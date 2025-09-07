@@ -1,0 +1,135 @@
+name: ✨ 功能请求
+description: 为足球预测系统建议新功能
+title: "[Feature] "
+labels: ["enhancement", "triage"]
+assignees:
+  - xupeng211
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您的功能建议！请详细描述您的想法，这将帮助我们更好地理解和评估这个功能。
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: 🎯 功能类别
+      description: 这个功能属于哪个类别？
+      options:
+        - 数据采集 (Data Collection)
+        - 机器学习模型 (ML Models)
+        - API接口 (API Endpoints)
+        - 数据库设计 (Database)
+        - 前端界面 (Frontend)
+        - 部署运维 (DevOps)
+        - 性能优化 (Performance)
+        - 安全功能 (Security)
+        - 其他 (Other)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: 🎯 问题描述
+      description: 描述这个功能要解决的问题或需求
+      placeholder: 当前存在什么问题或缺失什么功能？这会影响谁？
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 💡 解决方案
+      description: 详细描述您建议的解决方案
+      placeholder: |
+        描述您建议的具体实现方案：
+        - 功能如何工作？
+        - 用户如何使用？
+        - 技术实现思路？
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: 👤 用户故事
+      description: 从用户角度描述这个功能
+      placeholder: |
+        作为一个 [用户角色]，
+        我希望 [功能描述]，
+        以便 [获得的价值]。
+        
+        例如：
+        作为一个足球分析师，
+        我希望能够比较不同博彩公司的赔率变化，
+        以便发现市场异常和投资机会。
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: ✅ 验收标准
+      description: 这个功能完成时应该满足的条件
+      placeholder: |
+        - [ ] 功能A正常工作
+        - [ ] 性能满足要求（响应时间<2秒）
+        - [ ] 包含完整的单元测试
+        - [ ] API文档已更新
+        - [ ] 数据验证和错误处理
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 🎯 优先级
+      description: 这个功能的重要性和紧急程度
+      options:
+        - 🔥 高优先级 (Critical) - 核心功能，急需实现
+        - 📊 中优先级 (High) - 重要功能，近期实现
+        - 💡 低优先级 (Medium) - 有用功能，未来考虑
+        - 🎨 增强功能 (Low) - 锦上添花，可选实现
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: 🔧 技术考虑
+      description: 技术实现方面的考虑和约束
+      placeholder: |
+        - 依赖的第三方库或服务
+        - 对现有系统的影响
+        - 性能要求
+        - 安全考虑
+        - 数据库变更需求
+
+  - type: textarea
+    id: alternative-solutions
+    attributes:
+      label: 🔄 替代方案
+      description: 考虑过的其他解决方案
+      placeholder: 还有哪些其他的实现方式？为什么选择当前方案？
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📎 附加信息
+      description: 任何其他相关信息、截图、参考链接等
+      placeholder: |
+        - 相关文档链接
+        - 竞品分析
+        - 用户反馈
+        - 截图或草图
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 检查清单
+      description: 请确认您已经完成以下检查
+      options:
+        - label: 我已经搜索了现有的Issues，确认这不是重复请求
+          required: true
+        - label: 我已经考虑了这个功能对现有系统的影响
+          required: true
+        - label: 我已经提供了足够详细的信息来评估这个功能
+          required: true 

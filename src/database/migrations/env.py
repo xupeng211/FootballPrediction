@@ -17,16 +17,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.database.base import Base
 from src.database.config import get_database_config
-
 # 导入所有模型以确保它们被注册到Base.metadata
-from src.database.models import (  # noqa: F401
-    Features,
-    League,
-    Match,
-    Odds,
-    Predictions,
-    Team,
-)
+from src.database.models import (Features, League, Match, Odds,  # noqa: F401
+                                 Predictions, Team)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

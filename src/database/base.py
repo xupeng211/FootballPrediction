@@ -115,3 +115,4 @@ class BaseModel(Base, TimestampMixin):
 
 # 导出基础类，供其他模型使用
 __all__ = ["Base", "BaseModel", "TimestampMixin"]
+ 
