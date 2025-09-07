@@ -1,0 +1,6 @@
+# 基础依赖
+requests>=2.31.0
+click>=8.1.0
+pydantic>=2.0.0
+
+# 开发依赖请参考 requirements-dev.txt
