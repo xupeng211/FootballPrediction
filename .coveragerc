@@ -1,0 +1,29 @@
+[run]
+source = src
+omit =
+    */tests/*
+    */test_*
+    src/main.py
+    */venv/*
+    */__pycache__/*
+    */migrations/*
+
+[report]
+# 排除应用入口和配置文件，专注业务逻辑覆盖率
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov

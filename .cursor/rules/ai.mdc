@@ -1,0 +1,16 @@
+---
+description: AICultureKit项目AI开发规则（工具优先模式）
+globs: ["**/*"]
+alwaysApply: true
+rules:
+  - 🚫 **工具优先原则**：禁止绕过Makefile直接运行任何脚本或命令
+  - 📋 **必读文档**：开始工作前必须读取 AI_PROMPT.md 和 rules.md
+  - 🎯 **工作启动流程**：
+    1. 运行 `make env-check` 检查环境
+    2. 运行 `make context` 加载项目上下文
+    3. 根据任务选择适当的make命令
+  - 📁 **目录规范**：代码必须放在src/，测试必须放在tests/
+  - ✅ **质量保证**：所有代码变更必须通过 `make ci` 检查
+  - 📝 **注释要求**：生成的代码必须包含详细中文注释
+  - 🔄 **提交流程**：使用 `make prepush` 进行完整的提交前检查
+  - 🛡️ **防御机制**：严禁绕过pre-commit检查或CI流程

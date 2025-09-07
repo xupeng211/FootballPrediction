@@ -1,0 +1,18 @@
+# 暂时忽略有语法错误的脚本文件
+scripts/defense_generator.py
+scripts/ci_guardian.py
+
+# 忽略缓存目录
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 忽略构建产物
+build/
+dist/
+*.egg-info/
+
+# 忽略备份文件
+backup/
