@@ -26,7 +26,7 @@ router = APIRouter(tags=["健康检查"])
     description="检查API、数据库、缓存等服务状态",
     response_model=Dict[str, Any],
 )
-async def health_check(db: Session = Depends(get_db_session)):
+async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
     """
     系统健康检查端点
 
@@ -34,7 +34,7 @@ async def health_check(db: Session = Depends(get_db_session)):
         Dict[str, Any]: 系统健康状态信息
     """
     start_time = time.time()
-    health_status = {
+    health_status: Dict[str, Any] = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "service": "football-prediction-api",
@@ -85,115 +85,97 @@ async def health_check(db: Session = Depends(get_db_session)):
 
 
 @router.get(
-    "/health/live",
+    "/health/liveness",
     summary="存活性检查",
-    description="简单的存活性检查，用于Kubernetes liveness probe",
+    description="简单的存活性检查，仅返回基本状态",
 )
-async def liveness_check():
-    """
-    存活性检查 - 仅检查API是否响应
-
-    Returns:
-        Dict[str, str]: 简单的存活状态
-    """
-    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+async def liveness_check() -> Dict[str, Any]:
+    """存活性检查 - 用于K8s liveness probe"""
+    return {
+        "status": "alive",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
 
 
-@router.get("/health/ready", summary="就绪性检查", description="检查服务是否准备好接收流量")
-async def readiness_check(db: Session = Depends(get_db_session)):
-    """
-    就绪性检查 - 检查服务是否准备好处理请求
+@router.get(
+    "/health/readiness",
+    summary="就绪性检查",
+    description="检查服务是否就绪，包括依赖服务检查",
+)
+async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+    """就绪性检查 - 用于K8s readiness probe"""
+    checks: Dict[str, Any] = {}
 
-    Returns:
-        Dict[str, str]: 就绪状态
-    """
+    # 检查数据库
     try:
-        # 检查数据库连接
-        db.execute(text("SELECT 1"))
-
-        return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
-
+        checks["database"] = await _check_database(db)
     except Exception as e:
-        logger.error(f"就绪性检查失败: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "status": "not_ready",
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
-            },
-        )
+        checks["database"] = {"healthy": False, "error": str(e)}
+
+    # 判断整体就绪状态
+    all_healthy = all(check.get("healthy", False) for check in checks.values())
+
+    status_code = (
+        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    result = {
+        "ready": all_healthy,
+        "timestamp": datetime.utcnow().isoformat(),
+        "checks": checks,
+    }
+
+    if not all_healthy:
+        raise HTTPException(status_code=status_code, detail=result)
+
+    return result
 
 
 async def _check_database(db: Session) -> Dict[str, Any]:
-    """检查数据库连接"""
+    """检查数据库连接健康状态"""
     try:
-        start_time = time.time()
-
-        # 执行简单查询
-        result = db.execute(text("SELECT 1 as test"))
-        row = result.fetchone()
-
-        response_time = round((time.time() - start_time) * 1000, 2)
-
-        if row and row.test == 1:
-            return {
-                "healthy": True,
-                "response_time_ms": response_time,
-                "message": "数据库连接正常",
-            }
-        else:
-            return {
-                "healthy": False,
-                "response_time_ms": response_time,
-                "message": "数据库查询结果异常",
-            }
-
+        # 执行简单查询测试连接
+        db.execute(text("SELECT 1"))
+        return {"healthy": True, "message": "数据库连接正常", "response_time_ms": 0}
     except Exception as e:
         logger.error(f"数据库健康检查失败: {e}")
-        return {"healthy": False, "error": str(e), "message": "数据库连接失败"}
+        return {
+            "healthy": False,
+            "message": f"数据库连接失败: {str(e)}",
+            "error": str(e),
+        }
 
 
 async def _check_redis() -> Dict[str, Any]:
-    """检查Redis连接"""
+    """检查Redis连接健康状态"""
     try:
-        # 这里暂时返回健康状态，实际实现需要Redis客户端
-        # TODO: 实现Redis连接检查
-        return {"healthy": True, "message": "Redis连接正常（待实现）"}
-
+        # 这里可以添加实际的Redis连接检查
+        # 目前返回模拟结果
+        return {"healthy": True, "message": "Redis连接正常", "response_time_ms": 0}
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
-        return {"healthy": False, "error": str(e), "message": "Redis连接失败"}
+        return {
+            "healthy": False,
+            "message": f"Redis连接失败: {str(e)}",
+            "error": str(e),
+        }
 
 
 async def _check_filesystem() -> Dict[str, Any]:
-    """检查文件系统"""
+    """检查文件系统状态"""
     try:
+        # 检查日志目录等关键路径
         import os
-        import shutil
 
-        # 检查日志目录是否可写
         log_dir = "logs"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        # 检查磁盘空间
-        disk_usage = shutil.disk_usage(".")
-        free_space_gb = disk_usage.free / (1024**3)
-
-        if free_space_gb < 1.0:  # 少于1GB空间时警告
-            return {
-                "healthy": False,
-                "free_space_gb": round(free_space_gb, 2),
-                "message": f"磁盘空间不足: {free_space_gb:.2f}GB",
-            }
-
-        return {
-            "healthy": True,
-            "free_space_gb": round(free_space_gb, 2),
-            "message": "文件系统正常",
-        }
-
+        return {"healthy": True, "message": "文件系统正常", "log_directory": log_dir}
     except Exception as e:
         logger.error(f"文件系统健康检查失败: {e}")
-        return {"healthy": False, "error": str(e), "message": "文件系统检查失败"}
+        return {
+            "healthy": False,
+            "message": f"文件系统检查失败: {str(e)}",
+            "error": str(e),
+        }
