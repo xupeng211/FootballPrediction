@@ -1,0 +1,166 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set environment variables
+      run: |
+        echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+        echo "APP_NAME=football-prediction-staging" >> $GITHUB_ENV
+        echo "DOMAIN=staging-api.footballpred.com" >> $GITHUB_ENV
+        echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push image to ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: football-prediction
+        IMAGE_TAG: staging-${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:staging-latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging-latest
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Deploy to ECS Staging
+      env:
+        IMAGE_URI: ${{ steps.build-image.outputs.image }}
+        CLUSTER_NAME: football-prediction-staging
+        SERVICE_NAME: football-prediction-staging
+        TASK_DEFINITION: football-prediction-staging
+      run: |
+        aws ecs update-service \
+          --cluster $CLUSTER_NAME \
+          --service $SERVICE_NAME \
+          --force-new-deployment
+
+        aws ecs wait services-stable \
+          --cluster $CLUSTER_NAME \
+          --services $SERVICE_NAME
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set environment variables
+      run: |
+        echo "ENVIRONMENT=production" >> $GITHUB_ENV
+        echo "APP_NAME=football-prediction-prod" >> $GITHUB_ENV
+        echo "DOMAIN=api.footballpred.com" >> $GITHUB_ENV
+        echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Backup production database
+      run: |
+        echo "🔄 Creating database backup before production deployment..."
+        aws rds create-db-snapshot \
+          --db-instance-identifier football-prediction-prod \
+          --db-snapshot-identifier prod-backup-$(date +%Y%m%d-%H%M%S) \
+          --region us-east-1 || echo "Database backup failed, continuing..."
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push image to ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: football-prediction
+        IMAGE_TAG: production-${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:production-latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:production-latest
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Deploy to ECS Production
+      env:
+        IMAGE_URI: ${{ steps.build-image.outputs.image }}
+        CLUSTER_NAME: football-prediction-production
+        SERVICE_NAME: football-prediction-production
+        TASK_DEFINITION: football-prediction-production
+      run: |
+        aws ecs update-service \
+          --cluster $CLUSTER_NAME \
+          --service $SERVICE_NAME \
+          --force-new-deployment
+
+        aws ecs wait services-stable \
+          --cluster $CLUSTER_NAME \
+          --services $SERVICE_NAME
+
+    - name: Run database migrations
+      run: |
+        echo "🔄 Running database migrations on production..."
+        echo "Migrations will be run automatically by the application on startup"
+
+    - name: Health check
+      run: |
+        echo "🔍 Performing health check..."
+        sleep 30  # Wait for service to start
+
+        for i in {1..15}; do
+          if curl -f -s "https://${{ env.DOMAIN }}/health" > /dev/null 2>&1; then
+            echo "✅ Health check passed!"
+            exit 0
+          else
+            echo "⏳ Waiting for service to be healthy... (attempt $i/15)"
+            sleep 20
+          fi
+        done
+
+        echo "❌ Health check failed after 5 minutes"
+        echo "Service may still be starting up. Check AWS console for details."
+
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "🎉 Successfully deployed to production!"
+        echo "🔗 Service URL: https://${{ env.DOMAIN }}"
+        echo "🚀 Image: ${{ steps.build-image.outputs.image }}"

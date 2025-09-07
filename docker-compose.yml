@@ -4,23 +4,49 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      target: production
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=production
-      - PYTHONPATH=/app
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - ENVIRONMENT=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_dev
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - redis
-      - postgres
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=football_prediction_dev
+      - POSTGRES_USER=football_user
+      - POSTGRES_PASSWORD=football_pass
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_user -d football_prediction_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -28,20 +54,15 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
-
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: aiculturekit
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: unless-stopped
+    command: redis-server --appendonly yes
 
   nginx:
     image: nginx:alpine
@@ -49,12 +70,72 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - app
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # 数据采集服务
+  data-collector:
+    build:
+      context: .
+      target: production
+    environment:
+      - ENVIRONMENT=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_dev
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - REDIS_URL=redis://redis:6379/1
+      - API_FOOTBALL_KEY=${API_FOOTBALL_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+    networks:
+      - football-network
+    command: ["python", "-m", "src.data_collection.scheduler"]
+    restart: unless-stopped
+
+  # 机器学习训练服务
+  ml-trainer:
+    build:
+      context: .
+      target: production
+    environment:
+      - ENVIRONMENT=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_dev
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./models:/app/models
+      - ./logs:/app/logs
+    networks:
+      - football-network
+    command: ["python", "-m", "src.ml.training_scheduler"]
+    profiles: ["ml"]  # 可选启动
     restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+
+networks:
+  football-network:
+    driver: bridge

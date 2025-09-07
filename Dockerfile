@@ -1,39 +1,62 @@
-FROM python:3.11-slim
+# 多阶段构建 - 构建阶段
+FROM python:3.11-slim as builder
 
 # 设置工作目录
 WORKDIR /app
 
-# 设置环境变量
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
-
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    build-essential \
+    curl \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制requirements文件
-COPY requirements.txt .
+# 复制依赖文件
+COPY requirements.txt requirements-dev.txt ./
 
 # 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# 复制项目代码
-COPY . .
+# 生产阶段
+FROM python:3.11-slim as production
 
 # 创建非root用户
-RUN adduser --disabled-password --gecos '' appuser && \
+RUN groupadd -g 1001 appuser && \
+    useradd -r -u 1001 -g appuser appuser
+
+# 安装运行时依赖
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 设置工作目录
+WORKDIR /app
+
+# 从构建阶段复制Python包
+COPY --from=builder /root/.local /home/appuser/.local
+
+# 复制应用代码
+COPY . .
+
+# 设置Python路径
+ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONPATH=/app
+
+# 创建必要的目录并设置权限
+RUN mkdir -p /app/logs && \
     chown -R appuser:appuser /app
+
+# 切换到非root用户
 USER appuser
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # 暴露端口
 EXPOSE 8000
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
-
 # 启动命令
-CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

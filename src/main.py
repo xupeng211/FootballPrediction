@@ -1,128 +1,127 @@
 """
-AICultureKit FastAPI 应用入口点
+足球预测系统 FastAPI 主应用
+
+基于机器学习的足球比赛结果预测API服务
 """
 
-import asyncio
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .core import config, logger
-from .services import service_manager
+from src.api.health import router as health_router
+from src.database.connection import initialize_database
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时初始化
+    logger.info("🚀 足球预测API启动中...")
+
+    try:
+        # 初始化数据库连接
+        logger.info("📊 初始化数据库连接...")
+        initialize_database()
+
+        logger.info("✅ 服务启动成功")
+
+    except Exception as e:
+        logger.error(f"❌ 启动失败: {e}")
+        raise
+
+    yield
+
+    # 关闭时清理
+    logger.info("🛑 服务正在关闭...")
+
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="AICultureKit",
-    description="AI辅助文化产业工具包",
-    version="0.1.0",
+    title="足球预测API",
+    description="基于机器学习的足球比赛结果预测系统",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
-# 添加CORS中间件 - 安全配置：限制允许的域名
+# 添加CORS中间件
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,  # 使用环境变量控制允许的域名
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    """应用启动时的初始化"""
-    logger.info("🚀 AICultureKit 应用启动中...")
-
-    try:
-        # 初始化所有服务
-        success = await service_manager.initialize_all()
-        if success:
-            logger.info("✅ 所有服务初始化成功")
-        else:
-            logger.error("❌ 服务初始化失败")
-    except Exception as e:
-        logger.error(f"❌ 启动过程中发生错误: {e}")
+# 注册路由
+app.include_router(health_router)
 
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """应用关闭时的清理"""
-    logger.info("🛑 AICultureKit 应用关闭中...")
-
-    try:
-        await service_manager.shutdown_all()
-        logger.info("✅ 所有服务已关闭")
-    except Exception as e:
-        logger.error(f"❌ 关闭过程中发生错误: {e}")
-
-
-@app.get("/")
+@app.get("/", summary="根路径", tags=["基础"])
 async def root():
-    """根路径"""
+    """API根路径"""
     return {
-        "message": "Welcome to AICultureKit",
-        "version": "0.1.0",
-        "status": "running",
-        "docs": "/docs",
+        "service": "足球预测API",
+        "version": "1.0.0",
+        "status": "运行中",
+        "docs_url": "/docs",
+        "health_check": "/health",
     }
 
 
-@app.get("/health")
-async def health_check():
-    """健康检查端点"""
-    return {
-        "status": "healthy",
-        "timestamp": str(asyncio.get_event_loop().time()),
-        "services": {
-            service_name: "active" for service_name in service_manager.services.keys()
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    """HTTP异常处理"""
+    logger.error(f"HTTP异常: {exc.status_code} - {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "message": exc.detail,
+            "path": str(request.url),
         },
-    }
+    )
 
 
-@app.get("/api/status")
-async def api_status():
-    """API状态检查"""
-    try:
-        # 检查服务状态
-        service_status = {}
-        for name, service in service_manager.services.items():
-            service_status[name] = {"name": service.name, "status": "active"}
-
-        return {
-            "api_version": "v1",
-            "status": "operational",
-            "services": service_status,
-            "config": {
-                "debug": config.get("debug", False),
-                "environment": config.get("environment", "development"),
-            },
-        }
-    except Exception as e:
-        logger.error(f"状态检查失败: {e}")
-        raise HTTPException(status_code=500, detail="服务状态检查失败")
-
-
-# 错误处理 - 安全配置：生产环境隐藏敏感信息
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """全局异常处理"""
-    logger.error(f"全局异常: {exc}")
-    debug_mode = os.getenv("DEBUG", "false").lower() == "true"
-    if debug_mode:
-        return JSONResponse(status_code=500, content={"error": str(exc)})
-    return JSONResponse(status_code=500, content={"error": "服务暂时不可用"})
+async def general_exception_handler(request, exc: Exception):
+    """通用异常处理"""
+    logger.error(f"未处理异常: {type(exc).__name__}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": True,
+            "status_code": 500,
+            "message": "内部服务器错误",
+            "path": str(request.url),
+        },
+    )
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # 安全配置：使用环境变量控制网络绑定和模式
-    host = os.getenv("API_HOST", "127.0.0.1")  # 默认只监听本地
-    port = int(os.getenv("API_PORT", "8000"))
-    reload = os.getenv("DEBUG", "false").lower() == "true"  # 只在DEBUG模式启用reload
+    port = int(os.getenv("API_PORT", 8000))
+    host = os.getenv("API_HOST", "0.0.0.0")
 
-    uvicorn.run("src.main:app", host=host, port=port, reload=reload, log_level="info")
+    uvicorn.run(
+        "src.main:app",
+        host=host,
+        port=port,
+        reload=os.getenv("ENVIRONMENT") == "development",
+        log_level="info",
+    )
