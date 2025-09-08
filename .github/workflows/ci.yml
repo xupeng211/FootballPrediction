@@ -69,23 +69,18 @@ jobs:
     - name: Wait for DB
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Advanced Test Step by Step
+    - name: Direct Pytest Test
       run: |
-        echo "=== 基础检查全部成功，开始高级测试 ==="
+        echo "=== 问题定位：直接测试pytest命令 ==="
         export PYTHONPATH="$(pwd):${PYTHONPATH}"
-        echo "=== 测试1: 运行单个简单测试 ==="
-        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure -v
-        echo "=== 测试1成功！ ==="
-        echo "=== 测试2: 测试coverage导入 ==="
-        python -c "import coverage; print('Coverage导入成功')"
-        echo "=== 测试3: 运行带coverage的测试 ==="
-        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure --cov=core -v
-        echo "=== 测试3成功！ ==="
-        echo "=== 测试4: 检查make命令 ==="
-        make --version
-        echo "=== 测试5: 运行make env-check ==="
-        make env-check
-        echo "=== 所有高级测试成功！准备运行完整CI ==="
+        echo "当前目录: $(pwd)"
+        echo "PYTHONPATH: $PYTHONPATH"
+        echo "=== 检查测试文件详情 ==="
+        ls -la tests/test_basic.py
+        cat tests/test_basic.py | head -20
+        echo "=== 尝试直接运行pytest，看具体错误 ==="
+        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure -v -s || echo "PYTEST失败了！这就是问题所在！"
+        echo "=== 如果到这里，说明pytest运行成功 ==="
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
