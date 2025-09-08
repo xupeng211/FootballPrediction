@@ -13,8 +13,7 @@ setup(
     description="基于机器学习的足球比赛结果预测系统，覆盖全球主要赛事",
     author="Your Name",
     author_email="your.email@example.com",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(),
     install_requires=requirements,
     python_requires=">=3.8",
     classifiers=[
