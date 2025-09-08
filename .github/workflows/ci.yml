@@ -77,7 +77,7 @@ jobs:
 
     - name: Run type checking with mypy
       run: |
-        mypy core/ models/ services/ utils/ database/ api/ --ignore-missing-imports
+        mypy core/ models/ services/ utils/ database/ api/ --ignore-missing-imports --explicit-package-bases
 
     - name: Run security scan with bandit
       run: |

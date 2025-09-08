@@ -57,7 +57,7 @@ def test_database_config_functions():
 def test_utility_functions():
     """测试工具函数"""
     from FootballPrediction.core import Config, Logger
-    from FootballPrediction.utils import ensure_dir
+    from FootballPrediction.utils import FileUtils
 
     # 测试配置类
     config = Config()
@@ -72,7 +72,7 @@ def test_utility_functions():
     from pathlib import Path
 
     temp_dir = Path(tempfile.gettempdir()) / "test_dir"
-    ensure_dir(temp_dir)
+    FileUtils.ensure_dir(temp_dir)
 
     # 测试配置功能
     config.set("test_key", "test_value")
