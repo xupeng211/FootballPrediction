@@ -49,6 +49,7 @@ help: ## 显示帮助信息
 	@echo "  env-check   环境检查"
 	@echo "  quality     完整质量检查"
 	@echo "  ci          本地CI模拟"
+	@echo "  ci-local    本地执行与远程完全相同的CI流程"
 	@echo "  prepush     提交前完整检查+Issue同步"
 	@echo ""
 	@echo "$(YELLOW)项目管理:$(RESET)"
@@ -88,8 +89,14 @@ venv: $(VENV)/bin/activate ## 创建虚拟环境
 install: venv ## 安装项目依赖
 	@echo "$(BLUE)>>> 安装依赖包...$(RESET)"
 	$(ACTIVATE) && pip install -U pip setuptools wheel
-	$(ACTIVATE) && pip install -r requirements.txt
+	$(ACTIVATE) && pip install -r requirements.txt -r requirements-dev.txt
 	@echo "$(GREEN)✅ 依赖安装完成$(RESET)"
+
+.PHONY: lock
+lock: venv ## 生成依赖锁定文件
+	@echo "$(BLUE)>>> 生成依赖锁定文件...$(RESET)"
+	$(ACTIVATE) && pip-compile requirements.txt --output-file requirements.lock --strip-extras --upgrade
+	@echo "$(GREEN)✅ 依赖锁定文件已生成$(RESET)"
 
 .PHONY: init
 init: install ## 初始化项目（首次使用）
@@ -184,16 +191,16 @@ test: venv ## 运行单元测试
 coverage: venv ## 运行覆盖率测试
 	@echo "$(BLUE)>>> 运行覆盖率测试...$(RESET)"
 	@if [ -d "tests" ] && [ -n "$$(find tests -name '*.py' -type f)" ]; then \
-		if $(ACTIVATE) && python -c "import coverage" 2>/dev/null; then \
-			if $(ACTIVATE) && python -m coverage run -m pytest tests/ && $(ACTIVATE) && python -m coverage report --show-missing; then \
+		if $(ACTIVATE) && python -c "import pytest_cov" 2>/dev/null; then \
+			if $(ACTIVATE) && python -m pytest --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api --cov-fail-under=78 --cov-report=xml --cov-report=html -v; then \
 				echo "$(GREEN)✅ 覆盖率测试通过$(RESET)"; \
 			else \
 				echo "$(RED)❌ 覆盖率测试失败$(RESET)"; \
-				echo "$(YELLOW)   请修复测试问题后重试$(RESET)"; \
+				echo "$(YELLOW)   请修复测试问题或提高覆盖率到 >=80%$(RESET)"; \
 				exit 1; \
 			fi; \
 		else \
-			echo "$(YELLOW)⚠️ coverage未安装，运行普通测试$(RESET)"; \
+			echo "$(YELLOW)⚠️ pytest-cov未安装，运行普通测试$(RESET)"; \
 			if $(ACTIVATE) && python -m pytest tests/ -v; then \
 				echo "$(GREEN)✅ 测试通过$(RESET)"; \
 			else \
@@ -236,6 +243,11 @@ quality: venv format lint typecheck security complexity ## 完整质量检查
 ci: env-check context quality test coverage ## 本地CI模拟
 	@echo "$(GREEN)>>> 本地CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
+
+.PHONY: ci-local
+ci-local: ci ## 本地执行与远程完全相同的CI流程
+	@echo "$(GREEN)>>> 本地CI-LOCAL检查全部通过 ✅$(RESET)"
+	@echo "$(GREEN)>>> 与GitHub Actions CI流程保持一致$(RESET)"
 
 .PHONY: cursor-run
 cursor-run: venv ## 运行Cursor闭环系统
