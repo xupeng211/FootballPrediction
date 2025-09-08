@@ -342,9 +342,7 @@ class GitHubCIMonitor:
 
                     # 检测到新的工作流运行
                     if last_run_id != current_run_id:
-                        print(
-                            f"\n🚀 检测到新的CI运行 #{current_workflow['run_number']}"
-                        )
+                        print(f"\n🚀 检测到新的CI运行 #{current_workflow['run_number']}")
                         print(
                             f"📝 提交: {current_workflow['head_commit']['message'][:80]}"
                         )
@@ -355,14 +353,10 @@ class GitHubCIMonitor:
                     conclusion = current_workflow.get("conclusion")
 
                     if status == "in_progress":
-                        print(
-                            f"🔄 [{datetime.now().strftime('%H:%M:%S')}] CI正在运行..."
-                        )
+                        print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] CI正在运行...")
                     elif status == "completed":
                         if conclusion == "success":
-                            print(
-                                f"✅ [{datetime.now().strftime('%H:%M:%S')}] CI成功完成！"
-                            )
+                            print(f"✅ [{datetime.now().strftime('%H:%M:%S')}] CI成功完成！")
                             break
                         else:
                             print(

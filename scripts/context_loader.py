@@ -437,9 +437,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="项目上下文加载器")
     parser.add_argument("--project-root", default=".", help="项目根目录")
-    parser.add_argument(
-        "--output", default="logs/project_context.json", help="输出文件"
-    )
+    parser.add_argument("--output", default="logs/project_context.json", help="输出文件")
     parser.add_argument("--summary", action="store_true", help="显示摘要")
 
     args = parser.parse_args()

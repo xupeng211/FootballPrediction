@@ -613,9 +613,7 @@ class CIAnalyzer:
 
 
 @click.command()
-@click.option(
-    "--tool", "-t", help="分析特定工具的输出 (ruff, mypy, pytest, bandit, coverage)"
-)
+@click.option("--tool", "-t", help="分析特定工具的输出 (ruff, mypy, pytest, bandit, coverage)")
 @click.option("--input-file", "-i", help="输入文件路径 (工具输出或日志文件)")
 @click.option("--output", "-o", help="输出分析报告的文件路径")
 @click.option("--log-file", "-l", help="质量检查日志文件路径")
@@ -668,9 +666,7 @@ def main(tool, input_file, output, log_file, summary, recommendations, project_r
         issues_by_tool = analyzer.analyze_quality_check_log(log_path)
 
         total_issues = sum(len(issues) for issues in issues_by_tool.values())
-        click.echo(
-            f"📊 从日志中检测到 {total_issues} 个问题，涉及 {len(issues_by_tool)} 个工具"
-        )
+        click.echo(f"📊 从日志中检测到 {total_issues} 个问题，涉及 {len(issues_by_tool)} 个工具")
 
     else:
         click.echo("❌ 请指定输入文件 (-i) 或日志文件 (-l)")

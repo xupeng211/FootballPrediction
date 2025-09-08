@@ -912,9 +912,9 @@ class DefenseValidator:
                     original_issues, defenses
                 )
             )
-            validation_results["detailed_results"]["effectiveness"] = (
-                effectiveness_results
-            )
+            validation_results["detailed_results"][
+                "effectiveness"
+            ] = effectiveness_results
 
         # 计算总体评分
         validation_results["overall_score"] = self._calculate_overall_score(
@@ -1097,25 +1097,19 @@ def main(
             except Exception as e:
                 click.echo(f"⚠️ 读取问题文件失败: {e}")
 
-    click.echo(
-        f"📋 验证 {sum(len(files) for files in defenses.values())} 个防御机制文件"
-    )
+    click.echo(f"📋 验证 {sum(len(files) for files in defenses.values())} 个防御机制文件")
 
     # 根据选项执行特定验证
     if tests_only:
         test_results = validator.test_validator.validate_test_files(
             defenses.get("test_files", [])
         )
-        click.echo(
-            f"📊 测试验证结果: {test_results.get('success_rate', 0):.1f}% 通过率"
-        )
+        click.echo(f"📊 测试验证结果: {test_results.get('success_rate', 0):.1f}% 通过率")
     elif configs_only:
         lint_results = validator.lint_validator.validate_lint_configs(
             defenses.get("lint_configs", [])
         )
-        click.echo(
-            f"📊 配置验证结果: {lint_results.get('success_rate', 0):.1f}% 有效率"
-        )
+        click.echo(f"📊 配置验证结果: {lint_results.get('success_rate', 0):.1f}% 有效率")
     elif effectiveness_only:
         if original_issues:
             effectiveness_results = (
