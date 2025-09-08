@@ -16,6 +16,8 @@ bandit==1.7.5
 pbr>=6.0.0  # bandit dependency
 radon==6.0.1
 safety>=3.5.0
+pip-tools>=7.0.0
+ruff>=0.1.0
 
 # 开发服务器（在开发环境Dockerfile中使用）
 uvicorn[standard]==0.24.0
