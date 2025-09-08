@@ -5,6 +5,7 @@
 自动执行任务启动前的细节规则检查，确保开发环境处于最佳状态。
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -240,6 +241,18 @@ class EnvironmentChecker:
 
             current_branch = result.stdout.strip()
             main_branches = ["main", "master"]
+
+            # 在CI环境中允许主分支
+            if (
+                os.getenv("ENVIRONMENT") == "ci"
+                or os.getenv("CI") == "true"
+                or os.getenv("GITHUB_ACTIONS") == "true"
+            ):
+                return (
+                    True,
+                    f"CI环境：当前分支 '{current_branch}'",
+                    {"current_branch": current_branch, "is_ci": True},
+                )
 
             if current_branch in main_branches:
                 return (
