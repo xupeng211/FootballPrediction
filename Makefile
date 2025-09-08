@@ -123,20 +123,20 @@ context: venv ## 加载项目上下文
 .PHONY: format
 format: venv ## 代码格式化
 	@echo "$(BLUE)>>> 代码格式化...$(RESET)"
-	$(ACTIVATE) && python -m black src/ tests/ scripts/
+	$(ACTIVATE) && python -m black core/ models/ services/ utils/ database/ api/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码格式化完成$(RESET)"
 
 .PHONY: lint
 lint: venv ## 代码风格检查
 	@echo "$(BLUE)>>> 代码风格检查...$(RESET)"
-	$(ACTIVATE) && python -m flake8 src/ tests/ scripts/
+	$(ACTIVATE) && python -m flake8 core/ models/ services/ utils/ database/ api/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码风格检查通过$(RESET)"
 
 .PHONY: typecheck
 typecheck: venv ## 类型检查
 	@echo "$(BLUE)>>> 类型检查...$(RESET)"
 	@if $(ACTIVATE) && python -c "import mypy" 2>/dev/null; then \
-		$(ACTIVATE) && python -m mypy src/ --ignore-missing-imports; \
+		$(ACTIVATE) && python -m mypy core/ models/ services/ utils/ database/ api/ --ignore-missing-imports --explicit-package-bases; \
 		echo "$(GREEN)✅ 类型检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ mypy未安装，跳过类型检查$(RESET)"; \
@@ -146,7 +146,7 @@ typecheck: venv ## 类型检查
 security: venv ## 安全检查
 	@echo "$(BLUE)>>> 安全检查...$(RESET)"
 	@if $(ACTIVATE) && python -c "import bandit" 2>/dev/null; then \
-		$(ACTIVATE) && python -m bandit -r src/ -f json | python -m json.tool || true; \
+		$(ACTIVATE) && python -m bandit -r core/ models/ services/ utils/ database/ api/ -f json | python -m json.tool || true; \
 		echo "$(GREEN)✅ 安全检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ bandit未安装，跳过安全检查$(RESET)"; \
@@ -156,7 +156,7 @@ security: venv ## 安全检查
 complexity: venv ## 复杂度检查
 	@echo "$(BLUE)>>> 复杂度分析...$(RESET)"
 	@if $(ACTIVATE) && python -c "import radon" 2>/dev/null; then \
-		$(ACTIVATE) && python -m radon cc src/ --show-complexity; \
+		$(ACTIVATE) && python -m radon cc core/ models/ services/ utils/ database/ api/ --show-complexity; \
 		echo "$(GREEN)✅ 复杂度分析完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ radon未安装，跳过复杂度检查$(RESET)"; \
