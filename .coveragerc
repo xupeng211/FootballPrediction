@@ -7,6 +7,7 @@ omit =
     */venv/*
     */__pycache__/*
     */migrations/*
+    backup/*
 
 [report]
 # 排除应用入口和配置文件，专注业务逻辑覆盖率

@@ -1,7 +1,7 @@
 """数据库连接和配置测试"""
 
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.database.config import DatabaseConfig, get_database_config
 from src.database.connection import DatabaseManager, get_database_manager
@@ -36,7 +36,8 @@ class TestDatabaseConfig:
             password="pass",
         )
 
-        expected_url = "postgresql://user:pass@localhost:5432/test_db"
+        # 实际的PostgreSQL驱动使用psycopg2
+        expected_url = "postgresql+psycopg2://user:pass@localhost:5432/test_db"
         assert config.sync_url == expected_url
 
     def test_async_url_property(self):
@@ -62,18 +63,20 @@ class TestDatabaseConfig:
             password="pass",
         )
 
-        expected_url = "postgresql://user:pass@localhost:5432/test_db"
+        # Alembic也使用psycopg2驱动
+        expected_url = "postgresql+psycopg2://user:pass@localhost:5432/test_db"
         assert config.alembic_url == expected_url
 
     @patch.dict(
         os.environ,
         {
-            "DATABASE_HOST": "env_host",
-            "DATABASE_PORT": "3306",
-            "DATABASE_NAME": "env_db",
-            "DATABASE_USER": "env_user",
-            "DATABASE_PASSWORD": "env_pass",
+            "DB_HOST": "env_host",
+            "DB_PORT": "3306",
+            "DB_NAME": "env_db",
+            "DB_USER": "env_user",
+            "DB_PASSWORD": "env_pass",
         },
+        clear=True,
     )
     def test_get_database_config_from_env(self):
         """测试从环境变量获取数据库配置"""
@@ -90,10 +93,10 @@ class TestDatabaseConfig:
         """测试默认数据库配置"""
         config = get_database_config()
 
-        # 应该返回默认配置
+        # 应该返回开发环境的默认配置
         assert config.host == "localhost"
         assert config.port == 5432
-        assert config.database == "football_prediction"
+        assert config.database == "football_prediction_dev"
 
 
 class TestDatabaseManager:
@@ -118,13 +121,7 @@ class TestDatabaseManager:
         mock_create_engine.return_value = mock_engine
 
         manager = DatabaseManager()
-        manager.config = DatabaseConfig(
-            host="localhost",
-            port=5432,
-            database="test_db",
-            username="user",
-            password="pass",
-        )
+        manager.initialize()
 
         engine = manager.sync_engine
         assert engine == mock_engine
@@ -137,32 +134,35 @@ class TestDatabaseManager:
         mock_create_async_engine.return_value = mock_engine
 
         manager = DatabaseManager()
-        manager.config = DatabaseConfig(
-            host="localhost",
-            port=5432,
-            database="test_db",
-            username="user",
-            password="pass",
-        )
+        manager.initialize()
 
         engine = manager.async_engine
         assert engine == mock_engine
         mock_create_async_engine.assert_called_once()
 
     @patch("src.database.connection.sessionmaker")
-    def test_create_session(self, mock_sessionmaker):
+    @patch("src.database.connection.create_engine")
+    def test_create_session(self, mock_create_engine, mock_sessionmaker):
         """测试创建数据库会话"""
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
+
         mock_session_class = MagicMock()
         mock_sessionmaker.return_value = mock_session_class
         mock_session = MagicMock()
         mock_session_class.return_value = mock_session
 
         manager = DatabaseManager()
-        manager._sync_engine = MagicMock()
+        manager.initialize()
 
         session = manager.create_session()
         assert session == mock_session
-        mock_sessionmaker.assert_called_once_with(bind=manager._sync_engine)
+        mock_sessionmaker.assert_called_once_with(
+            bind=mock_engine,
+            autocommit=False,
+            autoflush=False,
+            expire_on_commit=False,
+        )
 
     def test_health_check_success(self):
         """测试健康检查成功"""

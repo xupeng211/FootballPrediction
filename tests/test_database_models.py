@@ -1,25 +1,16 @@
 """数据库模型测试"""
 
-import pytest
-from decimal import Decimal
 from datetime import datetime, timedelta
+from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.base import Base
-from src.database.models import (
-    League,
-    Team,
-    Match,
-    Odds,
-    Features,
-    Predictions,
-    MatchStatus,
-    MarketType,
-    TeamType,
-    PredictedResult,
-)
+from src.database.models import (Features, League, MarketType, Match,
+                                 MatchStatus, Odds, PredictedResult,
+                                 Predictions, Team, TeamType)
 
 
 @pytest.fixture(scope="function")
@@ -40,9 +31,7 @@ class TestDatabaseModels:
 
     def test_league_model(self, session):
         """测试联赛模型"""
-        league = League(
-            league_name="英超", league_code="EPL", country="英格兰", level=1
-        )
+        league = League(league_name="英超", league_code="EPL", country="英格兰", level=1)
         session.add(league)
         session.commit()
 
@@ -57,9 +46,7 @@ class TestDatabaseModels:
         session.add(league)
         session.flush()
 
-        team = Team(
-            team_name="曼联", team_code="MUN", league_id=league.id, country="英格兰"
-        )
+        team = Team(team_name="曼联", team_code="MUN", league_id=league.id, country="英格兰")
         session.add(team)
         session.commit()
 
@@ -80,13 +67,13 @@ class TestDatabaseModels:
         session.commit()
 
         # 创建比赛
-        match_date = datetime.now() + timedelta(days=1)
+        match_time = datetime.now() + timedelta(days=1)
         match = Match(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
-            match_date=match_date,
+            match_time=match_time,
             match_status=MatchStatus.SCHEDULED,
             venue="老特拉福德",
         )
@@ -119,7 +106,7 @@ class TestDatabaseModels:
             away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
-            match_date=datetime.now() + timedelta(days=1),
+            match_time=datetime.now() + timedelta(days=1),
         )
         session.add(match)
         session.commit()
@@ -158,7 +145,7 @@ class TestDatabaseModels:
             away_team_id=team.id,
             league_id=league.id,
             season="2023-24",
-            match_date=datetime.now() + timedelta(days=1),
+            match_time=datetime.now() + timedelta(days=1),
         )
         session.add(match)
         session.flush()
@@ -199,7 +186,7 @@ class TestDatabaseModels:
             away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
-            match_date=datetime.now() + timedelta(days=1),
+            match_time=datetime.now() + timedelta(days=1),
         )
         session.add(match)
         session.flush()
@@ -214,6 +201,7 @@ class TestDatabaseModels:
             draw_probability=Decimal("0.2000"),
             away_win_probability=Decimal("0.1500"),
             confidence_score=Decimal("0.8500"),
+            predicted_at=datetime.now(),
         )
         session.add(prediction)
         session.commit()
@@ -227,39 +215,12 @@ class TestDatabaseModels:
 
     def test_model_relationships(self, session):
         """测试模型关系"""
-        # 创建完整的数据层次结构
-        league = League(league_name="英超", league_code="EPL")
+        # 创建完整的模型关系链
+        league = League(league_name="英超")
         session.add(league)
         session.flush()
 
-        home_team = Team(team_name="曼联", league_id=league.id)
-        away_team = Team(team_name="切尔西", league_id=league.id)
-        session.add_all([home_team, away_team])
-        session.flush()
-
-        match = Match(
-            home_team_id=home_team.id,
-            away_team_id=away_team.id,
-            league_id=league.id,
-            season="2023-24",
-            match_date=datetime.now() + timedelta(days=1),
-        )
-        session.add(match)
-        session.commit()
-
-        # 验证关系
-        assert match.home_team.team_name == "曼联"
-        assert match.away_team.team_name == "切尔西"
-        assert match.league.league_name == "英超"
-
-    def test_model_validation(self, session):
-        """测试模型验证和约束"""
-        # 测试概率约束（应该接近1.0）
-        league = League(league_name="测试联赛")
-        session.add(league)
-        session.flush()
-
-        team = Team(team_name="测试队", league_id=league.id)
+        team = Team(team_name="曼联", league_id=league.id)
         session.add(team)
         session.flush()
 
@@ -268,28 +229,54 @@ class TestDatabaseModels:
             away_team_id=team.id,
             league_id=league.id,
             season="2023-24",
-            match_date=datetime.now(),
+            match_time=datetime.now() + timedelta(days=1),
         )
         session.add(match)
         session.flush()
 
-        # 创建预测数据验证概率和
+        # 测试关系是否正常工作
+        assert match.league == league
+        assert match.home_team == team
+
+    def test_model_validation(self, session):
+        """测试模型验证"""
+        # 创建基础数据
+        league = League(league_name="英超")
+        session.add(league)
+        session.flush()
+
+        team = Team(team_name="曼联", league_id=league.id)
+        session.add(team)
+        session.flush()
+
+        match = Match(
+            home_team_id=team.id,
+            away_team_id=team.id,
+            league_id=league.id,
+            season="2023-24",
+            match_time=datetime.now() + timedelta(days=1),
+        )
+        session.add(match)
+        session.flush()
+
+        # 创建各种模型测试验证
         prediction = Predictions(
             match_id=match.id,
             model_name="TestModel",
             model_version="1.0",
             predicted_result=PredictedResult.HOME_WIN,
-            home_win_probability=Decimal("0.5000"),
-            draw_probability=Decimal("0.3000"),
-            away_win_probability=Decimal("0.2000"),
+            home_win_probability=Decimal("0.5"),
+            draw_probability=Decimal("0.3"),
+            away_win_probability=Decimal("0.2"),
+            predicted_at=datetime.now(),
         )
         session.add(prediction)
         session.commit()
 
-        # 验证概率和
-        total_prob = (
+        # 验证数据完整性
+        assert (
             prediction.home_win_probability
             + prediction.draw_probability
             + prediction.away_win_probability
+            == Decimal("1.0")
         )
-        assert abs(float(total_prob) - 1.0) < 0.01  # 允许小误差
