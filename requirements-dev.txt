@@ -13,6 +13,7 @@ pytest-xdist>=3.5.0
 
 # 代码质量工具
 bandit==1.7.5
+pbr>=6.0.0  # bandit dependency
 radon==6.0.1
 safety>=3.5.0
 
