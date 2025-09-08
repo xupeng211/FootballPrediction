@@ -69,17 +69,10 @@ jobs:
     - name: Wait for DB
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Test Make CI Command
+    - name: Run CI Pipeline
       run: |
-        echo "=== 真相大白：直接测试make ci命令 ==="
         export PYTHONPATH="$(pwd):${PYTHONPATH}"
-        echo "=== 检查Makefile存在 ==="
-        ls -la Makefile
-        echo "=== 查看make ci目标 ==="
-        grep -A 5 "^ci:" Makefile || grep -A 5 "\.PHONY.*ci" Makefile
-        echo "=== 尝试运行make ci，加上详细输出 ==="
-        make ci || echo "MAKE CI失败了！这就是真正的问题！"
-        echo "=== 如果到这里，说明make ci成功 ==="
+        make ci
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
