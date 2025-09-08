@@ -85,18 +85,12 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        export PYTHONPATH="${PYTHONPATH}:$(pwd):$(pwd)/src"
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
         echo "=== 调试信息 ==="
         echo "当前工作目录: $(pwd)"
-        echo "目录结构:"
-        ls -la
-        echo "src目录:"
-        ls -la src/
         echo "PYTHONPATH: $PYTHONPATH"
-        echo "Python模块搜索路径:"
-        python -c "import sys; [print(f'  {p}') for p in sys.path]"
-        echo "尝试导入测试:"
-        python -c "import sys; sys.path.insert(0, '$(pwd)'); sys.path.insert(0, '$(pwd)/src'); from src.database.models import League; print('✅ 导入成功')" || echo "❌ 导入失败"
+        echo "测试导入模块:"
+        python -c "from src.database.models import League; print('✅ 模块导入成功')"
         echo "==============="
         python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
 
