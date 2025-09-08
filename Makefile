@@ -192,7 +192,7 @@ coverage: venv ## 运行覆盖率测试
 	@echo "$(BLUE)>>> 运行覆盖率测试...$(RESET)"
 	@if [ -d "tests" ] && [ -n "$$(find tests -name '*.py' -type f)" ]; then \
 		if $(ACTIVATE) && python -c "import pytest_cov" 2>/dev/null; then \
-			if $(ACTIVATE) && python -m pytest --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api --cov-fail-under=78 --cov-report=xml --cov-report=html -v; then \
+			if $(ACTIVATE) && python -m pytest --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api --cov-fail-under=80 --cov-report=xml --cov-report=html -v; then \
 				echo "$(GREEN)✅ 覆盖率测试通过$(RESET)"; \
 			else \
 				echo "$(RED)❌ 覆盖率测试失败$(RESET)"; \

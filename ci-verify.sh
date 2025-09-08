@@ -118,7 +118,7 @@ source venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 pytest \
     --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api \
-    --cov-fail-under=78 \
+    --cov-fail-under=80 \
     --cov-report=xml \
     --cov-report=html \
     -v || handle_error "测试执行或覆盖率不足"
