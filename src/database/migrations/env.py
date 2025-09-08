@@ -15,11 +15,10 @@ from sqlalchemy import engine_from_config, pool
 # 导入我们的数据库配置和模型
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
 
-from src.database.base import Base
-from src.database.config import get_database_config
-
+from src.database.base import Base  # noqa: E402
+from src.database.config import get_database_config  # noqa: E402
 # 导入所有模型以确保它们被注册到Base.metadata
-from src.database.models import Odds  # noqa: F401
+from src.database.models import Odds  # noqa: F401, E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
