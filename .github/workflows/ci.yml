@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/* ]
   pull_request:
     branches: [ main, develop ]
 
@@ -69,19 +69,19 @@ jobs:
 
     - name: Run linting with black
       run: |
-        black --check --diff src/ tests/
+        black --check --diff core/ models/ services/ utils/ database/ api/ tests/
 
     - name: Run linting with flake8
       run: |
-        flake8 src/ tests/
+        flake8 core/ models/ services/ utils/ database/ api/ tests/
 
     - name: Run type checking with mypy
       run: |
-        mypy src/ --ignore-missing-imports
+        mypy core/ models/ services/ utils/ database/ api/ --ignore-missing-imports
 
     - name: Run security scan with bandit
       run: |
-        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r core/ models/ services/ utils/ database/ api/ -f json -o bandit-report.json || true
 
     - name: Run tests with coverage
       run: |
@@ -90,9 +90,9 @@ jobs:
         echo "当前工作目录: $(pwd)"
         echo "PYTHONPATH: $PYTHONPATH"
         echo "测试导入模块:"
-        python -c "from src.database.models import League; print('✅ 模块导入成功')"
+        python -c "from database.models import League; print('✅ 模块导入成功')"
         echo "==============="
-        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+        python -m pytest tests/ -v --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
