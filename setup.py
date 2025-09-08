@@ -1,6 +1,6 @@
 """Setup configuration for FootballPrediction"""
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [
@@ -8,13 +8,17 @@ with open("requirements.txt", "r", encoding="utf-8") as f:
     ]
 
 setup(
-    name="footballprediction",
+    name="FootballPrediction",
     version="0.1.0",
     description="基于机器学习的足球比赛结果预测系统，覆盖全球主要赛事",
     author="Your Name",
     author_email="your.email@example.com",
-    packages=find_packages(),
-    package_dir={"": "."},
+    packages=["FootballPrediction"]
+    + [
+        "FootballPrediction." + pkg
+        for pkg in ["core", "models", "services", "utils", "database", "api"]
+    ],
+    package_dir={"FootballPrediction": "."},
     install_requires=requirements,
     python_requires=">=3.8",
     classifiers=[

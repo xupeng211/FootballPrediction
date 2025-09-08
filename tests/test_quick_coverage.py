@@ -56,11 +56,15 @@ def test_database_config_functions():
 
 def test_utility_functions():
     """测试工具函数"""
-    from footballprediction.core import ProjectCore
-    from footballprediction.utils import ensure_dir, setup_logger
+    from FootballPrediction.core import Config, Logger
+    from FootballPrediction.utils import ensure_dir
+
+    # 测试配置类
+    config = Config()
+    assert config is not None
 
     # 测试日志设置
-    logger = setup_logger("test")
+    logger = Logger.setup_logger("test")
     assert logger is not None
 
     # 测试确保目录存在
@@ -70,10 +74,9 @@ def test_utility_functions():
     temp_dir = Path(tempfile.gettempdir()) / "test_dir"
     ensure_dir(temp_dir)
 
-    # 测试项目核心
-    core = ProjectCore()
-    info = core.get_info()
-    assert "version" in info
+    # 测试配置功能
+    config.set("test_key", "test_value")
+    assert config.get("test_key") == "test_value"
 
 
 def test_simple_model_properties():
@@ -375,7 +378,7 @@ def test_additional_core_exceptions():
 
 def test_additional_footballprediction_version():
     """测试FootballPrediction版本"""
-    from footballprediction import __version__
+    from FootballPrediction import __version__
 
     # 测试版本存在
     assert __version__ is not None
