@@ -69,20 +69,23 @@ jobs:
     - name: Wait for DB
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Super Simple Test
+    - name: Incremental Test
       run: |
-        echo "=== 基础检查 ==="
-        pwd
-        python --version
-        which python
-        echo "=== Python路径检查 ==="
-        python -c "import sys; print('\n'.join(sys.path))"
-        echo "=== 尝试导入基础模块 ==="
-        python -c "import pytest; print('pytest OK')"
-        python -c "import os; print('os OK')"
-        echo "=== 检查文件结构 ==="
-        ls -la
-        echo "=== 结束基础检查 ==="
+        echo "=== 步骤1: 基础环境 ✅ ==="
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        echo "PYTHONPATH: $PYTHONPATH"
+        echo "=== 步骤2: 测试pytest ==="
+        python -m pytest --version
+        echo "=== 步骤3: 测试简单测试文件 ==="
+        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure -v
+        echo "=== 步骤4: 测试coverage ==="
+        python -c "import coverage; print('Coverage OK')"
+        echo "=== 步骤5: 测试make命令 ==="
+        make --version
+        echo "=== 步骤6: 检查Makefile ==="
+        head -10 Makefile
+        echo "=== 步骤7: 尝试make env-check ==="
+        make env-check
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
