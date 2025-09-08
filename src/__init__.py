@@ -7,7 +7,7 @@ AICultureKit - AI辅助文化产业工具包
 
 __version__ = "0.1.0"
 __author__ = "AICultureKit Team"
-__email__ = "contact@aiculturekit.com"
+__email__ = "football@prediction.com"
 
 # 导入核心模块
 from . import core, models, services, utils

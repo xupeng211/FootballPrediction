@@ -161,12 +161,13 @@ class EnvironmentChecker:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#"):
-                        # 提取包名（忽略版本号）
+                        # 提取包名（忽略版本号和extras）
                         package = (
                             line.split("==")[0]
                             .split(">=")[0]
                             .split("<=")[0]
                             .split("~=")[0]
+                            .split("[")[0]  # 处理 extras 如 uvicorn[standard]
                         )
                         requirements.append(package)
 
@@ -185,13 +186,13 @@ class EnvironmentChecker:
             installed_packages = set()
             for line in result.stdout.split("\n"):
                 if "==" in line:
-                    package = line.split("==")[0]
+                    package = line.split("==")[0].lower()  # 转换为小写
                     installed_packages.add(package)
 
             # 检查缺失的包
             missing_packages = []
             for package in requirements:
-                if package not in installed_packages:
+                if package.lower() not in installed_packages:  # 小写比较
                     missing_packages.append(package)
 
             if not missing_packages:
@@ -207,7 +208,7 @@ class EnvironmentChecker:
             else:
                 return (
                     False,
-                    f"缺少 {len(missing_packages)} 个依赖包",
+                    f"缺少 {len(missing_packages)} 个依赖包: {', '.join(missing_packages)}",
                     {
                         "total_required": len(requirements),
                         "missing_count": len(missing_packages),

@@ -78,57 +78,57 @@ services:
       - football-network
     restart: unless-stopped
 
-  # 数据采集服务
-  data-collector:
-    build:
-      context: .
-      target: production
-    environment:
-      - ENVIRONMENT=development
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_dev
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-      - REDIS_URL=redis://redis:6379/1
-      - API_FOOTBALL_KEY=${API_FOOTBALL_KEY}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./src:/app/src:ro
-      - ./logs:/app/logs
-    networks:
-      - football-network
-    command: ["python", "-m", "src.data_collection.scheduler"]
-    restart: unless-stopped
+  # TODO: 等待实现数据采集模块后再启用
+  # data-collector:
+  #   build:
+  #     context: .
+  #     target: production
+  #   environment:
+  #     - ENVIRONMENT=development
+  #     - DB_HOST=db
+  #     - DB_PORT=5432
+  #     - DB_NAME=football_prediction_dev
+  #     - DB_USER=football_user
+  #     - DB_PASSWORD=football_pass
+  #     - REDIS_URL=redis://redis:6379/1
+  #     - API_FOOTBALL_KEY=${API_FOOTBALL_KEY}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./src:/app/src:ro
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - football-network
+  #   command: ["python", "-m", "src.footballprediction.data_collection.scheduler"]
+  #   restart: unless-stopped
 
-  # 机器学习训练服务
-  ml-trainer:
-    build:
-      context: .
-      target: production
-    environment:
-      - ENVIRONMENT=development
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_dev
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./src:/app/src:ro
-      - ./models:/app/models
-      - ./logs:/app/logs
-    networks:
-      - football-network
-    command: ["python", "-m", "src.ml.training_scheduler"]
-    profiles: ["ml"]  # 可选启动
-    restart: unless-stopped
+  # TODO: 等待实现ML训练模块后再启用
+  # ml-trainer:
+  #   build:
+  #     context: .
+  #     target: production
+  #   environment:
+  #     - ENVIRONMENT=development
+  #     - DB_HOST=db
+  #     - DB_PORT=5432
+  #     - DB_NAME=football_prediction_dev
+  #     - DB_USER=football_user
+  #     - DB_PASSWORD=football_pass
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./src:/app/src:ro
+  #     - ./models:/app/models
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - football-network
+  #   command: ["python", "-m", "src.footballprediction.ml.training_scheduler"]
+  #   profiles: ["ml"]  # 可选启动
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
