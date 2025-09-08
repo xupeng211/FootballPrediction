@@ -19,7 +19,7 @@ from context_loader import ProjectContextLoader  # noqa: E402
 from env_checker import EnvironmentChecker  # noqa: E402
 from quality_checker import QualityChecker  # noqa: E402
 
-from src.core import Logger  # noqa: E402
+from core import Logger  # noqa: E402
 
 
 class CursorClosedLoopRunner:

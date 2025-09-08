@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from src.database.connection import get_db_session
+from database.connection import get_db_session
 
 logger = logging.getLogger(__name__)
 

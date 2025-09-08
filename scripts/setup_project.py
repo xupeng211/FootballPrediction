@@ -12,7 +12,7 @@ from pathlib import Path
 # 添加项目路径以便导入核心模块
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core import Logger  # noqa: E402
+from core import Logger  # noqa: E402
 
 # 设置全局日志器
 logger = Logger.setup_logger("setup_project", "INFO")

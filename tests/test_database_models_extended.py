@@ -7,19 +7,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.base import Base
-from src.database.models import (
-    Features,
-    League,
-    MarketType,
-    Match,
-    MatchStatus,
-    Odds,
-    PredictedResult,
-    Predictions,
-    Team,
-    TeamType,
-)
+from database.base import Base
+from database.models import (Features, League, MarketType, Match, MatchStatus,
+                             Odds, PredictedResult, Predictions, Team,
+                             TeamType)
 
 
 @pytest.fixture(scope="function")
@@ -569,7 +560,7 @@ class TestOddsModelMethodsAdditional:
         """测试赔率市场类型属性方法"""
         from decimal import Decimal
 
-        from src.database.models.odds import MarketType, Odds
+        from database.models.odds import MarketType, Odds
 
         # 测试1X2市场
         odds_1x2 = Odds(
@@ -607,7 +598,7 @@ class TestConnectionModelMethods:
 
     def test_database_manager_properties(self):
         """测试DatabaseManager的属性方法"""
-        from src.database.connection import DatabaseManager
+        from database.connection import DatabaseManager
 
         manager = DatabaseManager()
 
@@ -716,7 +707,7 @@ class TestPredictionsModelAdditional:
         """测试预测摘要属性"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -737,7 +728,7 @@ class TestPredictionsModelAdditional:
         """测试最大概率属性"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -756,7 +747,7 @@ class TestPredictionsModelAdditional:
         """测试预测置信度等级"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         # 高置信度
         high_confidence = Predictions(
@@ -794,7 +785,7 @@ class TestOddsModelAdditional:
         """测试Odds模型的字符串表示"""
         from decimal import Decimal
 
-        from src.database.models.odds import MarketType, Odds
+        from database.models.odds import MarketType, Odds
 
         odds = Odds(
             match_id=1,
@@ -907,7 +898,7 @@ class TestBasicModelMethods:
         """测试预测概率字典方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -970,7 +961,7 @@ class TestBasicModelMethods:
         """测试Predictions模型__repr__方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -993,7 +984,7 @@ class TestCoverageBoost:
 
     def test_features_repr_method(self):
         """测试Features模型__repr__方法"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1010,7 +1001,7 @@ class TestCoverageBoost:
 
     def test_features_basic_properties(self):
         """测试Features模型基础属性"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1029,7 +1020,7 @@ class TestCoverageBoost:
 
     def test_features_away_team(self):
         """测试客场球队Features"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1114,7 +1105,7 @@ class TestCoverageBoost:
 
     def test_odds_additional_properties(self):
         """测试Odds模型额外属性"""
-        from src.database.models.odds import MarketType, Odds
+        from database.models.odds import MarketType, Odds
 
         # 测试亚洲盘市场
         odds_ah = Odds(
@@ -1159,7 +1150,7 @@ class TestCoverageBoost:
 
     def test_features_goal_difference(self):
         """测试Features模型进球差属性"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1180,7 +1171,7 @@ class TestFinalCoverageBoost:
 
     def test_features_win_rates(self):
         """测试Features模型胜率计算属性"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1208,7 +1199,7 @@ class TestFinalCoverageBoost:
 
     def test_features_h2h_rate(self):
         """测试Features模型历史对战胜率"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1253,7 +1244,7 @@ class TestFinalCoverageBoost:
         """测试Predictions预测比分方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -1300,7 +1291,7 @@ class TestFinalCoverageBoost:
         """测试Odds百分比变化计算"""
         from decimal import Decimal
 
-        from src.database.models.odds import MarketType, Odds
+        from database.models.odds import MarketType, Odds
 
         odds = Odds(
             match_id=1,
@@ -1351,7 +1342,7 @@ class TestFinal17LinesCoverage:
         """测试Predictions获取重要特征方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from database.models.predictions import PredictedResult, Predictions
 
         prediction = Predictions(
             match_id=1,
@@ -1406,7 +1397,7 @@ class TestFinal17LinesCoverage:
 
     def test_features_basic_stats_features(self):
         """测试Features基础统计特征方法"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1,
@@ -1422,7 +1413,7 @@ class TestFinal17LinesCoverage:
 
     def test_features_home_away_features(self):
         """测试Features主客场特征方法"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1, team_id=1, team_type=TeamType.HOME, recent_5_wins=3
@@ -1433,7 +1424,7 @@ class TestFinal17LinesCoverage:
 
     def test_features_h2h_features(self):
         """测试Features历史对战特征方法"""
-        from src.database.models.features import Features, TeamType
+        from database.models.features import Features, TeamType
 
         features = Features(
             match_id=1, team_id=1, team_type=TeamType.HOME, recent_5_wins=3

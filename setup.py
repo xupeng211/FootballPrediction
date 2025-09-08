@@ -14,6 +14,7 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     packages=find_packages(),
+    package_dir={"": "."},
     install_requires=requirements,
     python_requires=">=3.8",
     classifiers=[

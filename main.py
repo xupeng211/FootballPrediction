@@ -12,8 +12,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.health import router as health_router
-from src.database.connection import initialize_database
+from api.health import router as health_router
+from database.connection import initialize_database
 
 # 配置日志
 logging.basicConfig(

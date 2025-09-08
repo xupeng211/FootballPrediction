@@ -3,8 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from src.database.config import DatabaseConfig, get_database_config
-from src.database.connection import DatabaseManager, get_database_manager
+from database.config import DatabaseConfig, get_database_config
+from database.connection import DatabaseManager, get_database_manager
 
 
 class TestDatabaseConfig:

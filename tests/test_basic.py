@@ -1,27 +1,20 @@
 """基本功能测试"""
 
-from footballprediction.core import ProjectCore
-from footballprediction.utils import setup_logger
+from core import Logger
 
 
-class TestCore:
-    """核心功能测试类"""
+class TestProjectBasics:
+    """项目基本功能测试类"""
 
-    def test_project_core_initialization(self):
-        """测试项目核心初始化"""
-        core = ProjectCore()
-        assert core.name == "FootballPrediction"
-        assert core.version == "0.1.0"
+    def test_project_structure(self):
+        """测试项目结构"""
+        # 这里可以测试项目的基本结构
+        import os
 
-    def test_get_info(self):
-        """测试获取项目信息"""
-        core = ProjectCore()
-        info = core.get_info()
-
-        assert isinstance(info, dict)
-        assert "name" in info
-        assert "version" in info
-        assert "description" in info
+        assert os.path.exists("api")
+        assert os.path.exists("core")
+        assert os.path.exists("database")
+        assert os.path.exists("services")
 
 
 class TestUtils:
@@ -29,6 +22,6 @@ class TestUtils:
 
     def test_setup_logger(self):
         """测试日志记录器设置"""
-        logger = setup_logger("test_logger")
+        logger = Logger.setup_logger("test_logger")
         assert logger.name == "test_logger"
         assert logger.level == 20  # INFO level
