@@ -123,13 +123,13 @@ context: venv ## 加载项目上下文
 .PHONY: format
 format: venv ## 代码格式化
 	@echo "$(BLUE)>>> 代码格式化...$(RESET)"
-	$(ACTIVATE) && python -m ruff format src/ tests/ scripts/
+	$(ACTIVATE) && python -m black src/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码格式化完成$(RESET)"
 
 .PHONY: lint
 lint: venv ## 代码风格检查
 	@echo "$(BLUE)>>> 代码风格检查...$(RESET)"
-	$(ACTIVATE) && python -m ruff check src/ tests/ scripts/
+	$(ACTIVATE) && python -m flake8 src/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码风格检查通过$(RESET)"
 
 .PHONY: typecheck
