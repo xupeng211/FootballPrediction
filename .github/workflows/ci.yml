@@ -69,21 +69,23 @@ jobs:
     - name: Wait for DB
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Command by Command Test
+    - name: Advanced Test Step by Step
       run: |
-        echo "=== 命令1: 设置PYTHONPATH ==="
-        export PYTHONPATH="$(pwd):${PYTHONPATH}" && echo "PYTHONPATH设置成功"
-        echo "=== 命令2: 检查Python ==="
-        python --version && echo "Python检查成功"
-        echo "=== 命令3: 测试pytest模块 ==="
-        python -c "import pytest; print('pytest import成功')"
-        echo "=== 命令4: pytest版本 ==="
-        python -m pytest --version && echo "pytest版本检查成功"
-        echo "=== 命令5: 检查测试文件存在 ==="
-        ls -la tests/test_basic.py && echo "测试文件存在"
-        echo "=== 命令6: 尝试导入测试模块 ==="
-        python -c "import sys; sys.path.append('.'); from tests.test_basic import *; print('测试模块导入成功')"
-        echo "=== 如果到这里说明基础OK ==="
+        echo "=== 基础检查全部成功，开始高级测试 ==="
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        echo "=== 测试1: 运行单个简单测试 ==="
+        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure -v
+        echo "=== 测试1成功！ ==="
+        echo "=== 测试2: 测试coverage导入 ==="
+        python -c "import coverage; print('Coverage导入成功')"
+        echo "=== 测试3: 运行带coverage的测试 ==="
+        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure --cov=core -v
+        echo "=== 测试3成功！ ==="
+        echo "=== 测试4: 检查make命令 ==="
+        make --version
+        echo "=== 测试5: 运行make env-check ==="
+        make env-check
+        echo "=== 所有高级测试成功！准备运行完整CI ==="
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
