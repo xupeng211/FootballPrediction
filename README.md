@@ -62,6 +62,34 @@ make prepush      # 提交前检查
 4. `make ci` - 质量检查
 5. `make prepush` - 完整验证
 
+## 🐳 本地模拟CI环境
+
+为确保本地环境与CI环境完全一致，可以使用Docker Compose在本地模拟CI环境：
+
+### 启动完整环境
+```bash
+docker-compose up --build
+```
+
+这将启动以下服务：
+- **app**: 主应用服务
+- **db**: PostgreSQL数据库（包含健康检查）
+- **redis**: Redis缓存服务
+- **nginx**: 反向代理服务
+
+### 环境配置
+项目包含以下环境配置文件：
+- `.env.ci` - CI环境变量配置
+- `requirements.lock` - 锁定的依赖版本
+
+### 验证步骤
+1. 启动服务：`docker-compose up --build`
+2. 检查服务状态：`docker-compose ps`
+3. 查看应用日志：`docker-compose logs app`
+4. 运行测试：`docker-compose exec app pytest --cov=src --cov-fail-under=78`
+
+这样可以确保本地开发环境与CI环境保持完全一致，避免"在我机器上可以运行"的问题。
+
 ## 🎉 开始使用
 
 ```bash
