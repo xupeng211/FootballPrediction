@@ -29,7 +29,14 @@
 - **本地测试**: `make test` 执行所有测试
 - **覆盖率检查**: `make coverage` 生成覆盖率报告
 - **快速测试**: `make test-unit` 只运行单元测试
+- **🐳 CI模拟**: `./ci-verify.sh` 在Docker环境中运行完整CI流程
 - **CI集成**: 所有测试必须在CI环境通过
+
+## 🐳 Docker环境测试
+- **环境隔离**: 使用Docker确保测试环境一致性
+- **服务依赖**: 自动启动PostgreSQL、Redis等依赖服务
+- **真实环境**: 模拟GitHub Actions CI的完整运行环境
+- **推送前验证**: 推送代码前必须通过`./ci-verify.sh`验证
 
 ## 🚫 测试禁忌
 - 测试中不使用真实外部依赖

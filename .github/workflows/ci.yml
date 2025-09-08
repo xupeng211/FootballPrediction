@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/* ]
   pull_request:
     branches: [ main, develop ]
 
@@ -54,8 +54,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        python -m venv venv
+        . venv/bin/activate
+        pip install -r requirements.txt -r requirements-dev.txt
         pip install -e .
 
     - name: Set up environment variables
@@ -67,32 +68,14 @@ jobs:
         echo "TEST_DB_PASSWORD=postgres" >> $GITHUB_ENV
         echo "ENVIRONMENT=test" >> $GITHUB_ENV
 
-    - name: Run linting with black
-      run: |
-        black --check --diff src/ tests/
+    - name: Wait for DB
+      run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Run linting with flake8
+    - name: Run CI Pipeline
       run: |
-        flake8 src/ tests/
-
-    - name: Run type checking with mypy
-      run: |
-        mypy src/ --ignore-missing-imports
-
-    - name: Run security scan with bandit
-      run: |
-        bandit -r src/ -f json -o bandit-report.json || true
-
-    - name: Run tests with coverage
-      run: |
+        . venv/bin/activate
         export PYTHONPATH="$(pwd):${PYTHONPATH}"
-        echo "=== 调试信息 ==="
-        echo "当前工作目录: $(pwd)"
-        echo "PYTHONPATH: $PYTHONPATH"
-        echo "测试导入模块:"
-        python -c "from src.database.models import League; print('✅ 模块导入成功')"
-        echo "==============="
-        python -m pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+        make ci
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
@@ -111,3 +94,40 @@ jobs:
           coverage.xml
           htmlcov/
           bandit-report.json
+
+  ci-verify:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install Docker Compose
+      run: |
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
+
+    - name: Run CI verification script
+      run: |
+        chmod +x ./ci-verify.sh
+        ./ci-verify.sh
+
+    - name: Upload CI verification results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ci-verify-results
+        path: |
+          coverage.xml
+          htmlcov/

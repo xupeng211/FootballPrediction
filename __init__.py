@@ -1,12 +1,12 @@
 """
-AICultureKit - AI辅助文化产业工具包
+FootballPrediction - 基于机器学习的足球比赛结果预测系统
 
-一个专注于文化产业的AI辅助开发工具包，提供数据分析、内容生成、
-用户画像等核心功能模块。
+覆盖全球主要赛事的足球比赛结果预测，提供数据分析、特征工程、
+模型训练和预测等核心功能模块。
 """
 
 __version__ = "0.1.0"
-__author__ = "AICultureKit Team"
+__author__ = "FootballPrediction Team"
 __email__ = "football@prediction.com"
 
 # 导入核心模块
