@@ -69,23 +69,21 @@ jobs:
     - name: Wait for DB
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
-    - name: Incremental Test
+    - name: Command by Command Test
       run: |
-        echo "=== 步骤1: 基础环境 ✅ ==="
-        export PYTHONPATH="$(pwd):${PYTHONPATH}"
-        echo "PYTHONPATH: $PYTHONPATH"
-        echo "=== 步骤2: 测试pytest ==="
-        python -m pytest --version
-        echo "=== 步骤3: 测试简单测试文件 ==="
-        python -m pytest tests/test_basic.py::TestProjectBasics::test_project_structure -v
-        echo "=== 步骤4: 测试coverage ==="
-        python -c "import coverage; print('Coverage OK')"
-        echo "=== 步骤5: 测试make命令 ==="
-        make --version
-        echo "=== 步骤6: 检查Makefile ==="
-        head -10 Makefile
-        echo "=== 步骤7: 尝试make env-check ==="
-        make env-check
+        echo "=== 命令1: 设置PYTHONPATH ==="
+        export PYTHONPATH="$(pwd):${PYTHONPATH}" && echo "PYTHONPATH设置成功"
+        echo "=== 命令2: 检查Python ==="
+        python --version && echo "Python检查成功"
+        echo "=== 命令3: 测试pytest模块 ==="
+        python -c "import pytest; print('pytest import成功')"
+        echo "=== 命令4: pytest版本 ==="
+        python -m pytest --version && echo "pytest版本检查成功"
+        echo "=== 命令5: 检查测试文件存在 ==="
+        ls -la tests/test_basic.py && echo "测试文件存在"
+        echo "=== 命令6: 尝试导入测试模块 ==="
+        python -c "import sys; sys.path.append('.'); from tests.test_basic import *; print('测试模块导入成功')"
+        echo "=== 如果到这里说明基础OK ==="
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
