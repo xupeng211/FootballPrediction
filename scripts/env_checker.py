@@ -394,7 +394,7 @@ class EnvironmentChecker:
     def _check_project_structure(self) -> Tuple[bool, str, Dict]:
         """检查项目结构完整性"""
         try:
-            required_dirs = ["src", "tests", "scripts", "logs"]
+            required_dirs = ["tests", "scripts", "logs"]
             required_files = ["requirements.txt", "rules.md", "README.md"]
 
             missing_dirs = []

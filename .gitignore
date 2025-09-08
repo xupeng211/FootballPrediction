@@ -119,7 +119,10 @@ alembic/versions/__pycache__/
 # ==================================================
 # 日志文件
 # ==================================================
-logs/
+logs/*.log
+logs/*.log.*
+logs/*.json
+!logs/.gitkeep
 *.log
 *.log.*
 log_*.txt
@@ -132,17 +135,17 @@ log_*.txt
 # ==================================================
 # 机器学习和数据
 # ==================================================
-models/
-!models/.gitkeep
-data/raw/
-!data/raw/.gitkeep
-data/processed/
-!data/processed/.gitkeep
+# 机器学习模型文件
 *.pkl
 *.pickle
 *.joblib
 *.model
 *.ckpt
+# 训练数据目录
+data/raw/
+!data/raw/.gitkeep
+data/processed/
+!data/processed/.gitkeep
 
 # TensorFlow
 *.pb

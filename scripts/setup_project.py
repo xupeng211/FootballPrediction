@@ -116,10 +116,6 @@ def create_basic_files(project_root: Path) -> bool:
 
     # 创建__init__.py文件
     init_files = [
-        "src/core/__init__.py",
-        "src/models/__init__.py",
-        "src/services/__init__.py",
-        "src/utils/__init__.py",
         "tests/__init__.py",
         "tests/unit/__init__.py",
         "tests/integration/__init__.py",

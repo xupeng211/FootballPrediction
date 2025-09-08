@@ -602,9 +602,9 @@ class TestConnectionModelMethods:
 
         manager = DatabaseManager()
 
-        # 测试属性存在
-        assert hasattr(manager, "sync_engine")
-        assert hasattr(manager, "async_engine")
+        # 测试属性存在（检查属性描述符，不访问值）
+        assert hasattr(DatabaseManager, "sync_engine")
+        assert hasattr(DatabaseManager, "async_engine")
 
         # 测试初始化方法存在
         assert hasattr(manager, "initialize")
