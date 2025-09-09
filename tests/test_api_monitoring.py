@@ -110,8 +110,11 @@ class TestMonitoringAPI:
         data = response.json()
 
         assert data["status"] == "error"
-        assert "error" in data
         assert "response_time_ms" in data
+        assert "system" in data
+        assert "database" in data
+        assert "runtime" in data
+        assert "business" in data
 
     @pytest.mark.asyncio
     async def test_get_database_metrics_success(self, mock_db_session):

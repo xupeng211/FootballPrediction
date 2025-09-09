@@ -1,26 +1,9 @@
-# ==================================================
-# 足球预测系统 .gitignore 配置
-# ==================================================
-
-# 虚拟环境
-venv/
-.venv/
-env/
-.env_dir/
-
-# 环境变量文件（包含敏感信息）
-.env
-.env.*
-!.env.example
-!env.template
-
-# ==================================================
-# Python
-# ==================================================
+# 字节码缓存
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+
+# 分发/打包
 .Python
 build/
 develop-eggs/
@@ -34,7 +17,6 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -44,11 +26,7 @@ MANIFEST
 *.manifest
 *.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+# 单元测试 / 覆盖率报告
 htmlcov/
 .tox/
 .nox/
@@ -58,212 +36,97 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# 环境变量文件
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# IPython
-profile_default/
-ipython_config.py
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# pyenv
-.python-version
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# pipenv
-Pipfile.lock
+# 项目特定文件
+logs/*.log
+logs/*.json
+!logs/.gitkeep
 
-# poetry
-poetry.lock
+# 临时文件
+*.tmp
+*.temp
 
-# celery beat schedule file
-celerybeat-schedule
-celerybeat.pid
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
 
-# SageMath parsed files
-*.sage.py
+# 配置文件
+config/local.yml
+config/production.yml
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# 密钥文件
+*.pem
+*.key
+secrets/
 
-# Rope project settings
-.ropeproject
-
-# mypy
+# 缓存和构建文件
 .mypy_cache/
 .dmypy.json
 dmypy.json
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 
-# Pyre type checker
-.pyre/
+# 静态分析报告
+security-report.json
+safety-report.json
+complexity-report.json
+bandit-report.json
 
-# pytype static type analyzer
-.pytype/
+# 依赖管理
+requirements-current.txt
+requirements-dev-freeze.txt
 
-# ==================================================
-# 数据库
-# ==================================================
-*.db
-*.sqlite3
-*.sql.backup
-postgres_data/
-mysql_data/
+# 文档构建
+docs/_build/
+docs/build/
 
-# 数据库迁移临时文件
-alembic/versions/__pycache__/
-
-# ==================================================
-# 日志文件
-# ==================================================
-logs/*.log
-logs/*.log.*
-logs/*.json
-!logs/.gitkeep
-*.log
-*.log.*
-log_*.txt
-
-# ==================================================
-# Docker
-# ==================================================
-.dockerignore
-
-# ==================================================
-# 机器学习和数据
-# ==================================================
-# 机器学习模型文件
+# 机器学习/数据
+*.model
 *.pkl
 *.pickle
-*.joblib
-*.model
-*.ckpt
-# 训练数据目录
-data/raw/
-!data/raw/.gitkeep
-data/processed/
-!data/processed/.gitkeep
+data/
+models/
+checkpoints/
 
-# TensorFlow
-*.pb
-*.pbtxt
-checkpoint/
-saved_model/
-
-# PyTorch
-*.pth
-*.pt
-
-# ==================================================
-# 开发工具
-# ==================================================
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.swp
-*.swo
-*~
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# ==================================================
-# 操作系统
-# ==================================================
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# Linux
-*~
-
-# ==================================================
-# 临时文件和缓存
-# ==================================================
-tmp/
-temp/
-*.tmp
-*.temp
-*.bak
-*.backup
-*.orig
-
-# ==================================================
-# 安全和密钥
-# ==================================================
-*.pem
-*.key
-*.crt
-*.csr
-id_rsa
-id_rsa.pub
-*.p12
-*.pfx
-secrets.yaml
-secrets.yml
-secret.json
-
-# AWS
-.aws/
-aws-credentials
-
-# ==================================================
-# 项目特定
-# ==================================================
-# API密钥配置文件
-api_keys.json
-config/secrets.py
-
-# 测试数据
-test_data/
-sample_data/
-
-# 性能测试结果
-benchmark_results/
-profiling_results/
-
-# ==================================================
-# Node.js (如果有前端)
-# ==================================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
-
-# ==================================================
-# 其他
-# ==================================================
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Backup directories
+# 日志和报告
+*.log
+reports/
 backup/
+backup_before_fix/
+*.backup
+# 备份目录
+backup/
+backup_before_fix/
+*.backup
+# 日志和缓存
+logs/

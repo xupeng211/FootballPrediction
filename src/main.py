@@ -132,7 +132,13 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("API_PORT", 8000))
-    host = os.getenv("API_HOST", "0.0.0.0")
+    # 安全修复：根据环境设置默认主机地址
+    # 开发环境允许所有接口访问，生产环境只允许本地访问
+    if os.getenv("ENVIRONMENT") == "development":
+        default_host = "0.0.0.0"  # nosec B104 # 开发环境允许绑定所有接口
+    else:
+        default_host = "127.0.0.1"
+    host = os.getenv("API_HOST", default_host)
 
     uvicorn.run(
         "src.main:app",
