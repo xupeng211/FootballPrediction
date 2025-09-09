@@ -12,7 +12,25 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from src.api.monitoring import _get_business_metrics, _get_database_metrics
+from src.database.connection import get_db_session
 from src.main import app
+
+
+# 创建测试用的数据库会话模拟
+def override_get_db_session():
+    """测试用的数据库会话依赖覆盖"""
+    mock_session = MagicMock(spec=Session)
+    mock_result = MagicMock()
+    mock_result.fetchone.return_value = [1]
+    mock_session.execute.return_value = mock_result
+    try:
+        yield mock_session
+    finally:
+        pass
+
+
+# 覆盖依赖注入
+app.dependency_overrides[get_db_session] = override_get_db_session
 
 client = TestClient(app)
 
@@ -30,12 +48,9 @@ class TestMonitoringAPI:
         return mock_session
 
     @patch("src.api.monitoring.psutil")
-    @patch("src.api.monitoring.get_db_session")
     @patch("src.api.monitoring._get_database_metrics")
     @patch("src.api.monitoring._get_business_metrics")
-    def test_get_metrics_success(
-        self, mock_business, mock_db_metrics, mock_get_db, mock_psutil
-    ):
+    def test_get_metrics_success(self, mock_business, mock_db_metrics, mock_psutil):
         """测试获取应用性能指标 - 成功场景"""
         # 模拟psutil返回数据
         mock_psutil.cpu_percent.return_value = 15.5
@@ -51,10 +66,6 @@ class TestMonitoringAPI:
         mock_disk.free = 549755813888  # 500GB
         mock_disk.percent = 50.0
         mock_psutil.disk_usage.return_value = mock_disk
-
-        # 模拟数据库会话
-        mock_session = MagicMock(spec=Session)
-        mock_get_db.return_value = mock_session
 
         # 模拟异步函数返回值
         mock_db_metrics.return_value = {
@@ -88,14 +99,10 @@ class TestMonitoringAPI:
         assert data["system"]["disk"]["percent"] == 50.0
 
     @patch("src.api.monitoring.psutil")
-    @patch("src.api.monitoring.get_db_session")
-    def test_get_metrics_with_exception(self, mock_get_db, mock_psutil):
+    def test_get_metrics_with_exception(self, mock_psutil):
         """测试获取应用性能指标 - 异常场景"""
         # 模拟psutil抛出异常
         mock_psutil.cpu_percent.side_effect = Exception("系统监控错误")
-
-        mock_session = MagicMock(spec=Session)
-        mock_get_db.return_value = mock_session
 
         response = client.get("/api/v1/metrics")
 
@@ -201,18 +208,14 @@ class TestMonitoringAPI:
 
         result = await _get_business_metrics(mock_db_session)
 
-        assert "error" in result
+        # 验证异常时返回None值，而不是error字段
+        assert result["24h_predictions"] is None
+        assert result["upcoming_matches_7d"] is None
+        assert result["model_accuracy_30d"] is None
+        assert "last_updated" in result
 
-    @patch("src.api.monitoring.get_db_session")
-    def test_get_service_status_all_healthy(self, mock_get_db):
+    def test_get_service_status_all_healthy(self):
         """测试服务状态检查 - 所有服务健康"""
-        # 模拟数据库连接成功
-        mock_session = MagicMock(spec=Session)
-        mock_result = MagicMock()
-        mock_result.fetchone.return_value = [1]
-        mock_session.execute.return_value = mock_result
-        mock_get_db.return_value = mock_session
-
         # 模拟Redis连接成功
         with patch("redis.from_url") as mock_redis:
             mock_redis_instance = MagicMock()
@@ -230,37 +233,44 @@ class TestMonitoringAPI:
         assert data["services"]["cache"] == "healthy"
         assert "timestamp" in data
 
-    @patch("src.api.monitoring.get_db_session")
-    def test_get_service_status_database_unhealthy(self, mock_get_db):
+    def test_get_service_status_database_unhealthy(self):
         """测试服务状态检查 - 数据库不健康"""
-        # 模拟数据库连接失败
-        mock_session = MagicMock(spec=Session)
-        mock_session.execute.side_effect = Exception("数据库连接失败")
-        mock_get_db.return_value = mock_session
 
-        # 模拟Redis连接失败
-        with patch("redis.from_url", side_effect=Exception("Redis连接失败")):
-            response = client.get("/api/v1/status")
+        # 覆盖依赖注入，模拟数据库连接失败
+        def override_get_db_session_fail():
+            mock_session = MagicMock(spec=Session)
+            mock_session.execute.side_effect = Exception("数据库连接失败")
+            try:
+                yield mock_session
+            finally:
+                pass
 
-        assert response.status_code == 200
-        data = response.json()
+        # 临时覆盖依赖
+        original_override = app.dependency_overrides.get(get_db_session)
+        app.dependency_overrides[get_db_session] = override_get_db_session_fail
 
-        assert data["status"] == "degraded"
-        assert data["services"]["api"] == "healthy"
-        assert data["services"]["database"] == "unhealthy"
-        assert data["services"]["cache"] == "unhealthy"
+        try:
+            # 模拟Redis连接失败
+            with patch("redis.from_url", side_effect=Exception("Redis连接失败")):
+                response = client.get("/api/v1/status")
 
-    @patch("src.api.monitoring.get_db_session")
+            assert response.status_code == 200
+            data = response.json()
+
+            assert data["status"] == "degraded"
+            assert data["services"]["api"] == "healthy"
+            assert data["services"]["database"] == "unhealthy"
+            assert data["services"]["cache"] == "unhealthy"
+        finally:
+            # 恢复原始依赖
+            if original_override:
+                app.dependency_overrides[get_db_session] = original_override
+            else:
+                app.dependency_overrides[get_db_session] = override_get_db_session
+
     @patch.dict(os.environ, {"REDIS_URL": "redis://test:6379/0"})
-    def test_get_service_status_with_custom_redis_url(self, mock_get_db):
+    def test_get_service_status_with_custom_redis_url(self):
         """测试服务状态检查 - 自定义Redis URL"""
-        # 模拟数据库连接成功
-        mock_session = MagicMock(spec=Session)
-        mock_result = MagicMock()
-        mock_result.fetchone.return_value = [1]
-        mock_session.execute.return_value = mock_result
-        mock_get_db.return_value = mock_session
-
         # 模拟Redis连接成功，验证使用了自定义URL
         with patch("redis.from_url") as mock_redis:
             mock_redis_instance = MagicMock()
@@ -285,20 +295,34 @@ class TestMonitoringAPI:
         )
         assert "/api/v1/status" in routes or any("/status" in route for route in routes)
 
-    @patch("src.api.monitoring.logger")
-    @patch("src.api.monitoring.get_db_session")
-    def test_error_logging(self, mock_get_db, mock_logger):
+    def test_error_logging(self):
         """测试错误日志记录"""
-        # 模拟数据库连接失败触发日志记录
-        mock_session = MagicMock(spec=Session)
-        mock_session.execute.side_effect = Exception("测试错误")
-        mock_get_db.return_value = mock_session
 
-        # 验证响应正常返回
-        response = client.get("/api/v1/status")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["services"]["database"] == "unhealthy"
+        # 覆盖依赖注入，模拟数据库连接失败
+        def override_get_db_session_fail():
+            mock_session = MagicMock(spec=Session)
+            mock_session.execute.side_effect = Exception("测试错误")
+            try:
+                yield mock_session
+            finally:
+                pass
+
+        # 临时覆盖依赖
+        original_override = app.dependency_overrides.get(get_db_session)
+        app.dependency_overrides[get_db_session] = override_get_db_session_fail
+
+        try:
+            # 验证响应正常返回
+            response = client.get("/api/v1/status")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["services"]["database"] == "unhealthy"
+        finally:
+            # 恢复原始依赖
+            if original_override:
+                app.dependency_overrides[get_db_session] = original_override
+            else:
+                app.dependency_overrides[get_db_session] = override_get_db_session
 
 
 class TestMonitoringMetricsStructure:
@@ -307,10 +331,8 @@ class TestMonitoringMetricsStructure:
     def test_metrics_response_structure(self):
         """测试metrics响应数据结构"""
         with patch("src.api.monitoring.psutil"), patch(
-            "src.api.monitoring.get_db_session"
-        ), patch("src.api.monitoring._get_database_metrics", return_value={}), patch(
-            "src.api.monitoring._get_business_metrics", return_value={}
-        ):
+            "src.api.monitoring._get_database_metrics", return_value={}
+        ), patch("src.api.monitoring._get_business_metrics", return_value={}):
             response = client.get("/api/v1/metrics")
             data = response.json()
 
@@ -328,26 +350,24 @@ class TestMonitoringMetricsStructure:
 
     def test_status_response_structure(self):
         """测试status响应数据结构"""
-        with patch("src.api.monitoring.get_db_session"):
-            response = client.get("/api/v1/status")
-            data = response.json()
+        response = client.get("/api/v1/status")
+        data = response.json()
 
-            # 验证必需字段存在
-            required_fields = ["status", "timestamp", "services"]
-            for field in required_fields:
-                assert field in data, f"缺少必需字段: {field}"
+        # 验证必需字段存在
+        required_fields = ["status", "timestamp", "services"]
+        for field in required_fields:
+            assert field in data, f"缺少必需字段: {field}"
 
-            # 验证services子字段
-            services_fields = ["api", "database", "cache"]
-            for field in services_fields:
-                assert field in data["services"], f"services中缺少字段: {field}"
+        # 验证services子字段
+        services_fields = ["api", "database", "cache"]
+        for field in services_fields:
+            assert field in data["services"], f"services中缺少字段: {field}"
 
 
 class TestMonitoringPerformance:
     """监控API性能测试"""
 
-    @patch("src.api.monitoring.get_db_session")
-    def test_metrics_response_time(self, mock_get_db):
+    def test_metrics_response_time(self):
         """测试metrics端点响应时间合理性"""
         with patch("src.api.monitoring.psutil"), patch(
             "src.api.monitoring._get_database_metrics", return_value={}
@@ -367,8 +387,7 @@ class TestMonitoringPerformance:
             if "response_time_ms" in data:
                 assert isinstance(data["response_time_ms"], (int, float))
 
-    @patch("src.api.monitoring.get_db_session")
-    def test_status_response_time(self, mock_get_db):
+    def test_status_response_time(self):
         """测试status端点响应时间合理性"""
         import time
 

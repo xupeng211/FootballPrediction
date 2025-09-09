@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from src.api.schemas import MetricsResponse
 from src.database.connection import get_db_session
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ router = APIRouter(tags=["监控"])
     "/metrics",
     summary="应用性能指标",
     description="获取系统性能指标、资源使用情况和业务统计",
-    response_model=Dict[str, Any],
+    response_model=MetricsResponse,
 )
 async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
     """

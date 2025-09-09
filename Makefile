@@ -151,22 +151,51 @@ typecheck: venv ## 类型检查
 
 .PHONY: security
 security: venv ## 安全检查
-	@echo "$(BLUE)>>> 安全检查...$(RESET)"
+	@echo "$(BLUE)>>> 安全漏洞扫描...$(RESET)"
 	@if $(ACTIVATE) && python -c "import bandit" 2>/dev/null; then \
-		$(ACTIVATE) && python -m bandit -r src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ -f json | python -m json.tool || true; \
-		echo "$(GREEN)✅ 安全检查完成$(RESET)"; \
+		$(ACTIVATE) && python -m bandit -r src/ --severity-level medium; \
+		echo "$(GREEN)✅ 代码安全检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ bandit未安装，跳过安全检查$(RESET)"; \
 	fi
+	@echo "$(BLUE)>>> 依赖安全检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import safety" 2>/dev/null; then \
+		$(ACTIVATE) && safety check; \
+		echo "$(GREEN)✅ 依赖安全检查完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ safety未安装，跳过依赖安全检查$(RESET)"; \
+	fi
 
 .PHONY: complexity
-complexity: venv ## 复杂度检查
-	@echo "$(BLUE)>>> 复杂度分析...$(RESET)"
+complexity: venv ## 复杂度分析
+	@echo "$(BLUE)>>> 代码复杂度分析...$(RESET)"
 	@if $(ACTIVATE) && python -c "import radon" 2>/dev/null; then \
-		$(ACTIVATE) && python -m radon cc src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --show-complexity; \
+		$(ACTIVATE) && python -m radon cc src/ -s --total-average; \
+		echo "$(BLUE)>>> 函数复杂度详细报告...$(RESET)"; \
+		$(ACTIVATE) && python -m radon cc src/ -a -nb; \
 		echo "$(GREEN)✅ 复杂度分析完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ radon未安装，跳过复杂度检查$(RESET)"; \
+	fi
+
+.PHONY: complexity-check
+complexity-check: venv ## 复杂度门禁检查
+	@echo "$(BLUE)>>> 复杂度门禁检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import xenon" 2>/dev/null; then \
+		$(ACTIVATE) && xenon --max-average A --max-modules B --max-absolute B src/; \
+		echo "$(GREEN)✅ 复杂度门禁检查通过$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ xenon未安装，跳过复杂度门禁检查$(RESET)"; \
+	fi
+
+.PHONY: deadcode
+deadcode: venv ## 死代码检测
+	@echo "$(BLUE)>>> 死代码检测...$(RESET)"
+	@if $(ACTIVATE) && python -c "import vulture" 2>/dev/null; then \
+		$(ACTIVATE) && vulture src/ --min-confidence 70 --sort-by-size; \
+		echo "$(GREEN)✅ 死代码检测完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ vulture未安装，跳过死代码检测$(RESET)"; \
 	fi
 
 # -------------------------------
