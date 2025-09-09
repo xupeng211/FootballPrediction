@@ -12,11 +12,12 @@ class TestDatabaseConnectionCoverage:
 
     def test_database_connection_imports(self):
         """测试数据库连接模块导入"""
-        from src.database.config import (get_database_config,
-                                         get_production_database_config,
-                                         get_test_database_config)
-        from src.database.connection import (DatabaseManager,
-                                             get_database_manager)
+        from src.database.config import (
+            get_database_config,
+            get_production_database_config,
+            get_test_database_config,
+        )
+        from src.database.connection import DatabaseManager, get_database_manager
 
         # 测试函数存在
         assert DatabaseManager is not None
