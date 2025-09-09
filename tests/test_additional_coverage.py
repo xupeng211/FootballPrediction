@@ -9,17 +9,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.database.models import (
-    Features,
-    League,
-    MarketType,
-    Match,
-    MatchStatus,
-    Odds,
-    PredictedResult,
-    Predictions,
-    Team,
-)
+from src.database.models import (Features, League, MarketType, Match,
+                                 MatchStatus, Odds, PredictedResult,
+                                 Predictions, Team)
 
 
 class TestAPIHealthCoverage:
