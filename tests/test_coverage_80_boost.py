@@ -141,14 +141,14 @@ def test_predictions_betting_recommendations():
 @pytest.mark.asyncio
 async def test_api_health_readiness_check():
     """测试API health模块的readiness检查"""
-    with patch("api.health._check_database") as mock_db:
-        with patch("api.health._check_redis") as mock_redis:
-            with patch("api.health._check_filesystem") as mock_fs:
+    with patch("src.api.health._check_database") as mock_db:
+        with patch("src.api.health._check_redis") as mock_redis:
+            with patch("src.api.health._check_filesystem") as mock_fs:
                 mock_db.return_value = {"healthy": True, "message": "DB OK"}
                 mock_redis.return_value = {"healthy": True, "message": "Redis OK"}
                 mock_fs.return_value = {"healthy": True, "message": "FS OK"}
 
-                from api.health import readiness_check
+                from src.api.health import readiness_check
 
                 result = await readiness_check()
 
@@ -159,12 +159,12 @@ async def test_api_health_readiness_check():
 @pytest.mark.asyncio
 async def test_api_health_check_database():
     """测试API health数据库检查"""
-    with patch("database.connection.get_database_manager") as mock_manager:
+    with patch("src.database.connection.get_database_manager") as mock_manager:
         mock_db_manager = Mock()
         mock_db_manager.health_check.return_value = True
         mock_manager.return_value = mock_db_manager
 
-        from api.health import _check_database
+        from src.api.health import _check_database
 
         result = await _check_database(mock_db_manager)
         assert isinstance(result, dict)
@@ -179,7 +179,7 @@ async def test_api_health_check_redis():
         mock_redis.ping.return_value = True
         mock_redis_class.return_value = mock_redis
 
-        from api.health import _check_redis
+        from src.api.health import _check_redis
 
         result = await _check_redis()
         assert isinstance(result, dict)
@@ -194,7 +194,7 @@ async def test_api_health_check_filesystem():
             mock_exists.return_value = True
             mock_access.return_value = True
 
-            from api.health import _check_filesystem
+            from src.api.health import _check_filesystem
 
             result = await _check_filesystem()
             assert isinstance(result, dict)
@@ -203,7 +203,7 @@ async def test_api_health_check_filesystem():
 
 def test_database_connection_manager_methods():
     """测试database connection manager的各种方法"""
-    from database.connection import DatabaseManager
+    from src.database.connection import DatabaseManager
 
     # 测试单例模式
     manager1 = DatabaseManager()

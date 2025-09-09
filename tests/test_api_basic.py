@@ -18,7 +18,7 @@ class TestAPIModule:
 
     def test_health_api_import(self):
         """测试健康检查API导入"""
-        from api.health import router
+        from src.api.health import router
 
         assert router is not None
 
@@ -26,10 +26,10 @@ class TestAPIModule:
         assert hasattr(router, "tags")
         assert "健康检查" in router.tags
 
-    @patch("api.health.get_db_session")
+    @patch("src.api.health.get_db_session")
     def test_health_check_basic(self, mock_get_db):
         """测试健康检查基础功能"""
-        from api.health import health_check
+        from src.api.health import health_check
 
         # 模拟数据库会话
         mock_session = MagicMock()
@@ -40,7 +40,7 @@ class TestAPIModule:
 
     def test_api_router_attributes(self):
         """测试API路由器属性"""
-        from api.health import logger, router
+        from src.api.health import logger, router
 
         # 测试路由器属性
         assert hasattr(router, "routes")
