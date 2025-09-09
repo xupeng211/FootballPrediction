@@ -6,8 +6,7 @@
 
 from unittest.mock import patch
 
-from src.database.models import (MarketType, Odds, PredictedResult,
-                                 Predictions, Team)
+from src.database.models import MarketType, Odds, PredictedResult, Predictions, Team
 
 
 class TestOddsCoverage:
