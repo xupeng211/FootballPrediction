@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Tuple
 # 添加项目路径以便导入核心模块
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core import Logger  # noqa: E402
+from src.core import Logger  # noqa: E402
 
 
 class QualityChecker:

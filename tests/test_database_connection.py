@@ -3,8 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
-from database.config import DatabaseConfig, get_database_config
-from database.connection import DatabaseManager, get_database_manager
+from src.database.config import DatabaseConfig, get_database_config
+from src.database.connection import DatabaseManager, get_database_manager
 
 
 class TestDatabaseConfig:
@@ -114,7 +114,7 @@ class TestDatabaseManager:
         manager = get_database_manager()
         assert isinstance(manager, DatabaseManager)
 
-    @patch("database.connection.create_engine")
+    @patch("src.database.connection.create_engine")
     def test_sync_engine_creation(self, mock_create_engine):
         """测试同步引擎创建"""
         mock_engine = MagicMock()
@@ -127,7 +127,7 @@ class TestDatabaseManager:
         assert engine == mock_engine
         mock_create_engine.assert_called_once()
 
-    @patch("database.connection.create_async_engine")
+    @patch("src.database.connection.create_async_engine")
     def test_async_engine_creation(self, mock_create_async_engine):
         """测试异步引擎创建"""
         mock_engine = MagicMock()
@@ -140,8 +140,8 @@ class TestDatabaseManager:
         assert engine == mock_engine
         mock_create_async_engine.assert_called_once()
 
-    @patch("database.connection.sessionmaker")
-    @patch("database.connection.create_engine")
+    @patch("src.database.connection.sessionmaker")
+    @patch("src.database.connection.create_engine")
     def test_create_session(self, mock_create_engine, mock_sessionmaker):
         """测试创建数据库会话"""
         mock_engine = MagicMock()

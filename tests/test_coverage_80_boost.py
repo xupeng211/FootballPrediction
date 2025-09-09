@@ -2,6 +2,7 @@
 🎯 专项覆盖率提升测试 - 目标80%+覆盖率
 重点测试低覆盖率模块的关键功能
 """
+
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
@@ -10,7 +11,7 @@ import pytest
 
 def test_odds_over_under_market_probabilities():
     """测试odds模型的over/under市场概率计算"""
-    from database.models.odds import Odds
+    from src.database.models.odds import Odds
 
     odds = Odds()
     odds.match_id = 1
@@ -30,7 +31,7 @@ def test_odds_over_under_market_probabilities():
 
 def test_odds_best_value_bet_1x2():
     """测试odds模型的最佳价值投注建议"""
-    from database.models.odds import Odds
+    from src.database.models.odds import Odds
 
     odds = Odds(
         match_id=1,
@@ -52,7 +53,7 @@ def test_odds_best_value_bet_1x2():
 
 def test_odds_percentage_change_calculation():
     """测试odds模型的百分比变化计算"""
-    from database.models.odds import Odds
+    from src.database.models.odds import Odds
 
     odds = Odds(match_id=1, bookmaker="test", market_type="1X2")
 
@@ -70,7 +71,7 @@ def test_odds_percentage_change_calculation():
 
 def test_odds_1x2_movement_check():
     """测试odds模型的1X2赔率变化检查"""
-    from database.models.odds import Odds
+    from src.database.models.odds import Odds
 
     current_odds = Odds(
         match_id=1,
@@ -97,7 +98,7 @@ def test_odds_1x2_movement_check():
 
 def test_predictions_accuracy_calculation():
     """测试predictions模型的准确率计算"""
-    from database.models.predictions import PredictedResult, Predictions
+    from src.database.models.predictions import PredictedResult, Predictions
 
     pred = Predictions(
         match_id=1,
@@ -119,7 +120,7 @@ def test_predictions_accuracy_calculation():
 
 def test_predictions_betting_recommendations():
     """测试predictions模型的投注建议"""
-    from database.models.predictions import PredictedResult, Predictions
+    from src.database.models.predictions import PredictedResult, Predictions
 
     pred = Predictions(
         match_id=1,
@@ -219,7 +220,7 @@ def test_database_connection_manager_methods():
 
 def test_team_model_advanced_methods():
     """测试team模型的高级方法"""
-    from database.models.team import Team
+    from src.database.models.team import Team
 
     team = Team()
     # 直接测试display_name属性（使用现有属性）
@@ -233,7 +234,7 @@ def test_team_model_advanced_methods():
 
 def test_match_model_advanced_features():
     """测试match模型的高级功能"""
-    from database.models.match import Match, MatchStatus
+    from src.database.models.match import Match, MatchStatus
 
     match = Match()
     match.home_score = 2
@@ -256,7 +257,7 @@ def test_match_model_advanced_features():
 
 def test_league_model_methods():
     """测试league模型的方法"""
-    from database.models.league import League
+    from src.database.models.league import League
 
     league = League()
     league.tier = 1  # 设置为顶级联赛
@@ -272,7 +273,7 @@ def test_league_model_methods():
 
 def test_features_model_extended():
     """测试features模型的扩展功能"""
-    from database.models.features import Features, TeamType
+    from src.database.models.features import Features, TeamType
 
     features = Features()
     features.team_type = TeamType.HOME

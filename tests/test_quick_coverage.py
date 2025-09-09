@@ -13,9 +13,9 @@ def test_imports():
 
 def test_enum_values():
     """测试枚举值"""
-    from database.models.match import MatchStatus
-    from database.models.odds import MarketType
-    from database.models.predictions import PredictedResult
+    from src.database.models.match import MatchStatus
+    from src.database.models.odds import MarketType
+    from src.database.models.predictions import PredictedResult
 
     # 测试MatchStatus枚举
     assert MatchStatus.SCHEDULED.value == "scheduled"
@@ -56,8 +56,8 @@ def test_database_config_functions():
 
 def test_utility_functions():
     """测试工具函数"""
-    from FootballPrediction.core import Config, Logger
-    from FootballPrediction.utils import FileUtils
+    from src.core import Config, Logger
+    from src.utils import FileUtils
 
     # 测试配置类
     config = Config()
@@ -81,8 +81,8 @@ def test_utility_functions():
 
 def test_simple_model_properties():
     """测试简单的模型属性和方法"""
-    from database.models.match import MatchStatus
-    from database.models.odds import MarketType
+    from src.database.models.match import MatchStatus
+    from src.database.models.odds import MarketType
 
     # 测试简单的枚举属性
     status = MatchStatus.SCHEDULED
@@ -378,7 +378,7 @@ def test_additional_core_exceptions():
 
 def test_additional_footballprediction_version():
     """测试FootballPrediction版本"""
-    from FootballPrediction import __version__
+    from src import __version__
 
     # 测试版本存在
     assert __version__ is not None
