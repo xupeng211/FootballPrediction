@@ -11,8 +11,8 @@ AICultureKit 业务服务模块
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from core import logger
-from models import AnalysisResult, Content, User, UserProfile
+from src.core import logger
+from src.models import AnalysisResult, Content, User, UserProfile
 
 
 class BaseService(ABC):
@@ -89,7 +89,7 @@ class ContentAnalysisService(BaseService):
 class UserProfileService(BaseService):
     """用户画像服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("UserProfileService")
         self._user_profiles: Dict[str, UserProfile] = {}
 
@@ -176,7 +176,7 @@ class DataProcessingService(BaseService):
 class ServiceManager:
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.services: Dict[str, BaseService] = {}
         self.logger = logger
 

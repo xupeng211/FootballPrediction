@@ -37,7 +37,7 @@ class DatabaseManager:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         if not hasattr(self, "_initialized"):
             self._config: Optional[DatabaseConfig] = None
             self._initialized = True
@@ -167,12 +167,18 @@ class DatabaseManager:
     async def close(self) -> None:
         """关闭数据库连接"""
         if self._async_engine:
-            await self._async_engine.dispose()
-            logger.info("异步数据库连接已关闭")
+            try:
+                await self._async_engine.dispose()
+                logger.info("异步数据库连接已关闭")
+            except Exception as e:
+                logger.error(f"关闭异步数据库连接失败: {e}")
 
         if self._sync_engine:
-            self._sync_engine.dispose()
-            logger.info("同步数据库连接已关闭")
+            try:
+                self._sync_engine.dispose()
+                logger.info("同步数据库连接已关闭")
+            except Exception as e:
+                logger.error(f"关闭同步数据库连接失败: {e}")
 
     def health_check(self) -> bool:
         """

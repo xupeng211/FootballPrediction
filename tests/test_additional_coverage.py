@@ -9,18 +9,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from database.models import (Features, League, MarketType, Match, MatchStatus,
-                             Odds, PredictedResult, Predictions, Team)
+from src.database.models import (Features, League, MarketType, Match,
+                                 MatchStatus, Odds, PredictedResult,
+                                 Predictions, Team)
 
 
 class TestAPIHealthCoverage:
     """提升API Health模块覆盖率"""
 
-    @patch("api.health.get_db_session")
+    @patch("src.api.health.get_db_session")
     @pytest.mark.asyncio
     async def test_health_check_success(self, mock_get_db):
         """测试健康检查成功情况"""
-        from api.health import health_check
+        from src.api.health import health_check
 
         # 模拟数据库会话
         mock_session = MagicMock()
@@ -37,7 +38,7 @@ class TestAPIHealthCoverage:
 
     def test_health_module_attributes(self):
         """测试health模块的各种属性"""
-        import api.health as health_module
+        import src.api.health as health_module
 
         # 测试模块属性
         assert hasattr(health_module, "datetime")
@@ -128,7 +129,7 @@ class TestDatabaseModelsCoverage:
 
     def test_features_model_methods(self):
         """测试Features模型的各种方法"""
-        from database.models.features import TeamType
+        from src.database.models.features import TeamType
 
         features = Features(match_id=1, team_id=1, team_type=TeamType.HOME)
 
@@ -264,7 +265,7 @@ class TestSimpleModelCreation:
         assert odds.match_id == 1
 
         # Features
-        from database.models.features import TeamType
+        from src.database.models.features import TeamType
 
         features = Features(match_id=1, team_id=1, team_type=TeamType.HOME)
         assert features.match_id == 1

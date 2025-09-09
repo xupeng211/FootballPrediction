@@ -976,9 +976,9 @@ class DefenseValidator:
         if "tests" in detailed:
             test_result = detailed["tests"]
             summary["component_status"]["tests"] = {
-                "status": "passed"
-                if test_result.get("success_rate", 0) >= 80
-                else "failed",
+                "status": (
+                    "passed" if test_result.get("success_rate", 0) >= 80 else "failed"
+                ),
                 "passed": test_result.get("passed_tests", 0),
                 "total": test_result.get("total_tests", 0),
                 "success_rate": test_result.get("success_rate", 0),
@@ -988,9 +988,9 @@ class DefenseValidator:
         if "lint_configs" in detailed:
             lint_result = detailed["lint_configs"]
             summary["component_status"]["lint_configs"] = {
-                "status": "passed"
-                if lint_result.get("success_rate", 0) >= 80
-                else "failed",
+                "status": (
+                    "passed" if lint_result.get("success_rate", 0) >= 80 else "failed"
+                ),
                 "valid": lint_result.get("valid_configs", 0),
                 "total": lint_result.get("total_configs", 0),
                 "success_rate": lint_result.get("success_rate", 0),
@@ -1008,9 +1008,11 @@ class DefenseValidator:
         if "workflows" in detailed:
             workflow_result = detailed["workflows"]
             summary["component_status"]["workflows"] = {
-                "status": "passed"
-                if workflow_result.get("success_rate", 0) >= 80
-                else "failed",
+                "status": (
+                    "passed"
+                    if workflow_result.get("success_rate", 0) >= 80
+                    else "failed"
+                ),
                 "valid": workflow_result.get("valid_workflows", 0),
                 "total": workflow_result.get("total_workflows", 0),
                 "success_rate": workflow_result.get("success_rate", 0),
