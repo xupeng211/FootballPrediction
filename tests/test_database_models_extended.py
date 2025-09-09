@@ -598,7 +598,7 @@ class TestConnectionModelMethods:
 
     def test_database_manager_properties(self):
         """测试DatabaseManager的属性方法"""
-        from database.connection import DatabaseManager
+        from src.database.connection import DatabaseManager
 
         manager = DatabaseManager()
 
