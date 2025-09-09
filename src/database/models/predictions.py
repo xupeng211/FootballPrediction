@@ -16,7 +16,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class PredictedResult(Enum):
@@ -278,11 +278,13 @@ class Predictions(BaseModel):
                     "odds": odds,
                     "expected_value": expected_value,
                     "kelly_fraction": kelly_fraction,
-                    "recommendation": "BET"
-                    if expected_value > 0.05
-                    else "CONSIDER"
-                    if expected_value > 0
-                    else "AVOID",
+                    "recommendation": (
+                        "BET"
+                        if expected_value > 0.05
+                        else "CONSIDER"
+                        if expected_value > 0
+                        else "AVOID"
+                    ),
                 }
 
                 recommendations.append(recommendation)
@@ -309,12 +311,14 @@ class Predictions(BaseModel):
             "predicted_score": self.get_predicted_score(),
             "key_factors": top_features,
             "additional_predictions": {
-                "over_2_5_goals": float(self.over_under_prediction)
-                if self.over_under_prediction
-                else None,
-                "both_teams_score": float(self.btts_probability)
-                if self.btts_probability
-                else None,
+                "over_2_5_goals": (
+                    float(self.over_under_prediction)
+                    if self.over_under_prediction
+                    else None
+                ),
+                "both_teams_score": (
+                    float(self.btts_probability) if self.btts_probability else None
+                ),
             },
         }
 

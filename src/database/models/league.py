@@ -7,7 +7,7 @@
 from sqlalchemy import Boolean, Column, Index, Integer, String
 from sqlalchemy.orm import relationship
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class League(BaseModel):

@@ -11,8 +11,8 @@ AICultureKit 业务服务模块
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from core import logger
-from models import AnalysisResult, Content, User, UserProfile
+from src.core import logger
+from src.models import AnalysisResult, Content, User, UserProfile
 
 
 class BaseService(ABC):

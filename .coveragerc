@@ -1,9 +1,9 @@
 [run]
-source = core,models,services,utils,database,api
+source = src
 omit =
     */tests/*
     */test_*
-    main.py
+    src/main.py
     */venv/*
     */__pycache__/*
     */migrations/*
