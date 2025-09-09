@@ -44,7 +44,7 @@ cd FootballPrediction
 
 ```bash
 make install      # 安装依赖
-make env-check    # 检查环境
+make context      # 加载项目上下文 (⭐ 最重要)
 make test         # 运行测试 (385个测试用例)
 make coverage     # 查看96.35%覆盖率报告
 ```
