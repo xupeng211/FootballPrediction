@@ -17,11 +17,11 @@ from src.database.models import (Features, League, MarketType, Match,
 class TestAPIHealthCoverage:
     """提升API Health模块覆盖率"""
 
-    @patch("api.health.get_db_session")
+    @patch("src.api.health.get_db_session")
     @pytest.mark.asyncio
     async def test_health_check_success(self, mock_get_db):
         """测试健康检查成功情况"""
-        from api.health import health_check
+        from src.api.health import health_check
 
         # 模拟数据库会话
         mock_session = MagicMock()

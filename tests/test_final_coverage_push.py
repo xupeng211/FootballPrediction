@@ -25,8 +25,8 @@ class TestDatabaseConnectionCoverage:
         assert get_production_database_config is not None
         assert get_test_database_config is not None
 
-    @patch("database.connection.create_engine")
-    @patch("database.connection.create_async_engine")
+    @patch("src.database.connection.create_engine")
+    @patch("src.database.connection.create_async_engine")
     def test_database_manager_initialization(self, mock_async_engine, mock_sync_engine):
         """测试数据库管理器初始化"""
         from src.database.config import DatabaseConfig

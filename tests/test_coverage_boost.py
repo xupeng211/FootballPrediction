@@ -158,10 +158,10 @@ class TestTeamCoverage:
 class TestConnectionCoverage:
     """提升数据库连接覆盖率的测试"""
 
-    @patch("database.connection.create_engine")
+    @patch("src.database.connection.create_engine")
     def test_database_manager_methods(self, mock_create_engine):
         """测试数据库管理器方法"""
-        from database.connection import DatabaseManager
+        from src.database.connection import DatabaseManager
 
         manager = DatabaseManager()
 
@@ -172,7 +172,7 @@ class TestConnectionCoverage:
 
     def test_database_config_methods(self):
         """测试数据库配置方法"""
-        from database.config import DatabaseConfig
+        from src.database.config import DatabaseConfig
 
         config = DatabaseConfig(
             host="localhost",
