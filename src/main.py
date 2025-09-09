@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
+from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
 
 # 配置日志
@@ -71,9 +72,14 @@ app.include_router(health_router)
 app.include_router(monitoring_router, prefix="/api/v1")
 
 
-@app.get("/", summary="根路径", tags=["基础"])
+@app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
 async def root():
-    """API根路径"""
+    """
+    API服务根路径
+
+    提供服务基本信息，包括版本号、文档地址等。
+    适用于服务发现和基本信息查询。
+    """
     return {
         "service": "足球预测API",
         "version": "1.0.0",
@@ -85,7 +91,11 @@ async def root():
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
-    """HTTP异常处理"""
+    """
+    HTTP异常处理器
+
+    统一处理HTTP异常，返回标准错误格式。
+    """
     logger.error(f"HTTP异常: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
@@ -100,7 +110,12 @@ async def http_exception_handler(request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc: Exception):
-    """通用异常处理"""
+    """
+    通用异常处理器
+
+    处理所有未被捕获的异常，确保返回标准错误格式。
+    记录详细错误信息用于调试。
+    """
     logger.error(f"未处理异常: {type(exc).__name__}: {exc}")
     return JSONResponse(
         status_code=500,
