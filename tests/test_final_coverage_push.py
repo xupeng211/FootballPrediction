@@ -228,10 +228,10 @@ class TestCoreCoverage:
 
     def test_core_exceptions(self):
         """测试核心异常类"""
-        from src.core import AICultureKitError, ConfigError, DataError
+        from src.core import ConfigError, DataError, FootballPredictionError
 
         # 测试异常创建
-        base_error = AICultureKitError("测试错误")
+        base_error = FootballPredictionError("测试错误")
         assert str(base_error) == "测试错误"
 
         config_error = ConfigError("配置错误")
