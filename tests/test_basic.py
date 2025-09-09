@@ -1,6 +1,6 @@
 """基本功能测试"""
 
-from core import Logger
+from src.core import Logger
 
 
 class TestProjectBasics:
@@ -11,10 +11,10 @@ class TestProjectBasics:
         # 这里可以测试项目的基本结构
         import os
 
-        assert os.path.exists("api")
-        assert os.path.exists("core")
-        assert os.path.exists("database")
-        assert os.path.exists("services")
+        assert os.path.exists("src/api")
+        assert os.path.exists("src/core")
+        assert os.path.exists("src/database")
+        assert os.path.exists("src/services")
 
 
 class TestUtils:

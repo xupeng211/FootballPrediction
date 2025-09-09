@@ -37,7 +37,7 @@ help: ## 显示帮助信息
 	@echo "$(YELLOW)代码质量:$(RESET)"
 	@echo "  format      代码格式化"
 	@echo "  lint        代码风格检查"
-	@echo "  typecheck   类型检查"
+	@echo "  typecheck   类型检查 (别名: type-check)"
 	@echo "  security    安全检查"
 	@echo ""
 	@echo "$(YELLOW)测试:$(RESET)"
@@ -130,43 +130,75 @@ context: venv ## 加载项目上下文
 .PHONY: format
 format: venv ## 代码格式化
 	@echo "$(BLUE)>>> 代码格式化...$(RESET)"
-	$(ACTIVATE) && python -m black core/ models/ services/ utils/ database/ api/ tests/ scripts/
+	$(ACTIVATE) && python -m black src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码格式化完成$(RESET)"
 
 .PHONY: lint
 lint: venv ## 代码风格检查
 	@echo "$(BLUE)>>> 代码风格检查...$(RESET)"
-	$(ACTIVATE) && python -m flake8 core/ models/ services/ utils/ database/ api/ tests/ scripts/
+	$(ACTIVATE) && python -m flake8 src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码风格检查通过$(RESET)"
 
-.PHONY: typecheck
+.PHONY: typecheck type-check
 typecheck: venv ## 类型检查
 	@echo "$(BLUE)>>> 类型检查...$(RESET)"
 	@if $(ACTIVATE) && python -c "import mypy" 2>/dev/null; then \
-		$(ACTIVATE) && python -m mypy core/ models/ services/ utils/ database/ api/ --ignore-missing-imports --explicit-package-bases; \
+		$(ACTIVATE) && python -m mypy src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --ignore-missing-imports --explicit-package-bases --check-untyped-defs; \
 		echo "$(GREEN)✅ 类型检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ mypy未安装，跳过类型检查$(RESET)"; \
 	fi
 
+# type-check 是 typecheck 的别名，兼容不同命名习惯
+type-check: typecheck
+
 .PHONY: security
 security: venv ## 安全检查
-	@echo "$(BLUE)>>> 安全检查...$(RESET)"
+	@echo "$(BLUE)>>> 安全漏洞扫描...$(RESET)"
 	@if $(ACTIVATE) && python -c "import bandit" 2>/dev/null; then \
-		$(ACTIVATE) && python -m bandit -r core/ models/ services/ utils/ database/ api/ -f json | python -m json.tool || true; \
-		echo "$(GREEN)✅ 安全检查完成$(RESET)"; \
+		$(ACTIVATE) && python -m bandit -r src/ --severity-level medium; \
+		echo "$(GREEN)✅ 代码安全检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ bandit未安装，跳过安全检查$(RESET)"; \
 	fi
+	@echo "$(BLUE)>>> 依赖安全检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import safety" 2>/dev/null; then \
+		$(ACTIVATE) && safety check; \
+		echo "$(GREEN)✅ 依赖安全检查完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ safety未安装，跳过依赖安全检查$(RESET)"; \
+	fi
 
 .PHONY: complexity
-complexity: venv ## 复杂度检查
-	@echo "$(BLUE)>>> 复杂度分析...$(RESET)"
+complexity: venv ## 复杂度分析
+	@echo "$(BLUE)>>> 代码复杂度分析...$(RESET)"
 	@if $(ACTIVATE) && python -c "import radon" 2>/dev/null; then \
-		$(ACTIVATE) && python -m radon cc core/ models/ services/ utils/ database/ api/ --show-complexity; \
+		$(ACTIVATE) && python -m radon cc src/ -s --total-average; \
+		echo "$(BLUE)>>> 函数复杂度详细报告...$(RESET)"; \
+		$(ACTIVATE) && python -m radon cc src/ -a -nb; \
 		echo "$(GREEN)✅ 复杂度分析完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ radon未安装，跳过复杂度检查$(RESET)"; \
+	fi
+
+.PHONY: complexity-check
+complexity-check: venv ## 复杂度门禁检查
+	@echo "$(BLUE)>>> 复杂度门禁检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import xenon" 2>/dev/null; then \
+		$(ACTIVATE) && xenon --max-average A --max-modules B --max-absolute B src/; \
+		echo "$(GREEN)✅ 复杂度门禁检查通过$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ xenon未安装，跳过复杂度门禁检查$(RESET)"; \
+	fi
+
+.PHONY: deadcode
+deadcode: venv ## 死代码检测
+	@echo "$(BLUE)>>> 死代码检测...$(RESET)"
+	@if $(ACTIVATE) && python -c "import vulture" 2>/dev/null; then \
+		$(ACTIVATE) && vulture src/ --min-confidence 70 --sort-by-size; \
+		echo "$(GREEN)✅ 死代码检测完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ vulture未安装，跳过死代码检测$(RESET)"; \
 	fi
 
 # -------------------------------
@@ -192,7 +224,7 @@ coverage: venv ## 运行覆盖率测试
 	@echo "$(BLUE)>>> 运行覆盖率测试...$(RESET)"
 	@if [ -d "tests" ] && [ -n "$$(find tests -name '*.py' -type f)" ]; then \
 		if $(ACTIVATE) && python -c "import pytest_cov" 2>/dev/null; then \
-			if $(ACTIVATE) && python -m pytest --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api --cov-fail-under=80 --cov-report=xml --cov-report=html -v; then \
+			if $(ACTIVATE) && python -m pytest --cov=src --cov-fail-under=80 --cov-report=term-missing --cov-report=xml --cov-report=html tests/; then \
 				echo "$(GREEN)✅ 覆盖率测试通过$(RESET)"; \
 			else \
 				echo "$(RED)❌ 覆盖率测试失败$(RESET)"; \
@@ -239,9 +271,26 @@ quality: venv format lint typecheck security complexity ## 完整质量检查
 # -------------------------------
 # 🚀 CI 模拟和闭环流程
 # -------------------------------
+.PHONY: ci-quick
+ci-quick: format lint test ## 极速CI检查 (仅核心检查，不清理环境)
+	@echo "$(GREEN)>>> 极速CI检查全部通过 ✅$(RESET)"
+
+.PHONY: ci-fast
+ci-fast: clean-cache format lint test coverage ## 快速CI检查 (保留虚拟环境)
+	@echo "$(GREEN)>>> 快速CI检查全部通过 ✅$(RESET)"
+
+.PHONY: clean-cache
+clean-cache: ## 清理缓存但保留虚拟环境
+	@echo "$(BLUE)>>> 清理缓存文件...$(RESET)"
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov
+	rm -f security-report.json safety-report.json complexity-report.json bandit-report.json
+	@echo "$(GREEN)✅ 缓存清理完成$(RESET)"
+
 .PHONY: ci
-ci: env-check context quality test coverage ## 本地CI模拟
-	@echo "$(GREEN)>>> 本地CI检查全部通过 ✅$(RESET)"
+ci: env-check context quality test coverage ## 完整CI流程
+	@echo "$(GREEN)>>> 完整CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
 
 .PHONY: ci-local
@@ -477,8 +526,8 @@ clean: ## 清理环境和缓存
 	rm -rf dist
 	rm -rf build
 	rm -rf *.egg-info
-	find . -type d -name __pycache__ -delete
-	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
 	@echo "$(GREEN)✅ 清理完成$(RESET)"
 
 .PHONY: clean-logs

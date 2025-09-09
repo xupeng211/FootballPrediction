@@ -13,7 +13,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class TeamType(Enum):
@@ -146,6 +146,7 @@ class Features(BaseModel):
         Index("idx_features_match", "match_id"),
         Index("idx_features_team", "team_id"),
         Index("idx_features_match_team", "match_id", "team_id"),
+        {"extend_existing": True},
     )
 
     def __repr__(self) -> str:
@@ -237,44 +238,44 @@ class Features(BaseModel):
     def _get_league_features(self) -> Dict[str, float]:
         """获取联赛状况特征"""
         return {
-            "league_position": float(self.league_position)
-            if self.league_position
-            else 0.0,
+            "league_position": (
+                float(self.league_position) if self.league_position else 0.0
+            ),
             "points": float(self.points) if self.points else 0.0,
-            "goal_difference": float(self.goal_difference)
-            if self.goal_difference
-            else 0.0,
+            "goal_difference": (
+                float(self.goal_difference) if self.goal_difference else 0.0
+            ),
         }
 
     def _get_extended_features(self) -> Dict[str, float]:
         """获取扩展特征"""
         return {
-            "days_since_last_match": float(self.days_since_last_match)
-            if self.days_since_last_match
-            else 0.0,
+            "days_since_last_match": (
+                float(self.days_since_last_match) if self.days_since_last_match else 0.0
+            ),
             "is_derby": float(int(self.is_derby)) if self.is_derby is not None else 0.0,
-            "avg_possession": float(self.avg_possession)
-            if self.avg_possession
-            else 0.0,
-            "avg_shots_per_game": float(self.avg_shots_per_game)
-            if self.avg_shots_per_game
-            else 0.0,
-            "avg_goals_per_game": float(self.avg_goals_per_game)
-            if self.avg_goals_per_game
-            else 0.0,
-            "avg_shots_on_target": float(self.avg_shots_on_target)
-            if self.avg_shots_on_target
-            else 0.0,
-            "avg_corners_per_game": float(self.avg_corners_per_game)
-            if self.avg_corners_per_game
-            else 0.0,
-            "avg_goals_conceded": float(self.avg_goals_conceded)
-            if self.avg_goals_conceded
-            else 0.0,
+            "avg_possession": (
+                float(self.avg_possession) if self.avg_possession else 0.0
+            ),
+            "avg_shots_per_game": (
+                float(self.avg_shots_per_game) if self.avg_shots_per_game else 0.0
+            ),
+            "avg_goals_per_game": (
+                float(self.avg_goals_per_game) if self.avg_goals_per_game else 0.0
+            ),
+            "avg_shots_on_target": (
+                float(self.avg_shots_on_target) if self.avg_shots_on_target else 0.0
+            ),
+            "avg_corners_per_game": (
+                float(self.avg_corners_per_game) if self.avg_corners_per_game else 0.0
+            ),
+            "avg_goals_conceded": (
+                float(self.avg_goals_conceded) if self.avg_goals_conceded else 0.0
+            ),
             "clean_sheets": float(self.clean_sheets),
-            "avg_cards_per_game": float(self.avg_cards_per_game)
-            if self.avg_cards_per_game
-            else 0.0,
+            "avg_cards_per_game": (
+                float(self.avg_cards_per_game) if self.avg_cards_per_game else 0.0
+            ),
             "win_streak": float(self.win_streak),
             "unbeaten_streak": float(self.unbeaten_streak),
         }
