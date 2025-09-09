@@ -149,7 +149,7 @@ class TestUserProfileService:
         profile = await service.generate_profile(sample_user)
 
         assert profile.user_id == sample_user.id
-        assert "文化" in profile.interests
+        assert "足球" in profile.interests
         assert profile.preferences["language"] == "zh"
         assert sample_user.id in service._user_profiles
 
