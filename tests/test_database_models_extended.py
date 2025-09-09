@@ -8,18 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.base import Base
-from src.database.models import (
-    Features,
-    League,
-    MarketType,
-    Match,
-    MatchStatus,
-    Odds,
-    PredictedResult,
-    Predictions,
-    Team,
-    TeamType,
-)
+from src.database.models import (Features, League, MarketType, Match,
+                                 MatchStatus, Odds, PredictedResult,
+                                 Predictions, Team, TeamType)
 
 
 @pytest.fixture(scope="function")
@@ -716,7 +707,8 @@ class TestPredictionsModelAdditional:
         """测试预测摘要属性"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
@@ -737,7 +729,8 @@ class TestPredictionsModelAdditional:
         """测试最大概率属性"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
@@ -756,7 +749,8 @@ class TestPredictionsModelAdditional:
         """测试预测置信度等级"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         # 高置信度
         high_confidence = Predictions(
@@ -907,7 +901,8 @@ class TestBasicModelMethods:
         """测试预测概率字典方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
@@ -970,7 +965,8 @@ class TestBasicModelMethods:
         """测试Predictions模型__repr__方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
@@ -1253,7 +1249,8 @@ class TestFinalCoverageBoost:
         """测试Predictions预测比分方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
@@ -1351,7 +1348,8 @@ class TestFinal17LinesCoverage:
         """测试Predictions获取重要特征方法"""
         from decimal import Decimal
 
-        from src.database.models.predictions import PredictedResult, Predictions
+        from src.database.models.predictions import (PredictedResult,
+                                                     Predictions)
 
         prediction = Predictions(
             match_id=1,
