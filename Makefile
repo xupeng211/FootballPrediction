@@ -151,22 +151,51 @@ typecheck: venv ## 类型检查
 
 .PHONY: security
 security: venv ## 安全检查
-	@echo "$(BLUE)>>> 安全检查...$(RESET)"
+	@echo "$(BLUE)>>> 安全漏洞扫描...$(RESET)"
 	@if $(ACTIVATE) && python -c "import bandit" 2>/dev/null; then \
-		$(ACTIVATE) && python -m bandit -r src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ -f json | python -m json.tool || true; \
-		echo "$(GREEN)✅ 安全检查完成$(RESET)"; \
+		$(ACTIVATE) && python -m bandit -r src/ --severity-level medium; \
+		echo "$(GREEN)✅ 代码安全检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ bandit未安装，跳过安全检查$(RESET)"; \
 	fi
+	@echo "$(BLUE)>>> 依赖安全检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import safety" 2>/dev/null; then \
+		$(ACTIVATE) && safety check; \
+		echo "$(GREEN)✅ 依赖安全检查完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ safety未安装，跳过依赖安全检查$(RESET)"; \
+	fi
 
 .PHONY: complexity
-complexity: venv ## 复杂度检查
-	@echo "$(BLUE)>>> 复杂度分析...$(RESET)"
+complexity: venv ## 复杂度分析
+	@echo "$(BLUE)>>> 代码复杂度分析...$(RESET)"
 	@if $(ACTIVATE) && python -c "import radon" 2>/dev/null; then \
-		$(ACTIVATE) && python -m radon cc src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --show-complexity; \
+		$(ACTIVATE) && python -m radon cc src/ -s --total-average; \
+		echo "$(BLUE)>>> 函数复杂度详细报告...$(RESET)"; \
+		$(ACTIVATE) && python -m radon cc src/ -a -nb; \
 		echo "$(GREEN)✅ 复杂度分析完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ radon未安装，跳过复杂度检查$(RESET)"; \
+	fi
+
+.PHONY: complexity-check
+complexity-check: venv ## 复杂度门禁检查
+	@echo "$(BLUE)>>> 复杂度门禁检查...$(RESET)"
+	@if $(ACTIVATE) && python -c "import xenon" 2>/dev/null; then \
+		$(ACTIVATE) && xenon --max-average A --max-modules B --max-absolute B src/; \
+		echo "$(GREEN)✅ 复杂度门禁检查通过$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ xenon未安装，跳过复杂度门禁检查$(RESET)"; \
+	fi
+
+.PHONY: deadcode
+deadcode: venv ## 死代码检测
+	@echo "$(BLUE)>>> 死代码检测...$(RESET)"
+	@if $(ACTIVATE) && python -c "import vulture" 2>/dev/null; then \
+		$(ACTIVATE) && vulture src/ --min-confidence 70 --sort-by-size; \
+		echo "$(GREEN)✅ 死代码检测完成$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️ vulture未安装，跳过死代码检测$(RESET)"; \
 	fi
 
 # -------------------------------
@@ -239,9 +268,26 @@ quality: venv format lint typecheck security complexity ## 完整质量检查
 # -------------------------------
 # 🚀 CI 模拟和闭环流程
 # -------------------------------
+.PHONY: ci-quick
+ci-quick: format lint test ## 极速CI检查 (仅核心检查，不清理环境)
+	@echo "$(GREEN)>>> 极速CI检查全部通过 ✅$(RESET)"
+
+.PHONY: ci-fast
+ci-fast: clean-cache format lint test coverage ## 快速CI检查 (保留虚拟环境)
+	@echo "$(GREEN)>>> 快速CI检查全部通过 ✅$(RESET)"
+
+.PHONY: clean-cache
+clean-cache: ## 清理缓存但保留虚拟环境
+	@echo "$(BLUE)>>> 清理缓存文件...$(RESET)"
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov
+	rm -f security-report.json safety-report.json complexity-report.json bandit-report.json
+	@echo "$(GREEN)✅ 缓存清理完成$(RESET)"
+
 .PHONY: ci
-ci: env-check context quality test coverage ## 本地CI模拟
-	@echo "$(GREEN)>>> 本地CI检查全部通过 ✅$(RESET)"
+ci: env-check context quality test coverage ## 完整CI流程
+	@echo "$(GREEN)>>> 完整CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
 
 .PHONY: ci-local
@@ -477,8 +523,8 @@ clean: ## 清理环境和缓存
 	rm -rf dist
 	rm -rf build
 	rm -rf *.egg-info
-	find . -type d -name __pycache__ -delete
-	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
 	@echo "$(GREEN)✅ 清理完成$(RESET)"
 
 .PHONY: clean-logs

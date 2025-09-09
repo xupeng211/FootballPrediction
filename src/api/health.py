@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from src.api.schemas import HealthCheckResponse
 from src.database.connection import get_db_session
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ router = APIRouter(tags=["健康检查"])
     "/health",
     summary="系统健康检查",
     description="检查API、数据库、缓存等服务状态",
-    response_model=Dict[str, Any],
+    response_model=HealthCheckResponse,
 )
 async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
     """
