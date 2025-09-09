@@ -12,7 +12,7 @@ class TestAPIModule:
 
     def test_api_module_imports(self):
         """测试API模块导入"""
-        from api import health_router
+        from src.api import health_router
 
         assert health_router is not None
 
@@ -52,7 +52,7 @@ class TestAPIHealthModule:
 
     def test_health_module_constants(self):
         """测试健康检查模块的常量和配置"""
-        import api.health as health_module
+        import src.api.health as health_module
 
         # 测试模块属性存在
         assert hasattr(health_module, "router")
