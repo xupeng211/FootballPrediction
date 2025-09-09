@@ -1,5 +1,5 @@
 # 开发工具
-black==23.12.1
+black>=24.3.0
 flake8==7.3.0
 mypy==1.8.0
 isort==5.13.2
@@ -12,7 +12,7 @@ pytest-asyncio>=0.21.1
 pytest-xdist>=3.5.0
 
 # 代码质量工具
-bandit==1.7.5
+bandit>=1.7.7
 pbr>=6.0.0  # bandit dependency
 radon==6.0.1
 safety>=3.5.0

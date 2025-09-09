@@ -37,7 +37,7 @@ help: ## 显示帮助信息
 	@echo "$(YELLOW)代码质量:$(RESET)"
 	@echo "  format      代码格式化"
 	@echo "  lint        代码风格检查"
-	@echo "  typecheck   类型检查"
+	@echo "  typecheck   类型检查 (别名: type-check)"
 	@echo "  security    安全检查"
 	@echo ""
 	@echo "$(YELLOW)测试:$(RESET)"
@@ -139,15 +139,18 @@ lint: venv ## 代码风格检查
 	$(ACTIVATE) && python -m flake8 src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ tests/ scripts/
 	@echo "$(GREEN)✅ 代码风格检查通过$(RESET)"
 
-.PHONY: typecheck
+.PHONY: typecheck type-check
 typecheck: venv ## 类型检查
 	@echo "$(BLUE)>>> 类型检查...$(RESET)"
 	@if $(ACTIVATE) && python -c "import mypy" 2>/dev/null; then \
-		$(ACTIVATE) && python -m mypy src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --ignore-missing-imports --explicit-package-bases; \
+		$(ACTIVATE) && python -m mypy src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --ignore-missing-imports --explicit-package-bases --check-untyped-defs; \
 		echo "$(GREEN)✅ 类型检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ mypy未安装，跳过类型检查$(RESET)"; \
 	fi
+
+# type-check 是 typecheck 的别名，兼容不同命名习惯
+type-check: typecheck
 
 .PHONY: security
 security: venv ## 安全检查
