@@ -1,382 +1,336 @@
-# 📚 AICultureKit API 参考文档
+# 📚 FootballPrediction API 参考文档
 
 ## 🎯 概览
 
-本文档提供 AICultureKit 各模块的详细API参考信息。
+本文档提供 FootballPrediction 足球预测系统各模块的详细API参考信息。
 
-## 📦 核心模块 (src.core)
+## 📦 API 端点 (src.api)
 
-### Config 类
+### 健康检查 API
 
-配置管理类，用于处理应用程序配置。
+系统健康状态检查端点，用于监控API、数据库、缓存等服务状态。
 
 ```python
-from src.core import Config, config
+from src.api.health import router as health_router
 
-# 创建配置实例
-cfg = Config()
-
-# 或使用全局实例
-from src.core import config
+# 健康检查端点
+GET /health
 ```
 
-**方法:**
-- `get(key: str, default: Any = None) -> Any`: 获取配置项
-- `set(key: str, value: Any) -> None`: 设置配置项
-- `save() -> None`: 保存配置到文件
-
-### Logger 类
-
-日志管理类，提供统一的日志接口。
-
-```python
-from src.core import Logger, logger
-
-# 创建日志器
-custom_logger = Logger.setup_logger("my_module", "DEBUG")
-
-# 或使用默认日志器
-from src.core import logger
-logger.info("这是一条信息")
+**响应格式:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-09-10T02:42:16.535410",
+  "service": "football-prediction-api",
+  "version": "1.0.0",
+  "checks": {
+    "database": {
+      "status": "healthy",
+      "response_time": 0.025
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time": 0.008
+    }
+  }
+}
 ```
 
-### 异常类
+### 监控 API
+
+系统性能指标和业务监控端点。
 
 ```python
-from src.core import AICultureKitError, ConfigError, DataError
+from src.api.monitoring import router as monitoring_router
 
-# 基础异常
-raise AICultureKitError("基础错误")
-
-# 配置相关异常
-raise ConfigError("配置错误")
-
-# 数据处理异常
-raise DataError("数据错误")
+# 性能指标端点
+GET /metrics
 ```
 
-## 🗄️ 数据模型 (src.models)
-
-### User 类
-
-用户数据模型。
-
-```python
-from src.models import User, UserRole
-
-user = User(
-    id="user_123",
-    username="testuser",
-    email="test@example.com",
-    role=UserRole.CREATOR
-)
-
-# 转换为字典
-user_dict = user.to_dict()
+**响应格式:**
+```json
+{
+  "timestamp": "2025-09-10T02:42:16.535410",
+  "system_metrics": {
+    "cpu_percent": 15.2,
+    "memory": {
+      "total": 16777216000,
+      "available": 12884901888,
+      "percent": 23.2,
+      "used": 3892314112
+    }
+  },
+  "database_metrics": {
+    "total_tables": 6,
+    "total_connections": 5,
+    "uptime": "7 days"
+  },
+  "business_metrics": {
+    "total_matches": 0,
+    "total_predictions": 0,
+    "active_leagues": 0
+  }
+}
 ```
 
-**属性:**
-- `id: str`: 用户唯一标识
-- `username: str`: 用户名
-- `email: str`: 邮箱地址
-- `role: UserRole`: 用户角色
-- `created_at: datetime`: 创建时间
-- `metadata: Dict[str, Any]`: 元数据
+## 📦 数据模型 (src.database.models)
 
-### Content 类
-
-内容数据模型。
+### 联赛模型 (League)
 
 ```python
-from src.models import Content, ContentType
+from src.database.models.league import League
 
-content = Content(
-    id="content_123",
-    title="示例内容",
-    content_type=ContentType.TEXT,
-    content_data="这是内容数据",
-    author_id="user_123"
-)
+# 联赛实体
+class League:
+    id: int
+    name: str
+    country: str
+    season: str
+    logo: Optional[str]
 ```
 
-**属性:**
-- `id: str`: 内容唯一标识
-- `title: str`: 内容标题
-- `content_type: ContentType`: 内容类型
-- `content_data: Union[str, bytes, Dict]`: 内容数据
-- `author_id: str`: 作者ID
-- `tags: List[str]`: 标签列表
-
-### AnalysisResult 类
-
-分析结果数据模型。
+### 球队模型 (Team)
 
 ```python
-from src.models import AnalysisResult
+from src.database.models.team import Team
 
-result = AnalysisResult(
-    id="analysis_123",
-    content_id="content_123",
-    analysis_type="sentiment",
-    result_data={"sentiment": "positive", "confidence": 0.95},
-    confidence_score=0.95
-)
+# 球队实体
+class Team:
+    id: int
+    name: str
+    country: str
+    founded: Optional[int]
+    logo: Optional[str]
 ```
 
-## ⚙️ 业务服务 (src.services)
-
-### ContentAnalysisService
-
-内容分析服务，提供内容分析功能。
+### 比赛模型 (Match)
 
 ```python
-from src.services import service_manager
-import asyncio
+from src.database.models.match import Match
 
-async def analyze_content():
-    # 获取服务实例
-    analysis_service = service_manager.get_service("ContentAnalysisService")
-
-    # 初始化服务
-    await analysis_service.initialize()
-
-    # 分析内容
-    result = await analysis_service.analyze_content(content)
-
-    return result
+# 比赛实体
+class Match:
+    id: int
+    home_team_id: int
+    away_team_id: int
+    league_id: int
+    match_date: datetime
+    status: str
+    home_score: Optional[int]
+    away_score: Optional[int]
 ```
 
-**主要方法:**
-- `analyze_content(content: Content) -> Optional[AnalysisResult]`: 分析单个内容
-- `batch_analyze(contents: List[Content]) -> List[AnalysisResult]`: 批量分析
-
-### UserProfileService
-
-用户画像服务，生成和管理用户画像。
+### 预测模型 (Prediction)
 
 ```python
-async def generate_profile():
-    profile_service = service_manager.get_service("UserProfileService")
-    await profile_service.initialize()
+from src.database.models.predictions import Prediction
 
-    # 生成用户画像
-    profile = await profile_service.generate_profile(user)
-
-    return profile
+# 预测实体
+class Prediction:
+    id: int
+    match_id: int
+    model_name: str
+    home_win_prob: float
+    draw_prob: float
+    away_win_prob: float
+    predicted_score: Optional[str]
+    confidence: float
 ```
 
-**主要方法:**
-- `generate_profile(user: User) -> UserProfile`: 生成用户画像
-- `get_profile(user_id: str) -> Optional[UserProfile]`: 获取用户画像
-- `update_profile(user_id: str, updates: Dict) -> Optional[UserProfile]`: 更新画像
-
-### ServiceManager
-
-服务管理器，管理所有业务服务。
+### 赔率模型 (Odds)
 
 ```python
-from src.services import service_manager
+from src.database.models.odds import Odds
 
-# 初始化所有服务
-await service_manager.initialize_all()
-
-# 获取特定服务
-service = service_manager.get_service("ContentAnalysisService")
-
-# 关闭所有服务
-await service_manager.shutdown_all()
+# 赔率实体
+class Odds:
+    id: int
+    match_id: int
+    bookmaker: str
+    home_odds: float
+    draw_odds: float
+    away_odds: float
+    last_updated: datetime
 ```
 
-## 🛠️ 工具模块 (src.utils)
-
-### FileUtils
-
-文件处理工具类。
+### 特征模型 (Features)
 
 ```python
-from src.utils import FileUtils
-from pathlib import Path
+from src.database.models.features import Features
 
-# 确保目录存在
-FileUtils.ensure_dir("data/uploads")
-
-# 读写JSON文件
-data = FileUtils.read_json("config.json")
-FileUtils.write_json(data, "output.json")
-
-# 获取文件信息
-hash_value = FileUtils.get_file_hash("document.pdf")
-size = FileUtils.get_file_size("document.pdf")
+# 特征实体
+class Features:
+    id: int
+    match_id: int
+    home_team_features: dict
+    away_team_features: dict
+    historical_features: dict
+    created_at: datetime
 ```
 
-### DataValidator
+## 🔧 工具函数 (src.utils)
 
-数据验证工具类。
+### 字符串工具
 
 ```python
-from src.utils import DataValidator
+from src.utils.string_utils import clean_text, normalize_name
 
-# 验证邮箱和URL
-is_valid = DataValidator.is_valid_email("test@example.com")
-is_url_valid = DataValidator.is_valid_url("https://example.com")
+# 文本清理
+clean_text("  Real Madrid  ") -> "Real Madrid"
 
-# 验证必需字段
-missing = DataValidator.validate_required_fields(
-    data={"name": "test"},
-    required_fields=["name", "email"]
-)  # 返回 ["email"]
-
-# 验证数据类型
-invalid = DataValidator.validate_data_types(
-    data={"age": "25"},
-    type_specs={"age": int}
-)  # 返回类型错误信息
+# 名称标准化
+normalize_name("Real Madrid CF") -> "real_madrid_cf"
 ```
 
-### TimeUtils
-
-时间处理工具类。
+### 时间工具
 
 ```python
-from src.utils import TimeUtils
-from datetime import datetime
+from src.utils.time_utils import format_datetime, parse_match_time
 
-# 获取当前UTC时间
-now = TimeUtils.now_utc()
+# 日期时间格式化
+format_datetime(datetime.now()) -> "2025-09-10 02:42:16"
 
-# 时间戳转换
-dt = TimeUtils.timestamp_to_datetime(1625097600)
-timestamp = TimeUtils.datetime_to_timestamp(now)
-
-# 格式化和解析
-formatted = TimeUtils.format_datetime(now, "%Y-%m-%d")
-parsed = TimeUtils.parse_datetime("2023-01-01", "%Y-%m-%d")
+# 比赛时间解析
+parse_match_time("2025-09-10 15:30") -> datetime(2025, 9, 10, 15, 30)
 ```
 
-### CryptoUtils
-
-加密和ID生成工具类。
+### 数据验证工具
 
 ```python
-from src.utils import CryptoUtils
+from src.utils.data_validator import validate_match_data, validate_odds
 
-# 生成ID
-uuid = CryptoUtils.generate_uuid()
-short_id = CryptoUtils.generate_short_id(8)
+# 比赛数据验证
+validate_match_data(match_dict) -> ValidationResult
 
-# 字符串哈希
-md5_hash = CryptoUtils.hash_string("hello", "md5")
-sha256_hash = CryptoUtils.hash_string("hello", "sha256")
+# 赔率数据验证
+validate_odds(odds_dict) -> ValidationResult
+```
+
+### 加密工具
+
+```python
+from src.utils.crypto_utils import hash_password, verify_password
 
 # 密码哈希
-hashed_password = CryptoUtils.hash_password("mypassword")
+hash_password("password123") -> "hashed_string"
+
+# 密码验证
+verify_password("password123", "hashed_string") -> True
 ```
 
-### StringUtils
-
-字符串处理工具类。
+### 文件工具
 
 ```python
-from src.utils import StringUtils
+from src.utils.file_utils import read_json, write_json, ensure_dir
 
-# 截断字符串
-truncated = StringUtils.truncate("very long text", 10)
+# JSON文件操作
+data = read_json("config.json")
+write_json("output.json", data)
 
-# URL友好化
-slug = StringUtils.slugify("Hello World!")  # "hello-world"
-
-# 命名转换
-snake_case = StringUtils.camel_to_snake("camelCase")  # "camel_case"
-camel_case = StringUtils.snake_to_camel("snake_case")  # "snakeCase"
-
-# 文本清理和数字提取
-clean = StringUtils.clean_text("  hello   world  ")  # "hello world"
-numbers = StringUtils.extract_numbers("Price: $12.34")  # [12.34]
+# 目录创建
+ensure_dir("logs/2025/09")
 ```
 
-### DictUtils
-
-字典处理工具类。
+### 字典工具
 
 ```python
-from src.utils import DictUtils
+from src.utils.dict_utils import deep_merge, safe_get
 
 # 深度合并字典
-dict1 = {"a": {"b": 1}}
-dict2 = {"a": {"c": 2}}
-merged = DictUtils.deep_merge(dict1, dict2)  # {"a": {"b": 1, "c": 2}}
+merged = deep_merge(dict1, dict2)
 
-# 扁平化字典
-nested = {"user": {"name": "John", "age": 30}}
-flat = DictUtils.flatten_dict(nested)  # {"user.name": "John", "user.age": 30}
-
-# 过滤None值
-filtered = DictUtils.filter_none_values({"a": 1, "b": None})  # {"a": 1}
+# 安全获取嵌套值
+value = safe_get(data, "team.stats.goals", default=0)
 ```
 
-## 🧪 测试示例
+## 📊 响应模式 (src.api.schemas)
+
+### HealthCheckResponse
+
+健康检查响应模式
 
 ```python
-# 运行所有测试
-python -m pytest tests/ -v
-
-# 运行特定测试
-python -m pytest tests/test_basic.py -v
-
-# 运行覆盖率测试
-python -m pytest tests/ --cov=src --cov-report=html
+class HealthCheckResponse:
+    status: str
+    timestamp: str
+    service: str
+    version: str
+    checks: dict
 ```
 
-## 🔧 使用示例
+### MetricsResponse
 
-### 完整工作流示例
+监控指标响应模式
 
 ```python
-import asyncio
-from src.core import logger
-from src.models import User, Content, ContentType, UserRole
-from src.services import service_manager
-from src.utils import CryptoUtils
+class MetricsResponse:
+    timestamp: str
+    system_metrics: dict
+    database_metrics: dict
+    business_metrics: dict
+```
 
-async def main():
-    # 初始化服务
-    await service_manager.initialize_all()
+## 🔗 数据库连接 (src.database)
 
-    # 创建用户
-    user = User(
-        id=CryptoUtils.generate_uuid(),
-        username="ai_creator",
-        email="creator@aiculture.com",
-        role=UserRole.CREATOR
-    )
+### 数据库配置
 
-    # 创建内容
-    content = Content(
-        id=CryptoUtils.generate_uuid(),
-        title="AI文化产业分析",
-        content_type=ContentType.TEXT,
-        content_data="这是一篇关于AI在文化产业应用的分析文章...",
-        author_id=user.id
-    )
+```python
+from src.database.config import DATABASE_URL, get_database_url
 
-    # 分析内容
-    analysis_service = service_manager.get_service("ContentAnalysisService")
-    result = await analysis_service.analyze_content(content)
+# 获取数据库连接字符串
+url = get_database_url()
+```
 
-    # 生成用户画像
-    profile_service = service_manager.get_service("UserProfileService")
-    profile = await profile_service.generate_profile(user)
+### 数据库会话
 
-    logger.info(f"分析结果: {result.result_data}")
-    logger.info(f"用户画像: {profile.interests}")
+```python
+from src.database.connection import get_db_session
 
-    # 清理
-    await service_manager.shutdown_all()
+# 获取数据库会话
+async def my_function(db: Session = Depends(get_db_session)):
+    # 使用数据库会话
+    pass
+```
 
+## 🚀 使用示例
+
+### 启动应用
+
+```python
+from src.main import app
+import uvicorn
+
+# 启动FastAPI应用
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
----
+### API调用示例
 
-**📝 注意**: 这是基础版本的API文档。随着功能的扩展，将持续更新此文档。
+```bash
+# 健康检查
+curl http://localhost:8000/health
+
+# 获取监控指标
+curl http://localhost:8000/metrics
+```
+
+## 📋 注意事项
+
+1. **认证**: 当前API端点暂不需要认证，未来版本将添加JWT认证
+2. **限流**: 建议在生产环境中配置API限流
+3. **缓存**: 监控指标已实现Redis缓存，缓存时间为60秒
+4. **错误处理**: 所有API端点都包含完整的错误处理和日志记录
+5. **类型安全**: 所有接口都有完整的类型注解和Pydantic模式验证
+
+## 🔧 开发工具
+
+使用项目提供的Makefile命令进行开发：
+
+```bash
+make test          # 运行测试
+make lint          # 代码检查
+make coverage      # 测试覆盖率
+make ci            # 完整CI检查
+```
