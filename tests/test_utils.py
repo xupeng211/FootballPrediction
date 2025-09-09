@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from utils import (CryptoUtils, DataValidator, DictUtils, FileUtils,
-                   StringUtils, TimeUtils)
+from src.utils import (CryptoUtils, DataValidator, DictUtils, FileUtils,
+                       StringUtils, TimeUtils)
 
 
 class TestFileUtils:

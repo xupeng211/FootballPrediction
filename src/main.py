@@ -12,8 +12,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from api.health import router as health_router
-from database.connection import initialize_database
+from src.api.health import router as health_router
+from src.api.monitoring import router as monitoring_router
+from src.database.connection import initialize_database
 
 # 配置日志
 logging.basicConfig(
@@ -65,9 +66,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # 注册路由
 app.include_router(health_router)
+app.include_router(monitoring_router, prefix="/api/v1")
 
 
 @app.get("/", summary="根路径", tags=["基础"])

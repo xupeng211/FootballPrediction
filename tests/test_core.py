@@ -10,8 +10,8 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from core import (AICultureKitError, Config, ConfigError, DataError, Logger,
-                  config, logger)
+from src.core import (AICultureKitError, Config, ConfigError, DataError,
+                      Logger, config, logger)
 
 
 class TestConfig:
