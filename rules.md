@@ -1,4 +1,4 @@
-# 🔧 AICultureKit 规则体系
+# 🔧 FootballPrediction 规则体系
 
 ## 📍 快速导航
 
