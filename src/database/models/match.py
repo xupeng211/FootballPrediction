@@ -13,7 +13,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class MatchStatus(Enum):

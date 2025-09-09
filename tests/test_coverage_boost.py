@@ -6,8 +6,8 @@
 
 from unittest.mock import patch
 
-from database.models import (MarketType, Odds, PredictedResult, Predictions,
-                             Team)
+from src.database.models import (MarketType, Odds, PredictedResult,
+                                 Predictions, Team)
 
 
 class TestOddsCoverage:
@@ -193,7 +193,7 @@ class TestModelsCoverage:
 
     def test_models_module_imports(self):
         """测试models模块的导入覆盖率"""
-        from models import AnalysisResult, Content, User
+        from src.models import AnalysisResult, Content, User
 
         # 测试基础类存在
         assert AnalysisResult is not None
@@ -202,7 +202,7 @@ class TestModelsCoverage:
 
     def test_models_creation(self):
         """测试模型创建"""
-        from models import AnalysisResult, Content, ContentType, User
+        from src.models import AnalysisResult, Content, ContentType, User
 
         # 测试User创建
         user = User(id="1", username="test_user", email="test@example.com")
