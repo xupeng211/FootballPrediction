@@ -23,7 +23,7 @@ class Config:
         self._config: Dict[str, Any] = {}
         self._load_config()
 
-    def _load_config(self):
+    def _load_config(self) -> None:
         """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
         if self.config_file.exists():
             import json
