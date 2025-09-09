@@ -1,6 +1,6 @@
 # 🚀 快速开始指南
 
-本指南展示如何在5分钟内设置并使用AICultureKit Cursor闭环系统。
+本指南展示如何在5分钟内设置并使用FootballPrediction足球预测系统。
 
 ## 📋 第一步：环境检查
 
@@ -51,7 +51,7 @@ git init
 git add .
 
 # 创建初始提交
-git commit -m "feat: 初始化AICultureKit闭环系统"
+git commit -m "feat: 初始化FootballPrediction闭环系统"
 
 # 创建功能分支
 git checkout -b feature/demo-task
@@ -94,7 +94,7 @@ python scripts/cursor_runner.py --task "实现用户认证模块" --summary
 TASK: 实现简单的用户数据模型
 
 CONTEXT:
-- 项目目录: AICultureKit
+- 项目目录: FootballPrediction
 - 当前分支: feature/demo-task
 - 已存在模块: src/core, src/models, src/services, src/utils
 - 依赖关系: 见requirements.txt
@@ -265,7 +265,7 @@ python -m black src/ tests/ scripts/
 
 ## 🎉 完成！
 
-现在你已经掌握了AICultureKit Cursor闭环系统的使用方法。
+现在你已经掌握了FootballPrediction Cursor闭环系统的使用方法。
 
 **关键要点：**
 - ✅ 始终从环境检查开始

@@ -1,6 +1,6 @@
-# 🎯 AICultureKit 完整系统演示
+# 🎯 FootballPrediction 完整系统演示
 
-本文档展示AICultureKit Cursor闭环开发系统的完整功能演示。
+本文档展示FootballPrediction Cursor闭环开发系统的完整功能演示。
 
 ## 🌟 系统特色
 
@@ -19,7 +19,7 @@
 ```bash
 # 1. 克隆项目
 git clone <your-repo>
-cd AICultureKit
+cd FootballPrediction
 
 # 2. 一键初始化（创建venv + 安装依赖 + 项目结构）
 make init
@@ -30,10 +30,10 @@ make status
 
 **输出示例：**
 ```
-🚀 AICultureKit 开发工具
+🚀 FootballPrediction 开发工具
 
 📁 项目信息:
-  项目名称: AICultureKit
+  项目名称: FootballPrediction
   Python版本: Python 3.11.x
   虚拟环境: venv
 
@@ -110,7 +110,7 @@ make dev
 ```
 TASK: 实现用户登录功能
 
-请按照AICultureKit闭环系统执行：
+请按照FootballPrediction闭环系统执行：
 
 1. 🚀 任务启动前检查：
    - ✅ 虚拟环境已激活
@@ -372,7 +372,7 @@ make prepush
 
 ## 🎉 使用效果
 
-使用AICultureKit系统后：
+使用FootballPrediction系统后：
 
 **开发效率提升：**
 - ⚡ 环境准备时间：从10分钟到30秒
@@ -393,4 +393,4 @@ make prepush
 
 ---
 
-**🎯 总结：** AICultureKit不仅是一个开发工具，更是一个完整的开发哲学和最佳实践的自动化实现。它让每个开发者都能拥有资深专家级别的开发流程和质量标准。
+**🎯 总结：** FootballPrediction不仅是一个开发工具，更是一个完整的开发哲学和最佳实践的自动化实现。它让每个开发者都能拥有资深专家级别的开发流程和质量标准。

@@ -1,8 +1,8 @@
-# 🤖 AICultureKit AI工作提示
+# 🤖 FootballPrediction AI工作提示
 
 ## 📋 项目概览
 
-**AICultureKit** 是一个面向AI文化研究的Python工具包项目。本项目采用FastAPI作为Web框架，遵循现代Python开发最佳实践。
+**FootballPrediction** 是一个基于现代Python技术栈的企业级足球预测系统。本项目采用FastAPI作为Web框架，遵循现代Python开发最佳实践。
 
 ### 🎯 **核心目标**
 - 提供高质量的AI文化分析工具
