@@ -6,7 +6,7 @@
 
 ### 🔧 **提示词文件结构**
 ```
-📁 AICultureKit/
+📁 FootballPrediction/
 ├── 📄 AI_PROMPT.md              # 详细的AI开发手册（238行）
 ├── 📄 .cursor/rules/ai.mdc      # Cursor编辑器核心规则（13行）
 └── 📄 AI_WORK_GUIDE.md          # 本文件 - AI使用指南
