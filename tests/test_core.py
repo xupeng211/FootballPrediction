@@ -10,7 +10,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.core import (AICultureKitError, Config, ConfigError, DataError,
+from src.core import (Config, ConfigError, DataError, FootballPredictionError,
                       Logger, config, logger)
 
 
@@ -20,7 +20,7 @@ class TestConfig:
     def test_config_initialization(self):
         """测试配置初始化"""
         test_config = Config()
-        assert test_config.config_dir == Path.home() / ".aiculturekit"
+        assert test_config.config_dir == Path.home() / ".footballprediction"
         assert test_config.config_file == test_config.config_dir / "config.json"
         assert isinstance(test_config._config, dict)
 
@@ -167,34 +167,34 @@ class TestLogger:
 class TestExceptions:
     """测试异常类"""
 
-    def test_aiculturekit_error(self):
+    def test_footballprediction_error(self):
         """测试基础异常类"""
-        error = AICultureKitError("test error message")
+        error = FootballPredictionError("test error message")
         assert isinstance(error, Exception)
         assert str(error) == "test error message"
 
     def test_config_error(self):
         """测试配置异常类"""
         error = ConfigError("config error message")
-        assert isinstance(error, AICultureKitError)
+        assert isinstance(error, FootballPredictionError)
         assert isinstance(error, Exception)
         assert str(error) == "config error message"
 
     def test_data_error(self):
         """测试数据异常类"""
         error = DataError("data error message")
-        assert isinstance(error, AICultureKitError)
+        assert isinstance(error, FootballPredictionError)
         assert isinstance(error, Exception)
         assert str(error) == "data error message"
 
     def test_exception_inheritance(self):
         """测试异常继承关系"""
-        # 验证所有自定义异常都继承自AICultureKitError
+        # 验证所有自定义异常都继承自FootballPredictionError
         config_error = ConfigError("test")
         data_error = DataError("test")
 
-        assert isinstance(config_error, AICultureKitError)
-        assert isinstance(data_error, AICultureKitError)
+        assert isinstance(config_error, FootballPredictionError)
+        assert isinstance(data_error, FootballPredictionError)
 
         # 验证它们也是标准异常
         assert isinstance(config_error, Exception)
@@ -213,7 +213,7 @@ class TestGlobalInstances:
         """测试全局日志器实例"""
         assert logger is not None
         assert isinstance(logger, logging.Logger)
-        assert logger.name == "aiculturekit"
+        assert logger.name == "footballprediction"
 
     def test_global_instances_usability(self):
         """测试全局实例的可用性"""
@@ -235,7 +235,7 @@ class TestConfigIntegration:
         """测试配置的完整工作流程"""
         # 创建临时目录
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_config_dir = Path(temp_dir) / ".aiculturekit"
+            temp_config_dir = Path(temp_dir) / ".footballprediction"
             temp_config_file = temp_config_dir / "config.json"
 
             # 模拟配置类使用临时目录
@@ -263,7 +263,7 @@ class TestConfigIntegration:
         """测试配置错误处理工作流程"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # 创建一个损坏的配置文件
-            temp_config_dir = Path(temp_dir) / ".aiculturekit"
+            temp_config_dir = Path(temp_dir) / ".footballprediction"
             temp_config_dir.mkdir(parents=True)
             temp_config_file = temp_config_dir / "config.json"
 

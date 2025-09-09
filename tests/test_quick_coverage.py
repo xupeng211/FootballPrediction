@@ -359,21 +359,21 @@ def test_service_manager():
 
 def test_additional_core_exceptions():
     """测试核心异常类"""
-    from src.core import AICultureKitError, ConfigError, DataError
+    from src.core import ConfigError, DataError, FootballPredictionError
 
     # 测试基础异常
-    base_error = AICultureKitError("test error")
+    base_error = FootballPredictionError("test error")
     assert str(base_error) == "test error"
 
     # 测试配置异常
     config_error = ConfigError("config error")
     assert str(config_error) == "config error"
-    assert isinstance(config_error, AICultureKitError)
+    assert isinstance(config_error, FootballPredictionError)
 
     # 测试数据异常
     data_error = DataError("data error")
     assert str(data_error) == "data error"
-    assert isinstance(data_error, AICultureKitError)
+    assert isinstance(data_error, FootballPredictionError)
 
 
 def test_additional_footballprediction_version():
