@@ -37,10 +37,8 @@ def test_enum_values():
 
 def test_database_config_functions():
     """测试数据库配置函数"""
-    from src.database.config import (
-        get_production_database_config,
-        get_test_database_config,
-    )
+    from src.database.config import (get_production_database_config,
+                                     get_test_database_config)
 
     # 测试配置函数
     test_config = get_test_database_config()

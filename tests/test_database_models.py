@@ -8,18 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.base import Base
-from src.database.models import (
-    Features,
-    League,
-    MarketType,
-    Match,
-    MatchStatus,
-    Odds,
-    PredictedResult,
-    Predictions,
-    Team,
-    TeamType,
-)
+from src.database.models import (Features, League, MarketType, Match,
+                                 MatchStatus, Odds, PredictedResult,
+                                 Predictions, Team, TeamType)
 
 
 @pytest.fixture(scope="function")

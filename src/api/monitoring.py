@@ -6,6 +6,7 @@
 
 import logging
 import os
+import sys
 import time
 from datetime import datetime
 from typing import Any, Dict
@@ -62,7 +63,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
         runtime_metrics = {
             "uptime_seconds": time.time() - start_time,
             "timestamp": datetime.utcnow().isoformat(),
-            "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
+            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
             "environment": os.getenv("ENVIRONMENT", "development"),
         }
 
