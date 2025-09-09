@@ -13,9 +13,9 @@ def test_imports():
 
 def test_enum_values():
     """测试枚举值"""
-    from database.models.match import MatchStatus
-    from database.models.odds import MarketType
-    from database.models.predictions import PredictedResult
+    from src.database.models.match import MatchStatus
+    from src.database.models.odds import MarketType
+    from src.database.models.predictions import PredictedResult
 
     # 测试MatchStatus枚举
     assert MatchStatus.SCHEDULED.value == "scheduled"
@@ -37,8 +37,8 @@ def test_enum_values():
 
 def test_database_config_functions():
     """测试数据库配置函数"""
-    from database.config import (get_production_database_config,
-                                 get_test_database_config)
+    from src.database.config import (get_production_database_config,
+                                     get_test_database_config)
 
     # 测试配置函数
     test_config = get_test_database_config()
@@ -56,8 +56,8 @@ def test_database_config_functions():
 
 def test_utility_functions():
     """测试工具函数"""
-    from FootballPrediction.core import Config, Logger
-    from FootballPrediction.utils import FileUtils
+    from src.core import Config, Logger
+    from src.utils import FileUtils
 
     # 测试配置类
     config = Config()
@@ -81,8 +81,8 @@ def test_utility_functions():
 
 def test_simple_model_properties():
     """测试简单的模型属性和方法"""
-    from database.models.match import MatchStatus
-    from database.models.odds import MarketType
+    from src.database.models.match import MatchStatus
+    from src.database.models.odds import MarketType
 
     # 测试简单的枚举属性
     status = MatchStatus.SCHEDULED
@@ -122,7 +122,7 @@ def test_mock_model_methods():
 
 def test_string_operations():
     """测试字符串操作相关代码"""
-    from utils import StringUtils
+    from src.utils import StringUtils
 
     # 测试字符串工具
     result = StringUtils.truncate("Hello World", 5)
@@ -151,7 +151,7 @@ def test_time_operations():
     """测试时间操作相关代码"""
     from datetime import datetime
 
-    from utils import TimeUtils
+    from src.utils import TimeUtils
 
     # 测试时间工具
     now = TimeUtils.now_utc()
@@ -177,7 +177,7 @@ def test_file_operations():
     import os
     import tempfile
 
-    from utils import FileUtils
+    from src.utils import FileUtils
 
     # 测试文件工具
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
@@ -214,7 +214,7 @@ def test_file_operations():
 
 def test_crypto_utils():
     """测试加密工具"""
-    from utils import CryptoUtils
+    from src.utils import CryptoUtils
 
     # 测试UUID生成
     uuid_val = CryptoUtils.generate_uuid()
@@ -239,7 +239,7 @@ def test_crypto_utils():
 
 def test_data_validator():
     """测试数据验证器"""
-    from utils import DataValidator
+    from src.utils import DataValidator
 
     # 测试邮箱验证
     assert DataValidator.is_valid_email("test@example.com") is True
@@ -275,7 +275,7 @@ def test_data_validator():
 
 def test_dict_utils():
     """测试字典工具"""
-    from utils import DictUtils
+    from src.utils import DictUtils
 
     # 测试字典合并
     dict1 = {"a": 1, "b": {"c": 2}}
@@ -306,7 +306,7 @@ def test_dict_utils():
 
 def test_core_config_and_logger():
     """测试核心配置和日志模块"""
-    from core import Config, Logger
+    from src.core import Config, Logger
 
     # 测试配置类
     config = Config()
@@ -337,7 +337,7 @@ def test_core_config_and_logger():
 
 def test_service_manager():
     """测试服务管理器"""
-    from services import BaseService, ServiceManager
+    from src.services import BaseService, ServiceManager
 
     # 测试创建服务管理器
     manager = ServiceManager()
@@ -359,7 +359,7 @@ def test_service_manager():
 
 def test_additional_core_exceptions():
     """测试核心异常类"""
-    from core import AICultureKitError, ConfigError, DataError
+    from src.core import AICultureKitError, ConfigError, DataError
 
     # 测试基础异常
     base_error = AICultureKitError("test error")
@@ -378,7 +378,7 @@ def test_additional_core_exceptions():
 
 def test_additional_footballprediction_version():
     """测试FootballPrediction版本"""
-    from FootballPrediction import __version__
+    from src import __version__
 
     # 测试版本存在
     assert __version__ is not None

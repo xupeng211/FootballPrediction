@@ -12,10 +12,11 @@ class TestDatabaseConnectionCoverage:
 
     def test_database_connection_imports(self):
         """测试数据库连接模块导入"""
-        from database.config import (get_database_config,
-                                     get_production_database_config,
-                                     get_test_database_config)
-        from database.connection import DatabaseManager, get_database_manager
+        from src.database.config import (get_database_config,
+                                         get_production_database_config,
+                                         get_test_database_config)
+        from src.database.connection import (DatabaseManager,
+                                             get_database_manager)
 
         # 测试函数存在
         assert DatabaseManager is not None
@@ -24,12 +25,12 @@ class TestDatabaseConnectionCoverage:
         assert get_production_database_config is not None
         assert get_test_database_config is not None
 
-    @patch("database.connection.create_engine")
-    @patch("database.connection.create_async_engine")
+    @patch("src.database.connection.create_engine")
+    @patch("src.database.connection.create_async_engine")
     def test_database_manager_initialization(self, mock_async_engine, mock_sync_engine):
         """测试数据库管理器初始化"""
-        from database.config import DatabaseConfig
-        from database.connection import DatabaseManager
+        from src.database.config import DatabaseConfig
+        from src.database.connection import DatabaseManager
 
         manager = DatabaseManager()
         config = DatabaseConfig(
@@ -49,7 +50,7 @@ class TestDatabaseConnectionCoverage:
 
     def test_database_config_edge_cases(self):
         """测试数据库配置边界情况"""
-        from database.config import DatabaseConfig
+        from src.database.config import DatabaseConfig
 
         # 测试不同的配置组合
         configs_to_test = [
@@ -80,7 +81,7 @@ class TestAPIHealthCoverageMore:
 
     def test_health_api_constants(self):
         """测试health API的常量和模块级变量"""
-        import api.health as health_module
+        import src.api.health as health_module
 
         # 测试模块常量
         assert hasattr(health_module, "status")
@@ -89,7 +90,7 @@ class TestAPIHealthCoverageMore:
 
     def test_health_api_route_definition(self):
         """测试health API路由定义"""
-        from api.health import router
+        from src.api.health import router
 
         # 测试路由属性
         assert hasattr(router, "routes")
@@ -102,7 +103,7 @@ class TestModelsSimpleCoverage:
 
     def test_models_attributes_access(self):
         """测试models模块属性访问"""
-        from models import ContentType, UserRole
+        from src.models import ContentType, UserRole
 
         # 测试枚举值
         assert ContentType.TEXT is not None
@@ -112,7 +113,7 @@ class TestModelsSimpleCoverage:
 
     def test_models_to_dict_methods(self):
         """测试模型的to_dict方法"""
-        from models import AnalysisResult, User, UserProfile
+        from src.models import AnalysisResult, User, UserProfile
 
         # 测试User to_dict
         user = User(id="1", username="test", email="test@example.com")
@@ -143,7 +144,7 @@ class TestDatabaseModelPropertiesCoverage:
     def test_all_model_repr_methods(self):
         """测试所有模型的__repr__方法"""
 
-        from database.models import League, MarketType, Odds, Team
+        from src.database.models import League, MarketType, Odds, Team
 
         # League repr
         league = League(league_name="测试联赛", country="中国")
@@ -162,7 +163,7 @@ class TestDatabaseModelPropertiesCoverage:
 
     def test_model_basic_properties(self):
         """测试模型基础属性"""
-        from database.models import League, Team
+        from src.database.models import League, Team
 
         # 测试League属性
         league = League(league_name="测试联赛", country="中国")
@@ -182,7 +183,7 @@ class TestServicesCoverage:
 
     def test_service_module_attributes(self):
         """测试服务模块属性"""
-        import services
+        import src.services as services
 
         # 测试模块属性
         assert hasattr(services, "BaseService")
@@ -191,7 +192,7 @@ class TestServicesCoverage:
 
     def test_service_manager_operations(self):
         """测试服务管理器操作"""
-        from services import ServiceManager
+        from src.services import ServiceManager
 
         manager = ServiceManager()
 
@@ -207,7 +208,7 @@ class TestUtilsCoverage:
 
     def test_utils_simple_operations(self):
         """测试工具模块的简单操作"""
-        from utils import FileUtils, StringUtils, TimeUtils
+        from src.utils import FileUtils, StringUtils, TimeUtils
 
         # 测试字符串工具
         truncated = StringUtils.truncate("long text", 4)
@@ -227,7 +228,7 @@ class TestCoreCoverage:
 
     def test_core_exceptions(self):
         """测试核心异常类"""
-        from core import AICultureKitError, ConfigError, DataError
+        from src.core import AICultureKitError, ConfigError, DataError
 
         # 测试异常创建
         base_error = AICultureKitError("测试错误")
@@ -241,7 +242,7 @@ class TestCoreCoverage:
 
     def test_core_global_instances(self):
         """测试核心全局实例"""
-        from core import config, logger
+        from src.core import config, logger
 
         # 测试全局实例
         assert config is not None
