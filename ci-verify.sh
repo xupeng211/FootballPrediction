@@ -117,7 +117,7 @@ echo "激活虚拟环境并执行测试套件..."
 source venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 pytest \
-    --cov=core --cov=models --cov=services --cov=utils --cov=database --cov=api \
+    --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
     --cov-fail-under=80 \
     --cov-report=xml \
     --cov-report=html \

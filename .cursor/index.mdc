@@ -1,39 +1,82 @@
-# AICultureKit 核心开发规则
+# FootballPrediction 项目开发规则总览
 
-## 🎯 项目原则
-- **工具优先**：禁止绕过Makefile直接运行任何脚本或命令
-- **质量第一**：所有代码变更必须通过`make ci`检查
-- **文档驱动**：重要决策必须有文档记录
-- **模块化优先**：优先复用已有函数/模块，避免重复造轮子
+## 🎯 核心开发原则
+- **工具优先**: 禁止绕过Makefile直接运行任何脚本或命令
+- **质量第一**: 所有代码变更必须通过`make ci`检查
+- **文档驱动**: 重要决策必须有文档记录
+- **模块化优先**: 优先复用已有函数/模块，避免重复造轮子
+- **Docker集成**: 使用`./ci-verify.sh`进行本地CI环境模拟
 
-## 🔧 标准开发工作流
-1. **环境检查**：`make env-check`
-2. **加载上下文**：`make context` (⭐ 最重要)
-3. **选择适当的make命令**：根据任务选择合适工具
-4. **提交前检查**：`make prepush` 进行完整检查
+## 🚀 标准开发工作流程
+1. **环境准备**:
+   - 激活虚拟环境: `source venv/bin/activate`
+   - 环境检查: `make env-check`
+2. **上下文加载**: `make context` (⭐ 最重要的步骤)
+3. **分支管理**: 从main创建feature分支进行开发
+4. **开发循环**:
+   - 代码编写 → `make lint` → `make test` → `make type-check`
+5. **提交前验证**:
+   - 完整检查: `make prepush`
+   - **Docker CI模拟**: `./ci-verify.sh` (推送前必须执行)
+6. **代码提交**: 使用conventional commits格式
 
-## 📁 项目结构规范
-- **源代码**：必须放在`src/`目录
-- **测试代码**：必须放在`tests/`目录
-- **文档**：放在`docs/`目录
-- **AI规则**：放在`.cursor/rules/`目录
+## 📁 项目结构标准
+```
+FootballPrediction/
+├── src/                    # 源代码目录 (当前需要重构)
+│   ├── api/               # API接口层
+│   ├── core/              # 核心业务逻辑
+│   ├── services/          # 服务层
+│   └── utils/             # 工具函数
+├── tests/                 # 测试代码
+│   ├── unit/              # 单元测试
+│   ├── integration/       # 集成测试
+│   └── fixtures/          # 测试数据
+├── docs/                  # 项目文档
+├── .cursor/rules/         # AI开发规则
+└── logs/                  # 日志文件
+```
 
 ## ✅ 代码质量标准
-- **测试覆盖率**: >= 80%
-- **代码风格**: 使用black格式化
-- **类型注解**: 使用typing进行类型注解
+- **测试覆盖率**: >= 80% (核心业务逻辑 >= 95%)
+- **代码风格**: 使用black格式化，最大行长度88字符
+- **类型注解**: 所有公共接口必须有完整类型注解
 - **异常处理**: 必须处理异常和边界情况
-- **日志记录**: 写结构化日志便于排查错误
+- **日志记录**: 使用结构化日志，便于问题排查
+- **中文注释**: 生成的代码必须包含详细中文注释
+
+## 🔧 开发工具集成
+- **代码格式化**: black, isort
+- **静态检查**: flake8, mypy, bandit
+- **测试框架**: pytest, coverage
+- **容器化**: Docker, docker-compose
+- **CI/CD**: GitHub Actions + 本地Docker模拟
+- **预提交检查**: pre-commit hooks
 
 ## 🚫 严禁事项
-- 绕过Makefile直接运行脚本
-- 跳过pre-commit检查或CI流程
-- 修改代码不写单元测试
-- 随意创建新文件（除非任务明确要求）
-- 使用`any`类型，避免类型安全问题
+- ❌ 绕过Makefile直接运行脚本
+- ❌ 跳过pre-commit检查或CI流程
+- ❌ 修改代码不写单元测试
+- ❌ 在main分支直接开发
+- ❌ 使用`any`类型，避免类型安全问题
+- ❌ 推送前不运行`./ci-verify.sh`验证
 
 ## 📝 提交规范
-- 遵循conventional commits格式
-- 每次生成代码前加载项目上下文
-- 必须包含详细中文注释
-- commit message要清晰描述变更内容
+- **格式**: 遵循conventional commits规范
+- **语言**: commit message使用英文，代码注释使用中文
+- **内容**: 清晰描述变更内容和影响范围
+- **测试**: 每次提交必须包含对应的单元测试
+
+## 🐳 Docker CI模拟重要性
+- **推送前必须**: 执行`./ci-verify.sh`验证CI兼容性
+- **环境一致性**: 与GitHub Actions CI环境完全一致
+- **依赖验证**: 确保requirements.lock在CI环境中正常工作
+- **服务测试**: 在PostgreSQL和Redis服务下运行完整测试
+
+## 📚 相关文档
+- [AI开发规则](.cursor/rules/ai.mdc)
+- [代码标准](.cursor/rules/coding-standards.mdc)
+- [测试规范](.cursor/rules/testing-workflow.mdc)
+- [Git工作流](.cursor/rules/git-workflow.mdc)
+- [CI/CD流程](.cursor/rules/ci-pipeline.mdc)
+- [文档规范](.cursor/rules/documentation.mdc)

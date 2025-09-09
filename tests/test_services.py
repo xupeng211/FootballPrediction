@@ -4,10 +4,10 @@
 
 import pytest
 
-from models import AnalysisResult, Content, User
-from services import (BaseService, ContentAnalysisService,
-                      DataProcessingService, ServiceManager,
-                      UserProfileService, service_manager)
+from src.models import AnalysisResult, Content, User
+from src.services import (BaseService, ContentAnalysisService,
+                          DataProcessingService, ServiceManager,
+                          UserProfileService, service_manager)
 
 
 class TestBaseService:
@@ -40,7 +40,7 @@ class TestContentAnalysisService:
     @pytest.fixture
     def sample_content(self):
         """创建测试内容"""
-        from models import ContentType
+        from src.models import ContentType
 
         return Content(
             id="test_content_1",
@@ -88,7 +88,7 @@ class TestContentAnalysisService:
         """测试批量分析"""
         await service.initialize()
 
-        from models import ContentType
+        from src.models import ContentType
 
         contents = [
             Content(
