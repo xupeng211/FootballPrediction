@@ -1,12 +1,12 @@
-# 🐳 AICultureKit Docker 部署指南
+# 🐳 FootballPrediction Docker 部署指南
 
 ## 🎯 快速开始
 
 ### 1. 🚀 生产环境部署
 ```bash
 # 克隆项目
-git clone https://github.com/xupeng211/AICultureKit.git
-cd AICultureKit
+git clone https://github.com/xupeng211/FootballPrediction.git
+cd FootballPrediction
 
 # 配置环境变量
 cp env.example .env
@@ -52,9 +52,9 @@ open http://localhost:8081      # Redis Commander
 ### 🐳 Docker镜像
 
 构建完成后，镜像会自动推送到：
-- `ghcr.io/xupeng211/aiculturekit:latest` (最新版本)
-- `ghcr.io/xupeng211/aiculturekit:main` (主分支)
-- `ghcr.io/xupeng211/aiculturekit:develop` (开发分支)
+- `ghcr.io/xupeng211/footballprediction:latest` (最新版本)
+- `ghcr.io/xupeng211/footballprediction:main` (主分支)
+- `ghcr.io/xupeng211/footballprediction:develop` (开发分支)
 
 ## 📋 可用命令
 
@@ -72,10 +72,10 @@ make -f Makefile.docker docker-clean    # 清理资源
 ### 直接使用Docker命令
 ```bash
 # 构建镜像
-docker build -t aiculturekit:latest .
+docker build -t footballprediction:latest .
 
 # 运行容器
-docker run -p 8000:8000 aiculturekit:latest
+docker run -p 8000:8000 footballprediction:latest
 
 # 查看运行状态
 docker ps
@@ -141,7 +141,7 @@ docker-compose logs redis
 version: '3.8'
 services:
   app:
-    image: ghcr.io/xupeng211/aiculturekit:latest
+    image: ghcr.io/xupeng211/footballprediction:latest
     ports:
       - "8000:8000"
     environment:
@@ -155,13 +155,13 @@ services:
 docker swarm init
 
 # 部署Stack
-docker stack deploy -c docker-compose.yml aiculturekit
+docker stack deploy -c docker-compose.yml footballprediction
 ```
 
 ### 使用Kubernetes
 ```bash
 # 创建命名空间
-kubectl create namespace aiculturekit
+kubectl create namespace footballprediction
 
 # 部署应用
 kubectl apply -f k8s/
@@ -233,7 +233,7 @@ FROM python:3.11-slim as runtime
 export DOCKER_BUILDKIT=1
 
 # 使用缓存挂载
-docker build --cache-from aiculturekit:latest .
+docker build --cache-from footballprediction:latest .
 ```
 
 ## 📈 监控和指标
@@ -258,4 +258,4 @@ docker build --cache-from aiculturekit:latest .
 3. **添加监控** - 集成APM和日志系统
 4. **扩展功能** - 根据业务需求添加新功能
 
-**🎉 恭喜！您的AICultureKit已经具备了企业级的容器化CI/CD能力！**
+**🎉 恭喜！您的FootballPrediction已经具备了企业级的容器化CI/CD能力！**

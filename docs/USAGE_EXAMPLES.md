@@ -1,6 +1,6 @@
 # 📖 使用示例
 
-本文档展示如何使用 AICultureKit Cursor 闭环开发系统来完成各种开发任务。
+本文档展示如何使用 FootballPrediction Cursor 闭环开发系统来完成各种开发任务。
 
 ## 🎯 基础使用流程
 
@@ -23,7 +23,7 @@ python scripts/quality_checker.py --summary
 TASK: 实现用户认证系统，包含登录、注册、密码重置功能
 
 CONTEXT:
-- 项目目录: /home/user/projects/AICultureKit
+- 项目目录: /home/user/projects/FootballPrediction
 - 当前分支: main
 - 已存在模块: src/core, src/models, src/services, src/utils
 - 最近提交: 初始化项目结构
