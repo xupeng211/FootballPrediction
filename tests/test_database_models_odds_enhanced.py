@@ -323,7 +323,7 @@ class TestOddsModelEnhancedCoverage:
         with patch.object(odds, "get_implied_probabilities") as mock_prob:
             mock_prob.return_value = {
                 "home_win": 0.45,
-                "away_win": 0.35
+                "away_win": 0.35,
                 # draw概率缺失
             }
 

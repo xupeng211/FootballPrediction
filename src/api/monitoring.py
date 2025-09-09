@@ -88,6 +88,10 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
             "status": "error",
             "error": str(e),
             "response_time_ms": round((time.time() - start_time) * 1000, 2),
+            "system": {},
+            "database": {},
+            "runtime": {},
+            "business": {},
         }
 
 
