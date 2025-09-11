@@ -12,10 +12,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from src.api.features import router as features_router
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
+from src.monitoring.metrics_collector import (start_metrics_collection,
+                                              stop_metrics_collection)
 
 # 配置日志
 logging.basicConfig(
@@ -35,6 +38,10 @@ async def lifespan(app: FastAPI):
         logger.info("📊 初始化数据库连接...")
         initialize_database()
 
+        # 启动监控指标收集
+        logger.info("📈 启动监控指标收集...")
+        await start_metrics_collection()
+
         logger.info("✅ 服务启动成功")
 
     except Exception as e:
@@ -45,6 +52,10 @@ async def lifespan(app: FastAPI):
 
     # 关闭时清理
     logger.info("🛑 服务正在关闭...")
+
+    # 停止监控指标收集
+    logger.info("📉 停止监控指标收集...")
+    await stop_metrics_collection()
 
 
 # 创建FastAPI应用
@@ -70,6 +81,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(health_router)
 app.include_router(monitoring_router, prefix="/api/v1")
+app.include_router(features_router, prefix="/api/v1")
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)

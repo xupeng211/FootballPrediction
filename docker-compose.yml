@@ -130,10 +130,292 @@ services:
   #   profiles: ["ml"]  # 可选启动
   #   restart: unless-stopped
 
+  # MinIO 对象存储服务 - 支持数据湖存储
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"      # MinIO API端口
+      - "9001:9001"      # MinIO管理界面端口
+    environment:
+      - MINIO_ROOT_USER=football_admin
+      - MINIO_ROOT_PASSWORD=football_minio_2025
+      - MINIO_DOMAIN=minio
+      - MINIO_REGION_NAME=us-east-1
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+      - ./scripts/minio-init.sh:/scripts/init.sh:ro
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # MinIO初始化服务 - 创建必要的桶
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: |
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 football_admin football_minio_2025;
+      /usr/bin/mc mb --ignore-existing myminio/football-lake-bronze;
+      /usr/bin/mc mb --ignore-existing myminio/football-lake-silver;
+      /usr/bin/mc mb --ignore-existing myminio/football-lake-gold;
+      /usr/bin/mc mb --ignore-existing myminio/football-lake-archive;
+      /usr/bin/mc mb --ignore-existing myminio/football-models;
+      /usr/bin/mc policy set public myminio/football-lake-bronze;
+      /usr/bin/mc policy set public myminio/football-lake-silver;
+      /usr/bin/mc policy set public myminio/football-lake-gold;
+      /usr/bin/mc policy set public myminio/football-models;
+      echo 'MinIO桶初始化完成 - 包含MLflow模型存储';
+      "
+    networks:
+      - football-network
+
+  # Prometheus 监控服务
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Grafana 可视化服务
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=football_grafana_2025
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SMTP_ENABLED=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL Exporter - 数据库指标导出
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://football_user:football_pass@db:5432/football_prediction_dev?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # Redis Exporter - Redis指标导出
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # Node Exporter - 系统指标导出
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # AlertManager - 告警管理
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager:/etc/alertmanager:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # Marquez - 数据血缘管理
+  marquez:
+    image: marquezproject/marquez:latest
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - MARQUEZ_CONFIG=/usr/src/app/marquez.yml
+      - MARQUEZ_DB_HOST=marquez-db
+      - MARQUEZ_DB_PORT=5432
+      - MARQUEZ_DB_NAME=marquez
+      - MARQUEZ_DB_USER=marquez_user
+      - MARQUEZ_DB_PASSWORD=marquez_password
+    volumes:
+      - ./monitoring/marquez/marquez.yml:/usr/src/app/marquez.yml:ro
+    depends_on:
+      marquez-db:
+        condition: service_healthy
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/namespaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Marquez Database
+  marquez-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=marquez
+      - POSTGRES_USER=marquez_user
+      - POSTGRES_PASSWORD=marquez_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5433:5432"
+    volumes:
+      - marquez_db_data:/var/lib/postgresql/data
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marquez_user -d marquez"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MLflow Database - 独立的PostgreSQL实例用于MLflow
+  mlflow-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=mlflow
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASSWORD=mlflow_password_2025
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5434:5432"
+    volumes:
+      - mlflow_db_data:/var/lib/postgresql/data
+    networks:
+      - football-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow_user -d mlflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MLflow Tracking Server - ML实验跟踪和模型注册
+  mlflow:
+    image: python:3.11-slim
+    ports:
+      - "5002:5000"  # MLflow UI端口
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow_user:mlflow_password_2025@mlflow-db:5432/mlflow
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://football-models/mlflow-artifacts
+      - AWS_ACCESS_KEY_ID=football_admin
+      - AWS_SECRET_ACCESS_KEY=football_minio_2025
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./mlflow:/app/mlflow
+    working_dir: /app
+    depends_on:
+      mlflow-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - football-network
+    command: >
+      bash -c "
+      pip install mlflow[extras]==2.8.1 psycopg2-binary boto3 &&
+      mlflow server
+        --backend-store-uri postgresql://mlflow_user:mlflow_password_2025@mlflow-db:5432/mlflow
+        --default-artifact-root s3://football-models/mlflow-artifacts
+        --artifacts-destination s3://football-models/mlflow-artifacts
+        --serve-artifacts
+        --host 0.0.0.0
+        --port 5000
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  marquez_db_data:
+    driver: local
+  mlflow_db_data:
     driver: local
 
 networks:

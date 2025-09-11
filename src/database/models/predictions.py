@@ -98,8 +98,35 @@ class Predictions(BaseModel):
         DateTime, nullable=False, comment="预测时间"
     )
 
+    # 验证相关字段
+    actual_result: Mapped[Optional[str]] = mapped_column(
+        String(10), nullable=True, comment="实际比赛结果"
+    )
+
+    is_correct: Mapped[Optional[bool]] = mapped_column(nullable=True, comment="预测是否正确")
+
+    verified_at: Mapped[Optional[DateTime]] = mapped_column(
+        DateTime, nullable=True, comment="验证时间"
+    )
+
+    # 特征数据（用于存储预测时使用的特征）
+    features_used: Mapped[Optional[JSON]] = mapped_column(
+        JSON, nullable=True, comment="预测时使用的特征数据"
+    )
+
+    # 预测元数据
+    prediction_metadata: Mapped[Optional[JSON]] = mapped_column(
+        JSON, nullable=True, comment="预测相关的元数据"
+    )
+
     # 关系定义
     match = relationship("Match", back_populates="predictions")
+
+    # 兼容性别名
+    @property
+    def created_at(self) -> datetime:
+        """兼容性属性：预测创建时间"""
+        return self.predicted_at
 
     # 索引定义
     __table_args__ = (

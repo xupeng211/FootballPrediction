@@ -1,0 +1,322 @@
+"""add_data_collection_logs_and_bronze_layer_tables
+
+Revision ID: f48d412852cc
+Revises: d56c8d0d5aa0
+Create Date: 2025-09-10 20:42:25.754318
+
+"""
+
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+
+# revision identifiers, used by Alembic.
+revision: str = "f48d412852cc"
+down_revision: Union[str, None] = "d56c8d0d5aa0"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """
+    创建数据采集日志表和Bronze层原始数据表
+
+    基于 DATA_DESIGN.md 第1.3节和第2.1节设计：
+    - data_collection_logs: 采集任务日志记录
+    - raw_match_data: Bronze层原始比赛数据
+    - raw_odds_data: Bronze层原始赔率数据（分区表）
+    """
+
+    # 创建数据采集日志表
+    op.create_table(
+        "data_collection_logs",
+        sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
+        sa.Column(
+            "data_source", sa.String(length=100), nullable=False, comment="数据源标识"
+        ),
+        sa.Column(
+            "collection_type",
+            sa.String(length=50),
+            nullable=False,
+            comment="采集类型(fixtures/odds/scores)",
+        ),
+        sa.Column("start_time", sa.DateTime(), nullable=False, comment="开始时间"),
+        sa.Column("end_time", sa.DateTime(), nullable=True, comment="结束时间"),
+        sa.Column(
+            "records_collected",
+            sa.Integer(),
+            nullable=False,
+            default=0,
+            comment="采集记录数",
+        ),
+        sa.Column(
+            "success_count", sa.Integer(), nullable=False, default=0, comment="成功数量"
+        ),
+        sa.Column(
+            "error_count", sa.Integer(), nullable=False, default=0, comment="错误数量"
+        ),
+        sa.Column(
+            "status",
+            sa.String(length=20),
+            nullable=False,
+            comment="状态(success/failed/partial)",
+        ),
+        sa.Column("error_message", sa.Text(), nullable=True, comment="错误信息"),
+        sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
+        sa.PrimaryKeyConstraint("id"),
+        comment="数据采集日志表",
+    )
+
+    # 为采集日志表创建索引
+    op.create_index(
+        "idx_collection_logs_source_type",
+        "data_collection_logs",
+        ["data_source", "collection_type"],
+    )
+    op.create_index(
+        "idx_collection_logs_start_time", "data_collection_logs", ["start_time"]
+    )
+    op.create_index("idx_collection_logs_status", "data_collection_logs", ["status"])
+
+    # 创建Bronze层原始比赛数据表
+    op.create_table(
+        "raw_match_data",
+        sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
+        sa.Column(
+            "data_source", sa.String(length=100), nullable=False, comment="数据源标识"
+        ),
+        sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
+        sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
+        sa.Column(
+            "processed",
+            sa.Boolean(),
+            nullable=False,
+            default=False,
+            comment="是否已处理",
+        ),
+        sa.Column(
+            "external_match_id",
+            sa.String(length=100),
+            nullable=True,
+            comment="外部比赛ID",
+        ),
+        sa.Column(
+            "external_league_id",
+            sa.String(length=100),
+            nullable=True,
+            comment="外部联赛ID",
+        ),
+        sa.Column("match_time", sa.DateTime(), nullable=True, comment="比赛时间"),
+        sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
+        sa.PrimaryKeyConstraint("id"),
+        comment="Bronze层原始比赛数据表",
+    )
+
+    # 为Bronze层比赛数据表创建索引
+    op.create_index("idx_raw_match_data_source", "raw_match_data", ["data_source"])
+    op.create_index(
+        "idx_raw_match_data_collected_at", "raw_match_data", ["collected_at"]
+    )
+    op.create_index("idx_raw_match_data_processed", "raw_match_data", ["processed"])
+    op.create_index(
+        "idx_raw_match_data_external_id", "raw_match_data", ["external_match_id"]
+    )
+    op.create_index("idx_raw_match_data_match_time", "raw_match_data", ["match_time"])
+
+    # 创建Bronze层原始赔率数据表（分区表准备）
+    # 注意：PostgreSQL分区表需要特殊语法，这里先创建基础结构
+    op.create_table(
+        "raw_odds_data",
+        sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
+        sa.Column(
+            "data_source", sa.String(length=100), nullable=False, comment="数据源标识"
+        ),
+        sa.Column(
+            "external_match_id",
+            sa.String(length=100),
+            nullable=True,
+            comment="外部比赛ID",
+        ),
+        sa.Column("bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"),
+        sa.Column("market_type", sa.String(length=50), nullable=True, comment="市场类型"),
+        sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
+        sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
+        sa.Column(
+            "processed",
+            sa.Boolean(),
+            nullable=False,
+            default=False,
+            comment="是否已处理",
+        ),
+        sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
+        sa.PrimaryKeyConstraint("id"),
+        comment="Bronze层原始赔率数据表",
+    )
+
+    # 为Bronze层赔率数据表创建索引
+    op.create_index("idx_raw_odds_data_source", "raw_odds_data", ["data_source"])
+    op.create_index("idx_raw_odds_data_collected_at", "raw_odds_data", ["collected_at"])
+    op.create_index("idx_raw_odds_data_processed", "raw_odds_data", ["processed"])
+    op.create_index(
+        "idx_raw_odds_data_match_bookmaker",
+        "raw_odds_data",
+        ["external_match_id", "bookmaker"],
+    )
+    op.create_index("idx_raw_odds_data_market_type", "raw_odds_data", ["market_type"])
+
+    # TODO: 后续优化可以考虑按时间分区
+    # 这需要使用原生SQL来创建分区表结构
+
+    # 创建Gold层特征表的扩展字段（对现有features表的增强）
+    # 添加新的特征字段以支持更复杂的ML特征
+    try:
+        # 检查是否存在features表，如果存在则添加新字段
+        op.add_column(
+            "features",
+            sa.Column(
+                "recent_5_draws",
+                sa.Integer(),
+                nullable=True,
+                default=0,
+                comment="近5场平局数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "recent_5_losses",
+                sa.Integer(),
+                nullable=True,
+                default=0,
+                comment="近5场失利数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "recent_5_goals_against",
+                sa.Integer(),
+                nullable=True,
+                default=0,
+                comment="近5场失球数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "home_advantage_score",
+                sa.Numeric(5, 2),
+                nullable=True,
+                comment="主场优势评分",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "form_trend",
+                sa.String(length=20),
+                nullable=True,
+                comment="状态趋势(improving/declining/stable)",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "h2h_draws",
+                sa.Integer(),
+                nullable=True,
+                default=0,
+                comment="对战历史平局数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "h2h_losses",
+                sa.Integer(),
+                nullable=True,
+                default=0,
+                comment="对战历史失利数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "odds_movement",
+                sa.String(length=20),
+                nullable=True,
+                comment="赔率变动趋势",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "market_sentiment",
+                sa.Numeric(5, 4),
+                nullable=True,
+                comment="市场情绪指数",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column(
+                "feature_version",
+                sa.String(length=20),
+                nullable=True,
+                default="v1.0",
+                comment="特征版本",
+            ),
+        )
+        op.add_column(
+            "features",
+            sa.Column("last_updated", sa.DateTime(), nullable=True, comment="最后更新时间"),
+        )
+    except Exception:
+        # 如果features表不存在或字段已存在，忽略错误
+        pass
+
+
+def downgrade() -> None:
+    """
+    回滚数据采集日志表和Bronze层表的创建
+    """
+
+    # 删除Gold层特征表的扩展字段
+    try:
+        op.drop_column("features", "last_updated")
+        op.drop_column("features", "feature_version")
+        op.drop_column("features", "market_sentiment")
+        op.drop_column("features", "odds_movement")
+        op.drop_column("features", "h2h_losses")
+        op.drop_column("features", "h2h_draws")
+        op.drop_column("features", "form_trend")
+        op.drop_column("features", "home_advantage_score")
+        op.drop_column("features", "recent_5_goals_against")
+        op.drop_column("features", "recent_5_losses")
+        op.drop_column("features", "recent_5_draws")
+    except Exception:
+        # 忽略字段不存在的错误
+        pass
+
+    # 删除Bronze层赔率数据表
+    op.drop_index("idx_raw_odds_data_market_type", table_name="raw_odds_data")
+    op.drop_index("idx_raw_odds_data_match_bookmaker", table_name="raw_odds_data")
+    op.drop_index("idx_raw_odds_data_processed", table_name="raw_odds_data")
+    op.drop_index("idx_raw_odds_data_collected_at", table_name="raw_odds_data")
+    op.drop_index("idx_raw_odds_data_source", table_name="raw_odds_data")
+    op.drop_table("raw_odds_data")
+
+    # 删除Bronze层比赛数据表
+    op.drop_index("idx_raw_match_data_match_time", table_name="raw_match_data")
+    op.drop_index("idx_raw_match_data_external_id", table_name="raw_match_data")
+    op.drop_index("idx_raw_match_data_processed", table_name="raw_match_data")
+    op.drop_index("idx_raw_match_data_collected_at", table_name="raw_match_data")
+    op.drop_index("idx_raw_match_data_source", table_name="raw_match_data")
+    op.drop_table("raw_match_data")
+
+    # 删除数据采集日志表
+    op.drop_index("idx_collection_logs_status", table_name="data_collection_logs")
+    op.drop_index("idx_collection_logs_start_time", table_name="data_collection_logs")
+    op.drop_index("idx_collection_logs_source_type", table_name="data_collection_logs")
+    op.drop_table("data_collection_logs")

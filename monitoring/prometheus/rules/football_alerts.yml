@@ -1,0 +1,109 @@
+groups:
+  - name: football_data_collection
+    rules:
+      # 数据采集成功率告警
+      - alert: DataCollectionFailureRateHigh
+        expr: (rate(football_data_collection_errors_total[5m]) / rate(football_data_collection_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: data_collection
+        annotations:
+          summary: "数据采集失败率过高"
+          description: "数据采集失败率 {{ $value | humanizePercentage }} 超过 5%，需要检查数据源连接"
+
+      # 数据采集完全停止告警
+      - alert: DataCollectionStopped
+        expr: increase(football_data_collection_total[10m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: data_collection
+        annotations:
+          summary: "数据采集完全停止"
+          description: "过去10分钟内没有任何数据采集活动，请检查采集服务状态"
+
+  - name: football_data_processing
+    rules:
+      # 数据清洗失败率告警
+      - alert: DataCleaningFailureRateHigh
+        expr: (rate(football_data_cleaning_errors_total[5m]) / rate(football_data_cleaning_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: data_processing
+        annotations:
+          summary: "数据清洗失败率过高"
+          description: "数据清洗失败率 {{ $value | humanizePercentage }} 超过 5%，需要检查数据质量"
+
+  - name: football_scheduler
+    rules:
+      # 调度任务延迟告警
+      - alert: SchedulerDelayHigh
+        expr: football_scheduler_task_delay_seconds > 600
+        for: 1m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "调度任务延迟过高"
+          description: "任务 {{ $labels.task_name }} 延迟 {{ $value }} 秒，超过10分钟阈值"
+
+      # 调度任务失败告警
+      - alert: SchedulerTaskFailed
+        expr: increase(football_scheduler_task_failures_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: scheduler
+        annotations:
+          summary: "调度任务执行失败"
+          description: "任务 {{ $labels.task_name }} 在过去5分钟内失败了 {{ $value }} 次"
+
+  - name: football_database
+    rules:
+      # 数据库连接数过高告警
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "数据库连接数过高"
+          description: "PostgreSQL 活跃连接数 {{ $value }}，接近最大连接数限制"
+
+      # 数据表行数异常变化告警
+      - alert: DataTableRowCountAbnormal
+        expr: abs(increase(football_table_row_count[1h]) - increase(football_table_row_count[1h] offset 1h)) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "数据表行数异常变化"
+          description: "表 {{ $labels.table_name }} 的行数变化异常，与前一小时相比差异超过1000行"
+
+  - name: system_health
+    rules:
+      # 应用响应时间告警
+      - alert: ApplicationResponseTimeHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "应用响应时间过高"
+          description: "95分位响应时间 {{ $value }} 秒，超过2秒阈值"
+
+      # 应用错误率告警
+      - alert: ApplicationErrorRateHigh
+        expr: (rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "应用错误率过高"
+          description: "HTTP 5xx错误率 {{ $value | humanizePercentage }} 超过5%"
