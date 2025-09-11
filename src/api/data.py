@@ -149,7 +149,11 @@ async def get_match_features(
                     else None
                 ),
                 "predicted_score": latest_prediction.get_predicted_score(),
-                "predicted_at": latest_prediction.predicted_at.isoformat(),
+                "predicted_at": (
+                    latest_prediction.predicted_at.isoformat()
+                    if hasattr(latest_prediction.predicted_at, "isoformat")
+                    else str(latest_prediction.predicted_at)
+                ),
             }
 
         # 处理赔率数据
@@ -369,7 +373,11 @@ async def get_dashboard_data(session: AsyncSession = Depends(get_async_session))
                             if pred.confidence_score
                             else None
                         ),
-                        "predicted_at": pred.predicted_at.isoformat(),
+                        "predicted_at": (
+                            pred.predicted_at.isoformat()
+                            if hasattr(pred.predicted_at, "isoformat")
+                            else str(pred.predicted_at)
+                        ),
                     }
                     for pred in latest_predictions
                 ],

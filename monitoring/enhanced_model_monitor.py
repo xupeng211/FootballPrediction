@@ -15,13 +15,13 @@ import json
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 from prometheus_client import (CollectorRegistry, Counter, Gauge, Histogram,
                                start_http_server)
 from scipy.stats import entropy, ks_2samp
-from sqlalchemy import and_, desc, func, select
+from sqlalchemy import Integer, and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # 添加项目根目录到Python路径
@@ -57,8 +57,8 @@ class EnhancedModelMonitor:
         self._init_prometheus_metrics()
 
         # 历史数据缓存
-        self._baseline_features = {}
-        self._baseline_confidence = {}
+        self._baseline_features: Dict[str, Dict[str, np.ndarray]] = {}
+        self._baseline_confidence: Dict[str, np.ndarray] = {}
 
         # 监控配置
         self.drift_threshold = 0.1  # KL散度阈值
@@ -195,8 +195,8 @@ class EnhancedModelMonitor:
             return {}
 
         # 处理特征数据
-        baseline_features = {}
-        baseline_confidence = []
+        baseline_features: Dict[str, List[float]] = {}
+        baseline_confidence: List[float] = []
 
         for prediction, feature in baseline_data:
             # 收集置信度数据
@@ -235,8 +235,12 @@ class EnhancedModelMonitor:
         }
 
         # 缓存基线数据
-        self._baseline_features[model_name] = baseline_result["features"]
-        self._baseline_confidence[model_name] = baseline_result["confidence_scores"]
+        self._baseline_features[model_name] = cast(
+            Dict[str, np.ndarray], baseline_result["features"]
+        )
+        self._baseline_confidence[model_name] = cast(
+            np.ndarray, baseline_result["confidence_scores"]
+        )
 
         logger.info(f"收集了 {len(baseline_data)} 条基线数据，{len(baseline_features)} 个特征")
         return baseline_result
@@ -338,7 +342,7 @@ class EnhancedModelMonitor:
             return {"error": "No current data available"}
 
         # 提取当前特征数据
-        current_features = {}
+        current_features: Dict[str, List[float]] = {}
         for prediction, feature in current_data:
             if hasattr(feature, "feature_data") and feature.feature_data:
                 feature_dict = (
@@ -590,7 +594,7 @@ class EnhancedModelMonitor:
             select(
                 Predictions.model_version,
                 func.count().label("total_predictions"),
-                func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
+                func.sum(func.cast(Predictions.is_correct, Integer)).label(
                     "correct_predictions"
                 ),
                 func.avg(
@@ -701,7 +705,7 @@ class EnhancedModelMonitor:
         logger.info("开始模型监控周期")
 
         cycle_start = datetime.utcnow()
-        results = {
+        results: Dict[str, Any] = {
             "start_time": cycle_start,
             "models_monitored": 0,
             "drift_detections": {},
@@ -719,6 +723,9 @@ class EnhancedModelMonitor:
                 )
                 .distinct()
             )
+
+            if self.session is None:
+                raise RuntimeError("Session not initialized")
 
             result = await self.session.execute(stmt)
             active_models = [row.model_name for row in result]

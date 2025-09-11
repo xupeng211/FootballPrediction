@@ -295,7 +295,12 @@ def cleanup_data(days_to_keep: int = 30):
                 logger.info("使用MinIO/S3数据湖存储")
             except Exception as e:
                 logger.warning(f"MinIO/S3不可用，回退到本地存储: {str(e)}")
-                storage = DataLakeStorage(base_path="/data/football_lake")
+                # 使用当前目录下的data子目录，确保测试环境可访问
+                import os
+
+                data_path = os.path.join(os.getcwd(), "data", "football_lake")
+                os.makedirs(data_path, exist_ok=True)
+                storage = DataLakeStorage(base_path=data_path)
 
             # 2. 归档原始数据到数据湖
             tables_to_archive = [
@@ -388,7 +393,14 @@ def cleanup_data(days_to_keep: int = 30):
                     raise
 
             # 4. 清理临时文件和缓存
-            temp_dirs = ["/tmp/football_prediction", "/var/cache/football_prediction"]
+            import tempfile
+
+            # 使用安全的临时目录获取方法
+            temp_base = tempfile.gettempdir()
+            temp_dirs = [
+                os.path.join(temp_base, "football_prediction"),
+                os.path.join(os.path.expanduser("~"), ".cache", "football_prediction"),
+            ]
             temp_files_deleted = 0
 
             for temp_dir in temp_dirs:

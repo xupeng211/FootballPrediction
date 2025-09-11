@@ -301,8 +301,7 @@ class MultiUserDatabaseManager:
             self._configs[role] = role_config
 
             # 为每个角色创建独立的数据库管理器
-            manager = DatabaseManager.__new__(DatabaseManager)
-            manager.__init__()
+            manager = DatabaseManager()
             manager.initialize(role_config)
 
             self._managers[role] = manager

@@ -150,15 +150,45 @@ async def _check_database(db: Session) -> Dict[str, Any]:
 async def _check_redis() -> Dict[str, Any]:
     """检查Redis连接健康状态"""
     try:
-        # 这里可以添加实际的Redis连接检查
-        # 目前返回模拟结果
-        return {"healthy": True, "message": "Redis连接正常", "response_time_ms": 0}
+        import time
+
+        from src.cache import RedisManager
+
+        start_time = time.time()
+
+        # 使用Redis管理器进行健康检查
+        redis_manager = RedisManager()
+        is_healthy = await redis_manager.aping()
+
+        response_time_ms = round((time.time() - start_time) * 1000, 2)
+
+        if is_healthy:
+            # 获取Redis服务器信息
+            info = redis_manager.get_info()
+            return {
+                "healthy": True,
+                "message": "Redis连接正常",
+                "response_time_ms": response_time_ms,
+                "server_info": {
+                    "version": info.get("version", "unknown"),
+                    "connected_clients": info.get("connected_clients", 0),
+                    "used_memory": info.get("used_memory_human", "0B"),
+                },
+            }
+        else:
+            return {
+                "healthy": False,
+                "message": "Redis连接失败：无法ping通服务器",
+                "response_time_ms": response_time_ms,
+            }
+
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"Redis连接失败: {str(e)}",
             "error": str(e),
+            "response_time_ms": 0,
         }
 
 

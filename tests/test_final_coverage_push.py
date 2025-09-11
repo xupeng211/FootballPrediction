@@ -109,14 +109,25 @@ class TestModelsSimpleCoverage:
         assert ContentType.TEXT is not None
         assert ContentType.IMAGE is not None if hasattr(ContentType, "IMAGE") else True
         assert UserRole.ADMIN is not None
-        assert UserRole.VIEWER is not None
+        assert UserRole.USER is not None
+        assert UserRole.GUEST is not None
+        assert UserRole.MODERATOR is not None
 
     def test_models_to_dict_methods(self):
         """测试模型的to_dict方法"""
-        from src.models import AnalysisResult, User, UserProfile
-
         # 测试User to_dict
-        user = User(id="1", username="test", email="test@example.com")
+        from datetime import datetime
+
+        from src.models import AnalysisResult, User, UserProfile, UserRole
+
+        profile = UserProfile(
+            user_id="1",
+            display_name="Test User",
+            email="test@example.com",
+            preferences={},
+            created_at=datetime.now(),
+        )
+        user = User(id="1", username="test", role=UserRole.USER, profile=profile)
         user_dict = user.to_dict()
         assert isinstance(user_dict, dict)
         assert user_dict["username"] == "test"
@@ -124,16 +135,22 @@ class TestModelsSimpleCoverage:
         # 测试AnalysisResult to_dict
         result = AnalysisResult(
             id="1",
-            content_id="1",
             analysis_type="test",
-            result_data={"test": "data"},
-            confidence_score=0.9,
+            result={"test": "data"},
+            confidence=0.9,
+            timestamp=datetime.now(),
         )
         result_dict = result.to_dict()
         assert isinstance(result_dict, dict)
 
         # 测试UserProfile to_dict
-        profile = UserProfile(user_id="1")
+        profile = UserProfile(
+            user_id="1",
+            display_name="Test",
+            email="test@example.com",
+            preferences={},
+            created_at=datetime.now(),
+        )
         profile_dict = profile.to_dict()
         assert isinstance(profile_dict, dict)
 

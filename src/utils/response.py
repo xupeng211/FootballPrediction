@@ -6,6 +6,17 @@ API响应工具类
 
 from typing import Any, Dict, Optional
 
+from pydantic import BaseModel
+
+
+class APIResponseModel(BaseModel):
+    """API响应Pydantic模型"""
+
+    success: bool
+    message: str
+    data: Optional[Any] = None
+    code: Optional[str] = None
+
 
 class APIResponse:
     """API响应格式化工具"""
