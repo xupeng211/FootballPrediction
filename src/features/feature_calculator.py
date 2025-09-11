@@ -410,12 +410,15 @@ class FeatureCalculator:
 
             results = await asyncio.gather(*tasks)
 
+            # 类型转换确保正确的类型匹配
+            from typing import cast
+
             return AllMatchFeatures(
                 match_entity=match_entity,
-                home_team_recent=results[0],
-                away_team_recent=results[1],
-                historical_matchup=results[2],
-                odds_features=results[3],
+                home_team_recent=cast(RecentPerformanceFeatures, results[0]),
+                away_team_recent=cast(RecentPerformanceFeatures, results[1]),
+                historical_matchup=cast(HistoricalMatchupFeatures, results[2]),
+                odds_features=cast(OddsFeatures, results[3]),
             )
 
     async def calculate_all_team_features(

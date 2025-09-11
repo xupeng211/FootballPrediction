@@ -4,6 +4,7 @@
 提供内容分析和处理功能。
 """
 
+from datetime import datetime
 from typing import List, Optional
 
 from src.models import AnalysisResult, Content
@@ -48,15 +49,16 @@ class ContentAnalysisService(BaseService):
 
         return AnalysisResult(
             id=f"analysis_{content.id}",
-            content_id=content.id,
             analysis_type="content_analysis",
-            result_data=analysis_data,
-            confidence_score=0.85,
+            result=analysis_data,
+            confidence=0.85,
+            timestamp=datetime.now(),
+            content_id=content.id,
         )
 
     async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
         """批量分析内容"""
-        results = []
+        results: List[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
             if result:

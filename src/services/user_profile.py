@@ -34,11 +34,19 @@ class UserProfileService(BaseService):
         self.logger.info(f"正在生成用户画像: {user.id}")
 
         # TODO: 实现实际的用户画像生成逻辑
+        from datetime import datetime
+
         profile = UserProfile(
             user_id=user.id,
-            interests=["足球", "体育", "预测"],
-            preferences={"content_type": "text", "language": "zh"},
-            behavior_patterns={"active_hours": [9, 10, 11, 14, 15, 16]},
+            display_name=user.username,
+            email=user.profile.email,  # Assuming email is in the user's profile
+            preferences={
+                "interests": ["足球", "体育", "预测"],
+                "content_type": "text",
+                "language": "zh",
+                "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
+            },
+            created_at=datetime.now(),
         )
 
         self._user_profiles[user.id] = profile
@@ -60,5 +68,8 @@ class UserProfileService(BaseService):
         for key, value in updates.items():
             if hasattr(profile, key):
                 setattr(profile, key, value)
+            else:
+                # Assume other keys are part of preferences
+                profile.preferences[key] = value
 
         return profile

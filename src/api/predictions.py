@@ -9,20 +9,20 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.response import APIResponse
 from src.database.connection import get_async_session
 from src.database.models import Match, Prediction
 from src.models.prediction_service import PredictionService
+from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/predictions", tags=["predictions"])
+router = APIRouter(prefix="/predictions", tags=["predictions"])
 
 # 全局预测服务实例
 prediction_service = PredictionService()
@@ -37,7 +37,7 @@ async def get_match_prediction(
     match_id: int,
     force_predict: bool = Query(False, description="是否强制重新预测"),
     session: AsyncSession = Depends(get_async_session),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取指定比赛的预测结果
 
@@ -66,7 +66,7 @@ async def get_match_prediction(
             prediction_query = (
                 select(Prediction)
                 .where(Prediction.match_id == match_id)
-                .order_by(desc(Prediction.created_at))
+                .order_by(Prediction.created_at.desc())
             )
 
             prediction_result = await session.execute(prediction_query)
@@ -142,7 +142,7 @@ async def get_match_prediction(
 )
 async def predict_match(
     match_id: int, session: AsyncSession = Depends(get_async_session)
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     对指定比赛进行实时预测
 
@@ -181,7 +181,7 @@ async def predict_match(
 @router.post("/batch", summary="批量预测比赛", description="对多场比赛进行批量预测")
 async def batch_predict_matches(
     match_ids: List[int], session: AsyncSession = Depends(get_async_session)
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     批量预测多场比赛
 
@@ -236,7 +236,7 @@ async def get_match_prediction_history(
     match_id: int,
     limit: int = Query(10, description="返回记录数量限制", ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取比赛的历史预测记录
 
@@ -311,7 +311,7 @@ async def get_recent_predictions(
     hours: int = Query(24, description="时间范围（小时）", ge=1, le=168),
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
     session: AsyncSession = Depends(get_async_session),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取最近的预测记录
 
@@ -393,7 +393,7 @@ async def get_recent_predictions(
 )
 async def verify_prediction(
     match_id: int, session: AsyncSession = Depends(get_async_session)
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     验证预测结果
 

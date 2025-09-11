@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,27 +24,78 @@ from src.models.model_training import BaselineModelTrainer
 from src.models.prediction_service import PredictionResult, PredictionService
 
 
+def pytest_db_available():
+    """检查数据库是否可用以及表结构是否存在"""
+    try:
+        import sqlalchemy as sa
+
+        from src.database.connection import get_database_manager
+
+        # 检查数据库连接
+        db_manager = get_database_manager()
+
+        # 检查关键表是否存在
+        with db_manager.get_session() as session:
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"
+                )
+            )
+            matches_exists = result.scalar()
+
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'teams')"
+                )
+            )
+            teams_exists = result.scalar()
+
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'predictions')"
+                )
+            )
+            predictions_exists = result.scalar()
+
+            return matches_exists and teams_exists and predictions_exists
+
+    except Exception:
+        return False
+
+
+# 跳过需要数据库的测试，如果数据库不可用
+pytestmark = pytest.mark.skipif(
+    not pytest_db_available(), reason="Database connection not available"
+)
+
+
 class TestModelIntegration:
     """模型集成测试套件"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def db_session(self):
         """数据库会话fixture"""
         db_manager = DatabaseManager()
+        if not hasattr(db_manager, "_async_engine") or db_manager._async_engine is None:
+            db_manager.initialize()
         async with db_manager.get_async_session() as session:
             yield session
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def sample_match_data(self, db_session: AsyncSession):
         """创建测试用的比赛数据"""
         # 创建联赛
-        league = League(name="Test League", country="Test Country", level=1)
+        league = League(league_name="Test League", country="Test Country", level=1)
         db_session.add(league)
         await db_session.flush()
 
         # 创建球队
-        home_team = Team(name="Home Team", league_id=league.id, country="Test Country")
-        away_team = Team(name="Away Team", league_id=league.id, country="Test Country")
+        home_team = Team(
+            team_name="Home Team", league_id=league.id, country="Test Country"
+        )
+        away_team = Team(
+            team_name="Away Team", league_id=league.id, country="Test Country"
+        )
         db_session.add_all([home_team, away_team])
         await db_session.flush()
 

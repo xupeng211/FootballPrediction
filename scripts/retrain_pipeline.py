@@ -19,11 +19,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import click
-import mlflow
 import mlflow.sklearn
-from mlflow import MlflowClient
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import mlflow
+from mlflow import MlflowClient
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -107,7 +108,7 @@ class AutoRetrainPipeline:
         # 查询性能数据
         stmt = select(
             func.count().label("total_predictions"),
-            func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
+            func.sum(func.case((Predictions.is_correct.is_(True), 1), else_=0)).label(
                 "correct_predictions"
             ),
             func.avg(Predictions.confidence_score).label("avg_confidence"),
@@ -205,9 +206,9 @@ class AutoRetrainPipeline:
             select(
                 func.date(Predictions.verified_at).label("prediction_date"),
                 func.count().label("daily_predictions"),
-                func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
-                    "daily_correct"
-                ),
+                func.sum(
+                    func.case((Predictions.is_correct.is_(True), 1), else_=0)
+                ).label("daily_correct"),
             )
             .where(and_(*query_conditions))
             .group_by(func.date(Predictions.verified_at))
