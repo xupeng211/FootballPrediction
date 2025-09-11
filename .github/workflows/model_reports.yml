@@ -1,0 +1,255 @@
+name: Model Performance Reports
+
+on:
+  schedule:
+    # 每天早上 8:00 UTC (北京时间 16:00) 生成报表
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: '分析回看天数'
+        required: false
+        default: '30'
+        type: string
+      force_retrain:
+        description: '强制触发重训练评估'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+jobs:
+  generate-reports:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: football_prediction_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: 安装系统依赖
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: 安装 Python 依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: 设置环境变量
+      run: |
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/football_prediction_test" >> $GITHUB_ENV
+        echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+        echo "MLFLOW_TRACKING_URI=http://localhost:5002" >> $GITHUB_ENV
+
+    - name: 运行数据库迁移
+      run: |
+        alembic upgrade head
+
+    - name: 更新预测结果
+      run: |
+        python scripts/update_predictions_results.py --update --report --trends --days ${{ inputs.days_back || '30' }} --verbose
+      continue-on-error: true
+
+    - name: 生成性能报表
+      run: |
+        python reports/model_performance_report.py --days ${{ inputs.days_back || '30' }} --output reports/generated --verbose
+      continue-on-error: true
+
+    - name: 运行自动重训练评估
+      if: ${{ inputs.force_retrain == true || github.event_name == 'schedule' }}
+      run: |
+        python scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days ${{ inputs.days_back || '30' }} --verbose
+      continue-on-error: true
+
+    - name: 运行模型监控
+      run: |
+        python -c "
+        import asyncio
+        from monitoring.enhanced_model_monitor import EnhancedModelMonitor
+
+        async def run_monitoring():
+            async with EnhancedModelMonitor() as monitor:
+                results = await monitor.run_monitoring_cycle()
+                print(f'监控完成: {results[\"models_monitored\"]} 个模型')
+
+        asyncio.run(run_monitoring())
+        "
+      continue-on-error: true
+
+    - name: 收集生成的文件
+      run: |
+        mkdir -p artifacts
+
+        # 复制报表文件
+        if [ -d "reports/generated" ]; then
+          cp -r reports/generated artifacts/
+        fi
+
+        # 复制重训练报告
+        if [ -d "models/retrain_reports" ]; then
+          cp -r models/retrain_reports artifacts/
+        fi
+
+        # 生成总结报告
+        echo "# 模型性能报表生成总结" > artifacts/summary.md
+        echo "" >> artifacts/summary.md
+        echo "**生成时间**: $(date)" >> artifacts/summary.md
+        echo "**分析周期**: ${{ inputs.days_back || '30' }} 天" >> artifacts/summary.md
+        echo "" >> artifacts/summary.md
+
+        if [ -d "reports/generated" ]; then
+          echo "## 📊 性能报表" >> artifacts/summary.md
+          find reports/generated -name "*.md" -exec basename {} \; | while read file; do
+            echo "- [$file](generated/$file)" >> artifacts/summary.md
+          done
+          echo "" >> artifacts/summary.md
+        fi
+
+        if [ -d "models/retrain_reports" ]; then
+          echo "## 🔄 重训练报告" >> artifacts/summary.md
+          find models/retrain_reports -name "*.md" -exec basename {} \; | while read file; do
+            echo "- [$file](../models/retrain_reports/$file)" >> artifacts/summary.md
+          done
+        fi
+
+    - name: 上传报表文件
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-reports-${{ github.run_number }}
+        path: artifacts/
+        retention-days: 30
+
+    - name: 发送通知到 Slack (可选)
+      if: always() && secrets.SLACK_WEBHOOK_URL
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          模型性能报表生成完成
+          - 分析周期: ${{ inputs.days_back || '30' }} 天
+          - 状态: ${{ job.status }}
+          - 下载链接: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # 可选的部署到 GitHub Pages
+  deploy-reports:
+    needs: generate-reports
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+    - name: 下载报表文件
+      uses: actions/download-artifact@v4
+      with:
+        name: model-reports-${{ github.run_number }}
+        path: ./reports-site
+
+    - name: 设置 GitHub Pages
+      uses: actions/configure-pages@v3
+
+    - name: 构建 Pages 站点
+      run: |
+        cd reports-site
+
+        # 创建简单的 HTML 索引页
+        cat > index.html << EOF
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>足球预测模型性能报表</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; }
+                h1 { color: #2c3e50; }
+                .report-list { list-style: none; padding: 0; }
+                .report-item { margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+                .report-item a { text-decoration: none; color: #3498db; font-weight: bold; }
+                .timestamp { color: #7f8c8d; font-size: 0.9em; }
+                .chart { margin: 20px 0; }
+                .chart img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <h1>🏈 足球预测模型性能报表</h1>
+            <p class="timestamp">最后更新: $(date)</p>
+
+            <h2>📊 最新报表</h2>
+            <ul class="report-list">
+        EOF
+
+        # 添加 Markdown 报表链接
+        find . -name "*.md" -type f | sort -r | head -10 | while read file; do
+          filename=$(basename "$file")
+          echo "                <li class=\"report-item\"><a href=\"$file\">$filename</a></li>" >> index.html
+        done
+
+        # 添加图表展示
+        echo "            </ul>" >> index.html
+        echo "            <h2>📈 性能图表</h2>" >> index.html
+        echo "            <div class=\"chart\">" >> index.html
+
+        find . -name "*.png" -type f | head -5 | while read chart; do
+          echo "                <img src=\"$chart\" alt=\"Performance Chart\">" >> index.html
+        done
+
+        cat >> index.html << EOF
+            </div>
+
+            <hr>
+            <p><em>本报表由 GitHub Actions 自动生成</em></p>
+        </body>
+        </html>
+        EOF
+
+    - name: 上传到 GitHub Pages
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: ./reports-site
+
+    - name: 部署到 GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
