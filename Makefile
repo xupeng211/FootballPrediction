@@ -68,7 +68,7 @@ lint: ## Quality: Run flake8 and mypy checks
 	echo "$(YELLOW)Running flake8...$(RESET)" && \
 	flake8 src/ tests/ && \
 	echo "$(YELLOW)Running mypy...$(RESET)" && \
-	mypy src/ && \
+	mypy --config-file mypy.ini src/ && \
 	echo "$(GREEN)✅ Linting passed$(RESET)"
 
 fmt: ## Quality: Format code with black and isort

@@ -2,6 +2,8 @@
 测试services模块的功能
 """
 
+from datetime import datetime
+
 import pytest
 
 from src.models import AnalysisResult, Content, User
@@ -45,9 +47,9 @@ class TestContentAnalysisService:
         return Content(
             id="test_content_1",
             title="测试内容",
-            content_data="这是一个测试内容",
-            author_id="user_1",
             content_type=ContentType.TEXT,
+            data="这是一个测试内容",
+            created_at=datetime.now(),
         )
 
     @pytest.mark.asyncio
@@ -75,7 +77,7 @@ class TestContentAnalysisService:
         assert isinstance(result, AnalysisResult)
         assert result.content_id == sample_content.id
         assert result.analysis_type == "content_analysis"
-        assert result.confidence_score == 0.85
+        assert result.confidence == 0.85
 
     @pytest.mark.asyncio
     async def test_analyze_content_not_initialized(self, service, sample_content):
@@ -94,16 +96,16 @@ class TestContentAnalysisService:
             Content(
                 id="1",
                 title="内容1",
-                content_data="测试内容1",
-                author_id="user1",
                 content_type=ContentType.TEXT,
+                data="测试内容1",
+                created_at=datetime.now(),
             ),
             Content(
                 id="2",
                 title="内容2",
-                content_data="测试内容2",
-                author_id="user2",
                 content_type=ContentType.TEXT,
+                data="测试内容2",
+                created_at=datetime.now(),
             ),
         ]
 
@@ -123,10 +125,23 @@ class TestUserProfileService:
     @pytest.fixture
     def sample_user(self):
         """创建测试用户"""
+        from datetime import datetime
+
+        from src.models import UserProfile, UserRole
+
+        profile = UserProfile(
+            user_id="test_user_1",
+            display_name="Test User",
+            email="test@example.com",
+            preferences={},
+            created_at=datetime.now(),
+        )
+
         return User(
             id="test_user_1",
             username="testuser",
-            email="test@example.com",
+            role=UserRole.USER,
+            profile=profile,
         )
 
     @pytest.mark.asyncio
@@ -149,7 +164,7 @@ class TestUserProfileService:
         profile = await service.generate_profile(sample_user)
 
         assert profile.user_id == sample_user.id
-        assert "足球" in profile.interests
+        assert "足球" in profile.preferences["interests"]
         assert profile.preferences["language"] == "zh"
         assert sample_user.id in service._user_profiles
 
@@ -177,7 +192,7 @@ class TestUserProfileService:
         updated_profile = await service.update_profile(sample_user.id, updates)
 
         assert updated_profile is not None
-        assert updated_profile.interests == ["新兴趣"]
+        assert updated_profile.preferences["interests"] == ["新兴趣"]
 
     @pytest.mark.asyncio
     async def test_update_profile_not_exists(self, service):

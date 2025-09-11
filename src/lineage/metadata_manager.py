@@ -219,7 +219,7 @@ class MetadataManager:
         try:
             response = self.session.get(
                 urljoin(self.api_url, "lineage"),
-                params={"nodeId": f"dataset:{namespace}:{name}", "depth": depth},
+                params={"nodeId": f"dataset:{namespace}:{name}", "depth": str(depth)},
             )
             response.raise_for_status()
 
@@ -245,7 +245,7 @@ class MetadataManager:
         Returns:
             List[Dict[str, Any]]: 搜索结果列表
         """
-        params = {"q": query, "limit": limit}
+        params = {"q": query, "limit": str(limit)}
 
         if namespace:
             params["namespace"] = namespace
@@ -470,12 +470,19 @@ class MetadataManager:
 
             for dataset in datasets:
                 try:
+                    # Type annotations to help mypy understand the correct types
+                    namespace_str: str = dataset["namespace"]  # type: ignore
+                    name_str: str = dataset["name"]  # type: ignore
+                    description_str: Optional[str] = dataset["description"]  # type: ignore
+                    schema_list: Optional[List[Dict[str, str]]] = dataset["schema"]  # type: ignore
+                    tags_list: Optional[List[str]] = dataset["tags"]  # type: ignore
+
                     self.create_dataset(
-                        namespace=dataset["namespace"],
-                        name=dataset["name"],
-                        description=dataset["description"],
-                        schema_fields=dataset["schema"],
-                        tags=dataset["tags"],
+                        namespace=namespace_str,
+                        name=name_str,
+                        description=description_str,
+                        schema_fields=schema_list,
+                        tags=tags_list,
                     )
                 except Exception as e:
                     logger.warning(

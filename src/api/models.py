@@ -9,20 +9,20 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from mlflow import MlflowClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.response import APIResponse
+from mlflow import MlflowClient
 from src.database.connection import get_async_session
 from src.models.prediction_service import PredictionService
+from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/models", tags=["models"])
+router = APIRouter(prefix="/models", tags=["models"])
 
 # MLflow客户端
 mlflow_client = MlflowClient(tracking_uri="http://localhost:5002")
@@ -36,7 +36,7 @@ prediction_service = PredictionService()
     summary="获取当前活跃模型",
     description="获取当前生产环境使用的模型版本信息",
 )
-async def get_active_models() -> APIResponse:
+async def get_active_models() -> Dict[str, Any]:
     """
     获取当前生产环境使用的模型版本
 
@@ -136,7 +136,7 @@ async def get_model_metrics(
     model_name: str = Query("football_baseline_model", description="模型名称"),
     time_window: str = Query("7d", description="时间窗口：1d, 7d, 30d"),
     session: AsyncSession = Depends(get_async_session),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取模型性能指标
 
@@ -296,7 +296,7 @@ async def get_model_metrics(
 async def get_model_versions(
     model_name: str,
     limit: int = Query(20, description="返回版本数量限制", ge=1, le=100),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取模型版本列表
 
@@ -370,7 +370,7 @@ async def promote_model_version(
     model_name: str,
     version: str,
     target_stage: str = Query("Production", description="目标阶段：Staging, Production"),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     推广模型版本到指定阶段
 
@@ -438,7 +438,7 @@ async def get_model_performance(
     model_name: str,
     version: Optional[str] = Query(None, description="模型版本，为空则获取生产版本"),
     session: AsyncSession = Depends(get_async_session),
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取模型详细性能分析
 
@@ -588,7 +588,7 @@ async def get_model_performance(
 @router.get("/experiments", summary="获取实验列表", description="获取MLflow实验列表")
 async def get_experiments(
     limit: int = Query(20, description="返回实验数量限制", ge=1, le=100)
-) -> APIResponse:
+) -> Dict[str, Any]:
     """
     获取MLflow实验列表
 

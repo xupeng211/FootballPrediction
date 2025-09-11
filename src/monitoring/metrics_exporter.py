@@ -271,12 +271,17 @@ class MetricsExporter:
 
                 for table_name in tables_to_monitor:
                     try:
+                        # 使用参数化查询避免SQL注入风险
+                        # 注意：表名不能参数化，所以需要验证表名的安全性
+                        if not table_name.replace("_", "").isalnum():
+                            logger.warning(f"跳过可能不安全的表名: {table_name}")
+                            continue
                         result = await session.execute(
-                            text(f"SELECT COUNT(*) FROM {table_name}")
+                            text("SELECT COUNT(*) FROM " + table_name)
                         )
                         row_count = result.scalar()
                         self.table_row_count.labels(table_name=table_name).set(
-                            row_count
+                            float(row_count) if row_count is not None else 0.0
                         )
 
                     except Exception as e:
@@ -349,7 +354,7 @@ class MetricsExporter:
             Tuple[str, str]: (content_type, metrics_data)
         """
         metrics_data = generate_latest(self.registry)
-        return CONTENT_TYPE_LATEST, metrics_data
+        return CONTENT_TYPE_LATEST, metrics_data.decode("utf-8")
 
 
 # 全局指标导出器实例

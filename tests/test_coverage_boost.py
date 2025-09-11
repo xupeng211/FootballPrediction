@@ -202,10 +202,20 @@ class TestModelsCoverage:
 
     def test_models_creation(self):
         """测试模型创建"""
-        from src.models import AnalysisResult, Content, ContentType, User
+        from datetime import datetime
 
         # 测试User创建
-        user = User(id="1", username="test_user", email="test@example.com")
+        from src.models import (AnalysisResult, Content, ContentType, User,
+                                UserProfile, UserRole)
+
+        profile = UserProfile(
+            user_id="1",
+            display_name="Test User",
+            email="test@example.com",
+            preferences={},
+            created_at=datetime.now(),
+        )
+        user = User(id="1", username="test_user", role=UserRole.USER, profile=profile)
         assert user.username == "test_user"
 
         # 测试Content创建
@@ -213,17 +223,17 @@ class TestModelsCoverage:
             id="1",
             title="测试内容",
             content_type=ContentType.TEXT,
-            content_data="测试文本",
-            author_id="1",
+            data="测试文本",
+            created_at=datetime.now(),
         )
         assert content.title == "测试内容"
 
         # 测试AnalysisResult创建
         result = AnalysisResult(
             id="1",
-            content_id="test123",
             analysis_type="test_analysis",
-            result_data={"key": "value"},
-            confidence_score=0.95,
+            result={"key": "value"},
+            confidence=0.95,
+            timestamp=datetime.now(),
         )
-        assert result.content_id == "test123"
+        assert result.analysis_type == "test_analysis"

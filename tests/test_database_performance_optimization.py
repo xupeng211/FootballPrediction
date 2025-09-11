@@ -17,15 +17,58 @@
 import asyncio
 import time
 from datetime import datetime
+from typing import AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scripts.materialized_views_examples import MaterializedViewExamples
 from scripts.refresh_materialized_views import MaterializedViewRefresher
-from src.database.connection import get_async_session
+
+
+def pytest_db_available():
+    """检查数据库是否可用以及表结构是否存在"""
+    try:
+        import sqlalchemy as sa
+
+        from src.database.connection import get_database_manager
+
+        # 检查数据库连接
+        db_manager = get_database_manager()
+
+        # 检查关键表是否存在
+        with db_manager.get_session() as session:
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"
+                )
+            )
+            matches_exists = result.scalar()
+
+            if not matches_exists:
+                return False
+
+            # 检查分区表是否存在
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches_2025_09')"
+                )
+            )
+            partition_exists = result.scalar()
+
+            return partition_exists
+
+    except Exception:
+        return False
+
+
+# 跳过需要数据库的测试，如果数据库不可用
+pytestmark = pytest.mark.skipif(
+    not pytest_db_available(), reason="Database connection not available"
+)
 
 
 class TestDatabasePartitioning:
@@ -553,10 +596,15 @@ class TestPerformanceOptimizationIntegration:
             assert all(r["success"] for r in results), "所有并发操作都应该成功"
 
 
-@pytest.fixture
-async def async_session():
+@pytest_asyncio.fixture
+async def async_session() -> AsyncGenerator[AsyncSession, None]:
     """提供异步数据库会话的fixture"""
-    async with get_async_session() as session:
+    from src.database.connection import DatabaseManager
+
+    db_manager = DatabaseManager()
+    if not hasattr(db_manager, "_async_engine") or db_manager._async_engine is None:
+        db_manager.initialize()
+    async with db_manager.get_async_session() as session:
         yield session
 
 

@@ -550,10 +550,17 @@ class TestDataQualityExceptionHandler:
             ),
         ]
 
-        with patch.object(handler.db_manager, "get_async_session") as mock_session:
-            mock_session.return_value.__aenter__.return_value.execute.return_value.fetchall.return_value = (
-                mock_rows
+        # 创建异步context manager的正确mock
+        mock_session = AsyncMock()
+        mock_result = Mock()
+        mock_result.fetchall.return_value = mock_rows
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        with patch.object(handler.db_manager, "get_async_session") as mock_get_session:
+            mock_get_session.return_value.__aenter__ = AsyncMock(
+                return_value=mock_session
             )
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await handler.get_handling_statistics()
 

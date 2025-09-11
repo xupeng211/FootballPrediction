@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from src.cache import CacheKeyManager, RedisManager
 from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 from src.data.storage.data_lake_storage import DataLakeStorage
@@ -39,6 +40,7 @@ class DataProcessingService(BaseService):
         self.missing_handler: Optional[MissingDataHandler] = None
         self.data_lake: Optional[DataLakeStorage] = None
         self.db_manager: Optional[DatabaseManager] = None
+        self.cache_manager: Optional[RedisManager] = None
 
     async def initialize(self) -> bool:
         """初始化服务"""
@@ -55,7 +57,10 @@ class DataProcessingService(BaseService):
             # 初始化数据库连接
             self.db_manager = DatabaseManager()
 
-            self.logger.info("数据处理服务初始化完成：清洗器、缺失值处理器、数据湖存储、数据库连接")
+            # 初始化缓存管理器
+            self.cache_manager = RedisManager()
+
+            self.logger.info("数据处理服务初始化完成：清洗器、缺失值处理器、数据湖存储、数据库连接、缓存管理器")
             return True
 
         except Exception as e:
@@ -91,6 +96,17 @@ class DataProcessingService(BaseService):
             return None
 
         try:
+            # 生成缓存Key
+            match_id = raw_data.get("external_match_id")
+            if match_id and self.cache_manager:
+                cache_key = CacheKeyManager.build_key("match", match_id, "processed")
+
+                # 尝试从缓存获取已处理的数据
+                cached_data = await self.cache_manager.aget(cache_key)
+                if cached_data:
+                    self.logger.debug(f"从缓存获取已处理的比赛数据: {match_id}")
+                    return cached_data
+
             # 第一步：数据清洗
             cleaned_data = await self.data_cleaner.clean_match_data(raw_data)
             if not cleaned_data:
@@ -104,6 +120,12 @@ class DataProcessingService(BaseService):
                 )
             else:
                 processed_data = cleaned_data
+
+            # 将处理后的数据存入缓存
+            if match_id and self.cache_manager and processed_data:
+                await self.cache_manager.aset(
+                    cache_key, processed_data, cache_type="match_info"
+                )
 
             self.logger.debug(f"成功处理比赛数据: {processed_data.get('external_match_id')}")
             return processed_data
@@ -277,7 +299,7 @@ class DataProcessingService(BaseService):
 
     async def process_batch(self, data_list: List[Any]) -> List[Dict[str, Any]]:
         """批量处理数据（向后兼容）"""
-        results = []
+        results: List[Any] = []
         for data in data_list:
             if isinstance(data, str):
                 result = await self.process_text(data)
@@ -341,6 +363,8 @@ class DataProcessingService(BaseService):
 
         try:
             # 从数据库获取未处理的原始比赛数据
+            if self.db_manager is None:
+                raise RuntimeError("Database manager not initialized")
             with self.db_manager.get_session() as session:
                 raw_matches = (
                     session.query(RawMatchData)
@@ -358,6 +382,8 @@ class DataProcessingService(BaseService):
                 for raw_match in raw_matches:
                     try:
                         # 清洗比赛数据
+                        if self.data_cleaner is None:
+                            raise RuntimeError("Data cleaner not initialized")
                         cleaned_data = await self.data_cleaner.clean_match_data(
                             raw_match.raw_data
                         )
@@ -367,6 +393,8 @@ class DataProcessingService(BaseService):
                             continue
 
                         # 处理缺失值
+                        if self.missing_handler is None:
+                            raise RuntimeError("Missing data handler not initialized")
                         final_data = (
                             await self.missing_handler.handle_missing_match_data(
                                 cleaned_data
@@ -394,6 +422,8 @@ class DataProcessingService(BaseService):
 
                 if processed_matches:
                     # 保存到Silver层
+                    if self.data_lake is None:
+                        raise RuntimeError("Data lake not initialized")
                     await self.data_lake.save_historical_data(
                         table_name="processed_matches", data=processed_matches
                     )
@@ -416,6 +446,8 @@ class DataProcessingService(BaseService):
 
         try:
             # 从数据库获取未处理的原始赔率数据
+            if self.db_manager is None:
+                raise RuntimeError("Database manager not initialized")
             with self.db_manager.get_session() as session:
                 raw_odds_list = (
                     session.query(RawOddsData)
@@ -429,14 +461,14 @@ class DataProcessingService(BaseService):
                     return 0
 
                 # 按比赛分组处理赔率数据
-                odds_by_match = {}
+                odds_by_match: Dict[int, List[Any]] = {}
                 for raw_odds in raw_odds_list:
                     match_id = raw_odds.external_match_id
                     if match_id not in odds_by_match:
                         odds_by_match[match_id] = []
                     odds_by_match[match_id].append(raw_odds)
 
-                all_processed_odds = []
+                all_processed_odds: List[Any] = []
 
                 for match_id, match_odds in odds_by_match.items():
                     try:
