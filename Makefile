@@ -139,6 +139,57 @@ context: ## Load project context for AI development
 	echo "$(GREEN)✅ Context loaded$(RESET)"
 
 # ============================================================================
+# 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
+# ============================================================================
+
+feedback-update: venv ## Update prediction results with actual outcomes
+	@echo "$(YELLOW)Updating prediction results...$(RESET)" && \
+	$(PYTHON) scripts/update_predictions_results.py --update --report --verbose && \
+	echo "$(GREEN)✅ Prediction results updated$(RESET)"
+
+feedback-report: venv ## Generate accuracy trends and feedback analysis
+	@echo "$(YELLOW)Generating feedback reports...$(RESET)" && \
+	$(PYTHON) scripts/update_predictions_results.py --report --trends --days 30 --verbose && \
+	echo "$(GREEN)✅ Feedback reports generated$(RESET)"
+
+performance-report: venv ## Generate model performance reports with charts
+	@echo "$(YELLOW)Generating performance reports...$(RESET)" && \
+	$(PYTHON) reports/model_performance_report.py --days 90 --output reports/generated --verbose && \
+	echo "$(GREEN)✅ Performance reports generated$(RESET)"
+
+retrain-check: venv ## Check models and trigger retraining if needed
+	@echo "$(YELLOW)Checking models for retraining...$(RESET)" && \
+	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days 30 --verbose && \
+	echo "$(GREEN)✅ Retrain check completed$(RESET)"
+
+retrain-dry: venv ## Dry run retrain check (evaluation only)
+	@echo "$(YELLOW)Running retrain dry run...$(RESET)" && \
+	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --dry-run --verbose && \
+	echo "$(GREEN)✅ Dry run completed$(RESET)"
+
+model-monitor: venv ## Run enhanced model monitoring cycle
+	@echo "$(YELLOW)Running model monitoring...$(RESET)" && \
+	$(PYTHON) -c "import asyncio; from monitoring.enhanced_model_monitor import EnhancedModelMonitor; asyncio.run(EnhancedModelMonitor().run_monitoring_cycle())" && \
+	echo "$(GREEN)✅ Model monitoring completed$(RESET)"
+
+feedback-test: venv ## Run feedback loop unit tests
+	@echo "$(YELLOW)Running feedback loop tests...$(RESET)" && \
+	$(PYTHON) -m pytest tests/test_feedback_loop.py -v --cov=scripts --cov=reports --cov=monitoring --cov-report=term-missing && \
+	echo "$(GREEN)✅ Feedback tests completed$(RESET)"
+
+mlops-pipeline: feedback-update performance-report retrain-check model-monitor ## Run complete MLOps feedback pipeline
+	@echo "$(GREEN)✅ Complete MLOps pipeline executed$(RESET)"
+
+mlops-status: venv ## Show MLOps pipeline status
+	@echo "$(CYAN)=== MLOps Pipeline Status ===$(RESET)"
+	@echo "📊 Generated Reports:"
+	@find reports/generated -name "*.md" -exec basename {} \; 2>/dev/null || echo "  No reports found"
+	@echo "🔄 Retrain Reports:"
+	@find models/retrain_reports -name "*.md" -exec basename {} \; 2>/dev/null || echo "  No retrain reports found"
+	@echo "🏥 Model Health:"
+	@echo "  Run 'make model-monitor' to check current model health"
+
+# ============================================================================
 # 🧹 Cleanup
 # ============================================================================
 clean: ## Clean: Remove cache and virtual environment
@@ -151,4 +202,6 @@ clean: ## Clean: Remove cache and virtual environment
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install lint fmt check test coverage ci up down logs sync-issues context clean
+.PHONY: help venv install lint fmt check test coverage ci up down logs sync-issues context clean \
+        feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
+        feedback-test mlops-pipeline mlops-status
