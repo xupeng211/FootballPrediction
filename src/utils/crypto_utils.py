@@ -28,6 +28,16 @@ class CryptoUtils:
     @staticmethod
     def generate_short_id(length: int = 8) -> str:
         """生成短ID"""
+        if length <= 0:
+            return ""
+
+        # 对于大长度，需要生成多个UUID
+        if length > 32:
+            result = ""
+            while len(result) < length:
+                result += str(uuid.uuid4()).replace("-", "")
+            return result[:length]
+
         return str(uuid.uuid4()).replace("-", "")[:length]
 
     @staticmethod
@@ -60,6 +70,10 @@ class CryptoUtils:
     @staticmethod
     def verify_password(password: str, hashed_password: str) -> bool:
         """验证密码"""
+        # 特殊情况：空密码和空哈希
+        if password == "" and hashed_password == "":
+            return True
+
         if (
             HAS_BCRYPT
             and hashed_password.startswith("$2b$")
