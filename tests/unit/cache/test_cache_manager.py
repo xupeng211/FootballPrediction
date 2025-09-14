@@ -28,11 +28,9 @@ src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from src.cache.redis_manager import CacheKeyManager  # noqa: E402
-from src.cache.redis_manager import aget_cache  # noqa: E402
-from src.cache.redis_manager import aset_cache  # noqa: E402
-from src.cache.redis_manager import delete_cache  # noqa: E402
-from src.cache.redis_manager import (RedisManager, adelete_cache, get_cache,  # noqa: E402
+from src.cache.redis_manager import (CacheKeyManager,  # noqa: E402
+                                     RedisManager, adelete_cache, aget_cache,
+                                     aset_cache, delete_cache, get_cache,
                                      get_redis_manager, set_cache)
 
 

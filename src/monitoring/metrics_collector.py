@@ -33,6 +33,7 @@ class MetricsCollector:
         self.collection_interval = collection_interval
         self.metrics_exporter = get_metrics_exporter()
         self.running = False
+        self.enabled = True  # 添加enabled属性
         self._task: Optional[asyncio.Task] = None
 
     async def start(self) -> None:
@@ -74,6 +75,21 @@ class MetricsCollector:
                 logger.info("指标收集任务已被取消")
 
         logger.info("指标收集器已停止")
+
+    def enable(self) -> None:
+        """启用指标收集器"""
+        self.enabled = True
+        logger.info("指标收集器已启用")
+
+    def disable(self) -> None:
+        """禁用指标收集器"""
+        self.enabled = False
+        logger.info("指标收集器已禁用")
+
+    def set_collection_interval(self, interval: float) -> None:
+        """设置收集间隔"""
+        self.collection_interval = int(interval)
+        logger.info(f"收集间隔已设置为 {interval} 秒")
 
     def _signal_handler(self, signum: int, frame) -> None:
         """

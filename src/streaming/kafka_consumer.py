@@ -268,11 +268,6 @@ class FootballKafkaConsumer:
             self.logger.error(f"订阅Topic失败: {e}")
             raise
 
-    def subscribe_all_topics(self) -> None:
-        """订阅所有配置的Topic"""
-        all_topics = self.config.get_all_topics()
-        self.subscribe_topics(all_topics)
-
     async def start_consuming(self, timeout: float = 1.0) -> None:
         """
         开始消费消息
@@ -398,6 +393,116 @@ class FootballKafkaConsumer:
 
         self.logger.info(f"批量消费完成 - 成功: {stats['processed']}, 失败: {stats['failed']}")
         return stats
+
+    async def consume_messages(
+        self, batch_size: int = 100, timeout: float = 5.0
+    ) -> list:
+        """
+        消费消息并返回消息列表（测试兼容性方法）
+
+        Args:
+            batch_size: 批量大小
+            timeout: 超时时间
+
+        Returns:
+            消息列表
+        """
+        if not self.consumer:
+            self.logger.error("Consumer未初始化")
+            return []
+
+        messages = []
+        start_time = datetime.now()
+
+        try:
+            while len(messages) < batch_size:
+                # 检查超时
+                elapsed = (datetime.now() - start_time).total_seconds()
+                if elapsed >= timeout:
+                    break
+
+                # 轮询消息
+                msg = self.consumer.poll(timeout=1.0)
+
+                if msg is None:
+                    continue
+
+                if msg.error():
+                    if msg.error().code() != KafkaError._PARTITION_EOF:
+                        self.logger.error(f"Kafka错误: {msg.error()}")
+                    continue
+
+                # 构造消息对象
+                try:
+                    message_data = {
+                        "topic": msg.topic(),
+                        "data": (
+                            json.loads(msg.value().decode("utf-8"))
+                            if msg.value()
+                            else {}
+                        ),
+                        "partition": msg.partition(),
+                        "offset": msg.offset(),
+                    }
+                    messages.append(message_data)
+                except Exception as e:
+                    self.logger.error(f"解析消息失败: {e}")
+
+        except Exception as e:
+            self.logger.error(f"消费消息失败: {e}")
+
+        return messages
+
+    async def process_message(self, message_data: Dict[str, Any]) -> bool:
+        """
+        处理单个消息（测试兼容性方法）
+
+        Args:
+            message_data: 消息数据
+
+        Returns:
+            处理是否成功
+        """
+        try:
+            topic = message_data.get("topic", "")
+            data = message_data.get("data", {})
+
+            if "matches" in topic:
+                return await self._process_match_message(data)
+            elif "odds" in topic:
+                return await self._process_odds_message(data)
+            elif "scores" in topic:
+                return await self._process_scores_message(data)
+            else:
+                self.logger.warning(f"未知的topic: {topic}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"处理消息失败: {e}")
+            return False
+
+    def subscribe_all_topics(self) -> None:
+        """订阅所有配置的Topic"""
+        if not self.consumer:
+            self.logger.error("Consumer未初始化")
+            return
+
+        topics = [
+            self.config.kafka_config.topics.matches,
+            self.config.kafka_config.topics.odds,
+            self.config.kafka_config.topics.scores,
+        ]
+
+        try:
+            self.consumer.subscribe(topics)
+            self.logger.info(f"已订阅Topics: {topics}")
+        except Exception as e:
+            self.logger.error(f"订阅Topics失败: {e}")
+            raise
+
+    def close(self) -> None:
+        """关闭消费者"""
+        self.stop_consuming()
 
     def __del__(self):
         """析构函数，确保资源清理"""
