@@ -1,4 +1,5 @@
 """
+import time
 数据库备份任务
 
 实现定时数据库备份任务，包括：
@@ -252,18 +253,53 @@ class DatabaseBackupTask(Task):
 
             if backup_type == "full":
                 backup_dir = os.path.join(backup_base_dir, "full")
-                # 查找最新的压缩备份文件
-                cmd = f"find {backup_dir} -name 'full_backup_*.sql.gz' -printf '%s\n' | sort -n | tail -1"
+                # 查找最新的压缩备份文件 - 使用安全的参数化方式
+                cmd = [
+                    "find",
+                    backup_dir,
+                    "-name",
+                    "full_backup_*.sql.gz",
+                    "-printf",
+                    "%s\n",
+                ]
+                find_result = subprocess.run(cmd, capture_output=True, text=True)
+                if find_result.returncode == 0 and find_result.stdout.strip():
+                    sizes = [
+                        int(size)
+                        for size in find_result.stdout.strip().split("\n")
+                        if size.strip()
+                    ]
+                    if sizes:
+                        return max(sizes)
+                return None
             elif backup_type == "incremental":
                 backup_dir = os.path.join(backup_base_dir, "incremental")
-                # 查找最新增量备份目录大小
-                cmd = f"find {backup_dir} -maxdepth 1 -type d -name '2*' -exec du -sb {{}} \\; | sort -k2 | tail -1 | cut -f1"
+                # 查找最新增量备份目录大小 - 使用安全的参数化方式
+                cmd = [
+                    "find",
+                    backup_dir,
+                    "-maxdepth",
+                    "1",
+                    "-type",
+                    "d",
+                    "-name",
+                    "2*",
+                ]
+                find_result = subprocess.run(cmd, capture_output=True, text=True)
+                if find_result.returncode == 0 and find_result.stdout.strip():
+                    dirs = find_result.stdout.strip().split("\n")
+                    if dirs and dirs[0]:
+                        # 获取最新目录的大小
+                        latest_dir = max(dirs)
+                        du_cmd = ["du", "-sb", latest_dir]
+                        du_result = subprocess.run(
+                            du_cmd, capture_output=True, text=True
+                        )
+                        if du_result.returncode == 0 and du_result.stdout.strip():
+                            return int(du_result.stdout.split()[0])
+                return None
             else:
                 return None
-
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if result.returncode == 0 and result.stdout.strip():
-                return int(result.stdout.strip())
 
         except Exception as e:
             logger.warning(f"获取备份文件大小失败: {e}")
@@ -512,11 +548,18 @@ def get_backup_status():
             "timestamp": datetime.now().isoformat(),
         }
 
-        # 统计全量备份
+        # 统计全量备份 - 使用安全的参数化方式
         full_backup_dir = os.path.join(backup_base_dir, "full")
         if os.path.exists(full_backup_dir):
-            cmd = f"find {full_backup_dir} -name 'full_backup_*.sql.gz' -printf '%s %T@ %p\n' | sort -k2"
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            cmd = [
+                "find",
+                full_backup_dir,
+                "-name",
+                "full_backup_*.sql.gz",
+                "-printf",
+                "%s %T@ %p\n",
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode == 0 and result.stdout:
                 lines = result.stdout.strip().split("\n")
@@ -543,16 +586,26 @@ def get_backup_status():
                     "latest_backup": latest_backup,
                 }
 
-        # 统计增量备份
+        # 统计增量备份 - 使用安全的参数化方式
         incremental_backup_dir = os.path.join(backup_base_dir, "incremental")
         if os.path.exists(incremental_backup_dir):
-            cmd = (
-                f"find {incremental_backup_dir} -maxdepth 1 -type d -name '2*' | wc -l"
-            )
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-            if result.returncode == 0 and result.stdout:
-                stats["incremental_backups"]["count"] = int(result.stdout.strip())
+            cmd = [
+                "find",
+                incremental_backup_dir,
+                "-maxdepth",
+                "1",
+                "-type",
+                "d",
+                "-name",
+                "2*",
+            ]
+            find_result = subprocess.run(cmd, capture_output=True, text=True)
+            if find_result.returncode == 0 and find_result.stdout.strip():
+                # 计算目录数量
+                dirs = [d for d in find_result.stdout.strip().split("\n") if d.strip()]
+                stats["incremental_backups"]["count"] = len(dirs)
+            else:
+                stats["incremental_backups"]["count"] = 0
 
         return stats
 

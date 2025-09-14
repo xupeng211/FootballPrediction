@@ -1,4 +1,5 @@
 """
+import asyncio
 Alembic环境配置
 
 配置数据库迁移环境，使用我们的数据库配置和模型。

@@ -145,7 +145,8 @@ class StreamConfig:
             "auto.offset.reset": self.kafka_config.consumer_auto_offset_reset,
             "enable.auto.commit": self.kafka_config.consumer_enable_auto_commit,
             "auto.commit.interval.ms": self.kafka_config.consumer_auto_commit_interval_ms,
-            "max.poll.records": self.kafka_config.consumer_max_poll_records,
+            # confluent-kafka不支持max.poll.records，改用max.poll.interval.ms
+            "max.poll.interval.ms": 300000,  # 5分钟
             "session.timeout.ms": 30000,
             "heartbeat.interval.ms": 3000,
         }

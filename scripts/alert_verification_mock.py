@@ -12,7 +12,7 @@
 import asyncio
 import json
 import logging
-import random
+import secrets
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -77,7 +77,7 @@ class MockAlertVerificationTester:
             self.mock_metrics["football_data_collection_total"] += 1
 
             # 模拟采集失败（50%失败率）
-            if random.random() < 0.5:
+            if secrets.randbelow(2) == 0:
                 self.mock_metrics["football_data_collection_errors_total"] += 1
                 print(f"    ❌ 模拟 {data_source}/{collection_type} 采集失败: {error_type}")
             else:

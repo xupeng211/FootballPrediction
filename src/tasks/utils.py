@@ -10,6 +10,8 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+from sqlalchemy import text
+
 from src.database.connection import DatabaseManager
 
 
@@ -68,8 +70,6 @@ async def get_upcoming_matches(hours: int = 24) -> List[dict]:
         db_manager = DatabaseManager()
 
         async with db_manager.get_async_session() as session:
-            from sqlalchemy import text
-
             now = datetime.now()
             end_time = now + timedelta(hours=hours)
 
@@ -139,8 +139,6 @@ async def get_active_leagues() -> List[str]:
         db_manager = DatabaseManager()
 
         async with db_manager.get_async_session() as session:
-            from sqlalchemy import text
-
             # 查询最近30天内有比赛的联赛
             query = text(
                 """
@@ -162,7 +160,9 @@ async def get_active_leagues() -> List[str]:
         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
 
 
-def calculate_next_collection_time(task_name: str) -> datetime:
+def calculate_next_collection_time(
+    task_name: str, interval_minutes: int = None
+) -> datetime:
     """
     计算下次采集时间
 
@@ -213,8 +213,6 @@ async def cleanup_stale_tasks() -> int:
         db_manager = DatabaseManager()
 
         async with db_manager.get_async_session() as session:
-            from sqlalchemy import text
-
             # 清理7天前的错误日志
             cleanup_query = text(
                 """
@@ -226,7 +224,10 @@ async def cleanup_stale_tasks() -> int:
             result = await session.execute(cleanup_query)
             await session.commit()
 
-            return result.rowcount
+            # For DELETE queries, we need to check if the result has rowcount
+            if hasattr(result, "rowcount") and result.rowcount is not None:
+                return result.rowcount
+            return 0
 
     except Exception:
         return 0

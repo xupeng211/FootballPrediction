@@ -1,4 +1,5 @@
 """
+import asyncio
 特征服务 API
 
 提供特征查询相关的 FastAPI 端点：

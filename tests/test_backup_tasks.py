@@ -1,4 +1,6 @@
 """
+
+import asyncio
 数据库备份任务测试
 
 验证备份任务的各个组件：
@@ -586,7 +588,8 @@ class TestBackupTasksIntegration:
     """备份任务集成测试"""
 
     @pytest.mark.skipif(
-        not os.getenv("RUN_INTEGRATION_TESTS"), reason="需要设置 RUN_INTEGRATION_TESTS 环境变量"
+        not os.getenv("RUN_INTEGRATION_TESTS"),
+        reason="需要设置 RUN_INTEGRATION_TESTS 环境变量",
     )
     def test_real_backup_script_execution(self):
         """测试真实备份脚本执行（需要数据库连接）"""
@@ -603,7 +606,8 @@ class TestBackupTasksIntegration:
         assert "用法" in result.stdout or "Usage" in result.stdout
 
     @pytest.mark.skipif(
-        not os.getenv("RUN_INTEGRATION_TESTS"), reason="需要设置 RUN_INTEGRATION_TESTS 环境变量"
+        not os.getenv("RUN_INTEGRATION_TESTS"),
+        reason="需要设置 RUN_INTEGRATION_TESTS 环境变量",
     )
     def test_real_restore_script_execution(self):
         """测试真实恢复脚本执行（需要数据库连接）"""

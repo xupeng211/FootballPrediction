@@ -4,6 +4,7 @@ API响应工具类
 提供统一的API响应格式
 """
 
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
@@ -33,7 +34,11 @@ class APIResponse:
         Returns:
             Dict[str, Any]: 格式化的成功响应
         """
-        response = {"success": True, "message": message}
+        response = {
+            "success": True,
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+        }
 
         if data is not None:
             response["data"] = data
@@ -41,8 +46,13 @@ class APIResponse:
         return response
 
     @staticmethod
+    def success_response(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:
+        """成功响应（别名方法）"""
+        return APIResponse.success(data, message)
+
+    @staticmethod
     def error(
-        message: str = "操作失败", code: Optional[str] = None, data: Any = None
+        message: str = "操作失败", code: Optional[int] = None, data: Any = None
     ) -> Dict[str, Any]:
         """
         错误响应
@@ -55,12 +65,25 @@ class APIResponse:
         Returns:
             Dict[str, Any]: 格式化的错误响应
         """
-        response = {"success": False, "message": message}
+        response = {
+            "success": False,
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+        }
 
         if code is not None:
             response["code"] = code
+        else:
+            response["code"] = 500  # 默认错误代码
 
         if data is not None:
             response["data"] = data
 
         return response
+
+    @staticmethod
+    def error_response(
+        message: str = "操作失败", code: Optional[int] = None, data: Any = None
+    ) -> Dict[str, Any]:
+        """错误响应（别名方法）"""
+        return APIResponse.error(message, code, data)

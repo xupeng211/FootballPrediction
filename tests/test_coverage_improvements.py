@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import numpy as np
 import pytest
 
-from src.database.models import Prediction
 from src.models.prediction_service import PredictionResult, PredictionService
 
 
@@ -41,7 +40,7 @@ class TestPredictionServiceCoverage:
         mock_latest_version.version = "0.8.0-latest"
         mock_latest_version.current_stage = "None"
 
-        # 模拟 Production 无版本，Staging 有版本
+        # 测试场景1：Production 无版本，Staging 有版本
         mock_client.get_latest_versions.side_effect = [[], [mock_staging_version]]
 
         with patch(
@@ -54,16 +53,19 @@ class TestPredictionServiceCoverage:
             assert version == "0.9.0-staging"
             assert mock_client.get_latest_versions.call_count == 2
 
-        # 模拟 Production 和 Staging 均无版本，只有最新版本
-        mock_client.get_latest_versions.reset_mock()
-        mock_client.get_latest_versions.side_effect = [[], [], [mock_latest_version]]
+        # 测试场景2：Production 和 Staging 均无版本，只有最新版本
+        # 创建新的mock_client实例避免状态污染
+        mock_client_2 = MagicMock()
+        mock_client_2.get_latest_versions.side_effect = [[], [], [mock_latest_version]]
         with patch(
+            "src.models.prediction_service.MlflowClient", return_value=mock_client_2
+        ), patch(
             "src.models.prediction_service.mlflow.sklearn.load_model",
             return_value=Mock(),
         ):
             model, version = await service.get_production_model("latest_model")
             assert version == "0.8.0-latest"
-            assert mock_client.get_latest_versions.call_count == 3
+            assert mock_client_2.get_latest_versions.call_count == 3
 
     @pytest.mark.asyncio
     async def test_store_prediction_and_metrics_export(self, service):
@@ -114,16 +116,18 @@ class TestPredictionServiceCoverage:
     def test_prepare_features_with_missing_values(self, service):
         """测试 _prepare_features_for_prediction 对缺失值的处理"""
         # 故意缺少一些特征
-        features = {"home_team_form": 0.8, "away_goals_avg": 1.2}
+        features = {"home_recent_wins": 0.8, "away_recent_goals_for": 1.2}
 
         feature_array = service._prepare_features_for_prediction(features)
 
         assert isinstance(feature_array, np.ndarray)
-        assert feature_array.shape == (1, len(service.feature_order))
+        # _prepare_features_for_prediction方法内部使用自己的feature_order，有10个特征
+        expected_feature_count = 10
+        assert feature_array.shape == (1, expected_feature_count)
         # 验证缺失值被填充为 0
-        # home_team_form 是第一个特征，应该为 0.8
+        # home_recent_wins 是第一个特征，应该为 0.8
         assert feature_array[0, 0] == 0.8
-        # away_goals_avg 是第五个特征，应该为 1.2
+        # away_recent_goals_for 是第五个特征，应该为 1.2
         assert feature_array[0, 4] == 1.2
-        # head_to_head_ratio 是第三个特征，缺失，应该为 0
-        assert feature_array[0, 2] == 0.0
+        # 其他缺失特征应该为 0
+        assert feature_array[0, 1] == 0.0  # home_recent_goals_for

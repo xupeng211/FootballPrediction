@@ -1,0 +1,96 @@
+# ========================================
+# 测试依赖配置文件
+# Football Prediction 项目测试环境依赖
+# ========================================
+
+# 核心测试框架
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-xdist>=3.0.0
+pytest-timeout>=2.1.0
+pytest-mock>=3.10.0
+
+# Docker和外部服务测试
+pytest-docker>=2.0.0
+pytest-testinfra>=8.0.0
+
+# 数据库测试依赖
+pytest-postgresql>=4.1.0
+pytest-redis>=3.0.0
+
+# HTTP和API测试
+httpx>=0.24.0
+fastapi>=0.100.0
+requests>=2.28.0
+
+# 数据处理测试依赖
+pandas>=2.0.0
+numpy>=1.24.0
+sqlalchemy[asyncio]>=2.0.0
+aioredis>=2.0.0
+fakeredis>=2.15.0
+
+# 机器学习测试依赖
+scikit-learn>=1.2.0
+mlflow>=2.5.0
+
+# 异步支持
+aiofiles>=23.0.0
+aiosqlite>=0.19.0
+
+# 数据验证和序列化
+pydantic>=2.0.0
+marshmallow>=3.19.0
+
+# 日志和监控测试
+structlog>=23.0.0
+prometheus-client>=0.16.0
+
+# 配置管理
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
+# 时间处理
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# 开发和调试工具
+ipython>=8.0.0
+ipdb>=0.13.0
+
+# 代码质量工具
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.4.0
+isort>=5.12.0
+
+# 安全测试
+bandit>=1.7.0
+safety>=2.3.0
+
+# 文档生成
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
+# 其他实用工具
+python-json-logger>=2.0.0
+colorlog>=6.7.0
+tqdm>=4.65.0
+
+# 性能分析
+memory-profiler>=0.61.0
+py-spy>=0.3.0
+
+# 环境变量和配置
+environs>=9.5.0
+
+# OpenLineage数据血缘
+openlineage-python>=0.29.0
+
+# 备注：
+# - 使用 pip install -r tests/requirements.txt 安装测试依赖
+# - 建议在虚拟环境中安装
+# - 某些包可能需要系统级依赖（如PostgreSQL开发库）
+# - Docker相关测试需要Docker服务运行
+# - 对于CI/CD环境，可能需要额外的环境变量配置

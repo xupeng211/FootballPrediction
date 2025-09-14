@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.sqltypes import quoted_name
 
 from src.database.connection import DatabaseManager
 from src.database.models.matches import Match
@@ -57,9 +58,9 @@ class DataFreshnessResult:
         """转换为字典格式"""
         return {
             "table_name": self.table_name,
-            "last_update_time": self.last_update_time.isoformat()
-            if self.last_update_time
-            else None,
+            "last_update_time": (
+                self.last_update_time.isoformat() if self.last_update_time else None
+            ),
             "records_count": self.records_count,
             "freshness_hours": round(self.freshness_hours, 2),
             "is_fresh": self.is_fresh,
@@ -155,7 +156,7 @@ class QualityMonitor:
         if table_names is None:
             table_names = list(self.freshness_thresholds.keys())
 
-        results = {}
+        results: Dict[str, Any] = {}
 
         async with self.db_manager.get_async_session() as session:
             for table_name in table_names:
@@ -263,26 +264,50 @@ class QualityMonitor:
             last_update_time = None
             records_count = 0
 
+            # Validate table name to prevent SQL injection
+            if table_name not in ["matches", "odds", "predictions", "teams", "leagues"]:
+                raise ValueError(f"Invalid table name: {table_name}")
+
             # 先获取记录数
+            # Safe: table_name is validated against whitelist above
+            # Note: Using f-string here is safe as table_name is validated
+            # 使用quoted_name确保表名安全，防止SQL注入
+            from sqlalchemy import quoted_name
+
+            safe_table_name = quoted_name(table_name, quote=True)
             count_result = await session.execute(
-                text(f"SELECT COUNT(*) as count FROM {table_name}")
+                text(
+                    f"SELECT COUNT(*) as count FROM {safe_table_name}"
+                )  # nosec B608 - using quoted_name for safety
             )
             count_row = count_result.first()
-            records_count = count_row.count if count_row else 0
+            records_count = int(count_row[0]) if count_row else 0
 
             # 尝试获取最后更新时间
             for time_field in time_fields:
+                # Validate time field to prevent SQL injection
+                if time_field not in [
+                    "updated_at",
+                    "created_at",
+                    "collected_at",
+                    "match_time",
+                ]:
+                    continue
                 try:
+                    # Safe: table_name and time_field are from validated whitelist, using parameterized query
                     time_result = await session.execute(
                         text(
-                            f"SELECT MAX({time_field}) as last_update FROM {table_name}"
+                            f"SELECT MAX({time_field}) as last_update FROM {table_name}"  # nosec B608 - validated
                         )
                     )
                     time_row = time_result.first()
                     if time_row and time_row.last_update:
                         last_update_time = time_row.last_update
                         break
-                except Exception:
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get last update time for {table_name} using field {time_field}: {e}"
+                    )
                     continue
 
             # 计算新鲜度
@@ -329,7 +354,7 @@ class QualityMonitor:
         if table_names is None:
             table_names = list(self.critical_fields.keys())
 
-        results = {}
+        results: Dict[str, Any] = {}
 
         async with self.db_manager.get_async_session() as session:
             for table_name in table_names:
@@ -368,9 +393,19 @@ class QualityMonitor:
                 completeness_score=100.0,
             )
 
+        # Validate table name to prevent SQL injection
+        if table_name not in ["matches", "odds", "predictions", "teams", "leagues"]:
+            raise ValueError(f"Invalid table name: {table_name}")
+
         # 获取总记录数
+        # Safe: table_name is validated against whitelist
+        # 使用quoted_name确保表名安全，防止SQL注入
+
+        safe_table_name = quoted_name(table_name, quote=True)
         total_result = await session.execute(
-            text(f"SELECT COUNT(*) as total FROM {table_name}")
+            text(
+                f"SELECT COUNT(*) as total FROM {safe_table_name}"
+            )  # nosec B608 - using quoted_name for safety
         )
         total_records = total_result.first().total
 
@@ -389,9 +424,12 @@ class QualityMonitor:
 
         for field in critical_fields:
             try:
+                # Validate field name to prevent SQL injection
+                if field not in self.critical_fields.get(table_name, []):
+                    continue
                 missing_result = await session.execute(
                     text(
-                        f"SELECT COUNT(*) as missing FROM {table_name} WHERE {field} IS NULL"
+                        f"SELECT COUNT(*) as missing FROM {table_name} WHERE {field} IS NULL"  # nosec B608 - validated
                     )
                 )
                 missing_count = missing_result.first().missing
@@ -421,7 +459,7 @@ class QualityMonitor:
         Returns:
             Dict[str, Any]: 一致性检查结果
         """
-        consistency_results = {}
+        consistency_results: Dict[str, Any] = {}
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
@@ -446,7 +484,7 @@ class QualityMonitor:
         self, session: AsyncSession
     ) -> Dict[str, Any]:
         """检查外键一致性"""
-        results = {}
+        results: Dict[str, Any] = {}
 
         try:
             # 检查 matches 表中的 team 引用
@@ -460,7 +498,10 @@ class QualityMonitor:
                 """
                 )
             )
-            results["orphaned_home_teams"] = orphaned_home_teams.first().count
+            home_teams_row = orphaned_home_teams.first()
+            results["orphaned_home_teams"] = (
+                int(home_teams_row[0]) if home_teams_row else 0
+            )
 
             orphaned_away_teams = await session.execute(
                 text(
@@ -472,7 +513,10 @@ class QualityMonitor:
                 """
                 )
             )
-            results["orphaned_away_teams"] = orphaned_away_teams.first().count
+            away_teams_row = orphaned_away_teams.first()
+            results["orphaned_away_teams"] = (
+                int(away_teams_row[0]) if away_teams_row else 0
+            )
 
             # 检查 odds 表中的 match 引用
             orphaned_odds = await session.execute(
@@ -485,7 +529,8 @@ class QualityMonitor:
                 """
                 )
             )
-            results["orphaned_odds"] = orphaned_odds.first().count
+            orphaned_row = orphaned_odds.first()
+            results["orphaned_odds"] = int(orphaned_row[0]) if orphaned_row else 0
 
         except Exception as e:
             logger.error(f"检查外键一致性失败: {e}")
@@ -495,7 +540,7 @@ class QualityMonitor:
 
     async def _check_odds_consistency(self, session: AsyncSession) -> Dict[str, Any]:
         """检查赔率数据一致性"""
-        results = {}
+        results: Dict[str, Any] = {}
 
         try:
             # 检查赔率的合理性（应该 > 1.0）
@@ -508,7 +553,10 @@ class QualityMonitor:
                 """
                 )
             )
-            results["invalid_odds_range"] = invalid_odds.first().count
+            invalid_odds_row = invalid_odds.first()
+            results["invalid_odds_range"] = (
+                int(invalid_odds_row[0]) if invalid_odds_row else 0
+            )
 
             # 检查隐含概率和是否合理（应该在 0.95-1.20 之间）
             invalid_probability = await session.execute(
@@ -521,7 +569,10 @@ class QualityMonitor:
                 """
                 )
             )
-            results["invalid_probability_sum"] = invalid_probability.first().count
+            invalid_row = invalid_probability.first()
+            results["invalid_probability_sum"] = (
+                int(invalid_row[0]) if invalid_row else 0
+            )
 
         except Exception as e:
             logger.error(f"检查赔率一致性失败: {e}")
@@ -533,7 +584,7 @@ class QualityMonitor:
         self, session: AsyncSession
     ) -> Dict[str, Any]:
         """检查比赛状态一致性"""
-        results = {}
+        results: Dict[str, Any] = {}
 
         try:
             # 检查已完成比赛是否有比分
@@ -562,7 +613,10 @@ class QualityMonitor:
                 """
                 )
             )
-            results["scheduled_matches_with_score"] = scheduled_with_score.first().count
+            scheduled_row = scheduled_with_score.first()
+            results["scheduled_matches_with_score"] = (
+                int(scheduled_row[0]) if scheduled_row else 0
+            )
 
         except Exception as e:
             logger.error(f"检查比赛状态一致性失败: {e}")

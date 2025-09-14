@@ -4,6 +4,7 @@
 包含所有SQLAlchemy数据模型定义。
 """
 
+from ..base import Base
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 from .data_collection_log import (CollectionStatus, CollectionType,
                                   DataCollectionLog)
@@ -20,6 +21,8 @@ Prediction = Predictions
 
 # 导出所有模型和枚举类
 __all__ = [
+    # 基础类
+    "Base",
     # 核心业务模型
     "League",
     "Team",
