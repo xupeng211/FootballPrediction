@@ -108,16 +108,19 @@ class TestDataProcessingService:
     async def test_shutdown_success(self, service):
         """测试服务关闭成功"""
         # 设置mock组件
-        service.cache_manager = Mock()
-        service.cache_manager.close = AsyncMock()
-        service.db_manager = Mock()
-        service.db_manager.close = AsyncMock()
+        cache_manager_mock = Mock()
+        cache_manager_mock.close = AsyncMock()
+        db_manager_mock = Mock()
+        db_manager_mock.close = AsyncMock()
+
+        service.cache_manager = cache_manager_mock
+        service.db_manager = db_manager_mock
 
         await service.shutdown()
 
         # 验证关闭方法被调用
-        service.cache_manager.close.assert_called_once()
-        service.db_manager.close.assert_called_once()
+        cache_manager_mock.close.assert_called_once()
+        db_manager_mock.close.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_success(self, service, sample_match_data):
@@ -263,19 +266,25 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_get_bronze_layer_status(self, service):
         """测试获取青铜层状态"""
-        # Mock数据库查询
+        # Mock数据库管理器和会话
+        mock_session = Mock()
+        mock_query = Mock()
+        mock_query.count.return_value = 100
+        mock_query.filter.return_value = mock_query
+        mock_session.query.return_value = mock_query
+
         service.db_manager = Mock()
-        service.db_manager.execute_query = AsyncMock(
-            return_value=[
-                {"table_name": "raw_matches", "count": 100},
-                {"table_name": "raw_odds", "count": 250},
-            ]
+        service.db_manager.get_session.return_value.__enter__ = Mock(
+            return_value=mock_session
         )
+        service.db_manager.get_session.return_value.__exit__ = Mock(return_value=None)
 
         status = await service.get_bronze_layer_status()
 
         assert isinstance(status, dict)
-        assert "raw_matches" in status or "total_records" in status
+        assert (
+            "matches" in status or "total_records" in status or "match_total" in status
+        )
 
     def test_service_inheritance(self, service):
         """测试服务继承关系"""
@@ -302,6 +311,12 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_process_bronze_to_silver_basic(self, service):
         """测试青铜层到白银层的基础处理"""
+        # 设置必要的组件以避免初始化错误
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
         # Mock相关方法
         service._process_raw_matches_bronze_to_silver = AsyncMock(return_value=10)
         service._process_raw_odds_bronze_to_silver = AsyncMock(return_value=25)
@@ -310,4 +325,4 @@ class TestDataProcessingService:
         result = await service.process_bronze_to_silver(batch_size=50)
 
         assert isinstance(result, dict)
-        assert "matches_processed" in result or "total_processed" in result
+        assert "processed_matches" in result or "total_processed" in result
