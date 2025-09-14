@@ -4,7 +4,7 @@
 存储足球比赛的详细信息，包括比赛时间、比分、状态等。
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
 
@@ -272,7 +272,6 @@ class Match(BaseModel):
     @classmethod
     def get_upcoming_matches(cls, session, days: int = 7):
         """获取未来几天的比赛"""
-        from datetime import timedelta
 
         start_date = datetime.utcnow()
         end_date = start_date + timedelta(days=days)

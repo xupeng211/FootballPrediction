@@ -1,10 +1,6 @@
 """测试失败演示"""
 
 
-import pytest
-
-
-@pytest.mark.skip(reason="故意跳过的测试，用于演示失败保护机制")
 def test_intentional_failure():
     """故意失败的测试，用于演示失败保护机制"""
     assert False, "这是一个故意失败的测试，用于演示失败保护机制"

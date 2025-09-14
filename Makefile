@@ -97,12 +97,19 @@ coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
+type-check: ## Quality: Run type checking with mypy
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running mypy type checking...$(RESET)" && \
+	mypy src tests && \
+	echo "$(GREEN)✅ Type checking passed$(RESET)"
+
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \
 	$(MAKE) lint && \
+	$(MAKE) type-check && \
 	$(MAKE) test && \
 	$(MAKE) coverage && \
 	echo "$(GREEN)✅ CI simulation passed$(RESET)"
@@ -202,6 +209,6 @@ clean: ## Clean: Remove cache and virtual environment
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install lint fmt check test coverage ci up down logs sync-issues context clean \
+.PHONY: help venv install lint fmt check test coverage type-check ci up down logs sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status

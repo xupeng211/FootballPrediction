@@ -10,7 +10,6 @@
 基于 DATA_DESIGN.md 数据质量监控设计。
 """
 
-import json
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -449,7 +448,7 @@ class AlertManager:
             sorted_labels = sorted(labels.items())
             content += "|" + "|".join([f"{k}={v}" for k, v in sorted_labels])
 
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
 
     def _should_throttle(self, alert_id: str, rule_id: Optional[str]) -> bool:
         """
@@ -515,8 +514,9 @@ class AlertManager:
         ).inc()
 
         # 更新活跃告警数量
-        active_count = len([a for a in self.alerts if a.status == AlertStatus.ACTIVE])
-        level_counts = defaultdict(int)
+        # Count active alerts for monitoring purposes
+        _ = len([a for a in self.alerts if a.status == AlertStatus.ACTIVE])
+        level_counts: Dict[str, int] = defaultdict(int)
         for a in self.alerts:
             if a.status == AlertStatus.ACTIVE:
                 level_counts[a.level.value] += 1
@@ -553,7 +553,6 @@ class AlertManager:
         """
         # Prometheus指标在_update_alert_metrics中已更新
         # 这里可以添加额外的Prometheus特定逻辑
-        pass
 
     def resolve_alert(self, alert_id: str) -> bool:
         """
@@ -601,13 +600,13 @@ class AlertManager:
         active_alerts = len([a for a in self.alerts if a.status == AlertStatus.ACTIVE])
 
         # 按级别统计
-        by_level = defaultdict(int)
+        by_level: Dict[str, int] = defaultdict(int)
         for alert in self.alerts:
             if alert.status == AlertStatus.ACTIVE:
                 by_level[alert.level.value] += 1
 
         # 按来源统计
-        by_source = defaultdict(int)
+        by_source: Dict[str, int] = defaultdict(int)
         for alert in self.alerts:
             if alert.status == AlertStatus.ACTIVE:
                 by_source[alert.source] += 1

@@ -1,5 +1,6 @@
 """add_data_collection_logs_and_bronze_layer_tables
 
+
 Revision ID: f48d412852cc
 Revises: d56c8d0d5aa0
 Create Date: 2025-09-10 20:42:25.754318
@@ -272,9 +273,9 @@ def upgrade() -> None:
             "features",
             sa.Column("last_updated", sa.DateTime(), nullable=True, comment="最后更新时间"),
         )
-    except Exception:
-        # 如果features表不存在或字段已存在，忽略错误
-        pass
+    except Exception as e:
+        # 如果features表不存在或字段已存在，忽略错误但记录日志
+        print(f"Warning: Could not add columns to features table: {e}")
 
 
 def downgrade() -> None:
@@ -295,9 +296,9 @@ def downgrade() -> None:
         op.drop_column("features", "recent_5_goals_against")
         op.drop_column("features", "recent_5_losses")
         op.drop_column("features", "recent_5_draws")
-    except Exception:
-        # 忽略字段不存在的错误
-        pass
+    except Exception as e:
+        # 忽略字段不存在的错误但记录日志
+        print(f"Warning: Could not drop columns from features table: {e}")
 
     # 删除Bronze层赔率数据表
     op.drop_index("idx_raw_odds_data_market_type", table_name="raw_odds_data")

@@ -1,4 +1,5 @@
 """
+import asyncio
 统计学异常检测器
 
 实现基于统计学方法的数据异常检测，包括3σ规则、IQR方法、
@@ -8,13 +9,13 @@ Z-score分析等多种异常检测算法。
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import DatabaseManager
@@ -203,7 +204,7 @@ class AnomalyDetector:
         Returns:
             List[AnomalyResult]: 异常检测结果
         """
-        anomalies = []
+        anomalies: List[AnomalyResult] = []
         config = self.detection_config.get(table_name, {})
 
         if not config:
@@ -261,18 +262,21 @@ class AnomalyDetector:
         """
         try:
             # 获取最近1000条记录进行异常检测
+            # Safe: table_name is validated against whitelist above
+            # Note: Using f-string here is safe as table_name is validated against whitelist
             result = await session.execute(
                 text(
                     f"""
                     SELECT * FROM {table_name}
                     ORDER BY id DESC
                     LIMIT 1000
-                """
+                """  # nosec B608 - table_name is validated against whitelist
                 )
             )
 
             # 转换为DataFrame
-            data = pd.DataFrame(result.fetchall(), columns=result.keys())
+            rows = result.fetchall()
+            data = pd.DataFrame([dict(row._mapping) for row in rows])
             return data
 
         except Exception as e:
@@ -300,7 +304,7 @@ class AnomalyDetector:
         Returns:
             List[AnomalyResult]: 异常结果列表
         """
-        anomalies = []
+        anomalies: List[AnomalyResult] = []
         column_data = data[column_name].dropna()
 
         if len(column_data) == 0:
@@ -715,19 +719,19 @@ class AnomalyDetector:
             }
 
         # 按严重程度统计
-        by_severity = {}
+        by_severity: Dict[str, int] = {}
         for anomaly in anomalies:
             severity = anomaly.severity.value
             by_severity[severity] = by_severity.get(severity, 0) + 1
 
         # 按类型统计
-        by_type = {}
+        by_type: Dict[str, int] = {}
         for anomaly in anomalies:
             anomaly_type = anomaly.anomaly_type.value
             by_type[anomaly_type] = by_type.get(anomaly_type, 0) + 1
 
         # 按表统计
-        by_table = {}
+        by_table: Dict[str, int] = {}
         for anomaly in anomalies:
             table = anomaly.table_name
             by_table[table] = by_table.get(table, 0) + 1
@@ -747,8 +751,8 @@ class AnomalyDetector:
                     if a.severity in [AnomalySeverity.CRITICAL, AnomalySeverity.HIGH]
                 ]
             ),
-            "most_affected_table": max(by_table.items(), key=lambda x: x[1])[0]
-            if by_table
-            else None,
+            "most_affected_table": (
+                max(by_table.items(), key=lambda x: x[1])[0] if by_table else None
+            ),
             "summary_time": datetime.now().isoformat(),
         }

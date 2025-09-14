@@ -18,13 +18,9 @@ logger = logging.getLogger(__name__)
 class DependencyError(Exception):
     """依赖关系错误异常"""
 
-    pass
-
 
 class CircularDependencyError(DependencyError):
     """循环依赖错误异常"""
-
-    pass
 
 
 class DependencyNode:
@@ -66,9 +62,9 @@ class DependencyNode:
             "task_id": self.task_id,
             "dependencies": list(self.dependencies),
             "dependents": list(self.dependents),
-            "last_success_time": self.last_success_time.isoformat()
-            if self.last_success_time
-            else None,
+            "last_success_time": (
+                self.last_success_time.isoformat() if self.last_success_time else None
+            ),
             "is_running": self.is_running,
         }
 

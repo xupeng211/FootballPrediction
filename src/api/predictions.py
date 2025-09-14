@@ -1,4 +1,5 @@
 """
+import asyncio
 预测API端点
 
 提供比赛预测相关的API接口：

@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
-from croniter import croniter
+from croniter import croniter  # type: ignore[import-untyped]
 
 from .dependency_resolver import DependencyResolver
 from .job_manager import JobManager
@@ -118,12 +118,12 @@ class ScheduledTask:
             "max_retries": self.max_retries,
             "timeout": self.timeout,
             "description": self.description,
-            "last_run_time": self.last_run_time.isoformat()
-            if self.last_run_time
-            else None,
-            "next_run_time": self.next_run_time.isoformat()
-            if self.next_run_time
-            else None,
+            "last_run_time": (
+                self.last_run_time.isoformat() if self.last_run_time else None
+            ),
+            "next_run_time": (
+                self.next_run_time.isoformat() if self.next_run_time else None
+            ),
             "is_running": self.is_running,
             "retry_count": self.retry_count,
             "last_error": self.last_error,
@@ -190,8 +190,9 @@ class TaskScheduler:
     def register_predefined_tasks(self) -> None:
         """注册预定义的数据采集任务"""
         # 导入任务函数
-        from .tasks import (calculate_features, cleanup_data, collect_fixtures,
-                            collect_live_scores, collect_odds)
+        from .tasks import (calculate_features_batch, cleanup_data,
+                            collect_fixtures, collect_live_scores_conditional,
+                            collect_odds)
 
         # 定义预设任务
         predefined_tasks = [
@@ -220,7 +221,7 @@ class TaskScheduler:
                 task_id="live_scores_collection",
                 name="实时比分采集",
                 cron_expression="*/2 * * * *",  # 每2分钟（比赛期间）
-                task_function=collect_live_scores,
+                task_function=collect_live_scores_conditional,
                 dependencies=["fixtures_collection"],
                 priority=1,
                 max_retries=5,
@@ -231,7 +232,7 @@ class TaskScheduler:
                 task_id="feature_calculation",
                 name="特征计算",
                 cron_expression="0 * * * *",  # 每小时
-                task_function=calculate_features,
+                task_function=calculate_features_batch,
                 dependencies=["fixtures_collection", "odds_collection"],
                 priority=3,
                 max_retries=3,

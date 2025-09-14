@@ -5,6 +5,7 @@
 """
 
 import re
+from datetime import datetime
 from typing import Any, Dict, List
 
 
@@ -57,3 +58,50 @@ class DataValidator:
                     f"实际 {type(data[field]).__name__}"
                 )
         return invalid_fields
+
+    @staticmethod
+    def sanitize_input(input_data: Any) -> str:
+        """清理输入数据"""
+        if input_data is None:
+            return ""
+
+        # 转换为字符串
+        text = str(input_data)
+
+        # 移除危险字符
+        dangerous_chars = ["<", ">", '"', "'", "&", "\x00", "\r", "\n"]
+        for char in dangerous_chars:
+            text = text.replace(char, "")
+
+        # 限制长度
+        if len(text) > 1000:
+            text = text[:1000]
+
+        return text.strip()
+
+    @staticmethod
+    def validate_email(email: str) -> bool:
+        """验证邮箱格式 - 别名方法"""
+        return DataValidator.is_valid_email(email)
+
+    @staticmethod
+    def validate_phone(phone: str) -> bool:
+        """验证手机号格式"""
+        # 移除所有非数字字符（除了开头的+号）
+        clean_phone = re.sub(r"[^\d+]", "", phone)
+
+        # 支持多种手机号格式
+        patterns = [
+            r"^1[3-9]\d{9}$",  # 中国手机号（11位）
+            r"^\+\d{8,15}$",  # 国际格式（+号开头）
+            r"^\d{8,15}$",  # 纯数字格式（8-15位）
+        ]
+
+        return any(bool(re.match(pattern, clean_phone)) for pattern in patterns)
+
+    @staticmethod
+    def validate_date_range(start_date: datetime, end_date: datetime) -> bool:
+        """验证日期范围 - 开始日期应早于结束日期"""
+        if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+            return False
+        return start_date <= end_date

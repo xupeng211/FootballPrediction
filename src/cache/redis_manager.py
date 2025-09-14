@@ -1,4 +1,5 @@
 """
+import asyncio
 Redis缓存管理器
 
 实现Redis连接池、基础操作方法，支持异步和同步两种模式
@@ -8,7 +9,6 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager, contextmanager
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 import redis
@@ -71,7 +71,12 @@ class CacheKeyManager:
 
         # 构建基础Key
         key_parts = [cls.PREFIXES.get(prefix, prefix)]
-        key_parts.extend(str(arg) for arg in args)
+        # 过滤掉None和空字符串，但保留数字0
+        key_parts.extend(
+            str(arg)
+            for arg in args
+            if arg is not None and (str(arg).strip() or str(arg) == "0")
+        )
 
         # 添加额外信息
         for k, v in kwargs.items():
@@ -245,7 +250,7 @@ class RedisManager:
 
             # 尝试JSON反序列化
             try:
-                return json.loads(value)
+                return json.loads(value)  # type: ignore[arg-type]
             except json.JSONDecodeError:
                 # 如果不是JSON，返回原始字符串
                 return value.decode("utf-8") if isinstance(value, bytes) else value
@@ -297,7 +302,7 @@ class RedisManager:
             if result:
                 logger.debug(f"Redis SET成功 (key={key}, ttl={ttl})")
 
-            return result
+            return bool(result)  # type: ignore[return-value]
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis SET操作失败 (key={key}): {e}")
@@ -326,7 +331,7 @@ class RedisManager:
         try:
             result = self._sync_client.delete(*keys)
             logger.debug(f"Redis DELETE成功，删除了 {result} 个Key")
-            return result
+            return int(result)  # type: ignore[arg-type]
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis DELETE操作失败 (keys={keys}): {e}")
@@ -353,7 +358,7 @@ class RedisManager:
             return 0
 
         try:
-            return self._sync_client.exists(*keys)
+            return int(self._sync_client.exists(*keys))  # type: ignore[arg-type]
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis EXISTS操作失败 (keys={keys}): {e}")
             return 0
@@ -376,7 +381,8 @@ class RedisManager:
             return -2
 
         try:
-            return self._sync_client.ttl(key)
+            result = self._sync_client.ttl(key)
+            return int(result)  # type: ignore[arg-type]
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis TTL操作失败 (key={key}): {e}")
             return -2
@@ -572,7 +578,7 @@ class RedisManager:
             values = self._sync_client.mget(keys)
             result = []
 
-            for value in values:
+            for value in values:  # type: ignore[union-attr]
                 if value is None:
                     result.append(default)
                 else:
@@ -608,7 +614,9 @@ class RedisManager:
 
         try:
             # 序列化所有值
-            serialized_mapping = {}
+            serialized_mapping: Dict[
+                Union[str, bytes], Union[str, bytes, int, float]
+            ] = {}
             for key, value in mapping.items():
                 if isinstance(value, (dict, list)):
                     serialized_mapping[key] = json.dumps(
@@ -618,7 +626,7 @@ class RedisManager:
                     serialized_mapping[key] = str(value)
 
             # 批量设置
-            result = self._sync_client.mset(serialized_mapping)
+            result = self._sync_client.mset(serialized_mapping)  # type: ignore[type-var]
 
             # 如果指定了TTL，需要逐个设置过期时间
             if result and ttl:
@@ -627,7 +635,7 @@ class RedisManager:
                     pipe.expire(key, ttl)
                 pipe.execute()
 
-            return result
+            return bool(result)  # type: ignore[return-value]
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis MSET操作失败: {e}")
@@ -692,7 +700,9 @@ class RedisManager:
 
         try:
             # 序列化所有值
-            serialized_mapping = {}
+            serialized_mapping: Dict[
+                Union[str, bytes], Union[str, bytes, int, float]
+            ] = {}
             for key, value in mapping.items():
                 if isinstance(value, (dict, list)):
                     serialized_mapping[key] = json.dumps(
@@ -702,16 +712,16 @@ class RedisManager:
                     serialized_mapping[key] = str(value)
 
             # 批量设置
-            result = await client.mset(serialized_mapping)
+            result = await client.mset(serialized_mapping)  # type: ignore[type-var]
 
             # 如果指定了TTL，需要逐个设置过期时间
             if result and ttl:
-                pipe = client.pipeline()
-                for key in mapping.keys():
-                    pipe.expire(key, ttl)
-                await pipe.execute()
+                async with client.pipeline() as pipe:
+                    for key in mapping.keys():
+                        pipe.expire(key, ttl)
+                    await pipe.execute()
 
-            return result
+            return bool(result)  # type: ignore[return-value]
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"异步Redis MSET操作失败: {e}")
@@ -768,15 +778,15 @@ class RedisManager:
             return {}
 
         try:
-            info = self._sync_client.info()
+            info = self._sync_client.info()  # type: ignore[union-attr]
             return {
-                "version": info.get("redis_version", "unknown"),
-                "mode": info.get("redis_mode", "standalone"),
-                "connected_clients": info.get("connected_clients", 0),
-                "used_memory_human": info.get("used_memory_human", "0B"),
-                "keyspace_hits": info.get("keyspace_hits", 0),
-                "keyspace_misses": info.get("keyspace_misses", 0),
-                "total_commands_processed": info.get("total_commands_processed", 0),
+                "version": info.get("redis_version", "unknown"),  # type: ignore[union-attr]
+                "mode": info.get("redis_mode", "standalone"),  # type: ignore[union-attr]
+                "connected_clients": info.get("connected_clients", 0),  # type: ignore[union-attr]
+                "used_memory_human": info.get("used_memory_human", "0B"),  # type: ignore[union-attr]
+                "keyspace_hits": info.get("keyspace_hits", 0),  # type: ignore[union-attr]
+                "keyspace_misses": info.get("keyspace_misses", 0),  # type: ignore[union-attr]
+                "total_commands_processed": info.get("total_commands_processed", 0),  # type: ignore[union-attr]
             }
         except Exception as e:
             logger.error(f"获取Redis信息失败: {e}")
@@ -797,15 +807,50 @@ class RedisManager:
     async def aclose(self):
         """关闭异步连接池"""
         try:
-            if self._async_client:
-                await self._async_client.aclose()
-                self._async_client = None
             if self._async_pool:
                 await self._async_pool.aclose()
                 self._async_pool = None
-            logger.info("异步Redis连接池已关闭")
+                logger.info("异步Redis连接池已关闭")
         except Exception as e:
             logger.error(f"关闭异步Redis连接池失败: {e}")
+
+    async def aexpire(self, key: str, ttl: int) -> bool:
+        """
+        异步设置Key的过期时间
+
+        Args:
+            key: 缓存Key
+            ttl: 过期时间 (秒)
+
+        Returns:
+            bool: 是否成功
+        """
+        try:
+            client = await self.get_async_client()
+            if client:
+                return await client.expire(key, ttl)
+            return False
+        except (RedisError, ConnectionError, TimeoutError) as e:
+            logger.error(f"设置Key过期时间失败 (async): {key}, error: {e}")
+            return False
+
+    def expire(self, key: str, ttl: int) -> bool:
+        """
+        同步设置Key的过期时间
+
+        Args:
+            key: 缓存Key
+            ttl: 过期时间 (秒)
+
+        Returns:
+            bool: 是否成功
+        """
+        try:
+            result = self._sync_client.expire(key, ttl)
+            return bool(result)  # type: ignore[return-value]
+        except (RedisError, ConnectionError, TimeoutError) as e:
+            logger.error(f"设置Key过期时间失败 (sync): {key}, error: {e}")
+            return False
 
     # ================== 上下文管理器 ==================
 
@@ -818,7 +863,7 @@ class RedisManager:
             pass  # 连接池会自动管理连接
 
     @asynccontextmanager
-    async def async_context(self):
+    async def async_context(self):  # type: ignore[misc]
         """异步Redis上下文管理器"""
         try:
             yield self

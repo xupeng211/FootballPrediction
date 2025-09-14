@@ -1,11 +1,10 @@
 """
-Kafka流处理相关的Celery任务
+实时数据流任务
 
-提供Kafka Producer和Consumer的Celery任务，支持：
-- 流式数据消费任务
-- 流式数据生产任务
-- 流处理监控任务
-- 流处理健康检查
+处理实时数据流，包括：
+- WebSocket连接管理
+- 实时数据处理
+- 流数据持久化
 """
 
 import asyncio

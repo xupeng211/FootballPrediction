@@ -522,7 +522,10 @@ class RecoveryHandler:
         task.next_run_time = datetime.now() + timedelta(days=365)
 
         failure.add_recovery_attempt(
-            RecoveryStrategy.MANUAL_INTERVENTION, True, datetime.now(), "已请求人工干预，任务已暂停"
+            RecoveryStrategy.MANUAL_INTERVENTION,
+            True,
+            datetime.now(),
+            "已请求人工干预，任务已暂停",
         )
 
         # 发送紧急告警
@@ -559,7 +562,10 @@ class RecoveryHandler:
         task._update_next_run_time()  # 计算下次执行时间
 
         failure.add_recovery_attempt(
-            RecoveryStrategy.SKIP_AND_CONTINUE, True, datetime.now(), "跳过失败，安排下次正常执行"
+            RecoveryStrategy.SKIP_AND_CONTINUE,
+            True,
+            datetime.now(),
+            "跳过失败，安排下次正常执行",
         )
 
         logger.info(f"跳过失败并继续: {task.task_id}")

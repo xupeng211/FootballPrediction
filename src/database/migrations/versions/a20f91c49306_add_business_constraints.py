@@ -1,5 +1,6 @@
 """add_business_constraints
 
+
 Revision ID: a20f91c49306
 Revises: d82ea26f05d0
 Create Date: 2025-09-11 23:59:32.853716
@@ -10,6 +11,7 @@ Create Date: 2025-09-11 23:59:32.853716
 3. 比赛时间必须大于 2000-01-01
 4. 外键引用一致性触发器
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

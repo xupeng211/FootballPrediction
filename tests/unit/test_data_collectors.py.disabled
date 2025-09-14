@@ -1,0 +1,280 @@
+"""
+单元测试：数据收集器模块
+
+测试足球数据收集器的核心功能，包括：
+- 赛程数据采集器 (FixturesCollector)
+- 赔率数据采集器 (OddsCollector)
+- 比分数据采集器 (ScoresCollector)
+- 数据采集结果处理 (CollectionResult)
+
+专注于测试业务逻辑，使用Mock隔离外部依赖。
+"""
+
+from datetime import datetime, timezone
+from unittest.mock import patch
+
+import pytest
+
+from src.data.collectors.base_collector import CollectionResult
+from src.data.collectors.fixtures_collector import FixturesCollector
+from src.data.collectors.odds_collector import OddsCollector
+from src.data.collectors.scores_collector import ScoresCollector
+
+
+class TestFixturesCollector:
+    """测试赛程数据采集器"""
+
+    @pytest.fixture
+    def fixtures_collector(self):
+        """创建测试用的赛程采集器"""
+        return FixturesCollector(
+            data_source="test_api",
+            api_key="test_key",
+            base_url="https://test-api.example.com"
+        )
+
+    @pytest.fixture
+    def sample_fixture_data(self):
+        """示例赛程数据"""
+        return {
+            "matches": [
+                {
+                    "id": 12345,
+                    "homeTeam": {"name": "Arsenal", "id": 57},
+                    "awayTeam": {"name": "Chelsea", "id": 61},
+                    "competition": {"name": "Premier League", "id": 2021},
+                    "utcDate": "2024-01-15T15:00:00Z",
+                    "status": "SCHEDULED",
+                    "matchday": 20
+                }
+            ]
+        }
+
+    @pytest.mark.asyncio
+    async def test_collect_fixtures_success(self, fixtures_collector, sample_fixture_data):
+        """测试成功采集赛程数据"""
+        with patch.object(fixtures_collector, '_fetch_data', return_value=sample_fixture_data):
+            result = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+
+            assert isinstance(result, CollectionResult)
+            assert result.success is True
+            assert len(result.data) == 1
+            assert result.data[0]["id"] == 12345
+
+    @pytest.mark.asyncio
+    async def test_collect_fixtures_duplicate_prevention(self, fixtures_collector, sample_fixture_data):
+        """测试防重复机制"""
+        with patch.object(fixtures_collector, '_fetch_data', return_value=sample_fixture_data):
+            # 第一次采集
+            result1 = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+            # 第二次采集相同数据
+            result2 = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+
+            assert result1.success is True
+            assert result2.success is True
+            # 应该检测到重复并跳过
+            assert len(result2.data) == 0
+
+    @pytest.mark.asyncio
+    async def test_collect_fixtures_api_error_handling(self, fixtures_collector):
+        """测试API错误处理"""
+        with patch.object(fixtures_collector, '_fetch_data', side_effect=Exception("API Error")):
+            result = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+
+            assert result.success is False
+            assert "API Error" in result.error_message
+
+    @pytest.mark.asyncio
+    async def test_collect_fixtures_partial_success(self, fixtures_collector):
+        """测试部分成功的情况"""
+        partial_data = {
+            "matches": [
+                {"id": 1, "status": "SCHEDULED"},  # 有效数据
+                {"invalid": "data"}  # 无效数据
+            ]
+        }
+
+        with patch.object(fixtures_collector, '_fetch_data', return_value=partial_data):
+            result = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+
+            assert result.success is True
+            assert len(result.data) == 1  # 只保留有效数据
+
+    @pytest.mark.asyncio
+    async def test_collect_fixtures_date_range_filtering(self, fixtures_collector):
+        """测试日期范围过滤"""
+        data_with_different_dates = {
+            "matches": [
+                {"id": 1, "utcDate": "2024-01-15T15:00:00Z"},  # 在范围内
+                {"id": 2, "utcDate": "2024-01-20T15:00:00Z"},  # 超出范围
+            ]
+        }
+
+        with patch.object(fixtures_collector, '_fetch_data', return_value=data_with_different_dates):
+            result = await fixtures_collector.collect_fixtures("2024-01-15", "2024-01-16")
+
+            assert result.success is True
+            assert len(result.data) == 1
+            assert result.data[0]["id"] == 1
+
+
+class TestOddsCollector:
+    """测试赔率数据采集器"""
+
+    @pytest.fixture
+    def odds_collector(self):
+        """创建测试用的赔率采集器"""
+        return OddsCollector(
+            data_source="odds_api",
+            api_key="odds_test_key",
+            base_url="https://odds-api.example.com"
+        )
+
+    @pytest.fixture
+    def sample_odds_data(self):
+        """示例赔率数据"""
+        return {
+            "odds": [
+                {
+                    "match_id": 12345,
+                    "bookmaker": "bet365",
+                    "markets": {
+                        "1x2": {
+                            "home": 1.80,
+                            "draw": 3.40,
+                            "away": 4.20
+                        }
+                    },
+                    "timestamp": "2024-01-15T14:30:00Z"
+                }
+            ]
+        }
+
+    @pytest.mark.asyncio
+    async def test_collect_odds_success(self, odds_collector, sample_odds_data):
+        """测试成功采集赔率数据"""
+        with patch.object(odds_collector, '_fetch_data', return_value=sample_odds_data):
+            result = await odds_collector.collect_odds([12345])
+
+            assert isinstance(result, CollectionResult)
+            assert result.success is True
+            assert len(result.data) == 1
+            assert result.data[0]["match_id"] == 12345
+
+    @pytest.mark.asyncio
+    async def test_collect_odds_validation_failure(self, odds_collector):
+        """测试赔率数据验证失败"""
+        invalid_odds_data = {
+            "odds": [
+                {
+                    "match_id": 12345,
+                    "bookmaker": "bet365",
+                    "markets": {
+                        "1x2": {
+                            "home": -1.80,  # 负赔率，无效
+                            "draw": 3.40,
+                            "away": 4.20
+                        }
+                    }
+                }
+            ]
+        }
+
+        with patch.object(odds_collector, '_fetch_data', return_value=invalid_odds_data):
+            result = await odds_collector.collect_odds([12345])
+
+            assert result.success is True
+            assert len(result.data) == 0  # 无效数据被过滤
+
+
+class TestScoresCollector:
+    """测试比分数据采集器"""
+
+    @pytest.fixture
+    def scores_collector(self):
+        """创建测试用的比分采集器"""
+        return ScoresCollector(
+            data_source="live_scores_api",
+            api_key="scores_test_key",
+            update_interval=30
+        )
+
+    @pytest.mark.asyncio
+    async def test_collect_scores_live_update(self, scores_collector):
+        """测试实时比分更新"""
+        live_score_data = {
+            "matches": [
+                {
+                    "id": 12345,
+                    "status": "IN_PLAY",
+                    "score": {
+                        "home": 1,
+                        "away": 0
+                    },
+                    "minute": 45
+                }
+            ]
+        }
+
+        with patch.object(scores_collector, '_fetch_data', return_value=live_score_data):
+            result = await scores_collector.collect_live_scores([12345])
+
+            assert result.success is True
+            assert len(result.data) == 1
+            assert result.data[0]["status"] == "IN_PLAY"
+
+    @pytest.mark.asyncio
+    async def test_collect_scores_match_finished(self, scores_collector):
+        """测试比赛结束后的比分采集"""
+        finished_score_data = {
+            "matches": [
+                {
+                    "id": 12345,
+                    "status": "FINISHED",
+                    "score": {
+                        "home": 2,
+                        "away": 1
+                    },
+                    "minute": 90
+                }
+            ]
+        }
+
+        with patch.object(scores_collector, '_fetch_data', return_value=finished_score_data):
+            result = await scores_collector.collect_live_scores([12345])
+
+            assert result.success is True
+            assert result.data[0]["status"] == "FINISHED"
+
+
+class TestCollectionResult:
+    """测试数据采集结果类"""
+
+    def test_collection_result_creation(self):
+        """测试采集结果创建"""
+        data = [{"id": 1, "name": "test"}]
+        result = CollectionResult(
+            success=True,
+            data=data,
+            source="test_source",
+            timestamp=datetime.now(timezone.utc)
+        )
+
+        assert result.success is True
+        assert len(result.data) == 1
+        assert result.source == "test_source"
+        assert result.error_message is None
+
+    def test_collection_result_with_error(self):
+        """测试带错误的采集结果"""
+        result = CollectionResult(
+            success=False,
+            data=[],
+            source="test_source",
+            timestamp=datetime.now(timezone.utc),
+            error_message="Test error"
+        )
+
+        assert result.success is False
+        assert len(result.data) == 0
+        assert result.error_message == "Test error"

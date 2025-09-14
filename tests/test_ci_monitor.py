@@ -1,6 +1,7 @@
 """CI监控工具测试 - 验证GitHub Actions集成和日志分析功能的正确性"""
 
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -169,7 +170,6 @@ class TestGitHubCIMonitor:
 
     def test_time_formatting(self):
         """测试时间格式化 - 验证相对时间显示的准确性和可读性"""
-        from datetime import datetime, timedelta, timezone
 
         # 测试不同时间间隔的格式化
         now = datetime.now(timezone.utc)
