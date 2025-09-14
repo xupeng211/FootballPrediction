@@ -14,7 +14,7 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import click
 from sqlalchemy import and_, desc, func, select, update
@@ -115,7 +115,7 @@ class PredictionResultUpdater:
         matches_and_predictions = result.all()
 
         logger.info(f"找到{len(matches_and_predictions)}场需要更新的比赛预测")
-        return matches_and_predictions
+        return list(matches_and_predictions)  # type: ignore[arg-type]
 
     async def update_prediction_result(
         self, prediction_id: int, actual_result: str, is_correct: bool
@@ -253,7 +253,7 @@ class PredictionResultUpdater:
         predictions = result.scalars().all()
 
         # 按模型分组
-        model_predictions = {}
+        model_predictions: Dict[str, List[Any]] = {}
         for pred in predictions:
             model_key = f"{pred.model_name}_{pred.model_version}"
             if model_key not in model_predictions:
@@ -313,7 +313,7 @@ class PredictionResultUpdater:
         # 总体统计
         stmt = select(
             func.count().label("total_predictions"),
-            func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
+            func.sum(func.cast(Predictions.is_correct, func.Integer)).label(  # type: ignore[arg-type]
                 "correct_predictions"
             ),
         ).where(
@@ -333,12 +333,14 @@ class PredictionResultUpdater:
             )
 
         # 按模型统计
-        stmt = (
-            select(
+        from sqlalchemy.sql import Select
+
+        model_stmt: Select = (
+            select(  # type: ignore[assignment]
                 Predictions.model_name,
                 Predictions.model_version,
                 func.count().label("total_predictions"),
-                func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
+                func.sum(func.cast(Predictions.is_correct, func.Integer)).label(  # type: ignore[arg-type]
                     "correct_predictions"
                 ),
             )
@@ -352,7 +354,7 @@ class PredictionResultUpdater:
             .order_by(desc(func.count()))
         )
 
-        result = await self.session.execute(stmt)
+        result = await self.session.execute(model_stmt)
         model_stats = result.all()
 
         model_accuracies = []

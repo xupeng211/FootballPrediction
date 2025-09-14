@@ -1,4 +1,5 @@
 """
+import asyncio
 模型API端点
 
 提供模型管理相关的API接口：
@@ -583,6 +584,22 @@ async def get_model_performance(
     except Exception as e:
         logger.error(f"获取模型性能分析失败: {e}")
         raise HTTPException(status_code=500, detail="获取模型性能分析失败")
+
+
+def get_model_info() -> Dict[str, Any]:
+    """
+    获取模型基本信息
+
+    Returns:
+        包含模型基本信息的字典
+    """
+    return {
+        "api": router,
+        "prefix": "/models",
+        "tags": ["models"],
+        "mlflow_client": mlflow_client,
+        "prediction_service": prediction_service,
+    }
 
 
 @router.get("/experiments", summary="获取实验列表", description="获取MLflow实验列表")

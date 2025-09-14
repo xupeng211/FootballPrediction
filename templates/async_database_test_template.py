@@ -1,4 +1,5 @@
 """
+import asyncio
 标准异步数据库测试模板
 
 兼容 SQLAlchemy 2.0 + asyncio

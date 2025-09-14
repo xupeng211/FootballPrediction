@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+import asyncio
 预测反馈闭环系统单元测试
 
 测试覆盖：
@@ -38,14 +41,14 @@ try:
     IMPORTS_AVAILABLE = True
 except ImportError:
     # 如果导入失败，设置为None，测试会跳过
-    EnhancedModelMonitor = None
-    ModelPerformanceReporter = None
-    AutoRetrainPipeline = None
-    PredictionResultUpdater = None
-    Match = None
-    MatchStatus = None
-    PredictedResult = None
-    Predictions = None
+    EnhancedModelMonitor = None  # type: ignore[misc]
+    ModelPerformanceReporter = None  # type: ignore[misc]
+    AutoRetrainPipeline = None  # type: ignore[misc]
+    PredictionResultUpdater = None  # type: ignore[misc]
+    Match = None  # type: ignore[misc]
+    MatchStatus = None  # type: ignore[misc]
+    PredictedResult = None  # type: ignore[misc]
+    Predictions = None  # type: ignore[misc]
     IMPORTS_AVAILABLE = False
 
 

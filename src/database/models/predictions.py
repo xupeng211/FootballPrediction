@@ -6,7 +6,7 @@
 
 import json
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -394,7 +394,6 @@ class Predictions(BaseModel):
         Returns:
             Dict[str, Any]: 准确性统计
         """
-        from datetime import timedelta
 
         from sqlalchemy import and_
 

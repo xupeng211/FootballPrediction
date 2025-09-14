@@ -7,7 +7,7 @@
 import json
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -70,7 +70,8 @@ class TestFootballKafkaProducer:
         mock_producer_class.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
-    def test_send_match_data(self, mock_producer_class):
+    @pytest.mark.asyncio
+    async def test_send_match_data(self, mock_producer_class):
         """测试发送比赛数据"""
         mock_producer_class.return_value = self.mock_producer
         producer = FootballKafkaProducer(self.config)
@@ -83,14 +84,15 @@ class TestFootballKafkaProducer:
             "status": "scheduled",
         }
 
-        result = producer.send_match_data(match_data)
+        result = await producer.send_match_data(match_data)
 
         assert result is True
         self.mock_producer.produce.assert_called_once()
         self.mock_producer.poll.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
-    def test_send_odds_data(self, mock_producer_class):
+    @pytest.mark.asyncio
+    async def test_send_odds_data(self, mock_producer_class):
         """测试发送赔率数据"""
         mock_producer_class.return_value = self.mock_producer
         producer = FootballKafkaProducer(self.config)
@@ -103,13 +105,14 @@ class TestFootballKafkaProducer:
             "away_odds": 1.8,
         }
 
-        result = producer.send_odds_data(odds_data)
+        result = await producer.send_odds_data(odds_data)
 
         assert result is True
         self.mock_producer.produce.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
-    def test_send_scores_data(self, mock_producer_class):
+    @pytest.mark.asyncio
+    async def test_send_scores_data(self, mock_producer_class):
         """测试发送比分数据"""
         mock_producer_class.return_value = self.mock_producer
         producer = FootballKafkaProducer(self.config)
@@ -122,13 +125,14 @@ class TestFootballKafkaProducer:
             "status": "finished",
         }
 
-        result = producer.send_scores_data(scores_data)
+        result = await producer.send_scores_data(scores_data)
 
         assert result is True
         self.mock_producer.produce.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
-    def test_producer_error_handling(self, mock_producer_class):
+    @pytest.mark.asyncio
+    async def test_producer_error_handling(self, mock_producer_class):
         """测试生产者错误处理"""
         mock_producer_class.return_value = self.mock_producer
         self.mock_producer.produce.side_effect = Exception("Kafka error")
@@ -136,7 +140,7 @@ class TestFootballKafkaProducer:
         producer = FootballKafkaProducer(self.config)
 
         match_data = {"match_id": 12345}
-        result = producer.send_match_data(match_data)
+        result = await producer.send_match_data(match_data)
 
         assert result is False
 
@@ -178,36 +182,49 @@ class TestFootballKafkaConsumer:
         assert consumer.consumer == self.mock_consumer
         mock_consumer_class.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.Consumer")
-    @patch("src.streaming.kafka_consumer.get_session")
-    def test_process_match_message(self, mock_get_session, mock_consumer_class):
+    @patch("src.streaming.kafka_consumer.DatabaseManager")
+    async def test_process_match_message(
+        self, mock_db_manager_class, mock_consumer_class
+    ):
         """测试处理比赛消息"""
         mock_consumer_class.return_value = self.mock_consumer
-        mock_db = Mock()
-        mock_get_session.return_value.__enter__.return_value = mock_db
+
+        # Mock数据库管理器和会话
+        mock_db_manager = Mock()
+        mock_session = AsyncMock()
+        mock_db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
+        mock_db_manager_class.return_value = mock_db_manager
 
         consumer = FootballKafkaConsumer(self.config)
 
         message_data = {
-            "match_id": 12345,
-            "home_team": "Team A",
-            "away_team": "Team B",
-            "match_time": datetime.now(timezone.utc).isoformat(),
+            "data": {
+                "match_id": 12345,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "match_time": datetime.now(timezone.utc).isoformat(),
+            },
+            "source": "test_source",
         }
 
-        result = consumer._process_match_message(message_data)
+        result = await consumer._process_match_message(message_data)
 
         assert result is True
-        mock_db.add.assert_called_once()
-        mock_db.commit.assert_called_once()
+        mock_session.add.assert_called_once()
+        mock_session.commit.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.Consumer")
     @patch("src.streaming.kafka_consumer.get_session")
-    def test_process_odds_message(self, mock_get_session, mock_consumer_class):
+    async def test_process_odds_message(self, mock_get_session, mock_consumer_class):
         """测试处理赔率消息"""
         mock_consumer_class.return_value = self.mock_consumer
-        mock_db = Mock()
-        mock_get_session.return_value.__enter__.return_value = mock_db
+        mock_db = AsyncMock()
+        mock_get_session.return_value.__aenter__.return_value = mock_db
 
         consumer = FootballKafkaConsumer(self.config)
 
@@ -218,19 +235,20 @@ class TestFootballKafkaConsumer:
             "draw_odds": 3.2,
         }
 
-        result = consumer._process_odds_message(message_data)
+        result = await consumer._process_odds_message(message_data)
 
         assert result is True
         mock_db.add.assert_called_once()
         mock_db.commit.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.Consumer")
     @patch("src.streaming.kafka_consumer.get_session")
-    def test_process_scores_message(self, mock_get_session, mock_consumer_class):
+    async def test_process_scores_message(self, mock_get_session, mock_consumer_class):
         """测试处理比分消息"""
         mock_consumer_class.return_value = self.mock_consumer
-        mock_db = Mock()
-        mock_get_session.return_value.__enter__.return_value = mock_db
+        mock_db = AsyncMock()
+        mock_get_session.return_value.__aenter__.return_value = mock_db
 
         consumer = FootballKafkaConsumer(self.config)
 
@@ -241,14 +259,15 @@ class TestFootballKafkaConsumer:
             "minute": 90,
         }
 
-        result = consumer._process_scores_message(message_data)
+        result = await consumer._process_scores_message(message_data)
 
         assert result is True
         mock_db.add.assert_called_once()
         mock_db.commit.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.Consumer")
-    def test_consume_batch(self, mock_consumer_class):
+    async def test_consume_batch(self, mock_consumer_class):
         """测试批量消费"""
         mock_consumer_class.return_value = self.mock_consumer
 
@@ -265,20 +284,21 @@ class TestFootballKafkaConsumer:
             {"data_type": "odds", "data": {"match_id": 2}}
         ).encode()
 
-        self.mock_consumer.consume.return_value = [mock_message1, mock_message2]
+        self.mock_consumer.poll.side_effect = [mock_message1, mock_message2, None]
 
         consumer = FootballKafkaConsumer(self.config)
 
         with patch.object(
             consumer, "_process_message", return_value=True
         ) as mock_process:
-            results = consumer.consume_batch(timeout=1.0, max_messages=10)
+            results = await consumer.consume_batch(batch_size=2, timeout=1.0)
 
-            assert len(results) == 2
+            assert results["processed"] == 2
             assert mock_process.call_count == 2
 
+    @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.Consumer")
-    def test_consumer_error_handling(self, mock_consumer_class):
+    async def test_consumer_error_handling(self, mock_consumer_class):
         """测试消费者错误处理"""
         mock_consumer_class.return_value = self.mock_consumer
 
@@ -286,13 +306,13 @@ class TestFootballKafkaConsumer:
         mock_message = Mock()
         mock_message.error.return_value = Mock(code=Mock(return_value=1))
 
-        self.mock_consumer.consume.return_value = [mock_message]
+        self.mock_consumer.poll.side_effect = [mock_message, None]
 
         consumer = FootballKafkaConsumer(self.config)
-        results = consumer.consume_batch(timeout=1.0, max_messages=1)
+        results = await consumer.consume_batch(batch_size=1, timeout=1.0)
 
         # 错误消息应该被跳过
-        assert len(results) == 0
+        assert results["failed"] == 1
 
 
 class TestStreamProcessor:
@@ -316,15 +336,16 @@ class TestStreamProcessor:
 
     @patch("src.streaming.stream_processor.FootballKafkaProducer")
     @patch("src.streaming.stream_processor.FootballKafkaConsumer")
-    def test_send_data(self, mock_consumer_class, mock_producer_class):
+    @pytest.mark.asyncio
+    async def test_send_data(self, mock_consumer_class, mock_producer_class):
         """测试发送数据"""
         mock_producer = Mock()
-        mock_producer.send_match_data.return_value = True
+        mock_producer.send_match_data = AsyncMock(return_value=True)
         mock_producer_class.return_value = mock_producer
 
         processor = StreamProcessor(self.config)
 
-        result = processor.send_data("match", {"match_id": 12345})
+        result = await processor.send_data({"match_id": 12345}, "match")
 
         assert result is True
         mock_producer.send_match_data.assert_called_once_with({"match_id": 12345})
@@ -334,33 +355,37 @@ class TestStreamProcessor:
     def test_consume_data(self, mock_consumer_class, mock_producer_class):
         """测试消费数据"""
         mock_consumer = Mock()
-        mock_consumer.consume_batch.return_value = [{"result": "success"}]
+        mock_consumer.consume_batch = AsyncMock(
+            return_value={"processed": 1, "failed": 0}
+        )
+        mock_consumer.subscribe_all_topics = Mock()
         mock_consumer_class.return_value = mock_consumer
 
         processor = StreamProcessor(self.config)
 
         results = processor.consume_data(timeout=1.0, max_messages=10)
 
-        assert len(results) == 1
-        mock_consumer.consume_batch.assert_called_once_with(
-            timeout=1.0, max_messages=10
-        )
+        assert results["processed"] == 1
+        mock_consumer.consume_batch.assert_called_once_with(batch_size=10, timeout=1.0)
 
+    @pytest.mark.asyncio
     @patch("src.streaming.stream_processor.FootballKafkaProducer")
     @patch("src.streaming.stream_processor.FootballKafkaConsumer")
-    def test_health_check(self, mock_consumer_class, mock_producer_class):
+    async def test_health_check(self, mock_consumer_class, mock_producer_class):
         """测试健康检查"""
         mock_producer = Mock()
         mock_consumer = Mock()
+        mock_producer.producer = Mock()  # 模拟内部producer
+        mock_consumer.consumer = Mock()  # 模拟内部consumer
         mock_producer_class.return_value = mock_producer
         mock_consumer_class.return_value = mock_consumer
 
         processor = StreamProcessor(self.config)
 
-        health_status = processor.health_check()
+        health_status = await processor.health_check()
 
-        assert "producer" in health_status
-        assert "consumer" in health_status
+        assert "producer_status" in health_status
+        assert "consumer_status" in health_status
         assert health_status["timestamp"] is not None
 
 

@@ -1,11 +1,10 @@
-# 修复后的代码，符合flake8规范
+# 故意写的格式很差的代码
 def badly_formatted_function(x, y, z):
-    """修复后的函数，符合代码规范。"""
     if x > 0:
         return x + y + z
     else:
         return None
 
 
-# 修复超长行问题
-very_long_line = "这是一个修复后的行，通过括号换行来避免超过88个字符的限制，" "用来测试flake8的检查功能，现在应该不会报错"
+# 超长行，会被flake8检查出来
+very_long_line = "这是一个故意写得很长的行，超过了88个字符的限制，用来测试flake8的检查功能，应该会报错"

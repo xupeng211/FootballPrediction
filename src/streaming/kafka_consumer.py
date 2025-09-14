@@ -17,10 +17,13 @@ from typing import Any, Dict, List, Optional
 from confluent_kafka import Consumer, KafkaError, KafkaException
 
 from src.database.connection import DatabaseManager
-from src.database.models.bronze_layer import (RawMatchData, RawOddsData,
-                                              RawScoresData)
+from src.database.models.raw_data import (RawMatchData, RawOddsData,
+                                          RawScoresData)
 
 from .stream_config import StreamConfig
+
+# 为了测试兼容性添加的别名
+KafkaConsumer = Consumer
 
 
 class FootballKafkaConsumer:
@@ -104,9 +107,11 @@ class FootballKafkaConsumer:
                 collected_at=datetime.now(),
                 external_match_id=str(match_data.get("match_id", "")),
                 external_league_id=str(match_data.get("league_id", "")),
-                match_time=datetime.fromisoformat(match_data["match_time"])
-                if match_data.get("match_time")
-                else None,
+                match_time=(
+                    datetime.fromisoformat(match_data["match_time"])
+                    if match_data.get("match_time")
+                    else None
+                ),
             )
 
             # 写入数据库
@@ -330,7 +335,10 @@ class FootballKafkaConsumer:
             self.logger.info("Kafka Consumer已关闭")
 
     async def consume_batch(
-        self, batch_size: int = 100, timeout: float = 5.0
+        self,
+        batch_size: int = 100,
+        timeout: float = 5.0,
+        max_messages: Optional[int] = None,
     ) -> Dict[str, int]:
         """
         批量消费消息
@@ -338,10 +346,14 @@ class FootballKafkaConsumer:
         Args:
             batch_size: 批量大小
             timeout: 总超时时间（秒）
+            max_messages: 最大消息数（兼容性参数，与batch_size相同）
 
         Returns:
             消费统计 {processed: 成功处理数, failed: 失败数}
         """
+        # 兼容性处理
+        if max_messages is not None:
+            batch_size = max_messages
         if not self.consumer:
             self.logger.error("Consumer未初始化")
             return {"processed": 0, "failed": 0}
@@ -398,3 +410,9 @@ class FootballKafkaConsumer:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         self.stop_consuming()
+
+
+def get_session():
+    """获取数据库会话 - 兼容测试代码"""
+    db_manager = DatabaseManager()
+    return db_manager.get_async_session()

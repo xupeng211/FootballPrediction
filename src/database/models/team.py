@@ -9,6 +9,8 @@ from sqlalchemy.orm import relationship
 
 from src.database.base import BaseModel
 
+from .match import Match
+
 
 class Team(BaseModel):
     """
@@ -25,6 +27,9 @@ class Team(BaseModel):
     team_code = Column(String(10), unique=True, nullable=True, comment="球队代码")
 
     country = Column(String(50), nullable=True, comment="所属国家")
+
+    # API相关字段
+    api_team_id = Column(Integer, unique=True, nullable=True, comment="API球队ID")
 
     # 联赛关系
     league_id = Column(
@@ -89,8 +94,6 @@ class Team(BaseModel):
         """获取最近的比赛"""
         from sqlalchemy import desc, or_
 
-        from .match import Match
-
         return (
             session.query(Match)
             .filter(
@@ -105,7 +108,6 @@ class Team(BaseModel):
 
     def get_home_record(self, session):
         """获取主场战绩"""
-        from .match import Match
 
         home_matches = session.query(Match).filter(
             Match.home_team_id == self.id, Match.match_status == "finished"
@@ -124,7 +126,6 @@ class Team(BaseModel):
 
     def get_away_record(self, session):
         """获取客场战绩"""
-        from .match import Match
 
         away_matches = session.query(Match).filter(
             Match.away_team_id == self.id, Match.match_status == "finished"
@@ -144,8 +145,6 @@ class Team(BaseModel):
     def get_season_stats(self, session, season: str):
         """获取指定赛季的统计数据"""
         from sqlalchemy import or_
-
-        from .match import Match
 
         matches = (
             session.query(Match)

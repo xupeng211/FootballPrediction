@@ -4,6 +4,7 @@
 针对覆盖率较低的模块添加更多测试
 """
 
+from datetime import datetime
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -12,6 +13,7 @@ import pytest
 from src.database.models import (Features, League, MarketType, Match,
                                  MatchStatus, Odds, PredictedResult,
                                  Predictions, Team)
+from src.database.models.features import TeamType
 
 
 class TestAPIHealthCoverage:
@@ -112,7 +114,6 @@ class TestDatabaseModelsCoverage:
 
     def test_match_model_methods(self):
         """测试Match模型的各种方法"""
-        from datetime import datetime
 
         match = Match(
             home_team_id=1,
@@ -246,7 +247,6 @@ class TestSimpleModelCreation:
         assert team.team_name == "测试队"
 
         # Match
-        from datetime import datetime
 
         match = Match(
             home_team_id=1,
@@ -265,7 +265,6 @@ class TestSimpleModelCreation:
         assert odds.match_id == 1
 
         # Features
-        from src.database.models.features import TeamType
 
         features = Features(match_id=1, team_id=1, team_type=TeamType.HOME)
         assert features.match_id == 1

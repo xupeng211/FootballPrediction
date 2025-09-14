@@ -1,5 +1,6 @@
 """Initial database schema
 
+
 Revision ID: d56c8d0d5aa0
 Revises:
 Create Date: 2025-09-07 20:13:08.860093

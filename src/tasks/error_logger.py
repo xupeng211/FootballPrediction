@@ -20,6 +20,9 @@ from sqlalchemy import text
 from src.database.connection import DatabaseManager
 from src.database.models.data_collection_log import (CollectionStatus,
                                                      DataCollectionLog)
+from src.database.sql_compatibility import (CompatibleQueryBuilder,
+                                            SQLCompatibilityHelper,
+                                            get_db_type_from_engine)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,8 @@ class TaskErrorLogger:
 
     def __init__(self):
         self.db_manager = DatabaseManager()
+        self._db_type = None
+        self._query_builder = None
 
     async def log_task_error(
         self,
@@ -171,13 +176,14 @@ class TaskErrorLogger:
 
                 session.add(log_entry)
                 await session.commit()
+                await session.refresh(log_entry)  # Refresh to get the actual ID
 
                 logger.info(
                     f"数据采集错误已记录: {data_source} - {collection_type}, "
                     f"错误: {error_message}"
                 )
 
-                return log_entry.id
+                return int(log_entry.id) if log_entry.id is not None else None
 
         except Exception as log_error:
             logger.error(f"记录数据采集错误失败: {str(log_error)}")
@@ -226,23 +232,33 @@ class TaskErrorLogger:
         except Exception as db_error:
             logger.error(f"保存错误到数据库失败: {str(db_error)}")
 
+    async def _get_db_type(self) -> str:
+        """获取数据库类型"""
+        if self._db_type is None:
+            try:
+                # 获取数据库引擎来检测类型
+                engine = self.db_manager._async_engine or self.db_manager._sync_engine
+                if engine:
+                    self._db_type = get_db_type_from_engine(engine)
+                else:
+                    self._db_type = "postgresql"  # 默认值
+            except Exception:
+                self._db_type = "postgresql"  # 默认值
+        return self._db_type
+
+    async def _get_query_builder(self) -> CompatibleQueryBuilder:
+        """获取兼容性查询构建器"""
+        if self._query_builder is None:
+            db_type = await self._get_db_type()
+            self._query_builder = CompatibleQueryBuilder(db_type)
+        return self._query_builder
+
     async def _ensure_error_logs_table_exists(self, session) -> None:
         """确保 error_logs 表存在"""
         try:
+            db_type = await self._get_db_type()
             create_table_sql = text(
-                """
-                CREATE TABLE IF NOT EXISTS error_logs (
-                    id SERIAL PRIMARY KEY,
-                    task_name VARCHAR(100) NOT NULL,
-                    task_id VARCHAR(100),
-                    error_type VARCHAR(100) NOT NULL,
-                    error_message TEXT,
-                    traceback TEXT,
-                    retry_count INTEGER DEFAULT 0,
-                    context_data TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """
+                SQLCompatibilityHelper.create_error_logs_table_sql(db_type)
             )
 
             await session.execute(create_table_sql)
@@ -262,32 +278,18 @@ class TaskErrorLogger:
             错误统计数据
         """
         try:
+            query_builder = await self._get_query_builder()
+
             async with self.db_manager.get_async_session() as session:
                 # 获取错误总数
                 error_count_sql = text(
-                    """
-                    SELECT COUNT(*) as total_errors
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '%s hours'
-                """
-                    % hours
+                    query_builder.build_error_statistics_query(hours)
                 )
-
                 result = await session.execute(error_count_sql)
                 total_errors = result.scalar() or 0
 
                 # 按任务类型统计错误
-                task_errors_sql = text(
-                    """
-                    SELECT task_name, COUNT(*) as error_count
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '%s hours'
-                    GROUP BY task_name
-                    ORDER BY error_count DESC
-                """
-                    % hours
-                )
-
+                task_errors_sql = text(query_builder.build_task_errors_query(hours))
                 result = await session.execute(task_errors_sql)
                 task_errors = [
                     {"task_name": row.task_name, "error_count": row.error_count}
@@ -295,17 +297,7 @@ class TaskErrorLogger:
                 ]
 
                 # 按错误类型统计
-                type_errors_sql = text(
-                    """
-                    SELECT error_type, COUNT(*) as error_count
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '%s hours'
-                    GROUP BY error_type
-                    ORDER BY error_count DESC
-                """
-                    % hours
-                )
-
+                type_errors_sql = text(query_builder.build_type_errors_query(hours))
                 result = await session.execute(type_errors_sql)
                 type_errors = [
                     {"error_type": row.error_type, "error_count": row.error_count}
@@ -340,15 +332,12 @@ class TaskErrorLogger:
             清理的记录数
         """
         try:
+            query_builder = await self._get_query_builder()
+
             async with self.db_manager.get_async_session() as session:
                 cleanup_sql = text(
-                    """
-                    DELETE FROM error_logs
-                    WHERE created_at < NOW() - INTERVAL '%s days'
-                """
-                    % days_to_keep
+                    query_builder.build_cleanup_old_logs_query(days_to_keep)
                 )
-
                 result = await session.execute(cleanup_sql)
                 await session.commit()
 
@@ -360,3 +349,15 @@ class TaskErrorLogger:
         except Exception as cleanup_error:
             logger.error(f"清理错误日志失败: {str(cleanup_error)}")
             return 0
+
+    async def cleanup_old_logs(self, days_to_keep: int = 7) -> int:
+        """
+        清理旧的错误日志（别名方法，兼容测试）
+
+        Args:
+            days_to_keep: 保留天数
+
+        Returns:
+            清理的记录数
+        """
+        return await self.cleanup_old_errors(days_to_keep)

@@ -1,4 +1,5 @@
 """
+import asyncio
 重构示例：test_index_existence
 
 这是使用标准异步数据库测试模板重构的示例，展示：

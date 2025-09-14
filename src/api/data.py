@@ -1,4 +1,5 @@
 """
+import asyncio
 数据API接口
 
 提供足球预测系统的数据访问接口。
@@ -176,6 +177,100 @@ async def get_match_features(
     except Exception as e:
         logger.error(f"获取比赛特征失败: {str(e)}")
         raise HTTPException(status_code=500, detail="获取比赛特征失败")
+
+
+@router.get("/teams/{team_id}/stats")
+async def get_team_stats(
+    team_id: int,
+    session: AsyncSession = Depends(get_async_session),
+):
+    """
+    获取球队统计数据
+
+    Args:
+        team_id: 球队ID
+
+    Returns:
+        Dict: 球队统计数据
+    """
+    try:
+        # 查询球队基本信息
+        team_query = select(Team).where(Team.id == team_id)
+        team_result = await session.execute(team_query)
+        team = team_result.scalar_one_or_none()
+
+        if not team:
+            raise HTTPException(status_code=404, detail="球队不存在")
+
+        # 查询所有比赛
+        matches_query = (
+            select(Match)
+            .where(
+                and_(
+                    or_(Match.home_team_id == team_id, Match.away_team_id == team_id),
+                    Match.match_status == "finished",
+                )
+            )
+            .limit(50)  # 限制最近50场比赛
+        )
+
+        matches_result = await session.execute(matches_query)
+        matches = matches_result.scalars().all()
+
+        # 初始化统计数据
+        stats = {
+            "team_id": team_id,
+            "team_name": team.name,
+            "total_matches": 0,
+            "wins": 0,
+            "draws": 0,
+            "losses": 0,
+            "goals_for": 0,
+            "goals_against": 0,
+            "clean_sheets": 0,
+        }
+
+        # 计算统计
+        for match in matches:
+            is_home = match.home_team_id == team_id
+            team_score = match.home_score if is_home else match.away_score
+            opponent_score = match.away_score if is_home else match.home_score
+
+            if team_score is not None and opponent_score is not None:
+                stats["total_matches"] += 1
+                stats["goals_for"] += team_score
+                stats["goals_against"] += opponent_score
+
+                if team_score > opponent_score:
+                    stats["wins"] += 1
+                elif team_score == opponent_score:
+                    stats["draws"] += 1
+                else:
+                    stats["losses"] += 1
+
+                if opponent_score == 0:
+                    stats["clean_sheets"] += 1
+
+        # 计算衍生统计
+        if stats["total_matches"] > 0:
+            stats["win_rate"] = stats["wins"] / stats["total_matches"]
+            stats["avg_goals_for"] = stats["goals_for"] / stats["total_matches"]
+            stats["avg_goals_against"] = stats["goals_against"] / stats["total_matches"]
+        else:
+            stats["win_rate"] = 0.0
+            stats["avg_goals_for"] = 0.0
+            stats["avg_goals_against"] = 0.0
+
+        stats["goal_difference"] = stats["goals_for"] - stats["goals_against"]
+        stats["points"] = stats["wins"] * 3 + stats["draws"]
+
+        return stats
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取球队统计失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="获取球队统计失败")
 
 
 @router.get("/teams/{team_id}/recent_stats")

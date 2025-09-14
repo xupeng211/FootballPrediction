@@ -1,10 +1,12 @@
 """
+from unittest.mock import AsyncMock, Mock, patch
+import asyncio
 预测服务全面测试
 重点解决实际业务问题，同时提升测试覆盖率
 """
-from dataclasses import asdict
+
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
 import pytest

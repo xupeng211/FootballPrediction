@@ -1,4 +1,5 @@
 """
+import asyncio
 数据库连接管理模块
 
 提供同步和异步的PostgreSQL数据库连接、会话管理和生命周期控制。
@@ -66,27 +67,43 @@ class DatabaseManager:
         logger.info(f"初始化数据库连接到 {config.host}:{config.port}/{config.database}")
 
         # 创建同步引擎
-        self._sync_engine = create_engine(
-            config.sync_url,
-            poolclass=QueuePool,
-            pool_size=config.pool_size,
-            max_overflow=config.max_overflow,
-            pool_timeout=config.pool_timeout,
-            pool_recycle=config.pool_recycle,
-            echo=config.echo,
-            echo_pool=config.echo_pool,
-        )
+        # 对于SQLite，不使用连接池
+        if config.database.endswith(".db") or config.database == ":memory:":
+            self._sync_engine = create_engine(
+                config.sync_url,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
+        else:
+            self._sync_engine = create_engine(
+                config.sync_url,
+                poolclass=QueuePool,
+                pool_size=config.pool_size,
+                max_overflow=config.max_overflow,
+                pool_timeout=config.pool_timeout,
+                pool_recycle=config.pool_recycle,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
 
         # 创建异步引擎
-        self._async_engine = create_async_engine(
-            config.async_url,
-            pool_size=config.async_pool_size,
-            max_overflow=config.async_max_overflow,
-            pool_timeout=config.pool_timeout,
-            pool_recycle=config.pool_recycle,
-            echo=config.echo,
-            echo_pool=config.echo_pool,
-        )
+        # 对于SQLite，不使用连接池参数
+        if config.database.endswith(".db") or config.database == ":memory:":
+            self._async_engine = create_async_engine(
+                config.async_url,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
+        else:
+            self._async_engine = create_async_engine(
+                config.async_url,
+                pool_size=config.async_pool_size,
+                max_overflow=config.async_max_overflow,
+                pool_timeout=config.pool_timeout,
+                pool_recycle=config.pool_recycle,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
 
         # 创建会话工厂
         self._session_factory = sessionmaker(
@@ -545,6 +562,7 @@ async def get_async_admin_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 # 便捷的会话获取函数，用于直接使用
+@contextmanager
 def get_session(
     role: DatabaseRole = DatabaseRole.READER,
 ) -> Generator[Session, None, None]:
@@ -558,6 +576,7 @@ def get_session(
         yield session
 
 
+@asynccontextmanager
 async def get_async_session(
     role: DatabaseRole = DatabaseRole.READER,
 ) -> AsyncGenerator[AsyncSession, None]:

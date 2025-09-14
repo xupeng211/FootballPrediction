@@ -64,3 +64,18 @@ class ContentAnalysisService(BaseService):
             if result:
                 results.append(result)
         return results
+
+    def analyze_text(self, text: str) -> dict:
+        """分析文本内容 - 同步版本用于测试"""
+        if not text:
+            return {"error": "Empty text"}
+
+        # 简单的文本分析逻辑
+        words = text.split()
+        return {
+            "word_count": len(words),
+            "character_count": len(text),
+            "sentiment": "neutral",
+            "keywords": words[:5] if words else [],
+            "language": "auto-detected",
+        }

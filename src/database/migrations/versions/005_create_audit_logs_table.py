@@ -1,4 +1,5 @@
 """
+from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表
 
 创建新的权限审计日志表，支持详细的操作记录和合规要求。
@@ -51,10 +52,16 @@ def upgrade():
         sa.Column("old_value", sa.Text(), nullable=True, comment="操作前值"),
         sa.Column("new_value", sa.Text(), nullable=True, comment="操作后值"),
         sa.Column(
-            "old_value_hash", sa.String(length=64), nullable=True, comment="旧值哈希（敏感数据）"
+            "old_value_hash",
+            sa.String(length=64),
+            nullable=True,
+            comment="旧值哈希（敏感数据）",
         ),
         sa.Column(
-            "new_value_hash", sa.String(length=64), nullable=True, comment="新值哈希（敏感数据）"
+            "new_value_hash",
+            sa.String(length=64),
+            nullable=True,
+            comment="新值哈希（敏感数据）",
         ),
         # 上下文信息
         sa.Column("ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"),
@@ -91,7 +98,10 @@ def upgrade():
         sa.Column("tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"),
         # 合规相关
         sa.Column(
-            "compliance_category", sa.String(length=100), nullable=True, comment="合规分类"
+            "compliance_category",
+            sa.String(length=100),
+            nullable=True,
+            comment="合规分类",
         ),
         sa.Column(
             "retention_period_days",
@@ -212,9 +222,9 @@ def upgrade():
         """
             )
         )
-    except Exception:
-        # 如果permission_audit_log表不存在，忽略错误
-        pass
+    except Exception as e:
+        # 如果permission_audit_log表不存在，忽略错误但记录日志
+        print(f"Warning: Could not drop permission_audit_log table: {e}")
 
 
 def downgrade():
@@ -233,9 +243,9 @@ def downgrade():
         """
             )
         )
-    except Exception:
-        # 如果permission_audit_log表不存在，忽略错误
-        pass
+    except Exception as e:
+        # 如果permission_audit_log表不存在，忽略错误但记录日志
+        print(f"Warning: Could not drop permission_audit_log table: {e}")
 
     # 删除清理函数
     connection.execute(text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();"))

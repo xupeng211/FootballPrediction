@@ -19,6 +19,9 @@ from confluent_kafka import Producer
 
 from .stream_config import StreamConfig
 
+# 为了测试兼容性添加的别名
+KafkaProducer = Producer
+
 
 class FootballKafkaProducer:
     """
@@ -318,9 +321,16 @@ class FootballKafkaProducer:
             self.producer = None
             self.logger.info("Kafka Producer已关闭")
 
+    def _serialize_data(self, data: Any) -> str:
+        """序列化数据 - 兼容测试代码"""
+        return self._serialize_message(data)
+
     def __del__(self):
         """析构函数，确保资源清理"""
-        self.close()
+        try:
+            self.close()
+        except Exception:
+            pass  # Ignore errors during cleanup
 
     async def __aenter__(self):
         """异步上下文管理器入口"""

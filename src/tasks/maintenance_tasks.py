@@ -13,6 +13,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
+from sqlalchemy import text
+
+from src.database.connection import DatabaseManager
+
 from .celery_app import app
 from .error_logger import TaskErrorLogger
 
@@ -37,10 +41,6 @@ def quality_check_task() -> Dict[str, Any]:
     async def _run_quality_checks():
         """内部异步检查函数"""
         try:
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
             check_results = {}
             issues_found = 0
@@ -167,7 +167,7 @@ def quality_check_task() -> Dict[str, Any]:
 
 
 @app.task
-def cleanup_error_logs_task(days_to_keep: int = 7) -> Dict[str, Any]:
+def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
     """
     错误日志清理任务
 
@@ -183,11 +183,11 @@ def cleanup_error_logs_task(days_to_keep: int = 7) -> Dict[str, Any]:
     async def _cleanup_error_logs():
         """内部异步清理函数"""
         error_logger = TaskErrorLogger()
-        deleted_count = await error_logger.cleanup_old_errors(days_to_keep)
+        deleted_count = await error_logger.cleanup_old_errors(days)
         return deleted_count
 
     try:
-        logger.info(f"开始清理超过 {days_to_keep} 天的错误日志")
+        logger.info(f"开始清理超过 {days} 天的错误日志")
 
         deleted_count = asyncio.run(_cleanup_error_logs())
 
@@ -196,7 +196,7 @@ def cleanup_error_logs_task(days_to_keep: int = 7) -> Dict[str, Any]:
         return {
             "status": "success",
             "deleted_count": deleted_count,
-            "days_to_keep": days_to_keep,
+            "days_to_keep": days,
             "execution_time": datetime.now().isoformat(),
         }
 
@@ -232,15 +232,15 @@ def system_health_check_task() -> Dict[str, Any]:
 
         try:
             # 1. 检查数据库连接
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
 
             db_manager = DatabaseManager()
 
             async with db_manager.get_async_session() as session:
                 await session.execute(text("SELECT 1"))
-                health_status["database"] = {"status": "healthy", "message": "数据库连接正常"}
+                health_status["database"] = {
+                    "status": "healthy",
+                    "message": "数据库连接正常",
+                }
 
         except Exception as e:
             health_status["database"] = {
@@ -336,10 +336,6 @@ def database_maintenance_task() -> Dict[str, Any]:
     async def _run_database_maintenance():
         """内部异步维护函数"""
         try:
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
             maintenance_results = {}
 

@@ -67,7 +67,7 @@ print_status "success" "依赖安装完成"
 print_status "info" "步骤 2/3: 启动 Docker Compose 环境"
 echo "停止现有容器..."
 
-docker-compose down || print_status "warning" "没有运行中的容器需要停止"
+docker-compose -f docker-compose.test.yml down || print_status "warning" "没有运行中的容器需要停止"
 
 echo "尝试拉取基础镜像..."
 if docker pull python:3.11-slim; then
@@ -76,9 +76,9 @@ else
     print_status "warning" "基础镜像拉取失败，将尝试使用本地缓存"
 fi
 
-echo "构建并启动服务..."
-if docker-compose up --build -d; then
-    print_status "success" "Docker 服务构建成功"
+echo "构建并启动测试服务..."
+if docker-compose -f docker-compose.test.yml up -d; then
+    print_status "success" "Docker 测试服务启动成功"
 else
     print_status "warning" "Docker 构建失败，可能是网络问题。跳过 Docker 环境验证，继续本地 CI 检查..."
     SKIP_DOCKER=true
@@ -89,10 +89,10 @@ if [ "$SKIP_DOCKER" != "true" ]; then
     sleep 10
 
     echo "检查服务状态..."
-    if docker-compose ps; then
+    if docker-compose -f docker-compose.test.yml ps; then
         # 验证关键服务是否正常运行
-        if docker-compose ps | grep -q "Up"; then
-            print_status "success" "Docker 环境启动成功"
+        if docker-compose -f docker-compose.test.yml ps | grep -q "Up"; then
+            print_status "success" "Docker 测试环境启动成功"
         else
             print_status "warning" "部分服务启动失败，继续本地检查"
             SKIP_DOCKER=true
@@ -131,7 +131,7 @@ echo "等待数据库就绪..."
 max_attempts=30
 attempt=0
 while [ $attempt -lt $max_attempts ]; do
-    if docker-compose exec db pg_isready -U postgres > /dev/null 2>&1; then
+    if docker-compose -f docker-compose.test.yml exec db pg_isready -U postgres > /dev/null 2>&1; then
         break
     fi
     attempt=$((attempt + 1))

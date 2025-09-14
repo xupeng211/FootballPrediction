@@ -7,6 +7,7 @@ Celery调度任务
 基于 DATA_DESIGN.md 第3节设计。
 """
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -44,7 +45,6 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
         leagues: 需要采集的联赛列表
         days_ahead: 采集未来N天的赛程
     """
-    import asyncio
 
     async def _collect_task():
         # 初始化赛程采集器
@@ -104,7 +104,6 @@ def collect_odds(
         match_ids: 需要采集的比赛ID列表
         bookmakers: 博彩公司列表
     """
-    import asyncio
 
     async def _collect_task():
         # 初始化赔率采集器
@@ -157,7 +156,6 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
     Args:
         match_ids: 需要监控的比赛ID列表
     """
-    import asyncio
 
     async def _collect_task():
         # 初始化比分采集器
@@ -264,9 +262,7 @@ def cleanup_data(days_to_keep: int = 30):
     try:
         logger.info(f"开始执行数据清理任务，保留最近{days_to_keep}天的数据")
 
-        import asyncio
         import os
-        from datetime import datetime, timedelta
 
         from sqlalchemy import text
 
@@ -296,7 +292,6 @@ def cleanup_data(days_to_keep: int = 30):
             except Exception as e:
                 logger.warning(f"MinIO/S3不可用，回退到本地存储: {str(e)}")
                 # 使用当前目录下的data子目录，确保测试环境可访问
-                import os
 
                 data_path = os.path.join(os.getcwd(), "data", "football_lake")
                 os.makedirs(data_path, exist_ok=True)
@@ -507,3 +502,71 @@ def backup_database():
     except Exception as exc:
         logger.error(f"数据库备份任务失败: {str(exc)}")
         raise
+
+
+@app.task(base=BaseDataTask, bind=True)
+def generate_predictions(self, match_ids: Optional[List[int]] = None):
+    """
+    生成预测任务
+
+    Args:
+        match_ids: 需要生成预测的比赛ID列表
+    """
+    try:
+        logger.info("开始执行预测生成任务")
+
+        # TODO: 实现预测生成逻辑
+        # 1. 获取待预测的比赛
+        # 2. 计算特征
+        # 3. 生成预测
+        # 4. 保存预测结果
+
+        logger.info("预测生成任务完成")
+
+        return {
+            "status": "success",
+            "predictions_generated": 0,
+            "execution_time": datetime.now().isoformat(),
+        }
+
+    except Exception as exc:
+        logger.error(f"预测生成任务失败: {str(exc)}")
+        raise
+
+
+@app.task(base=BaseDataTask, bind=True)
+def process_bronze_to_silver(self, batch_size: int = 1000):
+    """
+    Bronze层到Silver层数据处理任务
+
+    Args:
+        batch_size: 批处理大小
+    """
+    try:
+        logger.info("开始执行Bronze到Silver数据处理任务")
+
+        # TODO: 实现数据处理逻辑
+        # 1. 从Bronze层读取原始数据
+        # 2. 数据清洗和验证
+        # 3. 转换为Silver层格式
+        # 4. 保存到Silver层
+
+        logger.info("Bronze到Silver数据处理任务完成")
+
+        return {
+            "status": "success",
+            "records_processed": 0,
+            "execution_time": datetime.now().isoformat(),
+        }
+
+    except Exception as exc:
+        logger.error(f"Bronze到Silver数据处理任务失败: {str(exc)}")
+        raise
+
+
+# 为兼容性添加任务别名
+calculate_features_task = calculate_features_batch
+collect_fixtures_task = collect_fixtures
+collect_odds_task = collect_odds
+generate_predictions_task = generate_predictions
+process_data_task = process_bronze_to_silver

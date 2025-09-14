@@ -13,6 +13,11 @@ from datetime import datetime
 from typing import Any, Dict
 
 from prometheus_client import Counter, Gauge, Histogram
+from sqlalchemy import text
+
+from src.database.connection import DatabaseManager
+from src.database.sql_compatibility import (CompatibleQueryBuilder,
+                                            get_db_type_from_engine)
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,9 @@ class TaskMonitor:
     """任务监控器"""
 
     def __init__(self):
+        self._db_type = None
+        self._query_builder = None
+
         # Prometheus 指标定义
         self.task_counter = Counter(
             "football_tasks_total",
@@ -69,7 +77,7 @@ class TaskMonitor:
             task_name: 任务名称
             task_id: 任务ID
             duration: 执行时长（秒）
-            status: 任务状态 (success/failed)
+            status: 任务状态 (success / failed)
         """
         # 更新指标
         self.task_counter.labels(task_name=task_name, status=status).inc()
@@ -91,6 +99,27 @@ class TaskMonitor:
         """更新队列大小"""
         self.queue_size.labels(queue_name=queue_name).set(size)
 
+    async def _get_db_type(self) -> str:
+        """获取数据库类型"""
+        if self._db_type is None:
+            try:
+                db_manager = DatabaseManager()
+                engine = db_manager._async_engine or db_manager._sync_engine
+                if engine:
+                    self._db_type = get_db_type_from_engine(engine)
+                else:
+                    self._db_type = "postgresql"  # 默认值
+            except Exception:
+                self._db_type = "postgresql"  # 默认值
+        return self._db_type
+
+    async def _get_query_builder(self) -> CompatibleQueryBuilder:
+        """获取兼容性查询构建器"""
+        if self._query_builder is None:
+            db_type = await self._get_db_type()
+            self._query_builder = CompatibleQueryBuilder(db_type)
+        return self._query_builder
+
     async def calculate_error_rates(self) -> Dict[str, float]:
         """
         计算各任务的错误率
@@ -99,26 +128,36 @@ class TaskMonitor:
             任务错误率字典
         """
         try:
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
             error_rates = {}
+            db_type = await self._get_db_type()
 
             async with db_manager.get_async_session() as session:
                 # 查询最近1小时内的任务执行统计
-                error_rate_query = text(
+                if db_type == "sqlite":
+                    error_rate_query = text(
+                        """
+                        SELECT
+                            task_name,
+                            COUNT(*) as total_tasks,
+                            SUM(CASE WHEN error_message IS NOT NULL THEN 1 ELSE 0 END) as failed_tasks
+                        FROM error_logs
+                        WHERE created_at >= datetime('now', '-1 hour')
+                        GROUP BY task_name
                     """
-                    SELECT
-                        task_name,
-                        COUNT(*) as total_tasks,
-                        SUM(CASE WHEN error_message IS NOT NULL THEN 1 ELSE 0 END) as failed_tasks
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '1 hour'
-                    GROUP BY task_name
-                """
-                )
+                    )
+                else:
+                    error_rate_query = text(
+                        """
+                        SELECT
+                            task_name,
+                            COUNT(*) as total_tasks,
+                            SUM(CASE WHEN error_message IS NOT NULL THEN 1 ELSE 0 END) as failed_tasks
+                        FROM error_logs
+                        WHERE created_at >= NOW() - INTERVAL '1 hour'
+                        GROUP BY task_name
+                    """
+                    )
 
                 result = await session.execute(error_rate_query)
 
@@ -150,32 +189,45 @@ class TaskMonitor:
             任务统计数据
         """
         try:
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
+            db_type = await self._get_db_type()
 
             async with db_manager.get_async_session() as session:
                 # 统计查询
-                stats_query = text(
+                if db_type == "sqlite":
+                    stats_query = text(
+                        f"""
+                        SELECT
+                            task_name,
+                            COUNT(*) as total_executions,
+                            COUNT(CASE WHEN error_message IS NULL THEN 1 END) as successful_executions,
+                            COUNT(CASE WHEN error_message IS NOT NULL THEN 1 END) as failed_executions,
+                            AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
+                            SUM(retry_count) as total_retries
+                        FROM error_logs
+                        WHERE created_at >= datetime('now', '-{hours} hours')
+                        GROUP BY task_name
+                        ORDER BY total_executions DESC
                     """
-                    SELECT
-                        task_name,
-                        COUNT(*) as total_executions,
-                        COUNT(CASE WHEN error_message IS NULL THEN 1 END) as successful_executions,
-                        COUNT(CASE WHEN error_message IS NOT NULL THEN 1 END) as failed_executions,
-                        AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
-                        SUM(retry_count) as total_retries
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '%s hours'
-                    GROUP BY task_name
-                    ORDER BY total_executions DESC
-                """
-                    % hours
-                )
-
-                result = await session.execute(stats_query)
+                    )
+                    result = await session.execute(stats_query)
+                else:
+                    stats_query = text(
+                        """
+                        SELECT
+                            task_name,
+                            COUNT(*) as total_executions,
+                            COUNT(CASE WHEN error_message IS NULL THEN 1 END) as successful_executions,
+                            COUNT(CASE WHEN error_message IS NOT NULL THEN 1 END) as failed_executions,
+                            AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
+                            SUM(retry_count) as total_retries
+                        FROM error_logs
+                        WHERE created_at >= NOW() - INTERVAL :hours || ' hours'
+                        GROUP BY task_name
+                        ORDER BY total_executions DESC
+                    """
+                    )
+                    result = await session.execute(stats_query, {"hours": hours})
 
                 statistics = []
                 for row in result:
@@ -207,7 +259,11 @@ class TaskMonitor:
         Returns:
             健康状态信息
         """
-        health_status = {"overall_status": "healthy", "issues": [], "metrics": {}}
+        health_status: Dict[str, Any] = {
+            "overall_status": "healthy",
+            "issues": [],
+            "metrics": {},
+        }
 
         try:
             # 1. 检查错误率
@@ -282,7 +338,7 @@ class TaskMonitor:
             import redis
 
             redis_client = redis.from_url(
-                os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                os.getenv("REDIS_URL", "redis://localhost:6379 / 0")
             )
 
             queue_names = ["fixtures", "odds", "scores", "maintenance", "default"]
@@ -306,27 +362,13 @@ class TaskMonitor:
     async def _check_task_delays(self) -> Dict[str, float]:
         """检查任务延迟"""
         try:
-            from sqlalchemy import text
-
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
             task_delays = {}
+            query_builder = await self._get_query_builder()
 
             async with db_manager.get_async_session() as session:
                 # 查询运行时间过长的任务
-                delay_query = text(
-                    """
-                    SELECT
-                        task_name,
-                        AVG(EXTRACT(EPOCH FROM (NOW() - created_at))) as avg_delay_seconds
-                    FROM error_logs
-                    WHERE created_at >= NOW() - INTERVAL '1 hour'
-                    AND task_name IS NOT NULL
-                    GROUP BY task_name
-                """
-                )
-
+                delay_query = text(query_builder.build_task_delay_query())
                 result = await session.execute(delay_query)
 
                 for row in result:
@@ -357,5 +399,5 @@ class TaskMonitor:
                 "retry_counter",
             ],
             "prometheus_endpoint": "/metrics",
-            "health_check_endpoint": "/health/tasks",
+            "health_check_endpoint": "/health / tasks",
         }

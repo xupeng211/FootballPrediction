@@ -1,4 +1,5 @@
 """
+from datetime import datetime, timezone
 数据库业务逻辑约束测试
 
 测试 CHECK 约束和触发器的正确性，验证非法数据插入时约束能正确触发。
@@ -10,8 +11,16 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from src.database.core import get_session
+from src.database.config import get_test_database_config
+from src.database.connection import get_session, initialize_multi_user_database
 from src.database.models import League, MarketType, Match, Odds, Team
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_database():
+    """初始化多用户数据库以进行约束测试"""
+    config = get_test_database_config()
+    initialize_multi_user_database(config)
 
 
 class TestMatchConstraints:
@@ -22,20 +31,20 @@ class TestMatchConstraints:
         with get_session() as db:
             # 创建测试联赛
             self.test_league = League(
-                name="Test League", country="Test Country", api_league_id=999999
+                league_name="Test League", country="Test Country", api_league_id=999999
             )
             db.add(self.test_league)
 
             # 创建测试球队
             self.test_team1 = Team(
-                name="Test Team 1",
-                code="TT1",
+                team_name="Test Team 1",
+                team_code="TT1",
                 country="Test Country",
                 api_team_id=999998,
             )
             self.test_team2 = Team(
-                name="Test Team 2",
-                code="TT2",
+                team_name="Test Team 2",
+                team_code="TT2",
                 country="Test Country",
                 api_team_id=999997,
             )
@@ -179,20 +188,20 @@ class TestOddsConstraints:
         with get_session() as db:
             # 创建测试联赛
             self.test_league = League(
-                name="Test League", country="Test Country", api_league_id=999996
+                league_name="Test League", country="Test Country", api_league_id=999996
             )
             db.add(self.test_league)
 
             # 创建测试球队
             self.test_team1 = Team(
-                name="Test Team 1",
-                code="TT1",
+                team_name="Test Team 1",
+                team_code="TT1",
                 country="Test Country",
                 api_team_id=999995,
             )
             self.test_team2 = Team(
-                name="Test Team 2",
-                code="TT2",
+                team_name="Test Team 2",
+                team_code="TT2",
                 country="Test Country",
                 api_team_id=999994,
             )
@@ -325,17 +334,17 @@ class TestConstraintsIntegration:
         with get_session() as db:
             # 这个测试需要创建一些基础数据
             league = League(
-                name="Test League", country="Test Country", api_league_id=999993
+                league_name="Test League", country="Test Country", api_league_id=999993
             )
             team1 = Team(
-                name="Test Team 1",
-                code="TT1",
+                team_name="Test Team 1",
+                team_code="TT1",
                 country="Test Country",
                 api_team_id=999992,
             )
             team2 = Team(
-                name="Test Team 2",
-                code="TT2",
+                team_name="Test Team 2",
+                team_code="TT2",
                 country="Test Country",
                 api_team_id=999991,
             )
@@ -369,17 +378,17 @@ class TestConstraintsIntegration:
         with get_session() as db:
             # 创建基础数据
             league = League(
-                name="Test League", country="Test Country", api_league_id=999990
+                league_name="Test League", country="Test Country", api_league_id=999990
             )
             team1 = Team(
-                name="Test Team 1",
-                code="TT1",
+                team_name="Test Team 1",
+                team_code="TT1",
                 country="Test Country",
                 api_team_id=999989,
             )
             team2 = Team(
-                name="Test Team 2",
-                code="TT2",
+                team_name="Test Team 2",
+                team_code="TT2",
                 country="Test Country",
                 api_team_id=999988,
             )
