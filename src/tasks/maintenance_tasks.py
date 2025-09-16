@@ -61,7 +61,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(match_integrity_query)
-                incomplete_matches = result.scalar() or 0
+                incomplete_matches = (await result.scalar()) or 0
                 check_results["incomplete_matches"] = incomplete_matches
                 if incomplete_matches > 0:
                     issues_found += 1
@@ -80,7 +80,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(duplicate_matches_query)
-                duplicate_matches = result.scalar() or 0
+                duplicate_matches = (await result.scalar()) or 0
                 check_results["duplicate_matches"] = duplicate_matches
                 if duplicate_matches > 0:
                     issues_found += 1
@@ -100,7 +100,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(abnormal_odds_query)
-                abnormal_odds = result.scalar() or 0
+                abnormal_odds = (await result.scalar()) or 0
                 check_results["abnormal_odds"] = abnormal_odds
                 if abnormal_odds > 0:
                     issues_found += 1
@@ -117,7 +117,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(orphan_matches_query)
-                orphan_matches = result.scalar() or 0
+                orphan_matches = (await result.scalar()) or 0
                 check_results["orphan_matches"] = orphan_matches
                 if orphan_matches > 0:
                     issues_found += 1
@@ -133,7 +133,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(stale_data_query)
-                stale_logs = result.scalar() or 0
+                stale_logs = (await result.scalar()) or 0
                 check_results["stale_collection_logs"] = stale_logs
                 if stale_logs > 0:
                     issues_found += 1
@@ -386,8 +386,9 @@ def database_maintenance_task() -> Dict[str, Any]:
                 )
 
                 result = await session.execute(table_size_query)
+                rows = await result.fetchall()
                 table_sizes = [
-                    {"table": row.table_name, "size": row.size} for row in result
+                    {"table": row.table_name, "size": row.size} for row in rows
                 ]
                 maintenance_results["table_sizes"] = table_sizes
 

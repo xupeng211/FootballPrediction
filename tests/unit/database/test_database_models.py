@@ -32,7 +32,9 @@ class TestDatabaseModels:
 
     def test_league_model(self, session):
         """测试联赛模型"""
-        league = League(league_name="英超", league_code="EPL", country="英格兰", level=1)
+        league = League(
+            league_name="英超", league_code="EPL", country="英格兰", level=1
+        )
         session.add(league)
         session.commit()
 
@@ -47,7 +49,9 @@ class TestDatabaseModels:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", team_code="MUN", league_id=league.id, country="英格兰")
+        team = Team(
+            team_name="曼联", team_code="MUN", league_id=league.id, country="英格兰"
+        )
         session.add(team)
         session.commit()
 

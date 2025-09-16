@@ -373,7 +373,9 @@ class TestCacheConsistency:
 
         # 验证没有发生异常
         exceptions = [r for r in results if isinstance(r, Exception)]
-        assert len(exceptions) == 0 or len(exceptions) < len(results) * 0.1  # 异常率<10%
+        assert (
+            len(exceptions) == 0 or len(exceptions) < len(results) * 0.1
+        )  # 异常率<10%
 
     # ================================
     # 故障恢复一致性测试

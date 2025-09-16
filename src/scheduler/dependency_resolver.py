@@ -406,7 +406,9 @@ class DependencyResolver:
         if success and not is_running:
             node.last_success_time = datetime.now()
 
-        logger.debug(f"任务状态已更新: {task_id}, running={is_running}, success={success}")
+        logger.debug(
+            f"任务状态已更新: {task_id}, running={is_running}, success={success}"
+        )
 
     def get_dependency_graph(self) -> Dict[str, Any]:
         """

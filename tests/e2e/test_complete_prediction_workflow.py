@@ -487,7 +487,9 @@ class TestCompletePredictionWorkflow:
 
             # 验证性能指标 - 10个并发预测应该在合理时间内完成
             avg_response_time = total_time / len(match_ids)
-            assert avg_response_time < 1.0, f"平均响应时间{avg_response_time:.3f}s超过1秒阈值"
+            assert (
+                avg_response_time < 1.0
+            ), f"平均响应时间{avg_response_time:.3f}s超过1秒阈值"
 
             # 验证并发调用次数
             assert mock_predict.call_count == len(match_ids)
@@ -561,7 +563,9 @@ class TestCompletePredictionWorkflow:
             # 验证容错机制生效
             assert prediction_success, "预测容错机制失败"
             assert prediction_result is not None
-            assert "fallback" in prediction_result.get("model_version", ""), "未使用备用模型"
+            assert "fallback" in prediction_result.get(
+                "model_version", ""
+            ), "未使用备用模型"
 
     @pytest.mark.asyncio
     async def test_complete_system_health_verification(self):

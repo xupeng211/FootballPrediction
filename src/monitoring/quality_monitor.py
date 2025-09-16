@@ -16,10 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.sqltypes import quoted_name
 
 from src.database.connection import DatabaseManager
-from src.database.models.matches import Match
+from src.database.models.match import Match
 from src.database.models.odds import Odds
 from src.database.models.predictions import Predictions
-from src.database.models.teams import Team
+from src.database.models.team import Team
 
 logger = logging.getLogger(__name__)
 
@@ -196,17 +196,17 @@ class QualityMonitor:
 
         # 根据表名选择相应的模型和时间字段
         if table_name == "matches":
-            model = Match
-            time_field = Match.updated_at
+            model = Match  # type: ignore[assignment]
+            time_field = Match.updated_at  # type: ignore[assignment]
         elif table_name == "odds":
-            model = Odds
-            time_field = Odds.collected_at
+            model = Odds  # type: ignore[assignment]
+            time_field = Odds.collected_at  # type: ignore[assignment]
         elif table_name == "predictions":
-            model = Predictions
-            time_field = Predictions.created_at
+            model = Predictions  # type: ignore[assignment]
+            time_field = Predictions.created_at  # type: ignore[assignment]
         elif table_name == "teams":
-            model = Team
-            time_field = Team.updated_at
+            model = Team  # type: ignore[assignment]
+            time_field = Team.updated_at  # type: ignore[assignment]
         else:
             # 对于未知表，使用原生SQL查询
             return await self._check_table_freshness_sql(
@@ -463,19 +463,19 @@ class QualityMonitor:
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
-            consistency_results[
-                "foreign_key_consistency"
-            ] = await self._check_foreign_key_consistency(session)
+            consistency_results["foreign_key_consistency"] = (
+                await self._check_foreign_key_consistency(session)
+            )
 
             # 检查赔率数据一致性
-            consistency_results[
-                "odds_consistency"
-            ] = await self._check_odds_consistency(session)
+            consistency_results["odds_consistency"] = (
+                await self._check_odds_consistency(session)
+            )
 
             # 检查比赛状态一致性
-            consistency_results[
-                "match_status_consistency"
-            ] = await self._check_match_status_consistency(session)
+            consistency_results["match_status_consistency"] = (
+                await self._check_match_status_consistency(session)
+            )
 
         logger.info("数据一致性检查完成")
         return consistency_results
@@ -774,7 +774,9 @@ class QualityMonitor:
 
         # 基于各项评分给出建议
         if quality_data.get("freshness_score", 0) < 80:
-            recommendations.append("数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性")
+            recommendations.append(
+                "数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性"
+            )
 
         if quality_data.get("completeness_score", 0) < 85:
             recommendations.append("数据完整性有待提升，建议检查关键字段的数据录入流程")

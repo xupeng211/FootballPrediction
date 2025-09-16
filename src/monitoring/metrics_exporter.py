@@ -137,7 +137,9 @@ class MetricsExporter:
         )
 
         # 系统健康指标
-        self.system_info = Info("football_system_info", "系统信息", registry=self.registry)
+        self.system_info = Info(
+            "football_system_info", "系统信息", registry=self.registry
+        )
 
         self.last_update_timestamp = Gauge(
             "football_metrics_last_update_timestamp",

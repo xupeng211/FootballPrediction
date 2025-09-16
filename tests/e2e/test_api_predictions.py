@@ -156,7 +156,9 @@ class TestAPIPredictions:
             response = await test_api_client.get(f"/predictions/{match_id}")
 
             # 验证HTTP状态码
-            assert response.status_code == 200, f"API返回状态码{response.status_code}，期望200"
+            assert (
+                response.status_code == 200
+            ), f"API返回状态码{response.status_code}，期望200"
 
             # 验证响应格式
             prediction_data = response.json()
@@ -298,7 +300,9 @@ class TestAPIPredictions:
 
                 # 验证错误响应格式
                 error_data = response.json()
-                assert "error" in error_data or "detail" in error_data, "错误响应缺少错误信息"
+                assert (
+                    "error" in error_data or "detail" in error_data
+                ), "错误响应缺少错误信息"
 
             except Exception as e:
                 if isinstance(e, (ConnectionError, httpx.ConnectError)):
@@ -432,7 +436,9 @@ class TestAPIPredictions:
                     ]
                     for field in expected_feature_fields:
                         if field in features_info:
-                            assert features_info[field] is not None, f"特征字段{field}不应为空"
+                            assert (
+                                features_info[field] is not None
+                            ), f"特征字段{field}不应为空"
 
                 # 验证模型版本信息
                 assert "model_version" in prediction_data, "预测响应缺少模型版本信息"
