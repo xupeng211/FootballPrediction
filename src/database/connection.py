@@ -366,9 +366,7 @@ class MultiUserDatabaseManager:
 
             self._managers[role] = manager
 
-            logger.info(
-                f"初始化 {role.value} 用户数据库连接: {credentials['username']}"
-            )
+            logger.info(f"初始化 {role.value} 用户数据库连接: {credentials['username']}")
 
         logger.info("多用户数据库连接管理器初始化完成")
 
@@ -386,9 +384,7 @@ class MultiUserDatabaseManager:
             RuntimeError: 如果管理器未初始化或角色不存在
         """
         if role not in self._managers:
-            raise RuntimeError(
-                f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()"
-            )
+            raise RuntimeError(f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()")
         return self._managers[role]
 
     @contextmanager

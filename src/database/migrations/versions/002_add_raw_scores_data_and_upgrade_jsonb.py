@@ -59,9 +59,7 @@ def upgrade() -> None:
             nullable=True,
             comment="外部比赛ID",
         ),
-        sa.Column(
-            "match_status", sa.String(length=50), nullable=True, comment="比赛状态"
-        ),
+        sa.Column("match_status", sa.String(length=50), nullable=True, comment="比赛状态"),
         sa.Column("home_score", sa.Integer(), nullable=True, comment="主队比分"),
         sa.Column("away_score", sa.Integer(), nullable=True, comment="客队比分"),
         sa.Column("match_minute", sa.Integer(), nullable=True, comment="比赛分钟"),

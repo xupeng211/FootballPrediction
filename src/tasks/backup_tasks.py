@@ -400,9 +400,7 @@ class DatabaseBackupTask(Task):
                 logger.info(f"备份文件验证成功: {backup_file_path}")
                 return True
             else:
-                logger.error(
-                    f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}"
-                )
+                logger.error(f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}")
                 return False
 
         except subprocess.TimeoutExpired:

@@ -176,9 +176,7 @@ class RedisManager:
         # 初始化同步连接池
         self._init_sync_pool()
 
-        logger.info(
-            f"Redis管理器初始化完成，URL: {self._mask_password(self.redis_url)}"
-        )
+        logger.info(f"Redis管理器初始化完成，URL: {self._mask_password(self.redis_url)}")
 
     def _mask_password(self, url: str) -> str:
         """隐藏Redis URL中的密码"""

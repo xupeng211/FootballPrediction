@@ -22,8 +22,9 @@ if src_path not in sys.path:
 from src.cache.redis_manager import CacheKeyManager  # noqa: E402
 from src.cache.redis_manager import adelete_cache  # noqa: E402
 from src.cache.redis_manager import aset_cache  # noqa: E402
-from src.cache.redis_manager import (RedisManager, aget_cache, delete_cache,  # noqa: E402
-                                     get_cache, get_redis_manager, set_cache)
+from src.cache.redis_manager import delete_cache  # noqa: E402
+from src.cache.redis_manager import (RedisManager, aget_cache, get_cache,
+                                     get_redis_manager, set_cache)
 
 
 class TestCacheKeyManagerEdgeCases:
