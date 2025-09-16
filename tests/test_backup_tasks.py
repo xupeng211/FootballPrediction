@@ -1,6 +1,4 @@
 """
-
-import asyncio
 数据库备份任务测试
 
 验证备份任务的各个组件：
@@ -17,17 +15,14 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from prometheus_client import CollectorRegistry
 
 from src.tasks.backup_tasks import (DatabaseBackupTask,
-                                    backup_duration_seconds,
-                                    backup_failure_total,
-                                    backup_file_size_bytes,
-                                    backup_success_total,
                                     cleanup_old_backups_task,
-                                    daily_full_backup_task, get_backup_status,
+                                    daily_full_backup_task, get_backup_metrics,
+                                    get_backup_status,
                                     hourly_incremental_backup_task,
-                                    last_backup_timestamp, manual_backup_task,
-                                    verify_backup_task,
+                                    manual_backup_task, verify_backup_task,
                                     weekly_wal_archive_task)
 
 
@@ -352,83 +347,177 @@ class TestHelperTasks:
 
 
 class TestPrometheusMetrics:
-    """Prometheus指标测试"""
+    """Prometheus指标测试 - 使用fake collector registry避免真实依赖"""
 
-    def test_backup_success_total_metric(self):
-        """测试备份成功指标"""
-        # 重置指标
-        backup_success_total._value.clear()
+    @pytest.fixture
+    def fake_registry(self):
+        """
+        创建fake collector registry用于测试
+        这样可以避免与全局registry的冲突，确保测试隔离
+        """
+        return CollectorRegistry()
+
+    @pytest.fixture
+    def mock_backup_metrics(self, fake_registry):
+        """
+        创建mock的备份相关Prometheus指标对象
+        使用fake registry确保测试不会影响真实的指标收集
+        """
+        from prometheus_client import Counter, Gauge, Histogram
+
+        # 使用fake registry创建测试专用的指标
+        mock_success_counter = Counter(
+            "test_backup_success_total",
+            "Test backup success counter",
+            ["backup_type", "database_name"],
+            registry=fake_registry,
+        )
+
+        mock_failure_counter = Counter(
+            "test_backup_failure_total",
+            "Test backup failure counter",
+            ["backup_type", "database_name", "error_type"],
+            registry=fake_registry,
+        )
+
+        mock_timestamp_gauge = Gauge(
+            "test_last_backup_timestamp",
+            "Test last backup timestamp gauge",
+            ["backup_type", "database_name"],
+            registry=fake_registry,
+        )
+
+        mock_duration_histogram = Histogram(
+            "test_backup_duration_seconds",
+            "Test backup duration histogram",
+            ["backup_type", "database_name"],
+            registry=fake_registry,
+        )
+
+        mock_size_gauge = Gauge(
+            "test_backup_file_size_bytes",
+            "Test backup file size gauge",
+            ["backup_type", "database_name"],
+            registry=fake_registry,
+        )
+
+        return {
+            "success_counter": mock_success_counter,
+            "failure_counter": mock_failure_counter,
+            "timestamp_gauge": mock_timestamp_gauge,
+            "duration_histogram": mock_duration_histogram,
+            "size_gauge": mock_size_gauge,
+        }
+
+    def test_backup_success_total_metric(self, mock_backup_metrics):
+        """
+        测试备份成功指标
+        使用mock counter避免访问私有属性，通过registry获取指标值
+        注意：Counter会自动生成_created时间戳样本，所以会有2个样本
+        """
+        success_counter = mock_backup_metrics["success_counter"]
 
         # 增加指标
-        backup_success_total.labels(backup_type="full", database_name="test_db").inc()
+        success_counter.labels(backup_type="full", database_name="test_db").inc()
 
-        # 验证指标值
-        metric_value = backup_success_total.labels(
-            backup_type="full", database_name="test_db"
-        )._value._value
+        # 通过collect方法验证指标值（避免访问私有属性）
+        metric_families = list(success_counter.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == 1.0
+        samples = metric_families[0].samples
+        # Counter会生成2个样本：主要计数器和_created时间戳
+        assert len(samples) == 2
 
-    def test_backup_failure_total_metric(self):
-        """测试备份失败指标"""
-        # 重置指标
-        backup_failure_total._value.clear()
+        # 找到主要计数器样本（不是_created样本）
+        main_sample = next(s for s in samples if not s.name.endswith("_created"))
+        assert main_sample.value == 1.0
+
+    def test_backup_failure_total_metric(self, mock_backup_metrics):
+        """
+        测试备份失败指标
+        使用mock counter通过collect方法获取值，避免访问私有属性
+        注意：Counter会自动生成_created时间戳样本，所以会有2个样本
+        """
+        failure_counter = mock_backup_metrics["failure_counter"]
 
         # 增加指标
-        backup_failure_total.labels(
+        failure_counter.labels(
             backup_type="full", database_name="test_db", error_type="timeout"
         ).inc()
 
-        # 验证指标值
-        metric_value = backup_failure_total.labels(
-            backup_type="full", database_name="test_db", error_type="timeout"
-        )._value._value
+        # 通过collect方法验证指标值
+        metric_families = list(failure_counter.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == 1.0
+        samples = metric_families[0].samples
+        # Counter会生成2个样本：主要计数器和_created时间戳
+        assert len(samples) == 2
 
-    def test_last_backup_timestamp_metric(self):
-        """测试最后备份时间戳指标"""
+        # 找到主要计数器样本（不是_created样本）
+        main_sample = next(s for s in samples if not s.name.endswith("_created"))
+        assert main_sample.value == 1.0
+
+    def test_last_backup_timestamp_metric(self, mock_backup_metrics):
+        """
+        测试最后备份时间戳指标
+        使用mock gauge通过collect方法获取值，避免访问私有属性
+        """
+        timestamp_gauge = mock_backup_metrics["timestamp_gauge"]
         timestamp = datetime.now().timestamp()
 
-        last_backup_timestamp.labels(backup_type="full", database_name="test_db").set(
+        timestamp_gauge.labels(backup_type="full", database_name="test_db").set(
             timestamp
         )
 
-        metric_value = last_backup_timestamp.labels(
-            backup_type="full", database_name="test_db"
-        )._value._value
+        # 通过collect方法验证设置值
+        metric_families = list(timestamp_gauge.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == timestamp
+        samples = metric_families[0].samples
+        assert len(samples) == 1
+        assert samples[0].value == timestamp
 
-    def test_backup_duration_seconds_metric(self):
-        """测试备份执行时间指标"""
+    def test_backup_duration_seconds_metric(self, mock_backup_metrics):
+        """
+        测试备份执行时间指标
+        使用mock histogram通过collect方法获取统计信息，避免访问私有属性
+        """
+        duration_histogram = mock_backup_metrics["duration_histogram"]
         duration = 300.5  # 5分钟30秒
 
-        backup_duration_seconds.labels(
-            backup_type="full", database_name="test_db"
-        ).observe(duration)
-
-        # 验证观察值被记录
-        histogram = backup_duration_seconds.labels(
-            backup_type="full", database_name="test_db"
+        duration_histogram.labels(backup_type="full", database_name="test_db").observe(
+            duration
         )
 
-        assert histogram._sum._value == duration
-        assert histogram._count._value == 1
+        # 通过collect方法验证观察值被记录
+        metric_families = list(duration_histogram.collect())
+        assert len(metric_families) == 1
 
-    def test_backup_file_size_bytes_metric(self):
-        """测试备份文件大小指标"""
+        samples = metric_families[0].samples
+        # histogram会产生多个样本：_bucket, _count, _sum
+        sum_sample = next(s for s in samples if s.name.endswith("_sum"))
+        count_sample = next(s for s in samples if s.name.endswith("_count"))
+
+        assert sum_sample.value == duration
+        assert count_sample.value == 1
+
+    def test_backup_file_size_bytes_metric(self, mock_backup_metrics):
+        """
+        测试备份文件大小指标
+        使用mock gauge通过collect方法获取值，避免访问私有属性
+        """
+        size_gauge = mock_backup_metrics["size_gauge"]
         file_size = 1048576  # 1MB
 
-        backup_file_size_bytes.labels(backup_type="full", database_name="test_db").set(
-            file_size
-        )
+        size_gauge.labels(backup_type="full", database_name="test_db").set(file_size)
 
-        metric_value = backup_file_size_bytes.labels(
-            backup_type="full", database_name="test_db"
-        )._value._value
+        # 通过collect方法验证设置值
+        metric_families = list(size_gauge.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == file_size
+        samples = metric_families[0].samples
+        assert len(samples) == 1
+        assert samples[0].value == file_size
 
 
 class TestBackupScriptIntegration:
@@ -560,20 +649,29 @@ class TestDataConsistency:
         assert stats["duration_seconds"] >= 0
 
     def test_metric_labels_consistency(self):
-        """测试Prometheus指标标签一致性"""
+        """
+        测试Prometheus指标标签一致性
+
+        使用独立的 CollectorRegistry 确保测试隔离，避免全局状态污染。
+        这个测试验证指标标签的一致性以及正确的指标操作。
+        """
+        # 创建独立的注册表用于测试，避免全局状态污染
+        test_registry = CollectorRegistry()
+        metrics = get_backup_metrics(registry=test_registry)
+
         backup_type = "full"
         database_name = "test_db"
 
         # 使用相同标签操作不同指标
-        backup_success_total.labels(
+        metrics["success_total"].labels(
             backup_type=backup_type, database_name=database_name
         ).inc()
 
-        last_backup_timestamp.labels(
+        metrics["last_timestamp"].labels(
             backup_type=backup_type, database_name=database_name
         ).set(datetime.now().timestamp())
 
-        backup_duration_seconds.labels(
+        metrics["duration"].labels(
             backup_type=backup_type, database_name=database_name
         ).observe(300)
 

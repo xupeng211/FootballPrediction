@@ -8,7 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 
 class FileUtils:
@@ -54,7 +54,12 @@ class FileUtils:
     @staticmethod
     def get_file_size(file_path: Union[str, Path]) -> int:
         """获取文件大小（字节）"""
-        return os.path.getsize(file_path)
+        try:
+            if not os.path.exists(file_path):
+                return 0
+            return os.path.getsize(file_path)
+        except (FileNotFoundError, OSError):
+            return 0
 
     @staticmethod
     def ensure_directory(path: Union[str, Path]) -> Path:
@@ -62,9 +67,12 @@ class FileUtils:
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json_file(file_path: Union[str, Path]) -> Dict[str, Any]:
+    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
         """读取JSON文件（别名方法）"""
-        return FileUtils.read_json(file_path)
+        try:
+            return FileUtils.read_json(file_path)
+        except FileNotFoundError:
+            return None
 
     @staticmethod
     def write_json_file(

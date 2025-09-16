@@ -36,7 +36,7 @@ prediction_service = PredictionService()
 )
 async def get_match_prediction(
     match_id: int,
-    force_predict: bool = Query(False, description="是否强制重新预测"),
+    force_predict: bool = Query(default=False, description="是否强制重新预测"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -78,6 +78,7 @@ async def get_match_prediction(
             logger.info(f"返回缓存的预测结果：比赛 {match_id}")
             return APIResponse.success(
                 data={
+                    "match_id": match.id,  # 添加顶级match_id字段以匹配测试期望
                     "match_info": {
                         "match_id": match.id,
                         "home_team_id": match.home_team_id,
@@ -107,14 +108,16 @@ async def get_match_prediction(
             # 实时生成预测
             logger.info(f"实时生成预测：比赛 {match_id}")
 
-            # 检查比赛状态
-            if match.match_status == "completed":
-                logger.warning(f"比赛 {match_id} 已结束，但仍生成预测")
+            # 检查比赛状态，如果已结束则不允许实时预测
+            if match.match_status in ["finished", "completed"]:
+                logger.warning(f"尝试为已结束的比赛 {match_id} 生成预测")
+                raise HTTPException(status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测")
 
             prediction_result = await prediction_service.predict_match(match_id)
 
             return APIResponse.success(
                 data={
+                    "match_id": match.id,  # 添加顶级match_id字段以匹配测试期望
                     "match_info": {
                         "match_id": match.id,
                         "home_team_id": match.home_team_id,
@@ -132,8 +135,8 @@ async def get_match_prediction(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"获取比赛 {match_id} 预测失败: {e}")
-        raise HTTPException(status_code=500, detail="获取预测结果失败")
+        logger.error(f"获取比赛 {match_id} 预测失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"获取预测结果失败: {e}")
 
 
 @router.post(
@@ -259,11 +262,13 @@ async def get_match_prediction_history(
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
         # 查询历史预测
+        # limit 参数已经被 FastAPI 解析为 int 类型
+        limit_value = limit
         history_query = (
             select(Prediction)
             .where(Prediction.match_id == match_id)
             .order_by(desc(Prediction.created_at))
-            .limit(limit)
+            .limit(limit_value)
         )
 
         history_result = await session.execute(history_query)
@@ -309,7 +314,7 @@ async def get_match_prediction_history(
 
 @router.get("/recent", summary="获取最近的预测", description="获取最近的预测记录")
 async def get_recent_predictions(
-    hours: int = Query(24, description="时间范围（小时）", ge=1, le=168),
+    hours: int = Query(default=24, description="时间范围（小时）", ge=1, le=168),
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
@@ -329,6 +334,8 @@ async def get_recent_predictions(
         since_time = datetime.now() - timedelta(hours=hours)
 
         # 查询最近预测
+        # limit 参数已经被 FastAPI 解析为 int 类型
+        limit_value = limit
         recent_query = (
             select(
                 Prediction.id,
@@ -347,7 +354,7 @@ async def get_recent_predictions(
             .select_from(Prediction.__table__.join(Match.__table__))
             .where(Prediction.created_at >= since_time)
             .order_by(desc(Prediction.created_at))
-            .limit(limit)
+            .limit(limit_value)
         )
 
         result = await session.execute(recent_query)

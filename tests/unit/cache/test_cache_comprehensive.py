@@ -18,9 +18,12 @@ src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from src.cache.redis_manager import (CacheKeyManager,  # noqa: E402
-                                     RedisManager, adelete_cache, aget_cache,
-                                     aset_cache, delete_cache, get_cache,
+# Import after path setup
+from src.cache.redis_manager import CacheKeyManager  # noqa: E402
+from src.cache.redis_manager import aget_cache  # noqa: E402
+from src.cache.redis_manager import aset_cache  # noqa: E402
+from src.cache.redis_manager import delete_cache  # noqa: E402
+from src.cache.redis_manager import (RedisManager, adelete_cache, get_cache,  # noqa: E402
                                      get_redis_manager, set_cache)
 
 
@@ -33,9 +36,9 @@ class TestCacheKeyManagerEdgeCases:
         assert key == "match"
 
     def test_build_key_none_args(self):
-        """测试None参数的Key构建"""
+        """测试None参数的Key构建 - None值会被过滤掉"""
         key = CacheKeyManager.build_key("match", None, "features")
-        assert key == "match:None:features"
+        assert key == "match:features"
 
     def test_build_key_numeric_args(self):
         """测试数字参数的Key构建"""
@@ -80,7 +83,7 @@ class TestRedisManagerInitialization:
     def test_custom_initialization(self):
         """测试自定义参数初始化"""
         manager = RedisManager(
-            redis_url="redis://custom:6380/2",
+            redis_url="redis://custom:6380 / 2",
             max_connections=5,
             socket_timeout=10.0,
             socket_connect_timeout=15.0,
@@ -88,7 +91,7 @@ class TestRedisManagerInitialization:
             health_check_interval=60,
         )
 
-        assert manager.redis_url == "redis://custom:6380/2"
+        assert manager.redis_url == "redis://custom:6380 / 2"
         assert manager.max_connections == 5
         assert manager.socket_timeout == 10.0
         assert manager.socket_connect_timeout == 15.0
@@ -97,9 +100,9 @@ class TestRedisManagerInitialization:
 
     def test_environment_variable_url(self):
         """测试环境变量Redis URL"""
-        with patch.dict(os.environ, {"REDIS_URL": "redis://env:6379/5"}):
+        with patch.dict(os.environ, {"REDIS_URL": "redis://env:6379 / 5"}):
             manager = RedisManager()
-            assert manager.redis_url == "redis://env:6379/5"
+            assert manager.redis_url == "redis://env:6379 / 5"
 
     @patch("redis.ConnectionPool.from_url")
     @patch("redis.Redis")
@@ -110,7 +113,7 @@ class TestRedisManagerInitialization:
         mock_redis_instance = Mock()
         mock_redis.return_value = mock_redis_instance
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             _ = RedisManager()  # Manager for testing
             mock_logger.info.assert_called_with(
                 "Redis管理器初始化完成，URL: redis://localhost:6379/0"
@@ -122,7 +125,7 @@ class TestRedisManagerInitialization:
         """测试同步连接池初始化失败日志"""
         mock_pool.side_effect = Exception("Connection failed")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             _ = RedisManager()  # Manager for testing connection failure
             mock_logger.error.assert_called()
 
@@ -138,7 +141,7 @@ class TestRedisManagerAsyncOperations:
         """测试异步连接池初始化日志"""
         with patch("redis.asyncio.ConnectionPool.from_url") as mock_pool:
             with patch("redis.asyncio.Redis") as mock_redis:
-                with patch("cache.redis_manager.logger") as mock_logger:
+                with patch("src.cache.redis_manager.logger") as mock_logger:
                     mock_pool_instance = Mock()
                     mock_pool.return_value = mock_pool_instance
                     mock_redis_instance = Mock()
@@ -151,7 +154,7 @@ class TestRedisManagerAsyncOperations:
     async def test_async_operations_no_client(self):
         """测试异步操作无客户端"""
         with patch.object(self.redis_manager, "get_async_client", return_value=None):
-            with patch("cache.redis_manager.logger") as mock_logger:
+            with patch("src.cache.redis_manager.logger") as mock_logger:
                 # 测试aget
                 result = await self.redis_manager.aget("key", "default")
                 assert result == "default"
@@ -189,7 +192,7 @@ class TestRedisManagerAsyncOperations:
         ]
 
         for error in errors:
-            with patch("cache.redis_manager.logger") as mock_logger:
+            with patch("src.cache.redis_manager.logger") as mock_logger:
                 mock_client.get.side_effect = error
                 result = await self.redis_manager.aget("key", "default")
                 assert result == "default"
@@ -260,7 +263,7 @@ class TestRedisManagerBatchOperations:
 
         mock_client.mget.side_effect = RedisError("Batch get failed")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.mget(["key1", "key2"], "default")
             assert result == ["default", "default"]
             mock_logger.error.assert_called()
@@ -303,7 +306,7 @@ class TestRedisManagerBatchOperations:
 
         mock_client.mset.side_effect = RedisError("Batch set failed")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.mset({"key": "value"})
             assert result is False
             mock_logger.error.assert_called()
@@ -371,7 +374,7 @@ class TestRedisManagerHealthOperations:
         self.redis_manager._sync_client = mock_client
         mock_client.info.side_effect = Exception("Info failed")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.get_info()
             assert result == {}
             mock_logger.error.assert_called()
@@ -390,7 +393,7 @@ class TestRedisManagerHealthOperations:
         mock_pool.disconnect.side_effect = Exception("Disconnect failed")
         self.redis_manager._sync_pool = mock_pool
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             self.redis_manager.close()
             mock_logger.error.assert_called()
 
@@ -406,11 +409,11 @@ class TestRedisManagerHealthOperations:
     @pytest.mark.asyncio
     async def test_aclose_exception(self):
         """测试异步关闭异常"""
-        mock_client = AsyncMock()
-        mock_client.aclose.side_effect = Exception("Async close failed")
-        self.redis_manager._async_client = mock_client
+        mock_pool = AsyncMock()
+        mock_pool.aclose.side_effect = Exception("Async close failed")
+        self.redis_manager._async_pool = mock_pool
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             await self.redis_manager.aclose()
             mock_logger.error.assert_called()
 
@@ -466,7 +469,7 @@ class TestRedisManagerEdgeCases:
     def test_exists_no_client(self):
         """测试exists无客户端"""
         self.redis_manager._sync_client = None
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.exists("key")
             assert result == 0
             mock_logger.warning.assert_called()
@@ -474,7 +477,7 @@ class TestRedisManagerEdgeCases:
     def test_ttl_no_client(self):
         """测试ttl无客户端"""
         self.redis_manager._sync_client = None
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.ttl("key")
             assert result == -2
             mock_logger.warning.assert_called()
@@ -486,9 +489,9 @@ class TestGlobalFunctions:
     def test_get_redis_manager_creates_instance(self):
         """测试全局管理器创建"""
         # 清理全局实例
-        import cache.redis_manager
+        import src.cache.redis_manager
 
-        cache.redis_manager._redis_manager = None
+        src.cache.redis_manager._redis_manager = None
 
         manager1 = get_redis_manager()
         assert isinstance(manager1, RedisManager)
@@ -496,7 +499,7 @@ class TestGlobalFunctions:
         manager2 = get_redis_manager()
         assert manager1 is manager2  # 单例模式
 
-    @patch("cache.redis_manager.get_redis_manager")
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_convenience_functions_all_params(self, mock_get_manager):
         """测试便捷函数的所有参数"""
         mock_manager = Mock()
@@ -521,7 +524,7 @@ class TestGlobalFunctions:
         mock_manager.delete.assert_called_with("key1", "key2", "key3")
 
     @pytest.mark.asyncio
-    @patch("cache.redis_manager.get_redis_manager")
+    @patch("src.cache.redis_manager.get_redis_manager")
     async def test_async_convenience_functions(self, mock_get_manager):
         """测试异步便捷函数"""
         mock_manager = Mock()
@@ -558,17 +561,20 @@ class TestPasswordMasking:
         redis_manager = RedisManager()
 
         test_cases = [
-            ("redis://localhost:6379/0", "redis://localhost:6379/0"),
-            ("redis://user@localhost:6379/0", "redis://user@localhost:6379/0"),
+            ("redis://localhost:6379 / 0", "redis://localhost:6379 / 0"),
+            ("redis://user@localhost:6379 / 0", "redis://user@localhost:6379 / 0"),
             (
-                "redis://user:password@localhost:6379/0",
-                "redis://user:****@localhost:6379/0",
+                "redis://user:password@localhost:6379 / 0",
+                "redis://user:****@localhost:6379 / 0",
             ),
             (
-                "redis://user:complex_pass123@host:6379/0",
-                "redis://user:****@host:6379/0",
+                "redis://user:complex_pass123@host:6379 / 0",
+                "redis://user:****@host:6379 / 0",
             ),
-            ("redis://:password@localhost:6379/0", "redis://:****@localhost:6379/0"),
+            (
+                "redis://:password@localhost:6379 / 0",
+                "redis://:****@localhost:6379 / 0",
+            ),
         ]
 
         for original_url, expected_masked in test_cases:

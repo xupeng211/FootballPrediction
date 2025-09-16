@@ -515,7 +515,9 @@ class QualityMonitor:
             )
             away_teams_row = orphaned_away_teams.first()
             results["orphaned_away_teams"] = (
-                int(away_teams_row[0]) if away_teams_row else 0
+                int(away_teams_row[0])
+                if away_teams_row and away_teams_row[0] is not None
+                else 0
             )
 
             # 检查 odds 表中的 match 引用
@@ -555,7 +557,9 @@ class QualityMonitor:
             )
             invalid_odds_row = invalid_odds.first()
             results["invalid_odds_range"] = (
-                int(invalid_odds_row[0]) if invalid_odds_row else 0
+                int(invalid_odds_row[0])
+                if invalid_odds_row and invalid_odds_row[0] is not None
+                else 0
             )
 
             # 检查隐含概率和是否合理（应该在 0.95-1.20 之间）
@@ -598,9 +602,12 @@ class QualityMonitor:
                 """
                 )
             )
-            results[
-                "finished_matches_without_score"
-            ] = finished_without_score.first().count
+            finished_result = finished_without_score.first()
+            results["finished_matches_without_score"] = (
+                int(finished_result[0])
+                if finished_result and finished_result[0] is not None
+                else 0
+            )
 
             # 检查未开始比赛是否有比分
             scheduled_with_score = await session.execute(

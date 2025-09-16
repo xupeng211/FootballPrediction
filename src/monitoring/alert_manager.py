@@ -154,7 +154,12 @@ class PrometheusMetrics:
         初始化Prometheus指标
 
         Args:
-            registry: Prometheus注册表
+            registry: Prometheus注册表，默认使用全局注册表
+                     在测试环境中，使用独立的 CollectorRegistry 实例能够：
+                     1. 避免不同测试间指标状态的相互干扰
+                     2. 确保测试隔离性和可重复性
+                     3. 防止指标名称冲突导致的注册错误
+                     这是处理 Prometheus 指标测试的标准做法。
         """
         self.registry = registry or REGISTRY
 

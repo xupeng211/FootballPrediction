@@ -369,6 +369,7 @@ class SystemMetricsCollector(MetricsCollector):
         try:
             import psutil
 
+            # 获取CPU使用率可能抛出TimeoutError
             cpu_percent = psutil.cpu_percent(interval=1)
             cpu_count = psutil.cpu_count()
 
@@ -380,8 +381,11 @@ class SystemMetricsCollector(MetricsCollector):
         except ImportError:
             self.logger.warning("psutil未安装，无法收集CPU指标")
             return {}
+        except TimeoutError:
+            self.logger.warning("CPU指标收集超时")
+            return {}
         except Exception as e:
-            self.logger.error(f"收集CPU指标失败: {e}")
+            self.logger.error(f"CPU指标收集失败: {e}")
             return {}
 
     async def collect_memory_metrics(self) -> Dict[str, Any]:

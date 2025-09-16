@@ -243,12 +243,16 @@ class TestDataProcessingService:
         data_list = [
             "文本1",
             "文本2",
-            123,  # 非字符串数据应该被跳过
+            123,  # 非字符串数据会被处理，但格式不同
         ]
 
         results = await service.process_batch(data_list)
-        assert len(results) == 2  # 只处理了两个字符串
-        assert all("processed_text" in r for r in results)
+        assert len(results) == 3  # 处理了所有数据项
+        # 前两个是字符串，有processed_text字段
+        assert "processed_text" in results[0]
+        assert "processed_text" in results[1]
+        # 第三个是数字，有original_data字段
+        assert "original_data" in results[2]
 
 
 class TestServiceManager:

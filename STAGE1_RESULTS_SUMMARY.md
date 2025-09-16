@@ -51,7 +51,7 @@ pytest tests/test_database_performance_optimization.py -v --tb=short
 ### **阶段3: 完整测试套件验证**
 ```bash
 # 渐进式完整测试（限制失败数量）
-pytest tests/ -v --tb=short -x --maxfail=5 --ignore=tests/test_features/test_feature_store.py
+pytest tests/ -v --tb=short --maxfail=5 --disable-warnings --ignore=tests/test_features/test_feature_store.py
 
 # 如果大部分通过，尝试 make test
 timeout 300 make test

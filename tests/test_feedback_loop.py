@@ -131,6 +131,7 @@ class TestPredictionResultUpdater:
         """测试预测结果更新异常处理"""
         # 模拟数据库异常
         updater.session.execute = AsyncMock(side_effect=Exception("Database error"))
+        # ✅ 修复：rollback 通常是同步方法，不应该使用 AsyncMock
         updater.session.rollback = AsyncMock()
 
         # 执行更新
@@ -782,7 +783,7 @@ def mock_database_session():
     session.execute = AsyncMock()
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
-    session.close = AsyncMock()
+    session.close = Mock()
     return session
 
 

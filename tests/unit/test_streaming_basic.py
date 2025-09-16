@@ -83,11 +83,14 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_batch(batch_data, "matches")
 
-        assert isinstance(result, (bool, list))
+        assert isinstance(result, dict)
+        assert "success" in result
+        assert "failed" in result
+        assert result["success"] + result["failed"] == len(batch_data)
 
     def test_producer_error_handling(self):
         """测试生产者错误处理"""
-        with patch("src.streaming.kafka_producer.KafkaProducer") as mock_kafka:
+        with patch("src.streaming.kafka_producer.Producer") as mock_kafka:
             mock_kafka.side_effect = Exception("Kafka connection failed")
 
             try:
@@ -173,14 +176,13 @@ class TestFootballKafkaConsumer:
 
     def test_consumer_error_handling(self):
         """测试消费者错误处理"""
-        with patch("src.streaming.kafka_consumer.KafkaConsumer") as mock_kafka:
+        with patch("src.streaming.kafka_consumer.Consumer") as mock_kafka:
             mock_kafka.side_effect = Exception("Consumer initialization failed")
 
-            try:
+            with pytest.raises(Exception) as exc_info:
                 FootballKafkaConsumer()
-                assert False, "Should have raised exception"
-            except Exception as e:
-                assert "Consumer initialization failed" in str(e)
+
+            assert "Consumer initialization failed" in str(exc_info.value)
 
 
 class TestStreamProcessor:
@@ -271,9 +273,13 @@ class TestStreamConfig:
         kafka_config = config.kafka_config
 
         # 验证必需的配置项
-        required_keys = ["bootstrap_servers", "client_id"]
-        for key in required_keys:
-            assert key in kafka_config or hasattr(config, key)
+        required_attributes = [
+            "bootstrap_servers",
+            "producer_client_id",
+            "consumer_client_id",
+        ]
+        for attr in required_attributes:
+            assert hasattr(kafka_config, attr) or hasattr(config, attr)
 
     def test_topic_configuration(self):
         """测试主题配置"""
@@ -290,14 +296,20 @@ class TestStreamConfig:
         config = StreamConfig()
 
         # 验证序列化器配置
-        assert hasattr(config, "key_serializer") or hasattr(config, "value_serializer")
+        kafka_config = config.kafka_config
+        assert hasattr(kafka_config, "key_serializer") or hasattr(
+            kafka_config, "value_serializer"
+        )
 
     def test_consumer_group_config(self):
         """测试消费者组配置"""
         config = StreamConfig()
 
         # 验证消费者组配置
-        assert hasattr(config, "consumer_group_id") or "group_id" in config.kafka_config
+        kafka_config = config.kafka_config
+        assert hasattr(kafka_config, "consumer_group_id") or hasattr(
+            config, "consumer_group_id"
+        )
 
 
 class TestStreamingIntegration:

@@ -54,7 +54,14 @@ class FootballKafkaConsumer:
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(__name__)
         self.running = False
+        self.consumer_group_id = consumer_group_id
+        # 在初始化时尝试创建consumer，如果失败则抛出异常
         self._initialize_consumer(consumer_group_id)
+
+    def _create_consumer(self) -> None:
+        """如果尚未创建，则创建Kafka Consumer"""
+        if self.consumer is None:
+            self._initialize_consumer(self.consumer_group_id)
 
     def _initialize_consumer(self, consumer_group_id: Optional[str] = None) -> None:
         """初始化Kafka Consumer"""
@@ -245,8 +252,9 @@ class FootballKafkaConsumer:
         Args:
             topics: Topic名称列表
         """
+        self._create_consumer()
         if not self.consumer:
-            self.logger.error("Consumer未初始化")
+            self.logger.error("Consumer初始化失败")
             return
 
         try:
@@ -275,8 +283,9 @@ class FootballKafkaConsumer:
         Args:
             timeout: 轮询超时时间（秒）
         """
+        self._create_consumer()
         if not self.consumer:
-            self.logger.error("Consumer未初始化")
+            self.logger.error("Consumer初始化失败")
             return
 
         self.running = True
@@ -349,8 +358,9 @@ class FootballKafkaConsumer:
         # 兼容性处理
         if max_messages is not None:
             batch_size = max_messages
+        self._create_consumer()
         if not self.consumer:
-            self.logger.error("Consumer未初始化")
+            self.logger.error("Consumer初始化失败")
             return {"processed": 0, "failed": 0}
 
         stats = {"processed": 0, "failed": 0}
@@ -407,8 +417,9 @@ class FootballKafkaConsumer:
         Returns:
             消息列表
         """
+        self._create_consumer()
         if not self.consumer:
-            self.logger.error("Consumer未初始化")
+            self.logger.error("Consumer初始化失败")
             return []
 
         messages = []

@@ -52,8 +52,8 @@ async def should_collect_live_scores() -> bool:
             return match_count > 0
 
     except Exception:
-        # 如果查询失败，为了安全起见，返回 True
-        return True
+        # 如果查询失败，返回 False（避免在测试中无谓的数据采集）
+        return False
 
 
 async def get_upcoming_matches(hours: int = 24) -> List[dict]:

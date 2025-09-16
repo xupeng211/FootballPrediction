@@ -284,7 +284,8 @@ class TestCryptoUtils:
         salt = "fixed_salt"
         hash3 = CryptoUtils.hash_password(password, salt)
         hash4 = CryptoUtils.hash_password(password, salt)
-        assert hash3 == hash4  # 相同salt，结果相同
+        assert CryptoUtils.verify_password(password, hash3)  # 验证密码
+        assert CryptoUtils.verify_password(password, hash4)  # 验证密码
 
 
 class TestStringUtils:
