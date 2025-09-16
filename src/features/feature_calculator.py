@@ -38,8 +38,10 @@ class FeatureCalculator:
     - 批量计算和缓存优化
     """
 
-    def __init__(self):
+    def __init__(self, config: Optional[Dict] = None):
         self.db_manager = DatabaseManager()
+        self.config = config or {}
+        self.features = []  # 存储特征定义
 
     async def calculate_recent_performance_features(
         self,
@@ -475,3 +477,106 @@ class FeatureCalculator:
                 results[team_id] = features
 
         return results
+
+    def add_feature(self, feature_def: Dict) -> None:
+        """
+        添加特征定义
+
+        Args:
+            feature_def: 特征定义字典，包含name, type, calculation等字段
+        """
+        self.features.append(feature_def)
+
+    def calculate_mean(self, data) -> Optional[float]:
+        """
+        计算均值
+
+        Args:
+            data: 数据列表或Series
+
+        Returns:
+            均值，如果数据为空或无效则返回None
+        """
+        try:
+            if data is None or len(data) == 0:
+                return None
+            return float(statistics.mean(data))
+        except (TypeError, ValueError, statistics.StatisticsError):
+            return None
+
+    def calculate_std(self, data) -> Optional[float]:
+        """
+        计算标准差
+
+        Args:
+            data: 数据列表或Series
+
+        Returns:
+            标准差，如果数据为空或无效则返回None
+        """
+        try:
+            if data is None or len(data) <= 1:
+                return None
+            return float(statistics.stdev(data))
+        except (TypeError, ValueError, statistics.StatisticsError):
+            return None
+
+    def calculate_min(self, data) -> Optional[float]:
+        """
+        计算最小值
+
+        Args:
+            data: 数据列表或Series
+
+        Returns:
+            最小值，如果数据为空或无效则返回None
+        """
+        try:
+            if data is None or len(data) == 0:
+                return None
+            return float(min(data))
+        except (TypeError, ValueError):
+            return None
+
+    def calculate_max(self, data) -> Optional[float]:
+        """
+        计算最大值
+
+        Args:
+            data: 数据列表或Series
+
+        Returns:
+            最大值，如果数据为空或无效则返回None
+        """
+        try:
+            if data is None or len(data) == 0:
+                return None
+            return float(max(data))
+        except (TypeError, ValueError):
+            return None
+
+    def calculate_rolling_mean(self, data, window: int = 3):
+        """
+        计算滚动均值
+
+        Args:
+            data: 数据Series或列表
+            window: 窗口大小
+
+        Returns:
+            滚动均值Series
+        """
+        try:
+            import pandas as pd
+
+            if hasattr(data, "rolling"):
+                # 如果是pandas Series
+                return data.rolling(window=window, min_periods=1).mean()
+            else:
+                # 如果是列表，转换为Series
+                series = pd.Series(data)
+                return series.rolling(window=window, min_periods=1).mean()
+        except Exception:
+            import pandas as pd
+
+            return pd.Series([None] * len(data))

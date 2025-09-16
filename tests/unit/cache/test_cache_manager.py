@@ -28,13 +28,12 @@ src_path = os.path.join(os.path.dirname(__file__), "..", "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-# Import after path setup
+# 导入需要的模块
 from src.cache.redis_manager import CacheKeyManager  # noqa: E402
-from src.cache.redis_manager import aget_cache  # noqa: E402
+from src.cache.redis_manager import adelete_cache  # noqa: E402
 from src.cache.redis_manager import aset_cache  # noqa: E402
-from src.cache.redis_manager import delete_cache  # noqa: E402
-from src.cache.redis_manager import (RedisManager, adelete_cache, get_cache,  # noqa: E402
-                                     get_redis_manager, set_cache)
+from src.cache.redis_manager import (RedisManager, aget_cache, delete_cache,  # noqa: E402
+                                     get_cache, get_redis_manager, set_cache)
 
 
 class TestCacheKeyManager:

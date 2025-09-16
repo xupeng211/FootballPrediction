@@ -111,7 +111,9 @@ async def get_match_prediction(
             # 检查比赛状态，如果已结束则不允许实时预测
             if match.match_status in ["finished", "completed"]:
                 logger.warning(f"尝试为已结束的比赛 {match_id} 生成预测")
-                raise HTTPException(status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测")
+                raise HTTPException(
+                    status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测"
+                )
 
             prediction_result = await prediction_service.predict_match(match_id)
 
