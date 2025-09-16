@@ -336,7 +336,9 @@ class TaskMonitor:
             # 1. 检查错误率
             error_rates = await self.calculate_error_rates()
             high_error_tasks = [
-                task for task, rate in error_rates.items() if rate > 0.1  # 10% 错误率阈值
+                task
+                for task, rate in error_rates.items()
+                if rate > 0.1  # 10% 错误率阈值
             ]
 
             if high_error_tasks:
@@ -354,7 +356,9 @@ class TaskMonitor:
             # 2. 检查队列积压
             queue_sizes = await self._get_queue_sizes()
             large_queues = [
-                queue for queue, size in queue_sizes.items() if size > 100  # 100个任务积压阈值
+                queue
+                for queue, size in queue_sizes.items()
+                if size > 100  # 100个任务积压阈值
             ]
 
             if large_queues:
@@ -372,7 +376,9 @@ class TaskMonitor:
             # 3. 检查任务延迟
             task_delays = await self._check_task_delays()
             delayed_tasks = [
-                task for task, delay in task_delays.items() if delay > 600  # 10分钟延迟阈值
+                task
+                for task, delay in task_delays.items()
+                if delay > 600  # 10分钟延迟阈值
             ]
 
             if delayed_tasks:

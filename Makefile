@@ -39,6 +39,14 @@ help: ## 📋 Show available commands
 # ============================================================================
 # 🌍 Environment Management
 # ============================================================================
+env-check: ## Environment: Check development environment health
+	@echo "$(YELLOW)Checking development environment...$(RESET)"
+	@$(ACTIVATE) && \
+	echo "$(BLUE)✓ Virtual environment: $(VENV)$(RESET)" && \
+	python --version && \
+	echo "$(BLUE)✓ Python version check passed$(RESET)" && \
+	pip list | head -5 && \
+	echo "$(GREEN)✅ Environment check completed$(RESET)"
 venv: ## Environment: Create and activate virtual environment
 	@if [ ! -d "$(VENV)" ]; then \
 		echo "$(YELLOW)Creating virtual environment...$(RESET)"; \
@@ -79,7 +87,10 @@ fmt: ## Quality: Format code with black and isort
 	isort src/ tests/ && \
 	echo "$(GREEN)✅ Code formatted$(RESET)"
 
-check: lint fmt test ## Quality: Complete quality check (lint + format + test)
+quality: lint fmt test ## Quality: Complete quality check (lint + format + test)
+	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
+
+check: quality ## Quality: Alias for quality command
 	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
 
 # ============================================================================
@@ -124,6 +135,14 @@ type-check: ## Quality: Run type checking with mypy
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
+prepush: ## Quality: Complete pre-push validation (format + lint + type-check + test)
+	@echo "$(BLUE)🔄 Running pre-push validation...$(RESET)" && \
+	$(MAKE) fmt && \
+	$(MAKE) lint && \
+	$(MAKE) type-check && \
+	$(MAKE) test && \
+	echo "$(GREEN)✅ Pre-push validation passed$(RESET)"
+
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \
 	$(MAKE) lint && \
@@ -228,6 +247,6 @@ clean: ## Clean: Remove cache and virtual environment
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install lint fmt check test coverage coverage-fast coverage-unit test-quick type-check ci up down logs sync-issues context clean \
+.PHONY: help venv install env-check lint fmt quality check prepush test coverage coverage-fast coverage-unit test-quick type-check ci up down logs sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status

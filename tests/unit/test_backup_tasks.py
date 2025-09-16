@@ -194,7 +194,9 @@ class TestPrometheusMetrics:
         assert task is not None
 
         # 验证任务有必要的属性（Celery任务的基本属性）
-        assert hasattr(task, "name") or hasattr(task, "run")  # Celery任务应该有name或run方法
+        assert hasattr(task, "name") or hasattr(
+            task, "run"
+        )  # Celery任务应该有name或run方法
 
         # 验证可以获取Prometheus指标（使用新的函数接口避免全局状态污染）
         from prometheus_client import CollectorRegistry
@@ -265,7 +267,7 @@ class TestEdgeCases:
         assert task1 is not task2
         assert task1.backup_dir == task2.backup_dir  # 但配置应该相同
 
-    @patch("src.tasks.backup_tasks.time.time")
+    @patch("src.tasks.backup_tasks.datetime")
     def test_backup_during_system_maintenance(self, mock_time):
         """测试系统维护期间的备份"""
         # 模拟系统负载高的情况

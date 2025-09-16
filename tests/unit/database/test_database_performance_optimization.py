@@ -162,7 +162,9 @@ class TestDatabasePartitioning:
         query_duration = end_time - start_time
 
         # 验证查询性能（分区裁剪应该使查询很快）
-        assert query_duration < 0.1, f"分区裁剪查询应该很快，实际耗时: {query_duration:.3f}秒"
+        assert (
+            query_duration < 0.1
+        ), f"分区裁剪查询应该很快，实际耗时: {query_duration:.3f}秒"
         assert count >= 0, "查询应该返回有效计数"
 
     @pytest.mark.asyncio
@@ -400,7 +402,9 @@ class TestMaterializedViewExamples:
 
                 # 检查是否输出了执行时间
                 printed_args = [call[0] for call in mock_print.call_args_list]
-                time_output_found = any("平均执行时间" in str(args) for args in printed_args)
+                time_output_found = any(
+                    "平均执行时间" in str(args) for args in printed_args
+                )
                 assert time_output_found, "应该输出平均执行时间"
 
 
@@ -441,7 +445,9 @@ class TestDatabaseIndexes:
 
         # 验证关键索引存在（可能因为分区表重建而不存在，这是正常的）
         if found_indexes:
-            assert found_indexes.issubset(expected_indexes), "所有找到的索引都应该在预期列表中"
+            assert found_indexes.issubset(
+                expected_indexes
+            ), "所有找到的索引都应该在预期列表中"
 
     @pytest.mark.asyncio
     async def test_index_usage_simulation(self, async_session: AsyncSession):
@@ -472,7 +478,9 @@ class TestDatabaseIndexes:
             query_duration = end_time - start_time
 
             # 验证查询性能合理（有索引的查询应该很快）
-            assert query_duration < 1.0, f"索引查询应该很快，实际耗时: {query_duration:.3f}秒"
+            assert (
+                query_duration < 1.0
+            ), f"索引查询应该很快，实际耗时: {query_duration:.3f}秒"
             assert count >= 0, "查询应该返回有效计数"
 
 
@@ -525,7 +533,9 @@ class TestPerformanceOptimizationIntegration:
         end_time = time.time()
         query_duration = end_time - start_time
 
-        assert query_duration < 0.5, f"优化后查询应该很快，实际耗时: {query_duration:.3f}秒"
+        assert (
+            query_duration < 0.5
+        ), f"优化后查询应该很快，实际耗时: {query_duration:.3f}秒"
         assert count >= 0, "查询应该返回有效结果"
 
         # 3. 测试物化视图刷新（模拟）
