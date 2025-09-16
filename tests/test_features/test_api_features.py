@@ -125,8 +125,8 @@ class TestFeaturesAPI:
                 mock_session = AsyncMock()
                 # 🔧 FIXED: 创建AsyncMock的结果对象
                 mock_result = AsyncMock()
-                mock_result.scalar_one_or_none.return_value = mock_match
-                mock_session.execute.return_value = mock_result
+                mock_result.scalar_one_or_none = AsyncMock(return_value=mock_match)
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 # 发送请求
@@ -157,12 +157,12 @@ class TestFeaturesAPI:
         """测试获取不存在比赛的特征"""
         with patch("src.api.features.select"):
             # 模拟数据库查询返回None
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = None
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=None)
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get("/api/v1/features/999")
@@ -178,8 +178,8 @@ class TestFeaturesAPI:
             "src.api.features.feature_store"
         ) as mock_feature_store:
             # 模拟数据库查询结果
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = mock_team
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=mock_team)
 
             # 模拟特征存储返回结果
             mock_features_df = pd.DataFrame(
@@ -195,7 +195,7 @@ class TestFeaturesAPI:
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get("/api/v1/features/teams/1")
@@ -223,8 +223,8 @@ class TestFeaturesAPI:
             "src.api.features.feature_calculator"
         ) as mock_calculator:
             # 模拟数据库查询结果
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = mock_team
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=mock_team)
 
             # 模拟特征存储返回空结果
             mock_feature_store.get_online_features.return_value = pd.DataFrame()
@@ -239,7 +239,7 @@ class TestFeaturesAPI:
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get("/api/v1/features/teams/1?include_raw=true")
@@ -256,8 +256,8 @@ class TestFeaturesAPI:
             "src.api.features.feature_store"
         ) as mock_feature_store:
             # 模拟数据库查询结果
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = mock_match
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=mock_match)
 
             # 模拟特征计算和存储成功
             mock_feature_store.calculate_and_store_match_features.return_value = True
@@ -265,7 +265,7 @@ class TestFeaturesAPI:
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.post("/api/v1/features/calculate/1")
@@ -288,15 +288,15 @@ class TestFeaturesAPI:
             "src.api.features.feature_store"
         ) as mock_feature_store:
             # 模拟数据库查询结果
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = mock_team
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=mock_team)
 
             # 模拟特征计算和存储成功
             mock_feature_store.calculate_and_store_team_features.return_value = True
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.post("/api/v1/features/calculate/teams/1")
@@ -366,8 +366,8 @@ class TestFeaturesAPI:
             "src.api.features.feature_store"
         ) as mock_feature_store:
             # 模拟数据库查询结果
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = mock_match
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(return_value=mock_match)
 
             # 模拟历史特征查询结果
             mock_historical_df = pd.DataFrame(
@@ -383,7 +383,7 @@ class TestFeaturesAPI:
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get(
@@ -416,9 +416,9 @@ class TestFeaturesAPI:
         with patch("src.api.features.select"), patch(
             "src.api.features.feature_store"
         ) as mock_feature_store:
-            mock_result = Mock()
-            mock_result.scalar_one_or_none.return_value = Mock(
-                id=1, home_team_id=1, away_team_id=2
+            mock_result = AsyncMock()
+            mock_result.scalar_one_or_none = AsyncMock(
+                return_value=Mock(id=1, home_team_id=1, away_team_id=2)
             )
 
             mock_feature_store.get_match_features_for_prediction.side_effect = (
@@ -427,7 +427,7 @@ class TestFeaturesAPI:
 
             with patch("src.api.features.get_async_session") as mock_get_session:
                 mock_session = AsyncMock()
-                mock_session.execute.return_value = mock_result
+                mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get("/api/v1/features/1")

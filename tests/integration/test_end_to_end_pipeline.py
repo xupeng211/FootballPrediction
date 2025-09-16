@@ -32,7 +32,7 @@ class TestEndToEndPipeline:
         self.base_url = "http://localhost:8000"
 
         # 等待数据库连接
-        await self.db_manager.initialize()
+        self.db_manager.initialize()
 
         yield
 
@@ -73,22 +73,22 @@ class TestEndToEndPipeline:
             # 创建主队
             home_team = Team(
                 id=9999,
-                name="测试主队",
+                team_name="测试主队",
                 country="Test Country",
                 league_id=1,
-                founded=2000,
-                venue="Test Stadium",
+                founded_year=2000,
+                stadium="Test Stadium",
             )
             session.add(home_team)
 
             # 创建客队
             away_team = Team(
                 id=9998,
-                name="测试客队",
+                team_name="测试客队",
                 country="Test Country",
                 league_id=1,
-                founded=2001,
-                venue="Test Away Stadium",
+                founded_year=2001,
+                stadium="Test Away Stadium",
             )
             session.add(away_team)
 

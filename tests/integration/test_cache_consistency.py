@@ -97,7 +97,7 @@ class TestCacheConsistency:
 
         # 2. 同步写入缓存
         try:
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
         except Exception:
             # 模拟缓存写入成功
             pass
@@ -108,7 +108,7 @@ class TestCacheConsistency:
             db_data = await db_manager.get_match(match_id)
 
             # 从缓存读取
-            cache_data = await redis_manager.get(cache_key)
+            cache_data = await redis_manager.aget(cache_key)
 
             if db_data and cache_data:
                 # 验证关键字段一致
@@ -129,8 +129,8 @@ class TestCacheConsistency:
 
         # 1. 读取缓存（缓存未命中）
         try:
-            cached_prediction = await redis_manager.get(cache_key)
-            assert cached_prediction is None or not await redis_manager.exists(
+            cached_prediction = await redis_manager.aget(cache_key)
+            assert cached_prediction is None or not await redis_manager.aexists(
                 cache_key
             )
         except Exception:
@@ -146,13 +146,13 @@ class TestCacheConsistency:
         # 3. 将数据写入缓存
         if db_prediction:
             try:
-                await redis_manager.set(cache_key, db_prediction, ttl=1800)
+                await redis_manager.aset(cache_key, db_prediction, ttl=1800)
             except Exception:
                 pass
 
         # 4. 再次读取缓存验证一致性
         try:
-            cached_prediction = await redis_manager.get(cache_key)
+            cached_prediction = await redis_manager.aget(cache_key)
             if cached_prediction and db_prediction:
                 assert cached_prediction.get("match_id") == db_prediction.get(
                     "match_id"
@@ -177,7 +177,7 @@ class TestCacheConsistency:
 
         # 1. 初始化缓存数据
         try:
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
         except Exception:
             pass
 
@@ -199,12 +199,12 @@ class TestCacheConsistency:
             await consistency_manager.invalidate_cache([cache_key])
         except Exception:
             # 模拟缓存失效
-            await redis_manager.delete(cache_key)
+            await redis_manager.adelete(cache_key)
 
         # 4. 验证缓存已失效
         try:
-            cached_data = await redis_manager.get(cache_key)
-            assert cached_data is None or not await redis_manager.exists(cache_key)
+            cached_data = await redis_manager.aget(cache_key)
+            assert cached_data is None or not await redis_manager.aexists(cache_key)
         except Exception:
             pass
 
@@ -217,11 +217,11 @@ class TestCacheConsistency:
 
         # 1. 写入短TTL缓存
         try:
-            await redis_manager.set(cache_key, sample_match_data, ttl=short_ttl)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=short_ttl)
 
             # 立即验证缓存存在
-            exists = await redis_manager.exists(cache_key)
-            assert exists is True or await redis_manager.get(cache_key) is not None
+            exists = await redis_manager.aexists(cache_key)
+            assert exists is True or await redis_manager.aget(cache_key) is not None
 
         except Exception:
             # 模拟缓存操作
@@ -232,10 +232,10 @@ class TestCacheConsistency:
 
         # 3. 验证缓存已过期
         try:
-            expired_data = await redis_manager.get(cache_key)
+            expired_data = await redis_manager.aget(cache_key)
             assert expired_data is None
 
-            exists = await redis_manager.exists(cache_key)
+            exists = await redis_manager.aexists(cache_key)
             assert exists is False
 
         except Exception:
@@ -263,7 +263,7 @@ class TestCacheConsistency:
                 cache_key = f"match:{match_id}"
                 mock_data = {"id": match_id, "status": "scheduled"}
                 try:
-                    await redis_manager.set(cache_key, mock_data, ttl=3600)
+                    await redis_manager.aset(cache_key, mock_data, ttl=3600)
                 except Exception:
                     pass
 
@@ -272,7 +272,7 @@ class TestCacheConsistency:
         for match_id in match_ids:
             cache_key = f"match:{match_id}"
             try:
-                cached_data = await redis_manager.get(cache_key)
+                cached_data = await redis_manager.aget(cache_key)
                 if cached_data:
                     cached_count += 1
             except Exception:
@@ -294,7 +294,7 @@ class TestCacheConsistency:
         # 1. 数据库有数据，缓存为空（模拟缓存失效）
         try:
             await db_manager.update_match(match_id, sample_match_data)
-            await redis_manager.delete(cache_key)
+            await redis_manager.adelete(cache_key)
         except Exception:
             pass
 
@@ -303,12 +303,12 @@ class TestCacheConsistency:
             await consistency_manager.sync_cache_with_db("match", match_id)
         except Exception:
             # 模拟同步操作
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
 
         # 3. 验证同步后一致性
         try:
             db_data = await db_manager.get_match(match_id)
-            cache_data = await redis_manager.get(cache_key)
+            cache_data = await redis_manager.aget(cache_key)
 
             if db_data and cache_data:
                 assert db_data.get("id") == cache_data.get("id")
@@ -332,7 +332,7 @@ class TestCacheConsistency:
             """读操作"""
             try:
                 # 先读缓存
-                cached_data = await redis_manager.get(cache_key)
+                cached_data = await redis_manager.aget(cache_key)
                 if cached_data:
                     return cached_data
 
@@ -340,7 +340,7 @@ class TestCacheConsistency:
                 db_data = await db_manager.get_match(match_id)
                 if db_data:
                     # 写入缓存
-                    await redis_manager.set(cache_key, db_data, ttl=3600)
+                    await redis_manager.aset(cache_key, db_data, ttl=3600)
                     return db_data
 
             except Exception:
@@ -354,7 +354,7 @@ class TestCacheConsistency:
                 await db_manager.update_match(match_id, update_data)
 
                 # 更新缓存
-                await redis_manager.set(cache_key, update_data, ttl=3600)
+                await redis_manager.aset(cache_key, update_data, ttl=3600)
 
             except Exception:
                 # 模拟写操作
@@ -390,13 +390,13 @@ class TestCacheConsistency:
         # 1. 正常状态：数据库和缓存都有数据
         try:
             await db_manager.update_match(match_id, sample_match_data)
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
         except Exception:
             pass
 
         # 2. 模拟缓存故障
         with patch.object(
-            redis_manager, "get", side_effect=CacheError("Redis connection failed")
+            redis_manager, "aget", side_effect=CacheError("Redis connection failed")
         ):
             # 缓存失败时应该降级到数据库
             try:
@@ -411,10 +411,10 @@ class TestCacheConsistency:
         # 3. 缓存恢复后的数据一致性验证
         try:
             # 恢复后重新同步缓存
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
 
             # 验证一致性
-            cached_data = await redis_manager.get(cache_key)
+            cached_data = await redis_manager.aget(cache_key)
             db_data = await db_manager.get_match(match_id)
 
             if cached_data and db_data:
@@ -432,7 +432,7 @@ class TestCacheConsistency:
 
         # 1. 确保缓存有数据
         try:
-            await redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            await redis_manager.aset(cache_key, sample_match_data, ttl=3600)
         except Exception:
             pass
 
@@ -444,7 +444,7 @@ class TestCacheConsistency:
         ):
             # 数据库故障时应该从缓存读取
             try:
-                cached_data = await redis_manager.get(cache_key)
+                cached_data = await redis_manager.aget(cache_key)
                 assert cached_data is not None
                 assert cached_data.get("id") == match_id
             except Exception:
@@ -466,14 +466,14 @@ class TestCacheConsistency:
         # 写入测试数据
         for key in test_keys:
             try:
-                await redis_manager.set(key, sample_match_data, ttl=3600)
+                await redis_manager.aset(key, sample_match_data, ttl=3600)
             except Exception:
                 pass
 
         # 测试批量读取性能
         start_time = time.time()
 
-        read_tasks = [redis_manager.get(key) for key in test_keys]
+        read_tasks = [redis_manager.aget(key) for key in test_keys]
         results = await asyncio.gather(*read_tasks, return_exceptions=True)
 
         read_time = time.time() - start_time
@@ -501,7 +501,7 @@ class TestCacheConsistency:
         try:
             # 并发写入数据库和缓存
             db_task = db_manager.update_match(match_id, sample_match_data)
-            cache_task = redis_manager.set(cache_key, sample_match_data, ttl=3600)
+            cache_task = redis_manager.aset(cache_key, sample_match_data, ttl=3600)
 
             await asyncio.gather(db_task, cache_task, return_exceptions=True)
 
@@ -533,7 +533,7 @@ class TestCacheConsistency:
             else:
                 db_data = None
 
-            cache_data = await redis_manager.get(cache_key)
+            cache_data = await redis_manager.aget(cache_key)
 
             # 比较关键字段
             if db_data and cache_data:

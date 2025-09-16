@@ -39,9 +39,10 @@ class DatabaseConfig:
         """同步数据库连接URL"""
         # 检查是否为SQLite数据库
         if self.database.endswith(".db") or self.database == ":memory:":
+            # 对于测试环境使用同步SQLite驱动避免异步相关错误
             if self.database == ":memory:":
-                return "sqlite+aiosqlite:///:memory:"
-            return f"sqlite+aiosqlite:///{self.database}"
+                return "sqlite:///:memory:"  # 同步SQLite内存数据库
+            return f"sqlite:///{self.database}"  # 同步SQLite文件数据库
         return f"postgresql+psycopg2://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
     @property

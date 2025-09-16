@@ -158,6 +158,12 @@ class RedisManager:
         self.socket_connect_timeout = socket_connect_timeout
         self.retry_on_timeout = retry_on_timeout
         self.health_check_interval = health_check_interval
+        redis_password = os.getenv("REDIS_PASSWORD")
+        if redis_password:
+            # Use regex to insert password into the URL
+            import re
+
+            self.redis_url = re.sub(r"://", f"://{redis_password}@", self.redis_url)
 
         # 连接池
         self._sync_pool: Optional[redis.ConnectionPool] = None

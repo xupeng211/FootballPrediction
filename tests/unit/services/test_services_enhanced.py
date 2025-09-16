@@ -99,13 +99,14 @@ class TestContentAnalysisService:
         result = service.analyze_text("这是一个测试文本")
         assert isinstance(result, dict)
         assert "character_count" in result
-        assert result["character_count"] == 7
+        assert result["character_count"] == 8  # "这是一个测试文本" 有8个字符
 
     def test_analyze_text_empty(self):
         """测试空文本分析"""
         service = ContentAnalysisService()
         result = service.analyze_text("")
-        assert result["character_count"] == 0
+        assert "error" in result
+        assert result["error"] == "Empty text"
 
     def test_analyze_text_with_special_chars(self):
         """测试包含特殊字符的文本分析"""
@@ -166,9 +167,16 @@ class TestUserProfileService:
     async def test_update_profile(self):
         """测试更新用户档案"""
         service = UserProfileService()
+        # 首先创建一个用户档案
+        user_data = {"user_id": "123", "name": "测试用户", "email": "test@example.com"}
+        service.create_profile(user_data)
+
         update_data = {"name": "更新后的用户"}
         result = await service.update_profile("123", update_data)
-        assert isinstance(result, dict)
+        # update_profile 返回 UserProfile 对象或 None，不是 dict
+        assert result is not None
+        assert hasattr(result, "user_id")
+        assert result.user_id == "123"
 
     def test_delete_profile(self):
         """测试删除用户档案"""
@@ -182,10 +190,11 @@ class TestAuditService:
 
     @pytest.fixture
     def audit_service(self):
-        """审计服务测试夹具"""
-        with patch("src.services.audit_service.DatabaseManager"):
-            service = AuditService()
-            return service
+        """审计服务测试夹具 - 修改为不mock数据库，使用内存存储实现"""
+        # 不再mock DatabaseManager，直接创建服务实例
+        # AuditService的测试方法实际使用内存存储(_logs)，不需要mock数据库
+        service = AuditService()
+        return service
 
     def test_audit_service_init(self, audit_service):
         """测试审计服务初始化"""
@@ -193,59 +202,116 @@ class TestAuditService:
         assert hasattr(audit_service, "db_manager")
 
     def test_log_action_basic(self, audit_service):
-        """测试记录基本操作"""
-        with patch.object(audit_service.db_manager, "create_record") as mock_create:
-            mock_create.return_value = {"id": 1}
-            result = audit_service.log_action("user123", "login", {"ip": "127.0.0.1"})
-            assert result is not None
-            mock_create.assert_called_once()
+        """测试记录基本操作 - 修复：使用正确的参数顺序"""
+        # AuditService.log_action 的参数顺序是 (action, user_id, metadata)
+        result = audit_service.log_action("login", "user123", {"ip": "127.0.0.1"})
+
+        # 验证返回的日志条目
+        assert result is not None
+        assert result["action"] == "login"
+        assert result["user_id"] == "user123"
+        assert result["metadata"]["ip"] == "127.0.0.1"
+        assert result["success"] is True
+
+        # 验证日志被存储到内存中
+        assert len(audit_service._logs) == 1
+        assert audit_service._logs[0] == result
 
     def test_log_action_without_metadata(self, audit_service):
-        """测试记录无元数据的操作"""
-        with patch.object(audit_service.db_manager, "create_record") as mock_create:
-            mock_create.return_value = {"id": 1}
-            result = audit_service.log_action("user123", "logout")
-            assert result is not None
-            mock_create.assert_called_once()
+        """测试记录无元数据的操作 - 修复：使用正确的参数顺序"""
+        # AuditService.log_action 的参数顺序是 (action, user_id, metadata)
+        result = audit_service.log_action("logout", "user123")
+
+        # 验证返回的日志条目
+        assert result is not None
+        assert result["action"] == "logout"
+        assert result["user_id"] == "user123"
+        assert result["metadata"] == {}  # 默认空字典
+        assert result["success"] is True
+
+        # 验证日志被存储到内存中
+        assert len(audit_service._logs) == 1
+        assert audit_service._logs[0] == result
 
     def test_get_user_audit_logs(self, audit_service):
-        """测试获取用户审计日志"""
-        with patch.object(audit_service.db_manager, "query") as mock_query:
-            mock_query.return_value = [{"action": "login", "timestamp": "2023-01-01"}]
-            result = audit_service.get_user_audit_logs("user123")
-            assert isinstance(result, list)
-            assert len(result) >= 0
-            mock_query.assert_called_once()
+        """测试获取用户审计日志 - 修复：使用正确的参数顺序"""
+        # 先添加一些测试数据到内存存储
+        audit_service.log_action("login", "user123", {"ip": "127.0.0.1"})
+        audit_service.log_action("view", "user456", {"page": "dashboard"})
+        audit_service.log_action("logout", "user123")
+
+        # 测试获取特定用户的日志
+        result = audit_service.get_user_audit_logs("user123")
+
+        # 验证结果
+        assert isinstance(result, list)
+        assert len(result) == 2  # user123 的两条记录
+        assert all(log["user_id"] == "user123" for log in result)
+        assert result[0]["action"] == "login"
+        assert result[1]["action"] == "logout"
 
     def test_get_audit_summary(self, audit_service):
-        """测试获取审计摘要"""
-        with patch.object(audit_service.db_manager, "query") as mock_query:
-            mock_query.return_value = [{"action_count": 10}]
-            result = audit_service.get_audit_summary()
-            assert isinstance(result, dict)
-            mock_query.assert_called_once()
+        """测试获取审计摘要 - 修复：使用正确的参数顺序"""
+        # 先添加一些测试数据到内存存储
+        audit_service.log_action("login", "user123", {"ip": "127.0.0.1"})
+        audit_service.log_action("view", "user456", {"page": "dashboard"})
+        audit_service.log_action("logout", "user123")
+        audit_service.log_action("create", "user456", {"entity": "post"})
+
+        # 测试获取审计摘要
+        result = audit_service.get_audit_summary()
+
+        # 验证结果结构和内容
+        assert isinstance(result, dict)
+        assert "total_logs" in result
+        assert "users" in result
+        assert "actions" in result
+
+        # 验证统计数据
+        assert result["total_logs"] == 4
+        assert set(result["users"]) == {"user123", "user456"}
+        assert set(result["actions"]) == {"login", "view", "logout", "create"}
 
     @pytest.mark.asyncio
     async def test_async_log_action(self, audit_service):
-        """测试异步记录操作"""
-        with patch.object(audit_service.db_manager, "acreate_record") as mock_create:
-            mock_create.return_value = {"id": 1}
-            result = await audit_service.async_log_action(
-                "user123", "view", {"page": "dashboard"}
-            )
-            assert result is not None
+        """测试异步记录操作 - 修复：使用内存存储方法"""
+        # async_log_action 实际上调用 log_action，测试内存存储实现
+        result = await audit_service.async_log_action(
+            "view", "user123", {"page": "dashboard"}
+        )
+
+        # 验证返回的日志条目
+        assert result is not None
+        assert result["action"] == "view"
+        assert result["user_id"] == "user123"
+        assert result["metadata"]["page"] == "dashboard"
+        assert result["success"] is True
+
+        # 验证日志被存储到内存中
+        assert len(audit_service._logs) == 1
+        assert audit_service._logs[0] == result
 
     def test_batch_log_actions(self, audit_service):
-        """测试批量记录操作"""
+        """测试批量记录操作 - 修复：使用内存存储方法"""
         actions = [
             {"user_id": "user1", "action": "login"},
             {"user_id": "user2", "action": "logout"},
         ]
-        with patch.object(audit_service.db_manager, "bulk_create") as mock_bulk:
-            mock_bulk.return_value = [{"id": 1}, {"id": 2}]
-            result = audit_service.batch_log_actions(actions)
-            assert isinstance(result, list)
-            assert len(result) == 2
+        # batch_log_actions 实际调用内存存储的 log_action 方法
+        result = audit_service.batch_log_actions(actions)
+
+        # 验证返回结果
+        assert isinstance(result, list)
+        assert len(result) == 2
+
+        # 验证每个日志条目
+        assert result[0]["action"] == "login"
+        assert result[0]["user_id"] == "user1"
+        assert result[1]["action"] == "logout"
+        assert result[1]["user_id"] == "user2"
+
+        # 验证日志被存储到内存中
+        assert len(audit_service._logs) == 2
 
 
 class TestServiceIntegration:

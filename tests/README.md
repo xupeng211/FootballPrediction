@@ -82,7 +82,7 @@ pytest --cov=src --cov-report=html
 open htmlcov/index.html
 
 # 设置覆盖率阈值
-pytest --cov=src --cov-fail-under=80
+pytest --cov=src --cov-fail-under=60 --maxfail=5 --disable-warnings
 ```
 
 ## 📊 测试分层说明

@@ -6,7 +6,6 @@ import asyncio
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 from prometheus_client import CollectorRegistry
@@ -15,10 +14,21 @@ from src.monitoring.metrics_exporter import MetricsExporter
 
 
 class TestMetricsExporter:
-    """MetricsExporter 基础测试"""
+    """
+    MetricsExporter 基础测试
+
+    每个测试使用独立的 CollectorRegistry 实例，确保测试间的隔离，
+    避免 Prometheus 指标的全局状态污染问题。
+    """
 
     def setup_method(self):
-        """每个测试方法前的设置"""
+        """
+        每个测试方法前的设置
+
+        创建独立的 CollectorRegistry 实例用于测试，避免与全局注册表冲突。
+        这确保每个测试都有干净的指标环境。
+        """
+        # 使用独立的注册表实例，避免全局状态污染
         self.test_registry = CollectorRegistry()
         self.exporter = MetricsExporter(registry=self.test_registry)
 
@@ -89,14 +99,23 @@ class TestMetricsExporter:
         metrics_data = data  # data 已经是字符串类型，不需要decode
         assert "football_scheduler_task_delay_seconds" in metrics_data
 
-    @pytest.mark.asyncio
-    async def test_update_table_row_counts(self):
-        """测试更新表行数统计"""
-        # 创建一个简单的mock方法来避免复杂的async context manager
-        with patch.object(self.exporter, "table_row_count") as mock_gauge:
-            await self.exporter.update_table_row_counts()
-            # 只验证gauge对象存在，因为实际的数据库调用很难mock
-            assert mock_gauge is not None
+    def test_update_table_row_counts(self):
+        """
+        测试更新表行数统计
+
+        使用独立的 CollectorRegistry 确保测试隔离，避免全局状态污染。
+        这个测试验证指标能够正确设置到mock注册表中。
+        """
+        # 提供测试数据，避免异步数据库调用
+        test_counts = {"matches": 1000, "teams": 50, "odds": 2000}
+
+        # 调用同步方法，使用提供的测试数据
+        self.exporter.update_table_row_counts(test_counts)
+
+        # 验证指标被正确记录到我们的独立注册表中
+        content_type, metrics_data = self.exporter.get_metrics()
+        assert "football_table_row_count" in metrics_data
+        assert "matches" in metrics_data
 
     def test_get_metrics_returns_prometheus_format(self):
         """测试获取Prometheus格式指标"""

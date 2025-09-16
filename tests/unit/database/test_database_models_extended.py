@@ -268,13 +268,15 @@ class TestFeaturesModelMethods:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", league_id=league.id)
-        session.add(team)
+        home_team = Team(team_name="曼联", league_id=league.id)
+        away_team = Team(team_name="切尔西", league_id=league.id)
+        session.add(home_team)
+        session.add(away_team)
         session.flush()
 
         match = Match(
-            home_team_id=team.id,
-            away_team_id=team.id,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
             match_time=datetime.now(),
@@ -284,7 +286,7 @@ class TestFeaturesModelMethods:
 
         features = Features(
             match_id=match.id,
-            team_id=team.id,
+            team_id=home_team.id,
             team_type=TeamType.HOME,
             recent_5_wins=4,
             recent_5_draws=1,
@@ -311,13 +313,15 @@ class TestFeaturesModelMethods:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", league_id=league.id)
-        session.add(team)
+        home_team = Team(team_name="曼联", league_id=league.id)
+        away_team = Team(team_name="切尔西", league_id=league.id)
+        session.add(home_team)
+        session.add(away_team)
         session.flush()
 
         match = Match(
-            home_team_id=team.id,
-            away_team_id=team.id,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
             match_time=datetime.now(),
@@ -327,7 +331,7 @@ class TestFeaturesModelMethods:
 
         features = Features(
             match_id=match.id,
-            team_id=team.id,
+            team_id=home_team.id,
             team_type=TeamType.HOME,
             recent_5_wins=3,
             recent_5_draws=1,

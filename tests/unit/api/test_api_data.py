@@ -132,11 +132,12 @@ class TestDataAPIIntegration:
     def test_router_registration(self):
         """测试路由注册"""
         app = FastAPI()
-        app.include_router(router)
+        app.include_router(router, prefix="/api/v1")
 
         # 检查路由是否正确注册
         routes = [route.path for route in app.routes]
-        assert any("/data" in route for route in routes)
+        # 路由应该包含完整路径 /api/v1/data
+        assert any("/api/v1/data" in route for route in routes)
 
     @patch("src.api.data.get_async_session")
     def test_dependency_injection(self, mock_get_session):

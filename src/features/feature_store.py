@@ -85,12 +85,12 @@ class FootballFeatureStore:
     - 在线/离线特征同步
     """
 
-    def __init__(self, feature_store_path: str = "feature_store"):
+    def __init__(self, feature_store_path: str = "."):
         """
         初始化特征存储
 
         Args:
-            feature_store_path: Feast 配置文件路径
+            feature_store_path: Feast 配置文件路径（默认为当前目录，包含feature_store.yaml）
         """
         self.feature_store_path = feature_store_path
         self.store: Optional[FeatureStore] = None

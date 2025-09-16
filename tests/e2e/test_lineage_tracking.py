@@ -175,7 +175,7 @@ class TestLineageTracking:
                 stage_run_id = f"{pipeline_run_id}_{stage['name']}"
 
                 # 开始阶段运行
-                _ = await lineage_tracker.start_run(
+                await lineage_tracker.start_run(
                     job_name=f"{pipeline_config['pipeline_name']}.{stage['name']}",
                     run_id=stage_run_id,
                 )
@@ -559,7 +559,7 @@ class TestLineageTracking:
 
         try:
             # 1. 开始工作流
-            _ = await lineage_tracker.start_run(
+            await lineage_tracker.start_run(
                 job_name="e2e_lineage_test", run_id=workflow_id
             )
 

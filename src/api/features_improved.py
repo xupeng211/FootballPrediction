@@ -44,7 +44,7 @@ except Exception as e:
 )
 async def get_match_features_improved(
     match_id: int,
-    include_raw: bool = Query(False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -84,6 +84,8 @@ async def get_match_features_improved(
 
             logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
 
+        except HTTPException:
+            raise
         except SQLAlchemyError as db_error:
             logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
             raise HTTPException(status_code=500, detail="数据库查询失败，请稍后重试")

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from sqlalchemy import DateTime
+from sqlalchemy import CheckConstraint, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -124,14 +124,39 @@ class Match(BaseModel):
         cascade="all, delete-orphan",
     )
 
-    # 索引定义
+    # 索引和约束定义
     __table_args__ = (
+        # 索引定义
         Index("idx_matches_date", "match_time"),
         Index("idx_matches_teams", "home_team_id", "away_team_id"),
         Index("idx_matches_league_season", "league_id", "season"),
         Index("idx_matches_status", "match_status"),
         Index("idx_matches_home_team_date", "home_team_id", "match_time"),
         Index("idx_matches_away_team_date", "away_team_id", "match_time"),
+        # CHECK约束定义 - 确保数据完整性
+        CheckConstraint(
+            "home_score >= 0 AND home_score <= 99", name="ck_matches_home_score_range"
+        ),
+        CheckConstraint(
+            "away_score >= 0 AND away_score <= 99", name="ck_matches_away_score_range"
+        ),
+        CheckConstraint(
+            "home_ht_score >= 0 AND home_ht_score <= 99",
+            name="ck_matches_home_ht_score_range",
+        ),
+        CheckConstraint(
+            "away_ht_score >= 0 AND away_ht_score <= 99",
+            name="ck_matches_away_ht_score_range",
+        ),
+        CheckConstraint(
+            "match_time > '2000-01-01'", name="ck_matches_match_time_range"
+        ),
+        CheckConstraint(
+            "home_team_id != away_team_id", name="ck_matches_different_teams"
+        ),
+        CheckConstraint(
+            "minute >= 0 AND minute <= 120", name="ck_matches_minute_range"
+        ),
     )
 
     def __repr__(self) -> str:

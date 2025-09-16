@@ -253,7 +253,7 @@ class TestCompletePredictionWorkflow:
         match_id = 12345
 
         # 模拟API响应
-        with patch("src.api.predictions.router") as _:
+        with patch("src.api.predictions.router"):
             # 模拟预测API端点调用
             mock_response = {
                 "success": True,

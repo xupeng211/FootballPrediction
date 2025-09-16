@@ -1,5 +1,4 @@
 """
-from datetime import datetime, timezone
 Celery 应用配置
 
 基于 Redis 的任务队列系统，支持：
@@ -11,10 +10,47 @@ Celery 应用配置
 基于 DATA_DESIGN.md 第3节《任务调度系统》设计。
 """
 
+import logging
 import os
 
 from celery import Celery
 from celery.schedules import crontab
+
+# 配置日志记录器（用于测试支持）
+logger = logging.getLogger(__name__)
+
+
+# 模拟的数据库管理器类（用于测试支持）
+class DatabaseManager:
+    """数据库管理器模拟类，用于支持测试"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
+
+    def get_connection(self):
+        """获取数据库连接"""
+        return None
+
+    def close_connection(self):
+        """关闭数据库连接"""
+        pass
+
+
+# 模拟的Redis管理器类（用于测试支持）
+class RedisManager:
+    """Redis管理器模拟类，用于支持测试"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(f"{__name__}.RedisManager")
+
+    def get_redis_client(self):
+        """获取Redis客户端"""
+        return None
+
+    def close_connection(self):
+        """关闭Redis连接"""
+        pass
+
 
 # 创建 Celery 应用实例
 app = Celery("football_prediction_tasks")

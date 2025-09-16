@@ -5,6 +5,22 @@
 自动收集项目信息，为Cursor闭环系统提供完整的上下文数据。
 """
 
+# 🔧 首先设置警告过滤器，确保日志输出清洁
+import warnings
+
+try:
+    import marshmallow.warnings
+
+    warnings.filterwarnings(
+        "ignore",
+        category=marshmallow.warnings.ChangedInMarshmallow4Warning,
+        message=".*Number.*field should not be instantiated.*",
+    )
+except ImportError:
+    warnings.filterwarnings(
+        "ignore", message=".*Number.*field.*should.*not.*be.*instantiated.*"
+    )
+
 import json
 import os
 import subprocess

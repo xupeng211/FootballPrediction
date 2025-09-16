@@ -32,7 +32,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.get.side_effect = Exception("Generic error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.get("key", "default")
             assert result == "default"
             mock_logger.error.assert_called()
@@ -43,7 +43,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.setex.side_effect = Exception("Generic set error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.set("key", "value")
             assert result is False
             mock_logger.error.assert_called()
@@ -54,7 +54,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.delete.side_effect = Exception("Generic delete error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.delete("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -68,7 +68,7 @@ class TestMissingCodePaths:
 
         mock_client.exists.side_effect = RedisError("Exists error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.exists("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -79,7 +79,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.exists.side_effect = Exception("Generic exists error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.exists("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -91,7 +91,7 @@ class TestMissingCodePaths:
 
         mock_client.ttl.side_effect = RedisError("TTL error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.ttl("key")
             assert result == -2
             mock_logger.error.assert_called()
@@ -102,7 +102,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.ttl.side_effect = Exception("Generic TTL error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.ttl("key")
             assert result == -2
             mock_logger.error.assert_called()
@@ -114,7 +114,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.get.side_effect = Exception("Async generic error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.aget("key", "default")
             assert result == "default"
             mock_logger.error.assert_called()
@@ -126,7 +126,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.setex.side_effect = Exception("Async set error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.aset("key", "value")
             assert result is False
             mock_logger.error.assert_called()
@@ -138,7 +138,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.delete.side_effect = Exception("Async delete error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.adelete("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -151,7 +151,7 @@ class TestMissingCodePaths:
 
         mock_client.exists.side_effect = RedisError("Async exists error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.aexists("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -163,7 +163,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.exists.side_effect = Exception("Generic async exists error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.aexists("key")
             assert result == 0
             mock_logger.error.assert_called()
@@ -176,7 +176,7 @@ class TestMissingCodePaths:
 
         mock_client.ttl.side_effect = RedisError("Async TTL error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.attl("key")
             assert result == -2
             mock_logger.error.assert_called()
@@ -188,7 +188,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.ttl.side_effect = Exception("Generic async TTL error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.attl("key")
             assert result == -2
             mock_logger.error.assert_called()
@@ -199,7 +199,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.mget.side_effect = Exception("Generic mget error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.mget(["key1", "key2"], "default")
             assert result == ["default", "default"]
             mock_logger.error.assert_called()
@@ -210,7 +210,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.mset.side_effect = Exception("Generic mset error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = self.redis_manager.mset({"key": "value"})
             assert result is False
             mock_logger.error.assert_called()
@@ -223,7 +223,7 @@ class TestMissingCodePaths:
 
         mock_client.mget.side_effect = RedisError("Async mget error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.amget(["key"], "default")
             assert result == ["default"]
             mock_logger.error.assert_called()
@@ -235,7 +235,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.mget.side_effect = Exception("Generic async mget error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.amget(["key"], "default")
             assert result == ["default"]
             mock_logger.error.assert_called()
@@ -261,7 +261,7 @@ class TestMissingCodePaths:
 
         mock_client.mset.side_effect = RedisError("Async mset error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.amset({"key": "value"})
             assert result is False
             mock_logger.error.assert_called()
@@ -273,7 +273,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.mset.side_effect = Exception("Generic async mset error")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.amset({"key": "value"})
             assert result is False
             mock_logger.error.assert_called()
@@ -285,7 +285,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.ping.side_effect = Exception("Async ping failed")
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             result = await self.redis_manager.aping()
             assert result is False
             mock_logger.error.assert_called()
@@ -323,7 +323,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.setex.return_value = True
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             self.redis_manager.set("test_key", "test_value", ttl=3600)
             # 应该记录debug日志
             mock_logger.debug.assert_called()
@@ -334,7 +334,7 @@ class TestMissingCodePaths:
         self.redis_manager._sync_client = mock_client
         mock_client.delete.return_value = 2
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             self.redis_manager.delete("key1", "key2")
             # 应该记录debug日志
             mock_logger.debug.assert_called()
@@ -346,7 +346,7 @@ class TestMissingCodePaths:
         self.redis_manager._async_client = mock_client
         mock_client.delete.return_value = 1
 
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             await self.redis_manager.adelete("async_key")
             # 应该记录debug日志
             mock_logger.debug.assert_called()
@@ -366,7 +366,7 @@ class TestMissingCodePaths:
 
     def test_unknown_prefix_warning(self):
         """测试未知前缀警告"""
-        with patch("cache.redis_manager.logger") as mock_logger:
+        with patch("src.cache.redis_manager.logger") as mock_logger:
             key = CacheKeyManager.build_key("unknown_prefix", 123)
             assert key == "unknown_prefix:123"
             mock_logger.warning.assert_called_with("未知的Key前缀: unknown_prefix")
@@ -396,7 +396,7 @@ class TestMissingCodePaths:
         with patch("redis.asyncio.ConnectionPool.from_url") as mock_pool:
             mock_pool.side_effect = Exception("Async pool failed")
 
-            with patch("cache.redis_manager.logger") as mock_logger:
+            with patch("src.cache.redis_manager.logger") as mock_logger:
                 await self.redis_manager._init_async_pool()
                 mock_logger.error.assert_called()
 

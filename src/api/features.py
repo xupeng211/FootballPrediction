@@ -49,7 +49,7 @@ except Exception as e:
 )
 async def get_match_features(
     match_id: int,
-    include_raw: bool = Query(False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -129,8 +129,7 @@ async def get_match_features(
 
         except Exception as feature_error:
             logger.error(f"获取特征数据失败: {feature_error}")
-            features_error = str(feature_error)
-            features = {}  # 优雅降级：返回空特征而不是完全失败
+            raise HTTPException(status_code=500, detail=f"获取特征数据失败: {feature_error}")
 
         # 6. 构造响应数据
         response_data = {
@@ -192,7 +191,7 @@ async def get_match_features(
 async def get_team_features(
     team_id: int,
     calculation_date: Optional[datetime] = Query(None, description="特征计算日期，默认为当前时间"),
-    include_raw: bool = Query(False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -282,7 +281,7 @@ async def get_team_features(
 )
 async def calculate_match_features(
     match_id: int,
-    force_recalculate: bool = Query(False, description="是否强制重新计算"),
+    force_recalculate: bool = Query(default=False, description="是否强制重新计算"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -350,7 +349,7 @@ async def calculate_match_features(
 )
 async def calculate_team_features(
     team_id: int,
-    calculation_date: Optional[datetime] = Query(None, description="特征计算日期"),
+    calculation_date: Optional[datetime] = Query(default=None, description="特征计算日期"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -407,6 +406,12 @@ async def batch_calculate_features(
     end_date: datetime = Query(..., description="结束日期"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
+    if start_date >= end_date:
+        raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
+
+    if (end_date - start_date).days > 30:
+        raise HTTPException(status_code=400, detail="时间范围不能超过30天")
+
     """
     批量计算特征
 

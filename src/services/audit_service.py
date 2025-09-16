@@ -544,9 +544,9 @@ def audit_operation(
 
         # 根据原函数是否为异步决定返回哪个包装器
         if inspect.iscoroutinefunction(func):
-            return async_wrapper  # type: ignore[return-value]
+            return async_wrapper  # type: ignore
         else:
-            return sync_wrapper  # type: ignore[return-value]
+            return sync_wrapper  # type: ignore
 
     return decorator
 
@@ -628,7 +628,7 @@ def audit_database_operation(
             def sync_wrapper(*args, **kwargs):
                 return asyncio.run(async_wrapper(*args, **kwargs))
 
-            return sync_wrapper  # type: ignore[return-value]
+            return sync_wrapper  # type: ignore
 
     return decorator
 

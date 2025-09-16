@@ -370,7 +370,7 @@ jobs:
 pytest -v
 
 # 在第一个失败时停止
-pytest -x
+pytest --maxfail=5 --disable-warnings
 
 # 显示本地变量
 pytest -l

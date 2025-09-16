@@ -17,6 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from prometheus_client import CollectorRegistry
 
 from src.data.quality.anomaly_detector import (
     AdvancedAnomalyDetector, AnomalyDetectionResult,
@@ -526,7 +527,59 @@ class TestAdvancedAnomalyDetector:
 
 
 class TestPrometheusMetrics:
-    """Prometheus指标测试"""
+    """Prometheus指标测试 - 使用fake collector registry避免真实依赖"""
+
+    @pytest.fixture
+    def fake_registry(self):
+        """
+        创建fake collector registry用于测试
+        这样可以避免与全局registry的冲突，确保测试隔离
+        """
+        return CollectorRegistry()
+
+    @pytest.fixture
+    def mock_metrics(self, fake_registry):
+        """
+        创建mock的Prometheus指标对象
+        使用fake registry确保测试不会影响真实的指标收集
+        """
+        from prometheus_client import Counter, Gauge, Histogram
+
+        # 使用fake registry创建测试专用的指标
+        mock_counter = Counter(
+            "test_anomalies_detected_total",
+            "Test anomalies detected counter",
+            ["table_name", "anomaly_type", "detection_method", "severity"],
+            registry=fake_registry,
+        )
+
+        mock_gauge = Gauge(
+            "test_data_drift_score",
+            "Test data drift score gauge",
+            ["table_name", "feature_name"],
+            registry=fake_registry,
+        )
+
+        mock_histogram = Histogram(
+            "test_anomaly_detection_duration_seconds",
+            "Test anomaly detection duration histogram",
+            ["table_name", "detection_method"],
+            registry=fake_registry,
+        )
+
+        mock_coverage_gauge = Gauge(
+            "test_anomaly_detection_coverage",
+            "Test anomaly detection coverage gauge",
+            ["table_name"],
+            registry=fake_registry,
+        )
+
+        return {
+            "counter": mock_counter,
+            "gauge": mock_gauge,
+            "histogram": mock_histogram,
+            "coverage_gauge": mock_coverage_gauge,
+        }
 
     def test_metrics_initialization(self):
         """测试指标初始化"""
@@ -536,69 +589,93 @@ class TestPrometheusMetrics:
         assert anomaly_detection_duration_seconds is not None
         assert anomaly_detection_coverage is not None
 
-    def test_anomalies_detected_counter(self):
-        """测试异常检测计数器"""
-        # 清零计数器
-        anomalies_detected_total.clear()
+    def test_anomalies_detected_counter(self, mock_metrics):
+        """
+        测试异常检测计数器
+        使用mock counter避免访问私有属性，通过registry获取指标值
+        注意：Counter会自动生成_created时间戳样本，所以会有2个样本
+        """
+        counter = mock_metrics["counter"]
 
         # 增加计数
-        anomalies_detected_total.labels(
+        counter.labels(
             table_name="test_table",
             anomaly_type="test_anomaly",
             detection_method="test_method",
             severity="medium",
         ).inc(5)
 
-        # 验证计数
-        metric_value = anomalies_detected_total.labels(
-            table_name="test_table",
-            anomaly_type="test_anomaly",
-            detection_method="test_method",
-            severity="medium",
-        )._value._value
+        # 通过collect方法验证计数（避免访问私有属性）
+        metric_families = list(counter.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == 5
+        samples = metric_families[0].samples
+        # Counter会生成2个样本：主要计数器和_created时间戳
+        assert len(samples) == 2
 
-    def test_data_drift_score_gauge(self):
-        """测试数据漂移评分仪表"""
+        # 找到主要计数器样本（不是_created样本）
+        main_sample = next(s for s in samples if not s.name.endswith("_created"))
+        assert main_sample.value == 5
+
+    def test_data_drift_score_gauge(self, mock_metrics):
+        """
+        测试数据漂移评分仪表
+        使用mock gauge通过collect方法获取值，避免访问私有属性
+        """
+        gauge = mock_metrics["gauge"]
+
         # 设置漂移评分
-        data_drift_score.labels(
-            table_name="test_table", feature_name="test_feature"
-        ).set(0.75)
+        gauge.labels(table_name="test_table", feature_name="test_feature").set(0.75)
 
-        # 验证设置值
-        metric_value = data_drift_score.labels(
-            table_name="test_table", feature_name="test_feature"
-        )._value._value
+        # 通过collect方法验证设置值
+        metric_families = list(gauge.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == 0.75
+        samples = metric_families[0].samples
+        assert len(samples) == 1
+        assert samples[0].value == 0.75
 
-    def test_duration_histogram(self):
-        """测试执行时间直方图"""
+    def test_duration_histogram(self, mock_metrics):
+        """
+        测试执行时间直方图
+        使用mock histogram通过collect方法获取统计信息，避免访问私有属性
+        """
+        histogram = mock_metrics["histogram"]
+
         # 记录执行时间
-        anomaly_detection_duration_seconds.labels(
+        histogram.labels(
             table_name="test_table", detection_method="test_method"
         ).observe(1.5)
 
-        # 验证记录了观测值
-        histogram = anomaly_detection_duration_seconds.labels(
-            table_name="test_table", detection_method="test_method"
-        )
+        # 通过collect方法验证记录了观测值
+        metric_families = list(histogram.collect())
+        assert len(metric_families) == 1
 
-        assert histogram._sum._value == 1.5
-        assert histogram._count._value == 1
+        samples = metric_families[0].samples
+        # histogram会产生多个样本：_bucket, _count, _sum
+        sum_sample = next(s for s in samples if s.name.endswith("_sum"))
+        count_sample = next(s for s in samples if s.name.endswith("_count"))
 
-    def test_coverage_gauge(self):
-        """测试覆盖率仪表"""
+        assert sum_sample.value == 1.5
+        assert count_sample.value == 1
+
+    def test_coverage_gauge(self, mock_metrics):
+        """
+        测试覆盖率仪表
+        使用mock gauge通过collect方法获取值，避免访问私有属性
+        """
+        coverage_gauge = mock_metrics["coverage_gauge"]
+
         # 设置覆盖率
-        anomaly_detection_coverage.labels(table_name="test_table").set(0.95)
+        coverage_gauge.labels(table_name="test_table").set(0.95)
 
-        # 验证设置值
-        metric_value = anomaly_detection_coverage.labels(
-            table_name="test_table"
-        )._value._value
+        # 通过collect方法验证设置值
+        metric_families = list(coverage_gauge.collect())
+        assert len(metric_families) == 1
 
-        assert metric_value == 0.95
+        samples = metric_families[0].samples
+        assert len(samples) == 1
+        assert samples[0].value == 0.95
 
 
 class TestEdgeCases:

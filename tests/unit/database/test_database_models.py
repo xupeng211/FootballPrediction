@@ -137,13 +137,15 @@ class TestDatabaseModels:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", league_id=league.id)
-        session.add(team)
+        home_team = Team(team_name="曼联", league_id=league.id)
+        away_team = Team(team_name="切尔西", league_id=league.id)
+        session.add(home_team)
+        session.add(away_team)
         session.flush()
 
         match = Match(
-            home_team_id=team.id,
-            away_team_id=team.id,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
             match_time=datetime.now() + timedelta(days=1),
@@ -154,7 +156,7 @@ class TestDatabaseModels:
         # 创建特征
         features = Features(
             match_id=match.id,
-            team_id=team.id,
+            team_id=home_team.id,
             team_type=TeamType.HOME,
             recent_5_wins=3,
             recent_5_draws=1,
@@ -221,13 +223,15 @@ class TestDatabaseModels:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", league_id=league.id)
-        session.add(team)
+        home_team = Team(team_name="曼联", league_id=league.id)
+        away_team = Team(team_name="切尔西", league_id=league.id)
+        session.add(home_team)
+        session.add(away_team)
         session.flush()
 
         match = Match(
-            home_team_id=team.id,
-            away_team_id=team.id,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
             match_time=datetime.now() + timedelta(days=1),
@@ -237,7 +241,8 @@ class TestDatabaseModels:
 
         # 测试关系是否正常工作
         assert match.league == league
-        assert match.home_team == team
+        assert match.home_team == home_team
+        assert match.away_team == away_team
 
     def test_model_validation(self, session):
         """测试模型验证"""
@@ -246,13 +251,15 @@ class TestDatabaseModels:
         session.add(league)
         session.flush()
 
-        team = Team(team_name="曼联", league_id=league.id)
-        session.add(team)
+        home_team = Team(team_name="曼联", league_id=league.id)
+        away_team = Team(team_name="切尔西", league_id=league.id)
+        session.add(home_team)
+        session.add(away_team)
         session.flush()
 
         match = Match(
-            home_team_id=team.id,
-            away_team_id=team.id,
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             league_id=league.id,
             season="2023-24",
             match_time=datetime.now() + timedelta(days=1),

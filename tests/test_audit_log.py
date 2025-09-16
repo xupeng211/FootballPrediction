@@ -210,9 +210,9 @@ class TestAuditService:
     def mock_db_session(self):
         """模拟数据库会话"""
         session = AsyncMock()
-        session.add = Mock()
-        session.commit = AsyncMock()
-        session.refresh = AsyncMock()
+        session.add = Mock()  # add 是同步方法
+        session.commit = AsyncMock()  # commit 是异步方法
+        session.refresh = AsyncMock()  # refresh 是异步方法
         return session
 
     def test_audit_service_init(self, audit_service_instance):
@@ -467,7 +467,12 @@ class TestExtractRequestContext:
     def test_extract_request_context_anonymous(self):
         """测试匿名用户上下文提取"""
         mock_request = Mock(spec=Request)
-        mock_request.state = Mock()
+        # 创建一个简单的对象而不是Mock，确保getattr行为正确
+
+        class MockState:
+            pass
+
+        mock_request.state = MockState()
         # 没有user_id属性，应该默认为anonymous
         mock_request.headers = {}
         mock_request.client = None

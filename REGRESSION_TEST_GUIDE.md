@@ -87,10 +87,10 @@ echo "🎉 扩展模块测试完成！"
 ### 🔍 **测试 3.1: 渐进式完整测试**
 ```bash
 # 运行完整测试套件，但排除已知问题文件，限制失败数量
-pytest tests/ -v --tb=short -x --maxfail=5 --ignore=tests/test_features/test_feature_store.py
+pytest tests/ -v --tb=short --maxfail=5 --disable-warnings --ignore=tests/test_features/test_feature_store.py
 
-# -x: 遇到第一个失败就停止
-# --maxfail=5: 最多允许5个失败
+# --maxfail=5: 最多允许5个失败后停止
+# --disable-warnings: 禁用警告信息以减少噪音
 # --ignore: 排除原始问题文件
 ```
 
