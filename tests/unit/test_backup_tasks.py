@@ -194,9 +194,7 @@ class TestPrometheusMetrics:
         assert task is not None
 
         # 验证任务有必要的属性（Celery任务的基本属性）
-        assert hasattr(task, "name") or hasattr(
-            task, "run"
-        )  # Celery任务应该有name或run方法
+        assert hasattr(task, "name") or hasattr(task, "run")  # Celery任务应该有name或run方法
 
         # 验证可以获取Prometheus指标（使用新的函数接口避免全局状态污染）
         from prometheus_client import CollectorRegistry

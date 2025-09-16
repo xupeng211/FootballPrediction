@@ -91,18 +91,14 @@ async def get_active_models() -> Dict[str, Any]:
                     )
                     if staging_versions:
                         production_versions = staging_versions
-                        logger.warning(
-                            f"模型 {model_name} 没有生产版本，使用Staging版本"
-                        )
+                        logger.warning(f"模型 {model_name} 没有生产版本，使用Staging版本")
 
                 # 如果还是没有，获取最新版本
                 if not production_versions:
                     all_versions = mlflow_client.get_latest_versions(name=model_name)
                     if all_versions:
                         production_versions = all_versions
-                        logger.warning(
-                            f"模型 {model_name} 没有指定阶段版本，使用最新版本"
-                        )
+                        logger.warning(f"模型 {model_name} 没有指定阶段版本，使用最新版本")
 
                 for version in production_versions:
                     # 获取模型详细信息
@@ -125,9 +121,7 @@ async def get_active_models() -> Dict[str, Any]:
                                 "params": run.data.params,
                             }
                         except Exception as e:
-                            logger.warning(
-                                f"无法获取运行信息 {model_details.run_id}: {e}"
-                            )
+                            logger.warning(f"无法获取运行信息 {model_details.run_id}: {e}")
 
                     model_info = {
                         "name": model_name,
@@ -172,9 +166,7 @@ async def get_active_models() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail={"error": "获取活跃模型失败"})
 
 
-@router.get(
-    "/metrics", summary="获取模型性能指标", description="获取模型的性能指标和统计信息"
-)
+@router.get("/metrics", summary="获取模型性能指标", description="获取模型的性能指标和统计信息")
 async def get_model_metrics(
     model_name: str = Query("football_baseline_model", description="模型名称"),
     time_window: str = Query("7d", description="时间窗口：1d, 7d, 30d"),
@@ -419,9 +411,7 @@ async def get_model_versions(
 async def promote_model_version(
     model_name: str,
     version: str,
-    target_stage: str = Query(
-        "Production", description="目标阶段：Staging, Production"
-    ),
+    target_stage: str = Query("Production", description="目标阶段：Staging, Production"),
 ) -> Dict[str, Any]:
     """
     推广模型版本到指定阶段
@@ -461,9 +451,7 @@ async def promote_model_version(
             name=model_name,
             version=version,
             stage=target_stage,
-            archive_existing_versions=(
-                target_stage == "Production"
-            ),  # 生产环境时归档现有版本
+            archive_existing_versions=(target_stage == "Production"),  # 生产环境时归档现有版本
         )
 
         # 获取更新后的版本信息
@@ -524,14 +512,10 @@ async def get_model_performance(
                     version = production_versions[0].version
                 else:
                     # 符合测试断言期望：统一返回JSON格式错误信息
-                    raise HTTPException(
-                        status_code=404, detail={"error": "模型没有生产版本"}
-                    )
+                    raise HTTPException(status_code=404, detail={"error": "模型没有生产版本"})
             except Exception:
                 # 符合测试断言期望：统一返回JSON格式错误信息
-                raise HTTPException(
-                    status_code=404, detail={"error": "无法获取模型生产版本"}
-                )
+                raise HTTPException(status_code=404, detail={"error": "无法获取模型生产版本"})
 
         # 获取模型版本信息
         try:

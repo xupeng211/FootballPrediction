@@ -225,9 +225,7 @@ class TestLineageTracking:
                     # 验证上游依赖
                     if "upstream" in lineage_info:
                         upstream_datasets = lineage_info["upstream"]
-                        assert isinstance(
-                            upstream_datasets, list
-                        ), "上游数据集应该是列表"
+                        assert isinstance(upstream_datasets, list), "上游数据集应该是列表"
 
                         # 验证血缘关系的逻辑正确性
                         if dataset_name == "gold.predictions":
@@ -245,9 +243,7 @@ class TestLineageTracking:
                     # 验证下游消费者
                     if "downstream" in lineage_info:
                         downstream_datasets = lineage_info["downstream"]
-                        assert isinstance(
-                            downstream_datasets, list
-                        ), "下游数据集应该是列表"
+                        assert isinstance(downstream_datasets, list), "下游数据集应该是列表"
 
             except Exception:
                 # 在测试环境中可能无法查询真实血缘
@@ -265,12 +261,8 @@ class TestLineageTracking:
 
                 if impact_analysis:
                     # 验证影响分析结果
-                    assert (
-                        "affected_datasets" in impact_analysis
-                    ), "影响分析应该包含受影响的数据集"
-                    assert (
-                        "affected_jobs" in impact_analysis
-                    ), "影响分析应该包含受影响的作业"
+                    assert "affected_datasets" in impact_analysis, "影响分析应该包含受影响的数据集"
+                    assert "affected_jobs" in impact_analysis, "影响分析应该包含受影响的作业"
 
                     affected_datasets = impact_analysis["affected_datasets"]
 
@@ -608,9 +600,7 @@ class TestLineageTracking:
             prediction_lineage = await lineage_tracker.get_lineage("gold.predictions")
             if prediction_lineage and "upstream" in prediction_lineage:
                 upstream_datasets = prediction_lineage["upstream"]
-                assert "silver.clean_matches" in str(
-                    upstream_datasets
-                ), "血缘关系应该正确建立"
+                assert "silver.clean_matches" in str(upstream_datasets), "血缘关系应该正确建立"
 
         except Exception as e:
             # 在测试环境中可能无法执行完整的血缘追踪

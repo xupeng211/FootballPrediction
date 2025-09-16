@@ -126,9 +126,7 @@ class FootballKafkaConsumer:
                 session.add(raw_match)
                 await session.commit()
 
-            self.logger.info(
-                f"比赛数据已写入数据库 - Match ID: {match_data.get('match_id')}"
-            )
+            self.logger.info(f"比赛数据已写入数据库 - Match ID: {match_data.get('match_id')}")
             return True
 
         except Exception as e:
@@ -306,9 +304,7 @@ class FootballKafkaConsumer:
                 if msg.error():
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # 分区结束，正常情况
-                        self.logger.debug(
-                            f"分区结束: {msg.topic()} [{msg.partition()}]"
-                        )
+                        self.logger.debug(f"分区结束: {msg.topic()} [{msg.partition()}]")
                         continue
                     else:
                         # 其他错误
@@ -405,9 +401,7 @@ class FootballKafkaConsumer:
         except Exception as e:
             self.logger.error(f"批量消费失败: {e}")
 
-        self.logger.info(
-            f"批量消费完成 - 成功: {stats['processed']}, 失败: {stats['failed']}"
-        )
+        self.logger.info(f"批量消费完成 - 成功: {stats['processed']}, 失败: {stats['failed']}")
         return stats
 
     async def consume_messages(

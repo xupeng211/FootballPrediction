@@ -32,12 +32,8 @@ def upgrade():
             "id", sa.Integer(), autoincrement=True, nullable=False, comment="审计日志ID"
         ),
         # 用户信息
-        sa.Column(
-            "user_id", sa.String(length=100), nullable=False, comment="操作用户ID"
-        ),
-        sa.Column(
-            "username", sa.String(length=100), nullable=True, comment="操作用户名"
-        ),
+        sa.Column("user_id", sa.String(length=100), nullable=False, comment="操作用户ID"),
+        sa.Column("username", sa.String(length=100), nullable=True, comment="操作用户名"),
         sa.Column("user_role", sa.String(length=50), nullable=True, comment="用户角色"),
         sa.Column("session_id", sa.String(length=100), nullable=True, comment="会话ID"),
         # 操作信息
@@ -49,12 +45,8 @@ def upgrade():
             server_default="MEDIUM",
             comment="严重级别",
         ),
-        sa.Column(
-            "table_name", sa.String(length=100), nullable=True, comment="目标表名"
-        ),
-        sa.Column(
-            "column_name", sa.String(length=100), nullable=True, comment="目标列名"
-        ),
+        sa.Column("table_name", sa.String(length=100), nullable=True, comment="目标表名"),
+        sa.Column("column_name", sa.String(length=100), nullable=True, comment="目标列名"),
         sa.Column("record_id", sa.String(length=100), nullable=True, comment="记录ID"),
         # 数据变更信息
         sa.Column("old_value", sa.Text(), nullable=True, comment="操作前值"),
@@ -72,13 +64,9 @@ def upgrade():
             comment="新值哈希（敏感数据）",
         ),
         # 上下文信息
-        sa.Column(
-            "ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"
-        ),
+        sa.Column("ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"),
         sa.Column("user_agent", sa.Text(), nullable=True, comment="用户代理"),
-        sa.Column(
-            "request_path", sa.String(length=500), nullable=True, comment="请求路径"
-        ),
+        sa.Column("request_path", sa.String(length=500), nullable=True, comment="请求路径"),
         sa.Column(
             "request_method", sa.String(length=10), nullable=True, comment="HTTP方法"
         ),
@@ -99,9 +87,7 @@ def upgrade():
             server_default=sa.func.now(),
             comment="操作时间戳",
         ),
-        sa.Column(
-            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"
-        ),
+        sa.Column("duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"),
         # 扩展信息
         sa.Column(
             "metadata",
@@ -109,9 +95,7 @@ def upgrade():
             nullable=True,
             comment="扩展元数据",
         ),
-        sa.Column(
-            "tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"
-        ),
+        sa.Column("tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"),
         # 合规相关
         sa.Column(
             "compliance_category",

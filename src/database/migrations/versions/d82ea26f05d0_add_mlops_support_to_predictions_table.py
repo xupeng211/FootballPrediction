@@ -22,9 +22,7 @@ def upgrade() -> None:
     # 添加验证相关字段
     op.add_column(
         "predictions",
-        sa.Column(
-            "actual_result", sa.String(10), nullable=True, comment="实际比赛结果"
-        ),
+        sa.Column("actual_result", sa.String(10), nullable=True, comment="实际比赛结果"),
     )
     op.add_column(
         "predictions",
@@ -38,15 +36,11 @@ def upgrade() -> None:
     # 添加特征数据和元数据字段
     op.add_column(
         "predictions",
-        sa.Column(
-            "features_used", sa.JSON(), nullable=True, comment="预测时使用的特征数据"
-        ),
+        sa.Column("features_used", sa.JSON(), nullable=True, comment="预测时使用的特征数据"),
     )
     op.add_column(
         "predictions",
-        sa.Column(
-            "prediction_metadata", sa.JSON(), nullable=True, comment="预测相关的元数据"
-        ),
+        sa.Column("prediction_metadata", sa.JSON(), nullable=True, comment="预测相关的元数据"),
     )
 
     # 添加新的索引来优化查询性能
