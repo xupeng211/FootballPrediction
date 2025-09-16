@@ -276,7 +276,7 @@ async def get_team_stats(
 @router.get("/teams/{team_id}/recent_stats")
 async def get_team_recent_stats(
     team_id: int,
-    days: int = Query(30, ge=1, le=365, description="统计天数"),
+    days: int = Query(default=30, ge=1, le=365, description="统计天数"),
     session: AsyncSession = Depends(get_async_session),
 ):
     """

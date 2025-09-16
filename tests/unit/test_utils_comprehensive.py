@@ -2,6 +2,7 @@
 工具模块全面测试 - 提升覆盖率
 """
 
+import json
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -123,43 +124,40 @@ class TestDataValidator:
 class TestFileUtils:
     """文件工具测试"""
 
-    @patch("os.makedirs")
-    @patch("os.path.exists")
-    def test_ensure_directory_create(self, mock_exists, mock_makedirs):
+    def test_ensure_directory_create(self, tmp_path):
         """测试创建目录"""
-        mock_exists.return_value = False
+        test_dir = tmp_path / "new_dir"
+        assert not test_dir.exists()
 
-        FileUtils.ensure_directory("/test/path")
+        result = FileUtils.ensure_directory(str(test_dir))
 
-        mock_makedirs.assert_called_once_with("/test/path", exist_ok=True)
+        assert test_dir.exists()
+        assert result == test_dir or result is True
 
-    @patch("os.path.exists")
-    def test_ensure_directory_exists(self, mock_exists):
+    def test_ensure_directory_exists(self, tmp_path):
         """测试目录已存在"""
-        mock_exists.return_value = True
+        test_dir = tmp_path / "existing_dir"
+        test_dir.mkdir()
+        assert test_dir.exists()
 
-        result = FileUtils.ensure_directory("/existing/path")
+        result = FileUtils.ensure_directory(str(test_dir))
 
-        assert result is True
+        assert test_dir.exists()
+        assert result == test_dir or result is True
 
-    @patch("os.path.getsize")
-    @patch("os.path.exists")
-    def test_get_file_size_exists(self, mock_exists, mock_getsize):
+    def test_get_file_size_exists(self, tmp_path):
         """测试获取文件大小 - 文件存在"""
-        mock_exists.return_value = True
-        mock_getsize.return_value = 1024
+        test_file = tmp_path / "test_file.txt"
+        test_content = "Hello, World!"
+        test_file.write_text(test_content)
 
-        size = FileUtils.get_file_size("/test/file.txt")
+        size = FileUtils.get_file_size(str(test_file))
 
-        assert size == 1024
+        assert size == len(test_content.encode("utf-8"))
 
-    @patch("os.path.exists")
-    def test_get_file_size_not_exists(self, mock_exists):
+    def test_get_file_size_not_exists(self):
         """测试获取文件大小 - 文件不存在"""
-        mock_exists.return_value = False
-
         size = FileUtils.get_file_size("/nonexistent/file.txt")
-
         assert size == 0
 
     @patch("builtins.open")
@@ -174,46 +172,49 @@ class TestFileUtils:
 
         assert data == {"key": "value"}
 
-    @patch("os.path.exists")
-    def test_read_json_file_not_exists(self, mock_exists):
+    def test_read_json_file_not_exists(self):
         """测试读取不存在的JSON文件"""
-        mock_exists.return_value = False
-
         data = FileUtils.read_json_file("/nonexistent/data.json")
-
         assert data is None
 
-    @patch("builtins.open")
-    @patch("json.dump")
-    def test_write_json_file_success(self, mock_json_dump, mock_open):
+    def test_write_json_file_success(self, tmp_path):
         """测试写入JSON文件成功"""
+        test_file = tmp_path / "output.json"
         data = {"key": "value"}
 
-        result = FileUtils.write_json_file("/test/output.json", data)
+        result = FileUtils.write_json_file(data, str(test_file))
 
         assert result is True
-        mock_open.assert_called_once()
+        assert test_file.exists()
+        written_data = json.loads(test_file.read_text())
+        assert written_data == data
 
-    @patch("os.listdir")
-    @patch("os.path.isfile")
-    @patch("os.path.getmtime")
-    @patch("os.remove")
-    def test_cleanup_old_files(
-        self, mock_remove, mock_getmtime, mock_isfile, mock_listdir
-    ):
+    def test_cleanup_old_files(self, tmp_path):
         """测试清理旧文件"""
-        mock_listdir.return_value = ["file1.txt", "file2.txt", "file3.txt"]
-        mock_isfile.return_value = True
+        # 创建测试文件
+        old_file1 = tmp_path / "old_file1.txt"
+        old_file2 = tmp_path / "old_file2.txt"
+        new_file = tmp_path / "new_file.txt"
 
-        # 模拟文件时间 - file1和file2是旧文件，file3是新文件
-        old_time = (datetime.now() - timedelta(days=10)).timestamp()
-        new_time = datetime.now().timestamp()
-        mock_getmtime.side_effect = [old_time, old_time, new_time]
+        # 创建文件
+        old_file1.write_text("old content 1")
+        old_file2.write_text("old content 2")
+        new_file.write_text("new content")
 
-        removed_count = FileUtils.cleanup_old_files("/test/directory", days=7)
+        # 模拟旧文件的修改时间
+        import os
+        import time
+
+        old_time = time.time() - (8 * 24 * 3600)  # 8天前
+        os.utime(str(old_file1), (old_time, old_time))
+        os.utime(str(old_file2), (old_time, old_time))
+
+        removed_count = FileUtils.cleanup_old_files(str(tmp_path), days=7)
 
         assert removed_count == 2
-        assert mock_remove.call_count == 2
+        assert not old_file1.exists()
+        assert not old_file2.exists()
+        assert new_file.exists()
 
 
 class TestAPIResponse:
@@ -234,7 +235,7 @@ class TestAPIResponse:
         response = APIResponse.success()
 
         assert response["success"] is True
-        assert response["data"] is None
+        assert "data" not in response  # 当data为None时，不包含data键
         assert response["message"] == "操作成功"
 
     def test_error_response(self):

@@ -154,6 +154,10 @@ class StreamProcessor:
         self.logger.info("启动持续流处理...")
         await consumer.start_consuming()
 
+    def stop(self) -> None:
+        """停止流处理器"""
+        self.stop_processing()
+
     def stop_processing(self) -> None:
         """停止流处理"""
         if self.consumer:

@@ -154,6 +154,7 @@ class TestDatabaseConnectionAdvanced:
         # 创建模拟会话
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
+        # ✅ 修复：async session 的 close 方法应该是异步的
         mock_session.close = AsyncMock()
 
         with patch.object(manager, "create_async_session", return_value=mock_session):

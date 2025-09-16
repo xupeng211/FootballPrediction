@@ -18,6 +18,9 @@ from src.database.connection import get_db_session
 
 logger = logging.getLogger(__name__)
 
+# 记录应用启动时间
+_app_start_time = time.time()
+
 router = APIRouter(tags=["健康检查"])
 
 
@@ -40,6 +43,7 @@ async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat(),
         "service": "football-prediction-api",
         "version": "1.0.0",
+        "uptime": round(time.time() - _app_start_time, 2),  # 应用运行时间
         "checks": {},
     }
 
@@ -61,7 +65,7 @@ async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
         failed_checks = [
             check_name
             for check_name, check_result in health_status["checks"].items()
-            if not check_result.get("healthy", False)
+            if check_result.get("status") != "healthy"
         ]
 
         if failed_checks:
@@ -137,13 +141,19 @@ async def _check_database(db: Session) -> Dict[str, Any]:
     try:
         # 执行简单查询测试连接
         db.execute(text("SELECT 1"))
-        return {"healthy": True, "message": "数据库连接正常", "response_time_ms": 0}
+        return {
+            "healthy": True,
+            "status": "healthy",
+            "response_time_ms": 0,
+            "details": {"message": "数据库连接正常"},
+        }
     except Exception as e:
         logger.error(f"数据库健康检查失败: {e}")
         return {
             "healthy": False,
-            "message": f"数据库连接失败: {str(e)}",
-            "error": str(e),
+            "status": "unhealthy",
+            "response_time_ms": 0,
+            "details": {"message": f"数据库连接失败: {str(e)}", "error": str(e)},
         }
 
 
@@ -165,28 +175,32 @@ async def _check_redis() -> Dict[str, Any]:
             info = redis_manager.get_info()
             return {
                 "healthy": True,
-                "message": "Redis连接正常",
+                "status": "healthy",
                 "response_time_ms": response_time_ms,
-                "server_info": {
-                    "version": info.get("version", "unknown"),
-                    "connected_clients": info.get("connected_clients", 0),
-                    "used_memory": info.get("used_memory_human", "0B"),
+                "details": {
+                    "message": "Redis连接正常",
+                    "server_info": {
+                        "version": info.get("version", "unknown"),
+                        "connected_clients": info.get("connected_clients", 0),
+                        "used_memory": info.get("used_memory_human", "0B"),
+                    },
                 },
             }
         else:
             return {
                 "healthy": False,
-                "message": "Redis连接失败：无法ping通服务器",
+                "status": "unhealthy",
                 "response_time_ms": response_time_ms,
+                "details": {"message": "Redis连接失败：无法ping通服务器"},
             }
 
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
         return {
             "healthy": False,
-            "message": f"Redis连接失败: {str(e)}",
-            "error": str(e),
+            "status": "unhealthy",
             "response_time_ms": 0,
+            "details": {"message": f"Redis连接失败: {str(e)}", "error": str(e)},
         }
 
 
@@ -200,12 +214,17 @@ async def _check_filesystem() -> Dict[str, Any]:
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        return {"healthy": True, "message": "文件系统正常", "log_directory": log_dir}
+        return {
+            "status": "healthy",
+            "response_time_ms": 1.0,
+            "details": {"message": "文件系统正常", "log_directory": log_dir},
+        }
     except Exception as e:
         logger.error(f"文件系统健康检查失败: {e}")
         return {
-            "healthy": False,
-            "message": f"文件系统检查失败: {str(e)}",
+            "status": "unhealthy",
+            "response_time_ms": 0,
+            "details": {"message": f"文件系统检查失败: {str(e)}"},
             "error": str(e),
         }
 
@@ -228,6 +247,19 @@ def get_system_health() -> Dict[str, Any]:
             "filesystem": {"healthy": True, "message": "文件系统正常"},
         },
     }
+
+
+async def check_database_health(db: Session) -> Dict[str, Any]:
+    """
+    数据库健康检查的公开接口
+
+    Args:
+        db (Session): 数据库会话
+
+    Returns:
+        Dict[str, Any]: 数据库健康状态信息
+    """
+    return await _check_database(db)
 
 
 # 添加get_async_session函数供metrics_collector使用

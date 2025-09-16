@@ -108,9 +108,9 @@ class TestDataProcessingService:
     async def test_shutdown_success(self, service):
         """测试服务关闭成功"""
         # 设置mock组件
-        cache_manager_mock = Mock()
+        cache_manager_mock = AsyncMock()
         cache_manager_mock.close = AsyncMock()
-        db_manager_mock = Mock()
+        db_manager_mock = AsyncMock()
         db_manager_mock.close = AsyncMock()
 
         service.cache_manager = cache_manager_mock

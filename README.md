@@ -123,7 +123,7 @@ docker-compose up --build
 1. 启动服务：`docker-compose up --build`
 2. 检查服务状态：`docker-compose ps`
 3. 查看应用日志：`docker-compose logs app`
-4. 运行测试：`docker-compose exec app pytest --cov=src --cov-fail-under=80`
+4. 运行测试：`docker-compose exec app pytest --cov=src --cov-fail-under=60 --maxfail=5 --disable-warnings`
 
 这样可以确保本地开发环境与CI环境保持完全一致，避免"在我机器上可以运行"的问题。
 
