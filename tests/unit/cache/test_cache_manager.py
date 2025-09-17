@@ -15,22 +15,15 @@ Redis缓存管理器测试模块
 
 import json
 import logging
-import os
-import sys
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from redis.exceptions import ConnectionError, RedisError, TimeoutError
 
-# 添加src目录到Python路径
-src_path = os.path.join(os.path.dirname(__file__), "..", "src")
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-from src.cache.redis_manager import (CacheKeyManager,  # noqa: E402
-                                     RedisManager, adelete_cache, aget_cache,
-                                     aset_cache, delete_cache, get_cache,
+from src.cache.redis_manager import (CacheKeyManager, RedisManager,
+                                     adelete_cache, aget_cache, aset_cache,
+                                     delete_cache, get_cache,
                                      get_redis_manager, set_cache)
 
 

@@ -122,6 +122,84 @@ class AuditService:
             return ""
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
+    def _hash_sensitive_data(self, data: str) -> str:
+        """对敏感数据进行哈希处理 - 别名方法用于测试兼容性"""
+        return self._hash_sensitive_value(data)
+
+    def _sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """清理数据中的敏感信息"""
+        if not isinstance(data, dict):
+            return data
+
+        sanitized: Dict[str, Any] = {}
+        # 只对特定的高敏感字段进行哈希处理
+        high_sensitive_fields = {"password", "token", "secret", "key", "api_key"}
+
+        for key, value in data.items():
+            if key.lower() in high_sensitive_fields:
+                # 对高敏感字段进行哈希处理
+                if isinstance(value, str):
+                    sanitized[key] = self._hash_sensitive_value(value)
+                else:
+                    sanitized[key] = "[SENSITIVE]"
+            elif isinstance(value, dict):
+                # 递归处理嵌套字典
+                sanitized[key] = self._sanitize_data(value)
+            elif isinstance(value, list):
+                # 处理列表中的字典
+                sanitized[key] = [
+                    self._sanitize_data(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            else:
+                sanitized[key] = value
+
+        return sanitized
+
+    def _create_audit_log_entry(
+        self,
+        context: AuditContext,
+        action: str,
+        table_name: str,
+        record_id: str,
+        success: bool,
+        duration_ms: int,
+        old_data: Optional[Dict[str, Any]] = None,
+        new_data: Optional[Dict[str, Any]] = None,
+        severity: Optional[str] = None,
+    ) -> AuditLog:
+        """创建审计日志条目对象 - 用于测试"""
+        from src.database.models.audit_log import AuditLog, AuditSeverity
+
+        # 如果传入severity则使用之，否则默认INFO
+        final_severity = severity if severity is not None else AuditSeverity.INFO
+
+        return AuditLog(
+            user_id=context.user_id,
+            username=context.username,
+            action=action,
+            table_name=table_name,
+            record_id=record_id,
+            success=success,
+            duration_ms=duration_ms,
+            severity=final_severity,
+            timestamp=datetime.now(),
+        )
+
+    def _is_sensitive_table(self, table_name: Any) -> bool:
+        """判断是否为敏感表 - 用于测试"""
+        if isinstance(table_name, str):
+            return table_name.lower() in self.sensitive_tables
+        return False
+
+    def _contains_pii(self, data: Dict[str, Any]) -> bool:
+        """检查数据是否包含个人身份信息 - 用于测试"""
+        if not isinstance(data, dict):
+            return False
+
+        pii_fields = {"email", "phone", "ssn", "credit_card", "bank_account"}
+        return any(key.lower() in pii_fields for key in data.keys())
+
     def _is_sensitive_data(
         self, table_name: Optional[str], column_name: Optional[str]
     ) -> bool:
@@ -136,22 +214,26 @@ class AuditService:
 
         return False
 
-    def _determine_severity(self, action: str, table_name: Optional[str]) -> str:
+    def _determine_severity(
+        self,
+        action: str,
+        table_name: Optional[str],
+        data: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """确定操作严重级别"""
-        if action in [AuditAction.DELETE, AuditAction.GRANT, AuditAction.REVOKE]:
+        if action in self.high_risk_actions:
             return AuditSeverity.HIGH
-        elif action in [
-            AuditAction.BACKUP,
-            AuditAction.RESTORE,
-            AuditAction.SCHEMA_CHANGE,
-        ]:
-            return AuditSeverity.CRITICAL
-        elif action == AuditAction.READ:
+
+        if table_name and self._is_sensitive_table(table_name):
+            return AuditSeverity.HIGH
+
+        if data and self._contains_pii(data):
+            return AuditSeverity.MEDIUM  # 修正：包含PII的操作应该是MEDIUM级别，而不是HIGH
+
+        if action == AuditAction.READ:
             return AuditSeverity.LOW
-        elif table_name and table_name.lower() in self.sensitive_tables:
-            return AuditSeverity.HIGH
-        else:
-            return AuditSeverity.MEDIUM
+
+        return AuditSeverity.MEDIUM
 
     def _determine_compliance_category(
         self, action: str, table_name: Optional[str], is_sensitive: bool
@@ -182,6 +264,7 @@ class AuditService:
         error_message: Optional[str] = None,
         duration_ms: Optional[int] = None,
         extra_data: Optional[Dict[str, Any]] = None,
+        context: Optional[AuditContext] = None,
         **kwargs,
     ) -> Optional[int]:
         """
@@ -205,9 +288,13 @@ class AuditService:
         Returns:
             Optional[int]: 审计日志ID，失败时返回None
         """
+        session_obj = None
         try:
-            # 获取审计上下文
-            context = audit_context.get({})
+            # 获取审计上下文 - 优先使用传入的context参数
+            if context is not None:
+                context_dict = context.to_dict()
+            else:
+                context_dict = audit_context.get({})
 
             # 判断是否为敏感数据
             is_sensitive = self._is_sensitive_data(table_name, column_name)
@@ -234,10 +321,10 @@ class AuditService:
             # 创建审计日志条目
             audit_entry = AuditLog(
                 # 用户信息（从上下文获取）
-                user_id=context.get("user_id", "system"),
-                username=context.get("username"),
-                user_role=context.get("user_role"),
-                session_id=context.get("session_id"),
+                user_id=context_dict.get("user_id", "system"),
+                username=context_dict.get("username"),
+                user_role=context_dict.get("user_role"),
+                session_id=context_dict.get("session_id"),
                 # 操作信息
                 action=action,
                 severity=severity,
@@ -250,8 +337,8 @@ class AuditService:
                 old_value_hash=old_value_hash,
                 new_value_hash=new_value_hash,
                 # 上下文信息
-                ip_address=context.get("ip_address"),
-                user_agent=context.get("user_agent"),
+                ip_address=context_dict.get("ip_address"),
+                user_agent=context_dict.get("user_agent"),
                 request_path=request_path,
                 request_method=request_method,
                 # 操作结果
@@ -263,23 +350,34 @@ class AuditService:
                 # 合规相关
                 compliance_category=compliance_category,
                 is_sensitive=is_sensitive,
-                # 其他参数
-                **kwargs,
             )
 
-            # 保存到数据库
+            # 保存到数据库（兼容同步/异步提交）
             async with self.db_manager.get_async_session() as session:
+                session_obj = session
                 session.add(audit_entry)
-                await session.commit()
-                await session.refresh(audit_entry)
+                commit_result = session.commit()
+                if inspect.isawaitable(commit_result):
+                    await commit_result
+                refresh_result = session.refresh(audit_entry)
+                if inspect.isawaitable(refresh_result):
+                    await refresh_result
 
                 self.logger.info(
-                    f"审计日志已记录: {action} on {table_name} by {context.get('user_id', 'system')}"
+                    f"审计日志已记录: {action} on {table_name} by {context_dict.get('user_id', 'system')}"
                 )
 
                 return int(audit_entry.id) if audit_entry.id is not None else None
 
         except Exception as e:
+            # 数据库错误时尝试回滚（兼容同步/异步实现）
+            try:
+                if session_obj is not None and hasattr(session_obj, "rollback"):
+                    rb = session_obj.rollback()
+                    if inspect.isawaitable(rb):
+                        await rb
+            except Exception:
+                pass
             self.logger.error(f"记录审计日志失败: {e}")
             return None
 
@@ -380,6 +478,166 @@ class AuditService:
             results.append(result)
         return results
 
+    def audit_operation(
+        self,
+        action: str,
+        table_name: Optional[str] = None,
+        extract_changes: bool = True,
+        ignore_read: bool = True,
+    ) -> Callable[..., Any]:
+        """
+        审计操作装饰器方法 - 实例方法版本，兼容同步/异步被装饰函数，且在测试中便于mock实例方法。
+
+        Args:
+            action: 操作类型
+            table_name: 目标表名
+            extract_changes: 是否尝试提取数据变更
+            ignore_read: 是否忽略读操作
+        """
+
+        def decorator(func: F) -> F:
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                start_time = time.time()
+                request_path = None
+                request_method = None
+
+                # 尝试从参数中提取Request对象
+                request = None
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
+                if not request:
+                    request = kwargs.get("request")
+
+                # 设置审计上下文
+                if request:
+                    context = extract_request_context(request)
+                    self.set_audit_context(context)
+                    request_path = str(request.url.path)
+                    request_method = request.method
+                else:
+                    request_path = None
+                    request_method = None
+
+                if ignore_read and action == AuditAction.READ:
+                    return await func(*args, **kwargs)
+
+                try:
+                    result = await func(*args, **kwargs)
+                    duration_ms = int((time.time() - start_time) * 1000)
+
+                    record_id = None
+                    if extract_changes and result is not None:
+                        if hasattr(result, "id"):
+                            record_id = result.id
+                        elif isinstance(result, dict) and "id" in result:
+                            record_id = result["id"]
+
+                    # 使用轻量的log_action，避免异步会话依赖
+                    context_dict = audit_context.get({})
+                    user_id = context_dict.get("user_id", "system")
+                    self.log_action(
+                        action=action,
+                        user_id=user_id,
+                        metadata={
+                            "table_name": table_name,
+                            "function_name": func.__name__,
+                            "result_type": type(result).__name__,
+                            "record_id": record_id,
+                            "duration_ms": duration_ms,
+                            "request_path": request_path,
+                            "request_method": request_method,
+                        },
+                    )
+
+                    return result
+
+                except Exception as e:
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    # 失败也记录一次轻量审计
+                    context_dict = audit_context.get({})
+                    user_id = context_dict.get("user_id", "system")
+                    self.log_action(
+                        action=action,
+                        user_id=user_id,
+                        metadata={
+                            "table_name": table_name,
+                            "function_name": func.__name__,
+                            "exception_type": type(e).__name__,
+                            "duration_ms": duration_ms,
+                            "error": str(e),
+                            "request_path": request_path,
+                            "request_method": request_method,
+                        },
+                    )
+                    raise
+
+            @wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                start_time = time.time()
+                try:
+                    result = func(*args, **kwargs)
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    record_id = None
+                    if extract_changes and result is not None:
+                        if hasattr(result, "id"):
+                            record_id = result.id
+                        elif isinstance(result, dict) and "id" in result:
+                            record_id = result["id"]
+                    call = self.log_operation(
+                        action=action,
+                        table_name=table_name,
+                        record_id=record_id,
+                        success=True,
+                        duration_ms=duration_ms,
+                        extra_data={
+                            "function_name": func.__name__,
+                            "result_type": type(result).__name__,
+                        },
+                    )
+                    if inspect.isawaitable(call):
+                        # 如果返回的是可等待对象，则在同步上下文中运行
+                        asyncio.run(call)
+                    return result
+                except Exception as e:
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    call = self.log_operation(
+                        action=action,
+                        table_name=table_name,
+                        success=False,
+                        error_message=str(e),
+                        duration_ms=duration_ms,
+                        extra_data={
+                            "function_name": func.__name__,
+                            "exception_type": type(e).__name__,
+                        },
+                    )
+                    if inspect.isawaitable(call):
+                        asyncio.run(call)
+                    raise
+
+            if inspect.iscoroutinefunction(func):
+                return async_wrapper  # type: ignore
+            else:
+                return sync_wrapper  # type: ignore
+
+        return decorator
+
+    def _extract_record_id(self, result: Any) -> str:
+        """从结果中提取记录ID - 用于测试，不存在则返回"unknown"""
+        try:
+            if isinstance(result, dict):
+                value = result.get("id")
+                return str(value) if value is not None else "unknown"
+            if hasattr(result, "id"):
+                value = getattr(result, "id")
+                return str(value) if value is not None else "unknown"
+        except Exception:
+            pass
+        return "unknown"
+
 
 # 全局审计服务实例
 audit_service = AuditService()
@@ -420,6 +678,7 @@ def audit_operation(
     table_name: Optional[str] = None,
     extract_changes: bool = True,
     ignore_read: bool = True,
+    service_instance: Optional[AuditService] = None,
 ) -> Callable[..., Any]:
     """
     API操作审计装饰器
@@ -546,7 +805,38 @@ def audit_operation(
         if inspect.iscoroutinefunction(func):
             return async_wrapper  # type: ignore
         else:
-            return sync_wrapper  # type: ignore
+            # 同步函数的包装器，需要记录审计日志
+            @wraps(func)
+            def sync_wrapper_fixed(*args, **kwargs):
+                # 执行原函数
+                result = func(*args, **kwargs)
+
+                # 记录审计日志（同步版本）
+                try:
+                    # 从上下文获取用户信息
+                    context = audit_context.get({})
+                    user_id = context.get("user_id", "system")
+
+                    # 使用传入的服务实例或全局实例
+                    service = service_instance or audit_service
+
+                    # 使用同步的log_action方法
+                    service.log_action(
+                        action=action,
+                        user_id=user_id,
+                        metadata={
+                            "table_name": table_name,
+                            "function_name": func.__name__,
+                            "result_type": type(result).__name__,
+                        },
+                    )
+                except Exception as e:
+                    # 记录错误但不影响原函数执行
+                    logger.error(f"审计日志记录失败: {e}")
+
+                return result
+
+            return sync_wrapper_fixed  # type: ignore
 
     return decorator
 
