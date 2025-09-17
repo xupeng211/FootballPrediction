@@ -11,9 +11,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, quoted_name, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.sqltypes import quoted_name
 
 from src.database.connection import DatabaseManager
 from src.database.models.match import Match
@@ -221,7 +220,16 @@ class QualityMonitor:
             ).select_from(model)
         )
 
+        # 兼容不同测试场景：.first() 可能返回协程或直接返回行对象
         row = result.first()
+        try:
+            # 如果first()返回可等待对象，则等待其结果
+            import inspect
+
+            if inspect.isawaitable(row):
+                row = await row
+        except Exception:
+            pass
         last_update_time = row.last_update if row else None
         records_count = row.record_count if row else 0
 
@@ -272,8 +280,6 @@ class QualityMonitor:
             # Safe: table_name is validated against whitelist above
             # Note: Using f-string here is safe as table_name is validated
             # 使用quoted_name确保表名安全，防止SQL注入
-            from sqlalchemy import quoted_name
-
             safe_table_name = quoted_name(table_name, quote=True)
             count_result = await session.execute(
                 text(
@@ -281,6 +287,13 @@ class QualityMonitor:
                 )  # nosec B608 - using quoted_name for safety
             )
             count_row = count_result.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(count_row):
+                    count_row = await count_row
+            except Exception:
+                pass
             records_count = int(count_row[0]) if count_row else 0
 
             # 尝试获取最后更新时间
@@ -301,6 +314,13 @@ class QualityMonitor:
                         )
                     )
                     time_row = time_result.first()
+                    try:
+                        import inspect
+
+                        if inspect.isawaitable(time_row):
+                            time_row = await time_row
+                    except Exception:
+                        pass
                     if time_row and time_row.last_update:
                         last_update_time = time_row.last_update
                         break
@@ -407,7 +427,15 @@ class QualityMonitor:
                 f"SELECT COUNT(*) as total FROM {safe_table_name}"
             )  # nosec B608 - using quoted_name for safety
         )
-        total_records = total_result.first().total
+        total_row = total_result.first()
+        try:
+            import inspect
+
+            if inspect.isawaitable(total_row):
+                total_row = await total_row
+        except Exception:
+            pass
+        total_records = total_row.total if total_row else 0
 
         if total_records == 0:
             return DataCompletenessResult(
@@ -432,7 +460,15 @@ class QualityMonitor:
                         f"SELECT COUNT(*) as missing FROM {table_name} WHERE {field} IS NULL"  # nosec B608 - validated
                     )
                 )
-                missing_count = missing_result.first().missing
+                missing_row = missing_result.first()
+                try:
+                    import inspect
+
+                    if inspect.isawaitable(missing_row):
+                        missing_row = await missing_row
+                except Exception:
+                    pass
+                missing_count = missing_row.missing if missing_row else 0
                 missing_fields[field] = missing_count
                 total_missing += missing_count
             except Exception as e:
@@ -499,6 +535,13 @@ class QualityMonitor:
                 )
             )
             home_teams_row = orphaned_home_teams.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(home_teams_row):
+                    home_teams_row = await home_teams_row
+            except Exception:
+                pass
             results["orphaned_home_teams"] = (
                 int(home_teams_row[0]) if home_teams_row else 0
             )
@@ -514,6 +557,13 @@ class QualityMonitor:
                 )
             )
             away_teams_row = orphaned_away_teams.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(away_teams_row):
+                    away_teams_row = await away_teams_row
+            except Exception:
+                pass
             results["orphaned_away_teams"] = (
                 int(away_teams_row[0])
                 if away_teams_row and away_teams_row[0] is not None
@@ -532,6 +582,13 @@ class QualityMonitor:
                 )
             )
             orphaned_row = orphaned_odds.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(orphaned_row):
+                    orphaned_row = await orphaned_row
+            except Exception:
+                pass
             results["orphaned_odds"] = int(orphaned_row[0]) if orphaned_row else 0
 
         except Exception as e:
@@ -556,6 +613,13 @@ class QualityMonitor:
                 )
             )
             invalid_odds_row = invalid_odds.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(invalid_odds_row):
+                    invalid_odds_row = await invalid_odds_row
+            except Exception:
+                pass
             results["invalid_odds_range"] = (
                 int(invalid_odds_row[0])
                 if invalid_odds_row and invalid_odds_row[0] is not None
@@ -574,6 +638,13 @@ class QualityMonitor:
                 )
             )
             invalid_row = invalid_probability.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(invalid_row):
+                    invalid_row = await invalid_row
+            except Exception:
+                pass
             results["invalid_probability_sum"] = (
                 int(invalid_row[0]) if invalid_row else 0
             )
@@ -603,6 +674,13 @@ class QualityMonitor:
                 )
             )
             finished_result = finished_without_score.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(finished_result):
+                    finished_result = await finished_result
+            except Exception:
+                pass
             results["finished_matches_without_score"] = (
                 int(finished_result[0])
                 if finished_result and finished_result[0] is not None
@@ -621,6 +699,13 @@ class QualityMonitor:
                 )
             )
             scheduled_row = scheduled_with_score.first()
+            try:
+                import inspect
+
+                if inspect.isawaitable(scheduled_row):
+                    scheduled_row = await scheduled_row
+            except Exception:
+                pass
             results["scheduled_matches_with_score"] = (
                 int(scheduled_row[0]) if scheduled_row else 0
             )

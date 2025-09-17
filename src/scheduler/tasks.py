@@ -284,8 +284,13 @@ def cleanup_data(days_to_keep: int = 30):
                 # 尝试使用MinIO/S3存储
                 storage = S3DataLakeStorage(
                     endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
-                    access_key=os.getenv("MINIO_ACCESS_KEY", "football_admin"),
-                    secret_key=os.getenv("MINIO_SECRET_KEY", "football_minio_2025"),
+                    access_key=os.getenv(
+                        "MINIO_ACCESS_KEY", os.getenv("MINIO_ROOT_USER", "minioadmin")
+                    ),
+                    secret_key=os.getenv(
+                        "MINIO_SECRET_KEY",
+                        os.getenv("MINIO_ROOT_PASSWORD", "change_me"),
+                    ),
                     use_ssl=False,
                 )
                 logger.info("使用MinIO/S3数据湖存储")
