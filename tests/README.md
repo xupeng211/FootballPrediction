@@ -81,8 +81,8 @@ pytest --cov=src --cov-report=html
 # 查看HTML报告
 open htmlcov/index.html
 
-# 设置覆盖率阈值
-pytest --cov=src --cov-fail-under=60 --maxfail=5 --disable-warnings
+# 设置覆盖率阈值（全局要求 ≥ 80%）
+pytest --cov=src --cov-fail-under=80 --maxfail=5 --disable-warnings
 ```
 
 ## 📊 测试分层说明
@@ -112,8 +112,8 @@ pytest --cov=src --cov-fail-under=60 --maxfail=5 --disable-warnings
 testpaths = tests
 python_files = test_*.py
 
-# 覆盖率设置
-addopts = --cov=src --cov-fail-under=60
+# 覆盖率设置（≥ 80%）
+addopts = --cov=src --cov-fail-under=80
 
 # 异步测试支持
 asyncio_mode = auto

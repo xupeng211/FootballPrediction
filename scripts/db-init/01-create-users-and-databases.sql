@@ -29,19 +29,40 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "btree_gin";
 
 -- 创建应用专用用户
-CREATE USER football_user WITH PASSWORD 'football_pass';
+-- 密码改为从环境变量传入更安全，若未提供则使用占位符
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_user') THEN
+        EXECUTE format('CREATE USER football_user WITH PASSWORD %L', coalesce(current_setting('app.db_password', true), 'change_me'));
+    END IF;
+END $$;
 COMMENT ON ROLE football_user IS '足球预测应用主用户';
 
 -- 创建读者用户（只读权限）
-CREATE USER football_reader WITH PASSWORD 'reader_pass';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_reader') THEN
+        EXECUTE format('CREATE USER football_reader WITH PASSWORD %L', coalesce(current_setting('app.reader_password', true), 'change_me'));
+    END IF;
+END $$;
 COMMENT ON ROLE football_reader IS '只读用户，用于数据分析和前端查询';
 
 -- 创建写入用户（数据采集专用）
-CREATE USER football_writer WITH PASSWORD 'writer_pass';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_writer') THEN
+        EXECUTE format('CREATE USER football_writer WITH PASSWORD %L', coalesce(current_setting('app.writer_password', true), 'change_me'));
+    END IF;
+END $$;
 COMMENT ON ROLE football_writer IS '写入用户，专用于数据采集任务';
 
 -- 创建管理员用户
-CREATE USER football_admin WITH PASSWORD 'admin_pass';
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_admin') THEN
+        EXECUTE format('CREATE USER football_admin WITH PASSWORD %L', coalesce(current_setting('app.admin_password', true), 'change_me'));
+    END IF;
+END $$;
 COMMENT ON ROLE football_admin IS '管理员用户，用于运维和数据库管理';
 
 -- 为管理员用户添加数据库创建权限
