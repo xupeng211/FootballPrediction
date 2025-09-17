@@ -15,7 +15,7 @@ done
 echo "MinIO 服务已启动，开始创建桶..."
 
 # 配置 MinIO 客户端
-mc config host add local http://localhost:9000 football_admin football_minio_2025
+mc config host add local http://localhost:9000 "${MINIO_ROOT_USER:-minioadmin}" "${MINIO_ROOT_PASSWORD:-change_me}"
 
 # 创建数据湖桶
 echo "创建数据湖存储桶..."
@@ -78,5 +78,5 @@ mc ilm import local/football-lake-silver < /tmp/lifecycle-policy.json
 
 echo "MinIO 初始化完成！"
 echo "管理界面: http://localhost:9001"
-echo "用户名: football_admin"
-echo "密码: football_minio_2025"
+echo "用户名: ${MINIO_ROOT_USER:-minioadmin}"
+echo "密码: ${MINIO_ROOT_PASSWORD:-change_me}"

@@ -9,7 +9,7 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 60
+COVERAGE_THRESHOLD := 80
 
 # Colors for better UX
 GREEN := \033[32m
@@ -76,8 +76,8 @@ lint: ## Quality: Run flake8 and mypy checks
 	echo "$(YELLOW)Running flake8...$(RESET)" && \
 	flake8 src/ tests/ && \
 	echo "$(YELLOW)Running mypy...$(RESET)" && \
-	mypy --config-file mypy.ini src/ && \
-	echo "$(GREEN)✅ Linting passed$(RESET)"
+	mypy src tests && \
+	echo "$(GREEN)✅ Linting and type checks passed$(RESET)"
 
 fmt: ## Quality: Format code with black and isort
 	@$(ACTIVATE) && \
@@ -108,10 +108,12 @@ coverage: ## Test: Run tests with coverage report (threshold: 60%)
 	pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
-coverage-fast: ## Test: Run fast coverage (unit tests only, 60% threshold)
+coverage-fast: ## Test: Run fast coverage (unit tests only, 80% threshold)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
-	pytest tests/unit/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings --timeout=30 && \
+	pytest tests/unit/ \
+	  --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
+	  --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings --timeout=30 && \
 	echo "$(GREEN)✅ Fast coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
@@ -146,9 +148,8 @@ prepush: ## Quality: Complete pre-push validation (format + lint + type-check + 
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \
 	$(MAKE) lint && \
-	$(MAKE) type-check && \
-	$(MAKE) test && \
-	$(MAKE) coverage && \
+	$(MAKE) test-quick && \
+	$(MAKE) coverage-fast && \
 	echo "$(GREEN)✅ CI simulation passed$(RESET)"
 
 # ============================================================================

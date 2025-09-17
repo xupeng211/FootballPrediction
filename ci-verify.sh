@@ -57,8 +57,16 @@ echo "激活虚拟环境并安装依赖..."
 source venv/bin/activate || handle_error "激活虚拟环境"
 
 pip install --upgrade pip || handle_error "升级 pip"
-pip install -r requirements.txt || handle_error "安装基础依赖"
-pip install -r requirements-dev.txt || handle_error "安装开发依赖"
+if [ -f requirements.lock ]; then
+    pip install -r requirements.lock || handle_error "安装锁定依赖"
+else
+    pip install -r requirements.txt || handle_error "安装基础依赖"
+fi
+if [ -f requirements-dev.lock ]; then
+    pip install -r requirements-dev.lock || handle_error "安装开发锁定依赖"
+elif [ -f requirements-dev.txt ]; then
+    pip install -r requirements-dev.txt || handle_error "安装开发依赖"
+fi
 pip install -e . || handle_error "安装当前项目"
 
 print_status "success" "依赖安装完成"
@@ -149,7 +157,7 @@ source venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 pytest \
     --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
-    --cov-fail-under=60 --maxfail=5 --disable-warnings \
+    --cov-fail-under=80 --maxfail=5 --disable-warnings \
     --cov-report=xml \
     --cov-report=html \
     -v || handle_error "测试执行或覆盖率不足"

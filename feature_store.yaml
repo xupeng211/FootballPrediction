@@ -19,7 +19,7 @@ offline_store:
   database: football_prediction_dev
   db_schema: public
   user: football_user
-  password: football_pass
+  password: ${DB_PASSWORD:-change_me}
   sslmode: disable
 
 # 实体注册配置

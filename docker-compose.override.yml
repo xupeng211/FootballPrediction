@@ -9,11 +9,11 @@ services:
   app:
     environment:
       # MLflow追踪配置
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
       # MLflow实验配置
-      - MLFLOW_EXPERIMENT_NAME=football_prediction
+      - MLFLOW_EXPERIMENT_NAME=${MLFLOW_EXPERIMENT_NAME:-football_prediction}
       # MLflow注册模型配置
-      - MLFLOW_REGISTRY_URI=http://mlflow:5000
+      - MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI:-http://mlflow:5000}
     depends_on:
       mlflow:
         condition: service_healthy
@@ -23,22 +23,22 @@ services:
     container_name: football_prediction_postgres
     environment:
       # 主数据库配置
-      - POSTGRES_DB=football_prediction_dev
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_ROOT_PASSWORD:-postgres_root_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-football_prediction_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_ROOT_PASSWORD:-change_me}
 
       # 应用数据库配置
-      - APP_DB_NAME=football_prediction_dev
-      - APP_DB_USER=football_user
-      - APP_DB_PASSWORD=${DB_PASSWORD:-football_pass}
+      - APP_DB_NAME=${APP_DB_NAME:-football_prediction_dev}
+      - APP_DB_USER=${APP_DB_USER:-football_user}
+      - APP_DB_PASSWORD=${DB_PASSWORD:-change_me}
 
       # 多用户配置（读/写分离）
-      - READER_USER=football_reader
-      - READER_PASSWORD=${READER_PASSWORD:-reader_pass}
-      - WRITER_USER=football_writer
-      - WRITER_PASSWORD=${WRITER_PASSWORD:-writer_pass}
-      - ADMIN_USER=football_admin
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin_pass}
+      - READER_USER=${READER_USER:-football_reader}
+      - READER_PASSWORD=${READER_PASSWORD:-change_me}
+      - WRITER_USER=${WRITER_USER:-football_writer}
+      - WRITER_PASSWORD=${WRITER_PASSWORD:-change_me}
+      - ADMIN_USER=${ADMIN_USER:-football_admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change_me}
 
       # PostgreSQL性能调优配置
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
@@ -103,8 +103,8 @@ services:
     container_name: football_prediction_pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@football-prediction.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin_pass}
-      - PGADMIN_LISTEN_PORT=80
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-change_me}
+      - PGADMIN_LISTEN_PORT=${PGADMIN_LISTEN_PORT:-80}
     ports:
       - "${PGADMIN_PORT:-8080}:80"
     volumes:
@@ -151,13 +151,13 @@ services:
     image: redis:7-alpine
     container_name: football_prediction_redis
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_pass}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-change_me}
     volumes:
       - redis_data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
       - ./logs/redis:/var/log/redis
     # 使用配置文件启动
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-redis_pass}
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-change_me}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -183,8 +183,8 @@ services:
     container_name: football_prediction_minio
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
-      - MINIO_DEFAULT_BUCKETS=mlflow-artifacts
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-change_me}
+      - MINIO_DEFAULT_BUCKETS=${MINIO_DEFAULT_BUCKETS:-mlflow-artifacts}
     ports:
       - "${MINIO_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
@@ -207,16 +207,16 @@ services:
     container_name: football_prediction_mlflow
     environment:
       # MLflow数据库配置（使用PostgreSQL）
-      - MLFLOW_BACKEND_STORE_URI=postgresql://football_user:football_pass@db:5432/football_prediction_dev
-      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://mlflow-artifacts
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-postgresql://$APP_DB_USER:$APP_DB_PASSWORD@db:5432/$APP_DB_NAME}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
       # MinIO S3配置
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL:-http://minio:9000}
       - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER:-minioadmin}
-      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD:-minioadmin123}
-      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD:-change_me}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
       # MLflow服务配置
-      - MLFLOW_HOST=0.0.0.0
-      - MLFLOW_PORT=5000
+      - MLFLOW_HOST=${MLFLOW_HOST:-0.0.0.0}
+      - MLFLOW_PORT=${MLFLOW_PORT:-5000}
     ports:
       - "${MLFLOW_PORT:-5000}:5000"
     volumes:
@@ -233,9 +233,9 @@ services:
       sh -c "
         pip install mlflow[extras]==2.9.2 psycopg2-binary boto3 &&
         mlflow server
-        --backend-store-uri postgresql://football_user:football_pass@db:5432/football_prediction_dev
-        --default-artifact-root s3://mlflow-artifacts
-        --artifacts-destination s3://mlflow-artifacts
+        --backend-store-uri ${MLFLOW_BACKEND_STORE_URI:-postgresql://$APP_DB_USER:$APP_DB_PASSWORD@db:5432/$APP_DB_NAME}
+        --default-artifact-root ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
+        --artifacts-destination ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
         --serve-artifacts
         --host 0.0.0.0
         --port 5000

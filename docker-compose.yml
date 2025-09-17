@@ -8,13 +8,13 @@ services:
     env_file:
       - .env.ci
     environment:
-      - ENVIRONMENT=development
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_dev
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-football_prediction_dev}
+      - DB_USER=${DB_USER:-football_user}
+      - DB_PASSWORD=${DB_PASSWORD:-change_me}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
     depends_on:
       db:
         condition: service_healthy
@@ -30,9 +30,9 @@ services:
   db:
     image: postgres:15
     environment:
-      - POSTGRES_DB=football_prediction_dev
-      - POSTGRES_USER=football_user
-      - POSTGRES_PASSWORD=football_pass
+      - POSTGRES_DB=${POSTGRES_DB:-football_prediction_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-football_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change_me}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     ports:
       - "5432:5432"
@@ -102,7 +102,6 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
-    command: redis-server --appendonly yes
 
   nginx:
     image: nginx:alpine
@@ -177,10 +176,10 @@ services:
       - "9000:9000"      # MinIO API端口
       - "9001:9001"      # MinIO管理界面端口
     environment:
-      - MINIO_ROOT_USER=football_admin
-      - MINIO_ROOT_PASSWORD=football_minio_2025
-      - MINIO_DOMAIN=minio
-      - MINIO_REGION_NAME=us-east-1
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-change_me}
+      - MINIO_DOMAIN=${MINIO_DOMAIN:-minio}
+      - MINIO_REGION_NAME=${MINIO_REGION_NAME:-us-east-1}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -200,9 +199,12 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-change_me}
     entrypoint: |
       /bin/sh -c "
-      /usr/bin/mc config host add myminio http://minio:9000 football_admin football_minio_2025;
+      /usr/bin/mc config host add myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
       /usr/bin/mc mb --ignore-existing myminio/football-lake-bronze;
       /usr/bin/mc mb --ignore-existing myminio/football-lake-silver;
       /usr/bin/mc mb --ignore-existing myminio/football-lake-gold;
@@ -249,11 +251,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=football_grafana_2025
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_DOMAIN=localhost
-      - GF_SMTP_ENABLED=false
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-change_me}
+      - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP:-false}
+      - GF_SERVER_DOMAIN=${GF_SERVER_DOMAIN:-localhost}
+      - GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
+      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS:-grafana-clock-panel,grafana-simple-json-datasource}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -273,7 +275,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     environment:
-      - DATA_SOURCE_NAME=postgresql://football_user:football_pass@db:5432/football_prediction_dev?sslmode=disable
+      - DATA_SOURCE_NAME=${DATA_SOURCE_NAME:-postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB?sslmode=disable}
     ports:
       - "9187:9187"
     depends_on:
@@ -339,11 +341,11 @@ services:
       - "5001:5001"
     environment:
       - MARQUEZ_CONFIG=/usr/src/app/marquez.yml
-      - MARQUEZ_DB_HOST=marquez-db
-      - MARQUEZ_DB_PORT=5432
-      - MARQUEZ_DB_NAME=marquez
-      - MARQUEZ_DB_USER=marquez_user
-      - MARQUEZ_DB_PASSWORD=marquez_password
+      - MARQUEZ_DB_HOST=${MARQUEZ_DB_HOST:-marquez-db}
+      - MARQUEZ_DB_PORT=${MARQUEZ_DB_PORT:-5432}
+      - MARQUEZ_DB_NAME=${MARQUEZ_DB_NAME:-marquez}
+      - MARQUEZ_DB_USER=${MARQUEZ_DB_USER:-marquez_user}
+      - MARQUEZ_DB_PASSWORD=${MARQUEZ_DB_PASSWORD:-change_me}
     volumes:
       - ./monitoring/marquez/marquez.yml:/usr/src/app/marquez.yml:ro
     depends_on:
@@ -383,9 +385,9 @@ services:
   mlflow-db:
     image: postgres:15
     environment:
-      - POSTGRES_DB=mlflow
-      - POSTGRES_USER=mlflow_user
-      - POSTGRES_PASSWORD=mlflow_password_2025
+      - POSTGRES_DB=${MLFLOW_DB_NAME:-mlflow}
+      - POSTGRES_USER=${MLFLOW_DB_USER:-mlflow_user}
+      - POSTGRES_PASSWORD=${MLFLOW_DB_PASSWORD:-change_me}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     ports:
       - "5434:5432"
@@ -406,12 +408,12 @@ services:
     ports:
       - "5002:5000"  # MLflow UI端口
     environment:
-      - MLFLOW_BACKEND_STORE_URI=postgresql://mlflow_user:mlflow_password_2025@mlflow-db:5432/mlflow
-      - MLFLOW_DEFAULT_ARTIFACT_ROOT=s3://football-models/mlflow-artifacts
-      - AWS_ACCESS_KEY_ID=football_admin
-      - AWS_SECRET_ACCESS_KEY=football_minio_2025
-      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_DEFAULT_REGION=us-east-1
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-postgresql://$MLFLOW_DB_USER:$MLFLOW_DB_PASSWORD@mlflow-db:5432/$MLFLOW_DB_NAME}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://football-models/mlflow-artifacts}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-change_me}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL:-http://minio:9000}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
     volumes:
       - ./mlflow:/app/mlflow
     working_dir: /app
@@ -426,9 +428,9 @@ services:
       bash -c "
       pip install mlflow[extras]==2.8.1 psycopg2-binary boto3 &&
       mlflow server
-        --backend-store-uri postgresql://mlflow_user:mlflow_password_2025@mlflow-db:5432/mlflow
-        --default-artifact-root s3://football-models/mlflow-artifacts
-        --artifacts-destination s3://football-models/mlflow-artifacts
+        --backend-store-uri ${MLFLOW_BACKEND_STORE_URI:-postgresql://$MLFLOW_DB_USER:$MLFLOW_DB_PASSWORD@mlflow-db:5432/$MLFLOW_DB_NAME}
+        --default-artifact-root ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://football-models/mlflow-artifacts}
+        --artifacts-destination ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://football-models/mlflow-artifacts}
         --serve-artifacts
         --host 0.0.0.0
         --port 5000
@@ -446,13 +448,13 @@ services:
       context: .
       target: production
     environment:
-      - ENVIRONMENT=development
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_dev
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-football_prediction_dev}
+      - DB_USER=${DB_USER:-football_user}
+      - DB_PASSWORD=${DB_PASSWORD:-change_me}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
@@ -489,15 +491,15 @@ services:
       context: .
       target: production
     environment:
-      - ENVIRONMENT=development
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_dev
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-football_prediction_dev}
+      - DB_USER=${DB_USER:-football_user}
+      - DB_PASSWORD=${DB_PASSWORD:-change_me}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
     depends_on:
       db:
         condition: service_healthy
