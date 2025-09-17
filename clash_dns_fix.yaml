@@ -1,0 +1,64 @@
+# ==================================================
+# 🔧 Clash Verge DNS 污染修复配置
+# 解决 api.cursor.sh DNS 污染问题的完整配置
+# ==================================================
+
+# DNS 配置 - 防止 DNS 污染
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    # 保留本地域名使用真实DNS
+    - '*.lan'
+    - 'localhost.ptlogin2.qq.com'
+    - '+.srv.nintendo.net'
+    - '+.stun.playstation.net'
+    - 'xbox.*.microsoft.com'
+    - '+.xboxlive.com'
+    # 其他本地服务
+    - '*.local'
+    - '*.localdomain'
+
+  # 使用安全的上游DNS服务器
+  nameserver:
+    - 1.1.1.1
+    - 1.0.0.1
+    - 8.8.8.8
+    - 8.8.4.4
+
+  # DoH 服务器（更安全）
+  nameserver-policy:
+    'geosite:cn':
+      - 119.29.29.29
+      - 114.114.114.114
+    'geosite:geolocation-!cn':
+      - 'https://1.1.1.1/dns-query'
+      - 'https://8.8.8.8/dns-query'
+
+# 代理规则 - 确保 Cursor 相关域名强制走代理
+rules:
+  # === Cursor 相关域名 - 强制使用代理避免污染 ===
+  - DOMAIN,api.cursor.sh,🚀 节点选择
+  - DOMAIN,cursor.sh,🚀 节点选择
+  - DOMAIN-SUFFIX,cursor.sh,🚀 节点选择
+  - DOMAIN-SUFFIX,cursor.com,🚀 节点选择
+  - DOMAIN-SUFFIX,cursorapi.com,🚀 节点选择
+  - DOMAIN-SUFFIX,cursor.blob.core.windows.net,🚀 节点选择
+
+  # === AI 服务域名 ===
+  - DOMAIN-SUFFIX,openai.com,🚀 节点选择
+  - DOMAIN-SUFFIX,api.openai.com,🚀 节点选择
+  - DOMAIN-SUFFIX,anthropic.com,🚀 节点选择
+  - DOMAIN-SUFFIX,api.anthropic.com,🚀 节点选择
+
+  # === 通配符规则（保险起见）===
+  - DOMAIN-KEYWORD,cursor,🚀 节点选择
+  - DOMAIN-KEYWORD,openai,🚀 节点选择
+  - DOMAIN-KEYWORD,anthropic,🚀 节点选择
+
+# 注意：
+# 1. 请将 "🚀 节点选择" 替换为您实际的代理组名称
+# 2. 这些规则应该放在您现有规则的最顶部
+# 3. DNS 配置需要完整替换或合并到现有配置中
