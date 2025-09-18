@@ -9,6 +9,7 @@ pytest配置文件
 """
 
 import asyncio
+import importlib.util  # noqa: E402 - Must be after sys.path modification
 import os
 import sys
 from unittest.mock import AsyncMock, MagicMock, Mock
@@ -20,8 +21,27 @@ from sqlalchemy.ext.asyncio import create_async_engine
 # 避免触发src.__init__.py的导入链，直接导入需要的模块
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.database.base import Base  # noqa: E402
-from src.database.config import get_test_database_config  # noqa: E402
+
+def import_module_directly(module_path, module_name):
+    """直接导入模块，绕过包的__init__.py"""
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+# 直接导入需要的模块，避免触发src/__init__.py
+base_path = os.path.join(os.path.dirname(__file__), "..", "src", "database", "base.py")
+config_path = os.path.join(
+    os.path.dirname(__file__), "..", "src", "database", "config.py"
+)
+
+base_module = import_module_directly(base_path, "database_base")
+config_module = import_module_directly(config_path, "database_config")
+
+Base = base_module.Base
+get_test_database_config = config_module.get_test_database_config
 
 
 @pytest.fixture(scope="session")
