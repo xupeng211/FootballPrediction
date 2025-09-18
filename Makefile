@@ -108,12 +108,11 @@ coverage: ## Test: Run tests with coverage report (threshold: 60%)
 	pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
-coverage-fast: ## Test: Run fast coverage (unit tests only, 80% threshold)
+coverage-fast: ## Test: Run fast coverage (unit tests only, 60% threshold)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
 	pytest tests/unit/ \
-	  --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
-	  --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
+	  --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Fast coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
