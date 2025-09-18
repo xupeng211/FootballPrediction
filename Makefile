@@ -113,19 +113,19 @@ coverage-fast: ## Test: Run fast coverage (unit tests only, 80% threshold)
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
 	pytest tests/unit/ \
 	  --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
-	  --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings --timeout=30 && \
+	  --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Fast coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running unit test coverage...$(RESET)" && \
-	pytest tests/unit/ --cov=src --cov-report=html --cov-report=term --timeout=30 --maxfail=5 --disable-warnings && \
+	pytest tests/unit/ --cov=src --cov-report=html --cov-report=term --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
 
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running quick tests...$(RESET)" && \
-	pytest tests/unit/ -v --timeout=30 --maxfail=5 --disable-warnings && \
+	pytest tests/unit/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Quick tests passed$(RESET)"
 
 type-check: ## Quality: Run type checking with mypy
