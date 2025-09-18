@@ -24,6 +24,7 @@ class HealthCheckResponse(BaseModel):
     timestamp: str = Field(..., description="检查时间(ISO格式)")
     service: str = Field(..., description="服务名称")
     version: str = Field(..., description="服务版本")
+    uptime: float = Field(..., description="应用运行时间(秒)")
     response_time_ms: float = Field(..., description="总响应时间(毫秒)")
     checks: Dict[str, ServiceCheck] = Field(..., description="各服务检查结果")
 

@@ -1,0 +1,43 @@
+project: football_prediction
+provider: local
+
+# 注册表配置使用本地文件（生产环境可改为SQL）
+registry:
+  registry_type: file
+  path: .feast/registry.pb
+
+online_store:
+  type: redis
+  connection_string: redis://redis:6379/0  # 使用Docker Compose中的Redis服务
+  key_ttl_seconds: 86400  # 24小时过期时间
+
+offline_store:
+  type: postgres
+  # PostgreSQL 离线存储配置
+  host: db  # 使用Docker Compose中的PostgreSQL服务
+  port: 5432
+  database: football_prediction_dev
+  db_schema: public
+  user: football_user
+  password: ${DB_PASSWORD}
+  sslmode: disable
+
+# 实体注册配置
+entity_key_serialization_version: 2
+
+# 特征服务器配置（移除不支持的参数）
+feature_server:
+  enabled: true
+
+# 在线特征推送配置
+push:
+  mode: online_and_offline
+
+# 用于测试的批量摄入配置
+batch_engine:
+  type: local
+
+# 启用实验性功能
+flags:
+  alpha_features: true
+  beta_features: true

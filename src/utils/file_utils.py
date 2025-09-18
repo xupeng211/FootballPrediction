@@ -8,7 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 
 class FileUtils:
@@ -54,4 +54,55 @@ class FileUtils:
     @staticmethod
     def get_file_size(file_path: Union[str, Path]) -> int:
         """获取文件大小（字节）"""
-        return os.path.getsize(file_path)
+        try:
+            if not os.path.exists(file_path):
+                return 0
+            return os.path.getsize(file_path)
+        except (FileNotFoundError, OSError):
+            return 0
+
+    @staticmethod
+    def ensure_directory(path: Union[str, Path]) -> Path:
+        """确保目录存在（别名方法）"""
+        return FileUtils.ensure_dir(path)
+
+    @staticmethod
+    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+        """读取JSON文件（别名方法）"""
+        try:
+            return FileUtils.read_json(file_path)
+        except FileNotFoundError:
+            return None
+
+    @staticmethod
+    def write_json_file(
+        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
+    ) -> bool:
+        """写入JSON文件（别名方法）"""
+        try:
+            FileUtils.write_json(data, file_path, ensure_dir)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def cleanup_old_files(directory: Union[str, Path], days: int = 30) -> int:
+        """清理旧文件"""
+        import time
+
+        directory = Path(directory)
+        if not directory.exists():
+            return 0
+
+        cutoff_time = time.time() - (days * 24 * 60 * 60)
+        removed_count = 0
+
+        try:
+            for file_path in directory.iterdir():
+                if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
+                    file_path.unlink()
+                    removed_count += 1
+        except Exception:
+            pass
+
+        return removed_count

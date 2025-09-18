@@ -14,8 +14,6 @@ from sqlalchemy.orm import DeclarativeBase
 class Base(DeclarativeBase):
     """SQLAlchemy基础模型类"""
 
-    pass
-
 
 class TimestampMixin:
     """时间戳混入类，为模型添加创建时间和更新时间字段"""
