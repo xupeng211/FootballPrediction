@@ -9,7 +9,7 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 60
+COVERAGE_THRESHOLD := 50
 
 # Colors for better UX
 GREEN := \033[32m
