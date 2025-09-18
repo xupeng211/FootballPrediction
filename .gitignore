@@ -115,7 +115,8 @@ docs/build/
 *.pkl
 *.pickle
 data/
-models/
+ml_models/
+trained_models/
 checkpoints/
 
 # 日志和报告
