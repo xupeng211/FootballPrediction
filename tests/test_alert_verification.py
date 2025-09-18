@@ -22,7 +22,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 try:
     from scripts.alert_verification_mock import MockAlertVerificationTester
 except ImportError:
-    MockAlertVerificationTester = None
+    MockAlertVerificationTester = None  # type: ignore[misc]
 
 
 class TestMockAlertVerificationTester:

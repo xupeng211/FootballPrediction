@@ -15,7 +15,7 @@ done
 echo "MinIO 服务已启动，开始创建桶..."
 
 # 配置 MinIO 客户端
-mc config host add local http://localhost:9000 football_admin football_minio_2025
+mc config host add local http://localhost:9000 "${MINIO_ROOT_USER:-"$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"}"
 
 # 创建数据湖桶
 echo "创建数据湖存储桶..."
@@ -24,35 +24,15 @@ mc mb --ignore-existing local/football-lake-silver
 mc mb --ignore-existing local/football-lake-gold
 mc mb --ignore-existing local/football-lake-archive
 
-# 设置桶策略（开发环境为公共读取，生产环境应更严格）
-echo "设置桶访问策略..."
-cat > /tmp/public-policy.json << 'EOF'
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": ["*"]
-      },
-      "Action": ["s3:GetBucketLocation", "s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::football-lake-*"]
-    },
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": ["*"]
-      },
-      "Action": ["s3:GetObject", "s3:PutObject"],
-      "Resource": ["arn:aws:s3:::football-lake-*/*"]
-    }
-  ]
-}
-EOF
-
-mc policy set-json /tmp/public-policy.json local/football-lake-bronze
-mc policy set-json /tmp/public-policy.json local/football-lake-silver
-mc policy set-json /tmp/public-policy.json local/football-lake-gold
+# 设置桶访问策略（安全的私有策略）
+echo "设置桶访问策略（私有访问）..."
+# 移除公开访问策略，使用默认的私有访问策略
+# 只有认证用户才能访问存储桶
+mc policy set none local/football-lake-bronze
+mc policy set none local/football-lake-silver
+mc policy set none local/football-lake-gold
+mc policy set none local/football-lake-archive
+mc policy set none local/football-models
 
 # 创建生命周期策略（自动归档旧数据）
 echo "设置数据生命周期策略..."
@@ -78,5 +58,5 @@ mc ilm import local/football-lake-silver < /tmp/lifecycle-policy.json
 
 echo "MinIO 初始化完成！"
 echo "管理界面: http://localhost:9001"
-echo "用户名: football_admin"
-echo "密码: football_minio_2025"
+echo "用户名: ${MINIO_ROOT_USER:-${MINIO_ROOT_USER:-ERROR_NO_USER}}"
+echo "密码: ${MINIO_ROOT_PASSWORD:-${MINIO_ROOT_PASSWORD:-ERROR_NO_PASSWORD}}"

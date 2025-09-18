@@ -9,6 +9,15 @@ __version__ = "0.1.0"
 __author__ = "FootballPrediction Team"
 __email__ = "football@prediction.com"
 
+# 🔧 设置警告过滤器 - 确保测试日志清洁，不再充满第三方库警告
+try:
+    from .utils.warning_filters import setup_warning_filters
+
+    setup_warning_filters()
+except ImportError:
+    # 如果警告过滤器模块不可用，不影响正常功能
+    pass
+
 # 导入核心模块
 from . import core, models, services, utils
 

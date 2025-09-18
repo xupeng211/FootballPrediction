@@ -104,7 +104,8 @@ def badly_formatted_function(   x,y   ):
 """,
             "demo_security_error.py": """
 # 安全问题演示
-password = "hardcoded_password_123"
+import os
+password = os.getenv("DEMO_HARDCODED_PASSWORD", "hardcoded_password_123")
 
 def vulnerable_function():
     import subprocess

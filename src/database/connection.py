@@ -1,4 +1,5 @@
 """
+import asyncio
 数据库连接管理模块
 
 提供同步和异步的PostgreSQL数据库连接、会话管理和生命周期控制。
@@ -8,9 +9,9 @@
 import logging
 from contextlib import asynccontextmanager, contextmanager
 from enum import Enum
-from typing import AsyncGenerator, Dict, Generator, Optional
+from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, select, text, update
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     async_sessionmaker, create_async_engine)
 from sqlalchemy.orm import Session, sessionmaker
@@ -66,27 +67,43 @@ class DatabaseManager:
         logger.info(f"初始化数据库连接到 {config.host}:{config.port}/{config.database}")
 
         # 创建同步引擎
-        self._sync_engine = create_engine(
-            config.sync_url,
-            poolclass=QueuePool,
-            pool_size=config.pool_size,
-            max_overflow=config.max_overflow,
-            pool_timeout=config.pool_timeout,
-            pool_recycle=config.pool_recycle,
-            echo=config.echo,
-            echo_pool=config.echo_pool,
-        )
+        # 对于SQLite，不使用连接池
+        if config.database.endswith(".db") or config.database == ":memory:":
+            self._sync_engine = create_engine(
+                config.sync_url,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
+        else:
+            self._sync_engine = create_engine(
+                config.sync_url,
+                poolclass=QueuePool,
+                pool_size=config.pool_size,
+                max_overflow=config.max_overflow,
+                pool_timeout=config.pool_timeout,
+                pool_recycle=config.pool_recycle,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
 
         # 创建异步引擎
-        self._async_engine = create_async_engine(
-            config.async_url,
-            pool_size=config.async_pool_size,
-            max_overflow=config.async_max_overflow,
-            pool_timeout=config.pool_timeout,
-            pool_recycle=config.pool_recycle,
-            echo=config.echo,
-            echo_pool=config.echo_pool,
-        )
+        # 对于SQLite，不使用连接池参数
+        if config.database.endswith(".db") or config.database == ":memory:":
+            self._async_engine = create_async_engine(
+                config.async_url,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
+        else:
+            self._async_engine = create_async_engine(
+                config.async_url,
+                pool_size=config.async_pool_size,
+                max_overflow=config.async_max_overflow,
+                pool_timeout=config.pool_timeout,
+                pool_recycle=config.pool_recycle,
+                echo=config.echo,
+                echo_pool=config.echo_pool,
+            )
 
         # 创建会话工厂
         self._session_factory = sessionmaker(
@@ -182,6 +199,49 @@ class DatabaseManager:
             raise
         finally:
             await session.close()
+
+    async def get_match(self, match_id: int) -> Optional[Dict[str, Any]]:
+        """
+        获取比赛信息
+        """
+        from src.database.models.match import Match
+
+        async with self.get_async_session() as session:
+            result = await session.execute(select(Match).where(Match.id == match_id))
+            match = result.scalar_one_or_none()
+            if match:
+                return {c.name: getattr(match, c.name) for c in match.__table__.columns}
+            return None
+
+    async def update_match(self, match_id: int, data: Dict[str, Any]) -> bool:
+        """
+        更新比赛信息
+        """
+        from src.database.models.match import Match
+
+        async with self.get_async_session() as session:
+            stmt = update(Match).where(Match.id == match_id).values(**data)
+            result = await session.execute(stmt)
+            await session.commit()
+            return result.rowcount > 0
+
+    async def get_prediction(self, match_id: int) -> Optional[Dict[str, Any]]:
+        """
+        获取预测信息
+        """
+        from src.database.models.predictions import Predictions
+
+        async with self.get_async_session() as session:
+            result = await session.execute(
+                select(Predictions).where(Predictions.match_id == match_id)
+            )
+            prediction = result.scalar_one_or_none()
+            if prediction:
+                return {
+                    c.name: getattr(prediction, c.name)
+                    for c in prediction.__table__.columns
+                }
+            return None
 
     async def close(self) -> None:
         """关闭数据库连接"""
@@ -301,8 +361,7 @@ class MultiUserDatabaseManager:
             self._configs[role] = role_config
 
             # 为每个角色创建独立的数据库管理器
-            manager = DatabaseManager.__new__(DatabaseManager)
-            manager.__init__()
+            manager = DatabaseManager()
             manager.initialize(role_config)
 
             self._managers[role] = manager
@@ -481,6 +540,45 @@ def initialize_multi_user_database(config: Optional[DatabaseConfig] = None) -> N
     _multi_db_manager.initialize(config)
 
 
+def initialize_test_database(config: Optional[DatabaseConfig] = None) -> None:
+    """
+    初始化测试数据库连接（仅创建同步引擎）
+
+    专门为测试环境设计，避免异步引擎相关问题。
+    使用in-memory SQLite数据库，自动创建所有表结构。
+
+    Args:
+        config: 测试数据库配置
+    """
+    from .base import Base
+
+    if config is None:
+        config = get_database_config("test")
+
+    # 创建一个简化的数据库管理器，只用于测试
+    _db_manager._config = config
+
+    # 创建同步引擎（测试环境）
+    _db_manager._sync_engine = create_engine(
+        config.sync_url,
+        echo=config.echo,
+        echo_pool=config.echo_pool,
+    )
+
+    # 创建会话工厂
+    _db_manager._session_factory = sessionmaker(
+        bind=_db_manager._sync_engine,
+        autocommit=False,
+        autoflush=False,
+        expire_on_commit=False,
+    )
+
+    # 创建所有表结构
+    Base.metadata.create_all(bind=_db_manager._sync_engine)
+
+    logger.info(f"测试数据库初始化完成: {config.sync_url}")
+
+
 def get_db_session() -> Generator[Session, None, None]:
     """
     FastAPI依赖注入使用的同步数据库会话获取器
@@ -546,19 +644,33 @@ async def get_async_admin_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 # 便捷的会话获取函数，用于直接使用
+@contextmanager
 def get_session(
     role: DatabaseRole = DatabaseRole.READER,
 ) -> Generator[Session, None, None]:
     """
     获取指定角色的数据库会话
 
+    在测试环境中，如果多用户管理器未初始化，则回退到基础数据库管理器。
+
     Args:
         role: 数据库用户角色，默认为只读用户
     """
-    with _multi_db_manager.get_session(role) as session:
-        yield session
+    # 检查多用户管理器是否已初始化
+    try:
+        with _multi_db_manager.get_session(role) as session:
+            yield session
+    except RuntimeError as e:
+        if "未初始化" in str(e):
+            # 多用户管理器未初始化，回退到基础数据库管理器（测试环境）
+            logger.warning(f"多用户数据库管理器未初始化，回退到基础管理器: {e}")
+            with _db_manager.get_session() as session:
+                yield session
+        else:
+            raise
 
 
+@asynccontextmanager
 async def get_async_session(
     role: DatabaseRole = DatabaseRole.READER,
 ) -> AsyncGenerator[AsyncSession, None]:

@@ -22,12 +22,12 @@ try:
 except ImportError:
     HAS_FEAST = False
 
-    # 创建模拟类
-    class Entity:
+    # 创建模拟类（使用Mock前缀避免命名冲突）
+    class MockEntity:
         def __init__(self, *args, **kwargs):
             pass
 
-    class FeatureStore:
+    class MockFeatureStore:
         def __init__(self, *args, **kwargs):
             pass
 
@@ -37,27 +37,37 @@ except ImportError:
         def get_historical_features(self, *args, **kwargs):
             return {}
 
-    class FeatureView:
+    class MockFeatureView:
         def __init__(self, *args, **kwargs):
             pass
 
-    class Field:
+    class MockField:
         def __init__(self, *args, **kwargs):
             pass
 
-    class Float64:
+    class MockFloat64:
         pass
 
-    class Int64:
+    class MockInt64:
         pass
 
-    class PostgreSQLSource:
+    class MockPostgreSQLSource:
         def __init__(self, *args, **kwargs):
             pass
+
+    # 将模拟类赋值给原名称，保持向后兼容
+    Entity = MockEntity
+    FeatureStore = MockFeatureStore
+    FeatureView = MockFeatureView
+    Field = MockField
+    Float64 = MockFloat64
+    Int64 = MockInt64
+    PostgreSQLSource = MockPostgreSQLSource
 
 
 import pandas as pd
 
+from src.cache import CacheKeyManager, RedisManager
 from src.database.connection import DatabaseManager
 
 from .entities import MatchEntity
@@ -75,17 +85,18 @@ class FootballFeatureStore:
     - 在线/离线特征同步
     """
 
-    def __init__(self, feature_store_path: str = "feature_store"):
+    def __init__(self, feature_store_path: str = "."):
         """
         初始化特征存储
 
         Args:
-            feature_store_path: Feast 配置文件路径
+            feature_store_path: Feast 配置文件路径（默认为当前目录，包含feature_store.yaml）
         """
         self.feature_store_path = feature_store_path
         self.store: Optional[FeatureStore] = None
         self.calculator = FeatureCalculator()
         self.db_manager = DatabaseManager()
+        self.cache_manager = RedisManager()
 
         # 初始化 Feast 存储
         self._initialize_feast_store()
@@ -523,6 +534,15 @@ class FootballFeatureStore:
             Optional[Dict[str, Any]]: 特征字典
         """
         try:
+            # 生成缓存Key
+            cache_key = CacheKeyManager.match_features_key(match_id)
+
+            # 尝试从缓存获取特征数据
+            cached_features = await self.cache_manager.aget(cache_key)
+            if cached_features:
+                print(f"从缓存获取比赛 {match_id} 的预测特征")
+                return cached_features
+
             # 获取球队近期表现特征
             team_features = await self.get_online_features(
                 feature_refs=[
@@ -570,6 +590,11 @@ class FootballFeatureStore:
                     else {}
                 ),
             }
+
+            # 将特征数据存入缓存
+            await self.cache_manager.aset(
+                cache_key, features, cache_type="match_features"
+            )
 
             return features
 

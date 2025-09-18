@@ -126,7 +126,7 @@ class GitHubCIMonitor:
         }
 
         try:
-            response = requests.get(url, headers=self.headers, params=params)
+            response = requests.get(url, headers=self.headers, params=params)  # type: ignore[arg-type]
             response.raise_for_status()
 
             data = response.json()

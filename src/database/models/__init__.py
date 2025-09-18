@@ -4,6 +4,8 @@
 包含所有SQLAlchemy数据模型定义。
 """
 
+from ..base import Base
+from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 from .data_collection_log import (CollectionStatus, CollectionType,
                                   DataCollectionLog)
 from .features import Features, TeamType
@@ -19,6 +21,8 @@ Prediction = Predictions
 
 # 导出所有模型和枚举类
 __all__ = [
+    # 基础类
+    "Base",
     # 核心业务模型
     "League",
     "Team",
@@ -32,6 +36,9 @@ __all__ = [
     "RawMatchData",
     "RawOddsData",
     "RawScoresData",
+    # 审计日志模型
+    "AuditLog",
+    "AuditLogSummary",
     # 枚举类
     "MatchStatus",
     "MarketType",
@@ -39,4 +46,6 @@ __all__ = [
     "PredictedResult",
     "CollectionStatus",
     "CollectionType",
+    "AuditAction",
+    "AuditSeverity",
 ]

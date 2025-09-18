@@ -9,7 +9,7 @@ BEGIN
         SELECT FROM pg_catalog.pg_roles
         WHERE  rolname = 'football_user'
     ) THEN
-        CREATE USER football_user WITH PASSWORD 'football_pass';
+        CREATE USER football_user WITH PASSWORD current_setting('app.db_password', false);
     END IF;
 END
 $$;

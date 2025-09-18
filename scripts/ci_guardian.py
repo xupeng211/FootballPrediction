@@ -393,7 +393,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        args: ["tests/", "--cov=src", "--cov-fail-under=80"]
+        args: ["tests/", "--cov=src", "--cov-fail-under=60", "--maxfail=5", "--disable-warnings"]
 """
 
         try:

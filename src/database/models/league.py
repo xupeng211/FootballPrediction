@@ -28,6 +28,9 @@ class League(BaseModel):
 
     level = Column(Integer, nullable=True, comment="联赛级别（1=顶级联赛，2=二级联赛等）")
 
+    # API相关字段
+    api_league_id = Column(Integer, unique=True, nullable=True, comment="API联赛ID")
+
     # 赛季信息
     season_start_month = Column(Integer, nullable=True, comment="赛季开始月份（1-12）")
 

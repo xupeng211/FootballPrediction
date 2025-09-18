@@ -1,0 +1,300 @@
+# Docker Compose Override Configuration
+# 本文件用于覆盖和增强 docker-compose.yml 中的服务配置
+# 特别针对PostgreSQL数据库的企业级配置和多用户权限管理
+
+version: '3.8'
+
+services:
+  # 主应用服务MLflow环境变量补充
+  app:
+    environment:
+      # MLflow追踪配置
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      # MLflow实验配置
+      - MLFLOW_EXPERIMENT_NAME=${MLFLOW_EXPERIMENT_NAME:-football_prediction}
+      # MLflow注册模型配置
+      - MLFLOW_REGISTRY_URI=${MLFLOW_REGISTRY_URI:-http://mlflow:5000}
+    depends_on:
+      mlflow:
+        condition: service_healthy
+  # 增强的PostgreSQL数据库服务
+  db:
+    image: postgres:15-alpine
+    container_name: football_prediction_postgres
+    environment:
+      # 主数据库配置
+      - POSTGRES_DB=${POSTGRES_DB:-football_prediction_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_ROOT_PASSWORD}
+
+      # 应用数据库配置
+      - APP_DB_NAME=${APP_DB_NAME:-football_prediction_dev}
+      - APP_DB_USER=${APP_DB_USER:-football_user}
+      - APP_DB_PASSWORD=${DB_PASSWORD}
+
+      # 多用户配置（读/写分离）
+      - READER_USER=${READER_USER:-football_reader}
+      - READER_PASSWORD=${READER_PASSWORD}
+      - WRITER_USER=${WRITER_USER:-football_writer}
+      - WRITER_PASSWORD=${WRITER_PASSWORD}
+      - ADMIN_USER=${ADMIN_USER:-football_admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+      # PostgreSQL性能调优配置
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+    # 增强的卷映射配置
+    volumes:
+      # 持久化数据存储
+      - postgres_data:/var/lib/postgresql/data
+
+      # 数据库初始化脚本
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+
+      # PostgreSQL配置文件
+      - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+
+      # 备份目录
+      - ./data/db-backups:/backups
+
+      # 日志目录
+      - ./logs/postgresql:/var/log/postgresql
+
+    # 增强的健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_prediction_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    networks:
+      - football-network
+
+    restart: unless-stopped
+
+    # PostgreSQL启动命令，应用配置文件
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+      -c log_destination=stderr
+      -c log_statement=all
+      -c log_min_duration_statement=1000
+      -c shared_preload_libraries=pg_stat_statements
+
+  # PostgreSQL管理工具 - pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: football_prediction_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@football-prediction.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+      - PGADMIN_LISTEN_PORT=${PGADMIN_LISTEN_PORT:-80}
+    ports:
+      - "${PGADMIN_PORT:-8080}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # 数据库备份服务
+  db-backup:
+    image: postgres:15-alpine
+    container_name: football_prediction_backup
+    environment:
+      - PGHOST=db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=${POSTGRES_ROOT_PASSWORD:-postgres_root_pass}
+      - PGDATABASE=football_prediction_dev
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=3
+    volumes:
+      - ./data/db-backups:/backups
+      - ./scripts/backup:/scripts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football-network
+    # 每天凌晨2点执行备份
+    entrypoint: >
+      sh -c "
+        echo '0 2 * * * /scripts/backup-database.sh' | crontab -
+        && crond -f
+      "
+    restart: unless-stopped
+
+  # Redis配置增强（缓存和会话存储）
+  redis:
+    image: redis:7-alpine
+    container_name: football_prediction_redis
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./logs/redis:/var/log/redis
+    # 使用配置文件启动
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # MinIO对象存储服务（用于MLflow模型存储）
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-02-17T01-15-57Z
+    container_name: football_prediction_minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_DEFAULT_BUCKETS=${MINIO_DEFAULT_BUCKETS:-mlflow-artifacts}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # MLflow跟踪服务器
+  mlflow:
+    image: python:3.11-slim
+    container_name: football_prediction_mlflow
+    environment:
+      # MLflow数据库配置（使用PostgreSQL）
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-postgresql://$APP_DB_USER:$APP_DB_PASSWORD@db:5432/$APP_DB_NAME}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
+      # MinIO S3配置
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL:-http://minio:9000}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      # MLflow服务配置
+      - MLFLOW_HOST=${MLFLOW_HOST:-0.0.0.0}
+      - MLFLOW_PORT=${MLFLOW_PORT:-5000}
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    volumes:
+      - ./logs/mlflow:/var/log/mlflow
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - football-network
+    # 安装MLflow并启动服务
+    command: >
+      sh -c "
+        pip install mlflow[extras]==2.9.2 psycopg2-binary boto3 &&
+        mlflow server
+        --backend-store-uri ${MLFLOW_BACKEND_STORE_URI:-postgresql://$APP_DB_USER:$APP_DB_PASSWORD@db:5432/$APP_DB_NAME}
+        --default-artifact-root ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
+        --artifacts-destination ${MLFLOW_DEFAULT_ARTIFACT_ROOT:-s3://mlflow-artifacts}
+        --serve-artifacts
+        --host 0.0.0.0
+        --port 5000
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# 持久化存储卷
+volumes:
+  # PostgreSQL数据卷
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+
+  # Redis数据卷
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
+
+  # pgAdmin数据卷
+  pgadmin_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/pgladmin
+
+  # MinIO数据卷
+  minio_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/minio
+
+  # 其他数据卷（继承自主配置）
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+  prometheus_data:
+  grafana_data:
+
+# 网络配置
+networks:
+  football-network:
+    name: football_prediction_network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

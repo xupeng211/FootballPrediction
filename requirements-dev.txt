@@ -1,4 +1,10 @@
 # 开发工具
+# Added version constraints to resolve CI conflicts
+numpy<2.0
+tenacity<9.0
+packaging<25.0
+ruamel.yaml<0.18
+
 black>=24.3.0
 flake8==7.3.0
 mypy==1.8.0
@@ -17,6 +23,7 @@ bandit>=1.7.7
 pbr>=6.0.0  # bandit dependency
 radon==6.0.1
 safety>=3.5.0
+marshmallow<4.0.0  # Constrain version for great-expectations compatibility
 pip-tools>=7.0.0
 ruff>=0.1.0
 

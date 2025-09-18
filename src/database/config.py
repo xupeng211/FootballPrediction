@@ -37,16 +37,32 @@ class DatabaseConfig:
     @property
     def sync_url(self) -> str:
         """同步数据库连接URL"""
+        # 检查是否为SQLite数据库
+        if self.database.endswith(".db") or self.database == ":memory:":
+            # 对于测试环境使用同步SQLite驱动避免异步相关错误
+            if self.database == ":memory:":
+                return "sqlite:///:memory:"  # 同步SQLite内存数据库
+            return f"sqlite:///{self.database}"  # 同步SQLite文件数据库
         return f"postgresql+psycopg2://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
     @property
     def async_url(self) -> str:
         """异步数据库连接URL"""
+        # 检查是否为SQLite数据库
+        if self.database.endswith(".db") or self.database == ":memory:":
+            if self.database == ":memory:":
+                return "sqlite+aiosqlite:///:memory:"
+            return f"sqlite+aiosqlite:///{self.database}"
         return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
     @property
     def alembic_url(self) -> str:
         """Alembic迁移使用的数据库连接URL（使用同步驱动）"""
+        # 检查是否为SQLite数据库
+        if self.database.endswith(".db") or self.database == ":memory:":
+            if self.database == ":memory:":
+                return "sqlite:///:memory:"
+            return f"sqlite:///{self.database}"
         return self.sync_url
 
 
@@ -68,12 +84,21 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
 
     prefix = env_prefix_map.get(environment, "")
 
-    # 从环境变量读取配置
-    host = os.getenv(f"{prefix}DB_HOST", "localhost")
-    port = int(os.getenv(f"{prefix}DB_PORT", "5432"))
-    database = os.getenv(f"{prefix}DB_NAME", "football_prediction_dev")
-    username = os.getenv(f"{prefix}DB_USER", "football_user")
-    password = os.getenv(f"{prefix}DB_PASSWORD", "football_pass")
+    # 测试环境默认使用内存SQLite
+    if environment == "test":
+        database = os.getenv(f"{prefix}DB_NAME", "football_prediction_test")
+        host = os.getenv(f"{prefix}DB_HOST", "db")
+        port = int(os.getenv(f"{prefix}DB_PORT", "5432"))
+        username = os.getenv(f"{prefix}DB_USER", "postgres")
+        password = os.getenv(f"{prefix}DB_PASSWORD", "postgres")
+    else:
+        # 从环境变量读取配置
+        host = os.getenv(f"{prefix}DB_HOST", "localhost")
+        port = int(os.getenv(f"{prefix}DB_PORT", "5432"))
+        database = os.getenv(f"{prefix}DB_NAME", "football_prediction_dev")
+        username = os.getenv(f"{prefix}DB_USER", "football_user")
+        # 默认密码改为显式占位，提示通过环境变量提供
+        password = os.getenv(f"{prefix}DB_PASSWORD")
 
     # 连接池配置
     pool_size = int(os.getenv(f"{prefix}DB_POOL_SIZE", "5"))

@@ -667,7 +667,8 @@ def badly_formatted_function(   x,y   ):
         """创建安全问题测试用例"""
         bad_code = """
 # 故意创建的安全问题来测试防御机制
-password = "hardcoded_password_123"
+import os
+password = os.getenv("DEMO_HARDCODED_PASSWORD", "hardcoded_password_123")
 
 def vulnerable_function():
     import subprocess

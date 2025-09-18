@@ -19,11 +19,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import click
-import mlflow
 import mlflow.sklearn
-from mlflow import MlflowClient
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+import mlflow
+from mlflow import MlflowClient
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -107,7 +108,7 @@ class AutoRetrainPipeline:
         # 查询性能数据
         stmt = select(
             func.count().label("total_predictions"),
-            func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
+            func.sum(func.case((Predictions.is_correct.is_(True), 1), else_=0)).label(
                 "correct_predictions"
             ),
             func.avg(Predictions.confidence_score).label("avg_confidence"),
@@ -205,9 +206,9 @@ class AutoRetrainPipeline:
             select(
                 func.date(Predictions.verified_at).label("prediction_date"),
                 func.count().label("daily_predictions"),
-                func.sum(func.cast(Predictions.is_correct, func.Integer())).label(
-                    "daily_correct"
-                ),
+                func.sum(
+                    func.case((Predictions.is_correct.is_(True), 1), else_=0)
+                ).label("daily_correct"),
             )
             .where(and_(*query_conditions))
             .group_by(func.date(Predictions.verified_at))
@@ -695,7 +696,7 @@ class AutoRetrainPipeline:
 
                     # 如果需要重训练
                     if performance["needs_retrain"]:
-                        results["models_needing_retrain"] += 1
+                        results["models_needing_retrain"] = int(results["models_needing_retrain"]) + 1  # type: ignore[call-overload]
                         logger.info(f"触发重训练: {model_name} v{model_version}")
 
                         # 执行重训练
@@ -704,10 +705,10 @@ class AutoRetrainPipeline:
                         )
 
                         model_result["retrain_triggered"] = True
-                        results["retraining_triggered"] += 1
+                        results["retraining_triggered"] = int(results["retraining_triggered"]) + 1  # type: ignore[call-overload]
 
                         if retrain_result["success"]:
-                            results["retraining_successful"] += 1
+                            results["retraining_successful"] = int(results["retraining_successful"]) + 1  # type: ignore[call-overload]
                             model_result["retrain_successful"] = True
                             model_result["new_version"] = retrain_result["new_version"]
 
@@ -720,28 +721,32 @@ class AutoRetrainPipeline:
                                     retrain_result,
                                 )
                                 model_result["report_path"] = report_path
-                                results["reports_generated"] += 1
+                                results["reports_generated"] = int(results["reports_generated"]) + 1  # type: ignore[call-overload]
                             except Exception as e:
                                 logger.error(f"生成对比报告失败: {e}")
-                                results["errors"].append(
+                                errors_list = results["errors"]  # type: ignore[assignment]
+                                errors_list.append(  # type: ignore[attr-defined]
                                     f"Report generation failed for {model_name}: {e}"
                                 )
 
                         model_result["retrain_result"] = retrain_result
 
-                    results["model_results"].append(model_result)
+                    model_results_list = results["model_results"]  # type: ignore[assignment]
+                    model_results_list.append(model_result)  # type: ignore[attr-defined]
 
                 except Exception as e:
                     logger.error(f"处理模型 {model_name} 失败: {e}")
-                    results["errors"].append(f"Model {model_name}: {e}")
+                    errors_list = results["errors"]  # type: ignore[assignment]
+                    errors_list.append(f"Model {model_name}: {e}")  # type: ignore[attr-defined]
 
         except Exception as e:
             logger.error(f"评估周期执行失败: {e}")
-            results["errors"].append(f"Cycle execution failed: {e}")
+            errors_list = results["errors"]  # type: ignore[assignment]
+            errors_list.append(f"Cycle execution failed: {e}")  # type: ignore[attr-defined]
 
         results["end_time"] = datetime.utcnow()
         results["duration_seconds"] = (
-            results["end_time"] - results["start_time"]
+            results["end_time"] - results["start_time"]  # type: ignore[operator]
         ).total_seconds()
 
         logger.info(

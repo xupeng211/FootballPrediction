@@ -114,8 +114,10 @@ docs/build/
 *.model
 *.pkl
 *.pickle
-data/
-models/
+raw_data/
+datasets/
+ml_models/
+trained_models/
 checkpoints/
 
 # 日志和报告
@@ -130,3 +132,4 @@ backup_before_fix/
 *.backup
 # 日志和缓存
 logs/
+=*

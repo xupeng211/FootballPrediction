@@ -1,5 +1,6 @@
 """add_raw_scores_data_and_upgrade_jsonb
 
+
 Revision ID: 002_add_raw_scores_data_and_upgrade_jsonb
 Revises: f48d412852cc
 Create Date: 2025-09-10 18:20:30.000000
@@ -218,9 +219,9 @@ def downgrade() -> None:
     try:
         op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")
         op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")
-    except Exception:
-        # 忽略索引不存在的错误
-        pass
+    except Exception as e:
+        # 忽略索引不存在的错误，但记录日志
+        print(f"Warning: Could not drop indexes during downgrade: {e}")
 
     # 注意：将JSONB降级回JSON需要谨慎处理，这里不自动执行
     # 如果需要，可以手动执行：
