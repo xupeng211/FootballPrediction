@@ -33,7 +33,7 @@ CREATE EXTENSION IF NOT EXISTS "btree_gin";
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_user') THEN
-        EXECUTE format('CREATE USER football_user WITH PASSWORD %L', coalesce(current_setting('app.db_password', true), 'change_me'));
+        EXECUTE format('CREATE USER football_user WITH PASSWORD %L', current_setting('app.db_password', false));
     END IF;
 END $$;
 COMMENT ON ROLE football_user IS '足球预测应用主用户';
@@ -42,7 +42,7 @@ COMMENT ON ROLE football_user IS '足球预测应用主用户';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_reader') THEN
-        EXECUTE format('CREATE USER football_reader WITH PASSWORD %L', coalesce(current_setting('app.reader_password', true), 'change_me'));
+        EXECUTE format('CREATE USER football_reader WITH PASSWORD %L', current_setting('app.reader_password', false));
     END IF;
 END $$;
 COMMENT ON ROLE football_reader IS '只读用户，用于数据分析和前端查询';
@@ -51,7 +51,7 @@ COMMENT ON ROLE football_reader IS '只读用户，用于数据分析和前端�
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_writer') THEN
-        EXECUTE format('CREATE USER football_writer WITH PASSWORD %L', coalesce(current_setting('app.writer_password', true), 'change_me'));
+        EXECUTE format('CREATE USER football_writer WITH PASSWORD %L', current_setting('app.writer_password', false));
     END IF;
 END $$;
 COMMENT ON ROLE football_writer IS '写入用户，专用于数据采集任务';
@@ -60,7 +60,7 @@ COMMENT ON ROLE football_writer IS '写入用户，专用于数据采集任务';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'football_admin') THEN
-        EXECUTE format('CREATE USER football_admin WITH PASSWORD %L', coalesce(current_setting('app.admin_password', true), 'change_me'));
+        EXECUTE format('CREATE USER football_admin WITH PASSWORD %L', current_setting('app.admin_password', false));
     END IF;
 END $$;
 COMMENT ON ROLE football_admin IS '管理员用户，用于运维和数据库管理';
