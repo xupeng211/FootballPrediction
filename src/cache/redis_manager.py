@@ -152,7 +152,12 @@ class RedisManager:
             retry_on_timeout: 超时时是否重试
             health_check_interval: 健康检查间隔(秒)
         """
-        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        # 在测试环境中，优先使用 'redis' 作为主机名
+        is_test_env = os.getenv("ENVIRONMENT") == "test"
+        default_redis_host = "redis" if is_test_env else "localhost"
+        default_redis_url = f"redis://{default_redis_host}:6379/0"
+
+        self.redis_url = redis_url or os.getenv("REDIS_URL", default_redis_url)
         self.max_connections = max_connections
         self.socket_timeout = socket_timeout
         self.socket_connect_timeout = socket_connect_timeout

@@ -106,9 +106,14 @@ class TestRedisManagerInitialization:
 
         with patch("src.cache.redis_manager.logger") as mock_logger:
             _ = RedisManager()  # Manager for testing
-            mock_logger.info.assert_called_with(
-                "Redis管理器初始化完成，URL: redis://localhost:6379/0"
-            )
+            # 检查实际的Redis URL，而不是硬编码localhost
+            expected_urls = [
+                "Redis管理器初始化完成，URL: redis://localhost:6379/0",
+                "Redis管理器初始化完成，URL: redis://redis:6379/0",
+            ]
+            # 验证调用了其中一个预期的URL
+            calls = [call.args[0] for call in mock_logger.info.call_args_list]
+            assert any(url in calls for url in expected_urls)
             mock_logger.info.assert_any_call("同步Redis连接池初始化成功")
 
     @patch("redis.ConnectionPool.from_url")

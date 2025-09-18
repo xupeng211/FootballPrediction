@@ -86,11 +86,11 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
 
     # 测试环境默认使用内存SQLite
     if environment == "test":
-        database = os.getenv(f"{prefix}DB_NAME", ":memory:")
-        host = "localhost"
-        port = 0
-        username = "test"
-        password = "test"
+        database = os.getenv(f"{prefix}DB_NAME", "football_prediction_test")
+        host = os.getenv(f"{prefix}DB_HOST", "db")
+        port = int(os.getenv(f"{prefix}DB_PORT", "5432"))
+        username = os.getenv(f"{prefix}DB_USER", "postgres")
+        password = os.getenv(f"{prefix}DB_PASSWORD", "postgres")
     else:
         # 从环境变量读取配置
         host = os.getenv(f"{prefix}DB_HOST", "localhost")

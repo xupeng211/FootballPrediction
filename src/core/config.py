@@ -85,18 +85,18 @@ class Settings(SettingsClass):
     )
     test_database_url: str = (
         Field(
-            default="postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test",
+            default="postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test",
             description="测试数据库连接URL",
         )
         if HAS_PYDANTIC
-        else "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test"
+        else "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
     )
 
     # Redis配置
     redis_url: str = (
-        Field(default="redis://localhost:6379/0", description="Redis连接URL")
+        Field(default="redis://redis:6379/0", description="Redis连接URL")
         if HAS_PYDANTIC
-        else "redis://localhost:6379/0"
+        else "redis://redis:6379/0"
     )
 
     # API配置
@@ -151,8 +151,8 @@ class Settings(SettingsClass):
         def __init__(self, **kwargs):
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url = "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test"
-            self.redis_url = "redis://localhost:6379/0"
+            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+            self.redis_url = "redis://redis:6379/0"
             self.api_host = "localhost"
             self.api_port = 8000
             self.environment = "development"
