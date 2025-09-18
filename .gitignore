@@ -114,7 +114,8 @@ docs/build/
 *.model
 *.pkl
 *.pickle
-data/
+raw_data/
+datasets/
 ml_models/
 trained_models/
 checkpoints/
