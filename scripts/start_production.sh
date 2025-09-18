@@ -85,11 +85,11 @@ setup_environment() {
     fi
 
     # 导出必要的环境变量
-    export POSTGRES_ROOT_PASSWORD=${POSTGRES_ROOT_PASSWORD:-change_me}
-    export DB_PASSWORD=${DB_PASSWORD:-change_me}
-    export REDIS_PASSWORD=${REDIS_PASSWORD:-change_me}
-    export MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-    export MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-change_me}
+    export POSTGRES_ROOT_PASSWORD=${POSTGRES_ROOT_PASSWORD}
+    export DB_PASSWORD=${DB_PASSWORD}
+    export REDIS_PASSWORD=${REDIS_PASSWORD}
+    export MINIO_ROOT_USER=${MINIO_ROOT_USER}
+    export MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     export MLFLOW_PORT=${MLFLOW_PORT:-5000}
     export MINIO_PORT=${MINIO_PORT:-9000}
 
@@ -254,10 +254,10 @@ show_access_info() {
     echo "  📊 足球预测API:      http://localhost:8000"
     echo "  📚 API文档:          http://localhost:8000/docs"
     echo "  🔬 MLflow UI:        http://localhost:5000"
-    echo "  📈 Grafana监控:      http://localhost:3000 (admin/${GRAFANA_ADMIN_PASSWORD:-change_me})"
+    echo "  📈 Grafana监控:      http://localhost:3000 (admin/${GRAFANA_ADMIN_PASSWORD})"
     echo "  📊 Prometheus:       http://localhost:9090"
     echo "  🌸 Celery Flower:    http://localhost:5555"
-    echo "  💾 MinIO Console:    http://localhost:9001 (${MINIO_ROOT_USER:-minioadmin}/${MINIO_ROOT_PASSWORD:-change_me})"
+    echo "  💾 MinIO Console:    http://localhost:9001 (${MINIO_ROOT_USER}/${MINIO_ROOT_PASSWORD})"
     echo "  🗄️ pgAdmin:         http://localhost:8080"
     echo ""
     echo "🔧 管理工具:"

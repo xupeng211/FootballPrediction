@@ -285,11 +285,11 @@ def cleanup_data(days_to_keep: int = 30):
                 storage = S3DataLakeStorage(
                     endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
                     access_key=os.getenv(
-                        "MINIO_ACCESS_KEY", os.getenv("MINIO_ROOT_USER", "minioadmin")
+                        "MINIO_ACCESS_KEY", os.getenv("MINIO_ROOT_USER")
                     ),
                     secret_key=os.getenv(
                         "MINIO_SECRET_KEY",
-                        os.getenv("MINIO_ROOT_PASSWORD", "change_me"),
+                        os.getenv("MINIO_ROOT_PASSWORD"),
                     ),
                     use_ssl=False,
                 )

@@ -27,8 +27,8 @@ services:
   # Redis缓存服务 - 测试环境
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"  # 移除外部端口映射，仅内部网络访问
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

@@ -98,7 +98,7 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
         database = os.getenv(f"{prefix}DB_NAME", "football_prediction_dev")
         username = os.getenv(f"{prefix}DB_USER", "football_user")
         # 默认密码改为显式占位，提示通过环境变量提供
-        password = os.getenv(f"{prefix}DB_PASSWORD", "change_me")
+        password = os.getenv(f"{prefix}DB_PASSWORD")
 
     # 连接池配置
     pool_size = int(os.getenv(f"{prefix}DB_POOL_SIZE", "5"))
