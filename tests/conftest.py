@@ -8,10 +8,55 @@ pytest配置文件
 - Prometheus metrics清理
 """
 
+import asyncio
+import os
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from prometheus_client import REGISTRY, CollectorRegistry
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from src.database.base import Base
+from src.database.config import get_test_database_config
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for each test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_database(event_loop):
+    """
+    Set up the test database: create schema before tests and drop after.
+    """
+    # Ensure we are in the test environment
+    os.environ["ENVIRONMENT"] = "test"
+
+    config = get_test_database_config()
+
+    # Use a separate engine for schema creation/deletion
+    engine = create_async_engine(config.async_url)
+
+    async def init_db():
+        async with engine.begin() as conn:
+            # Drop all tables first for a clean state, in case of leftovers
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+
+    event_loop.run_until_complete(init_db())
+
+    yield
+
+    async def teardown_db():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
+
+    event_loop.run_until_complete(teardown_db())
 
 
 @pytest.fixture(autouse=True)

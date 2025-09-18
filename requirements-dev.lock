@@ -288,16 +288,18 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numpy==2.3.3
+numpy==1.26.4
     # via
+    #   -r requirements-dev.txt
     #   contourpy
     #   matplotlib
     #   pandas
     #   seaborn
 overrides==7.7.0
     # via jupyter-server
-packaging==25.0
+packaging==24.2
     # via
+    #   -r requirements-dev.txt
     #   black
     #   build
     #   dparse
@@ -468,8 +470,9 @@ rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
-ruamel-yaml==0.18.15
+ruamel-yaml==0.17.40
     # via
+    #   -r requirements-dev.txt
     #   safety
     #   safety-schemas
 ruamel-yaml-clib==0.2.12
@@ -526,8 +529,10 @@ stack-data==0.6.3
     # via ipython
 stevedore==5.5.0
     # via bandit
-tenacity==9.1.2
-    # via safety
+tenacity==8.5.0
+    # via
+    #   -r requirements-dev.txt
+    #   safety
 terminado==0.18.1
     # via
     #   jupyter-server
