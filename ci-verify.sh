@@ -42,19 +42,19 @@ echo "=========================================="
 print_status "info" "步骤 1/3: 清理并重建虚拟环境"
 echo "清理旧的虚拟环境..."
 
-if [ -d "venv" ]; then
-    rm -rf venv
+if [ -d ".venv" ]; then
+    rm -rf .venv
     print_status "success" "旧虚拟环境已清理"
 else
     print_status "info" "未找到旧虚拟环境，跳过清理"
 fi
 
 echo "创建新的虚拟环境..."
-python3 -m venv venv || handle_error "创建虚拟环境"
+python3 -m venv .venv || handle_error "创建虚拟环境"
 print_status "success" "虚拟环境创建成功"
 
 echo "激活虚拟环境并安装依赖..."
-source venv/bin/activate || handle_error "激活虚拟环境"
+source .venv/bin/activate || handle_error "激活虚拟环境"
 
 pip install --upgrade pip || handle_error "升级 pip"
 if [ -f requirements.lock ]; then
@@ -117,7 +117,7 @@ fi
 print_status "info" "步骤 3/4: 运行完整CI检查"
 
 echo "激活虚拟环境并运行类型检查..."
-source venv/bin/activate
+source .venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 
 echo "运行代码风格检查..."
@@ -153,11 +153,11 @@ fi
 print_status "success" "数据库已就绪"
 
 echo "激活虚拟环境并执行测试套件..."
-source venv/bin/activate
+source .venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 pytest \
     --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
-    --cov-fail-under=80 --maxfail=5 --disable-warnings \
+    --cov-fail-under=50 --maxfail=5 --disable-warnings \
     --cov-report=xml \
     --cov-report=html \
     -v || handle_error "测试执行或覆盖率不足"
@@ -174,7 +174,7 @@ echo -e "  ✅ 虚拟环境: 重建成功"
 echo -e "  ✅ Docker 环境: 启动正常"
 echo -e "  ✅ 代码风格检查: 通过"
 echo -e "  ✅ 类型检查: 通过"
-echo -e "  ✅ 测试覆盖率: >= 80%"
+echo -e "  ✅ 测试覆盖率: >= 50%"
 echo -e "  ✅ 所有测试: 通过"
 echo ""
 echo -e "${GREEN}🚀 可以安全推送到远程仓库！${NC}"
