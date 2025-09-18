@@ -8,13 +8,33 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
+# 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
+try:
+    from src.utils.warning_filters import setup_warning_filters
+
+    setup_warning_filters()
+except ImportError:
+    # 如果警告过滤器模块不可用，手动设置基本过滤器
+    import warnings
+
+    try:
+        import marshmallow.warnings
+
+        warnings.filterwarnings(
+            "ignore", category=marshmallow.warnings.ChangedInMarshmallow4Warning
+        )
+    except ImportError:
+        pass
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from src.api.data import router as data_router
 from src.api.features import router as features_router
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
+from src.api.predictions import router as predictions_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
 from src.monitoring.metrics_collector import (start_metrics_collection,
@@ -82,6 +102,8 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(monitoring_router, prefix="/api/v1")
 app.include_router(features_router, prefix="/api/v1")
+app.include_router(data_router, prefix="/api/v1")
+app.include_router(predictions_router, prefix="/api/v1")
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)

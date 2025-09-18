@@ -19,6 +19,44 @@ from src.features.feature_definitions import RecentPerformanceFeatures
 from src.features.feature_store import FootballFeatureStore
 
 
+def pytest_db_available():
+    """检查数据库是否可用以及表结构是否存在"""
+    try:
+        import sqlalchemy as sa
+
+        from src.database.connection import get_database_manager
+
+        # 检查数据库连接
+        db_manager = get_database_manager()
+
+        # 检查关键表是否存在
+        with db_manager.get_session() as session:
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"
+                )
+            )
+            matches_exists = result.scalar()
+
+            result = session.execute(
+                sa.text(
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'teams')"
+                )
+            )
+            teams_exists = result.scalar()
+
+            return matches_exists and teams_exists
+
+    except Exception:
+        return False
+
+
+# 跳过需要数据库的测试，如果数据库不可用
+pytestmark = pytest.mark.skipif(
+    not pytest_db_available(), reason="Database connection not available"
+)
+
+
 @pytest.fixture
 def feature_store():
     """创建特征存储实例"""

@@ -6,7 +6,7 @@
 
 import json
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -122,10 +122,9 @@ class Predictions(BaseModel):
     # 关系定义
     match = relationship("Match", back_populates="predictions")
 
-    # 兼容性别名
-    @property
-    def created_at(self) -> datetime:
-        """兼容性属性：预测创建时间"""
+    # 兼容性别名 - 使用方法而不是属性来避免与基类冲突
+    def get_created_at(self) -> datetime:
+        """兼容性方法：获取预测创建时间"""
         return self.predicted_at
 
     # 索引定义
@@ -395,7 +394,6 @@ class Predictions(BaseModel):
         Returns:
             Dict[str, Any]: 准确性统计
         """
-        from datetime import timedelta
 
         from sqlalchemy import and_
 

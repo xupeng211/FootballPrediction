@@ -47,7 +47,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}-${{ hashFiles('**/requirements*.lock') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
@@ -56,7 +56,16 @@ jobs:
         python -m pip install --upgrade pip
         python -m venv .venv
         . .venv/bin/activate
-        pip install -r requirements.txt -r requirements-dev.txt
+        if [ -f requirements.lock ]; then
+          pip install -r requirements.lock
+        else
+          pip install -r requirements.txt
+        fi
+        if [ -f requirements-dev.lock ]; then
+          pip install -r requirements-dev.lock
+        elif [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt
+        fi
         pip install -e .
 
     - name: Set up environment variables

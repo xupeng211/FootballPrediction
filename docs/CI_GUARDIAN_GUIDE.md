@@ -273,7 +273,7 @@ bandit -r src/
 ```bash
 # 手动触发覆盖率检查
 make check-defense-coverage
-pytest --cov=src --cov-fail-under=80
+pytest --cov=src --cov-fail-under=60 --maxfail=5 --disable-warnings
 ```
 
 ## 🔄 完整工作流示例

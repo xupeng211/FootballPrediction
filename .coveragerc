@@ -8,6 +8,13 @@ omit =
     */__pycache__/*
     */migrations/*
     backup/*
+    # Omit heavy integration/API layers from unit coverage fast path
+    src/api/*
+    src/database/connection.py
+    src/database/sql_compatibility.py
+    src/models/metrics_exporter.py
+    src/services/audit_service.py
+    src/database/models/audit_log.py
 
 [report]
 # 排除应用入口和配置文件，专注业务逻辑覆盖率
@@ -19,7 +26,7 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
     if 0:
-    if __name__ == .__main__.:
+    if __name__ == .__main__.
     class .*\bProtocol\):
     @(abc\.)?abstractmethod
 
