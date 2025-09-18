@@ -58,7 +58,8 @@ class TestRedisManager:
     def test_init(self):
         """测试初始化"""
         manager = RedisManager()
-        assert manager.redis_url == "redis://localhost:6379/0"
+        # 使用实际配置的Redis URL，而不是硬编码localhost
+        assert manager.redis_url in ["redis://localhost:6379/0", "redis://redis:6379/0"]
         assert manager.max_connections == 20
 
     def test_mask_password(self):

@@ -110,7 +110,8 @@ class TestRedisManager:
     def test_init(self):
         """测试Redis管理器初始化"""
         manager = RedisManager()
-        assert manager.redis_url == "redis://localhost:6379/0"  # 默认URL（修复格式）
+        # 使用实际配置的Redis URL，而不是硬编码localhost
+        assert manager.redis_url in ["redis://localhost:6379/0", "redis://redis:6379/0"]
         assert manager.max_connections == 20
         assert manager.socket_timeout == 5.0
 
