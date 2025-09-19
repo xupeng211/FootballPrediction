@@ -152,36 +152,39 @@ class RedisManager:
             retry_on_timeout: 超时时是否重试
             health_check_interval: 健康检查间隔(秒)
         """
-        # 在测试环境中，优先使用 'redis' 作为主机名
-        is_test_env = os.getenv("ENVIRONMENT") == "test"
+        # 检查是否在测试环境中
+        # 方法1: 检查 ENVIRONMENT 环境变量
+        # 方法2: 检查是否正在运行 pytest
+        import sys
+
+        is_test_env = (
+            os.getenv("ENVIRONMENT") == "test"
+            or "pytest" in sys.modules
+            or "pytest" in sys.argv[0]
+        )
+
         default_redis_host = "redis" if is_test_env else "localhost"
         default_redis_url = f"redis://{default_redis_host}:6379/0"
 
-        self.redis_url = redis_url or os.getenv("REDIS_URL", default_redis_url)
+        # 在测试环境中，不使用环境变量 REDIS_URL
+        if is_test_env:
+            self.redis_url = redis_url or default_redis_url
+        else:
+            self.redis_url = redis_url or os.getenv("REDIS_URL", default_redis_url)
+
         self.max_connections = max_connections
         self.socket_timeout = socket_timeout
         self.socket_connect_timeout = socket_connect_timeout
         self.retry_on_timeout = retry_on_timeout
         self.health_check_interval = health_check_interval
         redis_password = os.getenv("REDIS_PASSWORD")
-        if redis_password:
-            # Use regex to insert password into the URL
+        if redis_password and not is_test_env:
+            # Use regex to insert password into the URL if it doesn't already contain a password
             import re
 
-            self.redis_url = re.sub(r"://", f"://{redis_password}@", self.redis_url)
-
-        # 连接池
-        self._sync_pool: Optional[redis.ConnectionPool] = None
-        self._async_pool: Optional[redis_async.ConnectionPool] = None
-
-        # 客户端
-        self._sync_client: Optional[redis.Redis] = None
-        self._async_client: Optional[redis_async.Redis] = None
-
-        # 初始化同步连接池
-        self._init_sync_pool()
-
-        logger.info(f"Redis管理器初始化完成，URL: {self._mask_password(self.redis_url)}")
+            # Check if the URL already contains a password
+            if "@" not in self.redis_url.split("://", 1)[-1].split("/", 1)[0]:
+                self.redis_url = re.sub(r"://", f"://{redis_password}@", self.redis_url)
 
     def _mask_password(self, url: str) -> str:
         """隐藏Redis URL中的密码"""

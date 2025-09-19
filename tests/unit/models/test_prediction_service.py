@@ -86,8 +86,10 @@ class TestPredictionService:
 
     def test_init(self, prediction_service):
         """测试初始化"""
+        from src.cache.ttl_cache import TTLCache
+
         assert prediction_service.mlflow_tracking_uri == "http://localhost:5002"
-        assert isinstance(prediction_service.model_cache, dict)
+        assert isinstance(prediction_service.model_cache, TTLCache)
         assert isinstance(prediction_service.feature_order, list)
 
     @pytest.mark.asyncio
@@ -116,9 +118,14 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_production_model_from_cache(self, prediction_service):
         """测试从缓存获取模型"""
-        model_uri = "models:/football_baseline_model/1"
+        model_name = "football_baseline_model"
+        cache_key = f"model:{model_name}"
         cached_model = Mock()
-        prediction_service.model_cache[model_uri] = cached_model
+        cached_version = "1"
+        # 使用正确的缓存键设置缓存
+        await prediction_service.model_cache.set(
+            cache_key, (cached_model, cached_version)
+        )
 
         mock_client = Mock()
         mock_version_info = Mock()
@@ -131,7 +138,7 @@ class TestPredictionService:
             model, version = await prediction_service.get_production_model()
 
             assert model == cached_model
-            assert version == "1"
+            assert version == cached_version
 
     @pytest.mark.asyncio
     async def test_get_production_model_staging_fallback(self, prediction_service):
