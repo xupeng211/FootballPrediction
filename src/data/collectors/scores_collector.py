@@ -26,6 +26,7 @@ from .base_collector import CollectionResult, DataCollector
 
 class MatchStatus(Enum):
     """比赛状态枚举"""
+
     NOT_STARTED = "not_started"
     FIRST_HALF = "first_half"
     HALF_TIME = "half_time"
@@ -37,6 +38,7 @@ class MatchStatus(Enum):
 
 class EventType(Enum):
     """比赛事件类型枚举"""
+
     GOAL = "goal"
     YELLOW_CARD = "yellow_card"
     RED_CARD = "red_card"
@@ -61,7 +63,7 @@ class ScoresCollector(DataCollector):
         base_url: str = "https://api.football-data.org/v4",
         websocket_url: Optional[str] = None,
         polling_interval: int = 120,  # 轮询间隔（秒）
-        **kwargs
+        **kwargs,
     ):
         """
         初始化实时比分采集器
@@ -94,7 +96,7 @@ class ScoresCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped"
+            status="skipped",
         )
 
     async def collect_odds(self, **kwargs) -> CollectionResult:
@@ -105,14 +107,14 @@ class ScoresCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped"
+            status="skipped",
         )
 
     async def collect_live_scores(
         self,
         match_ids: Optional[List[str]] = None,
         use_websocket: bool = True,
-        **kwargs
+        **kwargs,
     ) -> CollectionResult:
         """
         采集实时比分数据
@@ -148,10 +150,12 @@ class ScoresCollector(DataCollector):
                     records_collected=0,
                     success_count=0,
                     error_count=0,
-                    status="success"
+                    status="success",
                 )
 
-            self.logger.info(f"Starting live scores collection for {len(match_ids)} matches")
+            self.logger.info(
+                f"Starting live scores collection for {len(match_ids)} matches"
+            )
             self._active_matches.update(match_ids)
 
             # 选择采集模式
@@ -165,7 +169,9 @@ class ScoresCollector(DataCollector):
                 except Exception as e:
                     error_count += 1
                     error_messages.append(f"WebSocket failed: {str(e)}")
-                    self.logger.warning(f"WebSocket collection failed: {str(e)}, falling back to polling")
+                    self.logger.warning(
+                        f"WebSocket collection failed: {str(e)}, falling back to polling"
+                    )
 
                     # 回退到轮询模式
                     scores_data = await self._collect_via_polling(match_ids)
@@ -198,7 +204,7 @@ class ScoresCollector(DataCollector):
                 error_count=error_count,
                 status=status,
                 error_message="; ".join(error_messages[:5]) if error_messages else None,
-                collected_data=collected_data
+                collected_data=collected_data,
             )
 
             self.logger.info(
@@ -217,10 +223,12 @@ class ScoresCollector(DataCollector):
                 success_count=0,
                 error_count=1,
                 status="failed",
-                error_message=str(e)
+                error_message=str(e),
             )
 
-    async def _collect_websocket_scores(self, match_ids: List[str]) -> List[Dict[str, Any]]:
+    async def _collect_websocket_scores(
+        self, match_ids: List[str]
+    ) -> List[Dict[str, Any]]:
         """
         通过WebSocket采集实时比分数据
 
@@ -248,9 +256,7 @@ class ScoresCollector(DataCollector):
             return []
 
     async def _collect_via_websocket(
-        self,
-        match_ids: List[str],
-        duration: int = 3600  # 连接持续时间（秒）
+        self, match_ids: List[str], duration: int = 3600  # 连接持续时间（秒）
     ) -> List[Dict[str, Any]]:
         """
         通过WebSocket采集实时数据
@@ -277,7 +283,7 @@ class ScoresCollector(DataCollector):
                 subscribe_message = {
                     "action": "subscribe",
                     "matches": match_ids,
-                    "api_key": self.api_key
+                    "api_key": self.api_key,
                 }
                 await websocket.send(json.dumps(subscribe_message))
 
@@ -287,10 +293,7 @@ class ScoresCollector(DataCollector):
                 while asyncio.get_event_loop().time() < end_time:
                     try:
                         # 等待消息，设置超时
-                        message = await asyncio.wait_for(
-                            websocket.recv(),
-                            timeout=30
-                        )
+                        message = await asyncio.wait_for(websocket.recv(), timeout=30)
 
                         # 解析实时数据
                         data = json.loads(message)
@@ -337,7 +340,9 @@ class ScoresCollector(DataCollector):
                             collected_data.append(cleaned_data)
 
                 except Exception as e:
-                    self.logger.error(f"Failed to collect live data for match {match_id}: {str(e)}")
+                    self.logger.error(
+                        f"Failed to collect live data for match {match_id}: {str(e)}"
+                    )
 
         except Exception as e:
             self.logger.error(f"Polling collection failed: {str(e)}")
@@ -357,9 +362,7 @@ class ScoresCollector(DataCollector):
         """
         try:
             url = f"{self.base_url}/matches/{match_id}"
-            headers = {
-                "X-Auth-Token": self.api_key
-            } if self.api_key else {}
+            headers = {"X-Auth-Token": self.api_key} if self.api_key else {}
 
             response = await self._make_request(url=url, headers=headers)
             return response
@@ -369,8 +372,7 @@ class ScoresCollector(DataCollector):
             return None
 
     async def _clean_live_data(
-        self,
-        raw_data: Dict[str, Any]
+        self, raw_data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """
         清洗和标准化实时比分数据
@@ -406,7 +408,7 @@ class ScoresCollector(DataCollector):
                     "minute": event.get("minute"),
                     "type": event.get("type"),
                     "player": event.get("player", {}).get("name"),
-                    "team": event.get("team", {}).get("name")
+                    "team": event.get("team", {}).get("name"),
                 }
                 events.append(event_data)
 
@@ -419,7 +421,7 @@ class ScoresCollector(DataCollector):
                 "events": events,
                 "raw_data": raw_data,
                 "collected_at": datetime.now().isoformat(),
-                "processed": False
+                "processed": False,
             }
 
             return cleaned_data
@@ -442,9 +444,7 @@ class ScoresCollector(DataCollector):
         return status.upper() in finished_statuses
 
     async def start_continuous_monitoring(
-        self,
-        match_ids: Optional[List[str]] = None,
-        use_websocket: bool = True
+        self, match_ids: Optional[List[str]] = None, use_websocket: bool = True
     ) -> None:
         """
         启动持续监控模式（后台任务）
@@ -465,8 +465,7 @@ class ScoresCollector(DataCollector):
 
                 if current_matches:
                     result = await self.collect_live_scores(
-                        match_ids=current_matches,
-                        use_websocket=use_websocket
+                        match_ids=current_matches, use_websocket=use_websocket
                     )
 
                     if result.status == "failed":

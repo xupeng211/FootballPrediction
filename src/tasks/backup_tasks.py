@@ -1,5 +1,5 @@
 """
-数据库备份任务
+数据库备份任务 / Database Backup Tasks
 
 实现定时数据库备份任务，包括：
 - 全量备份任务
@@ -8,6 +8,48 @@
 - 备份验证任务
 
 集成 Prometheus 监控指标，支持备份成功率和时间戳监控。
+
+Implements scheduled database backup tasks, including:
+- Full backup tasks
+- Incremental backup tasks
+- Backup file cleanup tasks
+- Backup verification tasks
+
+Integrates Prometheus monitoring metrics, supporting backup success rate and timestamp monitoring.
+
+主要类 / Main Classes:
+    DatabaseBackupTask: 数据库备份任务基类 / Database backup task base class
+
+主要方法 / Main Methods:
+    daily_full_backup_task: 每日全量备份任务 / Daily full backup task
+    hourly_incremental_backup_task: 每小时增量备份任务 / Hourly incremental backup task
+    weekly_wal_archive_task: 每周WAL归档任务 / Weekly WAL archive task
+    cleanup_old_backups_task: 清理旧备份文件任务 / Clean up old backup files task
+
+使用示例 / Usage Example:
+    ```python
+    from src.tasks.backup_tasks import daily_full_backup_task
+
+    # 手动触发每日全量备份
+    result = daily_full_backup_task.delay()
+
+    # 获取任务执行结果
+    backup_result = result.get()
+    print(f"备份状态: {'成功' if backup_result['success'] else '失败'}")
+    ```
+
+环境变量 / Environment Variables:
+    BACKUP_DIR: 备份文件存储目录 / Backup file storage directory
+    DB_HOST: 数据库主机地址 / Database host address
+    DB_PORT: 数据库端口 / Database port
+    DB_NAME: 数据库名称 / Database name
+    DB_USER: 数据库用户名 / Database username
+    DB_PASSWORD: 数据库密码 / Database password
+
+依赖 / Dependencies:
+    - celery: 任务队列框架 / Task queue framework
+    - subprocess: 系统命令执行 / System command execution
+    - prometheus_client: 监控指标收集 / Monitoring metrics collection
 """
 
 import asyncio
@@ -124,9 +166,44 @@ def get_backup_metrics(registry=None):
 
 class DatabaseBackupTask(Task):
     """
-    数据库备份任务基类
+    数据库备份任务基类 / Database Backup Task Base Class
 
     支持使用独立的 CollectorRegistry，避免测试环境中的全局状态污染。
+    支持备份脚本执行、监控指标收集和错误日志记录。
+
+    Supports using independent CollectorRegistry to avoid global state pollution in test environments.
+    Supports backup script execution, monitoring metrics collection, and error log recording.
+
+    Attributes:
+        error_logger (TaskErrorLogger): 任务错误日志记录器 / Task error logger
+        logger (logging.Logger): 任务日志记录器 / Task logger
+        metrics (dict): 备份监控指标 / Backup monitoring metrics
+        backup_script_path (str): 备份脚本路径 / Backup script path
+        restore_script_path (str): 恢复脚本路径 / Restore script path
+        backup_dir (str): 备份目录配置 / Backup directory configuration
+
+    Example:
+        ```python
+        from src.tasks.backup_tasks import DatabaseBackupTask
+
+        # 创建备份任务实例
+        backup_task = DatabaseBackupTask()
+
+        # 执行备份脚本
+        success, output, stats = backup_task.run_backup_script(
+            backup_type="full",
+            database_name="football_prediction"
+        )
+
+        if success:
+            print(f"备份成功，耗时 {stats['duration_seconds']} 秒")
+        else:
+            print(f"备份失败: {output}")
+        ```
+
+    Note:
+        该类作为Celery任务的基类使用。
+        This class is used as the base class for Celery tasks.
     """
 
     def __init__(self, registry: Optional["CollectorRegistry"] = None):
@@ -196,15 +273,55 @@ class DatabaseBackupTask(Task):
         additional_args: Optional[list] = None,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
-        运行备份脚本
+        运行备份脚本 / Run Backup Script
+
+        执行指定类型的数据库备份脚本，支持全量、增量和WAL备份。
+        Execute specified type of database backup script, supporting full, incremental, and WAL backups.
 
         Args:
-            backup_type: 备份类型 (full|incremental|wal|all)
-            database_name: 数据库名称
-            additional_args: 额外的脚本参数
+            backup_type (str): 备份类型 (full|incremental|wal|all) / Backup type (full|incremental|wal|all)
+            database_name (str): 数据库名称 / Database name
+                Defaults to "football_prediction"
+            additional_args (Optional[list]): 额外的脚本参数 / Additional script arguments
+                Defaults to None
 
         Returns:
-            (成功状态, 输出信息, 执行统计)
+            Tuple[bool, str, Dict[str, Any]]: 备份执行结果 / Backup execution result
+                - success (bool): 是否成功 / Whether successful
+                - output (str): 输出信息 / Output information
+                - stats (Dict[str, Any]): 执行统计 / Execution statistics
+                    - start_time (str): 开始时间 / Start time
+                    - end_time (str): 结束时间 / End time
+                    - duration_seconds (float): 执行时长(秒) / Execution duration (seconds)
+                    - exit_code (int): 退出码 / Exit code
+                    - command (str): 执行命令 / Execution command
+                    - backup_file_size_bytes (Optional[int]): 备份文件大小(字节) / Backup file size (bytes)
+
+        Raises:
+            subprocess.TimeoutExpired: 当备份脚本执行超时时抛出 / Raised when backup script execution times out
+            Exception: 当备份执行发生其他错误时抛出 / Raised when other backup execution errors occur
+
+        Example:
+            ```python
+            from src.tasks.backup_tasks import DatabaseBackupTask
+
+            backup_task = DatabaseBackupTask()
+
+            # 执行全量备份
+            success, output, stats = backup_task.run_backup_script(
+                backup_type="full",
+                database_name="football_prediction"
+            )
+
+            if success:
+                print(f"全量备份成功，耗时 {stats['duration_seconds']:.2f} 秒")
+            else:
+                print(f"全量备份失败: {output}")
+            ```
+
+        Note:
+            脚本执行超时时间为1小时。
+            Script execution timeout is 1 hour.
         """
         start_time = datetime.now()
 

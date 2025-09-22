@@ -177,6 +177,54 @@ class TestPredictionService:
             with pytest.raises(ValueError, match="模型 football_baseline_model 没有可用版本"):
                 await prediction_service.get_production_model()
 
+    @pytest.mark.asyncio
+    async def test_get_production_model_updates_cache_and_metadata(
+        self, prediction_service
+    ):
+        """测试成功加载模型时缓存与元数据会被更新"""
+        prediction_service.model_cache.get = AsyncMock(return_value=None)
+        prediction_service.model_cache.set = AsyncMock()
+
+        mock_model = Mock()
+        mock_version = "2"
+
+        with patch.object(
+            prediction_service,
+            "get_production_model_with_retry",
+            new=AsyncMock(return_value=(mock_model, mock_version)),
+        ):
+            model, version = await prediction_service.get_production_model("custom")
+
+        assert model is mock_model
+        assert version == mock_version
+        prediction_service.model_cache.set.assert_awaited_once_with(
+            "model:custom",
+            (mock_model, mock_version),
+            ttl=prediction_service.model_cache_ttl,
+        )
+        metadata = prediction_service.model_metadata_cache["models:/custom/2"]
+        assert metadata["name"] == "custom"
+        assert metadata["version"] == mock_version
+        assert metadata["stage"] == "unknown"
+        assert "loaded_at" in metadata
+
+    @pytest.mark.asyncio
+    async def test_get_production_model_failure_bubbles_up(self, prediction_service):
+        """测试加载模型失败时异常会继续传播且不会写入缓存"""
+        prediction_service.model_cache.get = AsyncMock(return_value=None)
+        prediction_service.model_cache.set = AsyncMock()
+
+        with patch.object(
+            prediction_service,
+            "get_production_model_with_retry",
+            new=AsyncMock(side_effect=RuntimeError("mlflow down")),
+        ):
+            with pytest.raises(RuntimeError, match="mlflow down"):
+                await prediction_service.get_production_model("unstable")
+
+        prediction_service.model_cache.set.assert_not_awaited()
+        assert "models:/unstable" not in prediction_service.model_metadata_cache
+
     def test_get_default_features(self, prediction_service):
         """测试获取默认特征"""
         features = prediction_service._get_default_features()

@@ -198,10 +198,12 @@ class FootballFeatureStore:
             timestamp_field="event_timestamp",
         )
 
+        entities = self.get_entity_definitions()
+
         return {
             "team_recent_performance": FeatureView(
                 name="team_recent_performance",
-                entities=["team"],
+                entities=[entities["team"]],
                 ttl=timedelta(days=7),
                 schema=[
                     Field(name="recent_5_wins", dtype=Int64),
@@ -220,7 +222,7 @@ class FootballFeatureStore:
             ),
             "historical_matchup": FeatureView(
                 name="historical_matchup",
-                entities=["match"],
+                entities=[entities["match"]],
                 ttl=timedelta(days=30),
                 schema=[
                     Field(name="home_team_id", dtype=Int64),
@@ -237,7 +239,7 @@ class FootballFeatureStore:
             ),
             "odds_features": FeatureView(
                 name="odds_features",
-                entities=["match"],
+                entities=[entities["match"]],
                 ttl=timedelta(hours=6),
                 schema=[
                     Field(name="home_odds_avg", dtype=Float64),

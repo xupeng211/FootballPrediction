@@ -12,6 +12,7 @@ import asyncio
 import importlib.util  # noqa: E402 - Must be after sys.path modification
 import os
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -293,6 +294,249 @@ def mock_total_metrics():
     return mock_metrics
 
 
+@pytest.fixture
+def mock_mlflow_client():
+    """
+    模拟MLflow客户端，避免真实依赖
+
+    提供完整的MLflow客户端mock，包括：
+    - 模型注册和版本管理
+    - 模型加载和缓存
+    - 实验跟踪
+    - 模型阶段转换
+    """
+    mock_client = Mock()
+
+    # Mock模型版本信息
+    mock_version_info = Mock()
+    mock_version_info.version = "1"
+    mock_version_info.current_stage = "Production"
+    mock_version_info.name = "football_baseline_model"
+
+    # Mock客户端方法
+    mock_client.get_latest_versions = Mock(return_value=[mock_version_info])
+    mock_client.get_model_version = Mock(return_value=mock_version_info)
+    mock_client.transition_model_version_stage = Mock()
+    mock_client.search_model_versions = Mock(return_value=[mock_version_info])
+    mock_client.create_registered_model = Mock()
+    mock_client.create_model_version = Mock(return_value=mock_version_info)
+
+    # Mock实验相关方法
+    mock_client.create_experiment = Mock(return_value="experiment_123")
+    mock_client.get_experiment_by_name = Mock()
+    mock_client.list_experiments = Mock(return_value=[])
+
+    # Mock运行相关方法
+    mock_client.create_run = Mock()
+    mock_client.log_metric = Mock()
+    mock_client.log_param = Mock()
+    mock_client.set_tag = Mock()
+
+    return mock_client
+
+
+@pytest.fixture
+def mock_mlflow_module():
+    """
+    模拟整个mlflow模块
+
+    提供完整的mlflow模块mock，包括：
+    - 实验和运行管理
+    - 模型记录和加载
+    - 跟踪URI设置
+    - 各种sklearn集成
+    """
+    import numpy as np
+
+    mock_mlflow = Mock()
+
+    # Mock基础设置
+    mock_mlflow.set_tracking_uri = Mock()
+    mock_mlflow.get_tracking_uri = Mock(return_value="http://localhost:5002")
+
+    # Mock实验管理
+    mock_mlflow.create_experiment = Mock(return_value="experiment_123")
+    mock_mlflow.set_experiment = Mock()
+    mock_mlflow.get_experiment = Mock()
+    mock_mlflow.delete_experiment = Mock()
+
+    # Mock运行管理
+    mock_run_context = Mock()
+    mock_run_info = Mock()
+    mock_run_info.run_id = "run_123"
+    mock_run_context.info = mock_run_info
+    mock_run_context.__enter__ = Mock(return_value=mock_run_context)
+    mock_run_context.__exit__ = Mock(return_value=None)
+    mock_mlflow.start_run = Mock(return_value=mock_run_context)
+    mock_mlflow.active_run = Mock(return_value=mock_run_context)
+
+    # Mock记录功能
+    mock_mlflow.log_param = Mock()
+    mock_mlflow.log_metric = Mock()
+    mock_mlflow.log_params = Mock()
+    mock_mlflow.log_metrics = Mock()
+    mock_mlflow.set_tag = Mock()
+    mock_mlflow.log_artifact = Mock()
+
+    # Mock模型管理
+    mock_mlflow.register_model = Mock()
+
+    # Mock sklearn集成
+    mock_sklearn = Mock()
+
+    # 创建一个mock模型
+    mock_model = Mock()
+    mock_model.predict = Mock(return_value=np.array(["home", "draw", "away"]))
+    mock_model.predict_proba = Mock(
+        return_value=np.array([[0.4, 0.3, 0.3], [0.3, 0.4, 0.3], [0.3, 0.3, 0.4]])
+    )
+    mock_model.feature_names_in_ = [f"feature_{i}" for i in range(10)]
+
+    mock_sklearn.log_model = Mock()
+    mock_sklearn.load_model = Mock(return_value=mock_model)
+    mock_mlflow.sklearn = mock_sklearn
+
+    # Mock其他集成
+    mock_mlflow.pytorch = Mock()
+    mock_mlflow.tensorflow = Mock()
+
+    return mock_mlflow
+
+
+@pytest.fixture
+def mock_redis_manager():
+    """
+    模拟Redis管理器，避免真实依赖
+
+    提供完整的Redis管理器mock，包括：
+    - 连接管理
+    - 缓存操作
+    - TTL管理
+    - 连接检查
+    """
+    mock_manager = AsyncMock()
+
+    # Mock连接管理
+    mock_manager.connect = AsyncMock()
+    mock_manager.disconnect = AsyncMock()
+    mock_manager.is_connected = AsyncMock(return_value=True)
+    mock_manager.ping = AsyncMock(return_value=True)
+
+    # Mock基本操作
+    mock_manager.set = AsyncMock(return_value=True)
+    mock_manager.get = AsyncMock(return_value=None)
+    mock_manager.delete = AsyncMock(return_value=1)
+    mock_manager.exists = AsyncMock(return_value=False)
+
+    # Mock TTL操作
+    mock_manager.expire = AsyncMock(return_value=True)
+    mock_manager.ttl = AsyncMock(return_value=-1)
+    mock_manager.persist = AsyncMock(return_value=True)
+
+    # Mock批量操作
+    mock_manager.mget = AsyncMock(return_value=[])
+    mock_manager.mset = AsyncMock(return_value=True)
+    mock_manager.delete_pattern = AsyncMock(return_value=0)
+
+    # Mock哈希操作
+    mock_manager.hset = AsyncMock(return_value=1)
+    mock_manager.hget = AsyncMock(return_value=None)
+    mock_manager.hgetall = AsyncMock(return_value={})
+    mock_manager.hdel = AsyncMock(return_value=1)
+
+    # Mock列表操作
+    mock_manager.lpush = AsyncMock(return_value=1)
+    mock_manager.rpush = AsyncMock(return_value=1)
+    mock_manager.lpop = AsyncMock(return_value=None)
+    mock_manager.rpop = AsyncMock(return_value=None)
+    mock_manager.llen = AsyncMock(return_value=0)
+
+    # Mock集合操作
+    mock_manager.sadd = AsyncMock(return_value=1)
+    mock_manager.srem = AsyncMock(return_value=1)
+    mock_manager.smembers = AsyncMock(return_value=set())
+    mock_manager.sismember = AsyncMock(return_value=False)
+
+    # Mock有序集合操作
+    mock_manager.zadd = AsyncMock(return_value=1)
+    mock_manager.zrem = AsyncMock(return_value=1)
+    mock_manager.zrange = AsyncMock(return_value=[])
+    mock_manager.zscore = AsyncMock(return_value=None)
+
+    # Mock事务支持
+    mock_pipeline = AsyncMock()
+    mock_pipeline.execute = AsyncMock(return_value=[])
+    mock_manager.pipeline = Mock(return_value=mock_pipeline)
+
+    # Mock发布/订阅
+    mock_manager.publish = AsyncMock(return_value=0)
+    mock_manager.subscribe = AsyncMock()
+    mock_manager.unsubscribe = AsyncMock()
+
+    return mock_manager
+
+
+@pytest.fixture
+def mock_feature_store():
+    """
+    模拟特征存储，避免Feast依赖
+
+    提供完整的特征存储mock，包括：
+    - 特征检索
+    - 历史特征获取
+    - 在线特征服务
+    - 特征定义管理
+    """
+    from datetime import datetime
+
+    import pandas as pd
+
+    mock_store = AsyncMock()
+
+    # Mock基本配置
+    mock_store.repo_path = "/tmp/feature_repo"
+    mock_store.registry_path = "/tmp/feature_repo/data/registry.db"
+
+    # Mock特征检索方法
+    mock_features = {
+        "home_recent_wins": 3,
+        "home_recent_losses": 1,
+        "home_recent_draws": 1,
+        "away_recent_wins": 2,
+        "away_recent_losses": 2,
+        "away_recent_draws": 1,
+        "home_goals_avg": 1.8,
+        "away_goals_avg": 1.5,
+        "head_to_head_home_wins": 2,
+        "head_to_head_away_wins": 1,
+    }
+
+    mock_store.get_match_features_for_prediction = AsyncMock(return_value=mock_features)
+    mock_store.get_historical_features = AsyncMock(
+        return_value=pd.DataFrame([mock_features])
+    )
+    mock_store.get_online_features = AsyncMock(return_value=mock_features)
+
+    # Mock特征定义
+    mock_store.list_feature_views = Mock(return_value=[])
+    mock_store.get_feature_view = Mock()
+    mock_store.apply = Mock()
+
+    # Mock数据源
+    mock_store.get_data_source = Mock()
+    mock_store.list_data_sources = Mock(return_value=[])
+
+    # Mock实体
+    mock_store.list_entities = Mock(return_value=[])
+    mock_store.get_entity = Mock()
+
+    # Mock服务管理
+    mock_store.serve = AsyncMock()
+    mock_store.teardown = AsyncMock()
+
+    return mock_store
+
+
 # 配置asyncio测试模式
 pytest_plugins = ("pytest_asyncio",)
 
@@ -327,3 +571,53 @@ def suppress_warnings():
         warnings.filterwarnings(
             "ignore", message=".*Number.*field.*should.*not.*be.*instantiated.*"
         )
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(session, config, items):
+    """Custom mark handling for unit tests."""
+    markexpr = getattr(config.option, "markexpr", None)
+    if not markexpr:
+        return
+
+    # Disable pytest's default mark filtering while we evaluate manually.
+    config.option.markexpr = None
+
+    from _pytest.mark import expression
+
+    compiled = expression.Expression.compile(markexpr)
+    root = Path(config.rootdir).resolve()
+    selected = []
+    deselected = []
+
+    for item in items:
+        try:
+            rel_path = Path(item.fspath).resolve().relative_to(root)
+        except ValueError:
+            rel_path = None
+
+        def matcher(name: str, **kwargs):
+            if name == "unit":
+                if rel_path is None:
+                    return False
+                parts = rel_path.parts
+                return (
+                    len(parts) >= 2
+                    and parts[0] == "tests"
+                    and parts[1] == "unit"
+                    and "integration" not in item.keywords
+                )
+            return any(
+                mark.name == name
+                and all(mark.kwargs.get(k) == v for k, v in kwargs.items())
+                for mark in item.iter_markers()
+            )
+
+        if compiled.evaluate(matcher):
+            selected.append(item)
+        else:
+            deselected.append(item)
+
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+    items[:] = selected
