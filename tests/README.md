@@ -15,13 +15,21 @@ tests/
 │   ├── test_database_manager.py  # 数据库管理器测试
 │   └── test_feature_store.py     # 特征存储测试
 ├── integration/                  # 集成测试
-│   ├── test_data_pipeline.py     # 数据管道集成测试
 │   ├── test_scheduler.py         # 任务调度器测试
 │   └── test_cache_consistency.py # 缓存一致性测试
-├── e2e/                          # 端到端测试
-│   ├── test_api_predictions.py   # API预测功能测试
-│   ├── test_lineage_tracking.py  # 数据血缘追踪测试
-│   └── test_backtest_accuracy.py # 回测准确率验证
+├── slow/                         # 慢测试集合
+│   ├── unit/                     # 慢速单元测试
+│   │   ├── test_data_collection_tasks_comprehensive.py
+│   │   └── api/
+│   │       ├── test_api_health_enhanced_slow.py
+│   │       └── test_health_core.py
+│   ├── integration/              # 慢速集成测试
+│   │   └── test_data_pipeline.py
+│   └── e2e/                      # 慢速端到端测试
+│       ├── test_api_predictions.py
+│       ├── test_lineage_tracking.py
+│       ├── test_backtest_accuracy.py
+│       └── test_complete_prediction_workflow.py
 └── fixtures/                     # 测试数据和工厂
     └── __init__.py               # 测试夹具模块
 ```
@@ -66,7 +74,10 @@ pytest tests/unit/test_data_cleaner.py::TestFootballDataCleaner::test_clean_matc
 pytest -m "not docker"
 
 # 只运行快速测试
-pytest -m "not slow"
+pytest tests/unit
+
+# 单独运行慢测试
+pytest tests/slow
 
 # 运行特定标记的测试
 pytest -m "unit or integration"

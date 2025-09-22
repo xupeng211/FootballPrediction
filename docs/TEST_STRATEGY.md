@@ -48,16 +48,17 @@
 
 ```bash
 # 快速单测（排除 slow）
-pytest tests/unit -m "unit and not slow"
+pytest tests/unit
 
 # 单独运行慢测试（包括 Redis 健康检查等）
-pytest tests/unit -m "slow"
+pytest tests/slow
 ```
 
 
 ```bash
+
 # 仅跑单元测试（快速反馈）
-pytest tests/unit -m "unit and not slow"
+pytest tests/unit
 
 # 跑集成测试
 pytest tests/integration -m "integration"
@@ -65,8 +66,8 @@ pytest tests/integration -m "integration"
 
 ## CI/CD 流程
 
-- **Pull Request（Fast）**: GitHub Actions 触发 `unit-fast` job，执行 `make check-deps` + 安装依赖，并运行 `pytest tests/unit -m "unit and not slow" --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml --cov-fail-under=0`，聚焦快速反馈，不对覆盖率设门槛。
-- **Push 到 main（Slow）**: 触发 `slow-suite` job，复用相同的依赖初始化后运行慢测试 (`pytest tests/unit -m "slow" --cov=src --cov-append --cov-fail-under=0`) 与集成测试 (`pytest tests/integration -m "integration" --cov=src --cov-append --cov-fail-under=0`)，仅验证逻辑完整性，不检查覆盖率红线。
+- **Pull Request（Fast）**: GitHub Actions 触发 `unit-fast` job，执行 `make check-deps` + 安装依赖，并运行 `pytest tests/unit --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml --cov-fail-under=0`，聚焦快速反馈，不对覆盖率设门槛。
+- **Push 到 main（Slow）**: 触发 `slow-suite` job，复用相同的依赖初始化后运行慢测试 (`pytest tests/slow --cov=src --cov-append --cov-fail-under=0`) 与集成测试 (`pytest tests/integration --cov=src --cov-append --cov-fail-under=0`)，仅验证逻辑完整性，不检查覆盖率红线。
 - **定时 Nightly**: 同样由 `slow-suite` job 在 `schedule` 触发，自动将 `--cov-fail-under` 切换回 `70` 并生成 `coverage.txt` + `docs/CI_REPORT.md`，严格卡住覆盖率门槛并回写报告。
 - **本地复现**: 与 CI 保持一致，先执行 `make check-deps` + `pip install -r requirements.txt -r requirements-dev.txt`，随后按需运行快速或慢测试命令。
 
@@ -75,7 +76,7 @@ pytest tests/integration -m "integration"
 ## ⚡ 测试性能优化
 
 - Mock 掉阻塞性的 `asyncio.sleep` / `time.sleep` 调用，覆盖 `tests/unit/utils/test_retry.py`, `tests/unit/cache/test_ttl_cache.py`, `tests/unit/models/test_prediction_service_caching.py` 等核心耗时用例，保持原有断言逻辑不变。
-- 单元测试套件运行时间显著下降（`pytest tests/unit -m "unit and not slow"`），CI 沙箱环境下可稳定完成，无需额外等待窗口。
+- 单元测试套件运行时间显著下降（`pytest tests/unit`），CI 沙箱环境下可稳定完成，无需额外等待窗口。
 
 ## 🧩 依赖校验
 
@@ -91,8 +92,8 @@ pytest tests/integration -m "integration"
 ### 慢测试分层
 
 - 将执行时间 ≥5 秒的用例标记为 `@pytest.mark.slow`（如 `tests/unit/test_data_collection_tasks_comprehensive.py`、`tests/unit/api/test_health_core.py`），确保默认单测集合保持快速。
-- 快速单元测试：`pytest tests/unit -m "unit and not slow"`
-- 专门运行慢测试：`pytest tests/unit -m "slow"`
+- 快速单元测试：`pytest tests/unit`
+- 专门运行慢测试：`pytest tests/slow`
 
 ### CI/CD 执行顺序
 

@@ -12,6 +12,7 @@
 """
 
 import time
+
 # 导入待测试模块
 from unittest.mock import Mock, patch
 
@@ -19,8 +20,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from src.api.health import (health_check, liveness_check, readiness_check,
-                            router)
+from src.api.health import health_check, liveness_check, readiness_check, router
 
 pytestmark = pytest.mark.slow
 
@@ -54,10 +54,16 @@ class TestHealthAPICore:
     def test_import_all_endpoints(self):
         """测试导入所有端点函数 - 提升import覆盖率"""
         try:
-            from src.api.health import (_check_database, _check_filesystem,
-                                        _check_redis, get_system_health,
-                                        health_check, liveness_check,
-                                        readiness_check, router)
+            from src.api.health import (
+                _check_database,
+                _check_filesystem,
+                _check_redis,
+                get_system_health,
+                health_check,
+                liveness_check,
+                readiness_check,
+                router,
+            )
 
             # 验证导入成功
             assert router is not None
