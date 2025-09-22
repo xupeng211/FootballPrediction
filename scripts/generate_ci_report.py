@@ -11,7 +11,7 @@ import datetime as dt
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 try:  # Optional dependency; charting is skipped if unavailable.
     import matplotlib
@@ -169,7 +169,7 @@ def main() -> None:
     overall_cov_display = overall_coverage if overall_coverage is not None else 0.0
 
     table_rows = [
-        "| Fast (unit and not slow) | {total} | {p} | {f} | {s} | {d} | {c:.2f}% |".format(
+        "| Fast (unit) | {total} | {p} | {f} | {s} | {d} | {c:.2f}% |".format(
             total=fast_stats.total,
             p=fast_stats.passed,
             f=fast_stats.failed,
