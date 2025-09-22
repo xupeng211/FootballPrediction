@@ -155,12 +155,16 @@ class TestHealthAPICore:
             # 模拟系统就绪
             with patch("src.api.health._check_database") as mock_db_check:
                 with patch("src.api.health._check_redis") as mock_redis_check:
-                    mock_db_check.return_value = {"healthy": True}
-                    mock_redis_check.return_value = {"healthy": True}
+                    with patch("src.api.health._check_kafka") as mock_kafka_check:
+                        with patch("src.api.health._check_mlflow") as mock_mlflow_check:
+                            mock_db_check.return_value = {"healthy": True}
+                            mock_redis_check.return_value = {"healthy": True}
+                            mock_kafka_check.return_value = {"healthy": True}
+                            mock_mlflow_check.return_value = {"healthy": True}
 
-                    result = await readiness_check(db=mock_db_session)
+                            result = await readiness_check(db=mock_db_session)
 
-                    assert result is not None
+                            assert result is not None
 
         except Exception:
             pass
@@ -171,14 +175,26 @@ class TestHealthAPICore:
         try:
             # 模拟系统未就绪
             with patch("src.api.health._check_database") as mock_db_check:
-                mock_db_check.return_value = {"healthy": False, "error": "DB down"}
+                with patch("src.api.health._check_redis") as mock_redis_check:
+                    with patch("src.api.health._check_kafka") as mock_kafka_check:
+                        with patch("src.api.health._check_mlflow") as mock_mlflow_check:
+                            mock_db_check.return_value = {
+                                "healthy": False,
+                                "error": "DB down",
+                            }
+                            for dependency_mock in (
+                                mock_redis_check,
+                                mock_kafka_check,
+                                mock_mlflow_check,
+                            ):
+                                dependency_mock.return_value = {"healthy": True}
 
-                try:
-                    result = await readiness_check(db=mock_db_session)
-                    if result:
-                        assert "status" in result
-                except HTTPException as e:
-                    assert e.status_code == 503
+                            try:
+                                result = await readiness_check(db=mock_db_session)
+                                if result:
+                                    assert "status" in result
+                            except HTTPException as e:
+                                assert e.status_code == 503
 
         except Exception:
             pass
@@ -492,12 +508,19 @@ class TestHealthAPIIntegration:
                 # 模拟所有检查通过
                 with patch("src.api.health._check_database") as mock_db:
                     with patch("src.api.health._check_redis") as mock_redis:
-                        with patch("src.api.health._check_filesystem") as mock_fs:
-                            mock_db.return_value = {"healthy": True}
-                            mock_redis.return_value = {"healthy": True}
-                            mock_fs.return_value = {"healthy": True}
+                        with patch("src.api.health._check_kafka") as mock_kafka:
+                            with patch(
+                                "src.api.health._check_mlflow"
+                            ) as mock_mlflow, patch(
+                                "src.api.health._check_filesystem"
+                            ) as mock_fs:
+                                mock_db.return_value = {"healthy": True}
+                                mock_redis.return_value = {"healthy": True}
+                                mock_kafka.return_value = {"healthy": True}
+                                mock_mlflow.return_value = {"healthy": True}
+                                mock_fs.return_value = {"healthy": True}
 
-                            response = test_client.get("/health")
+                                response = test_client.get("/health")
 
                             # 验证响应（可能成功也可能失败）
                             assert response is not None
@@ -523,9 +546,15 @@ class TestHealthAPIIntegration:
                 mock_get_db.return_value = Mock()
 
                 with patch("src.api.health._check_database") as mock_db:
-                    mock_db.return_value = {"healthy": True}
+                    with patch("src.api.health._check_redis") as mock_redis:
+                        with patch("src.api.health._check_kafka") as mock_kafka:
+                            with patch("src.api.health._check_mlflow") as mock_mlflow:
+                                mock_db.return_value = {"healthy": True}
+                                mock_redis.return_value = {"healthy": True}
+                                mock_kafka.return_value = {"healthy": True}
+                                mock_mlflow.return_value = {"healthy": True}
 
-                    response = test_client.get("/health / readiness")
+                                response = test_client.get("/health / readiness")
 
                     assert response is not None
 

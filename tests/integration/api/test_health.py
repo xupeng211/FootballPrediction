@@ -16,9 +16,9 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.integration
-
 from src.api.health import router
+
+pytestmark = pytest.mark.integration
 
 
 class TestHealthCheckAPI:
@@ -53,7 +53,28 @@ class TestHealthCheckAPI:
     @pytest.mark.asyncio
     async def test_basic_health_check_success(self, test_client):
         """测试基础健康检查成功"""
-        response = test_client.get("/health")
+        with patch("src.api.health._check_database") as mock_db, patch(
+            "src.api.health._check_redis"
+        ) as mock_redis, patch("src.api.health._check_kafka") as mock_kafka, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_mlflow, patch(
+            "src.api.health._check_filesystem"
+        ) as mock_fs:
+            for dependency_mock in (
+                mock_db,
+                mock_redis,
+                mock_kafka,
+                mock_mlflow,
+                mock_fs,
+            ):
+                dependency_mock.return_value = {
+                    "healthy": True,
+                    "status": "healthy",
+                    "response_time_ms": 1.0,
+                    "details": {"message": "OK"},
+                }
+
+            response = test_client.get("/health")
 
         # 健康检查可能返回503如果依赖服务不可用
         assert response.status_code in [200, 503]
@@ -88,6 +109,10 @@ class TestHealthCheckAPI:
         with patch("src.api.health._check_database") as mock_db_check, patch(
             "src.api.health._check_redis"
         ) as mock_redis_check, patch(
+            "src.api.health._check_kafka"
+        ) as mock_kafka_check, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_mlflow_check, patch(
             "src.api.health._check_filesystem"
         ) as mock_fs_check:
             mock_db_check.return_value = {
@@ -99,6 +124,26 @@ class TestHealthCheckAPI:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 20,
+            }
+            mock_kafka_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 15,
+            }
+            mock_mlflow_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 18,
+            }
+            mock_kafka_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 15,
+            }
+            mock_mlflow_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 18,
             }
             mock_fs_check.return_value = {
                 "healthy": True,
@@ -114,6 +159,8 @@ class TestHealthCheckAPI:
             assert result["status"] == "healthy"
             assert result["checks"]["database"]["status"] == "healthy"
             assert result["checks"]["redis"]["status"] == "healthy"
+            assert result["checks"]["kafka"]["status"] == "healthy"
+            assert result["checks"]["mlflow"]["status"] == "healthy"
             assert result["checks"]["filesystem"]["status"] == "healthy"
 
     @pytest.mark.asyncio
@@ -122,6 +169,10 @@ class TestHealthCheckAPI:
         with patch("src.api.health._check_database") as mock_db_check, patch(
             "src.api.health._check_redis"
         ) as mock_redis_check, patch(
+            "src.api.health._check_kafka"
+        ) as mock_kafka_check, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_mlflow_check, patch(
             "src.api.health._check_filesystem"
         ) as mock_fs_check:
             mock_db_check.return_value = {
@@ -133,6 +184,16 @@ class TestHealthCheckAPI:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 20,
+            }
+            mock_kafka_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 15,
+            }
+            mock_mlflow_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 18,
             }
             mock_fs_check.return_value = {
                 "healthy": True,
@@ -156,6 +217,10 @@ class TestHealthCheckAPI:
         with patch("src.api.health._check_database") as mock_db_check, patch(
             "src.api.health._check_redis"
         ) as mock_redis_check, patch(
+            "src.api.health._check_kafka"
+        ) as mock_kafka_check, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_mlflow_check, patch(
             "src.api.health._check_filesystem"
         ) as mock_fs_check:
             mock_db_check.return_value = {
@@ -167,6 +232,16 @@ class TestHealthCheckAPI:
                 "healthy": False,
                 "status": "unhealthy",
                 "error": "Redis unavailable",
+            }
+            mock_kafka_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 15,
+            }
+            mock_mlflow_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 18,
             }
             mock_fs_check.return_value = {
                 "healthy": True,
@@ -190,6 +265,10 @@ class TestHealthCheckAPI:
         with patch("src.api.health._check_database") as mock_db_check, patch(
             "src.api.health._check_redis"
         ) as mock_redis_check, patch(
+            "src.api.health._check_kafka"
+        ) as mock_kafka_check, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_mlflow_check, patch(
             "src.api.health._check_filesystem"
         ) as mock_fs_check:
             mock_db_check.return_value = {
@@ -201,6 +280,16 @@ class TestHealthCheckAPI:
                 "healthy": False,
                 "status": "unhealthy",
                 "error": "Redis down",
+            }
+            mock_kafka_check.return_value = {
+                "healthy": False,
+                "status": "unhealthy",
+                "error": "Kafka down",
+            }
+            mock_mlflow_check.return_value = {
+                "healthy": False,
+                "status": "unhealthy",
+                "error": "MLflow down",
             }
             mock_fs_check.return_value = {
                 "healthy": False,
@@ -216,6 +305,8 @@ class TestHealthCheckAPI:
             assert result["detail"]["status"] == "unhealthy"
             assert result["detail"]["checks"]["database"]["status"] == "unhealthy"
             assert result["detail"]["checks"]["redis"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["kafka"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["mlflow"]["status"] == "unhealthy"
 
 
 class TestDatabaseHealthCheck:
@@ -441,11 +532,28 @@ class TestHealthEndpoints:
         test_client.app.dependency_overrides[get_db_session] = lambda: mock_session
 
         try:
-            response = test_client.get("/health/readiness")
+            with patch("src.api.health._check_database") as mock_db, patch(
+                "src.api.health._check_redis"
+            ) as mock_redis, patch("src.api.health._check_kafka") as mock_kafka, patch(
+                "src.api.health._check_mlflow"
+            ) as mock_mlflow:
+                for dependency_mock in (
+                    mock_db,
+                    mock_redis,
+                    mock_kafka,
+                    mock_mlflow,
+                ):
+                    dependency_mock.return_value = {
+                        "healthy": True,
+                        "status": "healthy",
+                        "details": {"message": "OK"},
+                    }
 
-            assert response.status_code == 200
-            data = response.json()
-            assert data["ready"] is True
+                response = test_client.get("/health/readiness")
+
+                assert response.status_code == 200
+                data = response.json()
+                assert data["ready"] is True
         finally:
             # Clean up the override
             test_client.app.dependency_overrides.clear()
@@ -463,12 +571,22 @@ class TestHealthEndpoints:
         test_client.app.dependency_overrides[get_db_session] = lambda: mock_session
 
         try:
-            with patch("src.api.health._check_database") as mock_db:
+            with patch("src.api.health._check_database") as mock_db, patch(
+                "src.api.health._check_redis"
+            ) as mock_redis, patch("src.api.health._check_kafka") as mock_kafka, patch(
+                "src.api.health._check_mlflow"
+            ) as mock_mlflow:
                 mock_db.return_value = {
                     "healthy": False,
                     "status": "unhealthy",
                     "error": "DB down",
                 }
+                for dependency_mock in (mock_redis, mock_kafka, mock_mlflow):
+                    dependency_mock.return_value = {
+                        "healthy": True,
+                        "status": "healthy",
+                        "details": {"message": "OK"},
+                    }
 
                 response = test_client.get("/health/readiness")
 
