@@ -1,6 +1,11 @@
 name: Model Performance Reports
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/model_reports.yml'
   schedule:
     # 每天早上 8:00 UTC (北京时间 16:00) 生成报表
     - cron: '0 8 * * *'
