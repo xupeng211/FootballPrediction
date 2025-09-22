@@ -111,7 +111,7 @@ jobs:
       continue-on-error: true
 
     - name: 运行自动重训练评估
-      if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_retrain == 'true')
+      if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && env.INPUT_FORCE_RETRAIN == 'true')
       run: |
         python scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days "$REPORT_DAYS" --verbose
       continue-on-error: true
