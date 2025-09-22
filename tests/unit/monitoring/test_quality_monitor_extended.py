@@ -25,9 +25,7 @@ def mock_db_manager():
 def quality_monitor(mock_db_manager):
     """Returns a mocked instance of the QualityMonitor."""
     with pytest.MonkeyPatch.context() as m:
-        m.setattr(
-            "src.monitoring.quality_monitor.DatabaseManager", lambda: mock_db_manager[0]
-        )
+        m.setattr("src.database.connection.DatabaseManager", lambda: mock_db_manager[0])
         monitor = QualityMonitor()
         yield monitor, mock_db_manager[1]
 

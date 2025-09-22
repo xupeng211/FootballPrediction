@@ -428,7 +428,7 @@ class TestErrorHandling:
         try:
             _ = {  # incomplete_data unused but kept for documentation
                 "match_id": 123,
-                "home_team_id": 1
+                "home_team_id": 1,
                 # 缺少away_team_id
             }
 

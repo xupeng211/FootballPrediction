@@ -46,7 +46,7 @@ class FootballFeatureStore:
         project_name: str = "football_prediction",
         repo_path: Optional[str] = None,
         postgres_config: Optional[Dict[str, Any]] = None,
-        redis_config: Optional[Dict[str, Any]] = None
+        redis_config: Optional[Dict[str, Any]] = None,
     ):
         """
         初始化特征仓库
@@ -60,7 +60,10 @@ class FootballFeatureStore:
         self.project_name = project_name
         # Use tempfile.mkdtemp for secure temporary directory creation
         import tempfile
-        self.repo_path = Path(repo_path or tempfile.mkdtemp(prefix=f"feast_repo_{project_name}_"))
+
+        self.repo_path = Path(
+            repo_path or tempfile.mkdtemp(prefix=f"feast_repo_{project_name}_")
+        )
         self.logger = logging.getLogger(f"feature_store.{self.__class__.__name__}")
 
         # 默认配置
@@ -69,7 +72,7 @@ class FootballFeatureStore:
             "port": int(os.getenv("DB_PORT", 5432)),
             "database": os.getenv("DB_NAME", "football_prediction_dev"),
             "user": os.getenv("DB_READER_USER", "football_reader"),
-            "password": os.getenv("DB_READER_PASSWORD", "reader_password_2025")
+            "password": os.getenv("DB_READER_PASSWORD", "reader_password_2025"),
         }
 
         self.redis_config = redis_config or {
@@ -95,13 +98,13 @@ class FootballFeatureStore:
                     port=self.postgres_config["port"],
                     database=self.postgres_config["database"],
                     user=self.postgres_config["user"],
-                    password=self.postgres_config["password"]
+                    password=self.postgres_config["password"],
                 ),
                 online_store=RedisOnlineStoreConfig(
                     type="redis",
-                    connection_string=self.redis_config["connection_string"]
+                    connection_string=self.redis_config["connection_string"],
                 ),
-                entity_key_serialization_version=2
+                entity_key_serialization_version=2,
             )
 
             # 写入配置文件
@@ -129,7 +132,6 @@ class FootballFeatureStore:
                 # 实体
                 match_entity,
                 team_entity,
-
                 # 特征视图
                 match_features_view,
                 team_recent_stats_view,
@@ -150,7 +152,7 @@ class FootballFeatureStore:
         self,
         feature_view_name: str,
         df: pd.DataFrame,
-        timestamp_column: str = "event_timestamp"
+        timestamp_column: str = "event_timestamp",
     ) -> None:
         """
         写入特征数据到特征仓库
@@ -173,9 +175,7 @@ class FootballFeatureStore:
 
             # 写入特征数据
             self._store.push(
-                push_source_name=feature_view_name,
-                df=df,
-                to="online_and_offline"
+                push_source_name=feature_view_name, df=df, to="online_and_offline"
             )
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
@@ -185,9 +185,7 @@ class FootballFeatureStore:
             raise
 
     def get_online_features(
-        self,
-        feature_service_name: str,
-        entity_df: pd.DataFrame
+        self, feature_service_name: str, entity_df: pd.DataFrame
     ) -> pd.DataFrame:
         """
         获取在线特征数据（用于实时预测）
@@ -208,8 +206,7 @@ class FootballFeatureStore:
 
             # 获取在线特征
             feature_vector = self._store.get_online_features(
-                features=feature_service,
-                entity_rows=entity_df.to_dict("records")
+                features=feature_service, entity_rows=entity_df.to_dict("records")
             )
 
             return feature_vector.to_df()
@@ -222,7 +219,7 @@ class FootballFeatureStore:
         self,
         feature_service_name: str,
         entity_df: pd.DataFrame,
-        full_feature_names: bool = False
+        full_feature_names: bool = False,
     ) -> pd.DataFrame:
         """
         获取历史特征数据（用于模型训练）
@@ -246,7 +243,7 @@ class FootballFeatureStore:
             training_df = self._store.get_historical_features(
                 entity_df=entity_df,
                 features=feature_service,
-                full_feature_names=full_feature_names
+                full_feature_names=full_feature_names,
             )
 
             return training_df.to_df()
@@ -259,7 +256,7 @@ class FootballFeatureStore:
         self,
         start_date: datetime,
         end_date: datetime,
-        match_ids: Optional[List[int]] = None
+        match_ids: Optional[List[int]] = None,
     ) -> pd.DataFrame:
         """
         创建训练数据集
@@ -277,19 +274,23 @@ class FootballFeatureStore:
             entity_data = []
             if match_ids:
                 for match_id in match_ids:
-                    entity_data.append({
-                        "match_id": match_id,
-                        "event_timestamp": end_date  # 使用结束时间作为特征时间点
-                    })
+                    entity_data.append(
+                        {
+                            "match_id": match_id,
+                            "event_timestamp": end_date,  # 使用结束时间作为特征时间点
+                        }
+                    )
             else:
                 # 如果没有指定比赛ID，从数据库获取时间范围内的比赛
                 # TODO: 实现从数据库查询比赛的逻辑
                 # 这里提供一个示例
                 for i in range(1, 100):  # 示例：100场比赛
-                    entity_data.append({
-                        "match_id": i,
-                        "event_timestamp": start_date + timedelta(days=i % 30)
-                    })
+                    entity_data.append(
+                        {
+                            "match_id": i,
+                            "event_timestamp": start_date + timedelta(days=i % 30),
+                        }
+                    )
 
             entity_df = pd.DataFrame(entity_data)
 
@@ -297,7 +298,7 @@ class FootballFeatureStore:
             training_df = self.get_historical_features(
                 feature_service_name="match_prediction_v1",
                 entity_df=entity_df,
-                full_feature_names=True
+                full_feature_names=True,
             )
 
             self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
@@ -331,7 +332,7 @@ class FootballFeatureStore:
                 "feature_names": [f.name for f in feature_view.features],
                 "entities": [e.name for e in feature_view.entities],
                 "ttl_days": feature_view.ttl.days if feature_view.ttl else None,
-                "tags": feature_view.tags
+                "tags": feature_view.tags,
             }
 
             return stats
@@ -357,14 +358,16 @@ class FootballFeatureStore:
             feature_views = self._store.list_feature_views()
             for fv in feature_views:
                 for feature in fv.features:
-                    features_list.append({
-                        "feature_view": fv.name,
-                        "feature_name": feature.name,
-                        "feature_type": feature.dtype.name,
-                        "description": feature.description or "",
-                        "entities": [e.name for e in fv.entities],
-                        "tags": fv.tags
-                    })
+                    features_list.append(
+                        {
+                            "feature_view": fv.name,
+                            "feature_name": feature.name,
+                            "feature_type": feature.dtype.name,
+                            "description": feature.description or "",
+                            "entities": [e.name for e in fv.entities],
+                            "tags": fv.tags,
+                        }
+                    )
 
             return features_list
 
@@ -422,7 +425,7 @@ def initialize_feature_store(
     project_name: str = "football_prediction",
     repo_path: Optional[str] = None,
     postgres_config: Optional[Dict[str, Any]] = None,
-    redis_config: Optional[Dict[str, Any]] = None
+    redis_config: Optional[Dict[str, Any]] = None,
 ) -> FootballFeatureStore:
     """
     初始化全局特征仓库实例
@@ -441,7 +444,7 @@ def initialize_feature_store(
         project_name=project_name,
         repo_path=repo_path,
         postgres_config=postgres_config,
-        redis_config=redis_config
+        redis_config=redis_config,
     )
     _feature_store.initialize()
     _feature_store.apply_features()

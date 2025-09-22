@@ -28,9 +28,7 @@ def mock_db_manager():
 def quality_monitor(mock_db_manager):
     """Returns a mocked instance of the QualityMonitor."""
     with pytest.MonkeyPatch.context() as m:
-        m.setattr(
-            "src.monitoring.quality_monitor.DatabaseManager", lambda: mock_db_manager[0]
-        )
+        m.setattr("src.database.connection.DatabaseManager", lambda: mock_db_manager[0])
         monitor = QualityMonitor()
         yield monitor, mock_db_manager[1]
 
@@ -78,6 +76,19 @@ class TestQualityMonitor:
             assert isinstance(results["matches"], DataFreshnessResult)
 
     @pytest.mark.asyncio
+    async def test_check_data_freshness_failure_fallback(self, quality_monitor):
+        """当内部检查失败时返回默认失败结果"""
+        monitor, _ = quality_monitor
+        with patch.object(
+            monitor, "_check_table_freshness", side_effect=RuntimeError("boom")
+        ):
+            results = await monitor.check_data_freshness(["matches"])
+            fallback = results["matches"]
+            assert fallback.is_fresh is False
+            assert fallback.records_count == 0
+            assert fallback.freshness_hours == 999999
+
+    @pytest.mark.asyncio
     async def test_check_data_completeness_basic(self, quality_monitor):
         """测试基本数据完整性检查"""
         monitor, _ = quality_monitor
@@ -94,6 +105,16 @@ class TestQualityMonitor:
             results = await monitor.check_data_completeness(["matches"])
             assert "matches" in results
             assert isinstance(results["matches"], DataCompletenessResult)
+
+    @pytest.mark.asyncio
+    async def test_check_data_completeness_handles_error(self, quality_monitor):
+        """当完整性检查抛出异常时记录错误"""
+        monitor, _ = quality_monitor
+        with patch.object(
+            monitor, "_check_table_completeness", side_effect=RuntimeError("fail")
+        ):
+            results = await monitor.check_data_completeness(["matches"])
+            assert results == {}
 
     @pytest.mark.asyncio
     async def test_check_data_consistency_basic(self, quality_monitor):
@@ -143,6 +164,19 @@ class TestQualityMonitor:
             assert isinstance(result, dict)
             assert "overall_score" in result
 
+    @pytest.mark.asyncio
+    async def test_calculate_overall_quality_score_handles_exception(
+        self, quality_monitor
+    ):
+        """当子检查失败时返回错误信息"""
+        monitor, _ = quality_monitor
+        with patch.object(
+            monitor, "check_data_freshness", side_effect=RuntimeError("boom")
+        ):
+            result = await monitor.calculate_overall_quality_score()
+            assert result["overall_score"] == 0
+            assert "error" in result
+
     def test_get_quality_level(self, quality_monitor):
         """测试质量等级判断"""
         monitor, _ = quality_monitor
@@ -151,6 +185,20 @@ class TestQualityMonitor:
         assert monitor._get_quality_level(75) == "一般"
         assert monitor._get_quality_level(60) == "较差"
         assert monitor._get_quality_level(40) == "很差"
+
+    def test_generate_quality_recommendations_alerts(self, quality_monitor):
+        """低评分时应生成改进建议"""
+        monitor, _ = quality_monitor
+        quality_data = {
+            "freshness_score": 70,
+            "completeness_score": 80,
+            "consistency_score": 85,
+            "overall_score": 65,
+        }
+        suggestions = monitor._generate_quality_recommendations(quality_data)
+        assert any("新鲜度" in note for note in suggestions)
+        assert any("完整性" in note for note in suggestions)
+        assert any("整体数据质量" in note for note in suggestions)
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_basic(self, quality_monitor):

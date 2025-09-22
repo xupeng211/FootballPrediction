@@ -1,10 +1,42 @@
 """
-数据质量监控器
+数据质量监控器 / Data Quality Monitor
 
 负责监控数据新鲜度、缺失率、完整性等数据质量指标。
 支持实时监控、历史趋势分析、质量评分计算等功能。
 
-基于 DATA_DESIGN.md 数据质量监控设计。
+Responsible for monitoring data quality metrics such as freshness, missing rates, and completeness.
+Supports real-time monitoring, historical trend analysis, and quality score calculation.
+
+主要类 / Main Classes:
+    QualityMonitor: 数据质量监控主类 / Main data quality monitoring class
+    DataFreshnessResult: 数据新鲜度检查结果 / Data freshness check result
+    DataCompletenessResult: 数据完整性检查结果 / Data completeness check result
+
+主要方法 / Main Methods:
+    QualityMonitor.check_data_freshness(): 检查数据新鲜度 / Check data freshness
+    QualityMonitor.check_data_completeness(): 检查数据完整性 / Check data completeness
+    QualityMonitor.calculate_overall_quality_score(): 计算总体质量评分 / Calculate overall quality score
+
+使用示例 / Usage Example:
+    ```python
+    from src.monitoring.quality_monitor import QualityMonitor
+
+    # 创建监控器实例
+    monitor = QualityMonitor()
+
+    # 检查数据新鲜度
+    freshness_results = await monitor.check_data_freshness()
+
+    # 检查数据完整性
+    completeness_results = await monitor.check_data_completeness()
+
+    # 计算总体质量评分
+    quality_score = await monitor.calculate_overall_quality_score()
+    ```
+
+依赖 / Dependencies:
+    - sqlalchemy: 数据库查询 / Database queries
+    - src.database.connection: 数据库连接管理 / Database connection management
 """
 
 import logging
@@ -14,7 +46,6 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func, quoted_name, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import DatabaseManager
 from src.database.models.match import Match
 from src.database.models.odds import Odds
 from src.database.models.predictions import Predictions
@@ -107,7 +138,7 @@ class DataCompletenessResult:
 
 class QualityMonitor:
     """
-    数据质量监控器主类
+    数据质量监控器主类 / Data Quality Monitor Main Class
 
     提供以下监控功能：
     - 数据新鲜度监控
@@ -115,11 +146,38 @@ class QualityMonitor:
     - 数据一致性验证
     - 质量评分计算
     - 历史趋势分析
+
+    Provides the following monitoring functions:
+    - Data freshness monitoring
+    - Data completeness checking
+    - Data consistency verification
+    - Quality score calculation
+    - Historical trend analysis
+
+    Example:
+        ```python
+        from src.monitoring.quality_monitor import QualityMonitor
+
+        # 创建监控器实例
+        monitor = QualityMonitor()
+
+        # 检查特定表的新鲜度
+        freshness_results = await monitor.check_data_freshness(["matches", "odds"])
+
+        # 检查所有表的完整性
+        completeness_results = await monitor.check_data_completeness()
+
+        # 计算总体质量评分
+        overall_score = await monitor.calculate_overall_quality_score()
+        ```
+
+    Note:
+        基于DATA_DESIGN.md数据质量监控设计。
+        Based on DATA_DESIGN.md data quality monitoring design.
     """
 
     def __init__(self):
         """初始化数据质量监控器"""
-        self.db_manager = DatabaseManager()
 
         # 数据新鲜度阈值配置（小时）
         self.freshness_thresholds = {
@@ -138,19 +196,57 @@ class QualityMonitor:
             "teams": ["team_name", "league_id"],
         }
 
+        # 初始化数据库管理器
+        from src.database.connection import DatabaseManager
+
+        self.db_manager = DatabaseManager()
+
         logger.info("数据质量监控器初始化完成")
 
     async def check_data_freshness(
         self, table_names: Optional[List[str]] = None
     ) -> Dict[str, DataFreshnessResult]:
         """
-        检查数据新鲜度
+        检查数据新鲜度 / Check Data Freshness
+
+        检查指定表或所有配置表的数据新鲜度，基于最后更新时间计算。
+        Check data freshness for specified tables or all configured tables,
+        calculated based on last update time.
 
         Args:
-            table_names: 要检查的表名列表，为空时检查所有配置的表
+            table_names (Optional[List[str]]): 要检查的表名列表，为空时检查所有配置的表 /
+                                              List of table names to check, checks all configured tables if empty
+                Defaults to None
 
         Returns:
-            Dict[str, DataFreshnessResult]: 各表的新鲜度检查结果
+            Dict[str, DataFreshnessResult]: 各表的新鲜度检查结果 / Freshness check results for each table
+                Keys are table names, values are DataFreshnessResult objects
+
+        Raises:
+            Exception: 当数据库查询发生错误时抛出 / Raised when database query fails
+
+        Example:
+            ```python
+            from src.monitoring.quality_monitor import QualityMonitor
+
+            monitor = QualityMonitor()
+
+            # 检查所有表的新鲜度
+            results = await monitor.check_data_freshness()
+
+            # 检查特定表的新鲜度
+            results = await monitor.check_data_freshness(["matches", "odds"])
+
+            for table_name, result in results.items():
+                if result.is_fresh:
+                    print(f"表 {table_name} 数据新鲜 (更新于 {result.freshness_hours} 小时前)")
+                else:
+                    print(f"表 {table_name} 数据过期 (更新于 {result.freshness_hours} 小时前)")
+            ```
+
+        Note:
+            新鲜度阈值在__init__方法中配置。
+            Freshness thresholds are configured in the __init__ method.
         """
         if table_names is None:
             table_names = list(self.freshness_thresholds.keys())

@@ -39,6 +39,66 @@
 
 ---
 
+## 🗂️ 测试套件分类与执行
+
+- **单元测试目录**: `tests/unit/`
+- **集成测试目录**: `tests/integration/`
+- **标记约定**: `unit` 代表纯单测（无外部依赖），`integration` 代表依赖数据库/API/Kafka 等外部服务，`slow` 用于标记 >100ms 的慢测试。
+- **Slow 场景说明**: Redis 健康检查相关用例（如 `tests/unit/api/test_api_health_enhanced.py`）由于真实等待成本，已标记为 `@pytest.mark.slow`，默认不随快速单测一起执行。
+
+```bash
+# 快速单测（排除 slow）
+pytest tests/unit -m "unit and not slow"
+
+# 单独运行慢测试（包括 Redis 健康检查等）
+pytest tests/unit -m "slow"
+```
+
+
+```bash
+# 仅跑单元测试（快速反馈）
+pytest tests/unit -m "unit and not slow"
+
+# 跑集成测试
+pytest tests/integration -m "integration"
+```
+
+## CI/CD 流程
+
+- **Pull Request**: GitHub Actions 触发 `unit-fast` job，执行 `make check-deps` + 安装依赖，并运行 `pytest tests/unit -m "unit and not slow" --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml`，确保反馈时间 <2 分钟（pytest.ini 已设置 `--cov-fail-under=70` 阈值）。
+- **Push 到 main / Nightly**: 触发 `slow-suite` job，在同样的依赖初始化后运行慢测试 (`pytest tests/unit -m "slow"`) 与集成测试 (`pytest tests/integration -m "integration"`)，覆盖外部依赖场景。
+- **本地复现**: 与 CI 保持一致，先执行 `make check-deps` + `pip install -r requirements.txt -r requirements-dev.txt`，随后按需运行快速或慢测试命令。
+
+- **Nightly 报告**: Nightly job 会解析测试日志并更新 `docs/CI_REPORT.md`，并自动提交到仓库；报告包含最新的快/慢测试覆盖率总览（TOTAL 覆盖率）、趋势表与折线图，并附带覆盖率一致性验证结果。
+
+## ⚡ 测试性能优化
+
+- Mock 掉阻塞性的 `asyncio.sleep` / `time.sleep` 调用，覆盖 `tests/unit/utils/test_retry.py`, `tests/unit/cache/test_ttl_cache.py`, `tests/unit/models/test_prediction_service_caching.py` 等核心耗时用例，保持原有断言逻辑不变。
+- 单元测试套件运行时间显著下降（`pytest tests/unit -m "unit and not slow"`），CI 沙箱环境下可稳定完成，无需额外等待窗口。
+
+## 🧩 依赖校验
+
+- 在本地或 CI 执行测试前运行 `make check-deps`，快速确认当前环境已安装 `requirements*.txt` 中声明的依赖。
+- 脚本会列出缺失项并提示安装命令（例如 `[MISSING DEP] prometheus_client is not installed. Run: pip install prometheus_client`），修复后再次运行即可通过校验。
+
+### 依赖管理规范
+
+- 运行时依赖（生产环境需要的库）统一维护在 `requirements.txt`，例如 `fastapi`, `openlineage-python`, `openlineage-sql`。
+- 开发与测试依赖（pytest、coverage、prometheus_client 等）统一维护在 `requirements-dev.txt`，保持与 CI/CD、Dockerfile 中 `pip install -r requirements.txt -r requirements-dev.txt` 的流程一致。
+- 新增依赖时同步更新上述文件，并通过 `make check-deps` 进行验证。
+
+### 慢测试分层
+
+- 将执行时间 ≥5 秒的用例标记为 `@pytest.mark.slow`（如 `tests/unit/test_data_collection_tasks_comprehensive.py`、`tests/unit/api/test_health_core.py`），确保默认单测集合保持快速。
+- 快速单元测试：`pytest tests/unit -m "unit and not slow"`
+- 专门运行慢测试：`pytest tests/unit -m "slow"`
+
+### CI/CD 执行顺序
+
+1. 运行 `make check-deps` 校验依赖是否完整。
+2. 执行 `pip install -r requirements.txt -r requirements-dev.txt` 安装运行时与测试依赖。
+3. 按需运行快速单测或慢测试套件，保证与本地体验一致。
+
 ## 🏗️ 测试分层设计
 
 ### 1️⃣ 单元测试（Unit Test）- 基础保障层

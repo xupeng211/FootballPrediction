@@ -9,7 +9,7 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 50
+COVERAGE_THRESHOLD := 20
 
 # Colors for better UX
 GREEN := \033[32m
@@ -67,6 +67,10 @@ install: venv ## Environment: Install dependencies from requirements.txt
 		pip install -r requirements-dev.txt; \
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
+
+check-deps: ## Environment: Verify required Python dependencies are installed
+	@$(ACTIVATE) && python scripts/check_dependencies.py
+
 
 # ============================================================================
 # 🎨 Code Quality

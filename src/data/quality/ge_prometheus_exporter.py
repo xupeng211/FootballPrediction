@@ -47,68 +47,70 @@ class GEPrometheusExporter:
         """定义Prometheus指标"""
         # 数据质量检查通过率 (百分比)
         self.data_quality_success_rate = Gauge(
-            'football_data_quality_check_success_rate',
-            'Data quality check success rate percentage',
-            ['table_name', 'suite_name'],
-            registry=self.registry
+            "football_data_quality_check_success_rate",
+            "Data quality check success rate percentage",
+            ["table_name", "suite_name"],
+            registry=self.registry,
         )
 
         # 总断言数量
         self.expectations_total = Gauge(
-            'football_data_quality_expectations_total',
-            'Total number of data quality expectations',
-            ['table_name', 'suite_name'],
-            registry=self.registry
+            "football_data_quality_expectations_total",
+            "Total number of data quality expectations",
+            ["table_name", "suite_name"],
+            registry=self.registry,
         )
 
         # 失败断言数量
         self.expectations_failed = Gauge(
-            'football_data_quality_expectations_failed',
-            'Number of failed data quality expectations',
-            ['table_name', 'suite_name', 'expectation_type'],
-            registry=self.registry
+            "football_data_quality_expectations_failed",
+            "Number of failed data quality expectations",
+            ["table_name", "suite_name", "expectation_type"],
+            registry=self.registry,
         )
 
         # 异常记录数量
         self.anomaly_records = Gauge(
-            'football_data_quality_anomaly_records',
-            'Number of anomalous records detected',
-            ['table_name', 'anomaly_type', 'severity'],
-            registry=self.registry
+            "football_data_quality_anomaly_records",
+            "Number of anomalous records detected",
+            ["table_name", "anomaly_type", "severity"],
+            registry=self.registry,
         )
 
         # 数据质量检查执行时间
         self.quality_check_duration = Histogram(
-            'football_data_quality_check_duration_seconds',
-            'Time spent on data quality checks',
-            ['table_name'],
-            registry=self.registry
+            "football_data_quality_check_duration_seconds",
+            "Time spent on data quality checks",
+            ["table_name"],
+            registry=self.registry,
         )
 
         # 数据新鲜度 (小时)
         self.data_freshness_hours = Gauge(
-            'football_data_freshness_hours',
-            'Hours since last data update',
-            ['table_name', 'data_type'],
-            registry=self.registry
+            "football_data_freshness_hours",
+            "Hours since last data update",
+            ["table_name", "data_type"],
+            registry=self.registry,
         )
 
         # 数据质量评分
         self.quality_score = Gauge(
-            'football_data_quality_score',
-            'Overall data quality score (0-100)',
-            ['table_name'],
-            registry=self.registry
+            "football_data_quality_score",
+            "Overall data quality score (0-100)",
+            ["table_name"],
+            registry=self.registry,
         )
 
         # GE验证结果信息
         self.validation_info = Info(
-            'football_data_quality_validation_info',
-            'Information about the latest data quality validation',
-            registry=self.registry
+            "football_data_quality_validation_info",
+            "Information about the latest data quality validation",
+            registry=self.registry,
         )
 
-    async def export_ge_validation_results(self, validation_results: Dict[str, Any]) -> None:
+    async def export_ge_validation_results(
+        self, validation_results: Dict[str, Any]
+    ) -> None:
         """
         导出GE验证结果到Prometheus指标
 
@@ -141,7 +143,9 @@ class GEPrometheusExporter:
             # 设置错误指标
             self._set_error_metrics(str(e))
 
-    async def _export_table_validation_result(self, table_result: Dict[str, Any]) -> None:
+    async def _export_table_validation_result(
+        self, table_result: Dict[str, Any]
+    ) -> None:
         """导出单表验证结果"""
         table_name = table_result.get("table_name", "unknown")
         suite_name = table_result.get("suite_name", "unknown")
@@ -152,13 +156,11 @@ class GEPrometheusExporter:
 
         # 设置Prometheus指标
         self.data_quality_success_rate.labels(
-            table_name=table_name,
-            suite_name=suite_name
+            table_name=table_name, suite_name=suite_name
         ).set(success_rate)
 
         self.expectations_total.labels(
-            table_name=table_name,
-            suite_name=suite_name
+            table_name=table_name, suite_name=suite_name
         ).set(total_expectations)
 
         # 处理失败的断言
@@ -168,7 +170,7 @@ class GEPrometheusExporter:
             self.expectations_failed.labels(
                 table_name=table_name,
                 suite_name=suite_name,
-                expectation_type=expectation_type
+                expectation_type=expectation_type,
             ).inc()
 
         # 设置数据质量评分
@@ -177,11 +179,11 @@ class GEPrometheusExporter:
 
         # 更新验证信息
         validation_info = {
-            'table_name': table_name,
-            'last_validation_time': table_result.get("validation_time", "unknown"),
-            'status': table_result.get("status", "unknown"),
-            'rows_checked': str(table_result.get("rows_checked", 0)),
-            'ge_validation_id': table_result.get("ge_validation_result_id", "unknown")
+            "table_name": table_name,
+            "last_validation_time": table_result.get("validation_time", "unknown"),
+            "status": table_result.get("status", "unknown"),
+            "rows_checked": str(table_result.get("rows_checked", 0)),
+            "ge_validation_id": table_result.get("ge_validation_result_id", "unknown"),
         }
         self.validation_info.info(validation_info)
 
@@ -209,7 +211,9 @@ class GEPrometheusExporter:
         except Exception as e:
             self.logger.error(f"导出总体统计失败: {str(e)}")
 
-    async def export_data_freshness_metrics(self, freshness_data: Dict[str, Any]) -> None:
+    async def export_data_freshness_metrics(
+        self, freshness_data: Dict[str, Any]
+    ) -> None:
         """
         导出数据新鲜度指标
 
@@ -222,20 +226,20 @@ class GEPrometheusExporter:
             # 导出赛程数据新鲜度
             if "fixtures" in details:
                 fixtures_data = details["fixtures"]
-                hours_since_update = fixtures_data.get("hours_since_update", float('inf'))
+                hours_since_update = fixtures_data.get(
+                    "hours_since_update", float("inf")
+                )
                 self.data_freshness_hours.labels(
-                    table_name="matches",
-                    data_type="fixtures"
-                ).set(hours_since_update if hours_since_update != float('inf') else 999)
+                    table_name="matches", data_type="fixtures"
+                ).set(hours_since_update if hours_since_update != float("inf") else 999)
 
             # 导出赔率数据新鲜度
             if "odds" in details:
                 odds_data = details["odds"]
-                hours_since_update = odds_data.get("hours_since_update", float('inf'))
+                hours_since_update = odds_data.get("hours_since_update", float("inf"))
                 self.data_freshness_hours.labels(
-                    table_name="odds",
-                    data_type="odds"
-                ).set(hours_since_update if hours_since_update != float('inf') else 999)
+                    table_name="odds", data_type="odds"
+                ).set(hours_since_update if hours_since_update != float("inf") else 999)
 
             self.logger.debug("数据新鲜度指标导出完成")
 
@@ -272,9 +276,7 @@ class GEPrometheusExporter:
             # 设置异常指标
             for (table_name, anomaly_type, severity), count in anomaly_stats.items():
                 self.anomaly_records.labels(
-                    table_name=table_name,
-                    anomaly_type=anomaly_type,
-                    severity=severity
+                    table_name=table_name, anomaly_type=anomaly_type, severity=severity
                 ).set(count)
 
             self.logger.debug(f"异常检测指标导出完成，共 {len(anomalies)} 个异常")
@@ -289,9 +291,9 @@ class GEPrometheusExporter:
 
         # 更新错误信息
         error_info = {
-            'status': 'error',
-            'error_message': error_message,
-            'error_time': datetime.now().isoformat()
+            "status": "error",
+            "error_message": error_message,
+            "error_time": datetime.now().isoformat(),
         }
         self.validation_info.info(error_info)
 
@@ -314,6 +316,7 @@ class GEPrometheusExporter:
 
             # 3. 运行数据新鲜度检查（使用现有的DataQualityMonitor）
             from .data_quality_monitor import DataQualityMonitor
+
             monitor = DataQualityMonitor()
 
             freshness_results = await monitor.check_data_freshness()
@@ -332,12 +335,11 @@ class GEPrometheusExporter:
                 "freshness_results": freshness_results,
                 "anomalies_count": len(anomalies),
                 "prometheus_export_status": "success",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.logger.info(
-                f"完整数据质量检查完成，耗时 {total_duration:.2f} 秒，"
-                f"检测到 {len(anomalies)} 个异常"
+                f"完整数据质量检查完成，耗时 {total_duration:.2f} 秒，" f"检测到 {len(anomalies)} 个异常"
             )
 
             return result_summary
@@ -349,7 +351,7 @@ class GEPrometheusExporter:
                 "execution_time": 0,
                 "prometheus_export_status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def get_current_metrics_summary(self) -> Dict[str, Any]:
@@ -370,10 +372,10 @@ class GEPrometheusExporter:
                     "football_data_quality_anomaly_records",
                     "football_data_quality_check_duration_seconds",
                     "football_data_freshness_hours",
-                    "football_data_quality_score"
+                    "football_data_quality_score",
                 ],
                 "registry_status": "active" if self.registry else "default",
-                "exporter_status": "ready"
+                "exporter_status": "ready",
             }
 
             return metrics_summary
@@ -383,5 +385,5 @@ class GEPrometheusExporter:
             return {
                 "timestamp": datetime.now().isoformat(),
                 "exporter_status": "error",
-                "error": str(e)
+                "error": str(e),
             }

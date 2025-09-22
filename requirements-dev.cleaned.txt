@@ -1,0 +1,57 @@
+# 开发工具 / Development Tools
+# Added version constraints to resolve CI conflicts
+numpy==1.26.4
+tenacity==8.5.0
+packaging==24.1
+ruamel.yaml==0.17.32
+
+black==24.8.0
+flake8==7.1.1
+mypy==1.11.1
+types-psutil==6.1.0.20240605
+isort==5.13.2
+
+# 测试工具 / Testing Tools
+pytest==8.3.2
+pytest-cov==5.0.0
+pytest-mock==3.14.0
+pytest-asyncio==0.23.8
+pytest-xdist==3.6.1
+
+# 代码质量工具 / Code Quality Tools
+bandit==1.7.9
+pbr==6.1.0  # bandit dependency
+ruff==0.6.3
+
+# 开发服务器（在开发环境Dockerfile中使用） / Development Server (used in development environment Dockerfile)
+uvicorn[standard]==0.30.6
+
+# 工厂模式测试数据 / Factory Pattern Test Data
+factory-boy==3.3.0
+
+# 文档生成 / Documentation Generation
+sphinx==7.4.7
+sphinx-rtd-theme==2.0.0
+
+# 数据库测试和开发工具 / Database Testing and Development Tools
+pytest-postgresql==6.0.1
+sqlalchemy-utils==0.41.2
+
+# API测试工具 / API Testing Tools
+httpx==0.27.0
+requests-mock==1.12.1
+
+# Jupyter notebook支持（用于数据分析和模型开发） / Jupyter Notebook Support (for data analysis and model development)
+jupyter==1.0.0
+ipykernel==6.29.5
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# 调试工具 / Debugging Tools
+pdbpp==0.10.3
+ipdb==0.13.13
+
+types-requests==2.32.0.20240712
+types-PyYAML==6.0.12.20240808
+types-cachetools==5.3.0.20240820
+types-croniter==5.0.1.20240718

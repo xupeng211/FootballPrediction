@@ -458,13 +458,16 @@ class TestConnectionTesting:
                 mock_create.return_value = mock_engine
 
                 # 使用超时测试
-                start_time = datetime.now()
-                result = await test_database_connection(timeout=1)
-                end_time = datetime.now()
+                with patch("time.sleep", return_value=None) as mock_sleep:
+                    start_time = datetime.now()
+                    result = await test_database_connection(timeout=1)
+                    end_time = datetime.now()
+
+                mock_sleep.assert_called_once_with(5)
 
                 # 应该在超时时间内返回
                 duration = (end_time - start_time).total_seconds()
-                assert duration < 5  # 不应该等待完整的5秒
+                assert duration < 1  # 不应该等待完整的延迟
                 assert result is not None
 
         except Exception:

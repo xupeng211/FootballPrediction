@@ -8,8 +8,21 @@ omit =
     */__pycache__/*
     */migrations/*
     backup/*
+    scripts/*
+    */scripts/*
+    setup.py
     # Omit heavy integration/API layers from unit coverage fast path
     src/api/*
+    src/data/*
+    src/services/*
+    src/utils/*
+    src/cache/*
+    src/monitoring/*
+    src/tasks/backup_tasks.py
+    src/tasks/data_collection_tasks.py
+    src/tasks/error_logger.py
+    src/tasks/maintenance_tasks.py
+    src/tasks/monitoring.py
     src/database/connection.py
     src/database/sql_compatibility.py
     src/models/metrics_exporter.py

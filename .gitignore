@@ -133,3 +133,9 @@ backup_before_fix/
 # 日志和缓存
 logs/
 =*
+
+# 无关文件配置
+clash_dns_fix.yaml
+clash_rules_patch.yaml
+tests/sedony8lS
+ting workflow documentation

@@ -97,13 +97,20 @@ class AuditLog(BaseModel):
 
     # 操作结果
     success = Column(
-        Boolean, nullable=False, default=True, server_default="true", comment="操作是否成功"
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="true",
+        comment="操作是否成功",
     )
     error_message = Column(Text, nullable=True, comment="错误信息")
 
     # 时间信息
     timestamp = Column(
-        DateTime(timezone=True), nullable=False, default=func.now(), comment="操作时间戳"
+        DateTime(timezone=True),
+        nullable=False,
+        default=func.now(),
+        comment="操作时间戳",
     )
     duration_ms = Column(Integer, nullable=True, comment="操作耗时（毫秒）")
 

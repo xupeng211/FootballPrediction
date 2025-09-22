@@ -35,7 +35,7 @@ class OddsCollector(DataCollector):
         api_key: Optional[str] = None,
         base_url: str = "https://api.the-odds-api.com/v4",
         time_window_minutes: int = 5,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化赔率采集器
@@ -64,7 +64,7 @@ class OddsCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped"
+            status="skipped",
         )
 
     async def collect_odds(
@@ -72,7 +72,7 @@ class OddsCollector(DataCollector):
         match_ids: Optional[List[str]] = None,
         bookmakers: Optional[List[str]] = None,
         markets: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> CollectionResult:
         """
         采集赔率数据
@@ -125,7 +125,9 @@ class OddsCollector(DataCollector):
                             # 时间窗口去重检查
                             odds_key = self._generate_odds_key(odds_data)
                             if odds_key in self._recent_odds_keys:
-                                self.logger.debug(f"Skipping duplicate odds: {odds_key}")
+                                self.logger.debug(
+                                    f"Skipping duplicate odds: {odds_key}"
+                                )
                                 continue
 
                             # 赔率变化检测
@@ -138,7 +140,9 @@ class OddsCollector(DataCollector):
                                     success_count += 1
                                 else:
                                     error_count += 1
-                                    error_messages.append(f"Invalid odds data: {odds_data}")
+                                    error_messages.append(
+                                        f"Invalid odds data: {odds_data}"
+                                    )
                             else:
                                 self.logger.debug(f"No odds change for: {odds_key}")
 
@@ -149,7 +153,9 @@ class OddsCollector(DataCollector):
 
                 except Exception as e:
                     error_count += 1
-                    error_messages.append(f"Error collecting match {match_id}: {str(e)}")
+                    error_messages.append(
+                        f"Error collecting match {match_id}: {str(e)}"
+                    )
                     self.logger.error(f"Error collecting match {match_id}: {str(e)}")
 
             # 保存到Bronze层原始数据表
@@ -173,7 +179,7 @@ class OddsCollector(DataCollector):
                 error_count=error_count,
                 status=status,
                 error_message="; ".join(error_messages[:5]) if error_messages else None,
-                collected_data=collected_data
+                collected_data=collected_data,
             )
 
             self.logger.info(
@@ -192,7 +198,7 @@ class OddsCollector(DataCollector):
                 success_count=0,
                 error_count=1,
                 status="failed",
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
@@ -203,7 +209,7 @@ class OddsCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped"
+            status="skipped",
         )
 
     async def _get_active_bookmakers(self) -> List[str]:
@@ -222,7 +228,7 @@ class OddsCollector(DataCollector):
                 "williamhill",
                 "betfair",
                 "unibet",
-                "marathonbet"
+                "marathonbet",
             ]
         except Exception as e:
             self.logger.error(f"Failed to get active bookmakers: {str(e)}")
@@ -253,10 +259,7 @@ class OddsCollector(DataCollector):
             self.logger.error(f"Failed to clean odds cache: {str(e)}")
 
     async def _collect_match_odds(
-        self,
-        match_id: str,
-        bookmakers: List[str],
-        markets: List[str]
+        self, match_id: str, bookmakers: List[str], markets: List[str]
     ) -> List[Dict[str, Any]]:
         """
         采集指定比赛的赔率数据
@@ -278,7 +281,7 @@ class OddsCollector(DataCollector):
                     "apiKey": self.api_key,
                     "markets": market,
                     "bookmakers": ",".join(bookmakers),
-                    "eventIds": match_id
+                    "eventIds": match_id,
                 }
 
                 response = await self._make_request(url=url, params=params)
@@ -293,7 +296,7 @@ class OddsCollector(DataCollector):
                                 "market_type": market_data.get("key"),
                                 "outcomes": market_data.get("outcomes", []),
                                 "last_update": market_data.get("last_update"),
-                                "event_data": event
+                                "event_data": event,
                             }
                             all_odds.append(odds_data)
 
@@ -315,16 +318,17 @@ class OddsCollector(DataCollector):
         # 基于比赛、博彩公司、市场类型、时间窗口生成键
         timestamp = datetime.now()
         time_window = timestamp.replace(
-            minute=(timestamp.minute // self.time_window_minutes) * self.time_window_minutes,
+            minute=(timestamp.minute // self.time_window_minutes)
+            * self.time_window_minutes,
             second=0,
-            microsecond=0
+            microsecond=0,
         )
 
         key_components = [
             str(odds_data.get("match_id", "")),
             str(odds_data.get("bookmaker", "")),
             str(odds_data.get("market_type", "")),
-            time_window.isoformat()
+            time_window.isoformat(),
         ]
 
         key_string = "|".join(key_components)
@@ -346,14 +350,18 @@ class OddsCollector(DataCollector):
             # 提取当前赔率值
             current_odds = {}
             for outcome in odds_data.get("outcomes", []):
-                current_odds[outcome.get("name", "")] = Decimal(str(outcome.get("price", 0)))
+                current_odds[outcome.get("name", "")] = Decimal(
+                    str(outcome.get("price", 0))
+                )
 
             # 与上次记录的值比较
             if odds_id in self._last_odds_values:
                 last_odds = self._last_odds_values[odds_id]
                 # 检查是否有任何赔率发生变化
                 for name, value in current_odds.items():
-                    if name not in last_odds or abs(last_odds[name] - value) > Decimal('0.01'):
+                    if name not in last_odds or abs(last_odds[name] - value) > Decimal(
+                        "0.01"
+                    ):
                         self._last_odds_values[odds_id] = current_odds
                         return True
                 return False
@@ -367,8 +375,7 @@ class OddsCollector(DataCollector):
             return True  # 出错时默认认为有变化
 
     async def _clean_odds_data(
-        self,
-        raw_odds: Dict[str, Any]
+        self, raw_odds: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """
         清洗和标准化赔率数据
@@ -390,10 +397,12 @@ class OddsCollector(DataCollector):
             for outcome in raw_odds.get("outcomes", []):
                 price = outcome.get("price")
                 if price and float(price) > 1.0:  # 赔率必须大于1
-                    cleaned_outcomes.append({
-                        "name": outcome.get("name"),
-                        "price": round(float(price), 3)  # 保留3位小数
-                    })
+                    cleaned_outcomes.append(
+                        {
+                            "name": outcome.get("name"),
+                            "price": round(float(price), 3),  # 保留3位小数
+                        }
+                    )
 
             if not cleaned_outcomes:
                 return None
@@ -406,7 +415,7 @@ class OddsCollector(DataCollector):
                 "last_update": raw_odds.get("last_update"),
                 "raw_data": raw_odds,
                 "collected_at": datetime.now().isoformat(),
-                "processed": False
+                "processed": False,
             }
 
             return cleaned_data

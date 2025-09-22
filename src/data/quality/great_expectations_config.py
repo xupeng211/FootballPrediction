@@ -44,7 +44,10 @@ class GreatExpectationsConfig:
     集成足球预测系统的数据质量监控流程。
     """
 
-    def __init__(self, ge_root_dir: str = "/home/user/projects/FootballPrediction/great_expectations"):
+    def __init__(
+        self,
+        ge_root_dir: str = "/home/user/projects/FootballPrediction/great_expectations",
+    ):
         """
         初始化GE配置管理器
 
@@ -64,11 +67,11 @@ class GreatExpectationsConfig:
                 "expectations": [
                     {
                         "expectation_type": "expect_column_to_exist",
-                        "kwargs": {"column": "match_time"}
+                        "kwargs": {"column": "match_time"},
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "match_time"}
+                        "kwargs": {"column": "match_time"},
                     },
                     {
                         "expectation_type": "expect_column_values_to_be_between",
@@ -76,8 +79,8 @@ class GreatExpectationsConfig:
                             "column": "home_score",
                             "min_value": 0,
                             "max_value": 99,
-                            "allow_cross_type_comparisons": True
-                        }
+                            "allow_cross_type_comparisons": True,
+                        },
                     },
                     {
                         "expectation_type": "expect_column_values_to_be_between",
@@ -85,22 +88,22 @@ class GreatExpectationsConfig:
                             "column": "away_score",
                             "min_value": 0,
                             "max_value": 99,
-                            "allow_cross_type_comparisons": True
-                        }
+                            "allow_cross_type_comparisons": True,
+                        },
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "home_team_id"}
+                        "kwargs": {"column": "home_team_id"},
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "away_team_id"}
+                        "kwargs": {"column": "away_team_id"},
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "league_id"}
-                    }
-                ]
+                        "kwargs": {"column": "league_id"},
+                    },
+                ],
             },
             "odds": {
                 "name": "赔率数据质量检查",
@@ -111,8 +114,8 @@ class GreatExpectationsConfig:
                             "column": "home_odds",
                             "min_value": 1.01,
                             "max_value": 1000.0,
-                            "allow_cross_type_comparisons": True
-                        }
+                            "allow_cross_type_comparisons": True,
+                        },
                     },
                     {
                         "expectation_type": "expect_column_values_to_be_between",
@@ -120,8 +123,8 @@ class GreatExpectationsConfig:
                             "column": "draw_odds",
                             "min_value": 1.01,
                             "max_value": 1000.0,
-                            "allow_cross_type_comparisons": True
-                        }
+                            "allow_cross_type_comparisons": True,
+                        },
                     },
                     {
                         "expectation_type": "expect_column_values_to_be_between",
@@ -129,19 +132,19 @@ class GreatExpectationsConfig:
                             "column": "away_odds",
                             "min_value": 1.01,
                             "max_value": 1000.0,
-                            "allow_cross_type_comparisons": True
-                        }
+                            "allow_cross_type_comparisons": True,
+                        },
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "match_id"}
+                        "kwargs": {"column": "match_id"},
                     },
                     {
                         "expectation_type": "expect_column_values_to_not_be_null",
-                        "kwargs": {"column": "bookmaker"}
-                    }
-                ]
-            }
+                        "kwargs": {"column": "bookmaker"},
+                    },
+                ],
+            },
         }
 
     async def initialize_context(self) -> Any:
@@ -156,7 +159,9 @@ class GreatExpectationsConfig:
             os.makedirs(self.ge_root_dir, exist_ok=True)
             os.makedirs(f"{self.ge_root_dir}/expectations", exist_ok=True)
             os.makedirs(f"{self.ge_root_dir}/checkpoints", exist_ok=True)
-            os.makedirs(f"{self.ge_root_dir}/great_expectations/expectations", exist_ok=True)
+            os.makedirs(
+                f"{self.ge_root_dir}/great_expectations/expectations", exist_ok=True
+            )
 
             # 创建数据上下文配置
             context_config = {
@@ -173,9 +178,9 @@ class GreatExpectationsConfig:
                         "data_connectors": {
                             "default_runtime_data_connector": {
                                 "class_name": "RuntimeDataConnector",
-                                "batch_identifiers": ["default_identifier_name"]
+                                "batch_identifiers": ["default_identifier_name"],
                             }
-                        }
+                        },
                     }
                 },
                 "stores": {
@@ -183,23 +188,23 @@ class GreatExpectationsConfig:
                         "class_name": "ExpectationsStore",
                         "store_backend": {
                             "class_name": "TupleFilesystemStoreBackend",
-                            "base_directory": f"{self.ge_root_dir}/expectations"
-                        }
+                            "base_directory": f"{self.ge_root_dir}/expectations",
+                        },
                     },
                     "validations_store": {
                         "class_name": "ValidationsStore",
                         "store_backend": {
                             "class_name": "TupleFilesystemStoreBackend",
-                            "base_directory": f"{self.ge_root_dir}/validations"
-                        }
+                            "base_directory": f"{self.ge_root_dir}/validations",
+                        },
                     },
                     "checkpoint_store": {
                         "class_name": "CheckpointStore",
                         "store_backend": {
                             "class_name": "TupleFilesystemStoreBackend",
-                            "base_directory": f"{self.ge_root_dir}/checkpoints"
-                        }
-                    }
+                            "base_directory": f"{self.ge_root_dir}/checkpoints",
+                        },
+                    },
                 },
                 "expectations_store_name": "expectations_store",
                 "validations_store_name": "validations_store",
@@ -207,20 +212,18 @@ class GreatExpectationsConfig:
                 "data_docs_sites": {
                     "local_site": {
                         "class_name": "SiteBuilder",
-                        "site_index_builder": {
-                            "class_name": "DefaultSiteIndexBuilder"
-                        },
+                        "site_index_builder": {"class_name": "DefaultSiteIndexBuilder"},
                         "store_backend": {
                             "class_name": "TupleFilesystemStoreBackend",
-                            "base_directory": f"{self.ge_root_dir}/data_docs"
-                        }
+                            "base_directory": f"{self.ge_root_dir}/data_docs",
+                        },
                     }
-                }
+                },
             }
 
             # 保存配置文件
             config_file_path = f"{self.ge_root_dir}/great_expectations.yml"
-            with open(config_file_path, 'w', encoding='utf-8') as f:
+            with open(config_file_path, "w", encoding="utf-8") as f:
                 self.yaml_handler.dump(context_config, f)
 
             # 创建数据上下文
@@ -236,11 +239,11 @@ class GreatExpectationsConfig:
     def _get_database_connection_string(self) -> str:
         """获取数据库连接字符串"""
         # 从环境变量获取数据库配置
-        db_host = os.getenv('DB_HOST', 'localhost')
-        db_port = os.getenv('DB_PORT', '5432')
-        db_name = os.getenv('DB_NAME', 'football_prediction')
-        db_user = os.getenv('DB_USER', 'postgres')
-        db_password = os.getenv('DB_PASSWORD', 'postgres')
+        db_host = os.getenv("DB_HOST", "localhost")
+        db_port = os.getenv("DB_PORT", "5432")
+        db_name = os.getenv("DB_NAME", "football_prediction")
+        db_user = os.getenv("DB_USER", "postgres")
+        db_password = os.getenv("DB_PASSWORD", "postgres")
 
         return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
@@ -254,10 +257,7 @@ class GreatExpectationsConfig:
         if not self.context:
             await self.initialize_context()
 
-        results = {
-            "created_suites": [],
-            "errors": []
-        }
+        results = {"created_suites": [], "errors": []}
 
         try:
             for table_name, suite_config in self.data_assertions.items():
@@ -278,12 +278,14 @@ class GreatExpectationsConfig:
                     # 保存套件
                     self.context.save_expectation_suite(suite)
 
-                    results["created_suites"].append({
-                        "suite_name": suite_name,
-                        "table_name": table_name,
-                        "expectations_count": len(suite_config["expectations"]),
-                        "description": suite_config["name"]
-                    })
+                    results["created_suites"].append(
+                        {
+                            "suite_name": suite_name,
+                            "table_name": table_name,
+                            "expectations_count": len(suite_config["expectations"]),
+                            "description": suite_config["name"],
+                        }
+                    )
 
                     self.logger.info(f"成功创建期望套件: {suite_name}")
 
@@ -299,7 +301,9 @@ class GreatExpectationsConfig:
             results["errors"].append(str(e))
             return results
 
-    def _get_safe_query_parameters(self, table_name: str, limit_rows: int) -> Dict[str, str]:
+    def _get_safe_query_parameters(
+        self, table_name: str, limit_rows: int
+    ) -> Dict[str, str]:
         """
         获取安全的查询参数，防止SQL注入
 
@@ -311,7 +315,7 @@ class GreatExpectationsConfig:
             Dict: 安全的查询参数
         """
         # 白名单验证表名
-        allowed_tables = ['matches', 'odds', 'predictions', 'teams', 'leagues']
+        allowed_tables = ["matches", "odds", "predictions", "teams", "leagues"]
         if table_name not in allowed_tables:
             return {"query": "SELECT 1 WHERE 1=0"}  # 安全的空查询
 
@@ -324,17 +328,34 @@ class GreatExpectationsConfig:
         # 使用预定义的安全查询 - 使用参数化查询避免SQL注入
         # Safe: limit is validated as integer above and table_name is from whitelist
         safe_queries = {
-            'matches': ("SELECT * FROM matches ORDER BY created_at DESC LIMIT :limit", {"limit": limit}),
-            'odds': ("SELECT * FROM odds ORDER BY created_at DESC LIMIT :limit", {"limit": limit}),
-            'predictions': ("SELECT * FROM predictions ORDER BY created_at DESC LIMIT :limit", {"limit": limit}),
-            'teams': ("SELECT * FROM teams ORDER BY created_at DESC LIMIT :limit", {"limit": limit}),
-            'leagues': ("SELECT * FROM leagues ORDER BY created_at DESC LIMIT :limit", {"limit": limit})
+            "matches": (
+                "SELECT * FROM matches ORDER BY created_at DESC LIMIT :limit",
+                {"limit": limit},
+            ),
+            "odds": (
+                "SELECT * FROM odds ORDER BY created_at DESC LIMIT :limit",
+                {"limit": limit},
+            ),
+            "predictions": (
+                "SELECT * FROM predictions ORDER BY created_at DESC LIMIT :limit",
+                {"limit": limit},
+            ),
+            "teams": (
+                "SELECT * FROM teams ORDER BY created_at DESC LIMIT :limit",
+                {"limit": limit},
+            ),
+            "leagues": (
+                "SELECT * FROM leagues ORDER BY created_at DESC LIMIT :limit",
+                {"limit": limit},
+            ),
         }
 
         query, params = safe_queries[table_name]
         return {"query": query, "params": params}
 
-    async def run_validation(self, table_name: str, limit_rows: int = 1000) -> Dict[str, Any]:
+    async def run_validation(
+        self, table_name: str, limit_rows: int = 1000
+    ) -> Dict[str, Any]:
         """
         运行数据验证
 
@@ -356,13 +377,14 @@ class GreatExpectationsConfig:
                 data_connector_name="default_runtime_data_connector",
                 data_asset_name=table_name,
                 batch_identifiers={"default_identifier_name": f"{table_name}_batch"},
-                runtime_parameters=self._get_safe_query_parameters(table_name, limit_rows)
+                runtime_parameters=self._get_safe_query_parameters(
+                    table_name, limit_rows
+                ),
             )
 
             # 创建验证器
             validator = self.context.get_validator(
-                batch_request=batch_request,
-                expectation_suite_name=suite_name
+                batch_request=batch_request, expectation_suite_name=suite_name
             )
 
             # 执行验证
@@ -380,11 +402,13 @@ class GreatExpectationsConfig:
             failed_expectations = []
             for result in results:
                 if not result.success:
-                    failed_expectations.append({
-                        "expectation_type": result.expectation_config.expectation_type,
-                        "kwargs": result.expectation_config.kwargs,
-                        "result": result.result
-                    })
+                    failed_expectations.append(
+                        {
+                            "expectation_type": result.expectation_config.expectation_type,
+                            "kwargs": result.expectation_config.kwargs,
+                            "result": result.result,
+                        }
+                    )
 
             validation_summary = {
                 "table_name": table_name,
@@ -397,7 +421,9 @@ class GreatExpectationsConfig:
                 "rows_checked": limit_rows,
                 "status": "PASSED" if success_rate >= 95 else "FAILED",
                 "failed_expectations": failed_expectations[:5],  # 只保留前5个失败的断言
-                "ge_validation_result_id": validation_result.meta.get("run_id", {}).get("run_name", "unknown")
+                "ge_validation_result_id": validation_result.meta.get("run_id", {}).get(
+                    "run_name", "unknown"
+                ),
             }
 
             self.logger.info(
@@ -416,7 +442,7 @@ class GreatExpectationsConfig:
                 "error": str(e),
                 "success_rate": 0,
                 "successful_expectations": 0,
-                "total_expectations": 0
+                "total_expectations": 0,
             }
 
     async def validate_all_tables(self) -> Dict[str, Any]:
@@ -433,7 +459,7 @@ class GreatExpectationsConfig:
             "failed_tables": 0,
             "error_tables": 0,
             "overall_success_rate": 0,
-            "validation_time": datetime.now().isoformat()
+            "validation_time": datetime.now().isoformat(),
         }
 
         for table_name in self.data_assertions.keys():
@@ -455,10 +481,7 @@ class GreatExpectationsConfig:
                 total_success_rate / len(all_results), 2
             )
 
-        return {
-            "overall_statistics": overall_stats,
-            "table_results": all_results
-        }
+        return {"overall_statistics": overall_stats, "table_results": all_results}
 
     def get_custom_expectation_for_odds_probability(self) -> Dict[str, Any]:
         """
@@ -469,14 +492,11 @@ class GreatExpectationsConfig:
         """
         return {
             "expectation_type": "expect_table_column_count_to_be_between",
-            "kwargs": {
-                "min_value": 3,
-                "max_value": 10
-            },
+            "kwargs": {"min_value": 3, "max_value": 10},
             "meta": {
                 "notes": {
                     "format": "markdown",
-                    "content": "检查赔率表列数合理性，确保包含基本的home_odds, draw_odds, away_odds字段"
+                    "content": "检查赔率表列数合理性，确保包含基本的home_odds, draw_odds, away_odds字段",
                 }
-            }
+            },
         }

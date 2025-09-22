@@ -12,7 +12,4 @@
 from .football_data_cleaner import FootballDataCleaner
 from .missing_data_handler import MissingDataHandler
 
-__all__ = [
-    "FootballDataCleaner",
-    "MissingDataHandler"
-]
+__all__ = ["FootballDataCleaner", "MissingDataHandler"]

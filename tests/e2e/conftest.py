@@ -1,20 +1,24 @@
-"""
-End-to-end test fixtures.
-"""
-
+# Standard library imports
 import asyncio
 import os
 import sys
 import threading
 
-# Add project root to path for imports - must be before local imports
+# Third-party imports
+import httpx
+import pytest
+import uvicorn
+
+# Local imports
+from src.main import app
+
+# Add project root to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-import httpx  # noqa: E402
-import pytest  # noqa: E402
-import uvicorn  # noqa: E402
 
-from src.api.main import app  # noqa: E402
+"""
+End-to-end test fixtures.
+"""
 
 
 class TestServer(uvicorn.Server):

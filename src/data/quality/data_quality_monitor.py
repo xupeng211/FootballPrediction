@@ -37,12 +37,12 @@ class DataQualityMonitor:
 
         # 质量检查阈值配置
         self.thresholds = {
-            'data_freshness_hours': 24,      # 数据新鲜度阈值（小时）
-            'missing_data_rate': 0.1,        # 缺失数据率阈值（10%）
-            'odds_min_value': 1.01,          # 最小赔率值
-            'odds_max_value': 100.0,         # 最大赔率值
-            'score_max_value': 20,           # 最大比分值
-            'suspicious_odds_change': 0.5,   # 可疑赔率变化阈值（50%）
+            "data_freshness_hours": 24,  # 数据新鲜度阈值（小时）
+            "missing_data_rate": 0.1,  # 缺失数据率阈值（10%）
+            "odds_min_value": 1.01,  # 最小赔率值
+            "odds_max_value": 100.0,  # 最大赔率值
+            "score_max_value": 20,  # 最大比分值
+            "suspicious_odds_change": 0.5,  # 可疑赔率变化阈值（50%）
         }
 
     async def check_data_freshness(self) -> Dict[str, Any]:
@@ -58,7 +58,7 @@ class DataQualityMonitor:
                 "status": "healthy",
                 "issues": [],
                 "warnings": [],
-                "details": {}
+                "details": {},
             }
 
             async with self.db_manager.get_async_session() as session:
@@ -66,7 +66,10 @@ class DataQualityMonitor:
                 fixtures_age = await self._check_fixtures_age(session)
                 freshness_report["details"]["fixtures"] = fixtures_age
 
-                if fixtures_age["hours_since_update"] > self.thresholds['data_freshness_hours']:
+                if (
+                    fixtures_age["hours_since_update"]
+                    > self.thresholds["data_freshness_hours"]
+                ):
                     freshness_report["issues"].append(
                         f"赛程数据过期：{fixtures_age['hours_since_update']}小时未更新"
                     )
@@ -97,7 +100,7 @@ class DataQualityMonitor:
             return {
                 "check_time": datetime.now().isoformat(),
                 "status": "error",
-                "error": str(e)
+                "error": str(e),
             }
 
     async def detect_anomalies(self) -> List[Dict[str, Any]]:
@@ -128,11 +131,13 @@ class DataQualityMonitor:
 
         except Exception as e:
             self.logger.error(f"异常检测失败: {str(e)}")
-            return [{
-                "type": "detection_error",
-                "message": f"异常检测过程出错: {str(e)}",
-                "timestamp": datetime.now().isoformat()
-            }]
+            return [
+                {
+                    "type": "detection_error",
+                    "message": f"异常检测过程出错: {str(e)}",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ]
 
     async def _check_fixtures_age(self, session) -> Dict[str, Any]:
         """检查赛程数据年龄"""
@@ -148,17 +153,23 @@ class DataQualityMonitor:
             result = latest_log.fetchone()
 
             if result and result.last_update:
-                hours_since = (datetime.now() - result.last_update).total_seconds() / 3600
+                hours_since = (
+                    datetime.now() - result.last_update
+                ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
                     "hours_since_update": round(hours_since, 2),
-                    "status": "ok" if hours_since < self.thresholds['data_freshness_hours'] else "stale"
+                    "status": (
+                        "ok"
+                        if hours_since < self.thresholds["data_freshness_hours"]
+                        else "stale"
+                    ),
                 }
             else:
                 return {
                     "last_update": None,
-                    "hours_since_update": float('inf'),
-                    "status": "no_data"
+                    "hours_since_update": float("inf"),
+                    "status": "no_data",
                 }
 
         except Exception as e:
@@ -179,17 +190,19 @@ class DataQualityMonitor:
             result = latest_odds.fetchone()
 
             if result and result.last_update:
-                hours_since = (datetime.now() - result.last_update).total_seconds() / 3600
+                hours_since = (
+                    datetime.now() - result.last_update
+                ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
                     "hours_since_update": round(hours_since, 2),
-                    "status": "ok" if hours_since < 1 else "stale"
+                    "status": "ok" if hours_since < 1 else "stale",
                 }
             else:
                 return {
                     "last_update": None,
-                    "hours_since_update": float('inf'),
-                    "status": "no_data"
+                    "hours_since_update": float("inf"),
+                    "status": "no_data",
                 }
 
         except Exception as e:
@@ -203,11 +216,7 @@ class DataQualityMonitor:
             # 1. 根据联赛赛程规律检测缺失的比赛
             # 2. 对比不同数据源的比赛数量
 
-            return {
-                "count": 0,
-                "matches": [],
-                "check_time": datetime.now().isoformat()
-            }
+            return {"count": 0, "matches": [], "check_time": datetime.now().isoformat()}
 
         except Exception as e:
             self.logger.error(f"查找缺失比赛失败: {str(e)}")
@@ -220,7 +229,8 @@ class DataQualityMonitor:
         try:
             # 查找异常的赔率值
             abnormal_odds = await session.execute(
-                text("""
+                text(
+                    """
                 SELECT id, match_id, bookmaker, home_odds, draw_odds, away_odds, collected_at
                 FROM odds
                 WHERE (home_odds < :odds_min_value
@@ -230,27 +240,30 @@ class DataQualityMonitor:
                    OR (away_odds < :odds_min_value
                        OR away_odds > :odds_max_value)
                 AND collected_at > NOW() - INTERVAL '7 days'
-                """),
+                """
+                ),
                 {
-                    'odds_min_value': self.thresholds['odds_min_value'],
-                    'odds_max_value': self.thresholds['odds_max_value']
-                }
+                    "odds_min_value": self.thresholds["odds_min_value"],
+                    "odds_max_value": self.thresholds["odds_max_value"],
+                },
             )
 
             for row in abnormal_odds.fetchall():
-                suspicious_odds.append({
-                    "type": "abnormal_odds_value",
-                    "odds_id": row.id,
-                    "match_id": row.match_id,
-                    "bookmaker": row.bookmaker,
-                    "odds": {
-                        "home": float(row.home_odds) if row.home_odds else None,
-                        "draw": float(row.draw_odds) if row.draw_odds else None,
-                        "away": float(row.away_odds) if row.away_odds else None
-                    },
-                    "collected_at": row.collected_at.isoformat(),
-                    "severity": "high"
-                })
+                suspicious_odds.append(
+                    {
+                        "type": "abnormal_odds_value",
+                        "odds_id": row.id,
+                        "match_id": row.match_id,
+                        "bookmaker": row.bookmaker,
+                        "odds": {
+                            "home": float(row.home_odds) if row.home_odds else None,
+                            "draw": float(row.draw_odds) if row.draw_odds else None,
+                            "away": float(row.away_odds) if row.away_odds else None,
+                        },
+                        "collected_at": row.collected_at.isoformat(),
+                        "severity": "high",
+                    }
+                )
 
             # 查找赔率急剧变化
             # TODO: 实现赔率变化检测逻辑
@@ -268,27 +281,31 @@ class DataQualityMonitor:
         try:
             # 查找异常高的比分
             high_scores = await session.execute(
-                text("""
+                text(
+                    """
                 SELECT id, home_team_id, away_team_id, home_score, away_score, match_time
                 FROM matches
                 WHERE (home_score > :score_max_value
                        OR away_score > :score_max_value)
                 AND match_status = 'finished'
                 AND match_time > NOW() - INTERVAL '30 days'
-                """),
-                {'score_max_value': self.thresholds['score_max_value']}
+                """
+                ),
+                {"score_max_value": self.thresholds["score_max_value"]},
             )
 
             for row in high_scores.fetchall():
-                unusual_scores.append({
-                    "type": "unusual_high_score",
-                    "match_id": row.id,
-                    "home_team_id": row.home_team_id,
-                    "away_team_id": row.away_team_id,
-                    "score": f"{row.home_score}-{row.away_score}",
-                    "match_time": row.match_time.isoformat(),
-                    "severity": "medium"
-                })
+                unusual_scores.append(
+                    {
+                        "type": "unusual_high_score",
+                        "match_id": row.id,
+                        "home_team_id": row.home_team_id,
+                        "away_team_id": row.away_team_id,
+                        "score": f"{row.home_score}-{row.away_score}",
+                        "match_time": row.match_time.isoformat(),
+                        "severity": "medium",
+                    }
+                )
 
             return unusual_scores
 
@@ -312,14 +329,16 @@ class DataQualityMonitor:
             )
 
             for row in time_issues.fetchall():
-                consistency_issues.append({
-                    "type": "inconsistent_match_time",
-                    "match_id": row.id,
-                    "match_time": row.match_time.isoformat(),
-                    "created_at": row.created_at.isoformat(),
-                    "message": "比赛时间早于创建时间",
-                    "severity": "low"
-                })
+                consistency_issues.append(
+                    {
+                        "type": "inconsistent_match_time",
+                        "match_id": row.id,
+                        "match_time": row.match_time.isoformat(),
+                        "created_at": row.created_at.isoformat(),
+                        "message": "比赛时间早于创建时间",
+                        "severity": "low",
+                    }
+                )
 
             return consistency_issues
 
@@ -346,17 +365,27 @@ class DataQualityMonitor:
 
             report = {
                 "report_time": datetime.now().isoformat(),
-                "overall_status": self._determine_overall_status(freshness_check, anomalies),
+                "overall_status": self._determine_overall_status(
+                    freshness_check, anomalies
+                ),
                 "quality_score": quality_score,
                 "freshness_check": freshness_check,
                 "anomalies": {
                     "count": len(anomalies),
-                    "high_severity": len([a for a in anomalies if a.get("severity") == "high"]),
-                    "medium_severity": len([a for a in anomalies if a.get("severity") == "medium"]),
-                    "low_severity": len([a for a in anomalies if a.get("severity") == "low"]),
-                    "details": anomalies
+                    "high_severity": len(
+                        [a for a in anomalies if a.get("severity") == "high"]
+                    ),
+                    "medium_severity": len(
+                        [a for a in anomalies if a.get("severity") == "medium"]
+                    ),
+                    "low_severity": len(
+                        [a for a in anomalies if a.get("severity") == "low"]
+                    ),
+                    "details": anomalies,
                 },
-                "recommendations": self._generate_recommendations(freshness_check, anomalies)
+                "recommendations": self._generate_recommendations(
+                    freshness_check, anomalies
+                ),
             }
 
             self.logger.info(f"数据质量报告生成完成，总体状态: {report['overall_status']}")
@@ -367,7 +396,7 @@ class DataQualityMonitor:
             return {
                 "report_time": datetime.now().isoformat(),
                 "overall_status": "error",
-                "error": str(e)
+                "error": str(e),
             }
 
     def _calculate_quality_score(self, freshness_check: Dict, anomalies: List) -> float:
@@ -382,7 +411,9 @@ class DataQualityMonitor:
 
         # 根据异常数量扣分
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
-        medium_severity_count = len([a for a in anomalies if a.get("severity") == "medium"])
+        medium_severity_count = len(
+            [a for a in anomalies if a.get("severity") == "medium"]
+        )
         low_severity_count = len([a for a in anomalies if a.get("severity") == "low"])
 
         score -= high_severity_count * 15
@@ -402,7 +433,9 @@ class DataQualityMonitor:
         else:
             return "healthy"
 
-    def _generate_recommendations(self, freshness_check: Dict, anomalies: List) -> List[str]:
+    def _generate_recommendations(
+        self, freshness_check: Dict, anomalies: List
+    ) -> List[str]:
         """生成改进建议"""
         recommendations = []
 

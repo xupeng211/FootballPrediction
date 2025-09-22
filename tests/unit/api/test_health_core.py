@@ -22,6 +22,8 @@ from fastapi.testclient import TestClient
 from src.api.health import (health_check, liveness_check, readiness_check,
                             router)
 
+pytestmark = pytest.mark.slow
+
 
 class TestHealthAPICore:
     """健康检查API核心功能测试"""

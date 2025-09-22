@@ -177,9 +177,9 @@ class DataValidationResult:
             "is_valid": self.is_valid,
             "errors": self.errors,
             "warnings": self.warnings,
-            "validated_at": self.validated_at.isoformat()
-            if self.validated_at
-            else None,
+            "validated_at": (
+                self.validated_at.isoformat() if self.validated_at else None
+            ),
         }
 
     def add_error(self, error: str) -> None:
