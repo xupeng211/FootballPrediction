@@ -33,6 +33,14 @@ class DummyDBManager:
         return self._context
 
 
+class DummyKafka:
+    def __init__(self):
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
 @pytest.fixture
 def consumer_instance():
     instance = kafka_consumer.FootballKafkaConsumer.__new__(
@@ -40,7 +48,7 @@ def consumer_instance():
     )
     instance.logger = logging.getLogger("test-consumer")
     instance.config = None
-    instance.consumer = object()
+    instance.consumer = DummyKafka()
     instance.running = False
     context = DummySessionContext()
     instance.db_manager = DummyDBManager(context)
