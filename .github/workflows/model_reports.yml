@@ -25,6 +25,9 @@ env:
 jobs:
   generate-reports:
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    env:
+      REPORT_DAYS: ${{ github.event_name == 'workflow_dispatch' && inputs.days_back || '30' }}
 
     services:
       postgres:
@@ -84,18 +87,18 @@ jobs:
 
     - name: 更新预测结果
       run: |
-        python scripts/update_predictions_results.py --update --report --trends --days ${{ inputs.days_back || '30' }} --verbose
+        python scripts/update_predictions_results.py --update --report --trends --days "$REPORT_DAYS" --verbose
       continue-on-error: true
 
     - name: 生成性能报表
       run: |
-        python reports/model_performance_report.py --days ${{ inputs.days_back || '30' }} --output reports/generated --verbose
+        python reports/model_performance_report.py --days "$REPORT_DAYS" --output reports/generated --verbose
       continue-on-error: true
 
     - name: 运行自动重训练评估
-      if: ${{ inputs.force_retrain == true || github.event_name == 'schedule' }}
+      if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force_retrain == true)
       run: |
-        python scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days ${{ inputs.days_back || '30' }} --verbose
+        python scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days "$REPORT_DAYS" --verbose
       continue-on-error: true
 
     - name: 运行模型监控
@@ -131,7 +134,7 @@ jobs:
         echo "# 模型性能报表生成总结" > artifacts/summary.md
         echo "" >> artifacts/summary.md
         echo "**生成时间**: $(date)" >> artifacts/summary.md
-        echo "**分析周期**: ${{ inputs.days_back || '30' }} 天" >> artifacts/summary.md
+        echo "**分析周期**: $REPORT_DAYS 天" >> artifacts/summary.md
         echo "" >> artifacts/summary.md
 
         if [ -d "reports/generated" ]; then
@@ -163,7 +166,7 @@ jobs:
         status: ${{ job.status }}
         text: |
           模型性能报表生成完成
-          - 分析周期: ${{ inputs.days_back || '30' }} 天
+          - 分析周期: $REPORT_DAYS 天
           - 状态: ${{ job.status }}
           - 下载链接: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       env:
