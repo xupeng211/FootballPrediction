@@ -141,7 +141,7 @@ STAGING_SECURITY_GROUP_ID=sg-staging
 git checkout develop
 git push origin develop
 
-# 推送到main分支 → 自动部署到production  
+# 推送到main分支 → 自动部署到production
 git checkout main
 git merge develop
 git push origin main
@@ -149,6 +149,71 @@ git push origin main
 
 #### 手动部署
 在GitHub Actions中选择 "Deploy to AWS" workflow，手动触发部署。
+
+### 4. 网络与传输安全加固
+
+> 生产环境必须通过 HTTPS + WAF 防护暴露服务，以下步骤默认目标区域为 `us-east-1`，可按需调整。
+
+1. **申请 TLS 证书（AWS ACM）**
+   ```bash
+   aws acm request-certificate \
+     --domain-name api.footballpred.com \
+     --validation-method DNS \
+     --subject-alternative-names "*.api.footballpred.com"
+   ```
+   - 在 Route 53 中添加 ACM 提供的 CNAME 记录完成验证。
+   - 证书颁发后记录 `CertificateArn`，在 ALB / CloudFront 中引用。
+
+2. **配置应用负载均衡 (ALB)**
+   - 监听端口 `443`，关联上一步的 ACM 证书。
+   - 创建 HTTP(80) 监听器，仅用于 301 重定向到 HTTPS。
+   - 启用 `ELBSecurityPolicy-TLS13-1-2-2021-06` 只允许 TLS 1.2+。
+   - 打开 ALB 访问日志与指标：
+     ```bash
+     aws elbv2 modify-load-balancer-attributes \
+       --load-balancer-arn $ALB_ARN \
+       --attributes Key=access_logs.s3.enabled,Value=true,Key=access_logs.s3.bucket,Value=footballpred-alb-logs
+     ```
+
+3. **部署 AWS WAF 规则**
+   ```bash
+   aws wafv2 create-web-acl \
+     --name footballpred-waf \
+     --scope REGIONAL \
+     --default-action Block={} \
+     --rules file://docs/security/waf-managed-rules.sample.json \
+     --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=footballpred
+   ```
+   - 根据业务需求复制并调整 `docs/security/waf-managed-rules.sample.json` 定义自有托管/自定义规则集。
+   - 推荐启用托管规则：AWSManagedRulesCommonRuleSet、KnownBadInputs、SQLi/XSS。
+   - 添加自定义规则：
+     - IP 黑白名单 (`aws wafv2 create-ip-set`)
+     - 速率限制 (`RateBasedStatement`，如 200 req/5min)
+   - 将 WebACL 关联至 ALB：
+     ```bash
+     aws wafv2 associate-web-acl --web-acl-arn $WAF_ARN --resource-arn $ALB_ARN
+     ```
+
+4. **安全组与网络分段**
+   - ALB 安全组：仅开放 `80/443`，来源限定为公网或 CDN IP 段。
+   - ECS/Fargate 安全组：只允许来自 ALB 安全组的 `8080`/健康检查端口，出站仅指向 RDS、Redis、MLflow。
+   - RDS、Redis 安全组：拒绝公网访问，仅允许应用安全组入站。
+
+5. **Nginx 反向代理 (容器内)**
+   - 在 `nginx/production.conf` 中启用 `proxy_set_header X-Forwarded-Proto https` 并强制 `Strict-Transport-Security`：
+     ```nginx
+     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+     ```
+   - 开启 `proxy_buffering off` 与 `limit_req_zone` 基于 IP 的速率控制。
+
+6. **Secrets 与凭证管理**
+   - 使用 AWS Secrets Manager/SSM Parameter Store，而不是 `.env` 持久化敏感信息。
+   - 在部署脚本中通过 `aws secretsmanager get-secret-value` 拉取并注入容器环境变量。
+
+7. **持续监控与告警**
+   - 订阅 WAF 日志到 CloudWatch Logs，配置异常模式告警（大量 Block、RateLimit 触发等）。
+   - 在 CloudWatch 建立 HTTPS 端点探针，结合 `5xx` 指标触发 SNS 告警。
+   - 每季度复审 TLS 证书有效期与 WAF 规则命中率。
 
 ## 🔒 GitHub配置
 
@@ -292,4 +357,4 @@ git reset --hard HEAD~1
 
 **祝您部署顺利！** 🎉
 
-如果遇到问题，请先查看[故障排除](#故障排除)部分，或创建GitHub Issue寻求帮助。 
+如果遇到问题，请先查看[故障排除](#故障排除)部分，或创建GitHub Issue寻求帮助。
