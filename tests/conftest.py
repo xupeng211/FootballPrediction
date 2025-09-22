@@ -9,6 +9,7 @@ pytest配置文件
 """
 
 import asyncio
+import importlib
 import importlib.util  # noqa: E402 - Must be after sys.path modification
 import os
 import sys
@@ -73,6 +74,18 @@ def is_database_available() -> bool:
         return False
 
 
+def _load_database_models() -> None:
+    """动态加载数据库模型以填充SQLAlchemy元数据"""
+
+    if "src.database.models" in sys.modules:
+        return
+
+    try:
+        importlib.import_module("src.database.models")
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        print(f"⚠️  数据库模型导入失败: {exc}")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database(event_loop):
     """
@@ -91,6 +104,9 @@ def setup_test_database(event_loop):
         return
 
     config = get_test_database_config()
+
+    # 确保在创建表之前加载所有模型定义
+    _load_database_models()
 
     # Use a separate engine for schema creation/deletion
     engine = create_async_engine(config.async_url)
@@ -487,8 +503,6 @@ def mock_feature_store():
     - 在线特征服务
     - 特征定义管理
     """
-    from datetime import datetime
-
     import pandas as pd
 
     mock_store = AsyncMock()
