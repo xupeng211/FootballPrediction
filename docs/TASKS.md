@@ -36,6 +36,6 @@
   - 📝 部署文档包含 TLS 与安全策略
 
 ## CI/CD
-- [ ] 📌 主干 CI 全绿（修复 lint/失败用例，规范 model_reports.yml 触发条件）
+- [x] 📌 主干 CI 全绿（修复 lint/失败用例，规范 model_reports.yml 触发条件） ✅ 完成于 2025-09-22
   - 🎯 Blocker
   - 📝 main 分支 push 全绿，模型报表仅手动/定时触发
