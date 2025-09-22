@@ -69,9 +69,12 @@ jobs:
       uses: actions/checkout@v4
 
     - name: 准备报表参数
+      env:
+        DAYS_BACK: ${{ github.event.inputs.days_back || '30' }}
+        FORCE_RETRAIN: ${{ github.event.inputs.force_retrain || 'false' }}
       run: |
-        DAYS=${INPUT_DAYS_BACK:-30}
-        echo "REPORT_DAYS=$DAYS" >> $GITHUB_ENV
+        echo "REPORT_DAYS=${DAYS_BACK}" >> $GITHUB_ENV
+        echo "INPUT_FORCE_RETRAIN=${FORCE_RETRAIN}" >> $GITHUB_ENV
 
     - name: 设置 Python
       uses: actions/setup-python@v4
