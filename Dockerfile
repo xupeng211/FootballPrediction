@@ -20,6 +20,8 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # 生产阶段
 FROM python:3.11-slim as production
 
+ARG APP_VERSION=dev
+
 # 创建非root用户
 RUN groupadd -g 1001 appuser && \
     useradd -r -u 1001 -g appuser appuser
@@ -40,9 +42,14 @@ COPY --from=builder /root/.local /home/appuser/.local
 # 复制应用代码
 COPY . .
 
+# 复制入口脚本
+COPY scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # 设置Python路径
 ENV PATH=/home/appuser/.local/bin:$PATH
 ENV PYTHONPATH=/app
+ENV APP_VERSION=${APP_VERSION}
 
 # 创建必要的目录并设置权限
 RUN mkdir -p /app/logs && \
@@ -59,4 +66,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 EXPOSE 8000
 
 # 启动命令
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
