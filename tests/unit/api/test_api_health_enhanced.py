@@ -125,7 +125,12 @@ class TestAPIHealthExceptionHandling:
     @pytest.mark.asyncio
     @patch("src.api.health.get_db_session")
     @patch("src.api.health._check_database")
-    async def test_readiness_check_database_failure(self, mock_db, mock_session):
+    @patch("src.api.health._check_redis")
+    @patch("src.api.health._check_kafka")
+    @patch("src.api.health._check_mlflow")
+    async def test_readiness_check_database_failure(
+        self, mock_mlflow, mock_kafka, mock_redis, mock_db, mock_session
+    ):
         """测试就绪检查中数据库服务失败的情况 (覆盖112-113行)"""
         from src.api.health import readiness_check
 
@@ -135,6 +140,12 @@ class TestAPIHealthExceptionHandling:
             "healthy": False,
             "message": "Database connection failed",
         }
+        for dependency_mock in (mock_redis, mock_kafka, mock_mlflow):
+            dependency_mock.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "details": {"message": "OK"},
+            }
 
         # readiness_check会抛出HTTPException当服务失败时
         with pytest.raises(HTTPException) as exc_info:
@@ -150,7 +161,12 @@ class TestAPIHealthExceptionHandling:
     @pytest.mark.asyncio
     @patch("src.api.health.get_db_session")
     @patch("src.api.health._check_database")
-    async def test_readiness_check_all_services_healthy(self, mock_db, mock_session):
+    @patch("src.api.health._check_redis")
+    @patch("src.api.health._check_kafka")
+    @patch("src.api.health._check_mlflow")
+    async def test_readiness_check_all_services_healthy(
+        self, mock_mlflow, mock_kafka, mock_redis, mock_db, mock_session
+    ):
         """测试所有服务都健康的就绪检查"""
 
         # 模拟数据库服务正常
@@ -161,6 +177,13 @@ class TestAPIHealthExceptionHandling:
             "response_time_ms": 5.0,
             "details": {"message": "Database OK"},
         }
+        for dependency_mock in (mock_redis, mock_kafka, mock_mlflow):
+            dependency_mock.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 1.0,
+                "details": {"message": "OK"},
+            }
 
         result = await readiness_check()
 
@@ -207,6 +230,122 @@ class TestAPIHealthEdgeCases:
         assert "details" in result
 
 
+class TestExternalDependencyChecks:
+    """测试外部依赖健康检查逻辑"""
+
+    @pytest.mark.asyncio
+    async def test_check_kafka_success(self):
+        from src.api.health import _check_kafka
+
+        success_payload = {
+            "healthy": True,
+            "status": "healthy",
+            "details": {"message": "Kafka OK"},
+        }
+
+        async def fake_call(func, *args, **kwargs):
+            return await func(*args, **kwargs)
+
+        with patch(
+            "src.api.health.asyncio.to_thread", return_value=success_payload
+        ), patch("src.api.health._kafka_circuit_breaker.call", side_effect=fake_call):
+            result = await _check_kafka()
+
+        assert result["healthy"] is True
+        assert result["status"] == "healthy"
+        assert result["details"]["message"] == "Kafka OK"
+        assert "circuit_state" in result
+
+    @pytest.mark.asyncio
+    async def test_check_kafka_failure(self):
+        from src.api.health import ServiceCheckError, _check_kafka
+
+        async def fake_call(func, *args, **kwargs):
+            return await func(*args, **kwargs)
+
+        with patch(
+            "src.api.health.asyncio.to_thread",
+            side_effect=ServiceCheckError(
+                "Kafka down",
+                details={"message": "Kafka down", "bootstrap_servers": "local"},
+            ),
+        ), patch("src.api.health._kafka_circuit_breaker.call", side_effect=fake_call):
+            result = await _check_kafka()
+
+        assert result["healthy"] is False
+        assert "Kafka down" in result["details"]["message"]
+        assert result["status"] == "unhealthy"
+
+    @pytest.mark.asyncio
+    async def test_check_mlflow_success(self):
+        import sys
+        from types import SimpleNamespace
+
+        from src.api.health import _check_mlflow
+
+        success_payload = {
+            "healthy": True,
+            "status": "healthy",
+            "details": {"message": "MLflow OK", "tracking_uri": "file:///tmp"},
+        }
+
+        async def fake_call(func, *args, **kwargs):
+            return await func(*args, **kwargs)
+
+        mock_client = SimpleNamespace(list_experiments=lambda: [])
+        tracking_module = SimpleNamespace(MlflowClient=lambda: mock_client)
+        mlflow_module = SimpleNamespace(
+            set_tracking_uri=lambda uri: None, get_tracking_uri=lambda: "file:///tmp"
+        )
+
+        with patch.dict(
+            sys.modules,
+            {"mlflow": mlflow_module, "mlflow.tracking": tracking_module},
+        ), patch(
+            "src.api.health.asyncio.to_thread", return_value=success_payload
+        ), patch(
+            "src.api.health._mlflow_circuit_breaker.call", side_effect=fake_call
+        ):
+            result = await _check_mlflow()
+
+        assert result["healthy"] is True
+        assert result["details"]["message"] == "MLflow OK"
+        assert "tracking_uri" in result["details"]
+
+    @pytest.mark.asyncio
+    async def test_check_mlflow_failure(self):
+        import sys
+        from types import SimpleNamespace
+
+        from src.api.health import ServiceCheckError, _check_mlflow
+
+        async def fake_call(func, *args, **kwargs):
+            return await func(*args, **kwargs)
+
+        tracking_module = SimpleNamespace(MlflowClient=lambda: SimpleNamespace())
+        mlflow_module = SimpleNamespace(
+            set_tracking_uri=lambda uri: None, get_tracking_uri=lambda: "http://mlflow"
+        )
+
+        with patch.dict(
+            sys.modules,
+            {"mlflow": mlflow_module, "mlflow.tracking": tracking_module},
+        ), patch(
+            "src.api.health.asyncio.to_thread",
+            side_effect=ServiceCheckError(
+                "MLflow down",
+                details={"message": "MLflow down", "tracking_uri": "http://mlflow"},
+            ),
+        ), patch(
+            "src.api.health._mlflow_circuit_breaker.call", side_effect=fake_call
+        ):
+            result = await _check_mlflow()
+
+        assert result["healthy"] is False
+        assert result["status"] == "unhealthy"
+        assert "MLflow down" in result["details"]["message"]
+
+
 class TestAPIHealthResponseTime:
     """测试响应时间计算相关功能"""
 
@@ -214,9 +353,17 @@ class TestAPIHealthResponseTime:
     @patch("src.api.health.get_db_session")
     @patch("src.api.health._check_database")
     @patch("src.api.health._check_redis")
+    @patch("src.api.health._check_kafka")
+    @patch("src.api.health._check_mlflow")
     @patch("src.api.health._check_filesystem")
     async def test_health_check_response_time_calculation(
-        self, mock_fs, mock_redis, mock_db, mock_session
+        self,
+        mock_fs,
+        mock_mlflow,
+        mock_kafka,
+        mock_redis,
+        mock_db,
+        mock_session,
     ):
         """测试健康检查响应时间计算"""
 
@@ -231,6 +378,16 @@ class TestAPIHealthResponseTime:
             "status": "healthy",
             "response_time_ms": 3.0,
             "details": {"message": "Redis OK"},
+        }
+        mock_kafka.return_value = {
+            "status": "healthy",
+            "response_time_ms": 4.0,
+            "details": {"message": "Kafka OK"},
+        }
+        mock_mlflow.return_value = {
+            "status": "healthy",
+            "response_time_ms": 2.5,
+            "details": {"message": "MLflow OK"},
         }
         mock_fs.return_value = {
             "status": "healthy",
