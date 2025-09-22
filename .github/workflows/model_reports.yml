@@ -33,8 +33,6 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    env:
-      REPORT_DAYS: ${{ github.event_name == 'workflow_dispatch' && inputs.days_back || '30' }}
 
     services:
       postgres:
@@ -64,6 +62,11 @@ jobs:
     steps:
     - name: 检出代码
       uses: actions/checkout@v4
+
+    - name: 准备报表参数
+      run: |
+        DAYS=${INPUT_DAYS_BACK:-30}
+        echo "REPORT_DAYS=$DAYS" >> $GITHUB_ENV
 
     - name: 设置 Python
       uses: actions/setup-python@v4
@@ -103,7 +106,7 @@ jobs:
       continue-on-error: true
 
     - name: 运行自动重训练评估
-      if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force_retrain == true)
+      if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_retrain == 'true')
       run: |
         python scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days "$REPORT_DAYS" --verbose
       continue-on-error: true
