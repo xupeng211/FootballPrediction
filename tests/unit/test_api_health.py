@@ -32,6 +32,10 @@ class TestHealthAPI:
         with patch("src.api.health._check_database") as mock_check_db, patch(
             "src.api.health._check_redis"
         ) as mock_check_redis, patch(
+            "src.api.health._check_kafka"
+        ) as mock_check_kafka, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_check_mlflow, patch(
             "src.api.health._check_filesystem"
         ) as mock_check_fs:
             # 符合ServiceCheck schema的Mock数据
@@ -45,6 +49,18 @@ class TestHealthAPI:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 5.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_kafka.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 6.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_mlflow.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 7.0,
                 "details": {"connection": "ok"},
             }
             mock_check_fs.return_value = {
@@ -63,6 +79,10 @@ class TestHealthAPI:
         with patch("src.api.health._check_database") as mock_check_db, patch(
             "src.api.health._check_redis"
         ) as mock_check_redis, patch(
+            "src.api.health._check_kafka"
+        ) as mock_check_kafka, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_check_mlflow, patch(
             "src.api.health._check_filesystem"
         ) as mock_check_fs:
             # 符合ServiceCheck schema的Mock数据
@@ -76,6 +96,18 @@ class TestHealthAPI:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 5.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_kafka.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 6.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_mlflow.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 7.0,
                 "details": {"connection": "ok"},
             }
             mock_check_fs.return_value = {
@@ -98,6 +130,10 @@ class TestHealthAPI:
         with patch("src.api.health._check_database") as mock_check_db, patch(
             "src.api.health._check_redis"
         ) as mock_check_redis, patch(
+            "src.api.health._check_kafka"
+        ) as mock_check_kafka, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_check_mlflow, patch(
             "src.api.health._check_filesystem"
         ) as mock_check_fs:
             # 符合ServiceCheck schema的Mock数据
@@ -111,6 +147,18 @@ class TestHealthAPI:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 5.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_kafka.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 6.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_mlflow.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 7.0,
                 "details": {"connection": "ok"},
             }
             mock_check_fs.return_value = {
@@ -197,6 +245,10 @@ class TestHealthIntegration:
         with patch("src.api.health._check_database") as mock_check_db, patch(
             "src.api.health._check_redis"
         ) as mock_check_redis, patch(
+            "src.api.health._check_kafka"
+        ) as mock_check_kafka, patch(
+            "src.api.health._check_mlflow"
+        ) as mock_check_mlflow, patch(
             "src.api.health._check_filesystem"
         ) as mock_check_fs:
             # 符合ServiceCheck schema的Mock数据
@@ -210,6 +262,18 @@ class TestHealthIntegration:
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 5.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_kafka.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 6.0,
+                "details": {"connection": "ok"},
+            }
+            mock_check_mlflow.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 7.0,
                 "details": {"connection": "ok"},
             }
             mock_check_fs.return_value = {
