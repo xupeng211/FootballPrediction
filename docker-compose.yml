@@ -1,8 +1,11 @@
 services:
   app:
+    image: ${APP_IMAGE:-football-prediction}:${APP_TAG:-latest}
     build:
       context: .
       target: production
+      args:
+        - APP_VERSION=${APP_TAG:-latest}
     ports:
       - "8000:8000"
     env_file:
