@@ -10,6 +10,8 @@ VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
 COVERAGE_THRESHOLD := 20
+IMAGE_NAME ?= football-prediction
+GIT_SHA := $(shell git rev-parse --short HEAD)
 
 # Colors for better UX
 GREEN := \033[32m
@@ -171,6 +173,20 @@ down: ## Container: Stop docker-compose services
 logs: ## Container: Show docker-compose logs
 	@docker-compose logs -f
 
+deploy: ## CI/Container: Build & start containers with immutable git-sha tag
+	@echo "$(YELLOW)Deploying image $(IMAGE_NAME):$(GIT_SHA)...$(RESET)" && \
+	APP_IMAGE=$(IMAGE_NAME) APP_TAG=$(GIT_SHA) docker-compose up -d --build --remove-orphans && \
+	echo "$(GREEN)✅ Deployment completed (tag $(GIT_SHA))$(RESET)"
+
+rollback: ## CI/Container: Rollback to a previous image tag (use TAG=<sha>)
+	@if [ -z "$(TAG)" ]; then \
+		echo "$(RED)❌ TAG is required. Usage: make rollback TAG=<git-sha>$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Rolling back to image $(IMAGE_NAME):$(TAG)...$(RESET)" && \
+	APP_IMAGE=$(IMAGE_NAME) APP_TAG=$(TAG) docker-compose up -d --remove-orphans && \
+	echo "$(GREEN)✅ Rollback completed (tag $(TAG))$(RESET)"
+
 # ============================================================================
 # 🔗 GitHub Issue Synchronization
 # ============================================================================
@@ -251,6 +267,6 @@ clean: ## Clean: Remove cache and virtual environment
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install env-check lint fmt quality check prepush test coverage coverage-fast coverage-unit test-quick type-check ci up down logs sync-issues context clean \
+.PHONY: help venv install env-check lint fmt quality check prepush test coverage coverage-fast coverage-unit test-quick type-check ci up down logs deploy rollback sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status
