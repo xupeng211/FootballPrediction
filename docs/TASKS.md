@@ -20,7 +20,7 @@
 - [x] 📌 自动迁移链路（容器启动和 CI 中自动执行 Alembic upgrade） ✅ 完成于 2025-09-22
   - 🎯 High
   - 📝 `docker compose up` 可直接运行，CI 不再报缺表
-- [ ] 📌 回滚机制（不可变标签 + 一键回滚）
+- [x] 📌 回滚机制（不可变标签 + 一键回滚） ✅ 完成于 2025-09-22
   - 🎯 High
   - 📝 能切回上一个稳定版本
 - [ ] 📌 外部依赖健康检查（Redis / Kafka / MLflow readiness & liveness）

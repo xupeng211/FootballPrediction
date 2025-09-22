@@ -6,6 +6,10 @@
 
 set -e  # 遇到错误立即退出
 
+GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo dev)
+APP_IMAGE=${APP_IMAGE:-football-prediction}
+APP_TAG=${APP_TAG:-$GIT_SHA}
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -85,22 +89,22 @@ deploy_services() {
     docker-compose down 2>/dev/null || true
 
     # 构建镜像
-    print_info "构建Docker镜像..."
-    docker-compose build
+    print_info "构建Docker镜像 (标签: $APP_TAG)..."
+    APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker-compose build
 
     # 启动服务
     case $ENVIRONMENT in
         "production")
             print_info "启动生产环境服务..."
-            docker-compose up -d
+            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker-compose up -d --remove-orphans
             ;;
         "staging")
             print_info "启动预发布环境服务..."
-            docker-compose up -d
+            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker-compose up -d --remove-orphans
             ;;
         "development")
             print_info "启动开发环境服务..."
-            docker-compose up -d
+            APP_IMAGE="$APP_IMAGE" APP_TAG="$APP_TAG" docker-compose up -d --remove-orphans
             ;;
         *)
             print_error "未知环境: $ENVIRONMENT"
@@ -175,6 +179,7 @@ show_result() {
     print_info "  🔍 健康检查: http://localhost:8000/health"
     print_info "  📊 数据库: localhost:5432"
     print_info "  💾 Redis: localhost:6379"
+    print_info "  🐳 镜像版本: ${APP_IMAGE}:${APP_TAG}"
     echo ""
     print_info "常用命令:"
     print_info "  查看日志: docker-compose logs -f"
