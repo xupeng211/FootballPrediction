@@ -1,9 +1,11 @@
 # from src.tasks.data_collection_tasks import periodic_data_collection_task  # 暂时禁用：功能未实现
 # from src.tasks.data_collection_tasks import collect_all_data_task  # 暂时禁用：功能未实现
-from src.tasks.data_collection_tasks import (collect_fixtures_task,
-                                             collect_odds_task,
-                                             collect_scores_task,
-                                             emergency_data_collection_task)
+from src.tasks.data_collection_tasks import (
+    collect_fixtures_task,
+    collect_odds_task,
+    collect_scores_task,
+    emergency_data_collection_task,
+)
 
 """
 数据收集任务的全面单元测试
@@ -23,6 +25,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.data.collectors.base_collector import CollectionResult
+
 # 导入实际存在的任务函数
 from src.tasks.data_collection_tasks import app, manual_collect_all_data
 

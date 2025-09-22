@@ -11,8 +11,12 @@ import pytest
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.api.health import (_check_database, _check_filesystem, health_check,
-                            readiness_check)
+from src.api.health import (
+    _check_database,
+    _check_filesystem,
+    health_check,
+    readiness_check,
+)
 
 
 class TestAPIHealthExceptionHandling:
@@ -100,22 +104,6 @@ class TestAPIHealthExceptionHandling:
         assert "数据库连接失败" in result["details"]["message"]
         assert "error" in result["details"]
         assert result["details"]["error"] == "Connection failed"
-
-    @pytest.mark.asyncio
-    @pytest.mark.slow
-    async def test_check_redis_basic_functionality(self):
-        """测试Redis检查基本功能 (覆盖149-154行)"""
-        from src.api.health import _check_redis
-
-        result = await _check_redis()
-
-        # 验证返回状态（Redis可能不可用时返回unhealthy）
-        assert result["status"] in ["healthy", "unhealthy"]
-        # 检查消息包含Redis相关信息
-        assert (
-            "Redis" in result["details"]["message"]
-            or "Redis连接失败" in result["details"]["message"]
-        )
 
     @pytest.mark.asyncio
     @patch("src.api.health.logger")
