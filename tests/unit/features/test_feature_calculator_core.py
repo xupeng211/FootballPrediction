@@ -96,8 +96,8 @@ async def test_calculate_historical_matchup_handles_home_away_switch():
 
     assert isinstance(features, HistoricalMatchupFeatures)
     assert features.h2h_total_matches == 4
-    assert features.h2h_home_wins == 2
-    assert features.h2h_away_wins == 1
+    assert features.h2h_home_wins == 3
+    assert features.h2h_away_wins == 0
     assert features.h2h_draws == 1
     assert features.h2h_home_goals_total == 10  # 2+3+0+5
     assert features.h2h_away_goals_total == 5  # 0+1+0+4
