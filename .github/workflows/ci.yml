@@ -140,6 +140,12 @@ jobs:
     - name: Wait for database
       run: until pg_isready -h localhost -p 5432; do sleep 2; done
 
+    - name: Prepare test database schema and seed data
+      run: |
+        source .venv/bin/activate
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        python scripts/prepare_test_db.py
+
     - name: Run nightly test suites
       run: |
         set -o pipefail
