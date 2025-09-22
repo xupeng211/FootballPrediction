@@ -65,11 +65,12 @@ pytest tests/integration -m "integration"
 
 ## CI/CD 流程
 
-- **Pull Request**: GitHub Actions 触发 `unit-fast` job，执行 `make check-deps` + 安装依赖，并运行 `pytest tests/unit -m "unit and not slow" --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml`，确保反馈时间 <2 分钟（pytest.ini 已设置 `--cov-fail-under=70` 阈值）。
-- **Push 到 main / Nightly**: 触发 `slow-suite` job，在同样的依赖初始化后运行慢测试 (`pytest tests/unit -m "slow"`) 与集成测试 (`pytest tests/integration -m "integration"`)，覆盖外部依赖场景。
+- **Pull Request（Fast）**: GitHub Actions 触发 `unit-fast` job，执行 `make check-deps` + 安装依赖，并运行 `pytest tests/unit -m "unit and not slow" --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml --cov-fail-under=0`，聚焦快速反馈，不对覆盖率设门槛。
+- **Push 到 main（Slow）**: 触发 `slow-suite` job，复用相同的依赖初始化后运行慢测试 (`pytest tests/unit -m "slow" --cov=src --cov-append --cov-fail-under=0`) 与集成测试 (`pytest tests/integration -m "integration" --cov=src --cov-append --cov-fail-under=0`)，仅验证逻辑完整性，不检查覆盖率红线。
+- **定时 Nightly**: 同样由 `slow-suite` job 在 `schedule` 触发，自动将 `--cov-fail-under` 切换回 `70` 并生成 `coverage.txt` + `docs/CI_REPORT.md`，严格卡住覆盖率门槛并回写报告。
 - **本地复现**: 与 CI 保持一致，先执行 `make check-deps` + `pip install -r requirements.txt -r requirements-dev.txt`，随后按需运行快速或慢测试命令。
 
-- **Nightly 报告**: Nightly job 会解析测试日志并更新 `docs/CI_REPORT.md`，并自动提交到仓库；报告包含最新的快/慢测试覆盖率总览（TOTAL 覆盖率）、趋势表与折线图，并附带覆盖率一致性验证结果。
+- **Nightly 报告**: Nightly job 会解析测试日志并更新 `docs/CI_REPORT.md`，并自动提交到仓库；报告包含最新的快/慢测试覆盖率总览（TOTAL 覆盖率）、趋势表与折线图，并附带覆盖率一致性验证结果，若覆盖率低于 70% 即失败。
 
 ## ⚡ 测试性能优化
 
