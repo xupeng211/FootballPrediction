@@ -29,10 +29,10 @@ class MissingDataHandler:
     """
 
     FILL_STRATEGIES = {
-        'team_stats': 'historical_average',  # 历史平均值
-        'player_stats': 'position_median',   # 位置中位数
-        'weather': 'seasonal_normal',        # 季节正常值
-        'odds': 'market_consensus',          # 市场共识
+        "team_stats": "historical_average",  # 历史平均值
+        "player_stats": "position_median",  # 位置中位数
+        "weather": "seasonal_normal",  # 季节正常值
+        "odds": "market_consensus",  # 市场共识
     }
 
     def __init__(self):
@@ -40,7 +40,9 @@ class MissingDataHandler:
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"handler.{self.__class__.__name__}")
 
-    async def handle_missing_match_data(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_missing_match_data(
+        self, match_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         处理比赛数据中的缺失值
 
@@ -51,24 +53,30 @@ class MissingDataHandler:
             Dict[str, Any]: 处理缺失值后的数据
         """
         # 示例：填充缺失的比分
-        if match_data.get('home_score') is None:
-            match_data['home_score'] = 0
-            self.logger.debug(f"Filled missing home_score for match {match_data.get('id')}")
+        if match_data.get("home_score") is None:
+            match_data["home_score"] = 0
+            self.logger.debug(
+                f"Filled missing home_score for match {match_data.get('id')}"
+            )
 
-        if match_data.get('away_score') is None:
-            match_data['away_score'] = 0
-            self.logger.debug(f"Filled missing away_score for match {match_data.get('id')}")
+        if match_data.get("away_score") is None:
+            match_data["away_score"] = 0
+            self.logger.debug(
+                f"Filled missing away_score for match {match_data.get('id')}"
+            )
 
         # 示例：填充缺失的场地和裁判
-        if not match_data.get('venue'):
-            match_data['venue'] = 'Unknown'
+        if not match_data.get("venue"):
+            match_data["venue"] = "Unknown"
 
-        if not match_data.get('referee'):
-            match_data['referee'] = 'Unknown'
+        if not match_data.get("referee"):
+            match_data["referee"] = "Unknown"
 
         return match_data
 
-    async def handle_missing_features(self, match_id: int, features_df: pd.DataFrame) -> pd.DataFrame:
+    async def handle_missing_features(
+        self, match_id: int, features_df: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         处理特征数据中的缺失值
 
@@ -83,16 +91,18 @@ class MissingDataHandler:
             # 遍历所有特征列
             for col in features_df.columns:
                 if features_df[col].isnull().any():
-                    fill_strategy = self.FILL_STRATEGIES.get('team_stats', 'zero')
+                    fill_strategy = self.FILL_STRATEGIES.get("team_stats", "zero")
 
-                    if fill_strategy == 'historical_average':
+                    if fill_strategy == "historical_average":
                         # 使用历史平均值填充
                         # TODO: 实现从数据库获取历史平均值的逻辑
                         historical_avg = await self._get_historical_average(col)
                         features_df[col].fillna(historical_avg, inplace=True)
-                        self.logger.info(f"Filled missing {col} with historical average ({historical_avg})")
+                        self.logger.info(
+                            f"Filled missing {col} with historical average ({historical_avg})"
+                        )
 
-                    elif fill_strategy == 'median':
+                    elif fill_strategy == "median":
                         # 使用中位数填充
                         median_val = features_df[col].median()
                         features_df[col].fillna(median_val, inplace=True)
@@ -104,7 +114,9 @@ class MissingDataHandler:
             return features_df
 
         except Exception as e:
-            self.logger.error(f"Failed to handle missing features for match {match_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to handle missing features for match {match_id}: {str(e)}"
+            )
             # 出错时返回原始数据
             return features_df
 
@@ -122,16 +134,18 @@ class MissingDataHandler:
             # TODO: 实现从数据库查询历史平均值的逻辑
             # 这里返回一个固定的默认值作为占位符
             default_averages = {
-                'avg_possession': 50.0,
-                'avg_shots_per_game': 12.5,
-                'avg_goals_per_game': 1.5,
-                'league_position': 10.0
+                "avg_possession": 50.0,
+                "avg_shots_per_game": 12.5,
+                "avg_goals_per_game": 1.5,
+                "league_position": 10.0,
             }
 
             return default_averages.get(feature_name, 0.0)
 
         except Exception as e:
-            self.logger.error(f"Failed to get historical average for {feature_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to get historical average for {feature_name}: {str(e)}"
+            )
             return 0.0
 
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:
@@ -146,12 +160,14 @@ class MissingDataHandler:
         """
         try:
             # 使用线性插值
-            return data.interpolate(method='linear')
+            return data.interpolate(method="linear")
         except Exception as e:
             self.logger.error(f"Failed to interpolate time series data: {str(e)}")
             return data
 
-    def remove_rows_with_missing_critical_data(self, df: pd.DataFrame, critical_columns: List[str]) -> pd.DataFrame:
+    def remove_rows_with_missing_critical_data(
+        self, df: pd.DataFrame, critical_columns: List[str]
+    ) -> pd.DataFrame:
         """
         删除包含关键数据缺失的行
 
@@ -168,7 +184,9 @@ class MissingDataHandler:
             removed_rows = original_rows - len(cleaned_df)
 
             if removed_rows > 0:
-                self.logger.warning(f"Removed {removed_rows} rows due to missing critical data in columns: {critical_columns}")
+                self.logger.warning(
+                    f"Removed {removed_rows} rows due to missing critical data in columns: {critical_columns}"
+                )
 
             return cleaned_df
 

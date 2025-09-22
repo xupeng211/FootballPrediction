@@ -26,6 +26,8 @@ from src.data.collectors.base_collector import CollectionResult
 # 导入实际存在的任务函数
 from src.tasks.data_collection_tasks import app, manual_collect_all_data
 
+pytestmark = pytest.mark.slow
+
 
 class TestDataCollectionTasks:
     """数据收集任务测试类"""

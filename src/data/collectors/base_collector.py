@@ -3,12 +3,14 @@
 
 定义足球数据采集的统一接口和基础功能。
 实现了采集日志记录、错误处理、防重复等通用功能。
+集成新的重试机制以提高外部API调用的可靠性。
 
 基于 DATA_DESIGN.md 第1.2节设计。
 """
 
 import asyncio
 import logging
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -17,6 +19,17 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 
 from src.database.connection import DatabaseManager
+from src.utils.retry import RetryConfig, retry
+
+# 外部API重试配置 / External API retry configuration
+EXTERNAL_API_RETRY_CONFIG = RetryConfig(
+    max_attempts=int(os.getenv("EXTERNAL_API_RETRY_MAX_ATTEMPTS", "3")),
+    base_delay=float(os.getenv("EXTERNAL_API_RETRY_BASE_DELAY", "2.0")),
+    max_delay=30.0,
+    exponential_base=2.0,
+    jitter=True,
+    retryable_exceptions=(aiohttp.ClientError, asyncio.TimeoutError, ConnectionError),
+)
 
 
 @dataclass
@@ -49,7 +62,7 @@ class DataCollector(ABC):
         data_source: str,
         max_retries: int = 3,
         retry_delay: int = 5,
-        timeout: int = 30
+        timeout: int = 30,
     ):
         """
         初始化采集器
@@ -108,48 +121,119 @@ class DataCollector(ABC):
             CollectionResult: 采集结果
         """
 
+    @retry(EXTERNAL_API_RETRY_CONFIG)
+    async def _make_request_with_retry(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
+
+        使用新的重试装饰器发起HTTP请求，包含指数退避和抖动。
+        Make HTTP request using the new retry decorator with exponential backoff and jitter.
+
+        Args:
+            url (str): 请求URL / Request URL
+            method (str): HTTP方法 / HTTP method
+                Defaults to "GET"
+            headers (Optional[Dict[str, str]]): 请求头 / Request headers
+                Defaults to None
+            params (Optional[Dict[str, Any]]): URL参数 / URL parameters
+                Defaults to None
+            json_data (Optional[Dict[str, Any]]): JSON数据 / JSON data
+                Defaults to None
+
+        Returns:
+            Dict[str, Any]: 响应JSON数据 / Response JSON data
+
+        Raises:
+            Exception: 请求失败或达到最大重试次数 / Request failed or max retry attempts reached
+
+        Example:
+            ```python
+            collector = DataCollector("api_source")
+            response = await collector._make_request_with_retry(
+                "https://api.example.com/data",
+                method="GET",
+                headers={"Authorization": "Bearer token"}
+            )
+            ```
+
+        Note:
+            该方法包含自动重试机制，使用指数退避和抖动。
+            This method includes an automatic retry mechanism with exponential backoff and jitter.
+        """
+        timeout = aiohttp.ClientTimeout(total=self.timeout)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.request(
+                method=method, url=url, headers=headers, params=params, json=json_data
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"HTTP {response.status} for {url}",
+                    )
+
     async def _make_request(
         self,
         url: str,
         method: str = "GET",
         headers: Optional[Dict[str, str]] = None,
         params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None
+        json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
-        发起HTTP请求（带重试机制）
+        发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
 
         Args:
-            url: 请求URL
-            method: HTTP方法
-            headers: 请求头
-            params: URL参数
-            json_data: JSON数据
+            url (str): 请求URL / Request URL
+            method (str): HTTP方法 / HTTP method
+                Defaults to "GET"
+            headers (Optional[Dict[str, str]]): 请求头 / Request headers
+                Defaults to None
+            params (Optional[Dict[str, Any]]): URL参数 / URL parameters
+                Defaults to None
+            json_data (Optional[Dict[str, Any]]): JSON数据 / JSON data
+                Defaults to None
 
         Returns:
-            Dict: 响应JSON数据
+            Dict[str, Any]: 响应JSON数据 / Response JSON data
 
         Raises:
-            Exception: 请求失败或达到最大重试次数
+            Exception: 请求失败或达到最大重试次数 / Request failed or max retry attempts reached
+
+        Example:
+            ```python
+            collector = DataCollector("api_source")
+            response = await collector._make_request(
+                "https://api.example.com/data",
+                method="GET",
+                headers={"Authorization": "Bearer token"}
+            )
+            ```
+
+        Note:
+            该方法包含自动重试机制，最大尝试3次。
+            This method includes an automatic retry mechanism with up to 3 attempts.
         """
         for attempt in range(self.max_retries):
             try:
-                timeout = aiohttp.ClientTimeout(total=self.timeout)
-                async with aiohttp.ClientSession(timeout=timeout) as session:
-                    async with session.request(
-                        method=method,
-                        url=url,
-                        headers=headers,
-                        params=params,
-                        json=json_data
-                    ) as response:
-                        if response.status == 200:
-                            return await response.json()
-                        else:
-                            self.logger.warning(
-                                f"HTTP {response.status} for {url}, attempt {attempt + 1}"
-                            )
-
+                # 使用新的带重试机制的方法
+                return await self._make_request_with_retry(
+                    url=url,
+                    method=method,
+                    headers=headers,
+                    params=params,
+                    json_data=json_data,
+                )
             except Exception as e:
                 self.logger.error(
                     f"Request failed for {url}, attempt {attempt + 1}: {str(e)}"
@@ -160,9 +244,7 @@ class DataCollector(ABC):
                     raise e
 
     async def _save_to_bronze_layer(
-        self,
-        table_name: str,
-        raw_data: List[Dict[str, Any]]
+        self, table_name: str, raw_data: List[Dict[str, Any]]
     ) -> None:
         """
         保存原始数据到Bronze层
@@ -186,7 +268,7 @@ class DataCollector(ABC):
             model_mapping = {
                 "raw_match_data": RawMatchData,
                 "raw_odds_data": RawOddsData,
-                "raw_scores_data": RawScoresData
+                "raw_scores_data": RawScoresData,
             }
 
             if table_name not in model_mapping:
@@ -201,41 +283,53 @@ class DataCollector(ABC):
                 for data in raw_data:
                     try:
                         # 提取标准字段
-                        raw_json = data.get('raw_data', data)
+                        raw_json = data.get("raw_data", data)
 
                         # 创建Bronze层记录
                         bronze_record = model_class(
                             data_source=self.data_source,
                             raw_data=raw_json,
                             collected_at=current_time,
-                            processed=False
+                            processed=False,
                         )
 
                         # 根据表类型设置特定字段
                         if table_name == "raw_match_data":
-                            bronze_record.external_match_id = data.get('external_match_id')
-                            bronze_record.external_league_id = data.get('external_league_id')
-                            if 'match_time' in data:
+                            bronze_record.external_match_id = data.get(
+                                "external_match_id"
+                            )
+                            bronze_record.external_league_id = data.get(
+                                "external_league_id"
+                            )
+                            if "match_time" in data:
                                 try:
-                                    match_time_str = data['match_time']
+                                    match_time_str = data["match_time"]
                                     if isinstance(match_time_str, str):
-                                        bronze_record.match_time = datetime.fromisoformat(
-                                            match_time_str.replace('Z', '+00:00')
+                                        bronze_record.match_time = (
+                                            datetime.fromisoformat(
+                                                match_time_str.replace("Z", "+00:00")
+                                            )
                                         )
                                 except (ValueError, TypeError) as e:
-                                    self.logger.warning(f"Invalid match_time format: {e}")
+                                    self.logger.warning(
+                                        f"Invalid match_time format: {e}"
+                                    )
 
                         elif table_name == "raw_odds_data":
-                            bronze_record.external_match_id = data.get('external_match_id')
-                            bronze_record.bookmaker = data.get('bookmaker')
-                            bronze_record.market_type = data.get('market_type')
+                            bronze_record.external_match_id = data.get(
+                                "external_match_id"
+                            )
+                            bronze_record.bookmaker = data.get("bookmaker")
+                            bronze_record.market_type = data.get("market_type")
 
                         elif table_name == "raw_scores_data":
-                            bronze_record.external_match_id = data.get('external_match_id')
-                            bronze_record.match_status = data.get('match_status')
-                            bronze_record.home_score = data.get('home_score')
-                            bronze_record.away_score = data.get('away_score')
-                            bronze_record.match_minute = data.get('match_minute')
+                            bronze_record.external_match_id = data.get(
+                                "external_match_id"
+                            )
+                            bronze_record.match_status = data.get("match_status")
+                            bronze_record.home_score = data.get("home_score")
+                            bronze_record.away_score = data.get("away_score")
+                            bronze_record.match_minute = data.get("match_minute")
 
                         session.add(bronze_record)
                         saved_count += 1
@@ -259,7 +353,7 @@ class DataCollector(ABC):
         self,
         new_record: Dict[str, Any],
         existing_records: List[Dict[str, Any]],
-        key_fields: List[str]
+        key_fields: List[str],
     ) -> bool:
         """
         检查是否为重复记录
@@ -296,8 +390,7 @@ class DataCollector(ABC):
                 DataCollectionLog
 
             log_entry = DataCollectionLog(
-                data_source=self.data_source,
-                collection_type=collection_type
+                data_source=self.data_source, collection_type=collection_type
             )
             log_entry.mark_started()
 
@@ -311,7 +404,9 @@ class DataCollector(ABC):
             self.logger.error(f"Failed to create collection log: {str(e)}")
             return 0
 
-    async def _update_collection_log(self, log_id: int, result: CollectionResult) -> None:
+    async def _update_collection_log(
+        self, log_id: int, result: CollectionResult
+    ) -> None:
         """
         更新采集日志记录（结束时调用）
 
@@ -345,7 +440,7 @@ class DataCollector(ABC):
                         records_collected=result.records_collected,
                         success_count=result.success_count,
                         error_count=result.error_count,
-                        error_message=result.error_message
+                        error_message=result.error_message,
                     )
                     await session.commit()
 
@@ -392,7 +487,7 @@ class DataCollector(ABC):
                     success_count=0,
                     error_count=1,
                     status="failed",
-                    error_message=str(e)
+                    error_message=str(e),
                 )
                 results[data_type] = error_result
 

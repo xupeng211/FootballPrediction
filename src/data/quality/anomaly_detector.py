@@ -36,7 +36,7 @@ from sqlalchemy import text
 from src.database.connection import DatabaseManager
 
 # 忽略sklearn警告
-warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -47,30 +47,30 @@ logger = logging.getLogger(__name__)
 
 # 异常检测总计指标
 anomalies_detected_total = Counter(
-    'football_data_anomalies_detected_total',
-    'Total number of data anomalies detected',
-    ['table_name', 'anomaly_type', 'detection_method', 'severity']
+    "football_data_anomalies_detected_total",
+    "Total number of data anomalies detected",
+    ["table_name", "anomaly_type", "detection_method", "severity"],
 )
 
 # 数据漂移评分指标
 data_drift_score = Gauge(
-    'football_data_drift_score',
-    'Data drift score indicating distribution changes',
-    ['table_name', 'feature_name']
+    "football_data_drift_score",
+    "Data drift score indicating distribution changes",
+    ["table_name", "feature_name"],
 )
 
 # 异常检测执行时间
 anomaly_detection_duration_seconds = Histogram(
-    'football_data_anomaly_detection_duration_seconds',
-    'Time taken to complete anomaly detection',
-    ['table_name', 'detection_method']
+    "football_data_anomaly_detection_duration_seconds",
+    "Time taken to complete anomaly detection",
+    ["table_name", "detection_method"],
 )
 
 # 异常检测覆盖率
 anomaly_detection_coverage = Gauge(
-    'football_data_anomaly_detection_coverage',
-    'Percentage of data covered by anomaly detection',
-    ['table_name']
+    "football_data_anomaly_detection_coverage",
+    "Percentage of data covered by anomaly detection",
+    ["table_name"],
 )
 
 
@@ -82,7 +82,7 @@ class AnomalyDetectionResult:
         table_name: str,
         detection_method: str,
         anomaly_type: str,
-        severity: str = "medium"
+        severity: str = "medium",
     ):
         """
         初始化异常检测结果
@@ -117,15 +117,15 @@ class AnomalyDetectionResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
-            'table_name': self.table_name,
-            'detection_method': self.detection_method,
-            'anomaly_type': self.anomaly_type,
-            'severity': self.severity,
-            'timestamp': self.timestamp.isoformat(),
-            'anomalous_records_count': len(self.anomalous_records),
-            'anomalous_records': self.anomalous_records,
-            'statistics': self.statistics,
-            'metadata': self.metadata
+            "table_name": self.table_name,
+            "detection_method": self.detection_method,
+            "anomaly_type": self.anomaly_type,
+            "severity": self.severity,
+            "timestamp": self.timestamp.isoformat(),
+            "anomalous_records_count": len(self.anomalous_records),
+            "anomalous_records": self.anomalous_records,
+            "statistics": self.statistics,
+            "metadata": self.metadata,
         }
 
 
@@ -143,10 +143,7 @@ class StatisticalAnomalyDetector:
         self.logger = logging.getLogger(f"quality.{self.__class__.__name__}")
 
     def detect_outliers_3sigma(
-        self,
-        data: pd.Series,
-        table_name: str,
-        column_name: str
+        self, data: pd.Series, table_name: str, column_name: str
     ) -> AnomalyDetectionResult:
         """
         使用3σ规则检测异常值
@@ -180,18 +177,20 @@ class StatisticalAnomalyDetector:
                 # 所有值相同，没有异常值
                 result = AnomalyDetectionResult(
                     table_name=table_name,
-                    detection_method='3sigma',
-                    anomaly_type='statistical_outlier',
-                    severity='low'
+                    detection_method="3sigma",
+                    anomaly_type="statistical_outlier",
+                    severity="low",
                 )
-                result.set_statistics({
-                    'total_records': len(clean_data),
-                    'outliers_count': 0,
-                    'outlier_rate': 0.0,
-                    'mean': float(mean),
-                    'std': 0.0,
-                    'sigma_threshold': self.sigma_threshold
-                })
+                result.set_statistics(
+                    {
+                        "total_records": len(clean_data),
+                        "outliers_count": 0,
+                        "outlier_rate": 0.0,
+                        "mean": float(mean),
+                        "std": 0.0,
+                        "sigma_threshold": self.sigma_threshold,
+                    }
+                )
                 return result
 
             # 计算异常值阈值
@@ -213,7 +212,9 @@ class StatisticalAnomalyDetector:
                     log_upper_bound = log_mean + self.sigma_threshold * log_std
 
                     # 检测对数变换后的异常值
-                    outliers_mask = (log_data < log_lower_bound) | (log_data > log_upper_bound)
+                    outliers_mask = (log_data < log_lower_bound) | (
+                        log_data > log_upper_bound
+                    )
                     outliers = clean_data[outliers_mask]
                 else:
                     outliers = pd.Series(dtype=clean_data.dtype)
@@ -231,9 +232,9 @@ class StatisticalAnomalyDetector:
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method='3sigma',
-                anomaly_type='statistical_outlier',
-                severity='medium' if len(outliers) < len(clean_data) * 0.05 else 'high'
+                detection_method="3sigma",
+                anomaly_type="statistical_outlier",
+                severity="medium" if len(outliers) < len(clean_data) * 0.05 else "high",
             )
 
             # 添加异常记录
@@ -246,39 +247,46 @@ class StatisticalAnomalyDetector:
                 except (OverflowError, ValueError):
                     z_score = 100 if value > mean else -100
 
-                result.add_anomalous_record({
-                    'index': int(idx),
-                    'column': column_name,
-                    'value': float(value),
-                    'z_score': z_score,
-                    'threshold_exceeded': 'lower' if value < lower_bound else 'upper'
-                })
+                result.add_anomalous_record(
+                    {
+                        "index": int(idx),
+                        "column": column_name,
+                        "value": float(value),
+                        "z_score": z_score,
+                        "threshold_exceeded": (
+                            "lower" if value < lower_bound else "upper"
+                        ),
+                    }
+                )
 
             # 设置统计信息
-            result.set_statistics({
-                'total_records': len(clean_data),  # 使用清理后的数据计数
-                'outliers_count': len(outliers),
-                'outlier_rate': len(outliers) / len(clean_data) if len(clean_data) > 0 else 0.0,
-                'mean': float(mean),
-                'std': float(std),
-                'lower_bound': float(lower_bound),
-                'upper_bound': float(upper_bound),
-                'sigma_threshold': self.sigma_threshold
-            })
+            result.set_statistics(
+                {
+                    "total_records": len(clean_data),  # 使用清理后的数据计数
+                    "outliers_count": len(outliers),
+                    "outlier_rate": (
+                        len(outliers) / len(clean_data) if len(clean_data) > 0 else 0.0
+                    ),
+                    "mean": float(mean),
+                    "std": float(std),
+                    "lower_bound": float(lower_bound),
+                    "upper_bound": float(upper_bound),
+                    "sigma_threshold": self.sigma_threshold,
+                }
+            )
 
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type='statistical_outlier',
-                detection_method='3sigma',
-                severity=result.severity
+                anomaly_type="statistical_outlier",
+                detection_method="3sigma",
+                severity=result.severity,
             ).inc(len(outliers))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='3sigma'
+                table_name=table_name, detection_method="3sigma"
             ).observe(duration)
 
             self.logger.info(
@@ -298,7 +306,7 @@ class StatisticalAnomalyDetector:
         current_data: pd.Series,
         table_name: str,
         column_name: str,
-        significance_level: float = 0.05
+        significance_level: float = 0.05,
     ) -> AnomalyDetectionResult:
         """
         使用Kolmogorov-Smirnov检验检测分布偏移
@@ -324,85 +332,91 @@ class StatisticalAnomalyDetector:
 
             # 确定严重程度
             if p_value < 0.001:
-                severity = 'critical'
+                severity = "critical"
             elif p_value < 0.01:
-                severity = 'high'
+                severity = "high"
             elif p_value < 0.05:
-                severity = 'medium'
+                severity = "medium"
             else:
-                severity = 'low'
+                severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method='ks_test',
-                anomaly_type='distribution_shift',
-                severity=severity if distribution_shifted else 'low'
+                detection_method="ks_test",
+                anomaly_type="distribution_shift",
+                severity=severity if distribution_shifted else "low",
             )
 
             # 计算分布统计信息
             baseline_stats = {
-                'mean': float(baseline_data.mean()),
-                'std': float(baseline_data.std()),
-                'median': float(baseline_data.median()),
-                'min': float(baseline_data.min()),
-                'max': float(baseline_data.max())
+                "mean": float(baseline_data.mean()),
+                "std": float(baseline_data.std()),
+                "median": float(baseline_data.median()),
+                "min": float(baseline_data.min()),
+                "max": float(baseline_data.max()),
             }
 
             current_stats = {
-                'mean': float(current_data.mean()),
-                'std': float(current_data.std()),
-                'median': float(current_data.median()),
-                'min': float(current_data.min()),
-                'max': float(current_data.max())
+                "mean": float(current_data.mean()),
+                "std": float(current_data.std()),
+                "median": float(current_data.median()),
+                "min": float(current_data.min()),
+                "max": float(current_data.max()),
             }
 
             # 设置统计信息 - 确保布尔值正确转换
-            result.set_statistics({
-                'ks_statistic': float(ks_statistic),
-                'p_value': float(p_value),
-                'significance_level': significance_level,
-                'distribution_shifted': bool(distribution_shifted),  # 确保是布尔值
-                'baseline_size': len(baseline_data),
-                'current_size': len(current_data),
-                'baseline_stats': baseline_stats,
-                'current_stats': current_stats,
-                'mean_difference': float(current_stats['mean'] - baseline_stats['mean']),
-                'std_difference': float(current_stats['std'] - baseline_stats['std'])
-            })
+            result.set_statistics(
+                {
+                    "ks_statistic": float(ks_statistic),
+                    "p_value": float(p_value),
+                    "significance_level": significance_level,
+                    "distribution_shifted": bool(distribution_shifted),  # 确保是布尔值
+                    "baseline_size": len(baseline_data),
+                    "current_size": len(current_data),
+                    "baseline_stats": baseline_stats,
+                    "current_stats": current_stats,
+                    "mean_difference": float(
+                        current_stats["mean"] - baseline_stats["mean"]
+                    ),
+                    "std_difference": float(
+                        current_stats["std"] - baseline_stats["std"]
+                    ),
+                }
+            )
 
             # 如果检测到分布偏移，添加详细信息
             if distribution_shifted:
-                result.add_anomalous_record({
-                    'column': column_name,
-                    'ks_statistic': float(ks_statistic),
-                    'p_value': float(p_value),
-                    'baseline_period': 'historical',
-                    'current_period': 'recent',
-                    'shift_type': 'distribution_change'
-                })
+                result.add_anomalous_record(
+                    {
+                        "column": column_name,
+                        "ks_statistic": float(ks_statistic),
+                        "p_value": float(p_value),
+                        "baseline_period": "historical",
+                        "current_period": "recent",
+                        "shift_type": "distribution_change",
+                    }
+                )
 
             # 记录数据漂移评分
             drift_score = min(1.0, ks_statistic * 2)  # 归一化到0-1
             data_drift_score.labels(
-                table_name=table_name,
-                feature_name=column_name
+                table_name=table_name, feature_name=column_name
             ).set(drift_score)
 
             # 记录Prometheus指标
             if distribution_shifted:
                 anomalies_detected_total.labels(
                     table_name=table_name,
-                    anomaly_type='distribution_shift',
-                    detection_method='ks_test',
-                    severity=severity
+                    anomaly_type="distribution_shift",
+                    detection_method="ks_test",
+                    severity=severity,
                 ).inc()
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='ks_test'
+                table_name=table_name, detection_method="ks_test"
             ).observe(duration)
 
             self.logger.info(
@@ -422,7 +436,7 @@ class StatisticalAnomalyDetector:
         data: pd.Series,
         table_name: str,
         column_name: str,
-        iqr_multiplier: float = 1.5
+        iqr_multiplier: float = 1.5,
     ) -> AnomalyDetectionResult:
         """
         使用四分位距(IQR)方法检测异常值
@@ -455,54 +469,58 @@ class StatisticalAnomalyDetector:
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method='iqr',
-                anomaly_type='statistical_outlier',
-                severity='medium' if len(outliers) < len(data) * 0.05 else 'high'
+                detection_method="iqr",
+                anomaly_type="statistical_outlier",
+                severity="medium" if len(outliers) < len(data) * 0.05 else "high",
             )
 
             # 添加异常记录
             for idx, value in outliers.items():
-                result.add_anomalous_record({
-                    'index': int(idx),
-                    'column': column_name,
-                    'value': float(value),
-                    'iqr_distance': float(
-                        max(lower_bound - value, value - upper_bound) / IQR
-                    ),
-                    'threshold_exceeded': 'lower' if value < lower_bound else 'upper'
-                })
+                result.add_anomalous_record(
+                    {
+                        "index": int(idx),
+                        "column": column_name,
+                        "value": float(value),
+                        "iqr_distance": float(
+                            max(lower_bound - value, value - upper_bound) / IQR
+                        ),
+                        "threshold_exceeded": (
+                            "lower" if value < lower_bound else "upper"
+                        ),
+                    }
+                )
 
             # 设置统计信息
-            result.set_statistics({
-                'total_records': len(data),
-                'outliers_count': len(outliers),
-                'outlier_rate': len(outliers) / len(data),
-                'Q1': float(Q1),
-                'Q3': float(Q3),
-                'IQR': float(IQR),
-                'lower_bound': float(lower_bound),
-                'upper_bound': float(upper_bound),
-                'iqr_multiplier': iqr_multiplier
-            })
+            result.set_statistics(
+                {
+                    "total_records": len(data),
+                    "outliers_count": len(outliers),
+                    "outlier_rate": len(outliers) / len(data),
+                    "Q1": float(Q1),
+                    "Q3": float(Q3),
+                    "IQR": float(IQR),
+                    "lower_bound": float(lower_bound),
+                    "upper_bound": float(upper_bound),
+                    "iqr_multiplier": iqr_multiplier,
+                }
+            )
 
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type='statistical_outlier',
-                detection_method='iqr',
-                severity=result.severity
+                anomaly_type="statistical_outlier",
+                detection_method="iqr",
+                severity=result.severity,
             ).inc(len(outliers))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='iqr'
+                table_name=table_name, detection_method="iqr"
             ).observe(duration)
 
             self.logger.info(
-                f"IQR异常检测完成: {table_name}.{column_name}, "
-                f"发现 {len(outliers)} 个异常值"
+                f"IQR异常检测完成: {table_name}.{column_name}, " f"发现 {len(outliers)} 个异常值"
             )
 
             return result
@@ -527,7 +545,7 @@ class MachineLearningAnomalyDetector:
         data: pd.DataFrame,
         table_name: str,
         contamination: float = 0.1,
-        random_state: int = 42
+        random_state: int = 42,
     ) -> AnomalyDetectionResult:
         """
         使用Isolation Forest检测异常
@@ -554,9 +572,7 @@ class MachineLearningAnomalyDetector:
 
             # 训练Isolation Forest模型
             self.isolation_forest = IsolationForest(
-                contamination=contamination,
-                random_state=random_state,
-                n_estimators=100
+                contamination=contamination, random_state=random_state, n_estimators=100
             )
 
             # 预测异常
@@ -569,61 +585,66 @@ class MachineLearningAnomalyDetector:
             # 确定严重程度
             anomaly_rate = len(anomalous_indices) / len(data)
             if anomaly_rate > 0.2:
-                severity = 'critical'
+                severity = "critical"
             elif anomaly_rate > 0.1:
-                severity = 'high'
+                severity = "high"
             elif anomaly_rate > 0.05:
-                severity = 'medium'
+                severity = "medium"
             else:
-                severity = 'low'
+                severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method='isolation_forest',
-                anomaly_type='ml_anomaly',
-                severity=severity
+                detection_method="isolation_forest",
+                anomaly_type="ml_anomaly",
+                severity=severity,
             )
 
             # 添加异常记录
             for idx in anomalous_indices:
                 anomaly_record = {
-                    'index': int(idx),
-                    'anomaly_score': float(anomaly_scores[idx]),
-                    'features': {}
+                    "index": int(idx),
+                    "anomaly_score": float(anomaly_scores[idx]),
+                    "features": {},
                 }
 
                 # 添加特征值
                 for col in numeric_columns:
-                    anomaly_record['features'][col] = float(data.iloc[idx][col])
+                    anomaly_record["features"][col] = float(data.iloc[idx][col])
 
                 result.add_anomalous_record(anomaly_record)
 
             # 设置统计信息
-            result.set_statistics({
-                'total_records': len(data),
-                'anomalies_count': len(anomalous_indices),
-                'anomaly_rate': anomaly_rate,
-                'contamination_param': contamination,
-                'features_used': list(numeric_columns),
-                'mean_anomaly_score': float(np.mean(anomaly_scores[anomalous_indices])) if len(anomalous_indices) > 0 else 0.0,
-                'min_anomaly_score': float(np.min(anomaly_scores)),
-                'max_anomaly_score': float(np.max(anomaly_scores))
-            })
+            result.set_statistics(
+                {
+                    "total_records": len(data),
+                    "anomalies_count": len(anomalous_indices),
+                    "anomaly_rate": anomaly_rate,
+                    "contamination_param": contamination,
+                    "features_used": list(numeric_columns),
+                    "mean_anomaly_score": (
+                        float(np.mean(anomaly_scores[anomalous_indices]))
+                        if len(anomalous_indices) > 0
+                        else 0.0
+                    ),
+                    "min_anomaly_score": float(np.min(anomaly_scores)),
+                    "max_anomaly_score": float(np.max(anomaly_scores)),
+                }
+            )
 
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type='ml_anomaly',
-                detection_method='isolation_forest',
-                severity=severity
+                anomaly_type="ml_anomaly",
+                detection_method="isolation_forest",
+                severity=severity,
             ).inc(len(anomalous_indices))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='isolation_forest'
+                table_name=table_name, detection_method="isolation_forest"
             ).observe(duration)
 
             self.logger.info(
@@ -642,7 +663,7 @@ class MachineLearningAnomalyDetector:
         baseline_data: pd.DataFrame,
         current_data: pd.DataFrame,
         table_name: str,
-        drift_threshold: float = 0.1
+        drift_threshold: float = 0.1,
     ) -> List[AnomalyDetectionResult]:
         """
         检测数据漂移（Data Drift）
@@ -684,8 +705,12 @@ class MachineLearningAnomalyDetector:
                     current_std = current_col.std()
 
                     # 计算漂移评分
-                    mean_drift = abs(current_mean - baseline_mean) / max(abs(baseline_mean), 1e-8)
-                    std_drift = abs(current_std - baseline_std) / max(baseline_std, 1e-8)
+                    mean_drift = abs(current_mean - baseline_mean) / max(
+                        abs(baseline_mean), 1e-8
+                    )
+                    std_drift = abs(current_std - baseline_std) / max(
+                        baseline_std, 1e-8
+                    )
 
                     # 综合漂移评分
                     drift_score = (mean_drift + std_drift) / 2
@@ -699,70 +724,72 @@ class MachineLearningAnomalyDetector:
                     if has_drift:
                         # 确定严重程度
                         if drift_score > 0.5 or p_value < 0.001:
-                            severity = 'critical'
+                            severity = "critical"
                         elif drift_score > 0.3 or p_value < 0.01:
-                            severity = 'high'
+                            severity = "high"
                         elif drift_score > 0.1 or p_value < 0.05:
-                            severity = 'medium'
+                            severity = "medium"
                         else:
-                            severity = 'low'
+                            severity = "low"
 
                         # 创建检测结果
                         result = AnomalyDetectionResult(
                             table_name=table_name,
-                            detection_method='data_drift',
-                            anomaly_type='feature_drift',
-                            severity=severity
+                            detection_method="data_drift",
+                            anomaly_type="feature_drift",
+                            severity=severity,
                         )
 
                         # 添加漂移记录
-                        result.add_anomalous_record({
-                            'column': column,
-                            'drift_score': float(drift_score),
-                            'mean_drift': float(mean_drift),
-                            'std_drift': float(std_drift),
-                            'ks_statistic': float(ks_stat),
-                            'p_value': float(p_value),
-                            'baseline_mean': float(baseline_mean),
-                            'current_mean': float(current_mean),
-                            'baseline_std': float(baseline_std),
-                            'current_std': float(current_std)
-                        })
+                        result.add_anomalous_record(
+                            {
+                                "column": column,
+                                "drift_score": float(drift_score),
+                                "mean_drift": float(mean_drift),
+                                "std_drift": float(std_drift),
+                                "ks_statistic": float(ks_stat),
+                                "p_value": float(p_value),
+                                "baseline_mean": float(baseline_mean),
+                                "current_mean": float(current_mean),
+                                "baseline_std": float(baseline_std),
+                                "current_std": float(current_std),
+                            }
+                        )
 
                         # 设置统计信息
-                        result.set_statistics({
-                            'column': column,
-                            'drift_score': float(drift_score),
-                            'threshold': drift_threshold,
-                            'baseline_size': len(baseline_col),
-                            'current_size': len(current_col),
-                            'mean_change_pct': float(mean_drift * 100),
-                            'std_change_pct': float(std_drift * 100),
-                            'ks_statistic': float(ks_stat),
-                            'p_value': float(p_value)
-                        })
+                        result.set_statistics(
+                            {
+                                "column": column,
+                                "drift_score": float(drift_score),
+                                "threshold": drift_threshold,
+                                "baseline_size": len(baseline_col),
+                                "current_size": len(current_col),
+                                "mean_change_pct": float(mean_drift * 100),
+                                "std_change_pct": float(std_drift * 100),
+                                "ks_statistic": float(ks_stat),
+                                "p_value": float(p_value),
+                            }
+                        )
 
                         results.append(result)
 
                         # 记录数据漂移评分
                         data_drift_score.labels(
-                            table_name=table_name,
-                            feature_name=column
+                            table_name=table_name, feature_name=column
                         ).set(drift_score)
 
                         # 记录Prometheus指标
                         anomalies_detected_total.labels(
                             table_name=table_name,
-                            anomaly_type='feature_drift',
-                            detection_method='data_drift',
-                            severity=severity
+                            anomaly_type="feature_drift",
+                            detection_method="data_drift",
+                            severity=severity,
                         ).inc()
 
                     else:
                         # 记录正常的漂移评分
                         data_drift_score.labels(
-                            table_name=table_name,
-                            feature_name=column
+                            table_name=table_name, feature_name=column
                         ).set(drift_score)
 
                 except Exception as col_error:
@@ -772,8 +799,7 @@ class MachineLearningAnomalyDetector:
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='data_drift'
+                table_name=table_name, detection_method="data_drift"
             ).observe(duration)
 
             self.logger.info(
@@ -793,7 +819,7 @@ class MachineLearningAnomalyDetector:
         data: pd.DataFrame,
         table_name: str,
         eps: float = 0.5,
-        min_samples: int = 5
+        min_samples: int = 5,
     ) -> AnomalyDetectionResult:
         """
         使用DBSCAN聚类检测异常
@@ -828,33 +854,33 @@ class MachineLearningAnomalyDetector:
             # 确定严重程度
             anomaly_rate = len(anomalous_indices) / len(data)
             if anomaly_rate > 0.3:
-                severity = 'critical'
+                severity = "critical"
             elif anomaly_rate > 0.2:
-                severity = 'high'
+                severity = "high"
             elif anomaly_rate > 0.1:
-                severity = 'medium'
+                severity = "medium"
             else:
-                severity = 'low'
+                severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method='dbscan_clustering',
-                anomaly_type='clustering_outlier',
-                severity=severity
+                detection_method="dbscan_clustering",
+                anomaly_type="clustering_outlier",
+                severity=severity,
             )
 
             # 添加异常记录
             for idx in anomalous_indices:
                 anomaly_record = {
-                    'index': int(idx),
-                    'cluster_label': int(cluster_labels[idx]),
-                    'features': {}
+                    "index": int(idx),
+                    "cluster_label": int(cluster_labels[idx]),
+                    "features": {},
                 }
 
                 # 添加特征值
                 for col in numeric_columns:
-                    anomaly_record['features'][col] = float(data.iloc[idx][col])
+                    anomaly_record["features"][col] = float(data.iloc[idx][col])
 
                 result.add_anomalous_record(anomaly_record)
 
@@ -862,30 +888,35 @@ class MachineLearningAnomalyDetector:
             unique_clusters = np.unique(cluster_labels[cluster_labels != -1])
 
             # 设置统计信息
-            result.set_statistics({
-                'total_records': len(data),
-                'anomalies_count': len(anomalous_indices),
-                'anomaly_rate': anomaly_rate,
-                'num_clusters': len(unique_clusters),
-                'eps': eps,
-                'min_samples': min_samples,
-                'features_used': list(numeric_columns),
-                'largest_cluster_size': int(np.max(np.bincount(cluster_labels[cluster_labels != -1]))) if len(unique_clusters) > 0 else 0
-            })
+            result.set_statistics(
+                {
+                    "total_records": len(data),
+                    "anomalies_count": len(anomalous_indices),
+                    "anomaly_rate": anomaly_rate,
+                    "num_clusters": len(unique_clusters),
+                    "eps": eps,
+                    "min_samples": min_samples,
+                    "features_used": list(numeric_columns),
+                    "largest_cluster_size": (
+                        int(np.max(np.bincount(cluster_labels[cluster_labels != -1])))
+                        if len(unique_clusters) > 0
+                        else 0
+                    ),
+                }
+            )
 
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type='clustering_outlier',
-                detection_method='dbscan_clustering',
-                severity=severity
+                anomaly_type="clustering_outlier",
+                detection_method="dbscan_clustering",
+                severity=severity,
             ).inc(len(anomalous_indices))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='dbscan_clustering'
+                table_name=table_name, detection_method="dbscan_clustering"
             ).observe(duration)
 
             self.logger.info(
@@ -915,27 +946,34 @@ class AdvancedAnomalyDetector:
 
         # 检测配置
         self.detection_config = {
-            'matches': {
-                'enabled_methods': ['3sigma', 'iqr', 'isolation_forest', 'data_drift'],
-                'key_columns': ['home_score', 'away_score', 'match_time'],
-                'drift_baseline_days': 30
+            "matches": {
+                "enabled_methods": ["3sigma", "iqr", "isolation_forest", "data_drift"],
+                "key_columns": ["home_score", "away_score", "match_time"],
+                "drift_baseline_days": 30,
             },
-            'odds': {
-                'enabled_methods': ['3sigma', 'iqr', 'isolation_forest', 'distribution_shift'],
-                'key_columns': ['home_odds', 'draw_odds', 'away_odds'],
-                'drift_baseline_days': 7
+            "odds": {
+                "enabled_methods": [
+                    "3sigma",
+                    "iqr",
+                    "isolation_forest",
+                    "distribution_shift",
+                ],
+                "key_columns": ["home_odds", "draw_odds", "away_odds"],
+                "drift_baseline_days": 7,
             },
-            'predictions': {
-                'enabled_methods': ['3sigma', 'clustering', 'data_drift'],
-                'key_columns': ['home_win_probability', 'draw_probability', 'away_win_probability'],
-                'drift_baseline_days': 14
-            }
+            "predictions": {
+                "enabled_methods": ["3sigma", "clustering", "data_drift"],
+                "key_columns": [
+                    "home_win_probability",
+                    "draw_probability",
+                    "away_win_probability",
+                ],
+                "drift_baseline_days": 14,
+            },
         }
 
     async def run_comprehensive_detection(
-        self,
-        table_name: str,
-        time_window_hours: int = 24
+        self, table_name: str, time_window_hours: int = 24
     ) -> List[AnomalyDetectionResult]:
         """
         运行综合异常检测
@@ -972,35 +1010,43 @@ class AdvancedAnomalyDetector:
             anomaly_detection_coverage.labels(table_name=table_name).set(coverage)
 
             # 执行各种检测方法
-            for method in config['enabled_methods']:
+            for method in config["enabled_methods"]:
                 try:
-                    if method == '3sigma':
-                        results.extend(await self._run_3sigma_detection(table_name, current_data, config))
+                    if method == "3sigma":
+                        results.extend(
+                            await self._run_3sigma_detection(
+                                table_name, current_data, config
+                            )
+                        )
 
-                    elif method == 'iqr':
-                        results.extend(await self._run_iqr_detection(table_name, current_data, config))
+                    elif method == "iqr":
+                        results.extend(
+                            await self._run_iqr_detection(
+                                table_name, current_data, config
+                            )
+                        )
 
-                    elif method == 'isolation_forest':
+                    elif method == "isolation_forest":
                         if len(current_data) >= 10:  # 需要足够的数据
                             result = self.ml_detector.detect_anomalies_isolation_forest(
                                 current_data, table_name
                             )
                             results.append(result)
 
-                    elif method == 'clustering':
+                    elif method == "clustering":
                         if len(current_data) >= 20:  # 需要更多数据进行聚类
                             result = self.ml_detector.detect_anomalies_clustering(
                                 current_data, table_name
                             )
                             results.append(result)
 
-                    elif method == 'data_drift':
+                    elif method == "data_drift":
                         drift_results = await self._run_data_drift_detection(
                             table_name, current_data, config
                         )
                         results.extend(drift_results)
 
-                    elif method == 'distribution_shift':
+                    elif method == "distribution_shift":
                         shift_results = await self._run_distribution_shift_detection(
                             table_name, current_data, config
                         )
@@ -1013,8 +1059,7 @@ class AdvancedAnomalyDetector:
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name,
-                detection_method='comprehensive'
+                table_name=table_name, detection_method="comprehensive"
             ).observe(duration)
 
             self.logger.info(
@@ -1030,44 +1075,52 @@ class AdvancedAnomalyDetector:
             self.logger.error(f"综合异常检测失败: {e}")
             raise
 
-    async def _get_table_data(self, table_name: str, time_window_hours: int) -> pd.DataFrame:
+    async def _get_table_data(
+        self, table_name: str, time_window_hours: int
+    ) -> pd.DataFrame:
         """获取表数据"""
         try:
             # 检查数据库管理器是否已初始化
-            if not self.db_manager or not hasattr(self.db_manager, 'get_async_session'):
+            if not self.db_manager or not hasattr(self.db_manager, "get_async_session"):
                 self.logger.error("数据库连接未初始化，请先调用 initialize()")
                 return pd.DataFrame()
 
             cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
 
             async with self.db_manager.get_async_session() as session:
-                if table_name == 'matches':
-                    query = text("""
+                if table_name == "matches":
+                    query = text(
+                        """
                         SELECT home_score, away_score, home_ht_score, away_ht_score,
                                minute, match_time, created_at, updated_at
                         FROM matches
                         WHERE updated_at >= :cutoff_time
                         ORDER BY updated_at DESC
                         LIMIT 1000
-                    """)
-                elif table_name == 'odds':
-                    query = text("""
+                    """
+                    )
+                elif table_name == "odds":
+                    query = text(
+                        """
                         SELECT home_odds, draw_odds, away_odds, over_odds, under_odds,
                                collected_at, created_at
                         FROM odds
                         WHERE collected_at >= :cutoff_time
                         ORDER BY collected_at DESC
                         LIMIT 1000
-                    """)
-                elif table_name == 'predictions':
-                    query = text("""
+                    """
+                    )
+                elif table_name == "predictions":
+                    query = text(
+                        """
                         SELECT home_win_probability, draw_probability, away_win_probability,
                                confidence_score, created_at
                         FROM predictions
                         WHERE created_at >= :cutoff_time
                         ORDER BY created_at DESC
                         LIMIT 1000
-                    """)
+                    """
+                    )
                 else:
                     return pd.DataFrame()
 
@@ -1088,21 +1141,21 @@ class AdvancedAnomalyDetector:
         """获取表总记录数"""
         try:
             # 检查数据库管理器是否已初始化
-            if not self.db_manager or not hasattr(self.db_manager, 'get_async_session'):
+            if not self.db_manager or not hasattr(self.db_manager, "get_async_session"):
                 self.logger.error("数据库连接未初始化，请先调用 initialize()")
                 return 0
 
             async with self.db_manager.get_async_session() as session:
                 # Use whitelist validation to prevent SQL injection
-                allowed_tables = ['matches', 'odds', 'predictions']
+                allowed_tables = ["matches", "odds", "predictions"]
                 if table_name not in allowed_tables:
                     return 0
 
                 # Use table mapping for safe query construction
                 table_queries = {
-                    'matches': text("SELECT COUNT(*) FROM matches"),
-                    'odds': text("SELECT COUNT(*) FROM odds"),
-                    'predictions': text("SELECT COUNT(*) FROM predictions")
+                    "matches": text("SELECT COUNT(*) FROM matches"),
+                    "odds": text("SELECT COUNT(*) FROM odds"),
+                    "predictions": text("SELECT COUNT(*) FROM predictions"),
                 }
 
                 query = table_queries[table_name]
@@ -1114,15 +1167,12 @@ class AdvancedAnomalyDetector:
             return 0
 
     async def _run_3sigma_detection(
-        self,
-        table_name: str,
-        data: pd.DataFrame,
-        config: Dict[str, Any]
+        self, table_name: str, data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行3σ检测"""
         results = []
-        for column in config['key_columns']:
-            if column in data.columns and data[column].dtype in ['int64', 'float64']:
+        for column in config["key_columns"]:
+            if column in data.columns and data[column].dtype in ["int64", "float64"]:
                 try:
                     result = self.statistical_detector.detect_outliers_3sigma(
                         data[column].dropna(), table_name, column
@@ -1133,15 +1183,12 @@ class AdvancedAnomalyDetector:
         return results
 
     async def _run_iqr_detection(
-        self,
-        table_name: str,
-        data: pd.DataFrame,
-        config: Dict[str, Any]
+        self, table_name: str, data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行IQR检测"""
         results = []
-        for column in config['key_columns']:
-            if column in data.columns and data[column].dtype in ['int64', 'float64']:
+        for column in config["key_columns"]:
+            if column in data.columns and data[column].dtype in ["int64", "float64"]:
                 try:
                     result = self.statistical_detector.detect_outliers_iqr(
                         data[column].dropna(), table_name, column
@@ -1152,15 +1199,12 @@ class AdvancedAnomalyDetector:
         return results
 
     async def _run_data_drift_detection(
-        self,
-        table_name: str,
-        current_data: pd.DataFrame,
-        config: Dict[str, Any]
+        self, table_name: str, current_data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行数据漂移检测"""
         try:
             # 获取基准数据
-            baseline_days = config.get('drift_baseline_days', 30)
+            baseline_days = config.get("drift_baseline_days", 30)
             baseline_data = await self._get_baseline_data(table_name, baseline_days)
 
             if baseline_data.empty:
@@ -1176,31 +1220,32 @@ class AdvancedAnomalyDetector:
             return []
 
     async def _run_distribution_shift_detection(
-        self,
-        table_name: str,
-        current_data: pd.DataFrame,
-        config: Dict[str, Any]
+        self, table_name: str, current_data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行分布偏移检测"""
         results = []
         try:
             # 获取基准数据
-            baseline_days = config.get('drift_baseline_days', 30)
+            baseline_days = config.get("drift_baseline_days", 30)
             baseline_data = await self._get_baseline_data(table_name, baseline_days)
 
             if baseline_data.empty:
                 return results
 
-            for column in config['key_columns']:
+            for column in config["key_columns"]:
                 if column in current_data.columns and column in baseline_data.columns:
-                    if (current_data[column].dtype in ['int64', 'float64']
-                            and baseline_data[column].dtype in ['int64', 'float64']):
+                    if current_data[column].dtype in [
+                        "int64",
+                        "float64",
+                    ] and baseline_data[column].dtype in ["int64", "float64"]:
                         try:
-                            result = self.statistical_detector.detect_distribution_shift(
-                                baseline_data[column].dropna(),
-                                current_data[column].dropna(),
-                                table_name,
-                                column
+                            result = (
+                                self.statistical_detector.detect_distribution_shift(
+                                    baseline_data[column].dropna(),
+                                    current_data[column].dropna(),
+                                    table_name,
+                                    column,
+                                )
                             )
                             results.append(result)
                         except Exception as e:
@@ -1212,14 +1257,16 @@ class AdvancedAnomalyDetector:
             self.logger.error(f"分布偏移检测失败: {e}")
             return []
 
-    async def _get_baseline_data(self, table_name: str, baseline_days: int) -> pd.DataFrame:
+    async def _get_baseline_data(
+        self, table_name: str, baseline_days: int
+    ) -> pd.DataFrame:
         """获取基准数据"""
         try:
             start_time = datetime.now() - timedelta(days=baseline_days + 7)
             end_time = datetime.now() - timedelta(days=7)
 
             async with self.db_manager.get_async_session() as session:
-                if table_name == 'matches':
+                if table_name == "matches":
                     query = """
                         SELECT home_score, away_score, home_ht_score, away_ht_score,
                                minute, match_time
@@ -1228,7 +1275,7 @@ class AdvancedAnomalyDetector:
                         ORDER BY updated_at
                         LIMIT 2000
                     """
-                elif table_name == 'odds':
+                elif table_name == "odds":
                     query = """
                         SELECT home_odds, draw_odds, away_odds, over_odds, under_odds
                         FROM odds
@@ -1236,7 +1283,7 @@ class AdvancedAnomalyDetector:
                         ORDER BY collected_at
                         LIMIT 2000
                     """
-                elif table_name == 'predictions':
+                elif table_name == "predictions":
                     query = """
                         SELECT home_win_probability, draw_probability, away_win_probability,
                                confidence_score
@@ -1280,47 +1327,59 @@ class AdvancedAnomalyDetector:
 
             # 生成摘要
             summary = {
-                'detection_period': {
-                    'hours': hours,
-                    'start_time': (datetime.now() - timedelta(hours=hours)).isoformat(),
-                    'end_time': datetime.now().isoformat()
+                "detection_period": {
+                    "hours": hours,
+                    "start_time": (datetime.now() - timedelta(hours=hours)).isoformat(),
+                    "end_time": datetime.now().isoformat(),
                 },
-                'tables_analyzed': list(self.detection_config.keys()),
-                'total_anomalies': sum(len(results) for results in all_results.values()),
-                'anomalies_by_table': {},
-                'anomalies_by_severity': {'low': 0, 'medium': 0, 'high': 0, 'critical': 0},
-                'anomalies_by_method': {},
-                'anomalies_by_type': {}
+                "tables_analyzed": list(self.detection_config.keys()),
+                "total_anomalies": sum(
+                    len(results) for results in all_results.values()
+                ),
+                "anomalies_by_table": {},
+                "anomalies_by_severity": {
+                    "low": 0,
+                    "medium": 0,
+                    "high": 0,
+                    "critical": 0,
+                },
+                "anomalies_by_method": {},
+                "anomalies_by_type": {},
             }
 
             # 统计各表异常
             for table_name, results in all_results.items():
                 table_summary = {
-                    'total_anomalies': len(results),
-                    'methods_used': list(set(r.detection_method for r in results)),
-                    'severity_breakdown': {'low': 0, 'medium': 0, 'high': 0, 'critical': 0},
-                    'anomaly_types': list(set(r.anomaly_type for r in results))
+                    "total_anomalies": len(results),
+                    "methods_used": list(set(r.detection_method for r in results)),
+                    "severity_breakdown": {
+                        "low": 0,
+                        "medium": 0,
+                        "high": 0,
+                        "critical": 0,
+                    },
+                    "anomaly_types": list(set(r.anomaly_type for r in results)),
                 }
 
                 for result in results:
                     # 按严重程度统计
                     severity = result.severity
-                    table_summary['severity_breakdown'][severity] += 1
-                    summary['anomalies_by_severity'][severity] += 1
+                    table_summary["severity_breakdown"][severity] += 1
+                    summary["anomalies_by_severity"][severity] += 1
 
                     # 按方法统计
                     method = result.detection_method
-                    if method not in summary['anomalies_by_method']:
-                        summary['anomalies_by_method'][method] = 0
-                    summary['anomalies_by_method'][method] += 1
+                    if method not in summary["anomalies_by_method"]:
+                        summary["anomalies_by_method"][method] = 0
+                    summary["anomalies_by_method"][method] += 1
 
                     # 按类型统计
                     anomaly_type = result.anomaly_type
-                    if anomaly_type not in summary['anomalies_by_type']:
-                        summary['anomalies_by_type'][anomaly_type] = 0
-                    summary['anomalies_by_type'][anomaly_type] += 1
+                    if anomaly_type not in summary["anomalies_by_type"]:
+                        summary["anomalies_by_type"][anomaly_type] = 0
+                    summary["anomalies_by_type"][anomaly_type] += 1
 
-                summary['anomalies_by_table'][table_name] = table_summary
+                summary["anomalies_by_table"][table_name] = table_summary
 
             return summary
 

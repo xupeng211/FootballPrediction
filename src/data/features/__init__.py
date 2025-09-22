@@ -23,5 +23,5 @@ __all__ = [
     "team_entity",
     "match_features_view",
     "team_recent_stats_view",
-    "odds_features_view"
+    "odds_features_view",
 ]

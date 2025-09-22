@@ -102,6 +102,7 @@ class TestAPIHealthExceptionHandling:
         assert result["details"]["error"] == "Connection failed"
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_check_redis_basic_functionality(self):
         """测试Redis检查基本功能 (覆盖149-154行)"""
         from src.api.health import _check_redis

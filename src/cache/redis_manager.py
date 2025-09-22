@@ -166,17 +166,23 @@ class RedisManager:
         default_redis_host = "redis" if is_test_env else "localhost"
         default_redis_url = f"redis://{default_redis_host}:6379/0"
 
-        # 在测试环境中，不使用环境变量 REDIS_URL
-        if is_test_env:
-            self.redis_url = redis_url or default_redis_url
-        else:
-            self.redis_url = redis_url or os.getenv("REDIS_URL", default_redis_url)
+        # 在测试环境中，也使用环境变量 REDIS_URL
+
+        # 使用环境变量 REDIS_URL，如果未设置则使用默认URL
+        self.redis_url = redis_url or os.getenv("REDIS_URL", default_redis_url)
 
         self.max_connections = max_connections
         self.socket_timeout = socket_timeout
         self.socket_connect_timeout = socket_connect_timeout
         self.retry_on_timeout = retry_on_timeout
         self.health_check_interval = health_check_interval
+
+        # 初始化连接池和客户端属性
+        self._sync_pool = None
+        self._async_pool = None
+        self._sync_client = None
+        self._async_client = None
+
         redis_password = os.getenv("REDIS_PASSWORD")
         if redis_password and not is_test_env:
             # Use regex to insert password into the URL if it doesn't already contain a password

@@ -42,26 +42,25 @@ class DataQualityExceptionHandler:
             "missing_values": {
                 "strategy": "historical_average",
                 "lookback_days": 30,
-                "min_sample_size": 5
+                "min_sample_size": 5,
             },
             "suspicious_odds": {
                 "min_odds": 1.01,
                 "max_odds": 1000.0,
                 "probability_range": [0.95, 1.20],
-                "mark_suspicious": True
+                "mark_suspicious": True,
             },
             "invalid_scores": {
                 "min_score": 0,
                 "max_score": 99,
-                "require_manual_review": True
+                "require_manual_review": True,
             },
-            "data_consistency": {
-                "auto_fix": False,
-                "require_manual_review": True
-            }
+            "data_consistency": {"auto_fix": False, "require_manual_review": True},
         }
 
-    async def handle_missing_values(self, table_name: str, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def handle_missing_values(
+        self, table_name: str, records: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         处理缺失值
 
@@ -80,15 +79,21 @@ class DataQualityExceptionHandler:
                 processed_record = record.copy()
 
                 if table_name == "matches":
-                    processed_record = await self._handle_missing_match_values(processed_record)
+                    processed_record = await self._handle_missing_match_values(
+                        processed_record
+                    )
                 elif table_name == "odds":
-                    processed_record = await self._handle_missing_odds_values(processed_record)
+                    processed_record = await self._handle_missing_odds_values(
+                        processed_record
+                    )
 
                 # 统计缺失值处理数量
                 for key, value in processed_record.items():
                     if key not in record or record[key] is None:
                         if value is not None:  # 成功填充
-                            missing_value_counts[key] = missing_value_counts.get(key, 0) + 1
+                            missing_value_counts[key] = (
+                                missing_value_counts.get(key, 0) + 1
+                            )
 
                 processed_records.append(processed_record)
 
@@ -104,19 +109,29 @@ class DataQualityExceptionHandler:
             await self._log_exception("missing_value_handling", table_name, str(e))
             return records  # 返回原始记录
 
-    async def _handle_missing_match_values(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_missing_match_values(
+        self, record: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """处理比赛数据的缺失值"""
         try:
             # 处理缺失的比分（已完成比赛才处理）
             if record.get("match_status") == "finished":
                 if record.get("home_score") is None:
                     # 使用历史平均比分填充
-                    avg_score = await self._get_historical_average_score("home", record.get("home_team_id"))
-                    record["home_score"] = round(avg_score) if avg_score is not None else 0
+                    avg_score = await self._get_historical_average_score(
+                        "home", record.get("home_team_id")
+                    )
+                    record["home_score"] = (
+                        round(avg_score) if avg_score is not None else 0
+                    )
 
                 if record.get("away_score") is None:
-                    avg_score = await self._get_historical_average_score("away", record.get("away_team_id"))
-                    record["away_score"] = round(avg_score) if avg_score is not None else 0
+                    avg_score = await self._get_historical_average_score(
+                        "away", record.get("away_team_id")
+                    )
+                    record["away_score"] = (
+                        round(avg_score) if avg_score is not None else 0
+                    )
 
             # 处理缺失的场地信息
             if record.get("venue") is None:
@@ -136,7 +151,9 @@ class DataQualityExceptionHandler:
             self.logger.error(f"处理比赛缺失值失败: {str(e)}")
             return record
 
-    async def _handle_missing_odds_values(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_missing_odds_values(
+        self, record: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """处理赔率数据的缺失值"""
         try:
             match_id = record.get("match_id")
@@ -144,17 +161,23 @@ class DataQualityExceptionHandler:
 
             # 处理缺失的主胜赔率
             if record.get("home_odds") is None:
-                avg_odds = await self._get_historical_average_odds("home_odds", match_id, bookmaker)
+                avg_odds = await self._get_historical_average_odds(
+                    "home_odds", match_id, bookmaker
+                )
                 record["home_odds"] = avg_odds
 
             # 处理缺失的平局赔率
             if record.get("draw_odds") is None:
-                avg_odds = await self._get_historical_average_odds("draw_odds", match_id, bookmaker)
+                avg_odds = await self._get_historical_average_odds(
+                    "draw_odds", match_id, bookmaker
+                )
                 record["draw_odds"] = avg_odds
 
             # 处理缺失的客胜赔率
             if record.get("away_odds") is None:
-                avg_odds = await self._get_historical_average_odds("away_odds", match_id, bookmaker)
+                avg_odds = await self._get_historical_average_odds(
+                    "away_odds", match_id, bookmaker
+                )
                 record["away_odds"] = avg_odds
 
             return record
@@ -163,7 +186,9 @@ class DataQualityExceptionHandler:
             self.logger.error(f"处理赔率缺失值失败: {str(e)}")
             return record
 
-    async def handle_suspicious_odds(self, odds_records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def handle_suspicious_odds(
+        self, odds_records: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         处理可疑赔率
 
@@ -197,10 +222,12 @@ class DataQualityExceptionHandler:
                 "total_processed": len(odds_records),
                 "suspicious_count": suspicious_count,
                 "processed_records": processed_records,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-            self.logger.info(f"可疑赔率处理完成：{suspicious_count}/{len(odds_records)} 条记录被标记为可疑")
+            self.logger.info(
+                f"可疑赔率处理完成：{suspicious_count}/{len(odds_records)} 条记录被标记为可疑"
+            )
             return result
 
         except Exception as e:
@@ -210,7 +237,7 @@ class DataQualityExceptionHandler:
                 "total_processed": len(odds_records),
                 "suspicious_count": 0,
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     def _is_odds_suspicious(self, odds_record: Dict[str, Any]) -> bool:
@@ -234,10 +261,17 @@ class DataQualityExceptionHandler:
 
             # 检查隐含概率总和
             try:
-                total_probability = sum(1 / odds for odds in [home_odds, draw_odds, away_odds])
-                prob_range = self.handling_strategies["suspicious_odds"]["probability_range"]
+                total_probability = sum(
+                    1 / odds for odds in [home_odds, draw_odds, away_odds]
+                )
+                prob_range = self.handling_strategies["suspicious_odds"][
+                    "probability_range"
+                ]
 
-                if total_probability < prob_range[0] or total_probability > prob_range[1]:
+                if (
+                    total_probability < prob_range[0]
+                    or total_probability > prob_range[1]
+                ):
                     return True
             except (ZeroDivisionError, TypeError):
                 return True  # 无法计算概率，认为可疑
@@ -248,8 +282,9 @@ class DataQualityExceptionHandler:
             self.logger.error(f"判断赔率可疑性失败: {str(e)}")
             return True  # 出错时保守处理，标记为可疑
 
-    async def handle_invalid_data(self, table_name: str, invalid_records: List[Dict[str, Any]],
-                                  error_type: str) -> Dict[str, Any]:
+    async def handle_invalid_data(
+        self, table_name: str, invalid_records: List[Dict[str, Any]], error_type: str
+    ) -> Dict[str, Any]:
         """
         处理无效数据
 
@@ -273,7 +308,7 @@ class DataQualityExceptionHandler:
                         record_id=record.get("id"),
                         error_type=error_type,
                         error_data=record,
-                        requires_manual_review=True
+                        requires_manual_review=True,
                     )
                     logged_count += 1
 
@@ -283,7 +318,7 @@ class DataQualityExceptionHandler:
                 "invalid_records_count": len(invalid_records),
                 "logged_count": logged_count,
                 "requires_manual_review": True,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             self.logger.warning(
@@ -300,35 +335,46 @@ class DataQualityExceptionHandler:
                 "table_name": table_name,
                 "error_type": error_type,
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-    async def _get_historical_average_score(self, score_type: str, team_id: int) -> Optional[float]:
+    async def _get_historical_average_score(
+        self, score_type: str, team_id: int
+    ) -> Optional[float]:
         """获取球队历史平均进球数"""
         try:
             async with self.db_manager.get_async_session() as session:
                 if score_type == "home":
-                    query = text("""
+                    query = text(
+                        """
                         SELECT AVG(home_score::float) as avg_score
                         FROM matches
                         WHERE home_team_id = :team_id
                         AND match_status = 'finished'
                         AND home_score IS NOT NULL
                         AND match_time > NOW() - INTERVAL ':days days'
-                    """)
+                    """
+                    )
                 else:  # away
-                    query = text("""
+                    query = text(
+                        """
                         SELECT AVG(away_score::float) as avg_score
                         FROM matches
                         WHERE away_team_id = :team_id
                         AND match_status = 'finished'
                         AND away_score IS NOT NULL
                         AND match_time > NOW() - INTERVAL ':days days'
-                    """)
+                    """
+                    )
 
                 result = await session.execute(
                     query,
-                    {"team_id": team_id, "days": self.handling_strategies["missing_values"]["lookback_days"]}
+                    {
+                        "team_id": team_id,
+                        "days": self.handling_strategies["missing_values"][
+                            "lookback_days"
+                        ],
+                    },
                 )
                 row = result.fetchone()
 
@@ -338,42 +384,49 @@ class DataQualityExceptionHandler:
             self.logger.error(f"获取历史平均进球数失败: {str(e)}")
             return None
 
-    async def _get_historical_average_odds(self, odds_type: str, match_id: int,
-                                           bookmaker: str) -> Optional[float]:
+    async def _get_historical_average_odds(
+        self, odds_type: str, match_id: int, bookmaker: str
+    ) -> Optional[float]:
         """获取历史平均赔率"""
         try:
             async with self.db_manager.get_async_session() as session:
                 # 查询同一博彩商的历史平均赔率 - 使用白名单验证列名
-                allowed_odds_types = ['home_odds', 'draw_odds', 'away_odds']
+                allowed_odds_types = ["home_odds", "draw_odds", "away_odds"]
                 if odds_type not in allowed_odds_types:
                     return None
 
                 # Use column mapping for safe query construction
                 odds_queries = {
-                    'home_odds': text("""
+                    "home_odds": text(
+                        """
                         SELECT AVG(home_odds::float) as avg_odds
                         FROM odds
                         WHERE bookmaker = :bookmaker
                         AND home_odds IS NOT NULL
                         AND home_odds > 1.0
                         AND collected_at > NOW() - INTERVAL :days_interval
-                    """),
-                    'draw_odds': text("""
+                    """
+                    ),
+                    "draw_odds": text(
+                        """
                         SELECT AVG(draw_odds::float) as avg_odds
                         FROM odds
                         WHERE bookmaker = :bookmaker
                         AND draw_odds IS NOT NULL
                         AND draw_odds > 1.0
                         AND collected_at > NOW() - INTERVAL :days_interval
-                    """),
-                    'away_odds': text("""
+                    """
+                    ),
+                    "away_odds": text(
+                        """
                         SELECT AVG(away_odds::float) as avg_odds
                         FROM odds
                         WHERE bookmaker = :bookmaker
                         AND away_odds IS NOT NULL
                         AND away_odds > 1.0
                         AND collected_at > NOW() - INTERVAL :days_interval
-                    """)
+                    """
+                    ),
                 }
 
                 query = odds_queries[odds_type]
@@ -382,8 +435,8 @@ class DataQualityExceptionHandler:
                     query,
                     {
                         "bookmaker": bookmaker,
-                        "days_interval": f"{self.handling_strategies['missing_values']['lookback_days']} days"
-                    }
+                        "days_interval": f"{self.handling_strategies['missing_values']['lookback_days']} days",
+                    },
                 )
                 row = result.fetchone()
 
@@ -393,7 +446,9 @@ class DataQualityExceptionHandler:
             self.logger.error(f"获取历史平均赔率失败: {str(e)}")
             return None
 
-    async def _log_suspicious_odds(self, session: AsyncSession, odds_record: Dict[str, Any]) -> None:
+    async def _log_suspicious_odds(
+        self, session: AsyncSession, odds_record: Dict[str, Any]
+    ) -> None:
         """记录可疑赔率到日志"""
         try:
             await self._create_quality_log(
@@ -407,16 +462,17 @@ class DataQualityExceptionHandler:
                     "home_odds": odds_record.get("home_odds"),
                     "draw_odds": odds_record.get("draw_odds"),
                     "away_odds": odds_record.get("away_odds"),
-                    "collected_at": odds_record.get("collected_at")
+                    "collected_at": odds_record.get("collected_at"),
                 },
-                requires_manual_review=False
+                requires_manual_review=False,
             )
 
         except Exception as e:
             self.logger.error(f"记录可疑赔率日志失败: {str(e)}")
 
-    async def _log_missing_value_handling(self, table_name: str,
-                                          missing_counts: Dict[str, int]) -> None:
+    async def _log_missing_value_handling(
+        self, table_name: str, missing_counts: Dict[str, int]
+    ) -> None:
         """记录缺失值处理日志"""
         try:
             async with self.db_manager.get_async_session() as session:
@@ -428,17 +484,25 @@ class DataQualityExceptionHandler:
                     error_data={
                         "filled_columns": missing_counts,
                         "total_filled": sum(missing_counts.values()),
-                        "strategy": self.handling_strategies["missing_values"]["strategy"]
+                        "strategy": self.handling_strategies["missing_values"][
+                            "strategy"
+                        ],
                     },
-                    requires_manual_review=False
+                    requires_manual_review=False,
                 )
 
         except Exception as e:
             self.logger.error(f"记录缺失值处理日志失败: {str(e)}")
 
-    async def _create_quality_log(self, session: AsyncSession, table_name: str,
-                                  record_id: Optional[int], error_type: str,
-                                  error_data: Dict[str, Any], requires_manual_review: bool) -> None:
+    async def _create_quality_log(
+        self,
+        session: AsyncSession,
+        table_name: str,
+        record_id: Optional[int],
+        error_type: str,
+        error_data: Dict[str, Any],
+        requires_manual_review: bool,
+    ) -> None:
         """创建数据质量日志记录"""
         try:
             quality_log = DataQualityLog(
@@ -448,7 +512,7 @@ class DataQualityExceptionHandler:
                 error_data=error_data,
                 requires_manual_review=requires_manual_review,
                 status="logged",
-                detected_at=datetime.now()
+                detected_at=datetime.now(),
             )
 
             session.add(quality_log)
@@ -458,7 +522,9 @@ class DataQualityExceptionHandler:
             self.logger.error(f"创建质量日志记录失败: {str(e)}")
             await session.rollback()
 
-    async def _log_exception(self, operation: str, table_name: str, error_message: str) -> None:
+    async def _log_exception(
+        self, operation: str, table_name: str, error_message: str
+    ) -> None:
         """记录异常处理日志"""
         try:
             async with self.db_manager.get_async_session() as session:
@@ -470,9 +536,9 @@ class DataQualityExceptionHandler:
                     error_data={
                         "operation": operation,
                         "error_message": error_message,
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     },
-                    requires_manual_review=True
+                    requires_manual_review=True,
                 )
 
         except Exception as e:
@@ -488,7 +554,8 @@ class DataQualityExceptionHandler:
         try:
             async with self.db_manager.get_async_session() as session:
                 # 查询最近24小时的处理统计
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         error_type,
                         table_name,
@@ -498,7 +565,8 @@ class DataQualityExceptionHandler:
                     WHERE detected_at > NOW() - INTERVAL '24 hours'
                     GROUP BY error_type, table_name
                     ORDER BY count DESC
-                """)
+                """
+                )
 
                 result = await session.execute(query)
                 rows = result.fetchall()
@@ -506,10 +574,12 @@ class DataQualityExceptionHandler:
                 statistics = {
                     "period": "last_24_hours",
                     "total_issues": sum(row.count for row in rows),
-                    "manual_review_required": sum(row.manual_review_count for row in rows),
+                    "manual_review_required": sum(
+                        row.manual_review_count for row in rows
+                    ),
                     "by_error_type": {},
                     "by_table": {},
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
                 for row in rows:
@@ -531,5 +601,5 @@ class DataQualityExceptionHandler:
                 "period": "last_24_hours",
                 "total_issues": 0,
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }

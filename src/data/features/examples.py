@@ -41,19 +41,17 @@ def example_initialize_feature_store() -> FootballFeatureStore:
         "port": 5432,
         "database": "football_prediction_dev",
         "user": "football_reader",
-        "password": "reader_password_2025"
+        "password": "reader_password_2025",
     }
 
     # 配置Redis在线存储
-    redis_config = {
-        "connection_string": "redis://localhost:6379/1"
-    }
+    redis_config = {"connection_string": "redis://localhost:6379/1"}
 
     # 初始化特征仓库
     feature_store = initialize_feature_store(
         project_name="football_prediction_demo",
         postgres_config=postgres_config,
-        redis_config=redis_config
+        redis_config=redis_config,
     )
 
     print("✅ 特征仓库初始化成功！")
@@ -95,7 +93,7 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
             "team_value_millions": 150.5,
             "avg_player_age": 26.8,
             "league_position": 3,
-            "points_per_game": 2.1
+            "points_per_game": 2.1,
         },
         {
             "team_id": 2,
@@ -121,17 +119,14 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
             "team_value_millions": 120.3,
             "avg_player_age": 28.2,
             "league_position": 7,
-            "points_per_game": 1.7
-        }
+            "points_per_game": 1.7,
+        },
     ]
 
     df = pd.DataFrame(team_stats_data)
 
     # 写入特征数据
-    feature_store.write_features(
-        feature_view_name="team_recent_stats",
-        df=df
-    )
+    feature_store.write_features(feature_view_name="team_recent_stats", df=df)
 
     print(f"✅ 成功写入 {len(df)} 条球队统计特征！")
 
@@ -169,7 +164,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
             "handicap_home_odds": 1.95,
             "handicap_away_odds": 1.90,
             "bookmaker_margin": 0.073,
-            "market_efficiency": 0.92
+            "market_efficiency": 0.92,
         },
         {
             "match_id": 1002,
@@ -193,17 +188,14 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
             "handicap_home_odds": 1.85,
             "handicap_away_odds": 2.00,
             "bookmaker_margin": 0.067,
-            "market_efficiency": 0.94
-        }
+            "market_efficiency": 0.94,
+        },
     ]
 
     df = pd.DataFrame(odds_data)
 
     # 写入赔率特征
-    feature_store.write_features(
-        feature_view_name="odds_features",
-        df=df
-    )
+    feature_store.write_features(feature_view_name="odds_features", df=df)
 
     print(f"✅ 成功写入 {len(df)} 条赔率特征！")
 
@@ -221,16 +213,12 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
     print("🔍 获取在线特征数据...")
 
     # 构建实体数据（要预测的比赛）
-    entity_data = [
-        {"match_id": 1001},
-        {"match_id": 1002}
-    ]
+    entity_data = [{"match_id": 1001}, {"match_id": 1002}]
     entity_df = pd.DataFrame(entity_data)
 
     # 获取实时预测特征
     features_df = feature_store.get_online_features(
-        feature_service_name="real_time_prediction_v1",
-        entity_df=entity_df
+        feature_service_name="real_time_prediction_v1", entity_df=entity_df
     )
 
     print("✅ 成功获取在线特征！")
@@ -240,7 +228,9 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
     return features_df
 
 
-def example_get_historical_features(feature_store: FootballFeatureStore) -> pd.DataFrame:
+def example_get_historical_features(
+    feature_store: FootballFeatureStore,
+) -> pd.DataFrame:
     """
     示例：获取历史特征（用于模型训练）
 
@@ -257,10 +247,9 @@ def example_get_historical_features(feature_store: FootballFeatureStore) -> pd.D
     base_date = datetime(2025, 8, 1)
 
     for i in range(10):  # 10场历史比赛
-        training_entities.append({
-            "match_id": 2000 + i,
-            "event_timestamp": base_date + timedelta(days=i * 3)
-        })
+        training_entities.append(
+            {"match_id": 2000 + i, "event_timestamp": base_date + timedelta(days=i * 3)}
+        )
 
     entity_df = pd.DataFrame(training_entities)
 
@@ -268,7 +257,7 @@ def example_get_historical_features(feature_store: FootballFeatureStore) -> pd.D
     training_df = feature_store.get_historical_features(
         feature_service_name="match_prediction_v1",
         entity_df=entity_df,
-        full_feature_names=True
+        full_feature_names=True,
     )
 
     print("✅ 成功获取历史特征！")
@@ -279,7 +268,9 @@ def example_get_historical_features(feature_store: FootballFeatureStore) -> pd.D
     return training_df
 
 
-def example_create_training_dataset(feature_store: FootballFeatureStore) -> pd.DataFrame:
+def example_create_training_dataset(
+    feature_store: FootballFeatureStore,
+) -> pd.DataFrame:
     """
     示例：创建机器学习训练数据集
 
@@ -297,8 +288,7 @@ def example_create_training_dataset(feature_store: FootballFeatureStore) -> pd.D
 
     # 创建训练数据集
     training_df = feature_store.create_training_dataset(
-        start_date=start_date,
-        end_date=end_date
+        start_date=start_date, end_date=end_date
     )
 
     print("✅ 训练数据集创建成功！")
@@ -318,11 +308,7 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
     print("📊 获取特征统计信息...")
 
     # 获取不同特征视图的统计
-    feature_views = [
-        "team_recent_stats",
-        "odds_features",
-        "match_features"
-    ]
+    feature_views = ["team_recent_stats", "odds_features", "match_features"]
 
     for fv_name in feature_views:
         try:
@@ -351,7 +337,9 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
         print(f"✅ 发现 {len(features_list)} 个特征：\n")
 
         for i, feature in enumerate(features_list[:10]):  # 只显示前10个
-            print(f"{i+1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")
+            print(
+                f"{i+1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}"
+            )
 
         if len(features_list) > 10:
             print(f"    ... 还有 {len(features_list) - 10} 个特征")
@@ -428,8 +416,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
         # 创建训练数据集
         training_df = feature_store.create_training_dataset(
-            start_date=datetime(2025, 6, 1),
-            end_date=datetime(2025, 8, 31)
+            start_date=datetime(2025, 6, 1), end_date=datetime(2025, 8, 31)
         )
 
         print(f"  📊 训练数据: {len(training_df)} 条记录")
@@ -443,15 +430,12 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
         feature_store = get_feature_store()
 
         # 构建预测请求
-        prediction_entities = pd.DataFrame([
-            {"match_id": 3001},
-            {"match_id": 3002}
-        ])
+        prediction_entities = pd.DataFrame([{"match_id": 3001}, {"match_id": 3002}])
 
         # 获取实时特征
         features_df = feature_store.get_online_features(
             feature_service_name="real_time_prediction_v1",
-            entity_df=prediction_entities
+            entity_df=prediction_entities,
         )
 
         print(f"  📈 预测特征: {len(features_df)} 条记录")
@@ -461,7 +445,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
     results = {
         "training_result": train_model_with_features(),
         "prediction_result": predict_with_online_features(),
-        "integration_status": "success"
+        "integration_status": "success",
     }
 
     print("✅ ML流水线集成示例完成！")

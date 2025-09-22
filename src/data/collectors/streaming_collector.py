@@ -35,7 +35,7 @@ class StreamingDataCollector(DataCollector):
         retry_delay: int = 5,
         timeout: int = 30,
         enable_streaming: bool = True,
-        stream_config: Optional[StreamConfig] = None
+        stream_config: Optional[StreamConfig] = None,
     ):
         """
         初始化流式采集器
@@ -49,7 +49,9 @@ class StreamingDataCollector(DataCollector):
             stream_config: 流配置，None表示使用默认配置
         """
         super().__init__(data_source, max_retries, retry_delay, timeout)
-        self.logger = logging.getLogger(f"streaming_collector.{self.__class__.__name__}")
+        self.logger = logging.getLogger(
+            f"streaming_collector.{self.__class__.__name__}"
+        )
 
         self.enable_streaming = enable_streaming
         self.stream_config = stream_config or StreamConfig()
@@ -69,9 +71,7 @@ class StreamingDataCollector(DataCollector):
             self.enable_streaming = False
 
     async def _send_to_stream(
-        self,
-        data_list: List[Dict[str, Any]],
-        stream_type: str
+        self, data_list: List[Dict[str, Any]], stream_type: str
     ) -> Dict[str, int]:
         """
         发送数据到Kafka流
@@ -117,11 +117,13 @@ class StreamingDataCollector(DataCollector):
             # 根据数据内容推断流类型，默认使用 "data"
             stream_type = "data"
             if data and isinstance(data[0], dict):
-                if any(key in data[0] for key in ['match_id', 'home_team', 'away_team']):
+                if any(
+                    key in data[0] for key in ["match_id", "home_team", "away_team"]
+                ):
                     stream_type = "match"
-                elif any(key in data[0] for key in ['odds', 'price', 'bookmaker']):
+                elif any(key in data[0] for key in ["odds", "price", "bookmaker"]):
                     stream_type = "odds"
-                elif any(key in data[0] for key in ['score', 'minute', 'live']):
+                elif any(key in data[0] for key in ["score", "minute", "live"]):
                     stream_type = "scores"
 
             stats = await self._send_to_stream(data, stream_type)
@@ -142,15 +144,22 @@ class StreamingDataCollector(DataCollector):
         result = await super().collect_fixtures(**kwargs)
 
         # 如果采集成功且启用流式处理，发送到Kafka流
-        if result and result.status == "success" and result.collected_data and self.enable_streaming:
+        if (
+            result
+            and result.status == "success"
+            and result.collected_data
+            and self.enable_streaming
+        ):
             stream_stats = await self._send_to_stream(result.collected_data, "match")
 
             # 在采集结果中添加流处理统计
-            if hasattr(result, 'stream_stats'):
+            if hasattr(result, "stream_stats"):
                 result.stream_stats = stream_stats
             else:
                 # 如果没有stream_stats属性，添加到error_message中
-                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                stream_info = (
+                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                )
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:
@@ -169,14 +178,20 @@ class StreamingDataCollector(DataCollector):
         result = await self.collect_odds(**kwargs)
 
         # 如果采集成功且启用流式处理，发送到Kafka流
-        if result.status == "success" and result.collected_data and self.enable_streaming:
+        if (
+            result.status == "success"
+            and result.collected_data
+            and self.enable_streaming
+        ):
             stream_stats = await self._send_to_stream(result.collected_data, "odds")
 
             # 在采集结果中添加流处理统计
-            if hasattr(result, 'stream_stats'):
+            if hasattr(result, "stream_stats"):
                 result.stream_stats = stream_stats
             else:
-                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                stream_info = (
+                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                )
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:
@@ -195,14 +210,20 @@ class StreamingDataCollector(DataCollector):
         result = await self.collect_live_scores(**kwargs)
 
         # 如果采集成功且启用流式处理，发送到Kafka流
-        if result.status == "success" and result.collected_data and self.enable_streaming:
+        if (
+            result.status == "success"
+            and result.collected_data
+            and self.enable_streaming
+        ):
             stream_stats = await self._send_to_stream(result.collected_data, "scores")
 
             # 在采集结果中添加流处理统计
-            if hasattr(result, 'stream_stats'):
+            if hasattr(result, "stream_stats"):
                 result.stream_stats = stream_stats
             else:
-                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                stream_info = (
+                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
+                )
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:
@@ -211,8 +232,7 @@ class StreamingDataCollector(DataCollector):
         return result
 
     async def batch_collect_and_stream(
-        self,
-        collection_configs: List[Dict[str, Any]]
+        self, collection_configs: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         批量采集并流处理
@@ -231,7 +251,7 @@ class StreamingDataCollector(DataCollector):
             "failed_collections": 0,
             "total_stream_success": 0,
             "total_stream_failed": 0,
-            "collection_results": []
+            "collection_results": [],
         }
 
         tasks = []
@@ -253,19 +273,18 @@ class StreamingDataCollector(DataCollector):
 
         # 并行执行所有采集任务
         task_results = await asyncio.gather(
-            *[task for _, task in tasks],
-            return_exceptions=True
+            *[task for _, task in tasks], return_exceptions=True
         )
 
         # 统计结果
-        for i, (collection_type, result) in enumerate(zip([t[0] for t in tasks], task_results)):
+        for i, (collection_type, result) in enumerate(
+            zip([t[0] for t in tasks], task_results)
+        ):
             if isinstance(result, Exception):
                 results["failed_collections"] += 1
-                results["collection_results"].append({
-                    "type": collection_type,
-                    "status": "error",
-                    "error": str(result)
-                })
+                results["collection_results"].append(
+                    {"type": collection_type, "status": "error", "error": str(result)}
+                )
             else:
                 if result.status == "success":
                     results["successful_collections"] += 1
@@ -279,7 +298,11 @@ class StreamingDataCollector(DataCollector):
                     try:
                         parts = result.error_message.split("流处理 - ")[1]
                         success_part = parts.split("成功: ")[1].split(",")[0]
-                        failed_part = parts.split("失败: ")[1].split(";")[0] if ";" in parts else parts.split("失败: ")[1]
+                        failed_part = (
+                            parts.split("失败: ")[1].split(";")[0]
+                            if ";" in parts
+                            else parts.split("失败: ")[1]
+                        )
                         stream_stats["success"] = int(success_part)
                         stream_stats["failed"] = int(failed_part)
                     except (IndexError, ValueError):
@@ -288,12 +311,14 @@ class StreamingDataCollector(DataCollector):
                 results["total_stream_success"] += stream_stats["success"]
                 results["total_stream_failed"] += stream_stats["failed"]
 
-                results["collection_results"].append({
-                    "type": collection_type,
-                    "status": result.status,
-                    "records_collected": result.records_collected,
-                    "stream_stats": stream_stats
-                })
+                results["collection_results"].append(
+                    {
+                        "type": collection_type,
+                        "status": result.status,
+                        "records_collected": result.records_collected,
+                        "stream_stats": stream_stats,
+                    }
+                )
 
         self.logger.info(
             f"批量采集完成 - 总计: {results['total_collections']}, "
@@ -326,10 +351,14 @@ class StreamingDataCollector(DataCollector):
         return {
             "streaming_enabled": self.enable_streaming,
             "kafka_producer_initialized": self.kafka_producer is not None,
-            "stream_config": {
-                "bootstrap_servers": self.stream_config.kafka_config.bootstrap_servers,
-                "topics": list(self.stream_config.topics.keys())
-            } if self.stream_config else None
+            "stream_config": (
+                {
+                    "bootstrap_servers": self.stream_config.kafka_config.bootstrap_servers,
+                    "topics": list(self.stream_config.topics.keys()),
+                }
+                if self.stream_config
+                else None
+            ),
         }
 
     def close(self) -> None:

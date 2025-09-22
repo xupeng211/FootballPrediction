@@ -28,5 +28,5 @@ __all__ = [
     "AdvancedAnomalyDetector",
     "StatisticalAnomalyDetector",
     "MachineLearningAnomalyDetector",
-    "AnomalyDetectionResult"
+    "AnomalyDetectionResult",
 ]

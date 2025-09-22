@@ -1,18 +1,48 @@
 """
-import asyncio
-预测API端点
+预测API端点 / Prediction API Endpoints
 
 提供比赛预测相关的API接口：
 - 获取比赛预测结果
 - 实时生成预测
 - 批量预测接口
+
+Provides API endpoints for match prediction:
+- Get match prediction results
+- Generate real-time predictions
+- Batch prediction interface
+
+主要端点 / Main Endpoints:
+    GET /predictions/{match_id}: 获取指定比赛的预测结果 / Get prediction for specified match
+    POST /predictions/{match_id}/predict: 实时预测比赛结果 / Predict match result in real-time
+    POST /predictions/batch: 批量预测比赛 / Batch predict matches
+    GET /predictions/history/{match_id}: 获取比赛历史预测 / Get match prediction history
+    GET /predictions/recent: 获取最近的预测 / Get recent predictions
+    POST /predictions/{match_id}/verify: 验证预测结果 / Verify prediction result
+
+使用示例 / Usage Example:
+    ```python
+    import requests
+
+    # 获取比赛预测
+    response = requests.get("http://localhost:8000/api/v1/predictions/12345")
+    prediction = response.json()
+
+    # 实时预测
+    response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")
+    result = response.json()
+    ```
+
+错误处理 / Error Handling:
+    - 404: 比赛不存在 / Match not found
+    - 400: 请求参数错误 / Bad request parameters
+    - 500: 服务器内部错误 / Internal server error
 """
 
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,30 +55,86 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/predictions", tags=["predictions"])
 
-# 全局预测服务实例
+# 全局预测服务实例 / Global prediction service instance
 prediction_service = PredictionService()
 
 
 @router.get(
     "/{match_id}",
-    summary="获取比赛预测结果",
-    description="获取指定比赛的预测结果，如果不存在则实时生成",
+    summary="获取比赛预测结果 / Get Match Prediction",
+    description="获取指定比赛的预测结果，如果不存在则实时生成 / Get prediction result for specified match, generate in real-time if not exists",
+    responses={
+        200: {
+            "description": "成功获取预测结果 / Successfully retrieved prediction",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "data": {
+                            "match_id": 12345,
+                            "match_info": {
+                                "match_id": 12345,
+                                "home_team_id": 10,
+                                "away_team_id": 20,
+                                "league_id": 1,
+                                "match_time": "2025-09-15T15:00:00",
+                                "match_status": "scheduled",
+                                "season": "2024-25",
+                            },
+                            "prediction": {
+                                "model_version": "1.0",
+                                "home_win_probability": 0.45,
+                                "draw_probability": 0.30,
+                                "away_win_probability": 0.25,
+                                "predicted_result": "home",
+                                "confidence_score": 0.45,
+                            },
+                        },
+                    }
+                }
+            },
+        },
+        404: {"description": "比赛不存在 / Match not found"},
+        500: {"description": "服务器内部错误 / Internal server error"},
+    },
 )
 async def get_match_prediction(
-    match_id: int,
-    force_predict: bool = Query(default=False, description="是否强制重新预测"),
+    match_id: int = Path(
+        ..., description="比赛唯一标识符 / Unique match identifier", ge=1, example=12345
+    ),
+    force_predict: bool = Query(
+        default=False, description="是否强制重新预测 / Whether to force re-prediction"
+    ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
-    获取指定比赛的预测结果
+    获取指定比赛的预测结果 / Get Prediction for Specified Match
+
+    该端点首先检查数据库中是否存在该比赛的缓存预测结果。
+    如果存在且未设置force_predict参数，则直接返回缓存结果。
+    否则，实时生成新的预测结果并存储到数据库。
+
+    This endpoint first checks if there's a cached prediction result for the match in the database.
+    If it exists and force_predict is not set, it returns the cached result directly.
+    Otherwise, it generates a new prediction in real-time and stores it in the database.
 
     Args:
-        match_id: 比赛ID
-        force_predict: 是否强制重新预测
-        session: 数据库会话
+        match_id (int): 比赛唯一标识符，必须大于0 / Unique match identifier, must be greater than 0
+        force_predict (bool): 是否强制重新预测，默认为False / Whether to force re-prediction, defaults to False
+        session (AsyncSession): 数据库会话，由依赖注入提供 / Database session, provided by dependency injection
 
     Returns:
-        API响应，包含预测结果
+        Dict[str, Any]: API响应字典 / API response dictionary
+            - success (bool): 请求是否成功 / Whether request was successful
+            - data (Dict): 预测数据 / Prediction data
+                - match_id (int): 比赛ID / Match ID
+                - match_info (Dict): 比赛信息 / Match information
+                - prediction (Dict): 预测结果 / Prediction result
+
+    Raises:
+        HTTPException:
+            - 404: 当比赛不存在时 / When match does not exist
+            - 500: 当预测过程发生错误时 / When prediction process fails
     """
     try:
         logger.info(f"获取比赛 {match_id} 的预测结果")
