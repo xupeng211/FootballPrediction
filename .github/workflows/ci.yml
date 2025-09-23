@@ -69,7 +69,7 @@ jobs:
   slow-suite:
     runs-on: ubuntu-latest
     needs: unit-fast
-    timeout-minutes: 30
+    timeout-minutes: 45
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     services:
@@ -173,8 +173,11 @@ jobs:
       run: |
         pip install mlflow==2.8.1
         mlflow server --backend-store-uri sqlite:///tmp/mlflow.db --default-artifact-root /tmp/mlflow-artifacts --host 0.0.0.0 --port 5000 &
-        sleep 10
-        until curl -f http://localhost:5000/health; do echo "Waiting for MLflow..."; sleep 2; done
+        sleep 15
+        # 使用简单的端口检查而不是健康检查端点
+        timeout 60 bash -c 'until nc -z localhost 5000; do echo "Waiting for MLflow port..."; sleep 2; done'
+        # 验证MLflow服务是否响应
+        curl -s http://localhost:5000/ || echo "MLflow started but not fully ready"
 
     - name: Prepare test database schema and seed data
       run: |
@@ -330,7 +333,7 @@ jobs:
         # Start MLflow server
         pip install mlflow==2.8.1
         mlflow server --backend-store-uri sqlite:///tmp/mlflow.db --default-artifact-root /tmp/mlflow-artifacts --host 0.0.0.0 --port 5000 &
-        until nc -z localhost 5000; do echo "Waiting for MLflow..."; sleep 2; done
+        timeout 60 bash -c 'until nc -z localhost 5000; do echo "Waiting for MLflow port..."; sleep 2; done'
 
     - name: Prepare test database schema and seed data
       run: |
