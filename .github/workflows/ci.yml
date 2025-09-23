@@ -172,7 +172,9 @@ jobs:
     - name: Start MLflow server
       run: |
         pip install mlflow==2.8.1
-        mlflow server --backend-store-uri sqlite:///tmp/mlflow.db --default-artifact-root /tmp/mlflow-artifacts --host 0.0.0.0 --port 5000 &
+        # 创建MLflow工作目录
+        mkdir -p ./mlflow-data
+        mlflow server --backend-store-uri sqlite:///$(pwd)/mlflow-data/mlflow.db --default-artifact-root ./mlflow-data/artifacts --host 0.0.0.0 --port 5000 &
         sleep 15
         # 使用简单的端口检查而不是健康检查端点
         timeout 60 bash -c 'until nc -z localhost 5000; do echo "Waiting for MLflow port..."; sleep 2; done'
@@ -332,7 +334,9 @@ jobs:
 
         # Start MLflow server
         pip install mlflow==2.8.1
-        mlflow server --backend-store-uri sqlite:///tmp/mlflow.db --default-artifact-root /tmp/mlflow-artifacts --host 0.0.0.0 --port 5000 &
+        # 创建MLflow工作目录
+        mkdir -p ./mlflow-data
+        mlflow server --backend-store-uri sqlite:///$(pwd)/mlflow-data/mlflow.db --default-artifact-root ./mlflow-data/artifacts --host 0.0.0.0 --port 5000 &
         timeout 60 bash -c 'until nc -z localhost 5000; do echo "Waiting for MLflow port..."; sleep 2; done'
 
     - name: Prepare test database schema and seed data
