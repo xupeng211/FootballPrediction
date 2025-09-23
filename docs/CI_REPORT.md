@@ -118,3 +118,21 @@ TOTAL                                         3556   1069    70%
 
 #### 结论
 🎉 CI 配置、pytest.ini、文档完全一致，覆盖率门槛分离策略已 100% 对齐。
+
+### 2025-09-23 覆盖率门槛分离策略报告（修复后版本）
+
+#### CI 配置检查
+- fast job: --cov-fail-under=0 ✅（.github/workflows/ci.yml:56）
+- slow job: --cov-fail-under=0 ✅（配置步骤设置 COV_FAIL_UNDER=0 for push，运行命令引用该变量；.github/workflows/ci.yml:139-158）
+- nightly job: --cov-fail-under=70 ✅（schedule 事件设置 COV_FAIL_UNDER=70，命令共享该变量；.github/workflows/ci.yml:139-158）
+
+#### pytest.ini 检查
+- 全局默认: --cov-fail-under=70 ✅（pytest.ini:2）
+
+#### 文档说明检查
+- fast: 不查覆盖率 ✅（docs/TEST_STRATEGY.md:68）
+- slow: 不查覆盖率 ✅（docs/TEST_STRATEGY.md:69）
+- nightly/main: 严格 70% ✅（docs/TEST_STRATEGY.md:70-73）
+
+#### 结论
+🎉 CI 配置、pytest.ini、文档完全一致，覆盖率门槛分离策略已 100% 对齐。
