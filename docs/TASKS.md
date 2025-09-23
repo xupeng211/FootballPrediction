@@ -39,3 +39,21 @@
 - [x] 📌 主干 CI 全绿（修复 lint/失败用例，规范 model_reports.yml 触发条件） ✅ 完成于 2025-09-22
   - 🎯 Blocker
   - 📝 main 分支 push 全绿，模型报表仅手动/定时触发
+
+## 上线前最终动作（待执行）
+
+- [x] 📌 修复 CI/CD Docker pull 问题 ✅ 完成于 2025-09-23
+  - 🎯 Blocker
+  - 📝 main 分支流水线全绿，不再卡镜像拉取
+
+- [ ] 📌 执行 Staging 环境验证 (72h)
+  - 🎯 High
+  - 📝 按照 docs/STAGING_VALIDATION.md，完成三阶段验证并输出报告
+
+- [ ] 📌 数据库备份恢复测试
+  - 🎯 High
+  - 📝 scripts/db_backup.sh 脚本运行正常，恢复数据一致性验证通过
+
+- [ ] 📌 监控验证
+  - 🎯 Medium
+  - 📝 Prometheus 指标可采集，Grafana 仪表盘展示正常，AlertManager 能触发告警
