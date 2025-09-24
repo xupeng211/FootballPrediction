@@ -25,8 +25,7 @@ class TestDataQualityExceptionHandlerCore:
     def handler(self):
         """创建异常处理器实例"""
         with patch("src.database.connection.DatabaseManager"):
-            from src.data.quality.exception_handler import \
-                DataQualityExceptionHandler
+            from src.data.quality.exception_handler import DataQualityExceptionHandler
 
             return DataQualityExceptionHandler()
 

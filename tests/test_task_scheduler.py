@@ -88,8 +88,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.tasks.celery_app import TaskRetryConfig  # noqa: E402
 from src.tasks.data_collection_tasks import (  # noqa: E402
-    collect_fixtures_task, collect_odds_task, collect_scores_task,
-    manual_collect_all_data)
+    collect_fixtures_task,
+    collect_odds_task,
+    collect_scores_task,
+    manual_collect_all_data,
+)
 from src.tasks.error_logger import TaskErrorLogger  # noqa: E402
 from src.tasks.maintenance_tasks import cleanup_error_logs_task  # noqa: E402
 from src.tasks.maintenance_tasks import database_maintenance_task  # noqa: E402
@@ -1404,7 +1407,9 @@ class TestEdgeCases:
             mock_manager_class.return_value = mock_db_instance
 
             # 但在使用get_async_session时抛出异常
-            mock_db_instance.get_async_session.side_effect = OperationalError("数据库连接失败")
+            mock_db_instance.get_async_session.side_effect = OperationalError(
+                "数据库连接失败"
+            )
 
             # 创建TaskErrorLogger实例（此时不会抛异常）
             logger = TaskErrorLogger()

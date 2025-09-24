@@ -74,7 +74,9 @@ class TestFootballFeatureStore:
         assert mocked_feature_store.store is not None
         assert mocked_feature_store.store == mocked_feature_store.mock_fs
 
-    @patch("src.features.feature_store.FeatureStore", side_effect=Exception("初始化失败"))
+    @patch(
+        "src.features.feature_store.FeatureStore", side_effect=Exception("初始化失败")
+    )
     def test_initialize_feast_store_failure(self, mock_feature_store_class):
         """测试初始化Feast存储失败"""
         store = FootballFeatureStore()

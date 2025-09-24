@@ -19,8 +19,12 @@ def test_core_config_import():
 
 def test_core_exceptions_import():
     """测试核心异常模块导入"""
-    from src.core.exceptions import (CacheError, DatabaseError,
-                                     FootballPredictionError, ValidationError)
+    from src.core.exceptions import (
+        CacheError,
+        DatabaseError,
+        FootballPredictionError,
+        ValidationError,
+    )
 
     assert FootballPredictionError is not None
     assert DatabaseError is not None
@@ -37,8 +41,15 @@ def test_core_logger_import():
 
 def test_database_models_import():
     """测试数据库模型导入"""
-    from src.database.models import (AuditLog, DataCollectionLog, League,
-                                     Match, Odds, Predictions, Team)
+    from src.database.models import (
+        AuditLog,
+        DataCollectionLog,
+        League,
+        Match,
+        Odds,
+        Predictions,
+        Team,
+    )
 
     assert Match is not None
     assert Team is not None
@@ -164,8 +175,12 @@ def test_api_modules_import():
 
 def test_data_collectors_import():
     """测试数据收集器导入"""
-    from src.data.collectors import (base_collector, fixtures_collector,
-                                     odds_collector, scores_collector)
+    from src.data.collectors import (
+        base_collector,
+        fixtures_collector,
+        odds_collector,
+        scores_collector,
+    )
 
     assert base_collector is not None
     assert fixtures_collector is not None

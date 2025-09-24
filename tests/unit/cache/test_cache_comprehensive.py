@@ -12,10 +12,17 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from redis import RedisError
 
-from src.cache.redis_manager import (CacheKeyManager, RedisManager,
-                                     adelete_cache, aget_cache, aset_cache,
-                                     delete_cache, get_cache,
-                                     get_redis_manager, set_cache)
+from src.cache.redis_manager import (
+    CacheKeyManager,
+    RedisManager,
+    adelete_cache,
+    aget_cache,
+    aset_cache,
+    delete_cache,
+    get_cache,
+    get_redis_manager,
+    set_cache,
+)
 
 
 class TestCacheKeyManagerEdgeCases:

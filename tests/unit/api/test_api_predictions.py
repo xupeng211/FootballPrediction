@@ -56,8 +56,10 @@ class TestPredictionsAPI:
 
         # 测试可能存在的端点函数
         try:
-            from src.api.predictions import (get_match_prediction,
-                                             get_predictions_history)
+            from src.api.predictions import (
+                get_match_prediction,
+                get_predictions_history,
+            )
 
             result = await get_match_prediction(1, mock_session)
             assert result is not None

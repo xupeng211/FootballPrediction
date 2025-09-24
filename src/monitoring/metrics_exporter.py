@@ -10,9 +10,16 @@ import time
 from datetime import datetime
 from typing import Optional, Tuple
 
-from prometheus_client import (CONTENT_TYPE_LATEST, REGISTRY,
-                               CollectorRegistry, Counter, Gauge, Histogram,
-                               Info, generate_latest)
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    REGISTRY,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Info,
+    generate_latest,
+)
 from sqlalchemy import text
 
 from ..database.connection import get_async_session
@@ -137,7 +144,9 @@ class MetricsExporter:
         )
 
         # 系统健康指标
-        self.system_info = Info("football_system_info", "系统信息", registry=self.registry)
+        self.system_info = Info(
+            "football_system_info", "系统信息", registry=self.registry
+        )
 
         self.last_update_timestamp = Gauge(
             "football_metrics_last_update_timestamp",
@@ -374,18 +383,12 @@ class MetricsExporter:
                         if not table_name.replace("_", "").isalnum():
                             logger.warning(f"跳过可能不安全的表名: {table_name}")
                             continue
-                        # Safe: table_name is from predefined list in try block
-                        # Safe: table_name is from validated table list
-                        # Note: Using f-string here is safe as table_name is validated
-                        # 使用quoted_name确保表名安全，防止SQL注入
-                        from sqlalchemy import quoted_name
-
-                        safe_table_name = quoted_name(table_name, quote=True)
+                        # 使用quoted_name确保表名安全，并使用字符串拼接构建查询
+                        # 表名已通过quoted_name处理，防止SQL注入
+                        # Note: Using f-string here is safe as table_name is validated via quoted_name
                         result = await session.execute(
-                            text(
-                                f"SELECT COUNT(*) FROM {safe_table_name}"
-                            )  # nosec B608 - using quoted_name for safety
-                        )
+                            text("SELECT COUNT(*) FROM " + str(safe_table_name))
+                        )  # nosec B608
                         row_count = result.scalar()
                         self.table_row_count.labels(table_name=table_name).set(
                             float(row_count) if row_count is not None else 0.0

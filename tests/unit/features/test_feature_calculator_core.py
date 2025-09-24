@@ -81,7 +81,9 @@ async def test_calculate_historical_matchup_handles_home_away_switch():
     calculator = FeatureCalculator()
     matches = [
         MatchStub(1, 2, 2, 0, datetime.utcnow()),  # 主队胜
-        MatchStub(2, 1, 1, 3, datetime.utcnow() - timedelta(days=1)),  # 交换位置 -> 仍主队胜
+        MatchStub(
+            2, 1, 1, 3, datetime.utcnow() - timedelta(days=1)
+        ),  # 交换位置 -> 仍主队胜
         MatchStub(1, 2, 0, 0, datetime.utcnow() - timedelta(days=2)),  # 平局
         MatchStub(2, 1, 4, 5, datetime.utcnow() - timedelta(days=3)),  # 客队胜
     ]

@@ -16,8 +16,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from prometheus_client import (REGISTRY, CollectorRegistry, Counter, Gauge,
-                               Histogram)
+from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 

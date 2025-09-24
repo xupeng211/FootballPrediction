@@ -23,6 +23,7 @@ from sqlalchemy.exc import DatabaseError
 
 from src.database.connection import DatabaseManager
 from src.features.feature_store import FootballFeatureStore
+
 # 项目导入
 from src.models.prediction_service import PredictionResult, PredictionService
 
@@ -295,7 +296,9 @@ class TestEdgeCasesAndFailureScenarios:
         mock_mlflow_client.get_latest_versions.return_value = []
 
         # 获取模型应该失败
-        with pytest.raises(ValueError, match="模型 football_baseline_model 没有可用版本"):
+        with pytest.raises(
+            ValueError, match="模型 football_baseline_model 没有可用版本"
+        ):
             await prediction_service.get_production_model()
 
     # ================================

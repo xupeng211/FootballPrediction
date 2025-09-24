@@ -12,9 +12,12 @@
 - AdvancedAnomalyDetector: 高级异常检测器（统计学+机器学习）
 """
 
-from .anomaly_detector import (AdvancedAnomalyDetector, AnomalyDetectionResult,
-                               MachineLearningAnomalyDetector,
-                               StatisticalAnomalyDetector)
+from .anomaly_detector import (
+    AdvancedAnomalyDetector,
+    AnomalyDetectionResult,
+    MachineLearningAnomalyDetector,
+    StatisticalAnomalyDetector,
+)
 from .data_quality_monitor import DataQualityMonitor
 from .exception_handler import DataQualityExceptionHandler
 from .ge_prometheus_exporter import GEPrometheusExporter

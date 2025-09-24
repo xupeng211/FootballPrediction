@@ -70,7 +70,8 @@ import mlflow
 from mlflow import MlflowClient
 from src.cache.ttl_cache import TTLCache
 from src.database.connection import DatabaseManager
-from src.database.models import Match, Prediction
+from src.database.dao import PredictionDAO
+from src.database.models import Match
 from src.features.feature_store import FootballFeatureStore
 from src.utils.retry import RetryConfig, retry
 
@@ -200,6 +201,7 @@ class PredictionService:
             prediction_cache_ttl (timedelta): 预测结果缓存TTL / Prediction result cache TTL
         """
         self.db_manager = DatabaseManager()
+        self.prediction_dao = PredictionDAO(self.db_manager)
         self.feature_store = FootballFeatureStore()
         self.mlflow_tracking_uri = mlflow_tracking_uri
         self.metrics_exporter = ModelMetricsExporter()
@@ -318,10 +320,14 @@ class PredictionService:
                 if not all_versions:
                     raise ValueError(f"模型 {model_name} 没有可用版本")
                 model_version_info = all_versions[0]
-                logger.warning(f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境")
+                logger.warning(
+                    f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境"
+                )
             else:
                 model_version_info = staging_versions[0]
-                logger.warning(f"使用Staging版本 {model_version_info.version}，建议推广到生产环境")
+                logger.warning(
+                    f"使用Staging版本 {model_version_info.version}，建议推广到生产环境"
+                )
         else:
             model_version_info = production_versions[0]
             logger.info(f"使用生产版本 {model_version_info.version}")
@@ -744,30 +750,29 @@ class PredictionService:
             这是一个内部方法，包含事务处理和错误回滚。
             This is an internal method with transaction handling and error rollback.
         """
-        async with self.db_manager.get_async_session() as session:
-            try:
-                prediction = Prediction(
-                    match_id=result.match_id,
-                    model_version=result.model_version,
-                    model_name=result.model_name,
-                    home_win_probability=result.home_win_probability,
-                    draw_probability=result.draw_probability,
-                    away_win_probability=result.away_win_probability,
-                    predicted_result=result.predicted_result,
-                    confidence_score=result.confidence_score,
-                    features_used=result.features_used,
-                    prediction_metadata=result.prediction_metadata,
-                    created_at=result.created_at or datetime.now(),
-                )
+        try:
+            # 准备预测数据
+            prediction_data = {
+                "match_id": result.match_id,
+                "model_version": result.model_version,
+                "model_name": result.model_name,
+                "home_win_probability": result.home_win_probability,
+                "draw_probability": result.draw_probability,
+                "away_win_probability": result.away_win_probability,
+                "predicted_result": result.predicted_result,
+                "confidence_score": result.confidence_score,
+                "features_used": result.features_used,
+                "prediction_metadata": result.prediction_metadata,
+                "created_at": result.created_at or datetime.now(),
+            }
 
-                session.add(prediction)
-                await session.commit()
-                logger.debug(f"预测结果已存储到数据库：比赛 {result.match_id}")
+            # 使用DAO存储预测结果
+            await self.prediction_dao.create_prediction(prediction_data)
+            logger.debug(f"预测结果已存储到数据库：比赛 {result.match_id}")
 
-            except Exception as e:
-                await session.rollback()
-                logger.error(f"存储预测结果失败: {e}")
-                raise
+        except Exception as e:
+            logger.error(f"存储预测结果失败: {e}")
+            raise
 
     async def verify_prediction(self, match_id: int) -> bool:
         """
@@ -797,8 +802,8 @@ class PredictionService:
             This method should be called after match status becomes "completed".
         """
         try:
+            # 获取比赛实际结果
             async with self.db_manager.get_async_session() as session:
-                # 获取比赛实际结果
                 match_query = select(
                     Match.id, Match.home_score, Match.away_score, Match.match_status
                 ).where(Match.id == match_id, Match.match_status == "completed")
@@ -815,30 +820,19 @@ class PredictionService:
                     match.home_score, match.away_score
                 )
 
-                # 更新预测记录
-                update_query = text(
-                    """
-                    UPDATE predictions
-                    SET actual_result = :actual_result,
-                        is_correct = (predicted_result = :actual_result),
-                        verified_at = :verified_at
-                    WHERE match_id = :match_id
-                      AND actual_result IS NULL
-                """
-                )
+            # 更新预测记录
+            is_correct = await self.prediction_dao.update_prediction_result(
+                match_id=match_id,
+                actual_result=actual_result,
+                # 不传递is_correct参数，让DAO自动计算
+            )
 
-                await session.execute(
-                    update_query,
-                    {
-                        "actual_result": actual_result,
-                        "match_id": match_id,
-                        "verified_at": datetime.now(),
-                    },
-                )
-
-                await session.commit()
+            if is_correct:
                 logger.info(f"比赛 {match_id} 预测结果已验证：实际结果 {actual_result}")
                 return True
+            else:
+                logger.warning(f"比赛 {match_id} 预测结果验证失败：未找到预测记录")
+                return False
 
         except Exception as e:
             logger.error(f"验证预测结果失败: {e}")

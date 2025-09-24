@@ -21,14 +21,20 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from feast import FeatureStore
-from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import \
-    PostgreSQLOfflineStoreConfig
+from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
+    PostgreSQLOfflineStoreConfig,
+)
 from feast.infra.online_stores.redis import RedisOnlineStoreConfig
 from feast.repo_config import RepoConfig
 
-from .feature_definitions import (head_to_head_features_view, match_entity,
-                                  match_features_view, odds_features_view,
-                                  team_entity, team_recent_stats_view)
+from .feature_definitions import (
+    head_to_head_features_view,
+    match_entity,
+    match_features_view,
+    odds_features_view,
+    team_entity,
+    team_recent_stats_view,
+)
 
 logger = logging.getLogger(__name__)
 

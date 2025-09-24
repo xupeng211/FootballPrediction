@@ -60,8 +60,12 @@ from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
 from sqlalchemy import Engine, create_engine, select, text, update
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    async_sessionmaker, create_async_engine)
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
@@ -110,7 +114,9 @@ class DatabaseRole(str, Enum):
 
     READER = "reader"  # 只读用户（分析、前端） / Read-only user (analytics, frontend)
     WRITER = "writer"  # 读写用户（数据采集） / Read-write user (data collection)
-    ADMIN = "admin"  # 管理员用户（运维、迁移） / Administrator user (operations, migration)
+    ADMIN = (
+        "admin"  # 管理员用户（运维、迁移） / Administrator user (operations, migration)
+    )
 
 
 class DatabaseManager:
@@ -779,7 +785,9 @@ class MultiUserDatabaseManager:
 
             self._managers[role] = manager
 
-            logger.info(f"初始化 {role.value} 用户数据库连接: {credentials['username']}")
+            logger.info(
+                f"初始化 {role.value} 用户数据库连接: {credentials['username']}"
+            )
 
         logger.info("多用户数据库连接管理器初始化完成")
 
@@ -797,7 +805,9 @@ class MultiUserDatabaseManager:
             RuntimeError: 如果管理器未初始化或角色不存在
         """
         if role not in self._managers:
-            raise RuntimeError(f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()")
+            raise RuntimeError(
+                f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()"
+            )
         return self._managers[role]
 
     @contextmanager

@@ -24,12 +24,20 @@ def upgrade() -> None:
     op.create_table(
         "leagues",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
-        sa.Column("league_name", sa.String(length=100), nullable=False, comment="联赛名称"),
-        sa.Column("league_code", sa.String(length=20), nullable=True, comment="联赛代码"),
+        sa.Column(
+            "league_name", sa.String(length=100), nullable=False, comment="联赛名称"
+        ),
+        sa.Column(
+            "league_code", sa.String(length=20), nullable=True, comment="联赛代码"
+        ),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
         sa.Column("level", sa.Integer(), nullable=True, comment="联赛级别"),
-        sa.Column("season_start_month", sa.Integer(), nullable=True, comment="赛季开始月份"),
-        sa.Column("season_end_month", sa.Integer(), nullable=True, comment="赛季结束月份"),
+        sa.Column(
+            "season_start_month", sa.Integer(), nullable=True, comment="赛季开始月份"
+        ),
+        sa.Column(
+            "season_end_month", sa.Integer(), nullable=True, comment="赛季结束月份"
+        ),
         sa.Column(
             "is_active", sa.Boolean(), nullable=False, default=True, comment="是否活跃"
         ),
@@ -46,12 +54,16 @@ def upgrade() -> None:
     op.create_table(
         "teams",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
-        sa.Column("team_name", sa.String(length=100), nullable=False, comment="球队名称"),
+        sa.Column(
+            "team_name", sa.String(length=100), nullable=False, comment="球队名称"
+        ),
         sa.Column("team_code", sa.String(length=10), nullable=True, comment="球队代码"),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
         sa.Column("league_id", sa.Integer(), nullable=True, comment="所属联赛ID"),
         sa.Column("founded_year", sa.Integer(), nullable=True, comment="成立年份"),
-        sa.Column("stadium", sa.String(length=100), nullable=True, comment="主场体育场"),
+        sa.Column(
+            "stadium", sa.String(length=100), nullable=True, comment="主场体育场"
+        ),
         sa.Column(
             "is_active", sa.Boolean(), nullable=False, default=True, comment="是否活跃"
         ),
@@ -114,7 +126,9 @@ def upgrade() -> None:
         "odds",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
         sa.Column("match_id", sa.Integer(), nullable=False, comment="比赛ID"),
-        sa.Column("bookmaker", sa.String(length=50), nullable=False, comment="博彩公司名称"),
+        sa.Column(
+            "bookmaker", sa.String(length=50), nullable=False, comment="博彩公司名称"
+        ),
         sa.Column(
             "market_type",
             sa.Enum(
@@ -163,7 +177,9 @@ def upgrade() -> None:
             nullable=True,
             comment="盘口值",
         ),
-        sa.Column("collected_at", sa.DateTime(), nullable=False, comment="赔率收集时间"),
+        sa.Column(
+            "collected_at", sa.DateTime(), nullable=False, comment="赔率收集时间"
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.Column("updated_at", sa.DateTime(), nullable=False, comment="更新时间"),
         sa.ForeignKeyConstraint(["match_id"], ["matches.id"]),
@@ -361,7 +377,9 @@ def upgrade() -> None:
             nullable=True,
             comment="场均黄牌数",
         ),
-        sa.Column("current_form", sa.String(length=10), nullable=True, comment="当前状态"),
+        sa.Column(
+            "current_form", sa.String(length=10), nullable=True, comment="当前状态"
+        ),
         sa.Column(
             "win_streak", sa.Integer(), nullable=False, default=0, comment="连胜场次"
         ),
@@ -387,7 +405,9 @@ def upgrade() -> None:
         "predictions",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
         sa.Column("match_id", sa.Integer(), nullable=False, comment="比赛ID"),
-        sa.Column("model_name", sa.String(length=50), nullable=False, comment="模型名称"),
+        sa.Column(
+            "model_name", sa.String(length=50), nullable=False, comment="模型名称"
+        ),
         sa.Column(
             "model_version", sa.String(length=20), nullable=False, comment="模型版本号"
         ),
@@ -445,8 +465,12 @@ def upgrade() -> None:
             nullable=True,
             comment="预测置信度评分",
         ),
-        sa.Column("feature_importance", sa.JSON(), nullable=True, comment="特征重要性数据"),
-        sa.Column("predicted_at", sa.DateTime(), nullable=False, comment="预测生成时间"),
+        sa.Column(
+            "feature_importance", sa.JSON(), nullable=True, comment="特征重要性数据"
+        ),
+        sa.Column(
+            "predicted_at", sa.DateTime(), nullable=False, comment="预测生成时间"
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.Column("updated_at", sa.DateTime(), nullable=False, comment="更新时间"),
         sa.ForeignKeyConstraint(["match_id"], ["matches.id"]),

@@ -92,8 +92,7 @@ class TestSQLCompatibility:
     def test_postgresql_compatibility(self):
         """测试PostgreSQL兼容性"""
         try:
-            from database.sql_compatibility import \
-                ensure_postgresql_compatibility
+            from database.sql_compatibility import ensure_postgresql_compatibility
 
             result = ensure_postgresql_compatibility("SELECT * FROM test")
             assert result is not None

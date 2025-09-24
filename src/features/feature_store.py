@@ -14,8 +14,9 @@ from typing import Any, Dict, List, Optional
 # 处理可选依赖
 try:
     from feast import Entity, FeatureStore, FeatureView, Field
-    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import \
-        PostgreSQLSource
+    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
+        PostgreSQLSource,
+    )
     from feast.types import Float64, Int64
 
     HAS_FEAST = True

@@ -228,8 +228,13 @@ class TestDataAPISimpleCoverage:
     def test_import_all_functions(self):
         """测试导入所有函数"""
         try:
-            from src.api.data import (get_dashboard_data, get_match_features,
-                                      get_team_stats, logger, router)
+            from src.api.data import (
+                get_dashboard_data,
+                get_match_features,
+                get_team_stats,
+                logger,
+                router,
+            )
 
             assert router is not None
             assert get_match_features is not None

@@ -20,10 +20,13 @@ try:
     from src.core.exceptions import TaskExecutionError, TaskRetryError
     from src.scheduler.celery_app import celery_app
     from src.scheduler.task_manager import TaskManager
-    from src.scheduler.tasks import (calculate_features_task,
-                                     collect_fixtures_task, collect_odds_task,
-                                     generate_predictions_task,
-                                     process_data_task)
+    from src.scheduler.tasks import (
+        calculate_features_task,
+        collect_fixtures_task,
+        collect_odds_task,
+        generate_predictions_task,
+        process_data_task,
+    )
 except ImportError:
     # 创建Mock类用于测试框架
     class MockCelery:

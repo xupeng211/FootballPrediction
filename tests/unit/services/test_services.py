@@ -8,9 +8,14 @@ from enum import Enum
 import pytest
 
 from src.models import AnalysisResult, Content, User
-from src.services import (BaseService, ContentAnalysisService,
-                          DataProcessingService, ServiceManager,
-                          UserProfileService, service_manager)
+from src.services import (
+    BaseService,
+    ContentAnalysisService,
+    DataProcessingService,
+    ServiceManager,
+    UserProfileService,
+    service_manager,
+)
 
 
 class ContentType(Enum):

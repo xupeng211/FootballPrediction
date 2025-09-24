@@ -73,8 +73,7 @@ with (
 ):
     from src.data.quality.exception_handler import DataQualityExceptionHandler
     from src.data.quality.ge_prometheus_exporter import GEPrometheusExporter
-    from src.data.quality.great_expectations_config import \
-        GreatExpectationsConfig
+    from src.data.quality.great_expectations_config import GreatExpectationsConfig
     from src.database.models.data_quality_log import DataQualityLog
 
 

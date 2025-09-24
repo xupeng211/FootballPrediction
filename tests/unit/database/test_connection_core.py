@@ -50,15 +50,17 @@ class TestDatabaseManagerCore:
     def test_import_all_functions(self):
         """测试导入所有函数 - 提升import覆盖率"""
         try:
-            from src.database.connection import (DatabaseManager,
-                                                 close_all_connections,
-                                                 create_async_engine,
-                                                 create_engine,
-                                                 get_async_session,
-                                                 get_connection_string,
-                                                 get_db_session,
-                                                 setup_database_pool,
-                                                 test_database_connection)
+            from src.database.connection import (
+                DatabaseManager,
+                close_all_connections,
+                create_async_engine,
+                create_engine,
+                get_async_session,
+                get_connection_string,
+                get_db_session,
+                setup_database_pool,
+                test_database_connection,
+            )
 
             # 验证导入成功
             assert DatabaseManager is not None

@@ -12,13 +12,14 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
-from prometheus_client import (REGISTRY, CollectorRegistry, Counter, Gauge,
-                               Histogram)
+from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
-from src.database.sql_compatibility import (CompatibleQueryBuilder,
-                                            get_db_type_from_engine)
+from src.database.sql_compatibility import (
+    CompatibleQueryBuilder,
+    get_db_type_from_engine,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -336,7 +337,9 @@ class TaskMonitor:
             # 1. 检查错误率
             error_rates = await self.calculate_error_rates()
             high_error_tasks = [
-                task for task, rate in error_rates.items() if rate > 0.1  # 10% 错误率阈值
+                task
+                for task, rate in error_rates.items()
+                if rate > 0.1  # 10% 错误率阈值
             ]
 
             if high_error_tasks:
@@ -354,7 +357,9 @@ class TaskMonitor:
             # 2. 检查队列积压
             queue_sizes = await self._get_queue_sizes()
             large_queues = [
-                queue for queue, size in queue_sizes.items() if size > 100  # 100个任务积压阈值
+                queue
+                for queue, size in queue_sizes.items()
+                if size > 100  # 100个任务积压阈值
             ]
 
             if large_queues:
@@ -372,7 +377,9 @@ class TaskMonitor:
             # 3. 检查任务延迟
             task_delays = await self._check_task_delays()
             delayed_tasks = [
-                task for task, delay in task_delays.items() if delay > 600  # 10分钟延迟阈值
+                task
+                for task, delay in task_delays.items()
+                if delay > 600  # 10分钟延迟阈值
             ]
 
             if delayed_tasks:

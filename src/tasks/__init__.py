@@ -16,8 +16,11 @@
 """
 
 from .celery_app import app as celery_app
-from .data_collection_tasks import (collect_fixtures_task, collect_odds_task,
-                                    collect_scores_task)
+from .data_collection_tasks import (
+    collect_fixtures_task,
+    collect_odds_task,
+    collect_scores_task,
+)
 from .error_logger import TaskErrorLogger
 from .monitoring import TaskMonitor
 

@@ -18,11 +18,12 @@ from typing import Any, Dict, Optional
 from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
-from src.database.models.data_collection_log import (CollectionStatus,
-                                                     DataCollectionLog)
-from src.database.sql_compatibility import (CompatibleQueryBuilder,
-                                            SQLCompatibilityHelper,
-                                            get_db_type_from_engine)
+from src.database.models.data_collection_log import CollectionStatus, DataCollectionLog
+from src.database.sql_compatibility import (
+    CompatibleQueryBuilder,
+    SQLCompatibilityHelper,
+    get_db_type_from_engine,
+)
 
 logger = logging.getLogger(__name__)
 

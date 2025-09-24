@@ -14,9 +14,15 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
+
 # from sklearn.ensemble import RandomForestClassifier  # 备用分类器
-from sklearn.metrics import (accuracy_score, classification_report, f1_score,
-                             precision_score, recall_score)
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -171,7 +177,9 @@ class BaselineModelTrainer:
         logger.info(f"获取到 {len(matches_df)} 场历史比赛")
 
         if len(matches_df) < min_samples:
-            raise ValueError(f"训练数据不足，需要至少 {min_samples} 条记录，实际获取 {len(matches_df)} 条")
+            raise ValueError(
+                f"训练数据不足，需要至少 {min_samples} 条记录，实际获取 {len(matches_df)} 条"
+            )
 
         # 准备实体DataFrame用于特征获取
         entity_df = pd.DataFrame(

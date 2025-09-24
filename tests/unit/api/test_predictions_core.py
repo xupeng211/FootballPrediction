@@ -17,8 +17,12 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.predictions import (batch_predict_matches, get_match_prediction,
-                                 get_match_prediction_history, router)
+from src.api.predictions import (
+    batch_predict_matches,
+    get_match_prediction,
+    get_match_prediction_history,
+    router,
+)
 from src.models.prediction_service import PredictionResult
 
 
@@ -381,7 +385,9 @@ class TestPredictionsAPI:
 
         # ✅ 修复：正确配置AsyncMock for session.execute
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_match  # 直接返回对象，不是协程
+        mock_result.scalar_one_or_none.return_value = (
+            mock_match  # 直接返回对象，不是协程
+        )
         mock_session.execute = AsyncMock(return_value=mock_result)
 
         with patch("src.api.predictions.prediction_service") as mock_service:

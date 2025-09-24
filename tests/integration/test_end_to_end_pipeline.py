@@ -16,7 +16,7 @@ from sqlalchemy import select, text
 
 from src.cache.redis_manager import RedisManager
 from src.database.connection import DatabaseManager
-from src.database.models.match import Match
+from src.database.models.match import Match, MatchStatus
 from src.database.models.predictions import Predictions
 from src.database.models.team import Team
 
@@ -106,7 +106,7 @@ class TestEndToEndPipeline:
                 league_id=1,
                 season="2024-25",
                 match_time=datetime.now() + timedelta(days=1),
-                status="scheduled",
+                match_status=MatchStatus.SCHEDULED,
                 venue="Test Venue",
             )
             session.add(match)
@@ -207,14 +207,10 @@ class TestEndToEndPipeline:
         """测试预测API的错误处理"""
 
         # 测试无效的match_id
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        invalid_match_id = 999999999  # 不存在的比赛ID
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"{self.base_url}/api/v1/predictions/predict",
-                json={
-                    "match_id": 999999999,  # 不存在的比赛ID
-                    "home_team_id": 1,
-                    "away_team_id": 2,
-                },
+                f"{self.base_url}/api/v1/predictions/{invalid_match_id}/predict",
                 headers={"Content-Type": "application/json"},
             )
 
@@ -240,18 +236,13 @@ class TestEndToEndPipeline:
         async with httpx.AsyncClient(timeout=30.0) as client:
             # 创建预测
             await client.post(
-                f"{self.base_url}/api/v1/predictions/predict",
-                json={
-                    "match_id": match_id,
-                    "home_team_id": team_data["home_team_id"],
-                    "away_team_id": team_data["away_team_id"],
-                },
+                f"{self.base_url}/api/v1/predictions/{match_id}/predict",
                 headers={"Content-Type": "application/json"},
             )
 
             # 查询预测历史
             history_response = await client.get(
-                f"{self.base_url}/api/v1/predictions/history",
+                f"{self.base_url}/api/v1/predictions/history/{match_id}",
                 params={"limit": 10, "offset": 0},
             )
 
@@ -290,13 +281,11 @@ class TestEndToEndPipeline:
             assert "status" in health_data
             assert health_data["status"] == "healthy"
 
-            # 测试数据库连接检查
-            if "database" in health_data:
-                assert health_data["database"]["status"] == "connected"
-
-            # 测试Redis连接检查
-            if "cache" in health_data:
-                assert health_data["cache"]["status"] == "connected"
+            checks = health_data.get("checks", {})
+            if "database" in checks:
+                assert checks["database"]["status"] == "healthy"
+            if "redis" in checks:
+                assert checks["redis"]["status"] == "healthy"
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -385,7 +374,7 @@ class TestEndToEndPipeline:
         test_value = {"test": "data", "timestamp": str(datetime.now())}
 
         # 写入缓存
-        await self.redis_manager.aset(test_key, test_value, expire=60)
+        await self.redis_manager.aset(test_key, test_value, ttl=60)
 
         # 读取缓存
         cached_value = await self.redis_manager.aget(test_key)

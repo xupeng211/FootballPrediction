@@ -1,32 +1,24 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Runtime code lives in `src/`: FastAPI routers in `src/api`, domain rules in `src/core`, orchestration in `src/services` and `src/tasks`, persistence in `src/database`, and shared helpers in `src/utils`.
-- Tests mirror the modules under `tests/unit`, `tests/integration`, `tests/e2e`, and `tests/monitoring`; reusable fixtures sit in `tests/fixtures` and synthetic datasets in `data/`.
-- Generated assets belong in `data/` or `models/`, automation scripts in `scripts/`, and long-form references in `docs/`; keep environment samples synced across `env.template` and `env.example`.
+Runtime code lives in `src/`: FastAPI routers in `src/api`, domain logic in `src/core`, orchestration flows in `src/services` and `src/tasks`, persistence adapters in `src/database`, and shared helpers in `src/utils`. Test suites mirror this layout under `tests/unit`, `tests/integration`, `tests/slow`, and `tests/e2e`; reusable datasets sit in `tests/fixtures`, `data/`, and `models/`. Operational docs and runbooks belong in `docs/`, while automation lives in `scripts/`.
 
 ## Build, Test, and Development Commands
-- `make venv` then `make install` prepares the local Python 3.10+ toolchain inside `.venv`.
-- `make fmt` runs Black and isort; `make lint` layers flake8 plus mypy for static safety.
-- `make test` executes the full pytest suite; use `make coverage` to enforce the ≥80% threshold or `make coverage-fast` for quick unit feedback.
-- `make context` summarizes the project topology—run it ahead of large refactors or onboarding handoffs.
+- `make venv && make install` — create the local `.venv` and install runtime + dev dependencies.
+- `make fmt` — apply Black and isort formatting across Python sources.
+- `make lint` — run flake8 and mypy with project type stubs.
+- `make test` — execute the full pytest matrix; emits coverage to `coverage.xml` and terminal.
+- `make coverage-fast` — run time-boxed unit suites for fast feedback.
+- `make coverage` — enforce the ≥80% line coverage gate and write `coverage.txt`.
 
 ## Coding Style & Naming Conventions
-- Follow four-space indentation, 88-character lines, snake_case for functions and modules, PascalCase for classes, and UPPER_SNAKE_CASE for constants.
-- Add type hints and docstrings for public APIs, services, and tasks; align Pydantic response models with endpoints in `src/api`.
-- Prefer explicit imports, keep module-level configuration in `config/`, and avoid leaking secrets into code or samples.
+Use four-space indentation and keep lines ≤88 characters. Modules, functions, and variables use `snake_case`; classes use `PascalCase`; constants use `UPPER_SNAKE_CASE`. Exported APIs, services, tasks, and Pydantic models require type hints plus docstrings aligned with FastAPI responses. Prefer explicit relative imports and keep configuration code scoped to `config/` modules.
 
 ## Testing Guidelines
-- Name files `test_*.py`, scope markers with `@pytest.mark.unit`, `@pytest.mark.integration`, or `@pytest.mark.e2e`, and register long-running monitors under `tests/monitoring`.
-- Reuse fixtures from `tests/fixtures` and synthetic artifacts in `data/`; never rely on production snapshots.
-- Investigate coverage dips immediately and add regression cases when bugs reach production.
+Name files `test_*.py` and decorate suites with `@pytest.mark.unit`, `.integration`, `.slow`, or `.e2e` as appropriate. Reproduce regressions with targeted tests under the matching directory. Use shared fixtures from `tests/fixtures` and snapshot data from `data/`. Review `coverage.txt` or `coverage.xml` after `make coverage` to track drift, and investigate failures recorded in `reports/`.
 
 ## Commit & Pull Request Guidelines
-- Use Conventional Commit prefixes (`feat:`, `fix:`, `style:`, etc.), limit subjects to 72 characters, and note executed commands in the body.
-- Reference tickets in the footer (e.g., `Refs: FP-123`) and confirm lint plus test status before pushing.
-- PRs should summarize intent, list verification steps (paste command snippets), attach relevant logs or screenshots, and flag schema, monitoring, or deployment impacts.
+Follow Conventional Commits (e.g., `feat: add win probability api`) with subjects ≤72 characters. Document executed verification commands in the body and link tickets in the footer using `Refs: FP-123`. Pull requests should describe intent, note schema or deployment impacts, attach relevant logs or screenshots, and confirm lint/test commands run locally.
 
 ## Security & Configuration Tips
-- Base local configs on `env.template` or `env.example`, injecting secrets through tooling or runtime variables only.
-- Audit `docker-compose*.yml` and reverse-proxy settings whenever new services, ports, or hostnames are introduced.
-- Keep security scans current: run `make lint` after dependency bumps and review `reports/` plus `security_report*.json` before releases.
+Base local configuration on `env.template` or `env.example`; never commit secrets. When adding services, update `docker-compose*.yml` and related reverse-proxy rules under `nginx/`. After dependency changes, run `make lint` and inspect security artefacts in `reports/` or `security_report*.json` before merging.

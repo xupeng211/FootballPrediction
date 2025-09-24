@@ -6,8 +6,7 @@
 
 from ..base import Base
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
-from .data_collection_log import (CollectionStatus, CollectionType,
-                                  DataCollectionLog)
+from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
 from .features import Features, TeamType
 from .league import League
 from .match import Match, MatchStatus

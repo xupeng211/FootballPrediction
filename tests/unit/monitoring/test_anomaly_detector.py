@@ -7,8 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pandas as pd
 import pytest
 
-from src.monitoring.anomaly_detector import (AnomalyDetector, AnomalyResult,
-                                             AnomalyType)
+from src.monitoring.anomaly_detector import AnomalyDetector, AnomalyResult, AnomalyType
 
 
 @pytest.fixture

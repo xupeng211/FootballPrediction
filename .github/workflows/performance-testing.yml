@@ -1,0 +1,274 @@
+name: Performance Testing Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run performance tests daily at 3 AM UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: football_prediction_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      kafka:
+        image: bitnami/kafka:3.6.1
+        env:
+          KAFKA_ENABLE_KRAFT: "yes"
+          KAFKA_CFG_PROCESS_ROLES: controller,broker
+          KAFKA_CFG_NODE_ID: "1"
+          KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+          KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+          KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+          KAFKA_CFG_NUM_PARTITIONS: "1"
+          KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+          KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+          KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+          ALLOW_PLAINTEXT_LISTENER: "yes"
+        options: >-
+          --health-cmd "kafka-topics.sh --bootstrap-server localhost:9092 --list"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 30s
+        ports:
+          - 9092:9092
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-performance-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-performance-
+
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install locust psycopg2-binary redis kafka-python prometheus-client
+        pip install -e .
+
+    - name: Wait for services
+      run: |
+        until pg_isready -h localhost -p 5432; do echo "Waiting for Postgres..."; sleep 2; done
+        until nc -z localhost 6379; do echo "Waiting for Redis..."; sleep 2; done
+        until nc -z localhost 9092; do echo "Waiting for Kafka..."; sleep 2; done
+
+    - name: Run service performance tests
+      run: |
+        source .venv/bin/activate
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        python tests/performance/test_service_performance.py
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-test-results
+        path: |
+          reports/service_performance_report.json
+          htmlcov/
+
+    - name: Generate performance report
+      run: |
+        source .venv/bin/activate
+        if [ -f "reports/service_performance_report.json" ]; then
+          echo "## Performance Test Results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat reports/service_performance_report.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Validate performance thresholds
+      run: |
+        source .venv/bin/activate
+        python -c "
+        import json
+        import sys
+        from pathlib import Path
+
+        report_path = Path('reports/service_performance_report.json')
+        if not report_path.exists():
+            print('❌ Performance report not found')
+            sys.exit(1)
+
+        with open(report_path) as f:
+            data = json.load(f)
+
+        # Check if services meet performance requirements
+        single_threaded = data.get('single_threaded', {})
+        requirements = {
+            'postgresql': {'avg_response_ms': 50, 'throughput_qps': 1000},
+            'redis': {'avg_response_ms': 10, 'throughput_qps': 1000},
+            'kafka': {'avg_response_ms': 100, 'throughput_msgps': 100}
+        }
+
+        passed = 0
+        total = len(requirements)
+
+        for service, criteria in requirements.items():
+            if service in single_threaded:
+                result = single_threaded[service]
+                if 'error' not in result:
+                    avg_ms = result['avg_response_time'] * 1000
+                    throughput = result.get('throughput_qps', result.get('throughput_ops', result.get('throughput_msgps', 0)))
+
+                    if avg_ms <= criteria['avg_response_ms'] and throughput >= criteria['throughput_qps']:
+                        print(f'✅ {service}: {avg_ms:.2f}ms, {throughput:.1f} ops/sec')
+                        passed += 1
+                    else:
+                        print(f'❌ {service}: {avg_ms:.2f}ms, {throughput:.1f} ops/sec (required: <{criteria[\"avg_response_ms\"]}ms, >{criteria[\"throughput_qps\"]} ops/sec)')
+                else:
+                    print(f'❌ {service}: {result[\"error\"]}')
+            else:
+                print(f'❌ {service}: No results found')
+
+        print(f'Performance score: {passed}/{total} services meet requirements')
+
+        # For scheduled runs, require all services to pass
+        if '${{ github.event_name }}' == 'schedule' and passed < total:
+            print('❌ Performance requirements not met for scheduled run')
+            sys.exit(1)
+        elif passed < total * 0.8:  # 80% threshold for other runs
+            print('❌ Too many services failing performance requirements')
+            sys.exit(1)
+        else:
+            print('✅ Performance requirements met')
+        "
+
+  api-performance:
+    runs-on: ubuntu-latest
+    needs: performance-tests
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: football_prediction_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-locust-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-locust-
+
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install locust fastapi uvicorn psycopg2-binary redis
+        pip install -e .
+
+    - name: Wait for services
+      run: |
+        until pg_isready -h localhost -p 5432; do sleep 2; done
+        until nc -z localhost 6379; do sleep 2; done
+
+    - name: Start FastAPI application
+      run: |
+        source .venv/bin/activate
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        export ENVIRONMENT=test
+        python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        curl -f http://localhost:8000/health || exit 1
+
+    - name: Run Locust performance test
+      run: |
+        source .venv/bin/activate
+        locust --host http://localhost:8000 --users 50 --spawn-rate 5 --run-time 60s --headless --html reports/locust_report.html
+
+    - name: Upload Locust results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: locust-performance-results
+        path: |
+          reports/locust_report.html
+          reports/*_results*
+
+    - name: Add performance report to summary
+      run: |
+        echo "## API Performance Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "Locust test completed with 50 users over 60 seconds." >> $GITHUB_STEP_SUMMARY
+        echo "View detailed report in artifacts: locust_report.html" >> $GITHUB_STEP_SUMMARY

@@ -1,196 +1,237 @@
-# FootballPrediction Project - Qwen Code Context
+# 🏈 FootballPrediction Project Context for Qwen
 
-## Project Overview
+This document provides essential context about the FootballPrediction project to help you understand and work effectively with this codebase.
 
-This is a **Football Prediction System** built with a modern Python technology stack. It's an enterprise-grade application using FastAPI as the web framework, with a complete development infrastructure and best practices configuration.
+## 📋 Project Overview
 
-### Core Features
-- High test coverage (96.35%)
-- Security validation with bandit scanning
-- Full type safety with Python type annotations
-- Modern architecture with FastAPI, SQLAlchemy, Redis, and PostgreSQL
-- Containerized deployment with Docker and docker-compose
-- Automated CI/CD with GitHub Actions
-- Complete development toolchain driven by a 613-line Makefile
-- AI-assisted development workflow
-- Comprehensive documentation
+FootballPrediction is an enterprise-grade football prediction system built with modern Python technologies. It uses FastAPI as the core web framework with a complete development infrastructure and best practices configuration.
 
-## Project Structure
-```
-FootballPrediction/
-├── src/                  # Source code
-├── tests/                # Test files
-├── docs/                 # Documentation
-├── scripts/              # Utility scripts
-├── .github/workflows/    # CI/CD configuration
-├── config/               # Configuration files
-├── data/                 # Data files
-├── models/               # ML models
-├── monitoring/           # Monitoring configurations
-├── nginx/                # Nginx configuration
-├── reports/              # Generated reports
-├── venv/                 # Virtual environment (git-ignored)
-├── Makefile              # Development toolchain
-├── requirements.txt      # Production dependencies
-├── requirements-dev.txt  # Development dependencies
-├── docker-compose.yml    # Container orchestration
-├── Dockerfile            # Docker image definition
-├── README.md             # Project documentation
-└── ...                   # Other configuration and documentation files
-```
+### Key Features:
 
-## Key Technologies
-- **Backend Framework**: FastAPI
+- **High Test Coverage** - 96.35% code coverage with 385+ test cases
+- **Security Validation** - Passed bandit security scanning with dependency vulnerabilities fixed
+- **Type Safety** - Full Python type annotations and static checking
+- **Modern Architecture** - FastAPI + SQLAlchemy + Redis + PostgreSQL
+- **Containerized Deployment** - Docker + docker-compose production-ready configuration
+- **Automated CI/CD** - GitHub Actions + local CI simulation
+- **Complete Toolchain** - 613-line Makefile-driven development workflow
+- **AI-Assisted Development** - Built-in Cursor rules and AI workflow guidance
+
+## 🏗️ Architecture & Technologies
+
+### Core Stack:
+- **Framework**: FastAPI (Python 3.11+)
 - **Database**: PostgreSQL with SQLAlchemy ORM
 - **Caching**: Redis
-- **Streaming**: Kafka (via confluent-kafka)
-- **Monitoring**: Prometheus, Grafana, AlertManager
-- **Data Lineage**: Marquez
-- **ML Platform**: MLflow
+- **Streaming**: Kafka for real-time data processing
+- **ML Platform**: MLflow for experiment tracking and model management
+- **Feature Store**: Feast for feature management
+- **Monitoring**: Prometheus + Grafana for metrics and visualization
+- **Data Quality**: Great Expectations for data validation
 - **Task Queue**: Celery with Redis backend
-- **Feature Store**: Feast
-- **Data Validation**: Great Expectations
-- **Containerization**: Docker, docker-compose
+- **Containerization**: Docker + docker-compose
 
-## Development Workflow
+### Project Structure:
+```
+FootballPrediction/
+├── src/                    # Source code
+│   ├── api/               # API endpoints
+│   ├── core/              # Core business logic
+│   ├── database/          # Database models and connections
+│   ├── models/            # ML models and prediction logic
+│   ├── services/          # Business services
+│   ├── cache/             # Cache management
+│   ├── streaming/         # Kafka streaming components
+│   ├── monitoring/        # Monitoring and metrics
+│   ├── tasks/             # Background tasks
+│   ├── utils/             # Utility functions
+│   └── main.py            # Application entry point
+├── tests/                 # Test suite (unit, integration, e2e)
+├── docs/                  # Documentation
+├── scripts/               # Utility scripts
+├── .github/workflows/     # CI/CD configuration
+├── docker-compose.yml     # Docker services configuration
+├── Dockerfile             # Application container definition
+├── Makefile               # Development toolchain
+├── requirements.txt       # Production dependencies
+└── requirements-dev.txt   # Development dependencies
+```
 
-### Environment Setup
-1. Clone the repository
-2. Run `make install` to create virtual environment and install dependencies
-3. Run `make context` to load project context (important for AI-assisted development)
+## 🚀 Getting Started
 
-### Code Quality
-- `make lint`: Run flake8 and mypy checks
-- `make fmt`: Format code with black and isort
-- `make quality` or `make check`: Complete quality check (lint + format + test)
+### Quick Start Commands:
+```bash
+# Clone and setup
+git clone https://github.com/xupeng211/FootballPrediction.git
+cd FootballPrediction
 
-### Testing
-- `make test`: Run pytest unit tests
-- `make coverage`: Run tests with coverage report (requires 80% minimum)
-- `make ci`: Simulate CI environment locally
+# Install dependencies and setup environment
+make install      # Install dependencies
+make context      # Load project context (⭐ Most important)
+make test         # Run tests (385+ test cases)
+make coverage     # View 96.35% coverage report
 
-### GitHub Issues Synchronization
-- The project includes a custom tool for synchronizing GitHub Issues with a local `issues.yaml` file
-- `make sync-issues`: Sync issues between GitHub and local file
-- This enables offline issue management and team collaboration
+# Local CI verification
+./ci-verify.sh    # Full local CI validation
+make ci           # Complete quality checks
+```
 
-### AI-Assisted Development
-The project is designed to work with AI coding assistants:
-1. `make env-check`: Check environment health
-2. `make context`: Load comprehensive project context
-3. Development and testing
-4. `make ci`: Quality checks
-5. `make prepush`: Full validation before pushing
+## 🛠️ Development Workflow
 
-## Building and Running
+### Essential Makefile Commands:
+```bash
+make help         # Show all available commands ⭐
+make venv         # Create virtual environment
+make install      # Install dependencies
+make lint         # Code quality checks
+make test         # Run tests
+make ci           # Local CI checks
+make sync-issues  # GitHub Issues synchronization 🔄
+make context      # Load project context for AI development
+```
 
-### Local Development
-1. `make install`: Set up environment
-2. `make context`: Load context for AI tools
-3. `make test`: Run tests
-4. `make coverage`: Check code coverage
+### Development Process:
+1. `make env-check` - Check environment
+2. `make context` - Load context
+3. Develop and test
+4. `make ci` - Quality checks
+5. `make prepush` - Complete validation
 
-### Containerized Deployment
-1. Configure environment variables in `.env.ci` or similar files
-2. `docker-compose up --build`: Start all services
-   - This includes the app, database, Redis, Kafka, monitoring tools (Prometheus, Grafana), MLflow, and task workers
-3. Access services:
-   - Main app: http://localhost:8000
-   - Grafana: http://localhost:3000
-   - MLflow: http://localhost:5002
-   - Flower (Celery monitoring): http://localhost:5555/flower
+## 🧪 Testing Framework
 
-### CI Simulation
-- Run `./ci-verify.sh` to execute a complete CI validation locally
-- This script rebuilds the virtual environment, starts Docker services, and runs all tests with coverage checks
+The project has a comprehensive layered testing architecture:
 
-## Development Conventions
-- Follow the toolchain defined in the Makefile
-- Maintain high test coverage (>80%)
-- Use type hints throughout the codebase
-- Follow code formatting standards (black, isort)
-- Write comprehensive docstrings for public APIs
-- Use the GitHub issues sync tool for task management
+### Test Structure:
+```
+tests/
+├── unit/         # Unit tests (fast, isolated)
+├── integration/  # Integration tests (with real services)
+├── e2e/          # End-to-end tests (full workflows)
+├── slow/         # Slow-running tests
+└── fixtures/     # Test data and factories
+```
 
-## Key Files and Directories
-- `src/main.py`: Main FastAPI application entry point
-- `Makefile`: Primary development toolchain
-- `requirements.txt`/`requirements-dev.txt`: Dependencies
-- `docker-compose.yml`: Full service orchestration
-- `scripts/sync_issues.py`: GitHub issues synchronization tool
-- `issues.yaml`: Local issue tracking file
-- `TOOLS.md`: Detailed documentation of development tools
+### Running Tests:
+```bash
+# Run all tests
+pytest tests/
 
-## Architecture Overview
+# Run specific test types
+pytest tests/unit/              # Unit tests
+pytest tests/integration/       # Integration tests
+pytest tests/e2e/              # End-to-end tests
 
-### Core Components
-1. **API Layer**: FastAPI-based REST API with endpoints for predictions, data, features, monitoring, and health checks
-2. **Database Layer**: PostgreSQL with SQLAlchemy ORM for data persistence
-3. **Caching Layer**: Redis for caching frequently accessed data
-4. **Streaming Layer**: Kafka for real-time data processing
-5. **ML Pipeline**: MLflow for model management and training
-6. **Task Queue**: Celery for background task processing
-7. **Feature Store**: Feast for feature management
-8. **Monitoring**: Prometheus and Grafana for system monitoring
+# Run with coverage
+pytest --cov=src --cov-report=html
+```
 
-### Data Models
-- **Match**: Football match information including teams, scores, and status
-- **Team**: Team information including name, country, and league
-- **Prediction**: Model predictions with probabilities for match outcomes
-- **Features**: Feature data used for machine learning models
-- **Odds**: Betting odds from various bookmakers
-- **League**: League information
+### Test Requirements:
+- **Coverage**: Minimum 80% required (currently at 96.35%)
+- **Markers**: unit, integration, e2e, slow, docker
+- **Async Support**: Built-in pytest-asyncio support
 
-### Services
-- **Prediction Service**: Core service for generating football match predictions using ML models
-- **Data Collection**: Automated data collection from various sources
-- **Feature Engineering**: Feature extraction and processing for ML models
-- **Model Training**: ML model training and evaluation
-- **Monitoring**: System and business metrics collection and reporting
+## 🐳 Containerization & Deployment
 
-## Development Tools
-- **Makefile**: Complete development toolchain with 60+ commands
-- **GitHub Issues Sync**: Bidirectional synchronization between local file and GitHub
-- **Quality Checks**: Automated code quality tools (black, isort, flake8, mypy)
-- **Testing**: Pytest with coverage reporting
-- **CI Simulation**: Local CI environment using Docker Compose
-- **Context Loading**: AI context loading for development assistance
+### Docker Services:
+The project uses docker-compose to manage a complete service stack:
+- **app**: Main FastAPI application
+- **db**: PostgreSQL database
+- **redis**: Redis cache
+- **kafka**: Kafka streaming platform
+- **nginx**: Reverse proxy
+- **minio**: Object storage (S3-compatible)
+- **prometheus**: Metrics collection
+- **grafana**: Metrics visualization
+- **mlflow**: ML experiment tracking
+- **celery**: Background task processing
 
-## Key Environment Variables
-- `DATABASE_URL`: PostgreSQL database connection string
-- `REDIS_URL`: Redis connection URL
-- `MLFLOW_TRACKING_URI`: MLflow tracking server URI
-- `KAFKA_BOOTSTRAP_SERVERS`: Kafka bootstrap servers
-- `API_KEY`: API key for external data sources
-- Various Docker-specific variables in `.env.ci`
+### Deployment Commands:
+```bash
+# Start full environment
+docker-compose up --build
 
-## Testing Strategy
-- Unit tests for individual components
-- Integration tests for service interactions
-- End-to-end tests for complete workflows
-- High test coverage target (96.35% currently achieved)
-- Automated testing in CI pipeline
+# Deploy with immutable git-sha tag
+make deploy
 
-## Deployment Architecture
-- Docker containers for all services
-- Docker Compose for local development and testing
-- Kubernetes-ready configurations
-- Health checks and monitoring
-- Automated scaling capabilities
-- CI/CD pipeline with GitHub Actions
+# Rollback to previous version
+make rollback TAG=<git-sha>
+```
 
-## Monitoring and Observability
-- Prometheus metrics collection
-- Grafana dashboards for visualization
-- Health check endpoints
-- Performance metrics
-- Business metrics tracking
-- Alerting mechanisms
+## 📊 Monitoring & Observability
 
-## ML Pipeline
-- Feature store with Feast
-- Model training with scikit-learn/XGBoost
-- Model registry with MLflow
-- Model serving for predictions
-- Model performance tracking
-- Automated retraining capabilities
+The system includes comprehensive monitoring:
+- **Metrics**: Prometheus metrics collector
+- **Visualization**: Grafana dashboards
+- **Health Checks**: Built-in health endpoints
+- **Alerting**: Prometheus AlertManager
+- **Data Lineage**: Marquez for data governance
+- **Logging**: Structured logging with structlog
+
+## 🔧 Configuration Management
+
+Environment configuration is managed through:
+- `.env.ci` - CI environment variables
+- `env.example` - Example environment file
+- Environment-specific Docker configurations
+
+Key configuration areas:
+- Database connections
+- Redis caching
+- Kafka streaming
+- MLflow tracking
+- MinIO storage
+- External API keys
+
+## 🤖 AI-Assisted Development
+
+The project is designed for AI-assisted development:
+1. `make context` - Load comprehensive project context
+2. Follow tool-first principles
+3. Use structured documentation for AI understanding
+4. Leverage Cursor rules and AI workflow guides
+
+## 📈 MLOps Pipeline
+
+The system includes a complete MLOps feedback loop:
+```bash
+make feedback-update    # Update prediction results
+make performance-report # Generate model reports
+make retrain-check      # Check models for retraining
+make model-monitor      # Run model monitoring
+make mlops-pipeline     # Complete MLOps cycle
+```
+
+## 🔒 Security & Compliance
+
+- Security scanning with bandit
+- Dependency vulnerability checks
+- Type safety with mypy
+- Code quality enforcement
+- Test coverage requirements
+
+## 🎯 Quality Standards
+
+- **Code Coverage**: ≥ 80% (currently 96.35%)
+- **Security**: Validated with no known vulnerabilities
+- **Code Quality**: A+ rating with full linting
+- **Testing**: 385+ passing tests
+- **Documentation**: Comprehensive inline and external docs
+
+## 🔄 CI/CD Integration
+
+Local CI simulation with `./ci-verify.sh` ensures consistency with remote CI environments:
+1. Virtual environment rebuild
+2. Docker environment startup
+3. Test execution with coverage validation
+4. Quality checks (linting, type checking)
+
+## 📚 Documentation
+
+Key documentation files:
+- `README.md` - Project overview and quick start
+- `TOOLS.md` - Development tools guide
+- `tests/README.md` - Testing framework documentation
+- `AI_WORK_GUIDE.md` - AI development workflow
+- Various other specialized guides in the docs/ directory
+
+This project follows enterprise best practices for Python development with a focus on maintainability, testability, and scalability.
