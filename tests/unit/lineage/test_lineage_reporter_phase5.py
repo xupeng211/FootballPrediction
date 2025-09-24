@@ -20,7 +20,7 @@ from src.lineage.lineage_reporter import LineageReporter
 class TestLineageReporterBasic:
     """基础功能测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_initialization(self, mock_client_class):
         """测试初始化"""
         mock_client = Mock()
@@ -32,7 +32,7 @@ class TestLineageReporterBasic:
         assert reporter._active_runs == {}
         mock_client_class.assert_called_once_with(url="http://test:5000")
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_initialization_with_defaults(self, mock_client_class):
         """测试使用默认参数初始化"""
         mock_client = Mock()
@@ -43,7 +43,7 @@ class TestLineageReporterBasic:
         assert reporter.namespace == "football_prediction"
         mock_client_class.assert_called_once_with(url="http://localhost:5000")
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_start_job_run(self, mock_client_class):
         """测试开始作业运行"""
         mock_client = Mock()
@@ -55,11 +55,11 @@ class TestLineageReporterBasic:
         reporter = LineageReporter()
 
         # Patch the RunEvent and related classes to avoid OpenLineage version issues
-        with patch('src.lineage.lineage_reporter.RunEvent') as mock_run_event, \
-             patch('src.lineage.lineage_reporter.Job') as mock_job, \
-             patch('src.lineage.lineage_reporter.Run') as mock_run, \
-             patch('src.lineage.lineage_reporter.InputDataset') as mock_input_dataset:
-
+        with patch("src.lineage.lineage_reporter.RunEvent") as mock_run_event, patch(
+            "src.lineage.lineage_reporter.Job"
+        ) as mock_job, patch("src.lineage.lineage_reporter.Run") as mock_run, patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ) as mock_input_dataset:
             mock_run_event.return_value = Mock()
             mock_job.return_value = Mock()
             mock_run.return_value = Mock()
@@ -69,7 +69,7 @@ class TestLineageReporterBasic:
                 job_name="test_job",
                 job_type="BATCH",
                 inputs=[{"name": "source_data", "namespace": "raw"}],
-                description="Test job for data collection"
+                description="Test job for data collection",
             )
 
             # 验证返回值是UUID格式
@@ -82,7 +82,7 @@ class TestLineageReporterBasic:
             # 验证调用了客户端
             mock_client.emit.assert_called_once()
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_start_job_run_with_metadata(self, mock_client_class):
         """测试开始作业运行带元数据"""
         mock_client = Mock()
@@ -91,22 +91,22 @@ class TestLineageReporterBasic:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             run_id = reporter.start_job_run(
                 job_name="test_job_meta",
                 job_type="BATCH",
                 inputs=[],
-                description="Test job with metadata"
+                description="Test job with metadata",
             )
 
             assert run_id in reporter._active_runs.values()
             mock_client.emit.assert_called_once()
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_complete_job_run_success(self, mock_client_class):
         """测试成功完成作业运行"""
         mock_client = Mock()
@@ -115,18 +115,19 @@ class TestLineageReporterBasic:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.OutputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.OutputDataset"
+        ):
             # 先启动一个作业
             run_id = reporter.start_job_run(
                 job_name="complete_job",
                 job_type="BATCH",
                 inputs=[],
-                description="Test job completion"
+                description="Test job completion",
             )
 
             # 完成作业
@@ -141,7 +142,7 @@ class TestLineageReporterBasic:
             # 验证调用了两次emit（start + complete）
             assert mock_client.emit.call_count == 2
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_complete_job_run_not_started(self, mock_client_class):
         """测试完成未启动的作业运行"""
         mock_client = Mock()
@@ -155,7 +156,7 @@ class TestLineageReporterBasic:
         # 应该返回False而不是抛出异常
         assert result is False
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_fail_job_run(self, mock_client_class):
         """测试作业运行失败"""
         mock_client = Mock()
@@ -164,21 +165,25 @@ class TestLineageReporterBasic:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.error_message_run') as mock_error_facet:
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.error_message_run"
+        ) as mock_error_facet:
             error_message = "Data validation failed"
-            mock_error_facet.return_value = {"message": error_message, "programmingLanguage": "PYTHON"}
+            mock_error_facet.return_value = {
+                "message": error_message,
+                "programmingLanguage": "PYTHON",
+            }
 
             # 先启动一个作业
             run_id = reporter.start_job_run(
                 job_name="fail_job",
                 job_type="BATCH",
                 inputs=[],
-                description="Test job failure"
+                description="Test job failure",
             )
 
             # 作业失败
@@ -194,7 +199,7 @@ class TestLineageReporterBasic:
             # 验证调用了两次emit（start + fail）
             assert mock_client.emit.call_count == 2
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_fail_job_run_not_started(self, mock_client_class):
         """测试失败未启动的作业运行"""
         mock_client = Mock()
@@ -212,7 +217,7 @@ class TestLineageReporterBasic:
 class TestLineageReporterDatasetHandling:
     """数据集处理测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_create_dataset_with_schema(self, mock_client_class):
         """测试创建带schema的数据集"""
         mock_client = Mock()
@@ -224,27 +229,26 @@ class TestLineageReporterDatasetHandling:
         schema = {
             "fields": [
                 {"name": "id", "type": "integer"},
-                {"name": "name", "type": "string"}
+                {"name": "name", "type": "string"},
             ]
         }
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.schema_dataset') as mock_schema:
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.schema_dataset"
+        ) as mock_schema:
             mock_schema.return_value = {"fields": schema["fields"]}
 
             # 测试通过inputs参数传递schema
             run_id = reporter.start_job_run(
                 job_name="test_dataset_job",
                 job_type="BATCH",
-                inputs=[{
-                    "name": "test_dataset",
-                    "namespace": "test_ns",
-                    "schema": schema
-                }]
+                inputs=[
+                    {"name": "test_dataset", "namespace": "test_ns", "schema": schema}
+                ],
             )
 
             # 验证作业启动成功
@@ -252,7 +256,7 @@ class TestLineageReporterDatasetHandling:
             assert len(run_id) == 36
             mock_client.emit.assert_called_once()
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_create_dataset_without_schema(self, mock_client_class):
         """测试创建不带schema的数据集"""
         mock_client = Mock()
@@ -261,18 +265,15 @@ class TestLineageReporterDatasetHandling:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             run_id = reporter.start_job_run(
                 job_name="simple_dataset_job",
                 job_type="BATCH",
-                inputs=[{
-                    "name": "simple_dataset",
-                    "namespace": "simple_ns"
-                }]
+                inputs=[{"name": "simple_dataset", "namespace": "simple_ns"}],
             )
 
             assert isinstance(run_id, str)
@@ -283,7 +284,7 @@ class TestLineageReporterDatasetHandling:
 class TestLineageReporterJobTracking:
     """作业跟踪测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_track_data_collection_job(self, mock_client_class):
         """测试跟踪数据采集作业 - 简化版本"""
         mock_client = Mock()
@@ -293,22 +294,22 @@ class TestLineageReporterJobTracking:
         reporter = LineageReporter()
 
         # 直接测试start_job_run而不是report_data_collection
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             run_id = reporter.start_job_run(
                 job_name="data_collection_football_api",
                 job_type="BATCH",
                 inputs=[{"name": "football_api", "namespace": "external"}],
-                description="Collect data from football API"
+                description="Collect data from football API",
             )
 
             assert isinstance(run_id, str)
             mock_client.emit.assert_called_once()
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_track_data_processing_job(self, mock_client_class):
         """测试跟踪数据处理作业"""
         mock_client = Mock()
@@ -317,29 +318,35 @@ class TestLineageReporterJobTracking:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.OutputDataset'), \
-             patch('src.lineage.lineage_reporter.sql_job'), \
-             patch('src.lineage.lineage_reporter.source_code_location_job') as mock_source_location:
-
-            mock_source_location.return_value = {"type": "git", "url": "src/data/processing/"}
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.OutputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.sql_job"
+        ), patch(
+            "src.lineage.lineage_reporter.source_code_location_job"
+        ) as mock_source_location:
+            mock_source_location.return_value = {
+                "type": "git",
+                "url": "src/data/processing/",
+            }
 
             run_id = reporter.report_data_transformation(
                 source_tables=["raw_matches"],
                 target_table="cleaned_matches",
                 transformation_sql="SELECT * FROM raw_matches WHERE status = 'finished'",
                 records_processed=500,
-                transformation_type="CLEANING"
+                transformation_type="CLEANING",
             )
 
             assert isinstance(run_id, str)
             # 应该调用两次emit（start + complete）
             assert mock_client.emit.call_count == 2
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_track_model_training_job(self, mock_client_class):
         """测试跟踪模型训练作业"""
         mock_client = Mock()
@@ -348,31 +355,37 @@ class TestLineageReporterJobTracking:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.OutputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.OutputDataset"
+        ):
             # 模拟模型训练过程
             run_id = reporter.start_job_run(
                 job_name="model_training_xgboost_predictor",
                 job_type="BATCH",
                 inputs=[
                     {"name": "feature_store", "namespace": "football_prediction_db"},
-                    {"name": "historical_matches", "namespace": "football_prediction_db"}
+                    {
+                        "name": "historical_matches",
+                        "namespace": "football_prediction_db",
+                    },
                 ],
-                description="Train XGBoost model for match prediction"
+                description="Train XGBoost model for match prediction",
             )
 
             # 完成训练
             reporter.complete_job_run(
                 "model_training_xgboost_predictor",
-                outputs=[{
-                    "name": "xgboost_v1.pkl",
-                    "namespace": "models",
-                    "statistics": {"accuracy": 0.85, "training_samples": 10000}
-                }]
+                outputs=[
+                    {
+                        "name": "xgboost_v1.pkl",
+                        "namespace": "models",
+                        "statistics": {"accuracy": 0.85, "training_samples": 10000},
+                    }
+                ],
             )
 
             assert isinstance(run_id, str)
@@ -382,7 +395,7 @@ class TestLineageReporterJobTracking:
 class TestLineageReporterComplexScenarios:
     """复杂场景测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_multiple_concurrent_jobs(self, mock_client_class):
         """测试多个并发作业"""
         mock_client = Mock()
@@ -391,13 +404,17 @@ class TestLineageReporterComplexScenarios:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.error_message_run') as mock_error_facet:
-
-            mock_error_facet.return_value = {"message": "Failed", "programmingLanguage": "PYTHON"}
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.error_message_run"
+        ) as mock_error_facet:
+            mock_error_facet.return_value = {
+                "message": "Failed",
+                "programmingLanguage": "PYTHON",
+            }
 
             # 启动多个作业
             run1 = reporter.start_job_run("job1", "BATCH", [], "First test job")
@@ -420,7 +437,7 @@ class TestLineageReporterComplexScenarios:
             reporter.complete_job_run("job3")
             assert len(reporter._active_runs) == 0
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_job_restart_scenario(self, mock_client_class):
         """测试作业重启场景"""
         mock_client = Mock()
@@ -429,11 +446,11 @@ class TestLineageReporterComplexScenarios:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 启动作业
             run1 = reporter.start_job_run("restart_job", "BATCH", [], "First attempt")
 
@@ -451,7 +468,7 @@ class TestLineageReporterComplexScenarios:
 class TestLineageReporterErrorHandling:
     """错误处理测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_client_emission_failure(self, mock_client_class):
         """测试客户端发送失败"""
         mock_client = Mock()
@@ -460,16 +477,16 @@ class TestLineageReporterErrorHandling:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 应该抛出异常
             with pytest.raises(Exception, match="Network error"):
                 reporter.start_job_run("failing_job", "BATCH", [], "Test failure")
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_invalid_job_data(self, mock_client_class):
         """测试无效作业数据"""
         mock_client = Mock()
@@ -478,16 +495,16 @@ class TestLineageReporterErrorHandling:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 测试空作业名称 - 应该仍然能创建UUID并处理
             run_id = reporter.start_job_run("", "BATCH", [], "Empty job name")
             assert isinstance(run_id, str)
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_cleanup_on_failure(self, mock_client_class):
         """测试失败时的清理"""
         mock_client = Mock()
@@ -496,13 +513,17 @@ class TestLineageReporterErrorHandling:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.error_message_run') as mock_error_facet:
-
-            mock_error_facet.return_value = {"message": "Test failure", "programmingLanguage": "PYTHON"}
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.error_message_run"
+        ) as mock_error_facet:
+            mock_error_facet.return_value = {
+                "message": "Test failure",
+                "programmingLanguage": "PYTHON",
+            }
 
             # 启动作业
             run_id = reporter.start_job_run("cleanup_job", "BATCH", [], "Test cleanup")
@@ -518,7 +539,7 @@ class TestLineageReporterErrorHandling:
 class TestLineageReporterUtilityMethods:
     """工具方法测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_get_active_jobs(self, mock_client_class):
         """测试获取活跃作业"""
         mock_client = Mock()
@@ -530,11 +551,11 @@ class TestLineageReporterUtilityMethods:
         # 初始状态
         assert reporter.get_active_runs() == {}
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 启动一些作业
             reporter.start_job_run("job1", "BATCH", [], "First job")
             reporter.start_job_run("job2", "BATCH", [], "Second job")
@@ -544,7 +565,7 @@ class TestLineageReporterUtilityMethods:
             assert "job1" in active_runs
             assert "job2" in active_runs
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_is_job_active(self, mock_client_class):
         """测试检查作业是否活跃"""
         mock_client = Mock()
@@ -556,11 +577,11 @@ class TestLineageReporterUtilityMethods:
         # 作业未启动
         assert "test_job" not in reporter._active_runs
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 启动作业
             reporter.start_job_run("test_job", "BATCH", [], "Test job")
             assert "test_job" in reporter._active_runs
@@ -569,7 +590,7 @@ class TestLineageReporterUtilityMethods:
             reporter.complete_job_run("test_job")
             assert "test_job" not in reporter._active_runs
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_get_run_id(self, mock_client_class):
         """测试获取运行ID"""
         mock_client = Mock()
@@ -581,11 +602,11 @@ class TestLineageReporterUtilityMethods:
         # 不存在的作业
         assert reporter._active_runs.get("nonexistent") is None
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 启动作业
             run_id = reporter.start_job_run("id_job", "BATCH", [], "Test job")
 
@@ -593,7 +614,7 @@ class TestLineageReporterUtilityMethods:
             retrieved_id = reporter._active_runs.get("id_job")
             assert retrieved_id == run_id
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_clear_active_runs(self, mock_client_class):
         """测试清理活跃运行"""
         mock_client = Mock()
@@ -602,11 +623,11 @@ class TestLineageReporterUtilityMethods:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ):
             # 启动一些作业
             reporter.start_job_run("job1", "BATCH", [], "First job")
             reporter.start_job_run("job2", "BATCH", [], "Second job")
@@ -622,7 +643,7 @@ class TestLineageReporterUtilityMethods:
 class TestLineageReporterIntegration:
     """集成测试"""
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_complete_data_pipeline_tracking(self, mock_client_class):
         """测试完整数据管道跟踪 - 简化版本"""
         mock_client = Mock()
@@ -631,18 +652,19 @@ class TestLineageReporterIntegration:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.OutputDataset'):
-
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.OutputDataset"
+        ):
             # 1. 数据采集作业
             collection_run = reporter.start_job_run(
                 job_name="data_collection_match_api",
                 job_type="BATCH",
                 inputs=[{"name": "match_api", "namespace": "external"}],
-                description="Collect match data from API"
+                description="Collect match data from API",
             )
 
             # 2. 数据处理作业
@@ -650,7 +672,7 @@ class TestLineageReporterIntegration:
                 job_name="process_matches",
                 job_type="BATCH",
                 inputs=[{"name": "raw_matches", "namespace": "football_prediction_db"}],
-                description="Process raw match data"
+                description="Process raw match data",
             )
 
             # 3. 模型训练作业
@@ -659,9 +681,12 @@ class TestLineageReporterIntegration:
                 job_type="BATCH",
                 inputs=[
                     {"name": "clean_matches", "namespace": "football_prediction_db"},
-                    {"name": "historical_features", "namespace": "football_prediction_db"}
+                    {
+                        "name": "historical_features",
+                        "namespace": "football_prediction_db",
+                    },
                 ],
-                description="Train match prediction model"
+                description="Train match prediction model",
             )
 
             # 完成所有作业
@@ -675,7 +700,7 @@ class TestLineageReporterIntegration:
             # 验证客户端调用次数（3个作业，每个start+complete = 6次调用）
             assert mock_client.emit.call_count == 6
 
-    @patch('src.lineage.lineage_reporter.OpenLineageClient')
+    @patch("src.lineage.lineage_reporter.OpenLineageClient")
     def test_error_recovery_scenario(self, mock_client_class):
         """测试错误恢复场景"""
         mock_client = Mock()
@@ -684,13 +709,17 @@ class TestLineageReporterIntegration:
 
         reporter = LineageReporter()
 
-        with patch('src.lineage.lineage_reporter.RunEvent'), \
-             patch('src.lineage.lineage_reporter.Job'), \
-             patch('src.lineage.lineage_reporter.Run'), \
-             patch('src.lineage.lineage_reporter.InputDataset'), \
-             patch('src.lineage.lineage_reporter.error_message_run') as mock_error_facet:
-
-            mock_error_facet.return_value = {"message": "Processing error", "programmingLanguage": "PYTHON"}
+        with patch("src.lineage.lineage_reporter.RunEvent"), patch(
+            "src.lineage.lineage_reporter.Job"
+        ), patch("src.lineage.lineage_reporter.Run"), patch(
+            "src.lineage.lineage_reporter.InputDataset"
+        ), patch(
+            "src.lineage.lineage_reporter.error_message_run"
+        ) as mock_error_facet:
+            mock_error_facet.return_value = {
+                "message": "Processing error",
+                "programmingLanguage": "PYTHON",
+            }
 
             # 启动管道作业
             reporter.start_job_run("pipeline_job", "BATCH", [], "ETL pipeline")
@@ -699,7 +728,9 @@ class TestLineageReporterIntegration:
             reporter.fail_job_run("pipeline_job", "Processing error")
 
             # 重启作业
-            new_run_id = reporter.start_job_run("pipeline_job", "BATCH", [], "ETL pipeline retry")
+            new_run_id = reporter.start_job_run(
+                "pipeline_job", "BATCH", [], "ETL pipeline retry"
+            )
 
             # 这次成功完成
             reporter.complete_job_run("pipeline_job")

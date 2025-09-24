@@ -77,9 +77,7 @@ class TestAPIPredictions:
         response = test_api_client.get(f"/predictions/{match_id}")
 
         # 验证HTTP状态码
-        assert (
-            response.status_code == 200
-        ), f"API返回状态码{response.status_code}，期望200"
+        assert response.status_code == 200, f"API返回状态码{response.status_code}，期望200"
 
         # 验证响应格式
         prediction_data = response.json()
@@ -181,9 +179,7 @@ class TestAPIPredictions:
 
             # 验证错误响应格式
             error_data = response.json()
-            assert (
-                "error" in error_data or "detail" in error_data
-            ), "错误响应缺少错误信息"
+            assert "error" in error_data or "detail" in error_data, "错误响应缺少错误信息"
 
     def test_nonexistent_match_handling(self, test_api_client):
         """测试不存在比赛的处理"""
@@ -192,16 +188,12 @@ class TestAPIPredictions:
         response = test_api_client.get(f"/predictions/{nonexistent_match_id}")
 
         # 应该返回404 Not Found
-        assert (
-            response.status_code == 404
-        ), f"不存在的比赛应该返回404，实际返回{response.status_code}"
+        assert response.status_code == 404, f"不存在的比赛应该返回404，实际返回{response.status_code}"
 
         # 验证错误消息
         error_data = response.json()
         error_message = error_data.get("detail", "").lower()
-        assert (
-            "not found" in error_message or "不存在" in error_message
-        ), "错误消息应该指明比赛不存在"
+        assert "not found" in error_message or "不存在" in error_message, "错误消息应该指明比赛不存在"
 
     def test_api_rate_limiting(self, test_api_client, sample_match_ids):
         """测试API限流机制"""
@@ -284,9 +276,7 @@ class TestAPIPredictions:
                 ]
                 for field in expected_feature_fields:
                     if field in features_info:
-                        assert (
-                            features_info[field] is not None
-                        ), f"特征字段{field}不应为空"
+                        assert features_info[field] is not None, f"特征字段{field}不应为空"
 
             # 验证模型版本信息
             assert "model_version" in prediction_data, "预测响应缺少模型版本信息"
@@ -343,9 +333,7 @@ class TestAPIPredictions:
         successful_requests = sum(
             1 for result in results if result is not None and result[0] == 200
         )
-        assert (
-            successful_requests >= len(sample_match_ids[:3]) * 0.8
-        ), "并发请求成功率应该至少80%"
+        assert successful_requests >= len(sample_match_ids[:3]) * 0.8, "并发请求成功率应该至少80%"
 
         # 验证返回数据的一致性
         valid_results = [

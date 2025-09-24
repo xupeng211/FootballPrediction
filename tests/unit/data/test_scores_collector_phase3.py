@@ -398,7 +398,6 @@ class TestScoresCollectorWebSocket:
         ), patch(
             "asyncio.get_event_loop"
         ) as mock_loop:
-
             # 让时间函数返回足够的值以支持循环
             def mock_time():
                 current_time = getattr(mock_time, "_current_time", 0)
@@ -453,7 +452,6 @@ class TestScoresCollectorWebSocket:
         ), patch("asyncio.wait_for", side_effect=[asyncio.TimeoutError()]), patch(
             "asyncio.get_event_loop"
         ) as mock_loop:
-
             # 简单的时间函数
             def mock_time():
                 return 0

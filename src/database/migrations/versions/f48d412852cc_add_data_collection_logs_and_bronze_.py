@@ -139,12 +139,8 @@ def upgrade() -> None:
             nullable=True,
             comment="外部比赛ID",
         ),
-        sa.Column(
-            "bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"
-        ),
-        sa.Column(
-            "market_type", sa.String(length=50), nullable=True, comment="市场类型"
-        ),
+        sa.Column("bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"),
+        sa.Column("market_type", sa.String(length=50), nullable=True, comment="市场类型"),
         sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
@@ -275,9 +271,7 @@ def upgrade() -> None:
         )
         op.add_column(
             "features",
-            sa.Column(
-                "last_updated", sa.DateTime(), nullable=True, comment="最后更新时间"
-            ),
+            sa.Column("last_updated", sa.DateTime(), nullable=True, comment="最后更新时间"),
         )
     except Exception as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志

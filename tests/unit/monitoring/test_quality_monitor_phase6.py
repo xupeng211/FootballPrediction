@@ -969,9 +969,7 @@ class TestQualityMonitorLogging:
 
                     await self.monitor.check_data_freshness(["matches"])
 
-                    mock_logger.info.assert_called_with(
-                        "数据新鲜度检查完成，检查了 1 张表"
-                    )
+                    mock_logger.info.assert_called_with("数据新鲜度检查完成，检查了 1 张表")
                     mock_logger.debug.assert_called_with("表 matches 新鲜度检查完成")
 
     @pytest.mark.asyncio
@@ -998,9 +996,7 @@ class TestQualityMonitorLogging:
 
                     await self.monitor.check_data_completeness(["matches"])
 
-                    mock_logger.info.assert_called_with(
-                        "数据完整性检查完成，检查了 1 张表"
-                    )
+                    mock_logger.info.assert_called_with("数据完整性检查完成，检查了 1 张表")
                     mock_logger.debug.assert_called_with("表 matches 完整性检查完成")
 
     @pytest.mark.asyncio

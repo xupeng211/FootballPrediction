@@ -601,9 +601,7 @@ class TestStreamingDataCollector:
         assert isinstance(collector, DataCollector)
 
         # 验证必要方法存在
-        assert hasattr(
-            collector, "collect_fixtures_with_streaming"
-        )  # 修正：检查具体的方法
+        assert hasattr(collector, "collect_fixtures_with_streaming")  # 修正：检查具体的方法
         assert hasattr(collector, "send_to_stream")
         assert callable(collector.collect_fixtures_with_streaming)
         assert callable(collector.send_to_stream)

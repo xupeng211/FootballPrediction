@@ -25,7 +25,7 @@ class TestCryptoUtilsUUID:
         # 验证是有效的UUID格式
         assert isinstance(result, str)
         assert len(result) == 36
-        assert result.count('-') == 4
+        assert result.count("-") == 4
 
         # 验证可以转换为UUID对象
         uuid_obj = uuid.UUID(result)
@@ -45,14 +45,14 @@ class TestCryptoUtilsUUID:
         assert isinstance(result, str)
         assert len(result) == 8
         # 应该只包含十六进制字符
-        assert re.match(r'^[0-9a-f]+$', result)
+        assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_short_id_custom_length(self):
         """测试自定义长度短ID生成"""
         for length in [1, 5, 10, 16, 24, 32]:
             result = CryptoUtils.generate_short_id(length)
             assert len(result) == length
-            assert re.match(r'^[0-9a-f]+$', result)
+            assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_short_id_zero_length(self):
         """测试零长度短ID"""
@@ -70,7 +70,7 @@ class TestCryptoUtilsUUID:
 
         assert isinstance(result, str)
         assert len(result) == 100
-        assert re.match(r'^[0-9a-f]+$', result)
+        assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_short_id_uniqueness(self):
         """测试短ID的唯一性"""
@@ -89,7 +89,7 @@ class TestCryptoUtilsHashing:
         result = CryptoUtils.hash_string(text)
 
         # MD5 hash of "hello world"
-        expected = hashlib.md5(text.encode('utf-8'), usedforsecurity=False).hexdigest()
+        expected = hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
         assert result == expected
         assert len(result) == 32
 
@@ -98,7 +98,7 @@ class TestCryptoUtilsHashing:
         text = "test string"
         result = CryptoUtils.hash_string(text, "md5")
 
-        expected = hashlib.md5(text.encode('utf-8'), usedforsecurity=False).hexdigest()
+        expected = hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
         assert result == expected
 
     def test_hash_string_sha256(self):
@@ -106,7 +106,7 @@ class TestCryptoUtilsHashing:
         text = "test string"
         result = CryptoUtils.hash_string(text, "sha256")
 
-        expected = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        expected = hashlib.sha256(text.encode("utf-8")).hexdigest()
         assert result == expected
         assert len(result) == 64
 
@@ -124,7 +124,9 @@ class TestCryptoUtilsHashing:
 
         # 空字符串的已知哈希值
         expected_md5 = "d41d8cd98f00b204e9800998ecf8427e"
-        expected_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        expected_sha256 = (
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
 
         assert result_md5 == expected_md5
         assert result_sha256 == expected_sha256
@@ -134,7 +136,7 @@ class TestCryptoUtilsHashing:
         text = "你好世界"
         result = CryptoUtils.hash_string(text, "md5")
 
-        expected = hashlib.md5(text.encode('utf-8'), usedforsecurity=False).hexdigest()
+        expected = hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
         assert result == expected
 
     def test_hash_string_consistency(self):
@@ -153,33 +155,33 @@ class TestCryptoUtilsPasswordHashing:
         """测试使用bcrypt进行密码哈希"""
         password = "test_password"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', True):
-            with patch('src.utils.crypto_utils.bcrypt') as mock_bcrypt:
-                mock_bcrypt.gensalt.return_value = b'salt123'
-                mock_bcrypt.hashpw.return_value = b'$2b$12$salt123$hashedpassword'
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", True):
+            with patch("src.utils.crypto_utils.bcrypt") as mock_bcrypt:
+                mock_bcrypt.gensalt.return_value = b"salt123"
+                mock_bcrypt.hashpw.return_value = b"$2b$12$salt123$hashedpassword"
 
                 result = CryptoUtils.hash_password(password)
 
-                assert result == '$2b$12$salt123$hashedpassword'
+                assert result == "$2b$12$salt123$hashedpassword"
                 mock_bcrypt.hashpw.assert_called_once()
 
     def test_hash_password_without_bcrypt(self):
         """测试不使用bcrypt时的密码哈希"""
         password = "test_password"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
             result = CryptoUtils.hash_password(password)
 
             # 应该返回模拟bcrypt格式
             assert result.startswith("$2b$12$")
-            assert result.count('$') == 4
+            assert result.count("$") == 4
 
     def test_hash_password_with_custom_salt(self):
         """测试使用自定义盐值的密码哈希（无bcrypt）"""
         password = "test_password"
         salt = "custom_salt"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
             result = CryptoUtils.hash_password(password, salt)
 
             # 验证格式
@@ -188,7 +190,7 @@ class TestCryptoUtilsPasswordHashing:
 
     def test_hash_password_empty(self):
         """测试空密码哈希"""
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
             result = CryptoUtils.hash_password("")
             assert result.startswith("$2b$12$")
 
@@ -196,7 +198,7 @@ class TestCryptoUtilsPasswordHashing:
         """测试Unicode密码哈希"""
         password = "密码测试"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
             result = CryptoUtils.hash_password(password)
             assert result.startswith("$2b$12$")
 
@@ -214,8 +216,8 @@ class TestCryptoUtilsPasswordVerification:
         password = "test_password"
         hashed = "$2b$12$abcdefg"  # 简短的bcrypt格式
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', True):
-            with patch('src.utils.crypto_utils.bcrypt') as mock_bcrypt:
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", True):
+            with patch("src.utils.crypto_utils.bcrypt") as mock_bcrypt:
                 mock_bcrypt.checkpw.return_value = True
 
                 result = CryptoUtils.verify_password(password, hashed)
@@ -228,8 +230,8 @@ class TestCryptoUtilsPasswordVerification:
         password = "wrong_password"
         hashed = "$2b$12$abcdefg"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', True):
-            with patch('src.utils.crypto_utils.bcrypt') as mock_bcrypt:
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", True):
+            with patch("src.utils.crypto_utils.bcrypt") as mock_bcrypt:
                 mock_bcrypt.checkpw.return_value = False
 
                 result = CryptoUtils.verify_password(password, hashed)
@@ -290,14 +292,14 @@ class TestCryptoUtilsTokenGeneration:
         # 默认长度16，token_hex返回的是hex长度的2倍
         assert isinstance(result, str)
         assert len(result) == 32  # 16 * 2
-        assert re.match(r'^[0-9a-f]+$', result)
+        assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_salt_custom_length(self):
         """测试自定义长度盐值生成"""
         for length in [4, 8, 16, 32]:
             result = CryptoUtils.generate_salt(length)
             assert len(result) == length * 2
-            assert re.match(r'^[0-9a-f]+$', result)
+            assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_salt_uniqueness(self):
         """测试盐值唯一性"""
@@ -313,14 +315,14 @@ class TestCryptoUtilsTokenGeneration:
         # 默认长度32，token_hex返回的是hex长度的2倍
         assert isinstance(result, str)
         assert len(result) == 64  # 32 * 2
-        assert re.match(r'^[0-9a-f]+$', result)
+        assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_token_custom_length(self):
         """测试自定义长度令牌生成"""
         for length in [8, 16, 32, 64]:
             result = CryptoUtils.generate_token(length)
             assert len(result) == length * 2
-            assert re.match(r'^[0-9a-f]+$', result)
+            assert re.match(r"^[0-9a-f]+$", result)
 
     def test_generate_token_uniqueness(self):
         """测试令牌唯一性"""
@@ -337,7 +339,7 @@ class TestCryptoUtilsIntegration:
         """测试密码哈希-验证循环"""
         password = "integration_test_password"
 
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
             # 哈希密码
             hashed = CryptoUtils.hash_password(password)
 
@@ -394,13 +396,7 @@ class TestCryptoUtilsIntegration:
 
     def test_unicode_handling(self):
         """测试Unicode字符处理"""
-        unicode_texts = [
-            "Hello 世界",
-            "émojis 😀🚀",
-            "русский текст",
-            "العربية",
-            "日本語"
-        ]
+        unicode_texts = ["Hello 世界", "émojis 😀🚀", "русский текст", "العربية", "日本語"]
 
         for text in unicode_texts:
             # 哈希应该成功
@@ -411,7 +407,7 @@ class TestCryptoUtilsIntegration:
             assert len(sha256_hash) == 64
 
             # 密码处理应该成功
-            with patch('src.utils.crypto_utils.HAS_BCRYPT', False):
+            with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
                 hashed = CryptoUtils.hash_password(text)
                 assert CryptoUtils.verify_password(text, hashed) is True
 
@@ -427,10 +423,10 @@ class TestCryptoUtilsErrorHandling:
 
     def test_password_functions_with_bytes_input(self):
         """测试密码函数对bytes输入的处理"""
-        with patch('src.utils.crypto_utils.HAS_BCRYPT', True):
-            with patch('src.utils.crypto_utils.bcrypt') as mock_bcrypt:
-                mock_bcrypt.gensalt.return_value = b'salt123'
-                mock_bcrypt.hashpw.return_value = b'$2b$12$hashed'
+        with patch("src.utils.crypto_utils.HAS_BCRYPT", True):
+            with patch("src.utils.crypto_utils.bcrypt") as mock_bcrypt:
+                mock_bcrypt.gensalt.return_value = b"salt123"
+                mock_bcrypt.hashpw.return_value = b"$2b$12$hashed"
                 mock_bcrypt.checkpw.return_value = True
 
                 # 字符串输入（正常情况）
@@ -445,10 +441,10 @@ class TestCryptoUtilsErrorHandling:
         """测试格式错误哈希的各种情况"""
         password = "test"
         malformed_hashes = [
-            "$2b$12$$incomplete$hash",     # 不完整但符合基本格式
-            "$2b$12$a$b$wronghash",       # 错误哈希部分
-            "not_bcrypt_format",          # 完全不是bcrypt格式
-            "",                           # 空字符串
+            "$2b$12$$incomplete$hash",  # 不完整但符合基本格式
+            "$2b$12$a$b$wronghash",  # 错误哈希部分
+            "not_bcrypt_format",  # 完全不是bcrypt格式
+            "",  # 空字符串
         ]
 
         for hashed in malformed_hashes:

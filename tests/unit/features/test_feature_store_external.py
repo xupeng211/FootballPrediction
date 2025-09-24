@@ -219,7 +219,6 @@ class TestFootballFeatureStore:
             ) as odds_features, patch(
                 "src.data.features.feature_store.head_to_head_features_view"
             ) as h2h_features:
-
                 feature_store.apply_features()
 
                 # 验证所有特征对象都被传递给apply方法
@@ -806,7 +805,6 @@ class TestFootballFeatureStore:
             ) as mock_logger, patch.object(
                 feature_store.logger, "error"
             ) as mock_error_logger:
-
                 # 测试成功操作
                 feature_store.write_features("test_view", pd.DataFrame([{"test": 1}]))
                 mock_logger.assert_called()

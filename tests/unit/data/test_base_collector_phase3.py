@@ -277,7 +277,6 @@ class TestDataCollectorDataSaving:
         ) as mock_model, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session_manager.return_value.__aenter__.return_value = mock_session
 
@@ -304,7 +303,6 @@ class TestDataCollectorDataSaving:
         ) as mock_model, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session_manager.return_value.__aenter__.return_value = mock_session
 
@@ -333,7 +331,6 @@ class TestDataCollectorDataSaving:
         ) as mock_model, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session_manager.return_value.__aenter__.return_value = mock_session
 
@@ -353,7 +350,6 @@ class TestDataCollectorDataSaving:
         ) as mock_model, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session.commit.side_effect = Exception("Database error")
             mock_session_manager.return_value.__aenter__.return_value = mock_session
@@ -455,7 +451,6 @@ class TestDataCollectorCollectionLogging:
         ) as mock_log_class, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session_manager.return_value.__aenter__.return_value = mock_session
 
@@ -485,7 +480,6 @@ class TestDataCollectorCollectionLogging:
         ), patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session.commit.side_effect = Exception("Database error")
             mock_session_manager.return_value.__aenter__.return_value = mock_session
@@ -511,7 +505,6 @@ class TestDataCollectorCollectionLogging:
         ) as mock_log_class, patch.object(
             self.collector.db_manager, "get_async_session"
         ) as mock_session_manager:
-
             mock_session = AsyncMock()
             mock_session_manager.return_value.__aenter__.return_value = mock_session
 
@@ -557,7 +550,6 @@ class TestDataCollectorCollectionWorkflow:
         with patch.object(
             self.collector, "_create_collection_log", return_value=123
         ), patch.object(self.collector, "_update_collection_log") as mock_update_log:
-
             results = await self.collector.collect_all_data()
 
             assert len(results) == 3
@@ -588,7 +580,6 @@ class TestDataCollectorCollectionWorkflow:
         ), patch.object(
             self.collector, "_update_collection_log"
         ) as mock_update_log:
-
             results = await self.collector.collect_all_data()
 
             # fixtures should have failed
@@ -616,7 +607,6 @@ class TestDataCollectorCollectionWorkflow:
         with patch.object(
             self.collector, "_create_collection_log", side_effect=mock_create_log
         ), patch.object(self.collector, "_update_collection_log") as mock_update_log:
-
             results = await self.collector.collect_all_data()
 
             # 验证每种数据类型都有不同的日志ID

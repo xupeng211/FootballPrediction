@@ -494,7 +494,6 @@ class TestMetricsExporter:
             ) as mock_table_counts, patch.object(
                 metrics_exporter, "update_database_metrics"
             ) as mock_db_metrics:
-
                 await metrics_exporter.collect_all_metrics()
 
                 # 验证所有收集方法都被调用

@@ -278,7 +278,6 @@ class TestFeaturesImprovedAPIHealthCheck:
         with patch("src.api.features_improved.feature_store", Mock()) and patch(
             "src.api.features_improved.feature_calculator", Mock()
         ):
-
             result = await features_health_check()
 
             assert result["status"] == "healthy"
@@ -291,7 +290,6 @@ class TestFeaturesImprovedAPIHealthCheck:
         with patch("src.api.features_improved.feature_store", None) and patch(
             "src.api.features_improved.feature_calculator", Mock()
         ):
-
             result = await features_health_check()
 
             # When feature_store is None, the feature_store_connection is not checked
@@ -304,7 +302,6 @@ class TestFeaturesImprovedAPIHealthCheck:
         with patch("src.api.features_improved.feature_store", Mock()) and patch(
             "src.api.features_improved.feature_calculator", None
         ):
-
             result = await features_health_check()
 
             assert result["status"] == "unhealthy"
@@ -316,7 +313,6 @@ class TestFeaturesImprovedAPIHealthCheck:
         with patch("src.api.features_improved.feature_store") as mock_store:
             # Mock the connection test to fail - the function should handle this gracefully
             with patch("src.api.features_improved.feature_calculator", Mock()):
-
                 result = await features_health_check()
 
                 # The system remains healthy even if feature store connection fails

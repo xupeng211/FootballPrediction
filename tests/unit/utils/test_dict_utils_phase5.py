@@ -43,16 +43,16 @@ class TestDictUtilsDeepMerge:
         dict1 = {
             "config": {
                 "database": {"host": "localhost", "port": 5432},
-                "cache": {"ttl": 3600}
+                "cache": {"ttl": 3600},
             },
-            "feature": "enabled"
+            "feature": "enabled",
         }
         dict2 = {
             "config": {
                 "database": {"port": 5433, "ssl": True},
-                "logging": {"level": "INFO"}
+                "logging": {"level": "INFO"},
             },
-            "version": "1.0"
+            "version": "1.0",
         }
 
         result = DictUtils.deep_merge(dict1, dict2)
@@ -61,30 +61,21 @@ class TestDictUtilsDeepMerge:
             "config": {
                 "database": {"host": "localhost", "port": 5433, "ssl": True},
                 "cache": {"ttl": 3600},
-                "logging": {"level": "INFO"}
+                "logging": {"level": "INFO"},
             },
             "feature": "enabled",
-            "version": "1.0"
+            "version": "1.0",
         }
         assert result == expected
 
     def test_deep_merge_mixed_types(self):
         """测试混合类型合并"""
-        dict1 = {
-            "settings": {"debug": True},
-            "data": [1, 2, 3]
-        }
-        dict2 = {
-            "settings": {"timeout": 30},
-            "data": [4, 5, 6]  # 非字典类型会被覆盖
-        }
+        dict1 = {"settings": {"debug": True}, "data": [1, 2, 3]}
+        dict2 = {"settings": {"timeout": 30}, "data": [4, 5, 6]}  # 非字典类型会被覆盖
 
         result = DictUtils.deep_merge(dict1, dict2)
 
-        expected = {
-            "settings": {"debug": True, "timeout": 30},
-            "data": [4, 5, 6]
-        }
+        expected = {"settings": {"debug": True, "timeout": 30}, "data": [4, 5, 6]}
         assert result == expected
 
     def test_deep_merge_dict_overwrites_non_dict(self):
@@ -140,36 +131,12 @@ class TestDictUtilsDeepMerge:
 
     def test_deep_merge_deep_nesting(self):
         """测试深层嵌套合并"""
-        dict1 = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": {"a": 1}
-                    }
-                }
-            }
-        }
-        dict2 = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": {"b": 2}
-                    }
-                }
-            }
-        }
+        dict1 = {"level1": {"level2": {"level3": {"level4": {"a": 1}}}}}
+        dict2 = {"level1": {"level2": {"level3": {"level4": {"b": 2}}}}}
 
         result = DictUtils.deep_merge(dict1, dict2)
 
-        expected = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": {"a": 1, "b": 2}
-                    }
-                }
-            }
-        }
+        expected = {"level1": {"level2": {"level3": {"level4": {"a": 1, "b": 2}}}}}
         assert result == expected
 
     def test_deep_merge_with_none_values(self):
@@ -197,14 +164,8 @@ class TestDictUtilsFlattenDict:
     def test_flatten_dict_nested(self):
         """测试嵌套字典扁平化"""
         d = {
-            "user": {
-                "name": "John",
-                "email": "john@example.com"
-            },
-            "config": {
-                "debug": True,
-                "timeout": 30
-            }
+            "user": {"name": "John", "email": "john@example.com"},
+            "config": {"debug": True, "timeout": 30},
         }
 
         result = DictUtils.flatten_dict(d)
@@ -213,7 +174,7 @@ class TestDictUtilsFlattenDict:
             "user.name": "John",
             "user.email": "john@example.com",
             "config.debug": True,
-            "config.timeout": 30
+            "config.timeout": 30,
         }
         assert result == expected
 
@@ -221,17 +182,8 @@ class TestDictUtilsFlattenDict:
         """测试深层嵌套扁平化"""
         d = {
             "app": {
-                "database": {
-                    "connection": {
-                        "host": "localhost",
-                        "port": 5432
-                    }
-                },
-                "cache": {
-                    "redis": {
-                        "url": "redis://localhost:6379"
-                    }
-                }
+                "database": {"connection": {"host": "localhost", "port": 5432}},
+                "cache": {"redis": {"url": "redis://localhost:6379"}},
             }
         }
 
@@ -240,19 +192,13 @@ class TestDictUtilsFlattenDict:
         expected = {
             "app.database.connection.host": "localhost",
             "app.database.connection.port": 5432,
-            "app.cache.redis.url": "redis://localhost:6379"
+            "app.cache.redis.url": "redis://localhost:6379",
         }
         assert result == expected
 
     def test_flatten_dict_custom_separator(self):
         """测试自定义分隔符扁平化"""
-        d = {
-            "user": {
-                "profile": {
-                    "name": "John Doe"
-                }
-            }
-        }
+        d = {"user": {"profile": {"name": "John Doe"}}}
 
         result = DictUtils.flatten_dict(d, sep="_")
 
@@ -261,19 +207,11 @@ class TestDictUtilsFlattenDict:
 
     def test_flatten_dict_custom_parent_key(self):
         """测试自定义父键扁平化"""
-        d = {
-            "name": "test",
-            "settings": {
-                "enabled": True
-            }
-        }
+        d = {"name": "test", "settings": {"enabled": True}}
 
         result = DictUtils.flatten_dict(d, parent_key="config")
 
-        expected = {
-            "config.name": "test",
-            "config.settings.enabled": True
-        }
+        expected = {"config.name": "test", "config.settings.enabled": True}
         assert result == expected
 
     def test_flatten_dict_mixed_types(self):
@@ -284,10 +222,7 @@ class TestDictUtilsFlattenDict:
             "boolean": True,
             "none_val": None,
             "list": [1, 2, 3],
-            "nested": {
-                "inner_string": "inner_value",
-                "inner_number": 100
-            }
+            "nested": {"inner_string": "inner_value", "inner_number": 100},
         }
 
         result = DictUtils.flatten_dict(d)
@@ -299,7 +234,7 @@ class TestDictUtilsFlattenDict:
             "none_val": None,
             "list": [1, 2, 3],
             "nested.inner_string": "inner_value",
-            "nested.inner_number": 100
+            "nested.inner_number": 100,
         }
         assert result == expected
 
@@ -313,13 +248,7 @@ class TestDictUtilsFlattenDict:
 
     def test_flatten_dict_empty_nested_dict(self):
         """测试包含空嵌套字典的扁平化"""
-        d = {
-            "config": {},
-            "data": {
-                "items": {},
-                "count": 0
-            }
-        }
+        d = {"config": {}, "data": {"items": {}, "count": 0}}
 
         result = DictUtils.flatten_dict(d)
 
@@ -331,9 +260,7 @@ class TestDictUtilsFlattenDict:
         d = {
             "key-with-dash": "value1",
             "key_with_underscore": "value2",
-            "nested": {
-                "special.key": "nested_value"
-            }
+            "nested": {"special.key": "nested_value"},
         }
 
         result = DictUtils.flatten_dict(d)
@@ -341,19 +268,13 @@ class TestDictUtilsFlattenDict:
         expected = {
             "key-with-dash": "value1",
             "key_with_underscore": "value2",
-            "nested.special.key": "nested_value"
+            "nested.special.key": "nested_value",
         }
         assert result == expected
 
     def test_flatten_dict_with_complex_separator(self):
         """测试复杂分隔符"""
-        d = {
-            "level1": {
-                "level2": {
-                    "value": "test"
-                }
-            }
-        }
+        d = {"level1": {"level2": {"value": "test"}}}
 
         result = DictUtils.flatten_dict(d, sep="->")
 
@@ -405,7 +326,7 @@ class TestDictUtilsFilterNoneValues:
             "false": False,
             "empty_list": [],
             "none": None,
-            "empty_dict": {}
+            "empty_dict": {},
         }
 
         result = DictUtils.filter_none_values(d)
@@ -415,7 +336,7 @@ class TestDictUtilsFilterNoneValues:
             "empty_string": "",
             "false": False,
             "empty_list": [],
-            "empty_dict": {}
+            "empty_dict": {},
         }
         assert result == expected
 
@@ -435,7 +356,7 @@ class TestDictUtilsFilterNoneValues:
             "none_val": None,
             "nested_dict": {"inner": "value"},  # 嵌套字典本身不是None
             "nested_list": [1, None, 3],  # 列表本身不是None
-            "another_none": None
+            "another_none": None,
         }
 
         result = DictUtils.filter_none_values(d)
@@ -443,7 +364,7 @@ class TestDictUtilsFilterNoneValues:
         expected = {
             "simple": "value",
             "nested_dict": {"inner": "value"},
-            "nested_list": [1, None, 3]
+            "nested_list": [1, None, 3],
         }
         assert result == expected
 
@@ -452,7 +373,7 @@ class TestDictUtilsFilterNoneValues:
         d = {
             "explicit_none": None,
             "string_none": "None",  # 字符串"None"不是None值
-            "integer": 42
+            "integer": 42,
         }
 
         result = DictUtils.filter_none_values(d)
@@ -466,18 +387,8 @@ class TestDictUtilsIntegration:
 
     def test_deep_merge_then_flatten(self):
         """测试深度合并后扁平化"""
-        dict1 = {
-            "app": {
-                "database": {"host": "localhost"},
-                "cache": {"ttl": 3600}
-            }
-        }
-        dict2 = {
-            "app": {
-                "database": {"port": 5432},
-                "logging": {"level": "INFO"}
-            }
-        }
+        dict1 = {"app": {"database": {"host": "localhost"}, "cache": {"ttl": 3600}}}
+        dict2 = {"app": {"database": {"port": 5432}, "logging": {"level": "INFO"}}}
 
         merged = DictUtils.deep_merge(dict1, dict2)
         flattened = DictUtils.flatten_dict(merged)
@@ -486,7 +397,7 @@ class TestDictUtilsIntegration:
             "app.database.host": "localhost",
             "app.database.port": 5432,
             "app.cache.ttl": 3600,
-            "app.logging.level": "INFO"
+            "app.logging.level": "INFO",
         }
         assert flattened == expected
 
@@ -495,31 +406,26 @@ class TestDictUtilsIntegration:
         d = {
             "config": {
                 "database": {"host": "localhost", "password": None},
-                "cache": None
+                "cache": None,
             },
-            "feature": "enabled"
+            "feature": "enabled",
         }
 
         filtered = DictUtils.filter_none_values(d)
         flattened = DictUtils.flatten_dict(filtered)
 
-        expected = {
-            "config.database.host": "localhost",
-            "feature": "enabled"
-        }
+        expected = {"config.database.host": "localhost", "feature": "enabled"}
         # 注意：filter_none_values只处理顶层的None值
         # 嵌套的None值不会被过滤，所以需要特殊处理
         actual_filtered = {
-            "config": {
-                "database": {"host": "localhost", "password": None}
-            },
-            "feature": "enabled"
+            "config": {"database": {"host": "localhost", "password": None}},
+            "feature": "enabled",
         }
         actual_flattened = DictUtils.flatten_dict(actual_filtered)
         expected_with_nested_none = {
             "config.database.host": "localhost",
             "config.database.password": None,
-            "feature": "enabled"
+            "feature": "enabled",
         }
         assert actual_flattened == expected_with_nested_none
 
@@ -527,18 +433,16 @@ class TestDictUtilsIntegration:
         """测试所有操作组合"""
         # 准备测试数据
         base_config = {
-            "app": {
-                "database": {"host": "localhost", "ssl": None}
-            },
-            "logging": None
+            "app": {"database": {"host": "localhost", "ssl": None}},
+            "logging": None,
         }
 
         override_config = {
             "app": {
                 "database": {"port": 5432},
-                "cache": {"redis": {"url": "redis://localhost"}}
+                "cache": {"redis": {"url": "redis://localhost"}},
             },
-            "features": {"enabled": True}
+            "features": {"enabled": True},
         }
 
         # 1. 深度合并
@@ -556,7 +460,7 @@ class TestDictUtilsIntegration:
             "app.database.ssl": None,  # 嵌套的None不会被过滤
             "app.database.port": 5432,
             "app.cache.redis.url": "redis://localhost",
-            "features.enabled": True
+            "features.enabled": True,
         }
         assert flattened == expected
 
@@ -599,9 +503,7 @@ class TestDictUtilsEdgeCases:
         d = {
             "mock": mock_obj,
             "function": lambda x: x + 1,
-            "nested": {
-                "class_instance": Mock()
-            }
+            "nested": {"class_instance": Mock()},
         }
 
         # 这些操作应该能处理特殊对象
@@ -618,10 +520,7 @@ class TestDictUtilsEdgeCases:
         d = {
             "中文键": "中文值",
             "emoji_🚀": "rocket",
-            "nested": {
-                "русский": "russian",
-                "العربية": "arabic"
-            }
+            "nested": {"русский": "russian", "العربية": "arabic"},
         }
 
         # 扁平化应该保持Unicode字符
@@ -660,7 +559,7 @@ class TestDictUtilsPerformance:
         for i in range(100):
             large_dict[f"key_{i}"] = {
                 "nested_1": {"value": i * 2},
-                "nested_2": {"value": i * 3 if i % 2 == 0 else None}
+                "nested_2": {"value": i * 3 if i % 2 == 0 else None},
             }
 
         # 这些操作应该在合理时间内完成
@@ -691,14 +590,15 @@ class TestDictUtilsPerformance:
         for i in range(50):
             dict1[f"section_{i}"] = {
                 "config": {"value": i},
-                "metadata": {"created": f"2024-{i:02d}-01"}
+                "metadata": {"created": f"2024-{i:02d}-01"},
             }
             dict2[f"section_{i}"] = {
                 "config": {"updated": True},
-                "status": "active" if i % 2 == 0 else "inactive"
+                "status": "active" if i % 2 == 0 else "inactive",
             }
 
         import time
+
         start_time = time.time()
         result = DictUtils.deep_merge(dict1, dict2)
         merge_time = time.time() - start_time

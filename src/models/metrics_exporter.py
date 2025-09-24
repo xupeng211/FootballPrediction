@@ -154,9 +154,7 @@ class ModelMetricsExporter:
                 time_window=time_window,
             ).set(accuracy)
 
-            logger.debug(
-                f"已导出准确率指标：{model_name} v{model_version} = {accuracy:.3f}"
-            )
+            logger.debug(f"已导出准确率指标：{model_name} v{model_version} = {accuracy:.3f}")
 
         except Exception as e:
             logger.error(f"导出准确率指标失败: {e}")

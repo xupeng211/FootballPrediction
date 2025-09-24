@@ -63,9 +63,7 @@ def sample_scores_data():
         "minute": 67,
         "home_score": 1,
         "away_score": 2,
-        "events": [
-            {"type": "goal", "minute": 23, "player": "B.费尔南德斯", "team": "home"}
-        ],
+        "events": [{"type": "goal", "minute": 23, "player": "B.费尔南德斯", "team": "home"}],
     }
 
 

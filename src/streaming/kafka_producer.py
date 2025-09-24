@@ -161,9 +161,7 @@ class FootballKafkaProducer:
             # 异步刷新（不阻塞）
             self.producer.poll(0)
 
-            self.logger.info(
-                f"比赛数据已发送到Kafka - Match ID: {match_data.get('match_id')}"
-            )
+            self.logger.info(f"比赛数据已发送到Kafka - Match ID: {match_data.get('match_id')}")
             return True
 
         except Exception as e:

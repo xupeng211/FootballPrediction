@@ -67,9 +67,7 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
         if result.status == "failed":
             raise Exception(f"赛程采集失败: {result.error_message}")
 
-        logger.info(
-            f"赛程采集完成: 成功={result.success_count}, 错误={result.error_count}"
-        )
+        logger.info(f"赛程采集完成: 成功={result.success_count}, 错误={result.error_count}")
 
         return {
             "status": result.status,
@@ -124,9 +122,7 @@ def collect_odds(
         if result.status == "failed":
             raise Exception(f"赔率采集失败: {result.error_message}")
 
-        logger.info(
-            f"赔率采集完成: 成功={result.success_count}, 错误={result.error_count}"
-        )
+        logger.info(f"赔率采集完成: 成功={result.success_count}, 错误={result.error_count}")
 
         return {
             "status": result.status,
@@ -187,9 +183,7 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
         if result.status == "failed":
             raise Exception(f"实时比分采集失败: {result.error_message}")
 
-        logger.info(
-            f"实时比分采集完成: 成功={result.success_count}, 错误={result.error_count}"
-        )
+        logger.info(f"实时比分采集完成: 成功={result.success_count}, 错误={result.error_count}")
 
         return {
             "status": result.status,
@@ -329,9 +323,7 @@ def cleanup_data(days_to_keep: int = 30):
                         logger.info(f"归档了 {count} 个 {table_name} 文件")
                     else:
                         # S3存储需要先下载数据再重新上传到归档桶
-                        logger.info(
-                            f"S3存储的 {table_name} 数据将通过生命周期策略自动归档"
-                        )
+                        logger.info(f"S3存储的 {table_name} 数据将通过生命周期策略自动归档")
 
                 except Exception as e:
                     logger.error(f"归档 {table_name} 失败: {str(e)}")
@@ -426,9 +418,7 @@ def cleanup_data(days_to_keep: int = 30):
                                     os.remove(file_path)
                                     temp_files_deleted += 1
 
-                        logger.info(
-                            f"清理了 {temp_files_deleted} 个临时文件从 {temp_dir}"
-                        )
+                        logger.info(f"清理了 {temp_files_deleted} 个临时文件从 {temp_dir}")
                     except Exception as e:
                         logger.warning(f"清理临时目录 {temp_dir} 失败: {str(e)}")
 
@@ -439,9 +429,7 @@ def cleanup_data(days_to_keep: int = 30):
                         cleaned_partitions = await storage.cleanup_empty_partitions(
                             table_name
                         )
-                        logger.info(
-                            f"清理了 {cleaned_partitions} 个空分区从 {table_name}"
-                        )
+                        logger.info(f"清理了 {cleaned_partitions} 个空分区从 {table_name}")
                     except Exception as e:
                         logger.warning(f"清理 {table_name} 空分区失败: {str(e)}")
 
@@ -450,9 +438,7 @@ def cleanup_data(days_to_keep: int = 30):
         # 运行异步清理任务
         cleaned_records, archived_records = asyncio.run(_cleanup_task())
 
-        logger.info(
-            f"数据清理任务完成: 清理了 {cleaned_records} 条记录，归档了 {archived_records} 个文件"
-        )
+        logger.info(f"数据清理任务完成: 清理了 {cleaned_records} 条记录，归档了 {archived_records} 个文件")
 
         return {
             "status": "success",

@@ -598,19 +598,19 @@ class QualityMonitor:
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
-            consistency_results["foreign_key_consistency"] = (
-                await self._check_foreign_key_consistency(session)
-            )
+            consistency_results[
+                "foreign_key_consistency"
+            ] = await self._check_foreign_key_consistency(session)
 
             # 检查赔率数据一致性
-            consistency_results["odds_consistency"] = (
-                await self._check_odds_consistency(session)
-            )
+            consistency_results[
+                "odds_consistency"
+            ] = await self._check_odds_consistency(session)
 
             # 检查比赛状态一致性
-            consistency_results["match_status_consistency"] = (
-                await self._check_match_status_consistency(session)
-            )
+            consistency_results[
+                "match_status_consistency"
+            ] = await self._check_match_status_consistency(session)
 
         logger.info("数据一致性检查完成")
         return consistency_results
@@ -958,9 +958,7 @@ class QualityMonitor:
 
         # 基于各项评分给出建议
         if quality_data.get("freshness_score", 0) < 80:
-            recommendations.append(
-                "数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性"
-            )
+            recommendations.append("数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性")
 
         if quality_data.get("completeness_score", 0) < 85:
             recommendations.append("数据完整性有待提升，建议检查关键字段的数据录入流程")

@@ -285,9 +285,7 @@ class MetadataManager:
 
             result = response.json()
             versions = result.get("versions", [])
-            logger.info(
-                f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本"
-            )
+            logger.info(f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本")
             return versions
 
         except requests.exceptions.RequestException as e:
@@ -317,9 +315,7 @@ class MetadataManager:
 
             result = response.json()
             runs = result.get("runs", [])
-            logger.info(
-                f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录"
-            )
+            logger.info(f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录")
             return runs
 
         except requests.exceptions.RequestException as e:

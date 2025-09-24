@@ -351,7 +351,6 @@ class TestDataFeaturesExamplesPhase2:
         ) as mock_stats, patch(
             "src.data.features.examples.example_list_all_features"
         ) as mock_list_features:
-
             mock_store = Mock()
             mock_init.return_value = mock_store
 
@@ -374,7 +373,6 @@ class TestDataFeaturesExamplesPhase2:
         with patch(
             "src.data.features.examples.example_initialize_feature_store"
         ) as mock_init, patch("src.data.features.examples.logger") as mock_logger:
-
             # 模拟初始化失败
             mock_init.side_effect = Exception("Initialization failed")
 
@@ -392,7 +390,6 @@ class TestDataFeaturesExamplesPhase2:
         ) as mock_get_store, patch(
             "src.data.features.examples.pd.DataFrame"
         ) as mock_dataframe:
-
             mock_store = Mock()
             mock_get_store.return_value = mock_store
 
@@ -431,7 +428,6 @@ class TestDataFeaturesExamplesPhase2:
         ) as mock_get_store, patch(
             "src.data.features.examples.pd.DataFrame"
         ) as mock_dataframe:
-
             mock_store = Mock()
             mock_get_store.return_value = mock_store
             mock_df = Mock()
@@ -453,7 +449,6 @@ class TestDataFeaturesExamplesPhase2:
     def test_example_integration_with_ml_pipeline_date_range(self):
         """测试ML流水线集成日期范围"""
         with patch("src.data.features.examples.get_feature_store") as mock_get_store:
-
             mock_store = Mock()
             mock_get_store.return_value = mock_store
 
@@ -470,7 +465,6 @@ class TestDataFeaturesExamplesPhase2:
     def test_example_integration_with_ml_pipeline_feature_service_names(self):
         """测试ML流水线集成特征服务名称"""
         with patch("src.data.features.examples.get_feature_store") as mock_get_store:
-
             mock_store = Mock()
             mock_get_store.return_value = mock_store
 
@@ -555,7 +549,6 @@ class TestDataFeaturesExamplesPhase2:
         ) as mock_init, patch(
             "src.data.features.examples.example_write_team_features"
         ) as mock_write_team:
-
             mock_store = Mock()
             mock_init.return_value = mock_store
             mock_write_team.side_effect = Exception("Write failed")
@@ -563,7 +556,6 @@ class TestDataFeaturesExamplesPhase2:
             with patch("src.data.features.examples.print") as mock_print, patch(
                 "src.data.features.examples.logger"
             ) as mock_logger:
-
                 run_complete_example()
 
                 # 验证错误处理
@@ -589,7 +581,6 @@ class TestDataFeaturesExamplesPhase2:
             ), patch(
                 "src.data.features.examples.example_list_all_features"
             ):
-
                 run_complete_example()
 
                 # 验证资源清理
@@ -772,7 +763,6 @@ class TestDataFeaturesExamplesPhase2:
         ) as mock_get_store, patch(
             "src.data.features.examples.pd.DataFrame"
         ) as mock_dataframe:
-
             mock_store = Mock()
             mock_get_store.return_value = mock_store
 
@@ -868,7 +858,6 @@ class TestDataFeaturesExamplesPhase2:
         with patch(
             "src.data.features.examples.example_initialize_feature_store"
         ) as mock_init, patch("src.data.features.examples.logger") as mock_logger:
-
             mock_store = Mock()
             mock_init.return_value = mock_store
 
@@ -949,7 +938,6 @@ class TestDataFeaturesExamplesPhase2:
         with patch(
             "src.data.features.examples.example_initialize_feature_store"
         ) as mock_init, patch("src.data.features.examples.logger") as mock_logger:
-
             mock_init.side_effect = Exception("Test error message")
 
             run_complete_example()

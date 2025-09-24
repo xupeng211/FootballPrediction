@@ -238,9 +238,7 @@ class TestAPIResponse:
         assert required_success_fields.issubset(success_response.keys())
 
         # 错误响应
-        error_response = APIResponse.error(
-            message="错误", code=400, data={"error": True}
-        )
+        error_response = APIResponse.error(message="错误", code=400, data={"error": True})
         required_error_fields = {"success", "message", "timestamp", "code", "data"}
         assert required_error_fields.issubset(error_response.keys())
 

@@ -26,8 +26,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in os.sys.path:
     os.sys.path.insert(0, str(ROOT))
 
-from src.database.config import get_test_database_config  # noqa: E402
 from src.database.base import Base  # noqa: E402
+from src.database.config import get_test_database_config  # noqa: E402
 from src.database.models.league import League  # noqa: E402
 from src.database.models.match import Match, MatchStatus  # noqa: E402
 from src.database.models.team import Team  # noqa: E402
