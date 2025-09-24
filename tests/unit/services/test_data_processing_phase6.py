@@ -85,7 +85,6 @@ class TestDataProcessingServicePhase2:
         ) as mock_db_class, patch(
             "src.services.data_processing.RedisManager"
         ) as mock_redis_class:
-
             # 设置模拟对象
             mock_cleaner = Mock()
             mock_handler = Mock()

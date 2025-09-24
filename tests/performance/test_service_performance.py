@@ -402,7 +402,9 @@ class ServicePerformanceTester:
                 print(f"     ❌ Error: {result['error']}")
             else:
                 print(f"     ✅ Success Rate: {result['success_rate']*100:.1f}%")
-                print(f"     ⏱️  Avg Response: {result['avg_response_time']*1000:.2f}ms")
+                print(
+                    f"     ⏱️  Avg Response: {result['avg_response_time']*1000:.2f}ms"
+                )
                 print(f"     📊 P95 Response: {result['p95_response_time']*1000:.2f}ms")
                 print(
                     f"     🚀 Throughput: {result.get('throughput_qps', result.get('throughput_ops', 0)):.1f} ops/sec"

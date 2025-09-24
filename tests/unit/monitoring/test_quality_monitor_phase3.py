@@ -919,7 +919,6 @@ class TestQualityMonitor:
             ) as mock_completeness, patch.object(
                 quality_monitor, "check_data_consistency"
             ) as mock_consistency:
-
                 mock_freshness.return_value = DataFreshnessResult(
                     table_name="matches",
                     last_update_time=datetime.now(),

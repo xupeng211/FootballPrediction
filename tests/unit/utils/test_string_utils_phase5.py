@@ -560,7 +560,7 @@ class TestStringUtilsPerformance:
             lambda: StringUtils.truncate(large_text, 100),
             lambda: StringUtils.clean_text(large_text),
             lambda: StringUtils.slugify(large_text[:1000]),  # 限制slug长度
-            lambda: StringUtils.extract_numbers(large_text)
+            lambda: StringUtils.extract_numbers(large_text),
         ]
 
         for operation in operations:
@@ -580,6 +580,7 @@ class TestStringUtilsPerformance:
             number_text += f"Number {i} is {i * 1.5} and negative {-i}. "
 
         import time
+
         start_time = time.time()
         numbers = StringUtils.extract_numbers(number_text)
         end_time = time.time()

@@ -349,9 +349,7 @@ class TestDataProcessingService:
         """测试缓存命中时的处理"""
         # 设置缓存管理器
         service.cache_manager = AsyncMock()
-        service.cache_manager.aget = AsyncMock(
-            return_value=sample_match_data
-        )  # 缓存命中
+        service.cache_manager.aget = AsyncMock(return_value=sample_match_data)  # 缓存命中
 
         service.data_cleaner = AsyncMock()
         service.missing_handler = AsyncMock()

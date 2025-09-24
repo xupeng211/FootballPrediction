@@ -512,7 +512,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ) as mock_save:
-
             result = await self.collector.collect_fixtures()
 
             assert result.collection_type == "fixtures"
@@ -549,7 +548,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_fixtures(
                 leagues=["PL"], date_from=date_from, date_to=date_to
             )
@@ -567,7 +565,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_fixtures()
 
             assert result.collection_type == "fixtures"
@@ -596,7 +593,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_load_existing_matches"
         ):  # Mock to not reset processed matches
-
             # 添加已处理的比赛ID
             match_key = self.collector._generate_match_key(mock_fixtures[0])
             self.collector._processed_matches.add(match_key)
@@ -632,7 +628,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_fixtures()
 
             assert result.status == "partial"
@@ -652,7 +647,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_fixtures()
 
             assert result.status == "failed"
@@ -668,7 +662,6 @@ class TestFixturesCollectorMain:
             "_get_active_leagues",
             side_effect=Exception("General Error"),
         ):
-
             result = await self.collector.collect_fixtures()
 
             assert result.status == "failed"
@@ -686,7 +679,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ) as mock_save:
-
             result = await self.collector.collect_fixtures()
 
             # 空数据不应该调用保存
@@ -716,7 +708,6 @@ class TestFixturesCollectorMain:
         ), patch.object(
             self.collector, "_detect_missing_matches"
         ) as mock_detect:
-
             await self.collector.collect_fixtures()
 
             # 验证调用了缺失比赛检测
@@ -768,7 +759,6 @@ class TestFixturesCollectorIntegration:
         ) as mock_save, patch.object(
             self.collector, "_detect_missing_matches"
         ) as mock_detect:
-
             result = await self.collector.collect_fixtures()
 
             # 验证结果
@@ -805,7 +795,6 @@ class TestFixturesCollectorIntegration:
             ), patch.object(
                 self.collector, "_collect_league_fixtures", side_effect=exception
             ):
-
                 result = await self.collector.collect_fixtures()
 
                 assert result.status == "failed"
@@ -834,7 +823,6 @@ class TestFixturesCollectorIntegration:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_fixtures()
 
             # 应该只采集一个比赛（第二个被跳过）

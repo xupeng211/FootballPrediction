@@ -64,9 +64,7 @@ class DataCollectionLog(BaseModel):
     error_message = Column(Text, nullable=True, comment="错误信息")
 
     # 元数据字段
-    created_at = Column(
-        DateTime, nullable=False, default=func.now(), comment="创建时间"
-    )
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
 
     @validates("collection_type")
     def validate_collection_type(self, key: str, collection_type: str) -> str:

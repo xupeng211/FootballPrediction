@@ -83,7 +83,9 @@ class TestFileUtilsJSONOperations:
         """测试成功读取JSON文件"""
         test_data = {"key": "value", "number": 42}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             json.dump(test_data, tmp_file)
             tmp_file.flush()
 
@@ -100,7 +102,9 @@ class TestFileUtilsJSONOperations:
 
     def test_read_json_invalid_json(self):
         """测试读取无效JSON"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             tmp_file.write("invalid json content")
             tmp_file.flush()
 
@@ -120,7 +124,7 @@ class TestFileUtilsJSONOperations:
             FileUtils.write_json(test_data, file_path)
 
             assert file_path.exists()
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 loaded_data = json.load(f)
             assert loaded_data == test_data
 
@@ -151,7 +155,9 @@ class TestFileUtilsJSONOperations:
         """测试别名方法成功读取"""
         test_data = {"alias": "test"}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp_file:
             json.dump(test_data, tmp_file)
             tmp_file.flush()
 
@@ -183,7 +189,10 @@ class TestFileUtilsJSONOperations:
         test_data = {"test": "data"}
 
         # 尝试写入到只读目录
-        with patch('src.utils.file_utils.FileUtils.write_json', side_effect=PermissionError("Permission denied")):
+        with patch(
+            "src.utils.file_utils.FileUtils.write_json",
+            side_effect=PermissionError("Permission denied"),
+        ):
             result = FileUtils.write_json_file(test_data, "/readonly/path.json")
             assert result is False
 
@@ -260,8 +269,8 @@ class TestFileUtilsFileOperations:
             finally:
                 os.unlink(tmp_file.name)
 
-    @patch('os.path.exists')
-    @patch('os.path.getsize')
+    @patch("os.path.exists")
+    @patch("os.path.getsize")
     def test_get_file_size_os_error(self, mock_getsize, mock_exists):
         """测试OS错误处理"""
         mock_exists.return_value = True
@@ -325,7 +334,7 @@ class TestFileUtilsCleanupOperations:
             assert not test_file.exists()
             assert sub_dir.exists()  # 子目录应该保留
 
-    @patch('pathlib.Path.iterdir')
+    @patch("pathlib.Path.iterdir")
     def test_cleanup_old_files_exception_handling(self, mock_iterdir):
         """测试清理过程中的异常处理"""
         mock_iterdir.side_effect = PermissionError("Permission denied")
@@ -381,11 +390,7 @@ class TestFileUtilsPathHandling:
 
     def test_json_unicode_handling(self):
         """测试JSON Unicode处理"""
-        unicode_data = {
-            "中文": "测试",
-            "emoji": "😀🚀",
-            "русский": "тест"
-        }
+        unicode_data = {"中文": "测试", "emoji": "😀🚀", "русский": "тест"}
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = Path(tmp_dir) / "unicode.json"
@@ -402,14 +407,8 @@ class TestFileUtilsIntegration:
     def test_full_json_workflow(self):
         """测试完整的JSON工作流程"""
         test_data = {
-            "config": {
-                "version": "1.0",
-                "settings": [1, 2, 3]
-            },
-            "metadata": {
-                "created": "2024-01-01",
-                "author": "test"
-            }
+            "config": {"version": "1.0", "settings": [1, 2, 3]},
+            "metadata": {"created": "2024-01-01", "author": "test"},
         }
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -458,7 +457,7 @@ class TestFileUtilsIntegration:
 class TestFileUtilsErrorHandling:
     """错误处理测试"""
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_write_json_io_error(self, mock_open):
         """测试写入JSON时的IO错误"""
         mock_open.side_effect = IOError("IO Error")
@@ -466,7 +465,7 @@ class TestFileUtilsErrorHandling:
         with pytest.raises(IOError):
             FileUtils.write_json({"test": "data"}, "test.json")
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_get_file_hash_io_error(self, mock_open):
         """测试获取文件哈希时的IO错误"""
         mock_open.side_effect = IOError("Cannot open file")
@@ -483,7 +482,7 @@ class TestFileUtilsErrorHandling:
             abs_result = FileUtils.ensure_dir(Path(tmp_dir) / relative_path)
             assert abs_result.exists()
 
-    @patch('pathlib.Path.mkdir')
+    @patch("pathlib.Path.mkdir")
     def test_ensure_dir_permission_error(self, mock_mkdir):
         """测试目录创建权限错误"""
         mock_mkdir.side_effect = PermissionError("Permission denied")
@@ -506,6 +505,7 @@ class TestFileUtilsPerformance:
 
             try:
                 import time
+
                 start_time = time.time()
                 file_hash = FileUtils.get_file_hash(tmp_file.name)
                 end_time = time.time()
@@ -530,6 +530,7 @@ class TestFileUtilsPerformance:
                 os.utime(file_path, (old_time, old_time))
 
             import time as time_module
+
             start_time = time_module.time()
             result = FileUtils.cleanup_old_files(tmp_dir, days=30)
             end_time = time_module.time()

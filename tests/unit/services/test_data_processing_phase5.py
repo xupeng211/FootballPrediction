@@ -36,12 +36,12 @@ class TestDataProcessingServiceBasic:
     async def test_initialize_success(self, service):
         """测试成功初始化"""
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             result = await service.initialize()
             assert result is True
@@ -54,7 +54,10 @@ class TestDataProcessingServiceBasic:
     @pytest.mark.asyncio
     async def test_initialize_failure(self, service):
         """测试初始化失败"""
-        with patch('src.services.data_processing.FootballDataCleaner', side_effect=Exception("初始化失败")):
+        with patch(
+            "src.services.data_processing.FootballDataCleaner",
+            side_effect=Exception("初始化失败"),
+        ):
             result = await service.initialize()
             assert result is False
 
@@ -107,19 +110,21 @@ class TestDataProcessingServiceDataOperations:
         service = DataProcessingService()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
 
         return service
 
     @pytest.mark.asyncio
-    async def test_process_raw_match_data_single_dict_success(self, initialized_service):
+    async def test_process_raw_match_data_single_dict_success(
+        self, initialized_service
+    ):
         """测试处理单个比赛数据成功"""
         service = initialized_service
 
@@ -128,7 +133,7 @@ class TestDataProcessingServiceDataOperations:
             "external_match_id": "12345",
             "home_team": "Team A",
             "away_team": "Team B",
-            "match_date": "2024-01-01"
+            "match_date": "2024-01-01",
         }
 
         # 模拟清洗器返回清洗后的数据
@@ -136,11 +141,13 @@ class TestDataProcessingServiceDataOperations:
             "external_match_id": "12345",
             "home_team": "TEAM_A",
             "away_team": "TEAM_B",
-            "match_date": datetime(2024, 1, 1)
+            "match_date": datetime(2024, 1, 1),
         }
 
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
         service.cache_manager.aget = AsyncMock(return_value=None)  # 缓存未命中
         service.cache_manager.aset = AsyncMock()
 
@@ -156,13 +163,15 @@ class TestDataProcessingServiceDataOperations:
 
         raw_data = [
             {"external_match_id": "12345", "home_team": "Team A"},
-            {"external_match_id": "12346", "home_team": "Team B"}
+            {"external_match_id": "12346", "home_team": "Team B"},
         ]
 
         cleaned_data = {"external_match_id": "12345", "home_team": "TEAM_A"}
 
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
         service.cache_manager.aget = AsyncMock(return_value=None)
         service.cache_manager.aset = AsyncMock()
 
@@ -215,12 +224,12 @@ class TestDataProcessingServiceDataOperations:
 
         raw_odds = [
             {"match_id": "12345", "odds": 1.5},
-            {"match_id": "12346", "odds": 2.0}
+            {"match_id": "12346", "odds": 2.0},
         ]
 
         cleaned_odds = [
             {"match_id": "12345", "odds": 1.5, "cleaned": True},
-            {"match_id": "12346", "odds": 2.0, "cleaned": True}
+            {"match_id": "12346", "odds": 2.0, "cleaned": True},
         ]
 
         service.data_cleaner.clean_odds_data = Mock(return_value=cleaned_odds)
@@ -257,15 +266,21 @@ class TestDataProcessingServiceDataOperations:
         service = initialized_service
 
         match_id = 12345
-        features_df = pd.DataFrame({'feature1': [1, 2, 3], 'feature2': [4, 5, 6]})
-        processed_df = pd.DataFrame({'feature1': [1, 2, 3], 'feature2': [4, 5, 6], 'processed': True})
+        features_df = pd.DataFrame({"feature1": [1, 2, 3], "feature2": [4, 5, 6]})
+        processed_df = pd.DataFrame(
+            {"feature1": [1, 2, 3], "feature2": [4, 5, 6], "processed": True}
+        )
 
-        service.missing_handler.handle_missing_features = AsyncMock(return_value=processed_df)
+        service.missing_handler.handle_missing_features = AsyncMock(
+            return_value=processed_df
+        )
 
         result = await service.process_features_data(match_id, features_df)
 
         assert isinstance(result, pd.DataFrame)
-        service.missing_handler.handle_missing_features.assert_called_once_with(match_id, features_df)
+        service.missing_handler.handle_missing_features.assert_called_once_with(
+            match_id, features_df
+        )
 
     @pytest.mark.asyncio
     async def test_process_features_data_no_handler(self, initialized_service):
@@ -273,7 +288,7 @@ class TestDataProcessingServiceDataOperations:
         service = initialized_service
         service.missing_handler = None
 
-        features_df = pd.DataFrame({'feature1': [1, 2, 3]})
+        features_df = pd.DataFrame({"feature1": [1, 2, 3]})
 
         result = await service.process_features_data(12345, features_df)
 
@@ -284,8 +299,10 @@ class TestDataProcessingServiceDataOperations:
         """测试处理特征数据失败"""
         service = initialized_service
 
-        features_df = pd.DataFrame({'feature1': [1, 2, 3]})
-        service.missing_handler.handle_missing_features = AsyncMock(side_effect=Exception("处理失败"))
+        features_df = pd.DataFrame({"feature1": [1, 2, 3]})
+        service.missing_handler.handle_missing_features = AsyncMock(
+            side_effect=Exception("处理失败")
+        )
 
         result = await service.process_features_data(12345, features_df)
 
@@ -299,37 +316,36 @@ class TestDataProcessingServiceDataOperations:
 
         raw_matches = [
             {"external_match_id": "12345", "home_team": "Team A"},
-            {"external_match_id": "12346", "home_team": "Team B"}
+            {"external_match_id": "12346", "home_team": "Team B"},
         ]
 
         processed_match = {"external_match_id": "12345", "processed": True}
 
         # Mock处理结果
-        with patch.object(service, 'process_raw_match_data', return_value=processed_match):
+        with patch.object(
+            service, "process_raw_match_data", return_value=processed_match
+        ):
             result = await service.process_batch_matches(raw_matches)
 
         assert len(result) == 2
-        assert all(match['processed'] for match in result)
+        assert all(match["processed"] for match in result)
 
     @pytest.mark.asyncio
     async def test_process_batch_matches_partial_failure(self, initialized_service):
         """测试批量处理部分失败"""
         service = initialized_service
 
-        raw_matches = [
-            {"external_match_id": "12345"},
-            {"external_match_id": "12346"}
-        ]
+        raw_matches = [{"external_match_id": "12345"}, {"external_match_id": "12346"}]
 
         processed_match = {"external_match_id": "12345", "processed": True}
 
         # Mock第一个成功，第二个失败
         side_effects = [processed_match, Exception("处理失败")]
-        with patch.object(service, 'process_raw_match_data', side_effect=side_effects):
+        with patch.object(service, "process_raw_match_data", side_effect=side_effects):
             result = await service.process_batch_matches(raw_matches)
 
         assert len(result) == 1
-        assert result[0]['processed'] is True
+        assert result[0]["processed"] is True
 
 
 class TestDataProcessingServiceCacheOperations:
@@ -345,12 +361,12 @@ class TestDataProcessingServiceCacheOperations:
         mock_cache.aset = AsyncMock()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock(return_value=mock_cache)
+            RedisManager=Mock(return_value=mock_cache),
         ):
             await service.initialize()
             service.cache_manager = mock_cache
@@ -367,7 +383,9 @@ class TestDataProcessingServiceCacheOperations:
 
         service.cache_manager.aget = AsyncMock(return_value=None)  # 缓存未命中
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
 
         result = await service._process_single_match_data(raw_data)
 
@@ -395,12 +413,12 @@ class TestDataProcessingServiceCacheOperations:
         service = DataProcessingService()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
             service.cache_manager = None  # 设置为None
@@ -409,7 +427,9 @@ class TestDataProcessingServiceCacheOperations:
         cleaned_data = {"external_match_id": "12345", "cleaned": True}
 
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
 
         result = await service._process_single_match_data(raw_data)
 
@@ -424,7 +444,9 @@ class TestDataProcessingServiceCacheOperations:
         cleaned_data = {"home_team": "TEAM_A", "cleaned": True}
 
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
 
         result = await service._process_single_match_data(raw_data)
 
@@ -445,12 +467,12 @@ class TestDataProcessingServiceAsyncBehavior:
         mock_handler = Mock()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(return_value=mock_cleaner),
             MissingDataHandler=Mock(return_value=mock_handler),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
 
@@ -506,12 +528,12 @@ class TestDataProcessingServiceAsyncBehavior:
         mock_cleaner.clean_odds_data = async_clean_odds
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(return_value=mock_cleaner),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
 
@@ -533,8 +555,11 @@ class TestDataProcessingServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_partial_failure(self, service):
         """测试部分初始化失败"""
-        with patch('src.services.data_processing.FootballDataCleaner', Mock()):
-            with patch('src.services.data_processing.MissingDataHandler', side_effect=Exception("Handler失败")):
+        with patch("src.services.data_processing.FootballDataCleaner", Mock()):
+            with patch(
+                "src.services.data_processing.MissingDataHandler",
+                side_effect=Exception("Handler失败"),
+            ):
                 result = await service.initialize()
                 assert result is False
 
@@ -544,18 +569,22 @@ class TestDataProcessingServiceErrorHandling:
         service = DataProcessingService()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
 
         # 模拟处理过程中抛出异常
-        with patch.object(service, '_process_single_match_data', side_effect=Exception("处理异常")):
-            result = await service.process_raw_match_data({"external_match_id": "12345"})
+        with patch.object(
+            service, "_process_single_match_data", side_effect=Exception("处理异常")
+        ):
+            result = await service.process_raw_match_data(
+                {"external_match_id": "12345"}
+            )
 
         assert result is None
 
@@ -565,18 +594,20 @@ class TestDataProcessingServiceErrorHandling:
         service = DataProcessingService()
 
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             await service.initialize()
 
         service.data_cleaner.clean_match_data = Mock(side_effect=Exception("清洗异常"))
 
-        result = await service._process_single_match_data({"external_match_id": "12345"})
+        result = await service._process_single_match_data(
+            {"external_match_id": "12345"}
+        )
 
         assert result is None
 
@@ -608,12 +639,12 @@ class TestDataProcessingServiceIntegration:
 
         # 模拟初始化
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(return_value=mock_db),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             init_result = await service.initialize()
             assert init_result is True
@@ -623,7 +654,9 @@ class TestDataProcessingServiceIntegration:
         cleaned_data = {"external_match_id": "12345", "clean_data": "cleaned"}
 
         service.data_cleaner.clean_match_data = Mock(return_value=cleaned_data)
-        service.missing_handler.handle_missing_match_data = Mock(return_value=cleaned_data)
+        service.missing_handler.handle_missing_match_data = Mock(
+            return_value=cleaned_data
+        )
         service.cache_manager.aget = AsyncMock(return_value=None)
         service.cache_manager.aset = AsyncMock()
 
@@ -649,12 +682,12 @@ class TestDataProcessingServiceIntegration:
 
         # 初始化
         with patch.multiple(
-            'src.services.data_processing',
+            "src.services.data_processing",
             FootballDataCleaner=Mock(),
             MissingDataHandler=Mock(),
             DataLakeStorage=Mock(),
             DatabaseManager=Mock(return_value=mock_db),
-            RedisManager=Mock()
+            RedisManager=Mock(),
         ):
             result = await service.initialize()
             assert result is True

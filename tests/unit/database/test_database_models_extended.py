@@ -259,9 +259,7 @@ class TestOddsModelMethods:
         assert "bookmaker_margin" in probabilities
 
         # 验证概率计算合理性（不要求精确值，允许有博彩公司边际）
-        assert (
-            0.4 <= probabilities["home_win"] <= 0.6
-        )  # 1/2.00 = 0.5，但标准化后会有变化
+        assert 0.4 <= probabilities["home_win"] <= 0.6  # 1/2.00 = 0.5，但标准化后会有变化
         assert (
             probabilities["home_win"]
             + probabilities["draw"]

@@ -520,8 +520,7 @@ class StatisticalAnomalyDetector:
             ).observe(duration)
 
             self.logger.info(
-                f"IQR异常检测完成: {table_name}.{column_name}, "
-                f"发现 {len(outliers)} 个异常值"
+                f"IQR异常检测完成: {table_name}.{column_name}, " f"发现 {len(outliers)} 个异常值"
             )
 
             return result

@@ -261,7 +261,6 @@ class TestMetricsEndpoint:
         ) as mock_db_metrics, patch(
             "src.api.monitoring._get_business_metrics"
         ) as mock_biz_metrics:
-
             mock_db_metrics.return_value = {
                 "healthy": True,
                 "response_time_ms": 10.5,
@@ -302,7 +301,6 @@ class TestMetricsEndpoint:
         ) as mock_db_metrics, patch(
             "src.api.monitoring._get_business_metrics"
         ) as mock_biz_metrics:
-
             mock_db_metrics.return_value = {"healthy": True}
             mock_biz_metrics.return_value = {"24h_predictions": 50}
 
@@ -333,7 +331,6 @@ class TestMetricsEndpoint:
         ), patch(
             "src.api.monitoring.os.getenv", return_value="test"
         ):
-
             with patch(
                 "src.api.monitoring._get_database_metrics",
                 return_value=mock_async_db_metrics(),
@@ -341,7 +338,6 @@ class TestMetricsEndpoint:
                 "src.api.monitoring._get_business_metrics",
                 return_value=mock_async_biz_metrics(),
             ):
-
                 result = await get_metrics(mock_db_session)
 
                 assert result["status"] == "ok"
@@ -388,7 +384,6 @@ class TestServiceStatusEndpoint:
         with patch(
             "src.api.monitoring.os.getenv", return_value="redis://localhost:6379/0"
         ), patch("src.api.monitoring.redis.from_url") as mock_redis_from_url:
-
             mock_redis_client = Mock()
             mock_redis_client.ping.return_value = True
             mock_redis_from_url.return_value = mock_redis_client
@@ -672,7 +667,6 @@ class TestMonitoringEdgeCases:
         ) as mock_db_metrics, patch(
             "src.api.monitoring._get_business_metrics"
         ) as mock_biz_metrics:
-
             # 设置其他mock
             mock_virtual_memory.return_value = Mock(
                 total=1000, available=500, percent=50.0, used=500
@@ -693,7 +687,6 @@ class TestMonitoringEdgeCases:
         with patch("src.api.monitoring.os.getenv", return_value=None), patch(
             "src.api.monitoring.redis.from_url"
         ) as mock_redis_from_url:
-
             mock_redis_client = Mock()
             mock_redis_client.ping.return_value = True
             mock_redis_from_url.return_value = mock_redis_client
@@ -735,7 +728,6 @@ class TestMonitoringIntegration:
         ) as mock_db_metrics, patch(
             "src.api.monitoring._get_business_metrics"
         ) as mock_biz_metrics:
-
             mock_db_metrics.return_value = {
                 "healthy": True,
                 "response_time_ms": 10.0,
@@ -778,7 +770,6 @@ class TestMonitoringIntegration:
         with patch(
             "src.api.monitoring.os.getenv", return_value="redis://localhost:6379/0"
         ), patch("src.api.monitoring.redis.from_url") as mock_redis_from_url:
-
             mock_redis_client = Mock()
             mock_redis_client.ping.return_value = True
             mock_redis_from_url.return_value = mock_redis_client

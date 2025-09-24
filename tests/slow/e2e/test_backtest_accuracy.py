@@ -177,9 +177,7 @@ class TestBacktestAccuracy:
             # 验证回测结果基本结构
             assert isinstance(backtest_result, dict), "回测结果应该是字典格式"
             assert "total_matches" in backtest_result, "回测结果应该包含总比赛数"
-            assert (
-                "correct_predictions" in backtest_result
-            ), "回测结果应该包含正确预测数"
+            assert "correct_predictions" in backtest_result, "回测结果应该包含正确预测数"
 
             # 验证数据量合理性
             total_matches = backtest_result["total_matches"]
@@ -187,9 +185,7 @@ class TestBacktestAccuracy:
 
             # 验证预测数量不超过比赛总数
             correct_predictions = backtest_result["correct_predictions"]
-            assert (
-                0 <= correct_predictions <= total_matches
-            ), "正确预测数应该在合理范围内"
+            assert 0 <= correct_predictions <= total_matches, "正确预测数应该在合理范围内"
 
         except Exception as e:
             # 在测试环境中可能无法访问历史数据
@@ -356,9 +352,7 @@ class TestBacktestAccuracy:
             accuracy_std = np.std(accuracies) if HAS_NUMPY else 0.05
 
             # 准确率标准差应该较小，表明性能稳定
-            assert (
-                accuracy_std < 0.10
-            ), f"准确率标准差{accuracy_std:.3f}过大，模型性能不稳定"
+            assert accuracy_std < 0.10, f"准确率标准差{accuracy_std:.3f}过大，模型性能不稳定"
 
             # 所有时期的准确率都应该在合理范围内
             for result in period_results:
@@ -516,7 +510,9 @@ class TestBacktestAccuracy:
                         "actual_result": (
                             "home_win"
                             if i % 3 == 0
-                            else "away_win" if i % 3 == 1 else "draw"
+                            else "away_win"
+                            if i % 3 == 1
+                            else "draw"
                         ),
                     }
                     for i in range(100, 150)
@@ -769,9 +765,7 @@ class TestBacktestAccuracy:
 
             # 性能不应该有显著的长期下降趋势
             trend_change = recent_3_months_avg - older_3_months_avg
-            assert (
-                trend_change >= -0.08
-            ), f"长期性能趋势下降{-trend_change:.3f}过大，可能需要重新训练模型"
+            assert trend_change >= -0.08, f"长期性能趋势下降{-trend_change:.3f}过大，可能需要重新训练模型"
 
             # 所有月份的表现都应该在基线之上
             min_monthly_accuracy = min(monthly_performances)

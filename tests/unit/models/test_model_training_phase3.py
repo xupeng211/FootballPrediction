@@ -105,7 +105,6 @@ class TestModelTrainingDataPreparation:
         with patch.object(self.trainer, "feature_store") as mock_store, patch.object(
             self.trainer.db_manager, "get_async_session"
         ) as mock_get_session:
-
             # Mock feature store返回特征数据
             mock_store.get_features.return_value = mock_features
             mock_store.get_features_online.return_value = mock_features
@@ -186,7 +185,6 @@ class TestModelTrainingDataPreparation:
         with patch.object(self.trainer, "feature_store") as mock_store, patch.object(
             self.trainer.db_manager, "get_async_session"
         ) as mock_get_session:
-
             mock_store.get_features.return_value = mock_features
             mock_store.get_features_online.return_value = mock_features
 
@@ -231,9 +229,7 @@ class TestModelTrainingDataPreparation:
             mock_context_manager.__aexit__.return_value = None
             mock_get_session.return_value = mock_context_manager
 
-            with pytest.raises(
-                ValueError, match="训练数据不足，需要至少 100 条记录，实际获取 3 条"
-            ):
+            with pytest.raises(ValueError, match="训练数据不足，需要至少 100 条记录，实际获取 3 条"):
                 await self.trainer.prepare_training_data(
                     datetime(2023, 1, 1), datetime(2023, 1, 31), min_samples=100
                 )
@@ -264,7 +260,6 @@ class TestModelTrainingDataPreparation:
         with patch.object(self.trainer, "feature_store") as mock_store, patch.object(
             self.trainer.db_manager, "get_async_session"
         ) as mock_get_session:
-
             mock_store.get_features.return_value = mock_features
             mock_store.get_features_online.return_value = mock_features
             mock_get_session.side_effect = Exception("Database error")
@@ -314,7 +309,6 @@ class TestModelTrainingTraining:
         with patch.object(self.trainer, "prepare_training_data") as mock_prepare, patch(
             "src.models.model_training.mlflow"
         ) as mock_mlflow_module, patch("xgboost.XGBClassifier") as mock_xgb_class:
-
             mock_prepare.return_value = (mock_X, mock_y)
             mock_model = MagicMock()
             mock_xgb_class.return_value = mock_model
@@ -351,7 +345,6 @@ class TestModelTrainingTraining:
         with patch.object(self.trainer, "prepare_training_data") as mock_prepare, patch(
             "src.models.model_training.MlflowClient"
         ) as mock_mlflow, patch("xgboost.XGBClassifier") as mock_xgb_class:
-
             mock_prepare.return_value = (mock_X, mock_y)
             mock_model = MagicMock()
             mock_xgb_class.return_value = mock_model
@@ -392,7 +385,6 @@ class TestModelTrainingTraining:
         with patch.object(self.trainer, "prepare_training_data") as mock_prepare, patch(
             "src.models.model_training.MlflowClient"
         ) as mock_mlflow, patch("xgboost.XGBClassifier") as mock_xgb_class:
-
             mock_prepare.return_value = (mock_X, mock_y)
             mock_model = MagicMock()
             mock_xgb_class.return_value = mock_model
@@ -412,7 +404,6 @@ class TestModelTrainingTraining:
         with patch.object(self.trainer, "prepare_training_data") as mock_prepare, patch(
             "src.models.model_training.MlflowClient"
         ) as mock_mlflow, patch("xgboost.XGBClassifier") as mock_xgb_class:
-
             mock_prepare.return_value = (mock_X, mock_y)
             mock_model = MagicMock()
             mock_model.fit.side_effect = Exception("Model fit error")
@@ -733,7 +724,6 @@ class TestModelTrainingIntegration:
         with patch.object(self.trainer, "prepare_training_data") as mock_prepare, patch(
             "src.models.model_training.MlflowClient"
         ) as mock_mlflow, patch("xgboost.XGBClassifier") as mock_xgb_class:
-
             mock_prepare.return_value = (mock_X, mock_y)
             mock_model = MagicMock()
             mock_xgb_class.return_value = mock_model
@@ -795,7 +785,6 @@ class TestModelTrainingIntegration:
         ) as mock_xgb_class, patch(
             "asyncio.sleep", new_callable=AsyncMock
         ):  # Mock sleep
-
             mock_model = MagicMock()
             mock_xgb_class.return_value = mock_model
 

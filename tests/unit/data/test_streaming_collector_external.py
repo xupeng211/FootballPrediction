@@ -507,9 +507,7 @@ class TestStreamingDataCollector:
 
                 # 验证异常处理
                 assert result["total_collections"] == 2
-                assert (
-                    result["failed_collections"] == 1
-                )  # 只有fixtures任务，invalid_type被跳过
+                assert result["failed_collections"] == 1  # 只有fixtures任务，invalid_type被跳过
 
     class TestStreamingControl:
         """测试流式处理控制功能"""

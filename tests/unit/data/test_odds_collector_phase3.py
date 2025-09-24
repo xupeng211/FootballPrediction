@@ -694,7 +694,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ) as mock_save:
-
             result = await self.collector.collect_odds()
 
             assert result.collection_type == "odds"
@@ -731,7 +730,6 @@ class TestOddsCollectorMain:
         with patch.object(
             self.collector, "_collect_match_odds", return_value=mock_odds
         ), patch.object(self.collector, "_save_to_bronze_layer"):
-
             result = await self.collector.collect_odds(
                 match_ids=match_ids, bookmakers=bookmakers, markets=markets
             )
@@ -751,7 +749,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_save_to_bronze_layer"
         ):
-
             result = await self.collector.collect_odds()
 
             assert result.collection_type == "odds"
@@ -785,7 +782,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             # 添加已处理的赔率键
             odds_key = self.collector._generate_odds_key(mock_odds[0])
             self.collector._recent_odds_keys.add(odds_key)
@@ -823,7 +819,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             # 先记录一次赔率值
             await self.collector._has_odds_changed(mock_odds[0])
 
@@ -867,7 +862,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             result = await self.collector.collect_odds()
 
             assert result.status == "partial"
@@ -887,7 +881,6 @@ class TestOddsCollectorMain:
         ), patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             result = await self.collector.collect_odds()
 
             assert result.status == "failed"
@@ -903,7 +896,6 @@ class TestOddsCollectorMain:
             "_get_active_bookmakers",
             side_effect=Exception("General Error"),
         ):
-
             result = await self.collector.collect_odds()
 
             assert result.status == "failed"
@@ -925,7 +917,6 @@ class TestOddsCollectorMain:
         ) as mock_save, patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             result = await self.collector.collect_odds()
 
             # 空数据不应该调用保存
@@ -983,7 +974,6 @@ class TestOddsCollectorIntegration:
         ) as mock_save, patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             result = await self.collector.collect_odds()
 
             # 验证结果
@@ -1017,7 +1007,6 @@ class TestOddsCollectorIntegration:
             with patch.object(
                 self.collector, "_get_active_bookmakers", side_effect=exception
             ):
-
                 result = await self.collector.collect_odds()
 
                 assert result.status == "failed"
@@ -1051,7 +1040,6 @@ class TestOddsCollectorIntegration:
         ), patch.object(
             collector_5min, "_clean_expired_odds_cache"
         ):
-
             # 第一次采集
             result1 = await collector_5min.collect_odds()
             assert result1.records_collected == 1
@@ -1089,7 +1077,6 @@ class TestOddsCollectorIntegration:
         ), patch.object(
             self.collector, "_clean_expired_odds_cache"
         ):
-
             # 第一次采集（无变化）
             with patch.object(
                 self.collector, "_collect_match_odds", return_value=[unchanged_odds]

@@ -204,12 +204,8 @@ class TestDataPipeline:
 
             # 验证数据质量提升（可能有轻微的记录数量变化）
             silver_record_count = silver_result.get("record_count", 0)
-            assert (
-                silver_record_count <= bronze_record_count
-            ), "Silver层记录数量异常增加"
-            assert (
-                silver_record_count >= bronze_record_count * 0.8
-            ), "Silver层数据损失过多"
+            assert silver_record_count <= bronze_record_count, "Silver层记录数量异常增加"
+            assert silver_record_count >= bronze_record_count * 0.8, "Silver层数据损失过多"
 
             # 步骤3: Gold层处理 - 数据聚合和分析视图
             gold_result = await gold_processor.process_silver_to_gold(silver_result)
@@ -243,9 +239,7 @@ class TestDataPipeline:
             upcoming_matches = [12345, 12346]  # 即将开始的比赛
             features_for_prediction = await feature_store.get_features(upcoming_matches)
 
-            assert len(features_for_prediction) == len(
-                upcoming_matches
-            ), "特征获取不完整"
+            assert len(features_for_prediction) == len(upcoming_matches), "特征获取不完整"
 
             # 为每场比赛生成预测
             predictions = {}
@@ -254,13 +248,9 @@ class TestDataPipeline:
                 predictions[match_id] = prediction
 
                 # 验证预测格式
-                assert (
-                    "home_win_probability" in prediction
-                ), f"比赛{match_id}缺少主队胜率"
+                assert "home_win_probability" in prediction, f"比赛{match_id}缺少主队胜率"
                 assert "draw_probability" in prediction, f"比赛{match_id}缺少平局概率"
-                assert (
-                    "away_win_probability" in prediction
-                ), f"比赛{match_id}缺少客队胜率"
+                assert "away_win_probability" in prediction, f"比赛{match_id}缺少客队胜率"
 
                 # 验证概率分布
                 total_prob = (
@@ -338,9 +328,7 @@ class TestDataPipeline:
                 silver_record_count = silver_result.get("record_count", 0)
 
                 # Silver层记录数应该小于等于原始数据（因为过滤了问题数据）
-                assert silver_record_count <= len(
-                    problematic_data
-                ), "Silver层未正确过滤问题数据"
+                assert silver_record_count <= len(problematic_data), "Silver层未正确过滤问题数据"
 
                 # 至少应该保留一条有效记录
                 assert silver_record_count >= 1, "Silver层过度过滤了数据"
@@ -383,9 +371,7 @@ class TestDataPipeline:
 
         except PipelineError as e:
             # 如果管道完全失败，验证错误信息
-            assert (
-                "error" in str(e).lower() or "failed" in str(e).lower()
-            ), "错误信息不明确"
+            assert "error" in str(e).lower() or "failed" in str(e).lower(), "错误信息不明确"
         except Exception:
             # 在测试环境中可能有其他异常
             pass

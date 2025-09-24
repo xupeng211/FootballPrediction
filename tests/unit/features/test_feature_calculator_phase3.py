@@ -514,7 +514,6 @@ class TestFeatureCalculatorAllMatchFeatures:
         ) as mock_h2h, patch.object(
             self.calculator, "calculate_odds_features"
         ) as mock_odds:
-
             # Mock各个特征计算结果
             mock_recent.return_value = RecentPerformanceFeatures(
                 team_id=1,
@@ -600,7 +599,6 @@ class TestFeatureCalculatorAllMatchFeatures:
         ) as mock_h2h, patch.object(
             self.calculator, "calculate_odds_features"
         ) as mock_odds:
-
             mock_recent.return_value = RecentPerformanceFeatures(
                 team_id=1,
                 calculation_date=custom_date,
@@ -696,9 +694,7 @@ class TestFeatureCalculatorUtilityMethods:
             MagicMock(
                 home_team_id=3, away_team_id=1, home_score=1, away_score=2
             ),  # 客队胜利
-            MagicMock(
-                home_team_id=1, away_team_id=4, home_score=1, away_score=1
-            ),  # 平局
+            MagicMock(home_team_id=1, away_team_id=4, home_score=1, away_score=1),  # 平局
         ]
 
         points = self.calculator._calculate_points_from_matches(matches, 1)
@@ -839,7 +835,6 @@ class TestFeatureCalculatorIntegration:
         ) as mock_h2h, patch.object(
             self.calculator, "calculate_odds_features"
         ) as mock_odds:
-
             # Mock特征计算结果
             mock_recent.side_effect = [
                 RecentPerformanceFeatures(

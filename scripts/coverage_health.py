@@ -16,56 +16,60 @@ def run_coverage_analysis() -> Dict:
     try:
         result = subprocess.run(
             [
-                sys.executable, '-m', 'pytest',
-                'tests/unit/', '--cov=src', '--cov-report=json',
-                '--maxfail=10', '--disable-warnings', '-q'
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/unit/",
+                "--cov=src",
+                "--cov-report=json",
+                "--maxfail=10",
+                "--disable-warnings",
+                "-q",
             ],
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
         # Parse coverage.json if it exists
         coverage_data = {}
-        coverage_file = Path('coverage.json')
+        coverage_file = Path("coverage.json")
         if coverage_file.exists():
             with open(coverage_file) as f:
                 coverage_data = json.load(f)
 
         return {
-            'success': result.returncode == 0,
-            'coverage_data': coverage_data,
-            'stdout': result.stdout,
-            'stderr': result.stderr,
-            'returncode': result.returncode
+            "success": result.returncode == 0,
+            "coverage_data": coverage_data,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode,
         }
     except subprocess.TimeoutExpired:
         return {
-            'success': False,
-            'error': 'Coverage analysis timed out',
-            'coverage_data': {}
+            "success": False,
+            "error": "Coverage analysis timed out",
+            "coverage_data": {},
         }
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e),
-            'coverage_data': {}
-        }
+        return {"success": False, "error": str(e), "coverage_data": {}}
 
 
-def analyze_coverage_files(coverage_data: Dict) -> Tuple[List[str], List[str], List[str]]:
+def analyze_coverage_files(
+    coverage_data: Dict,
+) -> Tuple[List[str], List[str], List[str]]:
     """Analyze coverage by file and categorize them"""
-    files = coverage_data.get('files', {})
+    files = coverage_data.get("files", {})
 
     well_covered = []
     needs_improvement = []
     poorly_covered = []
 
     for filename, file_data in files.items():
-        if 'summary' in file_data:
-            coverage_percent = file_data['summary']['percent_covered']
-            lines_covered = file_data['summary']['covered_lines']
-            lines_total = file_data['summary']['num_statements']
+        if "summary" in file_data:
+            coverage_percent = file_data["summary"]["percent_covered"]
+            lines_covered = file_data["summary"]["covered_lines"]
+            lines_total = file_data["summary"]["num_statements"]
 
             file_info = f"{filename}: {coverage_percent:.1f}% ({lines_covered}/{lines_total} lines)"
 
@@ -79,7 +83,9 @@ def analyze_coverage_files(coverage_data: Dict) -> Tuple[List[str], List[str], L
     return well_covered, needs_improvement, poorly_covered
 
 
-def generate_recommendations(needs_improvement: List[str], poorly_covered: List[str]) -> List[str]:
+def generate_recommendations(
+    needs_improvement: List[str], poorly_covered: List[str]
+) -> List[str]:
     """Generate coverage improvement recommendations"""
     recommendations = []
 
@@ -90,24 +96,28 @@ def generate_recommendations(needs_improvement: List[str], poorly_covered: List[
         recommendations.append("")
 
     if needs_improvement:
-        recommendations.append("⚠️  Medium Priority: Files that need improvement (30-70%):")
+        recommendations.append(
+            "⚠️  Medium Priority: Files that need improvement (30-70%):"
+        )
         for file in needs_improvement[:5]:  # Show top 5
             recommendations.append(f"   - {file}")
         recommendations.append("")
 
-    recommendations.extend([
-        "💡 General recommendations:",
-        "   1. Focus on core business logic files first",
-        "   2. Add unit tests for utility functions",
-        "   3. Create integration tests for API endpoints",
-        "   4. Mock external dependencies to isolate code under test",
-        "   5. Use parameterized tests to increase test coverage efficiently",
-        "",
-        "📝 Next steps:",
-        "   - Run: python -m pytest tests/unit/path/to/file.py --cov=src/module --cov-report=term-missing",
-        "   - Target files that provide the most business value",
-        "   - Consider using test coverage tools like coverage-badge",
-    ])
+    recommendations.extend(
+        [
+            "💡 General recommendations:",
+            "   1. Focus on core business logic files first",
+            "   2. Add unit tests for utility functions",
+            "   3. Create integration tests for API endpoints",
+            "   4. Mock external dependencies to isolate code under test",
+            "   5. Use parameterized tests to increase test coverage efficiently",
+            "",
+            "📝 Next steps:",
+            "   - Run: python -m pytest tests/unit/path/to/file.py --cov=src/module --cov-report=term-missing",
+            "   - Target files that provide the most business value",
+            "   - Consider using test coverage tools like coverage-badge",
+        ]
+    )
 
     return recommendations
 
@@ -120,18 +130,20 @@ def main():
     # Run coverage analysis
     analysis = run_coverage_analysis()
 
-    if not analysis['success']:
+    if not analysis["success"]:
         print(f"❌ Coverage analysis failed: {analysis.get('error', 'Unknown error')}")
         return 1
 
-    coverage_data = analysis['coverage_data']
-    total_coverage = coverage_data.get('totals', {}).get('percent_covered', 0)
+    coverage_data = analysis["coverage_data"]
+    total_coverage = coverage_data.get("totals", {}).get("percent_covered", 0)
 
     print(f"📊 Current Total Coverage: {total_coverage:.1f}%")
     print()
 
     # Analyze by file
-    well_covered, needs_improvement, poorly_covered = analyze_coverage_files(coverage_data)
+    well_covered, needs_improvement, poorly_covered = analyze_coverage_files(
+        coverage_data
+    )
 
     print(f"✅ Well covered files (≥70%): {len(well_covered)}")
     print(f"⚠️  Files needing improvement (30-70%): {len(needs_improvement)}")

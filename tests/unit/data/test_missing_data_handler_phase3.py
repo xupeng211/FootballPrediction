@@ -174,9 +174,7 @@ class TestMissingDataHandlerFeatures:
         # 检查缺失值被填充
         assert not result.isnull().any().any()
         assert result.iloc[1, 0] == 50.0  # avg_possession的历史平均值
-        assert (
-            result.iloc[2, 1] == 12.5
-        )  # avg_shots_per_game的历史平均值（而不是中位数）
+        assert result.iloc[2, 1] == 12.5  # avg_shots_per_game的历史平均值（而不是中位数）
 
     @pytest.mark.asyncio
     async def test_handle_missing_features_all_missing(self):

@@ -388,9 +388,7 @@ class DataQualityMonitor:
                 ),
             }
 
-            self.logger.info(
-                f"数据质量报告生成完成，总体状态: {report['overall_status']}"
-            )
+            self.logger.info(f"数据质量报告生成完成，总体状态: {report['overall_status']}")
             return report
 
         except Exception as e:

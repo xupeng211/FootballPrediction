@@ -6,11 +6,12 @@ Fix AsyncMock patterns in multiple test files to improve coverage
 import re
 from pathlib import Path
 
+
 def fix_test_file(file_path):
     """Fix AsyncMock patterns in a specific test file"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Add MockAsyncResult classes if not present
@@ -44,31 +45,36 @@ class MockScalarResult:
 
 """
             # Insert after imports
-            import_match = re.search(r'(from unittest\.mock import .*?\n)', content)
+            import_match = re.search(r"(from unittest\.mock import .*?\n)", content)
             if import_match:
-                content = content[:import_match.end()] + "\n" + mock_classes + content[import_match.end():]
+                content = (
+                    content[: import_match.end()]
+                    + "\n"
+                    + mock_classes
+                    + content[import_match.end() :]
+                )
             else:
                 # Add after the last import
-                lines = content.split('\n')
+                lines = content.split("\n")
                 insert_idx = 0
                 for i, line in enumerate(lines):
-                    if line.startswith('from ') or line.startswith('import '):
+                    if line.startswith("from ") or line.startswith("import "):
                         insert_idx = i + 1
                 lines.insert(insert_idx, mock_classes)
-                content = '\n'.join(lines)
+                content = "\n".join(lines)
 
         # Pattern 1: Simple scalar_one_or_none pattern
-        pattern1 = r'(\s+)mock_result = AsyncMock\(\)\s+mock_result\.scalar_one_or_none\.return_value = ([^\s]+)\s+mock_session\.execute\.return_value = mock_result'
+        pattern1 = r"(\s+)mock_result = AsyncMock\(\)\s+mock_result\.scalar_one_or_none\.return_value = ([^\s]+)\s+mock_session\.execute\.return_value = mock_result"
 
         def replacement1(match):
             indent = match.group(1)
             mock_value = match.group(2)
-            return f'{indent}mock_session.execute.return_value = MockAsyncResult(scalar_one_or_none_result={mock_value})'
+            return f"{indent}mock_session.execute.return_value = MockAsyncResult(scalar_one_or_none_result={mock_value})"
 
         content = re.sub(pattern1, replacement1, content, flags=re.MULTILINE)
 
         # Write back
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
         print(f"Fixed {file_path}")
@@ -78,6 +84,7 @@ class MockScalarResult:
         print(f"Error fixing {file_path}: {e}")
         return False
 
+
 def main():
     """Fix key test files that likely have coverage impact"""
 
@@ -86,7 +93,7 @@ def main():
         "tests/unit/api/test_predictions_phase3.py",
         "tests/unit/api/test_monitoring_phase3.py",
         "tests/unit/models/test_prediction_service_phase3.py",
-        "tests/unit/models/test_model_training_phase3.py"
+        "tests/unit/models/test_model_training_phase3.py",
     ]
 
     for file_path in key_files:
@@ -96,6 +103,7 @@ def main():
             print(f"File not found: {file_path}")
 
     print("Async test fixes completed for key files!")
+
 
 if __name__ == "__main__":
     main()
