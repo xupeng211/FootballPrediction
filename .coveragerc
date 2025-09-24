@@ -11,13 +11,7 @@ omit =
     scripts/*
     */scripts/*
     setup.py
-    # Omit heavy integration/API layers from unit coverage fast path
-    src/api/*
-    src/data/*
-    src/services/*
-    src/utils/*
-    src/cache/*
-    src/monitoring/*
+    # 保留部分系统级模块的排除
     src/tasks/backup_tasks.py
     src/tasks/data_collection_tasks.py
     src/tasks/error_logger.py

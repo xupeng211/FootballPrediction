@@ -20,10 +20,15 @@ import pytest
 from prometheus_client import CollectorRegistry
 
 from src.data.quality.anomaly_detector import (
-    AdvancedAnomalyDetector, AnomalyDetectionResult,
-    MachineLearningAnomalyDetector, StatisticalAnomalyDetector,
-    anomalies_detected_total, anomaly_detection_coverage,
-    anomaly_detection_duration_seconds, data_drift_score)
+    AdvancedAnomalyDetector,
+    AnomalyDetectionResult,
+    MachineLearningAnomalyDetector,
+    StatisticalAnomalyDetector,
+    anomalies_detected_total,
+    anomaly_detection_coverage,
+    anomaly_detection_duration_seconds,
+    data_drift_score,
+)
 
 
 class TestAnomalyDetectionResult:
@@ -724,7 +729,9 @@ class TestEdgeCases:
 
     def test_very_large_numbers(self, detector):
         """测试极大数值"""
-        large_numbers = pd.Series([1e10, 1e10 + 1, 1e10 + 2, 1e15])  # 包含一个异常大的值
+        large_numbers = pd.Series(
+            [1e10, 1e10 + 1, 1e10 + 2, 1e15]
+        )  # 包含一个异常大的值
 
         result = detector.detect_outliers_3sigma(
             large_numbers, "test_table", "test_column"

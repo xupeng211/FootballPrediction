@@ -346,7 +346,7 @@ class DatabaseBackupTask(Task):
         try:
             logger.info(f"开始执行 {backup_type} 备份: {' '.join(cmd)}")
 
-            # 执行备份脚本
+            # 执行备份脚本，使用列表形式避免shell注入风险
             result = subprocess.run(
                 cmd, capture_output=True, text=True, env=env, timeout=3600  # 1小时超时
             )
@@ -437,7 +437,7 @@ class DatabaseBackupTask(Task):
 
             if backup_type == "full":
                 backup_dir = os.path.join(backup_base_dir, "full")
-                # 查找最新的压缩备份文件 - 使用安全的参数化方式
+                # 查找最新的压缩备份文件 - 使用安全的参数化方式，避免shell注入
                 cmd = [
                     "find",
                     backup_dir,
@@ -458,7 +458,7 @@ class DatabaseBackupTask(Task):
                 return None
             elif backup_type == "incremental":
                 backup_dir = os.path.join(backup_base_dir, "incremental")
-                # 查找最新增量备份目录大小 - 使用安全的参数化方式
+                # 查找最新增量备份目录大小 - 使用安全的参数化方式，避免shell注入
                 cmd = [
                     "find",
                     backup_dir,
@@ -473,7 +473,7 @@ class DatabaseBackupTask(Task):
                 if find_result.returncode == 0 and find_result.stdout.strip():
                     dirs = find_result.stdout.strip().split("\n")
                     if dirs and dirs[0]:
-                        # 获取最新目录的大小
+                        # 获取最新目录的大小 - 使用安全的参数化方式，避免shell注入
                         latest_dir = max(dirs)
                         du_cmd = ["du", "-sb", latest_dir]
                         du_result = subprocess.run(
@@ -517,7 +517,9 @@ class DatabaseBackupTask(Task):
                 logger.info(f"备份文件验证成功: {backup_file_path}")
                 return True
             else:
-                logger.error(f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}")
+                logger.error(
+                    f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}"
+                )
                 return False
 
         except subprocess.TimeoutExpired:
@@ -713,7 +715,7 @@ def verify_backup_task(
     """
     logger.info(f"开始验证备份文件: {backup_file_path}")
 
-    # 使用恢复脚本的验证功能
+    # 使用恢复脚本的验证功能，使用列表形式避免shell注入风险
     cmd = [self.restore_script_path, "--validate", backup_file_path]
 
     try:
@@ -783,7 +785,7 @@ def get_backup_status():
     try:
         backup_base_dir = os.getenv("BACKUP_DIR", "/backup/football_db")
 
-        # 统计备份文件数量和大小
+        # 统计备份文件数量和大小 - 使用安全的参数化方式，避免shell注入
         stats = {
             "full_backups": {"count": 0, "total_size_bytes": 0, "latest_backup": None},
             "incremental_backups": {
@@ -794,7 +796,7 @@ def get_backup_status():
             "timestamp": datetime.now().isoformat(),
         }
 
-        # 统计全量备份 - 使用安全的参数化方式
+        # 统计全量备份 - 使用安全的参数化方式，避免shell注入
         full_backup_dir = os.path.join(backup_base_dir, "full")
         if os.path.exists(full_backup_dir):
             cmd = [
@@ -832,7 +834,7 @@ def get_backup_status():
                     "latest_backup": latest_backup,
                 }
 
-        # 统计增量备份 - 使用安全的参数化方式
+        # 统计增量备份 - 使用安全的参数化方式，避免shell注入
         incremental_backup_dir = os.path.join(backup_base_dir, "incremental")
         if os.path.exists(incremental_backup_dir):
             cmd = [

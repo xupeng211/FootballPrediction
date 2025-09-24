@@ -251,7 +251,9 @@ class TestBronzeSilverGoldFlow:
             data_processing_service, "process_bronze_to_silver"
         ) as mock_process:
             # 模拟数据质量检查失败
-            mock_process.side_effect = DataQualityError("数据质量验证失败：缺少必填字段")
+            mock_process.side_effect = DataQualityError(
+                "数据质量验证失败：缺少必填字段"
+            )
 
             # 验证数据质量异常被正确捕获
             with pytest.raises(DataQualityError) as exc_info:

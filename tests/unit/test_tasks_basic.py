@@ -8,8 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch  # noqa: F401
 import pytest
 
 from src.tasks.error_logger import TaskErrorLogger
-from src.tasks.utils import (calculate_next_collection_time,
-                             should_collect_live_scores)
+from src.tasks.utils import calculate_next_collection_time, should_collect_live_scores
 
 
 class TestTaskErrorLogger:

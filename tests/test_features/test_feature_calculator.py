@@ -16,10 +16,12 @@ import pytest
 
 from src.features.entities import MatchEntity, TeamEntity
 from src.features.feature_calculator import FeatureCalculator
-from src.features.feature_definitions import (AllMatchFeatures,
-                                              HistoricalMatchupFeatures,
-                                              OddsFeatures,
-                                              RecentPerformanceFeatures)
+from src.features.feature_definitions import (
+    AllMatchFeatures,
+    HistoricalMatchupFeatures,
+    OddsFeatures,
+    RecentPerformanceFeatures,
+)
 
 
 def pytest_db_available():
@@ -82,7 +84,9 @@ def sample_match_entity():
 @pytest.fixture
 def sample_team_entity():
     """示例球队实体"""
-    return TeamEntity(team_id=1, team_name="测试球队", league_id=1, home_venue="测试球场")
+    return TeamEntity(
+        team_id=1, team_name="测试球队", league_id=1, home_venue="测试球场"
+    )
 
 
 class TestFeatureCalculator:

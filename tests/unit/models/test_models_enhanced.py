@@ -3,9 +3,14 @@
 针对src/models目录的核心功能测试
 """
 
-from src.models.common_models import (DataValidationResult, FeatureVector,
-                                      MatchData, ModelMetrics,
-                                      PredictionRequest, PredictionResponse)
+from src.models.common_models import (
+    DataValidationResult,
+    FeatureVector,
+    MatchData,
+    ModelMetrics,
+    PredictionRequest,
+    PredictionResponse,
+)
 
 
 class TestPredictionRequest:

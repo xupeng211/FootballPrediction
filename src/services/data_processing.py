@@ -18,8 +18,7 @@ from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 from src.data.storage.data_lake_storage import DataLakeStorage
 from src.database.connection import DatabaseManager
-from src.database.models.raw_data import (RawMatchData, RawOddsData,
-                                          RawScoresData)
+from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
 from .base import BaseService
 
@@ -61,7 +60,9 @@ class DataProcessingService(BaseService):
             # 初始化缓存管理器
             self.cache_manager = RedisManager()
 
-            self.logger.info("数据处理服务初始化完成：清洗器、缺失值处理器、数据湖存储、数据库连接、缓存管理器")
+            self.logger.info(
+                "数据处理服务初始化完成：清洗器、缺失值处理器、数据湖存储、数据库连接、缓存管理器"
+            )
             return True
 
         except Exception as e:
@@ -195,7 +196,9 @@ class DataProcessingService(BaseService):
                     cache_key, processed_data, cache_type="match_info"
                 )
 
-            self.logger.debug(f"成功处理比赛数据: {processed_data.get('external_match_id')}")
+            self.logger.debug(
+                f"成功处理比赛数据: {processed_data.get('external_match_id')}"
+            )
             return processed_data
 
         except Exception as e:
@@ -286,7 +289,9 @@ class DataProcessingService(BaseService):
                 self.logger.error(f"批量处理比赛数据时出错: {str(e)}")
                 continue
 
-        self.logger.info(f"批量处理完成: {len(processed_matches)}/{len(raw_matches)} 条记录成功")
+        self.logger.info(
+            f"批量处理完成: {len(processed_matches)}/{len(raw_matches)} 条记录成功"
+        )
         return processed_matches
 
     async def validate_data_quality(
@@ -497,7 +502,9 @@ class DataProcessingService(BaseService):
                         processed_count += 1
 
                     except Exception as e:
-                        self.logger.error(f"处理比赛数据失败 (ID: {raw_match.id}): {str(e)}")
+                        self.logger.error(
+                            f"处理比赛数据失败 (ID: {raw_match.id}): {str(e)}"
+                        )
                         continue
 
                 if processed_matches:
@@ -583,7 +590,9 @@ class DataProcessingService(BaseService):
                             processed_count += 1
 
                     except Exception as e:
-                        self.logger.error(f"处理比赛 {match_id} 的赔率数据失败: {str(e)}")
+                        self.logger.error(
+                            f"处理比赛 {match_id} 的赔率数据失败: {str(e)}"
+                        )
                         continue
 
                 if all_processed_odds:
@@ -668,7 +677,9 @@ class DataProcessingService(BaseService):
                         processed_count += 1
 
                     except Exception as e:
-                        self.logger.error(f"处理比分数据失败 (ID: {raw_scores.id}): {str(e)}")
+                        self.logger.error(
+                            f"处理比分数据失败 (ID: {raw_scores.id}): {str(e)}"
+                        )
                         continue
 
                 if processed_scores:

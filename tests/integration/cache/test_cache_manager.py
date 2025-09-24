@@ -24,10 +24,17 @@ pytestmark = pytest.mark.integration
 
 from redis.exceptions import ConnectionError, RedisError, TimeoutError
 
-from src.cache.redis_manager import (CacheKeyManager, RedisManager,
-                                     adelete_cache, aget_cache, aset_cache,
-                                     delete_cache, get_cache,
-                                     get_redis_manager, set_cache)
+from src.cache.redis_manager import (
+    CacheKeyManager,
+    RedisManager,
+    adelete_cache,
+    aget_cache,
+    aset_cache,
+    delete_cache,
+    get_cache,
+    get_redis_manager,
+    set_cache,
+)
 
 
 class TestCacheKeyManager:

@@ -17,7 +17,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -27,6 +27,7 @@ if str(ROOT) not in os.sys.path:
     os.sys.path.insert(0, str(ROOT))
 
 from src.database.config import get_test_database_config  # noqa: E402
+from src.database.base import Base  # noqa: E402
 from src.database.models.league import League  # noqa: E402
 from src.database.models.match import Match, MatchStatus  # noqa: E402
 from src.database.models.team import Team  # noqa: E402
@@ -118,10 +119,21 @@ def run_migrations(db_config) -> None:
     logger.info("Alembic upgrade head completed")
 
 
+def ensure_schema(db_config) -> None:
+    """Ensure all ORM models have backing tables (fallback for empty databases)."""
+    engine = create_engine(db_config.sync_url, future=True)
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("SQLAlchemy metadata create_all completed")
+    finally:
+        engine.dispose()
+
+
 async def main() -> None:
     os.environ.setdefault("ENVIRONMENT", "test")
     db_config = get_test_database_config()
     run_migrations(db_config)
+    ensure_schema(db_config)
 
     engine = create_async_engine(db_config.async_url, future=True)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

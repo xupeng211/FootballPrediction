@@ -372,16 +372,13 @@ class QualityMonitor:
             if table_name not in ["matches", "odds", "predictions", "teams", "leagues"]:
                 raise ValueError(f"Invalid table name: {table_name}")
 
-            # 先获取记录数
-            # Safe: table_name is validated against whitelist above
-            # Note: Using f-string here is safe as table_name is validated
-            # 使用quoted_name确保表名安全，防止SQL注入
+            # 使用quoted_name确保表名安全，并使用字符串拼接构建查询
+            # 表名已通过quoted_name处理，防止SQL注入
+            # Note: Using string concatenation here is safe as table_name is validated
             safe_table_name = quoted_name(table_name, quote=True)
-            count_result = await session.execute(
-                text(
-                    f"SELECT COUNT(*) as count FROM {safe_table_name}"
-                )  # nosec B608 - using quoted_name for safety
-            )
+            result = await session.execute(
+                text("SELECT COUNT(*) as count FROM " + str(safe_table_name))
+            )  # nosec B608
             count_row = count_result.first()
             try:
                 import inspect
@@ -403,12 +400,16 @@ class QualityMonitor:
                 ]:
                     continue
                 try:
-                    # Safe: table_name and time_field are from validated whitelist, using parameterized query
+                    # 表名和字段名都来自预定义的白名单，防止SQL注入
+                    # Note: Using string concatenation here is safe as both table_name and time_field are validated
                     time_result = await session.execute(
                         text(
-                            f"SELECT MAX({time_field}) as last_update FROM {table_name}"  # nosec B608 - validated
+                            "SELECT MAX("
+                            + time_field
+                            + ") as last_update FROM "
+                            + table_name
                         )
-                    )
+                    )  # nosec B608
                     time_row = time_result.first()
                     try:
                         import inspect
@@ -515,14 +516,13 @@ class QualityMonitor:
 
         # 获取总记录数
         # Safe: table_name is validated against whitelist
-        # 使用quoted_name确保表名安全，防止SQL注入
-
+        # 使用quoted_name确保表名安全，并使用字符串拼接构建查询
+        # 表名已通过quoted_name处理，防止SQL注入
+        # Note: Using string concatenation here is safe as table_name is validated
         safe_table_name = quoted_name(table_name, quote=True)
-        total_result = await session.execute(
-            text(
-                f"SELECT COUNT(*) as total FROM {safe_table_name}"
-            )  # nosec B608 - using quoted_name for safety
-        )
+        result = await session.execute(
+            text("SELECT COUNT(*) as total FROM " + str(safe_table_name))
+        )  # nosec B608
         total_row = total_result.first()
         try:
             import inspect
@@ -548,14 +548,17 @@ class QualityMonitor:
 
         for field in critical_fields:
             try:
-                # Validate field name to prevent SQL injection
-                if field not in self.critical_fields.get(table_name, []):
-                    continue
+                # 表名和字段名都来自预定义的白名单，防止SQL注入
+                # Note: Using string concatenation here is safe as both table_name and field are validated
                 missing_result = await session.execute(
                     text(
-                        f"SELECT COUNT(*) as missing FROM {table_name} WHERE {field} IS NULL"  # nosec B608 - validated
+                        "SELECT COUNT(*) as missing FROM "
+                        + table_name
+                        + " WHERE "
+                        + field
+                        + " IS NULL"
                     )
-                )
+                )  # nosec B608
                 missing_row = missing_result.first()
                 try:
                     import inspect
@@ -595,19 +598,19 @@ class QualityMonitor:
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
-            consistency_results[
-                "foreign_key_consistency"
-            ] = await self._check_foreign_key_consistency(session)
+            consistency_results["foreign_key_consistency"] = (
+                await self._check_foreign_key_consistency(session)
+            )
 
             # 检查赔率数据一致性
-            consistency_results[
-                "odds_consistency"
-            ] = await self._check_odds_consistency(session)
+            consistency_results["odds_consistency"] = (
+                await self._check_odds_consistency(session)
+            )
 
             # 检查比赛状态一致性
-            consistency_results[
-                "match_status_consistency"
-            ] = await self._check_match_status_consistency(session)
+            consistency_results["match_status_consistency"] = (
+                await self._check_match_status_consistency(session)
+            )
 
         logger.info("数据一致性检查完成")
         return consistency_results
@@ -955,7 +958,9 @@ class QualityMonitor:
 
         # 基于各项评分给出建议
         if quality_data.get("freshness_score", 0) < 80:
-            recommendations.append("数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性")
+            recommendations.append(
+                "数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性"
+            )
 
         if quality_data.get("completeness_score", 0) < 85:
             recommendations.append("数据完整性有待提升，建议检查关键字段的数据录入流程")

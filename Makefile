@@ -9,7 +9,7 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 20
+COVERAGE_THRESHOLD := 70
 IMAGE_NAME ?= football-prediction
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
@@ -108,13 +108,13 @@ test: ## Test: Run pytest unit tests
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
 
-coverage: ## Test: Run tests with coverage report (threshold: 60%)
+coverage: ## Test: Run tests with coverage report (threshold: 70%)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running coverage tests...$(RESET)" && \
 	pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
-coverage-fast: ## Test: Run fast coverage (unit tests only, 60% threshold)
+coverage-fast: ## Test: Run fast coverage (unit tests only, 70% threshold)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
 	pytest tests/unit/ \
