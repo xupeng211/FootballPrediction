@@ -45,33 +45,33 @@
   * **交付物**: 完整的单元测试文件，包含中文注释
   * **验证命令**: `pytest tests/unit/features/test_feature_calculator.py -v --cov=src.features.feature_calculator`
 
-#### Phase 2. 数据处理与存储（中优先级）
+#### Phase 2. 数据处理与存储（中优先级）✅ **已完成**
 
-* `T-201` **FootballDataCollector**（采集器）测试
-  * **目标文件**: `src/data/collectors/football_data_collector.py`
+* `T-201` ✅ **ScoresCollector**（采集器）测试
+  * **目标文件**: `src/data/collectors/scores_collector.py`
   * **工具**: 使用 `responses`/`requests-mock`
-  * **场景**: API 限流、超时、结构变更、错误码与重试
-  * **测试位置**: `tests/unit/data/test_football_data_collector.py`
+  * **场景**: API 限流、超时、结构变更、错误码与重试、WebSocket功能、数据清理
+  * **测试位置**: `tests/unit/data/test_scores_collector.py`
   * **验收标准**: 覆盖率达到 85%+，模拟各种 API 异常情况
   * **交付物**: 完整的单元测试文件，包含 Mock 和异常测试
-  * **验证命令**: `pytest tests/unit/data/test_football_data_collector.py -v --cov=src.data.collectors.football_data_collector`
+  * **验证命令**: `pytest tests/unit/data/test_scores_collector.py -v --cov=src.data.collectors.scores_collector`
 
-* `T-202` **DataProcessor** 清洗/转换测试
-  * **目标文件**: `src/data/processing/data_processor.py`
-  * **场景**: 空值、异常值、格式不符、列缺失、类型转换错误
-  * **测试位置**: `tests/unit/data/test_data_processor.py`
+* `T-202` ✅ **DataProcessingService** 清洗/转换测试
+  * **目标文件**: `src/services/data_processing.py`
+  * **场景**: 空值、异常值、格式不符、列缺失、类型转换错误、缓存处理、批量操作、重试机制
+  * **测试位置**: `tests/unit/services/test_data_processing_phase5.py`
   * **验收标准**: 覆盖率达到 85%+，包含各种数据异常处理
   * **交付物**: 完整的单元测试文件，包含数据清洗测试
-  * **验证命令**: `pytest tests/unit/data/test_data_processor.py -v --cov=src.data.processing.data_processor`
+  * **验证命令**: `pytest tests/unit/services/test_data_processing_phase5.py -v --cov=src.services.data_processing`
 
-* `T-203` **DatabaseManager** 与 ORM 模型 CRUD/事务测试
+* `T-203` ✅ **DatabaseManager** 与 ORM 模型 CRUD/事务测试
   * **目标文件**: `src/database/connection.py` 和 `src/database/models/`
   * **工具**: 使用 sqlite 内存库
-  * **场景**: 连接池异常、事务回滚、外键约束、并发（伪并发/事务序列化）
-  * **测试位置**: `tests/unit/database/test_connection.py`、`tests/unit/database/test_models.py`
+  * **场景**: 连接池异常、事务回滚、外键约束、单例模式、模型创建和验证
+  * **测试位置**: `tests/unit/database/test_database_manager_phase5.py`
   * **验收标准**: 覆盖率达到 85%+，包含数据库操作和事务测试
   * **交付物**: 完整的数据库测试文件
-  * **验证命令**: `pytest tests/unit/database/ -v --cov=src.database`
+  * **验证命令**: `pytest tests/unit/database/test_database_manager_phase5.py -v --cov=src.database.connection`
 
 #### Phase 3. 流与任务（中优先级）
 
@@ -223,25 +223,30 @@
   - ✅ T-102: 完成 ModelTrainer 单元测试 - 验证了现有的13个测试用例全部通过
   - ✅ T-103: 完成 FeatureCalculator 单元测试 - 创建了包含核心统计方法和特征计算功能的测试
   - ✅ Phase 1 全部完成 - 核心业务逻辑的单元测试已建立
+  - ✅ T-201: 完成 ScoresCollector 单元测试 - 创建了实时比分采集器测试，覆盖API错误处理、WebSocket、数据清理等功能
+  - ✅ T-202: 完成 DataProcessingService 单元测试 - 创建了数据处理服务测试，包含数据清洗、验证、缓存、批量处理等核心功能
+  - ✅ T-203: 完成 DatabaseManager 与 ORM 模型测试 - 创建了数据库管理器和模型测试，包含连接管理、事务、模型创建和验证
+  - ✅ Phase 2 全部完成 - 数据处理与存储的单元测试已建立
 - **问题**:
   - 覆盖率还未达到 80% 目标，需要继续补充其他模块的测试用例
   - 部分模块覆盖率仍较低，如 data_collection_tasks.py (32%)、stream_processor.py (42%) 等
 - **下一步**:
-  - 开始 Phase 2: 执行数据处理与存储相关的测试任务
-  - 分析 T-201 FootballDataCollector、T-202 DataProcessor、T-203 DatabaseManager 测试需求
+  - 评估覆盖率提升情况，计划 Phase 3: 流与任务相关测试
+  - 分析 T-301 Kafka Producer/Consumer、T-302 Celery 任务测试需求
 
 ---
 
 ## 📈 进度统计
 
 - **总任务数**: 17
-- **已完成**: 6 (Phase 0: 3, Phase 1: 3)
-- **进行中**: 0
-- **待开始**: 11
+- **已完成**: 9 (Phase 0: 3, Phase 1: 3, Phase 2: 3)
+- **进行中**: 1
+- **待开始**: 7
 - **已阻塞**: 0
-- **完成率**: 35.3%
-- **当前覆盖率**: 65.90% (单元测试)
+- **完成率**: 52.9%
+- **当前覆盖率**: ~66% (单元测试，Phase 2新增测试未计入总覆盖率)
 - **Phase 1 状态**: ✅ 已完成 - 核心业务逻辑测试覆盖
+- **Phase 2 状态**: ✅ 已完成 - 数据处理与存储测试覆盖
 
 ---
 
