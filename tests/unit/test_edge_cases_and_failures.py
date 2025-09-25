@@ -293,7 +293,9 @@ class TestEdgeCasesAndFailureScenarios:
         mock_mlflow_client.get_latest_versions.return_value = []
 
         # 获取模型应该失败
-        with pytest.raises(ValueError, match="模型 football_baseline_model 没有可用版本"):
+        with pytest.raises(
+            ValueError, match="模型 football_baseline_model 没有可用版本"
+        ):
             await prediction_service.get_production_model()
 
     # ================================

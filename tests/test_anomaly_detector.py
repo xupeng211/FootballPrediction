@@ -729,7 +729,9 @@ class TestEdgeCases:
 
     def test_very_large_numbers(self, detector):
         """测试极大数值"""
-        large_numbers = pd.Series([1e10, 1e10 + 1, 1e10 + 2, 1e15])  # 包含一个异常大的值
+        large_numbers = pd.Series(
+            [1e10, 1e10 + 1, 1e10 + 2, 1e15]
+        )  # 包含一个异常大的值
 
         result = detector.detect_outliers_3sigma(
             large_numbers, "test_table", "test_column"

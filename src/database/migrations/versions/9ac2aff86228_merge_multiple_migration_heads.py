@@ -5,6 +5,7 @@ Revises: 002_add_raw_scores_data_and_upgrade_jsonb, 005, 09d03cebf664, a20f91c49
 Create Date: 2025-09-25 14:22:58.998396
 
 """
+
 from typing import Sequence, Union
 
 # revision identifiers, used by Alembic.

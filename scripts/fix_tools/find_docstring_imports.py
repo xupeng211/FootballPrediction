@@ -62,12 +62,16 @@ def main():
             issues_found[filepath] = issues
             total_issues += len(issues)
 
-    print(f"\n发现 {total_issues} 个文档字符串导入问题，涉及 {len(issues_found)} 个文件\n")
+    print(
+        f"\n发现 {total_issues} 个文档字符串导入问题，涉及 {len(issues_found)} 个文件\n"
+    )
 
     for filepath, issues in issues_found.items():
         print(f"📁 {filepath}")
         for issue in issues:
-            print(f"  📜 文档字符串 {issue['docstring_index']}: {issue['docstring_preview']}")
+            print(
+                f"  📜 文档字符串 {issue['docstring_index']}: {issue['docstring_preview']}"
+            )
             for imp in issue["imports"]:
                 print(f"    ❌ {imp}")
         print()

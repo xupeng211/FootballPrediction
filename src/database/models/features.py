@@ -46,11 +46,17 @@ class Features(BaseModel):
     )
 
     # 近期表现（最近5场）
-    recent_5_wins: Mapped[int] = mapped_column(Integer, default=0, comment="近5场胜利数")
+    recent_5_wins: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场胜利数"
+    )
 
-    recent_5_draws: Mapped[int] = mapped_column(Integer, default=0, comment="近5场平局数")
+    recent_5_draws: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场平局数"
+    )
 
-    recent_5_losses: Mapped[int] = mapped_column(Integer, default=0, comment="近5场失败数")
+    recent_5_losses: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场失败数"
+    )
 
     recent_5_goals_for: Mapped[int] = mapped_column(
         Integer, default=0, comment="近5场进球数"
@@ -92,7 +98,9 @@ class Features(BaseModel):
     goal_difference = mapped_column(Integer, nullable=True, comment="净胜球")
 
     # 其他特征
-    days_since_last_match = mapped_column(Integer, nullable=True, comment="距离上场比赛天数")
+    days_since_last_match = mapped_column(
+        Integer, nullable=True, comment="距离上场比赛天数"
+    )
 
     is_derby = mapped_column(Boolean, nullable=True, comment="是否为德比战")
 
