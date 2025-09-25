@@ -271,11 +271,20 @@ def upgrade() -> None:
         )
     )
 
-    # features 表索引
+    # features 表索引（只在索引不存在时创建）
     conn.execute(
         text(
             """
-        CREATE INDEX idx_features_match_team ON features (match_id, team_id);
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE tablename = 'features'
+                AND indexname = 'idx_features_match_team'
+            ) THEN
+                CREATE INDEX idx_features_match_team ON features (match_id, team_id);
+            END IF;
+        END $$;
     """
         )
     )
@@ -283,7 +292,16 @@ def upgrade() -> None:
     conn.execute(
         text(
             """
-        CREATE INDEX idx_features_team_created ON features (team_id, created_at DESC);
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE tablename = 'features'
+                AND indexname = 'idx_features_team_created'
+            ) THEN
+                CREATE INDEX idx_features_team_created ON features (team_id, created_at DESC);
+            END IF;
+        END $$;
     """
         )
     )
