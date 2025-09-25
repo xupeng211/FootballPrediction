@@ -632,7 +632,9 @@ def downgrade() -> None:
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过性能优化回滚")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database performance optimization rollback")
+        op.execute(
+            "-- offline mode: skipped database performance optimization rollback"
+        )
         op.execute("-- offline mode: skipped materialized views removal")
         op.execute("-- offline mode: skipped foreign key constraints removal")
         op.execute("-- offline mode: skipped trigger functions removal")

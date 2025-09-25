@@ -6,7 +6,6 @@ Analyzes which dependencies from requirements.txt are actually used in the codeb
 """
 
 import ast
-import os
 import re
 from pathlib import Path
 
