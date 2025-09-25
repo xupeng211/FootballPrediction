@@ -79,9 +79,7 @@ class MockAlertVerificationTester:
             # 模拟采集失败（50%失败率）
             if secrets.randbelow(2) == 0:
                 self.mock_metrics["football_data_collection_errors_total"] += 1
-                print(
-                    f"    ❌ 模拟 {data_source}/{collection_type} 采集失败: {error_type}"
-                )
+                print(f"    ❌ 模拟 {data_source}/{collection_type} 采集失败: {error_type}")
             else:
                 print(f"    ✅ 模拟 {data_source}/{collection_type} 采集成功")
 
@@ -135,9 +133,7 @@ class MockAlertVerificationTester:
             "failures_simulated": len(failure_scenarios),
         }
 
-        print(
-            f"  ✅ 采集失败验证完成: 成功={result['success']} (失败率: {error_rate:.2%})"
-        )
+        print(f"  ✅ 采集失败验证完成: 成功={result['success']} (失败率: {error_rate:.2%})")
         return result
 
     async def verify_scheduler_delay(self) -> Dict[str, Any]:
@@ -159,9 +155,9 @@ class MockAlertVerificationTester:
         print("  🔥 制造调度延迟场景...")
         for task_name, delay_seconds in delayed_tasks:
             # 模拟设置延迟指标
-            self.mock_metrics[f"football_scheduler_task_delay_seconds_{task_name}"] = (
-                delay_seconds
-            )
+            self.mock_metrics[
+                f"football_scheduler_task_delay_seconds_{task_name}"
+            ] = delay_seconds
             print(f"    ⏰ 设置任务 {task_name} 延迟: {delay_seconds}秒")
             await asyncio.sleep(0.1)
 
@@ -210,9 +206,7 @@ class MockAlertVerificationTester:
             "max_delay": max(delay_seconds for _, delay_seconds in delayed_tasks),
         }
 
-        print(
-            f"  ✅ 调度延迟验证完成: 成功={result['success']} (高延迟任务: {len(high_delay_tasks)})"
-        )
+        print(f"  ✅ 调度延迟验证完成: 成功={result['success']} (高延迟任务: {len(high_delay_tasks)})")
         return result
 
     async def verify_prometheus_metrics(self) -> Dict[str, Any]:
@@ -303,8 +297,9 @@ class MockAlertVerificationTester:
         for alert_name, status in alert_statuses.items():
             if status.get("active"):
                 # 邮件通知示例
-                examples[f"{alert_name}_email"] = (
-                    f"""
+                examples[
+                    f"{alert_name}_email"
+                ] = f"""
 主题: 🚨 Football Platform Alert: {alert_name}
 
 告警: {status.get('summary', alert_name)}
@@ -328,11 +323,11 @@ class MockAlertVerificationTester:
 监控仪表盘: http://localhost:3000/d/football-monitoring
 告警管理: http://localhost:9093
                 """.strip()
-                )
 
                 # Slack通知示例
-                examples[f"{alert_name}_slack"] = (
-                    f"""
+                examples[
+                    f"{alert_name}_slack"
+                ] = f"""
 🚨 *Football Platform Critical Alert*
 
 *{status.get('summary', alert_name)}*
@@ -353,7 +348,6 @@ class MockAlertVerificationTester:
 
 ⚡ 请立即处理！
                 """.strip()
-                )
 
         return examples
 
