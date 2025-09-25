@@ -16,9 +16,15 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.models import (get_active_models, get_model_performance,
-                            get_model_versions, mlflow_client,
-                            prediction_service, promote_model_version, router)
+from src.api.models import (
+    get_active_models,
+    get_model_performance,
+    get_model_versions,
+    mlflow_client,
+    prediction_service,
+    promote_model_version,
+    router,
+)
 
 
 @pytest.fixture

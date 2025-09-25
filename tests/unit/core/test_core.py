@@ -11,8 +11,15 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.core import (Config, ConfigError, DataError, FootballPredictionError,
-                      Logger, config, logger)
+from src.core import (
+    Config,
+    ConfigError,
+    DataError,
+    FootballPredictionError,
+    Logger,
+    config,
+    logger,
+)
 
 
 class TestConfig:

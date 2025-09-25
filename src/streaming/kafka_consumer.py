@@ -17,8 +17,7 @@ from typing import Any, Dict, List, Optional
 from confluent_kafka import Consumer, KafkaError, KafkaException
 
 from src.database.connection import DatabaseManager
-from src.database.models.raw_data import (RawMatchData, RawOddsData,
-                                          RawScoresData)
+from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
 from .stream_config import StreamConfig
 

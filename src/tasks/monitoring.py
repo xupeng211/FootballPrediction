@@ -12,13 +12,14 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
-from prometheus_client import (REGISTRY, CollectorRegistry, Counter, Gauge,
-                               Histogram)
+from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
-from src.database.sql_compatibility import (CompatibleQueryBuilder,
-                                            get_db_type_from_engine)
+from src.database.sql_compatibility import (
+    CompatibleQueryBuilder,
+    get_db_type_from_engine,
+)
 
 logger = logging.getLogger(__name__)
 

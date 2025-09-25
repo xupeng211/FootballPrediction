@@ -3,13 +3,11 @@
 测试FootballFeatureStore类的所有功能
 """
 
-import logging
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
 import pytest
-from sqlalchemy import text
 
 from src.features.feature_store import FootballFeatureStore
 

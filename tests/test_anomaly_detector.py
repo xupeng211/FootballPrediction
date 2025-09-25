@@ -20,10 +20,15 @@ import pytest
 from prometheus_client import CollectorRegistry
 
 from src.data.quality.anomaly_detector import (
-    AdvancedAnomalyDetector, AnomalyDetectionResult,
-    MachineLearningAnomalyDetector, StatisticalAnomalyDetector,
-    anomalies_detected_total, anomaly_detection_coverage,
-    anomaly_detection_duration_seconds, data_drift_score)
+    AdvancedAnomalyDetector,
+    AnomalyDetectionResult,
+    MachineLearningAnomalyDetector,
+    StatisticalAnomalyDetector,
+    anomalies_detected_total,
+    anomaly_detection_coverage,
+    anomaly_detection_duration_seconds,
+    data_drift_score,
+)
 
 
 class TestAnomalyDetectionResult:

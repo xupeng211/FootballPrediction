@@ -16,10 +16,12 @@ import pytest
 
 from src.features.entities import MatchEntity, TeamEntity
 from src.features.feature_calculator import FeatureCalculator
-from src.features.feature_definitions import (AllMatchFeatures,
-                                              HistoricalMatchupFeatures,
-                                              OddsFeatures,
-                                              RecentPerformanceFeatures)
+from src.features.feature_definitions import (
+    AllMatchFeatures,
+    HistoricalMatchupFeatures,
+    OddsFeatures,
+    RecentPerformanceFeatures,
+)
 
 
 def pytest_db_available():

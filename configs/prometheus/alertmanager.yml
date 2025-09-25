@@ -1,0 +1,88 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@football-prediction.com'
+  smtp_auth_username: 'alerts@football-prediction.com'
+  smtp_auth_password: 'your-email-password'
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  group_by: ['alertname', 'severity', 'component']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      continue: true
+
+receivers:
+- name: 'web.hook'
+  webhook_configs:
+  - url: 'http://127.0.0.1:5001/'
+
+- name: 'critical-alerts'
+  email_configs:
+  - to: 'team-critical@football-prediction.com'
+    subject: '[CRITICAL] {{ .GroupLabels.alertname }} - {{ .GroupLabels.component }}'
+    body: |
+      {{ range .Alerts }}
+      告警名称: {{ .Annotations.summary }}
+      告警描述: {{ .Annotations.description }}
+      严重程度: {{ .Labels.severity }}
+      组件: {{ .Labels.component }}
+      实例: {{ .Labels.instance }}
+      开始时间: {{ .StartsAt }}
+      运行手册: {{ .Annotations.runbook_url }}
+      {{ end }}
+  webhook_configs:
+  - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    send_resolved: true
+    title: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    text: |
+      {{ range .Alerts }}
+      *告警:* {{ .Annotations.summary }}
+      *描述:* {{ .Annotations.description }}
+      *组件:* {{ .Labels.component }}
+      *详情:* {{ .GeneratorURL }}
+      {{ end }}
+
+- name: 'warning-alerts'
+  email_configs:
+  - to: 'team-warning@football-prediction.com'
+    subject: '[WARNING] {{ .GroupLabels.alertname }} - {{ .GroupLabels.component }}'
+    body: |
+      {{ range .Alerts }}
+      告警名称: {{ .Annotations.summary }}
+      告警描述: {{ .Annotations.description }}
+      严重程度: {{ .Labels.severity }}
+      组件: {{ .Labels.component }}
+      实例: {{ .Labels.instance }}
+      开始时间: {{ .StartsAt }}
+      运行手册: {{ .Annotations.runbook_url }}
+      {{ end }}
+  webhook_configs:
+  - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    send_resolved: true
+    title: '[WARNING] {{ .GroupLabels.alertname }}'
+    text: |
+      {{ range .Alerts }}
+      *告警:* {{ .Annotations.summary }}
+      *描述:* {{ .Annotations.description }}
+      *组件:* {{ .Labels.component }}
+      *详情:* {{ .GeneratorURL }}
+      {{ end }}
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component', 'instance']

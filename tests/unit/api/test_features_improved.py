@@ -18,8 +18,11 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.features_improved import (features_health_check,
-                                       get_match_features_improved, router)
+from src.api.features_improved import (
+    features_health_check,
+    get_match_features_improved,
+    router,
+)
 
 
 class TestFeaturesImprovedAPI:

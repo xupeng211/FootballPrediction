@@ -22,9 +22,13 @@ from ..database.connection import DatabaseManager
 from ..database.models.match import Match
 from ..database.models.odds import Odds
 from .entities import MatchEntity, TeamEntity
-from .feature_definitions import (AllMatchFeatures, AllTeamFeatures,
-                                  HistoricalMatchupFeatures, OddsFeatures,
-                                  RecentPerformanceFeatures)
+from .feature_definitions import (
+    AllMatchFeatures,
+    AllTeamFeatures,
+    HistoricalMatchupFeatures,
+    OddsFeatures,
+    RecentPerformanceFeatures,
+)
 
 
 class FeatureCalculator:

@@ -13,8 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from celery import Task
 
-from src.streaming import (FootballKafkaConsumer, FootballKafkaProducer,
-                           StreamProcessor)
+from src.streaming import FootballKafkaConsumer, FootballKafkaProducer, StreamProcessor
 from src.tasks.celery_app import app
 from src.tasks.error_logger import TaskErrorLogger
 

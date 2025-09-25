@@ -118,13 +118,15 @@ class TestAPIEndpointsCoverage:
     def test_import_all_endpoints(self):
         """测试导入所有端点函数，提升import覆盖率"""
         try:
-            from src.api.features import (batch_calculate_features,
-                                          calculate_match_features,
-                                          calculate_team_features,
-                                          features_health_check,
-                                          get_historical_features,
-                                          get_match_features,
-                                          get_team_features)
+            from src.api.features import (
+                batch_calculate_features,
+                calculate_match_features,
+                calculate_team_features,
+                features_health_check,
+                get_historical_features,
+                get_match_features,
+                get_team_features,
+            )
 
             # 验证所有函数都被成功导入
             assert callable(get_match_features)

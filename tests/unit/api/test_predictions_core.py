@@ -17,8 +17,12 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.predictions import (batch_predict_matches, get_match_prediction,
-                                 get_match_prediction_history, router)
+from src.api.predictions import (
+    batch_predict_matches,
+    get_match_prediction,
+    get_match_prediction_history,
+    router,
+)
 from src.models.prediction_service import PredictionResult
 
 

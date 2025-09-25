@@ -7,8 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from src.api.features_improved import (features_health_check,
-                                       get_match_features_improved)
+from src.api.features_improved import features_health_check, get_match_features_improved
 
 
 class TestFeaturesImprovedSimple:

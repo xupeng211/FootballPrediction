@@ -13,10 +13,12 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.monitoring.metrics_collector import (ApplicationMetricsCollector,
-                                              DatabaseMetricsCollector,
-                                              MetricsCollector,
-                                              SystemMetricsCollector)
+from src.monitoring.metrics_collector import (
+    ApplicationMetricsCollector,
+    DatabaseMetricsCollector,
+    MetricsCollector,
+    SystemMetricsCollector,
+)
 
 
 class TestMetricsCollector:

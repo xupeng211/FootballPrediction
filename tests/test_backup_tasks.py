@@ -17,13 +17,17 @@ from unittest.mock import Mock, patch
 import pytest
 from prometheus_client import CollectorRegistry
 
-from src.tasks.backup_tasks import (DatabaseBackupTask,
-                                    cleanup_old_backups_task,
-                                    daily_full_backup_task, get_backup_metrics,
-                                    get_backup_status,
-                                    hourly_incremental_backup_task,
-                                    manual_backup_task, verify_backup_task,
-                                    weekly_wal_archive_task)
+from src.tasks.backup_tasks import (
+    DatabaseBackupTask,
+    cleanup_old_backups_task,
+    daily_full_backup_task,
+    get_backup_metrics,
+    get_backup_status,
+    hourly_incremental_backup_task,
+    manual_backup_task,
+    verify_backup_task,
+    weekly_wal_archive_task,
+)
 
 
 class TestDatabaseBackupTask:

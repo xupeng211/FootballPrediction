@@ -37,8 +37,10 @@ from src.api.monitoring import router as monitoring_router
 from src.api.predictions import router as predictions_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
-from src.monitoring.metrics_collector import (start_metrics_collection,
-                                              stop_metrics_collection)
+from src.monitoring.metrics_collector import (
+    start_metrics_collection,
+    stop_metrics_collection,
+)
 
 # 配置日志
 logging.basicConfig(

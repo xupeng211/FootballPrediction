@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: football-prediction-staging-app-1
+    environment:
+      - ENVIRONMENT=staging
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_staging
+      - DB_USER=football_staging_user
+      - DB_PASSWORD=staging_db_password_2024
+      - REDIS_URL=redis://:staging_redis_password_2024@redis:6379/1
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080,https://staging.footballpred.com
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - staging-network
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    command: python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgres:15
+    container_name: football-prediction-staging-db-1
+    environment:
+      POSTGRES_DB: football_prediction_staging
+      POSTGRES_USER: football_staging_user
+      POSTGRES_PASSWORD: staging_db_password_2024
+    volumes:
+      - staging_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - staging-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_staging_user -d football_prediction_staging"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: football-prediction-staging-redis-1
+    command: redis-server --requirepass staging_redis_password_2024
+    volumes:
+      - staging_redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - staging-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "staging_redis_password_2024", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  staging_postgres_data:
+  staging_redis_data:
+
+networks:
+  staging-network:
+    driver: bridge

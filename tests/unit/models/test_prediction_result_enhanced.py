@@ -3,14 +3,11 @@
 补充缺失的测试用例以提高覆盖率
 """
 
-import logging
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from prometheus_client import CollectorRegistry
 
-from src.models.prediction_service import PredictionResult, PredictionService
+from src.models.prediction_service import PredictionResult
 
 
 class TestPredictionResultEnhanced:

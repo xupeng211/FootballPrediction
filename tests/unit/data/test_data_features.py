@@ -29,8 +29,7 @@ class TestFeatureStore:
     def test_feature_store_imports(self):
         """测试特征存储导入"""
         try:
-            from src.features.feature_store import \
-                FootballFeatureStore as FeatureStore
+            from src.features.feature_store import FootballFeatureStore as FeatureStore
 
             assert FeatureStore is not None
         except ImportError:
@@ -71,8 +70,7 @@ class TestFeatureDefinitions:
     def test_feature_definitions_imports(self):
         """测试特征定义导入"""
         try:
-            from src.data.features.feature_definitions import \
-                FeatureDefinitions
+            from src.data.features.feature_definitions import FeatureDefinitions
 
             assert FeatureDefinitions is not None
         except ImportError:

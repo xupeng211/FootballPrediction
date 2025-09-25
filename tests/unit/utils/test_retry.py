@@ -26,7 +26,6 @@ Tests for retry mechanism functionality, including retry decorator, circuit brea
     ```
 """
 
-import asyncio
 from unittest.mock import ANY, Mock
 
 import pytest

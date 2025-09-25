@@ -9,8 +9,13 @@
 """
 
 from .config import Config, Settings, config, get_settings
-from .exceptions import (ConfigError, DataError, FootballPredictionError,
-                         ModelError, PredictionError)
+from .exceptions import (
+    ConfigError,
+    DataError,
+    FootballPredictionError,
+    ModelError,
+    PredictionError,
+)
 from .logger import Logger, logger
 
 __all__ = [
