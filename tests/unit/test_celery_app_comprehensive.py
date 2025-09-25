@@ -14,6 +14,8 @@ import pytest
 
 from src.tasks.celery_app import app
 
+pytestmark = pytest.mark.unit
+
 
 class TestCeleryApp:
     """Celery应用测试类"""

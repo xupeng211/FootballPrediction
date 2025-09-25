@@ -12,6 +12,8 @@ import pytest
 
 from src.features.feature_calculator import FeatureCalculator
 
+pytestmark = pytest.mark.unit
+
 
 class TestFeatureCalculator:
     """测试FeatureCalculator基本功能"""

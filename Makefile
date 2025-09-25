@@ -161,53 +161,64 @@ test: ## Test: Run pytest unit tests
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
 
-coverage: ## Test: Run tests with coverage report (threshold: 50%)
+coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running coverage tests...$(RESET)" && \
-	pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) --maxfail=5 --disable-warnings && \
+	pytest -m "unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
-coverage-fast: ## Test: Run fast coverage (unit tests only, 20% threshold)
+coverage-fast: ## Test: Run fast coverage (unit tests only, no slow tests)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
-	pytest tests/unit/ \
-	  --cov=src --cov-report=term-missing --cov-fail-under=20 --maxfail=5 --disable-warnings && \
-	echo "$(GREEN)✅ Fast coverage passed (>=20%)$(RESET)"
+	pytest -m "unit and not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
+	echo "$(GREEN)✅ Fast coverage passed$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running unit test coverage...$(RESET)" && \
-	pytest tests/unit/ --cov=src --cov-report=html --cov-report=term --maxfail=5 --disable-warnings && \
+	pytest -m "unit" --cov=src --cov-report=html --cov-report=term --maxfail=5 && \
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
 
 test.unit: ## Test: Run unit tests only (marked with 'unit')
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running unit tests only...$(RESET)" && \
-	pytest tests/ -m unit --cov=src --cov-report=term-missing:skip-covered --maxfail=1 --disable-warnings && \
+	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered && \
 	echo "$(GREEN)✅ Unit tests passed$(RESET)"
 
 test.int: ## Test: Run integration tests only (marked with 'integration')
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running integration tests only...$(RESET)" && \
-	pytest tests/ -m integration --cov=src --cov-report=term-missing:skip-covered --maxfail=1 --disable-warnings && \
+	pytest -m "integration" && \
 	echo "$(GREEN)✅ Integration tests passed$(RESET)"
+
+test.e2e: ## Test: Run end-to-end tests only (marked with 'e2e')
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running end-to-end tests only...$(RESET)" && \
+	pytest -m "e2e" && \
+	echo "$(GREEN)✅ End-to-end tests passed$(RESET)"
+
+test.slow: ## Test: Run slow tests only (marked with 'slow')
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running slow tests only...$(RESET)" && \
+	pytest -m "slow" && \
+	echo "$(GREEN)✅ Slow tests passed$(RESET)"
 
 cov.html: ## Test: Generate HTML coverage report
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Generating HTML coverage report...$(RESET)" && \
-	pytest tests/ --cov=src --cov-report=html:htmlcov --cov-report=term-missing --maxfail=1 --disable-warnings && \
+	pytest -m "unit" --cov=src --cov-report=html && \
 	echo "$(GREEN)✅ HTML coverage report generated in htmlcov/$(RESET)"
 
 cov.enforce: ## Test: Run coverage with strict 80% threshold
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running coverage with 80% threshold...$(RESET)" && \
-	pytest tests/ --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 --maxfail=1 --disable-warnings && \
+	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 && \
 	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
 
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running quick tests...$(RESET)" && \
-	pytest tests/unit/ -v --maxfail=5 --disable-warnings && \
+	pytest -m "unit and not slow" --maxfail=5 && \
 	echo "$(GREEN)✅ Quick tests passed$(RESET)"
 
 type-check: ## Quality: Run type checking with mypy

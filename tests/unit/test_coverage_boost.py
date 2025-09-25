@@ -1,11 +1,10 @@
-"""
-测试覆盖率提升模块
-专门针对低覆盖率模块进行测试，提升整体覆盖率到60%以上
-"""
+import pytest
 
 import os
 import sys
 from unittest.mock import patch
+
+pytestmark = pytest.mark.unit
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))

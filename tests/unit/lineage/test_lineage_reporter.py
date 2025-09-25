@@ -4,6 +4,8 @@ import pytest
 
 from src.lineage import lineage_reporter as lineage_module
 
+pytestmark = pytest.mark.unit
+
 
 class DummyClient:
     def __init__(self, url):

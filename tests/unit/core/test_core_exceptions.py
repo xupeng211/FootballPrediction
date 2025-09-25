@@ -15,6 +15,8 @@ from src.core.exceptions import (
     PredictionError,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestExceptionHierarchy:
     """测试异常类层次结构"""

@@ -8,6 +8,8 @@ from unittest.mock import Mock, patch
 
 from src.tasks.celery_app import app, TaskRetryConfig, TASK_MONITORING
 
+pytestmark = pytest.mark.unit
+
 
 class TestCeleryApp:
     """测试Celery应用配置"""

@@ -8,6 +8,8 @@ import pytest
 
 from src.utils.string_utils import StringUtils
 
+pytestmark = pytest.mark.unit
+
 
 class TestStringUtils:
     """测试字符串工具类"""

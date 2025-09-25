@@ -1,9 +1,8 @@
-"""
-测试src/utils/dict_utils.py模块
-快速提升测试覆盖率的针对性测试
-"""
+import pytest
 
 from src.utils.dict_utils import DictUtils
+
+pytestmark = pytest.mark.unit
 
 
 class TestDictUtils:
