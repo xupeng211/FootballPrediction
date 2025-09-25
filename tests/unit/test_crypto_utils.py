@@ -19,6 +19,8 @@ import pytest
 
 from src.utils.crypto_utils import CryptoUtils
 
+pytestmark = pytest.mark.unit
+
 
 class TestCryptoUtils:
     """加密工具类测试"""

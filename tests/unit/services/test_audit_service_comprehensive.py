@@ -8,6 +8,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.database.models.audit_log import AuditAction, AuditSeverity
+
+pytestmark = pytest.mark.unit
 from src.services.audit_service import AuditContext, AuditService
 
 

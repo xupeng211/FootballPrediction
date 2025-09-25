@@ -9,6 +9,8 @@ from src.features.feature_definitions import (
     RecentPerformanceFeatures,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def build_recent_features(**overrides):
     base = dict(

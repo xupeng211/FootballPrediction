@@ -14,6 +14,8 @@ from src.tasks.maintenance_tasks import (
     system_health_check_task,
 )
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_db_manager():
