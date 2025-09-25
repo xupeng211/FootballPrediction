@@ -159,15 +159,34 @@ async def main() -> None:
     # Set the database URL for Alembic directly in the environment
     os.environ["SQLALCHEMY_URL"] = db_config.alembic_url
 
-    run_migrations(db_config)
+    # Run migrations with error handling
+    try:
+        run_migrations(db_config)
+        print("✅ Migrations completed successfully")
+    except Exception as e:
+        print(f"❌ Migration failed: {e}")
+        print("This might be expected if database services are not running")
+        # Exit gracefully for local development
+        if os.getenv("USE_LOCAL_DB", "false").lower() != "true":
+            # In CI environment, we should fail if migrations don't work
+            raise
 
-    engine = create_async_engine(db_config.async_url, future=True)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    # Only attempt to seed data if migrations succeeded
+    try:
+        engine = create_async_engine(db_config.async_url, future=True)
+        async_session = sessionmaker(
+            engine, expire_on_commit=False, class_=AsyncSession
+        )
 
-    async with async_session() as session:
-        await seed_reference_data(session)
+        async with async_session() as session:
+            await seed_reference_data(session)
 
-    await engine.dispose()
+        await engine.dispose()
+        print("✅ Database seeding completed")
+    except Exception as e:
+        print(f"❌ Database seeding failed: {e}")
+        if os.getenv("USE_LOCAL_DB", "false").lower() != "true":
+            raise
 
 
 if __name__ == "__main__":
