@@ -54,6 +54,8 @@ def upgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过JSONB兼容性检查")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped JSONB compatibility validation")
         return
 
     bind = op.get_bind()
@@ -135,7 +137,9 @@ def _verify_postgresql_jsonb_config():
                     if gin_index:
                         print(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响")
+                        print(
+                            f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响"
+                        )
                 else:
                     print(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:
@@ -152,4 +156,11 @@ def downgrade() -> None:
     由于此迁移主要是兼容性验证和配置，降级时不需要特殊操作。
     实际的数据库结构没有发生改变。
     """
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过JSONB兼容性降级")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped JSONB compatibility downgrade")
+        return
+
     print("JSONB兼容性迁移降级 - 无需特殊操作")

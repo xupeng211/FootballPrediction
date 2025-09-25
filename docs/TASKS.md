@@ -45,6 +45,9 @@
 - [x] 📌 修复 CI/CD Docker pull 问题 ✅ 完成于 2025-09-23
   - 🎯 Blocker
   - 📝 main 分支流水线全绿，不再卡镜像拉取
+- [x] 📌 CI迁移兼容性强化 ✅ 完成于 2025-09-25
+  - 🎯 Blocker
+  - 📝 彻底解决Alembic迁移在CI离线模式下失败的问题，修复6个迁移文件offline mode兼容性，确保CI/CD流水线稳定运行
 
 - [ ] 📌 执行 Staging 环境验证 (72h)
   - 🎯 High

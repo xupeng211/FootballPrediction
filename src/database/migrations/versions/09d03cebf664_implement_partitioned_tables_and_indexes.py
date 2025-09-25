@@ -53,6 +53,9 @@ def upgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过分区表实现")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped partitioned tables implementation")
+        op.execute("-- offline mode: skipped advanced indexes creation")
         return
 
     bind = op.get_bind()
@@ -375,6 +378,9 @@ def downgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过分区表降级")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped partitioned tables downgrade")
+        op.execute("-- offline mode: skipped advanced indexes removal")
         return
 
     print("开始降级分区表和索引优化...")
