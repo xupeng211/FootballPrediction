@@ -866,6 +866,8 @@ class RedisManager:
             bool: 是否成功
         """
         try:
+            if self._sync_client is None:
+                return False
             result = self._sync_client.expire(key, ttl)
             return bool(result)  # type: ignore[return-value]
         except (RedisError, ConnectionError, TimeoutError) as e:

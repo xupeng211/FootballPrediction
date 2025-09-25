@@ -8,10 +8,9 @@
 import os
 import sys
 
-from sqlalchemy import text
-
 sys.path.insert(0, ".")
 
+from sqlalchemy import text
 from src.database.config import get_database_config
 from src.database.connection import DatabaseManager
 

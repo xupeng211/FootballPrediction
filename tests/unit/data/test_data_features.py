@@ -20,8 +20,6 @@ from src.features.feature_store import FootballFeatureStore as FeatureStore
 class FeatureExamples:
     """临时的特征示例类，用于测试"""
 
-    pass
-
 
 class TestFeatureStore:
     """测试特征存储"""

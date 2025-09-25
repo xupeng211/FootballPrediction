@@ -55,14 +55,14 @@ def mock_db_manager():
         db_manager = MagicMock()
 
         async def _connect(*args, **kwargs):
-            _connect.invocations += 1
+            _connect.invocations = getattr(_connect, "invocations", 0) + 1
             if allowed_attempts <= 3:
                 raise DatabaseError("数据库连接失败：超过最大重试次数")
-            if _connect.invocations < 3:
+            if getattr(_connect, "invocations", 0) < 3:
                 raise DatabaseError("数据库暂时不可用")
             return MagicMock()
 
-        _connect.invocations = 0
+        setattr(_connect, "invocations", 0)
         db_manager.get_async_session = AsyncMock(side_effect=_connect)
 
         for attempt in range(allowed_attempts):
