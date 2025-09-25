@@ -151,6 +151,10 @@ async def main() -> None:
         os.environ["TEST_DB_HOST"] = "localhost"
         os.environ["TEST_DB_PORT"] = "5432"
 
+    # Ensure we use localhost for database connections in CI
+    if os.getenv("TEST_DB_HOST") is None:
+        os.environ["TEST_DB_HOST"] = "localhost"
+
     db_config = get_test_database_config()
 
     print(f"Using database URL for migrations: {db_config.alembic_url}")
