@@ -18,8 +18,13 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
-from prometheus_client import (CollectorRegistry, Counter, Gauge, Histogram,
-                               start_http_server)
+from prometheus_client import (
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    start_http_server,
+)
 from scipy.stats import entropy, ks_2samp
 from sqlalchemy import Integer, and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -242,7 +247,9 @@ class EnhancedModelMonitor:
             np.ndarray, baseline_result["confidence_scores"]
         )
 
-        logger.info(f"收集了 {len(baseline_data)} 条基线数据，{len(baseline_features)} 个特征")
+        logger.info(
+            f"收集了 {len(baseline_data)} 条基线数据，{len(baseline_features)} 个特征"
+        )
         return baseline_result
 
     def calculate_kl_divergence(
@@ -786,7 +793,9 @@ class EnhancedModelMonitor:
                 cycle_results = await self.run_monitoring_cycle()
 
                 # 记录监控结果
-                logger.info(f"监控周期完成: 监控了 {cycle_results['models_monitored']} 个模型")
+                logger.info(
+                    f"监控周期完成: 监控了 {cycle_results['models_monitored']} 个模型"
+                )
 
                 if cycle_results["errors"]:
                     logger.warning(f"本周期发现 {len(cycle_results['errors'])} 个错误")

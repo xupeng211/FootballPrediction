@@ -187,7 +187,9 @@ class GEPrometheusExporter:
         }
         self.validation_info.info(validation_info)
 
-        self.logger.debug(f"已导出表 {table_name} 的验证结果: 成功率 {success_rate:.1f}%")
+        self.logger.debug(
+            f"已导出表 {table_name} 的验证结果: 成功率 {success_rate:.1f}%"
+        )
 
     def _export_overall_statistics(self, overall_stats: Dict[str, Any]) -> None:
         """导出总体统计信息"""
@@ -339,7 +341,8 @@ class GEPrometheusExporter:
             }
 
             self.logger.info(
-                f"完整数据质量检查完成，耗时 {total_duration:.2f} 秒，" f"检测到 {len(anomalies)} 个异常"
+                f"完整数据质量检查完成，耗时 {total_duration:.2f} 秒，"
+                f"检测到 {len(anomalies)} 个异常"
             )
 
             return result_summary

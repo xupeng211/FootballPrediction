@@ -113,7 +113,9 @@ class TestDataValidator:
         ]
 
         for email in invalid_emails:
-            assert not DataValidator.is_valid_email(email), f"应该识别 {email} 为无效邮箱"
+            assert not DataValidator.is_valid_email(
+                email
+            ), f"应该识别 {email} 为无效邮箱"
 
     def test_is_valid_url_valid(self):
         """测试有效URL验证"""

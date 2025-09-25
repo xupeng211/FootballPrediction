@@ -22,8 +22,9 @@ sys.path.insert(0, str(project_root))
 
 try:
     from feast import Entity, FeatureStore, FeatureView, Field
-    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import \
-        PostgreSQLSource
+    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
+        PostgreSQLSource,
+    )
     from feast.types import Float64, Int64
 
     from src.database.connection import DatabaseManager

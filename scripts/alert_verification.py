@@ -327,9 +327,8 @@ class AlertVerificationTester:
         for alert_name, status in alert_statuses.items():
             if status["active"]:
                 # 邮件通知示例
-                examples[
-                    f"{alert_name}_email"
-                ] = f"""
+                examples[f"{alert_name}_email"] = (
+                    f"""
 主题: 🚨 Football Platform Alert: {alert_name}
 
 告警: {status.get('summary', alert_name)}
@@ -340,11 +339,11 @@ class AlertVerificationTester:
 
 请立即检查系统状态并处理相关问题。
                 """.strip()
+                )
 
                 # Slack通知示例
-                examples[
-                    f"{alert_name}_slack"
-                ] = f"""
+                examples[f"{alert_name}_slack"] = (
+                    f"""
 🚨 *Football Platform Critical Alert*
 
 *{status.get('summary', alert_name)}*
@@ -356,6 +355,7 @@ class AlertVerificationTester:
 
 请立即处理！
                 """.strip()
+                )
 
         return examples
 
