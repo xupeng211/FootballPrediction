@@ -74,10 +74,8 @@ class TestFixedAPI:
     def test_fixed_query_parameter(self):
         """测试修复后的 Query 参数"""
         # 这将在修复后实现
-        pass
 
     @pytest.mark.asyncio
     async def test_fixed_async_mock(self):
         """测试修复后的异步 Mock"""
         # 这将在修复后实现
-        pass
