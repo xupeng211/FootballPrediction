@@ -17,7 +17,7 @@
         # 使用mock进行测试
 """
 
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -249,7 +249,7 @@ class MockCounter:
         self._documentation = documentation
         self._labelnames = labelnames or []
         self._value = 0.0
-        self._values = {}
+        self._values: Dict[str, Any] = {}
 
     def inc(self, amount: float = 1.0, **labels):
         if labels:
@@ -288,7 +288,7 @@ class MockGauge:
         self._documentation = documentation
         self._labelnames = labelnames or []
         self._value = 0.0
-        self._values = {}
+        self._values: Dict[str, Any] = {}
 
     def set(self, value: float, **labels):
         if labels:
@@ -346,7 +346,7 @@ class MockHistogram:
         self._name = name
         self._documentation = documentation
         self._labelnames = labelnames or []
-        self._observations = []
+        self._observations: List[Dict[str, Any]] = []
 
     def observe(self, value: float, **labels):
         self._observations.append((value, labels))
