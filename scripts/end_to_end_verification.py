@@ -278,13 +278,9 @@ class EndToEndVerification:
 
                             self.verification_results["prediction_pipeline"] = True
                         else:
-                            self.console.print(
-                                f"❌ 预测结果缺少必要字段: {required_fields}"
-                            )
+                            self.console.print(f"❌ 预测结果缺少必要字段: {required_fields}")
                     else:
-                        self.console.print(
-                            f"❌ 预测API调用失败: {response.status_code}"
-                        )
+                        self.console.print(f"❌ 预测API调用失败: {response.status_code}")
                         self.console.print(f"响应内容: {response.text}")
 
         except Exception as e:

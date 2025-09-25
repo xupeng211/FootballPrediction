@@ -118,9 +118,7 @@ class TestDatabaseIndexesRefactored(AsyncDatabaseTestTemplate):
                 # 在生产环境中，某些索引可能因为分区表重建而暂时不存在
                 # 这里我们记录警告而不是失败测试
                 if missing_indexes:
-                    print(
-                        f"警告：某些索引可能因为分区表重建而不存在: {missing_indexes}"
-                    )
+                    print(f"警告：某些索引可能因为分区表重建而不存在: {missing_indexes}")
 
             else:
                 # 如果没有找到任何索引，可能是数据库尚未完全初始化

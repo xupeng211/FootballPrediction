@@ -247,9 +247,7 @@ class EnhancedModelMonitor:
             np.ndarray, baseline_result["confidence_scores"]
         )
 
-        logger.info(
-            f"收集了 {len(baseline_data)} 条基线数据，{len(baseline_features)} 个特征"
-        )
+        logger.info(f"收集了 {len(baseline_data)} 条基线数据，{len(baseline_features)} 个特征")
         return baseline_result
 
     def calculate_kl_divergence(
@@ -793,9 +791,7 @@ class EnhancedModelMonitor:
                 cycle_results = await self.run_monitoring_cycle()
 
                 # 记录监控结果
-                logger.info(
-                    f"监控周期完成: 监控了 {cycle_results['models_monitored']} 个模型"
-                )
+                logger.info(f"监控周期完成: 监控了 {cycle_results['models_monitored']} 个模型")
 
                 if cycle_results["errors"]:
                     logger.warning(f"本周期发现 {len(cycle_results['errors'])} 个错误")

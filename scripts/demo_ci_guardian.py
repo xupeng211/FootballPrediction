@@ -205,9 +205,7 @@ def test_import_failure():
             1 for output in ci_outputs.values() if output.get("has_issues", False)
         )
 
-        click.echo(
-            f"✅ CI监控完成，{len(tools_to_test)}个工具中{issues_found}个发现问题"
-        )
+        click.echo(f"✅ CI监控完成，{len(tools_to_test)}个工具中{issues_found}个发现问题")
         return True
 
     def analyze_issues(self) -> bool:
