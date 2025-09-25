@@ -370,9 +370,7 @@ class RequirementsUpdater:
                 with open(self.req_dev_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
 
-                click.echo(
-                    f"✅ requirements-dev.txt已更新，添加了{len(new_packages)}个包"
-                )
+                click.echo(f"✅ requirements-dev.txt已更新，添加了{len(new_packages)}个包")
                 return True
             else:
                 click.echo("ℹ️ requirements-dev.txt无需更新")
@@ -870,9 +868,7 @@ class AutoCIUpdater:
             self.update_results.append("❌ Documentation")
 
         success_rate = (success_count / total_updates) * 100
-        click.echo(
-            f"\n📊 集成结果: {success_count}/{total_updates} ({success_rate:.1f}%)"
-        )
+        click.echo(f"\n📊 集成结果: {success_count}/{total_updates} ({success_rate:.1f}%)")
 
         return success_count >= total_updates * 0.8  # 80%成功率认为集成成功
 
