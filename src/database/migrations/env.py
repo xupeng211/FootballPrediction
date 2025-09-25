@@ -33,10 +33,36 @@ if config.config_file_name is not None:
 
 # 获取数据库配置 - 优先使用测试环境配置
 environment = os.getenv("ENVIRONMENT", "test")
+
+# 检查是否使用本地数据库（用于本地开发环境）
+use_local_db = os.getenv("USE_LOCAL_DB", "false").lower() == "true"
+
+# 获取数据库配置
 db_config = get_database_config(environment)
 
-# 设置数据库连接URL
-config.set_main_option("sqlalchemy.url", db_config.alembic_url)
+# 如果使用本地数据库，覆盖数据库主机配置
+if use_local_db:
+    # 为本地开发修改数据库配置
+    db_config.host = "localhost"
+    db_config.port = "5432"
+    # 重新构建URL
+    from urllib.parse import urlparse, urlunparse
+
+    parsed_url = urlparse(db_config.alembic_url)
+    local_url = urlunparse(
+        (
+            parsed_url.scheme,
+            f"{parsed_url.username}:{parsed_url.password}@localhost:5432",
+            parsed_url.path,
+            parsed_url.params,
+            parsed_url.query,
+            parsed_url.fragment,
+        )
+    )
+    config.set_main_option("sqlalchemy.url", local_url)
+else:
+    # 设置数据库连接URL
+    config.set_main_option("sqlalchemy.url", db_config.alembic_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
