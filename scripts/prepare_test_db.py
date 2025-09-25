@@ -111,16 +111,54 @@ async def seed_reference_data(session: AsyncSession) -> None:
 
 
 def run_migrations(db_config) -> None:
+    """运行数据库迁移"""
     config = Config(str(ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(ROOT / "src/database/migrations"))
-    config.set_main_option("sqlalchemy.url", db_config.sync_url)
-    command.upgrade(config, "head")
-    logger.info("Alembic upgrade head completed")
+    config.set_main_option("sqlalchemy.url", db_config.alembic_url)
+
+    # 添加路径分隔符配置以避免警告
+    config.set_main_option("version_path_separator", "os")
+
+    try:
+        logger.info(f"Running Alembic migrations with URL: {db_config.alembic_url}")
+        logger.info("Starting Alembic upgrade to head...")
+        command.upgrade(config, "head")
+        logger.info("Alembic upgrade head completed successfully")
+
+        # Check current revision after upgrade
+        try:
+            current = command.current(config, verbose=True)
+            logger.info(f"Current revision after upgrade: {current}")
+        except Exception as e:
+            logger.warning(f"Could not get current revision: {e}")
+    except Exception as e:
+        logger.error(f"Migration failed: {e}")
+        logger.info("Attempting to create database from scratch...")
+        try:
+            command.stamp(config, "base")
+            command.upgrade(config, "head")
+            logger.info("Database reinitialized and migrations completed")
+        except Exception as e2:
+            logger.error(f"Database reinitialization failed: {e2}")
+            raise
 
 
 async def main() -> None:
     os.environ.setdefault("ENVIRONMENT", "test")
+
+    # For local testing, we can override the database host
+    if os.getenv("USE_LOCAL_DB", "false").lower() == "true":
+        os.environ["TEST_DB_HOST"] = "localhost"
+        os.environ["TEST_DB_PORT"] = "5432"
+
     db_config = get_test_database_config()
+
+    print(f"Using database URL for migrations: {db_config.alembic_url}")
+    print(f"Using async URL: {db_config.async_url}")
+
+    # Set the database URL for Alembic directly in the environment
+    os.environ["SQLALCHEMY_URL"] = db_config.alembic_url
+
     run_migrations(db_config)
 
     engine = create_async_engine(db_config.async_url, future=True)

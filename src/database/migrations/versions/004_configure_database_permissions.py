@@ -17,7 +17,7 @@ from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision = "004_configure_permissions"
-down_revision = "002_add_raw_scores_data_and_upgrade_jsonb"
+down_revision = "f48d412852cc"
 branch_labels = None
 depends_on = None
 

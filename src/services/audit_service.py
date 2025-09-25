@@ -634,6 +634,9 @@ class AuditService:
             if hasattr(result, "id"):
                 value = getattr(result, "id")
                 return str(value) if value is not None else "unknown"
+            # If result is a string or number, return it as string
+            if isinstance(result, (str, int, float)):
+                return str(result)
         except Exception:
             pass
         return "unknown"
@@ -661,7 +664,7 @@ def extract_request_context(request: Request) -> AuditContext:
         if forwarded_for:
             ip_address = forwarded_for.split(",")[0].strip()
 
-    user_agent = request.headers.get("User-Agent")
+    user_agent = request.headers.get("User-Agent") or request.headers.get("user-agent")
 
     return AuditContext(
         user_id=user_id,
