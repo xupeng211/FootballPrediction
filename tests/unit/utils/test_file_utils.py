@@ -1,8 +1,12 @@
+import pytest
+
 import json
 import os
 from datetime import datetime, timedelta
 
 from src.utils.file_utils import FileUtils
+
+pytestmark = pytest.mark.unit
 
 
 def test_write_and_read_json(tmp_path):

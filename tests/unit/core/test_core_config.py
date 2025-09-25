@@ -1,6 +1,4 @@
-"""
-测试核心配置模块
-"""
+import pytest
 
 import json
 import tempfile
@@ -8,6 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from src.core.config import Config
+
+pytestmark = pytest.mark.unit
 
 
 class TestConfig:

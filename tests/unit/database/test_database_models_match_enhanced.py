@@ -1,12 +1,9 @@
-"""
-Match模型增强测试
-
-专门针对src/database/models/match.py中未覆盖的代码路径进行测试，提升覆盖率从82%到95%+
-主要覆盖：边界情况、类方法、复杂条件分支等
-"""
+import pytest
 
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+pytestmark = pytest.mark.unit
 
 from sqlalchemy.orm import Session
 

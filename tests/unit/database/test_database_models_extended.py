@@ -8,6 +8,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+pytestmark = pytest.mark.unit
+
 from src.database.base import Base
 from src.database.models import (
     Features,

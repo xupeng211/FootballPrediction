@@ -1,13 +1,9 @@
-"""
-from unittest.mock import Mock, patch
-Odds模型增强测试
-
-专门针对src/database/models/odds.py中未覆盖的代码路径进行测试，提升覆盖率从59%到80%+
-主要覆盖：get_best_value_bet, get_implied_probabilities等方法
-"""
+import pytest
 
 from decimal import Decimal
 from unittest.mock import Mock, patch
+
+pytestmark = pytest.mark.unit
 
 # 尝试导入 Odds 和 MarketType
 try:

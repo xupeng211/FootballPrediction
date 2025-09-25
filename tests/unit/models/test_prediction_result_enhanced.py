@@ -9,6 +9,8 @@ import pytest
 
 from src.models.prediction_service import PredictionResult
 
+pytestmark = pytest.mark.unit
+
 
 class TestPredictionResultEnhanced:
     """增强的PredictionResult测试类"""

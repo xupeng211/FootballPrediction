@@ -1,13 +1,10 @@
-"""
-Team模型增强测试
-
-专门针对src/database/models/team.py中未覆盖的代码路径进行测试，提升覆盖率从59%到80%+
-主要覆盖：get_home_record, get_away_record, get_season_stats, get_recent_matches等方法
-"""
+import pytest
 
 from unittest.mock import Mock
 
 from sqlalchemy.orm import Session
+
+pytestmark = pytest.mark.unit
 
 from src.database.models import Team
 

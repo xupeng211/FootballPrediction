@@ -1,13 +1,8 @@
-"""
-Bronze层原始数据模型测试
-
-测试原始比赛数据、赔率数据和比分数据模型的功能，
-包括数据验证、JSONB操作、业务逻辑等。
-
-基于 DATA_DESIGN.md 第2.1节Bronze层设计的测试覆盖。
-"""
+import pytest
 
 from datetime import datetime
+
+pytestmark = pytest.mark.unit
 
 import pytest
 from sqlalchemy import create_engine

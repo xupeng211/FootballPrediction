@@ -1,6 +1,4 @@
-"""
-API健康检查模块测试
-"""
+import pytest
 
 from unittest.mock import Mock, patch
 
@@ -8,6 +6,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.health import router
+
+pytestmark = pytest.mark.unit
 from src.database.connection import get_db_session
 
 

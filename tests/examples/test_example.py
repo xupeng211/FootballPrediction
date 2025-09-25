@@ -1,5 +1,9 @@
 """示例测试文件"""
 
+import pytest
+
+pytestmark = pytest.mark.example
+
 
 def test_example():
     """示例测试函数"""

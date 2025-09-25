@@ -1,3 +1,5 @@
+import pytest
+
 """
 数据库业务逻辑约束测试
 
@@ -8,6 +10,8 @@
    - 完全隔离：每次测试都使用全新的内存数据库，避免测试间的数据污染
    - 高性能：内存数据库比磁盘数据库快几个数量级，提升测试执行速度
    - 零依赖：无需安装和配置 MySQL/PostgreSQL 等外部数据库服务
+
+pytestmark = pytest.mark.unit
    - CI友好：在各种环境中都能快速启动，无需额外的基础设施
 
 2. 自动创建 schema (Base.metadata.create_all) 的原因：

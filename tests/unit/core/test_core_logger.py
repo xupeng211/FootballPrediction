@@ -1,13 +1,11 @@
-"""
-from unittest.mock import Mock, patch
-测试src/core/logger.py模块
-快速提升测试覆盖率的针对性测试
-"""
+import pytest
 
 import logging
 from unittest.mock import Mock, patch
 
 from src.core.logger import Logger
+
+pytestmark = pytest.mark.unit
 
 
 class TestLogger:

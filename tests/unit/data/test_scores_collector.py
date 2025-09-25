@@ -277,7 +277,7 @@ class TestScoresCollector:
 
         # 应该合理处理None值，可能是设置为默认值或过滤掉
         assert cleaned_data is not None
-        assert cleaned_data["id"] == "match_1"
+        assert cleaned_data["external_match_id"] == "match_1"
 
     @pytest.mark.asyncio
     async def test_clean_live_data_empty_dict(self, collector):
@@ -309,7 +309,7 @@ class TestScoresCollector:
             mock_sleep.side_effect = [None, KeyboardInterrupt()]  # 第一次循环后中断
 
             try:
-                await collector.start_continuous_monitoring(interval=60)
+                await collector.start_continuous_monitoring()
             except KeyboardInterrupt:
                 pass  # 正常中断
 
