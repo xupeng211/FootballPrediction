@@ -31,8 +31,12 @@ def upgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():
-        # 在离线模式下跳过需要数据库连接的操作
         print("⚠️  离线模式：跳过性能优化迁移")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped database performance optimization")
+        op.execute("-- offline mode: skipped materialized views creation")
+        op.execute("-- offline mode: skipped foreign key constraints creation")
+        op.execute("-- offline mode: skipped trigger functions creation")
         return
 
     # 获取数据库连接以执行原生SQL
@@ -626,8 +630,12 @@ def downgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():
-        # 在离线模式下跳过需要数据库连接的操作
         print("⚠️  离线模式：跳过性能优化回滚")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped database performance optimization rollback")
+        op.execute("-- offline mode: skipped materialized views removal")
+        op.execute("-- offline mode: skipped foreign key constraints removal")
+        op.execute("-- offline mode: skipped trigger functions removal")
         return
 
     conn = op.get_bind()

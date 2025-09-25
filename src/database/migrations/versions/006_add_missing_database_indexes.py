@@ -33,6 +33,8 @@ def upgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过索引创建")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped database indexes creation")
         return
 
     # 获取数据库连接以执行原生SQL
@@ -245,6 +247,13 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """回滚索引创建（删除添加的索引）"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过索引回滚")
+        # 在离线模式下执行注释，确保 SQL 生成正常
+        op.execute("-- offline mode: skipped database indexes rollback")
+        return
 
     # 获取数据库连接
     conn = op.get_bind()
