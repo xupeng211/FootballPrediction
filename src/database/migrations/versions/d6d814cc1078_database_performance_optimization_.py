@@ -139,6 +139,15 @@ def upgrade() -> None:
         )
     )
 
+    # 为外键约束添加唯一约束（PostgreSQL 分区表需要）
+    conn.execute(
+        text(
+            """
+        CREATE UNIQUE INDEX idx_matches_id_unique ON matches (id);
+    """
+        )
+    )
+
     # 删除备份表
     conn.execute(text("DROP TABLE matches_backup;"))
 
@@ -198,6 +207,15 @@ def upgrade() -> None:
             """
         INSERT INTO odds
         SELECT * FROM odds_backup;
+    """
+        )
+    )
+
+    # 为外键约束添加唯一约束（PostgreSQL 分区表需要）
+    conn.execute(
+        text(
+            """
+        CREATE UNIQUE INDEX idx_odds_id_unique ON odds (id);
     """
         )
     )
