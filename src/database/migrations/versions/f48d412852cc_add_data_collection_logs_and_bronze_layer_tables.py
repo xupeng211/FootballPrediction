@@ -170,109 +170,31 @@ def upgrade() -> None:
     # 这需要使用原生SQL来创建分区表结构
 
     # 创建Gold层特征表的扩展字段（对现有features表的增强）
-    # 添加新的特征字段以支持更复杂的ML特征
+    # 只添加在初始schema中不存在的字段
     try:
-        # 检查是否存在features表，如果存在则添加新字段
-        op.add_column(
-            "features",
-            sa.Column(
-                "recent_5_draws",
-                sa.Integer(),
-                nullable=True,
-                default=0,
-                comment="近5场平局数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "recent_5_losses",
-                sa.Integer(),
-                nullable=True,
-                default=0,
-                comment="近5场失利数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "recent_5_goals_against",
-                sa.Integer(),
-                nullable=True,
-                default=0,
-                comment="近5场失球数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "home_advantage_score",
-                sa.Numeric(5, 2),
-                nullable=True,
-                comment="主场优势评分",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "form_trend",
-                sa.String(length=20),
-                nullable=True,
-                comment="状态趋势(improving/declining/stable)",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "h2h_draws",
-                sa.Integer(),
-                nullable=True,
-                default=0,
-                comment="对战历史平局数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "h2h_losses",
-                sa.Integer(),
-                nullable=True,
-                default=0,
-                comment="对战历史失利数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "odds_movement",
-                sa.String(length=20),
-                nullable=True,
-                comment="赔率变动趋势",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "market_sentiment",
-                sa.Numeric(5, 4),
-                nullable=True,
-                comment="市场情绪指数",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column(
-                "feature_version",
-                sa.String(length=20),
-                nullable=True,
-                default="v1.0",
-                comment="特征版本",
-            ),
-        )
-        op.add_column(
-            "features",
-            sa.Column("last_updated", sa.DateTime(), nullable=True, comment="最后更新时间"),
-        )
+        # 添加新的特征字段以支持更复杂的ML特征
+        # 跳过已在初始schema中存在的字段：recent_5_draws, recent_5_losses, recent_5_goals_against, h2h_draws, h2h_losses
+        new_columns = [
+            ("home_advantage_score", sa.Numeric(5, 2), "主场优势评分"),
+            ("form_trend", sa.String(length=20), "状态趋势(improving/declining/stable)"),
+            ("odds_movement", sa.String(length=20), "赔率变动趋势"),
+            ("market_sentiment", sa.Numeric(5, 4), "市场情绪指数"),
+            ("feature_version", sa.String(length=20), "特征版本"),
+            ("last_updated", sa.DateTime(), "最后更新时间"),
+        ]
+
+        for column_name, column_type, column_comment in new_columns:
+            try:
+                op.add_column(
+                    "features",
+                    sa.Column(
+                        column_name, column_type, nullable=True, comment=column_comment
+                    ),
+                )
+            except Exception as e:
+                # 如果字段已存在，忽略错误
+                print(f"Warning: Column {column_name} already exists: {e}")
+
     except Exception as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志
         print(f"Warning: Could not add columns to features table: {e}")
@@ -285,17 +207,22 @@ def downgrade() -> None:
 
     # 删除Gold层特征表的扩展字段
     try:
-        op.drop_column("features", "last_updated")
-        op.drop_column("features", "feature_version")
-        op.drop_column("features", "market_sentiment")
-        op.drop_column("features", "odds_movement")
-        op.drop_column("features", "h2h_losses")
-        op.drop_column("features", "h2h_draws")
-        op.drop_column("features", "form_trend")
-        op.drop_column("features", "home_advantage_score")
-        op.drop_column("features", "recent_5_goals_against")
-        op.drop_column("features", "recent_5_losses")
-        op.drop_column("features", "recent_5_draws")
+        # 只删除在此迁移中添加的字段
+        columns_to_drop = [
+            "last_updated",
+            "feature_version",
+            "market_sentiment",
+            "odds_movement",
+            "form_trend",
+            "home_advantage_score",
+        ]
+
+        for column_name in columns_to_drop:
+            try:
+                op.drop_column("features", column_name)
+            except Exception as e:
+                # 忽略字段不存在的错误但记录日志
+                print(f"Warning: Could not drop column {column_name}: {e}")
     except Exception as e:
         # 忽略字段不存在的错误但记录日志
         print(f"Warning: Could not drop columns from features table: {e}")
