@@ -266,8 +266,10 @@ def cleanup_data(days_to_keep: int = 30):
 
         from sqlalchemy import text
 
-        from src.data.storage.data_lake_storage import (DataLakeStorage,
-                                                        S3DataLakeStorage)
+        from src.data.storage.data_lake_storage import (
+            DataLakeStorage,
+            S3DataLakeStorage,
+        )
         from src.database.connection import get_async_session
 
         async def _cleanup_task():

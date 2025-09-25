@@ -14,9 +14,15 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
+
 # from sklearn.ensemble import RandomForestClassifier  # 备用分类器
-from sklearn.metrics import (accuracy_score, classification_report, f1_score,
-                             precision_score, recall_score)
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -75,8 +75,9 @@ def collect_fixtures_task(
         """内部异步采集函数"""
         try:
             # 动态导入以避免循环导入问题
-            from src.data.collectors.fixtures_collector import \
-                FixturesCollector as RealFixturesCollector
+            from src.data.collectors.fixtures_collector import (
+                FixturesCollector as RealFixturesCollector,
+            )
 
             collector = RealFixturesCollector()
 

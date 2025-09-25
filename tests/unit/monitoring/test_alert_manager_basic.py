@@ -5,8 +5,13 @@ alert_manager模块的基本测试
 
 from unittest.mock import patch
 
-from src.monitoring.alert_manager import (Alert, AlertChannel, AlertLevel,
-                                          AlertManager, AlertStatus)
+from src.monitoring.alert_manager import (
+    Alert,
+    AlertChannel,
+    AlertLevel,
+    AlertManager,
+    AlertStatus,
+)
 
 
 class TestAlertEnums:

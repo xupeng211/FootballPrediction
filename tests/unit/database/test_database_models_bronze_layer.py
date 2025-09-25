@@ -14,8 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.base import Base
-from src.database.models.raw_data import (RawMatchData, RawOddsData,
-                                          RawScoresData)
+from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
 
 @pytest.fixture(scope="function")

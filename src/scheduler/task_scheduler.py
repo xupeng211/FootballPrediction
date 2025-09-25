@@ -190,9 +190,13 @@ class TaskScheduler:
     def register_predefined_tasks(self) -> None:
         """注册预定义的数据采集任务"""
         # 导入任务函数
-        from .tasks import (calculate_features_batch, cleanup_data,
-                            collect_fixtures, collect_live_scores_conditional,
-                            collect_odds)
+        from .tasks import (
+            calculate_features_batch,
+            cleanup_data,
+            collect_fixtures,
+            collect_live_scores_conditional,
+            collect_odds,
+        )
 
         # 定义预设任务
         predefined_tasks = [

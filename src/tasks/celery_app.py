@@ -33,7 +33,6 @@ class DatabaseManager:
 
     def close_connection(self):
         """关闭数据库连接"""
-        pass
 
 
 # 模拟的Redis管理器类（用于测试支持）
@@ -49,7 +48,6 @@ class RedisManager:
 
     def close_connection(self):
         """关闭Redis连接"""
-        pass
 
 
 # 创建 Celery 应用实例
