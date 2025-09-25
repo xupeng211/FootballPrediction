@@ -123,11 +123,17 @@ def main():
         """,
     )
 
-    parser.add_argument("--check-only", action="store_true", help="仅检查问题，不执行修复")
+    parser.add_argument(
+        "--check-only", action="store_true", help="仅检查问题，不执行修复"
+    )
 
-    parser.add_argument("--auto-fix", action="store_true", help="自动修复模式（未实现，请手动修复）")
+    parser.add_argument(
+        "--auto-fix", action="store_true", help="自动修复模式（未实现，请手动修复）"
+    )
 
-    parser.add_argument("--project-root", default=".", help="项目根目录路径 (默认: 当前目录)")
+    parser.add_argument(
+        "--project-root", default=".", help="项目根目录路径 (默认: 当前目录)"
+    )
 
     args = parser.parse_args()
 

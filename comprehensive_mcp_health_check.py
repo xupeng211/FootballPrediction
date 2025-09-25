@@ -77,7 +77,10 @@ class MCPHealthChecker:
 
             if result and result[0] == 1:
                 self.add_result(
-                    "global_mcp", "PostgreSQL MCP", "✅ 正常", f"SELECT 1 返回: {result[0]}"
+                    "global_mcp",
+                    "PostgreSQL MCP",
+                    "✅ 正常",
+                    f"SELECT 1 返回: {result[0]}",
                 )
                 self.log("✅ PostgreSQL MCP: 连接正常")
             else:
@@ -91,7 +94,9 @@ class MCPHealthChecker:
                 self.log("❌ PostgreSQL MCP: 查询结果异常")
 
         except Exception as e:
-            self.add_result("global_mcp", "PostgreSQL MCP", "❌ 异常", f"连接失败: {str(e)}")
+            self.add_result(
+                "global_mcp", "PostgreSQL MCP", "❌ 异常", f"连接失败: {str(e)}"
+            )
             self.log(f"❌ PostgreSQL MCP: {str(e)}")
 
     def check_redis_mcp(self):
@@ -106,7 +111,9 @@ class MCPHealthChecker:
             result = r.ping()
 
             if result:
-                self.add_result("global_mcp", "Redis MCP", "✅ 正常", f"PING 返回: {result}")
+                self.add_result(
+                    "global_mcp", "Redis MCP", "✅ 正常", f"PING 返回: {result}"
+                )
                 self.log("✅ Redis MCP: 连接正常")
             else:
                 self.add_result("global_mcp", "Redis MCP", "❌ 异常", "PING 返回 False")
@@ -129,11 +136,15 @@ class MCPHealthChecker:
                     )
                     self.log("✅ Redis MCP: 连接正常")
                 else:
-                    self.add_result("global_mcp", "Redis MCP", "❌ 异常", "PING 返回 False")
+                    self.add_result(
+                        "global_mcp", "Redis MCP", "❌ 异常", "PING 返回 False"
+                    )
                     self.log("❌ Redis MCP: PING 返回 False")
 
             except Exception as e2:
-                self.add_result("global_mcp", "Redis MCP", "❌ 异常", f"连接失败: {str(e2)}")
+                self.add_result(
+                    "global_mcp", "Redis MCP", "❌ 异常", f"连接失败: {str(e2)}"
+                )
                 self.log(f"❌ Redis MCP: {str(e2)}")
 
     def check_kafka_mcp(self):
@@ -162,7 +173,10 @@ class MCPHealthChecker:
                 self.log(f"✅ Kafka MCP: 发现 {len(topics)} 个topics")
             else:
                 self.add_result(
-                    "global_mcp", "Kafka MCP", "✅ 正常", f"Kafka连接正常，返回类型: {type(topics)}"
+                    "global_mcp",
+                    "Kafka MCP",
+                    "✅ 正常",
+                    f"Kafka连接正常，返回类型: {type(topics)}",
                 )
                 self.log("✅ Kafka MCP: 连接正常")
 
@@ -188,12 +202,18 @@ class MCPHealthChecker:
                     name for name in result.stdout.strip().split("\n") if name
                 ]
                 self.add_result(
-                    "global_mcp", "Docker MCP", "✅ 正常", f"运行中的容器: {container_names}"
+                    "global_mcp",
+                    "Docker MCP",
+                    "✅ 正常",
+                    f"运行中的容器: {container_names}",
                 )
                 self.log(f"✅ Docker MCP: 发现 {len(container_names)} 个运行中的容器")
             else:
                 self.add_result(
-                    "global_mcp", "Docker MCP", "❌ 异常", f"命令执行失败: {result.stderr}"
+                    "global_mcp",
+                    "Docker MCP",
+                    "❌ 异常",
+                    f"命令执行失败: {result.stderr}",
                 )
                 self.log(f"❌ Docker MCP: 命令执行失败")
 
@@ -217,13 +237,19 @@ class MCPHealthChecker:
 
             pod_names = [pod.metadata.name for pod in pods.items]
             self.add_result(
-                "global_mcp", "Kubernetes MCP", "✅ 正常", f"默认命名空间 pods: {pod_names}"
+                "global_mcp",
+                "Kubernetes MCP",
+                "✅ 正常",
+                f"默认命名空间 pods: {pod_names}",
             )
             self.log(f"✅ Kubernetes MCP: 发现 {len(pod_names)} 个pods")
 
         except Exception as e:
             self.add_result(
-                "global_mcp", "Kubernetes MCP", "❌ 异常", f"Kubernetes连接失败: {str(e)}"
+                "global_mcp",
+                "Kubernetes MCP",
+                "❌ 异常",
+                f"Kubernetes连接失败: {str(e)}",
             )
             self.log(f"❌ Kubernetes MCP: {str(e)}")
 
@@ -265,7 +291,9 @@ class MCPHealthChecker:
                 self.log(f"❌ Prometheus MCP: HTTP {response.status_code}")
 
         except Exception as e:
-            self.add_result("global_mcp", "Prometheus MCP", "❌ 异常", f"连接失败: {str(e)}")
+            self.add_result(
+                "global_mcp", "Prometheus MCP", "❌ 异常", f"连接失败: {str(e)}"
+            )
             self.log(f"❌ Prometheus MCP: {str(e)}")
 
     def check_grafana_mcp(self):
@@ -296,7 +324,10 @@ class MCPHealthChecker:
                 )
                 if health_response.status_code == 200:
                     self.add_result(
-                        "global_mcp", "Grafana MCP", "✅ 正常", "Grafana服务正常运行，需要认证访问API"
+                        "global_mcp",
+                        "Grafana MCP",
+                        "✅ 正常",
+                        "Grafana服务正常运行，需要认证访问API",
                     )
                     self.log("✅ Grafana MCP: 服务正常运行，需要认证访问API")
                 else:
@@ -309,7 +340,9 @@ class MCPHealthChecker:
                     self.log(f"❌ Grafana MCP: HTTP {response.status_code}")
 
         except Exception as e:
-            self.add_result("global_mcp", "Grafana MCP", "❌ 异常", f"连接失败: {str(e)}")
+            self.add_result(
+                "global_mcp", "Grafana MCP", "❌ 异常", f"连接失败: {str(e)}"
+            )
             self.log(f"❌ Grafana MCP: {str(e)}")
 
     # Project-specific MCP Checks
@@ -335,7 +368,9 @@ class MCPHealthChecker:
             self.log(f"✅ MLflow MCP: 发现 {len(experiments)} 个experiments")
 
         except Exception as e:
-            self.add_result("project_mcp", "MLflow MCP", "❌ 异常", f"连接失败: {str(e)}")
+            self.add_result(
+                "project_mcp", "MLflow MCP", "❌ 异常", f"连接失败: {str(e)}"
+            )
             self.log(f"❌ MLflow MCP: {str(e)}")
 
     def check_feast_mcp(self):
@@ -363,12 +398,17 @@ class MCPHealthChecker:
                 self.log(f"✅ Feast MCP: 发现 {len(feature_views)} 个feature views")
             else:
                 self.add_result(
-                    "project_mcp", "Feast MCP", "❌ 异常", "feature_store.yaml 文件不存在"
+                    "project_mcp",
+                    "Feast MCP",
+                    "❌ 异常",
+                    "feature_store.yaml 文件不存在",
                 )
                 self.log("❌ Feast MCP: feature_store.yaml 文件不存在")
 
         except Exception as e:
-            self.add_result("project_mcp", "Feast MCP", "❌ 异常", f"连接失败: {str(e)}")
+            self.add_result(
+                "project_mcp", "Feast MCP", "❌ 异常", f"连接失败: {str(e)}"
+            )
             self.log(f"❌ Feast MCP: {str(e)}")
 
     def check_coverage_mcp(self):
@@ -403,7 +443,9 @@ class MCPHealthChecker:
                                 "✅ 正常",
                                 f"整体覆盖率: {coverage_percent:.1f}% (从 {cov_file})",
                             )
-                            self.log(f"✅ Coverage MCP: 整体覆盖率 {coverage_percent:.1f}%")
+                            self.log(
+                                f"✅ Coverage MCP: 整体覆盖率 {coverage_percent:.1f}%"
+                            )
                             break
 
                     elif cov_file == ".coverage":
@@ -429,12 +471,17 @@ class MCPHealthChecker:
             if not found_coverage:
                 # Check if we can generate coverage
                 self.add_result(
-                    "project_mcp", "Coverage MCP", "⚠️ 警告", "未找到覆盖率文件，可能需要运行测试生成"
+                    "project_mcp",
+                    "Coverage MCP",
+                    "⚠️ 警告",
+                    "未找到覆盖率文件，可能需要运行测试生成",
                 )
                 self.log("⚠️ Coverage MCP: 未找到覆盖率文件")
 
         except Exception as e:
-            self.add_result("project_mcp", "Coverage MCP", "❌ 异常", f"读取失败: {str(e)}")
+            self.add_result(
+                "project_mcp", "Coverage MCP", "❌ 异常", f"读取失败: {str(e)}"
+            )
             self.log(f"❌ Coverage MCP: {str(e)}")
 
     def check_pytest_mcp(self):
@@ -470,12 +517,17 @@ class MCPHealthChecker:
                 self.log(f"✅ Pytest MCP: 测试发现功能正常")
             else:
                 self.add_result(
-                    "project_mcp", "Pytest MCP", "❌ 异常", f"测试收集失败: {result.stderr}"
+                    "project_mcp",
+                    "Pytest MCP",
+                    "❌ 异常",
+                    f"测试收集失败: {result.stderr}",
                 )
                 self.log(f"❌ Pytest MCP: 测试收集失败")
 
         except Exception as e:
-            self.add_result("project_mcp", "Pytest MCP", "❌ 异常", f"执行失败: {str(e)}")
+            self.add_result(
+                "project_mcp", "Pytest MCP", "❌ 异常", f"执行失败: {str(e)}"
+            )
             self.log(f"❌ Pytest MCP: {str(e)}")
 
     def generate_report(self):

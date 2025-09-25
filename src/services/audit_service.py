@@ -228,7 +228,9 @@ class AuditService:
             return AuditSeverity.HIGH
 
         if data and self._contains_pii(data):
-            return AuditSeverity.MEDIUM  # 修正：包含PII的操作应该是MEDIUM级别，而不是HIGH
+            return (
+                AuditSeverity.MEDIUM
+            )  # 修正：包含PII的操作应该是MEDIUM级别，而不是HIGH
 
         if action == AuditAction.READ:
             return AuditSeverity.LOW

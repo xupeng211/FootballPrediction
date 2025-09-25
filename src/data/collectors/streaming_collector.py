@@ -157,9 +157,7 @@ class StreamingDataCollector(DataCollector):
                 result.stream_stats = stream_stats
             else:
                 # 如果没有stream_stats属性，添加到error_message中
-                stream_info = (
-                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
-                )
+                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:
@@ -189,9 +187,7 @@ class StreamingDataCollector(DataCollector):
             if hasattr(result, "stream_stats"):
                 result.stream_stats = stream_stats
             else:
-                stream_info = (
-                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
-                )
+                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:
@@ -221,9 +217,7 @@ class StreamingDataCollector(DataCollector):
             if hasattr(result, "stream_stats"):
                 result.stream_stats = stream_stats
             else:
-                stream_info = (
-                    f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
-                )
+                stream_info = f"流处理 - 成功: {stream_stats['success']}, 失败: {stream_stats['failed']}"
                 if result.error_message:
                     result.error_message += f"; {stream_info}"
                 else:

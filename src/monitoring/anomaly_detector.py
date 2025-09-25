@@ -183,7 +183,9 @@ class AnomalyDetector:
                         session, table_name, methods
                     )
                     all_anomalies.extend(table_anomalies)
-                    logger.debug(f"表 {table_name} 异常检测完成，发现 {len(table_anomalies)} 个异常")
+                    logger.debug(
+                        f"表 {table_name} 异常检测完成，发现 {len(table_anomalies)} 个异常"
+                    )
                 except Exception as e:
                     logger.error(f"检测表 {table_name} 异常失败: {e}")
 

@@ -203,7 +203,9 @@ class TestMLflowDatabaseIntegration:
         assert version1 == version2
 
         # 验证MLflow客户端只被调用一次（第一次）
-        assert mock_mlflow_client.get_latest_versions.call_count <= 2  # 允许一些缓存行为
+        assert (
+            mock_mlflow_client.get_latest_versions.call_count <= 2
+        )  # 允许一些缓存行为
 
     # ================================
     # 数据库存储集成测试
@@ -333,7 +335,9 @@ class TestMLflowDatabaseIntegration:
     ):
         """测试MLflow连接失败的处理"""
         # Mock MLflow客户端抛出异常
-        mock_mlflow_client.get_latest_versions.side_effect = Exception("无法连接到MLflow服务器")
+        mock_mlflow_client.get_latest_versions.side_effect = Exception(
+            "无法连接到MLflow服务器"
+        )
 
         # 尝试获取模型应该抛出异常
         with pytest.raises(Exception):
@@ -392,4 +396,6 @@ class TestMLflowDatabaseIntegration:
             avg_response_time = (end_time - start_time) / 10
 
             # 验证性能（平均响应时间应小于1秒）
-            assert avg_response_time < 1.0, f"预测响应时间过长: {avg_response_time:.2f}秒"
+            assert (
+                avg_response_time < 1.0
+            ), f"预测响应时间过长: {avg_response_time:.2f}秒"

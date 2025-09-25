@@ -174,7 +174,9 @@ class TestPredictionService:
         with patch(
             "src.models.prediction_service.MlflowClient", return_value=mock_client
         ):
-            with pytest.raises(ValueError, match="模型 football_baseline_model 没有可用版本"):
+            with pytest.raises(
+                ValueError, match="模型 football_baseline_model 没有可用版本"
+            ):
                 await prediction_service.get_production_model()
 
     @pytest.mark.asyncio

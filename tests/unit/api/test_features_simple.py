@@ -26,7 +26,9 @@ class TestFeatureAPISimple:
         """测试无效比赛ID的处理"""
         # 测试ID验证逻辑
         try:
-            result = await get_match_features(match_id=0, session=mock_session)  # 无效ID
+            result = await get_match_features(
+                match_id=0, session=mock_session
+            )  # 无效ID
             # 如果没有抛出异常，检查返回值
             assert result is not None
         except HTTPException as e:
