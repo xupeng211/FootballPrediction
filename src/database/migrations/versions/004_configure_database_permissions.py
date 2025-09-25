@@ -12,6 +12,8 @@ Revises: 003_previous_migration
 Create Date: 2025-09-10 16:40:00.000000
 """
 
+import os
+
 from alembic import op
 from sqlalchemy import text
 
@@ -27,6 +29,11 @@ def upgrade() -> None:
 
     # 获取数据库连接
     connection = op.get_bind()
+
+    # 获取当前数据库名称（支持测试环境）
+    db_name = os.getenv("TEST_DB_NAME", "football_prediction")
+    if os.getenv("ENVIRONMENT") == "test":
+        db_name = os.getenv("TEST_DB_NAME", "football_prediction_test")
 
     # =============================================================================
     # 创建数据库用户
@@ -82,9 +89,7 @@ def upgrade() -> None:
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(
-        text("GRANT CONNECT ON DATABASE football_prediction TO football_reader;")
-    )
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))
 
     # 授予使用public schema的权限
     connection.execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))
@@ -118,9 +123,7 @@ def upgrade() -> None:
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(
-        text("GRANT CONNECT ON DATABASE football_prediction TO football_writer;")
-    )
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))
 
     # 授予使用public schema的权限
     connection.execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))
@@ -168,13 +171,11 @@ def upgrade() -> None:
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(
-        text("GRANT CONNECT ON DATABASE football_prediction TO football_admin;")
-    )
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))
 
     # 授予所有权限
     connection.execute(
-        text("GRANT ALL PRIVILEGES ON DATABASE football_prediction TO football_admin;")
+        text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;")
     )
 
     # 授予所有表的所有权限
@@ -212,9 +213,7 @@ def upgrade() -> None:
     )
 
     # 授予创建schema的权限
-    connection.execute(
-        text("GRANT CREATE ON DATABASE football_prediction TO football_admin;")
-    )
+    connection.execute(text(f"GRANT CREATE ON DATABASE {db_name} TO football_admin;"))
 
     # =============================================================================
     # 创建角色和权限视图
@@ -357,6 +356,11 @@ def downgrade() -> None:
     # 获取数据库连接
     connection = op.get_bind()
 
+    # 获取当前数据库名称（支持测试环境）
+    db_name = os.getenv("TEST_DB_NAME", "football_prediction")
+    if os.getenv("ENVIRONMENT") == "test":
+        db_name = os.getenv("TEST_DB_NAME", "football_prediction_test")
+
     # 删除权限管理相关对象
     connection.execute(text("DROP VIEW IF EXISTS user_permissions;"))
     connection.execute(text("DROP VIEW IF EXISTS table_permissions;"))
@@ -365,9 +369,7 @@ def downgrade() -> None:
 
     # 撤销用户权限
     connection.execute(
-        text(
-            "REVOKE ALL PRIVILEGES ON DATABASE football_prediction FROM football_reader;"
-        )
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;")
     )
     connection.execute(
         text(
@@ -381,9 +383,7 @@ def downgrade() -> None:
     )
 
     connection.execute(
-        text(
-            "REVOKE ALL PRIVILEGES ON DATABASE football_prediction FROM football_writer;"
-        )
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_writer;")
     )
     connection.execute(
         text(
@@ -397,9 +397,7 @@ def downgrade() -> None:
     )
 
     connection.execute(
-        text(
-            "REVOKE ALL PRIVILEGES ON DATABASE football_prediction FROM football_admin;"
-        )
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_admin;")
     )
     connection.execute(
         text(
