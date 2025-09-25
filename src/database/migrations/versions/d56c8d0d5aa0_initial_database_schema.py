@@ -32,6 +32,7 @@ def upgrade() -> None:
         ),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
         sa.Column("level", sa.Integer(), nullable=True, comment="联赛级别"),
+        sa.Column("api_league_id", sa.Integer(), nullable=True, comment="API联赛ID"),
         sa.Column(
             "season_start_month", sa.Integer(), nullable=True, comment="赛季开始月份"
         ),
@@ -59,6 +60,7 @@ def upgrade() -> None:
         ),
         sa.Column("team_code", sa.String(length=10), nullable=True, comment="球队代码"),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
+        sa.Column("api_team_id", sa.Integer(), nullable=True, comment="API球队ID"),
         sa.Column("league_id", sa.Integer(), nullable=True, comment="所属联赛ID"),
         sa.Column("founded_year", sa.Integer(), nullable=True, comment="成立年份"),
         sa.Column(

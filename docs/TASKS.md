@@ -48,6 +48,9 @@
 - [x] 📌 CI迁移兼容性强化 ✅ 完成于 2025-09-25
   - 🎯 Blocker
   - 📝 彻底解决Alembic迁移在CI离线模式下失败的问题，修复6个迁移文件offline mode兼容性，确保CI/CD流水线稳定运行
+- [x] 📌 CI slow-suite 数据库迁移修复 ✅ 完成于 2025-09-25
+  - 🎯 Blocker
+  - 📝 解决测试数据库缺少leagues表的问题，修复迁移文件中的列名不匹配和事务失败问题，确保CI slow-suite任务正常运行
 
 - [ ] 📌 执行 Staging 环境验证 (72h)
   - 🎯 High

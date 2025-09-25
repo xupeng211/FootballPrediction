@@ -52,7 +52,7 @@ def upgrade() -> None:
             text(
                 """
             CREATE INDEX IF NOT EXISTS idx_recent_matches
-            ON matches (match_date DESC, league_id)
+            ON matches (match_time DESC, league_id)
             WHERE match_status IN ('finished', 'in_progress');
         """
             )
@@ -60,20 +60,6 @@ def upgrade() -> None:
         print("   ✅ idx_recent_matches 索引创建成功")
     except Exception as e:
         print(f"   ❌ idx_recent_matches 索引创建失败: {e}")
-        # 如果 match_date 字段不存在，使用 match_time 作为替代
-        try:
-            conn.execute(
-                text(
-                    """
-                CREATE INDEX IF NOT EXISTS idx_recent_matches
-                ON matches (match_time DESC, league_id)
-                WHERE match_status IN ('finished', 'in_progress');
-            """
-                )
-            )
-            print("   ✅ idx_recent_matches 索引创建成功 (使用 match_time)")
-        except Exception as e2:
-            print(f"   ❌ idx_recent_matches 索引创建最终失败: {e2}")
 
     # ========================================
     # 2. idx_team_matches - 球队对战查询优化
@@ -103,26 +89,13 @@ def upgrade() -> None:
             text(
                 """
             CREATE INDEX IF NOT EXISTS idx_predictions_lookup
-            ON predictions (match_id, model_name, predicted_at DESC);
+            ON predictions (match_id, model_name, created_at DESC);
         """
             )
         )
         print("   ✅ idx_predictions_lookup 索引创建成功")
     except Exception as e:
         print(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
-        # 如果 predicted_at 字段不存在，使用 created_at 作为替代
-        try:
-            conn.execute(
-                text(
-                    """
-                CREATE INDEX IF NOT EXISTS idx_predictions_lookup
-                ON predictions (match_id, model_name, created_at DESC);
-            """
-                )
-            )
-            print("   ✅ idx_predictions_lookup 索引创建成功 (使用 created_at)")
-        except Exception as e2:
-            print(f"   ❌ idx_predictions_lookup 索引创建最终失败: {e2}")
 
     # ========================================
     # 4. idx_odds_match_collected - 赔率时间序列查询优化

@@ -180,6 +180,30 @@ coverage-unit: ## Test: Unit test coverage only
 	pytest tests/unit/ --cov=src --cov-report=html --cov-report=term --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
 
+test.unit: ## Test: Run unit tests only (marked with 'unit')
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running unit tests only...$(RESET)" && \
+	pytest tests/ -m unit --cov=src --cov-report=term-missing:skip-covered --maxfail=1 --disable-warnings && \
+	echo "$(GREEN)✅ Unit tests passed$(RESET)"
+
+test.int: ## Test: Run integration tests only (marked with 'integration')
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running integration tests only...$(RESET)" && \
+	pytest tests/ -m integration --cov=src --cov-report=term-missing:skip-covered --maxfail=1 --disable-warnings && \
+	echo "$(GREEN)✅ Integration tests passed$(RESET)"
+
+cov.html: ## Test: Generate HTML coverage report
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Generating HTML coverage report...$(RESET)" && \
+	pytest tests/ --cov=src --cov-report=html:htmlcov --cov-report=term-missing --maxfail=1 --disable-warnings && \
+	echo "$(GREEN)✅ HTML coverage report generated in htmlcov/$(RESET)"
+
+cov.enforce: ## Test: Run coverage with strict 80% threshold
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running coverage with 80% threshold...$(RESET)" && \
+	pytest tests/ --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 --maxfail=1 --disable-warnings && \
+	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
+
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running quick tests...$(RESET)" && \
@@ -546,7 +570,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test-quick type-check ci up down logs deploy rollback sync-issues context clean \
+.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \

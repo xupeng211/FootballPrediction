@@ -181,7 +181,20 @@ jobs:
       run: |
         source .venv/bin/activate
         export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        # 确保数据库URL正确设置
+        export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/football_prediction_test
+        export SQLALCHEMY_URL=postgresql://postgres:postgres@localhost:5432/football_prediction_test
+        echo "Running database migrations..."
         python scripts/prepare_test_db.py
+
+    - name: Verify database migrations
+      run: |
+        source .venv/bin/activate
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/football_prediction_test
+        echo "Verifying database schema..."
+        alembic current
+        alembic check
 
     - name: Run nightly test suites
       run: |
