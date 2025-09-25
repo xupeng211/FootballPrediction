@@ -482,38 +482,118 @@ def upgrade() -> None:
     print("   ✅ 物化视图创建完成")
 
     # ========================================
-    # 5. 重新创建外键约束
+    # 5. 验证基础表存在并重新创建外键约束
     # ========================================
 
-    print("5. 开始重新创建外键约束...")
+    print("5. 验证基础表存在并重新创建外键约束...")
 
-    # matches 表外键
-    conn.execute(
+    # 首先验证基础表是否存在
+    result = conn.execute(
         text(
             """
-        ALTER TABLE matches ADD CONSTRAINT fk_matches_home_team
-        FOREIGN KEY (home_team_id) REFERENCES teams(id) ON DELETE CASCADE;
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name IN ('leagues', 'teams')
+        ORDER BY table_name;
     """
         )
     )
 
-    conn.execute(
-        text(
-            """
-        ALTER TABLE matches ADD CONSTRAINT fk_matches_away_team
-        FOREIGN KEY (away_team_id) REFERENCES teams(id) ON DELETE CASCADE;
-    """
-        )
-    )
+    existing_tables = [row[0] for row in result.fetchall()]
+    print(f"   现有基础表: {existing_tables}")
 
-    conn.execute(
-        text(
-            """
-        ALTER TABLE matches ADD CONSTRAINT fk_matches_league
-        FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE;
-    """
+    # 如果基础表不存在，需要重新创建它们
+    if "leagues" not in existing_tables:
+        print("   ⚠️  leagues 表不存在，重新创建...")
+        conn.execute(
+            text(
+                """
+            CREATE TABLE leagues (
+                id SERIAL PRIMARY KEY,
+                league_name VARCHAR(100) NOT NULL,
+                league_code VARCHAR(20),
+                country VARCHAR(50),
+                level INTEGER,
+                season_start_month INTEGER,
+                season_end_month INTEGER,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX idx_leagues_country ON leagues (country);
+            CREATE INDEX idx_leagues_active ON leagues (is_active);
+            CREATE INDEX idx_leagues_level ON leagues (level);
+        """
+            )
         )
-    )
+
+    if "teams" not in existing_tables:
+        print("   ⚠️  teams 表不存在，重新创建...")
+        conn.execute(
+            text(
+                """
+            CREATE TABLE teams (
+                id SERIAL PRIMARY KEY,
+                team_name VARCHAR(100) NOT NULL,
+                team_code VARCHAR(10),
+                country VARCHAR(50),
+                league_id INTEGER,
+                founded_year INTEGER,
+                stadium VARCHAR(100),
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX idx_teams_league ON teams (league_id);
+            CREATE INDEX idx_teams_country ON teams (country);
+            CREATE INDEX idx_teams_active ON teams (is_active);
+        """
+            )
+        )
+
+    # 现在重新创建外键约束
+    try:
+        # matches 表外键
+        conn.execute(
+            text(
+                """
+            ALTER TABLE matches ADD CONSTRAINT fk_matches_home_team
+            FOREIGN KEY (home_team_id) REFERENCES teams(id) ON DELETE CASCADE;
+        """
+            )
+        )
+        print("   ✅ matches -> teams 外键创建成功")
+    except Exception as e:
+        print(f"   ⚠️  matches -> teams 外键创建失败: {e}")
+
+    try:
+        conn.execute(
+            text(
+                """
+            ALTER TABLE matches ADD CONSTRAINT fk_matches_away_team
+            FOREIGN KEY (away_team_id) REFERENCES teams(id) ON DELETE CASCADE;
+        """
+            )
+        )
+        print("   ✅ matches -> teams (away) 外键创建成功")
+    except Exception as e:
+        print(f"   ⚠️  matches -> teams (away) 外键创建失败: {e}")
+
+    try:
+        conn.execute(
+            text(
+                """
+            ALTER TABLE matches ADD CONSTRAINT fk_matches_league
+            FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE;
+        """
+            )
+        )
+        print("   ✅ matches -> leagues 外键创建成功")
+    except Exception as e:
+        print(f"   ⚠️  matches -> leagues 外键创建失败: {e}")
 
     # 注意：在PostgreSQL分区表中，外键约束有限制
     # 我们将使用应用程序级别的约束来保证数据完整性
