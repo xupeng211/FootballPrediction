@@ -11,23 +11,6 @@ omit =
     scripts/*
     */scripts/*
     setup.py
-    # Omit heavy integration/API layers from unit coverage fast path
-    src/api/*
-    src/data/*
-    src/services/*
-    src/utils/*
-    src/cache/*
-    src/monitoring/*
-    src/tasks/backup_tasks.py
-    src/tasks/data_collection_tasks.py
-    src/tasks/error_logger.py
-    src/tasks/maintenance_tasks.py
-    src/tasks/monitoring.py
-    src/database/connection.py
-    src/database/sql_compatibility.py
-    src/models/metrics_exporter.py
-    src/services/audit_service.py
-    src/database/models/audit_log.py
 
 [report]
 # 排除应用入口和配置文件，专注业务逻辑覆盖率

@@ -37,11 +37,14 @@ environment = os.getenv("ENVIRONMENT", "test")
 # 检查是否使用本地数据库（用于本地开发环境）
 use_local_db = os.getenv("USE_LOCAL_DB", "false").lower() == "true"
 
+# 检查是否在CI环境中
+in_ci = os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
+
 # 获取数据库配置
 db_config = get_database_config(environment)
 
-# 如果使用本地数据库，覆盖数据库主机配置
-if use_local_db:
+# 如果使用本地数据库或在CI环境中，覆盖数据库主机配置
+if use_local_db or in_ci:
     # 为本地开发修改数据库配置
     db_config.host = "localhost"
     db_config.port = "5432"
