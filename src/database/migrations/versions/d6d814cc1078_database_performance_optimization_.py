@@ -16,7 +16,7 @@ Create Date: 2025-09-10 21:51:46.967609
 
 from typing import Sequence, Union
 
-from alembic import op
+from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
@@ -28,6 +28,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """数据库性能优化升级"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        # 在离线模式下跳过需要数据库连接的操作
+        print("⚠️  离线模式：跳过性能优化迁移")
+        return
 
     # 获取数据库连接以执行原生SQL
     conn = op.get_bind()
@@ -617,6 +623,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """回滚数据库性能优化"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        # 在离线模式下跳过需要数据库连接的操作
+        print("⚠️  离线模式：跳过性能优化回滚")
+        return
 
     conn = op.get_bind()
 

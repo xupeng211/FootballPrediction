@@ -17,7 +17,7 @@ Create Date: 2025-09-12 12:48:23.849021
 
 from typing import Sequence, Union
 
-from alembic import op
+from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
@@ -29,12 +29,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def is_sqlite():
     """检测当前是否为SQLite数据库"""
+    if context.is_offline_mode():
+        return False  # 离线模式下假设不是SQLite
     bind = op.get_bind()
     return bind.dialect.name == "sqlite"
 
 
 def is_postgresql():
     """检测当前是否为PostgreSQL数据库"""
+    if context.is_offline_mode():
+        return True  # 离线模式下假设是PostgreSQL
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
 
@@ -46,6 +50,11 @@ def upgrade() -> None:
     SQLite不支持分区表，但会创建相应的索引来优化查询性能。
     PostgreSQL将实现完整的分区表策略和高级索引。
     """
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过分区表实现")
+        return
+
     bind = op.get_bind()
 
     print(f"当前数据库类型: {bind.dialect.name}")
@@ -363,6 +372,11 @@ def downgrade() -> None:
 
     注意：分区表的降级需要谨慎操作，可能需要数据迁移
     """
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过分区表降级")
+        return
+
     print("开始降级分区表和索引优化...")
 
     if is_postgresql():

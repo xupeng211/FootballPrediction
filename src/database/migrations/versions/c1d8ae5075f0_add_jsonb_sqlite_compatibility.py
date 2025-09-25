@@ -19,7 +19,7 @@ Create Date: 2025-09-12 12:41:21.259691
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
 revision: str = "c1d8ae5075f0"
@@ -30,12 +30,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def is_sqlite():
     """检测当前是否为SQLite数据库"""
+    if context.is_offline_mode():
+        return False  # 离线模式下假设不是SQLite
     bind = op.get_bind()
     return bind.dialect.name == "sqlite"
 
 
 def is_postgresql():
     """检测当前是否为PostgreSQL数据库"""
+    if context.is_offline_mode():
+        return True  # 离线模式下假设是PostgreSQL
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
 
@@ -47,6 +51,11 @@ def upgrade() -> None:
     注意：由于我们已经在模型层面使用了兼容的类型定义，
     这个迁移主要是为了验证和确保现有结构的兼容性。
     """
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过JSONB兼容性检查")
+        return
+
     bind = op.get_bind()
 
     print(f"当前数据库类型: {bind.dialect.name}")
@@ -126,9 +135,7 @@ def _verify_postgresql_jsonb_config():
                     if gin_index:
                         print(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(
-                            f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响"
-                        )
+                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响")
                 else:
                     print(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:

@@ -14,7 +14,7 @@ Create Date: 2025-09-10 16:40:00.000000
 
 import os
 
-from alembic import op
+from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
@@ -26,6 +26,11 @@ depends_on = None
 
 def upgrade() -> None:
     """配置数据库权限"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过数据库权限配置")
+        return
 
     # 获取数据库连接
     connection = op.get_bind()
@@ -352,6 +357,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """回滚数据库权限配置"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过数据库权限回滚")
+        return
 
     # 获取数据库连接
     connection = op.get_bind()

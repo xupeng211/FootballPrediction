@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 """
 
 import sqlalchemy as sa
-from alembic import op
+from alembic import context, op
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 
@@ -32,12 +32,8 @@ def upgrade():
             "id", sa.Integer(), autoincrement=True, nullable=False, comment="审计日志ID"
         ),
         # 用户信息
-        sa.Column(
-            "user_id", sa.String(length=100), nullable=False, comment="操作用户ID"
-        ),
-        sa.Column(
-            "username", sa.String(length=100), nullable=True, comment="操作用户名"
-        ),
+        sa.Column("user_id", sa.String(length=100), nullable=False, comment="操作用户ID"),
+        sa.Column("username", sa.String(length=100), nullable=True, comment="操作用户名"),
         sa.Column("user_role", sa.String(length=50), nullable=True, comment="用户角色"),
         sa.Column("session_id", sa.String(length=100), nullable=True, comment="会话ID"),
         # 操作信息
@@ -49,12 +45,8 @@ def upgrade():
             server_default="MEDIUM",
             comment="严重级别",
         ),
-        sa.Column(
-            "table_name", sa.String(length=100), nullable=True, comment="目标表名"
-        ),
-        sa.Column(
-            "column_name", sa.String(length=100), nullable=True, comment="目标列名"
-        ),
+        sa.Column("table_name", sa.String(length=100), nullable=True, comment="目标表名"),
+        sa.Column("column_name", sa.String(length=100), nullable=True, comment="目标列名"),
         sa.Column("record_id", sa.String(length=100), nullable=True, comment="记录ID"),
         # 数据变更信息
         sa.Column("old_value", sa.Text(), nullable=True, comment="操作前值"),
@@ -72,13 +64,9 @@ def upgrade():
             comment="新值哈希（敏感数据）",
         ),
         # 上下文信息
-        sa.Column(
-            "ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"
-        ),
+        sa.Column("ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"),
         sa.Column("user_agent", sa.Text(), nullable=True, comment="用户代理"),
-        sa.Column(
-            "request_path", sa.String(length=500), nullable=True, comment="请求路径"
-        ),
+        sa.Column("request_path", sa.String(length=500), nullable=True, comment="请求路径"),
         sa.Column(
             "request_method", sa.String(length=10), nullable=True, comment="HTTP方法"
         ),
@@ -99,9 +87,7 @@ def upgrade():
             server_default=sa.func.now(),
             comment="操作时间戳",
         ),
-        sa.Column(
-            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"
-        ),
+        sa.Column("duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"),
         # 扩展信息
         sa.Column(
             "metadata",
@@ -109,9 +95,7 @@ def upgrade():
             nullable=True,
             comment="扩展元数据",
         ),
-        sa.Column(
-            "tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"
-        ),
+        sa.Column("tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"),
         # 合规相关
         sa.Column(
             "compliance_category",
@@ -178,32 +162,38 @@ def upgrade():
         batch_op.create_index("idx_audit_compliance", ["compliance_category"])
 
     # 为audit_logs表设置权限
-    connection = op.get_bind()
+    # 检查是否在离线模式
+    if not context.is_offline_mode():
+        connection = op.get_bind()
 
-    # 为只读用户授予查询权限
-    connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
+        # 为只读用户授予查询权限
+        connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
 
-    # 为写入用户授予查询和插入权限（审计日志通常只允许插入，不允许修改）
-    connection.execute(text("GRANT SELECT, INSERT ON audit_logs TO football_writer;"))
-
-    # 为管理员用户授予所有权限（包括删除权限，用于数据清理）
-    connection.execute(text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;"))
-
-    # 为序列授予使用权限
-    connection.execute(
-        text(
-            "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
+        # 为写入用户授予查询和插入权限（审计日志通常只允许插入，不允许修改）
+        connection.execute(
+            text("GRANT SELECT, INSERT ON audit_logs TO football_writer;")
         )
-    )
 
-    # 创建审计日志清理函数（用于定期清理过期日志）
-    connection.execute(
-        text(
-            """
-        CREATE OR REPLACE FUNCTION cleanup_expired_audit_logs()
-        RETURNS INTEGER AS $$
-        DECLARE
-            deleted_count INTEGER;
+        # 为管理员用户授予所有权限（包括删除权限，用于数据清理）
+        connection.execute(
+            text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;")
+        )
+
+        # 为序列授予使用权限
+        connection.execute(
+            text(
+                "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
+            )
+        )
+
+        # 创建审计日志清理函数（用于定期清理过期日志）
+        connection.execute(
+            text(
+                """
+            CREATE OR REPLACE FUNCTION cleanup_expired_audit_logs()
+            RETURNS INTEGER AS $$
+            DECLARE
+                deleted_count INTEGER;
         BEGIN
             -- 删除超过保留期限的审计日志
             WITH deleted AS (
@@ -217,54 +207,58 @@ def upgrade():
         END;
         $$ LANGUAGE plpgsql;
     """
+            )
         )
-    )
 
-    # 为清理函数授予执行权限
-    connection.execute(
-        text(
-            "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
-        )
-    )
-
-    # 记录迁移日志到原有的权限审计表（如果存在）
-    try:
+        # 为清理函数授予执行权限
         connection.execute(
             text(
-                """
+                "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
+            )
+        )
+
+        # 记录迁移日志到原有的权限审计表（如果存在）
+        try:
+            connection.execute(
+                text(
+                    """
             INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
             VALUES ('system', 'CREATE_TABLE', 'audit_logs', 'DDL', true, 'migration_005',
                    '创建增强的权限审计日志表，支持详细的操作记录和合规要求');
         """
+                )
             )
-        )
-    except Exception as e:
-        # 如果permission_audit_log表不存在，忽略错误但记录日志
-        print(f"Warning: Could not drop permission_audit_log table: {e}")
+        except Exception as e:
+            # 如果permission_audit_log表不存在，忽略错误但记录日志
+            print(f"Warning: Could not drop permission_audit_log table: {e}")
 
 
 def downgrade():
     """降级数据库架构 - 删除audit_logs表"""
 
-    connection = op.get_bind()
+    # 检查是否在离线模式
+    if not context.is_offline_mode():
+        connection = op.get_bind()
 
-    # 记录回滚日志
-    try:
-        connection.execute(
-            text(
-                """
-            INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
-            VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',
-                   '回滚：删除增强的权限审计日志表');
-        """
+        # 记录回滚日志
+        try:
+            connection.execute(
+                text(
+                    """
+                INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
+                VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',
+                       '回滚：删除增强的权限审计日志表');
+            """
+                )
             )
-        )
-    except Exception as e:
-        # 如果permission_audit_log表不存在，忽略错误但记录日志
-        print(f"Warning: Could not drop permission_audit_log table: {e}")
+        except Exception as e:
+            # 如果permission_audit_log表不存在，忽略错误但记录日志
+            print(f"Warning: Could not drop permission_audit_log table: {e}")
 
-    # 删除清理函数
-    connection.execute(text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();"))
+        # 删除清理函数
+        connection.execute(
+            text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();")
+        )
 
     # 删除索引（会随表一起删除，但为了明确性仍然列出）
     # 索引会随着表的删除自动删除
