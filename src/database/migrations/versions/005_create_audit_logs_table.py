@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 # 版本标识
 revision = "005"
-down_revision = "004"
+down_revision = "004_configure_permissions"
 branch_labels = None
 depends_on = None
 
