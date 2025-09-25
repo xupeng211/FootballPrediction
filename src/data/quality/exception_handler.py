@@ -101,7 +101,9 @@ class DataQualityExceptionHandler:
             if missing_value_counts:
                 await self._log_missing_value_handling(table_name, missing_value_counts)
 
-            self.logger.info(f"表 {table_name} 缺失值处理完成，处理 {len(records)} 条记录")
+            self.logger.info(
+                f"表 {table_name} 缺失值处理完成，处理 {len(records)} 条记录"
+            )
             return processed_records
 
         except Exception as e:

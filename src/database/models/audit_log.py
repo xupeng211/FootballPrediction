@@ -123,7 +123,9 @@ class AuditLog(BaseModel):
     retention_period_days = Column(
         Integer, nullable=True, default=2555, comment="保留期限（天）"
     )  # 7年
-    is_sensitive = Column(Boolean, nullable=False, default=False, comment="是否包含敏感数据")
+    is_sensitive = Column(
+        Boolean, nullable=False, default=False, comment="是否包含敏感数据"
+    )
 
     # 索引优化
     __table_args__ = (
@@ -302,9 +304,9 @@ class AuditLog(BaseModel):
             elif action in [AuditAction.BACKUP, AuditAction.RESTORE]:
                 kwargs["compliance_category"] = "DATA_PROTECTION"
             elif kwargs.get("is_sensitive"):
-                kwargs[
-                    "compliance_category"
-                ] = "PII"  # Personally Identifiable Information
+                kwargs["compliance_category"] = (
+                    "PII"  # Personally Identifiable Information
+                )
             else:
                 kwargs["compliance_category"] = "GENERAL"
 

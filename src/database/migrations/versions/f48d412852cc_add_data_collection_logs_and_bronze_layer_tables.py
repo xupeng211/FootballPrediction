@@ -139,8 +139,12 @@ def upgrade() -> None:
             nullable=True,
             comment="外部比赛ID",
         ),
-        sa.Column("bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"),
-        sa.Column("market_type", sa.String(length=50), nullable=True, comment="市场类型"),
+        sa.Column(
+            "bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"
+        ),
+        sa.Column(
+            "market_type", sa.String(length=50), nullable=True, comment="市场类型"
+        ),
         sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
@@ -176,7 +180,11 @@ def upgrade() -> None:
         # 跳过已在初始schema中存在的字段：recent_5_draws, recent_5_losses, recent_5_goals_against, h2h_draws, h2h_losses
         new_columns = [
             ("home_advantage_score", sa.Numeric(5, 2), "主场优势评分"),
-            ("form_trend", sa.String(length=20), "状态趋势(improving/declining/stable)"),
+            (
+                "form_trend",
+                sa.String(length=20),
+                "状态趋势(improving/declining/stable)",
+            ),
             ("odds_movement", sa.String(length=20), "赔率变动趋势"),
             ("market_sentiment", sa.Numeric(5, 4), "市场情绪指数"),
             ("feature_version", sa.String(length=20), "特征版本"),

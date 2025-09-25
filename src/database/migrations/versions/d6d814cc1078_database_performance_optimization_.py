@@ -139,11 +139,11 @@ def upgrade() -> None:
         )
     )
 
-    # 为外键约束添加唯一约束（PostgreSQL 分区表需要）
+    # 为外键约束添加唯一约束（PostgreSQL 分区表需要包含所有分区键）
     conn.execute(
         text(
             """
-        CREATE UNIQUE INDEX idx_matches_id_unique ON matches (id);
+        CREATE UNIQUE INDEX idx_matches_id_unique ON matches (id, match_time);
     """
         )
     )
@@ -211,11 +211,11 @@ def upgrade() -> None:
         )
     )
 
-    # 为外键约束添加唯一约束（PostgreSQL 分区表需要）
+    # 为外键约束添加唯一约束（PostgreSQL 分区表需要包含所有分区键）
     conn.execute(
         text(
             """
-        CREATE UNIQUE INDEX idx_odds_id_unique ON odds (id);
+        CREATE UNIQUE INDEX idx_odds_id_unique ON odds (id, collected_at);
     """
         )
     )
@@ -515,12 +515,13 @@ def upgrade() -> None:
         )
     )
 
-    # odds 表外键
+    # 注意：在PostgreSQL分区表中，外键约束有限制
+    # 我们将使用应用程序级别的约束来保证数据完整性
+    # 添加注释说明这个设计决策
     conn.execute(
         text(
             """
-        ALTER TABLE odds ADD CONSTRAINT fk_odds_match
-        FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE;
+        COMMENT ON TABLE odds IS '注意：match_id 字段应在应用程序级别保证引用完整性，由于PostgreSQL分区表限制，无法使用数据库外键约束';
     """
         )
     )

@@ -44,7 +44,9 @@ class Predictions(BaseModel):
         comment="比赛ID",
     )
 
-    model_name: Mapped[str] = mapped_column(String(100), nullable=False, comment="模型名称")
+    model_name: Mapped[str] = mapped_column(
+        String(100), nullable=False, comment="模型名称"
+    )
 
     model_version: Mapped[str] = mapped_column(
         String(50), nullable=False, comment="模型版本"
@@ -103,7 +105,9 @@ class Predictions(BaseModel):
         String(10), nullable=True, comment="实际比赛结果"
     )
 
-    is_correct: Mapped[Optional[bool]] = mapped_column(nullable=True, comment="预测是否正确")
+    is_correct: Mapped[Optional[bool]] = mapped_column(
+        nullable=True, comment="预测是否正确"
+    )
 
     verified_at: Mapped[Optional[DateTime]] = mapped_column(
         DateTime, nullable=True, comment="验证时间"
@@ -307,9 +311,7 @@ class Predictions(BaseModel):
                     "recommendation": (
                         "BET"
                         if expected_value > 0.05
-                        else "CONSIDER"
-                        if expected_value > 0
-                        else "AVOID"
+                        else "CONSIDER" if expected_value > 0 else "AVOID"
                     ),
                 }
 

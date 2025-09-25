@@ -1407,7 +1407,9 @@ class TestEdgeCases:
             mock_manager_class.return_value = mock_db_instance
 
             # 但在使用get_async_session时抛出异常
-            mock_db_instance.get_async_session.side_effect = OperationalError("数据库连接失败")
+            mock_db_instance.get_async_session.side_effect = OperationalError(
+                "数据库连接失败"
+            )
 
             # 创建TaskErrorLogger实例（此时不会抛异常）
             logger = TaskErrorLogger()

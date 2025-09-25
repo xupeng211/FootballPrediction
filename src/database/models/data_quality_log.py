@@ -31,7 +31,9 @@ class DataQualityLog(BaseModel):
 
     # 基础信息
     id = Column(Integer, primary_key=True, index=True, comment="日志记录唯一标识")
-    table_name = Column(String(100), nullable=False, index=True, comment="出现问题的表名")
+    table_name = Column(
+        String(100), nullable=False, index=True, comment="出现问题的表名"
+    )
     record_id = Column(Integer, nullable=True, index=True, comment="出现问题的记录ID")
 
     # 问题分类

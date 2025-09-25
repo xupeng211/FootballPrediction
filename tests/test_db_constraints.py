@@ -291,7 +291,9 @@ class TestMatchConstraints:
                 away_team_id=self.team2_id,
                 league_id=self.league_id,
                 season="1999-00",
-                match_time=datetime(1999, 12, 31, 15, 0, tzinfo=timezone.utc),  # 无效时间
+                match_time=datetime(
+                    1999, 12, 31, 15, 0, tzinfo=timezone.utc
+                ),  # 无效时间
             )
             db.add(match)
 
@@ -588,7 +590,9 @@ class TestConstraintsIntegration:
                 away_team_id=team2.id,
                 league_id=league.id,
                 season="2024-25",
-                match_time=datetime(1999, 1, 1, 15, 0, tzinfo=timezone.utc),  # 时间约束违反
+                match_time=datetime(
+                    1999, 1, 1, 15, 0, tzinfo=timezone.utc
+                ),  # 时间约束违反
                 home_score=-5,  # 比分约束违反
                 away_score=150,  # 比分约束违反
             )

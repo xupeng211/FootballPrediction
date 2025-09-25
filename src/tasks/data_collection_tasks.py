@@ -132,7 +132,8 @@ def collect_fixtures_task(
             else getattr(result, "records_collected", 0)
         )
         logger.info(
-            f"赛程采集完成: 成功={success_count}, " f"错误={error_count}, 总数={records_collected}"
+            f"赛程采集完成: 成功={success_count}, "
+            f"错误={error_count}, 总数={records_collected}"
         )
 
         status = (

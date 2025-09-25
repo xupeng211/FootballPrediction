@@ -277,7 +277,9 @@ class TestExternalDependencyChecks:
         assert result["status"] == "unhealthy"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="MLflow模块隔离问题 - 测试单独运行时通过，但在完整测试套件中有冲突")
+    @pytest.mark.skip(
+        reason="MLflow模块隔离问题 - 测试单独运行时通过，但在完整测试套件中有冲突"
+    )
     async def test_check_mlflow_success(self):
         """测试MLflow服务检查成功场景 (覆盖外部依赖检查)"""
         import sys
@@ -334,7 +336,9 @@ class TestExternalDependencyChecks:
                 sys.modules[k] = v
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="MLflow模块隔离问题 - 测试单独运行时通过，但在完整测试套件中有冲突")
+    @pytest.mark.skip(
+        reason="MLflow模块隔离问题 - 测试单独运行时通过，但在完整测试套件中有冲突"
+    )
     async def test_check_mlflow_failure(self):
         """测试MLflow服务检查失败场景 (覆盖外部依赖检查)"""
         import sys

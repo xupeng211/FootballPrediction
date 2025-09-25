@@ -318,10 +318,14 @@ class PredictionService:
                 if not all_versions:
                     raise ValueError(f"模型 {model_name} 没有可用版本")
                 model_version_info = all_versions[0]
-                logger.warning(f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境")
+                logger.warning(
+                    f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境"
+                )
             else:
                 model_version_info = staging_versions[0]
-                logger.warning(f"使用Staging版本 {model_version_info.version}，建议推广到生产环境")
+                logger.warning(
+                    f"使用Staging版本 {model_version_info.version}，建议推广到生产环境"
+                )
         else:
             model_version_info = production_versions[0]
             logger.info(f"使用生产版本 {model_version_info.version}")
