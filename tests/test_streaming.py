@@ -175,7 +175,6 @@ class FakeKafkaProducer:
 
         💡 测试行为：直接返回，不做任何处理
         """
-        pass
 
     def flush(self, timeout):
         """
@@ -256,7 +255,6 @@ class FakeKafkaConsumer:
         - 不进行实际订阅操作
         - 可以在测试中验证是否调用了此方法
         """
-        pass
 
     def poll(self, timeout):
         """
@@ -314,7 +312,6 @@ class FakeKafkaConsumer:
         - 不进行实际偏移量提交
         - 可以在测试中验证是否调用了此方法
         """
-        pass
 
     def close(self):
         """
@@ -322,7 +319,6 @@ class FakeKafkaConsumer:
 
         💡 测试行为：不进行任何操作
         """
-        pass
 
 
 class MockMessage:

@@ -15,13 +15,13 @@ class IntegrationTestServer(uvicorn.Server):
 
     def __init__(self, config: uvicorn.Config):
         super().__init__(config)
-        self.started = asyncio.Event()
+        self._started_event: asyncio.Event = asyncio.Event()
 
     async def startup(self, sockets=None):  # type: ignore[override]
         await super().startup(sockets=sockets)
-        self.started.set()
+        self._started_event.set()
 
-    async def force_exit(self) -> None:
+    async def shutdown(self, sockets=None) -> None:
         self.should_exit = True
         await asyncio.sleep(0.1)
 
@@ -45,7 +45,7 @@ def integration_server(event_loop):
     server_thread.start()
 
     # wait until the server reports ready
-    event_loop.run_until_complete(server.started.wait())
+    event_loop.run_until_complete(server._started_event.wait())
 
     try:
         yield

@@ -160,17 +160,19 @@ class AutoRetrainPipeline:
         }
 
         if needs_retrain:
-            evaluation[
-                "reason"
-            ] = f"Accuracy {accuracy:.2%} below threshold {self.accuracy_threshold:.2%}"
+            evaluation["reason"] = (
+                f"Accuracy {accuracy:.2%} below threshold {self.accuracy_threshold:.2%}"
+            )
         elif stats.total_predictions < self.min_predictions_required:
-            evaluation[
-                "reason"
-            ] = f"Insufficient predictions ({stats.total_predictions} < {self.min_predictions_required})"
+            evaluation["reason"] = (
+                f"Insufficient predictions ({stats.total_predictions} < {self.min_predictions_required})"
+            )
         else:
             evaluation["reason"] = "Performance satisfactory"
 
-        logger.info(f"模型 {model_name} 评估完成: 准确率 {accuracy:.2%}, 需要重训练: {needs_retrain}")
+        logger.info(
+            f"模型 {model_name} 评估完成: 准确率 {accuracy:.2%}, 需要重训练: {needs_retrain}"
+        )
         return evaluation
 
     async def _get_recent_performance_trend(
@@ -435,7 +437,9 @@ class AutoRetrainPipeline:
             "learning_rate": 0.001,
         }
 
-        logger.info(f"模型训练完成，验证准确率: {training_metrics['validation_accuracy']:.2%}")
+        logger.info(
+            f"模型训练完成，验证准确率: {training_metrics['validation_accuracy']:.2%}"
+        )
 
         return {
             "success": True,
@@ -801,7 +805,9 @@ def main(
                 click.echo("\n📊 模型性能评估:")
                 click.echo(f"   准确率: {performance['accuracy']:.2%}")
                 click.echo(f"   预测数量: {performance['total_predictions']}")
-                click.echo(f"   需要重训练: {'是' if performance['needs_retrain'] else '否'}")
+                click.echo(
+                    f"   需要重训练: {'是' if performance['needs_retrain'] else '否'}"
+                )
                 click.echo(f"   原因: {performance['reason']}")
 
                 if performance["needs_retrain"] and not dry_run:
@@ -811,7 +817,9 @@ def main(
                     )
 
                     if retrain_result["success"]:
-                        click.echo(f"✅ 重训练成功! 新版本: v{retrain_result['new_version']}")
+                        click.echo(
+                            f"✅ 重训练成功! 新版本: v{retrain_result['new_version']}"
+                        )
 
                         # 生成对比报告
                         report_path = await pipeline.generate_comparison_report(

@@ -4,10 +4,7 @@ MCP Health Check Script
 This script performs health checks on installed MCP servers
 """
 
-import json
-import os
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -81,9 +78,9 @@ def check_config_files():
                     content = f.read()
                     # Basic YAML validation
                     if "servers:" in content:
-                        print(f"   📋 Contains servers configuration")
+                        print("   📋 Contains servers configuration")
                     else:
-                        print(f"   ⚠️  Missing servers configuration")
+                        print("   ⚠️  Missing servers configuration")
             except Exception as e:
                 print(f"   ❌ Error reading config: {e}")
         else:
