@@ -17,7 +17,7 @@ Create Date: 2025-09-12 01:35:00.000000
 
 from typing import Sequence, Union
 
-from alembic import op
+from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
@@ -29,6 +29,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """添加缺失的数据库索引"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过索引创建")
+        return
 
     # 获取数据库连接以执行原生SQL
     conn = op.get_bind()
