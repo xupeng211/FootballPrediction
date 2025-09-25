@@ -18,6 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.database.base import Base  # noqa: E402
 from src.database.config import get_database_config  # noqa: E402
+
 # 导入所有模型以确保它们被注册到Base.metadata
 from src.database.models import Odds  # noqa: F401, E402
 
@@ -30,8 +31,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# 获取数据库配置
-db_config = get_database_config()
+# 获取数据库配置 - 优先使用测试环境配置
+environment = os.getenv("ENVIRONMENT", "test")
+db_config = get_database_config(environment)
 
 # 设置数据库连接URL
 config.set_main_option("sqlalchemy.url", db_config.alembic_url)
