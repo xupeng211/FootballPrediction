@@ -2,8 +2,6 @@ import json
 import os
 from datetime import datetime, timedelta
 
-import pytest
-
 from src.utils.file_utils import FileUtils
 
 

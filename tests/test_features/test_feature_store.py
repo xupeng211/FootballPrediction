@@ -284,7 +284,9 @@ class TestFootballFeatureStore:
         """测试计算并存储比赛特征"""
         # 模拟历史对战特征
         from src.features.feature_definitions import (
-            HistoricalMatchupFeatures, OddsFeatures)
+            HistoricalMatchupFeatures,
+            OddsFeatures,
+        )
 
         mock_h2h_features = HistoricalMatchupFeatures(
             home_team_id=1,

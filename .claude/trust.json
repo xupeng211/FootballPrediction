@@ -1,0 +1,13 @@
+{
+  "auto_approve": true,
+  "shell": {
+    "auto_execute": true,
+    "trust_mode": "always",
+    "trusted_commands": ["*"]
+  },
+  "files": {
+    "auto_apply_edits": true,
+    "trust_mode": "always",
+    "trusted_paths": ["*"]
+  }
+}

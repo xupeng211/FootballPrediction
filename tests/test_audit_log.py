@@ -11,13 +11,23 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from fastapi import Request
 
-from src.database.models.audit_log import (AuditAction, AuditLog,
-                                           AuditLogSummary, AuditSeverity)
-from src.services.audit_service import (AuditContext, AuditService,
-                                        audit_create, audit_database_operation,
-                                        audit_delete, audit_operation,
-                                        audit_service, audit_update,
-                                        extract_request_context)
+from src.database.models.audit_log import (
+    AuditAction,
+    AuditLog,
+    AuditLogSummary,
+    AuditSeverity,
+)
+from src.services.audit_service import (
+    AuditContext,
+    AuditService,
+    audit_create,
+    audit_database_operation,
+    audit_delete,
+    audit_operation,
+    audit_service,
+    audit_update,
+    extract_request_context,
+)
 
 
 class TestAuditLog:

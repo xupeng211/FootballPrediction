@@ -7,10 +7,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.tasks.maintenance_tasks import (cleanup_error_logs_task,
-                                         database_maintenance_task,
-                                         quality_check_task,
-                                         system_health_check_task)
+from src.tasks.maintenance_tasks import (
+    cleanup_error_logs_task,
+    database_maintenance_task,
+    quality_check_task,
+    system_health_check_task,
+)
 
 
 @pytest.fixture

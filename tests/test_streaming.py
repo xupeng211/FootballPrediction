@@ -78,8 +78,12 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.data.collectors.streaming_collector import StreamingDataCollector
-from src.streaming import (FootballKafkaConsumer, FootballKafkaProducer,
-                           StreamConfig, StreamProcessor)
+from src.streaming import (
+    FootballKafkaConsumer,
+    FootballKafkaProducer,
+    StreamConfig,
+    StreamProcessor,
+)
 from src.streaming.stream_processor import StreamProcessorManager
 
 # 📦 为测试环境创建的 Fake/Mock Kafka 客户端

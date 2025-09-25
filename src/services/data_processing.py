@@ -18,8 +18,7 @@ from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 from src.data.storage.data_lake_storage import DataLakeStorage
 from src.database.connection import DatabaseManager
-from src.database.models.raw_data import (RawMatchData, RawOddsData,
-                                          RawScoresData)
+from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
 from .base import BaseService
 

@@ -60,8 +60,12 @@ from enum import Enum
 from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
 from sqlalchemy import Engine, create_engine, select, text, update
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    async_sessionmaker, create_async_engine)
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 

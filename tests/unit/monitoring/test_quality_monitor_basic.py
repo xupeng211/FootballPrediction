@@ -8,9 +8,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.monitoring.quality_monitor import (DataCompletenessResult,
-                                            DataFreshnessResult,
-                                            QualityMonitor)
+from src.monitoring.quality_monitor import (
+    DataCompletenessResult,
+    DataFreshnessResult,
+    QualityMonitor,
+)
 
 
 @pytest.fixture

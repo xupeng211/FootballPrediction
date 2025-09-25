@@ -1,0 +1,277 @@
+groups:
+  - name: football-prediction-alerts
+    interval: 30s
+    rules:
+      # 服务健康检查告警
+      - alert: ServiceDown
+        expr: up{job="football-prediction"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: app
+        annotations:
+          summary: "足球预测服务离线"
+          description: "服务 {{ $labels.instance }} 已经离线超过1分钟"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/ServiceDown"
+
+      # API错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "API错误率过高"
+          description: "5xx错误率超过1%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighErrorRate"
+
+      - alert: HighClientErrorRate
+        expr: rate(http_requests_total{status=~"4.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "客户端错误率过高"
+          description: "4xx错误率超过5%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighClientErrorRate"
+
+      # 响应时间告警
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "响应时间过长"
+          description: "95分位响应时间超过2秒，当前值：{{ $value }}秒"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/SlowResponseTime"
+
+      - alert: VerySlowResponseTime
+        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 5
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "响应时间严重过长"
+          description: "95分位响应时间超过5秒，当前值：{{ $value }}秒"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/VerySlowResponseTime"
+
+      # 数据库告警
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "数据库服务离线"
+          description: "PostgreSQL数据库 {{ $labels.instance }} 已经离线超过1分钟"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/DatabaseDown"
+
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends{datname="football_pred"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "数据库连接数过高"
+          description: "数据库连接数超过80，当前值：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighDatabaseConnections"
+
+      - alert: VeryHighDatabaseConnections
+        expr: pg_stat_database_numbackends{datname="football_pred"} > 100
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "数据库连接数严重过高"
+          description: "数据库连接数超过100，当前值：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/VeryHighDatabaseConnections"
+
+      - alert: SlowDatabaseQueries
+        expr: pg_stat_database_calls_total > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "数据库查询缓慢"
+          description: "数据库每秒调用次数超过1000，可能存在性能问题"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/SlowDatabaseQueries"
+
+      # Redis告警
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis服务离线"
+          description: "Redis缓存服务 {{ $labels.instance }} 已经离线超过1分钟"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/RedisDown"
+
+      - alert: LowRedisHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100 < 80
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis命中率过低"
+          description: "Redis缓存命中率低于80%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/LowRedisHitRate"
+
+      - alert: VeryLowRedisHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100 < 50
+        for: 5m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis命中率严重过低"
+          description: "Redis缓存命中率低于50%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/VeryLowRedisHitRate"
+
+      # Celery任务队列告警
+      - alert: CeleryQueueTooLong
+        expr: celery_task_queue_length > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: tasks
+        annotations:
+          summary: "Celery任务队列过长"
+          description: "Celery任务队列长度超过100，当前值：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/CeleryQueueTooLong"
+
+      - alert: CeleryTaskFailure
+        expr: rate(celery_task_failed_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: tasks
+        annotations:
+          summary: "Celery任务失败率过高"
+          description: "Celery任务失败率超过0.1个/秒，当前值：{{ $value }}个/秒"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/CeleryTaskFailure"
+
+      # 模型性能告警
+      - alert: LowPredictionAccuracy
+        expr: prediction_accuracy_rate < 70
+        for: 10m
+        labels:
+          severity: critical
+          component: ml
+        annotations:
+          summary: "预测准确率过低"
+          description: "模型预测准确率低于70%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/LowPredictionAccuracy"
+
+      - alert: MediumPredictionAccuracy
+        expr: prediction_accuracy_rate < 85 and prediction_accuracy_rate >= 70
+        for: 15m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "预测准确率中等"
+          description: "模型预测准确率在70%-85%之间，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/MediumPredictionAccuracy"
+
+      - alert: ModelTrainingFailure
+        expr: increase(model_training_failed_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: ml
+        annotations:
+          summary: "模型训练失败"
+          description: "最近1小时内模型训练失败次数：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/ModelTrainingFailure"
+
+      # 数据收集告警
+      - alert: DataCollectionFailure
+        expr: increase(data_collection_errors_total[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: data
+        annotations:
+          summary: "数据收集错误过多"
+          description: "最近1小时内数据收集错误超过10次，当前值：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/DataCollectionFailure"
+
+      - alert: NoDataCollection
+        expr: increase(data_collection_matches_collected_total[2h]) == 0
+        for: 2h
+        labels:
+          severity: critical
+          component: data
+        annotations:
+          summary: "数据收集停止"
+          description: "最近2小时内没有收集到任何比赛数据"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/NoDataCollection"
+
+      # 系统资源告警
+      - alert: HighMemoryUsage
+        expr: (process_memory_bytes / process_memory_max_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率超过90%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighMemoryUsage"
+
+      - alert: HighCpuUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率超过80%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighCpuUsage"
+
+      - alert: HighDiskUsage
+        expr: (disk_used_bytes / disk_total_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "磁盘使用率超过85%，当前值：{{ $value }}%"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighDiskUsage"
+
+      # 业务指标告警
+      - alert: LowApiTraffic
+        expr: rate(http_requests_total[5m]) < 1
+        for: 30m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "API流量过低"
+          description: "API请求流量低于1个请求/5分钟，可能存在服务异常"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/LowApiTraffic"
+
+      - alert: HighApiTraffic
+        expr: rate(http_requests_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "API流量过高"
+          description: "API请求流量超过100个请求/5分钟，当前值：{{ $value }}"
+          runbook_url: "https://github.com/your-org/football-prediction/wiki/HighApiTraffic"
