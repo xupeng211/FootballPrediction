@@ -1,11 +1,10 @@
-"""
-metadata_manager模块的基本测试
-主要测试MetadataManager类的基本功能以提升测试覆盖率
-"""
+import pytest
 
 from unittest.mock import Mock, patch
 
 from src.lineage.metadata_manager import MetadataManager
+
+pytestmark = pytest.mark.unit
 
 
 class TestMetadataManager:

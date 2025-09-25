@@ -1,7 +1,4 @@
-"""
-增强的模型层测试 - 快速提升覆盖率
-针对src/models目录的核心功能测试
-"""
+import pytest
 
 from src.models.common_models import (
     DataValidationResult,
@@ -11,6 +8,8 @@ from src.models.common_models import (
     PredictionRequest,
     PredictionResponse,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestPredictionRequest:

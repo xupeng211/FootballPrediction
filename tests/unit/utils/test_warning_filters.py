@@ -1,10 +1,11 @@
-# tests/unit/utils/test_warning_filters.py
-
+import pytest
 import warnings
 from unittest.mock import MagicMock, patch
 
 # Import the module to be tested
 from src.utils import warning_filters
+
+pytestmark = pytest.mark.unit
 
 
 # A dummy Marshmallow warning class for mocking

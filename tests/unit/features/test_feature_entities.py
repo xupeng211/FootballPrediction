@@ -1,6 +1,10 @@
 import datetime
 
+import pytest
+
 from src.features.entities import FeatureKey, MatchEntity, TeamEntity
+
+pytestmark = pytest.mark.unit
 
 
 def test_match_entity_roundtrip():

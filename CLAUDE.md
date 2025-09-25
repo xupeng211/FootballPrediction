@@ -14,7 +14,7 @@ make env-check    # Verify environment health
 ### AI Development Guidelines
 The project includes comprehensive AI development guidelines in `.cursor/rules/` directory that work with both Cursor and Claude Code:
 - **Tool Priority**: Use Makefile commands for consistency
-- **Quality Standards**: 50%+ test coverage (CI), 20%+ (local)
+- **Quality Standards**: 80%+ test coverage (CI), 20%+ (local)
 - **Code Style**: Black formatting, mypy type checking, flake8 linting
 - **Documentation**: Clear comments and structured output
 - **Docker CI**: Validate with `./ci-verify.sh` before pushing
@@ -36,7 +36,7 @@ The project includes comprehensive AI development guidelines in `.cursor/rules/`
 
 ### Testing
 - `make test` - Run pytest unit tests
-- `make coverage` - Run tests with coverage report (50% threshold enforced in CI, 20% for local development)
+- `make coverage` - Run tests with coverage report (80% threshold enforced in CI, 20% for local development)
 - `make coverage-fast` - Run fast coverage (unit tests only, 20% threshold for development)
 - `make test-quick` - Quick test run (unit tests with timeout)
 - `make coverage-unit` - Unit test coverage with HTML report
@@ -60,6 +60,8 @@ The project includes comprehensive AI development guidelines in `.cursor/rules/`
 - `make retrain-check` - Check models and trigger retraining if needed
 - `make model-monitor` - Run enhanced model monitoring cycle
 - `make mlops-pipeline` - Run complete MLOps feedback pipeline
+- `make mlops-status` - Show MLOps pipeline status and generated reports
+- `make feedback-test` - Run feedback loop unit tests
 
 ### Project Context
 - `make context` - Load project context for AI development (⭐ Most important)
@@ -98,7 +100,7 @@ src/
 ├── cache/         # Redis caching layer with TTL support
 ├── core/          # Core utilities (logging, exceptions, configuration)
 ├── database/      # Database abstraction layer with multi-role connection management
-│   ├── models/          # 11 SQLAlchemy ORM models
+│   ├── models/          # 11+ SQLAlchemy ORM models
 │   ├── migrations/      # Alembic-managed schema migrations (10+ files)
 │   ├── connection.py    # Advanced async/sync DB connection manager
 │   └── config.py        # Database configuration
@@ -126,7 +128,7 @@ src/
 ### Key Architectural Patterns
 
 #### Async-First Architecture
-- **53 async Python files** with comprehensive async/await patterns
+- **128+ async Python files** with comprehensive async/await patterns
 - **Dual database support**: PostgreSQL (production) + SQLite (testing) via aiosqlite/asyncpg
 - **Background processing**: Celery with Redis for async task queue
 - **Connection pooling**: Advanced database connection management
@@ -168,11 +170,11 @@ Data Collection → Processing → Feature Store → ML Models → Predictions
 
 ### Quality Assurance
 1. **Code Quality**: Use `make prepush` before committing to ensure all checks pass
-2. **Testing**: CI requires 50%+ coverage, local development uses 20% threshold for speed
+2. **Testing**: CI requires 80%+ coverage, local development uses 20-50% thresholds for speed
 3. **Local CI**: Use `./ci-verify.sh` to simulate full CI environment locally (⭐ Required before pushing)
 
 ### Critical Requirements
-- **Test Coverage**: CI enforces 50%+ minimum (local dev uses 20% for faster iteration) with comprehensive test suite
+- **Test Coverage**: CI enforces 80%+ minimum (local dev uses 20-50% for faster iteration) with comprehensive test suite
 - **Type Safety**: Full mypy type checking required for all code (with some module exclusions)
 - **Code Formatting**: Black and isort automatically applied with flake8 linting
 - **Database**: Uses both SQLite (testing) and PostgreSQL (production) with compatibility layer
@@ -192,16 +194,19 @@ Data Collection → Processing → Feature Store → ML Models → Predictions
 - `docker-compose.yml` - Complete development environment (15+ services)
 - `docker-compose.test.yml` - CI testing environment
 - `docker-compose.grafana.yml` - Monitoring stack (Grafana, Prometheus)
-- `pytest.ini` - pytest configuration with 70% coverage threshold and test markers
+- `pytest.ini` - pytest configuration with 80% coverage threshold and comprehensive test markers
 - `.coveragerc` - Coverage configuration with exclusions for fast development
+- `ci-verify.sh` - Complete CI verification script with Docker environment
+- `Makefile` - Comprehensive build automation with 50+ commands
 
 ### Development Guidelines
 
 The project follows established development patterns with comprehensive tooling and automation. Key guidelines include:
 - **Code Quality**: Black formatting, flake8 linting, mypy type checking
-- **Testing**: pytest with coverage requirements (70% CI, 60% local development)
+- **Testing**: pytest with coverage requirements (80% CI, 20-50% local development)
 - **CI/CD**: GitHub Actions with local simulation via `./ci-verify.sh`
 - **Documentation**: Comprehensive project documentation in `docs/` directory
+- **MLOps**: Complete machine learning operations pipeline with automated retraining
 
 #### Key AI Development Principles:
 - **Modify over Create**: Prioritize modifying existing files over creating new ones
@@ -210,10 +215,11 @@ The project follows established development patterns with comprehensive tooling 
 - **Async Architecture**: All database operations and external API calls use async/await
 - **Quality Gates**: Must pass all CI checks including type safety, linting, and security scanning
 - **Docker Testing**: Test in local Docker environment using `./ci-verify.sh` before pushing
+- **Context Awareness**: Always run `make context` first to understand project state and patterns
 
 ### pytest Configuration
-- **Coverage threshold**: 70% minimum (enforced in CI), 60% for local development
-- **Test markers**: unit, integration, slow, asyncio, e2e, docker, performance, timeout, edge_case, failure_scenario, mlflow
+- **Coverage threshold**: 80% minimum (enforced in CI), 20-50% for local development
+- **Test markers**: unit, integration, slow, asyncio, e2e, docker, performance, timeout, edge_case, failure_scenario, mlflow, db, kafka, celery, ml
 - **Async mode**: auto with function fixture loop scope
 - **Test discovery**: test_*.py files, Test* classes, test_* functions
 - **Warning filters**: Handles deprecation warnings and third-party compatibility issues
@@ -232,6 +238,18 @@ The project follows established development patterns with comprehensive tooling 
 - **E2E Tests**: `tests/e2e/` - End-to-end testing scenarios
 - **Demo Tests**: `tests/demo/` - Example and demonstration tests
 - **Feature Tests**: `tests/test_features/` - Feature-specific testing
+
+#### MLOps Pipeline Testing
+- **Feedback Loop Tests**: `make feedback-test` - Test prediction feedback and retraining logic
+- **Model Monitoring Tests**: Tests for model performance tracking and automated retraining
+- **Data Quality Tests**: Great Expectations validation and data pipeline testing
+
+#### Performance Testing Commands
+- **Application Profiling**: `make profile-app` - Profile main application performance
+- **Test Profiling**: `make profile-tests` - Profile test execution performance
+- **Memory Analysis**: `make profile-memory` - Analyze memory usage patterns
+- **Performance Benchmarks**: `make benchmark` - Run performance benchmarks
+- **Flame Graphs**: `make flamegraph` - Generate performance visualization flame graphs
 
 #### Common Testing Commands
 - **Single test file**: `pytest tests/unit/test_specific_module.py -v`
@@ -255,11 +273,11 @@ The project follows established development patterns with comprehensive tooling 
 - Database migrations are automatically applied in CI environments
 
 #### Common Issues and Solutions
-- **Coverage reporting slow**: Use `make coverage-fast` for unit tests only
-- **Database connection errors**: Ensure Docker services are running with `docker-compose up -d`
+- **Coverage reporting slow**: Use `make coverage-fast` for unit tests only (20% threshold) or `make test-quick` for quick feedback
+- **Database connection errors**: Ensure Docker services are running with `docker-compose up -d` and use `./ci-verify.sh` for full CI environment
 - **Import errors**: Run with proper PYTHONPATH: `export PYTHONPATH="$(pwd):${PYTHONPATH}"`
-- **Test timeouts**: Use `make test-quick` for timeout protection
-- **Large test suite**: Focus on specific modules using path-based test selection
+- **Test timeouts**: Use `make test-quick` for timeout protection or `pytest -x` to stop on first failure
+- **Large test suite**: Use `pytest tests/unit/` for unit tests only, or `pytest tests/unit/test_specific_module.py` for specific modules
 
 ## 🔧 Development Environment Setup
 
@@ -297,3 +315,21 @@ The project follows established development patterns with comprehensive tooling 
 - **Model versioning**: MLflow integration for model lifecycle
 - **Performance tracking**: Automated model performance monitoring
 - **Feedback loop**: Automated retraining based on model performance
+
+### Database Management Commands
+- **Database Initialization**: `make db-init` - Initialize database with migrations
+- **Database Migration**: `make db-migrate` - Run database migrations
+- **Database Seeding**: `make db-seed` - Seed database with initial data
+- **Database Backup**: `make db-backup` - Create database backup
+- **Database Restore**: `make db-restore BACKUP=filename.sql` - Restore from backup
+- **Database Reset**: `make db-reset` - Reset database (WARNING: deletes all data)
+- **Database Shell**: `make db-shell` - Open database shell for queries
+
+### Security and Audit Commands
+- **Security Scan**: `make security-check` - Run vulnerability scan (safety + bandit)
+- **License Check**: `make license-check` - Check open source licenses
+- **Dependency Check**: `make dependency-check` - Check for outdated dependencies
+- **Secret Scan**: `make secret-scan` - Scan for secrets and sensitive data
+- **Complete Audit**: `make audit` - Run complete security audit (all checks above)
+- **Development Stats**: `make dev-stats` - Show development statistics
+- **Code Quality Report**: `make code-quality-report` - Generate code quality metrics

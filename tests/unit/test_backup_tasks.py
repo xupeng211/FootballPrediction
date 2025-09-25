@@ -14,6 +14,8 @@ import pytest
 
 from src.tasks.backup_tasks import DatabaseBackupTask, get_backup_status
 
+pytestmark = pytest.mark.unit
+
 
 class TestDatabaseBackupTask:
     """数据库备份任务测试类"""

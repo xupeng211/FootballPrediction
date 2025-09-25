@@ -4,6 +4,8 @@ import pytest
 
 from src.utils.crypto_utils import CryptoUtils
 
+pytestmark = pytest.mark.unit
+
 
 def test_generate_short_id_large_length():
     result = CryptoUtils.generate_short_id(40)

@@ -6,8 +6,12 @@
 import os
 import sys
 
+import pytest
+
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+pytestmark = pytest.mark.unit
 
 
 class TestCriticalModules:

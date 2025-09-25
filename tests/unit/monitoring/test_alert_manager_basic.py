@@ -1,7 +1,4 @@
-"""
-alert_manager模块的基本测试
-主要测试类和枚举的基本功能以提升测试覆盖率
-"""
+import pytest
 
 from unittest.mock import patch
 
@@ -12,6 +9,8 @@ from src.monitoring.alert_manager import (
     AlertManager,
     AlertStatus,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestAlertEnums:

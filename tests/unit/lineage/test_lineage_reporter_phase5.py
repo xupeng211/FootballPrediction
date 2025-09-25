@@ -1,13 +1,10 @@
-"""
-数据血缘报告器模块 Phase 5 专项测试
-Lineage Reporter Module Phase 5 Specialized Tests
-
-专门用于提升 lineage_reporter.py 模块的测试覆盖率，目标：≥60%
-"""
+import pytest
 
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 from uuid import uuid4
+
+pytestmark = pytest.mark.unit
 
 import pytest
 

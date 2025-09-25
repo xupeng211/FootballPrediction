@@ -1,13 +1,12 @@
-"""
-战略性测试覆盖率提升
-专门针对高影响、低覆盖率模块进行测试，快速提升整体覆盖率到60%以上
-"""
+import pytest
 
 import os
 import sys
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
+pytestmark = pytest.mark.unit
 
 
 class TestWarningFilters:

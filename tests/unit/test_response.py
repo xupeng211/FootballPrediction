@@ -17,6 +17,8 @@ from pydantic import ValidationError
 
 from src.utils.response import APIResponse, APIResponseModel
 
+pytestmark = pytest.mark.unit
+
 
 class TestAPIResponseModel:
     """API响应模型测试"""

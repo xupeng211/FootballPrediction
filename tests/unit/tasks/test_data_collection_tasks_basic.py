@@ -5,6 +5,8 @@ import pytest
 
 from src.tasks import data_collection_tasks as tasks_module
 
+pytestmark = pytest.mark.unit
+
 
 def _make_fake_task(retries: int, retry_side_effect=None):
     return SimpleNamespace(

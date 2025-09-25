@@ -12,6 +12,8 @@ from prometheus_client import CollectorRegistry
 
 from src.monitoring.metrics_exporter import MetricsExporter
 
+pytestmark = pytest.mark.unit
+
 
 class TestMetricsExporter:
     """

@@ -1,10 +1,8 @@
-"""
-API基础测试
-
-提供API模块的基础测试来提升代码覆盖率
-"""
+import pytest
 
 from unittest.mock import MagicMock, patch
+
+pytestmark = pytest.mark.unit
 
 
 class TestAPIModule:

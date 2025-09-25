@@ -1,10 +1,8 @@
-"""
-单元测试：字典工具模块
-
-测试DictUtils类的所有方法，确保字典处理功能正确性。
-"""
+import pytest
 
 from src.utils.dict_utils import DictUtils
+
+pytestmark = pytest.mark.unit
 
 
 class TestDictUtils:

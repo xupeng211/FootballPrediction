@@ -1,9 +1,8 @@
-"""
-测试src/utils/string_utils.py模块
-快速提升测试覆盖率的针对性测试
-"""
+import pytest
 
 from src.utils.string_utils import StringUtils
+
+pytestmark = pytest.mark.unit
 
 
 class TestStringUtils:

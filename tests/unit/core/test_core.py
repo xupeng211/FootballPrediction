@@ -21,6 +21,8 @@ from src.core import (
     logger,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestConfig:
     """测试配置管理类"""

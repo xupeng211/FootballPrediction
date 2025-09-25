@@ -1,4 +1,8 @@
+import pytest
+
 from src.utils.response import APIResponse
+
+pytestmark = pytest.mark.unit
 
 
 def test_success_response_contains_timestamp():

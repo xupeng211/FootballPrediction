@@ -1,6 +1,10 @@
+import pytest
+
 from datetime import datetime, timedelta
 
 from src.utils.data_validator import DataValidator
+
+pytestmark = pytest.mark.unit
 
 
 def test_validate_required_fields():

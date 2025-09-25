@@ -5,9 +5,13 @@ Predictions模型增强测试
 主要覆盖：get_predicted_score, get_feature_importance_dict, generate_explanation等方法
 """
 
+import pytest
+
 import json
 from datetime import datetime
 from decimal import Decimal
+
+pytestmark = pytest.mark.unit
 from unittest.mock import Mock, patch
 
 from sqlalchemy.orm import Session

@@ -1,9 +1,9 @@
-"""
-测试工具模块
-"""
+import pytest
 
 from src.utils.crypto_utils import CryptoUtils
 from src.utils.data_validator import DataValidator
+
+pytestmark = pytest.mark.unit
 
 
 class TestCryptoUtils:

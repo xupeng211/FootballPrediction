@@ -1,6 +1,9 @@
+import pytest
 import asyncio
 
 from src.cache.consistency_manager import CacheConsistencyManager
+
+pytestmark = pytest.mark.unit
 
 
 class DummyRedis:

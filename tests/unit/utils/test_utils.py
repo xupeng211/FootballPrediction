@@ -1,12 +1,11 @@
-"""
-from datetime import datetime, timezone
-测试utils模块的功能
-"""
+import pytest
 
 import json
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+pytestmark = pytest.mark.unit
 
 import pytest
 

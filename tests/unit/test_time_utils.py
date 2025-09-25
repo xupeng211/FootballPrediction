@@ -1,13 +1,10 @@
-"""
-from datetime import datetime, timezone
-单元测试：时间工具模块
-
-测试TimeUtils类的所有方法。
-"""
+import pytest
 
 from datetime import datetime, timezone
 
 from src.utils.time_utils import TimeUtils
+
+pytestmark = pytest.mark.unit
 
 
 class TestTimeUtils:

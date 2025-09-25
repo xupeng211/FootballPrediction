@@ -1,6 +1,10 @@
 """基本功能测试"""
 
+import pytest
+
 from src.core import Logger
+
+pytestmark = pytest.mark.unit
 
 
 class TestProjectBasics:

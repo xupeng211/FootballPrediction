@@ -1,4 +1,4 @@
-"""CI监控工具测试 - 验证GitHub Actions集成和日志分析功能的正确性"""
+import pytest
 
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -6,6 +6,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from scripts.ci_monitor import GitHubCIMonitor
+
+pytestmark = pytest.mark.unit
 
 
 class TestGitHubCIMonitor:
