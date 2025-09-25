@@ -8,7 +8,7 @@
 基于 DATA_DESIGN.md 第5.3节设计。
 
 Revision ID: 004_configure_permissions
-Revises: 003_previous_migration
+Revises: f48d412852cc
 Create Date: 2025-09-10 16:40:00.000000
 """
 
