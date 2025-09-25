@@ -9,7 +9,7 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 50
+COVERAGE_THRESHOLD := 80
 IMAGE_NAME ?= football-prediction
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
