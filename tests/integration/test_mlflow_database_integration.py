@@ -9,7 +9,6 @@ MLflow与数据库集成测试
 - 数据一致性验证
 """
 
-import datetime
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -17,9 +16,6 @@ import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 
-import mlflow
-from mlflow import MlflowClient
-from src.database.connection import DatabaseManager
 from src.database.models import Prediction
 from src.models.prediction_service import PredictionResult, PredictionService
 

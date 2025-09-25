@@ -23,7 +23,6 @@ Tests for TTL caching functionality in prediction service, including model cachi
     ```
 """
 
-import asyncio
 from datetime import timedelta
 from unittest.mock import AsyncMock, Mock, patch
 

@@ -4,10 +4,16 @@
 
 import pytest
 
-from src.core.exceptions import (CacheError, ConfigError, ConsistencyError,
-                                 DatabaseError, DataError,
-                                 FootballPredictionError, ModelError,
-                                 PredictionError)
+from src.core.exceptions import (
+    CacheError,
+    ConfigError,
+    ConsistencyError,
+    DatabaseError,
+    DataError,
+    FootballPredictionError,
+    ModelError,
+    PredictionError,
+)
 
 
 class TestExceptionHierarchy:

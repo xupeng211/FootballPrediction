@@ -21,8 +21,6 @@ import numpy as np
 import pytest
 from sqlalchemy.exc import DatabaseError
 
-from src.database.connection import DatabaseManager
-from src.features.feature_store import FootballFeatureStore
 # 项目导入
 from src.models.prediction_service import PredictionResult, PredictionService
 

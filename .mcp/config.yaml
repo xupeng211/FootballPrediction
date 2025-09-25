@@ -1,0 +1,80 @@
+# Football Prediction Project MCP Configuration
+# This file contains MCP server configurations specific to this project
+
+project:
+  name: "football-prediction"
+  version: "1.0.0"
+  description: "Football prediction system with ML models"
+
+# Project-specific MCP Servers
+servers:
+  # MLflow MCP Server
+  mlflow:
+    command: "python"
+    args: ["-m", "mcp_server_mlflow"]
+    env:
+      MLFLOW_TRACKING_URI: "sqlite:///mlflow.db"
+      MLFLOW_REGISTRY_URI: "sqlite:///mlflow.db"
+      MLFLOW_EXPERIMENT_NAME: "football_prediction"
+    working_dir: "/home/user/projects/FootballPrediction"
+
+  # Feast MCP Server
+  feast:
+    command: "python"
+    args: ["-m", "mcp_server_feast"]
+    env:
+      FEAST_REGISTRY: "data/registry.db"
+      FEAST_REPO_PATH: "/home/user/projects/FootballPrediction"
+      FEATURE_STORE_YAML: "feature_store.yaml"
+    working_dir: "/home/user/projects/FootballPrediction"
+
+  # Coverage MCP Server
+  coverage:
+    command: "python"
+    args: ["-m", "mcp_server_coverage"]
+    env:
+      COVERAGE_FILE: ".coverage"
+      COVERAGE_CONFIG: ".coveragerc"
+      PROJECT_ROOT: "/home/user/projects/FootballPrediction"
+    working_dir: "/home/user/projects/FootballPrediction"
+
+  # Pytest MCP Server
+  pytest:
+    command: "python"
+    args: ["-m", "mcp_server_pytest"]
+    env:
+      PYTEST_CONFIG: "pytest.ini"
+      TEST_ROOT: "tests"
+      PROJECT_ROOT: "/home/user/projects/FootballPrediction"
+    working_dir: "/home/user/projects/FootballPrediction"
+
+  # SQLite MCP Server (for local database access)
+  sqlite:
+    command: "python"
+    args: ["-m", "mcp_server_sqlite"]
+    env:
+      DATABASE_PATH: "football_prediction.db"
+      PROJECT_ROOT: "/home/user/projects/FootballPrediction"
+    working_dir: "/home/user/projects/FootballPrediction"
+
+# MCP Client Configuration
+client:
+  timeout: 30
+  retry_attempts: 3
+  log_level: "INFO"
+
+# Server Health Checks
+health_checks:
+  enabled: true
+  interval: 60
+  timeout: 10
+
+# MCP Security Settings
+security:
+  allow_local_files: true
+  allow_network_access: true
+  allowed_paths:
+    - "/home/user/projects/FootballPrediction"
+    - "/home/user/projects/FootballPrediction/data"
+    - "/home/user/projects/FootballPrediction/tests"
+    - "/home/user/projects/FootballPrediction/src"

@@ -1,6 +1,4 @@
-import asyncio
 from dataclasses import dataclass
-from types import SimpleNamespace
 
 import pandas as pd
 import pytest
