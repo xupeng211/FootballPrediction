@@ -41,6 +41,7 @@
 - 2025-09-21：Phase 4 · `src/streaming/stream_processor.py`，模拟批量发送成功、格式异常失败计数及消费者初始化异常兜底路径，覆盖统计更新与回退逻辑。
 - 2025-09-21：Phase 4 · `src/data/storage/data_lake_storage.py`，使用临时目录验证正常落盘、写入异常与权限错误分支，覆盖日志与补偿路径。
 - 2025-09-22：Phase 4 · `src/tasks/streaming_tasks.py`，补测流式任务执行、异常回退与 Kafka Topic 管理，覆盖正常/失败/重试路径。
+- 2025-09-25：Phase 6 · CI迁移兼容性强化，彻底解决Alembic迁移在CI离线模式下失败的问题，修复6个迁移文件的offline mode兼容性，新增migration health check，确保CI/CD流水线稳定运行。
 
 ## Phase 5 - 覆盖率提升专项（2025-09-25 启动）
 

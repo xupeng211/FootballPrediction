@@ -409,6 +409,37 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose --version
 
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+        pip install -e .
+        pip install matplotlib
+        make check-deps
+
+    - name: Migration Health Check
+      run: |
+        # 启动测试数据库
+        docker-compose -f docker-compose.test.yml up -d db
+        # 等待数据库就绪
+        sleep 10
+        # 检查数据库连接
+        until docker-compose -f docker-compose.test.yml exec -T db pg_isready -U postgres; do
+          echo "Waiting for database to be ready..."
+          sleep 2
+        done
+        # 执行完整迁移测试
+        source .venv/bin/activate
+        export PYTHONPATH="$(pwd):${PYTHONPATH}"
+        export DATABASE_URL=postgresql://postgres:password@localhost:5432/football_prediction_test
+        echo "Running database migration health check..."
+        alembic upgrade head
+        echo "Migration health check completed successfully!"
+        # 清理数据库容器
+        docker-compose -f docker-compose.test.yml down
+
     - name: Run CI verification script
       run: |
         chmod +x ./ci-verify.sh
