@@ -96,3 +96,22 @@
 - [Comprehensive API Documentation Style Guide](COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md) - API
 - [🎯 足球预测系统 Staging 环境部署彩排演练流程](STAGING_DEPLOYMENT_REHEARSAL.md) - CI/CD
 - [📋 测试套件优化总结报告](TESTING_OPTIMIZATION_REPORT.md) - Needs Review
+- [CI 修复报告](CI_FIX_REPORT.md) - Needs Review
+- [代码错误修复总结](code_fixes_summary.md) - Needs Review
+- [Caching Implementation Design](CACHING_IMPLEMENTATION_DESIGN.md) - General
+- [Coverage Improvement Roadmap](COVERAGE_ROADMAP.md) - Needs Review
+- [Dependency Files Overview](DEPENDENCY_FILES_OVERVIEW.md) - General
+- [📋 Phase 1-4 完成度审计报告](PHASE_COMPLETION_AUDIT.md) - General
+- [CI 迁移兼容性强化完成报告](CI_MIGRATION_COMPATIBILITY_REPORT.md) - CI/CD
+- [Phase 5.3 覆盖率优化阶段完成报告](PHASE5.3_COMPLETION_REPORT.md) - General
+- [Dependency Management](DEPENDENCY_MANAGEMENT.md) - General
+- [API Documentation Style Guide](API_DOCUMENTATION_STYLE_GUIDE.md) - API
+- [Unused Dependencies Analysis](UNUSED_DEPENDENCIES_ANALYSIS.md) - Needs Review
+- [MCP 健康检查报告](MCP_HEALTH_CHECK.md) - General
+- [Phase 5.2.1 专项修复阶段完成报告](PHASE5.2.1_COMPLETION_REPORT.md) - Needs Review
+- [本地CI模拟执行报告](LOCAL_CI_REPORT.md) - Needs Review
+- [Phase 5.3.2.2 完成报告：全局覆盖率突破阶段](PHASE5322_COMPLETION_REPORT.md) - General
+- [🎯 API 500 错误修复验证报告](REPAIR_VERIFICATION_REPORT.md) - General
+- [足球预测系统测试策略总览](TESTING_STRATEGY.md) - Testing
+- [CI Fast vs Slow 测试对比报告](CI_REPORT.md) - Needs Review
+- [Phase 5.3.1 覆盖率基线报告](COVERAGE_BASELINE_REPORT.md) - Testing
