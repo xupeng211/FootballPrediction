@@ -206,11 +206,11 @@ async def _check_redis() -> Dict[str, Any]:
                 "Redis连接失败：无法ping通服务器",
                 details={
                     "message": "Redis连接失败：无法ping通服务器",
-                    "server_info": redis_manager.get_info(),
+                    "server_info": await redis_manager.get_info(),
                 },
             )
 
-        info = redis_manager.get_info()
+        info = await redis_manager.get_info()
         return {
             "healthy": True,
             "status": "healthy",

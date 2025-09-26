@@ -674,9 +674,10 @@ class TestAnomalyDetectorBatchOmega003:
                 # 应该返回空列表而不是抛出异常
                 assert isinstance(anomalies, list)
 
-    def test_get_anomaly_summary_empty(self, detector):
+    @pytest.mark.asyncio
+    async def test_get_anomaly_summary_empty(self, detector):
         """测试空异常列表的摘要"""
-        summary = detector.get_anomaly_summary([])
+        summary = await detector.get_anomaly_summary([])
 
         assert summary["total_anomalies"] == 0
         assert summary["by_severity"] == {}
@@ -685,7 +686,8 @@ class TestAnomalyDetectorBatchOmega003:
         assert summary["critical_anomalies"] == 0
         assert summary["high_priority_anomalies"] == 0
 
-    def test_get_anomaly_summary_with_data(self, detector):
+    @pytest.mark.asyncio
+    async def test_get_anomaly_summary_with_data(self, detector):
         """测试有数据的异常摘要"""
         from src.monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
 
@@ -712,7 +714,7 @@ class TestAnomalyDetectorBatchOmega003:
             )
         ]
 
-        summary = detector.get_anomaly_summary(anomalies)
+        summary = await detector.get_anomaly_summary(anomalies)
 
         assert summary["total_anomalies"] == 2
         assert summary["by_severity"]["critical"] == 1
