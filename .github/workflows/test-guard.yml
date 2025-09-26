@@ -65,3 +65,7 @@ jobs:
 # 修改方法:
 #   直接在上方 env 中调整 COVERAGE_THRESHOLD 的值
 # ----------------------------------------------------------
+
+      - name: Check for TODO placeholders in tests
+        run: |
+          python scripts/check_todo_tests.py
