@@ -91,7 +91,8 @@ class TestDataProcessingService:
         # Mock依赖行为
         processor.data_cleaner.clean_match_data.return_value = raw_data
         processor.missing_handler.handle_missing_match_data.return_value = raw_data
-        processor.db_manager.get_async_session.return_value.__aenter__.return_value = AsyncMock()
+        mock_session = AsyncMock()
+        processor.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         processor.cache_manager.set.return_value = True
 
         result = await processor.process_raw_match_data(raw_data)
@@ -129,7 +130,8 @@ class TestDataProcessingService:
 
         processor.data_cleaner.clean_odds_data.return_value = raw_data
         processor.missing_handler.handle_missing_odds_data.return_value = raw_data
-        processor.db_manager.get_async_session.return_value.__aenter__.return_value = AsyncMock()
+        mock_session = AsyncMock()
+        processor.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
 
         result = await processor.process_raw_odds_data(raw_data)
 

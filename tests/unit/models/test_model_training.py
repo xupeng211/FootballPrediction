@@ -62,24 +62,10 @@ class TestBaselineModelTrainer:
 
     def test_calculate_match_result(self, trainer):
         """测试比赛结果计算"""
-        assert (
-            trainer._calculate_match_result(
-                pd.Series({"home_score": 2, "away_score": 1})
-            )
-            == "home"
-        )
-        assert (
-            trainer._calculate_match_result(
-                pd.Series({"home_score": 1, "away_score": 2})
-            )
-            == "away"
-        )
-        assert (
-            trainer._calculate_match_result(
-                pd.Series({"home_score": 1, "away_score": 1})
-            )
-            == "draw"
-        )
+        # 使用字典而不是 pandas.Series 来避免 mocking 问题
+        assert trainer._calculate_match_result({"home_score": 2, "away_score": 1}) == "home"
+        assert trainer._calculate_match_result({"home_score": 1, "away_score": 2}) == "away"
+        assert trainer._calculate_match_result({"home_score": 1, "away_score": 1}) == "draw"
 
     @pytest.mark.asyncio
     async def test_get_historical_matches_success(self, trainer, mock_db_manager):
