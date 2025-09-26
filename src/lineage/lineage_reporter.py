@@ -83,22 +83,15 @@ class LineageReporter:
         if description:
             job_facets["description"] = {"description": description}
         if source_location:
-            job_facets["sourceCodeLocation"] = source_code_location_job(
-                {"type": "git", "url": source_location}
+            job_facets["sourceCodeLocation"] = source_code_location_job.SourceCodeLocationJobFacet(
+                type="git", url=source_location
             )
         if transformation_sql:
-            job_facets["sql"] = sql_job(transformation_sql)
+            job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
 
         # 构建运行信息
         run_facets = {}
-        if parent_run_id:
-            run_facets["parent"] = parent_run(
-                {
-                    "runId": parent_run_id,
-                    "namespace": self.namespace,
-                    "name": f"parent_job_{parent_run_id}",
-                }
-            )
+        # TODO: Implement parent_run functionality with proper UUID handling
 
         # 构建输入数据集
         input_datasets = []
@@ -108,7 +101,9 @@ class LineageReporter:
 
             dataset_facets = {}
             if "schema" in input_info:
-                dataset_facets["schema"] = schema_dataset(input_info["schema"])
+                dataset_facets["schema"] = schema_dataset.SchemaDatasetFacet(
+                    fields=input_info["schema"]
+                )
 
             input_datasets.append(
                 InputDataset(
@@ -127,7 +122,6 @@ class LineageReporter:
             inputs=input_datasets,
             outputs=[],
             producer="football_prediction_lineage_reporter",
-            schemaURL="https://openlineage.io/spec/1-0-5/OpenLineage.json#/$defs/RunEvent",
         )
 
         try:
@@ -175,7 +169,9 @@ class LineageReporter:
 
             dataset_facets = {}
             if "schema" in output_info:
-                dataset_facets["schema"] = schema_dataset(output_info["schema"])
+                dataset_facets["schema"] = schema_dataset.SchemaDatasetFacet(
+                    fields=output_info["schema"]
+                )
             if "statistics" in output_info:
                 dataset_facets["dataQualityMetrics"] = {
                     "dataQualityMetrics": output_info["statistics"]
@@ -209,17 +205,15 @@ class LineageReporter:
             inputs=[],
             outputs=output_datasets,
             producer="football_prediction_lineage_reporter",
-            schemaURL="https://openlineage.io/spec/1-0-5/OpenLineage.json#/$defs/RunEvent",
-        )
+                    )
+
+        # 清理活跃运行记录
+        if job_name in self._active_runs:
+            del self._active_runs[job_name]
 
         try:
             self.client.emit(event)
             logger.info(f"Completed job run: {job_name} with run_id: {run_id}")
-
-            # 清理活跃运行记录
-            if job_name in self._active_runs:
-                del self._active_runs[job_name]
-
             return True
         except Exception as e:
             logger.error(f"Failed to emit complete event for job {job_name}: {e}")
@@ -248,8 +242,8 @@ class LineageReporter:
 
         # 构建错误信息
         run_facets = {
-            "errorMessage": error_message_run(
-                {"message": error_message, "programmingLanguage": "PYTHON"}
+            "errorMessage": error_message_run.ErrorMessageRunFacet(
+                message=error_message, programmingLanguage="PYTHON"
             )
         }
 
@@ -262,8 +256,7 @@ class LineageReporter:
             inputs=[],
             outputs=[],
             producer="football_prediction_lineage_reporter",
-            schemaURL="https://openlineage.io/spec/1-0-5/OpenLineage.json#/$defs/RunEvent",
-        )
+                    )
 
         try:
             self.client.emit(event)
