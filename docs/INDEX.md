@@ -74,3 +74,25 @@
 - [Moved](legacy/TEST_ARCHITECTURE_REFACTOR_REPORT.md)
 - [Merged](legacy/TEST_STRATEGY.md)
 - [Moved](legacy/monitoring.md)
+
+## Orphan Documents Integrated (Batch 1)
+- [📊 足球数据采集配置指南](DATA_COLLECTION_SETUP.md) - Data
+- [足球预测系统安全文档](SECURITY.md) - Security
+- [Coverage Progress Tracker](COVERAGE_PROGRESS.md) - Needs Review
+- [Phase 6 - 数据库迁移修复 + 集成测试优化 完成报告](PHASE6_PROGRESS.md) - General
+- [🛡️ FootballPrediction 项目安全检查清单](security-checklist.md) - Security
+- [📋 Phase 5 质量门禁总结报告](PHASE5_COMPLETION_REPORT.md) - Needs Review
+- [📖 使用示例](USAGE_EXAMPLES.md) - Needs Review
+- [📋 足球预测系统测试策略文档](TEST_STRATEGY.md) - General
+- [Release Checklist](RELEASE_CHECKLIST.md) - Needs Review
+- [覆盖率循环加速计划 - 进度记录](COVERAGE_PROGRESS_NEW.md) - Needs Review
+- [Retry Mechanism Design](RETRY_MECHANISM_DESIGN.md) - General
+- [API 500 错误分析报告](API_500_ERROR_ANALYSIS.md) - Needs Review
+- [Phase 5.3.2.2 全局覆盖率突破阶段完成报告](PHASE5.3.2.2_COMPLETION_REPORT.md) - General
+- [🎯 FootballPrediction 完整系统演示](COMPLETE_DEMO.md) - General
+- [GitHub Actions CI Blockers Analysis Report](CI_BLOCKERS.md) - CI/CD
+- [bad_example.py 迁移说明](bad_example.md) - Needs Review
+- [🔧 特征存储测试修复指南](FEATURE_STORE_TEST_FIXES.md) - General
+- [Comprehensive API Documentation Style Guide](COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md) - API
+- [🎯 足球预测系统 Staging 环境部署彩排演练流程](STAGING_DEPLOYMENT_REHEARSAL.md) - CI/CD
+- [📋 测试套件优化总结报告](TESTING_OPTIMIZATION_REPORT.md) - Needs Review
