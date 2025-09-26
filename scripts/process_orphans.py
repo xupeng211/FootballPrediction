@@ -149,13 +149,19 @@ def process_orphan(orphan_path):
 
 def main():
     """Main processing function"""
+    import sys
+
     print("🔧 Orphan Document Processor")
     print("=" * 40)
 
-    # Read orphan list from file
-    orphan_file = Path("docs/_meta/orphans_batch1.txt")
+    # Read orphan list from file argument or default
+    if len(sys.argv) > 1:
+        orphan_file = Path(sys.argv[1])
+    else:
+        orphan_file = Path("docs/_meta/orphans_batch1.txt")
+
     if not orphan_file.exists():
-        print("❌ Orphan list file not found: docs/_meta/orphans_batch1.txt")
+        print(f"❌ Orphan list file not found: {orphan_file}")
         return
 
     with open(orphan_file, 'r') as f:
