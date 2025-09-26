@@ -134,3 +134,24 @@
 - [数据管道系统实现报告 - 阶段1&2](archive/README_STAGE1_2_IMPLEMENTATION.md) - Needs Review
 - [🐳 FootballPrediction Docker 部署指南](archive/README_DOCKER.md) - Needs Review
 - [🚀 测试覆盖率全面提升方案](archive/COVERAGE_IMPROVEMENT_COMPREHENSIVE_PLAN.md) - Needs Review
+- [数据层代码符合性分析报告](archive/数据层符合性分析报告.md) - Needs Review
+- [🎯 测试覆盖率战略性提升计划](archive/COVERAGE_IMPROVEMENT_STRATEGIC_PLAN.md) - Needs Review
+- [足球预测系统数据层符合性分析报告](archive/数据层符合性分析报告_最新.md) - Needs Review
+- [Coverage Success](archive/COVERAGE_SUCCESS.md) - Needs Review
+- [🎉 阶段1: 最小核心回归测试 - 结果总结](archive/STAGE1_RESULTS_SUMMARY.md) - General
+- [足球预测系统测试框架](archive/README_TESTS.md) - General
+- [📊 测试覆盖率提升方案](archive/COVERAGE_IMPROVEMENT_PLAN.md) - Needs Review
+- [📊 项目质量检查状态报告](reports_archive/QUALITY_REPORT.md) - Needs Review
+- [数据库与配置修复完成报告](reports_archive/DATABASE_CONFIG_FIXES_REPORT.md) - Data
+- [🎉 生产部署与监控完成报告](reports_archive/PRODUCTION_DEPLOYMENT_MONITORING_COMPLETION_REPORT.md) - CI/CD
+- [阶段六：预测反馈闭环与自动迭代 - 完成报告](reports_archive/STAGE6_COMPLETION_REPORT.md) - General
+- [项目存储优化报告](reports_archive/OPTIMIZATION_REPORT.md) - Needs Review
+- [📊 测试覆盖率提升最终报告](reports_archive/COVERAGE_IMPROVEMENT_FINAL_REPORT.md) - Needs Review
+- [🔧 Football Prediction 项目问题修复报告](reports_archive/PROBLEM_RESOLUTION_REPORT.md) - General
+- [📋 足球预测系统测试套件重构完成报告](reports_archive/TEST_ARCHITECTURE_REFACTOR_REPORT.md) - General
+- [Marshmallow 警告问题解决报告](reports_archive/MARSHMALLOW_WARNING_RESOLUTION_REPORT.md) - General
+- [CI Green Light Verification](reports_archive/CI_SUCCESS_REPORT.md) - Needs Review
+- [🎯 质量改进工程师任务完成报告](reports_archive/QUALITY_IMPROVEMENT_COMPLETION_REPORT.md) - General
+- [🔍 问题解决状况最终确认报告](reports_archive/PROBLEM_STATUS_FINAL_REPORT.md) - General
+- [🛡️ 足球预测系统 - QA验证报告](reports_archive/QA_VERIFICATION_REPORT.md) - General
+- [🎉 外部依赖与服务集成完成报告](reports_archive/EXTERNAL_DEPENDENCIES_COMPLETION_REPORT.md) - CI/CD
