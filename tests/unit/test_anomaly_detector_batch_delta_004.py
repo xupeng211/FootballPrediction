@@ -87,14 +87,14 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证初始化属性
-        assert result.table_name == "test_table"
-        assert result.detection_method == "3sigma"
-        assert result.anomaly_type == "statistical_outlier"
-        assert result.severity == "medium"
-        assert isinstance(result.timestamp, datetime)
-        assert result.anomalous_records == []
-        assert result.statistics == {}
-        assert result.metadata == {}
+    assert result.table_name == "test_table"
+    assert result.detection_method == "3sigma"
+    assert result.anomaly_type == "statistical_outlier"
+    assert result.severity == "medium"
+    assert isinstance(result.timestamp, datetime)
+    assert result.anomalous_records == []
+    assert result.statistics == {}
+    assert result.metadata == {}
 
     def test_anomaly_detection_result_add_anomalous_record(self):
         """测试添加异常记录"""
@@ -103,8 +103,8 @@ class TestAnomalyDetectorBatchDelta004:
 
         result.add_anomalous_record(record)
 
-        assert len(result.anomalous_records) == 1
-        assert result.anomalous_records[0] == record
+    assert len(result.anomalous_records) == 1
+    assert result.anomalous_records[0] == record
 
     def test_anomaly_detection_result_set_statistics(self):
         """测试设置统计信息"""
@@ -113,7 +113,7 @@ class TestAnomalyDetectorBatchDelta004:
 
         result.set_statistics(stats)
 
-        assert result.statistics == stats
+    assert result.statistics == stats
 
     def test_anomaly_detection_result_set_metadata(self):
         """测试设置元数据"""
@@ -122,7 +122,7 @@ class TestAnomalyDetectorBatchDelta004:
 
         result.set_metadata(metadata)
 
-        assert result.metadata == metadata
+    assert result.metadata == metadata
 
     def test_anomaly_detection_result_to_dict(self):
         """测试转换为字典格式"""
@@ -133,22 +133,22 @@ class TestAnomalyDetectorBatchDelta004:
 
         result_dict = result.to_dict()
 
-        assert isinstance(result_dict, dict)
-        assert result_dict["table_name"] == "test"
-        assert result_dict["detection_method"] == "3sigma"
-        assert result_dict["anomaly_type"] == "outlier"
-        assert result_dict["severity"] == "high"
-        assert result_dict["anomalous_records_count"] == 1
-        assert result_dict["anomalous_records"] == [{"index": 1, "value": 100.0}]
-        assert result_dict["statistics"] == {"total_records": 100}
-        assert result_dict["metadata"] == {"version": "1.0"}
+    assert isinstance(result_dict, dict)
+    assert result_dict["table_name"] == "test"
+    assert result_dict["detection_method"] == "3sigma"
+    assert result_dict["anomaly_type"] == "outlier"
+    assert result_dict["severity"] == "high"
+    assert result_dict["anomalous_records_count"] == 1
+    assert result_dict["anomalous_records"] == [{"index": 1, "value": 100.0}]
+    assert result_dict["statistics"] == {"total_records": 100}
+    assert result_dict["metadata"] == {"version": "1.0"}
 
     def test_statistical_detector_initialization(self):
         """测试统计异常检测器初始化"""
         detector = StatisticalAnomalyDetector(sigma_threshold=2.5)
 
-        assert detector.sigma_threshold == 2.5
-        assert detector.logger is not None
+    assert detector.sigma_threshold == 2.5
+    assert detector.logger is not None
 
     def test_statistical_detector_detect_outliers_3sigma_normal_data(self, statistical_detector, sample_normal_data):
         """测试3σ检测正常数据"""
@@ -157,11 +157,11 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证返回结果
-        assert isinstance(result, AnomalyDetectionResult)
-        assert result.table_name == "test_table"
-        assert result.detection_method == "3sigma"
-        assert result.anomaly_type == "statistical_outlier"
-        assert len(result.anomalous_records) == 0  # 正常数据应该没有异常值
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.table_name == "test_table"
+    assert result.detection_method == "3sigma"
+    assert result.anomaly_type == "statistical_outlier"
+    assert len(result.anomalous_records) == 0  # 正常数据应该没有异常值
 
     def test_statistical_detector_detect_outliers_3sigma_with_outliers(self, statistical_detector, sample_outlier_data):
         """测试3σ检测包含异常值的数据"""
@@ -170,21 +170,21 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证检测结果结构
-        assert result.table_name == "test_table"
-        assert result.detection_method == "3sigma"
-        assert result.anomaly_type == "statistical_outlier"
-        assert isinstance(result.anomalous_records, list)
-        assert isinstance(result.statistics, dict)
-        assert "total_records" in result.statistics
-        assert "outliers_count" in result.statistics
+    assert result.table_name == "test_table"
+    assert result.detection_method == "3sigma"
+    assert result.anomaly_type == "statistical_outlier"
+    assert isinstance(result.anomalous_records, list)
+    assert isinstance(result.statistics, dict)
+    assert "total_records" in result.statistics
+    assert "outliers_count" in result.statistics
 
         # 如果检测到异常值，验证异常记录结构
         if result.anomalous_records:
             outlier_record = result.anomalous_records[0]
-            assert "index" in outlier_record
-            assert "value" in outlier_record
-            assert "z_score" in outlier_record
-            assert "threshold_exceeded" in outlier_record
+    assert "index" in outlier_record
+    assert "value" in outlier_record
+    assert "z_score" in outlier_record
+    assert "threshold_exceeded" in outlier_record
 
     def test_statistical_detector_detect_outliers_3sigma_empty_data(self, statistical_detector):
         """测试3σ检测空数据"""
@@ -202,8 +202,8 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 所有值相同应该没有异常值
-        assert len(result.anomalous_records) == 0
-        assert result.statistics["outlier_rate"] == 0.0
+    assert len(result.anomalous_records) == 0
+    assert result.statistics["outlier_rate"] == 0.0
 
     @patch('src.data.quality.anomaly_detector.stats.ks_2samp')
     def test_statistical_detector_detect_distribution_shift_no_shift(self, mock_ks_2samp, statistical_detector, baseline_data):
@@ -217,10 +217,10 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证无分布偏移
-        assert result.anomaly_type == "distribution_shift"
-        assert len(result.anomalous_records) == 0  # 无偏移时应该没有异常记录
-        assert result.statistics["ks_statistic"] == 0.1
-        assert result.statistics["p_value"] == 0.8
+    assert result.anomaly_type == "distribution_shift"
+    assert len(result.anomalous_records) == 0  # 无偏移时应该没有异常记录
+    assert result.statistics["ks_statistic"] == 0.1
+    assert result.statistics["p_value"] == 0.8
 
     @patch('src.data.quality.anomaly_detector.stats.ks_2samp')
     def test_statistical_detector_detect_distribution_shift_with_shift(self, mock_ks_2samp, statistical_detector, baseline_data, current_data_shifted):
@@ -233,14 +233,14 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证检测到分布偏移
-        assert result.anomaly_type == "distribution_shift"
-        assert result.table_name == "test_table"
-        assert "ks_statistic" in result.statistics
-        assert "p_value" in result.statistics
-        assert result.statistics["ks_statistic"] == 0.8
-        assert result.statistics["p_value"] == 0.01
-        assert "baseline_stats" in result.statistics
-        assert "current_stats" in result.statistics
+    assert result.anomaly_type == "distribution_shift"
+    assert result.table_name == "test_table"
+    assert "ks_statistic" in result.statistics
+    assert "p_value" in result.statistics
+    assert result.statistics["ks_statistic"] == 0.8
+    assert result.statistics["p_value"] == 0.01
+    assert "baseline_stats" in result.statistics
+    assert "current_stats" in result.statistics
 
     def test_statistical_detector_detect_outliers_iqr_normal_data(self, statistical_detector, sample_normal_data):
         """测试IQR检测正常数据"""
@@ -249,9 +249,9 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证返回结果
-        assert isinstance(result, AnomalyDetectionResult)
-        assert result.detection_method == "iqr"
-        assert result.anomaly_type == "statistical_outlier"
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.detection_method == "iqr"
+    assert result.anomaly_type == "statistical_outlier"
 
     def test_statistical_detector_detect_outliers_iqr_with_outliers(self, statistical_detector, sample_outlier_data):
         """测试IQR检测包含异常值的数据"""
@@ -260,17 +260,17 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证检测到异常值
-        assert result.detection_method == "iqr"
-        assert result.statistics["Q1"] is not None
-        assert result.statistics["Q3"] is not None
-        assert result.statistics["IQR"] is not None
+    assert result.detection_method == "iqr"
+    assert result.statistics["Q1"] is not None
+    assert result.statistics["Q3"] is not None
+    assert result.statistics["IQR"] is not None
 
     def test_ml_detector_initialization(self, ml_detector):
         """测试机器学习异常检测器初始化"""
-        assert ml_detector.scaler is not None
-        assert ml_detector.isolation_forest is None
-        assert ml_detector.dbscan is None
-        assert ml_detector.logger is not None
+    assert ml_detector.scaler is not None
+    assert ml_detector.isolation_forest is None
+    assert ml_detector.dbscan is None
+    assert ml_detector.logger is not None
 
     def test_ml_detector_detect_anomalies_isolation_forest(self, ml_detector, sample_dataframe):
         """测试Isolation Forest异常检测"""
@@ -287,16 +287,16 @@ class TestAnomalyDetectorBatchDelta004:
             )
 
             # 验证返回结果
-            assert isinstance(result, AnomalyDetectionResult)
-            assert result.detection_method == "isolation_forest"
-            assert result.anomaly_type == "ml_anomaly"
-            assert result.table_name == "test_table"
-            assert "total_records" in result.statistics
-            assert "anomaly_rate" in result.statistics
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.detection_method == "isolation_forest"
+    assert result.anomaly_type == "ml_anomaly"
+    assert result.table_name == "test_table"
+    assert "total_records" in result.statistics
+    assert "anomaly_rate" in result.statistics
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
             # 验证方法被调用的逻辑路径
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
             # 测试应该继续进行，因为这是由于mock环境限制
 
     def test_ml_detector_detect_anomalies_isolation_forest_no_numeric_columns(self, ml_detector):
@@ -313,7 +313,7 @@ class TestAnomalyDetectorBatchDelta004:
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
             # 验证逻辑路径正确
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_ml_detector_detect_anomalies_isolation_forest_small_dataset(self, ml_detector):
         """测试Isolation Forest检测小数据集"""
@@ -323,10 +323,10 @@ class TestAnomalyDetectorBatchDelta004:
         try:
             # 小数据集应该也能正常工作
             result = ml_detector.detect_anomalies_isolation_forest(small_df, "test_table")
-            assert isinstance(result, AnomalyDetectionResult)
+    assert isinstance(result, AnomalyDetectionResult)
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_ml_detector_detect_data_drift_no_drift(self, ml_detector, sample_dataframe):
         """测试数据漂移检测无漂移情况"""
@@ -343,11 +343,11 @@ class TestAnomalyDetectorBatchDelta004:
             )
 
             # 验证返回结果列表
-            assert isinstance(results, list)
+    assert isinstance(results, list)
             # 相同数据应该没有漂移
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_ml_detector_detect_data_drift_with_drift(self, ml_detector):
         """测试数据漂移检测有漂移情况"""
@@ -365,11 +365,11 @@ class TestAnomalyDetectorBatchDelta004:
             results = ml_detector.detect_data_drift(baseline_df, current_df, "test_table")
 
             # 验证检测到漂移
-            assert isinstance(results, list)
+    assert isinstance(results, list)
             # 应该检测到漂移特征
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_ml_detector_detect_anomalies_clustering(self, ml_detector, sample_dataframe):
         """测试DBSCAN聚类异常检测"""
@@ -385,13 +385,13 @@ class TestAnomalyDetectorBatchDelta004:
             )
 
             # 验证返回结果
-            assert isinstance(result, AnomalyDetectionResult)
-            assert result.detection_method == "dbscan_clustering"
-            assert result.anomaly_type == "clustering_outlier"
-            assert result.table_name == "test_table"
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.detection_method == "dbscan_clustering"
+    assert result.anomaly_type == "clustering_outlier"
+    assert result.table_name == "test_table"
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_ml_detector_detect_anomalies_clustering_no_numeric_columns(self, ml_detector):
         """测试DBSCAN聚类检测无数值列的情况"""
@@ -405,31 +405,31 @@ class TestAnomalyDetectorBatchDelta004:
                 ml_detector.detect_anomalies_clustering(non_numeric_df, "test_table")
         except Exception as e:
             # 如果由于ML库不可用而失败，这是预期的
-            assert isinstance(e, (ImportError, AttributeError, TypeError))
+    assert isinstance(e, (ImportError, AttributeError, TypeError))
 
     def test_advanced_detector_initialization(self, advanced_detector):
         """测试高级异常检测器初始化"""
-        assert advanced_detector.db_manager is not None
-        assert advanced_detector.statistical_detector is not None
-        assert advanced_detector.ml_detector is not None
-        assert advanced_detector.logger is not None
-        assert isinstance(advanced_detector.detection_config, dict)
+    assert advanced_detector.db_manager is not None
+    assert advanced_detector.statistical_detector is not None
+    assert advanced_detector.ml_detector is not None
+    assert advanced_detector.logger is not None
+    assert isinstance(advanced_detector.detection_config, dict)
 
     def test_advanced_detector_detection_config_structure(self, advanced_detector):
         """测试检测配置结构"""
         config = advanced_detector.detection_config
 
         # 验证配置包含预期表
-        assert "matches" in config
-        assert "odds" in config
-        assert "predictions" in config
+    assert "matches" in config
+    assert "odds" in config
+    assert "predictions" in config
 
         # 验证每个表的配置结构
         for table_config in config.values():
-            assert "enabled_methods" in table_config
-            assert "key_columns" in table_config
-            assert isinstance(table_config["enabled_methods"], list)
-            assert isinstance(table_config["key_columns"], list)
+    assert "enabled_methods" in table_config
+    assert "key_columns" in table_config
+    assert isinstance(table_config["enabled_methods"], list)
+    assert isinstance(table_config["key_columns"], list)
 
     @pytest.mark.asyncio
     async def test_advanced_detector_run_comprehensive_detection_unconfigured_table(self, advanced_detector):
@@ -437,7 +437,7 @@ class TestAnomalyDetectorBatchDelta004:
         results = await advanced_detector.run_comprehensive_detection("unconfigured_table")
 
         # 未配置表应该返回空结果
-        assert results == []
+    assert results == []
         advanced_detector.logger.warning.assert_called()
 
     @pytest.mark.asyncio
@@ -449,7 +449,7 @@ class TestAnomalyDetectorBatchDelta004:
         results = await advanced_detector.run_comprehensive_detection("matches")
 
         # 无数据应该返回空结果
-        assert results == []
+    assert results == []
         advanced_detector.logger.warning.assert_called()
 
     @pytest.mark.asyncio
@@ -471,9 +471,9 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_table_data("matches", 24)
 
         # 验证返回DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert not data.empty
-        assert list(data.columns) == ['home_score', 'away_score']
+    assert isinstance(data, pd.DataFrame)
+    assert not data.empty
+    assert list(data.columns) == ['home_score', 'away_score']
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_table_data_odds(self, advanced_detector):
@@ -494,9 +494,9 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_table_data("odds", 24)
 
         # 验证返回DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert not data.empty
-        assert list(data.columns) == ['home_odds', 'draw_odds', 'away_odds']
+    assert isinstance(data, pd.DataFrame)
+    assert not data.empty
+    assert list(data.columns) == ['home_odds', 'draw_odds', 'away_odds']
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_table_data_predictions(self, advanced_detector):
@@ -517,9 +517,9 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_table_data("predictions", 24)
 
         # 验证返回DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert not data.empty
-        assert list(data.columns) == ['home_win_probability', 'draw_probability', 'away_win_probability']
+    assert isinstance(data, pd.DataFrame)
+    assert not data.empty
+    assert list(data.columns) == ['home_win_probability', 'draw_probability', 'away_win_probability']
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_table_data_unsupported_table(self, advanced_detector):
@@ -527,8 +527,8 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_table_data("unsupported_table", 24)
 
         # 不支持表应该返回空DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert data.empty
+    assert isinstance(data, pd.DataFrame)
+    assert data.empty
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_table_data_db_error(self, advanced_detector):
@@ -542,8 +542,8 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_table_data("matches", 24)
 
         # 数据库错误应该返回空DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert data.empty
+    assert isinstance(data, pd.DataFrame)
+    assert data.empty
         advanced_detector.logger.error.assert_called()
 
     @pytest.mark.asyncio
@@ -564,7 +564,7 @@ class TestAnomalyDetectorBatchDelta004:
         count = await advanced_detector._get_total_records("matches")
 
         # 验证返回计数
-        assert count == 1000
+    assert count == 1000
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_total_records_unsupported_table(self, advanced_detector):
@@ -572,7 +572,7 @@ class TestAnomalyDetectorBatchDelta004:
         count = await advanced_detector._get_total_records("unsupported_table")
 
         # 不支持表应该返回0
-        assert count == 0
+    assert count == 0
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_total_records_db_error(self, advanced_detector):
@@ -586,7 +586,7 @@ class TestAnomalyDetectorBatchDelta004:
         count = await advanced_detector._get_total_records("matches")
 
         # 数据库错误应该返回0
-        assert count == 0
+    assert count == 0
         advanced_detector.logger.error.assert_called()
 
     @pytest.mark.asyncio
@@ -624,13 +624,13 @@ class TestAnomalyDetectorBatchDelta004:
             return
 
         # 验证返回结果列表
-        assert isinstance(results, list)
+    assert isinstance(results, list)
         # 每个数值列应该有一个结果
-        assert len(results) >= 1
+    assert len(results) >= 1
 
         for result in results:
-            assert isinstance(result, AnomalyDetectionResult)
-            assert result.detection_method == "3sigma"
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.detection_method == "3sigma"
 
     @pytest.mark.asyncio
     async def test_advanced_detector_run_iqr_detection(self, advanced_detector, sample_dataframe):
@@ -645,13 +645,13 @@ class TestAnomalyDetectorBatchDelta004:
             results = await advanced_detector._run_iqr_detection("test_table", sample_dataframe, config)
 
             # 验证返回结果列表
-            assert isinstance(results, list)
+    assert isinstance(results, list)
             # 每个数值列应该有一个结果
-            assert len(results) >= 1
+    assert len(results) >= 1
 
             for result in results:
-                assert isinstance(result, AnomalyDetectionResult)
-                assert result.detection_method == "iqr"
+    assert isinstance(result, AnomalyDetectionResult)
+    assert result.detection_method == "iqr"
         except Exception as e:
             # 如果pandas mock导致问题，只验证方法调用而不验证结果
             print(f"跳过IQR检测测试，由于pandas mock问题: {e}")
@@ -673,7 +673,7 @@ class TestAnomalyDetectorBatchDelta004:
         results = await advanced_detector._run_data_drift_detection("test_table", sample_dataframe, config)
 
         # 验证返回结果列表
-        assert isinstance(results, list)
+    assert isinstance(results, list)
 
     @pytest.mark.asyncio
     async def test_advanced_detector_run_data_drift_detection_no_baseline(self, advanced_detector, sample_dataframe):
@@ -690,7 +690,7 @@ class TestAnomalyDetectorBatchDelta004:
         results = await advanced_detector._run_data_drift_detection("test_table", sample_dataframe, config)
 
         # 无基准数据应该返回空结果
-        assert results == []
+    assert results == []
         advanced_detector.logger.warning.assert_called()
 
     @pytest.mark.asyncio
@@ -708,7 +708,7 @@ class TestAnomalyDetectorBatchDelta004:
         results = await advanced_detector._run_distribution_shift_detection("test_table", sample_dataframe, config)
 
         # 验证返回结果列表
-        assert isinstance(results, list)
+    assert isinstance(results, list)
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_baseline_data(self, advanced_detector):
@@ -729,9 +729,9 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_baseline_data("matches", 30)
 
         # 验证返回DataFrame
-        assert isinstance(data, pd.DataFrame)
+    assert isinstance(data, pd.DataFrame)
         if not data.empty:
-            assert list(data.columns) == ['home_score', 'away_score']
+    assert list(data.columns) == ['home_score', 'away_score']
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_baseline_data_unsupported_table(self, advanced_detector):
@@ -739,8 +739,8 @@ class TestAnomalyDetectorBatchDelta004:
         data = await advanced_detector._get_baseline_data("unsupported_table", 30)
 
         # 不支持表应该返回空DataFrame
-        assert isinstance(data, pd.DataFrame)
-        assert data.empty
+    assert isinstance(data, pd.DataFrame)
+    assert data.empty
 
     @pytest.mark.asyncio
     async def test_advanced_detector_get_anomaly_summary(self, advanced_detector):
@@ -751,18 +751,18 @@ class TestAnomalyDetectorBatchDelta004:
         summary = await advanced_detector.get_anomaly_summary(24)
 
         # 验证摘要结构
-        assert isinstance(summary, dict)
-        assert "detection_period" in summary
-        assert "tables_analyzed" in summary
-        assert "total_anomalies" in summary
-        assert "anomalies_by_table" in summary
-        assert "anomalies_by_severity" in summary
-        assert "anomalies_by_method" in summary
-        assert "anomalies_by_type" in summary
+    assert isinstance(summary, dict)
+    assert "detection_period" in summary
+    assert "tables_analyzed" in summary
+    assert "total_anomalies" in summary
+    assert "anomalies_by_table" in summary
+    assert "anomalies_by_severity" in summary
+    assert "anomalies_by_method" in summary
+    assert "anomalies_by_type" in summary
 
         # 验证默认值
-        assert summary["total_anomalies"] == 0
-        assert summary["tables_analyzed"] == ["matches", "odds", "predictions"]
+    assert summary["total_anomalies"] == 0
+    assert summary["tables_analyzed"] == ["matches", "odds", "predictions"]
 
     def test_anomaly_detection_result_severity_determination_3sigma(self, statistical_detector):
         """测试3σ检测的严重程度确定"""
@@ -773,7 +773,7 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 少量异常值（<5%）应该是中等严重程度
-        assert result.severity in ["medium", "low"]
+    assert result.severity in ["medium", "low"]
 
     def test_anomaly_detection_result_severity_determination_iqr(self, statistical_detector):
         """测试IQR检测的严重程度确定"""
@@ -784,14 +784,14 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证严重程度被正确设置（不指定具体值，因为算法可能有不同的判断逻辑）
-        assert result.severity in ["low", "medium", "high"]
+    assert result.severity in ["low", "medium", "high"]
 
     def test_anomaly_detection_statistical_methods_error_handling(self, statistical_detector):
         """测试统计方法的错误处理"""
         # 由于pandas mock对字符串数据处理有限制，跳过这个测试
         # 已经由其他测试覆盖了错误处理逻辑
         statistical_detector.logger.info("跳过字符串数据处理测试，由于pandas mock限制")
-        assert True  # 测试通过
+    assert True  # 测试通过
 
     def test_anomaly_detection_ml_methods_error_handling(self, ml_detector):
         """测试机器学习方法的错误处理"""
@@ -819,7 +819,7 @@ class TestAnomalyDetectorBatchDelta004:
                 advanced_detector._get_table_data("matches", 24)
             )
             loop.close()
-            assert isinstance(result, pd.DataFrame)  # 应该返回空DataFrame而不是抛出异常
+    assert isinstance(result, pd.DataFrame)  # 应该返回空DataFrame而不是抛出异常
         except Exception:
             pass  # 错误应该被捕获并记录
 
@@ -832,7 +832,7 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 单值数据应该没有异常值
-        assert len(result.anomalous_records) == 0
+    assert len(result.anomalous_records) == 0
 
         # 测试包含NaN的数据
         nan_data = pd.Series([1.0, np.nan, 3.0, 4.0])
@@ -841,7 +841,7 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 应该处理NaN值而不崩溃
-        assert isinstance(result, AnomalyDetectionResult)
+    assert isinstance(result, AnomalyDetectionResult)
 
     def test_anomaly_detection_prometheus_metrics_integration(self, statistical_detector, sample_normal_data):
         """测试Prometheus指标集成"""
@@ -854,8 +854,8 @@ class TestAnomalyDetectorBatchDelta004:
             )
 
             # 验证指标对象存在但不强求被调用，因为只有在检测到异常时才会触发
-            assert mock_metric is not None
-            assert hasattr(mock_metric, 'labels')
+    assert mock_metric is not None
+    assert hasattr(mock_metric, 'labels')
 
     def test_anomaly_detection_performance_logging(self, statistical_detector, sample_normal_data):
         """测试性能日志记录"""
@@ -864,7 +864,7 @@ class TestAnomalyDetectorBatchDelta004:
         )
 
         # 验证日志对象存在（性能日志可能只在特定条件下记录）
-        assert statistical_detector.logger is not None
+    assert statistical_detector.logger is not None
 
     def test_anomaly_detection_configuration_flexibility(self, advanced_detector):
         """测试配置的灵活性"""
@@ -875,7 +875,7 @@ class TestAnomalyDetectorBatchDelta004:
         config["matches"]["enabled_methods"].append("new_method")
 
         # 验证修改生效
-        assert "new_method" in config["matches"]["enabled_methods"]
+    assert "new_method" in config["matches"]["enabled_methods"]
 
         # 恢复原始配置
         config["matches"]["enabled_methods"] = original_methods

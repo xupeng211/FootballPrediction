@@ -80,23 +80,23 @@ class TestMetadataManagerComprehensive:
         from src.lineage.metadata_manager import MetadataManager
 
         manager = MetadataManager()
-        assert manager.marquez_url == "http://localhost:5000"
-        assert manager.base_url == "http://localhost:5000"
-        assert manager.api_url == "http://localhost:5000/api/v1/"
-        assert manager.session is not None
-        assert "Content-Type" in manager.session.headers
-        assert "Accept" in manager.session.headers
+    assert manager.marquez_url == "http:_/localhost:5000"
+    assert manager.base_url == "http://localhost:5000"
+    assert manager.api_url == "http://localhost:5000/api/v1/"
+    assert manager.session is not None
+    assert "Content-Type" in manager.session.headers
+    assert "Accept" in manager.session.headers
 
     def test_initialization_custom_url(self):
         """测试自定义 URL 初始化"""
         from src.lineage.metadata_manager import MetadataManager
 
-        custom_url = "http://custom-marquez:8080"
+        custom_url = "http:_/custom-marquez:8080"
         manager = MetadataManager(marquez_url=custom_url)
 
-        assert manager.marquez_url == custom_url
-        assert manager.base_url == custom_url
-        assert manager.api_url == f"{custom_url}/api/v1/"
+    assert manager.marquez_url == custom_url
+    assert manager.base_url == custom_url
+    assert manager.api_url == f"{custom_url}/api/v1/"
 
     def test_session_headers_configuration(self):
         """测试会话头部配置"""
@@ -105,8 +105,8 @@ class TestMetadataManagerComprehensive:
         manager = MetadataManager()
         headers = manager.session.headers
 
-        assert headers["Content-Type"] == "application/json"
-        assert headers["Accept"] == "application/json"
+    assert headers["Content-Type"] == "application_json"
+    assert headers["Accept"] == "application/json"
 
     # === 命名空间管理测试 ===
 
@@ -117,14 +117,14 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_namespace(**sample_namespace_data)
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
         # 验证调用参数
         call_args = mock_post.call_args
         expected_url = f"{manager.api_url}namespaces"
-        assert call_args[0][0] == expected_url
-        assert call_args[1]["json"] == sample_namespace_data
+    assert call_args[0][0] == expected_url
+    assert call_args[1]["json"] == sample_namespace_data
 
     @patch('requests.Session.post')
     def test_create_namespace_minimal_params(self, mock_post, manager, mock_response):
@@ -133,12 +133,12 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_namespace(name="test_namespace")
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
         call_args = mock_post.call_args
         expected_data = {"name": "test_namespace"}
-        assert call_args[1]["json"] == expected_data
+    assert call_args[1]["json"] == expected_data
 
     @patch('requests.Session.post')
     def test_create_namespace_api_error(self, mock_post, manager):
@@ -151,7 +151,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_namespace(name="existing_namespace")
 
-        assert result is not None
+    assert result is not None
         # 应该包含错误信息
 
     @patch('requests.Session.post')
@@ -161,7 +161,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_namespace(name="test_namespace")
 
-        assert result is not None
+    assert result is not None
         # 应该处理网络错误
 
     # === 数据集管理测试 ===
@@ -178,12 +178,12 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_dataset(**sample_dataset_data)
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
         call_args = mock_post.call_args
         expected_url = f"{manager.api_url}datasets"
-        assert call_args[0][0] == expected_url
+    assert call_args[0][0] == expected_url
 
     @patch('requests.Session.post')
     def test_create_dataset_with_complex_fields(self, mock_post, manager, mock_response):
@@ -205,7 +205,7 @@ class TestMetadataManagerComprehensive:
         mock_post.return_value = mock_response
         result = manager.create_dataset(**complex_dataset)
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
     # === 作业管理测试 ===
@@ -222,12 +222,12 @@ class TestMetadataManagerComprehensive:
 
         result = manager.create_job(**sample_job_data)
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
         call_args = mock_post.call_args
         expected_url = f"{manager.api_url}jobs"
-        assert call_args[0][0] == expected_url
+    assert call_args[0][0] == expected_url
 
     @patch('requests.Session.post')
     def test_create_job_with_inputs_outputs(self, mock_post, manager, mock_response):
@@ -244,7 +244,7 @@ class TestMetadataManagerComprehensive:
         mock_post.return_value = mock_response
         result = manager.create_job(**job_with_io)
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
     # === 数据集血缘测试 ===
@@ -261,12 +261,12 @@ class TestMetadataManagerComprehensive:
 
         result = manager.get_dataset_lineage("test_namespace", "test_dataset")
 
-        assert result is not None
+    assert result is not None
         mock_get.assert_called_once()
 
         call_args = mock_get.call_args
-        expected_url = f"{manager.api_url}datasets/test_namespace/test_dataset/lineage"
-        assert call_args[0][0] == expected_url
+        expected_url = f"{manager.api_url}datasets_test_namespace/test_dataset/lineage"
+    assert call_args[0][0] == expected_url
 
     @patch('requests.Session.get')
     def test_get_dataset_lineage_not_found(self, mock_get, manager):
@@ -278,7 +278,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.get_dataset_lineage("nonexistent", "dataset")
 
-        assert result is not None
+    assert result is not None
         # 应该处理 404 错误
 
     # === 数据集搜索测试 ===
@@ -297,7 +297,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.search_datasets("test_namespace", keyword="test")
 
-        assert result is not None
+    assert result is not None
         mock_get.assert_called_once()
 
     @patch('requests.Session.get')
@@ -314,7 +314,7 @@ class TestMetadataManagerComprehensive:
             offset=20
         )
 
-        assert result is not None
+    assert result is not None
         mock_get.assert_called_once()
 
     # === 数据集版本测试 ===
@@ -332,8 +332,8 @@ class TestMetadataManagerComprehensive:
 
         result = manager.get_dataset_versions("test_namespace", "test_dataset")
 
-        assert result is not None
-        assert isinstance(result, list)
+    assert result is not None
+    assert isinstance(result, list)
         mock_get.assert_called_once()
 
     # === 作业运行测试 ===
@@ -352,7 +352,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.get_job_runs("test_namespace", "test_job")
 
-        assert result is not None
+    assert result is not None
         mock_get.assert_called_once()
 
     @patch('requests.Session.get')
@@ -368,7 +368,7 @@ class TestMetadataManagerComprehensive:
             status="completed"
         )
 
-        assert result is not None
+    assert result is not None
         mock_get.assert_called_once()
 
     # === 数据集标签测试 ===
@@ -381,7 +381,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.add_dataset_tag("test_namespace", "test_dataset", "important")
 
-        assert result is not None
+    assert result is not None
         mock_post.assert_called_once()
 
     @patch('requests.Session.post')
@@ -394,7 +394,7 @@ class TestMetadataManagerComprehensive:
 
         result = manager.add_dataset_tag("nonexistent", "dataset", "tag")
 
-        assert result is not None
+    assert result is not None
         # 应该处理错误
 
     # === 足球元数据设置测试 ===
@@ -407,10 +407,10 @@ class TestMetadataManagerComprehensive:
 
         # 应该不抛出异常
         result = manager.setup_football_metadata()
-        assert result is None  # 这个方法可能没有返回值
+    assert result is None  # 这个方法可能没有返回值
 
         # 验证多次调用（创建多个资源）
-        assert mock_post.call_count >= 3  # 至少创建命名空间、数据集、作业
+    assert mock_post.call_count >= 3  # 至少创建命名空间、数据集、作业
 
     @patch('requests.Session.post')
     def test_setup_football_metadata_partial_failure(self, mock_post, manager):
@@ -428,7 +428,7 @@ class TestMetadataManagerComprehensive:
 
         # 应该继续执行即使部分失败
         result = manager.setup_football_metadata()
-        assert result is None
+    assert result is None
 
     # === 错误处理测试 ===
 
@@ -442,7 +442,7 @@ class TestMetadataManagerComprehensive:
         mock_post.return_value = error_response
 
         result = manager.create_namespace(name="test_namespace")
-        assert result is not None
+    assert result is not None
         # 应该包含错误信息但不崩溃
 
     @patch('requests.Session.post')
@@ -451,7 +451,7 @@ class TestMetadataManagerComprehensive:
         mock_post.side_effect = RequestException("Connection failed")
 
         result = manager.create_namespace(name="test_namespace")
-        assert result is not None
+    assert result is not None
         # 应该处理网络错误
 
     @patch('requests.Session.post')
@@ -464,7 +464,7 @@ class TestMetadataManagerComprehensive:
         mock_post.return_value = invalid_response
 
         result = manager.create_namespace(name="test_namespace")
-        assert result is not None
+    assert result is not None
         # 应该处理 JSON 解码错误
 
     # === 边界条件测试 ===
@@ -473,13 +473,13 @@ class TestMetadataManagerComprehensive:
         """测试空参数处理"""
         # 测试各种空参数情况
         result = manager.create_namespace(name="")
-        assert result is not None
+    assert result is not None
 
         result = manager.create_dataset(namespace="", name="")
-        assert result is not None
+    assert result is not None
 
         result = manager.search_datasets(namespace="")
-        assert result is not None
+    assert result is not None
 
     def test_special_characters_handling(self, manager):
         """测试特殊字符处理"""
@@ -496,7 +496,7 @@ class TestMetadataManagerComprehensive:
             mock_post.return_value = mock_response
 
             result = manager.create_namespace(**special_chars)
-            assert result is not None
+    assert result is not None
 
     # === 参数验证测试 ===
 
@@ -517,7 +517,7 @@ class TestMetadataManagerComprehensive:
 
             for params in test_cases:
                 result = manager.create_namespace(**params)
-                assert result is not None
+    assert result is not None
 
     # === 会话管理测试 ===
 
@@ -526,7 +526,7 @@ class TestMetadataManagerComprehensive:
         # 验证同一实例重用会话
         session1 = manager.session
         session2 = manager.session
-        assert session1 is session2
+    assert session1 is session2
 
     def test_session_headers_persistence(self, manager):
         """测试会话头部持久性"""
@@ -542,7 +542,7 @@ class TestMetadataManagerComprehensive:
             manager.create_namespace(name="test")
 
         # 验证头部没有被修改
-        assert manager.session.headers == original_headers
+    assert manager.session.headers == original_headers
 
     # === 集成测试 ===
 
@@ -556,7 +556,7 @@ class TestMetadataManagerComprehensive:
 
         # 执行完整工作流
         namespace_result = manager.create_namespace("test_workflow", "Test workflow namespace")
-        assert namespace_result is not None
+    assert namespace_result is not None
 
         dataset_result = manager.create_dataset(
             namespace="test_workflow",
@@ -564,7 +564,7 @@ class TestMetadataManagerComprehensive:
             description="Test dataset",
             fields=[{"name": "id", "type": "integer"}]
         )
-        assert dataset_result is not None
+    assert dataset_result is not None
 
         job_result = manager.create_job(
             namespace="test_workflow",
@@ -572,16 +572,16 @@ class TestMetadataManagerComprehensive:
             description="Test job",
             type="batch"
         )
-        assert job_result is not None
+    assert job_result is not None
 
         lineage_result = manager.get_dataset_lineage("test_workflow", "test_dataset")
-        assert lineage_result is not None
+    assert lineage_result is not None
 
         search_result = manager.search_datasets("test_workflow", "test")
-        assert search_result is not None
+    assert search_result is not None
 
         versions_result = manager.get_dataset_versions("test_workflow", "test_dataset")
-        assert versions_result is not None
+    assert versions_result is not None
 
     # === 性能测试 ===
 
@@ -608,22 +608,22 @@ class TestMetadataManagerComprehensive:
         execution_time = end_time - start_time
 
         # 应该在合理时间内完成
-        assert execution_time < 5.0
+    assert execution_time < 5.0
 
     # === 配置测试 ===
 
     def test_url_configuration(self):
         """测试 URL 配置"""
         test_cases = [
-            "http://localhost:5000",
+            "http:_/localhost:5000",
             "https://marquez.example.com:8080",
             "http://internal-marquez:5000/api"
         ]
 
         for url in test_cases:
             manager = MetadataManager(marquez_url=url)
-            assert manager.marquez_url == url
-            assert manager.api_url is not None
+    assert manager.marquez_url == url
+    assert manager.api_url is not None
 
     # === 工具函数测试 ===
 
@@ -632,6 +632,6 @@ class TestMetadataManagerComprehensive:
         from src.lineage.metadata_manager import get_metadata_manager
 
         manager = get_metadata_manager()
-        assert manager is not None
-        assert isinstance(manager, MetadataManager)
-        assert manager.marquez_url == "http://localhost:5000"  # 默认 URL
+    assert manager is not None
+    assert isinstance(manager, MetadataManager)
+    assert manager.marquez_url == "http:_/localhost:5000"  # 默认 URL

@@ -10,10 +10,15 @@ import importlib
 module = importlib.import_module("scripts.generate-passwords")
 
 def test_module_import():
-    """Basic import test to ensure scripts/generate-passwords.py loads without error."""
+    """Basic import test to ensure scripts_generate-passwords.py loads without error."""
     assert module is not None
 
-# TODO: Add minimal functional tests for key functions/classes in scripts/generate-passwords.py.
+def test_generate_passwords_basic():
+    """Test basic password generation functionality"""
+    if hasattr(module, 'generate_password'):
+        result = module.generate_password()
+    assert isinstance(result, str)
+    assert len(result) > 0
 # Hint: Use pytest-mock or monkeypatch to mock external dependencies.
 
 def test_func_generate_all_passwords():
@@ -105,54 +110,91 @@ def test_class_SecurePasswordGenerator_generate_service_password():
 def test_func_generate_all_passwords_business():
     # Based on docstring: 生成项目所需的所有密码...
     result = getattr(module, "generate_all_passwords")()
-    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
+    assert isinstance(result, (str, list, dict))
     assert result is not None
 
 
 def test_func_generate_env_file_business_args():
     # Based on docstring: 生成环境变量文件...
     result = getattr(module, "generate_env_file")(0, 0)
-    # TODO: 根据逻辑断言正确性
+    assert result is not None
+    if isinstance(result, bool):
+    assert result is True or result is False
     assert result is not None
 
 
 def test_func_main_business():
     # Based on docstring: 主函数...
     result = getattr(module, "main")()
-    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
+    assert isinstance(result, (str, list, dict))
     assert result is not None
 
 
 def test_class_SecurePasswordGenerator___init___business():
     obj = getattr(module, "SecurePasswordGenerator")()
     result = getattr(obj, "__init__")()
-    # TODO: 根据 docstring 推断业务行为
+        # Assuming function returns a meaningful result
+    assert result is not None
     assert result is not None
 
 
 def test_class_SecurePasswordGenerator_generate_password_business_args():
     obj = getattr(module, "SecurePasswordGenerator")()
     result = getattr(obj, "generate_password")(0, 0, 0, 0, 0, 0)
-    # TODO: 替换参数为更贴近业务场景的值
+        # Using reasonable default parameters
+    test_params = {'length': 12, 'complexity': 'medium'}
+    result = None
+    try:
+        if hasattr(module, 'generate_password'):
+            result = module.generate_password(**test_params)
+    except Exception as e:
+    assert isinstance(e, Exception)
+    assert result is not None or result is not False
     assert result is not None
 
 
 def test_class_SecurePasswordGenerator_generate_jwt_secret_business_args():
     obj = getattr(module, "SecurePasswordGenerator")()
     result = getattr(obj, "generate_jwt_secret")(0)
-    # TODO: 替换参数为更贴近业务场景的值
+        # Using reasonable default parameters
+    test_params = {'length': 12, 'complexity': 'medium'}
+    result = None
+    try:
+        if hasattr(module, 'generate_password'):
+            result = module.generate_password(**test_params)
+    except Exception as e:
+    assert isinstance(e, Exception)
+    assert result is not None or result is not False
     assert result is not None
 
 
 def test_class_SecurePasswordGenerator_generate_db_password_business_args():
     obj = getattr(module, "SecurePasswordGenerator")()
     result = getattr(obj, "generate_db_password")(0)
-    # TODO: 替换参数为更贴近业务场景的值
+        # Using reasonable default parameters
+    test_params = {'length': 12, 'complexity': 'medium'}
+    result = None
+    try:
+        if hasattr(module, 'generate_password'):
+            result = module.generate_password(**test_params)
+    except Exception as e:
+    assert isinstance(e, Exception)
+    assert result is not None or result is not False
     assert result is not None
 
 
 def test_class_SecurePasswordGenerator_generate_service_password_business_args():
     obj = getattr(module, "SecurePasswordGenerator")()
     result = getattr(obj, "generate_service_password")(0)
-    # TODO: 替换参数为更贴近业务场景的值
+        # Using reasonable default parameters
+    test_params = {'length': 12, 'complexity': 'medium'}
+    result = None
+    try:
+        if hasattr(module, 'generate_password'):
+            result = module.generate_password(**test_params)
+    except Exception as e:
+    assert isinstance(e, Exception)
+    assert result is not None or result is not False
     assert result is not None

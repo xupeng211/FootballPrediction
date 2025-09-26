@@ -95,12 +95,12 @@ class TestFeaturesImprovedAPI:
             )
 
             # 验证结果
-            assert "success" in result
-            assert result["success"] is True
-            assert "data" in result
-            assert result["data"]["match_info"]["match_id"] == 1
-            assert "home_team_form" in result["data"]["features"]
-            assert "timestamp" in result
+    assert "success" in result
+    assert result["success"] is True
+    assert "data" in result
+    assert result["data"]["match_info"]["match_id"] == 1
+    assert "home_team_form" in result["data"]["features"]
+    assert "timestamp" in result
 
             # 验证调用
             mock_session.execute.assert_called_once()
@@ -121,8 +121,8 @@ class TestFeaturesImprovedAPI:
                 match_id=999, include_raw=False, session=mock_session
             )
 
-        assert exc_info.value.status_code == 404
-        assert "不存在" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 404
+    assert "不存在" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_improved_database_error(self, mock_session):
@@ -136,8 +136,8 @@ class TestFeaturesImprovedAPI:
                 match_id=1, include_raw=False, session=mock_session
             )
 
-        assert exc_info.value.status_code == 500
-        assert "数据库查询失败" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 500
+    assert "数据库查询失败" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_improved_with_raw_data(
@@ -175,8 +175,8 @@ class TestFeaturesImprovedAPI:
             )
 
             # 验证结果包含原始数据
-            assert "raw_features" in result["data"]
-            assert result["data"]["raw_features"] == raw_data
+    assert "raw_features" in result["data"]
+    assert result["data"]["raw_features"] == raw_data
             mock_calc.calculate_all_match_features.assert_called_once()
 
     @pytest.mark.asyncio
@@ -207,9 +207,9 @@ class TestFeaturesImprovedAPI:
             )
 
             # 验证返回成功但包含错误信息
-            assert result["success"] is True
-            assert "features_warning" in result["data"]
-            assert "Feature calculation failed" in result["data"]["features_warning"]
+    assert result["success"] is True
+    assert "features_warning" in result["data"]
+    assert "Feature calculation failed" in result["data"]["features_warning"]
 
     @pytest.mark.asyncio
     async def test_features_health_check_success(self):
@@ -229,9 +229,9 @@ class TestFeaturesImprovedAPI:
             result = await features_health_check()
 
             # 验证结果
-            assert "status" in result
-            assert "components" in result
-            assert "timestamp" in result
+    assert "status" in result
+    assert "components" in result
+    assert "timestamp" in result
 
     @pytest.mark.asyncio
     async def test_features_health_check_service_unavailable(self):
@@ -243,8 +243,8 @@ class TestFeaturesImprovedAPI:
             result = await features_health_check()
 
             # 验证结果显示服务不可用
-            assert "status" in result
-            assert result["status"] in ["unhealthy", "degraded", "error"]
+    assert "status" in result
+    assert result["status"] in ["unhealthy", "degraded", "error"]
 
     def test_feature_store_initialization_success(self):
         """测试特征存储初始化成功 - 检查模块变量是否正确设置"""
@@ -252,15 +252,15 @@ class TestFeaturesImprovedAPI:
 
         # 检查模块级变量是否已初始化（不为None说明初始化成功）
         # 注意：由于路径修复，现在应该能够成功初始化
-        assert hasattr(src.api.features_improved, "feature_store")
-        assert hasattr(src.api.features_improved, "feature_calculator")
+    assert hasattr(src.api.features_improved, "feature_store")
+    assert hasattr(src.api.features_improved, "feature_calculator")
 
         # 验证初始化是否成功（如果初始化失败，这些变量会是None）
         # 由于我们修复了路径问题，这些应该不会是None
         if src.api.features_improved.feature_store is not None:
             # 初始化成功的情况
-            assert src.api.features_improved.feature_store is not None
-            assert src.api.features_improved.feature_calculator is not None
+    assert src.api.features_improved.feature_store is not None
+    assert src.api.features_improved.feature_calculator is not None
         else:
             # 如果还是None，说明有其他问题，我们跳过这个验证
             import pytest
@@ -282,20 +282,20 @@ class TestFeaturesImprovedAPI:
             # 创建 FootballFeatureStore 实例应该能处理异常
             store = FootballFeatureStore()
             # 验证异常被正确处理（store 应该为 None 或有适当的错误状态）
-            assert store.store is None  # 异常处理后，内部 store 应该为 None
+    assert store.store is None  # 异常处理后，内部 store 应该为 None
 
         # 测试 FeatureCalculator 正常初始化（确保它能独立工作）
         calc = FeatureCalculator()
-        assert calc is not None
+    assert calc is not None
 
     def test_router_configuration(self):
         """测试路由器配置"""
-        assert router.prefix == "/features"
-        assert "features" in router.tags
+    assert router.prefix == "_features"
+    assert "features" in router.tags
 
         # 验证路由注册（包含完整路径与前缀）
         routes = [route.path for route in router.routes]
-        assert "/features/{match_id}" in routes
+    assert "/features/{match_id}" in routes
 
     @pytest.mark.asyncio
     async def test_concurrent_feature_requests(
@@ -335,10 +335,10 @@ class TestFeaturesImprovedAPI:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 验证所有请求都成功
-            assert len(results) == len(match_ids)
+    assert len(results) == len(match_ids)
             for result in results:
-                assert not isinstance(result, Exception)
-                assert result["success"] is True
+    assert not isinstance(result, Exception)
+    assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_feature_caching_behavior(
@@ -372,9 +372,9 @@ class TestFeaturesImprovedAPI:
             )
 
             # 验证特征存储只被调用一次（如果有缓存机制）
-            assert result1["success"] is True
-            assert result2["success"] is True
-            assert (
+    assert result1["success"] is True
+    assert result2["success"] is True
+    assert (
                 result1["data"]["match_info"]["match_id"]
                 == result2["data"]["match_info"]["match_id"]
             )
@@ -385,8 +385,8 @@ class TestFeaturesImprovedAPI:
 
         logger = src.api.features_improved.logger
 
-        assert logger.name == "src.api.features_improved"
-        assert isinstance(logger, logging.Logger)
+    assert logger.name == "src.api.features_improved"
+    assert isinstance(logger, logging.Logger)
 
     @pytest.mark.asyncio
     async def test_feature_validation(self, mock_session, mock_match_data):
@@ -421,5 +421,5 @@ class TestFeaturesImprovedAPI:
             )
 
             # 验证系统能够处理无效数据
-            assert "success" in result
+    assert "success" in result
             # 具体的验证逻辑取决于实际的数据验证策略

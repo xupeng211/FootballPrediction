@@ -165,7 +165,7 @@ class TestCeleryAppConfiguration:
         测试Celery应用创建和基本配置
 
         使用Mock原因：
-        - 避免连接真实的message broker（Redis/RabbitMQ）
+        - 避免连接真实的message broker（Redis_RabbitMQ）
         - 确保测试聚焦于配置验证而非broker连接测试
         - 提高测试运行速度和可靠性
         """
@@ -180,10 +180,10 @@ class TestCeleryAppConfiguration:
         # 模拟应用创建过程
 
         # 验证基本配置
-        assert mock_app is not None
-        assert mock_app.main == "football_prediction_tasks"
-        assert hasattr(mock_app.conf, "broker_url")
-        assert hasattr(mock_app.conf, "result_backend")
+    assert mock_app is not None
+    assert mock_app.main == "football_prediction_tasks"
+    assert hasattr(mock_app.conf, "broker_url")
+    assert hasattr(mock_app.conf, "result_backend")
 
     @patch("src.tasks.celery_app.app")
     def test_task_routing_configuration(self, mock_celery_app):
@@ -209,16 +209,16 @@ class TestCeleryAppConfiguration:
         task_routes = mock_celery_app.conf.task_routes
 
         # 验证数据采集任务路由
-        assert "tasks.data_collection_tasks.collect_fixtures_task" in task_routes
-        assert (
+    assert "tasks.data_collection_tasks.collect_fixtures_task" in task_routes
+    assert (
             task_routes["tasks.data_collection_tasks.collect_fixtures_task"]["queue"]
             == "fixtures"
         )
-        assert (
+    assert (
             task_routes["tasks.data_collection_tasks.collect_odds_task"]["queue"]
             == "odds"
         )
-        assert (
+    assert (
             task_routes["tasks.data_collection_tasks.collect_scores_task"]["queue"]
             == "scores"
         )
@@ -227,8 +227,8 @@ class TestCeleryAppConfiguration:
         maintenance_route = next(
             (k for k in task_routes.keys() if "maintenance_tasks" in k), None
         )
-        assert maintenance_route is not None
-        assert task_routes[maintenance_route]["queue"] == "maintenance"
+    assert maintenance_route is not None
+    assert task_routes[maintenance_route]["queue"] == "maintenance"
 
     @patch("src.tasks.celery_app.app")
     def test_beat_schedule_configuration(self, mock_celery_app):
@@ -277,20 +277,20 @@ class TestCeleryAppConfiguration:
         ]
 
         for task_name in required_tasks:
-            assert task_name in beat_schedule, f"定时任务 {task_name} 未配置"
+    assert task_name in beat_schedule, f"定时任务 {task_name} 未配置"
 
         # 验证具体调度配置
         fixtures_task = beat_schedule["collect-daily-fixtures"]
-        assert (
+    assert (
             fixtures_task["task"] == "tasks.data_collection_tasks.collect_fixtures_task"
         )
-        assert "schedule" in fixtures_task
+    assert "schedule" in fixtures_task
 
         odds_task = beat_schedule["collect-odds-regular"]
-        assert odds_task["schedule"] == 300.0  # 5分钟
+    assert odds_task["schedule"] == 300.0  # 5分钟
 
         scores_task = beat_schedule["collect-live-scores"]
-        assert scores_task["schedule"] == 120.0  # 2分钟
+    assert scores_task["schedule"] == 120.0  # 2分钟
 
     def test_task_retry_configuration(self):
         """
@@ -312,9 +312,9 @@ class TestCeleryAppConfiguration:
 
         for task_name in required_tasks:
             config = retry_config.get_retry_config(task_name)
-            assert config is not None, f"任务 {task_name} 缺少重试配置"
-            assert config["max_retries"] == 3, f"任务 {task_name} 重试次数不是3次"
-            assert "retry_delay" in config
+    assert config is not None, f"任务 {task_name} 缺少重试配置"
+    assert config["max_retries"] == 3, f"任务 {task_name} 重试次数不是3次"
+    assert "retry_delay" in config
 
     @patch("src.tasks.celery_app.app")
     def test_worker_configuration(self, mock_celery_app):
@@ -338,13 +338,13 @@ class TestCeleryAppConfiguration:
         conf = mock_celery_app.conf
 
         # 验证超时配置
-        assert conf.task_soft_time_limit == 300  # 5分钟软超时
-        assert conf.task_time_limit == 600  # 10分钟硬超时
+    assert conf.task_soft_time_limit == 300  # 5分钟软超时
+    assert conf.task_time_limit == 600  # 10分钟硬超时
 
         # 验证序列化配置
-        assert conf.accept_content == ["json"]
-        assert conf.task_serializer == "json"
-        assert conf.result_serializer == "json"
+    assert conf.accept_content == ["json"]
+    assert conf.task_serializer == "json"
+    assert conf.result_serializer == "json"
 
 
 class TestDataCollectionTasks:
@@ -424,11 +424,11 @@ class TestDataCollectionTasks:
                 result = collect_fixtures_task(leagues=["Premier League"], days_ahead=7)
 
                 # 验证任务执行结果
-                assert result is not None
-                assert result["status"] == "success"
-                assert result["records_collected"] == 50
-                assert result["success_count"] == 45
-                assert result["error_count"] == 5
+    assert result is not None
+    assert result["status"] == "success"
+    assert result["records_collected"] == 50
+    assert result["success_count"] == 45
+    assert result["error_count"] == 5
 
                 # 验证asyncio.run被正确调用
                 mock_asyncio_run.assert_called_once()
@@ -467,11 +467,11 @@ class TestDataCollectionTasks:
                 result = collect_odds_task(match_ids=[1, 2, 3])
 
                 # 验证结果格式和内容
-                assert result is not None
-                assert result["status"] == "success"
-                assert result["records_collected"] == 100
-                assert result["success_count"] == 95
-                assert result["error_count"] == 5
+    assert result is not None
+    assert result["status"] == "success"
+    assert result["records_collected"] == 100
+    assert result["success_count"] == 95
+    assert result["error_count"] == 5
                 mock_asyncio_run.assert_called_once()
 
     def test_collect_scores_task_success(self, mock_db_manager, mock_error_logger):
@@ -515,11 +515,11 @@ class TestDataCollectionTasks:
                     result = collect_scores_task(live_only=True)
 
                     # 验证采集结果
-                    assert result is not None
-                    assert result["status"] == "success"
-                    assert result["records_collected"] == 15
-                    assert result["success_count"] == 12
-                    assert result["error_count"] == 3
+    assert result is not None
+    assert result["status"] == "success"
+    assert result["records_collected"] == 15
+    assert result["success_count"] == 12
+    assert result["error_count"] == 3
                     mock_asyncio_run.assert_called_once()
 
     def test_task_retry_mechanism(self, mock_db_manager, mock_error_logger):
@@ -617,9 +617,9 @@ class TestDataCollectionTasks:
             result = manual_collect_all_data()
 
             # 验证返回结果
-            assert "status" in result
-            assert result["status"] == "success"
-            assert "results" in result
+    assert "status" in result
+    assert result["status"] == "success"
+    assert "results" in result
 
             # 验证任务被调用
             mock_fixtures.assert_called_once()
@@ -661,10 +661,10 @@ class TestErrorLogger:
 
             # 验证传递的参数
             call_args = mock_save.call_args[0][0]  # 第一个参数是error_details字典
-            assert call_args["task_name"] == "collect_fixtures_task"
-            assert call_args["task_id"] == "task-123"
-            assert call_args["error_type"] == "Exception"
-            assert call_args["retry_count"] == 2
+    assert call_args["task_name"] == "collect_fixtures_task"
+    assert call_args["task_id"] == "task-123"
+    assert call_args["error_type"] == "Exception"
+    assert call_args["retry_count"] == 2
 
     @pytest.mark.asyncio
     async def test_log_api_failure(self, error_logger):
@@ -675,7 +675,7 @@ class TestErrorLogger:
         ) as mock_save:
             await error_logger.log_api_failure(
                 task_name="collect_odds_task",
-                api_endpoint="https://api-football.com/v3/odds",
+                api_endpoint="https:_/api-football.com/v3/odds",
                 http_status=503,
                 error_message="Service Unavailable",
                 retry_count=1,
@@ -686,11 +686,11 @@ class TestErrorLogger:
 
             # 验证传递的参数
             call_args = mock_save.call_args[0][0]  # 第一个参数是error_details字典
-            assert call_args["task_name"] == "collect_odds_task"
-            assert call_args["error_type"] == "API_FAILURE"
-            assert call_args["api_endpoint"] == "https://api-football.com/v3/odds"
-            assert call_args["http_status"] == 503
-            assert call_args["retry_count"] == 1
+    assert call_args["task_name"] == "collect_odds_task"
+    assert call_args["error_type"] == "API_FAILURE"
+    assert call_args["api_endpoint"] == "https://api-football.com/v3/odds"
+    assert call_args["http_status"] == 503
+    assert call_args["retry_count"] == 1
 
     @pytest.mark.asyncio
     async def test_log_data_collection_error(self, error_logger):
@@ -724,14 +724,14 @@ class TestErrorLogger:
             )
 
             # 验证返回值
-            assert result == 123
+    assert result == 123
 
             # 验证DataCollectionLog被正确创建
             mock_log_class.assert_called_once()
             create_args = mock_log_class.call_args[1]  # 关键字参数
-            assert create_args["data_source"] == "API-FOOTBALL"
-            assert create_args["collection_type"] == "fixtures"
-            assert create_args["error_message"] == "解析JSON失败"
+    assert create_args["data_source"] == "API-FOOTBALL"
+    assert create_args["collection_type"] == "fixtures"
+    assert create_args["error_message"] == "解析JSON失败"
 
     @pytest.mark.asyncio
     async def test_get_error_statistics(self, error_logger):
@@ -784,14 +784,14 @@ class TestErrorLogger:
             stats = await error_logger.get_error_statistics(hours=24)
 
             # 验证返回的统计结构
-            assert "total_errors" in stats
-            assert "task_errors" in stats
-            assert "type_errors" in stats
-            assert stats["total_errors"] == 7
-            assert len(stats["task_errors"]) == 2
-            assert len(stats["type_errors"]) == 2
-            assert stats["task_errors"][0]["task_name"] == "collect_odds_task"
-            assert stats["task_errors"][0]["error_count"] == 5
+    assert "total_errors" in stats
+    assert "task_errors" in stats
+    assert "type_errors" in stats
+    assert stats["total_errors"] == 7
+    assert len(stats["task_errors"]) == 2
+    assert len(stats["type_errors"]) == 2
+    assert stats["task_errors"][0]["task_name"] == "collect_odds_task"
+    assert stats["task_errors"][0]["error_count"] == 5
 
     @pytest.mark.asyncio
     async def test_cleanup_old_logs(self, error_logger):
@@ -823,7 +823,7 @@ class TestErrorLogger:
             # 使用正确的参数名
             deleted_count = await error_logger.cleanup_old_logs(days_to_keep=7)
 
-            assert deleted_count == 15
+    assert deleted_count == 15
 
 
 class TestMaintenanceTasks:
@@ -874,16 +874,16 @@ class TestMaintenanceTasks:
             result = quality_check_task()
 
             # 验证返回结果的结构
-            assert "status" in result
-            assert result["status"] == "success"
-            assert "checks_performed" in result
-            assert "issues_found" in result
-            assert "check_results" in result
-            assert "execution_time" in result
+    assert "status" in result
+    assert result["status"] == "success"
+    assert "checks_performed" in result
+    assert "issues_found" in result
+    assert "check_results" in result
+    assert "execution_time" in result
 
             # 验证检查结果
-            assert result["issues_found"] == 2
-            assert result["checks_performed"] == len(mock_check_results)
+    assert result["issues_found"] == 2
+    assert result["checks_performed"] == len(mock_check_results)
 
     def test_cleanup_error_logs_task(self, mock_db_manager):
         """测试错误日志清理任务"""
@@ -900,12 +900,12 @@ class TestMaintenanceTasks:
                 # 直接调用任务函数
                 result = cleanup_error_logs_task(days=7)
 
-                assert "deleted_count" in result
-                assert result["deleted_count"] == 25
-                assert "status" in result
-                assert result["status"] == "success"
-                assert "days_to_keep" in result
-                assert result["days_to_keep"] == 7
+    assert "deleted_count" in result
+    assert result["deleted_count"] == 25
+    assert "status" in result
+    assert result["status"] == "success"
+    assert "days_to_keep" in result
+    assert result["days_to_keep"] == 7
 
     def test_system_health_check_task(self, mock_db_manager):
         """
@@ -952,11 +952,11 @@ class TestMaintenanceTasks:
                     result = system_health_check_task()
 
                     # 验证健康检查结果格式
-                    assert "status" in result
-                    assert "overall_healthy" in result
-                    assert "components" in result
-                    assert result["overall_healthy"] is True
-                    assert result["status"] == "healthy"
+    assert "status" in result
+    assert "overall_healthy" in result
+    assert "components" in result
+    assert result["overall_healthy"] is True
+    assert result["status"] == "healthy"
 
     def test_database_maintenance_task(self, mock_db_manager):
         """测试数据库维护任务"""
@@ -975,11 +975,11 @@ class TestMaintenanceTasks:
             # 直接调用任务函数
             result = database_maintenance_task()
 
-            assert "maintenance_results" in result
-            assert "statistics_updated" in result["maintenance_results"]
-            assert "logs_cleaned" in result["maintenance_results"]
-            assert "status" in result
-            assert result["status"] == "success"
+    assert "maintenance_results" in result
+    assert "statistics_updated" in result["maintenance_results"]
+    assert "logs_cleaned" in result["maintenance_results"]
+    assert "status" in result
+    assert result["status"] == "success"
 
 
 class TestTaskMonitoring:
@@ -1023,12 +1023,12 @@ class TestTaskMonitoring:
         注意：此测试验证指标对象的存在性，不涉及真实的Prometheus服务器连接
         """
         # 验证所有必需的Prometheus指标都已创建
-        assert hasattr(task_monitor, "task_counter")  # 任务执行计数器
-        assert hasattr(task_monitor, "task_duration")  # 任务执行时长指标
-        assert hasattr(task_monitor, "task_error_rate")  # 任务错误率指标
-        assert hasattr(task_monitor, "active_tasks")  # 活跃任务数指标
-        assert hasattr(task_monitor, "queue_size")  # 队列大小指标
-        assert hasattr(task_monitor, "retry_counter")  # 重试计数器
+    assert hasattr(task_monitor, "task_counter")  # 任务执行计数器
+    assert hasattr(task_monitor, "task_duration")  # 任务执行时长指标
+    assert hasattr(task_monitor, "task_error_rate")  # 任务错误率指标
+    assert hasattr(task_monitor, "active_tasks")  # 活跃任务数指标
+    assert hasattr(task_monitor, "queue_size")  # 队列大小指标
+    assert hasattr(task_monitor, "retry_counter")  # 重试计数器
 
     def test_record_task_start(self, task_monitor):
         """测试记录任务开始"""
@@ -1036,7 +1036,7 @@ class TestTaskMonitoring:
 
         # 验证活跃任务数增加 - 正确访问Prometheus指标
         # Prometheus指标可以通过_value._value访问，但在测试中我们主要验证方法调用成功
-        assert True  # 验证方法调用不抛出异常
+    assert True  # 验证方法调用不抛出异常
 
     def test_record_task_completion(self, task_monitor):
         """测试记录任务完成"""
@@ -1045,14 +1045,14 @@ class TestTaskMonitoring:
         )
 
         # 验证方法调用成功，实际Prometheus指标的验证比较复杂
-        assert True  # 验证方法调用不抛出异常
+    assert True  # 验证方法调用不抛出异常
 
     def test_record_task_retry(self, task_monitor):
         """测试记录任务重试"""
         task_monitor.record_task_retry("collect_scores_task", retry_count=2)
 
         # 验证方法调用成功
-        assert True  # 验证方法调用不抛出异常
+    assert True  # 验证方法调用不抛出异常
 
     def test_update_queue_size(self, task_monitor):
         """测试更新队列大小"""
@@ -1063,7 +1063,7 @@ class TestTaskMonitoring:
         task_monitor.update_queue_size("maintenance", 1)
 
         # 验证方法调用成功
-        assert True  # 验证方法调用不抛出异常
+    assert True  # 验证方法调用不抛出异常
 
     @pytest.mark.asyncio
     async def test_calculate_error_rates(self, task_monitor):
@@ -1099,7 +1099,7 @@ class TestTaskMonitoring:
             error_rates = await task_monitor.calculate_error_rates()
 
             # 验证返回值
-            assert isinstance(error_rates, dict)
+    assert isinstance(error_rates, dict)
 
     @pytest.mark.asyncio
     async def test_check_task_health(self, task_monitor):
@@ -1125,18 +1125,18 @@ class TestTaskMonitoring:
             health_status = await task_monitor.check_task_health()
 
             # 验证返回结构与源代码一致
-            assert "overall_status" in health_status
-            assert "issues" in health_status
-            assert "metrics" in health_status
-            assert health_status["overall_status"] in [
+    assert "overall_status" in health_status
+    assert "issues" in health_status
+    assert "metrics" in health_status
+    assert health_status["overall_status"] in [
                 "healthy",
                 "warning",
                 "unhealthy",
                 "unknown",
             ]
-            assert "error_rates" in health_status["metrics"]
-            assert "queue_sizes" in health_status["metrics"]
-            assert "task_delays" in health_status["metrics"]
+    assert "error_rates" in health_status["metrics"]
+    assert "queue_sizes" in health_status["metrics"]
+    assert "task_delays" in health_status["metrics"]
 
 
 class TestTaskUtils:
@@ -1182,7 +1182,7 @@ class TestTaskUtils:
             # 执行函数并验证结果
             should_collect = await should_collect_live_scores()
 
-            assert should_collect is True
+    assert should_collect is True
 
     @pytest.mark.asyncio
     async def test_should_not_collect_live_scores_no_matches(self, mock_db_manager):
@@ -1214,7 +1214,7 @@ class TestTaskUtils:
 
             should_collect = await should_collect_live_scores()
 
-            assert should_collect is False
+    assert should_collect is False
 
     @pytest.mark.asyncio
     async def test_get_upcoming_matches(self, mock_db_manager):
@@ -1266,11 +1266,11 @@ class TestTaskUtils:
 
             upcoming = await get_upcoming_matches(hours=6)
 
-            assert len(upcoming) == 2
-            assert upcoming[0]["id"] == 1
-            assert upcoming[0]["home_team_id"] == 10
-            assert upcoming[1]["id"] == 2
-            assert upcoming[1]["home_team_id"] == 30
+    assert len(upcoming) == 2
+    assert upcoming[0]["id"] == 1
+    assert upcoming[0]["home_team_id"] == 10
+    assert upcoming[1]["id"] == 2
+    assert upcoming[1]["home_team_id"] == 30
 
     def test_calculate_next_collection_time(self):
         """测试计算下次采集时间"""
@@ -1285,10 +1285,10 @@ class TestTaskUtils:
             next_time = calculate_next_collection_time("collect_odds_task")
 
             # 验证返回时间是datetime对象
-            assert isinstance(next_time, datetime)
+    assert isinstance(next_time, datetime)
             # 验证时间在合理范围内（应该是10:05）
             expected = base_time.replace(minute=5, second=0, microsecond=0)
-            assert next_time == expected
+    assert next_time == expected
 
 
 class TestIntegration:
@@ -1321,9 +1321,9 @@ class TestIntegration:
             result = manual_collect_all_data()
 
             # 验证结果
-            assert "status" in result
-            assert result["status"] == "success"
-            assert "results" in result
+    assert "status" in result
+    assert result["status"] == "success"
+    assert "results" in result
 
             # 验证任务被调用
             mock_fixtures_delay.assert_called_once()
@@ -1382,7 +1382,7 @@ class TestIntegration:
         monitor.update_queue_size("fixtures", 2)
 
         # 验证方法调用成功（Prometheus指标验证比较复杂，主要验证不抛异常）
-        assert True  # 验证所有方法调用成功
+    assert True  # 验证所有方法调用成功
 
 
 class TestEdgeCases:
@@ -1424,10 +1424,10 @@ class TestEdgeCases:
                     retry_count=0,
                 )
                 # 如果没有抛出异常，说明错误被妥善处理了
-                assert True
+    assert True
             except Exception as e:
                 # 如果抛出异常，确保不是意外的异常
-                assert "数据库连接失败" in str(e) or "log_task_error" in str(e.args)
+    assert "数据库连接失败" in str(e) or "log_task_error" in str(e.args)
 
     def test_redis_connection_failure(self):
         """测试Redis连接失败"""
@@ -1457,8 +1457,8 @@ class TestEdgeCases:
                     # 直接调用任务函数
                     result = system_health_check_task()
 
-                    assert result["status"] == "unhealthy"
-                    assert result["overall_healthy"] is False
+    assert result["status"] == "unhealthy"
+    assert result["overall_healthy"] is False
 
     def test_invalid_task_configuration(self):
         """测试无效任务配置"""
@@ -1468,9 +1468,9 @@ class TestEdgeCases:
         config = retry_config.get_retry_config("nonexistent_task")
 
         # 应该返回默认配置
-        assert config is not None
-        assert config["max_retries"] == TaskRetryConfig.DEFAULT_MAX_RETRIES
-        assert config["retry_delay"] == TaskRetryConfig.DEFAULT_RETRY_DELAY
+    assert config is not None
+    assert config["max_retries"] == TaskRetryConfig.DEFAULT_MAX_RETRIES
+    assert config["retry_delay"] == TaskRetryConfig.DEFAULT_RETRY_DELAY
 
     @pytest.mark.asyncio
     async def test_large_error_log_handling(self):
@@ -1516,7 +1516,7 @@ class TestEdgeCases:
                 # 执行日志清理
                 deleted_count = await logger.cleanup_old_logs(days_to_keep=1)
 
-                assert deleted_count == 1000
+    assert deleted_count == 1000
 
 
 if __name__ == "__main__":

@@ -23,9 +23,9 @@ class TestConfig:
         """测试初始化创建空配置"""
         with patch("pathlib.Path.home", return_value=Path(self.temp_dir)):
             config = Config()
-            assert config._config == {}
-            assert config.config_dir == self.config_dir
-            assert config.config_file == self.config_file
+    assert config._config == {}
+    assert config.config_dir == self.config_dir
+    assert config.config_file == self.config_file
 
     def test_config_init_loads_existing_file(self):
         """测试初始化时加载现有配置文件"""
@@ -37,7 +37,7 @@ class TestConfig:
 
         with patch("pathlib.Path.home", return_value=Path(self.temp_dir)):
             config = Config()
-            assert config._config == test_config
+    assert config._config == test_config
 
     def test_config_init_handles_corrupt_file(self):
         """测试初始化时处理损坏的配置文件"""
@@ -49,7 +49,7 @@ class TestConfig:
         with patch("pathlib.Path.home", return_value=Path(self.temp_dir)):
             with patch("logging.warning") as mock_warning:
                 config = Config()
-                assert config._config == {}
+    assert config._config == {}
                 mock_warning.assert_called_once()
 
     def test_get_existing_key(self):
@@ -59,7 +59,7 @@ class TestConfig:
             config._config = {"test_key": "test_value"}
 
             result = config.get("test_key")
-            assert result == "test_value"
+    assert result == "test_value"
 
     def test_get_nonexistent_key_with_default(self):
         """测试获取不存在的配置项使用默认值"""
@@ -67,7 +67,7 @@ class TestConfig:
             config = Config()
 
             result = config.get("nonexistent", "default_value")
-            assert result == "default_value"
+    assert result == "default_value"
 
     def test_get_nonexistent_key_without_default(self):
         """测试获取不存在的配置项不提供默认值"""
@@ -75,7 +75,7 @@ class TestConfig:
             config = Config()
 
             result = config.get("nonexistent")
-            assert result is None
+    assert result is None
 
     def test_set_config_value(self):
         """测试设置配置项"""
@@ -83,7 +83,7 @@ class TestConfig:
             config = Config()
 
             config.set("test_key", "test_value")
-            assert config._config["test_key"] == "test_value"
+    assert config._config["test_key"] == "test_value"
 
     def test_save_config_creates_directory(self):
         """测试保存配置时创建目录"""
@@ -93,8 +93,8 @@ class TestConfig:
 
             config.save()
 
-            assert self.config_dir.exists()
-            assert self.config_file.exists()
+    assert self.config_dir.exists()
+    assert self.config_file.exists()
 
     def test_save_config_writes_correct_content(self):
         """测试保存配置写入正确内容"""
@@ -108,7 +108,7 @@ class TestConfig:
             # 验证文件内容
             with open(self.config_file, "r", encoding="utf-8") as f:
                 saved_data = json.load(f)
-            assert saved_data == test_data
+    assert saved_data == test_data
 
     def test_save_and_load_integration(self):
         """测试保存和加载的集成测试"""
@@ -121,8 +121,8 @@ class TestConfig:
 
             # 创建第二个配置实例，应该加载之前保存的值
             config2 = Config()
-            assert config2.get("test_key") == "test_value"
-            assert config2.get("number") == 123
+    assert config2.get("test_key") == "test_value"
+    assert config2.get("number") == 123
 
 
 class TestGlobalConfig:
@@ -132,4 +132,4 @@ class TestGlobalConfig:
         """测试全局配置实例存在"""
         from src.core.config import config
 
-        assert isinstance(config, Config)
+    assert isinstance(config, Config)

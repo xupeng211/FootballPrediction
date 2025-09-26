@@ -26,10 +26,10 @@ class TestDatabaseBackupTask:
 
     def test_backup_task_initialization(self):
         """测试备份任务初始化"""
-        assert self.backup_task is not None
+    assert self.backup_task is not None
         # Celery任务类的基本属性测试
-        assert hasattr(self.backup_task, "run")
-        assert hasattr(self.backup_task, "name")
+    assert hasattr(self.backup_task, "run")
+    assert hasattr(self.backup_task, "name")
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_run_backup_script_success(self, mock_run):
@@ -45,12 +45,12 @@ class TestDatabaseBackupTask:
         success, output, stats = self.backup_task.run_backup_script("full")
 
         # 验证结果
-        assert success is True
-        assert "Backup completed successfully" in output
-        assert "duration_seconds" in stats
+    assert success is True
+    assert "Backup completed successfully" in output
+    assert "duration_seconds" in stats
 
         # 验证subprocess.run被调用（可能被调用多次：一次备份脚本，一次获取文件大小）
-        assert mock_run.call_count >= 1  # 至少调用一次，允许多次调用
+    assert mock_run.call_count >= 1  # 至少调用一次，允许多次调用
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_run_backup_script_failure(self, mock_run):
@@ -66,8 +66,8 @@ class TestDatabaseBackupTask:
         success, output, stats = self.backup_task.run_backup_script("full")
 
         # 验证结果
-        assert success is False
-        assert "Database connection failed" in output
+    assert success is False
+    assert "Database connection failed" in output
 
     @patch("src.tasks.backup_tasks.DatabaseBackupTask.run_backup_script")
     def test_perform_full_backup_success(self, mock_run_script):
@@ -83,9 +83,9 @@ class TestDatabaseBackupTask:
         success, output, stats = self.backup_task.run_backup_script("full", "test_db")
 
         # 验证结果
-        assert success is True
-        assert "Backup successful" in output
-        assert "duration_seconds" in stats
+    assert success is True
+    assert "Backup successful" in output
+    assert "duration_seconds" in stats
         mock_run_script.assert_called_once()
 
     @patch("src.tasks.backup_tasks.DatabaseBackupTask.run_backup_script")
@@ -104,9 +104,9 @@ class TestDatabaseBackupTask:
         )
 
         # 验证结果
-        assert success is True
-        assert "Incremental backup successful" in output
-        assert "duration_seconds" in stats
+    assert success is True
+    assert "Incremental backup successful" in output
+    assert "duration_seconds" in stats
         mock_run_script.assert_called_once()
 
     @patch("src.tasks.backup_tasks.DatabaseBackupTask.run_backup_script")
@@ -125,9 +125,9 @@ class TestDatabaseBackupTask:
         )
 
         # 验证结果的结构
-        assert success is True
-        assert "Cleanup completed successfully" in output
-        assert "duration_seconds" in stats
+    assert success is True
+    assert "Cleanup completed successfully" in output
+    assert "duration_seconds" in stats
         mock_run_script.assert_called_once()
 
     @patch("src.tasks.backup_tasks.Path.exists")
@@ -139,27 +139,27 @@ class TestDatabaseBackupTask:
         mock_process.returncode = 0
         mock_run.return_value = mock_process
 
-        result = self.backup_task.verify_backup("/test / backup.sql")
+        result = self.backup_task.verify_backup("_test / backup.sql")
 
-        assert result is True
+    assert result is True
 
     @patch("src.tasks.backup_tasks.Path.exists")
     def test_verify_backup_file_not_exists(self, mock_exists):
         """测试备份文件不存在"""
         mock_exists.return_value = False
 
-        result = self.backup_task.verify_backup("/nonexistent / backup.sql")
+        result = self.backup_task.verify_backup("_nonexistent / backup.sql")
 
-        assert result is False
+    assert result is False
 
     def test_get_backup_config(self):
         """测试获取备份配置"""
         config = self.backup_task.get_backup_config()
 
-        assert isinstance(config, dict)
-        assert "backup_dir" in config
-        assert "max_backup_age_days" in config
-        assert "compression" in config
+    assert isinstance(config, dict)
+    assert "backup_dir" in config
+    assert "max_backup_age_days" in config
+    assert "compression" in config
 
 
 class TestBackupHelperTasks:
@@ -177,8 +177,8 @@ class TestBackupHelperTasks:
 
         result = get_backup_status()
 
-        assert isinstance(result, dict)
-        assert "status" in result
+    assert isinstance(result, dict)
+    assert "status" in result
 
 
 class TestPrometheusMetrics:
@@ -193,10 +193,10 @@ class TestPrometheusMetrics:
         task = DatabaseBackupTask()
 
         # 确保任务对象创建成功
-        assert task is not None
+    assert task is not None
 
         # 验证任务有必要的属性（Celery任务的基本属性）
-        assert hasattr(task, "name") or hasattr(
+    assert hasattr(task, "name") or hasattr(
             task, "run"
         )  # Celery任务应该有name或run方法
 
@@ -210,11 +210,11 @@ class TestPrometheusMetrics:
         metrics = get_backup_metrics(registry=test_registry)
 
         # 验证指标对象不为None
-        assert metrics["success_total"] is not None
-        assert metrics["failure_total"] is not None
-        assert metrics["last_timestamp"] is not None
-        assert metrics["duration"] is not None
-        assert metrics["file_size"] is not None
+    assert metrics["success_total"] is not None
+    assert metrics["failure_total"] is not None
+    assert metrics["last_timestamp"] is not None
+    assert metrics["duration"] is not None
+    assert metrics["file_size"] is not None
 
 
 class TestErrorHandling:
@@ -225,15 +225,15 @@ class TestErrorHandling:
         task = DatabaseBackupTask()
 
         # 测试任务创建时的异常处理
-        assert task is not None
-        assert hasattr(task, "logger")
+    assert task is not None
+    assert hasattr(task, "logger")
 
     def test_invalid_parameters(self):
         """测试无效参数处理"""
         task = DatabaseBackupTask()
 
         # 测试任务的基本属性
-        assert task is not None
+    assert task is not None
 
 
 class TestEdgeCases:
@@ -244,8 +244,8 @@ class TestEdgeCases:
         with patch("src.tasks.backup_tasks.Path.glob", return_value=[]):
             status = get_backup_status()
 
-            assert status["full_backups"]["count"] == 0
-            assert status["incremental_backups"]["count"] == 0
+    assert status["full_backups"]["count"] == 0
+    assert status["incremental_backups"]["count"] == 0
 
     @patch("src.tasks.backup_tasks.Path.glob")
     def test_corrupted_backup_files(self, mock_glob):
@@ -258,7 +258,7 @@ class TestEdgeCases:
         status = get_backup_status()
 
         # 应该跳过损坏的文件
-        assert isinstance(status, dict)
+    assert isinstance(status, dict)
 
     def test_concurrent_backup_operations(self):
         """测试并发备份操作"""
@@ -266,8 +266,8 @@ class TestEdgeCases:
         task2 = DatabaseBackupTask()
 
         # 两个任务应该是独立的
-        assert task1 is not task2
-        assert task1.backup_dir == task2.backup_dir  # 但配置应该相同
+    assert task1 is not task2
+    assert task1.backup_dir == task2.backup_dir  # 但配置应该相同
 
     @patch("src.tasks.backup_tasks.datetime")
     def test_backup_during_system_maintenance(self, mock_time):
@@ -282,8 +282,8 @@ class TestEdgeCases:
             side_effect=TimeoutError("Operation timed out"),
         ):
             success, output, stats = task.run_backup_script("full")
-            assert success is False
-            assert "Operation timed out" in output or "timeout" in output.lower()
+    assert success is False
+    assert "Operation timed out" in output or "timeout" in output.lower()
 
 
 if __name__ == "__main__":

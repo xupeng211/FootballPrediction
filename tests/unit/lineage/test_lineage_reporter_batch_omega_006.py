@@ -111,13 +111,13 @@ class TestLineageReporterBatchOmega006:
         from src.lineage.lineage_reporter import LineageReporter
 
         reporter = LineageReporter(
-            marquez_url="http://localhost:5000",
+            marquez_url="http:_/localhost:5000",
             namespace="test_namespace"
         )
 
-        assert reporter.namespace == "test_namespace"
-        assert reporter._active_runs == {}
-        assert hasattr(reporter, 'client')
+    assert reporter.namespace == "test_namespace"
+    assert reporter._active_runs == {}
+    assert hasattr(reporter, 'client')
 
     def test_lineage_reporter_default_values(self):
         """测试 LineageReporter 默认值"""
@@ -125,8 +125,8 @@ class TestLineageReporterBatchOmega006:
 
         reporter = LineageReporter()
 
-        assert reporter.namespace == "football_prediction"
-        assert reporter._active_runs == {}
+    assert reporter.namespace == "football_prediction"
+    assert reporter._active_runs == {}
 
     def test_start_job_run_basic(self, reporter, mock_openlineage_client):
         """测试开始作业运行基本功能"""
@@ -137,12 +137,12 @@ class TestLineageReporterBatchOmega006:
             )
 
             # 验证返回了有效的运行ID
-            assert isinstance(run_id, str)
-            assert len(run_id) > 0
+    assert isinstance(run_id, str)
+    assert len(run_id) > 0
 
             # 验证活跃运行记录
-            assert "test_job" in reporter._active_runs
-            assert reporter._active_runs["test_job"] == run_id
+    assert "test_job" in reporter._active_runs
+    assert reporter._active_runs["test_job"] == run_id
 
             # 验证客户端emit被调用
             mock_openlineage_client.emit.assert_called_once()
@@ -155,11 +155,11 @@ class TestLineageReporterBatchOmega006:
                 job_type="BATCH",
                 inputs=sample_inputs,
                 description="Test job description",
-                source_location="https://github.com/test/repo"
+                source_location="https:_/github.com/test/repo"
             )
 
-            assert isinstance(run_id, str)
-            assert "test_job" in reporter._active_runs
+    assert isinstance(run_id, str)
+    assert "test_job" in reporter._active_runs
 
             # 验证客户端emit被调用
             mock_openlineage_client.emit.assert_called_once()
@@ -173,8 +173,8 @@ class TestLineageReporterBatchOmega006:
                 transformation_sql="SELECT * FROM table"
             )
 
-            assert isinstance(run_id, str)
-            assert "test_job" in reporter._active_runs
+    assert isinstance(run_id, str)
+    assert "test_job" in reporter._active_runs
 
             # 验证客户端emit被调用
             mock_openlineage_client.emit.assert_called_once()
@@ -187,8 +187,8 @@ class TestLineageReporterBatchOmega006:
                 inputs=None
             )
 
-            assert isinstance(run_id, str)
-            assert "test_job" in reporter._active_runs
+    assert isinstance(run_id, str)
+    assert "test_job" in reporter._active_runs
 
             # 验证客户端emit被调用
             mock_openlineage_client.emit.assert_called_once()
@@ -210,13 +210,13 @@ class TestLineageReporterBatchOmega006:
 
             result = reporter.complete_job_run(job_name="test_job")
 
-            assert result is True
+    assert result is True
 
             # 验证活跃运行被清理
-            assert "test_job" not in reporter._active_runs
+    assert "test_job" not in reporter._active_runs
 
             # 验证客户端emit被调用
-            assert mock_openlineage_client.emit.call_count == 2  # start + complete
+    assert mock_openlineage_client.emit.call_count == 2  # start + complete
 
     def test_complete_job_run_with_outputs(self, reporter, mock_openlineage_client, sample_outputs):
         """测试完成作业运行带输出数据集"""
@@ -230,8 +230,8 @@ class TestLineageReporterBatchOmega006:
                 metrics={"processed": 1000}
             )
 
-            assert result is True
-            assert "test_job" not in reporter._active_runs
+    assert result is True
+    assert "test_job" not in reporter._active_runs
 
     def test_complete_job_run_with_run_id(self, reporter, mock_openlineage_client):
         """测试完成作业运行指定运行ID"""
@@ -245,15 +245,15 @@ class TestLineageReporterBatchOmega006:
                 run_id=custom_run_id
             )
 
-            assert result is True
-            assert "test_job" not in reporter._active_runs  # 不应该影响活跃运行
+    assert result is True
+    assert "test_job" not in reporter._active_runs  # 不应该影响活跃运行
 
     def test_complete_job_run_no_active_run(self, reporter, mock_openlineage_client):
         """测试完成作业运行无活跃运行"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             result = reporter.complete_job_run(job_name="nonexistent_job")
 
-            assert result is False
+    assert result is False
 
     def test_complete_job_run_emit_error(self, reporter, mock_openlineage_client):
         """测试完成作业运行发送错误"""
@@ -268,9 +268,9 @@ class TestLineageReporterBatchOmega006:
         with patch.object(reporter, 'client', mock_client):
             result = reporter.complete_job_run(job_name="test_job")
 
-            assert result is False
+    assert result is False
             # 运行应该被清理
-            assert "test_job" not in reporter._active_runs
+    assert "test_job" not in reporter._active_runs
 
     def test_fail_job_run_basic(self, reporter, mock_openlineage_client):
         """测试标记作业运行失败基本功能"""
@@ -283,13 +283,13 @@ class TestLineageReporterBatchOmega006:
                 error_message="Test error"
             )
 
-            assert result is True
+    assert result is True
 
             # 验证活跃运行被清理
-            assert "test_job" not in reporter._active_runs
+    assert "test_job" not in reporter._active_runs
 
             # 验证客户端emit被调用
-            assert mock_openlineage_client.emit.call_count == 2  # start + fail
+    assert mock_openlineage_client.emit.call_count == 2  # start + fail
 
     def test_fail_job_run_with_run_id(self, reporter, mock_openlineage_client):
         """测试标记作业运行失败指定运行ID"""
@@ -303,7 +303,7 @@ class TestLineageReporterBatchOmega006:
                 run_id=custom_run_id
             )
 
-            assert result is True
+    assert result is True
 
     def test_fail_job_run_no_active_run(self, reporter, mock_openlineage_client):
         """测试标记作业运行失败无活跃运行"""
@@ -313,7 +313,7 @@ class TestLineageReporterBatchOmega006:
                 error_message="Test error"
             )
 
-            assert result is False
+    assert result is False
 
     def test_fail_job_run_emit_error(self, reporter, mock_openlineage_client):
         """测试标记作业运行失败发送错误"""
@@ -331,9 +331,9 @@ class TestLineageReporterBatchOmega006:
                 error_message="Test error"
             )
 
-            assert result is False
+    assert result is False
             # 运行不会被清理（因为emit失败，清理只在成功时执行）
-            assert "test_job" in reporter._active_runs
+    assert "test_job" in reporter._active_runs
 
     def test_report_data_collection_basic(self, reporter, mock_openlineage_client):
         """测试报告数据采集基本功能"""
@@ -352,7 +352,7 @@ class TestLineageReporterBatchOmega006:
                 collection_time=collection_time
             )
 
-            assert run_id == "test_run_id"
+    assert run_id == "test_run_id"
 
             # 验证调用了start和complete
             mock_start.assert_called_once()
@@ -360,10 +360,10 @@ class TestLineageReporterBatchOmega006:
 
             # 验证参数
             call_args = mock_start.call_args[1]
-            assert call_args["job_name"] == "data_collection_api_source"
-            assert call_args["job_type"] == "BATCH"
-            assert len(call_args["inputs"]) == 1
-            assert call_args["inputs"][0]["name"] == "api_source"
+    assert call_args["job_name"] == "data_collection_api_source"
+    assert call_args["job_type"] == "BATCH"
+    assert len(call_args["inputs"]) == 1
+    assert call_args["inputs"][0]["name"] == "api_source"
 
     def test_report_data_collection_with_config(self, reporter, mock_openlineage_client):
         """测试报告数据采集带配置"""
@@ -384,11 +384,11 @@ class TestLineageReporterBatchOmega006:
                 source_config=source_config
             )
 
-            assert run_id == "test_run_id"
+    assert run_id == "test_run_id"
 
             # 验证schema传递
             call_args = mock_start.call_args[1]
-            assert call_args["inputs"][0]["schema"] == source_config["schema"]
+    assert call_args["inputs"][0]["schema"] == source_config["schema"]
 
     def test_report_data_transformation_basic(self, reporter, mock_openlineage_client):
         """测试报告数据转换基本功能"""
@@ -405,7 +405,7 @@ class TestLineageReporterBatchOmega006:
                 records_processed=500
             )
 
-            assert run_id == "test_run_id"
+    assert run_id == "test_run_id"
 
             # 验证调用了start和complete
             mock_start.assert_called_once()
@@ -413,11 +413,11 @@ class TestLineageReporterBatchOmega006:
 
             # 验证参数
             call_args = mock_start.call_args[1]
-            assert call_args["job_name"] == "data_transformation_target_table"
-            assert call_args["job_type"] == "BATCH"
-            assert len(call_args["inputs"]) == 2
-            assert call_args["inputs"][0]["name"] == "source1"
-            assert call_args["inputs"][1]["name"] == "source2"
+    assert call_args["job_name"] == "data_transformation_target_table"
+    assert call_args["job_type"] == "BATCH"
+    assert len(call_args["inputs"]) == 2
+    assert call_args["inputs"][0]["name"] == "source1"
+    assert call_args["inputs"][1]["name"] == "source2"
 
     def test_report_data_transformation_with_type(self, reporter, mock_openlineage_client):
         """测试报告数据转换带类型"""
@@ -435,14 +435,14 @@ class TestLineageReporterBatchOmega006:
                 transformation_type="CLEANING"
             )
 
-            assert run_id == "test_run_id"
+    assert run_id == "test_run_id"
 
             # 验证转换类型传递
             call_args = mock_start.call_args[1]
-            assert call_args["description"] == "CLEANING transformation to create target_table"
+    assert call_args["description"] == "CLEANING transformation to create target_table"
 
             complete_args = mock_complete.call_args[1]
-            assert complete_args["metrics"]["transformation_type"] == "CLEANING"
+    assert complete_args["metrics"]["transformation_type"] == "CLEANING"
 
     def test_get_active_runs(self, reporter):
         """测试获取活跃运行"""
@@ -452,14 +452,14 @@ class TestLineageReporterBatchOmega006:
 
         active_runs = reporter.get_active_runs()
 
-        assert isinstance(active_runs, dict)
-        assert len(active_runs) == 2
-        assert active_runs["job1"] == run_id1
-        assert active_runs["job2"] == run_id2
+    assert isinstance(active_runs, dict)
+    assert len(active_runs) == 2
+    assert active_runs["job1"] == run_id1
+    assert active_runs["job2"] == run_id2
 
         # 验证返回的是副本
         active_runs["job1"] = "modified"
-        assert reporter._active_runs["job1"] == run_id1
+    assert reporter._active_runs["job1"] == run_id1
 
     def test_clear_active_runs(self, reporter):
         """测试清理活跃运行"""
@@ -467,11 +467,11 @@ class TestLineageReporterBatchOmega006:
         reporter.start_job_run(job_name="job1")
         reporter.start_job_run(job_name="job2")
 
-        assert len(reporter._active_runs) == 2
+    assert len(reporter._active_runs) == 2
 
         reporter.clear_active_runs()
 
-        assert len(reporter._active_runs) == 0
+    assert len(reporter._active_runs) == 0
 
     def test_uuid_generation(self, reporter):
         """测试UUID生成"""
@@ -479,9 +479,9 @@ class TestLineageReporterBatchOmega006:
         run_id2 = reporter.start_job_run(job_name="job2")
 
         # 验证UUID是唯一的
-        assert run_id1 != run_id2
-        assert isinstance(run_id1, str)
-        assert isinstance(run_id2, str)
+    assert run_id1 != run_id2
+    assert isinstance(run_id1, str)
+    assert isinstance(run_id2, str)
 
     def test_event_construction_start(self, reporter):
         """测试开始事件构建"""
@@ -495,11 +495,11 @@ class TestLineageReporterBatchOmega006:
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
 
-            assert call_args["eventType"] == "START"
-            assert call_args["run"].runId == run_id
-            assert call_args["job"].name == "test_job"
-            assert call_args["job"].namespace == "football_prediction"
-            assert call_args["producer"] == "football_prediction_lineage_reporter"
+    assert call_args["eventType"] == "START"
+    assert call_args["run"].runId == run_id
+    assert call_args["job"].name == "test_job"
+    assert call_args["job"].namespace == "football_prediction"
+    assert call_args["producer"] == "football_prediction_lineage_reporter"
 
     def test_event_construction_complete(self, reporter):
         """测试完成事件构建"""
@@ -515,10 +515,10 @@ class TestLineageReporterBatchOmega006:
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
 
-            assert call_args["eventType"] == "COMPLETE"
-            assert call_args["run"].runId == run_id
-            assert call_args["job"].name == "test_job"
-            assert call_args["producer"] == "football_prediction_lineage_reporter"
+    assert call_args["eventType"] == "COMPLETE"
+    assert call_args["run"].runId == run_id
+    assert call_args["job"].name == "test_job"
+    assert call_args["producer"] == "football_prediction_lineage_reporter"
 
     def test_event_construction_fail(self, reporter):
         """测试失败事件构建"""
@@ -534,10 +534,10 @@ class TestLineageReporterBatchOmega006:
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
 
-            assert call_args["eventType"] == "FAIL"
-            assert call_args["run"].runId == run_id
-            assert call_args["job"].name == "test_job"
-            assert call_args["producer"] == "football_prediction_lineage_reporter"
+    assert call_args["eventType"] == "FAIL"
+    assert call_args["run"].runId == run_id
+    assert call_args["job"].name == "test_job"
+    assert call_args["producer"] == "football_prediction_lineage_reporter"
 
     def test_dataset_facet_handling(self, reporter):
         """测试数据集facet处理"""
@@ -558,9 +558,9 @@ class TestLineageReporterBatchOmega006:
             mock_input_dataset.assert_called_once()
             call_args = mock_input_dataset.call_args[1]
 
-            assert call_args["namespace"] == "test_namespace"
-            assert call_args["name"] == "test_table"
-            assert "facets" in call_args
+    assert call_args["namespace"] == "test_namespace"
+    assert call_args["name"] == "test_table"
+    assert "facets" in call_args
 
     def test_job_facet_handling(self, reporter):
         """测试作业facet处理"""
@@ -570,7 +570,7 @@ class TestLineageReporterBatchOmega006:
             run_id = reporter.start_job_run(
                 job_name="test_job",
                 description="Test description",
-                source_location="https://github.com/test/repo",
+                source_location="https:_/github.com/test/repo",
                 transformation_sql="SELECT * FROM table"
             )
 
@@ -601,7 +601,7 @@ class TestLineageReporterBatchOmega006:
             mock_output_dataset.assert_called_once()
             call_args = mock_output_dataset.call_args[1]
 
-            assert "facets" in call_args
+    assert "facets" in call_args
 
     def test_error_facet_handling(self, reporter):
         """测试错误facet处理"""
@@ -623,11 +623,11 @@ class TestLineageReporterBatchOmega006:
         run_id = reporter.start_job_run(job_name="test_job")
 
         # 验证使用了默认命名空间
-        assert reporter.namespace == "football_prediction"
+    assert reporter.namespace == "football_prediction"
 
         # 测试自定义命名空间
         custom_reporter = reporter.__class__(namespace="custom_namespace")
-        assert custom_reporter.namespace == "custom_namespace"
+    assert custom_reporter.namespace == "custom_namespace"
 
     def test_logging_functionality(self, reporter):
         """测试日志记录功能"""
@@ -664,20 +664,20 @@ class TestLineageReporterBatchOmega006:
 
         # 验证所有运行都在活跃状态
         active_runs = reporter.get_active_runs()
-        assert len(active_runs) == 3
-        assert "job1" in active_runs
-        assert "job2" in active_runs
-        assert "job3" in active_runs
+    assert len(active_runs) == 3
+    assert "job1" in active_runs
+    assert "job2" in active_runs
+    assert "job3" in active_runs
 
         # 完成部分作业
         reporter.complete_job_run(job_name="job2")
 
         # 验证剩余活跃运行
         active_runs = reporter.get_active_runs()
-        assert len(active_runs) == 2
-        assert "job1" in active_runs
-        assert "job3" in active_runs
-        assert "job2" not in active_runs
+    assert len(active_runs) == 2
+    assert "job1" in active_runs
+    assert "job3" in active_runs
+    assert "job2" not in active_runs
 
     def test_run_id_consistency(self, reporter):
         """测试运行ID一致性"""
@@ -685,12 +685,12 @@ class TestLineageReporterBatchOmega006:
         run_id = reporter.start_job_run(job_name="test_job")
 
         # 验证活跃运行中的ID一致
-        assert reporter._active_runs["test_job"] == run_id
+    assert reporter._active_runs["test_job"] == run_id
 
         # 完成作业时使用相同的ID
         with patch.object(reporter.client, 'emit'):
             result = reporter.complete_job_run(job_name="test_job")
-            assert result is True
+    assert result is True
 
     def test_empty_parameters_handling(self, reporter):
         """测试空参数处理"""
@@ -700,13 +700,13 @@ class TestLineageReporterBatchOmega006:
         # 测试空输出
         with patch.object(reporter.client, 'emit'):
             result = reporter.complete_job_run(job_name="test_job", outputs=[])
-            assert result is True
+    assert result is True
 
     def test_global_instance(self):
         """测试全局实例"""
         from src.lineage.lineage_reporter import lineage_reporter
 
         # 验证全局实例存在
-        assert lineage_reporter is not None
-        assert hasattr(lineage_reporter, 'namespace')
-        assert hasattr(lineage_reporter, '_active_runs')
+    assert lineage_reporter is not None
+    assert hasattr(lineage_reporter, 'namespace')
+    assert hasattr(lineage_reporter, '_active_runs')

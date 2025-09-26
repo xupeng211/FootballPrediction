@@ -272,13 +272,13 @@ def test_stream_data_processing(monkeypatch, patch_error_logger, start_fail):
     )
 
     if start_fail:
-        assert result["status"] == "failed"
+    assert result["status"] == "failed"
         task.logger.error.assert_called_once()
-        assert patch_error_logger.calls
+    assert patch_error_logger.calls
     else:
-        assert result["status"] == "success"
-        assert processor.started_topics == ["matches"]
-        assert result["statistics"]["processed"] == 5
+    assert result["status"] == "success"
+    assert processor.started_topics == ["matches"]
+    assert result["statistics"]["processed"] == 5
         task.logger.info.assert_called_once()
     assert processor.stopped is True
 

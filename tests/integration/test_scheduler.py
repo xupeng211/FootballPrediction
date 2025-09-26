@@ -130,16 +130,16 @@ class TestTaskScheduler:
         )
 
         # 验证任务已启动
-        assert fixtures_task is not None
-        assert hasattr(fixtures_task, "id") or hasattr(fixtures_task, "task_id")
+    assert fixtures_task is not None
+    assert hasattr(fixtures_task, "id") or hasattr(fixtures_task, "task_id")
 
         # 等待赛程采集完成
         try:
             fixtures_result = fixtures_task.get(timeout=30)
-            assert fixtures_result is not None
+    assert fixtures_result is not None
 
             if isinstance(fixtures_result, dict):
-                assert (
+    assert (
                     fixtures_result.get("success") is True
                     or "fixtures_collected" in fixtures_result
                 )
@@ -157,10 +157,10 @@ class TestTaskScheduler:
 
             try:
                 odds_result = odds_task.get(timeout=60)
-                assert odds_result is not None
+    assert odds_result is not None
 
                 if isinstance(odds_result, dict):
-                    assert (
+    assert (
                         odds_result.get("success") is True
                         or "odds_collected" in odds_result
                     )
@@ -176,7 +176,7 @@ class TestTaskScheduler:
 
             try:
                 processing_result = processing_task.get(timeout=120)
-                assert processing_result is not None
+    assert processing_result is not None
             except Exception:
                 processing_result = {"success": True, "processed_matches": 5}
 
@@ -204,7 +204,7 @@ class TestTaskScheduler:
                 completed_tasks += 1
 
         # 验证并行执行效果
-        assert completed_tasks >= len(sample_task_data["league_ids"]) * 0.8  # 80%成功率
+    assert completed_tasks >= len(sample_task_data["league_ids"]) * 0.8  # 80%成功率
 
     # ================================
     # 任务重试机制测试
@@ -219,9 +219,9 @@ class TestTaskScheduler:
         ):
             try:
                 _ = collect_fixtures_task.delay(league_ids=[39])
-                assert False, "应该抛出网络超时异常"
+    assert False, "应该抛出网络超时异常"
             except Exception as e:
-                assert "Network timeout" in str(e)
+    assert "Network timeout" in str(e)
 
         # 验证重试机制（如果实现了）
         if hasattr(collect_fixtures_task, "retry"):
@@ -240,7 +240,7 @@ class TestTaskScheduler:
                 except Exception:
                     retry_count += 1
 
-            assert retry_count == 2  # 验证重试了2次后成功
+    assert retry_count == 2  # 验证重试了2次后成功
 
     @pytest.mark.asyncio
     async def test_task_exponential_backoff(self):
@@ -261,7 +261,7 @@ class TestTaskScheduler:
 
         # 验证退避间隔
         expected_delays = [2, 4, 8, 16]
-        assert retry_delays == expected_delays
+    assert retry_delays == expected_delays
 
     # ================================
     # 任务优先级和队列管理测试
@@ -286,8 +286,8 @@ class TestTaskScheduler:
         # 验证任务已正确加入队列
         tasks = [high_priority_task, normal_priority_task, low_priority_task]
         for task in tasks:
-            assert task is not None
-            assert hasattr(task, "id") or hasattr(task, "task_id")
+    assert task is not None
+    assert hasattr(task, "id") or hasattr(task, "task_id")
 
     @pytest.mark.asyncio
     async def test_task_queue_routing(self):
@@ -310,7 +310,7 @@ class TestTaskScheduler:
         # 验证任务路由正确
         tasks = [data_collection_task, feature_calc_task, prediction_task]
         for task in tasks:
-            assert task is not None
+    assert task is not None
 
     # ================================
     # 任务监控和状态跟踪测试
@@ -328,7 +328,7 @@ class TestTaskScheduler:
             status = await task_manager.get_task_status(task_id)
 
             if status:
-                assert "state" in status or "status" in status
+    assert "state" in status or "status" in status
                 valid_states = [
                     "PENDING",
                     "STARTED",
@@ -338,7 +338,7 @@ class TestTaskScheduler:
                     "REVOKED",
                 ]
                 task_state = status.get("state") or status.get("status")
-                assert task_state in valid_states
+    assert task_state in valid_states
 
         except Exception:
             # 在测试环境中可能无法获取真实状态
@@ -359,10 +359,10 @@ class TestTaskScheduler:
                     # 验证进度信息格式
                     if "progress" in task_info:
                         progress = task_info["progress"]
-                        assert 0 <= progress <= 100
+    assert 0 <= progress <= 100
 
                     if "current_step" in task_info:
-                        assert isinstance(task_info["current_step"], str)
+    assert isinstance(task_info["current_step"], str)
 
             except Exception:
                 # 在测试环境中可能无法获取真实进度
@@ -387,12 +387,12 @@ class TestTaskScheduler:
             cancel_result = await task_manager.cancel_task(task_id)
 
             if cancel_result:
-                assert cancel_result.get("cancelled") is True or cancel_result is True
+    assert cancel_result.get("cancelled") is True or cancel_result is True
 
             # 验证任务状态已更新为已取消
             status = await task_manager.get_task_status(task_id)
             if status:
-                assert status.get("state") in ["REVOKED", "CANCELLED", "ABORTED"]
+    assert status.get("state") in ["REVOKED", "CANCELLED", "ABORTED"]
 
         except Exception:
             # 在测试环境中可能无法执行真实取消
@@ -415,7 +415,7 @@ class TestTaskScheduler:
         # 验证失败任务的清理（如果实现了）
         if hasattr(celery_app, "cleanup_failed_tasks"):
             cleanup_result = celery_app.cleanup_failed_tasks(max_age_hours=1)
-            assert cleanup_result >= 0  # 清理的任务数量
+    assert cleanup_result >= 0  # 清理的任务数量
 
     # ================================
     # 调度器性能测试
@@ -439,8 +439,8 @@ class TestTaskScheduler:
         submission_time = time.time() - start_time
 
         # 验证任务提交性能
-        assert submission_time < 5.0, f"任务提交时间{submission_time:.2f}s超过5秒"
-        assert len(tasks) == 20, "任务提交数量不正确"
+    assert submission_time < 5.0, f"任务提交时间{submission_time:.2f}s超过5秒"
+    assert len(tasks) == 20, "任务提交数量不正确"
 
     @pytest.mark.asyncio
     async def test_worker_load_balancing(self):
@@ -463,7 +463,7 @@ class TestTaskScheduler:
                         # 检查负载是否相对均衡
                         max_tasks = max(worker_task_counts.values())
                         min_tasks = min(worker_task_counts.values())
-                        assert max_tasks - min_tasks <= 3, "工作节点负载不均衡"
+    assert max_tasks - min_tasks <= 3, "工作节点负载不均衡"
 
             except Exception:
                 # 在测试环境中可能无法获取真实的worker信息
@@ -514,8 +514,8 @@ class TestTaskScheduler:
             workflow_result = await task_manager.schedule_task_chain(task_chain)
 
             if workflow_result:
-                assert "workflow_id" in workflow_result or "chain_id" in workflow_result
-                assert workflow_result.get("scheduled_tasks") == len(task_chain)
+    assert "workflow_id" in workflow_result or "chain_id" in workflow_result
+    assert workflow_result.get("scheduled_tasks") == len(task_chain)
 
         except Exception:
             # 在测试环境中可能无法执行真实的任务链
@@ -537,13 +537,13 @@ class TestTaskScheduler:
                 odds_task = collect_odds_task.delay(fixtures_data=fixtures_result)
 
                 odds_result = odds_task.get(timeout=60)
-                assert odds_result is not None
+    assert odds_result is not None
 
             else:
                 # 没有新赛程，跳过赔率采集
-                assert fixtures_result.get("new_fixtures_count", 0) == 0
+    assert fixtures_result.get("new_fixtures_count", 0) == 0
 
         except Exception:
             # 在测试环境中模拟条件执行
             fixtures_result = {"new_fixtures_count": 3}
-            assert fixtures_result["new_fixtures_count"] > 0
+    assert fixtures_result["new_fixtures_count"] > 0

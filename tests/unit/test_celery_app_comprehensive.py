@@ -22,15 +22,15 @@ class TestCeleryApp:
 
     def test_celery_app_creation(self):
         """测试Celery应用创建"""
-        assert app is not None
-        assert hasattr(app, "conf")
-        assert hasattr(app, "task")
+    assert app is not None
+    assert hasattr(app, "conf")
+    assert hasattr(app, "task")
 
     def test_celery_configuration(self):
         """测试Celery配置"""
         # 验证基本配置存在
-        assert hasattr(app.conf, "broker_url")
-        assert hasattr(app.conf, "result_backend")
+    assert hasattr(app.conf, "broker_url")
+    assert hasattr(app.conf, "result_backend")
 
     def test_task_discovery(self):
         """测试任务发现"""
@@ -38,31 +38,31 @@ class TestCeleryApp:
         task_names = [
             task for task in app.tasks.keys() if not task.startswith("celery.")
         ]
-        assert len(task_names) >= 0  # 至少应该有一些任务
+    assert len(task_names) >= 0  # 至少应该有一些任务
 
     def test_app_name_configuration(self):
         """测试应用名称配置"""
-        assert app.main is not None
-        assert isinstance(app.main, str)
+    assert app.main is not None
+    assert isinstance(app.main, str)
 
     def test_timezone_configuration(self):
         """测试时区配置"""
         timezone = getattr(app.conf, "timezone", None)
         if timezone:
-            assert isinstance(timezone, str)
+    assert isinstance(timezone, str)
 
     def test_serialization_configuration(self):
         """测试序列化配置"""
         # 验证序列化设置
         task_serializer = getattr(app.conf, "task_serializer", None)
         if task_serializer:
-            assert task_serializer in ["json", "pickle", "yaml"]
+    assert task_serializer in ["json", "pickle", "yaml"]
 
     def test_result_expires_configuration(self):
         """测试结果过期配置"""
         result_expires = getattr(app.conf, "result_expires", None)
         if result_expires:
-            assert isinstance(result_expires, (int, float))
+    assert isinstance(result_expires, (int, float))
 
     def test_worker_configuration(self):
         """测试Worker配置"""
@@ -71,13 +71,13 @@ class TestCeleryApp:
             app.conf, "worker_prefetch_multiplier", None
         )
         if worker_prefetch_multiplier:
-            assert isinstance(worker_prefetch_multiplier, int)
+    assert isinstance(worker_prefetch_multiplier, int)
 
     def test_beat_configuration(self):
         """测试Beat调度配置"""
         beat_schedule = getattr(app.conf, "beat_schedule", None)
         if beat_schedule:
-            assert isinstance(beat_schedule, dict)
+    assert isinstance(beat_schedule, dict)
 
 
 class TestTaskRegistration:
@@ -90,9 +90,9 @@ class TestTaskRegistration:
         def sample_task():
             return "test result"
 
-        assert sample_task is not None
-        assert hasattr(sample_task, "delay")
-        assert hasattr(sample_task, "apply_async")
+    assert sample_task is not None
+    assert hasattr(sample_task, "delay")
+    assert hasattr(sample_task, "apply_async")
 
     def test_task_binding(self):
         """测试任务绑定"""
@@ -101,8 +101,8 @@ class TestTaskRegistration:
         def bound_task(self):
             return self.request.id
 
-        assert bound_task is not None
-        assert hasattr(bound_task, "request")
+    assert bound_task is not None
+    assert hasattr(bound_task, "request")
 
     def test_task_routing(self):
         """测试任务路由"""
@@ -111,9 +111,9 @@ class TestTaskRegistration:
         def routed_task():
             return "routed"
 
-        assert routed_task is not None
+    assert routed_task is not None
         # 验证路由配置
-        assert True  # 占位验证
+    assert True  # 占位验证
 
     def test_task_retry_configuration(self):
         """测试任务重试配置"""
@@ -122,9 +122,9 @@ class TestTaskRegistration:
         def retry_task():
             raise Exception("Test exception")
 
-        assert retry_task is not None
+    assert retry_task is not None
         # 验证重试配置
-        assert True  # 占位验证
+    assert True  # 占位验证
 
 
 class TestErrorHandling:
@@ -145,12 +145,12 @@ class TestErrorHandling:
             pass
 
         # 验证日志记录（如果实现了）
-        assert True  # 占位验证
+    assert True  # 占位验证
 
     def test_connection_error_handling(self):
         """测试连接错误处理"""
         # 测试Broker连接错误的处理
-        assert app is not None
+    assert app is not None
         # 实际的连接错误测试需要模拟网络故障
 
     def test_serialization_error_handling(self):
@@ -166,7 +166,7 @@ class TestErrorHandling:
                 self.circular_ref = self
 
         # 应该处理序列化错误
-        assert serialization_task is not None
+    assert serialization_task is not None
 
 
 class TestMonitoring:
@@ -177,12 +177,12 @@ class TestMonitoring:
         # 验证监控配置
         monitoring = getattr(app.conf, "worker_send_task_events", None)
         if monitoring is not None:
-            assert isinstance(monitoring, bool)
+    assert isinstance(monitoring, bool)
 
     def test_metrics_collection(self):
         """测试指标收集"""
         # 验证指标收集配置
-        assert app is not None
+    assert app is not None
         # 实际的指标测试需要Prometheus集成
 
     @patch("prometheus_client.Counter")
@@ -201,12 +201,12 @@ class TestMonitoring:
             return "monitored"
 
         # 验证任务创建成功
-        assert monitored_task is not None
-        assert hasattr(monitored_task, "name")
+    assert monitored_task is not None
+    assert hasattr(monitored_task, "name")
 
         # 验证任务可以被调用（同步调用用于测试）
         result = monitored_task.apply()
-        assert result.result == "monitored"
+    assert result.result == "monitored"
 
 
 class TestConfiguration:
@@ -216,35 +216,35 @@ class TestConfiguration:
         """测试Broker配置"""
         broker_url = getattr(app.conf, "broker_url", None)
         if broker_url:
-            assert isinstance(broker_url, str)
-            assert broker_url.startswith(("redis://", "amqp://", "memory://"))
+    assert isinstance(broker_url, str)
+    assert broker_url.startswith(("redis:_/", "amqp://", "memory://"))
 
     def test_result_backend_configuration(self):
         """测试结果后端配置"""
         result_backend = getattr(app.conf, "result_backend", None)
         if result_backend:
-            assert isinstance(result_backend, str)
+    assert isinstance(result_backend, str)
 
     def test_queue_configuration(self):
         """测试队列配置"""
         # 验证队列路由配置
         task_routes = getattr(app.conf, "task_routes", None)
         if task_routes:
-            assert isinstance(task_routes, dict)
+    assert isinstance(task_routes, dict)
 
     def test_concurrency_configuration(self):
         """测试并发配置"""
         worker_concurrency = getattr(app.conf, "worker_concurrency", None)
         if worker_concurrency:
-            assert isinstance(worker_concurrency, int)
-            assert worker_concurrency > 0
+    assert isinstance(worker_concurrency, int)
+    assert worker_concurrency > 0
 
     def test_time_limit_configuration(self):
         """测试时间限制配置"""
         task_time_limit = getattr(app.conf, "task_time_limit", None)
         if task_time_limit:
-            assert isinstance(task_time_limit, (int, float))
-            assert task_time_limit > 0
+    assert isinstance(task_time_limit, (int, float))
+    assert task_time_limit > 0
 
 
 class TestSecurity:
@@ -254,14 +254,14 @@ class TestSecurity:
         """测试消息安全"""
         # 验证消息安全配置
         security = getattr(app.conf, "task_always_eager", False)
-        assert isinstance(security, bool)
+    assert isinstance(security, bool)
 
     def test_authentication_configuration(self):
         """测试认证配置"""
         # 验证认证相关配置
         broker_use_ssl = getattr(app.conf, "broker_use_ssl", None)
         if broker_use_ssl is not None:
-            assert isinstance(broker_use_ssl, (bool, dict))
+    assert isinstance(broker_use_ssl, (bool, dict))
 
     def test_encryption_configuration(self):
         """测试加密配置"""
@@ -270,7 +270,7 @@ class TestSecurity:
             app.conf, "result_backend_transport_options", None
         )
         if result_backend_transport_options:
-            assert isinstance(result_backend_transport_options, dict)
+    assert isinstance(result_backend_transport_options, dict)
 
 
 class TestPerformance:
@@ -280,22 +280,22 @@ class TestPerformance:
         """测试预取配置"""
         prefetch = getattr(app.conf, "worker_prefetch_multiplier", None)
         if prefetch:
-            assert isinstance(prefetch, int)
-            assert prefetch > 0
+    assert isinstance(prefetch, int)
+    assert prefetch > 0
 
     def test_optimization_settings(self):
         """测试优化设置"""
         # 验证性能优化设置
         disable_rate_limits = getattr(app.conf, "worker_disable_rate_limits", None)
         if disable_rate_limits is not None:
-            assert isinstance(disable_rate_limits, bool)
+    assert isinstance(disable_rate_limits, bool)
 
     def test_pool_configuration(self):
         """测试连接池配置"""
         pool_limit = getattr(app.conf, "broker_pool_limit", None)
         if pool_limit:
-            assert isinstance(pool_limit, int)
-            assert pool_limit > 0
+    assert isinstance(pool_limit, int)
+    assert pool_limit > 0
 
 
 class TestIntegration:
@@ -311,7 +311,7 @@ class TestIntegration:
         def db_task():
             return "database operation"
 
-        assert db_task is not None
+    assert db_task is not None
 
     @patch("src.tasks.celery_app.RedisManager")
     def test_redis_integration(self, mock_redis_manager):
@@ -323,12 +323,12 @@ class TestIntegration:
         def cache_task():
             return "cache operation"
 
-        assert cache_task is not None
+    assert cache_task is not None
 
     def test_logging_integration(self):
         """测试日志集成"""
         # 验证日志配置
-        assert app is not None
+    assert app is not None
         # 实际的日志测试需要检查日志输出
 
 
@@ -338,7 +338,7 @@ class TestScheduling:
     def test_periodic_task_setup(self):
         """测试定期任务设置"""
         beat_schedule = getattr(app.conf, "beat_schedule", {})
-        assert isinstance(beat_schedule, dict)
+    assert isinstance(beat_schedule, dict)
 
     def test_cron_configuration(self):
         """测试Cron配置"""
@@ -346,8 +346,8 @@ class TestScheduling:
         beat_schedule = getattr(app.conf, "beat_schedule", {})
         for task_name, config in beat_schedule.items():
             if "crontab" in config:
-                assert "schedule" in config
-                assert "task" in config
+    assert "schedule" in config
+    assert "task" in config
 
     def test_interval_configuration(self):
         """测试间隔配置"""
@@ -355,7 +355,7 @@ class TestScheduling:
         beat_schedule = getattr(app.conf, "beat_schedule", {})
         for task_name, config in beat_schedule.items():
             if isinstance(config.get("schedule"), (int, float)):
-                assert config["schedule"] > 0
+    assert config["schedule"] > 0
 
 
 if __name__ == "__main__":

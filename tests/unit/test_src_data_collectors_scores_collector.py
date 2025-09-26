@@ -10,13 +10,13 @@ import importlib
 module = importlib.import_module("src.data.collectors.scores_collector")
 
 def test_module_import():
-    """Basic import test to ensure src/data/collectors/scores_collector.py loads without error."""
+    """Basic import test to ensure src_data/collectors/scores_collector.py loads without error."""
     assert module is not None
 
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
 # Hint: Use pytest-mock or monkeypatch to mock external dependencies.

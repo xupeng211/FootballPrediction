@@ -32,11 +32,11 @@ class TestFootballKafkaConsumer:
 
     def test_init(self, consumer):
         """测试初始化"""
-        assert consumer.config is not None
-        assert consumer.consumer is not None
-        assert hasattr(consumer, 'logger')
-        assert hasattr(consumer, 'running')
-        assert consumer.running is False
+    assert consumer.config is not None
+    assert consumer.consumer is not None
+    assert hasattr(consumer, 'logger')
+    assert hasattr(consumer, 'running')
+    assert consumer.running is False
 
     @pytest.mark.asyncio
     async def test_create_consumer_success(self, consumer):
@@ -51,7 +51,7 @@ class TestFootballKafkaConsumer:
             # 这个方法应该不会返回值，但会创建consumer
             consumer._create_consumer()
 
-            assert consumer.consumer == mock_consumer
+    assert consumer.consumer == mock_consumer
             mock_consumer_class.assert_called_once()
 
     @pytest.mark.asyncio
@@ -65,11 +65,11 @@ class TestFootballKafkaConsumer:
             # 应该抛出异常而不是返回False
             try:
                 consumer._create_consumer()
-                assert False, "应该抛出异常"
+    assert False, "应该抛出异常"
             except Exception:
                 pass  # 期望抛出异常
 
-            assert consumer.consumer is None
+    assert consumer.consumer is None
 
     def test_subscribe_topics_success(self, consumer):
         """测试成功订阅主题"""
@@ -120,7 +120,7 @@ class TestFootballKafkaConsumer:
 
             result = await consumer.consume_messages(timeout=1.0)
 
-            assert result is True
+    assert result is True
             consumer.consumer.poll.assert_called()
             mock_process.assert_called_once()
 
@@ -132,7 +132,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer.consume_messages(timeout=1.0)
 
-        assert result is True  # 无消息也是成功的
+    assert result is True  # 无消息也是成功的
 
     @pytest.mark.asyncio
     async def test_consume_messages_consumer_not_initialized(self, consumer):
@@ -142,7 +142,7 @@ class TestFootballKafkaConsumer:
         result = await consumer.consume_messages()
 
         # 应该返回空列表或抛出异常
-        assert isinstance(result, list) or result is None
+    assert isinstance(result, list) or result is None
 
     @pytest.mark.asyncio
     async def test_process_match_message_success(self, consumer):
@@ -165,7 +165,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_match_message(message_data)
 
-        assert result is True
+    assert result is True
         consumer.db_manager.save_match_data.assert_called_once_with(message_data["data"])
 
     @pytest.mark.asyncio
@@ -186,7 +186,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_odds_message(message_data)
 
-        assert result is True
+    assert result is True
         consumer.db_manager.save_odds_data.assert_called_once_with(message_data["data"])
 
     @pytest.mark.asyncio
@@ -207,7 +207,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_scores_message(message_data)
 
-        assert result is True
+    assert result is True
         consumer.db_manager.save_scores_data.assert_called_once_with(message_data["data"])
 
     @pytest.mark.asyncio
@@ -221,7 +221,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_message(message_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_process_message_database_error(self, consumer):
@@ -237,7 +237,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_match_message(message_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_deserialize_message_success(self, consumer):
@@ -252,7 +252,7 @@ class TestFootballKafkaConsumer:
 
         result = consumer._deserialize_message(json_data)
 
-        assert result == original_data
+    assert result == original_data
 
     @pytest.mark.asyncio
     async def test_deserialize_message_invalid_json(self, consumer):
@@ -295,7 +295,7 @@ class TestFootballKafkaConsumer:
 
         await consumer.stop_consuming()
 
-        assert consumer.running is False
+    assert consumer.running is False
         consumer.consumer.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -312,7 +312,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer.subscribe_topics(topics)
 
-        assert result is True
+    assert result is True
         # 重平衡逻辑应该被正确处理
 
     @pytest.mark.asyncio
@@ -326,7 +326,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer.subscribe_topics(topics)
 
-        assert result is True
+    assert result is True
         # 消费者组应该正确配置和管理
 
     @pytest.mark.asyncio
@@ -364,8 +364,8 @@ class TestFootballKafkaConsumer:
 
             result = await consumer.consume_messages(timeout=5.0)
 
-            assert result is True
-            assert mock_process.call_count == 10  # 处理了10条消息
+    assert result is True
+    assert mock_process.call_count == 10  # 处理了10条消息
 
     @pytest.mark.asyncio
     async def test_connection_error_handling(self, consumer):
@@ -375,7 +375,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer.consume_messages()
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_consumer_initialization_error(self, consumer):
@@ -385,7 +385,7 @@ class TestFootballKafkaConsumer:
 
             result = consumer._create_consumer()
 
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_topic_subscription_error(self, consumer):
@@ -397,7 +397,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer.subscribe_topics(topics)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_consumer_metrics_collection(self, consumer):
@@ -408,7 +408,7 @@ class TestFootballKafkaConsumer:
         # 模拟指标收集
         metrics = await consumer._get_consumer_metrics()
 
-        assert isinstance(metrics, dict)
+    assert isinstance(metrics, dict)
 
     @pytest.mark.asyncio
     async def test_consumer_cleanup(self, consumer):
@@ -448,7 +448,7 @@ class TestFootballKafkaConsumer:
             await asyncio.gather(*tasks, return_exceptions=True)
 
             # 验证处理逻辑被调用
-            assert mock_process.call_count > 0
+    assert mock_process.call_count > 0
 
     @pytest.mark.asyncio
     async def test_message_validation_failure(self, consumer):
@@ -463,7 +463,7 @@ class TestFootballKafkaConsumer:
         result = await consumer.consume_messages()
 
         # 应该能处理无效消息而不崩溃
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_consumer_restart_after_failure(self, consumer):
@@ -474,11 +474,11 @@ class TestFootballKafkaConsumer:
 
             # 第一次尝试
             result1 = consumer._create_consumer()
-            assert result1 is False
+    assert result1 is False
 
             # 重置消费者对象
             consumer.consumer = None
 
             # 第二次尝试应该成功
             result2 = consumer._create_consumer()
-            assert result2 is True
+    assert result2 is True

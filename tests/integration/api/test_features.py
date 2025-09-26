@@ -101,19 +101,19 @@ class TestFeatureExtractionAPI:
         )
 
         # 验证APIResponse结构
-        assert result["success"] is True
-        assert "data" in result
+    assert result["success"] is True
+    assert "data" in result
 
         # 验证数据结构
         data = result["data"]
-        assert data["match_info"]["match_id"] == sample_match_data["match_id"]
-        assert "features" in data
+    assert data["match_info"]["match_id"] == sample_match_data["match_id"]
+    assert "features" in data
 
         # 验证特征数据结构（基于sample_features_data的实际结构）
         features = data["features"]
-        assert "team_form" in features
-        assert features["team_form"]["home_team"]["wins"] == 3
-        assert features["statistical_features"]["home_team_strength"] == 0.75
+    assert "team_form" in features
+    assert features["team_form"]["home_team"]["wins"] == 3
+    assert features["statistical_features"]["home_team_strength"] == 0.75
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, mock_session):
@@ -128,8 +128,8 @@ class TestFeatureExtractionAPI:
         with pytest.raises(HTTPException) as exc_info:
             await get_match_features(match_id=99999, session=mock_session)
 
-        assert exc_info.value.status_code == 404
-        assert "比赛" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 404
+    assert "比赛" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_invalid_id(self, mock_session):
@@ -140,7 +140,7 @@ class TestFeatureExtractionAPI:
         with pytest.raises(HTTPException) as exc_info:
             await get_match_features(match_id=-1, session=mock_session)
 
-        assert exc_info.value.status_code == 400
+    assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     @patch("src.api.features.feature_store.get_match_features_for_prediction")
@@ -168,8 +168,8 @@ class TestFeatureExtractionAPI:
                 match_id=sample_match_data["match_id"], session=mock_session
             )
 
-        assert exc_info.value.status_code == 500
-        assert "获取特征数据失败" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 500
+    assert "获取特征数据失败" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_success(self, mock_session):
@@ -205,7 +205,7 @@ class TestFeatureExtractionAPI:
             )
 
             # 验证结果
-            assert isinstance(result, dict)
+    assert isinstance(result, dict)
             # 验证基本结构，具体字段根据实际API调整
 
     @pytest.mark.asyncio
@@ -224,8 +224,8 @@ class TestFeatureExtractionAPI:
                 start_date=start_date, end_date=end_date, session=mock_session
             )
 
-        assert exc_info.value.status_code == 400
-        assert "开始日期必须早于结束日期" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 400
+    assert "开始日期必须早于结束日期" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_date_range_too_large(self, mock_session):
@@ -242,8 +242,8 @@ class TestFeatureExtractionAPI:
                 start_date=start_date, end_date=end_date, session=mock_session
             )
 
-        assert exc_info.value.status_code == 400
-        assert "时间范围不能超过30天" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 400
+    assert "时间范围不能超过30天" in str(exc_info.value.detail)
 
 
 @pytest.mark.integration

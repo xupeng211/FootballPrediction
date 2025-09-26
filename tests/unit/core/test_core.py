@@ -30,15 +30,15 @@ class TestConfig:
     def test_config_initialization(self):
         """测试配置初始化"""
         test_config = Config()
-        assert test_config.config_dir == Path.home() / ".footballprediction"
-        assert test_config.config_file == test_config.config_dir / "config.json"
-        assert isinstance(test_config._config, dict)
+    assert test_config.config_dir == Path.home() / ".footballprediction"
+    assert test_config.config_file == test_config.config_dir / "config.json"
+    assert isinstance(test_config._config, dict)
 
     def test_config_load_nonexistent_file(self):
         """测试加载不存在的配置文件"""
         with patch.object(Path, "exists", return_value=False):
             test_config = Config()
-            assert test_config._config == {}
+    assert test_config._config == {}
 
     def test_config_load_existing_file(self):
         """测试加载存在的配置文件"""
@@ -50,7 +50,7 @@ class TestConfig:
             patch("builtins.open", mock_open(read_data=mock_file_content)),
         ):
             test_config = Config()
-            assert test_config._config == test_data
+    assert test_config._config == test_data
 
     def test_config_load_corrupted_file(self):
         """测试加载损坏的配置文件"""
@@ -60,7 +60,7 @@ class TestConfig:
             patch("logging.warning") as mock_warning,
         ):
             test_config = Config()
-            assert test_config._config == {}
+    assert test_config._config == {}
             mock_warning.assert_called_once()
 
     def test_config_get_existing_key(self):
@@ -69,7 +69,7 @@ class TestConfig:
         test_config._config = {"test_key": "test_value"}
 
         result = test_config.get("test_key")
-        assert result == "test_value"
+    assert result == "test_value"
 
     def test_config_get_nonexistent_key_with_default(self):
         """测试获取不存在的配置项（有默认值）"""
@@ -77,7 +77,7 @@ class TestConfig:
         test_config._config = {}
 
         result = test_config.get("nonexistent_key", "default_value")
-        assert result == "default_value"
+    assert result == "default_value"
 
     def test_config_get_nonexistent_key_without_default(self):
         """测试获取不存在的配置项（无默认值）"""
@@ -85,14 +85,14 @@ class TestConfig:
         test_config._config = {}
 
         result = test_config.get("nonexistent_key")
-        assert result is None
+    assert result is None
 
     def test_config_set(self):
         """测试设置配置项"""
         test_config = Config()
         test_config.set("new_key", "new_value")
 
-        assert test_config._config["new_key"] == "new_value"
+    assert test_config._config["new_key"] == "new_value"
 
     def test_config_save_success(self):
         """测试成功保存配置"""
@@ -124,7 +124,7 @@ class TestConfig:
             mock_file.assert_called_once()
             # 验证文件是以UTF-8编码打开的
             args, kwargs = mock_file.call_args
-            assert kwargs.get("encoding") == "utf-8"
+    assert kwargs.get("encoding") == "utf-8"
 
 
 class TestLogger:
@@ -134,14 +134,14 @@ class TestLogger:
         """测试设置默认级别的日志器"""
         test_logger = Logger.setup_logger("test_logger")
 
-        assert isinstance(test_logger, logging.Logger)
-        assert test_logger.name == "test_logger"
-        assert test_logger.level == logging.INFO
+    assert isinstance(test_logger, logging.Logger)
+    assert test_logger.name == "test_logger"
+    assert test_logger.level == logging.INFO
 
     def test_setup_logger_custom_level(self):
         """测试设置自定义级别的日志器"""
         test_logger = Logger.setup_logger("test_logger", "DEBUG")
-        assert test_logger.level == logging.DEBUG
+    assert test_logger.level == logging.DEBUG
 
     def test_setup_logger_invalid_level(self):
         """测试设置无效级别的日志器"""
@@ -154,12 +154,12 @@ class TestLogger:
         test_logger = Logger.setup_logger("test_logger_handlers")
 
         # 第一次调用应该添加处理器
-        assert len(test_logger.handlers) == 1
+    assert len(test_logger.handlers) == 1
 
         # 第二次调用不应该重复添加处理器
         test_logger2 = Logger.setup_logger("test_logger_handlers")
-        assert len(test_logger2.handlers) == 1
-        assert test_logger is test_logger2  # 应该是同一个实例
+    assert len(test_logger2.handlers) == 1
+    assert test_logger is test_logger2  # 应该是同一个实例
 
     def test_logger_formatter(self):
         """测试日志格式器"""
@@ -167,11 +167,11 @@ class TestLogger:
         handler = test_logger.handlers[0]
         formatter = handler.formatter
 
-        assert isinstance(formatter, logging.Formatter)
-        assert "%(asctime)s" in formatter._fmt
-        assert "%(name)s" in formatter._fmt
-        assert "%(levelname)s" in formatter._fmt
-        assert "%(message)s" in formatter._fmt
+    assert isinstance(formatter, logging.Formatter)
+    assert "%(asctime)s" in formatter._fmt
+    assert "%(name)s" in formatter._fmt
+    assert "%(levelname)s" in formatter._fmt
+    assert "%(message)s" in formatter._fmt
 
 
 class TestExceptions:
@@ -180,22 +180,22 @@ class TestExceptions:
     def test_footballprediction_error(self):
         """测试基础异常类"""
         error = FootballPredictionError("test error message")
-        assert isinstance(error, Exception)
-        assert str(error) == "test error message"
+    assert isinstance(error, Exception)
+    assert str(error) == "test error message"
 
     def test_config_error(self):
         """测试配置异常类"""
         error = ConfigError("config error message")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "config error message"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "config error message"
 
     def test_data_error(self):
         """测试数据异常类"""
         error = DataError("data error message")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "data error message"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "data error message"
 
     def test_exception_inheritance(self):
         """测试异常继承关系"""
@@ -203,12 +203,12 @@ class TestExceptions:
         config_error = ConfigError("test")
         data_error = DataError("test")
 
-        assert isinstance(config_error, FootballPredictionError)
-        assert isinstance(data_error, FootballPredictionError)
+    assert isinstance(config_error, FootballPredictionError)
+    assert isinstance(data_error, FootballPredictionError)
 
         # 验证它们也是标准异常
-        assert isinstance(config_error, Exception)
-        assert isinstance(data_error, Exception)
+    assert isinstance(config_error, Exception)
+    assert isinstance(data_error, Exception)
 
 
 class TestGlobalInstances:
@@ -216,26 +216,26 @@ class TestGlobalInstances:
 
     def test_global_config_instance(self):
         """测试全局配置实例"""
-        assert config is not None
-        assert isinstance(config, Config)
+    assert config is not None
+    assert isinstance(config, Config)
 
     def test_global_logger_instance(self):
         """测试全局日志器实例"""
-        assert logger is not None
-        assert isinstance(logger, logging.Logger)
-        assert logger.name == "footballprediction"
+    assert logger is not None
+    assert isinstance(logger, logging.Logger)
+    assert logger.name == "footballprediction"
 
     def test_global_instances_usability(self):
         """测试全局实例的可用性"""
         # 测试全局配置可以使用
         config.set("test_global", "test_value")
-        assert config.get("test_global") == "test_value"
+    assert config.get("test_global") == "test_value"
 
         # 测试全局日志器可以使用
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "warning")
-        assert hasattr(logger, "debug")
+    assert hasattr(logger, "info")
+    assert hasattr(logger, "error")
+    assert hasattr(logger, "warning")
+    assert hasattr(logger, "debug")
 
 
 class TestConfigIntegration:
@@ -260,14 +260,14 @@ class TestConfigIntegration:
                 test_config.save()
 
                 # 验证文件被创建
-                assert temp_config_file.exists()
+    assert temp_config_file.exists()
 
                 # 验证内容正确
                 with open(temp_config_file, "r", encoding="utf-8") as f:
                     saved_data = json.load(f)
 
-                assert saved_data["user_name"] == "测试用户"
-                assert saved_data["preferences"]["language"] == "zh"
+    assert saved_data["user_name"] == "测试用户"
+    assert saved_data["preferences"]["language"] == "zh"
 
     def test_config_error_handling_workflow(self):
         """测试配置错误处理工作流程"""
@@ -289,8 +289,8 @@ class TestConfigIntegration:
 
                 # 应该记录警告并使用空配置
                 mock_warning.assert_called_once()
-                assert test_config._config == {}
+    assert test_config._config == {}
 
                 # 应该仍然可以正常工作
                 test_config.set("recovery_test", "success")
-                assert test_config.get("recovery_test") == "success"
+    assert test_config.get("recovery_test") == "success"

@@ -67,7 +67,7 @@ class TestQualityMonitorBatchOmega001:
     def test_quality_monitor_initialization(self, monitor):
         """测试 QualityMonitor 初始化"""
         # 检查新鲜度阈值配置
-        assert monitor.freshness_thresholds == {
+    assert monitor.freshness_thresholds == {
             "matches": 24,
             "odds": 1,
             "predictions": 2,
@@ -76,7 +76,7 @@ class TestQualityMonitorBatchOmega001:
         }
 
         # 检查关键字段定义
-        assert monitor.critical_fields == {
+    assert monitor.critical_fields == {
             "matches": ["home_team_id", "away_team_id", "league_id", "match_time"],
             "odds": ["match_id", "bookmaker", "home_odds", "draw_odds", "away_odds"],
             "predictions": ["match_id", "model_name", "home_win_probability"],
@@ -97,12 +97,12 @@ class TestQualityMonitorBatchOmega001:
             threshold_hours=24.0
         )
 
-        assert result.table_name == "matches"
-        assert result.last_update_time == last_update
-        assert result.records_count == 1000
-        assert result.freshness_hours == 1.0
-        assert result.is_fresh is True
-        assert result.threshold_hours == 24.0
+    assert result.table_name == "matches"
+    assert result.last_update_time == last_update
+    assert result.records_count == 1000
+    assert result.freshness_hours == 1.0
+    assert result.is_fresh is True
+    assert result.threshold_hours == 24.0
 
     def test_data_freshness_result_to_dict(self):
         """测试 DataFreshnessResult 转换为字典"""
@@ -119,11 +119,11 @@ class TestQualityMonitorBatchOmega001:
         )
 
         result_dict = result.to_dict()
-        assert result_dict["table_name"] == "matches"
-        assert result_dict["records_count"] == 1000
-        assert result_dict["freshness_hours"] == 1.0
-        assert result_dict["is_fresh"] is True
-        assert result_dict["threshold_hours"] == 24.0
+    assert result_dict["table_name"] == "matches"
+    assert result_dict["records_count"] == 1000
+    assert result_dict["freshness_hours"] == 1.0
+    assert result_dict["is_fresh"] is True
+    assert result_dict["threshold_hours"] == 24.0
 
     def test_data_freshness_result_to_dict_none_time(self):
         """测试 DataFreshnessResult 转换为字典 (None 时间)"""
@@ -139,7 +139,7 @@ class TestQualityMonitorBatchOmega001:
         )
 
         result_dict = result.to_dict()
-        assert result_dict["last_update_time"] is None
+    assert result_dict["last_update_time"] is None
 
     def test_data_completeness_result_initialization(self):
         """测试 DataCompletenessResult 初始化"""
@@ -154,11 +154,11 @@ class TestQualityMonitorBatchOmega001:
             completeness_score=0.92
         )
 
-        assert result.table_name == "matches"
-        assert result.total_records == 1000
-        assert result.missing_critical_fields == missing_fields
-        assert result.missing_rate == 0.08
-        assert result.completeness_score == 0.92
+    assert result.table_name == "matches"
+    assert result.total_records == 1000
+    assert result.missing_critical_fields == missing_fields
+    assert result.missing_rate == 0.08
+    assert result.completeness_score == 0.92
 
     def test_data_completeness_result_to_dict(self):
         """测试 DataCompletenessResult 转换为字典"""
@@ -174,11 +174,11 @@ class TestQualityMonitorBatchOmega001:
         )
 
         result_dict = result.to_dict()
-        assert result_dict["table_name"] == "matches"
-        assert result_dict["total_records"] == 1000
-        assert result_dict["missing_critical_fields"] == missing_fields
-        assert result_dict["missing_rate"] == 0.08
-        assert result_dict["completeness_score"] == 0.92
+    assert result_dict["table_name"] == "matches"
+    assert result_dict["total_records"] == 1000
+    assert result_dict["missing_critical_fields"] == missing_fields
+    assert result_dict["missing_rate"] == 0.08
+    assert result_dict["completeness_score"] == 0.92
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_matches(self, monitor):
@@ -205,11 +205,11 @@ class TestQualityMonitorBatchOmega001:
 
             result = await monitor.check_data_freshness(["matches"])
 
-            assert len(result) == 1
-            assert "matches" in result
-            assert result["matches"].table_name == "matches"
-            assert result["matches"].records_count == 1000
-            assert result["matches"].is_fresh is True
+    assert len(result) == 1
+    assert "matches" in result
+    assert result["matches"].table_name == "matches"
+    assert result["matches"].records_count == 1000
+    assert result["matches"].is_fresh is True
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_no_tables(self, monitor):
@@ -222,7 +222,7 @@ class TestQualityMonitorBatchOmega001:
             mock_get_session.return_value.__aexit__.return_value = None
 
             result = await monitor.check_data_freshness([])
-            assert len(result) == 0
+    assert len(result) == 0
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_old_data(self, monitor):
@@ -249,10 +249,10 @@ class TestQualityMonitorBatchOmega001:
 
             result = await monitor.check_data_freshness(["matches"])
 
-            assert len(result) == 1
-            assert "matches" in result
-            assert result["matches"].table_name == "matches"
-            assert result["matches"].is_fresh is False
+    assert len(result) == 1
+    assert "matches" in result
+    assert result["matches"].table_name == "matches"
+    assert result["matches"].is_fresh is False
 
     @pytest.mark.asyncio
     async def test_check_data_completeness(self, monitor):
@@ -278,11 +278,11 @@ class TestQualityMonitorBatchOmega001:
 
             result = await monitor.check_data_completeness(["matches"])
 
-            assert len(result) == 1
-            assert "matches" in result
-            assert result["matches"].table_name == "matches"
-            assert result["matches"].total_records == 1000
-            assert result["matches"].completeness_score > 0.95
+    assert len(result) == 1
+    assert "matches" in result
+    assert result["matches"].table_name == "matches"
+    assert result["matches"].total_records == 1000
+    assert result["matches"].completeness_score > 0.95
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_no_tables(self, monitor):
@@ -295,7 +295,7 @@ class TestQualityMonitorBatchOmega001:
             mock_get_session.return_value.__aexit__.return_value = None
 
             result = await monitor.check_data_completeness([])
-            assert len(result) == 0
+    assert len(result) == 0
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score(self, monitor):
@@ -318,8 +318,8 @@ class TestQualityMonitorBatchOmega001:
             score = await monitor.calculate_overall_quality_score()
 
             # 分数应该在0-1之间
-            assert isinstance(score, dict)
-            assert 0 <= score.get("overall_score", 0) <= 1
+    assert isinstance(score, dict)
+    assert 0 <= score.get("overall_score", 0) <= 1
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_empty_results(self, monitor):
@@ -330,7 +330,7 @@ class TestQualityMonitorBatchOmega001:
             score = await monitor.calculate_overall_quality_score()
 
             # 空结果应该返回合理的默认值
-            assert isinstance(score, dict)
+    assert isinstance(score, dict)
 
     def test_freshness_hours_calculation(self):
         """测试新鲜度小时数计算"""
@@ -348,7 +348,7 @@ class TestQualityMonitorBatchOmega001:
             is_fresh=True,
             threshold_hours=24.0
         )
-        assert result1.freshness_hours == 1.0
+    assert result1.freshness_hours == 1.0
 
         # 30分钟前 (0.5小时)
         result2 = DataFreshnessResult(
@@ -359,7 +359,7 @@ class TestQualityMonitorBatchOmega001:
             is_fresh=True,
             threshold_hours=24.0
         )
-        assert result2.freshness_hours == 0.5
+    assert result2.freshness_hours == 0.5
 
     def test_missing_rate_calculation(self):
         """测试缺失率计算"""
@@ -373,8 +373,8 @@ class TestQualityMonitorBatchOmega001:
             missing_rate=0.08,
             completeness_score=0.92
         )
-        assert result1.missing_rate == 0.08
-        assert result1.completeness_score == 0.92
+    assert result1.missing_rate == 0.08
+    assert result1.completeness_score == 0.92
 
         # 100%缺失率 (极端情况)
         result2 = DataCompletenessResult(
@@ -384,8 +384,8 @@ class TestQualityMonitorBatchOmega001:
             missing_rate=1.0,
             completeness_score=0.0
         )
-        assert result2.missing_rate == 1.0
-        assert result2.completeness_score == 0.0
+    assert result2.missing_rate == 1.0
+    assert result2.completeness_score == 0.0
 
     def test_edge_cases(self, monitor):
         """测试边界情况"""
@@ -394,7 +394,7 @@ class TestQualityMonitorBatchOmega001:
         monitor.critical_fields = {}
 
         # 应该不会引发错误，只是没有字段可以检查
-        assert monitor.critical_fields == {}
+    assert monitor.critical_fields == {}
 
         # 恢复原始配置
         monitor.critical_fields = original_critical_fields
@@ -412,7 +412,7 @@ class TestQualityMonitorBatchOmega001:
             is_fresh=True,
             threshold_hours=24.0
         )
-        assert result1.records_count == 1000000
+    assert result1.records_count == 1000000
 
         # 大缺失字段数
         result2 = DataCompletenessResult(
@@ -422,8 +422,8 @@ class TestQualityMonitorBatchOmega001:
             missing_rate=0.1,
             completeness_score=0.9
         )
-        assert result2.total_records == 1000000
-        assert result2.missing_critical_fields["big_field"] == 100000
+    assert result2.total_records == 1000000
+    assert result2.missing_critical_fields["big_field"] == 100000
 
     @pytest.mark.asyncio
     async def test_database_error_handling(self, monitor):
@@ -442,7 +442,7 @@ class TestQualityMonitorBatchOmega001:
             try:
                 result = await monitor.check_data_completeness(["matches"])
                 # 在错误情况下应该返回空结果或部分结果
-                assert isinstance(result, dict)
+    assert isinstance(result, dict)
             except Exception:
                 # 或者抛出适当的异常
                 pass
@@ -451,11 +451,11 @@ class TestQualityMonitorBatchOmega001:
         """测试配置验证"""
         # 验证新鲜度阈值都是正数
         for table_name, threshold in monitor.freshness_thresholds.items():
-            assert threshold > 0, f"Freshness threshold for {table_name} should be positive"
+    assert threshold > 0, f"Freshness threshold for {table_name} should be positive"
 
         # 验证每个表都有至少一个关键字段
         for table_name, fields in monitor.critical_fields.items():
-            assert len(fields) > 0, f"Table {table_name} should have at least one critical field"
+    assert len(fields) > 0, f"Table {table_name} should have at least one critical field"
 
     def test_threshold_boundary_conditions(self):
         """测试阈值边界条件"""
@@ -476,8 +476,8 @@ class TestQualityMonitorBatchOmega001:
             threshold_hours=threshold_hours
         )
 
-        assert result.freshness_hours == threshold_hours
-        assert result.is_fresh is True
+    assert result.freshness_hours == threshold_hours
+    assert result.is_fresh is True
 
     @pytest.mark.asyncio
     async def test_concurrent_access(self, monitor):
@@ -511,10 +511,10 @@ class TestQualityMonitorBatchOmega001:
             # 应该能够处理并发调用
             try:
                 results = await asyncio.gather(*tasks, return_exceptions=True)
-                assert len(results) == 5
+    assert len(results) == 5
                 for result in results:
                     if not isinstance(result, Exception):
-                        assert isinstance(result, dict)
+    assert isinstance(result, dict)
             except Exception:
                 # 并发可能失败，但不应该崩溃
                 pass

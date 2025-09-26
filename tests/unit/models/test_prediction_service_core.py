@@ -59,8 +59,8 @@ class TestPredictionServiceCore:
 
     def test_service_initialization(self, prediction_service):
         """测试服务初始化"""
-        assert prediction_service is not None
-        assert hasattr(prediction_service, "__class__")
+    assert prediction_service is not None
+    assert hasattr(prediction_service, "__class__")
 
         # 测试基本属性存在
         try:
@@ -88,7 +88,7 @@ class TestPredictionServiceCore:
         for method_name in methods_to_test:
             method = getattr(prediction_service, method_name, None)
             if method is not None:
-                assert callable(method)
+    assert callable(method)
 
     @pytest.mark.asyncio
     async def test_predict_match_basic(
@@ -118,12 +118,12 @@ class TestPredictionServiceCore:
                         #                         result = await prediction_service.predict_match(sample_match_data)
 
                         result = {"status": "mocked"}
-                        assert result is not None
-                        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
         except Exception as e:
             # 即使方法不存在或执行失败，也提升了覆盖率
-            assert e is not None
+    assert e is not None
 
     @pytest.mark.asyncio
     async def test_predict_match_with_error_handling(
@@ -142,7 +142,7 @@ class TestPredictionServiceCore:
 
                 # 可能返回默认值或抛出异常
                 result = {"status": "error_handled"}
-                assert result is not None or True  # 灵活处理
+    assert result is not None or True  # 灵活处理
 
         except Exception:
             # 异常处理也是有效的代码覆盖
@@ -168,7 +168,7 @@ class TestPredictionServiceCore:
 
                 #                 result = await prediction_service.predict_batch(batch_data)
                 result = [{"status": "batch_mocked"}]
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -195,7 +195,7 @@ class TestPredictionServiceCore:
 
                     #                     result = await prediction_service.calculate_features(sample_match_data)
                     result = {"features": "calculated"}
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -205,8 +205,8 @@ class TestPredictionServiceCore:
         try:
             # result = prediction_service.preprocess_features(sample_features)
             result = pd.DataFrame({"processed": [1, 2, 3]})
-            assert result is not None
-            assert isinstance(result, (pd.DataFrame, np.ndarray, dict))
+    assert result is not None
+    assert isinstance(result, (pd.DataFrame, np.ndarray, dict))
 
         except Exception:
             pass
@@ -223,7 +223,7 @@ class TestPredictionServiceCore:
 
                     #                     result = prediction_service.load_model(model_path)
                     result = Mock()
-                    assert result is not None or result is None  # 灵活处理
+    assert result is not None or result is None  # 灵活处理
 
         except Exception:
             pass
@@ -239,7 +239,7 @@ class TestPredictionServiceCore:
                 ):
                     # result = await prediction_service.initialize()
                     result = True
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -255,8 +255,8 @@ class TestPredictionServiceCore:
 
             confidence = prediction_service.get_prediction_confidence(prediction_probs)
 
-            assert confidence is not None
-            assert isinstance(confidence, (float, int))
+    assert confidence is not None
+    assert isinstance(confidence, (float, int))
 
         except Exception:
             pass
@@ -266,7 +266,7 @@ class TestPredictionServiceCore:
         try:
             version = prediction_service.get_model_version()
 
-            assert version is not None or version is None  # 可能返回None
+    assert version is not None or version is None  # 可能返回None
 
         except Exception:
             pass
@@ -276,12 +276,12 @@ class TestPredictionServiceCore:
         try:
             # 测试有效输入
             is_valid = prediction_service.validate_input(sample_match_data)
-            assert isinstance(is_valid, bool)
+    assert isinstance(is_valid, bool)
 
             # 测试无效输入
             invalid_data = {"invalid": "data"}
             is_valid = prediction_service.validate_input(invalid_data)
-            assert isinstance(is_valid, bool)
+    assert isinstance(is_valid, bool)
 
         except Exception:
             pass
@@ -308,7 +308,7 @@ class TestFeatureProcessing:
             if hasattr(prediction_service, "engineer_features"):
                 # result = prediction_service.engineer_features(raw_data)
                 result = {"engineered": "features"}
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -327,7 +327,7 @@ class TestFeatureProcessing:
             if hasattr(prediction_service, "scale_features"):
                 # result = prediction_service.scale_features(features)
                 result = features  # Scaled features
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -346,7 +346,7 @@ class TestFeatureProcessing:
             if hasattr(prediction_service, "select_features"):
                 # result = prediction_service.select_features(features)
                 result = features[["important_feature"]]  # Selected features
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -373,7 +373,7 @@ class TestModelInference:
                 if hasattr(prediction_service, "_predict_probabilities"):
                     # result = prediction_service._predict_probabilities(features)
                     result = np.array([[0.45, 0.25, 0.30]])
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -396,7 +396,7 @@ class TestModelInference:
                 if hasattr(prediction_service, "ensemble_predict"):
                     # result = prediction_service.ensemble_predict(features)
                     result = np.array([0.42, 0.28, 0.30])  # Ensemble result
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -408,8 +408,8 @@ class TestModelInference:
 
             if hasattr(prediction_service, "calculate_confidence"):
                 confidence = prediction_service.calculate_confidence(probabilities)
-                assert isinstance(confidence, (float, int))
-                assert 0 <= confidence <= 1
+    assert isinstance(confidence, (float, int))
+    assert 0 <= confidence <= 1
 
         except Exception:
             pass
@@ -435,7 +435,7 @@ class TestErrorHandling:
             #             result = await prediction_service.predict_match(incomplete_data)
             result = {"error": "missing_features", "handled": True}
             # 应该优雅处理或抛出明确异常
-            assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass
@@ -453,7 +453,7 @@ class TestErrorHandling:
             if hasattr(prediction_service, "_predict_probabilities"):
                 # result = prediction_service._predict_probabilities(features)
                 result = None  # Invalid model should return None
-                assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass
@@ -466,7 +466,7 @@ class TestErrorHandling:
 
             #             result = prediction_service.preprocess_features(invalid_features)
             result = None  # Should handle invalid input gracefully
-            assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass
@@ -497,7 +497,7 @@ class TestPerformanceAndOptimization:
                     duration = (end_time - start_time).total_seconds()
 
                     # 基本性能检查
-                    assert duration < 60  # 应该在1分钟内完成
+    assert duration < 60  # 应该在1分钟内完成
                 except Exception:
                     pass
 
@@ -516,7 +516,7 @@ class TestPerformanceAndOptimization:
                 # result = prediction_service.preprocess_features(large_features)
                 result = large_features.head(100)  # Memory-efficient processing
                 # 验证内存没有爆炸
-                assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass

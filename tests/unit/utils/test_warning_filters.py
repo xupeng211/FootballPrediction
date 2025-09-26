@@ -27,7 +27,7 @@ def test_setup_warning_filters_marshmallow_present():
             warnings.warn(
                 "Number field should not be instantiated.", MockMarshmallowWarning
             )
-            assert len(w) == 0
+    assert len(w) == 0
 
 
 def test_setup_warning_filters_marshmallow_absent():
@@ -39,7 +39,7 @@ def test_setup_warning_filters_marshmallow_absent():
             warnings.simplefilter("always")
             warning_filters.setup_warning_filters()
             warnings.warn("A Number field should not be instantiated.", UserWarning)
-            assert len(w) == 0
+    assert len(w) == 0
 
 
 def test_setup_third_party_warning_filters():
@@ -51,7 +51,7 @@ def test_setup_third_party_warning_filters():
         warning_filters._setup_third_party_warning_filters()
         warnings.warn("A great_expectations warning", DeprecationWarning)
         warnings.warn("A sqlalchemy warning", DeprecationWarning)
-        assert len(w) == 0
+    assert len(w) == 0
 
 
 def test_setup_test_warning_filters():
@@ -64,8 +64,8 @@ def test_setup_test_warning_filters():
         warnings.warn("Some deprecation warning", DeprecationWarning)
         warnings.warn("Some pending deprecation warning", PendingDeprecationWarning)
         warnings.warn("A user-facing warning", UserWarning)
-        assert len(w) == 1
-        assert issubclass(w[-1].category, UserWarning)
+    assert len(w) == 1
+    assert issubclass(w[-1].category, UserWarning)
 
 
 @patch("src.utils.warning_filters.setup_warning_filters")
@@ -94,4 +94,4 @@ def test_suppress_marshmallow_warnings_decorator():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             function_with_marshmallow_warning()
-            assert len(w) == 0
+    assert len(w) == 0

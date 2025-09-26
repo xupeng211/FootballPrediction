@@ -122,13 +122,13 @@ class TestDataProcessingService:
         print("🧪 测试数据处理服务初始化...")
 
         # 测试基本属性
-        assert hasattr(service, 'data_cleaner')
-        assert hasattr(service, 'missing_handler')
-        assert hasattr(service, 'data_lake')
-        assert hasattr(service, 'db_manager')
-        assert hasattr(service, 'cache_manager')
-        assert hasattr(service, 'name')
-        assert service.name == "DataProcessingService"
+    assert hasattr(service, 'data_cleaner')
+    assert hasattr(service, 'missing_handler')
+    assert hasattr(service, 'data_lake')
+    assert hasattr(service, 'db_manager')
+    assert hasattr(service, 'cache_manager')
+    assert hasattr(service, 'name')
+    assert service.name == "DataProcessingService"
 
         print("✅ 数据处理服务初始化测试通过")
 
@@ -152,12 +152,12 @@ class TestDataProcessingService:
 
             result = await service.initialize()
 
-            assert result is True
-            assert service.data_cleaner is not None
-            assert service.missing_handler is not None
-            assert service.data_lake is not None
-            assert service.db_manager is not None
-            assert service.cache_manager is not None
+    assert result is True
+    assert service.data_cleaner is not None
+    assert service.missing_handler is not None
+    assert service.data_lake is not None
+    assert service.db_manager is not None
+    assert service.cache_manager is not None
 
         print("✅ 服务初始化成功测试通过")
 
@@ -172,7 +172,7 @@ class TestDataProcessingService:
 
             result = await service.initialize()
 
-            assert result is False
+    assert result is False
 
         print("✅ 服务初始化失败测试通过")
 
@@ -196,11 +196,11 @@ class TestDataProcessingService:
             mock_db_close.assert_called_once()
             mock_cache_close.assert_called_once()
 
-            assert service.data_cleaner is None
-            assert service.missing_handler is None
-            assert service.data_lake is None
-            assert service.db_manager is None
-            assert service.cache_manager is None
+    assert service.data_cleaner is None
+    assert service.missing_handler is None
+    assert service.data_lake is None
+    assert service.db_manager is None
+    assert service.cache_manager is None
 
         print("✅ 服务正常关闭测试通过")
 
@@ -236,8 +236,8 @@ class TestDataProcessingService:
 
             result = await service.process_raw_match_data(raw_data)
 
-            assert result is not None
-            assert hasattr(result, 'empty')  # 应该是DataFrame
+    assert result is not None
+    assert hasattr(result, 'empty')  # 应该是DataFrame
             mock_process_single.assert_called()
 
         print("✅ 处理原始比赛数据 - 列表输入测试通过")
@@ -268,7 +268,7 @@ class TestDataProcessingService:
 
         result = await service.process_raw_match_data(raw_data)
 
-        assert result == mock_clean_data
+    assert result == mock_clean_data
 
         print("✅ 处理原始比赛数据 - 单个输入测试通过")
 
@@ -279,8 +279,8 @@ class TestDataProcessingService:
 
         result = await service.process_raw_match_data([])
 
-        assert result is not None
-        assert hasattr(result, 'empty')  # 应该是空的DataFrame
+    assert result is not None
+    assert hasattr(result, 'empty')  # 应该是空的DataFrame
 
         print("✅ 处理原始比赛数据 - 空列表输入测试通过")
 
@@ -296,7 +296,7 @@ class TestDataProcessingService:
 
         result = await service.process_raw_match_data(raw_data)
 
-        assert result is None
+    assert result is None
 
         print("✅ 处理原始比赛数据 - 清洗器未初始化测试通过")
 
@@ -326,7 +326,7 @@ class TestDataProcessingService:
 
         result = await service.process_raw_odds_data(raw_data)
 
-        assert result == mock_clean_data
+    assert result == mock_clean_data
 
         print("✅ 处理原始赔率数据测试通过")
 
@@ -352,7 +352,7 @@ class TestDataProcessingService:
 
         result = await service.process_features_data(raw_data)
 
-        assert result == mock_clean_data
+    assert result == mock_clean_data
 
         print("✅ 处理特征数据测试通过")
 
@@ -378,11 +378,11 @@ class TestDataProcessingService:
 
             result = await service.process_batch_matches(batch_data)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert 'processed_count' in result
-            assert 'failed_count' in result
-            assert result['processed_count'] == 2
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'processed_count' in result
+    assert 'failed_count' in result
+    assert result['processed_count'] == 2
 
         print("✅ 批量处理比赛数据测试通过")
 
@@ -400,10 +400,10 @@ class TestDataProcessingService:
 
         result = await service.validate_data_quality(mock_df)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert 'is_valid' in result
-        assert result['is_valid'] is True
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'is_valid' in result
+    assert result['is_valid'] is True
 
         print("✅ 数据质量验证 - 成功场景测试通过")
 
@@ -420,10 +420,10 @@ class TestDataProcessingService:
 
         result = await service.validate_data_quality(mock_df)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert 'is_valid' in result
-        assert result['is_valid'] is False
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'is_valid' in result
+    assert result['is_valid'] is False
 
         print("✅ 数据质量验证 - 失败场景测试通过")
 
@@ -440,7 +440,7 @@ class TestDataProcessingService:
 
             result = await service.process_text(test_text)
 
-            assert result == expected_result
+    assert result == expected_result
 
         print("✅ 文本处理测试通过")
 
@@ -457,8 +457,8 @@ class TestDataProcessingService:
 
             result = await service.process_batch(test_data)
 
-            assert result == expected_results
-            assert len(result) == 3
+    assert result == expected_results
+    assert len(result) == 3
 
         print("✅ 批量处理测试通过")
 
@@ -480,14 +480,14 @@ class TestDataProcessingService:
 
             result = await service.process_bronze_to_silver(batch_size=50)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert 'matches_processed' in result
-            assert 'odds_processed' in result
-            assert 'scores_processed' in result
-            assert result['matches_processed'] == 10
-            assert result['odds_processed'] == 5
-            assert result['scores_processed'] == 8
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'matches_processed' in result
+    assert 'odds_processed' in result
+    assert 'scores_processed' in result
+    assert result['matches_processed'] == 10
+    assert result['odds_processed'] == 5
+    assert result['scores_processed'] == 8
 
         print("✅ 青铜层到银层数据处理测试通过")
 
@@ -506,11 +506,11 @@ class TestDataProcessingService:
 
         result = await service.get_bronze_layer_status()
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert 'matches_count' in result
-        assert 'odds_count' in result
-        assert 'scores_count' in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'matches_count' in result
+    assert 'odds_count' in result
+    assert 'scores_count' in result
 
         print("✅ 获取青铜层状态测试通过")
 
@@ -525,7 +525,7 @@ class TestDataProcessingService:
 
         result = await service.handle_missing_scores(mock_df)
 
-        assert result is not None
+    assert result is not None
 
         print("✅ 处理缺失比分数据测试通过")
 
@@ -541,8 +541,8 @@ class TestDataProcessingService:
 
         result = await service.detect_anomalies(mock_df)
 
-        assert result is not None
-        assert isinstance(result, list)
+    assert result is not None
+    assert isinstance(result, list)
 
         print("✅ 异常检测测试通过")
 
@@ -563,10 +563,10 @@ class TestDataProcessingService:
 
         result = await service.store_processed_data(processed_data, "matches")
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert 'stored' in result
-        assert result['stored'] is True
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'stored' in result
+    assert result['stored'] is True
 
         print("✅ 存储处理后的数据测试通过")
 
@@ -587,10 +587,10 @@ class TestDataProcessingService:
 
         result = await service.cache_processing_results(data, cache_key)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert 'cached' in result
-        assert result['cached'] is True
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'cached' in result
+    assert result['cached'] is True
 
         print("✅ 缓存处理结果测试通过")
 
@@ -608,13 +608,13 @@ class TestDataProcessingService:
 
         result = await service.get_cached_results("match_123_processed")
 
-        assert result == cached_data
+    assert result == cached_data
 
         # Mock缓存未命中
         service.cache_manager.aget.return_value = None
         result = await service.get_cached_results("match_456_processed")
 
-        assert result is None
+    assert result is None
 
         print("✅ 获取缓存结果测试通过")
 
@@ -640,10 +640,10 @@ class TestDataProcessingService:
 
             result = await service.batch_process_datasets(datasets)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert 'total_processed' in result
-            assert 'success_count' in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'total_processed' in result
+    assert 'success_count' in result
 
         print("✅ 批量数据集处理测试通过")
 
@@ -660,8 +660,8 @@ class TestDataProcessingService:
 
         result = await service.process_with_retry(mock_process_func, test_data, max_retries=3)
 
-        assert result is not None
-        assert result['processed'] is True
+    assert result is not None
+    assert result['processed'] is True
 
         print("✅ 带重试的处理 - 成功场景测试通过")
 
@@ -678,9 +678,9 @@ class TestDataProcessingService:
 
         result = await service.process_with_retry(mock_process_func, test_data, max_retries=3)
 
-        assert result is not None
-        assert 'error' in result
-        assert result['retries'] == 3
+    assert result is not None
+    assert 'error' in result
+    assert result['retries'] == 3
 
         print("✅ 带重试的处理 - 失败场景测试通过")
 
@@ -695,10 +695,10 @@ class TestDataProcessingService:
 
             result = await service.collect_performance_metrics()
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert 'processing_time' in result
-            assert result['processing_time'] == 1.0
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'processing_time' in result
+    assert result['processing_time'] == 1.0
 
         print("✅ 收集性能指标测试通过")
 
@@ -720,10 +720,10 @@ class TestDataProcessingService:
 
             result = await service.process_large_dataset(large_dataset)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert 'total_processed' in result
-            assert result['total_processed'] == 1000
+    assert result is not None
+    assert isinstance(result, dict)
+    assert 'total_processed' in result
+    assert result['total_processed'] == 1000
 
         print("✅ 大数据集处理测试通过")
 
@@ -742,9 +742,9 @@ class TestDataProcessingService:
 
         result = await service.cleanup()
 
-        assert result is not None
-        assert isinstance(result, bool)
-        assert result is True
+    assert result is not None
+    assert isinstance(result, bool)
+    assert result is True
 
         print("✅ 清理操作测试通过")
 
@@ -764,7 +764,7 @@ class TestDataProcessingService:
             for error_case in range(3):
                 service = DataProcessingService()  # 重新创建实例
                 result = await service.initialize()
-                assert result is False
+    assert result is False
 
         print("✅ 初始化错误处理测试通过")
 
@@ -791,10 +791,10 @@ class TestDataProcessingService:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        assert len(results) == 5
+    assert len(results) == 5
         for result in results:
-            assert not isinstance(result, Exception)
-            assert result is not None
+    assert not isinstance(result, Exception)
+    assert result is not None
 
         print("✅ 并发处理测试通过")
 

@@ -47,23 +47,23 @@ class TestRetryConfig:
             retryable_exceptions=(ValueError, ConnectionError),
         )
 
-        assert config.max_attempts == 5
-        assert config.base_delay == 1.0
-        assert config.max_delay == 30.0
-        assert config.exponential_base == 2.0
-        assert config.jitter is True
-        assert config.retryable_exceptions == (ValueError, ConnectionError)
+    assert config.max_attempts == 5
+    assert config.base_delay == 1.0
+    assert config.max_delay == 30.0
+    assert config.exponential_base == 2.0
+    assert config.jitter is True
+    assert config.retryable_exceptions == (ValueError, ConnectionError)
 
     def test_retry_config_default_values(self):
         """测试重试配置默认值 / Test retry configuration default values"""
         config = RetryConfig()
 
-        assert config.max_attempts == 3
-        assert config.base_delay == 1.0
-        assert config.max_delay == 60.0
-        assert config.exponential_base == 2.0
-        assert config.jitter is True
-        assert config.retryable_exceptions == (Exception,)
+    assert config.max_attempts == 3
+    assert config.base_delay == 1.0
+    assert config.max_delay == 60.0
+    assert config.exponential_base == 2.0
+    assert config.jitter is True
+    assert config.retryable_exceptions == (Exception,)
 
 
 class TestRetryDecorator:
@@ -84,8 +84,8 @@ class TestRetryDecorator:
 
         result = await successful_function()
 
-        assert result == "success"
-        assert call_count == 1
+    assert result == "success"
+    assert call_count == 1
 
     @pytest.mark.asyncio
     async def test_retry_decorator_async_retry_success(self):
@@ -104,8 +104,8 @@ class TestRetryDecorator:
 
         result = await sometimes_failing_function()
 
-        assert result == "success"
-        assert call_count == 2
+    assert result == "success"
+    assert call_count == 2
 
     @pytest.mark.asyncio
     async def test_retry_decorator_async_max_attempts_reached(self):
@@ -123,7 +123,7 @@ class TestRetryDecorator:
         with pytest.raises(ValueError, match="Permanent failure"):
             await always_failing_function()
 
-        assert call_count == 3
+    assert call_count == 3
 
     @pytest.mark.asyncio
     async def test_retry_decorator_async_with_callback(self):
@@ -142,17 +142,17 @@ class TestRetryDecorator:
         with pytest.raises(ValueError, match="Failure"):
             await failing_function()
 
-        assert call_count == 3
-        assert retry_callback.call_count == 2  # Called after attempt 1 and 2 failures
+    assert call_count == 3
+    assert retry_callback.call_count == 2  # Called after attempt 1 and 2 failures
         retry_callback.assert_any_call(1, ANY)
         retry_callback.assert_any_call(2, ANY)
         seen_attempts = set()
         for call in retry_callback.call_args_list:
             attempt, error = call.args
-            assert attempt in (1, 2)
+    assert attempt in (1, 2)
             seen_attempts.add(attempt)
-            assert isinstance(error, ValueError)
-        assert seen_attempts == {1, 2}
+    assert isinstance(error, ValueError)
+    assert seen_attempts == {1, 2}
 
     def test_retry_decorator_sync_success(self):
         """测试同步函数重试装饰器成功 / Test sync function retry decorator success"""
@@ -168,8 +168,8 @@ class TestRetryDecorator:
 
         result = successful_function()
 
-        assert result == "success"
-        assert call_count == 1
+    assert result == "success"
+    assert call_count == 1
 
     def test_retry_decorator_sync_retry_success(self):
         """测试同步函数重试装饰器重试后成功 / Test sync function retry decorator retry then success"""
@@ -187,8 +187,8 @@ class TestRetryDecorator:
 
         result = sometimes_failing_function()
 
-        assert result == "success"
-        assert call_count == 2
+    assert result == "success"
+    assert call_count == 2
 
     def test_retry_decorator_sync_max_attempts_reached(self):
         """测试同步函数重试装饰器达到最大尝试次数 / Test sync function retry decorator max attempts reached"""
@@ -205,7 +205,7 @@ class TestRetryDecorator:
         with pytest.raises(ValueError, match="Permanent failure"):
             always_failing_function()
 
-        assert call_count == 3
+    assert call_count == 3
 
 
 class TestCircuitBreaker:
@@ -221,8 +221,8 @@ class TestCircuitBreaker:
     @pytest.mark.asyncio
     async def test_circuit_breaker_initial_state(self, circuit_breaker):
         """测试熔断器初始状态 / Test circuit breaker initial state"""
-        assert circuit_breaker.state == CircuitState.CLOSED
-        assert circuit_breaker.failure_count == 0
+    assert circuit_breaker.state == CircuitState.CLOSED
+    assert circuit_breaker.failure_count == 0
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_successful_call(self, circuit_breaker):
@@ -233,9 +233,9 @@ class TestCircuitBreaker:
 
         result = await circuit_breaker.call(successful_function)
 
-        assert result == "success"
-        assert circuit_breaker.state == CircuitState.CLOSED
-        assert circuit_breaker.failure_count == 0
+    assert result == "success"
+    assert circuit_breaker.state == CircuitState.CLOSED
+    assert circuit_breaker.failure_count == 0
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_failure_count(self, circuit_breaker):
@@ -249,8 +249,8 @@ class TestCircuitBreaker:
             with pytest.raises(ValueError):
                 await circuit_breaker.call(failing_function)
 
-        assert circuit_breaker.failure_count == 2
-        assert circuit_breaker.state == CircuitState.CLOSED
+    assert circuit_breaker.failure_count == 2
+    assert circuit_breaker.state == CircuitState.CLOSED
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_open_state(self, circuit_breaker):
@@ -264,7 +264,7 @@ class TestCircuitBreaker:
             with pytest.raises(ValueError):
                 await circuit_breaker.call(failing_function)
 
-        assert circuit_breaker.state == CircuitState.OPEN
+    assert circuit_breaker.state == CircuitState.OPEN
 
         # 尝试在打开状态下调用应该失败
         with pytest.raises(Exception, match="Circuit breaker is OPEN"):
@@ -282,10 +282,10 @@ class TestCircuitBreaker:
             with pytest.raises(ValueError):
                 await circuit_breaker.call(failing_function)
 
-        assert circuit_breaker.state == CircuitState.OPEN
+    assert circuit_breaker.state == CircuitState.OPEN
 
         # 直接快进恢复时间，避免真实等待
-        assert circuit_breaker.last_failure_time is not None
+    assert circuit_breaker.last_failure_time is not None
         circuit_breaker.last_failure_time -= circuit_breaker.recovery_timeout + 0.01
 
         # 在半开状态下，应该允许一次调用
@@ -293,7 +293,7 @@ class TestCircuitBreaker:
             await circuit_breaker.call(failing_function)
 
         # 失败后应该回到打开状态
-        assert circuit_breaker.state == CircuitState.OPEN
+    assert circuit_breaker.state == CircuitState.OPEN
 
     @pytest.mark.asyncio
     async def test_circuit_breaker_recovery(self, circuit_breaker):
@@ -310,15 +310,15 @@ class TestCircuitBreaker:
             with pytest.raises(ValueError):
                 await circuit_breaker.call(failing_function)
 
-        assert circuit_breaker.state == CircuitState.OPEN
+    assert circuit_breaker.state == CircuitState.OPEN
 
         # 直接快进恢复时间，避免真实等待
-        assert circuit_breaker.last_failure_time is not None
+    assert circuit_breaker.last_failure_time is not None
         circuit_breaker.last_failure_time -= circuit_breaker.recovery_timeout + 0.01
 
         # 在半开状态下成功调用应该恢复熔断器
         result = await circuit_breaker.call(successful_function)
 
-        assert result == "success"
-        assert circuit_breaker.state == CircuitState.CLOSED
-        assert circuit_breaker.failure_count == 0
+    assert result == "success"
+    assert circuit_breaker.state == CircuitState.CLOSED
+    assert circuit_breaker.failure_count == 0

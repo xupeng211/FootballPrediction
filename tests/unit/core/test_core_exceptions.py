@@ -24,60 +24,60 @@ class TestExceptionHierarchy:
     def test_football_prediction_error_base(self):
         """测试基础异常类"""
         error = FootballPredictionError("Test message")
-        assert str(error) == "Test message"
-        assert isinstance(error, Exception)
+    assert str(error) == "Test message"
+    assert isinstance(error, Exception)
 
     def test_config_error_inherits_from_base(self):
         """测试ConfigError继承自基础异常"""
         error = ConfigError("Config error")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Config error"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Config error"
 
     def test_data_error_inherits_from_base(self):
         """测试DataError继承自基础异常"""
         error = DataError("Data error")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Data error"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Data error"
 
     def test_model_error_inherits_from_base(self):
         """测试ModelError继承自基础异常"""
         error = ModelError("Model error")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Model error"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Model error"
 
     def test_prediction_error_inherits_from_base(self):
         """测试PredictionError继承自基础异常"""
         error = PredictionError("Prediction error")
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Prediction error"
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Prediction error"
 
     def test_cache_error_inherits_from_data_error(self):
         """测试CacheError继承自DataError"""
         error = CacheError("Cache error")
-        assert isinstance(error, DataError)
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Cache error"
+    assert isinstance(error, DataError)
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Cache error"
 
     def test_database_error_inherits_from_data_error(self):
         """测试DatabaseError继承自DataError"""
         error = DatabaseError("Database error")
-        assert isinstance(error, DataError)
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Database error"
+    assert isinstance(error, DataError)
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Database error"
 
     def test_consistency_error_inherits_from_data_error(self):
         """测试ConsistencyError继承自DataError"""
         error = ConsistencyError("Consistency error")
-        assert isinstance(error, DataError)
-        assert isinstance(error, FootballPredictionError)
-        assert isinstance(error, Exception)
-        assert str(error) == "Consistency error"
+    assert isinstance(error, DataError)
+    assert isinstance(error, FootballPredictionError)
+    assert isinstance(error, Exception)
+    assert str(error) == "Consistency error"
 
 
 class TestExceptionUsage:
@@ -88,7 +88,7 @@ class TestExceptionUsage:
         with pytest.raises(ConfigError) as exc_info:
             raise ConfigError("配置文件无效")
 
-        assert str(exc_info.value) == "配置文件无效"
+    assert str(exc_info.value) == "配置文件无效"
 
     def test_catch_base_exception(self):
         """测试通过基类捕获异常"""
@@ -118,8 +118,8 @@ class TestExceptionUsage:
         }
         error = ModelError(f"模型训练失败: {error_details}")
 
-        assert "模型训练失败" in str(error)
-        assert "500" in str(error)
+    assert "模型训练失败" in str(error)
+    assert "500" in str(error)
 
     def test_exception_chaining(self):
         """测试异常链"""
@@ -129,6 +129,6 @@ class TestExceptionUsage:
             except ValueError as e:
                 raise PredictionError("预测失败") from e
         except PredictionError as e:
-            assert e.__cause__ is not None
-            assert isinstance(e.__cause__, ValueError)
-            assert str(e.__cause__) == "原始错误"
+    assert e.__cause__ is not None
+    assert isinstance(e.__cause__, ValueError)
+    assert str(e.__cause__) == "原始错误"

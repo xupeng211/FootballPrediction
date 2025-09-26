@@ -67,20 +67,20 @@ class TestQualityMonitorComprehensive:
 
     def test_data_freshness_result_initialization(self, sample_freshness_result):
         """测试 DataFreshnessResult 初始化"""
-        assert sample_freshness_result.table_name == "matches"
-        assert sample_freshness_result.records_count == 1000
-        assert sample_freshness_result.is_fresh is True
-        assert sample_freshness_result.threshold_hours == 24.0
+    assert sample_freshness_result.table_name == "matches"
+    assert sample_freshness_result.records_count == 1000
+    assert sample_freshness_result.is_fresh is True
+    assert sample_freshness_result.threshold_hours == 24.0
 
     def test_data_freshness_result_to_dict(self, sample_freshness_result):
         """测试 DataFreshnessResult 转字典"""
         result_dict = sample_freshness_result.to_dict()
 
-        assert isinstance(result_dict, dict)
-        assert result_dict["table_name"] == "matches"
-        assert result_dict["records_count"] == 1000
-        assert result_dict["is_fresh"] is True
-        assert "last_update_time" in result_dict
+    assert isinstance(result_dict, dict)
+    assert result_dict["table_name"] == "matches"
+    assert result_dict["records_count"] == 1000
+    assert result_dict["is_fresh"] is True
+    assert "last_update_time" in result_dict
 
     def test_data_freshness_result_with_none_time(self):
         """测试 DataFreshnessResult 处理 None 时间"""
@@ -96,26 +96,26 @@ class TestQualityMonitorComprehensive:
         )
 
         result_dict = result.to_dict()
-        assert result_dict["last_update_time"] is None
+    assert result_dict["last_update_time"] is None
 
     # === DataCompletenessResult 测试 ===
 
     def test_data_completeness_result_initialization(self, sample_completeness_result):
         """测试 DataCompletenessResult 初始化"""
-        assert sample_completeness_result.table_name == "matches"
-        assert sample_completeness_result.total_records == 1000
-        assert sample_completeness_result.completeness_rate == 0.95
-        assert sample_completeness_result.is_complete is True
+    assert sample_completeness_result.table_name == "matches"
+    assert sample_completeness_result.total_records == 1000
+    assert sample_completeness_result.completeness_rate == 0.95
+    assert sample_completeness_result.is_complete is True
 
     def test_data_completeness_result_to_dict(self, sample_completeness_result):
         """测试 DataCompletenessResult 转字典"""
         result_dict = sample_completeness_result.to_dict()
 
-        assert isinstance(result_dict, dict)
-        assert result_dict["table_name"] == "matches"
-        assert result_dict["total_records"] == 1000
-        assert result_dict["completeness_rate"] == 0.95
-        assert "home_score" in result_dict["missing_fields"]
+    assert isinstance(result_dict, dict)
+    assert result_dict["table_name"] == "matches"
+    assert result_dict["total_records"] == 1000
+    assert result_dict["completeness_rate"] == 0.95
+    assert "home_score" in result_dict["missing_fields"]
 
     # === QualityMonitor 主要方法测试 ===
 
@@ -130,11 +130,11 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_freshness(mock_session)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "tables" in result
-        assert "summary" in result
-        assert len(result["tables"]) >= 4  # matches, odds, predictions, teams
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "tables" in result
+    assert "summary" in result
+    assert len(result["tables"]) >= 4  # matches, odds, predictions, teams
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_with_old_data(self, monitor, mock_session):
@@ -148,11 +148,11 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_freshness(mock_session)
 
-        assert result is not None
+    assert result is not None
         # 检查是否有表被标记为不新鲜
         tables = result["tables"]
         has_stale_table = any(not table["is_fresh"] for table in tables)
-        assert has_stale_table
+    assert has_stale_table
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_with_no_data(self, monitor, mock_session):
@@ -165,11 +165,11 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_freshness(mock_session)
 
-        assert result is not None
+    assert result is not None
         # 检查无数据表的处理
         tables = result["tables"]
         has_no_data_table = any(table["records_count"] == 0 for table in tables)
-        assert has_no_data_table
+    assert has_no_data_table
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_basic(self, monitor, mock_session):
@@ -181,11 +181,11 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_completeness(mock_session)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "tables" in result
-        assert "summary" in result
-        assert "overall_completeness_rate" in result["summary"]
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "tables" in result
+    assert "summary" in result
+    assert "overall_completeness_rate" in result["summary"]
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_with_missing_data(self, monitor, mock_session):
@@ -197,9 +197,9 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_completeness(mock_session)
 
-        assert result is not None
+    assert result is not None
         summary = result["summary"]
-        assert summary["overall_completeness_rate"] < 0.9  # 80% 完整性
+    assert summary["overall_completeness_rate"] < 0.9  # 80% 完整性
 
     @pytest.mark.asyncio
     async def test_check_data_consistency_basic(self, monitor, mock_session):
@@ -211,12 +211,12 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_consistency(mock_session)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "foreign_key_issues" in result
-        assert "odds_consistency_issues" in result
-        assert "match_status_consistency_issues" in result
-        assert "overall_consistency_score" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "foreign_key_issues" in result
+    assert "odds_consistency_issues" in result
+    assert "match_status_consistency_issues" in result
+    assert "overall_consistency_score" in result
 
     @pytest.mark.asyncio
     async def test_check_data_consistency_with_issues(self, monitor, mock_session):
@@ -228,9 +228,9 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_consistency(mock_session)
 
-        assert result is not None
-        assert result["overall_consistency_score"] < 1.0
-        assert result["foreign_key_issues"] > 0
+    assert result is not None
+    assert result["overall_consistency_score"] < 1.0
+    assert result["foreign_key_issues"] > 0
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_basic(self, monitor, mock_session):
@@ -246,13 +246,13 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.calculate_overall_quality_score(mock_session)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "overall_score" in result
-        assert "quality_level" in result
-        assert "freshness_score" in result
-        assert "completeness_score" in result
-        assert "consistency_score" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "overall_score" in result
+    assert "quality_level" in result
+    assert "freshness_score" in result
+    assert "completeness_score" in result
+    assert "consistency_score" in result
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_with_poor_metrics(self, monitor, mock_session):
@@ -268,9 +268,9 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.calculate_overall_quality_score(mock_session)
 
-        assert result is not None
-        assert result["overall_score"] < 0.5
-        assert result["quality_level"] in ["Poor", "Fair"]
+    assert result is not None
+    assert result["overall_score"] < 0.5
+    assert result["quality_level"] in ["Poor", "Fair"]
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_basic(self, monitor, mock_session):
@@ -285,11 +285,11 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.get_quality_trends(7, mock_session)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "trends" in result
-        assert "summary" in result
-        assert len(result["trends"]) == 7
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "trends" in result
+    assert "summary" in result
+    assert len(result["trends"]) == 7
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_with_improvement(self, monitor, mock_session):
@@ -304,43 +304,43 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.get_quality_trends(7, mock_session)
 
-        assert result is not None
+    assert result is not None
         summary = result["summary"]
-        assert "trend_direction" in summary
-        assert summary["trend_direction"] == "improving"
+    assert "trend_direction" in summary
+    assert summary["trend_direction"] == "improving"
 
     # === 内部方法测试 ===
 
     def test_get_quality_level_excellent(self, monitor):
         """测试优秀质量等级"""
         level = monitor._get_quality_level(0.95)
-        assert level == "Excellent"
+    assert level == "Excellent"
 
     def test_get_quality_level_good(self, monitor):
         """测试良好质量等级"""
         level = monitor._get_quality_level(0.85)
-        assert level == "Good"
+    assert level == "Good"
 
     def test_get_quality_level_fair(self, monitor):
         """测试一般质量等级"""
         level = monitor._get_quality_level(0.70)
-        assert level == "Fair"
+    assert level == "Fair"
 
     def test_get_quality_level_poor(self, monitor):
         """测试较差质量等级"""
         level = monitor._get_quality_level(0.50)
-        assert level == "Poor"
+    assert level == "Poor"
 
     def test_get_quality_level_bad(self, monitor):
         """测试糟糕质量等级"""
         level = monitor._get_quality_level(0.20)
-        assert level == "Bad"
+    assert level == "Bad"
 
     def test_generate_quality_recommendations_excellent(self, monitor):
         """测试优秀质量的建议"""
         recommendations = monitor._generate_quality_recommendations(0.95, {})
-        assert isinstance(recommendations, list)
-        assert len(recommendations) >= 0
+    assert isinstance(recommendations, list)
+    assert len(recommendations) >= 0
 
     def test_generate_quality_recommendations_poor(self, monitor):
         """测试较差质量的建议"""
@@ -351,12 +351,12 @@ class TestQualityMonitorComprehensive:
         }
         recommendations = monitor._generate_quality_recommendations(0.4, metrics)
 
-        assert isinstance(recommendations, list)
-        assert len(recommendations) > 0
+    assert isinstance(recommendations, list)
+    assert len(recommendations) > 0
         # 检查是否包含具体建议
         has_completeness_rec = any("completeness" in rec.lower() for rec in recommendations)
         has_consistency_rec = any("consistency" in rec.lower() for rec in recommendations)
-        assert has_completeness_rec or has_consistency_rec
+    assert has_completeness_rec or has_consistency_rec
 
     # === 边界条件和异常处理测试 ===
 
@@ -367,8 +367,8 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_freshness(mock_session)
 
-        assert result is not None
-        assert "error" in result
+    assert result is not None
+    assert "error" in result
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_database_error(self, monitor, mock_session):
@@ -377,8 +377,8 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.check_data_completeness(mock_session)
 
-        assert result is not None
-        assert "error" in result
+    assert result is not None
+    assert "error" in result
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_error_handling(self, monitor, mock_session):
@@ -387,17 +387,17 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.calculate_overall_quality_score(mock_session)
 
-        assert result is not None
-        assert "overall_score" in result
-        assert result["overall_score"] == 0.0
+    assert result is not None
+    assert "overall_score" in result
+    assert result["overall_score"] == 0.0
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_with_invalid_days(self, monitor, mock_session):
         """测试无效天数参数的趋势分析"""
         result = await monitor.get_quality_trends(-1, mock_session)
 
-        assert result is not None
-        assert "error" in result
+    assert result is not None
+    assert "error" in result
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_database_error(self, monitor, mock_session):
@@ -406,8 +406,8 @@ class TestQualityMonitorComprehensive:
 
         result = await monitor.get_quality_trends(7, mock_session)
 
-        assert result is not None
-        assert "error" in result
+    assert result is not None
+    assert "error" in result
 
     # === 性能测试 ===
 
@@ -432,17 +432,17 @@ class TestQualityMonitorComprehensive:
         execution_time = end_time - start_time
 
         # 应该在合理时间内完成
-        assert execution_time < 5.0
+    assert execution_time < 5.0
 
     # === 数据验证测试 ===
 
     def test_quality_score_validation(self, monitor):
         """测试质量分数验证"""
         # 测试边界值
-        assert monitor._get_quality_level(1.0) == "Excellent"
-        assert monitor._get_quality_level(0.0) == "Bad"
-        assert monitor._get_quality_level(1.1) == "Excellent"  # 处理大于1的情况
-        assert monitor._get_quality_level(-0.1) == "Bad"     # 处理负数
+    assert monitor._get_quality_level(1.0) == "Excellent"
+    assert monitor._get_quality_level(0.0) == "Bad"
+    assert monitor._get_quality_level(1.1) == "Excellent"  # 处理大于1的情况
+    assert monitor._get_quality_level(-0.1) == "Bad"     # 处理负数
 
     def test_recommendations_content_validation(self, monitor):
         """测试建议内容验证"""
@@ -452,20 +452,20 @@ class TestQualityMonitorComprehensive:
             "freshness_score": 0.4
         })
 
-        assert isinstance(recommendations, list)
+    assert isinstance(recommendations, list)
         # 检查建议不为空且包含有用信息
         for rec in recommendations:
-            assert isinstance(rec, str)
-            assert len(rec.strip()) > 0
+    assert isinstance(rec, str)
+    assert len(rec.strip()) > 0
 
     # === 配置相关测试 ===
 
     def test_default_thresholds(self, monitor):
         """测试默认阈值配置"""
         # 测试服务是否使用了合理的默认阈值
-        assert hasattr(monitor, 'freshness_threshold_hours')
-        assert hasattr(monitor, 'completeness_threshold')
-        assert hasattr(monitor, 'consistency_threshold')
+    assert hasattr(monitor, 'freshness_threshold_hours')
+    assert hasattr(monitor, 'completeness_threshold')
+    assert hasattr(monitor, 'consistency_threshold')
 
     # === 集成测试 ===
 
@@ -497,6 +497,6 @@ class TestQualityMonitorComprehensive:
         trends = await monitor.get_quality_trends(7, mock_session)
 
         # 验证所有结果
-        assert all(result is not None for result in [freshness, completeness, consistency, quality_score, trends])
-        assert quality_score["overall_score"] > 0.8
-        assert "Excellent" in quality_score["quality_level"]
+    assert all(result is not None for result in [freshness, completeness, consistency, quality_score, trends])
+    assert quality_score["overall_score"] > 0.8
+    assert "Excellent" in quality_score["quality_level"]

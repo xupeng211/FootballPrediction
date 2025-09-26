@@ -143,11 +143,11 @@ class TestEdgeCasesAndFailureScenarios:
         # 测试负数天数
         result = await prediction_service.get_model_accuracy(days=-1)
         # 应该返回None或处理负数情况
-        assert result is None or isinstance(result, (float, int))
+    assert result is None or isinstance(result, (float, int))
 
         # 测试零天数
         result = await prediction_service.get_model_accuracy(days=0)
-        assert result is None or isinstance(result, (float, int))
+    assert result is None or isinstance(result, (float, int))
 
     # ================================
     # 网络故障和超时处理测试
@@ -206,7 +206,7 @@ class TestEdgeCasesAndFailureScenarios:
 
             # 应该回退到默认特征而不是失败
             result = await prediction_service.predict_match(1)
-            assert result is not None
+    assert result is not None
 
     # ================================
     # 数据库连接问题测试
@@ -223,7 +223,7 @@ class TestEdgeCasesAndFailureScenarios:
 
         # 测试获取比赛信息失败
         result = await prediction_service._get_match_info(1)
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_database_query_timeout(self, prediction_service):
@@ -242,7 +242,7 @@ class TestEdgeCasesAndFailureScenarios:
 
         # 测试获取比赛信息失败
         result = await prediction_service._get_match_info(1)
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_database_transaction_rollback(self, prediction_service):
@@ -327,12 +327,12 @@ class TestEdgeCasesAndFailureScenarios:
 
         # 验证所有任务都成功完成
         successful_results = [r for r in results if not isinstance(r, Exception)]
-        assert len(successful_results) == 5
+    assert len(successful_results) == 5
 
         # 验证所有结果都相同
         models, versions = zip(*successful_results)
-        assert len(set(id(m) for m in models)) == 1  # 所有模型对象相同
-        assert len(set(versions)) == 1  # 所有版本号相同
+    assert len(set(id(m) for m in models)) == 1  # 所有模型对象相同
+    assert len(set(versions)) == 1  # 所有版本号相同
 
     @pytest.mark.asyncio
     async def test_concurrent_prediction_requests(self, prediction_service):
@@ -359,12 +359,12 @@ class TestEdgeCasesAndFailureScenarios:
 
             # 验证所有任务都成功完成
             successful_results = [r for r in results if not isinstance(r, Exception)]
-            assert len(successful_results) == 5
+    assert len(successful_results) == 5
 
             # 验证所有结果都有效
             for result in successful_results:
-                assert isinstance(result, PredictionResult)
-                assert 0 <= result.confidence_score <= 1
+    assert isinstance(result, PredictionResult)
+    assert 0 <= result.confidence_score <= 1
 
     # ================================
     # 资源限制和性能边界测试
@@ -394,8 +394,8 @@ class TestEdgeCasesAndFailureScenarios:
             results = await prediction_service.batch_predict_matches(match_ids)
 
             # 验证结果
-            assert len(results) == 100
-            assert all(isinstance(r, PredictionResult) for r in results)
+    assert len(results) == 100
+    assert all(isinstance(r, PredictionResult) for r in results)
 
     @pytest.mark.asyncio
     async def test_memory_usage_under_load(self, prediction_service):
@@ -429,7 +429,7 @@ class TestEdgeCasesAndFailureScenarios:
 
             # 验证内存增长在合理范围内（不超过50MB增长）
             memory_growth = final_memory - initial_memory
-            assert memory_growth < 50, f"内存增长过大: {memory_growth:.2f}MB"
+    assert memory_growth < 50, f"内存增长过大: {memory_growth:.2f}MB"
 
     @pytest.mark.asyncio
     async def test_prediction_service_under_high_concurrency(self, prediction_service):
@@ -460,12 +460,12 @@ class TestEdgeCasesAndFailureScenarios:
             total_time = time.time() - start_time
 
             # 验证性能（50个请求应该在5秒内完成）
-            assert total_time < 5.0, f"高并发性能不佳: {total_time:.2f}秒"
+    assert total_time < 5.0, f"高并发性能不佳: {total_time:.2f}秒"
 
             # 验证成功率
             success_count = sum(1 for r in results if not isinstance(r, Exception))
             success_rate = success_count / len(results)
-            assert success_rate >= 0.9, f"高并发成功率过低: {success_rate:.2%}"
+    assert success_rate >= 0.9, f"高并发成功率过低: {success_rate:.2%}"
 
     # ================================
     # 异常输入和数据完整性测试
@@ -488,7 +488,7 @@ class TestEdgeCasesAndFailureScenarios:
 
             # 应该能够处理损坏的数据
             result = await prediction_service.predict_match(1)
-            assert isinstance(result, PredictionResult)
+    assert isinstance(result, PredictionResult)
 
     @pytest.mark.asyncio
     async def test_predict_match_with_unusual_match_status(self, prediction_service):
@@ -507,7 +507,7 @@ class TestEdgeCasesAndFailureScenarios:
 
             # 应该能够处理异常状态
             result = await prediction_service.predict_match(1)
-            assert isinstance(result, PredictionResult)
+    assert isinstance(result, PredictionResult)
 
     @pytest.mark.asyncio
     async def test_feature_preparation_with_missing_features(self, prediction_service):
@@ -524,8 +524,8 @@ class TestEdgeCasesAndFailureScenarios:
         )
 
         # 验证结果数组的形状
-        assert isinstance(features_array, np.ndarray)
-        assert features_array.shape == (1, 10)  # 应该填充缺失值为0
+    assert isinstance(features_array, np.ndarray)
+    assert features_array.shape == (1, 10)  # 应该填充缺失值为0
 
     @pytest.mark.asyncio
     async def test_verify_prediction_for_nonexistent_match(
@@ -541,4 +541,4 @@ class TestEdgeCasesAndFailureScenarios:
 
         # 验证应该返回False
         result = await prediction_service.verify_prediction(999999)
-        assert result is False
+    assert result is False

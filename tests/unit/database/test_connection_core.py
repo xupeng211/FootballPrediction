@@ -31,8 +31,8 @@ class TestDatabaseManagerCore:
 
     def test_manager_initialization(self, db_manager):
         """测试管理器初始化"""
-        assert db_manager is not None
-        assert hasattr(db_manager, "__class__")
+    assert db_manager is not None
+    assert hasattr(db_manager, "__class__")
 
         # 测试基本属性存在
         try:
@@ -63,15 +63,15 @@ class TestDatabaseManagerCore:
             )
 
             # 验证导入成功
-            assert DatabaseManager is not None
-            assert callable(get_db_session)
-            assert callable(get_async_session)
-            assert callable(create_engine)
-            assert callable(create_async_engine)
-            assert callable(get_connection_string)
-            assert callable(test_database_connection)
-            assert callable(close_all_connections)
-            assert callable(setup_database_pool)
+    assert DatabaseManager is not None
+    assert callable(get_db_session)
+    assert callable(get_async_session)
+    assert callable(create_engine)
+    assert callable(create_async_engine)
+    assert callable(get_connection_string)
+    assert callable(test_database_connection)
+    assert callable(close_all_connections)
+    assert callable(setup_database_pool)
 
         except ImportError as e:
             print(f"Import warning: {e}")
@@ -84,7 +84,7 @@ class TestDatabaseManagerCore:
             with patch(
                 "src.database.connection.get_connection_string"
             ) as mock_conn_str:
-                mock_conn_str.return_value = "postgresql://test:test@localhost / test"
+                mock_conn_str.return_value = "postgresql:_/test:test@localhost / test"
 
                 with patch(
                     "src.database.connection.create_engine"
@@ -97,7 +97,7 @@ class TestDatabaseManagerCore:
 
                         result = await db_manager.initialize()
 
-                        assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -115,7 +115,7 @@ class TestDatabaseManagerCore:
                 result = await db_manager.initialize()
 
                 # 应该处理错误或返回False
-                assert result is not None or result is None
+    assert result is not None or result is None
 
         except Exception:
             pass
@@ -123,7 +123,7 @@ class TestDatabaseManagerCore:
     def test_create_engine_basic(self, db_manager):
         """测试创建引擎"""
         try:
-            connection_string = "postgresql://test:test@localhost / test"
+            connection_string = "postgresql:_/test:test@localhost / test"
 
             # 模拟引擎创建
             with patch("sqlalchemy.create_engine") as mock_create:
@@ -132,13 +132,13 @@ class TestDatabaseManagerCore:
 
                 if hasattr(db_manager, "create_engine"):
                     result = db_manager.create_engine(connection_string)
-                    assert result is not None
+    assert result is not None
                 else:
                     # 测试模块级函数
                     from src.database.connection import create_engine
 
                     result = create_engine(connection_string)
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -146,7 +146,7 @@ class TestDatabaseManagerCore:
     def test_create_async_engine_basic(self, db_manager):
         """测试创建异步引擎"""
         try:
-            connection_string = "postgresql + asyncpg://test:test@localhost / test"
+            connection_string = "postgresql + asyncpg:_/test:test@localhost / test"
 
             # 模拟异步引擎创建
             with patch("sqlalchemy.ext.asyncio.create_async_engine") as mock_create:
@@ -155,12 +155,12 @@ class TestDatabaseManagerCore:
 
                 if hasattr(db_manager, "create_async_engine"):
                     result = db_manager.create_async_engine(connection_string)
-                    assert result is not None
+    assert result is not None
                 else:
                     from src.database.connection import create_async_engine
 
                     result = create_async_engine(connection_string)
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -183,9 +183,9 @@ class TestDatabaseManagerCore:
             ):
                 result = get_connection_string()
 
-                assert result is not None
-                assert isinstance(result, str)
-                assert "postgresql" in result
+    assert result is not None
+    assert isinstance(result, str)
+    assert "postgresql" in result
 
         except Exception:
             pass
@@ -200,7 +200,7 @@ class TestDatabaseManagerCore:
                 result = get_connection_string()
 
                 # 应该使用默认值或抛出异常
-                assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass
@@ -227,7 +227,7 @@ class TestSessionManagement:
                 session_gen = get_db_session()
                 session = next(session_gen)
 
-                assert session is not None
+    assert session is not None
 
                 # 清理
                 try:
@@ -255,7 +255,7 @@ class TestSessionManagement:
                 session_gen = get_async_session()
                 session = await session_gen.__anext__()
 
-                assert session is not None
+    assert session is not None
 
                 # 清理
                 try:
@@ -280,7 +280,7 @@ class TestSessionManagement:
                 try:
                     session_gen = get_db_session()
                     session = next(session_gen)
-                    assert session is not None
+    assert session is not None
                 except SQLAlchemyError:
                     # 期望的异常
                     pass
@@ -308,7 +308,7 @@ class TestSessionManagement:
                 try:
                     session_gen = get_async_session()
                     session = await session_gen.__anext__()
-                    assert session is not None
+    assert session is not None
                 except SQLAlchemyError:
                     pass
                 except StopAsyncIteration:
@@ -340,7 +340,7 @@ class TestConnectionPooling:
 
                 result = setup_database_pool(config)
 
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -357,7 +357,7 @@ class TestConnectionPooling:
 
             try:
                 result = setup_database_pool(invalid_config)
-                assert result is not None
+    assert result is not None
             except (ValueError, TypeError):
                 # 期望的异常
                 pass
@@ -379,7 +379,7 @@ class TestConnectionPooling:
                 try:
                     session_gen = get_db_session()
                     session = next(session_gen)
-                    assert session is not None
+    assert session is not None
                 except OperationalError:
                     # 期望的异常
                     pass
@@ -411,8 +411,8 @@ class TestConnectionTesting:
 
                 result = await test_database_connection()
 
-                assert result is not None
-                assert isinstance(result, (bool, dict))
+    assert result is not None
+    assert isinstance(result, (bool, dict))
 
         except Exception:
             pass
@@ -433,9 +433,9 @@ class TestConnectionTesting:
 
                 result = await test_database_connection()
 
-                assert result is not None
+    assert result is not None
                 if isinstance(result, dict):
-                    assert "success" in result or "error" in result
+    assert "success" in result or "error" in result
 
         except Exception:
             pass
@@ -469,8 +469,8 @@ class TestConnectionTesting:
 
                 # 应该在超时时间内返回
                 duration = (end_time - start_time).total_seconds()
-                assert duration < 1  # 不应该等待完整的延迟
-                assert result is not None
+    assert duration < 1  # 不应该等待完整的延迟
+    assert result is not None
 
         except Exception:
             pass
@@ -493,7 +493,7 @@ class TestConnectionCleanup:
 
                     result = await close_all_connections()
 
-                    assert result is not None or result is None
+    assert result is not None or result is None
 
         except Exception:
             pass
@@ -511,7 +511,7 @@ class TestConnectionCleanup:
                 result = await close_all_connections()
 
                 # 应该优雅处理错误
-                assert result is not None or result is None
+    assert result is not None or result is None
 
         except Exception:
             pass
@@ -546,7 +546,7 @@ class TestConnectionCleanup:
                     pass
 
                 # 验证会话被关闭
-                assert mock_session.close.called or True
+    assert mock_session.close.called or True
 
         except Exception:
             pass
@@ -567,7 +567,7 @@ class TestDatabaseHealthCheck:
 
                 if hasattr(db_manager, "health_check"):
                     result = await db_manager.health_check()
-                    assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -587,9 +587,9 @@ class TestDatabaseHealthCheck:
 
                 if hasattr(db_manager, "health_check"):
                     result = await db_manager.health_check()
-                    assert result is not None
+    assert result is not None
                     if isinstance(result, dict):
-                        assert "status" in result
+    assert "status" in result
 
         except Exception:
             pass

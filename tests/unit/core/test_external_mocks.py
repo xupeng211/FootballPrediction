@@ -32,16 +32,16 @@ class TestRedisMocks:
         # 测试基本操作
         await redis.aset("test_key", "test_value")
         value = await redis.aget("test_key")
-        assert value == "test_value"
+    assert value == "test_value"
 
         # 测试存在性检查
         exists = await redis.aexists("test_key")
-        assert exists is True
+    assert exists is True
 
         # 测试删除
         await redis.adelete("test_key")
         value = await redis.aget("test_key")
-        assert value is None
+    assert value is None
 
     @pytest.mark.asyncio
     async def test_mock_redis_ttl(self):
@@ -51,7 +51,7 @@ class TestRedisMocks:
         # Mock版本的TTL实际上不会过期，但可以验证功能
         await redis.aset("ttl_key", "ttl_value", expire=60)
         value = await redis.aget("ttl_key")
-        assert value == "ttl_value"
+    assert value == "ttl_value"
 
 
 class TestMLflowMocks:
@@ -63,11 +63,11 @@ class TestMLflowMocks:
 
         # 创建实验
         exp_id = client.create_experiment("test_experiment")
-        assert exp_id is not None
+    assert exp_id is not None
 
         # 创建运行
         run_id = client.create_run(exp_id, "test_run")
-        assert run_id is not None
+    assert run_id is not None
 
         # 记录参数和指标
         client.log_param(run_id, "param1", "value1")
@@ -77,9 +77,9 @@ class TestMLflowMocks:
         client.set_terminated(run_id)
 
         # 验证数据
-        assert run_id in client.runs
-        assert client.runs[run_id]["params"]["param1"] == "value1"
-        assert client.runs[run_id]["metrics"]["metric1"] == 0.95
+    assert run_id in client.runs
+    assert client.runs[run_id]["params"]["param1"] == "value1"
+    assert client.runs[run_id]["metrics"]["metric1"] == 0.95
 
 
 class TestKafkaMocks:
@@ -95,10 +95,10 @@ class TestKafkaMocks:
         await producer.send("test_topic", {"data": "test"}, key="test_key")
 
         # 验证消息
-        assert len(producer.messages) == 1
-        assert producer.messages[0]["topic"] == "test_topic"
-        assert producer.messages[0]["value"] == {"data": "test"}
-        assert producer.messages[0]["key"] == "test_key"
+    assert len(producer.messages) == 1
+    assert producer.messages[0]["topic"] == "test_topic"
+    assert producer.messages[0]["value"] == {"data": "test"}
+    assert producer.messages[0]["key"] == "test_key"
 
         await producer.stop()
 
@@ -116,7 +116,7 @@ class TestKafkaMocks:
         await consumer.stop()
 
         # 验证消息结构
-        assert len(messages) > 0
+    assert len(messages) > 0
 
 
 class TestFeatureStoreMocks:
@@ -134,9 +134,9 @@ class TestFeatureStoreMocks:
 
         # 验证结果格式
         feature_dict = result.to_dict()
-        assert "feature1" in feature_dict
-        assert "feature2" in feature_dict
-        assert "feature3" in feature_dict
+    assert "feature1" in feature_dict
+    assert "feature2" in feature_dict
+    assert "feature3" in feature_dict
 
     def test_mock_feature_store_operations(self):
         """测试特征存储操作"""
@@ -144,10 +144,10 @@ class TestFeatureStoreMocks:
 
         # 测试写入和物化
         success = store.write_to_online_store("test_view", {"data": "test"})
-        assert success is True
+    assert success is True
 
         success = store.materialize_incremental("2025-01-01")
-        assert success is True
+    assert success is True
 
 
 class TestPrometheusMocks:
@@ -159,13 +159,13 @@ class TestPrometheusMocks:
 
         # 基本计数
         counter.inc()
-        assert counter.get_value() == 1.0
+    assert counter.get_value() == 1.0
 
         # 带标签计数
-        counter.labels(method="get", endpoint="/api").inc()
+        counter.labels(method="get", endpoint="_api").inc()
         counter.labels(method="post", endpoint="/api").inc()
 
-        assert len(counter._values) == 2
+    assert len(counter._values) == 2
 
     def test_mock_gauge(self):
         """测试仪表Mock"""
@@ -173,14 +173,14 @@ class TestPrometheusMocks:
 
         # 设置值
         gauge.set(10.5)
-        assert gauge.get_value() == 10.5
+    assert gauge.get_value() == 10.5
 
         # 增减值
         gauge.inc(2.5)
-        assert gauge.get_value() == 13.0
+    assert gauge.get_value() == 13.0
 
         gauge.dec(1.0)
-        assert gauge.get_value() == 12.0
+    assert gauge.get_value() == 12.0
 
     def test_mock_histogram(self):
         """测试直方图Mock"""
@@ -191,7 +191,7 @@ class TestPrometheusMocks:
         histogram.observe(2.0)
         histogram.observe(3.0)
 
-        assert len(histogram._observations) == 3
+    assert len(histogram._observations) == 3
 
 
 class TestDatabaseMocks:
@@ -205,8 +205,8 @@ class TestDatabaseMocks:
         sync_session = manager.get_session()
         async_session = manager.get_async_session()
 
-        assert sync_session is not None
-        assert async_session is not None
+    assert sync_session is not None
+    assert async_session is not None
 
     def test_mock_session_creation(self):
         """测试模拟会话创建"""
@@ -214,13 +214,13 @@ class TestDatabaseMocks:
         async_session = create_mock_async_session()
 
         # 验证基本方法存在
-        assert hasattr(sync_session, "execute")
-        assert hasattr(sync_session, "commit")
-        assert hasattr(sync_session, "rollback")
+    assert hasattr(sync_session, "execute")
+    assert hasattr(sync_session, "commit")
+    assert hasattr(sync_session, "rollback")
 
-        assert hasattr(async_session, "execute")
-        assert hasattr(async_session, "commit")
-        assert hasattr(async_session, "rollback")
+    assert hasattr(async_session, "execute")
+    assert hasattr(async_session, "commit")
+    assert hasattr(async_session, "rollback")
 
     def test_mock_session_queries(self):
         """测试模拟会话查询"""
@@ -229,12 +229,12 @@ class TestDatabaseMocks:
         # 测试标量查询
         result = session.execute("SELECT 1")
         scalar = result.scalar()
-        assert scalar == 1
+    assert scalar == 1
 
         # 测试列表查询
         result = session.execute("SELECT * FROM test")
         rows = result.fetchall()
-        assert rows == []
+    assert rows == []
 
 
 class TestMockIntegration:
@@ -261,10 +261,10 @@ class TestMockIntegration:
 
         # 验证结果
         cached_data = await redis.aget("workflow_data")
-        assert cached_data == {"processed": True}
+    assert cached_data == {"processed": True}
 
-        assert run_id in mlflow.runs
-        assert len(kafka.messages) == 1
+    assert run_id in mlflow.runs
+    assert len(kafka.messages) == 1
 
     def test_sync_workflow_mocks(self):
         """测试同步工作流Mock"""
@@ -276,8 +276,8 @@ class TestMockIntegration:
         counter.inc()
         gauge.set(100)
 
-        assert counter.get_value() == 1.0
-        assert gauge.get_value() == 100.0
+    assert counter.get_value() == 1.0
+    assert gauge.get_value() == 100.0
 
 
 if __name__ == "__main__":

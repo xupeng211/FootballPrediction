@@ -39,8 +39,8 @@ class TestBaseService:
                 pass
 
         service = TestService("test_service")
-        assert service.name == "test_service"
-        assert service.logger is not None
+    assert service.name == "test_service"
+    assert service.logger is not None
 
 
 class TestContentAnalysisService:
@@ -67,17 +67,17 @@ class TestContentAnalysisService:
     @pytest.mark.asyncio
     async def test_service_initialization(self, service):
         """测试服务初始化"""
-        assert not service._initialized
+    assert not service._initialized
         result = await service.initialize()
-        assert result is True
-        assert service._initialized is True
+    assert result is True
+    assert service._initialized is True
 
     @pytest.mark.asyncio
     async def test_service_shutdown(self, service):
         """测试服务关闭"""
         await service.initialize()
         await service.shutdown()
-        assert service._initialized is False
+    assert service._initialized is False
 
     @pytest.mark.asyncio
     async def test_analyze_content_success(self, service, sample_content):
@@ -85,11 +85,11 @@ class TestContentAnalysisService:
         await service.initialize()
         result = await service.analyze_content(sample_content)
 
-        assert result is not None
-        assert isinstance(result, AnalysisResult)
-        assert result.content_id == sample_content.id
-        assert result.analysis_type == "content_analysis"
-        assert result.confidence == 0.85
+    assert result is not None
+    assert isinstance(result, AnalysisResult)
+    assert result.content_id == sample_content.id
+    assert result.analysis_type == "content_analysis"
+    assert result.confidence == 0.85
 
     @pytest.mark.asyncio
     async def test_analyze_content_not_initialized(self, service, sample_content):
@@ -120,8 +120,8 @@ class TestContentAnalysisService:
         ]
 
         results = await service.batch_analyze(contents)
-        assert len(results) == 2
-        assert all(isinstance(r, AnalysisResult) for r in results)
+    assert len(results) == 2
+    assert all(isinstance(r, AnalysisResult) for r in results)
 
 
 class TestUserProfileService:
@@ -157,7 +157,7 @@ class TestUserProfileService:
     async def test_service_initialization(self, service):
         """测试服务初始化"""
         result = await service.initialize()
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_service_shutdown(self, service):
@@ -165,17 +165,17 @@ class TestUserProfileService:
         # 添加一些测试数据
         service._user_profiles["test"] = "data"
         await service.shutdown()
-        assert len(service._user_profiles) == 0
+    assert len(service._user_profiles) == 0
 
     @pytest.mark.asyncio
     async def test_generate_profile(self, service, sample_user):
         """测试生成用户画像"""
         profile = await service.generate_profile(sample_user)
 
-        assert profile.user_id == sample_user.id
-        assert "足球" in profile.preferences["interests"]
-        assert profile.preferences["language"] == "zh"
-        assert sample_user.id in service._user_profiles
+    assert profile.user_id == sample_user.id
+    assert "足球" in profile.preferences["interests"]
+    assert profile.preferences["language"] == "zh"
+    assert sample_user.id in service._user_profiles
 
     @pytest.mark.asyncio
     async def test_get_profile_exists(self, service, sample_user):
@@ -183,14 +183,14 @@ class TestUserProfileService:
         await service.generate_profile(sample_user)
         profile = await service.get_profile(sample_user.id)
 
-        assert profile is not None
-        assert profile.user_id == sample_user.id
+    assert profile is not None
+    assert profile.user_id == sample_user.id
 
     @pytest.mark.asyncio
     async def test_get_profile_not_exists(self, service):
         """测试获取不存在的用户画像"""
         profile = await service.get_profile("nonexistent_user")
-        assert profile is None
+    assert profile is None
 
     @pytest.mark.asyncio
     async def test_update_profile_success(self, service, sample_user):
@@ -200,15 +200,15 @@ class TestUserProfileService:
         updates = {"interests": ["新兴趣"]}
         updated_profile = await service.update_profile(sample_user.id, updates)
 
-        assert updated_profile is not None
-        assert updated_profile.preferences["interests"] == ["新兴趣"]
+    assert updated_profile is not None
+    assert updated_profile.preferences["interests"] == ["新兴趣"]
 
     @pytest.mark.asyncio
     async def test_update_profile_not_exists(self, service):
         """测试更新不存在的用户画像"""
         updates = {"interests": ["新兴趣"]}
         result = await service.update_profile("nonexistent_user", updates)
-        assert result is None
+    assert result is None
 
 
 class TestDataProcessingService:
@@ -223,7 +223,7 @@ class TestDataProcessingService:
     async def test_service_initialization(self, service):
         """测试服务初始化"""
         result = await service.initialize()
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_service_shutdown(self, service):
@@ -237,10 +237,10 @@ class TestDataProcessingService:
         test_text = "  这是一个测试文本  "
         result = await service.process_text(test_text)
 
-        assert "processed_text" in result
-        assert result["processed_text"] == "这是一个测试文本"
-        assert result["word_count"] == 1
-        assert result["character_count"] == len(test_text)
+    assert "processed_text" in result
+    assert result["processed_text"] == "这是一个测试文本"
+    assert result["word_count"] == 1
+    assert result["character_count"] == len(test_text)
 
     @pytest.mark.asyncio
     async def test_process_batch(self, service):
@@ -252,12 +252,12 @@ class TestDataProcessingService:
         ]
 
         results = await service.process_batch(data_list)
-        assert len(results) == 3  # 处理了所有数据项
+    assert len(results) == 3  # 处理了所有数据项
         # 前两个是字符串，有processed_text字段
-        assert "processed_text" in results[0]
-        assert "processed_text" in results[1]
+    assert "processed_text" in results[0]
+    assert "processed_text" in results[1]
         # 第三个是数字，有original_data字段
-        assert "original_data" in results[2]
+    assert "original_data" in results[2]
 
 
 class TestServiceManager:
@@ -289,8 +289,8 @@ class TestServiceManager:
     def test_register_service(self, manager, test_service):
         """测试注册服务"""
         manager.register_service("TestService", test_service)
-        assert "TestService" in manager.services
-        assert manager.services["TestService"] == test_service
+    assert "TestService" in manager.services
+    assert manager.services["TestService"] == test_service
 
     @pytest.mark.asyncio
     async def test_initialize_all_success(self, manager, test_service):
@@ -298,8 +298,8 @@ class TestServiceManager:
         manager.register_service("TestService", test_service)
         result = await manager.initialize_all()
 
-        assert result is True
-        assert test_service.initialized is True
+    assert result is True
+    assert test_service.initialized is True
 
     @pytest.mark.asyncio
     async def test_initialize_all_failure(self, manager):
@@ -316,7 +316,7 @@ class TestServiceManager:
         manager.register_service("FailingService", failing_service)
 
         result = await manager.initialize_all()
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_initialize_all_exception(self, manager):
@@ -333,7 +333,7 @@ class TestServiceManager:
         manager.register_service("ExceptionService", exception_service)
 
         result = await manager.initialize_all()
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_shutdown_all(self, manager, test_service):
@@ -342,7 +342,7 @@ class TestServiceManager:
         await manager.initialize_all()
         await manager.shutdown_all()
 
-        assert test_service.initialized is False
+    assert test_service.initialized is False
 
     @pytest.mark.asyncio
     async def test_shutdown_all_with_exception(self, manager):
@@ -365,12 +365,12 @@ class TestServiceManager:
         """测试获取存在的服务"""
         manager.register_service("TestService", test_service)
         service = manager.get_service("TestService")
-        assert service == test_service
+    assert service == test_service
 
     def test_get_service_not_exists(self, manager):
         """测试获取不存在的服务"""
         service = manager.get_service("NonExistentService")
-        assert service is None
+    assert service is None
 
 
 class TestGlobalServiceManager:
@@ -378,8 +378,8 @@ class TestGlobalServiceManager:
 
     def test_global_service_manager_exists(self):
         """测试全局服务管理器存在"""
-        assert service_manager is not None
-        assert isinstance(service_manager, ServiceManager)
+    assert service_manager is not None
+    assert isinstance(service_manager, ServiceManager)
 
     def test_default_services_registered(self):
         """测试默认服务已注册"""
@@ -390,4 +390,4 @@ class TestGlobalServiceManager:
         ]
 
         for service_name in expected_services:
-            assert service_name in service_manager.services
+    assert service_name in service_manager.services

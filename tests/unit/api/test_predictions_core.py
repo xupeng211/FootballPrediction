@@ -89,13 +89,13 @@ class TestPredictionsAPI:
             result = await get_match_prediction(match_id=1, session=mock_session)
 
             # 验证结果
-            assert "success" in result
-            assert result["success"] is True
-            assert "data" in result
-            assert result["data"]["match_id"] == 1
-            assert "home_win_probability" in result["data"]["prediction"]
-            assert "confidence_score" in result["data"]["prediction"]
-            assert "timestamp" in result
+    assert "success" in result
+    assert result["success"] is True
+    assert "data" in result
+    assert result["data"]["match_id"] == 1
+    assert "home_win_probability" in result["data"]["prediction"]
+    assert "confidence_score" in result["data"]["prediction"]
+    assert "timestamp" in result
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_match_not_found(self, mock_session):
@@ -109,8 +109,8 @@ class TestPredictionsAPI:
         with pytest.raises(HTTPException) as exc_info:
             await get_match_prediction(match_id=999, session=mock_session)
 
-        assert exc_info.value.status_code == 404
-        assert "比赛 999 不存在" == str(exc_info.value.detail)
+    assert exc_info.value.status_code == 404
+    assert "比赛 999 不存在" == str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_finished_match(
@@ -137,8 +137,8 @@ class TestPredictionsAPI:
             # 确保prediction_service未被调用
             mock_prediction_service.predict_match.assert_not_called()
 
-        assert exc_info.value.status_code == 400
-        assert "已结束，无法生成预测" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 400
+    assert "已结束，无法生成预测" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_service_error(
@@ -166,8 +166,8 @@ class TestPredictionsAPI:
             with pytest.raises(HTTPException) as exc_info:
                 await get_match_prediction(match_id=1, session=mock_session)
 
-            assert exc_info.value.status_code == 500
-            assert "Prediction service failed" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 500
+    assert "Prediction service failed" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_batch_predict_matches_success(
@@ -213,12 +213,12 @@ class TestPredictionsAPI:
             )
 
             # 验证结果
-            assert "success" in result
-            assert result["success"] is True
-            assert "data" in result
-            assert "predictions" in result["data"]
-            assert len(result["data"]["predictions"]) == len(match_ids)
-            assert all(
+    assert "success" in result
+    assert result["success"] is True
+    assert "data" in result
+    assert "predictions" in result["data"]
+    assert len(result["data"]["predictions"]) == len(match_ids)
+    assert all(
                 pred["match_id"] in match_ids for pred in result["data"]["predictions"]
             )
 
@@ -264,12 +264,12 @@ class TestPredictionsAPI:
             )
 
             # 验证结果包含成功和失败信息
-            assert "success" in result
-            assert "data" in result
-            assert "predictions" in result["data"]
-            assert len(result["data"]["predictions"]) == 0  # 没有成功的预测
-            assert "invalid_match_ids" in result["data"]
-            assert len(result["data"]["invalid_match_ids"]) == 3  # 3个无效ID
+    assert "success" in result
+    assert "data" in result
+    assert "predictions" in result["data"]
+    assert len(result["data"]["predictions"]) == 0  # 没有成功的预测
+    assert "invalid_match_ids" in result["data"]
+    assert len(result["data"]["invalid_match_ids"]) == 3  # 3个无效ID
 
     @pytest.mark.asyncio
     async def test_batch_predict_matches_empty_list(self, mock_session):
@@ -279,9 +279,9 @@ class TestPredictionsAPI:
 
             result = await batch_predict_matches(match_ids=[], session=mock_session)
 
-            assert result["success"] is True
-            assert "data" in result
-            assert result["data"]["predictions"] == []
+    assert result["success"] is True
+    assert "data" in result
+    assert result["data"]["predictions"] == []
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_history_success(self, mock_session):
@@ -322,14 +322,14 @@ class TestPredictionsAPI:
         )
 
         # 验证结果
-        assert "success" in result
-        assert result["success"] is True
-        assert "data" in result
-        assert result["data"]["match_id"] == match_id
-        assert result["data"]["total_predictions"] == len(mock_history)
-        assert len(result["data"]["predictions"]) == len(mock_history)
-        assert result["data"]["predictions"][0]["id"] == 1
-        assert result["data"]["predictions"][1]["id"] == 2
+    assert "success" in result
+    assert result["success"] is True
+    assert "data" in result
+    assert result["data"]["match_id"] == match_id
+    assert result["data"]["total_predictions"] == len(mock_history)
+    assert len(result["data"]["predictions"]) == len(mock_history)
+    assert result["data"]["predictions"][0]["id"] == 1
+    assert result["data"]["predictions"][1]["id"] == 2
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_history_no_history(self, mock_session):
@@ -349,13 +349,13 @@ class TestPredictionsAPI:
         )
 
         # 验证结果
-        assert result["success"] is True
-        assert result["data"]["match_id"] == match_id
-        assert result["data"]["total_predictions"] == 0
-        assert result["data"]["predictions"] == []
+    assert result["success"] is True
+    assert result["data"]["match_id"] == match_id
+    assert result["data"]["total_predictions"] == 0
+    assert result["data"]["predictions"] == []
 
-    # TODO: 实现 update_prediction_feedback 功能后再添加相关测试
-    # 目前该函数尚未实现，暂时注释掉相关测试避免 linting 错误
+    # Note: update_prediction_feedback functionality tests will be added when the feature is implemented
+    # Current tests focus on existing core prediction functionality
 
     @pytest.mark.asyncio
     async def test_database_connection_error(self, mock_session):
@@ -367,8 +367,8 @@ class TestPredictionsAPI:
         with pytest.raises(HTTPException) as exc_info:
             await get_match_prediction(match_id=1, session=mock_session)
 
-        assert exc_info.value.status_code == 500
-        assert "获取预测结果失败" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 500
+    assert "获取预测结果失败" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_concurrent_prediction_requests(
@@ -403,15 +403,15 @@ class TestPredictionsAPI:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # 验证所有请求都成功
-            assert len(results) == len(match_ids)
+    assert len(results) == len(match_ids)
             for result in results:
-                assert not isinstance(result, Exception)
-                assert result["success"] is True
+    assert not isinstance(result, Exception)
+    assert result["success"] is True
 
     def test_router_configuration(self):
         """测试路由器配置"""
-        assert router.prefix == "/predictions"
-        assert "predictions" in router.tags
+    assert router.prefix == "_predictions"
+    assert "predictions" in router.tags
 
         # 验证主要路由存在 - 修正：使用实际的路由路径
         routes = [route.path for route in router.routes]
@@ -424,10 +424,10 @@ class TestPredictionsAPI:
             "/predictions/{match_id}/verify",
         ]
         for expected_route in expected_routes:
-            assert expected_route in routes, f"路由 {expected_route} 不存在于 {routes}"
+    assert expected_route in routes, f"路由 {expected_route} 不存在于 {routes}"
 
         # 验证路由数量
-        assert len(routes) == len(expected_routes)
+    assert len(routes) == len(expected_routes)
 
     @pytest.mark.asyncio
     async def test_prediction_caching_behavior(
@@ -454,9 +454,9 @@ class TestPredictionsAPI:
             result2 = await get_match_prediction(match_id=1, session=mock_session)
 
             # 验证结果一致性
-            assert result1["success"] is True
-            assert result2["success"] is True
-            assert result1["data"]["match_id"] == result2["data"]["match_id"]
+    assert result1["success"] is True
+    assert result2["success"] is True
+    assert result1["data"]["match_id"] == result2["data"]["match_id"]
 
     @pytest.mark.asyncio
     async def test_prediction_confidence_validation(
@@ -494,9 +494,9 @@ class TestPredictionsAPI:
             result = await get_match_prediction(match_id=1, session=mock_session)
 
             # 验证系统处理低置信度预测
-            assert result["success"] is True
-            assert "data" in result
-            assert result["data"]["prediction"]["confidence_score"] == 0.25
+    assert result["success"] is True
+    assert "data" in result
+    assert result["data"]["prediction"]["confidence_score"] == 0.25
 
 
 class TestAPIResponseFormats:
@@ -539,11 +539,11 @@ class TestAPIResponseFormats:
             # 验证响应结构
             required_fields = ["success", "data", "timestamp"]
             for field in required_fields:
-                assert field in result
+    assert field in result
 
-            assert isinstance(result["success"], bool)
-            assert isinstance(result["data"], dict)
-            assert "match_id" in result["data"]
+    assert isinstance(result["success"], bool)
+    assert isinstance(result["data"], dict)
+    assert "match_id" in result["data"]
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(5)  # 添加5秒超时限制
@@ -561,12 +561,12 @@ class TestAPIResponseFormats:
             result = await batch_predict_matches(match_ids=[], session=mock_session)
 
             # 验证批量响应结构
-            assert result["success"] is True
-            assert "data" in result
-            assert isinstance(result["data"], dict)
-            assert "predictions" in result["data"]
-            assert isinstance(result["data"]["predictions"], list)
-            assert result["data"]["valid_matches"] == 0
+    assert result["success"] is True
+    assert "data" in result
+    assert isinstance(result["data"], dict)
+    assert "predictions" in result["data"]
+    assert isinstance(result["data"]["predictions"], list)
+    assert result["data"]["valid_matches"] == 0
 
     @pytest.mark.asyncio
     async def test_error_response_structure(self, mock_session):
@@ -581,6 +581,6 @@ class TestAPIResponseFormats:
             await get_match_prediction(match_id=999, session=mock_session)
 
         # 验证错误响应结构
-        assert exc_info.value.status_code == 404
-        assert isinstance(exc_info.value.detail, str)
-        assert len(exc_info.value.detail) > 0
+    assert exc_info.value.status_code == 404
+    assert isinstance(exc_info.value.detail, str)
+    assert len(exc_info.value.detail) > 0

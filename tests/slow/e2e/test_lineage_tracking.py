@@ -168,7 +168,7 @@ class TestLineageTracking:
             run_info = await lineage_tracker.start_run(
                 job_name=pipeline_config["pipeline_name"], run_id=pipeline_run_id
             )
-            assert run_info is not None
+    assert run_info is not None
 
             # 追踪每个阶段的数据流
             for stage in pipeline_config["stages"]:
@@ -202,7 +202,7 @@ class TestLineageTracking:
 
         except Exception as e:
             # 在测试环境中可能无法连接到真实的血缘服务
-            assert isinstance(e, (LineageError, TrackingError, AttributeError))
+    assert isinstance(e, (LineageError, TrackingError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_dataset_lineage_query(self, lineage_tracker):
@@ -220,32 +220,32 @@ class TestLineageTracking:
 
                 if lineage_info:
                     # 验证血缘信息结构
-                    assert isinstance(lineage_info, dict), "血缘信息应该是字典格式"
+    assert isinstance(lineage_info, dict), "血缘信息应该是字典格式"
 
                     # 验证上游依赖
                     if "upstream" in lineage_info:
                         upstream_datasets = lineage_info["upstream"]
-                        assert isinstance(
+    assert isinstance(
                             upstream_datasets, list
                         ), "上游数据集应该是列表"
 
                         # 验证血缘关系的逻辑正确性
                         if dataset_name == "gold.predictions":
                             # 预测数据集应该依赖特征数据集
-                            assert any(
+    assert any(
                                 "features" in ds for ds in upstream_datasets
                             ), "预测应该依赖特征数据"
 
                         elif dataset_name == "gold.match_features":
                             # 特征数据集应该依赖清洗后的数据
-                            assert any(
+    assert any(
                                 "clean" in ds for ds in upstream_datasets
                             ), "特征应该依赖清洗数据"
 
                     # 验证下游消费者
                     if "downstream" in lineage_info:
                         downstream_datasets = lineage_info["downstream"]
-                        assert isinstance(
+    assert isinstance(
                             downstream_datasets, list
                         ), "下游数据集应该是列表"
 
@@ -265,10 +265,10 @@ class TestLineageTracking:
 
                 if impact_analysis:
                     # 验证影响分析结果
-                    assert (
+    assert (
                         "affected_datasets" in impact_analysis
                     ), "影响分析应该包含受影响的数据集"
-                    assert (
+    assert (
                         "affected_jobs" in impact_analysis
                     ), "影响分析应该包含受影响的作业"
 
@@ -282,7 +282,7 @@ class TestLineageTracking:
                     ]
 
                     for expected_dataset in expected_affected:
-                        assert any(
+    assert any(
                             expected_dataset in ds for ds in affected_datasets
                         ), f"影响分析应该包含{expected_dataset}"
 
@@ -322,13 +322,13 @@ class TestLineageTracking:
                     )
 
                     if quality_history:
-                        assert isinstance(quality_history, list), "质量历史应该是列表"
+    assert isinstance(quality_history, list), "质量历史应该是列表"
 
                         # 验证质量趋势
                         for quality_record in quality_history:
-                            assert "timestamp" in quality_record
-                            assert "quality_score" in quality_record
-                            assert 0 <= quality_record["quality_score"] <= 1
+    assert "timestamp" in quality_record
+    assert "quality_score" in quality_record
+    assert 0 <= quality_record["quality_score"] <= 1
 
         except Exception:
             # 测试环境中可能不支持质量追踪
@@ -370,7 +370,7 @@ class TestLineageTracking:
                         ]
 
                         for expected in expected_affected:
-                            assert any(
+    assert any(
                                 expected in ds for ds in affected_datasets
                             ), f"质量问题应该传播到{expected}"
 
@@ -396,7 +396,7 @@ class TestLineageTracking:
                 "facets": {
                     "documentation": {
                         "_producer": "test",
-                        "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/DocumentationJobFacet.json",
+                        "_schemaURL": "https:_/openlineage.io/spec/facets/1-0-0/DocumentationJobFacet.json",
                         "description": "特征工程作业",
                     }
                 },
@@ -441,17 +441,17 @@ class TestLineageTracking:
             await openlineage_client.emit_event(lineage_event)
 
             # 验证事件格式的正确性
-            assert lineage_event["eventType"] in [
+    assert lineage_event["eventType"] in [
                 "START",
                 "RUNNING",
                 "COMPLETE",
                 "ABORT",
                 "FAIL",
             ]
-            assert "eventTime" in lineage_event
-            assert "run" in lineage_event
-            assert "job" in lineage_event
-            assert "producer" in lineage_event
+    assert "eventTime" in lineage_event
+    assert "run" in lineage_event
+    assert "job" in lineage_event
+    assert "producer" in lineage_event
 
         except Exception:
             # 测试环境中可能无法连接到OpenLineage服务
@@ -468,29 +468,29 @@ class TestLineageTracking:
 
                 if viz_data:
                     # 验证可视化数据结构
-                    assert "nodes" in viz_data, "可视化数据应该包含节点信息"
-                    assert "edges" in viz_data, "可视化数据应该包含边信息"
+    assert "nodes" in viz_data, "可视化数据应该包含节点信息"
+    assert "edges" in viz_data, "可视化数据应该包含边信息"
 
                     nodes = viz_data["nodes"]
                     edges = viz_data["edges"]
 
                     # 验证节点信息
                     for node in nodes:
-                        assert "id" in node, "节点应该有ID"
-                        assert "type" in node, "节点应该有类型（dataset/job）"
-                        assert "name" in node, "节点应该有名称"
+    assert "id" in node, "节点应该有ID"
+    assert "type" in node, "节点应该有类型（dataset_job）"
+    assert "name" in node, "节点应该有名称"
 
                     # 验证边信息
                     for edge in edges:
-                        assert "source" in edge, "边应该有源节点"
-                        assert "target" in edge, "边应该有目标节点"
-                        assert "relationship" in edge, "边应该有关系类型"
+    assert "source" in edge, "边应该有源节点"
+    assert "target" in edge, "边应该有目标节点"
+    assert "relationship" in edge, "边应该有关系类型"
 
                     # 验证焦点数据集存在
                     focus_node_exists = any(
                         node["name"] == "gold.predictions" for node in nodes
                     )
-                    assert focus_node_exists, "可视化数据应该包含焦点数据集"
+    assert focus_node_exists, "可视化数据应该包含焦点数据集"
 
         except Exception:
             # 测试环境中可能不支持可视化数据生成
@@ -525,7 +525,7 @@ class TestLineageTracking:
 
         # 验证并发处理结果
         successful_tracks = sum(1 for result in results if result is True)
-        assert successful_tracks >= 3, "并发血缘追踪成功率应该至少60%"
+    assert successful_tracks >= 3, "并发血缘追踪成功率应该至少60%"
 
     @pytest.mark.asyncio
     async def test_lineage_query_performance(self, lineage_tracker):
@@ -548,7 +548,7 @@ class TestLineageTracking:
             query_time = time.time() - start_time
 
             # 性能基准：3个查询应在2秒内完成
-            assert query_time < 2.0, f"血缘查询时间{query_time:.2f}s超过2秒阈值"
+    assert query_time < 2.0, f"血缘查询时间{query_time:.2f}s超过2秒阈值"
 
         except Exception:
             # 测试环境中可能无法执行真实查询
@@ -608,10 +608,10 @@ class TestLineageTracking:
             prediction_lineage = await lineage_tracker.get_lineage("gold.predictions")
             if prediction_lineage and "upstream" in prediction_lineage:
                 upstream_datasets = prediction_lineage["upstream"]
-                assert "silver.clean_matches" in str(
+    assert "silver.clean_matches" in str(
                     upstream_datasets
                 ), "血缘关系应该正确建立"
 
         except Exception as e:
             # 在测试环境中可能无法执行完整的血缘追踪
-            assert isinstance(e, (LineageError, TrackingError, AttributeError))
+    assert isinstance(e, (LineageError, TrackingError, AttributeError))

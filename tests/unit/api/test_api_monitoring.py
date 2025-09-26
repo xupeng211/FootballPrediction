@@ -82,22 +82,22 @@ class TestMonitoringAPI:
         }
 
         with patch("os.getloadavg", return_value=[0.5, 0.7, 0.8]):
-            response = client.get("/api/v1/metrics")
+            response = client.get("_api/v1/metrics")
 
-        assert response.status_code == 200
+    assert response.status_code == 200
         data = response.json()
 
-        assert data["status"] == "ok"
-        assert "response_time_ms" in data
-        assert "system" in data
-        assert "database" in data
-        assert "runtime" in data
-        assert "business" in data
+    assert data["status"] == "ok"
+    assert "response_time_ms" in data
+    assert "system" in data
+    assert "database" in data
+    assert "runtime" in data
+    assert "business" in data
 
         # 验证系统指标
-        assert data["system"]["cpu_percent"] == 15.5
-        assert data["system"]["memory"]["percent"] == 50.0
-        assert data["system"]["disk"]["percent"] == 50.0
+    assert data["system"]["cpu_percent"] == 15.5
+    assert data["system"]["memory"]["percent"] == 50.0
+    assert data["system"]["disk"]["percent"] == 50.0
 
     @patch("src.api.monitoring.psutil")
     def test_get_metrics_with_exception(self, mock_psutil):
@@ -105,17 +105,17 @@ class TestMonitoringAPI:
         # 模拟psutil抛出异常
         mock_psutil.cpu_percent.side_effect = Exception("系统监控错误")
 
-        response = client.get("/api/v1/metrics")
+        response = client.get("_api/v1/metrics")
 
-        assert response.status_code == 200
+    assert response.status_code == 200
         data = response.json()
 
-        assert data["status"] == "error"
-        assert "response_time_ms" in data
-        assert "system" in data
-        assert "database" in data
-        assert "runtime" in data
-        assert "business" in data
+    assert data["status"] == "error"
+    assert "response_time_ms" in data
+    assert "system" in data
+    assert "database" in data
+    assert "runtime" in data
+    assert "business" in data
 
     @pytest.mark.asyncio
     async def test_get_database_metrics_success(self, mock_db_session):
@@ -156,12 +156,12 @@ class TestMonitoringAPI:
 
         result = await _get_database_metrics(mock_db_session)
 
-        assert result["healthy"] is True
-        assert "response_time_ms" in result
-        assert result["statistics"]["teams_count"] == 150
-        assert result["statistics"]["matches_count"] == 800
-        assert result["statistics"]["predictions_count"] == 320
-        assert result["statistics"]["active_connections"] == 5
+    assert result["healthy"] is True
+    assert "response_time_ms" in result
+    assert result["statistics"]["teams_count"] == 150
+    assert result["statistics"]["matches_count"] == 800
+    assert result["statistics"]["predictions_count"] == 320
+    assert result["statistics"]["active_connections"] == 5
 
     @pytest.mark.asyncio
     async def test_get_database_metrics_with_exception(self, mock_db_session):
@@ -171,8 +171,8 @@ class TestMonitoringAPI:
 
         result = await _get_database_metrics(mock_db_session)
 
-        assert result["healthy"] is False
-        assert "error" in result
+    assert result["healthy"] is False
+    assert "error" in result
 
     @pytest.mark.asyncio
     async def test_get_business_metrics_success(self, mock_db_session):
@@ -199,10 +199,10 @@ class TestMonitoringAPI:
 
         result = await _get_business_metrics(mock_db_session)
 
-        assert result["24h_predictions"] == 42
-        assert result["upcoming_matches_7d"] == 15
-        assert result["model_accuracy_30d"] == 87.25
-        assert "last_updated" in result
+    assert result["24h_predictions"] == 42
+    assert result["upcoming_matches_7d"] == 15
+    assert result["model_accuracy_30d"] == 87.25
+    assert "last_updated" in result
 
     @pytest.mark.asyncio
     async def test_get_business_metrics_with_exception(self, mock_db_session):
@@ -213,10 +213,10 @@ class TestMonitoringAPI:
         result = await _get_business_metrics(mock_db_session)
 
         # 验证异常时返回None值，而不是error字段
-        assert result["24h_predictions"] is None
-        assert result["upcoming_matches_7d"] is None
-        assert result["model_accuracy_30d"] is None
-        assert "last_updated" in result
+    assert result["24h_predictions"] is None
+    assert result["upcoming_matches_7d"] is None
+    assert result["model_accuracy_30d"] is None
+    assert "last_updated" in result
 
     def test_get_service_status_all_healthy(self):
         """测试服务状态检查 - 所有服务健康"""
@@ -226,19 +226,19 @@ class TestMonitoringAPI:
             mock_redis_instance.ping.return_value = True
             mock_redis.return_value = mock_redis_instance
 
-            response = client.get("/api/v1/status")
+            response = client.get("_api/v1/status")
 
-        assert response.status_code == 200
+    assert response.status_code == 200
         data = response.json()
 
         # The status logic returns "degraded" if not all services are healthy
         # In test environment, some services might not be available
-        assert data["status"] in ["healthy", "degraded"]
-        assert data["services"]["api"] == "healthy"
-        assert data["services"]["database"] == "healthy"
+    assert data["status"] in ["healthy", "degraded"]
+    assert data["services"]["api"] == "healthy"
+    assert data["services"]["database"] == "healthy"
         # Cache service might be unhealthy in test environment
-        assert data["services"]["cache"] in ["healthy", "unhealthy"]
-        assert "timestamp" in data
+    assert data["services"]["cache"] in ["healthy", "unhealthy"]
+    assert "timestamp" in data
 
     def test_get_service_status_database_unhealthy(self):
         """测试服务状态检查 - 数据库不健康"""
@@ -259,15 +259,15 @@ class TestMonitoringAPI:
         try:
             # 模拟Redis连接失败
             with patch("redis.from_url", side_effect=Exception("Redis连接失败")):
-                response = client.get("/api/v1/status")
+                response = client.get("_api/v1/status")
 
-            assert response.status_code == 200
+    assert response.status_code == 200
             data = response.json()
 
-            assert data["status"] == "degraded"
-            assert data["services"]["api"] == "healthy"
-            assert data["services"]["database"] == "unhealthy"
-            assert data["services"]["cache"] == "unhealthy"
+    assert data["status"] == "degraded"
+    assert data["services"]["api"] == "healthy"
+    assert data["services"]["database"] == "unhealthy"
+    assert data["services"]["cache"] == "unhealthy"
         finally:
             # 恢复原始依赖
             if original_override:
@@ -278,7 +278,7 @@ class TestMonitoringAPI:
     def test_get_service_status_with_custom_redis_url(self):
         """测试服务状态检查 - 自定义Redis URL"""
         # 模拟Redis连接成功，验证使用了自定义URL
-        with patch.dict(os.environ, {"REDIS_URL": "redis://test:6379/0"}), \
+        with patch.dict(os.environ, {"REDIS_URL": "redis:_/test:6379/0"}), \
              patch("src.api.monitoring.redis.from_url") as mock_redis:
             mock_redis_instance = MagicMock()
             mock_redis_instance.ping.return_value = True
@@ -289,18 +289,18 @@ class TestMonitoringAPI:
             # 验证使用了环境变量中的Redis URL
             mock_redis.assert_called_with("redis://test:6379/0")
 
-        assert response.status_code == 200
+    assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
+    assert data["status"] == "healthy"
 
     def test_monitoring_endpoints_registered(self):
         """测试监控端点是否正确注册"""
         # 验证路由是否存在
         routes = [route.path for route in app.routes]
-        assert "/api/v1/metrics" in routes or any(
+    assert "_api/v1/metrics" in routes or any(
             "/metrics" in route for route in routes
         )
-        assert "/api/v1/status" in routes or any("/status" in route for route in routes)
+    assert "/api/v1/status" in routes or any("/status" in route for route in routes)
 
     def test_error_logging(self):
         """测试错误日志记录"""
@@ -320,10 +320,10 @@ class TestMonitoringAPI:
 
         try:
             # 验证响应正常返回
-            response = client.get("/api/v1/status")
-            assert response.status_code == 200
+            response = client.get("_api/v1/status")
+    assert response.status_code == 200
             data = response.json()
-            assert data["services"]["database"] == "unhealthy"
+    assert data["services"]["database"] == "unhealthy"
         finally:
             # 恢复原始依赖
             if original_override:
@@ -340,7 +340,7 @@ class TestMonitoringMetricsStructure:
         with patch("src.api.monitoring.psutil"), patch(
             "src.api.monitoring._get_database_metrics", return_value={}
         ), patch("src.api.monitoring._get_business_metrics", return_value={}):
-            response = client.get("/api/v1/metrics")
+            response = client.get("_api/v1/metrics")
             data = response.json()
 
             # 验证必需字段存在
@@ -353,22 +353,22 @@ class TestMonitoringMetricsStructure:
                 "business",
             ]
             for field in required_fields:
-                assert field in data, f"缺少必需字段: {field}"
+    assert field in data, f"缺少必需字段: {field}"
 
     def test_status_response_structure(self):
         """测试status响应数据结构"""
-        response = client.get("/api/v1/status")
+        response = client.get("_api/v1/status")
         data = response.json()
 
         # 验证必需字段存在
         required_fields = ["status", "timestamp", "services"]
         for field in required_fields:
-            assert field in data, f"缺少必需字段: {field}"
+    assert field in data, f"缺少必需字段: {field}"
 
         # 验证services子字段
         services_fields = ["api", "database", "cache"]
         for field in services_fields:
-            assert field in data["services"], f"services中缺少字段: {field}"
+    assert field in data["services"], f"services中缺少字段: {field}"
 
 
 class TestMonitoringPerformance:
@@ -382,26 +382,26 @@ class TestMonitoringPerformance:
             import time
 
             start_time = time.time()
-            response = client.get("/api/v1/metrics")
+            response = client.get("_api/v1/metrics")
             end_time = time.time()
 
             # 响应时间应该在合理范围内（考虑到mocking，应该很快）
             response_time = (end_time - start_time) * 1000  # 转换为毫秒
-            assert response_time < 1000, f"响应时间过长: {response_time}ms"
+    assert response_time < 1000, f"响应时间过长: {response_time}ms"
 
             # 验证返回的response_time_ms字段存在且为数字
             data = response.json()
             if "response_time_ms" in data:
-                assert isinstance(data["response_time_ms"], (int, float))
+    assert isinstance(data["response_time_ms"], (int, float))
 
     def test_status_response_time(self):
         """测试status端点响应时间合理性"""
 
         start_time = time.time()
-        response = client.get("/api/v1/status")
+        response = client.get("_api/v1/status")
         end_time = time.time()
 
         # 状态检查应该很快
         response_time = (end_time - start_time) * 1000
-        assert response_time < 1000, f"状态检查响应时间过长: {response_time}ms"
-        assert response.status_code == 200
+    assert response_time < 1000, f"状态检查响应时间过长: {response_time}ms"
+    assert response.status_code == 200

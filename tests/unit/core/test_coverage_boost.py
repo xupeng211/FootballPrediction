@@ -132,7 +132,7 @@ async def test_cache_manager_basic():
         mock_redis.return_value = mock_client
 
         manager = RedisManager()
-        assert manager is not None
+    assert manager is not None
 
 
 # 测试数据库连接基本功能
@@ -216,13 +216,13 @@ def test_exception_handling():
     try:
         raise FootballPredictionError("Test error")
     except FootballPredictionError as e:
-        assert str(e) == "Test error"
+    assert str(e) == "Test error"
 
     # 测试数据库异常
     try:
         raise DatabaseError("Database connection failed")
     except DatabaseError as e:
-        assert str(e) == "Database connection failed"
+    assert str(e) == "Database connection failed"
 
 
 # 测试JSON序列化

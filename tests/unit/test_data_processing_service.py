@@ -55,15 +55,15 @@ class TestDataProcessingService:
 
     def test_init_service_name(self, service):
         """测试服务初始化时设置正确的名称"""
-        assert service.name == "DataProcessingService"
+    assert service.name == "DataProcessingService"
 
     def test_init_components_none(self, service):
         """测试初始化时组件为None"""
-        assert service.data_cleaner is None
-        assert service.missing_handler is None
-        assert service.data_lake is None
-        assert service.db_manager is None
-        assert service.cache_manager is None
+    assert service.data_cleaner is None
+    assert service.missing_handler is None
+    assert service.data_lake is None
+    assert service.db_manager is None
+    assert service.cache_manager is None
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, service):
@@ -97,12 +97,12 @@ class TestDataProcessingService:
                         ):
                             result = await service.initialize()
 
-        assert result is True
-        assert service.data_cleaner is not None
-        assert service.missing_handler is not None
-        assert service.data_lake is not None
-        assert service.db_manager is not None
-        assert service.cache_manager is not None
+    assert result is True
+    assert service.data_cleaner is not None
+    assert service.missing_handler is not None
+    assert service.data_lake is not None
+    assert service.db_manager is not None
+    assert service.cache_manager is not None
 
     @pytest.mark.asyncio
     async def test_shutdown_success(self, service):
@@ -137,8 +137,8 @@ class TestDataProcessingService:
 
         result = await service.process_raw_match_data(sample_match_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
         service.data_cleaner.clean_match_data.assert_called_once()
         service.missing_handler.handle_missing_match_data.assert_called_once()
 
@@ -146,7 +146,7 @@ class TestDataProcessingService:
     async def test_process_raw_match_data_invalid_input(self, service):
         """测试处理原始比赛数据 - 无效输入"""
         result = await service.process_raw_match_data(None)
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_success(self, service, sample_odds_data):
@@ -161,8 +161,8 @@ class TestDataProcessingService:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_batch_matches_success(self, service, sample_match_data):
@@ -174,17 +174,17 @@ class TestDataProcessingService:
 
         results = await service.process_batch_matches(match_list)
 
-        assert isinstance(results, list)
-        assert len(results) == 3
-        assert service.process_raw_match_data.call_count == 3
+    assert isinstance(results, list)
+    assert len(results) == 3
+    assert service.process_raw_match_data.call_count == 3
 
     @pytest.mark.asyncio
     async def test_process_batch_matches_empty_list(self, service):
         """测试批量处理比赛数据 - 空列表"""
         results = await service.process_batch_matches([])
 
-        assert isinstance(results, list)
-        assert len(results) == 0
+    assert isinstance(results, list)
+    assert len(results) == 0
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_valid_match(self, service):
@@ -200,9 +200,9 @@ class TestDataProcessingService:
 
         result = await service.validate_data_quality(valid_match_data, "match")
 
-        assert isinstance(result, dict)
-        assert "is_valid" in result
-        assert "issues" in result
+    assert isinstance(result, dict)
+    assert "is_valid" in result
+    assert "issues" in result
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_invalid_match(self, service):
@@ -217,9 +217,9 @@ class TestDataProcessingService:
 
         result = await service.validate_data_quality(invalid_match_data, "match")
 
-        assert isinstance(result, dict)
-        assert "is_valid" in result
-        assert "issues" in result
+    assert isinstance(result, dict)
+    assert "is_valid" in result
+    assert "issues" in result
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_valid_odds(self, service):
@@ -234,9 +234,9 @@ class TestDataProcessingService:
 
         result = await service.validate_data_quality(valid_odds_data, "odds")
 
-        assert isinstance(result, dict)
-        assert "is_valid" in result
-        assert "issues" in result
+    assert isinstance(result, dict)
+    assert "is_valid" in result
+    assert "issues" in result
 
     @pytest.mark.asyncio
     async def test_process_text(self, service):
@@ -245,9 +245,9 @@ class TestDataProcessingService:
 
         result = await service.process_text(text)
 
-        assert isinstance(result, dict)
-        assert "processed_text" in result
-        assert result["processed_text"] == text
+    assert isinstance(result, dict)
+    assert "processed_text" in result
+    assert result["processed_text"] == text
 
     @pytest.mark.asyncio
     async def test_process_batch_data_list(self, service):
@@ -260,8 +260,8 @@ class TestDataProcessingService:
 
         result = await service.process_batch(data_list)
 
-        assert isinstance(result, list)
-        assert len(result) == len(data_list)
+    assert isinstance(result, list)
+    assert len(result) == len(data_list)
 
     @pytest.mark.asyncio
     async def test_get_bronze_layer_status(self, service):
@@ -281,8 +281,8 @@ class TestDataProcessingService:
 
         status = await service.get_bronze_layer_status()
 
-        assert isinstance(status, dict)
-        assert (
+    assert isinstance(status, dict)
+    assert (
             "matches" in status or "total_records" in status or "match_total" in status
         )
 
@@ -290,23 +290,23 @@ class TestDataProcessingService:
         """测试服务继承关系"""
         from src.services.base import BaseService
 
-        assert isinstance(service, BaseService)
+    assert isinstance(service, BaseService)
 
     def test_service_has_required_methods(self, service):
         """测试服务具有必需的方法"""
-        assert hasattr(service, "initialize")
-        assert hasattr(service, "shutdown")
-        assert hasattr(service, "process_raw_match_data")
-        assert hasattr(service, "process_raw_odds_data")
-        assert hasattr(service, "validate_data_quality")
+    assert hasattr(service, "initialize")
+    assert hasattr(service, "shutdown")
+    assert hasattr(service, "process_raw_match_data")
+    assert hasattr(service, "process_raw_odds_data")
+    assert hasattr(service, "validate_data_quality")
 
     def test_service_components_attributes(self, service):
         """测试服务组件属性存在"""
-        assert hasattr(service, "data_cleaner")
-        assert hasattr(service, "missing_handler")
-        assert hasattr(service, "data_lake")
-        assert hasattr(service, "db_manager")
-        assert hasattr(service, "cache_manager")
+    assert hasattr(service, "data_cleaner")
+    assert hasattr(service, "missing_handler")
+    assert hasattr(service, "data_lake")
+    assert hasattr(service, "db_manager")
+    assert hasattr(service, "cache_manager")
 
     @pytest.mark.asyncio
     async def test_process_bronze_to_silver_basic(self, service):
@@ -324,5 +324,5 @@ class TestDataProcessingService:
 
         result = await service.process_bronze_to_silver(batch_size=50)
 
-        assert isinstance(result, dict)
-        assert "processed_matches" in result or "total_processed" in result
+    assert isinstance(result, dict)
+    assert "processed_matches" in result or "total_processed" in result

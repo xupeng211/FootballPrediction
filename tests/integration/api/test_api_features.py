@@ -130,27 +130,27 @@ class TestFeaturesAPI:
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 # 发送请求
-                response = client.get("/api/v1/features/1")
+                response = client.get("_api/v1/features/1")
 
                 # 验证响应
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
-                assert "data" in data
-                assert "match_info" in data["data"]
-                assert "features" in data["data"]
+    assert data["success"] is True
+    assert "data" in data
+    assert "match_info" in data["data"]
+    assert "features" in data["data"]
 
                 # 验证比赛信息
                 match_info = data["data"]["match_info"]
-                assert match_info["match_id"] == 1
-                assert match_info["home_team_id"] == 1
-                assert match_info["away_team_id"] == 2
+    assert match_info["match_id"] == 1
+    assert match_info["home_team_id"] == 1
+    assert match_info["away_team_id"] == 2
 
                 # 验证特征数据
                 features = data["data"]["features"]
-                assert "team_features" in features
-                assert "h2h_features" in features
-                assert "odds_features" in features
+    assert "team_features" in features
+    assert "h2h_features" in features
+    assert "odds_features" in features
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, client):
@@ -165,11 +165,11 @@ class TestFeaturesAPI:
                 mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
-                response = client.get("/api/v1/features/999")
+                response = client.get("_api/v1/features/999")
 
-                assert response.status_code == 404
+    assert response.status_code == 404
                 data = response.json()
-                assert "比赛 999 不存在" in data["detail"]
+    assert "比赛 999 不存在" in data["detail"]
 
     @pytest.mark.asyncio
     async def test_get_team_features_success(self, client, mock_team):
@@ -198,21 +198,21 @@ class TestFeaturesAPI:
                 mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
-                response = client.get("/api/v1/features/teams/1")
+                response = client.get("_api/v1/features/teams/1")
 
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
+    assert data["success"] is True
 
                 # 验证球队信息
                 team_info = data["data"]["team_info"]
-                assert team_info["team_id"] == 1
-                assert team_info["team_name"] == "测试球队"
+    assert team_info["team_id"] == 1
+    assert team_info["team_name"] == "测试球队"
 
                 # 验证特征数据
                 features = data["data"]["features"]
-                assert features["recent_5_wins"] == 3
-                assert features["recent_5_goals_for"] == 8
+    assert features["recent_5_wins"] == 3
+    assert features["recent_5_goals_for"] == 8
 
     @pytest.mark.asyncio
     async def test_get_team_features_with_raw_data(self, client, mock_team):
@@ -242,12 +242,12 @@ class TestFeaturesAPI:
                 mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
-                response = client.get("/api/v1/features/teams/1?include_raw=true")
+                response = client.get("_api/v1/features/teams/1?include_raw=true")
 
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
-                assert "raw_features" in data["data"]
+    assert data["success"] is True
+    assert "raw_features" in data["data"]
 
     @pytest.mark.asyncio
     async def test_calculate_match_features_success(self, client, mock_match):
@@ -268,18 +268,18 @@ class TestFeaturesAPI:
                 mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
-                response = client.post("/api/v1/features/calculate/1")
+                response = client.post("_api/v1/features/calculate/1")
 
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
+    assert data["success"] is True
 
                 result_data = data["data"]
-                assert result_data["match_id"] == 1
-                assert result_data["match_features_stored"] is True
-                assert result_data["home_team_features_stored"] is True
-                assert result_data["away_team_features_stored"] is True
-                assert "calculation_time" in result_data
+    assert result_data["match_id"] == 1
+    assert result_data["match_features_stored"] is True
+    assert result_data["home_team_features_stored"] is True
+    assert result_data["away_team_features_stored"] is True
+    assert "calculation_time" in result_data
 
     @pytest.mark.asyncio
     async def test_calculate_team_features_success(self, client, mock_team):
@@ -299,17 +299,17 @@ class TestFeaturesAPI:
                 mock_session.execute = AsyncMock(return_value=mock_result)
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
-                response = client.post("/api/v1/features/calculate/teams/1")
+                response = client.post("_api/v1/features/calculate/teams/1")
 
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
+    assert data["success"] is True
 
                 result_data = data["data"]
-                assert result_data["team_id"] == 1
-                assert result_data["team_name"] == "测试球队"
-                assert result_data["features_stored"] is True
-                assert "calculation_date" in result_data
+    assert result_data["team_id"] == 1
+    assert result_data["team_name"] == "测试球队"
+    assert result_data["features_stored"] is True
+    assert "calculation_date" in result_data
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_success(self, client):
@@ -326,38 +326,38 @@ class TestFeaturesAPI:
 
             # 发送请求
             response = client.post(
-                "/api/v1/features/batch/calculate",
+                "_api/v1/features/batch/calculate",
                 params={
                     "start_date": "2025-09-10T00:00:00",
                     "end_date": "2025-09-17T00:00:00",
                 },
             )
 
-            assert response.status_code == 200
+    assert response.status_code == 200
             data = response.json()
-            assert data["success"] is True
+    assert data["success"] is True
 
             result_data = data["data"]
-            assert "date_range" in result_data
-            assert result_data["date_range"]["start_date"] == "2025-09-10T00:00:00"
-            assert result_data["date_range"]["end_date"] == "2025-09-17T00:00:00"
-            assert result_data["statistics"] == mock_stats
-            assert "completion_time" in result_data
+    assert "date_range" in result_data
+    assert result_data["date_range"]["start_date"] == "2025-09-10T00:00:00"
+    assert result_data["date_range"]["end_date"] == "2025-09-17T00:00:00"
+    assert result_data["statistics"] == mock_stats
+    assert "completion_time" in result_data
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_invalid_dates(self, client):
         """测试批量计算特征日期无效"""
         response = client.post(
-            "/api/v1/features/batch/calculate",
+            "_api/v1/features/batch/calculate",
             params={
                 "start_date": "2025-09-17T00:00:00",
                 "end_date": "2025-09-10T00:00:00",  # 结束日期早于开始日期
             },
         )
 
-        assert response.status_code == 400
+    assert response.status_code == 400
         data = response.json()
-        assert "开始日期必须早于结束日期" in data["detail"]
+    assert "开始日期必须早于结束日期" in data["detail"]
 
     @pytest.mark.asyncio
     async def test_get_historical_features_success(self, client, mock_match):
@@ -387,19 +387,19 @@ class TestFeaturesAPI:
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get(
-                    "/api/v1/features/historical/1",
+                    "_api/v1/features/historical/1",
                     params={"feature_refs": ["team_recent_performance:recent_5_wins"]},
                 )
 
-                assert response.status_code == 200
+    assert response.status_code == 200
                 data = response.json()
-                assert data["success"] is True
+    assert data["success"] is True
 
                 result_data = data["data"]
-                assert result_data["match_id"] == 1
-                assert result_data["feature_count"] == 5  # DataFrame列数
-                assert result_data["record_count"] == 2  # DataFrame行数
-                assert len(result_data["features"]) == 2  # 转换为records的长度
+    assert result_data["match_id"] == 1
+    assert result_data["feature_count"] == 5  # DataFrame列数
+    assert result_data["record_count"] == 2  # DataFrame行数
+    assert len(result_data["features"]) == 2  # 转换为records的长度
 
     @pytest.mark.asyncio
     async def test_api_error_handling(self, client):
@@ -409,8 +409,8 @@ class TestFeaturesAPI:
             "src.api.features.get_async_session",
             side_effect=Exception("数据库连接错误"),
         ):
-            response = client.get("/api/v1/features/1")
-            assert response.status_code == 500
+            response = client.get("_api/v1/features/1")
+    assert response.status_code == 500
 
         # 测试特征存储错误
         with patch("src.api.features.select"), patch(
@@ -431,22 +431,22 @@ class TestFeaturesAPI:
                 mock_get_session.return_value.__aenter__.return_value = mock_session
 
                 response = client.get("/api/v1/features/1")
-                assert response.status_code == 500
+    assert response.status_code == 500
 
     def test_api_route_registration(self, client):
         """测试API路由注册"""
         # 测试特征相关路由是否正确注册
-        response = client.get("/api/v1/features/1")
+        response = client.get("_api/v1/features/1")
         # 即使返回错误，也说明路由已注册（不是404）
-        assert response.status_code != 404
+    assert response.status_code != 404
 
         response = client.get("/api/v1/features/teams/1")
-        assert response.status_code != 404
+    assert response.status_code != 404
 
         response = client.post("/api/v1/features/calculate/1")
-        assert response.status_code != 404
+    assert response.status_code != 404
 
         response = client.post(
             "/api/v1/features/batch/calculate?start_date=2025-09-10T00:00:00&end_date=2025-09-17T00:00:00"
         )
-        assert response.status_code != 404
+    assert response.status_code != 404

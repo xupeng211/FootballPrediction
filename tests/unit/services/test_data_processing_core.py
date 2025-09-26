@@ -31,9 +31,9 @@ class TestDataProcessingServiceCore:
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
-        assert service is not None
-        assert hasattr(service, "__class__")
-        assert service.name == "DataProcessingService"
+    assert service is not None
+    assert hasattr(service, "__class__")
+    assert service.name == "DataProcessingService"
 
         # 测试基本属性
         try:
@@ -62,7 +62,7 @@ class TestDataProcessingServiceCore:
         for method_name in methods_to_test:
             method = getattr(service, method_name, None)
             if method is not None:
-                assert callable(method)
+    assert callable(method)
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, service):
@@ -92,7 +92,7 @@ class TestDataProcessingServiceCore:
 
                                 result = await service.initialize()
 
-                                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -110,7 +110,7 @@ class TestDataProcessingServiceCore:
                 result = await service.initialize()
 
                 # 应该返回False或处理异常
-                assert result is not None or result is None
+    assert result is not None or result is None
 
         except Exception:
             pass
@@ -127,7 +127,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.cleanup()
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -168,7 +168,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.process_raw_match_data(raw_data)
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -180,7 +180,7 @@ class TestDataProcessingServiceCore:
             result = await service.process_raw_match_data([])
 
             # 应该优雅处理空数据
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -220,7 +220,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.process_raw_odds_data(raw_odds)
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -254,8 +254,8 @@ class TestDataProcessingServiceCore:
 
             result = await service.validate_data_quality(test_data)
 
-            assert result is not None
-            assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
         except Exception:
             pass
@@ -274,10 +274,10 @@ class TestDataProcessingServiceCore:
 
             result = await service.validate_data_quality(problematic_data)
 
-            assert result is not None
+    assert result is not None
             if isinstance(result, dict):
                 # 应该识别出质量问题
-                assert "issues" in result or "completeness" in result
+    assert "issues" in result or "completeness" in result
 
         except Exception:
             pass
@@ -302,7 +302,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.handle_missing_values(data_with_missing)
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -338,7 +338,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.clean_data(dirty_data)
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -362,7 +362,7 @@ class TestDataProcessingServiceCore:
 
             result = await service.store_processed_data(processed_data, "test_table")
 
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -380,7 +380,7 @@ class TestDataProcessingServiceCore:
             result = await service.store_processed_data(processed_data, "test_table")
 
             # 应该优雅处理失败
-            assert result is not None or result is None
+    assert result is not None or result is None
 
         except Exception:
             pass
@@ -391,8 +391,8 @@ class TestDataProcessingServiceCore:
             if hasattr(service, "get_processing_status"):
                 status = service.get_processing_status()
 
-                assert status is not None
-                assert isinstance(status, dict)
+    assert status is not None
+    assert isinstance(status, dict)
 
         except Exception:
             pass
@@ -417,7 +417,7 @@ class TestAsyncProcessing:
 
             if hasattr(service, "process_batch"):
                 result = await service.process_batch(batch_data)
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -434,7 +434,7 @@ class TestAsyncProcessing:
 
             if hasattr(service, "process_concurrent"):
                 result = await service.process_concurrent(tasks)
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -450,7 +450,7 @@ class TestAsyncProcessing:
 
             if hasattr(service, "process_stream"):
                 result = await service.process_stream(mock_data_stream())
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -480,7 +480,7 @@ class TestErrorHandling:
                     failing_process, {"test": "data"}, max_retries=2
                 )
 
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -501,7 +501,7 @@ class TestErrorHandling:
                 [{"match_id": "123", "home_team": "Test", "away_team": "Team"}]
             )
 
-            assert result is not None or True
+    assert result is not None or True
 
         except Exception:
             pass
@@ -520,7 +520,7 @@ class TestErrorHandling:
             result = await service.process_raw_match_data(corrupted_data)
 
             # 应该能够处理或过滤掉损坏的数据
-            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -537,7 +537,7 @@ class TestErrorHandling:
             # 应该能够处理大数据集而不耗尽内存
             if hasattr(service, "process_large_dataset"):
                 result = await service.process_large_dataset(large_dataset)
-                assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -564,10 +564,10 @@ class TestDataQualityMetrics:
             if hasattr(service, "calculate_completeness"):
                 completeness = service.calculate_completeness(test_data)
 
-                assert completeness is not None
-                assert isinstance(completeness, (float, dict))
+    assert completeness is not None
+    assert isinstance(completeness, (float, dict))
                 if isinstance(completeness, float):
-                    assert 0 <= completeness <= 1
+    assert 0 <= completeness <= 1
 
         except Exception:
             pass
@@ -591,8 +591,8 @@ class TestDataQualityMetrics:
             if hasattr(service, "validate_consistency"):
                 consistency_report = service.validate_consistency(test_data)
 
-                assert consistency_report is not None
-                assert isinstance(consistency_report, dict)
+    assert consistency_report is not None
+    assert isinstance(consistency_report, dict)
 
         except Exception:
             pass
@@ -612,8 +612,8 @@ class TestDataQualityMetrics:
             if hasattr(service, "detect_anomalies"):
                 anomalies = service.detect_anomalies(test_data)
 
-                assert anomalies is not None
-                assert isinstance(anomalies, (list, dict))
+    assert anomalies is not None
+    assert isinstance(anomalies, (list, dict))
 
         except Exception:
             pass
@@ -640,8 +640,8 @@ class TestPerformanceOptimization:
             duration = (end_time - start_time).total_seconds()
 
             # 基本性能检查（应该在合理时间内完成）
-            assert duration < 10  # 应该在10秒内完成
-            assert result is not None or True
+    assert duration < 10  # 应该在10秒内完成
+    assert result is not None or True
 
         except Exception:
             pass
@@ -669,8 +669,8 @@ class TestPerformanceOptimization:
                 memory_increase = final_memory - initial_memory
 
                 # 内存增长应该在合理范围内
-                assert memory_increase < 1000  # 不应该增长超过1GB
-                assert result is not None
+    assert memory_increase < 1000  # 不应该增长超过1GB
+    assert result is not None
 
         except Exception:
             pass

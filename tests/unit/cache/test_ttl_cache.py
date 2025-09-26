@@ -44,9 +44,9 @@ class TestCacheEntry:
 
         entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)
 
-        assert entry.value == value
-        assert entry.created_at == created_at
-        assert entry.ttl == ttl
+    assert entry.value == value
+    assert entry.created_at == created_at
+    assert entry.ttl == ttl
 
     def test_cache_entry_without_ttl(self):
         """测试无TTL的缓存条目 / Test cache entry without TTL"""
@@ -55,9 +55,9 @@ class TestCacheEntry:
 
         entry = CacheEntry(value=value, created_at=created_at)
 
-        assert entry.value == value
-        assert entry.created_at == created_at
-        assert entry.ttl is None
+    assert entry.value == value
+    assert entry.created_at == created_at
+    assert entry.ttl is None
 
     def test_cache_entry_is_expired_with_ttl(self):
         """测试带TTL的缓存条目是否过期 / Test if cache entry with TTL is expired"""
@@ -67,7 +67,7 @@ class TestCacheEntry:
 
         entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)
 
-        assert entry.is_expired() is True
+    assert entry.is_expired() is True
 
     def test_cache_entry_is_not_expired_with_ttl(self):
         """测试带TTL的缓存条目未过期 / Test if cache entry with TTL is not expired"""
@@ -77,7 +77,7 @@ class TestCacheEntry:
 
         entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)
 
-        assert entry.is_expired() is False
+    assert entry.is_expired() is False
 
     def test_cache_entry_is_not_expired_without_ttl(self):
         """测试无TTL的缓存条目永不过期 / Test that cache entry without TTL never expires"""
@@ -86,7 +86,7 @@ class TestCacheEntry:
 
         entry = CacheEntry(value=value, created_at=created_at)
 
-        assert entry.is_expired() is False
+    assert entry.is_expired() is False
 
     def test_cache_entry_get_remaining_ttl(self):
         """测试获取缓存条目剩余TTL / Test getting remaining TTL for cache entry"""
@@ -97,9 +97,9 @@ class TestCacheEntry:
         entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)
         remaining_ttl = entry.get_remaining_ttl()
 
-        assert remaining_ttl is not None
-        assert remaining_ttl.total_seconds() > 0
-        assert remaining_ttl.total_seconds() < 180  # 小于3分钟
+    assert remaining_ttl is not None
+    assert remaining_ttl.total_seconds() > 0
+    assert remaining_ttl.total_seconds() < 180  # 小于3分钟
 
     def test_cache_entry_get_remaining_ttl_expired(self):
         """测试获取已过期缓存条目的剩余TTL / Test getting remaining TTL for expired cache entry"""
@@ -110,8 +110,8 @@ class TestCacheEntry:
         entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)
         remaining_ttl = entry.get_remaining_ttl()
 
-        assert remaining_ttl is not None
-        assert remaining_ttl.total_seconds() == 0
+    assert remaining_ttl is not None
+    assert remaining_ttl.total_seconds() == 0
 
     def test_cache_entry_get_remaining_ttl_without_ttl(self):
         """测试获取无TTL缓存条目的剩余TTL / Test getting remaining TTL for cache entry without TTL"""
@@ -121,7 +121,7 @@ class TestCacheEntry:
         entry = CacheEntry(value=value, created_at=created_at)
         remaining_ttl = entry.get_remaining_ttl()
 
-        assert remaining_ttl is None
+    assert remaining_ttl is None
 
 
 class TestTTLCache:
@@ -144,7 +144,7 @@ class TestTTLCache:
         # 获取缓存值
         cached_value = await ttl_cache.get(key)
 
-        assert cached_value == value
+    assert cached_value == value
 
     @pytest.mark.asyncio
     async def test_ttl_cache_get_nonexistent_key(self, ttl_cache):
@@ -154,7 +154,7 @@ class TestTTLCache:
         # 获取不存在的键
         cached_value = await ttl_cache.get(key)
 
-        assert cached_value is None
+    assert cached_value is None
 
     @pytest.mark.asyncio
     async def test_ttl_cache_set_get_with_ttl(self, ttl_cache):
@@ -169,7 +169,7 @@ class TestTTLCache:
         # 立即获取缓存值
         cached_value = await ttl_cache.get(key)
 
-        assert cached_value == value
+    assert cached_value == value
 
     @pytest.mark.asyncio
     async def test_ttl_cache_expiration(self, ttl_cache):
@@ -182,13 +182,13 @@ class TestTTLCache:
         await ttl_cache.set(key, value, ttl=ttl)
 
         # 人为调整创建时间以模拟过期，避免真实等待
-        assert key in ttl_cache._cache
+    assert key in ttl_cache._cache
         ttl_cache._cache[key].created_at -= ttl + timedelta(milliseconds=10)
 
         # 获取过期的缓存值
         cached_value = await ttl_cache.get(key)
 
-        assert cached_value is None
+    assert cached_value is None
 
     @pytest.mark.asyncio
     async def test_ttl_cache_delete(self, ttl_cache):
@@ -202,11 +202,11 @@ class TestTTLCache:
         # 删除缓存值
         result = await ttl_cache.delete(key)
 
-        assert result is True
+    assert result is True
 
         # 验证缓存值已删除
         cached_value = await ttl_cache.get(key)
-        assert cached_value is None
+    assert cached_value is None
 
     @pytest.mark.asyncio
     async def test_ttl_cache_delete_nonexistent_key(self, ttl_cache):
@@ -216,7 +216,7 @@ class TestTTLCache:
         # 删除不存在的键
         result = await ttl_cache.delete(key)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_ttl_cache_clear(self, ttl_cache):
@@ -230,9 +230,9 @@ class TestTTLCache:
         await ttl_cache.clear()
 
         # 验证所有缓存值已清空
-        assert await ttl_cache.get("key1") is None
-        assert await ttl_cache.get("key2") is None
-        assert await ttl_cache.get("key3") is None
+    assert await ttl_cache.get("key1") is None
+    assert await ttl_cache.get("key2") is None
+    assert await ttl_cache.get("key3") is None
 
     @pytest.mark.asyncio
     async def test_ttl_cache_eviction_lru(self, ttl_cache):
@@ -250,7 +250,7 @@ class TestTTLCache:
 
         # 验证缓存状态
         stats = await small_cache.get_stats()
-        assert stats["total_entries"] <= 3
+    assert stats["total_entries"] <= 3
 
     @pytest.mark.asyncio
     async def test_ttl_cache_get_stats(self, ttl_cache):
@@ -261,16 +261,16 @@ class TestTTLCache:
 
         # 设置带TTL的缓存值并等待过期
         await ttl_cache.set("key3", "value3", ttl=timedelta(milliseconds=10))
-        assert "key3" in ttl_cache._cache
+    assert "key3" in ttl_cache._cache
         ttl_cache._cache["key3"].created_at -= timedelta(milliseconds=20)
 
         # 获取统计信息
         stats = await ttl_cache.get_stats()
 
-        assert stats["total_entries"] >= 0
-        assert stats["max_size"] == 100
-        assert isinstance(stats["active_entries"], int)
-        assert isinstance(stats["expired_entries"], int)
+    assert stats["total_entries"] >= 0
+    assert stats["max_size"] == 100
+    assert isinstance(stats["active_entries"], int)
+    assert isinstance(stats["expired_entries"], int)
 
     @pytest.mark.asyncio
     async def test_ttl_cache_thread_safety(self, ttl_cache):
@@ -294,4 +294,4 @@ class TestTTLCache:
         results = await asyncio.gather(*tasks)
 
         # 验证所有任务都成功
-        assert all(results)
+    assert all(results)

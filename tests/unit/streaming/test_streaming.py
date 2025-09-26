@@ -480,30 +480,30 @@ class TestStreamConfig:
         """测试配置初始化"""
         config = StreamConfig()
 
-        assert config.kafka_config is not None
-        assert config.kafka_config.bootstrap_servers is not None
-        assert config.topics is not None
-        assert "matches-stream" in config.topics
-        assert "odds-stream" in config.topics
-        assert "scores-stream" in config.topics
+    assert config.kafka_config is not None
+    assert config.kafka_config.bootstrap_servers is not None
+    assert config.topics is not None
+    assert "matches-stream" in config.topics
+    assert "odds-stream" in config.topics
+    assert "scores-stream" in config.topics
 
     def test_producer_config(self):
         """测试生产者配置"""
         config = StreamConfig()
         producer_config = config.get_producer_config()
 
-        assert "bootstrap.servers" in producer_config
-        assert "client.id" in producer_config
-        assert "acks" in producer_config
+    assert "bootstrap.servers" in producer_config
+    assert "client.id" in producer_config
+    assert "acks" in producer_config
 
     def test_consumer_config(self):
         """测试消费者配置"""
         config = StreamConfig()
         consumer_config = config.get_consumer_config()
 
-        assert "bootstrap.servers" in consumer_config
-        assert "group.id" in consumer_config
-        assert "auto.offset.reset" in consumer_config
+    assert "bootstrap.servers" in consumer_config
+    assert "group.id" in consumer_config
+    assert "auto.offset.reset" in consumer_config
 
 
 class TestFootballKafkaProducer:
@@ -527,8 +527,8 @@ class TestFootballKafkaProducer:
         producer = FootballKafkaProducer(self.config)
         producer._create_producer()  # 手动触发创建
 
-        assert producer.config == self.config
-        assert isinstance(producer.producer, FakeKafkaProducer)
+    assert producer.config == self.config
+    assert isinstance(producer.producer, FakeKafkaProducer)
 
     @pytest.mark.asyncio
     async def test_send_match_data(self):
@@ -545,10 +545,10 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is True
-        assert len(producer.producer.messages) == 1
+    assert result is True
+    assert len(producer.producer.messages) == 1
         sent_message = json.loads(producer.producer.messages[0]["value"])
-        assert sent_message["data"]["match_id"] == 12345
+    assert sent_message["data"]["match_id"] == 12345
 
     @pytest.mark.asyncio
     async def test_send_odds_data(self):
@@ -565,10 +565,10 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_odds_data(odds_data)
 
-        assert result is True
-        assert len(producer.producer.messages) == 1
+    assert result is True
+    assert len(producer.producer.messages) == 1
         sent_message = json.loads(producer.producer.messages[0]["value"])
-        assert sent_message["data"]["bookmaker"] == "Test Bookmaker"
+    assert sent_message["data"]["bookmaker"] == "Test Bookmaker"
 
     @pytest.mark.asyncio
     async def test_send_scores_data(self):
@@ -585,10 +585,10 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_scores_data(scores_data)
 
-        assert result is True
-        assert len(producer.producer.messages) == 1
+    assert result is True
+    assert len(producer.producer.messages) == 1
         sent_message = json.loads(producer.producer.messages[0]["value"])
-        assert sent_message["data"]["home_score"] == 2
+    assert sent_message["data"]["home_score"] == 2
 
     @pytest.mark.asyncio
     async def test_producer_error_handling(self):
@@ -601,7 +601,7 @@ class TestFootballKafkaProducer:
             producer.producer, "produce", side_effect=Exception("Kafka Error")
         ):
             result = await producer.send_match_data({"match_id": 12345})
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_batch_send(self):
@@ -612,9 +612,9 @@ class TestFootballKafkaProducer:
 
         results = await producer.send_batch(batch_data, "match")
 
-        assert results["success"] == 3
-        assert results["failed"] == 0
-        assert len(producer.producer.messages) == 3
+    assert results["success"] == 3
+    assert results["failed"] == 0
+    assert len(producer.producer.messages) == 3
 
     @pytest.mark.asyncio
     async def test_producer_failure_handling(self):
@@ -638,28 +638,28 @@ class TestFootballKafkaProducer:
         result = await producer.send_match_data(match_data)
 
         # 验证失败处理：应返回False而不是抛出异常
-        assert result is False
-        assert len(producer.producer.messages) == 0  # 没有消息被存储
-        assert producer.producer.failure_count == 1  # 记录了失败次数
+    assert result is False
+    assert len(producer.producer.messages) == 0  # 没有消息被存储
+    assert producer.producer.failure_count == 1  # 记录了失败次数
 
         # 测试批量发送失败
         batch_data = [{"match_id": i} for i in range(3)]
         batch_results = await producer.send_batch(batch_data, "match")
 
         # 验证批量失败处理
-        assert batch_results["success"] == 0
-        assert batch_results["failed"] == 3
-        assert producer.producer.failure_count == 4  # 1 + 3 = 4次失败
+    assert batch_results["success"] == 0
+    assert batch_results["failed"] == 3
+    assert producer.producer.failure_count == 4  # 1 + 3 = 4次失败
 
         # 测试flush在失败模式下的行为
         remaining = producer.producer.flush(10.0)
-        assert remaining == 4  # 返回失败数量
+    assert remaining == 4  # 返回失败数量
 
         # 恢复正常模式并验证
         producer.producer.set_failure_mode(False)
         result = await producer.send_match_data({"match_id": 99999})
-        assert result is True
-        assert len(producer.producer.messages) == 1  # 现在有了成功的消息
+    assert result is True
+    assert len(producer.producer.messages) == 1  # 现在有了成功的消息
 
 
 class TestFootballKafkaConsumer:
@@ -682,8 +682,8 @@ class TestFootballKafkaConsumer:
         consumer = FootballKafkaConsumer(self.config)
         consumer._create_consumer()  # 手动触发
 
-        assert consumer.config == self.config
-        assert isinstance(consumer.consumer, FakeKafkaConsumer)
+    assert consumer.config == self.config
+    assert isinstance(consumer.consumer, FakeKafkaConsumer)
 
     @pytest.mark.asyncio
     @patch("src.streaming.kafka_consumer.DatabaseManager")
@@ -717,7 +717,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_match_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
 
@@ -752,7 +752,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_odds_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
 
@@ -787,7 +787,7 @@ class TestFootballKafkaConsumer:
 
         result = await consumer._process_scores_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
 
@@ -818,8 +818,8 @@ class TestFootballKafkaConsumer:
             mock_process.return_value = True
             results = await consumer.consume_batch(batch_size=2, timeout=1.0)
 
-            assert results["processed"] == 2
-            assert mock_process.call_count == 2
+    assert results["processed"] == 2
+    assert mock_process.call_count == 2
 
     @pytest.mark.asyncio
     async def test_consumer_error_handling(self):
@@ -834,8 +834,8 @@ class TestFootballKafkaConsumer:
 
         results = await consumer.consume_batch(batch_size=1, timeout=1.0)
 
-        assert results["failed"] == 1
-        assert results["processed"] == 0
+    assert results["failed"] == 1
+    assert results["processed"] == 0
 
     @pytest.mark.asyncio
     async def test_consumer_error_simulation(self):
@@ -874,8 +874,8 @@ class TestFootballKafkaConsumer:
             results = await consumer.consume_batch(batch_size=5, timeout=2.0)
 
             # 应该有部分成功和部分失败
-            assert results["processed"] >= 1  # 至少处理了一条正常消息
-            assert results["failed"] >= 1  # 至少有一条错误
+    assert results["processed"] >= 1  # 至少处理了一条正常消息
+    assert results["failed"] >= 1  # 至少有一条错误
 
         # 恢复正常模式
         consumer.consumer.set_error_mode(False)
@@ -891,9 +891,9 @@ class TestStreamProcessor:
     def test_stream_processor_initialization(self):
         """测试流处理器初始化"""
         processor = StreamProcessor(self.config)
-        assert processor.config == self.config
-        assert processor.producer is None  # 初始化时为None，惰性创建
-        assert processor.consumer is None  # 初始化时为None，惰性创建
+    assert processor.config == self.config
+    assert processor.producer is None  # 初始化时为None，惰性创建
+    assert processor.consumer is None  # 初始化时为None，惰性创建
 
     @pytest.mark.asyncio
     async def test_send_data(self):
@@ -908,7 +908,7 @@ class TestStreamProcessor:
             processor = StreamProcessor(self.config)
             result = await processor.send_data({"match_id": 12345}, "match")
 
-            assert result is True
+    assert result is True
             mock_producer.send_match_data.assert_called_once_with({"match_id": 12345})
 
     def test_consume_data(self):
@@ -926,7 +926,7 @@ class TestStreamProcessor:
             processor = StreamProcessor(self.config)
             results = processor.consume_data(timeout=1.0, max_messages=10)
 
-            assert results["processed"] == 1
+    assert results["processed"] == 1
             mock_consumer.subscribe_all_topics.assert_called_once()
 
     @pytest.mark.asyncio
@@ -936,9 +936,9 @@ class TestStreamProcessor:
 
         # 测试未初始化状态
         health_status = await processor.health_check()
-        assert health_status["producer_status"] == "not_initialized"
-        assert health_status["consumer_status"] == "not_initialized"
-        assert health_status["kafka_connection"] is False
+    assert health_status["producer_status"] == "not_initialized"
+    assert health_status["consumer_status"] == "not_initialized"
+    assert health_status["kafka_connection"] is False
 
         # 测试已初始化状态
         with patch(
@@ -951,8 +951,8 @@ class TestStreamProcessor:
             processor._initialize_producer()  # 手动初始化
             health_status = await processor.health_check()
 
-            assert health_status["producer_status"] == "healthy"
-            assert health_status["consumer_status"] == "not_initialized"
+    assert health_status["producer_status"] == "healthy"
+    assert health_status["consumer_status"] == "not_initialized"
 
 
 class TestStreamProcessorManager:
@@ -967,8 +967,8 @@ class TestStreamProcessorManager:
         """测试管理器初始化"""
         manager = StreamProcessorManager(self.config, num_processors=3)
 
-        assert len(manager.processors) == 3
-        assert mock_processor_class.call_count == 3
+    assert len(manager.processors) == 3
+    assert mock_processor_class.call_count == 3
 
     @patch("src.streaming.stream_processor.StreamProcessor")
     def test_start_all_processors(self, mock_processor_class):
@@ -985,7 +985,7 @@ class TestStreamProcessorManager:
         manager = StreamProcessorManager(self.config, num_processors=2)
         result = manager.start_all()
 
-        assert result is True
+    assert result is True
         # 验证每个处理器的 start 方法都被调用了一次
         for mock_processor in mock_processors:
             mock_processor.start.assert_called_once()
@@ -1005,7 +1005,7 @@ class TestStreamProcessorManager:
         manager = StreamProcessorManager(self.config, num_processors=2)
         result = manager.stop_all()
 
-        assert result is True
+    assert result is True
         # 验证每个处理器的 stop_processing 方法都被调用了一次
         for mock_processor in mock_processors:
             mock_processor.stop_processing.assert_called_once()
@@ -1028,7 +1028,7 @@ class TestStreamingDataCollector:
 
         collector = StreamingDataCollector()
 
-        assert collector.kafka_producer is not None
+    assert collector.kafka_producer is not None
         mock_producer_class.assert_called_once()
 
     @pytest.mark.asyncio
@@ -1069,8 +1069,8 @@ class TestStreamingDataCollector:
                 league_id=39, season=2024
             )
 
-            assert results.status == "success"
-            assert len(results.collected_data) == 1
+    assert results.status == "success"
+    assert len(results.collected_data) == 1
             mock_base_collect.assert_called_once_with(league_id=39, season=2024)
 
     @pytest.mark.asyncio
@@ -1109,8 +1109,8 @@ class TestStreamingDataCollector:
 
             results = await collector.collect_odds_with_streaming(fixture_id=12345)
 
-            assert results.status == "success"
-            assert len(results.collected_data) == 1
+    assert results.status == "success"
+    assert len(results.collected_data) == 1
             mock_base_collect.assert_called_once_with(fixture_id=12345)
 
     @pytest.mark.asyncio
@@ -1151,8 +1151,8 @@ class TestStreamingDataCollector:
 
             results = await collector.collect_live_scores_with_streaming()
 
-            assert results.status == "success"
-            assert len(results.collected_data) == 1
+    assert results.status == "success"
+    assert len(results.collected_data) == 1
             mock_base_collect.assert_called_once_with()
 
 
@@ -1172,8 +1172,8 @@ class TestKafkaIntegration:
             producer = FootballKafkaProducer(config)
             test_data = {"match_id": 12345, "home_team": "Team A"}
             result = await producer.send_match_data(test_data)
-            assert result is True
-            assert len(producer.producer.messages) == 1
+    assert result is True
+    assert len(producer.producer.messages) == 1
 
             # 2. 消费者接收并处理消息
             consumer = FootballKafkaConsumer(config)
@@ -1202,8 +1202,8 @@ class TestKafkaIntegration:
 
         # 验证消息内容格式正确
         message_content = json.loads(sent_message["value"])
-        assert "data_type" in message_content
-        assert "data" in message_content
+    assert "data_type" in message_content
+    assert "data" in message_content
 
         # 手动添加缺失的字段到消息中
         if "data_type" not in message_content:
@@ -1214,7 +1214,7 @@ class TestKafkaIntegration:
 
         # 消费并验证
         results = await consumer.consume_batch(batch_size=1)
-        assert results["processed"] == 1
+    assert results["processed"] == 1
         # 验证session的调用
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -1230,9 +1230,9 @@ class TestKafkaIntegration:
                 "decimal_value": Decimal("2.50"),
             }
             serialized = producer._serialize_data(test_data)
-            assert isinstance(serialized, str)
+    assert isinstance(serialized, str)
             deserialized = json.loads(serialized)
-            assert "match_id" in deserialized
+    assert "match_id" in deserialized
 
     @pytest.mark.asyncio
     async def test_async_processing(self):
@@ -1242,7 +1242,7 @@ class TestKafkaIntegration:
             producer = FootballKafkaProducer(config)
             batch_data = [{"match_id": i} for i in range(5)]
             results = await producer.send_batch(batch_data, "match")
-            assert results["success"] == 5
+    assert results["success"] == 5
 
 
 if __name__ == "__main__":

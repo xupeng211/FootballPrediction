@@ -71,7 +71,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_raw_match_data(sample_match_data)
 
-        assert result is not None
+    assert result is not None
         service.data_cleaner.clean_match_data.assert_called_once_with(sample_match_data)
 
     @pytest.mark.asyncio
@@ -82,14 +82,14 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_raw_match_data(match_list)
 
-        assert result is not None
+    assert result is not None
         service.data_cleaner.clean_match_data.assert_called_once_with(sample_match_data)
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_with_none(self, service):
         """测试 process_raw_match_data 处理 None"""
         result = await service.process_raw_match_data(None)
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_async(self, service, sample_odds_data):
@@ -98,8 +98,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result is not None
-        assert isinstance(result, list)
+    assert result is not None
+    assert isinstance(result, list)
         service.data_cleaner.clean_odds_data.assert_called_once_with(sample_odds_data)
 
     @pytest.mark.asyncio
@@ -113,8 +113,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.validate_data_quality(sample_match_data, "match_data")
 
-        assert result is not None
-        assert "quality_score" in result
+    assert result is not None
+    assert "quality_score" in result
         service.quality_monitor.validate.assert_called_once_with(sample_match_data, "match_data")
 
     @pytest.mark.asyncio
@@ -132,8 +132,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_bronze_to_silver(bronze_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_batch_process_datasets_async(self, service, sample_match_data, sample_odds_data):
@@ -148,8 +148,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.batch_process_datasets(batch_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_batch_matches_async(self, service, sample_match_data):
@@ -160,8 +160,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_batch_matches(matches)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_features_data_async(self, service):
@@ -172,8 +172,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_features_data(features_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_large_dataset_async(self, service, sample_match_data):
@@ -184,8 +184,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_large_dataset(large_dataset)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_with_retry_async(self, service, sample_match_data):
@@ -194,7 +194,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_with_retry(sample_match_data, max_retries=3)
 
-        assert result is not None
+    assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_text_async(self, service):
@@ -203,49 +203,49 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_text(text_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     # === 服务生命周期方法测试 ===
 
     def test_initialize(self, service):
         """测试服务初始化"""
         result = service.initialize()
-        assert result is None  # 通常初始化方法返回 None
+    assert result is None  # 通常初始化方法返回 None
 
     def test_start(self, service):
         """测试服务启动"""
         result = service.start()
-        assert result is None
+    assert result is None
 
     def test_stop(self, service):
         """测试服务停止"""
         result = service.stop()
-        assert result is None
+    assert result is None
 
     def test_shutdown(self, service):
         """测试服务关闭"""
         result = service.shutdown()
-        assert result is None
+    assert result is None
 
     def test_cleanup(self, service):
         """测试清理资源"""
         result = service.cleanup()
-        assert result is None
+    assert result is None
 
     # === 状态检查方法测试 ===
 
     def test_get_status(self, service):
         """测试获取服务状态"""
         result = service.get_status()
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     def test_get_bronze_layer_status(self, service):
         """测试获取 Bronze 层状态"""
         result = service.get_bronze_layer_status()
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     # === 缓存相关方法测试 ===
 
@@ -259,7 +259,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.cache_processing_results(cache_key, results)
 
-        assert result is True
+    assert result is True
         service.cache_manager.set.assert_called_once()
 
     @pytest.mark.asyncio
@@ -272,7 +272,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.get_cached_results(cache_key)
 
-        assert result == cached_data
+    assert result == cached_data
         service.cache_manager.get.assert_called_once_with(cache_key)
 
     # === 异常检测方法测试 ===
@@ -286,8 +286,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.detect_anomalies(data)
 
-        assert result is not None
-        assert isinstance(result, list)
+    assert result is not None
+    assert isinstance(result, list)
 
     # === 性能监控方法测试 ===
 
@@ -296,8 +296,8 @@ class TestDataProcessingServiceCoverage:
         """测试收集性能指标"""
         result = await service.collect_performance_metrics()
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     # === 数据存储方法测试 ===
 
@@ -311,7 +311,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.store_processed_data(data, table_name)
 
-        assert result is True
+    assert result is True
         service.data_lake.save_historical_data.assert_called_once_with(table_name, data)
 
     # === 缺失数据处理方法测试 ===
@@ -326,7 +326,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.handle_missing_scores(data)
 
-        assert result is not None
+    assert result is not None
         service.data_cleaner._validate_score.assert_called()
 
     @pytest.mark.asyncio
@@ -339,7 +339,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.handle_missing_team_data(data)
 
-        assert result is not None
+    assert result is not None
         service.missing_handler.handle_missing_match_data.assert_called_once_with(data)
 
     # === 错误处理测试 ===
@@ -352,7 +352,7 @@ class TestDataProcessingServiceCoverage:
         result = await service.process_raw_match_data(sample_match_data)
 
         # 应该返回 None 或错误处理结果
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_with_exception(self, service, sample_odds_data):
@@ -361,7 +361,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result is not None  # 通常返回空列表或错误处理结果
+    assert result is not None  # 通常返回空列表或错误处理结果
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_with_exception(self, service, sample_match_data):
@@ -370,8 +370,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.validate_data_quality(sample_match_data, "match_data")
 
-        assert result is not None
-        assert "quality_score" in result  # 应该包含默认质量分数
+    assert result is not None
+    assert "quality_score" in result  # 应该包含默认质量分数
 
     # === 边界条件测试 ===
 
@@ -379,7 +379,7 @@ class TestDataProcessingServiceCoverage:
     async def test_process_empty_list(self, service):
         """测试处理空列表"""
         result = await service.process_raw_match_data([])
-        assert result is not None
+    assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_large_dataset_performance(self, service, sample_match_data):
@@ -393,8 +393,8 @@ class TestDataProcessingServiceCoverage:
         result = await service.process_large_dataset(large_dataset)
         end_time = time.time()
 
-        assert result is not None
-        assert end_time - start_time < 10.0  # 应该在10秒内完成
+    assert result is not None
+    assert end_time - start_time < 10.0  # 应该在10秒内完成
 
     # === 数据类型转换测试 ===
 
@@ -412,7 +412,7 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.process_raw_match_data(string_data)
 
-        assert result is not None
+    assert result is not None
 
     # === 数据完整性验证测试 ===
 
@@ -428,8 +428,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.validate_data_quality(sample_match_data, "match_data")
 
-        assert result["is_valid"] is True
-        assert result["integrity_check"] is True
+    assert result["is_valid"] is True
+    assert result["integrity_check"] is True
 
     # === 批量处理优化测试 ===
 
@@ -442,8 +442,8 @@ class TestDataProcessingServiceCoverage:
 
         result = await service.batch_process_datasets({"matches": batch_data})
 
-        assert result is not None
-        assert "processed_count" in result
+    assert result is not None
+    assert "processed_count" in result
 
     # === 内存使用测试 ===
 
@@ -466,7 +466,7 @@ class TestDataProcessingServiceCoverage:
         memory_increase = final_memory - initial_memory
 
         # 内存增长应该在合理范围内
-        assert memory_increase < 50 * 1024 * 1024  # 小于50MB
+    assert memory_increase < 50 * 1024 * 1024  # 小于50MB
 
     # === 并发处理测试 ===
 
@@ -484,5 +484,5 @@ class TestDataProcessingServiceCoverage:
         # 等待所有任务完成
         results = await asyncio.gather(*tasks)
 
-        assert len(results) == 10
-        assert all(result is not None for result in results)
+    assert len(results) == 10
+    assert all(result is not None for result in results)

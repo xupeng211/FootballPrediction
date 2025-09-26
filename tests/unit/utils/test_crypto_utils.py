@@ -21,9 +21,9 @@ def test_hash_and_verify_password_fallback():
     with patch("src.utils.crypto_utils.HAS_BCRYPT", False):
         salt = "testsalt"
         hashed = CryptoUtils.hash_password("secret", salt=salt)
-        assert hashed.startswith("$2b$12$")
-        assert CryptoUtils.verify_password("secret", hashed)
-        assert not CryptoUtils.verify_password("wrong", hashed)
+    assert hashed.startswith("$2b$12$")
+    assert CryptoUtils.verify_password("secret", hashed)
+    assert not CryptoUtils.verify_password("wrong", hashed)
 
 
 def test_generate_token_and_salt():

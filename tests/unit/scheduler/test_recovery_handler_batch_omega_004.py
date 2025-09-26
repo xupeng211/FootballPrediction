@@ -61,20 +61,20 @@ class TestRecoveryHandlerBatchOmega004:
     def test_recovery_handler_initialization(self, recovery_handler):
         """测试 RecoveryHandler 初始化"""
         # 检查基本属性
-        assert recovery_handler.failure_history == []
-        assert recovery_handler.failure_patterns == {}
-        assert recovery_handler.alert_handlers == []
+    assert recovery_handler.failure_history == []
+    assert recovery_handler.failure_patterns == {}
+    assert recovery_handler.alert_handlers == []
 
         # 检查统计信息
-        assert recovery_handler.total_failures == 0
-        assert recovery_handler.successful_recoveries == 0
-        assert recovery_handler.failed_recoveries == 0
+    assert recovery_handler.total_failures == 0
+    assert recovery_handler.successful_recoveries == 0
+    assert recovery_handler.failed_recoveries == 0
 
         # 检查恢复配置
-        assert len(recovery_handler.recovery_configs) == 6
-        assert FailureType.TIMEOUT in recovery_handler.recovery_configs
-        assert FailureType.CONNECTION_ERROR in recovery_handler.recovery_configs
-        assert FailureType.DATA_ERROR in recovery_handler.recovery_configs
+    assert len(recovery_handler.recovery_configs) == 6
+    assert FailureType.TIMEOUT in recovery_handler.recovery_configs
+    assert FailureType.CONNECTION_ERROR in recovery_handler.recovery_configs
+    assert FailureType.DATA_ERROR in recovery_handler.recovery_configs
 
     def test_task_failure_initialization(self):
         """测试 TaskFailure 初始化"""
@@ -90,13 +90,13 @@ class TestRecoveryHandlerBatchOmega004:
             context=context
         )
 
-        assert failure.task_id == "test_task_001"
-        assert failure.failure_time == failure_time
-        assert failure.failure_type == FailureType.TIMEOUT
-        assert failure.error_message == "Task timeout"
-        assert failure.retry_count == 1
-        assert failure.context == context
-        assert failure.recovery_attempts == []
+    assert failure.task_id == "test_task_001"
+    assert failure.failure_time == failure_time
+    assert failure.failure_type == FailureType.TIMEOUT
+    assert failure.error_message == "Task timeout"
+    assert failure.retry_count == 1
+    assert failure.context == context
+    assert failure.recovery_attempts == []
 
     def test_task_failure_add_recovery_attempt(self):
         """测试 TaskFailure 添加恢复尝试记录"""
@@ -115,12 +115,12 @@ class TestRecoveryHandlerBatchOmega004:
             details="立即重试成功"
         )
 
-        assert len(failure.recovery_attempts) == 1
+    assert len(failure.recovery_attempts) == 1
         attempt = failure.recovery_attempts[0]
-        assert attempt["strategy"] == RecoveryStrategy.IMMEDIATE_RETRY.value
-        assert attempt["success"] is True
-        assert attempt["attempt_time"] == attempt_time.isoformat()
-        assert attempt["details"] == "立即重试成功"
+    assert attempt["strategy"] == RecoveryStrategy.IMMEDIATE_RETRY.value
+    assert attempt["success"] is True
+    assert attempt["attempt_time"] == attempt_time.isoformat()
+    assert attempt["details"] == "立即重试成功"
 
     def test_task_failure_to_dict(self):
         """测试 TaskFailure 转换为字典"""
@@ -143,84 +143,84 @@ class TestRecoveryHandlerBatchOmega004:
         )
 
         result_dict = failure.to_dict()
-        assert result_dict["task_id"] == "test_task_001"
-        assert result_dict["failure_time"] == failure_time.isoformat()
-        assert result_dict["failure_type"] == FailureType.TIMEOUT.value
-        assert result_dict["error_message"] == "Task timeout"
-        assert result_dict["retry_count"] == 1
-        assert result_dict["context"] == {"task_name": "测试任务"}
-        assert len(result_dict["recovery_attempts"]) == 1
+    assert result_dict["task_id"] == "test_task_001"
+    assert result_dict["failure_time"] == failure_time.isoformat()
+    assert result_dict["failure_type"] == FailureType.TIMEOUT.value
+    assert result_dict["error_message"] == "Task timeout"
+    assert result_dict["retry_count"] == 1
+    assert result_dict["context"] == {"task_name": "测试任务"}
+    assert len(result_dict["recovery_attempts"]) == 1
 
     def test_failure_type_enum(self):
         """测试 FailureType 枚举"""
-        assert FailureType.TIMEOUT.value == "timeout"
-        assert FailureType.CONNECTION_ERROR.value == "connection_error"
-        assert FailureType.DATA_ERROR.value == "data_error"
-        assert FailureType.RESOURCE_ERROR.value == "resource_error"
-        assert FailureType.PERMISSION_ERROR.value == "permission_error"
-        assert FailureType.UNKNOWN_ERROR.value == "unknown_error"
+    assert FailureType.TIMEOUT.value == "timeout"
+    assert FailureType.CONNECTION_ERROR.value == "connection_error"
+    assert FailureType.DATA_ERROR.value == "data_error"
+    assert FailureType.RESOURCE_ERROR.value == "resource_error"
+    assert FailureType.PERMISSION_ERROR.value == "permission_error"
+    assert FailureType.UNKNOWN_ERROR.value == "unknown_error"
 
     def test_recovery_strategy_enum(self):
         """测试 RecoveryStrategy 枚举"""
-        assert RecoveryStrategy.IMMEDIATE_RETRY.value == "immediate_retry"
-        assert RecoveryStrategy.EXPONENTIAL_BACKOFF.value == "exponential_backoff"
-        assert RecoveryStrategy.FIXED_DELAY.value == "fixed_delay"
-        assert RecoveryStrategy.MANUAL_INTERVENTION.value == "manual_intervention"
-        assert RecoveryStrategy.SKIP_AND_CONTINUE.value == "skip_and_continue"
+    assert RecoveryStrategy.IMMEDIATE_RETRY.value == "immediate_retry"
+    assert RecoveryStrategy.EXPONENTIAL_BACKOFF.value == "exponential_backoff"
+    assert RecoveryStrategy.FIXED_DELAY.value == "fixed_delay"
+    assert RecoveryStrategy.MANUAL_INTERVENTION.value == "manual_intervention"
+    assert RecoveryStrategy.SKIP_AND_CONTINUE.value == "skip_and_continue"
 
     def test_classify_failure_timeout(self, recovery_handler):
         """测试分类超时失败"""
-        assert recovery_handler._classify_failure("Task timeout") == FailureType.TIMEOUT
-        assert recovery_handler._classify_failure("time out") == FailureType.TIMEOUT
-        assert recovery_handler._classify_failure("任务超时") == FailureType.TIMEOUT
+    assert recovery_handler._classify_failure("Task timeout") == FailureType.TIMEOUT
+    assert recovery_handler._classify_failure("time out") == FailureType.TIMEOUT
+    assert recovery_handler._classify_failure("任务超时") == FailureType.TIMEOUT
 
     def test_classify_failure_connection_error(self, recovery_handler):
         """测试分类连接错误"""
-        assert recovery_handler._classify_failure("Connection failed") == FailureType.CONNECTION_ERROR
-        assert recovery_handler._classify_failure("Network unreachable") == FailureType.CONNECTION_ERROR
-        assert recovery_handler._classify_failure("连接失败") == FailureType.CONNECTION_ERROR
-        assert recovery_handler._classify_failure("网络错误") == FailureType.CONNECTION_ERROR
+    assert recovery_handler._classify_failure("Connection failed") == FailureType.CONNECTION_ERROR
+    assert recovery_handler._classify_failure("Network unreachable") == FailureType.CONNECTION_ERROR
+    assert recovery_handler._classify_failure("连接失败") == FailureType.CONNECTION_ERROR
+    assert recovery_handler._classify_failure("网络错误") == FailureType.CONNECTION_ERROR
 
     def test_classify_failure_data_error(self, recovery_handler):
         """测试分类数据错误"""
-        assert recovery_handler._classify_failure("Data parse error") == FailureType.DATA_ERROR
-        assert recovery_handler._classify_failure("Invalid JSON format") == FailureType.DATA_ERROR
-        assert recovery_handler._classify_failure("数据格式错误") == FailureType.DATA_ERROR
+    assert recovery_handler._classify_failure("Data parse error") == FailureType.DATA_ERROR
+    assert recovery_handler._classify_failure("Invalid JSON format") == FailureType.DATA_ERROR
+    assert recovery_handler._classify_failure("数据格式错误") == FailureType.DATA_ERROR
 
     def test_classify_failure_resource_error(self, recovery_handler):
         """测试分类资源错误"""
-        assert recovery_handler._classify_failure("Memory allocation failed") == FailureType.RESOURCE_ERROR
-        assert recovery_handler._classify_failure("Disk space full") == FailureType.RESOURCE_ERROR
-        assert recovery_handler._classify_failure("内存不足") == FailureType.RESOURCE_ERROR
+    assert recovery_handler._classify_failure("Memory allocation failed") == FailureType.RESOURCE_ERROR
+    assert recovery_handler._classify_failure("Disk space full") == FailureType.RESOURCE_ERROR
+    assert recovery_handler._classify_failure("内存不足") == FailureType.RESOURCE_ERROR
 
     def test_classify_failure_permission_error(self, recovery_handler):
         """测试分类权限错误"""
-        assert recovery_handler._classify_failure("Permission denied") == FailureType.PERMISSION_ERROR
-        assert recovery_handler._classify_failure("Access forbidden") == FailureType.PERMISSION_ERROR
-        assert recovery_handler._classify_failure("权限不足") == FailureType.PERMISSION_ERROR
+    assert recovery_handler._classify_failure("Permission denied") == FailureType.PERMISSION_ERROR
+    assert recovery_handler._classify_failure("Access forbidden") == FailureType.PERMISSION_ERROR
+    assert recovery_handler._classify_failure("权限不足") == FailureType.PERMISSION_ERROR
 
     def test_classify_failure_unknown(self, recovery_handler):
         """测试分类未知错误"""
-        assert recovery_handler._classify_failure("Unknown error") == FailureType.UNKNOWN_ERROR
-        assert recovery_handler._classify_failure("Something went wrong") == FailureType.UNKNOWN_ERROR
+    assert recovery_handler._classify_failure("Unknown error") == FailureType.UNKNOWN_ERROR
+    assert recovery_handler._classify_failure("Something went wrong") == FailureType.UNKNOWN_ERROR
 
     def test_update_failure_patterns(self, recovery_handler):
         """测试更新失败模式"""
         # 第一次失败
         recovery_handler._update_failure_patterns("task_001", FailureType.TIMEOUT)
-        assert len(recovery_handler.failure_patterns["task_001"]) == 1
-        assert recovery_handler.failure_patterns["task_001"][0] == FailureType.TIMEOUT
+    assert len(recovery_handler.failure_patterns["task_001"]) == 1
+    assert recovery_handler.failure_patterns["task_001"][0] == FailureType.TIMEOUT
 
         # 第二次失败
         recovery_handler._update_failure_patterns("task_001", FailureType.CONNECTION_ERROR)
-        assert len(recovery_handler.failure_patterns["task_001"]) == 2
+    assert len(recovery_handler.failure_patterns["task_001"]) == 2
 
         # 测试超过10条记录的情况
         for i in range(12):
             recovery_handler._update_failure_patterns("task_001", FailureType.DATA_ERROR)
 
         # 应该只保留最近10条
-        assert len(recovery_handler.failure_patterns["task_001"]) == 10
+    assert len(recovery_handler.failure_patterns["task_001"]) == 10
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_handle_task_failure_success(self, mock_datetime, recovery_handler, mock_task):
@@ -237,17 +237,17 @@ class TestRecoveryHandlerBatchOmega004:
 
             result = recovery_handler.handle_task_failure(mock_task, "Task timeout")
 
-            assert result is True
-            assert recovery_handler.total_failures == 1
-            assert recovery_handler.successful_recoveries == 1
-            assert recovery_handler.failed_recoveries == 0
-            assert len(recovery_handler.failure_history) == 1
+    assert result is True
+    assert recovery_handler.total_failures == 1
+    assert recovery_handler.successful_recoveries == 1
+    assert recovery_handler.failed_recoveries == 0
+    assert len(recovery_handler.failure_history) == 1
 
             # 验证失败记录
             failure = recovery_handler.failure_history[0]
-            assert failure.task_id == mock_task.task_id
-            assert failure.failure_type == FailureType.TIMEOUT
-            assert failure.error_message == "Task timeout"
+    assert failure.task_id == mock_task.task_id
+    assert failure.failure_type == FailureType.TIMEOUT
+    assert failure.error_message == "Task timeout"
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_handle_task_failure_with_exception(self, mock_datetime, recovery_handler, mock_task):
@@ -260,10 +260,10 @@ class TestRecoveryHandlerBatchOmega004:
 
             result = recovery_handler.handle_task_failure(mock_task, "Task timeout")
 
-            assert result is False
-            assert recovery_handler.total_failures == 0
-            assert recovery_handler.successful_recoveries == 0
-            assert recovery_handler.failed_recoveries == 0
+    assert result is False
+    assert recovery_handler.total_failures == 0
+    assert recovery_handler.successful_recoveries == 0
+    assert recovery_handler.failed_recoveries == 0
 
     def test_execute_recovery_strategy_immediate_retry(self, recovery_handler, mock_task, sample_failure):
         """测试执行立即重试策略"""
@@ -274,7 +274,7 @@ class TestRecoveryHandlerBatchOmega004:
 
             result = recovery_handler._execute_recovery_strategy(mock_task, sample_failure)
 
-            assert result is True
+    assert result is True
             mock_retry.assert_called_once_with(mock_task, sample_failure, recovery_handler.recovery_configs[FailureType.CONNECTION_ERROR])
 
     def test_execute_recovery_strategy_unknown_strategy(self, recovery_handler, mock_task, sample_failure):
@@ -290,7 +290,7 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._execute_recovery_strategy(mock_task, sample_failure)
 
-        assert result is False
+    assert result is False
 
         # 恢复原始配置
         recovery_handler.recovery_configs[FailureType.TIMEOUT] = original_config
@@ -303,9 +303,9 @@ class TestRecoveryHandlerBatchOmega004:
 
             result = recovery_handler._execute_recovery_strategy(mock_task, sample_failure)
 
-            assert result is False
-            assert len(sample_failure.recovery_attempts) == 1
-            assert sample_failure.recovery_attempts[0]["success"] is False
+    assert result is False
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is False
 
     def test_immediate_retry_success(self, recovery_handler, mock_task, sample_failure):
         """测试立即重试成功"""
@@ -313,11 +313,11 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._immediate_retry(mock_task, sample_failure, config)
 
-        assert result is True
-        assert mock_task.next_run_time is not None
-        assert mock_task.retry_count == 1
-        assert len(sample_failure.recovery_attempts) == 1
-        assert sample_failure.recovery_attempts[0]["success"] is True
+    assert result is True
+    assert mock_task.next_run_time is not None
+    assert mock_task.retry_count == 1
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is True
 
     def test_immediate_retry_max_retries_exceeded(self, recovery_handler, mock_task, sample_failure):
         """测试立即重试超过最大重试次数"""
@@ -326,10 +326,10 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._immediate_retry(mock_task, sample_failure, config)
 
-        assert result is False
-        assert mock_task.retry_count == 3  # 重试次数不应改变
-        assert len(sample_failure.recovery_attempts) == 1
-        assert sample_failure.recovery_attempts[0]["success"] is False
+    assert result is False
+    assert mock_task.retry_count == 3  # 重试次数不应改变
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is False
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_exponential_backoff_retry_success(self, mock_datetime, recovery_handler, mock_task, sample_failure):
@@ -346,11 +346,11 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._exponential_backoff_retry(mock_task, sample_failure, config)
 
-        assert result is True
-        assert mock_task.retry_count == 1
-        assert mock_task.next_run_time == mock_now + timedelta(seconds=60)  # 60 * (2.0^0) = 60
-        assert len(sample_failure.recovery_attempts) == 1
-        assert sample_failure.recovery_attempts[0]["success"] is True
+    assert result is True
+    assert mock_task.retry_count == 1
+    assert mock_task.next_run_time == mock_now + timedelta(seconds=60)  # 60 * (2.0^0) = 60
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is True
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_exponential_backoff_retry_with_max_delay(self, mock_datetime, recovery_handler, mock_task, sample_failure):
@@ -368,9 +368,9 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._exponential_backoff_retry(mock_task, sample_failure, config)
 
-        assert result is True
+    assert result is True
         # 60 * (2.0^3) = 480, 但应该限制为300
-        assert mock_task.next_run_time == mock_now + timedelta(seconds=300)
+    assert mock_task.next_run_time == mock_now + timedelta(seconds=300)
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_fixed_delay_retry_success(self, mock_datetime, recovery_handler, mock_task, sample_failure):
@@ -382,11 +382,11 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._fixed_delay_retry(mock_task, sample_failure, config)
 
-        assert result is True
-        assert mock_task.retry_count == 1
-        assert mock_task.next_run_time == mock_now + timedelta(seconds=120)
-        assert len(sample_failure.recovery_attempts) == 1
-        assert sample_failure.recovery_attempts[0]["success"] is True
+    assert result is True
+    assert mock_task.retry_count == 1
+    assert mock_task.next_run_time == mock_now + timedelta(seconds=120)
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is True
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_request_manual_intervention_success(self, mock_datetime, recovery_handler, mock_task, sample_failure):
@@ -399,17 +399,17 @@ class TestRecoveryHandlerBatchOmega004:
         with patch.object(recovery_handler, '_send_alert') as mock_send_alert:
             result = recovery_handler._request_manual_intervention(mock_task, sample_failure, config)
 
-            assert result is True
+    assert result is True
             # 检查任务被暂停（下次执行时间设置为一年后）
             expected_next_time = mock_now + timedelta(days=365)
-            assert mock_task.next_run_time == expected_next_time
-            assert len(sample_failure.recovery_attempts) == 1
-            assert sample_failure.recovery_attempts[0]["success"] is True
+    assert mock_task.next_run_time == expected_next_time
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is True
 
             # 验证发送了紧急告警
             mock_send_alert.assert_called_once()
             call_args = mock_send_alert.call_args
-            assert call_args[1]["level"] == "CRITICAL"
+    assert call_args[1]["level"] == "CRITICAL"
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_skip_and_continue_success(self, mock_datetime, recovery_handler, mock_task, sample_failure):
@@ -421,11 +421,11 @@ class TestRecoveryHandlerBatchOmega004:
 
         result = recovery_handler._skip_and_continue(mock_task, sample_failure, config)
 
-        assert result is True
-        assert mock_task.retry_count == 0  # 重置为0
-        assert mock_task._update_next_run_time.called  # 应该被调用
-        assert len(sample_failure.recovery_attempts) == 1
-        assert sample_failure.recovery_attempts[0]["success"] is True
+    assert result is True
+    assert mock_task.retry_count == 0  # 重置为0
+    assert mock_task._update_next_run_time.called  # 应该被调用
+    assert len(sample_failure.recovery_attempts) == 1
+    assert sample_failure.recovery_attempts[0]["success"] is True
 
     def test_check_and_send_alerts_threshold_reached(self, recovery_handler, mock_task, sample_failure):
         """测试检查并发送告警（达到阈值）"""
@@ -470,7 +470,7 @@ class TestRecoveryHandlerBatchOmega004:
             # 应该发送告警
             mock_send_alert.assert_called_once()
             call_args = mock_send_alert.call_args
-            assert call_args[1]["level"] == "HIGH"
+    assert call_args[1]["level"] == "HIGH"
 
     def test_check_failure_patterns_no_repeated_failures(self, recovery_handler):
         """测试检查失败模式（无重复失败）"""
@@ -530,13 +530,13 @@ class TestRecoveryHandlerBatchOmega004:
         )
 
         # 验证告警处理器被调用
-        assert len(mock_calls) == 1
+    assert len(mock_calls) == 1
         call_args = mock_calls[0]
-        assert call_args["level"] == "WARNING"
-        assert call_args["message"] == "Test alert"
-        assert call_args["details"] == {"key": "value"}
-        assert call_args["timestamp"] == mock_now.isoformat()
-        assert call_args["component"] == "scheduler"
+    assert call_args["level"] == "WARNING"
+    assert call_args["message"] == "Test alert"
+    assert call_args["details"] == {"key": "value"}
+    assert call_args["timestamp"] == mock_now.isoformat()
+    assert call_args["component"] == "scheduler"
 
     def test_send_alert_handler_exception(self, recovery_handler):
         """测试告警处理器异常"""
@@ -559,21 +559,21 @@ class TestRecoveryHandlerBatchOmega004:
 
         recovery_handler.register_alert_handler(mock_handler)
 
-        assert len(recovery_handler.alert_handlers) == 1
-        assert recovery_handler.alert_handlers[0] == mock_handler
+    assert len(recovery_handler.alert_handlers) == 1
+    assert recovery_handler.alert_handlers[0] == mock_handler
 
     def test_get_failure_statistics_empty(self, recovery_handler):
         """测试获取失败统计信息（空状态）"""
         stats = recovery_handler.get_failure_statistics()
 
-        assert stats["total_failures"] == 0
-        assert stats["successful_recoveries"] == 0
-        assert stats["failed_recoveries"] == 0
-        assert stats["recovery_success_rate"] == 0.0
-        assert stats["failure_by_type"] == {}
-        assert stats["failure_by_task"] == {}
-        assert stats["recent_24h_failures"] == 0
-        assert stats["failure_patterns"] == {}
+    assert stats["total_failures"] == 0
+    assert stats["successful_recoveries"] == 0
+    assert stats["failed_recoveries"] == 0
+    assert stats["recovery_success_rate"] == 0.0
+    assert stats["failure_by_type"] == {}
+    assert stats["failure_by_task"] == {}
+    assert stats["recent_24h_failures"] == 0
+    assert stats["failure_patterns"] == {}
 
     def test_get_failure_statistics_with_data(self, recovery_handler, sample_failure):
         """测试获取失败统计信息（有数据）"""
@@ -586,14 +586,14 @@ class TestRecoveryHandlerBatchOmega004:
 
         stats = recovery_handler.get_failure_statistics()
 
-        assert stats["total_failures"] == 1
-        assert stats["successful_recoveries"] == 1
-        assert stats["failed_recoveries"] == 0
-        assert stats["recovery_success_rate"] == 100.0
-        assert stats["failure_by_type"] == {"timeout": 1}
-        assert stats["failure_by_task"] == {sample_failure.task_id: 1}
-        assert stats["recent_24h_failures"] == 1
-        assert stats["failure_patterns"] == {sample_failure.task_id: ["timeout"]}
+    assert stats["total_failures"] == 1
+    assert stats["successful_recoveries"] == 1
+    assert stats["failed_recoveries"] == 0
+    assert stats["recovery_success_rate"] == 100.0
+    assert stats["failure_by_type"] == {"timeout": 1}
+    assert stats["failure_by_task"] == {sample_failure.task_id: 1}
+    assert stats["recent_24h_failures"] == 1
+    assert stats["failure_patterns"] == {sample_failure.task_id: ["timeout"]}
 
     def test_get_recent_failures(self, recovery_handler, sample_failure):
         """测试获取最近的失败记录"""
@@ -602,9 +602,9 @@ class TestRecoveryHandlerBatchOmega004:
 
         recent_failures = recovery_handler.get_recent_failures(limit=10)
 
-        assert len(recent_failures) == 1
-        assert recent_failures[0]["task_id"] == sample_failure.task_id
-        assert recent_failures[0]["failure_type"] == sample_failure.failure_type.value
+    assert len(recent_failures) == 1
+    assert recent_failures[0]["task_id"] == sample_failure.task_id
+    assert recent_failures[0]["failure_type"] == sample_failure.failure_type.value
 
     def test_get_recent_failures_with_limit(self, recovery_handler):
         """测试获取最近的失败记录（有限制）"""
@@ -623,11 +623,11 @@ class TestRecoveryHandlerBatchOmega004:
 
         recent_failures = recovery_handler.get_recent_failures(limit=3)
 
-        assert len(recent_failures) == 3
+    assert len(recent_failures) == 3
         # 应该按时间倒序排列
-        assert recent_failures[0]["task_id"] == "task_000"
-        assert recent_failures[1]["task_id"] == "task_001"
-        assert recent_failures[2]["task_id"] == "task_002"
+    assert recent_failures[0]["task_id"] == "task_000"
+    assert recent_failures[1]["task_id"] == "task_001"
+    assert recent_failures[2]["task_id"] == "task_002"
 
     @patch('src.scheduler.recovery_handler.datetime')
     def test_clear_old_failures(self, mock_datetime, recovery_handler):
@@ -654,9 +654,9 @@ class TestRecoveryHandlerBatchOmega004:
 
         cleared_count = recovery_handler.clear_old_failures(days_to_keep=30)
 
-        assert cleared_count == 1
-        assert len(recovery_handler.failure_history) == 1
-        assert recovery_handler.failure_history[0].task_id == "new_task"
+    assert cleared_count == 1
+    assert len(recovery_handler.failure_history) == 1
+    assert recovery_handler.failure_history[0].task_id == "new_task"
 
     def test_clear_old_failures_no_old_records(self, recovery_handler):
         """测试清理旧的失败记录（无旧记录）"""
@@ -671,8 +671,8 @@ class TestRecoveryHandlerBatchOmega004:
 
         cleared_count = recovery_handler.clear_old_failures(days_to_keep=30)
 
-        assert cleared_count == 0
-        assert len(recovery_handler.failure_history) == 1
+    assert cleared_count == 0
+    assert len(recovery_handler.failure_history) == 1
 
     def test_edge_case_empty_recovery_configs(self, recovery_handler):
         """测试边界情况：空的恢复配置"""
@@ -681,7 +681,7 @@ class TestRecoveryHandlerBatchOmega004:
 
         # 应该能正常处理空配置
         result = recovery_handler._classify_failure("Unknown error")
-        assert result == FailureType.UNKNOWN_ERROR
+    assert result == FailureType.UNKNOWN_ERROR
 
         # 恢复原始配置
         recovery_handler.recovery_configs = original_configs
@@ -693,8 +693,8 @@ class TestRecoveryHandlerBatchOmega004:
         config = {"max_retries": 5}
         result = recovery_handler._immediate_retry(mock_task, sample_failure, config)
 
-        assert result is False
-        assert sample_failure.recovery_attempts[0]["details"] == "已达到最大重试次数: 5"
+    assert result is False
+    assert sample_failure.recovery_attempts[0]["details"] == "已达到最大重试次数: 5"
 
     def test_edge_case_negative_delay_calculation(self, recovery_handler, mock_task, sample_failure):
         """测试边界情况：负延迟计算"""
@@ -708,7 +708,7 @@ class TestRecoveryHandlerBatchOmega004:
         # 应该能处理负延迟（虽然不应该在实际使用中出现）
         result = recovery_handler._exponential_backoff_retry(mock_task, sample_failure, config)
 
-        assert result is True
+    assert result is True
 
     def test_integration_complete_failure_handling_workflow(self, recovery_handler, mock_task):
         """测试集成：完整的失败处理工作流"""
@@ -726,14 +726,14 @@ class TestRecoveryHandlerBatchOmega004:
 
             result = recovery_handler.handle_task_failure(mock_task, "Connection timeout")
 
-            assert result is True
-            assert recovery_handler.total_failures == 1
-            assert recovery_handler.successful_recoveries == 1
-            assert len(recovery_handler.failure_history) == 1
+    assert result is True
+    assert recovery_handler.total_failures == 1
+    assert recovery_handler.successful_recoveries == 1
+    assert len(recovery_handler.failure_history) == 1
 
             # 验证失败分类
             failure = recovery_handler.failure_history[0]
-            assert failure.failure_type == FailureType.TIMEOUT
+    assert failure.failure_type == FailureType.TIMEOUT
 
     def test_integration_statistics_after_multiple_failures(self, recovery_handler, mock_task):
         """测试集成：多次失败后的统计"""
@@ -744,9 +744,9 @@ class TestRecoveryHandlerBatchOmega004:
 
         stats = recovery_handler.get_failure_statistics()
 
-        assert stats["total_failures"] == 3
-        assert stats["recovery_success_rate"] >= 0.0  # 验证计算成功，不关心具体值
-        assert len(stats["failure_by_task"]) == 3
+    assert stats["total_failures"] == 3
+    assert stats["recovery_success_rate"] >= 0.0  # 验证计算成功，不关心具体值
+    assert len(stats["failure_by_task"]) == 3
 
     def test_integration_alert_handler_registration_and_execution(self, recovery_handler):
         """测试集成：告警处理器注册和执行"""
@@ -768,8 +768,8 @@ class TestRecoveryHandlerBatchOmega004:
         recovery_handler._send_alert("WARNING", "Test alert", {})
 
         # 两个处理器都应该被调用
-        assert len(calls1) == 1
-        assert len(calls2) == 1
+    assert len(calls1) == 1
+    assert len(calls2) == 1
 
     def test_error_handling_invalid_task_attributes(self, recovery_handler):
         """测试错误处理：无效的任务属性"""
@@ -789,12 +789,12 @@ class TestRecoveryHandlerBatchOmega004:
         """测试配置验证：恢复配置"""
         # 验证所有失败类型都有配置
         for failure_type in FailureType:
-            assert failure_type in recovery_handler.recovery_configs
+    assert failure_type in recovery_handler.recovery_configs
 
             config = recovery_handler.recovery_configs[failure_type]
-            assert "strategy" in config
-            assert "max_retries" in config
-            assert "alert_threshold" in config
+    assert "strategy" in config
+    assert "max_retries" in config
+    assert "alert_threshold" in config
 
     def test_memory_usage_large_failure_history(self, recovery_handler):
         """测试内存使用：大量失败历史"""
@@ -811,8 +811,8 @@ class TestRecoveryHandlerBatchOmega004:
 
         # 应该能处理大量数据
         stats = recovery_handler.get_failure_statistics()
-        assert stats["total_failures"] == 1000
+    assert stats["total_failures"] == 1000
 
         # 清理应该正常工作
         cleared_count = recovery_handler.clear_old_failures(days_to_keep=1)
-        assert cleared_count > 0
+    assert cleared_count > 0

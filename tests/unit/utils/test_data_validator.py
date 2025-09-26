@@ -21,7 +21,7 @@ def test_validate_data_types():
 
 
 def test_sanitize_input_removes_dangerous_chars():
-    text = "<script>alert('x')</script>" + "A" * 2000
+    text = "<script>alert('x')<_script>" + "A" * 2000
     sanitized = DataValidator.sanitize_input(text)
     assert "<" not in sanitized and ">" not in sanitized
     assert len(sanitized) == 1000  # truncated to limit

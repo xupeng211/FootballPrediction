@@ -60,10 +60,10 @@ class TestModelTrainingPipeline:
         print("🧪 测试训练管道初始化...")
 
         # 测试基本属性
-        assert hasattr(pipeline, 'model_type')
-        assert hasattr(pipeline, 'experiment_name')
-        assert hasattr(pipeline, 'tracking_uri')
-        assert hasattr(pipeline, 'model_registry')
+    assert hasattr(pipeline, 'model_type')
+    assert hasattr(pipeline, 'experiment_name')
+    assert hasattr(pipeline, 'tracking_uri')
+    assert hasattr(pipeline, 'model_registry')
 
         print("✅ 训练管道初始化测试通过")
 
@@ -74,16 +74,16 @@ class TestModelTrainingPipeline:
         # 测试默认配置
         config = pipeline.get_default_config()
 
-        assert isinstance(config, dict)
-        assert 'model_params' in config
-        assert 'training_params' in config
-        assert 'evaluation_params' in config
+    assert isinstance(config, dict)
+    assert 'model_params' in config
+    assert 'training_params' in config
+    assert 'evaluation_params' in config
 
         # 验证配置结构
         model_params = config['model_params']
-        assert 'n_estimators' in model_params
-        assert 'max_depth' in model_params
-        assert 'learning_rate' in model_params
+    assert 'n_estimators' in model_params
+    assert 'max_depth' in model_params
+    assert 'learning_rate' in model_params
 
         print("✅ 模型配置加载测试通过")
 
@@ -105,10 +105,10 @@ class TestModelTrainingPipeline:
 
             prepared_data = await pipeline.prepare_training_data()
 
-            assert prepared_data is not None
-            assert 'features' in prepared_data
-            assert 'target' in prepared_data
-            assert len(prepared_data['features']) == len(prepared_data['target'])
+    assert prepared_data is not None
+    assert 'features' in prepared_data
+    assert 'target' in prepared_data
+    assert len(prepared_data['features']) == len(prepared_data['target'])
 
         print("✅ 数据准备测试通过")
 
@@ -138,10 +138,10 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.train_model(training_data)
 
-            assert result is not None
-            assert result['model_id'] == 'model_v1'
-            assert result['accuracy'] == 0.85
-            assert 'training_time' in result
+    assert result is not None
+    assert result['model_id'] == 'model_v1'
+    assert result['accuracy'] == 0.85
+    assert 'training_time' in result
 
         print("✅ 模型训练执行测试通过")
 
@@ -169,10 +169,10 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.optimize_hyperparameters()
 
-            assert result is not None
-            assert result['best_params'] == best_params
-            assert 'best_score' in result
-            assert 'optimization_time' in result
+    assert result is not None
+    assert result['best_params'] == best_params
+    assert 'best_score' in result
+    assert 'optimization_time' in result
 
         print("✅ 超参数优化测试通过")
 
@@ -199,12 +199,12 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.evaluate_model(y_true, y_pred)
 
-            assert result is not None
-            assert 'accuracy' in result
-            assert 'precision' in result
-            assert 'recall' in result
-            assert 'f1_score' in result
-            assert result['accuracy'] == 0.75
+    assert result is not None
+    assert 'accuracy' in result
+    assert 'precision' in result
+    assert 'recall' in result
+    assert 'f1_score' in result
+    assert result['accuracy'] == 0.75
 
         print("✅ 模型评估测试通过")
 
@@ -235,7 +235,7 @@ class TestModelTrainingPipeline:
                 artifacts={'model': 'model.pkl'}
             )
 
-            assert run_info is not None
+    assert run_info is not None
             mock_client.log_param.assert_called()
             mock_client.log_metric.assert_called()
 
@@ -249,7 +249,7 @@ class TestModelTrainingPipeline:
         model_info = {
             'model_name': 'football_prediction',
             'model_version': 'v1.0',
-            'model_path': '/tmp/model.pkl',
+            'model_path': '_tmp/model.pkl',
             'metrics': {'accuracy': 0.85},
             'params': {'n_estimators': 100}
         }
@@ -260,9 +260,9 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.register_model(model_info)
 
-            assert result is not None
-            assert result['model_name'] == 'football_prediction'
-            assert result['model_version'] == 'v1.0'
+    assert result is not None
+    assert result['model_name'] == 'football_prediction'
+    assert result['model_version'] == 'v1.0'
 
         print("✅ 模型注册表操作测试通过")
 
@@ -284,10 +284,10 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.get_training_features()
 
-            assert result is not None
-            assert 'feature_view' in result
-            assert 'features' in result
-            assert 'data' in result
+    assert result is not None
+    assert 'feature_view' in result
+    assert 'features' in result
+    assert 'data' in result
 
         print("✅ 特征存储集成测试通过")
 
@@ -310,10 +310,10 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.validate_model()
 
-            assert result is not None
-            assert 'cross_validation_score' in result
-            assert 'overfitting_detected' in result
-            assert result['overfitting_detected'] is False
+    assert result is not None
+    assert 'cross_validation_score' in result
+    assert 'overfitting_detected' in result
+    assert result['overfitting_detected'] is False
 
         print("✅ 模型验证测试通过")
 
@@ -337,9 +337,9 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.check_deployment_readiness()
 
-            assert result is not None
-            assert result['overall_readiness'] is True
-            assert all(result.values())
+    assert result is not None
+    assert result['overall_readiness'] is True
+    assert all(result.values())
 
         print("✅ 模型部署就绪性检查测试通过")
 
@@ -352,9 +352,9 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.train_model({})
 
-            assert result is not None
-            assert 'error' in result
-            assert 'Data loading failed' in result['error']
+    assert result is not None
+    assert 'error' in result
+    assert 'Data loading failed' in result['error']
 
         print("✅ 训练错误处理测试通过")
 
@@ -378,10 +378,10 @@ class TestModelTrainingPipeline:
 
             result = await pipeline.get_model_versions()
 
-            assert result is not None
-            assert 'current_version' in result
-            assert 'version_history' in result
-            assert len(result['version_history']) == 2
+    assert result is not None
+    assert 'current_version' in result
+    assert 'version_history' in result
+    assert len(result['version_history']) == 2
 
         print("✅ 模型版本管理测试通过")
 
@@ -404,11 +404,11 @@ class TestModelTrainingPipeline:
 
         # 测试有效配置
         is_valid = pipeline.validate_config(valid_config)
-        assert is_valid is True
+    assert is_valid is True
 
         # 测试无效配置
         is_valid = pipeline.validate_config(invalid_config)
-        assert is_valid is False
+    assert is_valid is False
 
         print("✅ 训练配置验证测试通过")
 

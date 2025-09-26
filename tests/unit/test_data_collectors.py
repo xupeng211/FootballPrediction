@@ -32,14 +32,14 @@ class TestCollectionResult:
             collected_data=[{"id": 1}, {"id": 2}],
         )
 
-        assert result.data_source == "test_api"
-        assert result.collection_type == "fixtures"
-        assert result.records_collected == 10
-        assert result.success_count == 8
-        assert result.error_count == 2
-        assert result.status == "partial"
-        assert result.error_message == "Some records failed"
-        assert len(result.collected_data) == 2
+    assert result.data_source == "test_api"
+    assert result.collection_type == "fixtures"
+    assert result.records_collected == 10
+    assert result.success_count == 8
+    assert result.error_count == 2
+    assert result.status == "partial"
+    assert result.error_message == "Some records failed"
+    assert len(result.collected_data) == 2
 
     def test_collection_result_success(self):
         """测试成功的采集结果"""
@@ -52,9 +52,9 @@ class TestCollectionResult:
             status="success",
         )
 
-        assert result.status == "success"
-        assert result.error_count == 0
-        assert result.error_message is None
+    assert result.status == "success"
+    assert result.error_count == 0
+    assert result.error_message is None
 
     def test_collection_result_failure(self):
         """测试失败的采集结果"""
@@ -68,9 +68,9 @@ class TestCollectionResult:
             error_message="API connection timeout",
         )
 
-        assert result.status == "failed"
-        assert result.records_collected == 0
-        assert result.error_message == "API connection timeout"
+    assert result.status == "failed"
+    assert result.records_collected == 0
+    assert result.error_message == "API connection timeout"
 
 
 class MockDataCollector(DataCollector):
@@ -135,43 +135,43 @@ class TestDataCollector:
 
     def test_data_collector_initialization(self, mock_collector):
         """测试数据收集器初始化"""
-        assert mock_collector.data_source == "test_api"
-        assert mock_collector.max_retries == 2
-        assert mock_collector.retry_delay == 1
-        assert hasattr(mock_collector, "logger")
+    assert mock_collector.data_source == "test_api"
+    assert mock_collector.max_retries == 2
+    assert mock_collector.retry_delay == 1
+    assert hasattr(mock_collector, "logger")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures(self, mock_collector):
         """测试赛程数据采集"""
         result = await mock_collector.collect_fixtures()
 
-        assert isinstance(result, CollectionResult)
-        assert result.collection_type == "fixtures"
-        assert result.status == "success"
-        assert result.records_collected == 3
-        assert len(result.collected_data) == 3
+    assert isinstance(result, CollectionResult)
+    assert result.collection_type == "fixtures"
+    assert result.status == "success"
+    assert result.records_collected == 3
+    assert len(result.collected_data) == 3
 
     @pytest.mark.asyncio
     async def test_collect_odds(self, mock_collector):
         """测试赔率数据采集"""
         result = await mock_collector.collect_odds()
 
-        assert isinstance(result, CollectionResult)
-        assert result.collection_type == "odds"
-        assert result.status == "success"
-        assert result.records_collected == 2
-        assert len(result.collected_data) == 2
+    assert isinstance(result, CollectionResult)
+    assert result.collection_type == "odds"
+    assert result.status == "success"
+    assert result.records_collected == 2
+    assert len(result.collected_data) == 2
 
     @pytest.mark.asyncio
     async def test_collect_live_scores(self, mock_collector):
         """测试实时比分采集"""
         result = await mock_collector.collect_live_scores()
 
-        assert isinstance(result, CollectionResult)
-        assert result.collection_type == "live_scores"
-        assert result.status == "success"
-        assert result.records_collected == 1
-        assert len(result.collected_data) == 1
+    assert isinstance(result, CollectionResult)
+    assert result.collection_type == "live_scores"
+    assert result.status == "success"
+    assert result.records_collected == 1
+    assert len(result.collected_data) == 1
 
     @pytest.mark.asyncio
     async def test_collect_all_data(self, mock_collector):
@@ -183,16 +183,16 @@ class TestDataCollector:
             ):
                 results = await mock_collector.collect_all_data()
 
-        assert isinstance(results, dict)
-        assert "fixtures" in results
-        assert "odds" in results
-        assert "live_scores" in results
+    assert isinstance(results, dict)
+    assert "fixtures" in results
+    assert "odds" in results
+    assert "live_scores" in results
 
         # 验证每个结果
         for data_type, result in results.items():
-            assert isinstance(result, CollectionResult)
-            assert result.collection_type == data_type
-            assert result.status == "success"
+    assert isinstance(result, CollectionResult)
+    assert result.collection_type == data_type
+    assert result.status == "success"
 
 
 class TestDataCollectorErrorHandling:
@@ -239,23 +239,23 @@ class TestDataCollectorErrorHandling:
             ):
                 results = await error_collector.collect_all_data()
 
-        assert isinstance(results, dict)
-        assert len(results) == 3
+    assert isinstance(results, dict)
+    assert len(results) == 3
 
         # fixtures应该失败
         fixtures_result = results["fixtures"]
-        assert fixtures_result.status == "failed"
-        assert "API connection failed" in fixtures_result.error_message
+    assert fixtures_result.status == "failed"
+    assert "API connection failed" in fixtures_result.error_message
 
         # odds应该失败
         odds_result = results["odds"]
-        assert odds_result.status == "failed"
-        assert odds_result.error_count == 1
+    assert odds_result.status == "failed"
+    assert odds_result.error_count == 1
 
         # live_scores应该成功
         scores_result = results["live_scores"]
-        assert scores_result.status == "success"
-        assert scores_result.success_count == 1
+    assert scores_result.status == "success"
+    assert scores_result.success_count == 1
 
 
 class TestDataCollectorEdgeCases:
@@ -273,9 +273,9 @@ class TestDataCollectorEdgeCases:
             collected_data=[],
         )
 
-        assert result.records_collected == 0
-        assert result.collected_data == []
-        assert result.status == "success"  # 空结果也可能是成功的
+    assert result.records_collected == 0
+    assert result.collected_data == []
+    assert result.status == "success"  # 空结果也可能是成功的
 
     def test_collection_result_no_collected_data(self):
         """测试没有collected_data字段的采集结果"""
@@ -289,9 +289,9 @@ class TestDataCollectorEdgeCases:
             # 没有 collected_data 字段
         )
 
-        assert result.collected_data is None
-        assert result.records_collected == 5
-        assert result.status == "success"
+    assert result.collected_data is None
+    assert result.records_collected == 5
+    assert result.status == "success"
 
     @pytest.mark.asyncio
     async def test_collector_with_custom_params(self):
@@ -301,10 +301,10 @@ class TestDataCollectorEdgeCases:
                 data_source="custom_api", max_retries=5, retry_delay=10
             )
 
-        assert collector.data_source == "custom_api"
-        assert collector.max_retries == 5
-        assert collector.retry_delay == 10
+    assert collector.data_source == "custom_api"
+    assert collector.max_retries == 5
+    assert collector.retry_delay == 10
 
         # 测试方法仍然工作
         result = await collector.collect_fixtures()
-        assert result.data_source == "custom_api"
+    assert result.data_source == "custom_api"

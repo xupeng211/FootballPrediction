@@ -78,12 +78,12 @@ class TestStreamingDataCollector:
         """测试默认配置初始化"""
         collector = StreamingDataCollector(**default_config)
 
-        assert collector.data_source == default_config["data_source"]
-        assert collector.max_retries == default_config["max_retries"]
-        assert collector.retry_delay == default_config["retry_delay"]
-        assert collector.timeout == default_config["timeout"]
-        assert collector.enable_streaming == default_config["enable_streaming"]
-        assert collector.stream_config is not None  # 应该使用默认配置
+    assert collector.data_source == default_config["data_source"]
+    assert collector.max_retries == default_config["max_retries"]
+    assert collector.retry_delay == default_config["retry_delay"]
+    assert collector.timeout == default_config["timeout"]
+    assert collector.enable_streaming == default_config["enable_streaming"]
+    assert collector.stream_config is not None  # 应该使用默认配置
 
     def test_streaming_collector_initialization_custom_config(self, mock_stream_config):
         """测试自定义流配置初始化"""
@@ -99,9 +99,9 @@ class TestStreamingDataCollector:
                 stream_config=mock_stream_config,
             )
 
-            assert collector.data_source == "custom_source"
-            assert collector.enable_streaming is True
-            assert collector.stream_config == mock_stream_config
+    assert collector.data_source == "custom_source"
+    assert collector.enable_streaming is True
+    assert collector.stream_config == mock_stream_config
 
     def test_streaming_collector_initialization_disabled(self):
         """测试禁用流式处理的初始化"""
@@ -109,8 +109,8 @@ class TestStreamingDataCollector:
             data_source="test_source", enable_streaming=False
         )
 
-        assert collector.enable_streaming is False
-        assert collector.kafka_producer is None
+    assert collector.enable_streaming is False
+    assert collector.kafka_producer is None
 
     @pytest.mark.asyncio
     async def test_collect_with_streaming_enabled_success(
@@ -127,8 +127,8 @@ class TestStreamingDataCollector:
             )
 
             # 确保Kafka生产者初始化成功
-            assert collector.enable_streaming is True
-            assert collector.kafka_producer is not None
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
             # Mock _send_to_stream 方法以避免实际Kafka调用
             with patch.object(collector, "_send_to_stream") as mock_send_stream:
@@ -155,10 +155,10 @@ class TestStreamingDataCollector:
                     result = await collector.collect_fixtures_with_streaming()
 
                     # 验证结果
-                    assert isinstance(result, CollectionResult)
-                    assert result.status == "success"
-                    assert result.records_collected == len(sample_data)
-                    assert result.error_count == 0
+    assert isinstance(result, CollectionResult)
+    assert result.status == "success"
+    assert result.records_collected == len(sample_data)
+    assert result.error_count == 0
 
                     # 验证流处理被调用
                     mock_send_stream.assert_called_once_with(sample_data, "match")
@@ -186,12 +186,12 @@ class TestStreamingDataCollector:
             result = await collector.collect_fixtures()
 
             # 验证结果 - 应该正常采集但不发送流
-            assert isinstance(result, CollectionResult)
-            assert result.status == "success"
-            assert result.records_collected == len(sample_data)
+    assert isinstance(result, CollectionResult)
+    assert result.status == "success"
+    assert result.records_collected == len(sample_data)
 
             # 验证没有Kafka操作
-            assert collector.kafka_producer is None
+    assert collector.kafka_producer is None
 
     @pytest.mark.asyncio
     async def test_kafka_producer_send_error_handling(
@@ -225,9 +225,9 @@ class TestStreamingDataCollector:
                 result = await collector.collect_fixtures()
 
                 # 验证结果 - 应该处理错误但不影响数据采集
-                assert isinstance(result, CollectionResult)
-                assert result.status == "success"  # 数据采集成功
-                assert result.records_collected == len(sample_data)
+    assert isinstance(result, CollectionResult)
+    assert result.status == "success"  # 数据采集成功
+    assert result.records_collected == len(sample_data)
                 # 可能会有Kafka相关的警告，但不应该是严重错误
 
     @pytest.mark.asyncio
@@ -254,8 +254,8 @@ class TestStreamingDataCollector:
             )
 
             # 确保Kafka生产者初始化成功
-            assert collector.enable_streaming is True
-            assert collector.kafka_producer is not None
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
             # Mock _send_to_stream 方法以避免实际Kafka调用
             with patch.object(collector, "_send_to_stream") as mock_send_stream:
@@ -282,8 +282,8 @@ class TestStreamingDataCollector:
                     result = await collector.collect_fixtures_with_streaming()
 
                     # 验证结果
-                    assert result.status == "success"
-                    assert result.records_collected == len(large_data)
+    assert result.status == "success"
+    assert result.records_collected == len(large_data)
 
                     # 验证流处理被调用
                     mock_send_stream.assert_called_once_with(large_data, "match")
@@ -303,8 +303,8 @@ class TestStreamingDataCollector:
             )
 
             # 确保Kafka生产者初始化成功
-            assert collector.enable_streaming is True
-            assert collector.kafka_producer is not None
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
             # Mock send_batch 方法返回成功统计
             mock_kafka_producer.send_batch.return_value = {
@@ -316,7 +316,7 @@ class TestStreamingDataCollector:
             success = await collector.send_to_stream(sample_data)
 
             # 验证结果
-            assert success is True
+    assert success is True
             # 验证send_batch被调用而不是send
             mock_kafka_producer.send_batch.assert_called_once()
 
@@ -331,7 +331,7 @@ class TestStreamingDataCollector:
         success = await collector.send_to_stream(sample_data)
 
         # 验证结果 - 应该直接返回True（跳过流式处理）
-        assert success is True
+    assert success is True
 
     @pytest.mark.asyncio
     async def test_send_to_stream_empty_data(self, mock_kafka_producer):
@@ -349,7 +349,7 @@ class TestStreamingDataCollector:
             success = await collector.send_to_stream([])
 
             # 验证结果
-            assert success is True
+    assert success is True
             mock_kafka_producer.send.assert_not_called()
             mock_kafka_producer.flush.assert_not_called()
 
@@ -368,9 +368,9 @@ class TestStreamingDataCollector:
             )
 
             # 验证错误处理 - Kafka失败时应该禁用流式处理
-            assert collector.enable_streaming is False  # 修正：初始化失败时应为False
+    assert collector.enable_streaming is False  # 修正：初始化失败时应为False
             # Kafka生产者应该为None
-            assert collector.kafka_producer is None
+    assert collector.kafka_producer is None
 
     @pytest.mark.asyncio
     async def test_topic_name_generation(self, mock_kafka_producer):
@@ -394,8 +394,8 @@ class TestStreamingDataCollector:
                 call_args = mock_kafka_producer.send.call_args_list[0]
                 topic = call_args[1].get("topic") or call_args[0][0]
                 # 验证主题名称包含数据源信息
-                assert isinstance(topic, str)
-                assert len(topic) > 0
+    assert isinstance(topic, str)
+    assert len(topic) > 0
 
     @pytest.mark.asyncio
     async def test_data_serialization_for_kafka(self, mock_kafka_producer):
@@ -410,8 +410,8 @@ class TestStreamingDataCollector:
             )
 
             # 确保Kafka生产者初始化成功
-            assert collector.enable_streaming is True
-            assert collector.kafka_producer is not None
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
             # 包含特殊数据类型的测试数据
             test_data = [
@@ -434,7 +434,7 @@ class TestStreamingDataCollector:
             success = await collector.send_to_stream(test_data)
 
             # 验证序列化成功
-            assert success is True
+    assert success is True
             mock_kafka_producer.send_batch.assert_called_once()
 
     @pytest.mark.asyncio
@@ -452,8 +452,8 @@ class TestStreamingDataCollector:
             )
 
             # 确保Kafka生产者初始化成功
-            assert collector.enable_streaming is True
-            assert collector.kafka_producer is not None
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
             # Mock send_batch 方法返回成功统计
             mock_kafka_producer.send_batch.return_value = {"success": 1, "failed": 0}
@@ -471,8 +471,8 @@ class TestStreamingDataCollector:
 
             # 验证所有操作都成功
             for result in results:
-                assert not isinstance(result, Exception)
-                assert result is True
+    assert not isinstance(result, Exception)
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_collect_with_retry_on_stream_failure(
@@ -512,8 +512,8 @@ class TestStreamingDataCollector:
                 result = await collector.collect_fixtures_with_streaming()
 
                 # 验证数据采集成功（即使流式发送有问题）
-                assert result.status == "success"
-                assert result.records_collected == len(sample_data)
+    assert result.status == "success"
+    assert result.records_collected == len(sample_data)
 
     def test_stream_config_validation(self):
         """测试流配置验证"""
@@ -522,7 +522,7 @@ class TestStreamingDataCollector:
         collector = StreamingDataCollector(
             data_source="test_source", enable_streaming=True, stream_config=valid_config
         )
-        assert collector.stream_config == valid_config
+    assert collector.stream_config == valid_config
 
     @pytest.mark.asyncio
     async def test_cleanup_resources(self, mock_kafka_producer):
@@ -586,8 +586,8 @@ class TestStreamingDataCollector:
                 result = await collector.collect_fixtures_with_streaming()
 
                 # 验证错误恢复 - 数据采集应该继续
-                assert result.status == "success"
-                assert result.records_collected == len(sample_data)
+    assert result.status == "success"
+    assert result.records_collected == len(sample_data)
 
                 # 可以验证错误日志（如果实现了日志记录）
 
@@ -598,15 +598,15 @@ class TestStreamingDataCollector:
         collector = StreamingDataCollector()
 
         # 验证继承关系
-        assert isinstance(collector, DataCollector)
+    assert isinstance(collector, DataCollector)
 
         # 验证必要方法存在
-        assert hasattr(
+    assert hasattr(
             collector, "collect_fixtures_with_streaming"
         )  # 修正：检查具体的方法
-        assert hasattr(collector, "send_to_stream")
-        assert callable(collector.collect_fixtures_with_streaming)
-        assert callable(collector.send_to_stream)
+    assert hasattr(collector, "send_to_stream")
+    assert callable(collector.collect_fixtures_with_streaming)
+    assert callable(collector.send_to_stream)
 
     @pytest.mark.asyncio
     async def test_metadata_enrichment(self, mock_kafka_producer):
@@ -631,4 +631,4 @@ class TestStreamingDataCollector:
                 # 检查是否添加了元数据字段
                 sent_data = call_args[1].get("value") or call_args[0][1]
                 # 元数据可能包括时间戳、数据源等信息
-                assert sent_data is not None
+    assert sent_data is not None

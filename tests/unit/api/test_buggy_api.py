@@ -23,9 +23,9 @@ class TestBuggyAPI:
     def test_buggy_query_parameter_error(self):
         """测试 FastAPI Query 参数错误 - 会导致 TypeError"""
         # 这个测试会暴露 Query 参数的问题
-        response = self.client.get("/buggy_query?limit=abc")  # 传入非数字字符串
+        response = self.client.get("_buggy_query?limit=abc")  # 传入非数字字符串
         # 由于缺少类型注解和验证，这可能导致 TypeError: int() argument must be...
-        assert response.status_code in [200, 422]  # 可能返回验证错误
+    assert response.status_code in [200, 422]  # 可能返回验证错误
 
     @pytest.mark.asyncio
     async def test_buggy_async_mock_error(self):
@@ -42,7 +42,7 @@ class TestBuggyAPI:
             result = await buggy_async()
 
             # 验证结果
-            assert result == {"status": "fixed_mocked_status"}
+    assert result == {"status": "fixed_mocked_status"}
 
             # 验证 mock 被正确调用
             mock_service.get_status.assert_awaited_once()
@@ -62,7 +62,7 @@ class TestBuggyAPI:
             result = await buggy_async()
 
             # 验证结果
-            assert result == {"status": "correct_mocked_status"}
+    assert result == {"status": "correct_mocked_status"}
 
             # 验证 mock 被正确调用
             mock_service.get_status.assert_awaited_once()

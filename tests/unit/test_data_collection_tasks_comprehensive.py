@@ -37,8 +37,8 @@ class TestDataCollectionTasks:
 
     def test_app_instance(self):
         """测试应用实例存在"""
-        assert app is not None
-        assert hasattr(app, "tasks")
+    assert app is not None
+    assert hasattr(app, "tasks")
 
     def test_task_registration(self):
         """测试任务注册"""
@@ -46,29 +46,29 @@ class TestDataCollectionTasks:
         task_names = list(app.tasks.keys())
         # 过滤掉Celery内置任务
         custom_tasks = [name for name in task_names if not name.startswith("celery.")]
-        assert len(custom_tasks) >= 0
+    assert len(custom_tasks) >= 0
 
     @patch("src.tasks.data_collection_tasks.FixturesCollector")
     def test_collector_import(self, mock_collector_class):
         """测试收集器导入"""
         mock_collector = Mock()
         mock_collector_class.return_value = mock_collector
-        assert mock_collector_class is not None
+    assert mock_collector_class is not None
 
     def test_data_collection_module_structure(self):
         """测试数据收集模块结构"""
         import src.tasks.data_collection_tasks as module
 
-        assert hasattr(module, "app")
+    assert hasattr(module, "app")
         # 检查是否有基础的导入
-        assert True  # 占位验证
+    assert True  # 占位验证
 
     def test_task_base_classes(self):
         """测试任务基类"""
         import src.tasks.data_collection_tasks as module
 
         # 检查模块是否正确导入
-        assert module is not None
+    assert module is not None
 
     @patch("src.data.collectors.odds_collector.OddsCollector")
     async def test_collect_odds_task_with_bookmaker(self, mock_collector_class):
@@ -91,7 +91,7 @@ class TestDataCollectionTasks:
         )
         result = await loop.run_in_executor(None, task_func)
 
-        assert result["status"] == "success"
+    assert result["status"] == "success"
         mock_collector_instance.collect_odds.assert_awaited_once_with(
             match_ids=["12345"], bookmakers=["bet365"]
         )
@@ -114,7 +114,7 @@ class TestDataCollectionTasks:
         task_func = functools.partial(collect_scores_task, match_id=12345)
         result = await loop.run_in_executor(None, task_func)
 
-        assert result["status"] == "success"
+    assert result["status"] == "success"
         mock_collector_instance.collect_live_scores.assert_awaited_once_with(
             match_ids=["12345"], use_websocket=False
         )
@@ -135,7 +135,7 @@ class TestDataCollectionTasks:
 
         result = collect_scores_task(match_id=12345, live=True)
 
-        assert result["status"] == "success"
+    assert result["status"] == "success"
         mock_collector_instance.collect_live_scores.assert_awaited_once_with(
             match_ids=["12345"], use_websocket=True
         )
@@ -157,8 +157,8 @@ class TestDataCollectionTasks:
         mock_odds.assert_called_once()
         mock_scores.assert_called_once()
 
-        assert isinstance(result, dict)
-        assert "task_ids" in result
+    assert isinstance(result, dict)
+    assert "task_ids" in result
 
     def test_periodic_data_collection_task(self):
         """测试定期数据收集任务"""
@@ -181,7 +181,7 @@ class TestDataCollectionTasks:
             mock_fixtures.assert_called_once()
             mock_odds.assert_called_once()
             mock_scores.assert_called_once()
-            assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     @patch("src.tasks.data_collection_tasks.collect_fixtures_task.apply_async")
     @patch("src.tasks.data_collection_tasks.collect_odds_task.apply_async")
@@ -207,8 +207,8 @@ class TestDataCollectionTasks:
         mock_odds.assert_called_once()
         mock_scores.assert_called_once()
 
-        assert isinstance(result, dict)
-        assert result["status"] == "success"
+    assert isinstance(result, dict)
+    assert result["status"] == "success"
 
 
 class TestTaskErrorHandling:
@@ -227,7 +227,7 @@ class TestTaskErrorHandling:
         with pytest.raises(Exception, match="Network timeout"):
             collect_fixtures_task(leagues=["epl"], days_ahead=7)
         # 验证错误日志记录（可能通过不同的方式记录）
-        assert True  # 简化断言，因为错误日志记录机制可能不同
+    assert True  # 简化断言，因为错误日志记录机制可能不同
 
     @patch("src.data.collectors.fixtures_collector.FixturesCollector")
     def test_network_timeout_handling(self, mock_collector_class):
@@ -296,10 +296,10 @@ class TestTaskRetryMechanism:
         try:
             result = collect_odds_task(match_id=12345)
             # 如果没有异常，结果应该是字典或None
-            assert result is None or isinstance(result, dict)
+    assert result is None or isinstance(result, dict)
         except Exception as e:
             # 预期会有重试异常
-            assert "Persistent failure" in str(e) or "retry" in str(e).lower()
+    assert "Persistent failure" in str(e) or "retry" in str(e).lower()
 
 
 class TestTaskConfiguration:
@@ -308,23 +308,23 @@ class TestTaskConfiguration:
     def test_task_names_are_defined(self):
         """测试任务名称已定义"""
         # 验证任务具有正确的名称属性
-        assert hasattr(collect_fixtures_task, "name")
-        assert hasattr(collect_odds_task, "name")
-        assert hasattr(collect_scores_task, "name")
+    assert hasattr(collect_fixtures_task, "name")
+    assert hasattr(collect_odds_task, "name")
+    assert hasattr(collect_scores_task, "name")
 
     def test_task_routing_configuration(self):
         """测试任务路由配置"""
         # 验证任务路由设置
-        assert hasattr(collect_fixtures_task, "queue") or True
-        assert hasattr(collect_odds_task, "queue") or True
-        assert hasattr(collect_scores_task, "queue") or True
+    assert hasattr(collect_fixtures_task, "queue") or True
+    assert hasattr(collect_odds_task, "queue") or True
+    assert hasattr(collect_scores_task, "queue") or True
 
     def test_task_time_limits(self):
         """测试任务时间限制"""
         # 验证任务时间限制设置
-        assert hasattr(collect_fixtures_task, "time_limit") or True
-        assert hasattr(collect_odds_task, "time_limit") or True
-        assert hasattr(collect_scores_task, "time_limit") or True
+    assert hasattr(collect_fixtures_task, "time_limit") or True
+    assert hasattr(collect_odds_task, "time_limit") or True
+    assert hasattr(collect_scores_task, "time_limit") or True
 
 
 class TestTaskMonitoring:
@@ -349,7 +349,7 @@ class TestTaskMonitoring:
             collect_fixtures_task(leagues=["epl"], days_ahead=7)
 
         # 验证任务执行完成（简化断言，因为指标收集可能不是必需的）
-        assert True  # 任务执行成功即可
+    assert True  # 任务执行成功即可
 
     @patch("src.tasks.data_collection_tasks.logger")
     def test_task_logging(self, mock_logger):
@@ -361,7 +361,7 @@ class TestTaskMonitoring:
             collect_fixtures_task(leagues=["epl"], days_ahead=7)
 
         # 验证日志被记录
-        assert True  # 实际验证取决于日志实现
+    assert True  # 实际验证取决于日志实现
 
 
 class TestTaskIntegration:
@@ -379,7 +379,7 @@ class TestTaskIntegration:
             mock_collector.return_value.collect_fixtures.return_value = {"fixtures": []}
             result = collect_fixtures_task(leagues=["epl"], days_ahead=7)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     @patch("src.streaming.kafka_producer.FootballKafkaProducer")
     def test_kafka_integration(self, mock_producer_class):
@@ -394,7 +394,7 @@ class TestTaskIntegration:
             mock_collector.return_value.collect_fixtures.return_value = {"fixtures": []}
             result = collect_fixtures_task(leagues=["epl"], days_ahead=7)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     @patch("src.cache.redis_manager.RedisManager")
     def test_cache_integration(self, mock_redis_manager):
@@ -408,7 +408,7 @@ class TestTaskIntegration:
             mock_collector.return_value.collect_fixtures.return_value = {"fixtures": []}
             result = collect_fixtures_task(leagues=["epl"], days_ahead=7)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
 
 class TestPerformanceOptimization:
@@ -437,8 +437,8 @@ class TestPerformanceOptimization:
         duration = end_time - start_time
 
         # 验证处理时间合理（现在应该很快，因为是纯模拟）
-        assert duration < 1.0  # 应该在1秒内完成
-        assert isinstance(result, dict)
+    assert duration < 1.0  # 应该在1秒内完成
+    assert isinstance(result, dict)
 
     @patch("src.data.collectors.odds_collector.OddsCollector")
     def test_memory_usage_optimization(self, mock_collector_class):
@@ -464,7 +464,7 @@ class TestPerformanceOptimization:
 
         # 验证没有明显的内存泄漏
         object_growth = final_objects - initial_objects
-        assert object_growth < 200  # 允许适量对象增长，考虑到测试环境的复杂性
+    assert object_growth < 200  # 允许适量对象增长，考虑到测试环境的复杂性
 
 
 if __name__ == "__main__":

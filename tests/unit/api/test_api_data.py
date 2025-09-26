@@ -39,8 +39,8 @@ class TestDataAPI:
 
     def test_router_creation(self):
         """测试路由器创建"""
-        assert router.prefix == "/data"
-        assert "data" in router.tags
+    assert router.prefix == "_data"
+    assert "data" in router.tags
 
     @pytest.mark.asyncio
     async def test_get_match_features_success(self, mock_session):
@@ -55,8 +55,8 @@ class TestDataAPI:
             }
 
             result = await mock_get_features(1, mock_session)
-            assert result is not None
-            assert result["match_id"] == 1
+    assert result is not None
+    assert result["match_id"] == 1
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, mock_session):
@@ -89,10 +89,10 @@ class TestDataAPI:
 
         result = await get_team_stats(1, mock_session)
 
-        assert result is not None
-        assert "team_id" in result
-        assert "team_name" in result
-        assert result["team_name"] == "Test Team"
+    assert result is not None
+    assert "team_id" in result
+    assert "team_name" in result
+    assert result["team_name"] == "Test Team"
 
     @pytest.mark.asyncio
     async def test_get_dashboard_data_success(self, mock_session):
@@ -106,15 +106,15 @@ class TestDataAPI:
             }
 
             result = await mock_get_dashboard(mock_session)
-            assert result is not None
-            assert result["total_matches"] == 100
+    assert result is not None
+    assert result["total_matches"] == 100
 
     def test_api_module_imports(self):
         """测试API模块导入"""
         from src.api import data
 
-        assert hasattr(data, "router")
-        assert hasattr(data, "get_match_features")
+    assert hasattr(data, "router")
+    assert hasattr(data, "get_match_features")
 
     @pytest.mark.asyncio
     async def test_api_error_handling(self, mock_session):
@@ -132,12 +132,12 @@ class TestDataAPIIntegration:
     def test_router_registration(self):
         """测试路由注册"""
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="_api/v1")
 
         # 检查路由是否正确注册
         routes = [route.path for route in app.routes]
         # 路由应该包含完整路径 /api/v1/data
-        assert any("/api/v1/data" in route for route in routes)
+    assert any("/api/v1/data" in route for route in routes)
 
     @patch("src.api.data.get_async_session")
     def test_dependency_injection(self, mock_get_session):
@@ -146,7 +146,7 @@ class TestDataAPIIntegration:
         mock_get_session.return_value = mock_session
 
         # 验证依赖注入配置
-        assert mock_get_session is not None
+    assert mock_get_session is not None
 
 
 class TestDataAPIEdgeCases:
@@ -172,8 +172,8 @@ class TestDataAPIEdgeCases:
         """测试API常量"""
         from src.api.data import logger, router
 
-        assert router.prefix == "/data"
-        assert logger.name == "src.api.data"
+    assert router.prefix == "_data"
+    assert logger.name == "src.api.data"
 
 
 class TestDataAPIBasicFunctionality:
@@ -184,8 +184,8 @@ class TestDataAPIBasicFunctionality:
         import src.api.data as data_module
 
         # 检查必要的导入和属性
-        assert hasattr(data_module, "router")
-        assert hasattr(data_module, "logger")
+    assert hasattr(data_module, "router")
+    assert hasattr(data_module, "logger")
 
     @pytest.mark.asyncio
     async def test_basic_api_calls(self):
@@ -215,11 +215,11 @@ class TestDataAPIBasicFunctionality:
 
     def test_router_configuration(self):
         """测试路由配置"""
-        assert router.prefix == "/data"
-        assert router.tags == ["data"]
+    assert router.prefix == "_data"
+    assert router.tags == ["data"]
 
         # 检查路由是否有端点
-        assert len(router.routes) > 0
+    assert len(router.routes) > 0
 
 
 class TestDataAPISimpleCoverage:
@@ -236,16 +236,16 @@ class TestDataAPISimpleCoverage:
                 router,
             )
 
-            assert router is not None
-            assert get_match_features is not None
-            assert get_team_stats is not None
-            assert get_dashboard_data is not None
-            assert logger is not None
+    assert router is not None
+    assert get_match_features is not None
+    assert get_team_stats is not None
+    assert get_dashboard_data is not None
+    assert logger is not None
         except ImportError:
             # 如果某些函数不存在，至少测试基本导入
 
-            assert router is not None
-            assert logger is not None
+    assert router is not None
+    assert logger is not None
 
     @pytest.mark.asyncio
     async def test_mock_all_endpoints(self):
