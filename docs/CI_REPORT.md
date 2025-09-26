@@ -88,7 +88,7 @@ TOTAL                                         3556   1069    70%
 | --- | --- | --- | --- | --- |
 | 2025-09-22 | 0s | 3.8m | 1.0m | 70.0% |
 
-![Coverage Trend](assets/coverage_trend.png)
+![Coverage Trend](legacy/coverage_trend.png)
 ## 覆盖率一致性验证结果 (2025-09-22)
 
 - pytest.ini 阈值：70%
