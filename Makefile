@@ -589,3 +589,13 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
         db-init db-migrate db-seed db-backup db-restore db-reset db-shell \
         security-check license-check dependency-check secret-scan audit \
         dev-stats code-quality-report workflow-analysis
+
+.PHONY: docs.check
+## 运行文档质量检查（坏链/孤儿/目录规范）
+docs.check:
+	@python3 scripts/docs_guard.py
+
+.PHONY: docs.fix
+## 自动化修复文档问题（如孤儿批次处理）
+docs.fix:
+	@python3 scripts/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
