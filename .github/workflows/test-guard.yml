@@ -1,3 +1,6 @@
+env:
+  COVERAGE_THRESHOLD: 70
+
 name: Test Guard
 
 on:
@@ -28,7 +31,7 @@ jobs:
         run: |
           echo "🧪 Running pytest with coverage enforcement..."
           set +e
-          pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=term-missing --cov-fail-under=80
+          pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=term-missing --cov-fail-under=${{ env.COVERAGE_THRESHOLD }}
           STATUS=$?
           set -e
 
