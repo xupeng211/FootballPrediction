@@ -26,10 +26,10 @@ class TestPredictionResult:
             confidence_score=0.5,
         )
 
-        assert result.match_id == 1
-        assert result.model_version == "v1.0"
-        assert result.home_win_probability == 0.5
-        assert result.predicted_result == "home"
+    assert result.match_id == 1
+    assert result.model_version == "v1.0"
+    assert result.home_win_probability == 0.5
+    assert result.predicted_result == "home"
 
     def test_prediction_result_to_dict(self):
         """测试预测结果转换为字典"""
@@ -40,9 +40,9 @@ class TestPredictionResult:
 
         result_dict = result.to_dict()
 
-        assert result_dict["match_id"] == 1
-        assert result_dict["model_version"] == "v1.0"
-        assert result_dict["created_at"] == created_at.isoformat()
+    assert result_dict["match_id"] == 1
+    assert result_dict["model_version"] == "v1.0"
+    assert result_dict["created_at"] == created_at.isoformat()
 
     def test_prediction_result_to_dict_none_dates(self):
         """测试预测结果转换为字典（日期为None）"""
@@ -50,8 +50,8 @@ class TestPredictionResult:
 
         result_dict = result.to_dict()
 
-        assert result_dict["created_at"] is None
-        assert result_dict["verified_at"] is None
+    assert result_dict["created_at"] is None
+    assert result_dict["verified_at"] is None
 
 
 class TestPredictionService:
@@ -88,9 +88,9 @@ class TestPredictionService:
         """测试初始化"""
         from src.cache.ttl_cache import TTLCache
 
-        assert prediction_service.mlflow_tracking_uri == "http://localhost:5002"
-        assert isinstance(prediction_service.model_cache, TTLCache)
-        assert isinstance(prediction_service.feature_order, list)
+    assert prediction_service.mlflow_tracking_uri == "http:_/localhost:5002"
+    assert isinstance(prediction_service.model_cache, TTLCache)
+    assert isinstance(prediction_service.feature_order, list)
 
     @pytest.mark.asyncio
     async def test_get_production_model_success(self, prediction_service):
@@ -112,8 +112,8 @@ class TestPredictionService:
         ):
             model, version = await prediction_service.get_production_model()
 
-            assert model == mock_model
-            assert version == "1"
+    assert model == mock_model
+    assert version == "1"
 
     @pytest.mark.asyncio
     async def test_get_production_model_from_cache(self, prediction_service):
@@ -137,8 +137,8 @@ class TestPredictionService:
         ):
             model, version = await prediction_service.get_production_model()
 
-            assert model == cached_model
-            assert version == cached_version
+    assert model == cached_model
+    assert version == cached_version
 
     @pytest.mark.asyncio
     async def test_get_production_model_staging_fallback(self, prediction_service):
@@ -162,8 +162,8 @@ class TestPredictionService:
         ):
             model, version = await prediction_service.get_production_model()
 
-            assert model == mock_model
-            assert version == "1"
+    assert model == mock_model
+    assert version == "1"
 
     @pytest.mark.asyncio
     async def test_get_production_model_no_versions(self, prediction_service):
@@ -197,18 +197,18 @@ class TestPredictionService:
         ):
             model, version = await prediction_service.get_production_model("custom")
 
-        assert model is mock_model
-        assert version == mock_version
+    assert model is mock_model
+    assert version == mock_version
         prediction_service.model_cache.set.assert_awaited_once_with(
             "model:custom",
             (mock_model, mock_version),
             ttl=prediction_service.model_cache_ttl,
         )
-        metadata = prediction_service.model_metadata_cache["models:/custom/2"]
-        assert metadata["name"] == "custom"
-        assert metadata["version"] == mock_version
-        assert metadata["stage"] == "unknown"
-        assert "loaded_at" in metadata
+        metadata = prediction_service.model_metadata_cache["models:_custom/2"]
+    assert metadata["name"] == "custom"
+    assert metadata["version"] == mock_version
+    assert metadata["stage"] == "unknown"
+    assert "loaded_at" in metadata
 
     @pytest.mark.asyncio
     async def test_get_production_model_failure_bubbles_up(self, prediction_service):
@@ -225,16 +225,16 @@ class TestPredictionService:
                 await prediction_service.get_production_model("unstable")
 
         prediction_service.model_cache.set.assert_not_awaited()
-        assert "models:/unstable" not in prediction_service.model_metadata_cache
+    assert "models:_unstable" not in prediction_service.model_metadata_cache
 
     def test_get_default_features(self, prediction_service):
         """测试获取默认特征"""
         features = prediction_service._get_default_features()
 
-        assert isinstance(features, dict)
-        assert "home_recent_wins" in features
-        assert "away_recent_wins" in features
-        assert features["home_recent_wins"] == 2
+    assert isinstance(features, dict)
+    assert "home_recent_wins" in features
+    assert "away_recent_wins" in features
+    assert features["home_recent_wins"] == 2
 
     def test_prepare_features_for_prediction(self, prediction_service):
         """测试准备预测特征"""
@@ -253,9 +253,9 @@ class TestPredictionService:
 
         features_array = prediction_service._prepare_features_for_prediction(features)
 
-        assert isinstance(features_array, np.ndarray)
-        assert features_array.shape == (1, 10)
-        assert features_array[0][0] == 3.0  # home_recent_wins
+    assert isinstance(features_array, np.ndarray)
+    assert features_array.shape == (1, 10)
+    assert features_array[0][0] == 3.0  # home_recent_wins
 
     def test_prepare_features_missing_values(self, prediction_service):
         """测试缺失特征值的处理"""
@@ -263,16 +263,16 @@ class TestPredictionService:
 
         features_array = prediction_service._prepare_features_for_prediction(features)
 
-        assert isinstance(features_array, np.ndarray)
-        assert features_array.shape == (1, 10)
-        assert features_array[0][0] == 3.0  # home_recent_wins
-        assert features_array[0][1] == 0.0  # 缺失的特征默认为0
+    assert isinstance(features_array, np.ndarray)
+    assert features_array.shape == (1, 10)
+    assert features_array[0][0] == 3.0  # home_recent_wins
+    assert features_array[0][1] == 0.0  # 缺失的特征默认为0
 
     def test_calculate_actual_result(self, prediction_service):
         """测试计算实际比赛结果"""
-        assert prediction_service._calculate_actual_result(2, 1) == "home"
-        assert prediction_service._calculate_actual_result(1, 2) == "away"
-        assert prediction_service._calculate_actual_result(1, 1) == "draw"
+    assert prediction_service._calculate_actual_result(2, 1) == "home"
+    assert prediction_service._calculate_actual_result(1, 2) == "away"
+    assert prediction_service._calculate_actual_result(1, 1) == "draw"
 
     @pytest.mark.asyncio
     async def test_get_match_info_success(self, prediction_service, mock_db_manager):
@@ -297,10 +297,10 @@ class TestPredictionService:
 
         match_info = await prediction_service._get_match_info(1)
 
-        assert match_info is not None
-        assert match_info["id"] == 1
-        assert match_info["home_team_id"] == 10
-        assert match_info["away_team_id"] == 20
+    assert match_info is not None
+    assert match_info["id"] == 1
+    assert match_info["home_team_id"] == 10
+    assert match_info["away_team_id"] == 20
 
     @pytest.mark.asyncio
     async def test_get_match_info_not_found(self, prediction_service, mock_db_manager):
@@ -316,7 +316,7 @@ class TestPredictionService:
 
         match_info = await prediction_service._get_match_info(999)
 
-        assert match_info is None
+    assert match_info is None
 
     @pytest.mark.asyncio
     async def test_store_prediction_success(self, prediction_service, mock_db_manager):
@@ -403,10 +403,10 @@ class TestPredictionService:
 
             result = await prediction_service.predict_match(1)
 
-            assert result.match_id == 1
-            assert result.predicted_result == "home"
-            assert result.confidence_score == 0.5
-            assert result.home_win_probability == 0.5
+    assert result.match_id == 1
+    assert result.predicted_result == "home"
+    assert result.confidence_score == 0.5
+    assert result.home_win_probability == 0.5
 
     @pytest.mark.asyncio
     async def test_predict_match_no_features(
@@ -438,8 +438,8 @@ class TestPredictionService:
 
             result = await prediction_service.predict_match(1)
 
-            assert result.match_id == 1
-            assert result.predicted_result == "draw"
+    assert result.match_id == 1
+    assert result.predicted_result == "draw"
 
     @pytest.mark.asyncio
     async def test_predict_match_no_match(self, prediction_service):
@@ -471,8 +471,8 @@ class TestPredictionService:
 
         result = await prediction_service.verify_prediction(1)
 
-        assert result is True
-        assert mock_session.execute.call_count == 2
+    assert result is True
+    assert mock_session.execute.call_count == 2
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
@@ -491,7 +491,7 @@ class TestPredictionService:
 
         result = await prediction_service.verify_prediction(1)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_get_model_accuracy_success(
@@ -512,7 +512,7 @@ class TestPredictionService:
 
         accuracy = await prediction_service.get_model_accuracy()
 
-        assert accuracy == 0.8
+    assert accuracy == 0.8
 
     @pytest.mark.asyncio
     async def test_get_model_accuracy_no_data(
@@ -530,7 +530,7 @@ class TestPredictionService:
 
         accuracy = await prediction_service.get_model_accuracy()
 
-        assert accuracy is None
+    assert accuracy is None
 
     @pytest.mark.asyncio
     async def test_batch_predict_matches_success(self, prediction_service):
@@ -551,8 +551,8 @@ class TestPredictionService:
             ):
                 results = await prediction_service.batch_predict_matches(match_ids)
 
-        assert len(results) == 3
-        assert [r.match_id for r in results] == [1, 2, 3]
+    assert len(results) == 3
+    assert [r.match_id for r in results] == [1, 2, 3]
         # The mock is on the instance, so it's called inside the loop, not on the service itself directly.
         # We can't easily assert call count here without more complex mocking.
 
@@ -576,8 +576,8 @@ class TestPredictionService:
             ):
                 results = await prediction_service.batch_predict_matches(match_ids)
 
-            assert len(results) == 2
-            assert [r.match_id for r in results] == [1, 3]
+    assert len(results) == 2
+    assert [r.match_id for r in results] == [1, 3]
 
     @pytest.mark.asyncio
     async def test_get_prediction_statistics_success(
@@ -606,12 +606,12 @@ class TestPredictionService:
 
         stats = await prediction_service.get_prediction_statistics()
 
-        assert stats["period_days"] == 30
-        assert len(stats["statistics"]) == 1
+    assert stats["period_days"] == 30
+    assert len(stats["statistics"]) == 1
         stat_item = stats["statistics"][0]
-        assert stat_item["model_version"] == "v1.0"
-        assert stat_item["total_predictions"] == 100
-        assert stat_item["accuracy"] == 70 / 90
+    assert stat_item["model_version"] == "v1.0"
+    assert stat_item["total_predictions"] == 100
+    assert stat_item["accuracy"] == 70 / 90
 
     @pytest.mark.asyncio
     async def test_get_prediction_statistics_no_data(
@@ -629,4 +629,4 @@ class TestPredictionService:
 
         stats = await prediction_service.get_prediction_statistics()
 
-        assert stats["statistics"] == []
+    assert stats["statistics"] == []

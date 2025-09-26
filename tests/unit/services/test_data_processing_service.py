@@ -136,7 +136,7 @@ async def test_process_raw_matches_bronze_to_silver_success():
     assert processed_count == 2
     assert session.committed is True
     for stub in raw_matches:
-        assert stub.processed is True
+    assert stub.processed is True
     assert service.data_lake.saved_payloads
     table_name, payload = service.data_lake.saved_payloads[0]
     assert table_name == "processed_matches"

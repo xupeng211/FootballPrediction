@@ -41,7 +41,7 @@ class TestAPIHealthCoverage:
         try:
             result = await health_check(db=mock_session)
             # 测试函数可以被调用
-            assert result is not None or result is None
+    assert result is not None or result is None
         except Exception:
             # 即使失败也算作覆盖了代码
             pass
@@ -51,9 +51,9 @@ class TestAPIHealthCoverage:
         import src.api.health as health_module
 
         # 测试模块属性
-        assert hasattr(health_module, "datetime")
-        assert hasattr(health_module, "logging")
-        assert hasattr(health_module, "time")
+    assert hasattr(health_module, "datetime")
+    assert hasattr(health_module, "logging")
+    assert hasattr(health_module, "time")
 
 
 class TestDatabaseModelsCoverage:
@@ -72,12 +72,12 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(odds)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
         # 测试to_dict方法
         if hasattr(odds, "to_dict"):
             odds_dict = odds.to_dict()
-            assert isinstance(odds_dict, dict)
+    assert isinstance(odds_dict, dict)
 
     def test_predictions_model_methods(self):
         """测试Predictions模型的各种方法"""
@@ -93,11 +93,11 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(prediction)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
         # 测试各种属性
-        assert prediction.model_name == "test_model"
-        assert prediction.model_version == "1.0"
+    assert prediction.model_name == "test_model"
+    assert prediction.model_version == "1.0"
 
     def test_team_model_methods(self):
         """测试Team模型的各种方法"""
@@ -105,12 +105,12 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(team)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
         # 测试to_dict方法
         if hasattr(team, "to_dict"):
             team_dict = team.to_dict()
-            assert isinstance(team_dict, dict)
+    assert isinstance(team_dict, dict)
 
     def test_league_model_methods(self):
         """测试League模型的各种方法"""
@@ -118,7 +118,7 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(league)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
     def test_match_model_methods(self):
         """测试Match模型的各种方法"""
@@ -134,7 +134,7 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(match)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
     def test_features_model_methods(self):
         """测试Features模型的各种方法"""
@@ -144,7 +144,7 @@ class TestDatabaseModelsCoverage:
 
         # 测试 __repr__ 方法
         repr_str = repr(features)
-        assert isinstance(repr_str, str)
+    assert isinstance(repr_str, str)
 
 
 class TestModelPropertiesAndMethods:
@@ -221,24 +221,24 @@ class TestEnumCoverage:
     def test_market_type_enum(self):
         """测试MarketType枚举"""
         # 测试所有枚举值
-        assert MarketType.ONE_X_TWO.value == "1x2"
-        assert MarketType.OVER_UNDER.value == "over_under"
-        assert MarketType.ASIAN_HANDICAP.value == "asian_handicap"
-        assert MarketType.BOTH_TEAMS_SCORE.value == "both_teams_score"
+    assert MarketType.ONE_X_TWO.value == "1x2"
+    assert MarketType.OVER_UNDER.value == "over_under"
+    assert MarketType.ASIAN_HANDICAP.value == "asian_handicap"
+    assert MarketType.BOTH_TEAMS_SCORE.value == "both_teams_score"
 
     def test_predicted_result_enum(self):
         """测试PredictedResult枚举"""
         # 测试所有枚举值
-        assert PredictedResult.HOME_WIN.value == "home_win"
-        assert PredictedResult.DRAW.value == "draw"
-        assert PredictedResult.AWAY_WIN.value == "away_win"
+    assert PredictedResult.HOME_WIN.value == "home_win"
+    assert PredictedResult.DRAW.value == "draw"
+    assert PredictedResult.AWAY_WIN.value == "away_win"
 
     def test_match_status_enum(self):
         """测试MatchStatus枚举"""
         # 测试枚举存在
-        assert MatchStatus.SCHEDULED is not None
+    assert MatchStatus.SCHEDULED is not None
         if hasattr(MatchStatus, "FINISHED"):
-            assert MatchStatus.FINISHED is not None
+    assert MatchStatus.FINISHED is not None
 
 
 class TestSimpleModelCreation:
@@ -248,11 +248,11 @@ class TestSimpleModelCreation:
         """测试所有模型的基本创建"""
         # League
         league = League(league_name="测试联赛", country="中国")
-        assert league.league_name == "测试联赛"
+    assert league.league_name == "测试联赛"
 
         # Team
         team = Team(team_name="测试队", league_id=1)
-        assert team.team_name == "测试队"
+    assert team.team_name == "测试队"
 
         # Match
 
@@ -264,18 +264,18 @@ class TestSimpleModelCreation:
             match_time=datetime.now(),
             match_status=MatchStatus.SCHEDULED,
         )
-        assert match.home_team_id == 1
+    assert match.home_team_id == 1
 
         # Odds
         odds = Odds(
             match_id=1, market_type=MarketType.ONE_X_TWO, bookmaker="test_bookmaker"
         )
-        assert odds.match_id == 1
+    assert odds.match_id == 1
 
         # Features
 
         features = Features(match_id=1, team_id=1, team_type=TeamType.HOME)
-        assert features.match_id == 1
+    assert features.match_id == 1
 
         # Predictions
         prediction = Predictions(
@@ -284,4 +284,4 @@ class TestSimpleModelCreation:
             model_version="1.0",
             predicted_result=PredictedResult.HOME_WIN,
         )
-        assert prediction.match_id == 1
+    assert prediction.match_id == 1

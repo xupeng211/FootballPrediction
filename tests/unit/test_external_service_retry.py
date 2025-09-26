@@ -84,9 +84,9 @@ class TestDatabaseRetry:
     async def test_database_connection_retry(self, mock_db_manager):
         """测试数据库连接重试 / Test database connection retry"""
         db_manager = await mock_db_manager()
-        assert db_manager is not None
+    assert db_manager is not None
         # 验证 get_async_session 被调用了3次
-        assert db_manager.get_async_session.call_count == 3
+    assert db_manager.get_async_session.call_count == 3
 
     @pytest.mark.asyncio
     async def test_database_connection_max_retry_attempts(self, mock_db_manager):
@@ -105,10 +105,10 @@ class TestMLflowRetry:
         model, version = await mock_prediction_service.get_production_model_with_retry()
 
         # 验证结果
-        assert model == "model"
-        assert version == "v1.0.0"
+    assert model == "model"
+    assert version == "v1.0.0"
         # 验证 get_production_model_with_retry 被调用了3次
-        assert mock_prediction_service.get_production_model_with_retry.call_count == 3
+    assert mock_prediction_service.get_production_model_with_retry.call_count == 3
 
     @pytest.mark.asyncio
     async def test_mlflow_model_loading_max_retry_attempts(
@@ -137,9 +137,9 @@ class TestExternalAPIRetry:
         response = await mock_data_collector.make_request("http://test.com")
 
         # 验证结果
-        assert response["status"] == "success"
+    assert response["status"] == "success"
         # 验证 make_request 被调用了3次
-        assert mock_data_collector.make_request.call_count == 3
+    assert mock_data_collector.make_request.call_count == 3
 
     @pytest.mark.asyncio
     async def test_external_api_call_max_retry_attempts(self, mock_data_collector):
@@ -157,6 +157,6 @@ class TestExternalAPIRetry:
     def test_retry_config_customization(self):
         """测试重试配置自定义 / Test retry configuration customization"""
         config = RetryConfig(max_attempts=5, base_delay=2, exponential_base=1.5)
-        assert config.max_attempts == 5
-        assert config.base_delay == 2
-        assert config.exponential_base == 1.5
+    assert config.max_attempts == 5
+    assert config.base_delay == 2
+    assert config.exponential_base == 1.5

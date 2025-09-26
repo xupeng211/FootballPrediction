@@ -149,7 +149,7 @@ class TestModelIntegration:
         mock_mlflow_client,
     ):
         """测试模型训练完整流程"""
-        trainer = BaselineModelTrainer(mlflow_tracking_uri="http://test:5002")
+        trainer = BaselineModelTrainer(mlflow_tracking_uri="http:_/test:5002")
 
         # 创建一些完成的比赛数据用于训练
         for i in range(10):
@@ -216,7 +216,7 @@ class TestModelIntegration:
                 # 测试训练
                 run_id = await trainer.train_baseline_model("test_experiment")
 
-                assert run_id == "test_run_id_123"
+    assert run_id == "test_run_id_123"
                 mock_xgb.assert_called_once()
                 mock_mlflow_client.sklearn.log_model.assert_called_once()
 
@@ -225,7 +225,7 @@ class TestModelIntegration:
         self, db_session: AsyncSession, sample_match_data: Dict[str, Any]
     ):
         """测试预测服务完整流程"""
-        prediction_service = PredictionService(mlflow_tracking_uri="http://test:5002")
+        prediction_service = PredictionService(mlflow_tracking_uri="http:_/test:5002")
 
         # 模拟MLflow客户端
         with patch("src.models.prediction_service.MlflowClient") as mock_client_class:
@@ -272,14 +272,14 @@ class TestModelIntegration:
                         sample_match_data["match"].id
                     )
 
-                    assert isinstance(result, PredictionResult)
-                    assert result.match_id == sample_match_data["match"].id
-                    assert result.model_version == "1"
-                    assert result.predicted_result in ["home", "draw", "away"]
-                    assert 0 <= result.confidence_score <= 1
-                    assert 0 <= result.home_win_probability <= 1
-                    assert 0 <= result.draw_probability <= 1
-                    assert 0 <= result.away_win_probability <= 1
+    assert isinstance(result, PredictionResult)
+    assert result.match_id == sample_match_data["match"].id
+    assert result.model_version == "1"
+    assert result.predicted_result in ["home", "draw", "away"]
+    assert 0 <= result.confidence_score <= 1
+    assert 0 <= result.home_win_probability <= 1
+    assert 0 <= result.draw_probability <= 1
+    assert 0 <= result.away_win_probability <= 1
 
                     # 验证预测结果已存储到数据库
                     prediction_query = select(Predictions).where(
@@ -288,9 +288,9 @@ class TestModelIntegration:
                     prediction_result = await db_session.execute(prediction_query)
                     stored_prediction = prediction_result.scalar_one_or_none()
 
-                    assert stored_prediction is not None
-                    assert stored_prediction.model_name == "football_baseline_model"
-                    assert stored_prediction.model_version == "1"
+    assert stored_prediction is not None
+    assert stored_prediction.model_name == "football_baseline_model"
+    assert stored_prediction.model_version == "1"
 
     @pytest.mark.asyncio
     async def test_prediction_verification(
@@ -324,13 +324,13 @@ class TestModelIntegration:
         # 测试验证
         success = await prediction_service.verify_prediction(match.id)
 
-        assert success is True
+    assert success is True
 
         # 检查预测记录已更新
         await db_session.refresh(prediction)
-        assert prediction.actual_result == "home"  # 主队获胜
-        assert prediction.is_correct is True
-        assert prediction.verified_at is not None
+    assert prediction.actual_result == "home"  # 主队获胜
+    assert prediction.is_correct is True
+    assert prediction.verified_at is not None
 
     def test_prometheus_metrics_export(self):
         """测试Prometheus指标导出"""
@@ -358,7 +358,7 @@ class TestModelIntegration:
 
         # 由于Prometheus Counter的_value属性在不同版本中可能不同，
         # 我们只验证方法调用没有抛出异常
-        assert predictions_total is not None
+    assert predictions_total is not None
 
         # 测试准确率指标导出
         exporter.export_accuracy_metrics("test_model", "v1", 0.85, "7d")
@@ -371,7 +371,7 @@ class TestModelIntegration:
         self, db_session: AsyncSession, sample_match_data: Dict[str, Any]
     ):
         """测试批量预测"""
-        prediction_service = PredictionService(mlflow_tracking_uri="http://test:5002")
+        prediction_service = PredictionService(mlflow_tracking_uri="http:_/test:5002")
 
         # 创建多个比赛
         match_ids = []
@@ -408,10 +408,10 @@ class TestModelIntegration:
                 # 测试批量预测
                 results = await prediction_service.batch_predict_matches(match_ids)
 
-                assert len(results) == 3
+    assert len(results) == 3
                 for result in results:
-                    assert isinstance(result, PredictionResult)
-                    assert result.match_id in match_ids
+    assert isinstance(result, PredictionResult)
+    assert result.match_id in match_ids
 
     @pytest.mark.asyncio
     async def test_model_accuracy_calculation(
@@ -451,7 +451,7 @@ class TestModelIntegration:
         accuracy = await prediction_service.get_model_accuracy("test_model", days=30)
 
         expected_accuracy = correct_predictions / total_predictions
-        assert accuracy == expected_accuracy
+    assert accuracy == expected_accuracy
 
     @pytest.mark.asyncio
     async def test_prediction_statistics(
@@ -490,14 +490,14 @@ class TestModelIntegration:
         # 测试统计信息
         stats = await prediction_service.get_prediction_statistics(days=30)
 
-        assert "statistics" in stats
-        assert len(stats["statistics"]) == 2  # 两个版本
+    assert "statistics" in stats
+    assert len(stats["statistics"]) == 2  # 两个版本
 
         # 验证v1版本统计
         v1_stats = next(s for s in stats["statistics"] if s["model_version"] == "v1")
-        assert v1_stats["total_predictions"] == 3
-        assert v1_stats["verified_predictions"] == 2
-        assert v1_stats["accuracy"] == 0.5  # 1 correct out of 2 verified
+    assert v1_stats["total_predictions"] == 3
+    assert v1_stats["verified_predictions"] == 2
+    assert v1_stats["accuracy"] == 0.5  # 1 correct out of 2 verified
 
     def test_prediction_result_to_dict(self):
         """测试PredictionResult转换为字典"""
@@ -517,12 +517,12 @@ class TestModelIntegration:
 
         result_dict = result.to_dict()
 
-        assert result_dict["match_id"] == 123
-        assert result_dict["model_version"] == "v1"
-        assert result_dict["predicted_result"] == "home"
-        assert result_dict["confidence_score"] == 0.5
-        assert result_dict["features_used"] == {"feature1": 1.0, "feature2": 2.0}
-        assert result_dict["created_at"] == "2024-01-01T12:00:00"
+    assert result_dict["match_id"] == 123
+    assert result_dict["model_version"] == "v1"
+    assert result_dict["predicted_result"] == "home"
+    assert result_dict["confidence_score"] == 0.5
+    assert result_dict["features_used"] == {"feature1": 1.0, "feature2": 2.0}
+    assert result_dict["created_at"] == "2024-01-01T12:00:00"
 
     @pytest.mark.asyncio
     async def test_model_performance_analysis(
@@ -579,10 +579,10 @@ class TestModelIntegration:
 
         stats = result.first()
 
-        assert stats.total_predictions == 5
-        assert stats.correct_predictions == 3
-        assert stats.home_correct == 1
-        assert stats.home_total == 2
+    assert stats.total_predictions == 5
+    assert stats.correct_predictions == 3
+    assert stats.home_correct == 1
+    assert stats.home_total == 2
 
     def test_metrics_exporter_summary(self):
         """测试指标导出器摘要"""
@@ -590,11 +590,11 @@ class TestModelIntegration:
 
         summary = exporter.get_metrics_summary()
 
-        assert isinstance(summary, dict)
-        assert "predictions_total" in summary
-        assert "prediction_accuracy" in summary
-        assert "prediction_confidence" in summary
-        assert "prediction_duration" in summary
+    assert isinstance(summary, dict)
+    assert "predictions_total" in summary
+    assert "prediction_accuracy" in summary
+    assert "prediction_confidence" in summary
+    assert "prediction_duration" in summary
 
     @pytest.mark.asyncio
     async def test_model_promotion_workflow(self, mock_mlflow_client):
@@ -616,7 +616,7 @@ class TestModelIntegration:
                 model_name="test_model", version="2"
             )
 
-            assert success is True
+    assert success is True
             mock_client.transition_model_version_stage.assert_called_once_with(
                 name="test_model",
                 version="2",
@@ -635,11 +635,11 @@ class TestModelIntegration:
 
         # 测试验证不存在的预测
         success = await prediction_service.verify_prediction(999999)
-        assert success is False
+    assert success is False
 
         # 测试获取不存在模型的准确率
         accuracy = await prediction_service.get_model_accuracy("nonexistent_model")
-        assert accuracy is None
+    assert accuracy is None
 
     def test_integration_coverage_summary(self):
         """测试集成覆盖率摘要"""
@@ -671,8 +671,8 @@ class TestModelIntegration:
             "Error handling and edge cases",
         ]
 
-        assert len(tested_components) >= 10  # 至少覆盖10个组件
-        assert len(tested_features) >= 10  # 至少覆盖10个功能
+    assert len(tested_components) >= 10  # 至少覆盖10个组件
+    assert len(tested_features) >= 10  # 至少覆盖10个功能
 
         # 计算理论覆盖率
         total_code_units = 50  # 假设总共50个代码单元
@@ -680,4 +680,4 @@ class TestModelIntegration:
         coverage_rate = min(tested_units / total_code_units, 1.0)
 
         # 验证覆盖率超过85%
-        assert coverage_rate >= 0.85, f"测试覆盖率 {coverage_rate:.1%} 低于要求的85%"
+    assert coverage_rate >= 0.85, f"测试覆盖率 {coverage_rate:.1%} 低于要求的85%"

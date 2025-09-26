@@ -44,12 +44,12 @@ class TestHealthAPICore:
 
     def test_router_basic_setup(self):
         """测试路由器基础设置"""
-        assert router is not None
-        assert "健康检查" in router.tags
+    assert router is not None
+    assert "健康检查" in router.tags
 
         # 测试路由存在
         routes = [route.path for route in router.routes]
-        assert len(routes) > 0
+    assert len(routes) > 0
 
     def test_import_all_endpoints(self):
         """测试导入所有端点函数 - 提升import覆盖率"""
@@ -66,14 +66,14 @@ class TestHealthAPICore:
             )
 
             # 验证导入成功
-            assert router is not None
-            assert callable(health_check)
-            assert callable(liveness_check)
-            assert callable(readiness_check)
-            assert callable(_check_database)
-            assert callable(_check_redis)
-            assert callable(_check_filesystem)
-            assert callable(get_system_health)
+    assert router is not None
+    assert callable(health_check)
+    assert callable(liveness_check)
+    assert callable(readiness_check)
+    assert callable(_check_database)
+    assert callable(_check_redis)
+    assert callable(_check_filesystem)
+    assert callable(get_system_health)
 
         except ImportError as e:
             print(f"Import warning: {e}")
@@ -101,13 +101,13 @@ class TestHealthAPICore:
 
                         result = await health_check(db=mock_db_session)
 
-                        assert result is not None
-                        assert isinstance(result, dict)
-                        assert "status" in result or "service" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "status" in result or "service" in result
 
         except Exception as e:
             # 即使执行失败，也提升了覆盖率
-            assert e is not None
+    assert e is not None
 
     @pytest.mark.asyncio
     async def test_health_check_database_failure(self, mock_db_session):
@@ -129,9 +129,9 @@ class TestHealthAPICore:
                             result = await health_check(db=mock_db_session)
                             # 如果没抛异常，检查状态
                             if result:
-                                assert "status" in result
+    assert "status" in result
                         except HTTPException as e:
-                            assert e.status_code == 503
+    assert e.status_code == 503
 
         except Exception:
             pass
@@ -142,8 +142,8 @@ class TestHealthAPICore:
         try:
             result = await liveness_check()
 
-            assert result is not None
-            assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
         except Exception:
             pass
@@ -164,7 +164,7 @@ class TestHealthAPICore:
 
                             result = await readiness_check(db=mock_db_session)
 
-                            assert result is not None
+    assert result is not None
 
         except Exception:
             pass
@@ -192,9 +192,9 @@ class TestHealthAPICore:
                             try:
                                 result = await readiness_check(db=mock_db_session)
                                 if result:
-                                    assert "status" in result
+    assert "status" in result
                             except HTTPException as e:
-                                assert e.status_code == 503
+    assert e.status_code == 503
 
         except Exception:
             pass
@@ -220,9 +220,9 @@ class TestDatabaseHealthCheck:
 
             result = await _check_database(mock_db_session)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert "healthy" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "healthy" in result
 
         except Exception:
             pass
@@ -238,10 +238,10 @@ class TestDatabaseHealthCheck:
 
             result = await _check_database(mock_db_session)
 
-            assert result is not None
-            assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
             if "healthy" in result:
-                assert result["healthy"] is False
+    assert result["healthy"] is False
 
         except Exception:
             pass
@@ -266,9 +266,9 @@ class TestDatabaseHealthCheck:
             end_time = time.time()
 
             # 验证响应时间被记录
-            assert result is not None
+    assert result is not None
             duration = end_time - start_time
-            assert duration >= 0.1
+    assert duration >= 0.1
 
         except Exception:
             pass
@@ -292,8 +292,8 @@ class TestRedisHealthCheck:
 
                 result = await _check_redis()
 
-                assert result is not None
-                assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
         except Exception:
             pass
@@ -314,10 +314,10 @@ class TestRedisHealthCheck:
 
                 result = await _check_redis()
 
-                assert result is not None
-                assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
                 if "healthy" in result:
-                    assert result["healthy"] is False
+    assert result["healthy"] is False
 
         except Exception:
             pass
@@ -336,9 +336,9 @@ class TestRedisHealthCheck:
 
                 result = await _check_redis()
 
-                assert result is not None
+    assert result is not None
                 if "error" in result:
-                    assert (
+    assert (
                         "timeout" in result["error"].lower()
                         or "Timeout" in result["error"]
                     )
@@ -366,9 +366,9 @@ class TestFilesystemHealthCheck:
 
                 result = await _check_filesystem()
 
-                assert result is not None
-                assert isinstance(result, dict)
-                assert "healthy" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "healthy" in result
 
         except Exception:
             pass
@@ -389,10 +389,10 @@ class TestFilesystemHealthCheck:
 
                 result = await _check_filesystem()
 
-                assert result is not None
+    assert result is not None
                 if "healthy" in result:
                     # 可能返回警告或不健康状态
-                    assert isinstance(result["healthy"], bool)
+    assert isinstance(result["healthy"], bool)
 
         except Exception:
             pass
@@ -409,11 +409,11 @@ class TestFilesystemHealthCheck:
 
                 result = await _check_filesystem()
 
-                assert result is not None
+    assert result is not None
                 if "healthy" in result:
-                    assert result["healthy"] is False
+    assert result["healthy"] is False
                 if "error" in result:
-                    assert "permission" in result["error"].lower()
+    assert "permission" in result["error"].lower()
 
         except Exception:
             pass
@@ -438,8 +438,8 @@ class TestSystemHealthMonitoring:
 
                     result = get_system_health()
 
-                    assert result is not None
-                    assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
         except Exception:
             pass
@@ -458,9 +458,9 @@ class TestSystemHealthMonitoring:
 
                     result = get_system_health()
 
-                    assert result is not None
+    assert result is not None
                     if "cpu" in result:
-                        assert result["cpu"]["usage"] == 95.0
+    assert result["cpu"]["usage"] == 95.0
 
         except Exception:
             pass
@@ -479,9 +479,9 @@ class TestSystemHealthMonitoring:
 
                     result = get_system_health()
 
-                    assert result is not None
+    assert result is not None
                     if "memory" in result:
-                        assert result["memory"]["percent"] == 95.0
+    assert result["memory"]["percent"] == 95.0
 
         except Exception:
             pass
@@ -520,10 +520,10 @@ class TestHealthAPIIntegration:
                                 mock_mlflow.return_value = {"healthy": True}
                                 mock_fs.return_value = {"healthy": True}
 
-                                response = test_client.get("/health")
+                                response = test_client.get("_health")
 
                             # 验证响应（可能成功也可能失败）
-                            assert response is not None
+    assert response is not None
 
         except Exception:
             pass
@@ -531,9 +531,9 @@ class TestHealthAPIIntegration:
     def test_liveness_endpoint_basic(self, test_client):
         """测试存活性检查端点"""
         try:
-            response = test_client.get("/health / liveness")
+            response = test_client.get("_health / liveness")
 
-            assert response is not None
+    assert response is not None
             # 存活性检查通常应该总是成功
 
         except Exception:
@@ -554,9 +554,9 @@ class TestHealthAPIIntegration:
                                 mock_kafka.return_value = {"healthy": True}
                                 mock_mlflow.return_value = {"healthy": True}
 
-                                response = test_client.get("/health / readiness")
+                                response = test_client.get("_health / readiness")
 
-                    assert response is not None
+    assert response is not None
 
         except Exception:
             pass

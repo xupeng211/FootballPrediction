@@ -39,15 +39,15 @@ class TestContentAnalysisService:
 
     def test_content_analysis_service_inheritance(self):
         """Test ContentAnalysisService inherits from BaseService"""
-        assert issubclass(ContentAnalysisService, BaseService)
+    assert issubclass(ContentAnalysisService, BaseService)
 
     def test_content_analysis_service_init(self):
         """Test ContentAnalysisService initialization"""
         with patch('src.services.base.BaseService.__init__') as mock_init:
             service = ContentAnalysisService()
 
-            assert service is not None
-            assert service._initialized is False
+    assert service is not None
+    assert service._initialized is False
             mock_init.assert_called_once_with("ContentAnalysisService")
 
     @pytest.mark.asyncio
@@ -55,8 +55,8 @@ class TestContentAnalysisService:
         """Test successful service initialization"""
         result = await content_analysis_service.initialize()
 
-        assert result is True
-        assert content_analysis_service._initialized is True
+    assert result is True
+    assert content_analysis_service._initialized is True
         content_analysis_service.logger.info.assert_called_with("正在初始化 ContentAnalysisService")
 
     @pytest.mark.asyncio
@@ -66,7 +66,7 @@ class TestContentAnalysisService:
 
         await content_analysis_service.shutdown()
 
-        assert content_analysis_service._initialized is False
+    assert content_analysis_service._initialized is False
         content_analysis_service.logger.info.assert_called_with("正在关闭 ContentAnalysisService")
 
     @pytest.mark.asyncio
@@ -74,18 +74,18 @@ class TestContentAnalysisService:
         """Test successful content analysis"""
         result = await content_analysis_service.analyze_content(mock_content)
 
-        assert result is not None
-        assert isinstance(result, AnalysisResult)
-        assert result.id == "analysis_test_content_123"
-        assert result.analysis_type == "content_analysis"
-        assert result.confidence == 0.85
-        assert result.content_id == "test_content_123"
-        assert isinstance(result.timestamp, datetime)
-        assert "sentiment" in result.result
-        assert result.result["sentiment"] == "positive"
-        assert "keywords" in result.result
-        assert "category" in result.result
-        assert result.result["category"] == "体育"
+    assert result is not None
+    assert isinstance(result, AnalysisResult)
+    assert result.id == "analysis_test_content_123"
+    assert result.analysis_type == "content_analysis"
+    assert result.confidence == 0.85
+    assert result.content_id == "test_content_123"
+    assert isinstance(result.timestamp, datetime)
+    assert "sentiment" in result.result
+    assert result.result["sentiment"] == "positive"
+    assert "keywords" in result.result
+    assert "category" in result.result
+    assert result.result["category"] == "体育"
 
     @pytest.mark.asyncio
     async def test_analyze_content_not_initialized(self, content_analysis_service, mock_content):
@@ -95,7 +95,7 @@ class TestContentAnalysisService:
         with pytest.raises(RuntimeError) as exc_info:
             await content_analysis_service.analyze_content(mock_content)
 
-        assert "服务未初始化" in str(exc_info.value)
+    assert "服务未初始化" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_analyze_content_logging(self, content_analysis_service, mock_content):
@@ -117,19 +117,19 @@ class TestContentAnalysisService:
 
         results = await content_analysis_service.batch_analyze(contents)
 
-        assert len(results) == 3
+    assert len(results) == 3
         for i, result in enumerate(results):
-            assert result is not None
-            assert isinstance(result, AnalysisResult)
-            assert result.id == f"analysis_content_{i}"
-            assert result.content_id == f"content_{i}"
+    assert result is not None
+    assert isinstance(result, AnalysisResult)
+    assert result.id == f"analysis_content_{i}"
+    assert result.content_id == f"content_{i}"
 
     @pytest.mark.asyncio
     async def test_batch_analyze_empty_list(self, content_analysis_service):
         """Test batch analysis with empty content list"""
         results = await content_analysis_service.batch_analyze([])
 
-        assert results == []
+    assert results == []
 
     @pytest.mark.asyncio
     async def test_batch_analyze_partial_results(self, content_analysis_service):
@@ -153,69 +153,69 @@ class TestContentAnalysisService:
             results = await content_analysis_service.batch_analyze(contents)
 
             # Should return 2 results (one failed)
-            assert len(results) == 2
+    assert len(results) == 2
 
     def test_analyze_text_success(self, content_analysis_service):
         """Test successful text analysis"""
         text = "This is a test football prediction analysis"
         result = content_analysis_service.analyze_text(text)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "word_count" in result
-        assert "character_count" in result
-        assert "sentiment" in result
-        assert "keywords" in result
-        assert "language" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "word_count" in result
+    assert "character_count" in result
+    assert "sentiment" in result
+    assert "keywords" in result
+    assert "language" in result
 
-        assert result["word_count"] == 8
-        assert result["character_count"] == len(text)
-        assert result["sentiment"] == "neutral"
-        assert result["language"] == "auto-detected"
-        assert isinstance(result["keywords"], list)
+    assert result["word_count"] == 8
+    assert result["character_count"] == len(text)
+    assert result["sentiment"] == "neutral"
+    assert result["language"] == "auto-detected"
+    assert isinstance(result["keywords"], list)
 
     def test_analyze_text_empty(self, content_analysis_service):
         """Test text analysis with empty text"""
         result = content_analysis_service.analyze_text("")
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "error" in result
-        assert result["error"] == "Empty text"
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert result["error"] == "Empty text"
 
     def test_analyze_text_single_word(self, content_analysis_service):
         """Test text analysis with single word"""
         text = "football"
         result = content_analysis_service.analyze_text(text)
 
-        assert result["word_count"] == 1
-        assert result["character_count"] == 8
-        assert result["keywords"] == ["football"]
+    assert result["word_count"] == 1
+    assert result["character_count"] == 8
+    assert result["keywords"] == ["football"]
 
     def test_analyze_text_long_text(self, content_analysis_service):
         """Test text analysis with long text"""
         text = "word " * 100  # 100 words
         result = content_analysis_service.analyze_text(text)
 
-        assert result["word_count"] == 100
-        assert len(result["keywords"]) == 5  # Should be limited to first 5 words
+    assert result["word_count"] == 100
+    assert len(result["keywords"]) == 5  # Should be limited to first 5 words
 
     def test_analyze_text_unicode(self, content_analysis_service):
         """Test text analysis with unicode characters"""
         text = "足球预测 ⚽ 分析"
         result = content_analysis_service.analyze_text(text)
 
-        assert result is not None
-        assert result["word_count"] == 4  # Unicode words
-        assert result["character_count"] == len(text)
+    assert result is not None
+    assert result["word_count"] == 4  # Unicode words
+    assert result["character_count"] == len(text)
 
     def test_analyze_text_whitespace(self, content_analysis_service):
         """Test text analysis with whitespace"""
         text = "   multiple   spaces   between   words   "
         result = content_analysis_service.analyze_text(text)
 
-        assert result["word_count"] == 4  # Should ignore extra spaces
-        assert result["keywords"] == ["multiple", "spaces", "between", "words"]
+    assert result["word_count"] == 4  # Should ignore extra spaces
+    assert result["keywords"] == ["multiple", "spaces", "between", "words"]
 
 
 class TestContentAnalysisServiceEdgeCases:
@@ -268,20 +268,20 @@ class TestContentAnalysisServiceEdgeCases:
         text = "Football @#$%^&*() Match!"
         result = content_analysis_service.analyze_text(text)
 
-        assert result is not None
-        assert result["word_count"] == 3  # "Football", "Match", "@#$%^&*()"
-        assert result["character_count"] == len(text)
+    assert result is not None
+    assert result["word_count"] == 3  # "Football", "Match", "@#$%^&*()"
+    assert result["character_count"] == len(text)
 
     def test_analyze_text_numbers_and_mixed_content(self, content_analysis_service):
         """Test text analysis with numbers and mixed content"""
         text = "Match 123: TeamA 45 - TeamB 67 final score"
         result = content_analysis_service.analyze_text(text)
 
-        assert result is not None
-        assert result["word_count"] == 9
-        assert "123" in result["keywords"]
-        assert "TeamA" in result["keywords"]
-        assert "TeamB" in result["keywords"]
+    assert result is not None
+    assert result["word_count"] == 9
+    assert "123" in result["keywords"]
+    assert "TeamA" in result["keywords"]
+    assert "TeamB" in result["keywords"]
 
 
 class TestContentAnalysisServiceIntegration:
@@ -296,7 +296,7 @@ class TestContentAnalysisServiceIntegration:
 
             # Test initialization
             await service.initialize()
-            assert service._initialized is True
+    assert service._initialized is True
 
             # Test content analysis
             content = Mock(spec=Content)
@@ -304,18 +304,18 @@ class TestContentAnalysisServiceIntegration:
             content.text = "Integration test content"
 
             result = await service.analyze_content(content)
-            assert result is not None
-            assert result.content_id == "integration_test"
+    assert result is not None
+    assert result.content_id == "integration_test"
 
             # Test batch analysis
             contents = [content]
             batch_results = await service.batch_analyze(contents)
-            assert len(batch_results) == 1
-            assert batch_results[0].content_id == "integration_test"
+    assert len(batch_results) == 1
+    assert batch_results[0].content_id == "integration_test"
 
             # Test shutdown
             await service.shutdown()
-            assert service._initialized is False
+    assert service._initialized is False
 
     @pytest.mark.asyncio
     async def test_concurrent_analysis(self):
@@ -343,10 +343,10 @@ class TestContentAnalysisServiceIntegration:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Verify all results
-            assert len(results) == 5
+    assert len(results) == 5
             for i, result in enumerate(results):
-                assert isinstance(result, AnalysisResult)
-                assert result.content_id == f"concurrent_{i}"
+    assert isinstance(result, AnalysisResult)
+    assert result.content_id == f"concurrent_{i}"
 
 
 if __name__ == "__main__":

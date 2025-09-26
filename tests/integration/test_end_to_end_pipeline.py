@@ -137,7 +137,7 @@ class TestEndToEndPipeline:
         # Step 2: 调用预测API
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"{self.base_url}/api/v1/predictions/predict",
+                f"{self.base_url}_api/v1/predictions/predict",
                 json={
                     "match_id": match_id,
                     "home_team_id": team_data["home_team_id"],
@@ -147,32 +147,32 @@ class TestEndToEndPipeline:
             )
 
         # Step 3: 验证API响应
-        assert (
+    assert (
             response.status_code == 200
         ), f"API响应错误: {response.status_code}, {response.text}"
 
         prediction_result = response.json()
 
         # 验证响应结构
-        assert "prediction_id" in prediction_result
-        assert "match_id" in prediction_result
-        assert "probabilities" in prediction_result
-        assert "predicted_result" in prediction_result
-        assert "confidence" in prediction_result
-        assert "created_at" in prediction_result
+    assert "prediction_id" in prediction_result
+    assert "match_id" in prediction_result
+    assert "probabilities" in prediction_result
+    assert "predicted_result" in prediction_result
+    assert "confidence" in prediction_result
+    assert "created_at" in prediction_result
 
         # 验证预测结果合理性
         probabilities = prediction_result["probabilities"]
-        assert "home_win" in probabilities
-        assert "draw" in probabilities
-        assert "away_win" in probabilities
+    assert "home_win" in probabilities
+    assert "draw" in probabilities
+    assert "away_win" in probabilities
 
         # 验证概率和为1
         total_prob = sum(probabilities.values())
-        assert abs(total_prob - 1.0) < 0.01, f"概率和不为1: {total_prob}"
+    assert abs(total_prob - 1.0) < 0.01, f"概率和不为1: {total_prob}"
 
         # 验证置信度
-        assert 0 <= prediction_result["confidence"] <= 1
+    assert 0 <= prediction_result["confidence"] <= 1
 
         # Step 4: 验证数据库记录
         async with self.db_manager.get_async_session() as session:
@@ -182,20 +182,20 @@ class TestEndToEndPipeline:
             result = await session.execute(prediction_query)
             db_prediction = result.scalar_one_or_none()
 
-            assert db_prediction is not None, "预测记录未保存到数据库"
-            assert db_prediction.match_id == match_id
-            assert (
+    assert db_prediction is not None, "预测记录未保存到数据库"
+    assert db_prediction.match_id == match_id
+    assert (
                 db_prediction.prediction_result == prediction_result["predicted_result"]
             )
-            assert db_prediction.confidence == prediction_result["confidence"]
+    assert db_prediction.confidence == prediction_result["confidence"]
 
         # Step 5: 验证缓存
         cache_key = f"prediction:{match_id}"
         cached_result = await self.redis_manager.aget(cache_key)
 
         if cached_result:
-            assert cached_result["match_id"] == match_id
-            assert (
+    assert cached_result["match_id"] == match_id
+    assert (
                 cached_result["predicted_result"]
                 == prediction_result["predicted_result"]
             )
@@ -209,7 +209,7 @@ class TestEndToEndPipeline:
         # 测试无效的match_id
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(
-                f"{self.base_url}/api/v1/predictions/predict",
+                f"{self.base_url}_api/v1/predictions/predict",
                 json={
                     "match_id": 999999999,  # 不存在的比赛ID
                     "home_team_id": 1,
@@ -219,10 +219,10 @@ class TestEndToEndPipeline:
             )
 
         # 应该返回404或400错误
-        assert response.status_code in [400, 404, 422]
+    assert response.status_code in [400, 404, 422]
 
         error_response = response.json()
-        assert "detail" in error_response or "error" in error_response
+    assert "detail" in error_response or "error" in error_response
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -240,7 +240,7 @@ class TestEndToEndPipeline:
         async with httpx.AsyncClient(timeout=30.0) as client:
             # 创建预测
             await client.post(
-                f"{self.base_url}/api/v1/predictions/predict",
+                f"{self.base_url}_api/v1/predictions/predict",
                 json={
                     "match_id": match_id,
                     "home_team_id": team_data["home_team_id"],
@@ -255,12 +255,12 @@ class TestEndToEndPipeline:
                 params={"limit": 10, "offset": 0},
             )
 
-        assert history_response.status_code == 200
+    assert history_response.status_code == 200
 
         history_data = history_response.json()
-        assert "predictions" in history_data
-        assert "total" in history_data
-        assert len(history_data["predictions"]) > 0
+    assert "predictions" in history_data
+    assert "total" in history_data
+    assert len(history_data["predictions"]) > 0
 
         # 验证预测记录包含必要字段
         first_prediction = history_data["predictions"][0]
@@ -273,7 +273,7 @@ class TestEndToEndPipeline:
         ]
 
         for field in required_fields:
-            assert field in first_prediction, f"预测历史缺少字段: {field}"
+    assert field in first_prediction, f"预测历史缺少字段: {field}"
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -283,20 +283,20 @@ class TestEndToEndPipeline:
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             # 测试主健康检查端点
-            health_response = await client.get(f"{self.base_url}/health")
-            assert health_response.status_code == 200
+            health_response = await client.get(f"{self.base_url}_health")
+    assert health_response.status_code == 200
 
             health_data = health_response.json()
-            assert "status" in health_data
-            assert health_data["status"] == "healthy"
+    assert "status" in health_data
+    assert health_data["status"] == "healthy"
 
             # 测试数据库连接检查
             if "database" in health_data:
-                assert health_data["database"]["status"] == "connected"
+    assert health_data["database"]["status"] == "connected"
 
             # 测试Redis连接检查
             if "cache" in health_data:
-                assert health_data["cache"]["status"] == "connected"
+    assert health_data["cache"]["status"] == "connected"
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -305,10 +305,10 @@ class TestEndToEndPipeline:
         """测试监控指标端点"""
 
         async with httpx.AsyncClient(timeout=10.0) as client:
-            metrics_response = await client.get(f"{self.base_url}/metrics")
+            metrics_response = await client.get(f"{self.base_url}_metrics")
 
             # 指标端点可能返回200或404（如果未启用）
-            assert metrics_response.status_code in [200, 404]
+    assert metrics_response.status_code in [200, 404]
 
             if metrics_response.status_code == 200:
                 metrics_text = metrics_response.text
@@ -321,7 +321,7 @@ class TestEndToEndPipeline:
                 ]
 
                 for metric_prefix in expected_metrics:
-                    assert any(
+    assert any(
                         metric_prefix in line for line in metrics_text.split("\n")
                     ), f"缺少指标前缀: {metric_prefix}"
 
@@ -333,18 +333,18 @@ class TestEndToEndPipeline:
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             # 测试Swagger UI
-            docs_response = await client.get(f"{self.base_url}/docs")
-            assert docs_response.status_code == 200
-            assert "swagger" in docs_response.text.lower()
+            docs_response = await client.get(f"{self.base_url}_docs")
+    assert docs_response.status_code == 200
+    assert "swagger" in docs_response.text.lower()
 
             # 测试OpenAPI schema
             openapi_response = await client.get(f"{self.base_url}/openapi.json")
-            assert openapi_response.status_code == 200
+    assert openapi_response.status_code == 200
 
             openapi_data = openapi_response.json()
-            assert "openapi" in openapi_data
-            assert "info" in openapi_data
-            assert "paths" in openapi_data
+    assert "openapi" in openapi_data
+    assert "info" in openapi_data
+    assert "paths" in openapi_data
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -365,12 +365,12 @@ class TestEndToEndPipeline:
             for query in queries:
                 result = await session.execute(text(query))
                 count = result.scalar()
-                assert isinstance(count, int), f"查询结果类型错误: {query}"
+    assert isinstance(count, int), f"查询结果类型错误: {query}"
 
         execution_time = (datetime.now() - start_time).total_seconds()
 
         # 数据库查询应该在合理时间内完成
-        assert execution_time < 5.0, f"数据库查询耗时过长: {execution_time}秒"
+    assert execution_time < 5.0, f"数据库查询耗时过长: {execution_time}秒"
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -390,8 +390,8 @@ class TestEndToEndPipeline:
         # 读取缓存
         cached_value = await self.redis_manager.aget(test_key)
 
-        assert cached_value is not None
-        assert cached_value["test"] == test_value["test"]
+    assert cached_value is not None
+    assert cached_value["test"] == test_value["test"]
 
         # 清理测试缓存
         await self.redis_manager.adelete(test_key)
@@ -399,7 +399,7 @@ class TestEndToEndPipeline:
         execution_time = (datetime.now() - start_time).total_seconds()
 
         # 缓存操作应该非常快速
-        assert execution_time < 1.0, f"缓存操作耗时过长: {execution_time}秒"
+    assert execution_time < 1.0, f"缓存操作耗时过长: {execution_time}秒"
 
 
 @pytest.mark.asyncio
@@ -412,7 +412,7 @@ async def test_system_integration_smoke():
     快速验证所有关键组件是否正常工作
     """
     components_to_test = [
-        ("API服务", "http://localhost:8000/health"),
+        ("API服务", "http:_/localhost:8000/health"),
         ("Prometheus", "http://localhost:9090/-/ready"),
         ("Grafana", "http://localhost:3000/api/health"),
     ]
@@ -442,7 +442,7 @@ async def test_system_integration_smoke():
     # 验证关键组件状态
     critical_components = ["API服务"]
     for component in critical_components:
-        assert (
+    assert (
             results[component]["status"] == "OK"
         ), f"关键组件 {component} 不健康: {results[component]}"
 

@@ -24,9 +24,9 @@ class TestFootballKafkaProducer:
 
     def test_producer_initialization(self):
         """测试生产者初始化"""
-        assert self.producer is not None
-        assert hasattr(self.producer, "send_match_data")
-        assert hasattr(self.producer, "send_odds_data")
+    assert self.producer is not None
+    assert hasattr(self.producer, "send_match_data")
+    assert hasattr(self.producer, "send_odds_data")
 
     @patch("src.streaming.kafka_producer.KafkaProducer")
     @pytest.mark.asyncio
@@ -45,7 +45,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is True or result is False
+    assert result is True or result is False
 
     @patch("src.streaming.kafka_producer.KafkaProducer")
     @pytest.mark.asyncio
@@ -65,7 +65,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_odds_data(odds_data)
 
-        assert result is True or result is False
+    assert result is True or result is False
 
     @patch("src.streaming.kafka_producer.KafkaProducer")
     @pytest.mark.asyncio
@@ -83,10 +83,10 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_batch(batch_data, "matches")
 
-        assert isinstance(result, dict)
-        assert "success" in result
-        assert "failed" in result
-        assert result["success"] + result["failed"] == len(batch_data)
+    assert isinstance(result, dict)
+    assert "success" in result
+    assert "failed" in result
+    assert result["success"] + result["failed"] == len(batch_data)
 
     def test_producer_error_handling(self):
         """测试生产者错误处理"""
@@ -95,9 +95,9 @@ class TestFootballKafkaProducer:
 
             try:
                 FootballKafkaProducer()
-                assert False, "Should have raised exception"
+    assert False, "Should have raised exception"
             except Exception as e:
-                assert "Kafka connection failed" in str(e)
+    assert "Kafka connection failed" in str(e)
 
 
 class TestFootballKafkaConsumer:
@@ -110,9 +110,9 @@ class TestFootballKafkaConsumer:
 
     def test_consumer_initialization(self):
         """测试消费者初始化"""
-        assert self.consumer is not None
-        assert hasattr(self.consumer, "consume_messages")
-        assert hasattr(self.consumer, "process_message")
+    assert self.consumer is not None
+    assert hasattr(self.consumer, "consume_messages")
+    assert hasattr(self.consumer, "process_message")
 
     @pytest.mark.asyncio
     async def test_process_match_message(self):
@@ -124,7 +124,7 @@ class TestFootballKafkaConsumer:
 
             result = await self.consumer._process_match_message(message_data)
 
-            assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_process_odds_message(self):
@@ -139,7 +139,7 @@ class TestFootballKafkaConsumer:
 
             result = await self.consumer._process_odds_message(message_data)
 
-            assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_process_scores_message(self):
@@ -156,7 +156,7 @@ class TestFootballKafkaConsumer:
 
             result = await self.consumer._process_scores_message(message_data)
 
-            assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_consume_batch(self):
@@ -172,7 +172,7 @@ class TestFootballKafkaConsumer:
 
             result = await self.consumer.consume_messages(batch_size=3)
 
-            assert isinstance(result, list)
+    assert isinstance(result, list)
 
     def test_consumer_error_handling(self):
         """测试消费者错误处理"""
@@ -182,7 +182,7 @@ class TestFootballKafkaConsumer:
             with pytest.raises(Exception) as exc_info:
                 FootballKafkaConsumer()
 
-            assert "Consumer initialization failed" in str(exc_info.value)
+    assert "Consumer initialization failed" in str(exc_info.value)
 
 
 class TestStreamProcessor:
@@ -197,9 +197,9 @@ class TestStreamProcessor:
 
     def test_stream_processor_initialization(self):
         """测试流处理器初始化"""
-        assert self.processor is not None
-        assert hasattr(self.processor, "start")
-        assert hasattr(self.processor, "stop")
+    assert self.processor is not None
+    assert hasattr(self.processor, "start")
+    assert hasattr(self.processor, "stop")
 
     @pytest.mark.asyncio
     async def test_send_data(self):
@@ -213,7 +213,7 @@ class TestStreamProcessor:
 
             result = await self.processor.send_data(test_data, "match")
 
-            assert result is True
+    assert result is True
 
     def test_consume_data(self):
         """测试消费数据"""
@@ -227,9 +227,9 @@ class TestStreamProcessor:
 
             result = self.processor.consume_data(timeout=1.0, max_messages=10)
 
-            assert result is not None
-            assert isinstance(result, dict)
-            assert result["processed"] == 2
+    assert result is not None
+    assert isinstance(result, dict)
+    assert result["processed"] == 2
 
     @pytest.mark.asyncio
     async def test_health_check(self):
@@ -242,7 +242,7 @@ class TestStreamProcessor:
 
             health_status = await self.processor.health_check()
 
-            assert isinstance(health_status, dict)
+    assert isinstance(health_status, dict)
 
     def test_processor_lifecycle(self):
         """测试处理器生命周期"""
@@ -263,9 +263,9 @@ class TestStreamConfig:
     def test_stream_config_initialization(self):
         """测试流配置初始化"""
         config = StreamConfig()
-        assert config is not None
-        assert hasattr(config, "kafka_config")
-        assert hasattr(config, "topics")
+    assert config is not None
+    assert hasattr(config, "kafka_config")
+    assert hasattr(config, "topics")
 
     def test_kafka_config_validation(self):
         """测试Kafka配置验证"""
@@ -279,7 +279,7 @@ class TestStreamConfig:
             "consumer_client_id",
         ]
         for attr in required_attributes:
-            assert hasattr(kafka_config, attr) or hasattr(config, attr)
+    assert hasattr(kafka_config, attr) or hasattr(config, attr)
 
     def test_topic_configuration(self):
         """测试主题配置"""
@@ -289,7 +289,7 @@ class TestStreamConfig:
         # 验证主题配置
         expected_topics = ["matches", "odds", "scores"]
         for topic in expected_topics:
-            assert topic in topics or isinstance(topics, dict)
+    assert topic in topics or isinstance(topics, dict)
 
     def test_serialization_config(self):
         """测试序列化配置"""
@@ -297,7 +297,7 @@ class TestStreamConfig:
 
         # 验证序列化器配置
         kafka_config = config.kafka_config
-        assert hasattr(kafka_config, "key_serializer") or hasattr(
+    assert hasattr(kafka_config, "key_serializer") or hasattr(
             kafka_config, "value_serializer"
         )
 
@@ -307,7 +307,7 @@ class TestStreamConfig:
 
         # 验证消费者组配置
         kafka_config = config.kafka_config
-        assert hasattr(kafka_config, "consumer_group_id") or hasattr(
+    assert hasattr(kafka_config, "consumer_group_id") or hasattr(
             config, "consumer_group_id"
         )
 
@@ -325,9 +325,9 @@ class TestStreamingIntegration:
         }
 
         # 验证数据格式
-        assert "match_id" in test_data
-        assert "timestamp" in test_data
-        assert isinstance(test_data["match_id"], int)
+    assert "match_id" in test_data
+    assert "timestamp" in test_data
+    assert isinstance(test_data["match_id"], int)
 
     def test_message_serialization(self):
         """测试消息序列化"""
@@ -343,8 +343,8 @@ class TestStreamingIntegration:
         # 反序列化
         deserialized = json.loads(serialized)
 
-        assert deserialized["id"] == test_message["id"]
-        assert deserialized["data"] == test_message["data"]
+    assert deserialized["id"] == test_message["id"]
+    assert deserialized["data"] == test_message["data"]
 
     def test_error_recovery(self):
         """测试错误恢复"""
@@ -368,8 +368,8 @@ class TestStreamingIntegration:
                 if attempt == max_retries - 1:
                     raise
 
-        assert result == "Success"
-        assert current_retry == 3
+    assert result == "Success"
+    assert current_retry == 3
 
     def test_throughput_monitoring(self):
         """测试吞吐量监控"""
@@ -379,8 +379,8 @@ class TestStreamingIntegration:
 
         throughput = processed_messages / time_window_seconds
 
-        assert throughput > 0
-        assert isinstance(throughput, (int, float))
+    assert throughput > 0
+    assert isinstance(throughput, (int, float))
 
     def test_backpressure_handling(self):
         """测试背压处理"""
@@ -393,5 +393,5 @@ class TestStreamingIntegration:
         # 检查是否需要背压控制
         needs_backpressure = queue_utilization > 0.8
 
-        assert isinstance(needs_backpressure, bool)
-        assert queue_utilization >= 0 and queue_utilization <= 1
+    assert isinstance(needs_backpressure, bool)
+    assert queue_utilization >= 0 and queue_utilization <= 1

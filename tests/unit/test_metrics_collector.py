@@ -30,36 +30,36 @@ class TestMetricsCollector:
 
     def test_metrics_collector_initialization(self):
         """测试指标收集器初始化"""
-        assert self.collector is not None
-        assert hasattr(self.collector, "enabled")
-        assert hasattr(self.collector, "collection_interval")
+    assert self.collector is not None
+    assert hasattr(self.collector, "enabled")
+    assert hasattr(self.collector, "collection_interval")
 
     def test_enable_disable_collector(self):
         """测试启用 / 禁用收集器"""
         # 禁用
         self.collector.disable()
-        assert self.collector.enabled is False
+    assert self.collector.enabled is False
 
         # 启用
         self.collector.enable()
-        assert self.collector.enabled is True
+    assert self.collector.enabled is True
 
     def test_set_collection_interval(self):
         """测试设置收集间隔"""
         new_interval = 30.0
         self.collector.set_collection_interval(new_interval)
 
-        assert self.collector.collection_interval == new_interval
+    assert self.collector.collection_interval == new_interval
 
     def test_invalid_collection_interval(self):
         """测试无效的收集间隔"""
         # 修改实现以实际验证无效值
         # 当前实现不会抛出ValueError，所以我们测试实际行为
         self.collector.set_collection_interval(-1)
-        assert self.collector.collection_interval == -1  # 实际行为
+    assert self.collector.collection_interval == -1  # 实际行为
 
         self.collector.set_collection_interval(0)
-        assert self.collector.collection_interval == 0  # 实际行为
+    assert self.collector.collection_interval == 0  # 实际行为
 
     @patch("src.monitoring.metrics_collector.datetime")
     def test_get_current_timestamp(self, mock_datetime):
@@ -74,18 +74,18 @@ class TestMetricsCollector:
         result = mock_datetime.now()
         timestamp = result.timestamp()
 
-        assert isinstance(timestamp, float)
-        assert timestamp > 0
+    assert isinstance(timestamp, float)
+    assert timestamp > 0
 
     def test_get_collector_info(self):
         """测试获取收集器信息"""
         # 由于原始类没有get_collector_info方法，我们测试实际存在的get_status方法
         info = self.collector.get_status()
 
-        assert isinstance(info, dict)
-        assert "running" in info
-        assert "collection_interval" in info
-        assert "task_status" in info
+    assert isinstance(info, dict)
+    assert "running" in info
+    assert "collection_interval" in info
+    assert "task_status" in info
 
 
 class TestSystemMetricsCollector:
@@ -97,8 +97,8 @@ class TestSystemMetricsCollector:
 
     def test_system_collector_initialization(self):
         """测试系统收集器初始化"""
-        assert self.collector is not None
-        assert isinstance(self.collector, MetricsCollector)
+    assert self.collector is not None
+    assert isinstance(self.collector, MetricsCollector)
 
     @patch("builtins.__import__")
     @pytest.mark.asyncio
@@ -123,12 +123,12 @@ class TestSystemMetricsCollector:
 
         metrics = await self.collector.collect_cpu_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "cpu_usage_percent" in metrics
-        assert metrics["cpu_usage_percent"] == 45.5
-        assert "cpu_count" in metrics
-        assert metrics["cpu_count"] == 4
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "cpu_usage_percent" in metrics
+    assert metrics["cpu_usage_percent"] == 45.5
+    assert "cpu_count" in metrics
+    assert metrics["cpu_count"] == 4
+    assert "timestamp" in metrics
 
     @patch("builtins.__import__")
     @pytest.mark.asyncio
@@ -157,14 +157,14 @@ class TestSystemMetricsCollector:
 
         metrics = await self.collector.collect_memory_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "memory_total" in metrics  # 实际字段名
-        assert "memory_available" in metrics  # 实际字段名
-        assert "memory_usage_percent" in metrics
-        assert metrics["memory_usage_percent"] == 50.0
-        assert "memory_used" in metrics
-        assert metrics["memory_total"] == 8 * 1024 * 1024 * 1024
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "memory_total" in metrics  # 实际字段名
+    assert "memory_available" in metrics  # 实际字段名
+    assert "memory_usage_percent" in metrics
+    assert metrics["memory_usage_percent"] == 50.0
+    assert "memory_used" in metrics
+    assert metrics["memory_total"] == 8 * 1024 * 1024 * 1024
+    assert "timestamp" in metrics
 
     @patch("src.monitoring.metrics_collector.psutil", create=True)
     def test_collect_disk_metrics(self, mock_psutil):
@@ -181,11 +181,11 @@ class TestSystemMetricsCollector:
         mock_psutil.disk_usage.return_value = mock_disk_obj
 
         # 测试psutil mock是否正确设置
-        disk_info = mock_psutil.disk_usage("/")
+        disk_info = mock_psutil.disk_usage("_")
 
-        assert disk_info.total == 100 * 1024 * 1024 * 1024
-        assert disk_info.used == 60 * 1024 * 1024 * 1024
-        assert disk_info.free == 40 * 1024 * 1024 * 1024
+    assert disk_info.total == 100 * 1024 * 1024 * 1024
+    assert disk_info.used == 60 * 1024 * 1024 * 1024
+    assert disk_info.free == 40 * 1024 * 1024 * 1024
 
     @patch("src.monitoring.metrics_collector.psutil", create=True)
     def test_collect_network_metrics(self, mock_psutil):
@@ -205,10 +205,10 @@ class TestSystemMetricsCollector:
         # 测试psutil mock是否正确设置
         net_info = mock_psutil.net_io_counters()
 
-        assert net_info.bytes_sent == 1024 * 1024
-        assert net_info.bytes_recv == 2 * 1024 * 1024
-        assert net_info.packets_sent == 1000
-        assert net_info.packets_recv == 1500
+    assert net_info.bytes_sent == 1024 * 1024
+    assert net_info.bytes_recv == 2 * 1024 * 1024
+    assert net_info.packets_sent == 1000
+    assert net_info.packets_recv == 1500
 
     @patch("src.monitoring.metrics_collector.os", create=True)
     def test_collect_system_load(self, mock_os):
@@ -223,10 +223,10 @@ class TestSystemMetricsCollector:
         # 测试os mock是否正确设置
         load_avg = mock_os.getloadavg()
 
-        assert len(load_avg) == 3
-        assert load_avg[0] == 1.0
-        assert load_avg[1] == 1.5
-        assert load_avg[2] == 2.0
+    assert len(load_avg) == 3
+    assert load_avg[0] == 1.0
+    assert load_avg[1] == 1.5
+    assert load_avg[2] == 2.0
 
     @pytest.mark.asyncio
     async def test_collect_all_system_metrics(self):
@@ -245,13 +245,13 @@ class TestSystemMetricsCollector:
             ):
                 metrics = await self.collector.collect_all_metrics()
 
-                assert isinstance(metrics, dict)
-                assert "system_metrics" in metrics
+    assert isinstance(metrics, dict)
+    assert "system_metrics" in metrics
 
                 system_data = metrics["system_metrics"]
-                assert "cpu_usage" in system_data
-                assert "memory_usage" in system_data
-                assert "collection_time" in system_data
+    assert "cpu_usage" in system_data
+    assert "memory_usage" in system_data
+    assert "collection_time" in system_data
 
 
 class TestDatabaseMetricsCollector:
@@ -263,8 +263,8 @@ class TestDatabaseMetricsCollector:
 
     def test_database_collector_initialization(self):
         """测试数据库收集器初始化"""
-        assert self.collector is not None
-        assert isinstance(self.collector, MetricsCollector)
+    assert self.collector is not None
+    assert isinstance(self.collector, MetricsCollector)
 
     @pytest.mark.asyncio
     async def test_collect_connection_pool_metrics(self):
@@ -276,11 +276,11 @@ class TestDatabaseMetricsCollector:
         # 测试实际存在的collect_connection_metrics方法
         metrics = await self.collector.collect_connection_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "active_connections" in metrics
-        assert "max_connections" in metrics
-        assert "connection_pool_usage" in metrics
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "active_connections" in metrics
+    assert "max_connections" in metrics
+    assert "connection_pool_usage" in metrics
+    assert "timestamp" in metrics
 
     @pytest.mark.asyncio
     async def test_collect_query_performance_metrics(self):
@@ -293,11 +293,11 @@ class TestDatabaseMetricsCollector:
         # 测试实际存在的方法
         metrics = await self.collector.collect_all_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "database_metrics" in metrics
+    assert isinstance(metrics, dict)
+    assert "database_metrics" in metrics
 
         db_data = metrics["database_metrics"]
-        assert "collection_time" in db_data
+    assert "collection_time" in db_data
 
     @pytest.mark.asyncio
     async def test_collect_table_size_metrics(self):
@@ -308,13 +308,13 @@ class TestDatabaseMetricsCollector:
         """
         metrics = await self.collector.collect_table_size_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "total_size_mb" in metrics
-        assert "table_sizes" in metrics
-        assert "matches" in metrics["table_sizes"]
-        assert "teams" in metrics["table_sizes"]
-        assert "odds" in metrics["table_sizes"]
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "total_size_mb" in metrics
+    assert "table_sizes" in metrics
+    assert "matches" in metrics["table_sizes"]
+    assert "teams" in metrics["table_sizes"]
+    assert "odds" in metrics["table_sizes"]
+    assert "timestamp" in metrics
 
 
 class TestApplicationMetricsCollector:
@@ -326,8 +326,8 @@ class TestApplicationMetricsCollector:
 
     def test_application_collector_initialization(self):
         """测试应用收集器初始化"""
-        assert self.collector is not None
-        assert isinstance(self.collector, MetricsCollector)
+    assert self.collector is not None
+    assert isinstance(self.collector, MetricsCollector)
 
     @pytest.mark.asyncio
     async def test_collect_request_metrics(self):
@@ -338,13 +338,13 @@ class TestApplicationMetricsCollector:
         """
         metrics = await self.collector.collect_request_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "total_requests" in metrics
-        assert "successful_requests" in metrics
-        assert "failed_requests" in metrics
-        assert "average_response_time_ms" in metrics
-        assert "error_rate_percent" in metrics
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "total_requests" in metrics
+    assert "successful_requests" in metrics
+    assert "failed_requests" in metrics
+    assert "average_response_time_ms" in metrics
+    assert "error_rate_percent" in metrics
+    assert "timestamp" in metrics
 
     @pytest.mark.asyncio
     async def test_collect_business_metrics(self):
@@ -355,12 +355,12 @@ class TestApplicationMetricsCollector:
         """
         metrics = await self.collector.collect_business_metrics()
 
-        assert isinstance(metrics, dict)
-        assert "total_predictions" in metrics
-        assert "successful_predictions" in metrics
-        assert "prediction_accuracy" in metrics
-        assert "active_users" in metrics
-        assert "timestamp" in metrics
+    assert isinstance(metrics, dict)
+    assert "total_predictions" in metrics
+    assert "successful_predictions" in metrics
+    assert "prediction_accuracy" in metrics
+    assert "active_users" in metrics
+    assert "timestamp" in metrics
 
     @pytest.mark.asyncio
     async def test_collect_all_application_metrics(self):
@@ -380,13 +380,13 @@ class TestApplicationMetricsCollector:
             ):
                 metrics = await self.collector.collect_all_metrics()
 
-                assert isinstance(metrics, dict)
-                assert "application_metrics" in metrics
+    assert isinstance(metrics, dict)
+    assert "application_metrics" in metrics
 
                 app_data = metrics["application_metrics"]
-                assert "total_requests" in app_data
-                assert "total_predictions" in app_data
-                assert "collection_time" in app_data
+    assert "total_requests" in app_data
+    assert "total_predictions" in app_data
+    assert "collection_time" in app_data
 
 
 class TestMetricsCollectorIntegration:
@@ -427,13 +427,13 @@ class TestMetricsCollectorIntegration:
                     all_metrics.update(await db_collector.collect_all_metrics())
                     all_metrics.update(await app_collector.collect_all_metrics())
 
-                    assert len(all_metrics) == 3
-                    assert "system_metrics" in all_metrics
-                    assert "database_metrics" in all_metrics
-                    assert "application_metrics" in all_metrics
-                    assert all_metrics["system_metrics"]["cpu_usage"] == 30
-                    assert all_metrics["database_metrics"]["db_connections"] == 10
-                    assert all_metrics["application_metrics"]["cache_hits"] == 100
+    assert len(all_metrics) == 3
+    assert "system_metrics" in all_metrics
+    assert "database_metrics" in all_metrics
+    assert "application_metrics" in all_metrics
+    assert all_metrics["system_metrics"]["cpu_usage"] == 30
+    assert all_metrics["database_metrics"]["db_connections"] == 10
+    assert all_metrics["application_metrics"]["cache_hits"] == 100
 
 
 class TestErrorHandling:
@@ -458,7 +458,7 @@ class TestErrorHandling:
 
             mock_import.side_effect = mock_import_func
             metrics = await collector.collect_cpu_metrics()
-            assert metrics == {}
+    assert metrics == {}
 
     @pytest.mark.asyncio
     async def test_database_connection_failure(self):
@@ -482,9 +482,9 @@ class TestErrorHandling:
         # 测试应该抛出异常
         try:
             await collector.collect_connection_metrics()
-            assert False, "应该抛出异常"
+    assert False, "应该抛出异常"
         except Exception as e:
-            assert str(e) == "Connection failed"
+    assert str(e) == "Connection failed"
 
     @patch("builtins.__import__")
     @pytest.mark.asyncio
@@ -510,7 +510,7 @@ class TestErrorHandling:
         mock_import.side_effect = import_side_effect
 
         metrics = await collector.collect_cpu_metrics()
-        assert metrics == {}
+    assert metrics == {}
 
 
 class TestPerformance:
@@ -533,7 +533,7 @@ class TestPerformance:
         duration = end_time - start_time
 
         # 确保收集速度足够快
-        assert duration < 1.0  # 100次收集应该在1秒内完成
+    assert duration < 1.0  # 100次收集应该在1秒内完成
 
     def test_memory_usage_during_collection(self):
         """测试收集过程中的内存使用"""
@@ -555,7 +555,7 @@ class TestPerformance:
 
         # 确保没有明显的内存泄漏
         object_growth = final_objects - initial_objects
-        assert object_growth < 100  # 允许少量对象增长
+    assert object_growth < 100  # 允许少量对象增长
 
 
 if __name__ == "__main__":

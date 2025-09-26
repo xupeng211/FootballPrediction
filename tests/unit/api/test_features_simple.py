@@ -30,10 +30,10 @@ class TestFeatureAPISimple:
                 match_id=0, session=mock_session
             )  # 无效ID
             # 如果没有抛出异常，检查返回值
-            assert result is not None
+    assert result is not None
         except HTTPException as e:
             # 如果抛出异常，验证是400错误
-            assert e.status_code == 400
+    assert e.status_code == 400
 
     @pytest.mark.asyncio
     async def test_get_match_features_with_valid_mock(self, mock_session):
@@ -57,10 +57,10 @@ class TestFeatureAPISimple:
             try:
                 result = await get_match_features(match_id=12345, session=mock_session)
                 # 验证返回了结果
-                assert result is not None
+    assert result is not None
             except Exception as e:
                 # 如果有异常，至少验证代码被执行了
-                assert e is not None
+    assert e is not None
 
     @pytest.mark.asyncio
     async def test_get_team_features_basic(self, mock_session):
@@ -83,16 +83,16 @@ class TestFeatureAPISimple:
 
             try:
                 result = await get_team_features(team_id=1, session=mock_session)
-                assert result is not None
+    assert result is not None
             except Exception as e:
                 # 验证代码被执行
-                assert e is not None
+    assert e is not None
 
     def test_router_exists(self):
         """测试路由器存在且配置正确"""
-        assert router is not None
-        assert router.prefix == "/features"
-        assert "features" in router.tags
+    assert router is not None
+    assert router.prefix == "_features"
+    assert "features" in router.tags
 
     @pytest.mark.asyncio
     async def test_service_initialization_check(self):
@@ -101,8 +101,8 @@ class TestFeatureAPISimple:
         from src.api.features import feature_calculator, feature_store
 
         # 这些可能是None（如果初始化失败），但至少应该存在变量
-        assert feature_store is not None or feature_store is None
-        assert feature_calculator is not None or feature_calculator is None
+    assert feature_store is not None or feature_store is None
+    assert feature_calculator is not None or feature_calculator is None
 
     @pytest.mark.asyncio
     async def test_error_handling_coverage(self, mock_session):
@@ -131,13 +131,13 @@ class TestAPIEndpointsCoverage:
             )
 
             # 验证所有函数都被成功导入
-            assert callable(get_match_features)
-            assert callable(get_team_features)
-            assert callable(calculate_match_features)
-            assert callable(calculate_team_features)
-            assert callable(batch_calculate_features)
-            assert callable(get_historical_features)
-            assert callable(features_health_check)
+    assert callable(get_match_features)
+    assert callable(get_team_features)
+    assert callable(calculate_match_features)
+    assert callable(calculate_team_features)
+    assert callable(batch_calculate_features)
+    assert callable(get_historical_features)
+    assert callable(features_health_check)
 
         except ImportError as e:
             # 如果导入失败，至少记录
@@ -150,10 +150,10 @@ class TestAPIEndpointsCoverage:
 
         try:
             result = await features_health_check()
-            assert result is not None
+    assert result is not None
         except Exception as e:
             # 即使异常，也覆盖了代码
-            assert e is not None
+    assert e is not None
 
 
 # 简单的集成风格测试
@@ -164,12 +164,12 @@ class TestFeatureAPIIntegration:
         """测试路由器配置"""
         from src.api.features import router
 
-        assert hasattr(router, "routes")
-        assert len(router.routes) > 0
+    assert hasattr(router, "routes")
+    assert len(router.routes) > 0
 
         # 检查路由配置
         route_paths = [route.path for route in router.routes]
-        assert any("/{match_id}" in path for path in route_paths)
+    assert any("_{match_id}" in path for path in route_paths)
 
     def test_dependency_imports(self):
         """测试依赖导入，提升import语句覆盖率"""
@@ -178,9 +178,9 @@ class TestFeatureAPIIntegration:
             from src.api.features import logger, pd, router
 
             # 基本断言
-            assert logger is not None
-            assert pd is not None
-            assert router is not None
+    assert logger is not None
+    assert pd is not None
+    assert router is not None
 
         except ImportError as e:
             # 记录导入问题但不失败

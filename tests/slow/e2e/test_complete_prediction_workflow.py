@@ -154,8 +154,8 @@ class TestCompletePredictionWorkflow:
             mock_collect.return_value = collection_result
 
             _ = await mock_collect()
-            assert collection_result.status == "success"
-            assert collection_result.records_collected == 1
+    assert collection_result.status == "success"
+    assert collection_result.records_collected == 1
 
         # 第2步：数据处理流水线 (Bronze→Silver→Gold)
         with patch.object(
@@ -171,8 +171,8 @@ class TestCompletePredictionWorkflow:
                 silver_result = await data_processing_service.process_bronze_to_silver()
                 gold_result = await data_processing_service.process_silver_to_gold()
 
-                assert silver_result["processed_matches"] == 1
-                assert gold_result["processed_features"] == 4
+    assert silver_result["processed_matches"] == 1
+    assert gold_result["processed_features"] == 4
 
         # 第3步：调用预测API
         with patch.object(prediction_service, "predict_match") as mock_predict:
@@ -192,7 +192,7 @@ class TestCompletePredictionWorkflow:
             prediction = await prediction_service.predict_match(match_id)
 
             # 第4步：验证预测结果格式和概率
-            assert prediction["match_id"] == match_id
+    assert prediction["match_id"] == match_id
 
             # 验证概率和为1（±0.05容差）
             total_prob = (
@@ -200,10 +200,10 @@ class TestCompletePredictionWorkflow:
                 + prediction["draw_probability"]
                 + prediction["away_win_probability"]
             )
-            assert 0.95 <= total_prob <= 1.05, f"概率总和{total_prob}不在有效范围内"
+    assert 0.95 <= total_prob <= 1.05, f"概率总和{total_prob}不在有效范围内"
 
             # 验证置信度分数在有效范围内
-            assert 0 <= prediction["confidence_score"] <= 1
+    assert 0 <= prediction["confidence_score"] <= 1
 
             # 验证必要字段存在
             required_fields = [
@@ -215,7 +215,7 @@ class TestCompletePredictionWorkflow:
                 "confidence_score",
             ]
             for field in required_fields:
-                assert field in prediction, f"缺少必要字段: {field}"
+    assert field in prediction, f"缺少必要字段: {field}"
 
         # 第5步：验证预测结果存储
         with patch("src.database.connection.DatabaseManager") as mock_db:
@@ -244,8 +244,8 @@ class TestCompletePredictionWorkflow:
 
             # 验证预测结果已存储
             stored_prediction = mock_session.query().filter().first()
-            assert stored_prediction is not None
-            assert stored_prediction.match_id == match_id
+    assert stored_prediction is not None
+    assert stored_prediction.match_id == match_id
 
     @pytest.mark.asyncio
     async def test_api_prediction_endpoint_workflow(self, test_client):
@@ -283,15 +283,15 @@ class TestCompletePredictionWorkflow:
                     )()
                     mock_get.return_value = mock_response_obj
 
-                    response = test_client.get(f"/predictions/{match_id}")
+                    response = test_client.get(f"_predictions/{match_id}")
 
                     # 验证HTTP响应
-                    assert response.status_code == 200
+    assert response.status_code == 200
 
                     # 验证响应数据
                     prediction_data = response.json()
-                    assert prediction_data["success"] is True
-                    assert prediction_data["data"]["match_id"] == match_id
+    assert prediction_data["success"] is True
+    assert prediction_data["data"]["match_id"] == match_id
 
                     # 验证概率分布合理性
                     probabilities = prediction_data["data"]
@@ -300,7 +300,7 @@ class TestCompletePredictionWorkflow:
                         + probabilities["draw_probability"]
                         + probabilities["away_win_probability"]
                     )
-                    assert 0.95 <= total_prob <= 1.05
+    assert 0.95 <= total_prob <= 1.05
 
     @pytest.mark.asyncio
     async def test_data_lineage_end_to_end_tracking(self):
@@ -342,15 +342,15 @@ class TestCompletePredictionWorkflow:
             )
 
             # 验证血缘完整性
-            assert "data_collection" in result
-            assert "data_processing" in result
-            assert "prediction" in result
+    assert "data_collection" in result
+    assert "data_processing" in result
+    assert "prediction" in result
 
             # 验证血缘链路连续性
-            assert result["data_collection"]["bronze_record_id"] is not None
-            assert result["data_processing"]["silver_match_id"] is not None
-            assert len(result["data_processing"]["gold_feature_ids"]) > 0
-            assert result["prediction"]["prediction_id"] is not None
+    assert result["data_collection"]["bronze_record_id"] is not None
+    assert result["data_processing"]["silver_match_id"] is not None
+    assert len(result["data_processing"]["gold_feature_ids"]) > 0
+    assert result["prediction"]["prediction_id"] is not None
         except ImportError:
             # 如果模块不可用，跳过测试
             pytest.skip("lineage module not available")
@@ -436,13 +436,13 @@ class TestCompletePredictionWorkflow:
             accuracy = correct_predictions / len(predictions)
 
             # 验证准确率计算
-            assert len(predictions) == 3
-            assert correct_predictions == 2  # 10001和10003预测正确
-            assert accuracy == 2 / 3  # 约66.7%
+    assert len(predictions) == 3
+    assert correct_predictions == 2  # 10001和10003预测正确
+    assert accuracy == 2 / 3  # 约66.7%
 
             # 验证准确率达到基准线
             BASELINE_ACCURACY = 0.55  # 55%基准准确率
-            assert (
+    assert (
                 accuracy >= BASELINE_ACCURACY
             ), f"准确率{accuracy:.2%}低于基准{BASELINE_ACCURACY:.2%}"
 
@@ -478,21 +478,21 @@ class TestCompletePredictionWorkflow:
             total_time = end_time - start_time
 
             # 验证所有预测完成
-            assert len(results) == len(match_ids)
+    assert len(results) == len(match_ids)
 
             # 验证每个预测结果
             for i, result in enumerate(results):
-                assert result["match_id"] == match_ids[i]
-                assert 0 <= result["confidence_score"] <= 1
+    assert result["match_id"] == match_ids[i]
+    assert 0 <= result["confidence_score"] <= 1
 
             # 验证性能指标 - 10个并发预测应该在合理时间内完成
             avg_response_time = total_time / len(match_ids)
-            assert (
+    assert (
                 avg_response_time < 1.0
             ), f"平均响应时间{avg_response_time:.3f}s超过1秒阈值"
 
             # 验证并发调用次数
-            assert mock_predict.call_count == len(match_ids)
+    assert mock_predict.call_count == len(match_ids)
 
     @pytest.mark.asyncio
     async def test_error_recovery_in_prediction_pipeline(
@@ -529,7 +529,7 @@ class TestCompletePredictionWorkflow:
                     await asyncio.sleep(0.1)  # 短暂延迟后重试
 
             # 验证重试成功
-            assert processing_success, "数据处理重试机制失败"
+    assert processing_success, "数据处理重试机制失败"
 
         # 模拟预测服务的容错机制
         with patch.object(prediction_service, "predict_match") as mock_predict:
@@ -561,9 +561,9 @@ class TestCompletePredictionWorkflow:
                     break
 
             # 验证容错机制生效
-            assert prediction_success, "预测容错机制失败"
-            assert prediction_result is not None
-            assert "fallback" in prediction_result.get(
+    assert prediction_success, "预测容错机制失败"
+    assert prediction_result is not None
+    assert "fallback" in prediction_result.get(
                 "model_version", ""
             ), "未使用备用模型"
 
@@ -582,15 +582,15 @@ class TestCompletePredictionWorkflow:
 
         # 验证所有组件健康
         for component, status in health_checks.items():
-            assert status["status"] == "healthy", f"组件{component}状态异常"
+    assert status["status"] == "healthy", f"组件{component}状态异常"
 
         # 验证系统整体响应时间
         total_response_time = sum(
             check.get("response_time_ms", 0) for check in health_checks.values()
         )
-        assert total_response_time < 100, f"系统整体响应时间{total_response_time}ms过长"
+    assert total_response_time < 100, f"系统整体响应时间{total_response_time}ms过长"
 
         # 验证关键服务可用
-        assert health_checks["prediction_service"]["model_loaded"] is True
-        assert health_checks["data_processing"]["queued_jobs"] >= 0
-        assert health_checks["external_apis"]["rate_limit_remaining"] > 0
+    assert health_checks["prediction_service"]["model_loaded"] is True
+    assert health_checks["data_processing"]["queued_jobs"] >= 0
+    assert health_checks["external_apis"]["rate_limit_remaining"] > 0

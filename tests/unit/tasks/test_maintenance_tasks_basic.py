@@ -37,9 +37,9 @@ class TestQualityCheckTask:
 
         result = quality_check_task.run()
 
-        assert result["status"] == "success"
-        assert result["issues_found"] == 0
-        assert len(result["check_results"]) == 5
+    assert result["status"] == "success"
+    assert result["issues_found"] == 0
+    assert len(result["check_results"]) == 5
 
     def test_quality_check_with_issues(self, mock_db_manager):
         mock_db, mock_session = mock_db_manager
@@ -50,8 +50,8 @@ class TestQualityCheckTask:
 
         result = quality_check_task.run()
 
-        assert result["status"] == "success"
-        assert result["issues_found"] == 5
+    assert result["status"] == "success"
+    assert result["issues_found"] == 5
 
     def test_quality_check_db_error(self, mock_db_manager):
         mock_db, mock_session = mock_db_manager
@@ -59,8 +59,8 @@ class TestQualityCheckTask:
 
         result = quality_check_task.run()
 
-        assert result["status"] == "failed"
-        assert "DB Error" in result["error"]
+    assert result["status"] == "failed"
+    assert "DB Error" in result["error"]
 
 
 class TestCleanupErrorLogsTask:
@@ -72,8 +72,8 @@ class TestCleanupErrorLogsTask:
 
         result = cleanup_error_logs_task.run(days=7)
 
-        assert result["status"] == "success"
-        assert result["deleted_count"] == 10
+    assert result["status"] == "success"
+    assert result["deleted_count"] == 10
         mock_logger_instance.cleanup_old_errors.assert_called_once_with(7)
 
     @patch("src.tasks.maintenance_tasks.TaskErrorLogger")
@@ -84,8 +84,8 @@ class TestCleanupErrorLogsTask:
 
         result = cleanup_error_logs_task.run(days=7)
 
-        assert result["status"] == "failed"
-        assert "Cleanup Failed" in result["error"]
+    assert result["status"] == "failed"
+    assert "Cleanup Failed" in result["error"]
 
 
 class TestSystemHealthCheckTask:
@@ -102,11 +102,11 @@ class TestSystemHealthCheckTask:
 
         result = system_health_check_task.run()
 
-        assert result["status"] == "healthy"
-        assert result["overall_healthy"] is True
-        assert result["components"]["database"]["status"] == "healthy"
-        assert result["components"]["redis"]["status"] == "healthy"
-        assert result["components"]["disk_space"]["status"] == "healthy"
+    assert result["status"] == "healthy"
+    assert result["overall_healthy"] is True
+    assert result["components"]["database"]["status"] == "healthy"
+    assert result["components"]["redis"]["status"] == "healthy"
+    assert result["components"]["disk_space"]["status"] == "healthy"
 
     @patch("shutil.disk_usage")
     @patch("redis.from_url")
@@ -122,9 +122,9 @@ class TestSystemHealthCheckTask:
 
         result = system_health_check_task.run()
 
-        assert result["status"] == "unhealthy"
-        assert result["overall_healthy"] is False
-        assert result["components"]["database"]["status"] == "unhealthy"
+    assert result["status"] == "unhealthy"
+    assert result["overall_healthy"] is False
+    assert result["components"]["database"]["status"] == "unhealthy"
 
 
 class TestDatabaseMaintenanceTask:
@@ -144,8 +144,8 @@ class TestDatabaseMaintenanceTask:
 
         result = database_maintenance_task.run()
 
-        assert result["status"] == "success"
-        assert "table_sizes" in result["maintenance_results"]
+    assert result["status"] == "success"
+    assert "table_sizes" in result["maintenance_results"]
         mock_session.commit.assert_called_once()
 
     def test_maintenance_db_error(self, mock_db_manager):
@@ -154,5 +154,5 @@ class TestDatabaseMaintenanceTask:
 
         result = database_maintenance_task.run()
 
-        assert result["status"] == "failed"
-        assert "Analyze Failed" in result["error"]
+    assert result["status"] == "failed"
+    assert "Analyze Failed" in result["error"]

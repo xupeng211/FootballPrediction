@@ -40,16 +40,16 @@ class TestUserProfileService:
 
     def test_user_profile_service_inheritance(self):
         """Test UserProfileService inherits from BaseService"""
-        assert issubclass(UserProfileService, BaseService)
+    assert issubclass(UserProfileService, BaseService)
 
     def test_user_profile_service_init(self):
         """Test UserProfileService initialization"""
         with patch('src.services.base.BaseService.__init__') as mock_init:
             service = UserProfileService()
 
-            assert service is not None
-            assert isinstance(service._user_profiles, dict)
-            assert len(service._user_profiles) == 0
+    assert service is not None
+    assert isinstance(service._user_profiles, dict)
+    assert len(service._user_profiles) == 0
             mock_init.assert_called_once_with("UserProfileService")
 
     @pytest.mark.asyncio
@@ -57,7 +57,7 @@ class TestUserProfileService:
         """Test successful service initialization"""
         result = await user_profile_service.initialize()
 
-        assert result is True
+    assert result is True
         user_profile_service.logger.info.assert_called_with("正在初始化 UserProfileService")
 
     @pytest.mark.asyncio
@@ -68,7 +68,7 @@ class TestUserProfileService:
 
         await user_profile_service.shutdown()
 
-        assert len(user_profile_service._user_profiles) == 0
+    assert len(user_profile_service._user_profiles) == 0
         user_profile_service.logger.info.assert_called_with("正在关闭 UserProfileService")
 
     @pytest.mark.asyncio
@@ -76,20 +76,20 @@ class TestUserProfileService:
         """Test successful profile generation"""
         profile = await user_profile_service.generate_profile(mock_user)
 
-        assert profile is not None
-        assert profile.user_id == mock_user.id
-        assert profile.display_name == mock_user.username
-        assert profile.email == mock_user.profile.email
-        assert isinstance(profile.preferences, dict)
-        assert "interests" in profile.preferences
-        assert "content_type" in profile.preferences
-        assert "language" in profile.preferences
-        assert "behavior_patterns" in profile.preferences
-        assert isinstance(profile.created_at, datetime)
+    assert profile is not None
+    assert profile.user_id == mock_user.id
+    assert profile.display_name == mock_user.username
+    assert profile.email == mock_user.profile.email
+    assert isinstance(profile.preferences, dict)
+    assert "interests" in profile.preferences
+    assert "content_type" in profile.preferences
+    assert "language" in profile.preferences
+    assert "behavior_patterns" in profile.preferences
+    assert isinstance(profile.created_at, datetime)
 
         # Verify profile is stored
-        assert mock_user.id in user_profile_service._user_profiles
-        assert user_profile_service._user_profiles[mock_user.id] == profile
+    assert mock_user.id in user_profile_service._user_profiles
+    assert user_profile_service._user_profiles[mock_user.id] == profile
 
     @pytest.mark.asyncio
     async def test_generate_profile_logging(self, user_profile_service, mock_user):
@@ -107,16 +107,16 @@ class TestUserProfileService:
         # Then retrieve it
         retrieved_profile = await user_profile_service.get_profile(mock_user.id)
 
-        assert retrieved_profile is not None
-        assert retrieved_profile == generated_profile
-        assert retrieved_profile.user_id == mock_user.id
+    assert retrieved_profile is not None
+    assert retrieved_profile == generated_profile
+    assert retrieved_profile.user_id == mock_user.id
 
     @pytest.mark.asyncio
     async def test_get_profile_not_exists(self, user_profile_service):
         """Test getting non-existent profile"""
         profile = await user_profile_service.get_profile("nonexistent_user")
 
-        assert profile is None
+    assert profile is None
 
     @pytest.mark.asyncio
     async def test_update_profile_exists(self, user_profile_service, mock_user):
@@ -131,9 +131,9 @@ class TestUserProfileService:
         }
         updated_profile = await user_profile_service.update_profile(mock_user.id, updates)
 
-        assert updated_profile is not None
-        assert updated_profile.display_name == "Updated Name"
-        assert updated_profile.preferences["new_preference"] == "new_value"
+    assert updated_profile is not None
+    assert updated_profile.display_name == "Updated Name"
+    assert updated_profile.preferences["new_preference"] == "new_value"
 
     @pytest.mark.asyncio
     async def test_update_profile_not_exists(self, user_profile_service):
@@ -142,7 +142,7 @@ class TestUserProfileService:
 
         profile = await user_profile_service.update_profile("nonexistent_user", updates)
 
-        assert profile is None
+    assert profile is None
 
     @pytest.mark.asyncio
     async def test_update_profile_attribute_vs_preferences(self, user_profile_service, mock_user):
@@ -157,9 +157,9 @@ class TestUserProfileService:
         }
         updated_profile = await user_profile_service.update_profile(mock_user.id, updates)
 
-        assert updated_profile is not None
-        assert updated_profile.display_name == "Updated Name"
-        assert updated_profile.preferences["custom_setting"] == "custom_value"
+    assert updated_profile is not None
+    assert updated_profile.display_name == "Updated Name"
+    assert updated_profile.preferences["custom_setting"] == "custom_value"
 
     def test_create_profile_success(self, user_profile_service):
         """Test successful profile creation (sync version)"""
@@ -171,24 +171,24 @@ class TestUserProfileService:
 
         result = user_profile_service.create_profile(user_data)
 
-        assert result is not None
-        assert result["status"] == "created"
-        assert "profile" in result
-        assert result["profile"]["user_id"] == "new_user_456"
-        assert result["profile"]["display_name"] == "New User"
-        assert result["profile"]["email"] == "newuser@example.com"
+    assert result is not None
+    assert result["status"] == "created"
+    assert "profile" in result
+    assert result["profile"]["user_id"] == "new_user_456"
+    assert result["profile"]["display_name"] == "New User"
+    assert result["profile"]["email"] == "newuser@example.com"
 
         # Verify profile is stored
-        assert "new_user_456" in user_profile_service._user_profiles
+    assert "new_user_456" in user_profile_service._user_profiles
 
     def test_create_profile_empty_data(self, user_profile_service):
         """Test profile creation with empty data"""
         result = user_profile_service.create_profile({})
 
-        assert result is not None
-        assert result["status"] == "error"
-        assert "message" in result
-        assert "Empty or invalid user data" in result["message"]
+    assert result is not None
+    assert result["status"] == "error"
+    assert "message" in result
+    assert "Empty or invalid user data" in result["message"]
 
     def test_create_profile_no_user_id(self, user_profile_service):
         """Test profile creation without user_id"""
@@ -196,8 +196,8 @@ class TestUserProfileService:
 
         result = user_profile_service.create_profile(user_data)
 
-        assert result["status"] == "error"
-        assert "Empty or invalid user data" in result["message"]
+    assert result["status"] == "error"
+    assert "Empty or invalid user data" in result["message"]
 
     def test_create_profile_minimal_data(self, user_profile_service):
         """Test profile creation with minimal data"""
@@ -205,10 +205,10 @@ class TestUserProfileService:
 
         result = user_profile_service.create_profile(user_data)
 
-        assert result["status"] == "created"
-        assert result["profile"]["user_id"] == "minimal_user"
-        assert result["profile"]["display_name"] == "Anonymous"
-        assert result["profile"]["email"] == ""
+    assert result["status"] == "created"
+    assert result["profile"]["user_id"] == "minimal_user"
+    assert result["profile"]["display_name"] == "Anonymous"
+    assert result["profile"]["email"] == ""
 
     def test_delete_profile_exists(self, user_profile_service):
         """Test deleting existing profile"""
@@ -219,16 +219,16 @@ class TestUserProfileService:
         # Then delete it
         result = user_profile_service.delete_profile("delete_user")
 
-        assert result is not None
-        assert result["status"] == "deleted"
-        assert "delete_user" not in user_profile_service._user_profiles
+    assert result is not None
+    assert result["status"] == "deleted"
+    assert "delete_user" not in user_profile_service._user_profiles
 
     def test_delete_profile_not_exists(self, user_profile_service):
         """Test deleting non-existent profile"""
         result = user_profile_service.delete_profile("nonexistent_user")
 
-        assert result is not None
-        assert result["status"] == "not_found"
+    assert result is not None
+    assert result["status"] == "not_found"
 
     def test_profiles_property(self, user_profile_service):
         """Test _profiles property for test compatibility"""
@@ -248,14 +248,14 @@ class TestUserProfileService:
 
         profiles_dict = user_profile_service._profiles
 
-        assert isinstance(profiles_dict, dict)
-        assert len(profiles_dict) == 2
-        assert "user1" in profiles_dict
-        assert "user2" in profiles_dict
+    assert isinstance(profiles_dict, dict)
+    assert len(profiles_dict) == 2
+    assert "user1" in profiles_dict
+    assert "user2" in profiles_dict
         # user1 should return the profile object (no to_dict method)
-        assert profiles_dict["user1"] == profile1
+    assert profiles_dict["user1"] == profile1
         # user2 should return the dict result
-        assert profiles_dict["user2"]["converted"] is True
+    assert profiles_dict["user2"]["converted"] is True
 
 
 class TestUserProfileServiceEdgeCases:
@@ -295,7 +295,7 @@ class TestUserProfileServiceEdgeCases:
         updated_profile = await user_profile_service.update_profile(mock_user.id, {})
 
         # Should return the same profile
-        assert updated_profile == original_profile
+    assert updated_profile == original_profile
 
     def test_create_profile_with_none_data(self, user_profile_service):
         """Test profile creation with None data"""
@@ -316,14 +316,14 @@ class TestUserProfileServiceEdgeCases:
         """Test profile deletion with empty user_id"""
         result = user_profile_service.delete_profile("")
 
-        assert result["status"] == "not_found"
+    assert result["status"] == "not_found"
 
     def test_profiles_property_empty(self, user_profile_service):
         """Test _profiles property with no profiles"""
         profiles_dict = user_profile_service._profiles
 
-        assert isinstance(profiles_dict, dict)
-        assert len(profiles_dict) == 0
+    assert isinstance(profiles_dict, dict)
+    assert len(profiles_dict) == 0
 
     def test_profiles_property_with_complex_profiles(self, user_profile_service):
         """Test _profiles property with complex profile objects"""
@@ -339,10 +339,10 @@ class TestUserProfileServiceEdgeCases:
 
         profiles_dict = user_profile_service._profiles
 
-        assert isinstance(profiles_dict, dict)
-        assert "complex_user" in profiles_dict
+    assert isinstance(profiles_dict, dict)
+    assert "complex_user" in profiles_dict
         # Should return the original object since it doesn't have to_dict
-        assert profiles_dict["complex_user"] == complex_profile
+    assert profiles_dict["complex_user"] == complex_profile
 
 
 class TestUserProfileServiceIntegration:
@@ -368,30 +368,30 @@ class TestUserProfileServiceIntegration:
 
             # Generate profile
             profile = await service.generate_profile(user)
-            assert profile.user_id == "lifecycle_user"
+    assert profile.user_id == "lifecycle_user"
 
             # Get profile
             retrieved_profile = await service.get_profile("lifecycle_user")
-            assert retrieved_profile == profile
+    assert retrieved_profile == profile
 
             # Update profile
             updated_profile = await service.update_profile("lifecycle_user", {"display_name": "Updated"})
-            assert updated_profile.display_name == "Updated"
+    assert updated_profile.display_name == "Updated"
 
             # Test sync operations
             sync_result = service.create_profile({"user_id": "sync_user", "name": "Sync User"})
-            assert sync_result["status"] == "created"
+    assert sync_result["status"] == "created"
 
             delete_result = service.delete_profile("sync_user")
-            assert delete_result["status"] == "deleted"
+    assert delete_result["status"] == "deleted"
 
             # Test profiles property
             profiles_dict = service._profiles
-            assert "lifecycle_user" in profiles_dict
+    assert "lifecycle_user" in profiles_dict
 
             # Shutdown
             await service.shutdown()
-            assert len(service._user_profiles) == 0
+    assert len(service._user_profiles) == 0
 
     @pytest.mark.asyncio
     async def test_concurrent_operations(self):
@@ -421,13 +421,13 @@ class TestUserProfileServiceIntegration:
             profiles = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Verify all profiles were created
-            assert len(profiles) == 5
+    assert len(profiles) == 5
             for i, profile in enumerate(profiles):
-                assert isinstance(profile, UserProfile)
-                assert profile.user_id == f"concurrent_user_{i}"
+    assert isinstance(profile, UserProfile)
+    assert profile.user_id == f"concurrent_user_{i}"
 
             # Verify all profiles are stored
-            assert len(service._user_profiles) == 5
+    assert len(service._user_profiles) == 5
 
     @pytest.mark.asyncio
     async def test_profile_preferences_structure(self):
@@ -447,18 +447,18 @@ class TestUserProfileServiceIntegration:
 
             # Check preferences structure
             preferences = profile.preferences
-            assert isinstance(preferences, dict)
-            assert "interests" in preferences
-            assert "content_type" in preferences
-            assert "language" in preferences
-            assert "behavior_patterns" in preferences
+    assert isinstance(preferences, dict)
+    assert "interests" in preferences
+    assert "content_type" in preferences
+    assert "language" in preferences
+    assert "behavior_patterns" in preferences
 
             # Check specific values
-            assert isinstance(preferences["interests"], list)
-            assert "足球" in preferences["interests"]
-            assert isinstance(preferences["content_type"], str)
-            assert preferences["language"] == "zh"
-            assert isinstance(preferences["behavior_patterns"], dict)
+    assert isinstance(preferences["interests"], list)
+    assert "足球" in preferences["interests"]
+    assert isinstance(preferences["content_type"], str)
+    assert preferences["language"] == "zh"
+    assert isinstance(preferences["behavior_patterns"], dict)
 
 
 if __name__ == "__main__":
