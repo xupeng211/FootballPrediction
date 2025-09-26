@@ -1,0 +1,4 @@
+ImportError while loading conftest '/home/user/projects/FootballPrediction/tests/conftest.py'.
+tests/conftest.py:20: in <module>
+    from prometheus_client import REGISTRY, CollectorRegistry
+E   ModuleNotFoundError: No module named 'prometheus_client'

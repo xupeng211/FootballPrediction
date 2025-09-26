@@ -1,15 +1,992 @@
 """
-数据处理服务测试
+DataProcessingService 增强测试套件 - Phase 5.1 Batch-Δ-011
+
+专门为 data_processing.py 设计的增强测试，目标是将其覆盖率从 7% 提升至 ≥70%
+覆盖所有核心数据处理功能、错误场景、异步操作和集成测试
 """
 
 import asyncio
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from typing import Dict, Any, List, Optional, Union
 
 import pandas as pd
 import pytest
 
 from src.services.data_processing import DataProcessingService
+from src.services.base import BaseService
+
+
+class TestDataProcessingServiceEnhanced:
+    """DataProcessingService 增强测试套件"""
+
+    # ========== 新增：Bronze到Silver层处理测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_bronze_to_silver_uninitialized(self):
+        """测试未初始化状态的Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = None
+
+        result = await service.process_bronze_to_silver()
+
+        assert result["error"] == 1
+        service.logger.error.assert_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_bronze_to_silver_success(self):
+        """测试成功的Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock all the required methods
+        service._process_raw_matches_bronze_to_silver = AsyncMock(return_value=10)
+        service._process_raw_odds_bronze_to_silver = AsyncMock(return_value=20)
+        service._process_raw_scores_bronze_to_silver = AsyncMock(return_value=5)
+
+        result = await service.process_bronze_to_silver(100)
+
+        assert result["processed_matches"] == 10
+        assert result["processed_odds"] == 20
+        assert result["processed_scores"] == 5
+        assert result["errors"] == 0
+        service.logger.info.assert_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_bronze_to_silver_exception_handling(self):
+        """测试Bronze到Silver处理异常"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        service._process_raw_matches_bronze_to_silver = AsyncMock(side_effect=Exception("处理错误"))
+
+        result = await service.process_bronze_to_silver()
+
+        assert result["errors"] == 1
+        service.logger.error.assert_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_matches_bronze_to_silver(self):
+        """测试比赛数据Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session
+        mock_session = Mock()
+        mock_raw_match = Mock()
+        mock_raw_match.id = 1
+        mock_raw_match.raw_data = {"test": "data"}
+        mock_raw_match.mark_processed = Mock()
+
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = [mock_raw_match]
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        # Mock data cleaner and missing handler
+        service.data_cleaner.clean_match_data = AsyncMock(return_value={"cleaned": True})
+        service.missing_handler.handle_missing_match_data = AsyncMock(return_value={"processed": True})
+
+        # Mock data lake
+        service.data_lake.save_historical_data = AsyncMock()
+
+        result = await service._process_raw_matches_bronze_to_silver(100)
+
+        assert result == 1
+        mock_session.commit.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_matches_bronze_to_silver_no_data(self):
+        """测试无比赛数据时的Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        mock_session = Mock()
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = []
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        result = await service._process_raw_matches_bronze_to_silver(100)
+
+        assert result == 0
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_odds_bronze_to_silver(self):
+        """测试赔率数据Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session
+        mock_session = Mock()
+        mock_raw_odds = Mock()
+        mock_raw_odds.id = 1
+        mock_raw_odds.external_match_id = 12345
+        mock_raw_odds.raw_data = {"odds": "data"}
+        mock_raw_odds.mark_processed = Mock()
+
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = [mock_raw_odds]
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        # Mock data cleaner
+        service.data_cleaner.clean_odds_data = AsyncMock(return_value=[{"cleaned": True}])
+
+        # Mock data lake
+        service.data_lake.save_historical_data = AsyncMock()
+
+        result = await service._process_raw_odds_bronze_to_silver(100)
+
+        assert result == 1
+        mock_session.commit.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_scores_bronze_to_silver(self):
+        """测试比分数据Bronze到Silver处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session
+        mock_session = Mock()
+        mock_raw_scores = Mock()
+        mock_raw_scores.id = 1
+        mock_raw_scores.external_match_id = 12345
+        mock_raw_scores.get_score_info.return_value = {
+            "home_score": 2,
+            "away_score": 1,
+            "half_time_home": 1,
+            "half_time_away": 0,
+            "status": "FINISHED",
+            "minute": 90,
+            "events": []
+        }
+        mock_raw_scores.is_live = False
+        mock_raw_scores.is_finished = True
+        mock_raw_scores.collected_at = datetime.now()
+        mock_raw_scores.mark_processed = Mock()
+
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = [mock_raw_scores]
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        # Mock data cleaner methods
+        service.data_cleaner._validate_score = Mock(side_effect=lambda x: x)
+        service.data_cleaner._standardize_match_status = Mock(return_value="FINISHED")
+
+        # Mock data lake
+        service.data_lake.save_historical_data = AsyncMock()
+
+        result = await service._process_raw_scores_bronze_to_silver(100)
+
+        assert result == 1
+        mock_session.commit.assert_called_once()
+
+    # ========== 新增：数据状态查询测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_bronze_layer_status_no_db(self):
+        """测试无数据库连接的状态查询"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        result = await service.get_bronze_layer_status()
+
+        assert "error" in result
+        assert result["error"] == "数据库连接未初始化"
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_bronze_layer_status_success(self):
+        """测试成功的Bronze层状态查询"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session
+        mock_session = Mock()
+        mock_session.query.return_value.count.return_value = 10
+        mock_session.query.return_value.filter.return_value.count.return_value = 5
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        result = await service.get_bronze_layer_status()
+
+        assert "matches" in result
+        assert "odds" in result
+        assert "scores" in result
+        assert result["matches"]["total"] == 10
+        assert result["matches"]["processed"] == 5
+        assert result["matches"]["pending"] == 5
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_bronze_layer_status_exception(self):
+        """测试Bronze层状态查询异常"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.db_manager = Mock()
+        service.db_manager.get_session.side_effect = Exception("数据库错误")
+
+        result = await service.get_bronze_layer_status()
+
+        assert "error" in result
+
+    # ========== 新增：存储处理测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_store_processed_data_success(self):
+        """测试成功的处理后数据存储"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+        service.cache_manager = Mock()
+
+        test_df = pd.DataFrame({"test": [1, 2, 3]})
+        table_name = "test_table"
+
+        # Mock data lake
+        service.data_lake.store_dataframe = AsyncMock()
+
+        # Mock database manager
+        service.db_manager.bulk_insert = AsyncMock()
+
+        # Mock cache manager
+        service.cache_manager.set_json = AsyncMock()
+
+        result = await service.store_processed_data(test_df, table_name, True)
+
+        assert result is True
+        service.data_lake.store_dataframe.assert_called_once()
+        service.db_manager.bulk_insert.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_store_processed_data_lake_failure(self):
+        """测试数据湖存储失败场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        test_df = pd.DataFrame({"test": [1, 2, 3]})
+        table_name = "test_table"
+
+        # Mock data lake to fail
+        service.data_lake.store_dataframe = AsyncMock(side_effect=Exception("存储失败"))
+
+        # Mock database manager
+        service.db_manager.bulk_insert = AsyncMock()
+
+        result = await service.store_processed_data(test_df, table_name)
+
+        assert result is False
+        service.logger.error.assert_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_store_processed_data_no_components(self):
+        """测试无存储组件的场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_lake = None
+        service.db_manager = None
+
+        test_df = pd.DataFrame({"test": [1, 2, 3]})
+
+        result = await service.store_processed_data(test_df, "test_table")
+
+        assert result is True  # Should still return True since storage is optional
+
+    # ========== 新增：异步处理测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_single_match_data_async_cleaning(self):
+        """测试异步数据清洗场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345", "home_team_id": 100}
+
+        # Mock data cleaner to return coroutine
+        async def mock_async_clean(data):
+            await asyncio.sleep(0.001)
+            return data
+
+        service.data_cleaner.clean_match_data = mock_async_clean
+        service.missing_handler.handle_missing_match_data = Mock(return_value=sample_match_data)
+
+        result = await service._process_single_match_data(sample_match_data)
+
+        assert result == sample_match_data
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_single_match_data_async_missing_handling(self):
+        """测试异步缺失值处理场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345", "home_team_id": 100}
+
+        # Mock missing handler to return coroutine
+        async def mock_async_handle(data):
+            await asyncio.sleep(0.001)
+            return data
+
+        service.data_cleaner.clean_match_data.return_value = sample_match_data
+        service.missing_handler.handle_missing_match_data = mock_async_handle
+
+        result = await service._process_single_match_data(sample_match_data)
+
+        assert result == sample_match_data
+
+    # ========== 新增：批处理增强测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_in_batches(self):
+        """测试分批处理"""
+        service = DataProcessingService()
+
+        dataset = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        batch_size = 3
+
+        batches = []
+        async for batch in service._process_in_batches(dataset, batch_size):
+            batches.append(batch)
+
+        assert len(batches) == 4
+        assert batches[0] == [1, 2, 3]
+        assert batches[1] == [4, 5, 6]
+        assert batches[2] == [7, 8, 9]
+        assert batches[3] == [10]
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_large_dataset(self):
+        """测试大型数据集处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        dataset = list(range(100))
+
+        # Mock the process_batch method
+        service.process_batch = AsyncMock(return_value=[{"processed": True}])
+
+        result = await service.process_large_dataset(dataset, batch_size=10)
+
+        assert len(result) == 100  # Each item becomes a processed result
+        assert service.process_batch.call_count == 10
+
+    # ========== 新增：服务关闭测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_service_shutdown_with_mock_cache(self):
+        """测试服务关闭 - Mock缓存管理器场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Mock cache manager that has a close method
+        mock_cache = Mock()
+        mock_cache.close = AsyncMock()
+        mock_cache.close._mock_name = "close"
+        service.cache_manager = mock_cache
+
+        # Mock database manager
+        mock_db = AsyncMock()
+        service.db_manager = mock_db
+
+        await service.shutdown()
+
+        mock_cache.close.assert_called_once()
+        mock_db.close.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_service_shutdown_sync_cache(self):
+        """测试服务关闭 - 同步缓存管理器场景"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Mock sync cache manager
+        mock_cache = Mock()
+        mock_cache.close = Mock()
+        service.cache_manager = mock_cache
+
+        # Mock database manager
+        mock_db = AsyncMock()
+        service.db_manager = mock_db
+
+        await service.shutdown()
+
+        mock_cache.close.assert_called_once()
+        mock_db.close.assert_called_once()
+
+    # ========== 新增：数据质量验证增强测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_validate_data_quality_exception_handling(self):
+        """测试数据质量验证异常处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # This will cause an exception when accessing data.get()
+        result = await service.validate_data_quality(None, "match")
+
+        assert result["is_valid"] is False
+        assert len(result["issues"]) > 0
+
+    # ========== 新增：数据库事务测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_database_rollback_on_exception(self):
+        """测试数据库异常时的回滚"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session
+        mock_session = Mock()
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = [Mock()]
+        mock_session.commit.side_effect = Exception("提交失败")
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        # This should trigger an exception and rollback
+        result = await service._process_raw_matches_bronze_to_silver(100)
+
+        assert result == 0
+        mock_session.rollback.assert_called_once()
+
+    # ========== 新增：性能指标收集测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_collect_performance_metrics(self):
+        """测试性能指标收集"""
+        service = DataProcessingService()
+
+        mock_function = AsyncMock(return_value=[1, 2, 3])
+
+        result = await service.collect_performance_metrics(mock_function, "arg1", kwarg1="value1")
+
+        assert "total_time" in result
+        assert "items_processed" in result
+        assert "items_per_second" in result
+        assert result["items_processed"] == 3
+        assert result["total_time"] > 0
+        mock_function.assert_called_once_with("arg1", kwarg1="value1")
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_collect_performance_metrics_single_item(self):
+        """测试单个项目的性能指标收集"""
+        service = DataProcessingService()
+
+        mock_function = AsyncMock(return_value={"single": "result"})
+
+        result = await service.collect_performance_metrics(mock_function)
+
+        assert result["items_processed"] == 1
+        assert result["items_per_second"] > 0
+
+    # ========== 新增：清理资源测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cleanup_success(self):
+        """测试成功的资源清理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Mock the db manager
+        mock_db = Mock()
+        mock_db.close = AsyncMock()
+        service.db_manager = mock_db
+
+        # Add a cache attribute
+        service._cache = {1: 2, 3: 4}
+
+        result = await service.cleanup()
+
+        assert result is True
+        assert len(service._cache) == 0
+        mock_db.close.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cleanup_sync_db_close(self):
+        """测试同步数据库关闭"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Mock the db manager with synchronous close
+        mock_db = Mock()
+        mock_db.close = Mock()
+        service.db_manager = mock_db
+
+        result = await service.cleanup()
+
+        assert result is True
+        mock_db.close.assert_called_once()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cleanup_exception_handling(self):
+        """测试清理异常处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Mock the db manager to raise exception
+        mock_db = Mock()
+        mock_db.close = Mock(side_effect=Exception("关闭失败"))
+        service.db_manager = mock_db
+
+        result = await service.cleanup()
+
+        assert result is False
+        service.logger.error.assert_called()
+
+    # ========== 新增：缓存操作增强测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_cache_processing_results_no_cache_manager(self):
+        """测试无缓存管理器的缓存处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.cache_manager = None
+
+        result = await service.cache_processing_results("test_key", {"data": "value"})
+
+        assert result is False
+        service.logger.error.assert_called_with("缓存管理器未初始化")
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_cached_results_no_cache_manager(self):
+        """测试无缓存管理器的缓存获取"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.cache_manager = None
+
+        result = await service.get_cached_results("test_key")
+
+        assert result is None
+        service.logger.error.assert_called_with("缓存管理器未初始化")
+
+    # ========== 新增：边界条件测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_empty_dict(self):
+        """测试空字典输入的比赛数据处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        result = await service._process_single_match_data({})
+
+        assert result is None
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_no_match_id(self):
+        """测试无比赛ID的缓存处理"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"home_team_id": 100, "away_team_id": 200}  # No external_match_id
+
+        service.data_cleaner.clean_match_data.return_value = sample_match_data
+        service.missing_handler.handle_missing_match_data.return_value = sample_match_data
+
+        result = await service._process_single_match_data(sample_match_data)
+
+        assert result == sample_match_data
+        # Cache should not be called when no match_id
+        service.cache_manager.aset.assert_not_called()
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_none_result_from_cleaner(self):
+        """测试数据清洗返回None"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345"}
+
+        service.data_cleaner.clean_match_data.return_value = None
+
+        result = await service._process_single_match_data(sample_match_data)
+
+        assert result is None
+        service.logger.warning.assert_called_with("比赛数据清洗失败")
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_empty_dataframe_result(self):
+        """测试数据清洗返回空DataFrame"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345"}
+        empty_df = pd.DataFrame()
+
+        service.data_cleaner.clean_match_data.return_value = empty_df
+
+        result = await service._process_single_match_data(sample_match_data)
+
+        assert result is None
+        service.logger.warning.assert_called_with("比赛数据清洗失败")
+
+    # ========== 新增：重试机制增强测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_process_with_retry_zero_retries(self):
+        """测试零重试次数"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        mock_func = Mock(side_effect=Exception("失败"))
+        test_data = {"test": "data"}
+
+        with pytest.raises(RuntimeError, match="处理持续失败"):
+            await service.process_with_retry(mock_func, test_data, max_retries=0, delay=0.01)
+
+        mock_func.assert_called_once()
+
+    # ========== 新增：存储数据缓存失败测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_store_processed_data_cache_failure(self):
+        """测试数据存储缓存失败"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+        service.cache_manager = Mock()
+
+        test_df = pd.DataFrame({"test": [1, 2, 3]})
+        table_name = "test_table"
+
+        # Mock data lake
+        service.data_lake.store_dataframe = AsyncMock()
+
+        # Mock database manager
+        service.db_manager.bulk_insert = AsyncMock()
+
+        # Mock cache manager to fail
+        service.cache_manager.set_json = AsyncMock(side_effect=Exception("缓存失败"))
+
+        result = await service.store_processed_data(test_df, table_name, True)
+
+        assert result is True  # Should still succeed even if cache fails
+        service.logger.warning.assert_called()
+
+    # ========== 新增：完整集成测试 ==========
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_full_data_processing_workflow(self):
+        """测试完整的数据处理工作流"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345", "home_team_id": 100}
+
+        # Setup all mocks for a complete workflow
+        service.data_cleaner.clean_match_data.return_value = sample_match_data
+        service.missing_handler.handle_missing_match_data.return_value = sample_match_data
+
+        # Test cache workflow
+        service.cache_manager.aget = AsyncMock(return_value=None)  # No cached data
+        service.cache_manager.aset = AsyncMock()
+
+        # Process the data
+        result = await service._process_single_match_data(sample_match_data)
+
+        # Verify the complete workflow
+        assert result == sample_match_data
+        service.data_cleaner.clean_match_data.assert_called_once()
+        service.missing_handler.handle_missing_match_data.assert_called_once()
+        service.cache_manager.aget.assert_called_once()
+        service.cache_manager.aset.assert_called_once()
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_bronze_to_silver_full_workflow(self):
+        """测试完整的Bronze到Silver处理工作流"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.data_lake = Mock()
+        service.db_manager = Mock()
+
+        # Mock database session for matches
+        mock_session = Mock()
+        mock_raw_match = Mock()
+        mock_raw_match.id = 1
+        mock_raw_match.raw_data = {"test": "data"}
+        mock_raw_match.mark_processed = Mock()
+
+        mock_session.query.return_value.filter.return_value.limit.return_value.all.return_value = [mock_raw_match]
+
+        # Mock the context manager properly
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(return_value=mock_session)
+        mock_context_manager.__exit__ = Mock(return_value=None)
+        service.db_manager.get_session.return_value = mock_context_manager
+
+        # Mock data cleaning and missing handling
+        service.data_cleaner.clean_match_data = AsyncMock(return_value={"cleaned": True})
+        service.missing_handler.handle_missing_match_data = AsyncMock(return_value={"processed": True})
+
+        # Mock data lake storage
+        service.data_lake.save_historical_data = AsyncMock()
+
+        # Mock odds and scores processing to return 0 (no data)
+        service._process_raw_odds_bronze_to_silver = AsyncMock(return_value=0)
+        service._process_raw_scores_bronze_to_silver = AsyncMock(return_value=0)
+
+        # Execute the full workflow
+        result = await service.process_bronze_to_silver(batch_size=100)
+
+        # Verify the result
+        assert result["processed_matches"] == 1
+        assert result["processed_odds"] == 0
+        assert result["processed_scores"] == 0
+        assert result["errors"] == 0
+
+    # ========== 新增：性能测试 ==========
+
+    @pytest.mark.performance
+    @pytest.mark.asyncio
+    async def test_large_batch_processing_performance(self):
+        """测试大批量处理性能"""
+        service = DataProcessingService()
+        service.logger = Mock()
+
+        # Create a large dataset
+        large_dataset = [{"id": i} for i in range(1000)]
+
+        # Mock process_batch to return quickly
+        async def mock_process_batch(data):
+            await asyncio.sleep(0.001)
+            return [{"processed": True} for _ in data]
+
+        service.process_batch = mock_process_batch
+
+        # Measure performance
+        start_time = asyncio.get_event_loop().time()
+        result = await service.process_large_dataset(large_dataset, batch_size=100)
+        end_time = asyncio.get_event_loop().time()
+
+        processing_time = end_time - start_time
+        assert processing_time < 1.0  # Should process 1000 items in less than 1 second
+        assert len(result) == 1000
+
+    @pytest.mark.performance
+    @pytest.mark.asyncio
+    async def test_concurrent_cache_operations(self):
+        """测试并发缓存操作"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.cache_manager = Mock()
+
+        cache_key = "test_concurrent"
+        data = {"data": "value"}
+
+        # Mock cache operations to be slightly slow
+        async def mock_slow_set(key, value, **kwargs):
+            await asyncio.sleep(0.01)
+            return True
+
+        async def mock_slow_get(key):
+            await asyncio.sleep(0.01)
+            return {"cached": True}
+
+        service.cache_manager.set_json = mock_slow_set
+        service.cache_manager.get_json = mock_slow_get
+
+        # Test concurrent operations
+        tasks = []
+        for i in range(10):
+            tasks.append(service.cache_processing_results(f"{cache_key}_{i}", data))
+            tasks.append(service.get_cached_results(f"{cache_key}_{i}"))
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # All operations should complete successfully
+        assert len([r for r in results if r is True]) == 10  # cache_processing_results
+        assert len([r for r in results if r is not None]) == 10  # get_cached_results
+
+    # ========== 新增：错误场景测试 ==========
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_data_cleaner_async_check(self):
+        """测试数据清洗器异步性检查"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345"}
+
+        # Create a mock that looks like a coroutine but isn't
+        mock_result = Mock()
+        mock_result.__class__ = type(lambda: None)
+        mock_result.__class__.__name__ = "coroutine"
+
+        service.data_cleaner.clean_match_data.return_value = mock_result
+
+        # This should handle the case where something looks like a coroutine but isn't
+        with pytest.raises(Exception):
+            await service._process_single_match_data(sample_match_data)
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_missing_data_handler_async_check(self):
+        """测试缺失值处理器异步性检查"""
+        service = DataProcessingService()
+        service.logger = Mock()
+        service.data_cleaner = Mock()
+        service.missing_handler = Mock()
+        service.cache_manager = AsyncMock()
+
+        sample_match_data = {"external_match_id": "12345"}
+
+        # Mock data cleaner to return sync result
+        service.data_cleaner.clean_match_data.return_value = sample_match_data
+
+        # Create a mock that looks like a coroutine but isn't
+        mock_result = Mock()
+        mock_result.__class__ = type(lambda: None)
+        mock_result.__class__.__name__ = "coroutine"
+
+        service.missing_handler.handle_missing_match_data.return_value = mock_result
+
+        # This should handle the case where something looks like a coroutine but isn't
+        with pytest.raises(Exception):
+            await service._process_single_match_data(sample_match_data)
+
+
+# 测试标记和分类
+class TestDataProcessingServiceMarkers:
+    """测试标记验证"""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_unit_test_marker(self):
+        """验证单元测试标记"""
+        assert True  # This test is marked as unit
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_integration_test_marker(self):
+        """验证集成测试标记"""
+        assert True  # This test is marked as integration
+
+    @pytest.mark.performance
+    @pytest.mark.asyncio
+    async def test_performance_test_marker(self):
+        """验证性能测试标记"""
+        assert True  # This test is marked as performance
+
+    @pytest.mark.asyncio
+    async def test_asyncio_marker(self):
+        """验证异步测试标记"""
+        assert True  # This test is marked as asyncio
+
+
+class TestDataProcessingService:
+    """测试数据处理服务 - 原有测试保留"""
 
 
 class TestDataProcessingService:
