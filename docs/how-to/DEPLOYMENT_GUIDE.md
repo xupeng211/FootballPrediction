@@ -645,9 +645,9 @@ docker-compose up -d --force-recreate
 
 ### 相关文档
 - [API文档](http://localhost:8000/docs)
-- [数据库架构](docs/DATABASE_SCHEMA.md)
-- [开发指南](docs/DEVELOPMENT_GUIDE.md)
-- [监控指南](docs/MONITORING_GUIDE.md)
+- [数据库架构](../reference/DATABASE_SCHEMA.md)
+- [开发指南](../reference/DEVELOPMENT_GUIDE.md)
+- [监控指南](../reference/MONITORING_GUIDE.md)
 
 ### 获取帮助
 - **GitHub Issues**: 报告Bug和功能请求

@@ -349,10 +349,10 @@ alerts:
 - **类型检查**: `make type-check`
 
 ### 📚 文档和指南
-- [项目规则文档](.cursor/rules/)
-- [CI风险分析报告](./CI_风险分析与代码质量优化报告.md)
-- [Makefile命令手册](./Makefile)
-- [测试策略文档](./docs/TEST_STRATEGY.md)
+- [项目规则文档](../../legacy/.cursor)
+- [CI风险分析报告](../../legacy/CI_风险分析与代码质量优化报告.md)
+- [Makefile命令手册](../../legacy/Makefile)
+- [测试策略文档](../../legacy/TEST_STRATEGY.md)
 
 ### 🎯 成功关键因素
 1. **严格执行规则**: 绝不绕过Makefile和CI验证

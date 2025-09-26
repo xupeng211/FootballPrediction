@@ -533,8 +533,8 @@ class AnomalyDetectionTrigger:
 
 - [数据设计文档](./DATA_DESIGN.md) - 数据库架构和权限设计
 - [API文档](./API_REFERENCE.md) - 审计API接口说明
-- [部署指南](./DEPLOYMENT.md) - 安全部署配置
-- [运维手册](./OPERATIONS.md) - 安全运维流程
+- [部署指南](../legacy/DEPLOYMENT.md) - 安全部署配置
+- [运维手册](../legacy/OPERATIONS.md) - 安全运维流程
 
 ---
 
