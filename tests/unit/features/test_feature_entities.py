@@ -14,7 +14,7 @@ def test_match_entity_roundtrip():
         away_team_id=2,
         league_id=99,
         match_time=datetime.datetime(2024, 1, 1, 12, 30),
-        season="2024/25",
+        season="2024_25",
     )
 
     data = entity.to_dict()

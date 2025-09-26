@@ -14,8 +14,8 @@ class TestFootballDataCleaner:
             return FootballDataCleaner()
 
     def test_data_cleaner_initialization(self, data_cleaner):
-        assert data_cleaner is not None
-        assert hasattr(data_cleaner, "logger")
+    assert data_cleaner is not None
+    assert hasattr(data_cleaner, "logger")
 
     @pytest.mark.asyncio
     async def test_clean_match_data_transforms_payload(self, data_cleaner):
@@ -45,30 +45,30 @@ class TestFootballDataCleaner:
         ):
             cleaned = await data_cleaner.clean_match_data(raw_data)
 
-        assert cleaned is not None
-        assert cleaned["external_match_id"] == "555"
-        assert cleaned["match_status"] == "scheduled"
-        assert cleaned["home_team_id"] == 101
-        assert cleaned["away_team_id"] == 202
-        assert cleaned["league_id"] == 301
-        assert cleaned["home_score"] == 2
-        assert cleaned["away_score"] == 1
-        assert cleaned["home_ht_score"] == 1
-        assert cleaned["away_ht_score"] == 1
-        assert cleaned["matchday"] == 16
-        assert cleaned["season"] == "2024"
-        assert cleaned["match_time"] == "2025-01-02T15:00:00+00:00"
+    assert cleaned is not None
+    assert cleaned["external_match_id"] == "555"
+    assert cleaned["match_status"] == "scheduled"
+    assert cleaned["home_team_id"] == 101
+    assert cleaned["away_team_id"] == 202
+    assert cleaned["league_id"] == 301
+    assert cleaned["home_score"] == 2
+    assert cleaned["away_score"] == 1
+    assert cleaned["home_ht_score"] == 1
+    assert cleaned["away_ht_score"] == 1
+    assert cleaned["matchday"] == 16
+    assert cleaned["season"] == "2024"
+    assert cleaned["match_time"] == "2025-01-02T15:00:00+00:00"
 
         # 确认可读字段被清理
-        assert cleaned["venue"] == "Old Trafford"
-        assert cleaned["referee"] == "Mike Dean"
-        assert cleaned["data_source"] == "cleaned"
-        assert cleaned["cleaned_at"] is not None
+    assert cleaned["venue"] == "Old Trafford"
+    assert cleaned["referee"] == "Mike Dean"
+    assert cleaned["data_source"] == "cleaned"
+    assert cleaned["cleaned_at"] is not None
 
     @pytest.mark.asyncio
     async def test_clean_match_data_invalid_payload_returns_none(self, data_cleaner):
         result = await data_cleaner.clean_match_data({"homeTeam": {}})
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_clean_odds_data_filters_invalid_entries(self, data_cleaner):
@@ -89,11 +89,11 @@ class TestFootballDataCleaner:
 
         cleaned = await data_cleaner.clean_odds_data(raw_odds)
 
-        assert len(cleaned) == 1
+    assert len(cleaned) == 1
         entry = cleaned[0]
-        assert entry["bookmaker"] == "acme_books"
-        assert entry["market_type"] == "1x2"
-        assert {o["name"] for o in entry["outcomes"]} == {"home", "draw", "away"}
-        assert all(o["price"] >= 1.01 for o in entry["outcomes"])
-        assert abs(sum(entry["implied_probabilities"].values()) - 1.0) < 0.01
-        assert entry["cleaned_at"] is not None
+    assert entry["bookmaker"] == "acme_books"
+    assert entry["market_type"] == "1x2"
+    assert {o["name"] for o in entry["outcomes"]} == {"home", "draw", "away"}
+    assert all(o["price"] >= 1.01 for o in entry["outcomes"])
+    assert abs(sum(entry["implied_probabilities"].values()) - 1.0) < 0.01
+    assert entry["cleaned_at"] is not None

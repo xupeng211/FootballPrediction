@@ -26,42 +26,42 @@ class TestGitHubCIMonitor:
 
     def test_monitor_initialization(self):
         """测试监控器初始化 - 确保基本属性正确设置和环境配置生效"""
-        assert self.monitor.project_root == self.test_project_root
-        assert self.monitor.api_base == "https://api.github.com"
-        assert "Bearer test_token_123" in self.monitor.headers.get("Authorization", "")
+    assert self.monitor.project_root == self.test_project_root
+    assert self.monitor.api_base == "https:_/api.github.com"
+    assert "Bearer test_token_123" in self.monitor.headers.get("Authorization", "")
 
     def test_github_token_detection(self):
         """测试GitHub令牌检测 - 验证多种令牌配置方式的优先级和兼容性"""
         # 测试环境变量GITHUB_TOKEN
         with patch.dict("os.environ", {"GITHUB_TOKEN": "env_token"}):
             monitor = GitHubCIMonitor(str(self.test_project_root))
-            assert monitor.token == "env_token"
+    assert monitor.token == "env_token"
 
         # 测试环境变量GH_TOKEN
         with patch.dict("os.environ", {"GH_TOKEN": "gh_token"}, clear=True):
             monitor = GitHubCIMonitor(str(self.test_project_root))
-            assert monitor.token == "gh_token"
+    assert monitor.token == "gh_token"
 
         # 测试无令牌情况
         with patch.dict("os.environ", {}, clear=True):
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value.returncode = 1
                 monitor = GitHubCIMonitor(str(self.test_project_root))
-                assert monitor.token is None
+    assert monitor.token is None
 
     @patch("subprocess.run")
     def test_repository_info_parsing(self, mock_run):
         """测试仓库信息解析 - 验证HTTPS和SSH格式URL的正确解析"""
         # 测试HTTPS格式URL
         mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "https://github.com/owner/repo.git"
+        mock_run.return_value.stdout = "https:_/github.com/owner/repo.git"
 
         monitor = GitHubCIMonitor(str(self.test_project_root))
         repo_info = monitor._get_repository_info()
 
-        assert repo_info["owner"] == "owner"
-        assert repo_info["repo"] == "repo"
-        assert repo_info["full_name"] == "owner/repo"
+    assert repo_info["owner"] == "owner"
+    assert repo_info["repo"] == "repo"
+    assert repo_info["full_name"] == "owner/repo"
 
         # 测试SSH格式URL
         mock_run.return_value.stdout = "git@github.com:owner/repo.git"
@@ -69,8 +69,8 @@ class TestGitHubCIMonitor:
         monitor = GitHubCIMonitor(str(self.test_project_root))
         repo_info = monitor._get_repository_info()
 
-        assert repo_info["owner"] == "owner"
-        assert repo_info["repo"] == "repo"
+    assert repo_info["owner"] == "owner"
+    assert repo_info["repo"] == "repo"
 
     @patch("requests.get")
     def test_get_latest_workflows(self, mock_get):
@@ -88,7 +88,7 @@ class TestGitHubCIMonitor:
                     "head_commit": {"message": "feat: 添加新功能"},
                     "head_branch": "main",
                     "created_at": "2024-01-01T12:00:00Z",
-                    "html_url": "https://github.com/owner/repo/actions/runs/123456",
+                    "html_url": "https:_/github.com/owner/repo/actions/runs/123456",
                 }
             ]
         }
@@ -100,15 +100,15 @@ class TestGitHubCIMonitor:
 
         workflows = self.monitor.get_latest_workflows(limit=5)
 
-        assert len(workflows) == 1
-        assert workflows[0]["id"] == 123456
-        assert workflows[0]["status"] == "completed"
-        assert workflows[0]["conclusion"] == "success"
+    assert len(workflows) == 1
+    assert workflows[0]["id"] == 123456
+    assert workflows[0]["status"] == "completed"
+    assert workflows[0]["conclusion"] == "success"
 
         # 验证API调用参数
         mock_get.assert_called_once()
         call_args = mock_get.call_args
-        assert call_args[1]["params"]["per_page"] == 5
+    assert call_args[1]["params"]["per_page"] == 5
 
     def test_failure_analysis_dependency_conflict(self):
         """测试依赖冲突分析 - 验证常见依赖版本冲突的识别和建议"""
@@ -120,12 +120,12 @@ class TestGitHubCIMonitor:
 
         analysis = self.monitor.analyze_failure_reason(logs)
 
-        assert analysis["failure_type"] == "dependency_conflict"
-        assert analysis["severity"] == "high"
-        assert any(
+    assert analysis["failure_type"] == "dependency_conflict"
+    assert analysis["severity"] == "high"
+    assert any(
             "requirements.txt" in suggestion for suggestion in analysis["suggestions"]
         )
-        assert any("版本冲突" in suggestion for suggestion in analysis["suggestions"])
+    assert any("版本冲突" in suggestion for suggestion in analysis["suggestions"])
 
     def test_failure_analysis_missing_dependency(self):
         """测试缺失依赖分析 - 验证ImportError和ModuleNotFoundError的识别"""
@@ -136,9 +136,9 @@ class TestGitHubCIMonitor:
 
         analysis = self.monitor.analyze_failure_reason(logs)
 
-        assert analysis["failure_type"] == "missing_dependency"
-        assert analysis["severity"] == "high"
-        assert any(
+    assert analysis["failure_type"] == "missing_dependency"
+    assert analysis["severity"] == "high"
+    assert any(
             "requirements" in suggestion for suggestion in analysis["suggestions"]
         )
 
@@ -146,29 +146,29 @@ class TestGitHubCIMonitor:
         """测试代码风格分析 - 验证black、isort、flake8等工具错误的识别"""
         logs = """
         flake8 error: line too long (88 > 79 characters)
-        black would reformat src/main.py
+        black would reformat src_main.py
         isort would reformat imports in src/utils.py
         """
 
         analysis = self.monitor.analyze_failure_reason(logs)
 
-        assert analysis["failure_type"] == "code_style"
-        assert analysis["severity"] == "low"
-        assert any("make fix" in suggestion for suggestion in analysis["suggestions"])
+    assert analysis["failure_type"] == "code_style"
+    assert analysis["severity"] == "low"
+    assert any("make fix" in suggestion for suggestion in analysis["suggestions"])
 
     def test_failure_analysis_test_failure(self):
         """测试测试失败分析 - 验证pytest错误和断言失败的识别"""
         logs = """
-        FAILED tests/test_basic.py::TestConfig::test_config_creation - AssertionError
+        FAILED tests_test_basic.py::TestConfig::test_config_creation - AssertionError
         pytest failed with 2 test failures
         test session failed
         """
 
         analysis = self.monitor.analyze_failure_reason(logs)
 
-        assert analysis["failure_type"] == "test_failure"
-        assert analysis["severity"] == "medium"
-        assert any("make test" in suggestion for suggestion in analysis["suggestions"])
+    assert analysis["failure_type"] == "test_failure"
+    assert analysis["severity"] == "medium"
+    assert any("make test" in suggestion for suggestion in analysis["suggestions"])
 
     def test_time_formatting(self):
         """测试时间格式化 - 验证相对时间显示的准确性和可读性"""
@@ -178,15 +178,15 @@ class TestGitHubCIMonitor:
 
         # 5分钟前
         five_min_ago = now - timedelta(minutes=5)
-        assert "5分钟前" in self.monitor._format_time_ago(five_min_ago)
+    assert "5分钟前" in self.monitor._format_time_ago(five_min_ago)
 
         # 2小时前
         two_hours_ago = now - timedelta(hours=2)
-        assert "2小时前" in self.monitor._format_time_ago(two_hours_ago)
+    assert "2小时前" in self.monitor._format_time_ago(two_hours_ago)
 
         # 3天前
         three_days_ago = now - timedelta(days=3)
-        assert "3天前" in self.monitor._format_time_ago(three_days_ago)
+    assert "3天前" in self.monitor._format_time_ago(three_days_ago)
 
     @patch("requests.get")
     def test_api_error_handling(self, mock_get):
@@ -195,10 +195,10 @@ class TestGitHubCIMonitor:
         mock_get.side_effect = Exception("网络连接失败")
 
         self.monitor.token = "test_token"
-        self.monitor.repo_info = {"full_name": "owner/repo"}
+        self.monitor.repo_info = {"full_name": "owner_repo"}
 
         workflows = self.monitor.get_latest_workflows()
-        assert workflows == []  # 错误时应返回空列表
+    assert workflows == []  # 错误时应返回空列表
 
         # 模拟认证错误
         mock_response = Mock()
@@ -207,7 +207,7 @@ class TestGitHubCIMonitor:
         mock_get.side_effect = None
 
         workflows = self.monitor.get_latest_workflows()
-        assert workflows == []
+    assert workflows == []
 
     def test_monitor_without_token(self):
         """测试无令牌场景 - 验证缺少GitHub令牌时的降级处理"""
@@ -217,9 +217,9 @@ class TestGitHubCIMonitor:
                 monitor = GitHubCIMonitor(str(self.test_project_root))
 
                 # 无令牌时应返回空结果而不是抛出异常
-                assert monitor.get_latest_workflows() == []
-                assert monitor.get_workflow_jobs(123) == []
-                assert monitor.get_job_logs(456) == ""
+    assert monitor.get_latest_workflows() == []
+    assert monitor.get_workflow_jobs(123) == []
+    assert monitor.get_job_logs(456) == ""
 
     def test_monitor_without_repo_info(self):
         """测试无仓库信息场景 - 验证非Git仓库环境下的错误处理"""
@@ -229,8 +229,8 @@ class TestGitHubCIMonitor:
             monitor = GitHubCIMonitor(str(self.test_project_root))
 
             # 无仓库信息时应该有适当的错误处理
-            assert monitor.repo_info == {}
-            assert monitor.get_latest_workflows() == []
+    assert monitor.repo_info == {}
+    assert monitor.get_latest_workflows() == []
 
 
 class TestCIMonitorIntegration:
@@ -241,14 +241,14 @@ class TestCIMonitorIntegration:
         """测试Git仓库检测 - 验证不同Git配置下的仓库信息获取"""
         # 模拟成功的Git命令
         mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "https://github.com/test/repo.git"
+        mock_run.return_value.stdout = "https:_/github.com/test/repo.git"
 
         with tempfile.TemporaryDirectory() as temp_dir:
             monitor = GitHubCIMonitor(temp_dir)
             repo_info = monitor._get_repository_info()
 
-            assert repo_info["owner"] == "test"
-            assert repo_info["repo"] == "repo"
+    assert repo_info["owner"] == "test"
+    assert repo_info["repo"] == "repo"
 
     def test_full_workflow_status_display(self):
         """测试完整工作流状态显示 - 验证状态格式化和用户界面输出"""
@@ -261,7 +261,7 @@ class TestCIMonitorIntegration:
                 "head_commit": {"message": "初始提交"},
                 "head_branch": "main",
                 "created_at": "2024-01-01T12:00:00Z",
-                "html_url": "https://github.com/test/repo/actions/runs/123",
+                "html_url": "https:_/github.com/test/repo/actions/runs/123",
             },
             {
                 "id": 124,

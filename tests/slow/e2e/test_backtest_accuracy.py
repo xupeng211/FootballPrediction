@@ -175,25 +175,25 @@ class TestBacktestAccuracy:
             )
 
             # 验证回测结果基本结构
-            assert isinstance(backtest_result, dict), "回测结果应该是字典格式"
-            assert "total_matches" in backtest_result, "回测结果应该包含总比赛数"
-            assert (
+    assert isinstance(backtest_result, dict), "回测结果应该是字典格式"
+    assert "total_matches" in backtest_result, "回测结果应该包含总比赛数"
+    assert (
                 "correct_predictions" in backtest_result
             ), "回测结果应该包含正确预测数"
 
             # 验证数据量合理性
             total_matches = backtest_result["total_matches"]
-            assert total_matches > 0, "回测期间应该有比赛数据"
+    assert total_matches > 0, "回测期间应该有比赛数据"
 
             # 验证预测数量不超过比赛总数
             correct_predictions = backtest_result["correct_predictions"]
-            assert (
+    assert (
                 0 <= correct_predictions <= total_matches
             ), "正确预测数应该在合理范围内"
 
         except Exception as e:
             # 在测试环境中可能无法访问历史数据
-            assert isinstance(e, (BacktestError, DataError, AttributeError))
+    assert isinstance(e, (BacktestError, DataError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_accuracy_baseline_verification(
@@ -215,19 +215,19 @@ class TestBacktestAccuracy:
 
                 # 验证总体准确率
                 overall_accuracy = metrics.get("overall_accuracy", 0)
-                assert (
+    assert (
                     overall_accuracy >= accuracy_baseline["overall_accuracy"]
                 ), f"总体准确率{overall_accuracy:.3f}低于基线{accuracy_baseline['overall_accuracy']:.3f}"
 
                 # 验证对数损失
                 log_loss = metrics.get("log_loss", 1.0)
-                assert (
+    assert (
                     log_loss <= accuracy_baseline["log_loss"]
                 ), f"对数损失{log_loss:.3f}高于基线{accuracy_baseline['log_loss']:.3f}"
 
                 # 验证Brier分数
                 brier_score = metrics.get("brier_score", 1.0)
-                assert (
+    assert (
                     brier_score <= accuracy_baseline["brier_score"]
                 ), f"Brier分数{brier_score:.3f}高于基线{accuracy_baseline['brier_score']:.3f}"
 
@@ -237,7 +237,7 @@ class TestBacktestAccuracy:
                 correct_predictions = backtest_result.get("correct_predictions", 0)
                 basic_accuracy = correct_predictions / total_matches
 
-                assert (
+    assert (
                     basic_accuracy >= accuracy_baseline["overall_accuracy"]
                 ), f"基本准确率{basic_accuracy:.3f}低于基线{accuracy_baseline['overall_accuracy']:.3f}"
 
@@ -245,7 +245,7 @@ class TestBacktestAccuracy:
             if isinstance(e, (BacktestError, DataError)):
                 # 在测试环境中模拟基线验证
                 simulated_accuracy = 0.75  # 模拟准确率
-                assert (
+    assert (
                     simulated_accuracy >= accuracy_baseline["overall_accuracy"]
                 ), "模拟准确率达到基线"
             else:
@@ -272,21 +272,21 @@ class TestBacktestAccuracy:
                 # 验证主队获胜预测准确性
                 if "home_wins" in breakdown:
                     home_win_accuracy = breakdown["home_wins"].get("accuracy", 0)
-                    assert (
+    assert (
                         home_win_accuracy >= accuracy_baseline["home_win_accuracy"]
                     ), f"主队获胜预测准确率{home_win_accuracy:.3f}低于基线"
 
                 # 验证平局预测准确性（通常较难预测）
                 if "draws" in breakdown:
                     draw_accuracy = breakdown["draws"].get("accuracy", 0)
-                    assert (
+    assert (
                         draw_accuracy >= accuracy_baseline["draw_accuracy"]
                     ), f"平局预测准确率{draw_accuracy:.3f}低于基线"
 
                 # 验证客队获胜预测准确性
                 if "away_wins" in breakdown:
                     away_win_accuracy = breakdown["away_wins"].get("accuracy", 0)
-                    assert (
+    assert (
                         away_win_accuracy >= accuracy_baseline["away_win_accuracy"]
                     ), f"客队获胜预测准确率{away_win_accuracy:.3f}低于基线"
 
@@ -306,7 +306,7 @@ class TestBacktestAccuracy:
                 ]:
                     accuracy = simulated_breakdown[result_type]["accuracy"]
                     baseline = accuracy_baseline[baseline_key]
-                    assert accuracy >= baseline, f"{result_type}准确率达到基线"
+    assert accuracy >= baseline, f"{result_type}准确率达到基线"
 
     # ================================
     # 模型性能稳定性测试
@@ -356,13 +356,13 @@ class TestBacktestAccuracy:
             accuracy_std = np.std(accuracies) if HAS_NUMPY else 0.05
 
             # 准确率标准差应该较小，表明性能稳定
-            assert (
+    assert (
                 accuracy_std < 0.10
             ), f"准确率标准差{accuracy_std:.3f}过大，模型性能不稳定"
 
             # 所有时期的准确率都应该在合理范围内
             for result in period_results:
-                assert (
+    assert (
                     0.50 <= result["accuracy"] <= 0.90
                 ), f"时期{result['period']}的准确率{result['accuracy']:.3f}异常"
 
@@ -436,7 +436,7 @@ class TestBacktestAccuracy:
 
                 # 允许轻微下降，但不应该超过5%
                 performance_change = recent_accuracy - previous_accuracy
-                assert (
+    assert (
                     performance_change > -0.05
                 ), f"最近赛季性能下降过多: {performance_change:.3f}"
 
@@ -465,19 +465,19 @@ class TestBacktestAccuracy:
                 # 验证概率校准误差
                 if "calibration_error" in metrics:
                     calibration_error = metrics["calibration_error"]
-                    assert (
+    assert (
                         calibration_error <= accuracy_baseline["calibration_error"]
                     ), f"概率校准误差{calibration_error:.3f}超过基线{accuracy_baseline['calibration_error']:.3f}"
 
                 # 验证排序能力（ROC-AUC）
                 if "roc_auc" in metrics:
                     roc_auc = metrics["roc_auc"]
-                    assert roc_auc >= 0.60, f"ROC-AUC分数{roc_auc:.3f}过低"
+    assert roc_auc >= 0.60, f"ROC-AUC分数{roc_auc:.3f}过低"
 
                 # 验证Sharp ratio（预测锐度）
                 if "sharpness" in metrics:
                     sharpness = metrics["sharpness"]
-                    assert 0.1 <= sharpness <= 0.4, f"预测锐度{sharpness:.3f}异常"
+    assert 0.1 <= sharpness <= 0.4, f"预测锐度{sharpness:.3f}异常"
 
         except Exception as e:
             if isinstance(e, (BacktestError, AttributeError)):
@@ -488,12 +488,12 @@ class TestBacktestAccuracy:
                     "sharpness": 0.25,
                 }
 
-                assert (
+    assert (
                     simulated_metrics["calibration_error"]
                     <= accuracy_baseline["calibration_error"]
                 )
-                assert simulated_metrics["roc_auc"] >= 0.60
-                assert 0.1 <= simulated_metrics["sharpness"] <= 0.4
+    assert simulated_metrics["roc_auc"] >= 0.60
+    assert 0.1 <= simulated_metrics["sharpness"] <= 0.4
 
     @pytest.mark.asyncio
     async def test_confidence_score_reliability(
@@ -564,7 +564,7 @@ class TestBacktestAccuracy:
                     )
 
                     # 高置信度应该对应更高的准确率（允许一定误差）
-                    assert (
+    assert (
                         next_acc >= current_acc - 0.15
                     ), f"置信度{next_conf}的准确率{next_acc:.3f}低于置信度{current_conf}的{current_acc:.3f}"
 
@@ -573,7 +573,7 @@ class TestBacktestAccuracy:
                 # 简化的置信度可靠性检查
                 high_confidence_accuracy = 0.78
                 low_confidence_accuracy = 0.65
-                assert (
+    assert (
                     high_confidence_accuracy > low_confidence_accuracy
                 ), "高置信度应该对应更高准确率"
 
@@ -628,7 +628,7 @@ class TestBacktestAccuracy:
 
                                 # 当前模型应该优于基准方法
                                 improvement = current_accuracy - benchmark_accuracy
-                                assert (
+    assert (
                                     improvement > 0
                                 ), f"当前模型准确率{current_accuracy:.3f}未超过{benchmark}基准{benchmark_accuracy:.3f}"
 
@@ -644,7 +644,7 @@ class TestBacktestAccuracy:
                         benchmark_accuracy = expected_benchmark_accuracies.get(
                             benchmark, 0.50
                         )
-                        assert (
+    assert (
                             current_accuracy > benchmark_accuracy
                         ), f"当前模型应该优于{benchmark}基准（预期{benchmark_accuracy:.3f}）"
 
@@ -655,7 +655,7 @@ class TestBacktestAccuracy:
                 benchmark_accuracies = [0.33, 0.45, 0.55, 0.65]  # 各基准的模拟准确率
 
                 for benchmark_acc in benchmark_accuracies:
-                    assert (
+    assert (
                         simulated_current_accuracy > benchmark_acc
                     ), f"模拟准确率{simulated_current_accuracy:.3f}应该优于基准{benchmark_acc:.3f}"
 
@@ -709,7 +709,7 @@ class TestBacktestAccuracy:
                     )
 
                 # 验证当前准确率仍在基线之上
-                assert (
+    assert (
                     recent_accuracy >= accuracy_baseline["overall_accuracy"]
                 ), f"最近准确率{recent_accuracy:.3f}低于基线{accuracy_baseline['overall_accuracy']:.3f}"
 
@@ -723,7 +723,7 @@ class TestBacktestAccuracy:
                 )
 
                 # 确保性能下降在可接受范围内
-                assert (
+    assert (
                     accuracy_change >= -alert_thresholds["accuracy_drop"]
                 ), f"模拟准确率下降{-accuracy_change:.3f}超过预警阈值"
 
@@ -769,12 +769,12 @@ class TestBacktestAccuracy:
 
             # 性能不应该有显著的长期下降趋势
             trend_change = recent_3_months_avg - older_3_months_avg
-            assert (
+    assert (
                 trend_change >= -0.08
             ), f"长期性能趋势下降{-trend_change:.3f}过大，可能需要重新训练模型"
 
             # 所有月份的表现都应该在基线之上
             min_monthly_accuracy = min(monthly_performances)
-            assert (
+    assert (
                 min_monthly_accuracy >= accuracy_baseline["overall_accuracy"] - 0.05
             ), f"最低月度准确率{min_monthly_accuracy:.3f}过低"

@@ -196,9 +196,9 @@ class TestBronzeSilverGoldFlow:
             result = await fixtures_collector.collect_fixtures()
 
             # 验证Bronze层采集成功
-            assert result.status == "success"
-            assert result.records_collected == 2
-            assert len(result.collected_data) == 2
+    assert result.status == "success"
+    assert result.records_collected == 2
+    assert len(result.collected_data) == 2
 
         # 第二步：Bronze→Silver数据处理
         with patch.object(
@@ -218,9 +218,9 @@ class TestBronzeSilverGoldFlow:
             )
 
             # 验证Silver层处理成功
-            assert silver_result["processed_matches"] == 2
-            assert silver_result["processed_odds"] == 2
-            assert silver_result["errors"] == 0
+    assert silver_result["processed_matches"] == 2
+    assert silver_result["processed_odds"] == 2
+    assert silver_result["errors"] == 0
 
         # 第三步：Silver→Gold特征计算
         with patch.object(
@@ -235,8 +235,8 @@ class TestBronzeSilverGoldFlow:
             )
 
             # 验证Gold层处理成功
-            assert gold_result["processed_features"] > 0
-            assert gold_result["errors"] == 0
+    assert gold_result["processed_features"] > 0
+    assert gold_result["errors"] == 0
 
         # 第四步：验证数据一致性
         await self._verify_data_consistency_across_layers(data_processing_service)
@@ -259,7 +259,7 @@ class TestBronzeSilverGoldFlow:
             with pytest.raises(DataQualityError) as exc_info:
                 await data_processing_service.process_bronze_to_silver()
 
-            assert "数据质量验证失败" in str(exc_info.value)
+    assert "数据质量验证失败" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_silver_layer_business_rules_validation(
@@ -292,8 +292,8 @@ class TestBronzeSilverGoldFlow:
                     await data_processing_service.process_bronze_to_silver()
                 )
 
-                assert processing_result["errors"] > 0
-                assert processing_result["processed_matches"] == 0
+    assert processing_result["errors"] > 0
+    assert processing_result["processed_matches"] == 0
 
     @pytest.mark.asyncio
     async def test_gold_layer_feature_calculation_accuracy(
@@ -333,14 +333,14 @@ class TestBronzeSilverGoldFlow:
             result = await data_processing_service.process_silver_to_gold()
 
             # 验证特征计算结果
-            assert result["processed_features"] == 4
-            assert result["errors"] == 0
+    assert result["processed_features"] == 4
+    assert result["errors"] == 0
 
             # 验证特征值在合理范围内
             features = result["feature_values"]
-            assert 0 <= features["odds_implied_probability"] <= 1
-            assert features["team_strength_ratio"] > 0
-            assert 0 <= features["market_confidence"] <= 1
+    assert 0 <= features["odds_implied_probability"] <= 1
+    assert features["team_strength_ratio"] > 0
+    assert 0 <= features["market_confidence"] <= 1
 
     @pytest.mark.asyncio
     async def test_cross_layer_data_lineage_tracking(self, data_processing_service):
@@ -386,9 +386,9 @@ class TestBronzeSilverGoldFlow:
 
                     # 验证血缘关系的完整性
                     lineage = mock_lineage.return_value
-                    assert lineage["bronze_id"] == bronze_record_id
-                    assert lineage["silver_match_id"] is not None
-                    assert len(lineage["gold_feature_ids"]) == 4
+    assert lineage["bronze_id"] == bronze_record_id
+    assert lineage["silver_match_id"] is not None
+    assert len(lineage["gold_feature_ids"]) == 4
 
     @pytest.mark.asyncio
     async def test_pipeline_error_recovery_mechanism(self, data_processing_service):
@@ -411,8 +411,8 @@ class TestBronzeSilverGoldFlow:
                     result = await data_processing_service.process_bronze_to_silver()
                     # 如果成功，验证结果
                     if "processed_matches" in result:
-                        assert result["processed_matches"] == 2
-                        assert result["errors"] == 0
+    assert result["processed_matches"] == 2
+    assert result["errors"] == 0
                         break
                 except DataProcessingError as e:
                     if attempt == max_retries - 1:
@@ -438,11 +438,11 @@ class TestBronzeSilverGoldFlow:
             status = await data_processing_service.get_bronze_layer_status()
 
             # 验证数据处理一致性
-            assert (
+    assert (
                 status["total_records"]
                 == status["processed_records"] + status["error_records"]
             )
-            assert status["processed_records"] > 0
+    assert status["processed_records"] > 0
 
     @pytest.mark.asyncio
     async def test_concurrent_layer_processing(self, data_processing_service):
@@ -467,10 +467,10 @@ class TestBronzeSilverGoldFlow:
             results = await asyncio.gather(*tasks)
 
             # 验证所有批次处理成功
-            assert len(results) == 3
+    assert len(results) == 3
             for result in results:
-                assert result["result"]["processed_matches"] == 5
-                assert result["result"]["errors"] == 0
+    assert result["result"]["processed_matches"] == 5
+    assert result["result"]["errors"] == 0
 
             # 验证并发调用次数正确
-            assert mock_process.call_count == 3
+    assert mock_process.call_count == 3

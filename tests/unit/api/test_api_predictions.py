@@ -37,14 +37,14 @@ class TestPredictionsAPI:
 
     def test_router_creation(self):
         """测试路由器创建"""
-        assert router.prefix == "/predictions"
-        assert "predictions" in router.tags
+    assert router.prefix == "_predictions"
+    assert "predictions" in router.tags
 
     def test_api_module_imports(self):
         """测试API模块导入"""
         from src.api import predictions
 
-        assert hasattr(predictions, "router")
+    assert hasattr(predictions, "router")
 
     @pytest.mark.asyncio
     async def test_basic_endpoints(self, mock_session):
@@ -62,10 +62,10 @@ class TestPredictionsAPI:
             )
 
             result = await get_match_prediction(1, mock_session)
-            assert result is not None
+    assert result is not None
 
             result = await get_predictions_history(mock_session)
-            assert result is not None
+    assert result is not None
 
         except ImportError:
             # 如果函数不存在，至少测试模块导入
@@ -73,8 +73,8 @@ class TestPredictionsAPI:
 
     def test_router_configuration(self):
         """测试路由配置"""
-        assert router.prefix == "/predictions"
-        assert router.tags == ["predictions"]
+    assert router.prefix == "_predictions"
+    assert router.tags == ["predictions"]
 
 
 class TestPredictionsAPIIntegration:
@@ -83,12 +83,12 @@ class TestPredictionsAPIIntegration:
     def test_router_registration(self):
         """测试路由注册"""
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="_api/v1")
 
         # 检查路由是否正确注册
         routes = [route.path for route in app.routes]
         # 路由应该包含完整路径 /api/v1/predictions
-        assert any("/api/v1/predictions" in route for route in routes)
+    assert any("/api/v1/predictions" in route for route in routes)
 
     @patch("src.api.predictions.get_async_session")
     def test_dependency_injection(self, mock_get_session):
@@ -97,7 +97,7 @@ class TestPredictionsAPIIntegration:
         mock_get_session.return_value = mock_session
 
         # 验证依赖注入配置
-        assert mock_get_session is not None
+    assert mock_get_session is not None
 
 
 class TestPredictionsAPIBasicFunctionality:
@@ -108,7 +108,7 @@ class TestPredictionsAPIBasicFunctionality:
         import src.api.predictions as predictions_module
 
         # 检查必要的导入和属性
-        assert hasattr(predictions_module, "router")
+    assert hasattr(predictions_module, "router")
 
     @pytest.mark.asyncio
     async def test_mock_all_endpoints(self):
@@ -147,7 +147,7 @@ class TestPredictionsAPIBasicFunctionality:
     def test_import_all_functions(self):
         """测试导入所有函数"""
         try:
-            assert router is not None
+    assert router is not None
         except ImportError:
             pass
 
@@ -175,7 +175,7 @@ class TestPredictionsAPIEdgeCases:
     def test_api_constants(self):
         """测试API常量"""
 
-        assert router.prefix == "/predictions"
+    assert router.prefix == "_predictions"
 
 
 class TestPredictionsAPISimpleCoverage:
@@ -185,14 +185,14 @@ class TestPredictionsAPISimpleCoverage:
         """测试基本导入"""
         import src.api.predictions
 
-        assert src.api.predictions is not None
+    assert src.api.predictions is not None
 
     def test_router_exists(self):
         """测试路由器存在"""
 
-        assert router is not None
-        assert hasattr(router, "prefix")
-        assert hasattr(router, "tags")
+    assert router is not None
+    assert hasattr(router, "prefix")
+    assert hasattr(router, "tags")
 
     @pytest.mark.asyncio
     async def test_basic_functionality(self):
@@ -203,8 +203,8 @@ class TestPredictionsAPISimpleCoverage:
         mock_session.execute.return_value = mock_result
 
         # 测试模块是否可以正常工作
-        assert mock_session is not None
-        assert mock_result is not None
+    assert mock_session is not None
+    assert mock_result is not None
 
 
 class TestPredictionsAPIErrorHandling:
@@ -230,7 +230,7 @@ class TestPredictionsAPIErrorHandling:
         for invalid_input in invalid_inputs:
             try:
                 # 这里可以测试输入验证逻辑
-                assert invalid_input is not None or invalid_input is None
+    assert invalid_input is not None or invalid_input is None
             except Exception:
                 pass
 
@@ -259,7 +259,7 @@ class TestPredictionsAPIPerformance:
         response_time = end_time - start_time
 
         # 确保响应时间合理（小于1秒）
-        assert response_time < 1.0
+    assert response_time < 1.0
 
     def test_memory_usage(self):
         """测试内存使用"""
@@ -275,7 +275,7 @@ class TestPredictionsAPIPerformance:
         modules_after = len(sys.modules)
 
         # 确保没有导入过多的模块
-        assert modules_after - modules_before < 50
+    assert modules_after - modules_before < 50
 
 
 class TestPredictionsAPIDataValidation:
@@ -291,9 +291,9 @@ class TestPredictionsAPIDataValidation:
             "away_win_prob": 0.2,
         }
 
-        assert "match_id" in sample_prediction
-        assert "home_win_prob" in sample_prediction
-        assert (
+    assert "match_id" in sample_prediction
+    assert "home_win_prob" in sample_prediction
+    assert (
             sum(
                 [
                     sample_prediction["home_win_prob"],
@@ -312,6 +312,6 @@ class TestPredictionsAPIDataValidation:
         valid_prediction = {"match_id": 1, "probabilities": [0.5, 0.3, 0.2]}
 
         # 验证数据结构
-        assert "match_id" in valid_prediction
-        assert "probabilities" in valid_prediction
-        assert len(valid_prediction["probabilities"]) == 3
+    assert "match_id" in valid_prediction
+    assert "probabilities" in valid_prediction
+    assert len(valid_prediction["probabilities"]) == 3

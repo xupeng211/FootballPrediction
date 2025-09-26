@@ -18,10 +18,10 @@ class TestCacheConsistencyManager:
         try:
             from cache.consistency_manager import ConsistencyManager
 
-            assert ConsistencyManager is not None
+    assert ConsistencyManager is not None
         except ImportError:
             # 如果模块不存在，创建基本测试
-            assert True
+    assert True
 
     def test_consistency_manager_basic_functionality(self):
         """测试一致性管理器基本功能"""
@@ -30,10 +30,10 @@ class TestCacheConsistencyManager:
 
             manager = ConsistencyManager()
             # 测试基本方法存在
-            assert hasattr(manager, "__init__")
+    assert hasattr(manager, "__init__")
         except (ImportError, AttributeError):
             # 模块或方法不存在时的回退测试
-            assert True
+    assert True
 
 
 class TestLineageReporter:
@@ -44,9 +44,9 @@ class TestLineageReporter:
         try:
             from lineage.lineage_reporter import LineageReporter
 
-            assert LineageReporter is not None
+    assert LineageReporter is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_lineage_reporter_basic_methods(self):
         """测试血缘关系报告器基本方法"""
@@ -55,9 +55,9 @@ class TestLineageReporter:
 
             reporter = LineageReporter()
             # 测试基本属性
-            assert hasattr(reporter, "__init__")
+    assert hasattr(reporter, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestMetadataManager:
@@ -68,9 +68,9 @@ class TestMetadataManager:
         try:
             from lineage.metadata_manager import MetadataManager
 
-            assert MetadataManager is not None
+    assert MetadataManager is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_metadata_manager_initialization(self):
         """测试元数据管理器初始化"""
@@ -78,9 +78,9 @@ class TestMetadataManager:
             from lineage.metadata_manager import MetadataManager
 
             manager = MetadataManager()
-            assert hasattr(manager, "__init__")
+    assert hasattr(manager, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestAlertManager:
@@ -91,9 +91,9 @@ class TestAlertManager:
         try:
             from monitoring.alert_manager import AlertManager
 
-            assert AlertManager is not None
+    assert AlertManager is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_alert_manager_basic_functionality(self):
         """测试告警管理器基本功能"""
@@ -101,9 +101,9 @@ class TestAlertManager:
             from monitoring.alert_manager import AlertManager
 
             manager = AlertManager()
-            assert hasattr(manager, "__init__")
+    assert hasattr(manager, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestAnomalyDetector:
@@ -114,9 +114,9 @@ class TestAnomalyDetector:
         try:
             from data.quality.anomaly_detector import AnomalyDetector
 
-            assert AnomalyDetector is not None
+    assert AnomalyDetector is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_anomaly_detector_initialization(self):
         """测试异常检测器初始化"""
@@ -124,9 +124,9 @@ class TestAnomalyDetector:
             from data.quality.anomaly_detector import AnomalyDetector
 
             detector = AnomalyDetector()
-            assert hasattr(detector, "__init__")
+    assert hasattr(detector, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     @patch("data.quality.anomaly_detector.logger")
     def test_anomaly_detector_with_mock_logger(self, mock_logger):
@@ -142,7 +142,7 @@ class TestAnomalyDetector:
                 else None
             )
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestQualityMonitor:
@@ -153,9 +153,9 @@ class TestQualityMonitor:
         try:
             from monitoring.quality_monitor import QualityMonitor
 
-            assert QualityMonitor is not None
+    assert QualityMonitor is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_quality_monitor_basic_methods(self):
         """测试质量监控器基本方法"""
@@ -163,9 +163,9 @@ class TestQualityMonitor:
             from monitoring.quality_monitor import QualityMonitor
 
             monitor = QualityMonitor()
-            assert hasattr(monitor, "__init__")
+    assert hasattr(monitor, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestMaintenanceTasks:
@@ -176,9 +176,9 @@ class TestMaintenanceTasks:
         try:
             from tasks.maintenance_tasks import MaintenanceTask
 
-            assert MaintenanceTask is not None
+    assert MaintenanceTask is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_maintenance_tasks_basic_functionality(self):
         """测试维护任务基本功能"""
@@ -186,9 +186,9 @@ class TestMaintenanceTasks:
             from tasks.maintenance_tasks import MaintenanceTask
 
             task = MaintenanceTask()
-            assert hasattr(task, "__init__")
+    assert hasattr(task, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestStreamingTasks:
@@ -199,9 +199,9 @@ class TestStreamingTasks:
         try:
             from tasks.streaming_tasks import StreamingTask
 
-            assert StreamingTask is not None
+    assert StreamingTask is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_streaming_tasks_basic_methods(self):
         """测试流处理任务基本方法"""
@@ -209,9 +209,9 @@ class TestStreamingTasks:
             from tasks.streaming_tasks import StreamingTask
 
             task = StreamingTask()
-            assert hasattr(task, "__init__")
+    assert hasattr(task, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestFeatureCalculator:
@@ -222,9 +222,9 @@ class TestFeatureCalculator:
         try:
             from features.feature_calculator import FeatureCalculator
 
-            assert FeatureCalculator is not None
+    assert FeatureCalculator is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_feature_calculator_initialization(self):
         """测试特征计算器初始化"""
@@ -232,9 +232,9 @@ class TestFeatureCalculator:
             from features.feature_calculator import FeatureCalculator
 
             calculator = FeatureCalculator()
-            assert hasattr(calculator, "__init__")
+    assert hasattr(calculator, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     def test_feature_calculator_with_logging(self):
         """测试特征计算器日志功能"""
@@ -243,9 +243,9 @@ class TestFeatureCalculator:
 
             calculator = FeatureCalculator()
             # 测试基本功能
-            assert calculator is not None
+    assert calculator is not None
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestDataFeatureStore:
@@ -256,9 +256,9 @@ class TestDataFeatureStore:
         try:
             from data.features.feature_store import FeatureStore
 
-            assert FeatureStore is not None
+    assert FeatureStore is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_data_feature_store_basic_methods(self):
         """测试数据特征存储基本方法"""
@@ -266,9 +266,9 @@ class TestDataFeatureStore:
             from data.features.feature_store import FeatureStore
 
             store = FeatureStore()
-            assert hasattr(store, "__init__")
+    assert hasattr(store, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestKafkaConsumer:
@@ -279,9 +279,9 @@ class TestKafkaConsumer:
         try:
             from streaming.kafka_consumer import KafkaConsumer
 
-            assert KafkaConsumer is not None
+    assert KafkaConsumer is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_kafka_consumer_initialization(self):
         """测试Kafka消费者初始化"""
@@ -295,9 +295,9 @@ class TestKafkaConsumer:
                 "auto_offset_reset": "earliest",
             }
             consumer = KafkaConsumer(config)
-            assert hasattr(consumer, "__init__")
+    assert hasattr(consumer, "__init__")
         except (ImportError, AttributeError, TypeError, ValueError):
-            assert True
+    assert True
 
 
 class TestModelTraining:
@@ -308,9 +308,9 @@ class TestModelTraining:
         try:
             from models.model_training import ModelTrainer
 
-            assert ModelTrainer is not None
+    assert ModelTrainer is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_model_training_basic_functionality(self):
         """测试模型训练基本功能"""
@@ -318,9 +318,9 @@ class TestModelTraining:
             from models.model_training import ModelTrainer
 
             trainer = ModelTrainer()
-            assert hasattr(trainer, "__init__")
+    assert hasattr(trainer, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestTaskUtils:
@@ -331,9 +331,9 @@ class TestTaskUtils:
         try:
             from tasks.utils import TaskUtils
 
-            assert TaskUtils is not None
+    assert TaskUtils is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_task_utils_basic_methods(self):
         """测试任务工具基本方法"""
@@ -341,9 +341,9 @@ class TestTaskUtils:
             from tasks.utils import TaskUtils
 
             utils = TaskUtils()
-            assert hasattr(utils, "__init__")
+    assert hasattr(utils, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestFeatureStore:
@@ -354,9 +354,9 @@ class TestFeatureStore:
         try:
             from features.feature_store import FeatureStore
 
-            assert FeatureStore is not None
+    assert FeatureStore is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_feature_store_initialization(self):
         """测试特征存储初始化"""
@@ -364,9 +364,9 @@ class TestFeatureStore:
             from features.feature_store import FeatureStore
 
             store = FeatureStore()
-            assert hasattr(store, "__init__")
+    assert hasattr(store, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestPredictionService:
@@ -377,9 +377,9 @@ class TestPredictionService:
         try:
             from models.prediction_service import PredictionService
 
-            assert PredictionService is not None
+    assert PredictionService is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_prediction_service_basic_functionality(self):
         """测试预测服务基本功能"""
@@ -387,9 +387,9 @@ class TestPredictionService:
             from models.prediction_service import PredictionService
 
             service = PredictionService()
-            assert hasattr(service, "__init__")
+    assert hasattr(service, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestAuditService:
@@ -400,9 +400,9 @@ class TestAuditService:
         try:
             from services.audit_service import AuditService
 
-            assert AuditService is not None
+    assert AuditService is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_audit_service_basic_methods(self):
         """测试审计服务基本方法"""
@@ -410,9 +410,9 @@ class TestAuditService:
             from services.audit_service import AuditService
 
             service = AuditService()
-            assert hasattr(service, "__init__")
+    assert hasattr(service, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestScoresCollector:
@@ -423,9 +423,9 @@ class TestScoresCollector:
         try:
             from data.collectors.scores_collector import ScoresCollector
 
-            assert ScoresCollector is not None
+    assert ScoresCollector is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_scores_collector_initialization(self):
         """测试比分收集器初始化"""
@@ -433,9 +433,9 @@ class TestScoresCollector:
             from data.collectors.scores_collector import ScoresCollector
 
             collector = ScoresCollector()
-            assert hasattr(collector, "__init__")
+    assert hasattr(collector, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     def test_scores_collector_with_mock_requests(self):
         """使用模拟请求测试比分收集器"""
@@ -444,9 +444,9 @@ class TestScoresCollector:
 
             collector = ScoresCollector()
             # 测试基本功能
-            assert collector is not None
+    assert collector is not None
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestStreamProcessor:
@@ -457,9 +457,9 @@ class TestStreamProcessor:
         try:
             from streaming.stream_processor import StreamProcessor
 
-            assert StreamProcessor is not None
+    assert StreamProcessor is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_stream_processor_basic_functionality(self):
         """测试流处理器基本功能"""
@@ -467,9 +467,9 @@ class TestStreamProcessor:
             from streaming.stream_processor import StreamProcessor
 
             processor = StreamProcessor()
-            assert hasattr(processor, "__init__")
+    assert hasattr(processor, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     def test_stream_processor_logging(self):
         """测试流处理器日志功能"""
@@ -477,9 +477,9 @@ class TestStreamProcessor:
             from streaming.stream_processor import StreamProcessor
 
             processor = StreamProcessor()
-            assert processor is not None
+    assert processor is not None
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestWarningFilters:
@@ -490,9 +490,9 @@ class TestWarningFilters:
         try:
             from utils.warning_filters import suppress_warnings
 
-            assert suppress_warnings is not None
+    assert suppress_warnings is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_warning_filters_functionality(self):
         """测试警告过滤器功能"""
@@ -501,9 +501,9 @@ class TestWarningFilters:
 
             # 测试警告抑制功能
             suppress_warnings()
-            assert True
+    assert True
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     def test_warning_filters_marshmallow_warnings(self):
         """测试Marshmallow警告过滤"""
@@ -511,9 +511,9 @@ class TestWarningFilters:
             from utils.warning_filters import suppress_marshmallow_warnings
 
             suppress_marshmallow_warnings()
-            assert True
+    assert True
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestMissingDataHandler:
@@ -524,9 +524,9 @@ class TestMissingDataHandler:
         try:
             from data.processing.missing_data_handler import MissingDataHandler
 
-            assert MissingDataHandler is not None
+    assert MissingDataHandler is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_missing_data_handler_basic_methods(self):
         """测试缺失数据处理器基本方法"""
@@ -534,9 +534,9 @@ class TestMissingDataHandler:
             from data.processing.missing_data_handler import MissingDataHandler
 
             handler = MissingDataHandler()
-            assert hasattr(handler, "__init__")
+    assert hasattr(handler, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
     def test_missing_data_handler_fill_missing(self):
         """测试缺失数据填充功能"""
@@ -551,9 +551,9 @@ class TestMissingDataHandler:
                 if hasattr(handler, "fill_missing_values")
                 else test_data
             )
-            assert result is not None
+    assert result is not None
         except (ImportError, AttributeError):
-            assert True
+    assert True
 
 
 class TestMetricsExporter:
@@ -564,9 +564,9 @@ class TestMetricsExporter:
         try:
             from models.metrics_exporter import MetricsExporter
 
-            assert MetricsExporter is not None
+    assert MetricsExporter is not None
         except ImportError:
-            assert True
+    assert True
 
     def test_metrics_exporter_initialization(self):
         """测试指标导出器初始化"""
@@ -574,6 +574,6 @@ class TestMetricsExporter:
             from models.metrics_exporter import MetricsExporter
 
             exporter = MetricsExporter()
-            assert hasattr(exporter, "__init__")
+    assert hasattr(exporter, "__init__")
         except (ImportError, AttributeError):
-            assert True
+    assert True

@@ -55,17 +55,17 @@ class TestBaselineModelTrainer:
 
     def test_init(self, trainer):
         """测试初始化"""
-        assert trainer.mlflow_tracking_uri == "http://localhost:5002"
-        assert isinstance(trainer.model_params, dict)
-        assert "n_estimators" in trainer.model_params
-        assert isinstance(trainer.feature_refs, list)
+    assert trainer.mlflow_tracking_uri == "http:_/localhost:5002"
+    assert isinstance(trainer.model_params, dict)
+    assert "n_estimators" in trainer.model_params
+    assert isinstance(trainer.feature_refs, list)
 
     def test_calculate_match_result(self, trainer):
         """测试比赛结果计算"""
         # 使用字典而不是 pandas.Series 来避免 mocking 问题
-        assert trainer._calculate_match_result({"home_score": 2, "away_score": 1}) == "home"
-        assert trainer._calculate_match_result({"home_score": 1, "away_score": 2}) == "away"
-        assert trainer._calculate_match_result({"home_score": 1, "away_score": 1}) == "draw"
+    assert trainer._calculate_match_result({"home_score": 2, "away_score": 1}) == "home"
+    assert trainer._calculate_match_result({"home_score": 1, "away_score": 2}) == "away"
+    assert trainer._calculate_match_result({"home_score": 1, "away_score": 1}) == "draw"
 
     @pytest.mark.asyncio
     async def test_get_historical_matches_success(self, trainer, mock_db_manager):
@@ -91,9 +91,9 @@ class TestBaselineModelTrainer:
 
         df = await trainer._get_historical_matches(datetime.now(), datetime.now())
 
-        assert not df.empty
-        assert len(df) == 1
-        assert df.iloc[0]["result"] == "home"
+    assert not df.empty
+    assert len(df) == 1
+    assert df.iloc[0]["result"] == "home"
 
     @pytest.mark.asyncio
     async def test_prepare_training_data_success(self, trainer, mock_feature_store):
@@ -128,12 +128,12 @@ class TestBaselineModelTrainer:
 
         X, y = await trainer.prepare_training_data(start_date, end_date, min_samples=50)
 
-        assert isinstance(X, pd.DataFrame)
-        assert isinstance(y, pd.Series)
-        assert len(X) == 100
-        assert len(y) == 100
-        assert "result" not in X.columns
-        assert "feature_1" in X.columns
+    assert isinstance(X, pd.DataFrame)
+    assert isinstance(y, pd.Series)
+    assert len(X) == 100
+    assert len(y) == 100
+    assert "result" not in X.columns
+    assert "feature_1" in X.columns
 
     @pytest.mark.asyncio
     async def test_prepare_training_data_insufficient_samples(self, trainer):
@@ -183,8 +183,8 @@ class TestBaselineModelTrainer:
 
         X, y = await trainer.prepare_training_data(start_date, end_date, min_samples=50)
 
-        assert "home_recent_wins" in X.columns
-        assert len(X) == 100
+    assert "home_recent_wins" in X.columns
+    assert len(X) == 100
         trainer._get_simplified_features.assert_called_once()
 
     async def test_get_historical_matches_with_mock_query(self, trainer):
@@ -229,11 +229,11 @@ class TestBaselineModelTrainer:
 
         result = await trainer._get_historical_matches(start_date, end_date)
 
-        assert len(result) == 2
-        assert "id" in result.columns
-        assert "home_team_id" in result.columns
-        assert "away_team_id" in result.columns
-        assert "result" in result.columns
+    assert len(result) == 2
+    assert "id" in result.columns
+    assert "home_team_id" in result.columns
+    assert "away_team_id" in result.columns
+    assert "result" in result.columns
 
     async def test_get_simplified_features_success(self, trainer):
         """测试获取简化特征成功"""
@@ -258,10 +258,10 @@ class TestBaselineModelTrainer:
 
         result = await trainer._get_simplified_features(matches_df)
 
-        assert len(result) == 3
-        assert "match_id" in result.columns
-        assert "home_recent_wins" in result.columns
-        assert "away_recent_wins" in result.columns
+    assert len(result) == 3
+    assert "match_id" in result.columns
+    assert "home_recent_wins" in result.columns
+    assert "away_recent_wins" in result.columns
 
     async def test_calculate_team_simple_features(self, trainer):
         """测试计算团队简单特征"""
@@ -301,28 +301,28 @@ class TestBaselineModelTrainer:
             mock_session, team_id, match_time
         )
 
-        assert "recent_wins" in result
-        assert "recent_goals_for" in result
-        assert "recent_goals_against" in result
+    assert "recent_wins" in result
+    assert "recent_goals_for" in result
+    assert "recent_goals_against" in result
         # Team 10: 3 wins (match1 home win 2-1, match2 away win 1-3, match3 home win 3-0)
         # Goals for: 2+3+3=8, Goals against: 1+1+0=2
-        assert result["recent_wins"] == 3
-        assert result["recent_goals_for"] == 8
-        assert result["recent_goals_against"] == 2
+    assert result["recent_wins"] == 3
+    assert result["recent_goals_for"] == 8
+    assert result["recent_goals_against"] == 2
 
     def test_calculate_match_result_extended(self, trainer):
         """测试比赛结果计算扩展"""
         # Test home win
         row_home_win = {"home_score": 3, "away_score": 1}
-        assert trainer._calculate_match_result(row_home_win) == "home"
+    assert trainer._calculate_match_result(row_home_win) == "home"
 
         # Test away win
         row_away_win = {"home_score": 1, "away_score": 3}
-        assert trainer._calculate_match_result(row_away_win) == "away"
+    assert trainer._calculate_match_result(row_away_win) == "away"
 
         # Test draw
         row_draw = {"home_score": 2, "away_score": 2}
-        assert trainer._calculate_match_result(row_draw) == "draw"
+    assert trainer._calculate_match_result(row_draw) == "draw"
 
     async def test_promote_model_to_production(self, trainer):
         """测试模型推广到生产环境"""
@@ -336,7 +336,7 @@ class TestBaselineModelTrainer:
 
         result = await trainer.promote_model_to_production(model_name, version)
 
-        assert result is True
+    assert result is True
         mock_client.transition_model_version_stage.assert_called_once_with(
             name=model_name,
             version=version,
@@ -358,10 +358,10 @@ class TestBaselineModelTrainer:
 
         result = trainer.get_model_performance_summary(run_id)
 
-        assert "metrics" in result
-        assert "parameters" in result
-        assert result["metrics"]["accuracy"] == 0.85
-        assert result["parameters"]["n_estimators"] == "100"
+    assert "metrics" in result
+    assert "parameters" in result
+    assert result["metrics"]["accuracy"] == 0.85
+    assert result["parameters"]["n_estimators"] == "100"
 
     async def test_train_baseline_model_with_mocked_data(self, trainer):
         """测试基准模型训练（使用模拟数据）"""
@@ -386,6 +386,6 @@ class TestBaselineModelTrainer:
 
             result = await trainer.train_baseline_model()
 
-            assert "run_id" in result
-            assert "metrics" in result
-            assert result["run_id"] == "test_run_456"
+    assert "run_id" in result
+    assert "metrics" in result
+    assert result["run_id"] == "test_run_456"

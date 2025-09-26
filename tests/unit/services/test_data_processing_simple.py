@@ -59,30 +59,30 @@ class TestDataProcessingServiceBasic:
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
-        assert service is not None
-        assert hasattr(service, 'db_manager')
-        assert hasattr(service, 'cache_manager')
-        assert hasattr(service, 'quality_monitor')
+    assert service is not None
+    assert hasattr(service, 'db_manager')
+    assert hasattr(service, 'cache_manager')
+    assert hasattr(service, 'quality_monitor')
 
     def test_process_raw_match_data_basic(self, service, sample_raw_data):
         """测试基础比赛数据处理"""
         result = service.process_raw_match_data(sample_raw_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "match_id" in result
-        assert result["match_id"] == sample_raw_data["match_id"]
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "match_id" in result
+    assert result["match_id"] == sample_raw_data["match_id"]
 
     def test_process_raw_match_data_with_none(self, service):
         """测试空数据处理"""
         result = service.process_raw_match_data(None)
-        assert result is None
+    assert result is None
 
     def test_process_raw_match_data_with_empty_dict(self, service):
         """测试空字典处理"""
         result = service.process_raw_match_data({})
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     def test_process_raw_odds_data_basic(self, service):
         """测试基础赔率数据处理"""
@@ -96,19 +96,19 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_odds_data(sample_odds)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "match_id" in result
-        assert result["match_id"] == sample_odds["match_id"]
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "match_id" in result
+    assert result["match_id"] == sample_odds["match_id"]
 
     def test_validate_data_quality_basic(self, service, sample_processed_data):
         """测试基础数据质量验证"""
         result = service.validate_data_quality(sample_processed_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
-        assert "quality_score" in result
-        assert "is_valid" in result
+    assert result is not None
+    assert isinstance(result, dict)
+    assert "quality_score" in result
+    assert "is_valid" in result
 
     def test_validate_data_quality_with_missing_fields(self, service):
         """测试缺失字段的数据质量验证"""
@@ -116,18 +116,18 @@ class TestDataProcessingServiceBasic:
 
         result = service.validate_data_quality(incomplete_data)
 
-        assert result is not None
-        assert "quality_score" in result
-        assert result["quality_score"] < 1.0
+    assert result is not None
+    assert "quality_score" in result
+    assert result["quality_score"] < 1.0
 
     def test_clean_data_basic(self, service, sample_raw_data):
         """测试基础数据清洗"""
         result = service.clean_data(sample_raw_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
         # 验证清洗后的数据结构
-        assert "match_id" in result
+    assert "match_id" in result
 
     def test_clean_data_with_none_values(self, service):
         """测试包含 None 值的数据清洗"""
@@ -141,30 +141,30 @@ class TestDataProcessingServiceBasic:
 
         result = service.clean_data(data_with_none)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     def test_transform_data_basic(self, service, sample_processed_data):
         """测试基础数据转换"""
         result = service.transform_data(sample_processed_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
         # 验证转换后的数据结构
 
     def test_normalize_data_basic(self, service, sample_processed_data):
         """测试基础数据标准化"""
         result = service.normalize_data(sample_processed_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
 
     def test_enrich_data_basic(self, service, sample_processed_data):
         """测试基础数据增强"""
         result = service.enrich_data(sample_processed_data)
 
-        assert result is not None
-        assert isinstance(result, dict)
+    assert result is not None
+    assert isinstance(result, dict)
         # 验证增强后的数据包含额外字段
 
     # === 错误处理测试 ===
@@ -211,7 +211,7 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_match_data(extreme_data)
 
-        assert result is not None
+    assert result is not None
 
     def test_process_raw_odds_data_with_extreme_odds(self, service):
         """测试极值赔率处理"""
@@ -224,14 +224,14 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_odds_data(extreme_odds)
 
-        assert result is not None
+    assert result is not None
 
     def test_validate_data_quality_with_empty_data(self, service):
         """测试空数据质量验证"""
         result = service.validate_data_quality({})
 
-        assert result is not None
-        assert "quality_score" in result
+    assert result is not None
+    assert "quality_score" in result
 
     # === 数据类型转换测试 ===
 
@@ -246,7 +246,7 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_match_data(string_data)
 
-        assert result is not None
+    assert result is not None
         # 验证类型转换是否正确
 
     def test_process_raw_odds_data_type_conversion(self, service):
@@ -260,7 +260,7 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_odds_data(string_odds)
 
-        assert result is not None
+    assert result is not None
 
     # === 业务逻辑测试 ===
 
@@ -268,21 +268,21 @@ class TestDataProcessingServiceBasic:
         """测试数据质量评分逻辑"""
         result = service.validate_data_quality(sample_processed_data)
 
-        assert "quality_score" in result
-        assert 0 <= result["quality_score"] <= 1
+    assert "quality_score" in result
+    assert 0 <= result["quality_score"] <= 1
 
     def test_data_validation_rules(self, service, sample_processed_data):
         """测试数据验证规则"""
         result = service.validate_data_quality(sample_processed_data)
 
-        assert "validation_rules" in result
-        assert isinstance(result["validation_rules"], dict)
+    assert "validation_rules" in result
+    assert isinstance(result["validation_rules"], dict)
 
     def test_data_cleaning_rules(self, service, sample_raw_data):
         """测试数据清洗规则"""
         result = service.clean_data(sample_raw_data)
 
-        assert result is not None
+    assert result is not None
         # 验证清洗规则应用
 
     def test_data_transformation_pipeline(self, service, sample_processed_data):
@@ -293,8 +293,8 @@ class TestDataProcessingServiceBasic:
         normalized = service.normalize_data(transformed)
         enriched = service.enrich_data(normalized)
 
-        assert enriched is not None
-        assert isinstance(enriched, dict)
+    assert enriched is not None
+    assert isinstance(enriched, dict)
 
     # === 批量处理测试 ===
 
@@ -307,8 +307,8 @@ class TestDataProcessingServiceBasic:
             result = service.process_raw_match_data(data)
             results.append(result)
 
-        assert len(results) == 5
-        assert all(result is not None for result in results)
+    assert len(results) == 5
+    assert all(result is not None for result in results)
 
     def test_batch_validate_data_quality(self, service, sample_processed_data):
         """测试批量数据质量验证"""
@@ -319,8 +319,8 @@ class TestDataProcessingServiceBasic:
             result = service.validate_data_quality(data)
             results.append(result)
 
-        assert len(results) == 3
-        assert all("quality_score" in result for result in results)
+    assert len(results) == 3
+    assert all("quality_score" in result for result in results)
 
     # === 缓存集成测试 ===
 
@@ -345,7 +345,7 @@ class TestDataProcessingServiceBasic:
 
         # 验证从缓存获取数据
         service.cache_manager.get.assert_called()
-        assert result == sample_processed_data
+    assert result == sample_processed_data
 
     # === 数据库集成测试 ===
 
@@ -388,7 +388,7 @@ class TestDataProcessingServiceBasic:
 
         # 验证质量监控调用
         service.quality_monitor.validate.assert_called()
-        assert result["quality_score"] == 0.95
+    assert result["quality_score"] == 0.95
 
     def test_performance_monitoring_integration(self, service, sample_raw_data):
         """测试性能监控集成"""
@@ -406,15 +406,15 @@ class TestDataProcessingServiceBasic:
         """测试数据完整性验证"""
         result = service.validate_data_integrity(sample_processed_data)
 
-        assert result is not None
-        assert "is_integrity_valid" in result
+    assert result is not None
+    assert "is_integrity_valid" in result
 
     def test_data_consistency_check(self, service, sample_processed_data):
         """测试数据一致性检查"""
         result = service.check_data_consistency(sample_processed_data)
 
-        assert result is not None
-        assert "is_consistent" in result
+    assert result is not None
+    assert "is_consistent" in result
 
     # === 配置驱动测试 ===
 
@@ -429,7 +429,7 @@ class TestDataProcessingServiceBasic:
 
         result = service.process_raw_match_data(sample_raw_data)
 
-        assert result is not None
+    assert result is not None
         # 验证配置被正确应用
 
     # === 日志记录测试 ===
@@ -439,9 +439,9 @@ class TestDataProcessingServiceBasic:
         with caplog.at_level('INFO'):
             result = service.process_raw_match_data(sample_raw_data)
 
-        assert result is not None
+    assert result is not None
         # 验证日志记录
-        assert len(caplog.records) > 0
+    assert len(caplog.records) > 0
 
     # === 性能基准测试 ===
 
@@ -459,7 +459,7 @@ class TestDataProcessingServiceBasic:
         processing_time = end_time - start_time
 
         # 验证处理时间在合理范围内
-        assert processing_time < 1.0  # 100次处理应在1秒内完成
+    assert processing_time < 1.0  # 100次处理应在1秒内完成
 
     # === 并发处理测试 ===
 
@@ -478,8 +478,8 @@ class TestDataProcessingServiceBasic:
         # 等待所有任务完成
         results = await asyncio.gather(*tasks)
 
-        assert len(results) == 10
-        assert all(result is not None for result in results)
+    assert len(results) == 10
+    assert all(result is not None for result in results)
 
     # === 内存使用测试 ===
 
@@ -499,4 +499,4 @@ class TestDataProcessingServiceBasic:
         memory_increase = final_memory - initial_memory
 
         # 验证内存增长在合理范围内
-        assert memory_increase < 10 * 1024 * 1024  # 增长应小于10MB
+    assert memory_increase < 10 * 1024 * 1024  # 增长应小于10MB

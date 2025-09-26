@@ -10,14 +10,14 @@ import importlib
 module = importlib.import_module("src.tasks.utils")
 
 def test_module_import():
-    """Basic import test to ensure src/tasks/utils.py loads without error."""
+    """Basic import test to ensure src_tasks/utils.py loads without error."""
     assert module is not None
 
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
 # Hint: Use pytest-mock or monkeypatch to mock external dependencies.
 
@@ -64,9 +64,9 @@ Returns:
     result = getattr(module, "is_match_day")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -82,9 +82,9 @@ Returns:
     result = getattr(module, "calculate_next_collection_time")(0, 0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -100,8 +100,8 @@ Returns:
     result = getattr(module, "get_task_priority")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None

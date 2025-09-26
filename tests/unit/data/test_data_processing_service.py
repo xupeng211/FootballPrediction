@@ -65,11 +65,11 @@ class TestDataProcessingService:
 
         result = await self.service.initialize()
 
-        assert result is True
-        assert self.service.data_cleaner is not None
-        assert self.service.missing_handler is not None
-        assert self.service.data_lake is not None
-        assert self.service.db_manager is not None
+    assert result is True
+    assert self.service.data_cleaner is not None
+    assert self.service.missing_handler is not None
+    assert self.service.data_lake is not None
+    assert self.service.db_manager is not None
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_success(self):
@@ -96,8 +96,8 @@ class TestDataProcessingService:
 
         result = await self.service.process_raw_match_data(self.sample_match_data)
 
-        assert result is not None
-        assert result["external_match_id"] == "123456"
+    assert result is not None
+    assert result["external_match_id"] == "123456"
         self.service.data_cleaner.clean_match_data.assert_called_once_with(
             self.sample_match_data
         )
@@ -113,7 +113,7 @@ class TestDataProcessingService:
         self.service.data_cleaner.clean_match_data.side_effect = ValueError("清洗失败")
 
         result = await self.service.process_raw_match_data(self.sample_match_data)
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_success(self):
@@ -152,9 +152,9 @@ class TestDataProcessingService:
 
         result = await self.service.process_raw_odds_data(self.sample_odds_data)
 
-        assert result is not None
-        assert len(result) == 3
-        assert all(odds["match_id"] == "123456" for odds in result)
+    assert result is not None
+    assert len(result) == 3
+    assert all(odds["match_id"] == "123456" for odds in result)
         self.service.data_cleaner.clean_odds_data.assert_called_once_with(
             self.sample_odds_data
         )
@@ -174,7 +174,7 @@ class TestDataProcessingService:
         }
 
         result = await self.service.validate_data_quality(valid_match_data, "match")
-        assert result["is_valid"] is True
+    assert result["is_valid"] is True
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_match_missing_fields(self):
@@ -185,7 +185,7 @@ class TestDataProcessingService:
         }
 
         result = await self.service.validate_data_quality(invalid_match_data, "match")
-        assert result["is_valid"] is False
+    assert result["is_valid"] is False
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_negative_scores(self):
@@ -202,7 +202,7 @@ class TestDataProcessingService:
         }
 
         result = await self.service.validate_data_quality(invalid_match_data, "match")
-        assert result["is_valid"] is False
+    assert result["is_valid"] is False
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_odds_success(self):
@@ -215,7 +215,7 @@ class TestDataProcessingService:
         }
 
         result = await self.service.validate_data_quality(valid_odds_data, "odds")
-        assert result["is_valid"] is True
+    assert result["is_valid"] is True
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_invalid_odds_price(self):
@@ -227,7 +227,7 @@ class TestDataProcessingService:
         }
 
         result = await self.service.validate_data_quality(invalid_odds_data, "odds")
-        assert result["is_valid"] is False
+    assert result["is_valid"] is False
 
 
 class TestFootballDataCleaner:
@@ -254,12 +254,12 @@ class TestFootballDataCleaner:
         """测试成功清洗比赛数据"""
         result = await self.cleaner.clean_match_data(self.sample_match_data)
 
-        assert result is not None
-        assert "external_match_id" in result
-        assert "home_team_id" in result
-        assert "away_team_id" in result
-        assert "match_time" in result
-        assert result["external_match_id"] == "123456"
+    assert result is not None
+    assert "external_match_id" in result
+    assert "home_team_id" in result
+    assert "away_team_id" in result
+    assert "match_time" in result
+    assert result["external_match_id"] == "123456"
 
     @pytest.mark.asyncio
     async def test_clean_match_data_invalid_input(self):
@@ -268,7 +268,7 @@ class TestFootballDataCleaner:
 
         try:
             result = await self.cleaner.clean_match_data(invalid_data)
-            assert result is None or result == {}
+    assert result is None or result == {}
         except (ValueError, KeyError):
             # 清洗器应该抛出适当的异常
             pass
@@ -292,16 +292,16 @@ class TestFootballDataCleaner:
 
         result = await self.cleaner.clean_odds_data(sample_odds)
 
-        assert result is not None
-        assert isinstance(result, list)
+    assert result is not None
+    assert isinstance(result, list)
         # 实际返回的是处理后的赔率记录，可能是1个包含多个outcomes的记录
-        assert len(result) >= 1
+    assert len(result) >= 1
 
         # 检查第一个结果的结构
         if result:
             first_result = result[0]
-            assert "external_match_id" in first_result or "match_id" in first_result
-            assert "bookmaker" in first_result
+    assert "external_match_id" in first_result or "match_id" in first_result
+    assert "bookmaker" in first_result
 
     @pytest.mark.asyncio
     async def test_clean_odds_data_invalid_price(self):
@@ -325,7 +325,7 @@ class TestFootballDataCleaner:
         # 清洗器应该过滤掉无效价格或抛出异常
         if result is not None:
             # 如果返回结果，检查无效价格是否被过滤
-            assert all(odds["outcome_price"] > 0 for odds in result)
+    assert all(odds["outcome_price"] > 0 for odds in result)
 
 
 class TestMissingDataHandler:
@@ -351,10 +351,10 @@ class TestMissingDataHandler:
 
         result = await self.handler.handle_missing_match_data(match_data)
 
-        assert result is not None
+    assert result is not None
         # 对于未开始的比赛，分数应该设为默认值或保持None
-        assert "home_score" in result
-        assert "away_score" in result
+    assert "home_score" in result
+    assert "away_score" in result
 
     @pytest.mark.asyncio
     async def test_handle_missing_match_data_no_missing_values(self):
@@ -372,8 +372,8 @@ class TestMissingDataHandler:
 
         result = await self.handler.handle_missing_match_data(complete_match_data)
 
-        assert result is not None
-        assert result == complete_match_data  # 数据应该保持不变
+    assert result is not None
+    assert result == complete_match_data  # 数据应该保持不变
 
     @pytest.mark.asyncio
     async def test_handle_missing_features_with_historical_average(self):
@@ -387,9 +387,9 @@ class TestMissingDataHandler:
             }
         )
 
-        assert result is not None
+    assert result is not None
         # 检查缺失值是否被处理
-        assert "team_id" in result
+    assert "team_id" in result
 
     @pytest.mark.asyncio
     async def test_get_historical_average_known_features(self):

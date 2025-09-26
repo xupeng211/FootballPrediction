@@ -98,13 +98,13 @@ class TestDataProcessingServiceBatchOmega009:
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
-        assert service.name == "DataProcessingService"
-        assert service.data_cleaner is None
-        assert service.missing_handler is None
-        assert service.data_lake is None
-        assert service.cache_manager is None
-        assert service.db_manager is None
-        assert service.logger is not None
+    assert service.name == "DataProcessingService"
+    assert service.data_cleaner is None
+    assert service.missing_handler is None
+    assert service.data_lake is None
+    assert service.cache_manager is None
+    assert service.db_manager is None
+    assert service.logger is not None
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, service):
@@ -119,9 +119,9 @@ class TestDataProcessingServiceBatchOmega009:
 
             result = await service.initialize()
 
-            assert result is True
-            assert service.data_cleaner == mock_cleaner_instance
-            assert service.missing_handler == mock_handler_instance
+    assert result is True
+    assert service.data_cleaner == mock_cleaner_instance
+    assert service.missing_handler == mock_handler_instance
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, service):
@@ -131,7 +131,7 @@ class TestDataProcessingServiceBatchOmega009:
 
             result = await service.initialize()
 
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_shutdown_with_cache_manager(self, service):
@@ -144,11 +144,11 @@ class TestDataProcessingServiceBatchOmega009:
 
         await service.shutdown()
 
-        assert service.data_cleaner is None
-        assert service.missing_handler is None
-        assert service.data_lake is None
-        assert service.cache_manager is None
-        assert service.db_manager is None
+    assert service.data_cleaner is None
+    assert service.missing_handler is None
+    assert service.data_lake is None
+    assert service.cache_manager is None
+    assert service.db_manager is None
 
     @pytest.mark.asyncio
     async def test_shutdown_with_db_manager(self, service):
@@ -160,7 +160,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         await service.shutdown()
 
-        assert service.db_manager is None
+    assert service.db_manager is None
         mock_db.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -173,7 +173,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         await service.shutdown()
 
-        assert service.cache_manager is None
+    assert service.cache_manager is None
         mock_cache.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -186,9 +186,9 @@ class TestDataProcessingServiceBatchOmega009:
 
             result = await service.process_raw_match_data(sample_raw_data)
 
-            assert isinstance(result, pd.DataFrame)
-            assert len(result) == len(sample_raw_data)
-            assert mock_process_single.call_count == len(sample_raw_data)
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == len(sample_raw_data)
+    assert mock_process_single.call_count == len(sample_raw_data)
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_dict_input(self, service, sample_raw_data):
@@ -201,7 +201,7 @@ class TestDataProcessingServiceBatchOmega009:
 
             result = await service.process_raw_match_data(single_data)
 
-            assert result == single_data
+    assert result == single_data
             mock_process_single.assert_called_once_with(single_data)
 
     @pytest.mark.asyncio
@@ -211,8 +211,8 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_match_data([])
 
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 0
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 0
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_no_cleaner(self, service, sample_raw_data):
@@ -221,7 +221,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_match_data(sample_raw_data)
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_exception(self, service, sample_raw_data):
@@ -233,7 +233,7 @@ class TestDataProcessingServiceBatchOmega009:
 
             result = await service.process_raw_match_data(sample_raw_data)
 
-            assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_success(self, service, sample_odds_data):
@@ -243,7 +243,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result == sample_odds_data
+    assert result == sample_odds_data
         service.data_cleaner.clean_odds_data.assert_called_once_with(sample_odds_data)
 
     @pytest.mark.asyncio
@@ -256,7 +256,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result == sample_odds_data
+    assert result == sample_odds_data
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_no_cleaner(self, service, sample_odds_data):
@@ -265,7 +265,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_exception(self, service, sample_odds_data):
@@ -275,7 +275,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_raw_odds_data(sample_odds_data)
 
-        assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_process_features_data_basic(self, service, sample_dataframe):
@@ -284,7 +284,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_features_data(1001, sample_dataframe)
 
-        assert result is sample_dataframe  # Should return the same DataFrame if no missing handler
+    assert result is sample_dataframe  # Should return the same DataFrame if no missing handler
 
     @pytest.mark.asyncio
     async def test_process_features_data_with_missing_handler(self, service, sample_dataframe):
@@ -294,7 +294,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_features_data(1001, sample_dataframe)
 
-        assert result == sample_dataframe
+    assert result == sample_dataframe
         service.missing_handler.handle_missing_features.assert_called_once()
 
     @pytest.mark.asyncio
@@ -304,7 +304,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.process_features_data(1001, sample_dataframe)
 
-        assert result is sample_dataframe
+    assert result is sample_dataframe
 
     @pytest.mark.asyncio
     async def test__process_single_match_data_basic(self, service, sample_raw_data):
@@ -322,7 +322,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service._process_single_match_data(single_data)
 
-        assert result == single_data
+    assert result == single_data
 
     
     @pytest.mark.asyncio
@@ -334,7 +334,7 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.handle_missing_scores(test_df)
 
-        assert result is not None
+    assert result is not None
         service.missing_handler.interpolate_scores.assert_called_once_with(test_df)
 
     @pytest.mark.asyncio
@@ -345,14 +345,14 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.handle_missing_scores(test_df)
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_detect_anomalies_basic(self, service, sample_dataframe):
         """测试异常检测基本功能"""
         result = await service.detect_anomalies(sample_dataframe)
 
-        assert isinstance(result, list)
+    assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_collect_performance_metrics(self, service):
@@ -362,19 +362,19 @@ class TestDataProcessingServiceBatchOmega009:
 
         result = await service.collect_performance_metrics(mock_processing_function)
 
-        assert isinstance(result, dict)
-        assert "total_time" in result
-        assert "items_processed" in result
-        assert "items_per_second" in result
+    assert isinstance(result, dict)
+    assert "total_time" in result
+    assert "items_processed" in result
+    assert "items_per_second" in result
 
     @pytest.mark.asyncio
     async def test_cleanup_basic(self, service):
         """测试清理基本功能"""
         result = await service.cleanup()
 
-        assert isinstance(result, bool)
+    assert isinstance(result, bool)
 
     def test_service_repr(self, service):
         """测试服务字符串表示"""
         repr_str = repr(service)
-        assert "DataProcessingService" in repr_str
+    assert "DataProcessingService" in repr_str

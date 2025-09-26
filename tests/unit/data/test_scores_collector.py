@@ -24,22 +24,22 @@ class TestScoresCollector:
 
     def test_init(self, collector):
         """测试初始化"""
-        assert collector.base_url is not None
-        assert collector.websocket_url is None  # 默认为 None
-        assert hasattr(collector, 'polling_interval')
-        assert collector.polling_interval == 120
-        assert hasattr(collector, '_active_matches')
-        assert isinstance(collector._active_matches, set)
+    assert collector.base_url is not None
+    assert collector.websocket_url is None  # 默认为 None
+    assert hasattr(collector, 'polling_interval')
+    assert collector.polling_interval == 120
+    assert hasattr(collector, '_active_matches')
+    assert isinstance(collector._active_matches, set)
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_skipped(self, collector):
         """测试ScoresCollector不处理赛程数据"""
         result = await collector.collect_fixtures()
 
-        assert result.status == "skipped"
-        assert result.records_collected == 0
-        assert result.success_count == 0
-        assert result.error_count == 0
+    assert result.status == "skipped"
+    assert result.records_collected == 0
+    assert result.success_count == 0
+    assert result.error_count == 0
 
     
     @pytest.mark.asyncio
@@ -47,10 +47,10 @@ class TestScoresCollector:
         """测试ScoresCollector不处理赔率数据"""
         result = await collector.collect_odds()
 
-        assert result.status == "skipped"
-        assert result.records_collected == 0
-        assert result.success_count == 0
-        assert result.error_count == 0
+    assert result.status == "skipped"
+    assert result.records_collected == 0
+    assert result.success_count == 0
+    assert result.error_count == 0
 
     @pytest.mark.asyncio
     async def test_collect_live_scores_success(self, collector):
@@ -72,8 +72,8 @@ class TestScoresCollector:
 
             result = await collector.collect_live_scores()
 
-            assert result.status == "success"
-            assert result.records_collected == 1
+    assert result.status == "success"
+    assert result.records_collected == 1
 
     @pytest.mark.asyncio
     async def test_collect_live_scores_no_matches(self, collector):
@@ -83,8 +83,8 @@ class TestScoresCollector:
 
             result = await collector.collect_live_scores()
 
-            assert result.status == "success"
-            assert result.records_collected == 0
+    assert result.status == "success"
+    assert result.records_collected == 0
 
     @pytest.mark.asyncio
     async def test_get_live_matches_success(self, collector):
@@ -93,8 +93,8 @@ class TestScoresCollector:
         matches = await collector._get_live_matches()
 
         # 当前实现返回空列表作为占位符
-        assert isinstance(matches, list)
-        assert len(matches) == 0
+    assert isinstance(matches, list)
+    assert len(matches) == 0
 
     @pytest.mark.asyncio
     async def test_get_match_live_data_success(self, collector):
@@ -117,9 +117,9 @@ class TestScoresCollector:
 
             data = await collector._get_match_live_data("match_1")
 
-            assert data is not None
-            assert data["home_score"] == 2
-            assert data["away_score"] == 1
+    assert data is not None
+    assert data["home_score"] == 2
+    assert data["away_score"] == 1
 
     @pytest.mark.asyncio
     async def test_get_match_live_data_not_found(self, collector):
@@ -129,7 +129,7 @@ class TestScoresCollector:
 
             data = await collector._get_match_live_data("nonexistent_match")
 
-            assert data is None
+    assert data is None
 
     @responses.activate
     @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestScoresCollector:
         # Mock 429 Too Many Requests 响应
         responses.add(
             responses.GET,
-            "https://api.example.com/live-matches",
+            "https:_/api.example.com/live-matches",
             status=429,
             json={"error": "Rate limit exceeded"}
         )
@@ -149,7 +149,7 @@ class TestScoresCollector:
             try:
                 await collector._get_live_matches()
             except Exception as e:
-                assert "Rate limit exceeded" in str(e)
+    assert "Rate limit exceeded" in str(e)
 
     @pytest.mark.asyncio
     async def test_api_timeout(self, collector):
@@ -160,7 +160,7 @@ class TestScoresCollector:
             try:
                 await collector._get_live_matches()
             except asyncio.TimeoutError as e:
-                assert "Request timeout" in str(e)
+    assert "Request timeout" in str(e)
 
     @pytest.mark.asyncio
     async def test_process_response_success(self, collector):
@@ -183,8 +183,8 @@ class TestScoresCollector:
 
             result = await collector._collect_via_polling(["match_1"])
 
-            assert len(result) == 1
-            assert result[0]["home_score"] == 2
+    assert len(result) == 1
+    assert result[0]["home_score"] == 2
 
     @pytest.mark.asyncio
     async def test_process_response_invalid_json(self, collector):
@@ -206,7 +206,7 @@ class TestScoresCollector:
             data = await collector._get_match_live_data("match_1")
 
             # 应该返回空字典，因为方法直接返回响应
-            assert data == {}
+    assert data == {}
 
     @pytest.mark.asyncio
     async def test_process_response_missing_fields(self, collector):
@@ -220,22 +220,22 @@ class TestScoresCollector:
             data = await collector._get_match_live_data("match_1")
 
             # 应该能处理缺失字段
-            assert data is not None
-            assert data["match_id"] == "match_1"
+    assert data is not None
+    assert data["match_id"] == "match_1"
 
     def test_match_status_enum(self):
         """测试比赛状态枚举"""
-        assert MatchStatus.NOT_STARTED.value == "not_started"
-        assert MatchStatus.FIRST_HALF.value == "first_half"
-        assert MatchStatus.FINISHED.value == "finished"
-        assert MatchStatus.POSTPONED.value == "postponed"
+    assert MatchStatus.NOT_STARTED.value == "not_started"
+    assert MatchStatus.FIRST_HALF.value == "first_half"
+    assert MatchStatus.FINISHED.value == "finished"
+    assert MatchStatus.POSTPONED.value == "postponed"
 
     def test_event_type_enum(self):
         """测试事件类型枚举"""
-        assert EventType.GOAL.value == "goal"
-        assert EventType.YELLOW_CARD.value == "yellow_card"
-        assert EventType.RED_CARD.value == "red_card"
-        assert EventType.SUBSTITUTION.value == "substitution"
+    assert EventType.GOAL.value == "goal"
+    assert EventType.YELLOW_CARD.value == "yellow_card"
+    assert EventType.RED_CARD.value == "red_card"
+    assert EventType.SUBSTITUTION.value == "substitution"
 
     @pytest.mark.asyncio
     async def test_clean_live_data_success(self, collector):
@@ -254,10 +254,10 @@ class TestScoresCollector:
 
         cleaned_data = await collector._clean_live_data(raw_data)
 
-        assert cleaned_data is not None
-        assert cleaned_data["home_score"] == "2"  # 保持字符串格式
-        assert cleaned_data["away_score"] == "1"
-        assert cleaned_data["status"] == "SECOND_HALF"  # 保持原始格式
+    assert cleaned_data is not None
+    assert cleaned_data["home_score"] == "2"  # 保持字符串格式
+    assert cleaned_data["away_score"] == "1"
+    assert cleaned_data["status"] == "SECOND_HALF"  # 保持原始格式
 
     @pytest.mark.asyncio
     async def test_clean_live_data_with_none_values(self, collector):
@@ -276,24 +276,24 @@ class TestScoresCollector:
         cleaned_data = await collector._clean_live_data(raw_data)
 
         # 应该合理处理None值，可能是设置为默认值或过滤掉
-        assert cleaned_data is not None
-        assert cleaned_data["external_match_id"] == "match_1"
+    assert cleaned_data is not None
+    assert cleaned_data["external_match_id"] == "match_1"
 
     @pytest.mark.asyncio
     async def test_clean_live_data_empty_dict(self, collector):
         """测试清洗空字典"""
         cleaned_data = await collector._clean_live_data({})
 
-        assert cleaned_data is None  # 空字典应该返回None
+    assert cleaned_data is None  # 空字典应该返回None
 
     def test_is_match_finished(self, collector):
         """测试比赛是否结束的判断"""
-        assert collector._is_match_finished("finished") is True
-        assert collector._is_match_finished("FINISHED") is True
-        assert collector._is_match_finished("postponed") is True
-        assert collector._is_match_finished("cancelled") is True
-        assert collector._is_match_finished("first_half") is False
-        assert collector._is_match_finished("second_half") is False
+    assert collector._is_match_finished("finished") is True
+    assert collector._is_match_finished("FINISHED") is True
+    assert collector._is_match_finished("postponed") is True
+    assert collector._is_match_finished("cancelled") is True
+    assert collector._is_match_finished("first_half") is False
+    assert collector._is_match_finished("second_half") is False
 
     @pytest.mark.asyncio
     async def test_start_continuous_monitoring(self, collector):

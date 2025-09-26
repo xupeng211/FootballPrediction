@@ -88,8 +88,8 @@ class TestPredictionServiceCaching:
             model2, version2 = await prediction_service.get_production_model()
 
             # 验证两次获取的是相同的模型
-            assert model1 == model2
-            assert version1 == version2
+    assert model1 == model2
+    assert version1 == version2
 
             # 验证MLflow客户端只被调用一次
             mock_client.get_latest_versions.assert_called_once()
@@ -121,7 +121,7 @@ class TestPredictionServiceCaching:
             # 模拟缓存过期，避免真实等待
             cache_key = "model:football_baseline_model"
             cached_entry = prediction_service.model_cache._cache.get(cache_key)
-            assert cached_entry is not None
+    assert cached_entry is not None
             cached_entry.created_at -= prediction_service.model_cache_ttl + timedelta(
                 milliseconds=10
             )
@@ -130,7 +130,7 @@ class TestPredictionServiceCaching:
             model2, version2 = await prediction_service.get_production_model()
 
             # 验证MLflow客户端被调用了两次（缓存过期后重新加载）
-            assert mock_client.get_latest_versions.call_count == 2
+    assert mock_client.get_latest_versions.call_count == 2
 
     @pytest.mark.asyncio
     async def test_predict_match_caching(self, prediction_service, mock_feature_store):
@@ -181,9 +181,9 @@ class TestPredictionServiceCaching:
             result2 = await prediction_service.predict_match(1)
 
             # 验证两次预测结果相同
-            assert result1.match_id == result2.match_id
-            assert result1.predicted_result == result2.predicted_result
-            assert result1.confidence_score == result2.confidence_score
+    assert result1.match_id == result2.match_id
+    assert result1.predicted_result == result2.predicted_result
+    assert result1.confidence_score == result2.confidence_score
 
     @pytest.mark.asyncio
     async def test_predict_match_cache_expiration(
@@ -264,11 +264,11 @@ class TestPredictionServiceCaching:
                 results2 = await prediction_service.batch_predict_matches(match_ids)
 
                 # 验证结果数量相同
-                assert len(results1) == len(results2) == 3
+    assert len(results1) == len(results2) == 3
 
                 # 验证每场比赛的预测结果相同
                 for i in range(len(results1)):
-                    assert results1[i].match_id == results2[i].match_id
+    assert results1[i].match_id == results2[i].match_id
 
     @pytest.mark.asyncio
     async def test_cache_stats_monitoring(self, prediction_service):
@@ -278,27 +278,27 @@ class TestPredictionServiceCaching:
         prediction_cache_stats = await prediction_service.prediction_cache.get_stats()
 
         # 验证统计信息格式
-        assert "total_entries" in model_cache_stats
-        assert "active_entries" in model_cache_stats
-        assert "expired_entries" in model_cache_stats
-        assert "max_size" in model_cache_stats
+    assert "total_entries" in model_cache_stats
+    assert "active_entries" in model_cache_stats
+    assert "expired_entries" in model_cache_stats
+    assert "max_size" in model_cache_stats
 
-        assert "total_entries" in prediction_cache_stats
-        assert "active_entries" in prediction_cache_stats
-        assert "expired_entries" in prediction_cache_stats
-        assert "max_size" in prediction_cache_stats
+    assert "total_entries" in prediction_cache_stats
+    assert "active_entries" in prediction_cache_stats
+    assert "expired_entries" in prediction_cache_stats
+    assert "max_size" in prediction_cache_stats
 
     @pytest.mark.asyncio
     async def test_cache_configuration(self, prediction_service):
         """测试缓存配置 / Test cache configuration"""
         # 验证缓存配置
-        assert isinstance(prediction_service.model_cache, TTLCache)
-        assert isinstance(prediction_service.prediction_cache, TTLCache)
+    assert isinstance(prediction_service.model_cache, TTLCache)
+    assert isinstance(prediction_service.prediction_cache, TTLCache)
 
         # 验证缓存TTL配置
-        assert isinstance(prediction_service.model_cache_ttl, timedelta)
-        assert isinstance(prediction_service.prediction_cache_ttl, timedelta)
+    assert isinstance(prediction_service.model_cache_ttl, timedelta)
+    assert isinstance(prediction_service.prediction_cache_ttl, timedelta)
 
         # 验证默认TTL值
-        assert prediction_service.model_cache_ttl.total_seconds() >= 0
-        assert prediction_service.prediction_cache_ttl.total_seconds() >= 0
+    assert prediction_service.model_cache_ttl.total_seconds() >= 0
+    assert prediction_service.prediction_cache_ttl.total_seconds() >= 0
