@@ -13,7 +13,6 @@ def test_module_import():
     """Basic import test to ensure scripts/setup_project.py loads without error."""
     assert module is not None
 
-    # ✅ Replaced TODO with real assertion
     result = None
     try:
         result = <target_function>()  # 调用实际函数，必要时加参数
