@@ -257,11 +257,252 @@ class DynamicModuleImporter:
             def __len__(self):
                 return len(self.data)
 
+            @property
+            def empty(self):
+                return len(self.data) == 0
+
+            def dropna(self):
+                """Drop NA values from the series"""
+                import math
+                clean_data = []
+                for x in self.data:
+                    # Filter out None, actual NaN values, and Mock objects representing NaN
+                    if x is None:
+                        continue
+                    if isinstance(x, float) and math.isnan(x):
+                        continue
+                    # Filter out Mock objects (they represent NaN in our tests)
+                    if hasattr(x, '_mock_name') and x._mock_name == 'nan':
+                        continue
+                    clean_data.append(x)
+                return MockSeries(clean_data, self.name)
+
             def mean(self):
-                return sum(self.data) / len(self.data) if self.data else 0
+                if not self.data:
+                    return 0.0
+                # Filter out non-numeric values (like Mock objects representing NaN)
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                return sum(numeric_data) / len(numeric_data) if numeric_data else 0.0
 
             def sum(self):
-                return sum(self.data)
+                # Filter out non-numeric values (like Mock objects representing NaN)
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                return sum(numeric_data)
+
+            def std(self):
+                if len(self.data) < 2:
+                    return 0.0
+                mean_val = self.mean()
+                # Filter out non-numeric values for variance calculation
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                if len(numeric_data) < 2:
+                    return 0.0
+                variance = sum((x - mean_val) ** 2 for x in numeric_data) / (len(numeric_data) - 1)
+                return variance ** 0.5
+
+            def median(self):
+                """Calculate median of the series"""
+                if not self.data:
+                    return 0.0
+                # Filter out non-numeric values
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                if not numeric_data:
+                    return 0.0
+                sorted_data = sorted(numeric_data)
+                n = len(sorted_data)
+                if n % 2 == 0:
+                    return (sorted_data[n//2 - 1] + sorted_data[n//2]) / 2
+                else:
+                    return sorted_data[n//2]
+
+            def min(self):
+                """Calculate minimum of the series"""
+                if not self.data:
+                    return 0.0
+                # Filter out non-numeric values
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                return min(numeric_data) if numeric_data else 0.0
+
+            def max(self):
+                """Calculate maximum of the series"""
+                if not self.data:
+                    return 0.0
+                # Filter out non-numeric values
+                numeric_data = []
+                for x in self.data:
+                    if isinstance(x, (int, float)) and not (isinstance(x, float) and str(x) == 'nan'):
+                        numeric_data.append(x)
+                return max(numeric_data) if numeric_data else 0.0
+
+            def items(self):
+                """Return items as (index, value) pairs"""
+                return [(i, value) for i, value in enumerate(self.data)]
+
+            def quantile(self, q):
+                """Calculate quantiles for the series"""
+                if not self.data:
+                    return 0.0
+
+                sorted_data = sorted(self.data)
+                n = len(sorted_data)
+
+                if isinstance(q, (list, tuple)):
+                    return [self._calculate_quantile(sorted_data, n, quantile) for quantile in q]
+                else:
+                    return self._calculate_quantile(sorted_data, n, q)
+
+            def _calculate_quantile(self, sorted_data, n, q):
+                """Helper method to calculate a single quantile"""
+                if n == 0:
+                    return 0.0
+
+                # Method 7: Linear interpolation of the empirical distribution function
+                position = (n - 1) * q + 1
+                lower_idx = int(position) - 1
+                upper_idx = int(position)
+
+                if lower_idx < 0:
+                    return sorted_data[0]
+                if upper_idx >= n:
+                    return sorted_data[-1]
+
+                weight = position - int(position)
+                return sorted_data[lower_idx] + weight * (sorted_data[upper_idx] - sorted_data[lower_idx])
+
+            def var(self):
+                if len(self.data) < 2:
+                    return 0.0
+                mean_val = self.mean()
+                return sum((x - mean_val) ** 2 for x in self.data) / (len(self.data) - 1)
+
+            def min(self):
+                return min(self.data) if self.data else 0.0
+
+            def max(self):
+                return max(self.data) if self.data else 0.0
+
+            def abs(self):
+                return MockSeries([abs(x) for x in self.data])
+
+            def __getitem__(self, key):
+                if isinstance(key, (list, tuple)):
+                    return MockSeries([self.data[i] for i in key if i < len(self.data)])
+                elif isinstance(key, slice):
+                    return MockSeries(self.data[key])
+                elif hasattr(key, 'data') and hasattr(key, '__len__'):
+                    # Handle boolean masking (MockSeries as boolean mask)
+                    if len(key.data) == len(self.data):
+                        return MockSeries([self.data[i] for i, mask in enumerate(key.data) if mask])
+                    else:
+                        return MockSeries([])
+                else:
+                    if key < 0:
+                        key = len(self.data) + key
+                    if 0 <= key < len(self.data):
+                        return self.data[key]
+                    return 0.0
+
+            def __lt__(self, other):
+                if isinstance(other, (int, float)):
+                    return MockSeries([x < other for x in self.data])
+                return MockSeries([])
+
+            def __le__(self, other):
+                if isinstance(other, (int, float)):
+                    return MockSeries([x <= other for x in self.data])
+                return MockSeries([])
+
+            def __gt__(self, other):
+                if isinstance(other, (int, float)):
+                    return MockSeries([x > other for x in self.data])
+                return MockSeries([])
+
+            def __ge__(self, other):
+                if isinstance(other, (int, float)):
+                    return MockSeries([x >= other for x in self.data])
+                return MockSeries([])
+
+            def __or__(self, other):
+                """Logical OR operation for boolean series"""
+                if isinstance(other, MockSeries):
+                    return MockSeries([x or y for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __and__(self, other):
+                """Logical AND operation for boolean series"""
+                if isinstance(other, MockSeries):
+                    return MockSeries([x and y for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __add__(self, other):
+                """Addition operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([x + other for x in self.data])
+                elif isinstance(other, MockSeries):
+                    return MockSeries([x + y for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __sub__(self, other):
+                """Subtraction operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([x - other for x in self.data])
+                elif isinstance(other, MockSeries):
+                    return MockSeries([x - y for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __mul__(self, other):
+                """Multiplication operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([x * other for x in self.data])
+                elif isinstance(other, MockSeries):
+                    return MockSeries([x * y for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __truediv__(self, other):
+                """Division operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([x / other if other != 0 else 0 for x in self.data])
+                elif isinstance(other, MockSeries):
+                    return MockSeries([x / y if y != 0 else 0 for x, y in zip(self.data, other.data)])
+                return MockSeries([])
+
+            def __radd__(self, other):
+                """Right addition operation"""
+                return self.__add__(other)
+
+            def __rsub__(self, other):
+                """Right subtraction operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([other - x for x in self.data])
+                return MockSeries([])
+
+            def __rmul__(self, other):
+                """Right multiplication operation"""
+                return self.__mul__(other)
+
+            def __rtruediv__(self, other):
+                """Right division operation"""
+                if isinstance(other, (int, float)):
+                    return MockSeries([other / x if x != 0 else 0 for x in self.data])
+                return MockSeries([])
+
+            def tolist(self):
+                return self.data
 
             @property
             def shape(self):
@@ -1218,11 +1459,71 @@ def mock_pandas():
             return len(self.data)
 
         def __getitem__(self, key):
-            return self.data[key] if isinstance(key, int) else MockSeries()
+            if isinstance(key, int):
+                return self.data[key] if key < len(self.data) else None
+            elif isinstance(key, slice):
+                return MockSeries(self.data[key])
+            elif isinstance(key, list):
+                # Boolean indexing - filter data based on boolean mask
+                if len(key) == len(self.data) and all(isinstance(x, bool) for x in key):
+                    return MockSeries([self.data[i] for i, mask in enumerate(key) if mask])
+                else:
+                    return MockSeries([self.data[i] for i in key if isinstance(i, int) and i < len(self.data)])
+            else:
+                # Handle callable functions for boolean indexing
+                if callable(key):
+                    return MockSeries([x for x in self.data if key(x)])
+                return MockSeries()
 
         def __setitem__(self, key, value):
             if isinstance(key, int):
                 self.data[key] = value
+
+        def __lt__(self, other):
+            if isinstance(other, MockSeries):
+                return [x < y for x, y in zip(self.data, other.data)]
+            else:
+                return [x < other for x in self.data]
+
+        def __gt__(self, other):
+            if isinstance(other, MockSeries):
+                return [x > y for x, y in zip(self.data, other.data)]
+            else:
+                return [x > other for x in self.data]
+
+        def __le__(self, other):
+            if isinstance(other, MockSeries):
+                return [x <= y for x, y in zip(self.data, other.data)]
+            else:
+                return [x <= other for x in self.data]
+
+        def __ge__(self, other):
+            if isinstance(other, MockSeries):
+                return [x >= y for x, y in zip(self.data, other.data)]
+            else:
+                return [x >= other for x in self.data]
+
+        def __or__(self, other):
+            if isinstance(other, list) and len(other) == len(self.data):
+                return [x or y for x, y in zip(self.data, other)]
+            return self.data
+
+        def __and__(self, other):
+            if isinstance(other, list) and len(other) == len(self.data):
+                return [x and y for x, y in zip(self.data, other)]
+            return self.data
+
+        def __sub__(self, other):
+            if isinstance(other, MockSeries):
+                return MockSeries([x - y for x, y in zip(self.data, other.data)])
+            else:
+                return MockSeries([x - other for x in self.data])
+
+        def __mul__(self, other):
+            if isinstance(other, MockSeries):
+                return MockSeries([x * y for x, y in zip(self.data, other.data)])
+            else:
+                return MockSeries([x * other for x in self.data])
 
         @property
         def shape(self):
@@ -1246,13 +1547,45 @@ def mock_pandas():
             return len([x for x in self.data if x is not None])
 
         def std(self):
-            return 0.0
+            if len(self.data) < 2:
+                return 0.0
+            mean_val = self.mean()
+            variance = sum((x - mean_val) ** 2 for x in self.data) / (len(self.data) - 1)
+            return variance ** 0.5
 
         def min(self):
             return min(self.data) if self.data else None
 
         def max(self):
             return max(self.data) if self.data else None
+
+        def quantile(self, q):
+            """Calculate quantiles for the series"""
+            if not self.data:
+                return 0.0
+            sorted_data = sorted(self.data)
+            n = len(sorted_data)
+            if isinstance(q, (list, tuple)):
+                return [self._calculate_quantile(sorted_data, n, quantile) for quantile in q]
+            else:
+                return self._calculate_quantile(sorted_data, n, q)
+
+        def _calculate_quantile(self, sorted_data, n, q):
+            """Helper method to calculate quantile"""
+            if q <= 0:
+                return sorted_data[0]
+            elif q >= 1:
+                return sorted_data[-1]
+
+            position = q * (n - 1)
+            lower_idx = int(position)
+            upper_idx = lower_idx + 1
+
+            if upper_idx >= n:
+                return sorted_data[-1]
+
+            weight = position - lower_idx
+            return sorted_data[lower_idx] * (1 - weight) + sorted_data[upper_idx] * weight
 
         def unique(self):
             return list(set(self.data))
@@ -1271,6 +1604,18 @@ def mock_pandas():
 
         def to_numpy(self):
             return MockArray(self.data)
+
+        def tolist(self):
+            return self.data.copy()
+
+        @property
+        def empty(self):
+            return len(self.data) == 0
+
+        def dropna(self):
+            """Drop NA values from the series"""
+            clean_data = [x for x in self.data if x is not None and not (isinstance(x, float) and str(x) == 'nan')]
+            return MockSeries(clean_data, self.name)
 
     class MockGroupBy:
         def __init__(self):
