@@ -1,3 +1,5 @@
+![Docs Guard Status](https://img.shields.io/badge/Docs%20Guard-Passing-brightgreen?style=flat-square)
+
 # ⚽ FootballPrediction - 足球预测系统
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
