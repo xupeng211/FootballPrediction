@@ -275,11 +275,11 @@ class TestMonitoringAPI:
             else:
                 app.dependency_overrides[get_db_session] = override_get_db_session
 
-    @patch.dict(os.environ, {"REDIS_URL": "redis://test:6379/0"})
     def test_get_service_status_with_custom_redis_url(self):
         """测试服务状态检查 - 自定义Redis URL"""
         # 模拟Redis连接成功，验证使用了自定义URL
-        with patch("redis.from_url") as mock_redis:
+        with patch.dict(os.environ, {"REDIS_URL": "redis://test:6379/0"}), \
+             patch("src.api.monitoring.redis.from_url") as mock_redis:
             mock_redis_instance = MagicMock()
             mock_redis_instance.ping.return_value = True
             mock_redis.return_value = mock_redis_instance
