@@ -112,8 +112,8 @@ class TestCacheConsistency:
 
             if db_data and cache_data:
                 # 验证关键字段一致
-                assert db_data.get("id") == cache_data.get("id")
-                assert db_data.get("match_status") == cache_data.get("match_status")
+    assert db_data.get("id") == cache_data.get("id")
+    assert db_data.get("match_status") == cache_data.get("match_status")
 
         except Exception:
             # 在测试环境中可能无法执行真实的读写操作
@@ -130,7 +130,7 @@ class TestCacheConsistency:
         # 1. 读取缓存（缓存未命中）
         try:
             cached_prediction = await redis_manager.aget(cache_key)
-            assert cached_prediction is None or not await redis_manager.aexists(
+    assert cached_prediction is None or not await redis_manager.aexists(
                 cache_key
             )
         except Exception:
@@ -154,10 +154,10 @@ class TestCacheConsistency:
         try:
             cached_prediction = await redis_manager.aget(cache_key)
             if cached_prediction and db_prediction:
-                assert cached_prediction.get("match_id") == db_prediction.get(
+    assert cached_prediction.get("match_id") == db_prediction.get(
                     "match_id"
                 )
-                assert cached_prediction.get("model_version") == db_prediction.get(
+    assert cached_prediction.get("model_version") == db_prediction.get(
                     "model_version"
                 )
         except Exception:
@@ -204,7 +204,7 @@ class TestCacheConsistency:
         # 4. 验证缓存已失效
         try:
             cached_data = await redis_manager.aget(cache_key)
-            assert cached_data is None or not await redis_manager.aexists(cache_key)
+    assert cached_data is None or not await redis_manager.aexists(cache_key)
         except Exception:
             pass
 
@@ -221,7 +221,7 @@ class TestCacheConsistency:
 
             # 立即验证缓存存在
             exists = await redis_manager.aexists(cache_key)
-            assert exists is True or await redis_manager.aget(cache_key) is not None
+    assert exists is True or await redis_manager.aget(cache_key) is not None
 
         except Exception:
             # 模拟缓存操作
@@ -233,10 +233,10 @@ class TestCacheConsistency:
         # 3. 验证缓存已过期
         try:
             expired_data = await redis_manager.aget(cache_key)
-            assert expired_data is None
+    assert expired_data is None
 
             exists = await redis_manager.aexists(cache_key)
-            assert exists is False
+    assert exists is False
 
         except Exception:
             # 在测试环境中模拟过期
@@ -281,7 +281,7 @@ class TestCacheConsistency:
 
         # 3. 验证预热成功率
         success_rate = cached_count / len(match_ids)
-        assert success_rate >= 0.8, f"缓存预热成功率{success_rate:.2%}过低"
+    assert success_rate >= 0.8, f"缓存预热成功率{success_rate:.2%}过低"
 
     @pytest.mark.asyncio
     async def test_bidirectional_sync_consistency(
@@ -311,8 +311,8 @@ class TestCacheConsistency:
             cache_data = await redis_manager.aget(cache_key)
 
             if db_data and cache_data:
-                assert db_data.get("id") == cache_data.get("id")
-                assert db_data.get("match_status") == cache_data.get("match_status")
+    assert db_data.get("id") == cache_data.get("id")
+    assert db_data.get("match_status") == cache_data.get("match_status")
         except Exception:
             pass
 
@@ -373,7 +373,7 @@ class TestCacheConsistency:
 
         # 验证没有发生异常
         exceptions = [r for r in results if isinstance(r, Exception)]
-        assert (
+    assert (
             len(exceptions) == 0 or len(exceptions) < len(results) * 0.1
         )  # 异常率<10%
 
@@ -404,11 +404,11 @@ class TestCacheConsistency:
             try:
                 # 尝试读取数据（应该从数据库读取）
                 data = await db_manager.get_match(match_id)
-                assert data is not None
+    assert data is not None
             except Exception:
                 # 模拟数据库降级成功
                 data = sample_match_data
-                assert data is not None
+    assert data is not None
 
         # 3. 缓存恢复后的数据一致性验证
         try:
@@ -420,7 +420,7 @@ class TestCacheConsistency:
             db_data = await db_manager.get_match(match_id)
 
             if cached_data and db_data:
-                assert cached_data.get("id") == db_data.get("id")
+    assert cached_data.get("id") == db_data.get("id")
         except Exception:
             pass
 
@@ -447,8 +447,8 @@ class TestCacheConsistency:
             # 数据库故障时应该从缓存读取
             try:
                 cached_data = await redis_manager.aget(cache_key)
-                assert cached_data is not None
-                assert cached_data.get("id") == match_id
+    assert cached_data is not None
+    assert cached_data.get("id") == match_id
             except Exception:
                 # 模拟缓存命中
                 pass
@@ -481,12 +481,12 @@ class TestCacheConsistency:
         read_time = time.time() - start_time
 
         # 验证性能基准
-        assert read_time < 2.0, f"100个缓存读取耗时{read_time:.2f}s超过2秒"
+    assert read_time < 2.0, f"100个缓存读取耗时{read_time:.2f}s超过2秒"
 
         # 验证读取成功率
         successful_reads = sum(1 for r in results if not isinstance(r, Exception))
         success_rate = successful_reads / len(test_keys)
-        assert success_rate >= 0.9, f"缓存读取成功率{success_rate:.2%}过低"
+    assert success_rate >= 0.9, f"缓存读取成功率{success_rate:.2%}过低"
 
     @pytest.mark.asyncio
     async def test_write_latency_consistency(
@@ -514,7 +514,7 @@ class TestCacheConsistency:
         write_time = time.time() - start_time
 
         # 验证写入延迟在合理范围内
-        assert write_time < 1.0, f"并发写入延迟{write_time:.2f}s超过1秒"
+    assert write_time < 1.0, f"并发写入延迟{write_time:.2f}s超过1秒"
 
     # ================================
     # 数据一致性验证工具
@@ -539,7 +539,7 @@ class TestCacheConsistency:
 
             # 比较关键字段
             if db_data and cache_data:
-                assert db_data.get("id") == cache_data.get("id")
+    assert db_data.get("id") == cache_data.get("id")
                 return True
             elif not db_data and not cache_data:
                 return True  # 都为空也是一致的

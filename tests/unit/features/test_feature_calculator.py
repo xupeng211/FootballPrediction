@@ -141,15 +141,15 @@ class TestFeatureCalculator:
             )
 
             # 验证特征
-            assert isinstance(features, RecentPerformanceFeatures)
-            assert features.team_id == 1
-            assert features.recent_5_wins == 2  # 主场胜利 + 客场胜利
-            assert features.recent_5_draws == 1  # 平局
-            assert features.recent_5_losses == 0
-            assert features.recent_5_goals_for == 5  # 2 + 2 + 1
-            assert features.recent_5_goals_against == 4  # 1 + 0 + 1
-            assert features.recent_5_points == 7  # 3*2 + 1*1
-            assert features.recent_5_win_rate == 2 / 3  # 2胜1平
+    assert isinstance(features, RecentPerformanceFeatures)
+    assert features.team_id == 1
+    assert features.recent_5_wins == 2  # 主场胜利 + 客场胜利
+    assert features.recent_5_draws == 1  # 平局
+    assert features.recent_5_losses == 0
+    assert features.recent_5_goals_for == 5  # 2 + 2 + 1
+    assert features.recent_5_goals_against == 4  # 1 + 0 + 1
+    assert features.recent_5_points == 7  # 3*2 + 1*1
+    assert features.recent_5_win_rate == 2 / 3  # 2胜1平
 
     @pytest.mark.asyncio
     async def test_calculate_historical_matchup_features(self, feature_calculator):
@@ -214,17 +214,17 @@ class TestFeatureCalculator:
             )
 
             # 验证特征
-            assert isinstance(features, HistoricalMatchupFeatures)
-            assert features.home_team_id == 1
-            assert features.away_team_id == 2
-            assert features.h2h_total_matches == 5
-            assert features.h2h_home_wins == 2  # 球队1作为主队赢2次
-            assert features.h2h_away_wins == 1  # 球队1作为客队赢1次
-            assert features.h2h_draws == 2  # 2次平局
-            assert features.h2h_home_goals_total == 6  # 2+3+0+2+1
-            assert features.h2h_away_goals_total == 6  # 1+1+0+2+2
-            assert features.h2h_goals_avg == 2.4  # 12/5
-            assert features.h2h_home_win_rate == 0.4  # 2/5
+    assert isinstance(features, HistoricalMatchupFeatures)
+    assert features.home_team_id == 1
+    assert features.away_team_id == 2
+    assert features.h2h_total_matches == 5
+    assert features.h2h_home_wins == 2  # 球队1作为主队赢2次
+    assert features.h2h_away_wins == 1  # 球队1作为客队赢1次
+    assert features.h2h_draws == 2  # 2次平局
+    assert features.h2h_home_goals_total == 6  # 2+3+0+2+1
+    assert features.h2h_away_goals_total == 6  # 1+1+0+2+2
+    assert features.h2h_goals_avg == 2.4  # 12_5
+    assert features.h2h_home_win_rate == 0.4  # 2/5
 
     @pytest.mark.asyncio
     async def test_calculate_odds_features(self, feature_calculator):
@@ -272,19 +272,19 @@ class TestFeatureCalculator:
             )
 
             # 验证特征
-            assert isinstance(features, OddsFeatures)
-            assert features.match_id == 1
-            assert features.bookmaker_count == 3
+    assert isinstance(features, OddsFeatures)
+    assert features.match_id == 1
+    assert features.bookmaker_count == 3
 
             # 验证平均赔率（约等于）
-            assert abs(float(features.home_odds_avg) - 2.10) < 0.01
-            assert abs(float(features.draw_odds_avg) - 3.22) < 0.01
-            assert abs(float(features.away_odds_avg) - 3.52) < 0.01
+    assert abs(float(features.home_odds_avg) - 2.10) < 0.01
+    assert abs(float(features.draw_odds_avg) - 3.22) < 0.01
+    assert abs(float(features.away_odds_avg) - 3.52) < 0.01
 
             # 验证隐含概率
-            assert abs(features.home_implied_probability - 1 / 2.10) < 0.01
-            assert abs(features.draw_implied_probability - 1 / 3.22) < 0.01
-            assert abs(features.away_implied_probability - 1 / 3.52) < 0.01
+    assert abs(features.home_implied_probability - 1 / 2.10) < 0.01
+    assert abs(features.draw_implied_probability - 1 / 3.22) < 0.01
+    assert abs(features.away_implied_probability - 1 / 3.52) < 0.01
 
             # 验证市场效率
             total_prob = (
@@ -292,7 +292,7 @@ class TestFeatureCalculator:
                 + features.draw_implied_probability
                 + features.away_implied_probability
             )
-            assert 1.0 < total_prob < 1.1  # 正常的博彩公司抽水
+    assert 1.0 < total_prob < 1.1  # 正常的博彩公司抽水
 
     @pytest.mark.asyncio
     async def test_calculate_all_match_features(
@@ -362,30 +362,30 @@ class TestFeatureCalculator:
             )
 
             # 验证结果
-            assert isinstance(all_features, AllMatchFeatures)
-            assert all_features.match_entity == sample_match_entity
-            assert isinstance(all_features.home_team_recent, RecentPerformanceFeatures)
-            assert isinstance(all_features.away_team_recent, RecentPerformanceFeatures)
-            assert isinstance(
+    assert isinstance(all_features, AllMatchFeatures)
+    assert all_features.match_entity == sample_match_entity
+    assert isinstance(all_features.home_team_recent, RecentPerformanceFeatures)
+    assert isinstance(all_features.away_team_recent, RecentPerformanceFeatures)
+    assert isinstance(
                 all_features.historical_matchup, HistoricalMatchupFeatures
             )
-            assert isinstance(all_features.odds_features, OddsFeatures)
+    assert isinstance(all_features.odds_features, OddsFeatures)
 
             # 验证主队特征
-            assert all_features.home_team_recent.team_id == 1
-            assert all_features.home_team_recent.recent_5_wins >= 0
+    assert all_features.home_team_recent.team_id == 1
+    assert all_features.home_team_recent.recent_5_wins >= 0
 
             # 验证客队特征
-            assert all_features.away_team_recent.team_id == 2
-            assert all_features.away_team_recent.recent_5_wins >= 0
+    assert all_features.away_team_recent.team_id == 2
+    assert all_features.away_team_recent.recent_5_wins >= 0
 
             # 验证历史对战特征
-            assert all_features.historical_matchup.home_team_id == 1
-            assert all_features.historical_matchup.away_team_id == 2
+    assert all_features.historical_matchup.home_team_id == 1
+    assert all_features.historical_matchup.away_team_id == 2
 
             # 验证赔率特征
-            assert all_features.odds_features.match_id == 1
-            assert all_features.odds_features.bookmaker_count == 1
+    assert all_features.odds_features.match_id == 1
+    assert all_features.odds_features.bookmaker_count == 1
 
     @pytest.mark.asyncio
     async def test_batch_calculate_team_features(self, feature_calculator):
@@ -429,12 +429,12 @@ class TestFeatureCalculator:
             )
 
             # 验证结果
-            assert len(results) == 3
+    assert len(results) == 3
             for team_id in team_ids:
-                assert team_id in results
-                assert isinstance(results[team_id], RecentPerformanceFeatures)
-                assert results[team_id].team_id == team_id
-                assert results[team_id].calculation_date == calculation_date
+    assert team_id in results
+    assert isinstance(results[team_id], RecentPerformanceFeatures)
+    assert results[team_id].team_id == team_id
+    assert results[team_id].calculation_date == calculation_date
 
     def test_feature_property_calculations(self):
         """测试特征属性计算"""
@@ -449,8 +449,8 @@ class TestFeatureCalculator:
             recent_5_goals_against=4,
         )
 
-        assert features.recent_5_win_rate == 0.6  # 3/5
-        assert features.recent_5_goals_per_game == 1.6  # 8/5
+    assert features.recent_5_win_rate == 0.6  # 3_5
+    assert features.recent_5_goals_per_game == 1.6  # 8/5
 
         # 测试历史对战特征的计算属性
         h2h_features = HistoricalMatchupFeatures(
@@ -465,9 +465,9 @@ class TestFeatureCalculator:
             h2h_away_goals_total=12,
         )
 
-        assert h2h_features.h2h_home_win_rate == 0.4  # 4/10
-        assert h2h_features.h2h_goals_avg == 2.7  # 27/10
-        assert h2h_features.h2h_home_goals_avg == 1.5  # 15/10
+    assert h2h_features.h2h_home_win_rate == 0.4  # 4/10
+    assert h2h_features.h2h_goals_avg == 2.7  # 27/10
+    assert h2h_features.h2h_home_goals_avg == 1.5  # 15/10
 
         # 测试赔率特征的计算属性
         odds_features = OddsFeatures(
@@ -481,8 +481,8 @@ class TestFeatureCalculator:
             odds_variance_away=0.12,
         )
 
-        assert abs(odds_features.market_efficiency - 1.10) < 0.01
-        assert (
+    assert abs(odds_features.market_efficiency - 1.10) < 0.01
+    assert (
             abs(odds_features.bookmaker_consensus - 0.877) < 0.01
         )  # 1 - (0.1+0.15+0.12)/3
 
@@ -499,11 +499,11 @@ class TestFeatureCalculator:
         )
 
         performance_dict = performance_features.to_dict()
-        assert performance_dict["team_id"] == 1
-        assert performance_dict["recent_5_wins"] == 3
-        assert performance_dict["recent_5_goals_for"] == 8
-        assert "calculation_date" in performance_dict
-        assert "recent_5_win_rate" in performance_dict
+    assert performance_dict["team_id"] == 1
+    assert performance_dict["recent_5_wins"] == 3
+    assert performance_dict["recent_5_goals_for"] == 8
+    assert "calculation_date" in performance_dict
+    assert "recent_5_win_rate" in performance_dict
 
         # 测试历史对战特征序列化
         h2h_features = HistoricalMatchupFeatures(
@@ -514,17 +514,17 @@ class TestFeatureCalculator:
         )
 
         h2h_dict = h2h_features.to_dict()
-        assert h2h_dict["home_team_id"] == 1
-        assert h2h_dict["away_team_id"] == 2
-        assert h2h_dict["h2h_total_matches"] == 5
+    assert h2h_dict["home_team_id"] == 1
+    assert h2h_dict["away_team_id"] == 2
+    assert h2h_dict["h2h_total_matches"] == 5
 
         # 测试实体序列化
         match_dict = sample_match_entity.to_dict()
-        assert match_dict["match_id"] == 1
-        assert match_dict["home_team_id"] == 1
-        assert match_dict["away_team_id"] == 2
-        assert "match_time" in match_dict
+    assert match_dict["match_id"] == 1
+    assert match_dict["home_team_id"] == 1
+    assert match_dict["away_team_id"] == 2
+    assert "match_time" in match_dict
 
         team_dict = sample_team_entity.to_dict()
-        assert team_dict["team_id"] == 1
-        assert team_dict["team_name"] == "测试球队"
+    assert team_dict["team_id"] == 1
+    assert team_dict["team_name"] == "测试球队"

@@ -30,10 +30,10 @@ class TestFootballKafkaProducer:
 
     def test_init(self, producer):
         """测试初始化"""
-        assert producer.config is not None
-        assert producer.producer is not None
-        assert hasattr(producer, 'logger')
-        assert hasattr(producer, '_delivery_callback')
+    assert producer.config is not None
+    assert producer.producer is not None
+    assert hasattr(producer, 'logger')
+    assert hasattr(producer, '_delivery_callback')
 
     @pytest.mark.asyncio
     async def test_create_producer_success(self, producer):
@@ -48,7 +48,7 @@ class TestFootballKafkaProducer:
             # 这个方法没有返回值，但会创建producer
             producer._create_producer()
 
-            assert producer.producer == mock_producer
+    assert producer.producer == mock_producer
             mock_producer_class.assert_called_once()
 
     @pytest.mark.asyncio
@@ -62,11 +62,11 @@ class TestFootballKafkaProducer:
             # 应该抛出异常而不是返回False
             try:
                 producer._create_producer()
-                assert False, "应该抛出异常"
+    assert False, "应该抛出异常"
             except Exception:
                 pass  # 期望抛出异常
 
-            assert producer.producer is None
+    assert producer.producer is None
 
     @pytest.mark.asyncio
     async def test_send_match_data_success(self, producer):
@@ -87,20 +87,20 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is True
+    assert result is True
         producer.producer.produce.assert_called_once()
         producer.producer.flush.assert_called_once()
 
         # 验证消息格式
         call_args = producer.producer.produce.call_args
-        assert call_args[1]['topic'] == "matches-stream"
-        assert call_args[1]['key'] == "match_1"
+    assert call_args[1]['topic'] == "matches-stream"
+    assert call_args[1]['key'] == "match_1"
 
         # 解析消息内容
         message_data = json.loads(call_args[1]['value'])
-        assert message_data['data_type'] == "match"
-        assert message_data['source'] == "data_collector"
-        assert message_data['data'] == match_data
+    assert message_data['data_type'] == "match"
+    assert message_data['source'] == "data_collector"
+    assert message_data['data'] == match_data
 
     @pytest.mark.asyncio
     async def test_send_match_data_with_custom_key(self, producer):
@@ -114,9 +114,9 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data, key=custom_key)
 
-        assert result is True
+    assert result is True
         call_args = producer.producer.produce.call_args
-        assert call_args[1]['key'] == custom_key
+    assert call_args[1]['key'] == custom_key
 
     @pytest.mark.asyncio
     async def test_send_match_data_producer_not_initialized(self, producer):
@@ -127,7 +127,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_send_odds_data_success(self, producer):
@@ -145,13 +145,13 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_odds_data(odds_data)
 
-        assert result is True
+    assert result is True
 
         # 验证消息格式
         call_args = producer.producer.produce.call_args
         message_data = json.loads(call_args[1]['value'])
-        assert message_data['data_type'] == "odds"
-        assert message_data['data'] == odds_data
+    assert message_data['data_type'] == "odds"
+    assert message_data['data'] == odds_data
 
     @pytest.mark.asyncio
     async def test_send_scores_data_success(self, producer):
@@ -169,13 +169,13 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_scores_data(scores_data)
 
-        assert result is True
+    assert result is True
 
         # 验证消息格式
         call_args = producer.producer.produce.call_args
         message_data = json.loads(call_args[1]['value'])
-        assert message_data['data_type'] == "scores"
-        assert message_data['data'] == scores_data
+    assert message_data['data_type'] == "scores"
+    assert message_data['data'] == scores_data
 
     @pytest.mark.asyncio
     async def test_send_batch_success(self, producer):
@@ -192,8 +192,8 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_batch(messages)
 
-        assert result is True
-        assert producer.producer.produce.call_count == 3
+    assert result is True
+    assert producer.producer.produce.call_count == 3
         producer.producer.flush.assert_called_once()
 
     @pytest.mark.asyncio
@@ -201,7 +201,7 @@ class TestFootballKafkaProducer:
         """测试发送空消息列表"""
         result = await producer.send_batch([])
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_send_batch_with_failures(self, producer):
@@ -221,7 +221,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_batch(messages)
 
-        assert result is False  # 部分失败也返回False
+    assert result is False  # 部分失败也返回False
 
     @pytest.mark.asyncio
     async def test_serialize_message_success(self, producer):
@@ -234,9 +234,9 @@ class TestFootballKafkaProducer:
 
         result = producer._serialize_message(message)
 
-        assert isinstance(result, str)
+    assert isinstance(result, str)
         parsed = json.loads(result)
-        assert parsed == message
+    assert parsed == message
 
     @pytest.mark.asyncio
     async def test_serialize_message_with_complex_types(self, producer):
@@ -253,9 +253,9 @@ class TestFootballKafkaProducer:
         # 应该能处理复杂类型（转换为可序列化格式）
         result = producer._serialize_message(message)
 
-        assert isinstance(result, str)
+    assert isinstance(result, str)
         parsed = json.loads(result)
-        assert parsed["match_id"] == "match_1"
+    assert parsed["match_id"] == "match_1"
 
     @pytest.mark.asyncio
     async def test_serialize_message_failure(self, producer):
@@ -305,7 +305,7 @@ class TestFootballKafkaProducer:
 
         # 第一次发送失败
         result1 = await producer.send_match_data(match_data)
-        assert result1 is False
+    assert result1 is False
 
         # 重新创建生产者
         with patch('confluent_kafka.Producer') as mock_producer_class:
@@ -319,7 +319,7 @@ class TestFootballKafkaProducer:
 
             # 第二次发送成功
             result2 = await producer.send_match_data(match_data)
-            assert result2 is True
+    assert result2 is True
 
     @pytest.mark.asyncio
     async def test_timeout_handling(self, producer):
@@ -332,7 +332,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_kafka_broker_unavailable(self, producer):
@@ -342,22 +342,22 @@ class TestFootballKafkaProducer:
 
             result = producer._create_producer()
 
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_validate_message_data(self, producer):
         """测试验证消息数据"""
         # 有效数据
         valid_data = {"match_id": "match_1", "home_team": "Team A", "away_team": "Team B"}
-        assert producer._validate_message_data(valid_data) is True
+    assert producer._validate_message_data(valid_data) is True
 
         # 缺少必要字段
         invalid_data = {"home_team": "Team A"}
-        assert producer._validate_message_data(invalid_data) is False
+    assert producer._validate_message_data(invalid_data) is False
 
         # None值
         none_data = None
-        assert producer._validate_message_data(none_data) is False
+    assert producer._validate_message_data(none_data) is False
 
     @pytest.mark.asyncio
     async def test_flush_timeout_handling(self, producer):
@@ -370,7 +370,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_cleanup(self, producer):

@@ -105,8 +105,8 @@ class TestFootballKafkaConsumerComprehensive:
 
     def test_initialization_with_config(self, consumer, mock_config):
         """测试使用配置初始化"""
-        assert consumer.config is mock_config
-        assert consumer._consumer is not None
+    assert consumer.config is mock_config
+    assert consumer._consumer is not None
 
     def test_initialization_without_config(self):
         """测试无配置初始化"""
@@ -117,8 +117,8 @@ class TestFootballKafkaConsumerComprehensive:
             mock_consumer_class.return_value = mock_consumer
 
             consumer = FootballKafkaConsumer()
-            assert consumer.config is not None
-            assert isinstance(consumer.config, StreamConfig)
+    assert consumer.config is not None
+    assert isinstance(consumer.config, StreamConfig)
 
     def test_initialization_with_custom_group_id(self, mock_config):
         """测试自定义消费者组ID"""
@@ -130,19 +130,19 @@ class TestFootballKafkaConsumerComprehensive:
 
             consumer = FootballKafkaConsumer(config=mock_config, consumer_group_id="custom_group")
             # 应该使用自定义组ID
-            assert consumer is not None
+    assert consumer is not None
 
     # === 消费者创建测试 ===
 
     def test_create_consumer(self, consumer):
         """测试创建消费者"""
         consumer._create_consumer()
-        assert consumer._consumer is not None
+    assert consumer._consumer is not None
 
     def test_initialize_consumer(self, consumer):
         """测试初始化消费者"""
         consumer._initialize_consumer("test_group")
-        assert consumer._consumer is not None
+    assert consumer._consumer is not None
 
     # === 消息反序列化测试 ===
 
@@ -153,8 +153,8 @@ class TestFootballKafkaConsumerComprehensive:
 
         result = consumer._deserialize_message(message_bytes)
 
-        assert result == message_data
-        assert isinstance(result, dict)
+    assert result == message_data
+    assert isinstance(result, dict)
 
     def test_deserialize_message_invalid_json(self, consumer):
         """测试无效JSON消息反序列化"""
@@ -163,7 +163,7 @@ class TestFootballKafkaConsumerComprehensive:
         result = consumer._deserialize_message(invalid_bytes)
 
         # 应该返回空字典或处理错误
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     def test_deserialize_message_empty_bytes(self, consumer):
         """测试空字节消息反序列化"""
@@ -171,13 +171,13 @@ class TestFootballKafkaConsumerComprehensive:
 
         result = consumer._deserialize_message(empty_bytes)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     def test_deserialize_message_none(self, consumer):
         """测试None消息反序列化"""
         result = consumer._deserialize_message(None)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     # === 消息处理测试 ===
 
@@ -189,7 +189,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.process_message(sample_match_message)
 
-            assert result is True
+    assert result is True
             mock_process.assert_called_once_with(sample_match_message)
 
     @pytest.mark.asyncio
@@ -200,7 +200,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.process_message(sample_odds_message)
 
-            assert result is True
+    assert result is True
             mock_process.assert_called_once_with(sample_odds_message)
 
     @pytest.mark.asyncio
@@ -211,7 +211,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.process_message(sample_scores_message)
 
-            assert result is True
+    assert result is True
             mock_process.assert_called_once_with(sample_scores_message)
 
     @pytest.mark.asyncio
@@ -222,7 +222,7 @@ class TestFootballKafkaConsumerComprehensive:
         result = await consumer.process_message(unknown_message)
 
         # 应该处理未知类型而不崩溃
-        assert result is not None
+    assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_message_with_exception(self, consumer, sample_match_message):
@@ -233,7 +233,7 @@ class TestFootballKafkaConsumerComprehensive:
             result = await consumer.process_message(sample_match_message)
 
             # 应该处理异常而不崩溃
-            assert result is not None
+    assert result is not None
 
     # === Kafka消息处理测试 ===
 
@@ -245,7 +245,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer._process_message(mock_kafka_message)
 
-            assert result is True
+    assert result is True
             mock_process.assert_called_once()
 
     @pytest.mark.asyncio
@@ -257,7 +257,7 @@ class TestFootballKafkaConsumerComprehensive:
         result = await consumer._process_message(error_message)
 
         # 应该处理错误消息
-        assert result is not None
+    assert result is not None
 
     @pytest.mark.asyncio
     async def test_process_kafka_message_none_value(self, consumer):
@@ -268,7 +268,7 @@ class TestFootballKafkaConsumerComprehensive:
 
         result = await consumer._process_message(none_value_message)
 
-        assert result is not None
+    assert result is not None
 
     # === 订阅测试 ===
 
@@ -341,7 +341,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.consume_batch(num_messages=1, timeout=1.0)
 
-            assert result is not None
+    assert result is not None
             mock_consume.assert_called_once_with(1, timeout=1.0)
             mock_process.assert_called_once()
 
@@ -354,7 +354,7 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.consume_batch(num_messages=1, timeout=1.0)
 
-            assert result is not None
+    assert result is not None
             mock_consume.assert_called_once()
 
     @pytest.mark.asyncio
@@ -370,9 +370,9 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.consume_messages(max_messages=3, timeout=1.0)
 
-            assert result is not None
+    assert result is not None
             # 应该处理指定数量的消息
-            assert mock_process.call_count == 3
+    assert mock_process.call_count == 3
 
     # === 停止和关闭测试 ===
 
@@ -381,7 +381,7 @@ class TestFootballKafkaConsumerComprehensive:
         consumer.stop_consuming()
 
         # 应该调用相关停止方法
-        assert hasattr(consumer, '_consuming')
+    assert hasattr(consumer, '_consuming')
         # 停止后应该设置标志
 
     def test_close(self, consumer):
@@ -403,7 +403,7 @@ class TestFootballKafkaConsumerComprehensive:
     async def test_async_context_manager(self, consumer):
         """测试异步上下文管理器"""
         async with consumer:
-            assert consumer is not None
+    assert consumer is not None
 
         # 退出时应调用close
         consumer._consumer.close.assert_called()
@@ -452,7 +452,7 @@ class TestFootballKafkaConsumerComprehensive:
             result = await consumer._process_message(mock_kafka_message)
 
             # 应该返回False或处理异常
-            assert result is not None
+    assert result is not None
 
     def test_subscribe_exception_handling(self, consumer):
         """测试订阅异常处理"""
@@ -472,7 +472,7 @@ class TestFootballKafkaConsumerComprehensive:
 
         result = consumer._deserialize_message(large_bytes)
 
-        assert isinstance(result, dict)
+    assert isinstance(result, dict)
 
     def test_deserialize_unicode_message(self, consumer):
         """测试Unicode消息反序列化"""
@@ -481,7 +481,7 @@ class TestFootballKafkaConsumerComprehensive:
 
         result = consumer._deserialize_message(unicode_bytes)
 
-        assert result == unicode_data
+    assert result == unicode_data
 
     @pytest.mark.asyncio
     async def test_consume_with_zero_timeout(self, consumer):
@@ -510,8 +510,8 @@ class TestFootballKafkaConsumerComprehensive:
             # 等待所有任务完成
             results = await asyncio.gather(*tasks)
 
-            assert all(result is not None for result in results)
-            assert mock_process.call_count == 100
+    assert all(result is not None for result in results)
+    assert mock_process.call_count == 100
 
     # === 配置测试 ===
 
@@ -526,7 +526,7 @@ class TestFootballKafkaConsumerComprehensive:
             consumer = FootballKafkaConsumer(config=mock_config)
 
             # 验证配置被正确应用
-            assert consumer.config == mock_config
+    assert consumer.config == mock_config
 
     def test_default_configuration(self):
         """测试默认配置"""
@@ -539,8 +539,8 @@ class TestFootballKafkaConsumerComprehensive:
             consumer = FootballKafkaConsumer()
 
             # 应该有默认配置
-            assert consumer.config is not None
-            assert isinstance(consumer.config, StreamConfig)
+    assert consumer.config is not None
+    assert isinstance(consumer.config, StreamConfig)
 
     # === 集成测试 ===
 
@@ -588,8 +588,8 @@ class TestFootballKafkaConsumerComprehensive:
 
             result = await consumer.consume_batch(num_messages=10, timeout=1.0)
 
-            assert result is not None
-            assert mock_process.call_count == 10
+    assert result is not None
+    assert mock_process.call_count == 10
             mock_consume.assert_called_once_with(10, timeout=1.0)
 
     # === 重连机制测试 ===
@@ -612,7 +612,7 @@ class TestFootballKafkaConsumerComprehensive:
             # 应该处理连接问题并继续
             await consumer.start_consuming(timeout=0.1)
 
-            assert call_count >= 1
+    assert call_count >= 1
 
     # === 偏移量管理测试 ===
 
@@ -657,7 +657,7 @@ class TestFootballKafkaConsumerComprehensive:
             )
 
             # 应该使用自定义消费者组ID
-            assert consumer is not None
+    assert consumer is not None
 
     # === 工具函数测试 ===
 
@@ -666,4 +666,4 @@ class TestFootballKafkaConsumerComprehensive:
         from src.streaming.kafka_consumer import get_session
 
         session = get_session()
-        assert session is not None
+    assert session is not None

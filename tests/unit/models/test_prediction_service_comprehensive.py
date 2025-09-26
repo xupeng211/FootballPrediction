@@ -29,10 +29,10 @@ class TestPredictionResult:
             confidence_score=0.6,
         )
 
-        assert result.match_id == 123
-        assert result.model_version == "1.0.0"
-        assert result.predicted_result == "home"
-        assert result.confidence_score == 0.6
+    assert result.match_id == 123
+    assert result.model_version == "1.0.0"
+    assert result.predicted_result == "home"
+    assert result.confidence_score == 0.6
 
     def test_prediction_result_to_dict(self):
         """测试预测结果转换为字典"""
@@ -43,12 +43,12 @@ class TestPredictionResult:
 
         result_dict = result.to_dict()
 
-        assert result_dict["match_id"] == 123
-        assert result_dict["model_version"] == "1.0.0"
-        assert result_dict["created_at"] == created_at.isoformat()
-        assert "home_win_probability" in result_dict
-        assert "draw_probability" in result_dict
-        assert "away_win_probability" in result_dict
+    assert result_dict["match_id"] == 123
+    assert result_dict["model_version"] == "1.0.0"
+    assert result_dict["created_at"] == created_at.isoformat()
+    assert "home_win_probability" in result_dict
+    assert "draw_probability" in result_dict
+    assert "away_win_probability" in result_dict
 
     def test_prediction_result_validation_probabilities_sum(self):
         """测试预测概率总和验证（业务逻辑测试）"""
@@ -67,7 +67,7 @@ class TestPredictionResult:
         )
 
         # 业务规则：概率总和应该接近1.0
-        assert abs(total_prob - 1.0) < 0.01
+    assert abs(total_prob - 1.0) < 0.01
 
 
 class TestPredictionService:
@@ -92,11 +92,11 @@ class TestPredictionService:
 
     def test_prediction_service_initialization(self, mock_dependencies):
         """测试预测服务初始化"""
-        service = PredictionService(mlflow_tracking_uri="http://test:5002")
+        service = PredictionService(mlflow_tracking_uri="http:_/test:5002")
 
-        assert service.mlflow_tracking_uri == "http://test:5002"
-        assert isinstance(service.model_cache, dict)
-        assert isinstance(service.model_metadata_cache, dict)
+    assert service.mlflow_tracking_uri == "http://test:5002"
+    assert isinstance(service.model_cache, dict)
+    assert isinstance(service.model_metadata_cache, dict)
         mock_dependencies["mlflow"].set_tracking_uri.assert_called_with(
             "http://test:5002"
         )
@@ -122,9 +122,9 @@ class TestPredictionService:
             service = PredictionService()
             model, version = await service.get_production_model("test_model")
 
-            assert model == mock_model
-            assert version == "1.0.0"
-            assert "models:/test_model/1.0.0" in service.model_cache
+    assert model == mock_model
+    assert version == "1.0.0"
+    assert "models:_test_model/1.0.0" in service.model_cache
 
     @pytest.mark.asyncio
     async def test_get_production_model_fallback_to_staging(self, mock_dependencies):
@@ -148,9 +148,9 @@ class TestPredictionService:
             service = PredictionService()
             model, version = await service.get_production_model("test_model")
 
-            assert version == "0.9.0"
+    assert version == "0.9.0"
             # 验证调用了两次get_latest_versions（Production和Staging）
-            assert mock_client.get_latest_versions.call_count == 2
+    assert mock_client.get_latest_versions.call_count == 2
 
     @pytest.mark.asyncio
     async def test_get_production_model_no_versions_error(self, mock_dependencies):
@@ -190,8 +190,8 @@ class TestPredictionService:
             # 第二次调用（应该使用缓存）
             model2, version2 = await service.get_production_model("test_model")
 
-            assert model1 == model2
-            assert version1 == version2
+    assert model1 == model2
+    assert version1 == version2
             # 验证只加载了一次模型
             mock_load.assert_called_once()
 
@@ -245,14 +245,14 @@ class TestPredictionService:
         ):
             result = await service.predict_match(123)
 
-            assert isinstance(result, PredictionResult)
-            assert result.match_id == 123
-            assert result.model_version == "1.0.0"
-            assert result.predicted_result == "home"
-            assert result.home_win_probability == 0.5
-            assert result.draw_probability == 0.3
-            assert result.away_win_probability == 0.2
-            assert result.confidence_score == 0.5  # max probability
+    assert isinstance(result, PredictionResult)
+    assert result.match_id == 123
+    assert result.model_version == "1.0.0"
+    assert result.predicted_result == "home"
+    assert result.home_win_probability == 0.5
+    assert result.draw_probability == 0.3
+    assert result.away_win_probability == 0.2
+    assert result.confidence_score == 0.5  # max probability
 
     @pytest.mark.asyncio
     async def test_predict_match_no_match_found(self, mock_dependencies):
@@ -303,5 +303,5 @@ class TestPredictionService:
         ):
             result = await service.predict_match(123)
 
-            assert result.predicted_result == "draw"
-            assert result.features_used == mock_default_features
+    assert result.predicted_result == "draw"
+    assert result.features_used == mock_default_features

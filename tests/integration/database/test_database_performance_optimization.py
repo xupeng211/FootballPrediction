@@ -114,7 +114,7 @@ class TestDatabasePartitioning:
             result = await async_session.execute(insert_query, match_data)
             match_id = result.scalar()
 
-            assert match_id is not None, "分区表插入应该返回有效的ID"
+    assert match_id is not None, "分区表插入应该返回有效的ID"
 
         await async_session.commit()
 
@@ -129,7 +129,7 @@ class TestDatabasePartitioning:
         september_result = await async_session.execute(september_query)
         september_count = september_result.scalar()
 
-        assert september_count >= 1, "9月数据应该插入到2025_09分区"
+    assert september_count >= 1, "9月数据应该插入到2025_09分区"
 
         october_query = text(
             """
@@ -141,7 +141,7 @@ class TestDatabasePartitioning:
         october_result = await async_session.execute(october_query)
         october_count = october_result.scalar()
 
-        assert october_count >= 1, "10月数据应该插入到2025_10分区"
+    assert october_count >= 1, "10月数据应该插入到2025_10分区"
 
     @pytest.mark.asyncio
     async def test_partition_pruning_query(self, async_session: AsyncSession):
@@ -165,10 +165,10 @@ class TestDatabasePartitioning:
         query_duration = end_time - start_time
 
         # 验证查询性能（分区裁剪应该使查询很快）
-        assert (
+    assert (
             query_duration < 0.1
         ), f"分区裁剪查询应该很快，实际耗时: {query_duration:.3f}秒"
-        assert count >= 0, "查询应该返回有效计数"
+    assert count >= 0, "查询应该返回有效计数"
 
     @pytest.mark.asyncio
     async def test_odds_partition_insertion(self, async_session: AsyncSession):
@@ -196,7 +196,7 @@ class TestDatabasePartitioning:
         result = await async_session.execute(insert_odds_query, odds_data)
         odds_id = result.scalar()
 
-        assert odds_id is not None, "odds分区表插入应该成功"
+    assert odds_id is not None, "odds分区表插入应该成功"
 
         await async_session.commit()
 
@@ -214,7 +214,7 @@ class TestDatabasePartitioning:
         )
 
         verify_count = verify_result.scalar()
-        assert verify_count >= 1, "赔率数据应该插入到正确的分区"
+    assert verify_count >= 1, "赔率数据应该插入到正确的分区"
 
 
 class TestMaterializedViews:
@@ -226,12 +226,12 @@ class TestMaterializedViews:
 
         refresher = MaterializedViewRefresher()
 
-        assert refresher.config is not None, "数据库配置应该正确加载"
-        assert len(refresher.MATERIALIZED_VIEWS) == 2, "应该定义2个物化视图"
-        assert (
+    assert refresher.config is not None, "数据库配置应该正确加载"
+    assert len(refresher.MATERIALIZED_VIEWS) == 2, "应该定义2个物化视图"
+    assert (
             "team_performance" in refresher.MATERIALIZED_VIEWS
         ), "应该包含team_performance视图"
-        assert "odds_trends" in refresher.MATERIALIZED_VIEWS, "应该包含odds_trends视图"
+    assert "odds_trends" in refresher.MATERIALIZED_VIEWS, "应该包含odds_trends视图"
 
     @pytest.mark.asyncio
     async def test_materialized_view_exists_check(self):
@@ -251,9 +251,9 @@ class TestMaterializedViews:
 
             result = await refresher.refresh_view("team_performance")
 
-            assert result["success"], "视图存在时刷新应该成功"
-            assert "duration" in result, "结果应该包含执行时间"
-            assert "view_name" in result, "结果应该包含视图名称"
+    assert result["success"], "视图存在时刷新应该成功"
+    assert "duration" in result, "结果应该包含执行时间"
+    assert "view_name" in result, "结果应该包含视图名称"
 
     @pytest.mark.asyncio
     async def test_materialized_view_nonexistent_handling(self):
@@ -273,9 +273,9 @@ class TestMaterializedViews:
 
             result = await refresher.refresh_view("team_performance")
 
-            assert not result["success"], "视图不存在时应该返回失败"
-            assert result["error"] == "物化视图不存在", "应该返回正确的错误信息"
-            assert result["duration"] == 0, "失败时duration应该为0"
+    assert not result["success"], "视图不存在时应该返回失败"
+    assert result["error"] == "物化视图不存在", "应该返回正确的错误信息"
+    assert result["duration"] == 0, "失败时duration应该为0"
 
     @pytest.mark.asyncio
     async def test_invalid_view_key_handling(self):
@@ -305,9 +305,9 @@ class TestMaterializedViews:
 
             results = await refresher.refresh_all_views()
 
-            assert len(results) == 2, "应该刷新2个视图"
-            assert all(r["success"] for r in results), "所有视图刷新都应该成功"
-            assert mock_refresh.call_count == 2, "应该调用2次refresh_view"
+    assert len(results) == 2, "应该刷新2个视图"
+    assert all(r["success"] for r in results), "所有视图刷新都应该成功"
+    assert mock_refresh.call_count == 2, "应该调用2次refresh_view"
 
     @pytest.mark.asyncio
     async def test_get_view_info(self):
@@ -345,9 +345,9 @@ class TestMaterializedViews:
 
             info = await refresher.get_view_info()
 
-            assert info["success"], "获取视图信息应该成功"
-            assert "views" in info, "结果应该包含视图信息"
-            assert len(info["views"]) >= 1, "应该返回至少一个视图的信息"
+    assert info["success"], "获取视图信息应该成功"
+    assert "views" in info, "结果应该包含视图信息"
+    assert len(info["views"]) >= 1, "应该返回至少一个视图的信息"
 
 
 class TestMaterializedViewExamples:
@@ -358,7 +358,7 @@ class TestMaterializedViewExamples:
         """测试示例类初始化"""
 
         examples = MaterializedViewExamples()
-        assert examples.config is not None, "配置应该正确初始化"
+    assert examples.config is not None, "配置应该正确初始化"
 
     @pytest.mark.asyncio
     async def test_execute_query_mock(self):
@@ -380,9 +380,9 @@ class TestMaterializedViewExamples:
             test_query = "SELECT team_name, matches, wins FROM mv_team_recent_performance LIMIT 2;"
             results = await examples._execute_query(test_query)
 
-            assert len(results) == 2, "应该返回2行结果"
-            assert results[0]["team_name"] == "Team A", "第一行数据应该正确"
-            assert results[1]["wins"] == 2, "第二行数据应该正确"
+    assert len(results) == 2, "应该返回2行结果"
+    assert results[0]["team_name"] == "Team A", "第一行数据应该正确"
+    assert results[1]["wins"] == 2, "第二行数据应该正确"
 
     @pytest.mark.asyncio
     async def test_performance_test_mock(self):
@@ -401,14 +401,14 @@ class TestMaterializedViewExamples:
                 )
 
                 # 验证有性能输出
-                assert mock_print.call_count > 0, "应该有性能测试输出"
+    assert mock_print.call_count > 0, "应该有性能测试输出"
 
                 # 检查是否输出了执行时间
                 printed_args = [call[0] for call in mock_print.call_args_list]
                 time_output_found = any(
                     "平均执行时间" in str(args) for args in printed_args
                 )
-                assert time_output_found, "应该输出平均执行时间"
+    assert time_output_found, "应该输出平均执行时间"
 
 
 class TestDatabaseIndexes:
@@ -448,7 +448,7 @@ class TestDatabaseIndexes:
 
         # 验证关键索引存在（可能因为分区表重建而不存在，这是正常的）
         if found_indexes:
-            assert found_indexes.issubset(
+    assert found_indexes.issubset(
                 expected_indexes
             ), "所有找到的索引都应该在预期列表中"
 
@@ -481,10 +481,10 @@ class TestDatabaseIndexes:
             query_duration = end_time - start_time
 
             # 验证查询性能合理（有索引的查询应该很快）
-            assert (
+    assert (
                 query_duration < 1.0
             ), f"索引查询应该很快，实际耗时: {query_duration:.3f}秒"
-            assert count >= 0, "查询应该返回有效计数"
+    assert count >= 0, "查询应该返回有效计数"
 
 
 class TestPerformanceOptimizationIntegration:
@@ -518,7 +518,7 @@ class TestPerformanceOptimizationIntegration:
         match_id = result.scalar()
         await async_session.commit()
 
-        assert match_id is not None, "分区表插入应该成功"
+    assert match_id is not None, "分区表插入应该成功"
 
         # 2. 测试查询性能
         start_time = time.time()
@@ -536,10 +536,10 @@ class TestPerformanceOptimizationIntegration:
         end_time = time.time()
         query_duration = end_time - start_time
 
-        assert (
+    assert (
             query_duration < 0.5
         ), f"优化后查询应该很快，实际耗时: {query_duration:.3f}秒"
-        assert count >= 0, "查询应该返回有效结果"
+    assert count >= 0, "查询应该返回有效结果"
 
         # 3. 测试物化视图刷新（模拟）
         refresher = MaterializedViewRefresher()
@@ -559,8 +559,8 @@ class TestPerformanceOptimizationIntegration:
 
             refresh_result = await refresher.refresh_view("team_performance")
 
-            assert refresh_result["success"], "物化视图刷新应该成功"
-            assert (
+    assert refresh_result["success"], "物化视图刷新应该成功"
+    assert (
                 refresh_result["rows_after"] >= refresh_result["rows_before"]
             ), "刷新后行数应该合理"
 
@@ -576,8 +576,8 @@ class TestPerformanceOptimizationIntegration:
 
             result = await refresher.refresh_view("team_performance")
 
-            assert not result["success"], "连接失败时应该返回失败"
-            assert "数据库连接失败" in result["error"], "应该包含具体错误信息"
+    assert not result["success"], "连接失败时应该返回失败"
+    assert "数据库连接失败" in result["error"], "应该包含具体错误信息"
 
         # 测试无效参数
         with pytest.raises(ValueError):
@@ -605,8 +605,8 @@ class TestPerformanceOptimizationIntegration:
 
             results = await asyncio.gather(*tasks)
 
-            assert len(results) == 2, "应该返回2个结果"
-            assert all(r["success"] for r in results), "所有并发操作都应该成功"
+    assert len(results) == 2, "应该返回2个结果"
+    assert all(r["success"] for r in results), "所有并发操作都应该成功"
 
 
 @pytest_asyncio.fixture
@@ -665,7 +665,7 @@ class TestPerformanceBenchmarks:
             # assert duration <= benchmark['expected_max_duration'], \
             #     f"{benchmark['name']} 超过性能基准: {duration:.3f}s > {benchmark['expected_max_duration']}s"
 
-            assert count >= 0, f"{benchmark['name']} 应该返回有效计数"
+    assert count >= 0, f"{benchmark['name']} 应该返回有效计数"
 
 
 if __name__ == "__main__":

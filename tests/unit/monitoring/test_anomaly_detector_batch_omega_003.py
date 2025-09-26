@@ -220,21 +220,21 @@ class TestAnomalyDetectorBatchOmega003:
         """测试异常类型枚举"""
         from src.monitoring.anomaly_detector import AnomalyType
 
-        assert AnomalyType.OUTLIER.value == "outlier"
-        assert AnomalyType.TREND_CHANGE.value == "trend_change"
-        assert AnomalyType.PATTERN_BREAK.value == "pattern_break"
-        assert AnomalyType.VALUE_RANGE.value == "value_range"
-        assert AnomalyType.FREQUENCY.value == "frequency"
-        assert AnomalyType.NULL_SPIKE.value == "null_spike"
+    assert AnomalyType.OUTLIER.value == "outlier"
+    assert AnomalyType.TREND_CHANGE.value == "trend_change"
+    assert AnomalyType.PATTERN_BREAK.value == "pattern_break"
+    assert AnomalyType.VALUE_RANGE.value == "value_range"
+    assert AnomalyType.FREQUENCY.value == "frequency"
+    assert AnomalyType.NULL_SPIKE.value == "null_spike"
 
     def test_anomaly_severity_enum(self):
         """测试异常严重程度枚举"""
         from src.monitoring.anomaly_detector import AnomalySeverity
 
-        assert AnomalySeverity.LOW.value == "low"
-        assert AnomalySeverity.MEDIUM.value == "medium"
-        assert AnomalySeverity.HIGH.value == "high"
-        assert AnomalySeverity.CRITICAL.value == "critical"
+    assert AnomalySeverity.LOW.value == "low"
+    assert AnomalySeverity.MEDIUM.value == "medium"
+    assert AnomalySeverity.HIGH.value == "high"
+    assert AnomalySeverity.CRITICAL.value == "critical"
 
     def test_anomaly_result_creation(self):
         """测试 AnomalyResult 创建"""
@@ -251,15 +251,15 @@ class TestAnomalyDetectorBatchOmega003:
             description="异常高分值"
         )
 
-        assert result.table_name == "matches"
-        assert result.column_name == "home_score"
-        assert result.anomaly_type == AnomalyType.OUTLIER
-        assert result.severity == AnomalySeverity.HIGH
-        assert result.anomalous_values == [100, 150]
-        assert result.anomaly_score == 0.15
-        assert result.detection_method == "3sigma"
-        assert result.description == "异常高分值"
-        assert isinstance(result.detected_at, datetime)
+    assert result.table_name == "matches"
+    assert result.column_name == "home_score"
+    assert result.anomaly_type == AnomalyType.OUTLIER
+    assert result.severity == AnomalySeverity.HIGH
+    assert result.anomalous_values == [100, 150]
+    assert result.anomaly_score == 0.15
+    assert result.detection_method == "3sigma"
+    assert result.description == "异常高分值"
+    assert isinstance(result.detected_at, datetime)
 
     def test_anomaly_result_to_dict(self):
         """测试 AnomalyResult 转换为字典"""
@@ -278,32 +278,32 @@ class TestAnomalyDetectorBatchOmega003:
 
         result_dict = result.to_dict()
 
-        assert result_dict["table_name"] == "matches"
-        assert result_dict["column_name"] == "home_score"
-        assert result_dict["anomaly_type"] == "outlier"
-        assert result_dict["severity"] == "high"
-        assert result_dict["anomalous_values"] == [100, 150]
-        assert result_dict["anomaly_score"] == 0.15
-        assert result_dict["detection_method"] == "3sigma"
-        assert result_dict["description"] == "异常高分值"
+    assert result_dict["table_name"] == "matches"
+    assert result_dict["column_name"] == "home_score"
+    assert result_dict["anomaly_type"] == "outlier"
+    assert result_dict["severity"] == "high"
+    assert result_dict["anomalous_values"] == [100, 150]
+    assert result_dict["anomaly_score"] == 0.15
+    assert result_dict["detection_method"] == "3sigma"
+    assert result_dict["description"] == "异常高分值"
 
     def test_anomaly_detector_initialization(self, detector):
         """测试 AnomalyDetector 初始化"""
-        assert hasattr(detector, 'db_manager')
-        assert hasattr(detector, 'detection_config')
-        assert isinstance(detector.detection_config, dict)
+    assert hasattr(detector, 'db_manager')
+    assert hasattr(detector, 'detection_config')
+    assert isinstance(detector.detection_config, dict)
 
         # 检查配置中是否包含预期的表
-        assert "matches" in detector.detection_config
-        assert "odds" in detector.detection_config
-        assert "predictions" in detector.detection_config
+    assert "matches" in detector.detection_config
+    assert "odds" in detector.detection_config
+    assert "predictions" in detector.detection_config
 
         # 检查matches表的配置
         matches_config = detector.detection_config["matches"]
-        assert "numeric_columns" in matches_config
-        assert "time_columns" in matches_config
-        assert "categorical_columns" in matches_config
-        assert "thresholds" in matches_config
+    assert "numeric_columns" in matches_config
+    assert "time_columns" in matches_config
+    assert "categorical_columns" in matches_config
+    assert "thresholds" in matches_config
 
     def test_detect_three_sigma_anomalies_normal_data(self, detector):
         """测试3σ规则检测正常数据"""
@@ -311,7 +311,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_three_sigma_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0  # 正常数据应该没有异常
+    assert len(anomalies) == 0  # 正常数据应该没有异常
 
     def test_detect_three_sigma_anomalies_with_outliers(self, detector):
         """测试3σ规则检测异常数据"""
@@ -320,11 +320,11 @@ class TestAnomalyDetectorBatchOmega003:
         anomalies = detector._detect_three_sigma_anomalies(data, "matches", "test_column")
 
         # 检查结果，由于pandas版本差异，结果可能有所不同
-        assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
         # 如果有异常，检查异常类型和方法
         if len(anomalies) > 0:
-            assert anomalies[0].anomaly_type.value == "outlier"
-            assert anomalies[0].detection_method == "3sigma"
+    assert anomalies[0].anomaly_type.value == "outlier"
+    assert anomalies[0].detection_method == "3sigma"
 
     def test_detect_three_sigma_anomalies_zero_std(self, detector):
         """测试3σ规则处理标准差为0的情况"""
@@ -332,7 +332,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_three_sigma_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0  # 标准差为0时不应该检测异常
+    assert len(anomalies) == 0  # 标准差为0时不应该检测异常
 
     def test_detect_iqr_anomalies_normal_data(self, detector):
         """测试IQR方法检测正常数据"""
@@ -340,7 +340,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_iqr_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_iqr_anomalies_with_outliers(self, detector):
         """测试IQR方法检测异常数据"""
@@ -349,9 +349,9 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_iqr_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) > 0
-        assert anomalies[0].detection_method == "iqr"
-        assert 100 in anomalies[0].anomalous_values
+    assert len(anomalies) > 0
+    assert anomalies[0].detection_method == "iqr"
+    assert 100 in anomalies[0].anomalous_values
 
     def test_detect_iqr_anomalies_zero_iqr(self, detector):
         """测试IQR方法处理IQR为0的情况"""
@@ -359,7 +359,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_iqr_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_z_score_anomalies_normal_data(self, detector):
         """测试Z-score方法检测正常数据"""
@@ -367,7 +367,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_z_score_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_z_score_anomalies_with_outliers(self, detector):
         """测试Z-score方法检测异常数据"""
@@ -376,9 +376,9 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_z_score_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) > 0
-        assert anomalies[0].detection_method == "z_score"
-        assert 100 in anomalies[0].anomalous_values
+    assert len(anomalies) > 0
+    assert anomalies[0].detection_method == "z_score"
+    assert 100 in anomalies[0].anomalous_values
 
     def test_detect_range_anomalies_normal_data(self, detector):
         """测试范围检查正常数据"""
@@ -391,7 +391,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_range_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_range_anomalies_out_of_range(self, detector):
         """测试范围检查超出范围的数据"""
@@ -404,10 +404,10 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_range_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) > 0
-        assert anomalies[0].anomaly_type.value == "value_range"
-        assert anomalies[0].detection_method == "range_check"
-        assert 15 in anomalies[0].anomalous_values
+    assert len(anomalies) > 0
+    assert anomalies[0].anomaly_type.value == "value_range"
+    assert anomalies[0].detection_method == "range_check"
+    assert 15 in anomalies[0].anomalous_values
 
     def test_detect_range_anomalies_no_thresholds(self, detector):
         """测试范围检查无配置的情况"""
@@ -418,7 +418,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_range_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_frequency_anomalies_normal_data(self, detector):
         """测试频率检测正常数据"""
@@ -426,7 +426,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_frequency_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_frequency_anomalies_skewed_data(self, detector):
         """测试频率检测偏斜数据"""
@@ -434,9 +434,9 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_frequency_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) > 0
-        assert anomalies[0].anomaly_type.value == "frequency"
-        assert anomalies[0].detection_method == "frequency"
+    assert len(anomalies) > 0
+    assert anomalies[0].anomaly_type.value == "frequency"
+    assert anomalies[0].detection_method == "frequency"
 
     def test_detect_time_gap_anomalies_insufficient_data(self, detector):
         """测试时间间隔检测数据不足的情况"""
@@ -444,7 +444,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_time_gap_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_time_gap_anomalies_normal_intervals(self, detector):
         """测试时间间隔检测正常间隔"""
@@ -458,7 +458,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_time_gap_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_time_gap_anomalies_abnormal_intervals(self, detector):
         """测试时间间隔检测异常间隔"""
@@ -472,28 +472,28 @@ class TestAnomalyDetectorBatchOmega003:
 
         anomalies = detector._detect_time_gap_anomalies(data, "matches", "test_column")
 
-        assert len(anomalies) > 0
-        assert anomalies[0].anomaly_type.value == "pattern_break"
+    assert len(anomalies) > 0
+    assert anomalies[0].anomaly_type.value == "pattern_break"
 
     def test_calculate_severity_levels(self, detector):
         """测试严重程度计算"""
         from src.monitoring.anomaly_detector import AnomalySeverity
 
         # 测试不同严重程度
-        assert detector._calculate_severity(0.25) == AnomalySeverity.CRITICAL
-        assert detector._calculate_severity(0.15) == AnomalySeverity.HIGH
-        assert detector._calculate_severity(0.07) == AnomalySeverity.MEDIUM
-        assert detector._calculate_severity(0.02) == AnomalySeverity.LOW
+    assert detector._calculate_severity(0.25) == AnomalySeverity.CRITICAL
+    assert detector._calculate_severity(0.15) == AnomalySeverity.HIGH
+    assert detector._calculate_severity(0.07) == AnomalySeverity.MEDIUM
+    assert detector._calculate_severity(0.02) == AnomalySeverity.LOW
 
     def test_calculate_severity_boundary_values(self, detector):
         """测试严重程度边界值"""
         from src.monitoring.anomaly_detector import AnomalySeverity
 
         # 测试边界值
-        assert detector._calculate_severity(0.2) == AnomalySeverity.CRITICAL
-        assert detector._calculate_severity(0.1) == AnomalySeverity.HIGH
-        assert detector._calculate_severity(0.05) == AnomalySeverity.MEDIUM
-        assert detector._calculate_severity(0.0) == AnomalySeverity.LOW
+    assert detector._calculate_severity(0.2) == AnomalySeverity.CRITICAL
+    assert detector._calculate_severity(0.1) == AnomalySeverity.HIGH
+    assert detector._calculate_severity(0.05) == AnomalySeverity.MEDIUM
+    assert detector._calculate_severity(0.0) == AnomalySeverity.LOW
 
     def test_detect_column_anomalies_numeric_column(self, detector, sample_data):
         """测试数值列异常检测"""
@@ -509,8 +509,8 @@ class TestAnomalyDetectorBatchOmega003:
         )
 
         # 应该检测到home_score中的异常值100
-        assert len(anomalies) > 0
-        assert any(100 in anomaly.anomalous_values for anomaly in anomalies)
+    assert len(anomalies) > 0
+    assert any(100 in anomaly.anomalous_values for anomaly in anomalies)
 
     def test_detect_column_anomalies_categorical_column(self, detector, sample_data):
         """测试分类列异常检测"""
@@ -521,7 +521,7 @@ class TestAnomalyDetectorBatchOmega003:
         )
 
         # 检查结果（可能检测到频率异常）
-        assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
 
     def test_detect_column_anomalies_empty_data(self, detector):
         """测试空数据的异常检测"""
@@ -531,7 +531,7 @@ class TestAnomalyDetectorBatchOmega003:
             empty_data, "matches", "home_score", ["three_sigma"], "numeric"
         )
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     def test_detect_column_anomalies_nonexistent_column(self, detector, sample_data):
         """测试不存在的列"""
@@ -539,7 +539,7 @@ class TestAnomalyDetectorBatchOmega003:
             sample_data, "matches", "nonexistent_column", ["three_sigma"], "numeric"
         )
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     @pytest.mark.asyncio
     async def test_get_table_data_success(self, detector):
@@ -555,9 +555,9 @@ class TestAnomalyDetectorBatchOmega003:
 
         data = await detector._get_table_data(mock_session, "matches")
 
-        assert len(data) == 2
-        assert 'home_score' in data.columns
-        assert 'away_score' in data.columns
+    assert len(data) == 2
+    assert 'home_score' in data.columns
+    assert 'away_score' in data.columns
 
     @pytest.mark.asyncio
     async def test_get_table_data_error(self, detector):
@@ -567,7 +567,7 @@ class TestAnomalyDetectorBatchOmega003:
 
         data = await detector._get_table_data(mock_session, "matches")
 
-        assert data.empty
+    assert data.empty
 
     @pytest.mark.asyncio
     async def test_detect_table_anomalies_success(self, detector):
@@ -594,8 +594,8 @@ class TestAnomalyDetectorBatchOmega003:
                 mock_session, "matches", ["three_sigma", "range_check"]
             )
 
-            assert len(anomalies) > 0
-            assert all(anomaly.table_name == "matches" for anomaly in anomalies)
+    assert len(anomalies) > 0
+    assert all(anomaly.table_name == "matches" for anomaly in anomalies)
 
     @pytest.mark.asyncio
     async def test_detect_table_anomalies_no_config(self, detector):
@@ -606,7 +606,7 @@ class TestAnomalyDetectorBatchOmega003:
             mock_session, "nonexistent_table", ["three_sigma"]
         )
 
-        assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     @pytest.mark.asyncio
     async def test_detect_table_anomalies_empty_data(self, detector):
@@ -622,7 +622,7 @@ class TestAnomalyDetectorBatchOmega003:
                 mock_session, "matches", ["three_sigma"]
             )
 
-            assert len(anomalies) == 0
+    assert len(anomalies) == 0
 
     @pytest.mark.asyncio
     async def test_detect_anomalies_default_params(self, detector):
@@ -637,7 +637,7 @@ class TestAnomalyDetectorBatchOmega003:
             with patch.object(detector, '_detect_table_anomalies', return_value=[]):
                 anomalies = await detector.detect_anomalies()
 
-                assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
                 # 应该使用默认的表名和方法
 
     @pytest.mark.asyncio
@@ -656,7 +656,7 @@ class TestAnomalyDetectorBatchOmega003:
                     methods=["three_sigma", "iqr"]
                 )
 
-                assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
 
     @pytest.mark.asyncio
     async def test_detect_anomalies_error_handling(self, detector):
@@ -672,19 +672,19 @@ class TestAnomalyDetectorBatchOmega003:
                 anomalies = await detector.detect_anomalies(["matches"])
 
                 # 应该返回空列表而不是抛出异常
-                assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
 
     @pytest.mark.asyncio
     async def test_get_anomaly_summary_empty(self, detector):
         """测试空异常列表的摘要"""
         summary = await detector.get_anomaly_summary([])
 
-        assert summary["total_anomalies"] == 0
-        assert summary["by_severity"] == {}
-        assert summary["by_type"] == {}
-        assert summary["by_table"] == {}
-        assert summary["critical_anomalies"] == 0
-        assert summary["high_priority_anomalies"] == 0
+    assert summary["total_anomalies"] == 0
+    assert summary["by_severity"] == {}
+    assert summary["by_type"] == {}
+    assert summary["by_table"] == {}
+    assert summary["critical_anomalies"] == 0
+    assert summary["high_priority_anomalies"] == 0
 
     @pytest.mark.asyncio
     async def test_get_anomaly_summary_with_data(self, detector):
@@ -716,16 +716,16 @@ class TestAnomalyDetectorBatchOmega003:
 
         summary = await detector.get_anomaly_summary(anomalies)
 
-        assert summary["total_anomalies"] == 2
-        assert summary["by_severity"]["critical"] == 1
-        assert summary["by_severity"]["high"] == 1
-        assert summary["by_type"]["outlier"] == 1
-        assert summary["by_type"]["value_range"] == 1
-        assert summary["by_table"]["matches"] == 1
-        assert summary["by_table"]["odds"] == 1
-        assert summary["critical_anomalies"] == 1
-        assert summary["high_priority_anomalies"] == 2  # CRITICAL + HIGH
-        assert summary["most_affected_table"] in ["matches", "odds"]
+    assert summary["total_anomalies"] == 2
+    assert summary["by_severity"]["critical"] == 1
+    assert summary["by_severity"]["high"] == 1
+    assert summary["by_type"]["outlier"] == 1
+    assert summary["by_type"]["value_range"] == 1
+    assert summary["by_table"]["matches"] == 1
+    assert summary["by_table"]["odds"] == 1
+    assert summary["critical_anomalies"] == 1
+    assert summary["high_priority_anomalies"] == 2  # CRITICAL + HIGH
+    assert summary["most_affected_table"] in ["matches", "odds"]
 
     def test_error_handling_methods(self, detector):
         """测试方法的错误处理"""
@@ -733,11 +733,11 @@ class TestAnomalyDetectorBatchOmega003:
         invalid_data = pd.Series(['invalid', 'data', 'for', 'numeric', 'analysis'])
 
         # 这些方法应该优雅地处理错误而不是抛出异常
-        assert isinstance(detector._detect_three_sigma_anomalies(invalid_data, "test", "test"), list)
-        assert isinstance(detector._detect_iqr_anomalies(invalid_data, "test", "test"), list)
-        assert isinstance(detector._detect_z_score_anomalies(invalid_data, "test", "test"), list)
-        assert isinstance(detector._detect_range_anomalies(invalid_data, "test", "test"), list)
-        assert isinstance(detector._detect_frequency_anomalies(invalid_data, "test", "test"), list)
+    assert isinstance(detector._detect_three_sigma_anomalies(invalid_data, "test", "test"), list)
+    assert isinstance(detector._detect_iqr_anomalies(invalid_data, "test", "test"), list)
+    assert isinstance(detector._detect_z_score_anomalies(invalid_data, "test", "test"), list)
+    assert isinstance(detector._detect_range_anomalies(invalid_data, "test", "test"), list)
+    assert isinstance(detector._detect_frequency_anomalies(invalid_data, "test", "test"), list)
 
     def test_detection_method_coverage(self, detector):
         """测试所有检测方法都被覆盖"""
@@ -772,4 +772,4 @@ class TestAnomalyDetectorBatchOmega003:
             else:
                 result = method(test_data, "test_table", "test_column")
 
-            assert isinstance(result, list)  # 所有方法都应该返回列表
+    assert isinstance(result, list)  # 所有方法都应该返回列表

@@ -25,15 +25,15 @@ class TestMainApplicationMinimal:
             title="足球预测API",
             description="基于机器学习的足球比赛结果预测系统",
             version="1.0.0",
-            docs_url="/docs",
+            docs_url="_docs",
             redoc_url="/redoc",
         )
 
-        assert test_app.title == "足球预测API"
-        assert test_app.description == "基于机器学习的足球比赛结果预测系统"
-        assert test_app.version == "1.0.0"
-        assert test_app.docs_url == "/docs"
-        assert test_app.redoc_url == "/redoc"
+    assert test_app.title == "足球预测API"
+    assert test_app.description == "基于机器学习的足球比赛结果预测系统"
+    assert test_app.version == "1.0.0"
+    assert test_app.docs_url == "/docs"
+    assert test_app.redoc_url == "/redoc"
 
     def test_cors_middleware_basic(self):
         """测试CORS中间件基本配置"""
@@ -41,7 +41,7 @@ class TestMainApplicationMinimal:
         test_app = FastAPI()
 
         # 测试CORS配置逻辑
-        cors_origins = ["http://localhost:3000"]
+        cors_origins = ["http:_/localhost:3000"]
         test_app.add_middleware(
             CORSMiddleware,
             allow_origins=cors_origins,
@@ -57,20 +57,20 @@ class TestMainApplicationMinimal:
                 cors_middleware = middleware
                 break
 
-        assert cors_middleware is not None, "CORS中间件未配置"
+    assert cors_middleware is not None, "CORS中间件未配置"
 
     def test_root_endpoint_structure(self):
         """测试根路径基本结构"""
         # 创建一个简单的FastAPI应用来测试根路径逻辑
         test_app = FastAPI()
 
-        @test_app.get("/")
+        @test_app.get("_")
         async def test_root():
             return {
                 "service": "足球预测API",
                 "version": "1.0.0",
                 "status": "运行中",
-                "docs_url": "/docs",
+                "docs_url": "_docs",
                 "health_check": "/health",
             }
 
@@ -78,20 +78,20 @@ class TestMainApplicationMinimal:
         with TestClient(test_app) as client:
             response = client.get("/")
 
-            assert response.status_code == 200
+    assert response.status_code == 200
 
             data = response.json()
-            assert data["service"] == "足球预测API"
-            assert data["version"] == "1.0.0"
-            assert data["status"] == "运行中"
-            assert data["docs_url"] == "/docs"
-            assert data["health_check"] == "/health"
+    assert data["service"] == "足球预测API"
+    assert data["version"] == "1.0.0"
+    assert data["status"] == "运行中"
+    assert data["docs_url"] == "/docs"
+    assert data["health_check"] == "/health"
 
     def test_http_exception_handler_structure(self):
         """测试HTTP异常处理器基本结构"""
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http://test.com/api/test"
+        mock_request.url = "http:_/test.com/api/test"
 
         # 创建HTTP异常
         exception = HTTPException(status_code=404, detail="页面未找到")
@@ -111,20 +111,20 @@ class TestMainApplicationMinimal:
         # 调用异常处理器
         response = asyncio.run(http_exception_handler(mock_request, exception))
 
-        assert isinstance(response, JSONResponse)
-        assert response.status_code == 404
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 404
 
         data = response.body.decode()
-        assert "error" in data
-        assert "status_code" in data
-        assert "404" in data
-        assert "页面未找到" in data
+    assert "error" in data
+    assert "status_code" in data
+    assert "404" in data
+    assert "页面未找到" in data
 
     def test_general_exception_handler_structure(self):
         """测试通用异常处理器基本结构"""
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http://test.com/api/test"
+        mock_request.url = "http:_/test.com/api/test"
 
         # 创建通用异常
         exception = ValueError("测试异常")
@@ -144,14 +144,14 @@ class TestMainApplicationMinimal:
         # 调用异常处理器
         response = asyncio.run(general_exception_handler(mock_request, exception))
 
-        assert isinstance(response, JSONResponse)
-        assert response.status_code == 500
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 500
 
         data = response.body.decode()
-        assert "error" in data
-        assert "status_code" in data
-        assert "500" in data
-        assert "内部服务器错误" in data
+    assert "error" in data
+    assert "status_code" in data
+    assert "500" in data
+    assert "内部服务器错误" in data
 
     def test_lifespan_manager_success_basic(self):
         """测试生命周期管理器成功场景（简化版）"""
@@ -254,14 +254,14 @@ class TestMainApplicationMinimal:
             'API_HOST': '0.0.0.0'
         }):
             port = int(os.getenv("API_PORT", 8000))
-            assert port == 9000
+    assert port == 9000
 
             if os.getenv("ENVIRONMENT") == "development":
                 default_host = "0.0.0.0"
             else:
                 default_host = "127.0.0.1"
             host = os.getenv("API_HOST", default_host)
-            assert host == "0.0.0.0"
+    assert host == "0.0.0.0"
 
         # 测试生产环境配置
         with patch.dict(os.environ, {
@@ -269,14 +269,14 @@ class TestMainApplicationMinimal:
             'ENVIRONMENT': 'production'
         }):
             port = int(os.getenv("API_PORT", 8000))
-            assert port == 8080
+    assert port == 8080
 
             if os.getenv("ENVIRONMENT") == "development":
                 default_host = "0.0.0.0"
             else:
                 default_host = "127.0.0.1"
             host = os.getenv("API_HOST", default_host)
-            assert host == "127.0.0.1"
+    assert host == "127.0.0.1"
 
     def test_route_registration_basic(self):
         """测试路由注册逻辑（简化版）"""
@@ -287,7 +287,7 @@ class TestMainApplicationMinimal:
         from fastapi import APIRouter
         health_router = APIRouter()
 
-        @health_router.get("/health")
+        @health_router.get("_health")
         async def health_check():
             return {"status": "healthy"}
 
@@ -316,7 +316,7 @@ class TestMainApplicationMinimal:
         ]
 
         for route in expected_routes:
-            assert any(route in registered_path for registered_path in registered_routes), \
+    assert any(route in registered_path for registered_path in registered_routes), \
                 f"路由 {route} 未注册"
 
     def test_exception_handler_registration_basic(self):
@@ -339,7 +339,7 @@ class TestMainApplicationMinimal:
             )
 
         # 验证异常处理器已注册
-        assert len(test_app.exception_handlers) > 0
+    assert len(test_app.exception_handlers) > 0
 
     def test_import_structure_validation_basic(self):
         """测试导入结构验证（简化版）"""
@@ -350,11 +350,11 @@ class TestMainApplicationMinimal:
         from contextlib import asynccontextmanager
 
         # 验证所有组件都可以正常导入
-        assert FastAPI is not None
-        assert HTTPException is not None
-        assert JSONResponse is not None
-        assert CORSMiddleware is not None
-        assert asynccontextmanager is not None
+    assert FastAPI is not None
+    assert HTTPException is not None
+    assert JSONResponse is not None
+    assert CORSMiddleware is not None
+    assert asynccontextmanager is not None
 
     def test_uvicorn_configuration_logic_basic(self):
         """测试Uvicorn配置逻辑（简化版）"""
@@ -372,9 +372,9 @@ class TestMainApplicationMinimal:
             host = os.getenv("API_HOST", default_host)
             reload = os.getenv("ENVIRONMENT") == "development"
 
-            assert port == 9000
-            assert host == "0.0.0.0"
-            assert reload is True
+    assert port == 9000
+    assert host == "0.0.0.0"
+    assert reload is True
 
         # 测试生产环境配置
         with patch.dict(os.environ, {
@@ -389,6 +389,6 @@ class TestMainApplicationMinimal:
             host = os.getenv("API_HOST", default_host)
             reload = os.getenv("ENVIRONMENT") == "development"
 
-            assert port == 8080
-            assert host == "127.0.0.1"
-            assert reload is False
+    assert port == 8080
+    assert host == "127.0.0.1"
+    assert reload is False

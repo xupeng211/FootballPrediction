@@ -27,12 +27,12 @@ class TestDataProcessingService:
 
     def test_init(self, processor):
         """测试初始化"""
-        assert processor.name == "DataProcessingService"
-        assert processor.data_cleaner is None
-        assert processor.missing_handler is None
-        assert processor.data_lake is None
-        assert processor.db_manager is None
-        assert processor.cache_manager is None
+    assert processor.name == "DataProcessingService"
+    assert processor.data_cleaner is None
+    assert processor.missing_handler is None
+    assert processor.data_lake is None
+    assert processor.db_manager is None
+    assert processor.cache_manager is None
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, processor):
@@ -52,12 +52,12 @@ class TestDataProcessingService:
 
             result = await processor.initialize()
 
-            assert result is True
-            assert processor.data_cleaner is not None
-            assert processor.missing_handler is not None
-            assert processor.data_lake is not None
-            assert processor.db_manager is not None
-            assert processor.cache_manager is not None
+    assert result is True
+    assert processor.data_cleaner is not None
+    assert processor.missing_handler is not None
+    assert processor.data_lake is not None
+    assert processor.db_manager is not None
+    assert processor.cache_manager is not None
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, processor):
@@ -67,7 +67,7 @@ class TestDataProcessingService:
 
             result = await processor.initialize()
 
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_success(self, processor):
@@ -99,8 +99,8 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_match_data(raw_data)
 
-        assert result is not None
-        assert result["external_match_id"] == "match_1"
+    assert result is not None
+    assert result["external_match_id"] == "match_1"
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_validation_error(self, processor):
@@ -120,7 +120,7 @@ class TestDataProcessingService:
         result = await processor.process_raw_match_data(invalid_data)
 
         # Assert - 应该返回None表示失败
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_success(self, processor):
@@ -143,8 +143,8 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_odds_data(raw_data)
 
-        assert result is not None
-        assert "external_match_id" in result
+    assert result is not None
+    assert "external_match_id" in result
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_missing_fields(self, processor):
@@ -166,7 +166,7 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_odds_data(incomplete_data)
 
-        assert result is not None
+    assert result is not None
         # 应该能处理缺失字段
 
     @pytest.mark.asyncio
@@ -181,9 +181,9 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(test_data, 'match')
 
-        assert result is not None
-        assert result['is_valid'] is True
-        assert result['data_type'] == 'match'
+    assert result is not None
+    assert result['is_valid'] is True
+    assert result['data_type'] == 'match'
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_with_issues(self, processor):
@@ -198,11 +198,11 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(test_df, 'matches')
 
-        assert result['valid'] is False
-        assert result['total_records'] == 3
-        assert result['issues_detected'] > 0
-        assert 'missing_values' in result
-        assert 'invalid_values' in result
+    assert result['valid'] is False
+    assert result['total_records'] == 3
+    assert result['issues_detected'] > 0
+    assert 'missing_values' in result
+    assert 'invalid_values' in result
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_empty_dataframe(self, processor):
@@ -211,9 +211,9 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(empty_df, 'matches')
 
-        assert result['valid'] is False
-        assert result['total_records'] == 0
-        assert 'empty' in result['error'].lower()
+    assert result['valid'] is False
+    assert result['total_records'] == 0
+    assert 'empty' in result['error'].lower()
 
     @pytest.mark.asyncio
     async def test_detect_anomalies(self, processor):
@@ -227,9 +227,9 @@ class TestDataProcessingService:
 
         anomalies = await processor.detect_anomalies(test_df)
 
-        assert isinstance(anomalies, list)
+    assert isinstance(anomalies, list)
         # 应该检测到一些异常值
-        assert len(anomalies) > 0
+    assert len(anomalies) > 0
 
     @pytest.mark.asyncio
     async def test_handle_missing_scores(self, processor):
@@ -246,8 +246,8 @@ class TestDataProcessingService:
 
         result = await processor.handle_missing_scores(test_df)
 
-        assert result is not None
-        assert result['home_score'].isna().sum() == 0  # 缺失值应该被处理
+    assert result is not None
+    assert result['home_score'].isna().sum() == 0  # 缺失值应该被处理
 
     @pytest.mark.asyncio
     async def test_handle_missing_team_data(self, processor):
@@ -263,8 +263,8 @@ class TestDataProcessingService:
 
         result = await processor.handle_missing_team_data(test_df)
 
-        assert result is not None
-        assert result['team_name'].isna().sum() == 0
+    assert result is not None
+    assert result['team_name'].isna().sum() == 0
 
     @pytest.mark.asyncio
     async def test_process_text(self, processor):
@@ -273,10 +273,10 @@ class TestDataProcessingService:
 
         result = await processor.process_text(text)
 
-        assert isinstance(result, dict)
-        assert 'processed_text' in result
-        assert 'entities' in result
-        assert result['original_text'] == text
+    assert isinstance(result, dict)
+    assert 'processed_text' in result
+    assert 'entities' in result
+    assert result['original_text'] == text
 
     @pytest.mark.asyncio
     async def test_process_batch(self, processor):
@@ -292,9 +292,9 @@ class TestDataProcessingService:
 
         results = await processor.process_batch(data_list)
 
-        assert isinstance(results, list)
-        assert len(results) == 3
-        assert all(isinstance(r, dict) for r in results)
+    assert isinstance(results, list)
+    assert len(results) == 3
+    assert all(isinstance(r, dict) for r in results)
 
     @pytest.mark.asyncio
     async def test_process_with_retry_success(self, processor):
@@ -310,7 +310,7 @@ class TestDataProcessingService:
         test_data["attempt"] = 1
         result = await processor.process_with_retry(mock_process_func, test_data, max_retries=2)
 
-        assert result["success"] is True
+    assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_process_with_retry_failure(self, processor):
@@ -322,8 +322,8 @@ class TestDataProcessingService:
 
         result = await processor.process_with_retry(mock_process_func, test_data, max_retries=2)
 
-        assert result["success"] is False
-        assert "Persistent failure" in result["error"]
+    assert result["success"] is False
+    assert "Persistent failure" in result["error"]
 
     @pytest.mark.asyncio
     async def test_cache_processing_results(self, processor):
@@ -347,7 +347,7 @@ class TestDataProcessingService:
 
         result = await processor.get_cached_results("test_key")
 
-        assert result == cached_data
+    assert result == cached_data
         processor.cache_manager.get.assert_called_once_with("test_key")
 
     @pytest.mark.asyncio
@@ -358,7 +358,7 @@ class TestDataProcessingService:
 
         result = await processor.get_cached_results("nonexistent_key")
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_large_dataset(self, processor):
@@ -371,8 +371,8 @@ class TestDataProcessingService:
 
         result = await processor.process_large_dataset(large_dataset, batch_size=100)
 
-        assert result["success"] is True
-        assert result["total_processed"] == 1000
+    assert result["success"] is True
+    assert result["total_processed"] == 1000
         processor._process_in_batches.assert_called_once()
 
     @pytest.mark.asyncio
@@ -437,10 +437,10 @@ class TestDataProcessingService:
         await processor.shutdown()
 
         # Assert - 验证缓存管理器被正确关闭（会被调用两次：async尝试 + sync fallback）
-        assert mock_cache_manager.close.call_count == 2
+    assert mock_cache_manager.close.call_count == 2
         mock_db_manager.close.assert_called_once()
-        assert processor.cache_manager is None
-        assert processor.db_manager is None
+    assert processor.cache_manager is None
+    assert processor.db_manager is None
 
         print("✅ 关闭带Mock缓存管理器的服务测试通过")
 
@@ -471,8 +471,8 @@ class TestDataProcessingService:
         # Assert - 验证异步缓存管理器被正确关闭
         async_mock_close.assert_called_once()
         mock_db_manager.close.assert_called_once()
-        assert processor.cache_manager is None
-        assert processor.db_manager is None
+    assert processor.cache_manager is None
+    assert processor.db_manager is None
 
         print("✅ 关闭带异步Mock缓存管理器的服务测试通过")
 
@@ -500,10 +500,10 @@ class TestDataProcessingService:
         await processor.shutdown()
 
         # Assert - 验证同步缓存管理器被正确关闭
-        assert mock_cache_manager.close.call_count >= 1
+    assert mock_cache_manager.close.call_count >= 1
         mock_db_manager.close.assert_called_once()
-        assert processor.cache_manager is None
-        assert processor.db_manager is None
+    assert processor.cache_manager is None
+    assert processor.db_manager is None
 
         print("✅ 关闭带同步缓存管理器的服务测试通过")
 
@@ -542,8 +542,8 @@ class TestDataProcessingService:
         # Assert - 验证同步fallback方法被调用
         sync_close.assert_called_once()
         mock_db_manager.close.assert_called_once()
-        assert processor.cache_manager is None
-        assert processor.db_manager is None
+    assert processor.cache_manager is None
+    assert processor.db_manager is None
 
         print("✅ 关闭带类型错误的异步缓存管理器测试通过")
 
@@ -567,8 +567,8 @@ class TestDataProcessingService:
 
         # Assert - 验证数据库管理器被正确关闭
         mock_db_manager.close.assert_called_once()
-        assert processor.db_manager is None
-        assert processor.cache_manager is None
+    assert processor.db_manager is None
+    assert processor.cache_manager is None
 
         print("✅ 关闭带数据库管理器的服务测试通过")
 
@@ -603,8 +603,8 @@ class TestDataProcessingService:
         # Assert - 验证所有组件被正确关闭和清理
         mock_cache_manager.close.assert_called_once()
         mock_db_manager.close.assert_called_once()
-        assert processor.cache_manager is None
-        assert processor.db_manager is None
+    assert processor.cache_manager is None
+    assert processor.db_manager is None
 
         print("✅ 完整关闭服务测试通过")
 
@@ -620,8 +620,8 @@ class TestDataProcessingService:
         result = await processor.process_raw_match_data([])
 
         # Assert - 应该返回空的DataFrame
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 0
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 0
 
         print("✅ 处理空的原始比赛数据列表测试通过")
 
@@ -637,6 +637,6 @@ class TestDataProcessingService:
         result = await processor.process_raw_match_data({"match_id": "test"})
 
         # Assert - 应该返回None
-        assert result is None
+    assert result is None
 
         print("✅ 数据清洗器未初始化的情况测试通过")

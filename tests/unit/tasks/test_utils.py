@@ -60,7 +60,7 @@ def test_calculate_next_collection_time(
         mock_dt.now.return_value = now
         next_time = utils.calculate_next_collection_time(task_name)
         delta = (next_time - now).total_seconds() / 60
-        assert abs(delta - expected_delta_minutes) < 1
+    assert abs(delta - expected_delta_minutes) < 1
 
 
 # =============================================================================

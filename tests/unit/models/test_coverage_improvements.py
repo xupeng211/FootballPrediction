@@ -50,8 +50,8 @@ class TestPredictionServiceCoverage:
             return_value=Mock(),
         ):
             model, version = await service.get_production_model("fallback_model")
-            assert version == "0.9.0-staging"
-            assert mock_client.get_latest_versions.call_count == 2
+    assert version == "0.9.0-staging"
+    assert mock_client.get_latest_versions.call_count == 2
 
         # 测试场景2：Production 和 Staging 均无版本，只有最新版本
         # 创建新的mock_client实例避免状态污染
@@ -64,8 +64,8 @@ class TestPredictionServiceCoverage:
             return_value=Mock(),
         ):
             model, version = await service.get_production_model("latest_model")
-            assert version == "0.8.0-latest"
-            assert mock_client_2.get_latest_versions.call_count == 3
+    assert version == "0.8.0-latest"
+    assert mock_client_2.get_latest_versions.call_count == 3
 
     @pytest.mark.asyncio
     async def test_store_prediction_and_metrics_export(self, service):
@@ -105,13 +105,13 @@ class TestPredictionServiceCoverage:
         )
 
         match_info = await service._get_match_info(1)
-        assert match_info is not None
-        assert match_info["id"] == 1
+    assert match_info is not None
+    assert match_info["id"] == 1
 
         # 测试找不到比赛的情况
         mock_result.first.return_value = None
         match_info_none = await service._get_match_info(999)
-        assert match_info_none is None
+    assert match_info_none is None
 
     def test_prepare_features_with_missing_values(self, service):
         """测试 _prepare_features_for_prediction 对缺失值的处理"""
@@ -120,14 +120,14 @@ class TestPredictionServiceCoverage:
 
         feature_array = service._prepare_features_for_prediction(features)
 
-        assert isinstance(feature_array, np.ndarray)
+    assert isinstance(feature_array, np.ndarray)
         # _prepare_features_for_prediction方法内部使用自己的feature_order，有10个特征
         expected_feature_count = 10
-        assert feature_array.shape == (1, expected_feature_count)
+    assert feature_array.shape == (1, expected_feature_count)
         # 验证缺失值被填充为 0
         # home_recent_wins 是第一个特征，应该为 0.8
-        assert feature_array[0, 0] == 0.8
+    assert feature_array[0, 0] == 0.8
         # away_recent_goals_for 是第五个特征，应该为 1.2
-        assert feature_array[0, 4] == 1.2
+    assert feature_array[0, 4] == 1.2
         # 其他缺失特征应该为 0
-        assert feature_array[0, 1] == 0.0  # home_recent_goals_for
+    assert feature_array[0, 1] == 0.0  # home_recent_goals_for

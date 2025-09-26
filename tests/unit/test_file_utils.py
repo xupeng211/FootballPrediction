@@ -29,9 +29,9 @@ class TestFileUtils:
 
         result = FileUtils.ensure_dir(test_dir)
 
-        assert test_dir.exists()
-        assert test_dir.is_dir()
-        assert result == test_dir
+    assert test_dir.exists()
+    assert test_dir.is_dir()
+    assert result == test_dir
 
     def test_ensure_dir_existing_directory(self, tmp_path):
         """测试在已存在目录上调用ensure_dir"""
@@ -40,8 +40,8 @@ class TestFileUtils:
 
         result = FileUtils.ensure_dir(existing_dir)
 
-        assert existing_dir.exists()
-        assert result == existing_dir
+    assert existing_dir.exists()
+    assert result == existing_dir
 
     def test_ensure_directory_alias(self, tmp_path):
         """测试ensure_directory别名方法"""
@@ -49,8 +49,8 @@ class TestFileUtils:
 
         result = FileUtils.ensure_directory(test_dir)
 
-        assert test_dir.exists()
-        assert result == test_dir
+    assert test_dir.exists()
+    assert result == test_dir
 
     def test_read_json_success(self, tmp_path):
         """测试成功读取JSON文件"""
@@ -62,7 +62,7 @@ class TestFileUtils:
 
         result = FileUtils.read_json(json_file)
 
-        assert result == test_data
+    assert result == test_data
 
     def test_read_json_file_not_found(self, tmp_path):
         """测试读取不存在的JSON文件"""
@@ -91,7 +91,7 @@ class TestFileUtils:
 
         result = FileUtils.read_json_file(json_file)
 
-        assert result == test_data
+    assert result == test_data
 
     def test_write_json_success(self, tmp_path):
         """测试成功写入JSON文件"""
@@ -100,10 +100,10 @@ class TestFileUtils:
 
         FileUtils.write_json(test_data, json_file)
 
-        assert json_file.exists()
+    assert json_file.exists()
         with open(json_file, "r", encoding="utf-8") as f:
             loaded_data = json.load(f)
-        assert loaded_data == test_data
+    assert loaded_data == test_data
 
     def test_write_json_with_nested_directory(self, tmp_path):
         """测试写入到嵌套目录中的JSON文件"""
@@ -112,12 +112,12 @@ class TestFileUtils:
 
         FileUtils.write_json(test_data, nested_file, ensure_dir=True)
 
-        assert nested_file.exists()
-        assert nested_file.parent.exists()
+    assert nested_file.exists()
+    assert nested_file.parent.exists()
 
         with open(nested_file, "r", encoding="utf-8") as f:
             loaded_data = json.load(f)
-        assert loaded_data == test_data
+    assert loaded_data == test_data
 
     def test_write_json_no_ensure_dir(self, tmp_path):
         """测试写入JSON时不自动创建目录"""
@@ -134,8 +134,8 @@ class TestFileUtils:
 
         result = FileUtils.write_json_file(test_data, json_file)
 
-        assert result is True
-        assert json_file.exists()
+    assert result is True
+    assert json_file.exists()
 
     def test_write_json_file_alias_failure(self, tmp_path):
         """测试write_json_file别名方法失败情况"""
@@ -151,7 +151,7 @@ class TestFileUtils:
             result = FileUtils.write_json_file(test_data, json_file)
             # 某些系统可能仍允许写入，所以不强制断言失败
             if not result:
-                assert result is False
+    assert result is False
         finally:
             # 恢复权限以便清理
             read_only_dir.chmod(0o755)
@@ -166,12 +166,12 @@ class TestFileUtils:
 
         hash_value = FileUtils.get_file_hash(test_file)
 
-        assert isinstance(hash_value, str)
-        assert len(hash_value) == 32  # MD5哈希长度
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 32  # MD5哈希长度
 
         # 验证相同内容产生相同哈希
         hash_value2 = FileUtils.get_file_hash(test_file)
-        assert hash_value == hash_value2
+    assert hash_value == hash_value2
 
     def test_get_file_hash_binary_file(self, tmp_path):
         """测试获取二进制文件的哈希值"""
@@ -183,8 +183,8 @@ class TestFileUtils:
 
         hash_value = FileUtils.get_file_hash(test_file)
 
-        assert isinstance(hash_value, str)
-        assert len(hash_value) == 32
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 32
 
     def test_get_file_size(self, tmp_path):
         """测试获取文件大小"""
@@ -196,9 +196,9 @@ class TestFileUtils:
 
         file_size = FileUtils.get_file_size(test_file)
 
-        assert isinstance(file_size, int)
-        assert file_size > 0
-        assert file_size == len(test_content.encode("utf-8"))
+    assert isinstance(file_size, int)
+    assert file_size > 0
+    assert file_size == len(test_content.encode("utf-8"))
 
     def test_get_file_size_empty_file(self, tmp_path):
         """测试获取空文件大小"""
@@ -207,7 +207,7 @@ class TestFileUtils:
 
         file_size = FileUtils.get_file_size(empty_file)
 
-        assert file_size == 0
+    assert file_size == 0
 
     def test_cleanup_old_files(self, tmp_path):
         """测试清理旧文件功能"""
@@ -231,10 +231,10 @@ class TestFileUtils:
         # 清理30天以上的文件
         removed_count = FileUtils.cleanup_old_files(tmp_path, days=30)
 
-        assert removed_count == 2
-        assert not old_file1.exists()
-        assert not old_file2.exists()
-        assert new_file.exists()
+    assert removed_count == 2
+    assert not old_file1.exists()
+    assert not old_file2.exists()
+    assert new_file.exists()
 
     def test_cleanup_old_files_non_existent_directory(self, tmp_path):
         """测试清理不存在目录的旧文件"""
@@ -242,7 +242,7 @@ class TestFileUtils:
 
         removed_count = FileUtils.cleanup_old_files(non_existent)
 
-        assert removed_count == 0
+    assert removed_count == 0
 
     def test_cleanup_old_files_no_old_files(self, tmp_path):
         """测试清理目录中没有旧文件的情况"""
@@ -253,9 +253,9 @@ class TestFileUtils:
 
         removed_count = FileUtils.cleanup_old_files(tmp_path, days=30)
 
-        assert removed_count == 0
+    assert removed_count == 0
         # 验证文件仍然存在
-        assert len(list(tmp_path.iterdir())) == 3
+    assert len(list(tmp_path.iterdir())) == 3
 
     def test_cleanup_old_files_with_subdirectories(self, tmp_path):
         """测试清理时忽略子目录"""
@@ -275,9 +275,9 @@ class TestFileUtils:
 
         removed_count = FileUtils.cleanup_old_files(tmp_path, days=30)
 
-        assert removed_count == 1  # 只删除文件，不删除目录
-        assert not old_file.exists()
-        assert sub_dir.exists()
+    assert removed_count == 1  # 只删除文件，不删除目录
+    assert not old_file.exists()
+    assert sub_dir.exists()
 
     @patch("src.utils.file_utils.Path.iterdir")
     def test_cleanup_old_files_exception_handling(self, mock_iterdir, tmp_path):
@@ -286,7 +286,7 @@ class TestFileUtils:
 
         removed_count = FileUtils.cleanup_old_files(tmp_path)
 
-        assert removed_count == 0
+    assert removed_count == 0
 
     def test_all_methods_with_string_paths(self, tmp_path):
         """测试所有方法都支持字符串路径"""
@@ -299,12 +299,12 @@ class TestFileUtils:
         FileUtils.write_json(test_data, test_file_str)
         loaded_data = FileUtils.read_json(test_file_str)
 
-        assert Path(test_dir_str).exists()
-        assert loaded_data == test_data
+    assert Path(test_dir_str).exists()
+    assert loaded_data == test_data
 
         # 测试文件操作
         file_size = FileUtils.get_file_size(test_file_str)
         file_hash = FileUtils.get_file_hash(test_file_str)
 
-        assert file_size > 0
-        assert len(file_hash) == 32
+    assert file_size > 0
+    assert len(file_hash) == 32

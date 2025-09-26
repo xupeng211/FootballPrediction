@@ -32,7 +32,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.process_bronze_to_silver()
 
-        assert result["error"] == 1
+    assert result["error"] == 1
         service.logger.error.assert_called()
 
     @pytest.mark.unit
@@ -53,10 +53,10 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.process_bronze_to_silver(100)
 
-        assert result["processed_matches"] == 10
-        assert result["processed_odds"] == 20
-        assert result["processed_scores"] == 5
-        assert result["errors"] == 0
+    assert result["processed_matches"] == 10
+    assert result["processed_odds"] == 20
+    assert result["processed_scores"] == 5
+    assert result["errors"] == 0
         service.logger.info.assert_called()
 
     @pytest.mark.unit
@@ -74,7 +74,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.process_bronze_to_silver()
 
-        assert result["errors"] == 1
+    assert result["errors"] == 1
         service.logger.error.assert_called()
 
     @pytest.mark.unit
@@ -112,7 +112,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_raw_matches_bronze_to_silver(100)
 
-        assert result == 1
+    assert result == 1
         mock_session.commit.assert_called_once()
 
     @pytest.mark.unit
@@ -137,7 +137,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_raw_matches_bronze_to_silver(100)
 
-        assert result == 0
+    assert result == 0
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -173,7 +173,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_raw_odds_bronze_to_silver(100)
 
-        assert result == 1
+    assert result == 1
         mock_session.commit.assert_called_once()
 
     @pytest.mark.unit
@@ -222,7 +222,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_raw_scores_bronze_to_silver(100)
 
-        assert result == 1
+    assert result == 1
         mock_session.commit.assert_called_once()
 
     # ========== 新增：数据状态查询测试 ==========
@@ -236,8 +236,8 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.get_bronze_layer_status()
 
-        assert "error" in result
-        assert result["error"] == "数据库连接未初始化"
+    assert "error" in result
+    assert result["error"] == "数据库连接未初始化"
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -260,12 +260,12 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.get_bronze_layer_status()
 
-        assert "matches" in result
-        assert "odds" in result
-        assert "scores" in result
-        assert result["matches"]["total"] == 10
-        assert result["matches"]["processed"] == 5
-        assert result["matches"]["pending"] == 5
+    assert "matches" in result
+    assert "odds" in result
+    assert "scores" in result
+    assert result["matches"]["total"] == 10
+    assert result["matches"]["processed"] == 5
+    assert result["matches"]["pending"] == 5
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -278,7 +278,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.get_bronze_layer_status()
 
-        assert "error" in result
+    assert "error" in result
 
     # ========== 新增：存储处理测试 ==========
 
@@ -306,7 +306,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.store_processed_data(test_df, table_name, True)
 
-        assert result is True
+    assert result is True
         service.data_lake.store_dataframe.assert_called_once()
         service.db_manager.bulk_insert.assert_called_once()
 
@@ -330,7 +330,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.store_processed_data(test_df, table_name)
 
-        assert result is False
+    assert result is False
         service.logger.error.assert_called()
 
     @pytest.mark.unit
@@ -346,7 +346,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.store_processed_data(test_df, "test_table")
 
-        assert result is True  # Should still return True since storage is optional
+    assert result is True  # Should still return True since storage is optional
 
     # ========== 新增：异步处理测试 ==========
 
@@ -372,7 +372,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data(sample_match_data)
 
-        assert result == sample_match_data
+    assert result == sample_match_data
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -396,7 +396,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data(sample_match_data)
 
-        assert result == sample_match_data
+    assert result == sample_match_data
 
     # ========== 新增：批处理增强测试 ==========
 
@@ -413,11 +413,11 @@ class TestDataProcessingServiceEnhanced:
         async for batch in service._process_in_batches(dataset, batch_size):
             batches.append(batch)
 
-        assert len(batches) == 4
-        assert batches[0] == [1, 2, 3]
-        assert batches[1] == [4, 5, 6]
-        assert batches[2] == [7, 8, 9]
-        assert batches[3] == [10]
+    assert len(batches) == 4
+    assert batches[0] == [1, 2, 3]
+    assert batches[1] == [4, 5, 6]
+    assert batches[2] == [7, 8, 9]
+    assert batches[3] == [10]
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -433,8 +433,8 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.process_large_dataset(dataset, batch_size=10)
 
-        assert len(result) == 100  # Each item becomes a processed result
-        assert service.process_batch.call_count == 10
+    assert len(result) == 100  # Each item becomes a processed result
+    assert service.process_batch.call_count == 10
 
     # ========== 新增：服务关闭测试 ==========
 
@@ -493,8 +493,8 @@ class TestDataProcessingServiceEnhanced:
         # This will cause an exception when accessing data.get()
         result = await service.validate_data_quality(None, "match")
 
-        assert result["is_valid"] is False
-        assert len(result["issues"]) > 0
+    assert result["is_valid"] is False
+    assert len(result["issues"]) > 0
 
     # ========== 新增：数据库事务测试 ==========
 
@@ -522,7 +522,7 @@ class TestDataProcessingServiceEnhanced:
         # This should trigger an exception and rollback
         result = await service._process_raw_matches_bronze_to_silver(100)
 
-        assert result == 0
+    assert result == 0
         mock_session.rollback.assert_called_once()
 
     # ========== 新增：性能指标收集测试 ==========
@@ -537,11 +537,11 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.collect_performance_metrics(mock_function, "arg1", kwarg1="value1")
 
-        assert "total_time" in result
-        assert "items_processed" in result
-        assert "items_per_second" in result
-        assert result["items_processed"] == 3
-        assert result["total_time"] > 0
+    assert "total_time" in result
+    assert "items_processed" in result
+    assert "items_per_second" in result
+    assert result["items_processed"] == 3
+    assert result["total_time"] > 0
         mock_function.assert_called_once_with("arg1", kwarg1="value1")
 
     @pytest.mark.unit
@@ -554,8 +554,8 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.collect_performance_metrics(mock_function)
 
-        assert result["items_processed"] == 1
-        assert result["items_per_second"] > 0
+    assert result["items_processed"] == 1
+    assert result["items_per_second"] > 0
 
     # ========== 新增：清理资源测试 ==========
 
@@ -576,8 +576,8 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.cleanup()
 
-        assert result is True
-        assert len(service._cache) == 0
+    assert result is True
+    assert len(service._cache) == 0
         mock_db.close.assert_called_once()
 
     @pytest.mark.unit
@@ -594,7 +594,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.cleanup()
 
-        assert result is True
+    assert result is True
         mock_db.close.assert_called_once()
 
     @pytest.mark.unit
@@ -611,7 +611,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.cleanup()
 
-        assert result is False
+    assert result is False
         service.logger.error.assert_called()
 
     # ========== 新增：缓存操作增强测试 ==========
@@ -626,7 +626,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.cache_processing_results("test_key", {"data": "value"})
 
-        assert result is False
+    assert result is False
         service.logger.error.assert_called_with("缓存管理器未初始化")
 
     @pytest.mark.unit
@@ -639,7 +639,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.get_cached_results("test_key")
 
-        assert result is None
+    assert result is None
         service.logger.error.assert_called_with("缓存管理器未初始化")
 
     # ========== 新增：边界条件测试 ==========
@@ -656,7 +656,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data({})
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -675,7 +675,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data(sample_match_data)
 
-        assert result == sample_match_data
+    assert result == sample_match_data
         # Cache should not be called when no match_id
         service.cache_manager.aset.assert_not_called()
 
@@ -695,7 +695,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data(sample_match_data)
 
-        assert result is None
+    assert result is None
         service.logger.warning.assert_called_with("比赛数据清洗失败")
 
     @pytest.mark.unit
@@ -715,7 +715,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service._process_single_match_data(sample_match_data)
 
-        assert result is None
+    assert result is None
         service.logger.warning.assert_called_with("比赛数据清洗失败")
 
     # ========== 新增：重试机制增强测试 ==========
@@ -761,7 +761,7 @@ class TestDataProcessingServiceEnhanced:
 
         result = await service.store_processed_data(test_df, table_name, True)
 
-        assert result is True  # Should still succeed even if cache fails
+    assert result is True  # Should still succeed even if cache fails
         service.logger.warning.assert_called()
 
     # ========== 新增：完整集成测试 ==========
@@ -790,7 +790,7 @@ class TestDataProcessingServiceEnhanced:
         result = await service._process_single_match_data(sample_match_data)
 
         # Verify the complete workflow
-        assert result == sample_match_data
+    assert result == sample_match_data
         service.data_cleaner.clean_match_data.assert_called_once()
         service.missing_handler.handle_missing_match_data.assert_called_once()
         service.cache_manager.aget.assert_called_once()
@@ -837,10 +837,10 @@ class TestDataProcessingServiceEnhanced:
         result = await service.process_bronze_to_silver(batch_size=100)
 
         # Verify the result
-        assert result["processed_matches"] == 1
-        assert result["processed_odds"] == 0
-        assert result["processed_scores"] == 0
-        assert result["errors"] == 0
+    assert result["processed_matches"] == 1
+    assert result["processed_odds"] == 0
+    assert result["processed_scores"] == 0
+    assert result["errors"] == 0
 
     # ========== 新增：性能测试 ==========
 
@@ -867,8 +867,8 @@ class TestDataProcessingServiceEnhanced:
         end_time = asyncio.get_event_loop().time()
 
         processing_time = end_time - start_time
-        assert processing_time < 1.0  # Should process 1000 items in less than 1 second
-        assert len(result) == 1000
+    assert processing_time < 1.0  # Should process 1000 items in less than 1 second
+    assert len(result) == 1000
 
     @pytest.mark.performance
     @pytest.mark.asyncio
@@ -902,8 +902,8 @@ class TestDataProcessingServiceEnhanced:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # All operations should complete successfully
-        assert len([r for r in results if r is True]) == 10  # cache_processing_results
-        assert len([r for r in results if r is not None]) == 10  # get_cached_results
+    assert len([r for r in results if r is True]) == 10  # cache_processing_results
+    assert len([r for r in results if r is not None]) == 10  # get_cached_results
 
     # ========== 新增：错误场景测试 ==========
 
@@ -965,24 +965,24 @@ class TestDataProcessingServiceMarkers:
     @pytest.mark.asyncio
     async def test_unit_test_marker(self):
         """验证单元测试标记"""
-        assert True  # This test is marked as unit
+    assert True  # This test is marked as unit
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_integration_test_marker(self):
         """验证集成测试标记"""
-        assert True  # This test is marked as integration
+    assert True  # This test is marked as integration
 
     @pytest.mark.performance
     @pytest.mark.asyncio
     async def test_performance_test_marker(self):
         """验证性能测试标记"""
-        assert True  # This test is marked as performance
+    assert True  # This test is marked as performance
 
     @pytest.mark.asyncio
     async def test_asyncio_marker(self):
         """验证异步测试标记"""
-        assert True  # This test is marked as asyncio
+    assert True  # This test is marked as asyncio
 
 
 class TestDataProcessingService:
@@ -1004,12 +1004,12 @@ class TestDataProcessingService:
 
     def test_init(self, processor):
         """测试初始化"""
-        assert processor.name == "DataProcessingService"
-        assert processor.data_cleaner is None
-        assert processor.missing_handler is None
-        assert processor.data_lake is None
-        assert processor.db_manager is None
-        assert processor.cache_manager is None
+    assert processor.name == "DataProcessingService"
+    assert processor.data_cleaner is None
+    assert processor.missing_handler is None
+    assert processor.data_lake is None
+    assert processor.db_manager is None
+    assert processor.cache_manager is None
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, processor):
@@ -1029,12 +1029,12 @@ class TestDataProcessingService:
 
             result = await processor.initialize()
 
-            assert result is True
-            assert processor.data_cleaner is not None
-            assert processor.missing_handler is not None
-            assert processor.data_lake is not None
-            assert processor.db_manager is not None
-            assert processor.cache_manager is not None
+    assert result is True
+    assert processor.data_cleaner is not None
+    assert processor.missing_handler is not None
+    assert processor.data_lake is not None
+    assert processor.db_manager is not None
+    assert processor.cache_manager is not None
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, processor):
@@ -1044,7 +1044,7 @@ class TestDataProcessingService:
 
             result = await processor.initialize()
 
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_single_dict(self, processor):
@@ -1072,10 +1072,10 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_match_data(raw_data)
 
-        assert result is not None
-        assert result["external_match_id"] == "match_1"
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
+    assert result is not None
+    assert result["external_match_id"] == "match_1"
+    assert result["home_score"] == 2
+    assert result["away_score"] == 1
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_list(self, processor):
@@ -1111,9 +1111,9 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_match_data(raw_data_list)
 
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 2
-        assert "external_match_id" in result.columns
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 2
+    assert "external_match_id" in result.columns
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_empty_list(self, processor):
@@ -1122,8 +1122,8 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_match_data([])
 
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 0
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 0
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_cache_hit(self, processor):
@@ -1152,7 +1152,7 @@ class TestDataProcessingService:
         result = await processor.process_raw_match_data(raw_data)
 
         # 应该返回缓存的数据
-        assert result == cached_data
+    assert result == cached_data
         # 数据清洗器不应该被调用
         processor.data_cleaner.clean_match_data.assert_not_called()
 
@@ -1180,9 +1180,9 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_odds_data(raw_odds)
 
-        assert isinstance(result, list)
-        assert len(result) == 2
-        assert result[0]["home_odds"] == 2.50
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert result[0]["home_odds"] == 2.50
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_empty_input(self, processor):
@@ -1192,7 +1192,7 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_odds_data([])
 
-        assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_cleaner_not_initialized(self, processor):
@@ -1201,7 +1201,7 @@ class TestDataProcessingService:
 
         result = await processor.process_raw_odds_data([{"match_id": "match_1"}])
 
-        assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_process_features_data_success(self, processor):
@@ -1224,8 +1224,8 @@ class TestDataProcessingService:
 
         result = await processor.process_features_data(1, features_df)
 
-        assert isinstance(result, pd.DataFrame)
-        assert result.equals(expected_df)
+    assert isinstance(result, pd.DataFrame)
+    assert result.equals(expected_df)
         processor.missing_handler.handle_missing_features.assert_called_once_with(1, features_df)
 
     @pytest.mark.asyncio
@@ -1238,7 +1238,7 @@ class TestDataProcessingService:
         result = await processor.process_features_data(1, features_df)
 
         # 应该返回原始DataFrame
-        assert result.equals(features_df)
+    assert result.equals(features_df)
 
     @pytest.mark.asyncio
     async def test_process_batch_matches_success(self, processor):
@@ -1262,8 +1262,8 @@ class TestDataProcessingService:
 
         result = await processor.process_batch_matches(raw_matches)
 
-        assert len(result) == 2  # 只有前两个成功
-        assert all(match["processed"] for match in result)
+    assert len(result) == 2  # 只有前两个成功
+    assert all(match["processed"] for match in result)
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_match_valid(self, processor):
@@ -1279,9 +1279,9 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(valid_match_data, "match")
 
-        assert result["is_valid"] is True
-        assert len(result["issues"]) == 0
-        assert result["data_type"] == "match"
+    assert result["is_valid"] is True
+    assert len(result["issues"]) == 0
+    assert result["data_type"] == "match"
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_match_missing_fields(self, processor):
@@ -1295,9 +1295,9 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(invalid_match_data, "match")
 
-        assert result["is_valid"] is False
-        assert len(result["issues"]) > 0
-        assert any("Missing required field" in issue for issue in result["issues"])
+    assert result["is_valid"] is False
+    assert len(result["issues"]) > 0
+    assert any("Missing required field" in issue for issue in result["issues"])
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_match_negative_scores(self, processor):
@@ -1313,8 +1313,8 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(invalid_match_data, "match")
 
-        assert result["is_valid"] is False
-        assert any("Negative scores detected" in issue for issue in result["issues"])
+    assert result["is_valid"] is False
+    assert any("Negative scores detected" in issue for issue in result["issues"])
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_match_high_scores_warning(self, processor):
@@ -1331,9 +1331,9 @@ class TestDataProcessingService:
         result = await processor.validate_data_quality(match_data, "match")
 
         # 数据应该有效，但有警告
-        assert result["is_valid"] is True
-        assert len(result["warnings"]) > 0
-        assert any("Unusually high scores detected" in warning for warning in result["warnings"])
+    assert result["is_valid"] is True
+    assert len(result["warnings"]) > 0
+    assert any("Unusually high scores detected" in warning for warning in result["warnings"])
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_odds_valid(self, processor):
@@ -1348,9 +1348,9 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(valid_odds_data, "odds")
 
-        assert result["is_valid"] is True
-        assert len(result["issues"]) == 0
-        assert result["data_type"] == "odds"
+    assert result["is_valid"] is True
+    assert len(result["issues"]) == 0
+    assert result["data_type"] == "odds"
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_odds_no_outcomes(self, processor):
@@ -1361,8 +1361,8 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(invalid_odds_data, "odds")
 
-        assert result["is_valid"] is False
-        assert any("No odds outcomes found" in issue for issue in result["issues"])
+    assert result["is_valid"] is False
+    assert any("No odds outcomes found" in issue for issue in result["issues"])
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_odds_invalid_price(self, processor):
@@ -1376,8 +1376,8 @@ class TestDataProcessingService:
 
         result = await processor.validate_data_quality(invalid_odds_data, "odds")
 
-        assert result["is_valid"] is False
-        assert any("Invalid odds price" in issue for issue in result["issues"])
+    assert result["is_valid"] is False
+    assert any("Invalid odds price" in issue for issue in result["issues"])
 
     @pytest.mark.asyncio
     async def test_process_text(self, processor):
@@ -1386,9 +1386,9 @@ class TestDataProcessingService:
 
         result = await processor.process_text(text)
 
-        assert result["processed_text"] == text.strip()
-        assert result["word_count"] == 8
-        assert result["character_count"] == len(text.strip())
+    assert result["processed_text"] == text.strip()
+    assert result["word_count"] == 8
+    assert result["character_count"] == len(text.strip())
 
     @pytest.mark.asyncio
     async def test_process_batch_mixed_data(self, processor):
@@ -1402,12 +1402,12 @@ class TestDataProcessingService:
 
         result = await processor.process_batch(data_list)
 
-        assert len(result) == 4
-        assert result[0]["processed_text"] == "Sample text data"
-        assert result[1]["key"] == "value"
-        assert result[1]["processed"] is True
-        assert result[2]["original_data"] == 123
-        assert result[3]["original_data"] == ["list", "data"]
+    assert len(result) == 4
+    assert result[0]["processed_text"] == "Sample text data"
+    assert result[1]["key"] == "value"
+    assert result[1]["processed"] is True
+    assert result[2]["original_data"] == 123
+    assert result[3]["original_data"] == ["list", "data"]
 
     @pytest.mark.asyncio
     async def test_handle_missing_scores_success(self, processor):
@@ -1430,8 +1430,8 @@ class TestDataProcessingService:
 
         result = await processor.handle_missing_scores(test_df)
 
-        assert result is not None
-        assert result.equals(expected_df)
+    assert result is not None
+    assert result.equals(expected_df)
 
     @pytest.mark.asyncio
     async def test_handle_missing_scores_handler_not_initialized(self, processor):
@@ -1445,7 +1445,7 @@ class TestDataProcessingService:
 
         result = await processor.handle_missing_scores(test_df)
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_handle_missing_team_data_success(self, processor):
@@ -1468,8 +1468,8 @@ class TestDataProcessingService:
 
         result = await processor.handle_missing_team_data(team_df)
 
-        assert result is not None
-        assert result.equals(expected_df)
+    assert result is not None
+    assert result.equals(expected_df)
 
     @pytest.mark.asyncio
     async def test_detect_anomalies_success(self, processor):
@@ -1491,10 +1491,10 @@ class TestDataProcessingService:
 
         result = await processor.detect_anomalies(test_df)
 
-        assert isinstance(result, list)
-        assert len(result) == 2
-        assert result[0]["match_id"] == 2
-        assert result[0]["value"] == 15
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert result[0]["match_id"] == 2
+    assert result[0]["value"] == 15
 
     @pytest.mark.asyncio
     async def test_detect_anomalies_handler_not_initialized(self, processor):
@@ -1505,7 +1505,7 @@ class TestDataProcessingService:
 
         result = await processor.detect_anomalies(test_df)
 
-        assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_cache_processing_results_success(self, processor):
@@ -1518,7 +1518,7 @@ class TestDataProcessingService:
 
         result = await processor.cache_processing_results(cache_key, data, ttl=1800)
 
-        assert result is True
+    assert result is True
         processor.cache_manager.set_json.assert_called_once_with(cache_key, data, ttl=1800)
 
     @pytest.mark.asyncio
@@ -1528,7 +1528,7 @@ class TestDataProcessingService:
 
         result = await processor.cache_processing_results("test_key", {"data": "test"})
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_get_cached_results_success(self, processor):
@@ -1539,7 +1539,7 @@ class TestDataProcessingService:
 
         result = await processor.get_cached_results("test_key")
 
-        assert result == cached_data
+    assert result == cached_data
         processor.cache_manager.get_json.assert_called_once_with("test_key")
 
     @pytest.mark.asyncio
@@ -1550,7 +1550,7 @@ class TestDataProcessingService:
 
         result = await processor.get_cached_results("nonexistent_key")
 
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_batch_process_datasets_success(self, processor):
@@ -1576,11 +1576,11 @@ class TestDataProcessingService:
 
         result = await processor.batch_process_datasets(datasets)
 
-        assert result["total_processed"] == 5  # 2 + 2 + 1
-        assert result["processed_counts"]["matches"] == 2
-        assert result["processed_counts"]["odds"] == 2
-        assert result["processed_counts"]["other"] == 1
-        assert len(result["errors"]) == 0
+    assert result["total_processed"] == 5  # 2 + 2 + 1
+    assert result["processed_counts"]["matches"] == 2
+    assert result["processed_counts"]["odds"] == 2
+    assert result["processed_counts"]["other"] == 1
+    assert len(result["errors"]) == 0
 
     @pytest.mark.asyncio
     async def test_batch_process_datasets_with_errors(self, processor):
@@ -1595,9 +1595,9 @@ class TestDataProcessingService:
 
         result = await processor.batch_process_datasets(datasets)
 
-        assert result["total_processed"] == 1  # 只有odds成功
-        assert "matches" in result["errors"]
-        assert "Processing failed" in result["errors"]["matches"]
+    assert result["total_processed"] == 1  # 只有odds成功
+    assert "matches" in result["errors"]
+    assert "Processing failed" in result["errors"]["matches"]
 
     @pytest.mark.asyncio
     async def test_process_with_retry_success(self, processor):
@@ -1613,8 +1613,8 @@ class TestDataProcessingService:
 
         result = await processor.process_with_retry(mock_func, {"test": "data"}, max_retries=3)
 
-        assert result["success"] is True
-        assert call_count == 2  # 第一次失败，第二次成功
+    assert result["success"] is True
+    assert call_count == 2  # 第一次失败，第二次成功
 
     @pytest.mark.asyncio
     async def test_process_with_retry_all_attempts_fail(self, processor):
@@ -1643,8 +1643,8 @@ class TestDataProcessingService:
 
         result = await processor.process_large_dataset(large_dataset, batch_size=25)
 
-        assert len(result) == 100
-        assert all(item["processed"] for item in result)
+    assert len(result) == 100
+    assert all(item["processed"] for item in result)
 
     @pytest.mark.asyncio
     async def test_collect_performance_metrics(self, processor):
@@ -1655,11 +1655,11 @@ class TestDataProcessingService:
 
         metrics = await processor.collect_performance_metrics(mock_processing_function)
 
-        assert "total_time" in metrics
-        assert "items_processed" in metrics
-        assert "items_per_second" in metrics
-        assert metrics["items_processed"] == 10
-        assert metrics["items_per_second"] > 0
+    assert "total_time" in metrics
+    assert "items_processed" in metrics
+    assert "items_per_second" in metrics
+    assert metrics["items_processed"] == 10
+    assert metrics["items_per_second"] > 0
 
     @pytest.mark.asyncio
     async def test_cleanup_success(self, processor):
@@ -1671,8 +1671,8 @@ class TestDataProcessingService:
 
         result = await processor.cleanup()
 
-        assert result is True
-        assert len(processor._cache) == 0  # 缓存被清空
+    assert result is True
+    assert len(processor._cache) == 0  # 缓存被清空
         processor.db_manager.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -1685,7 +1685,7 @@ class TestDataProcessingService:
 
         result = await processor.cleanup()
 
-        assert result is True
+    assert result is True
         processor.db_manager.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -1697,7 +1697,7 @@ class TestDataProcessingService:
 
         result = await processor.cleanup()
 
-        assert result is False  # 清理失败
+    assert result is False  # 清理失败
 
     def test_edge_cases_with_none_inputs(self, processor):
         """测试处理None输入的边界情况"""
@@ -1705,11 +1705,11 @@ class TestDataProcessingService:
         # 实际的服务方法都有适当的空值检查
 
         # 检查初始化状态
-        assert processor.data_cleaner is None
-        assert processor.missing_handler is None
-        assert processor.data_lake is None
-        assert processor.db_manager is None
-        assert processor.cache_manager is None
+    assert processor.data_cleaner is None
+    assert processor.missing_handler is None
+    assert processor.data_lake is None
+    assert processor.db_manager is None
+    assert processor.cache_manager is None
 
         # 服务名称应该正确设置
-        assert processor.name == "DataProcessingService"
+    assert processor.name == "DataProcessingService"

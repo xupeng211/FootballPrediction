@@ -93,10 +93,10 @@ class TestFootballKafkaConsumerBatchDelta033:
 
     def test_initialization_success(self, consumer_instance, mock_stream_config, mock_consumer):
         """测试成功初始化"""
-        assert consumer_instance.config == mock_stream_config
-        assert consumer_instance.consumer == mock_consumer
-        assert consumer_instance.running is False
-        assert consumer_instance.db_manager is not None
+    assert consumer_instance.config == mock_stream_config
+    assert consumer_instance.consumer == mock_consumer
+    assert consumer_instance.running is False
+    assert consumer_instance.db_manager is not None
 
     def test_initialization_with_custom_group_id(self, mock_stream_config, mock_consumer):
         """测试使用自定义消费者组ID初始化"""
@@ -112,7 +112,7 @@ class TestFootballKafkaConsumerBatchDelta033:
             )
 
             # 验证使用了自定义组ID
-            assert consumer.consumer_group_id == "custom_group"
+    assert consumer.consumer_group_id == "custom_group"
 
     def test_initialization_failure(self, mock_stream_config):
         """测试初始化失败"""
@@ -136,7 +136,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
             consumer_instance._create_consumer()
 
-            assert consumer_instance.consumer == mock_consumer
+    assert consumer_instance.consumer == mock_consumer
 
     def test_create_consumer_when_exists(self, consumer_instance, mock_consumer):
         """测试当consumer已存在时不重新创建"""
@@ -148,7 +148,7 @@ class TestFootballKafkaConsumerBatchDelta033:
             consumer_instance._create_consumer()
 
             # 应该保持原有的consumer
-            assert consumer_instance.consumer == original_consumer
+    assert consumer_instance.consumer == original_consumer
             mock_consumer_class.assert_not_called()
 
     def test_initialize_consumer_success(self, mock_stream_config, mock_consumer):
@@ -180,7 +180,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = consumer_instance._deserialize_message(message_bytes)
 
-        assert result == original_data
+    assert result == original_data
 
     def test_deserialize_message_invalid_json(self, consumer_instance):
         """测试反序列化无效JSON消息"""
@@ -222,15 +222,15 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance._process_match_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_db_session.add.assert_called_once()
         mock_db_session.commit.assert_called_once()
 
         # 验证创建的RawMatchData对象
         call_args = mock_db_session.add.call_args[0][0]
-        assert isinstance(call_args, RawMatchData)
-        assert call_args.data_source == "test_source"
-        assert call_args.external_match_id == "match_123"
+    assert isinstance(call_args, RawMatchData)
+    assert call_args.data_source == "test_source"
+    assert call_args.external_match_id == "match_123"
 
     @pytest.mark.asyncio
     async def test_process_odds_message_success(self, consumer_instance, mock_db_session):
@@ -254,12 +254,12 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance._process_odds_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_db_session.add.assert_called_once()
 
         call_args = mock_db_session.add.call_args[0][0]
-        assert isinstance(call_args, RawOddsData)
-        assert call_args.bookmaker == "BookmakerA"
+    assert isinstance(call_args, RawOddsData)
+    assert call_args.bookmaker == "BookmakerA"
 
     @pytest.mark.asyncio
     async def test_process_scores_message_success(self, consumer_instance, mock_db_session):
@@ -282,12 +282,12 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance._process_scores_message(message_data)
 
-        assert result is True
+    assert result is True
         mock_db_session.add.assert_called_once()
 
         call_args = mock_db_session.add.call_args[0][0]
-        assert isinstance(call_args, RawScoresData)
-        assert call_args.match_status == "in_progress"
+    assert isinstance(call_args, RawScoresData)
+    assert call_args.match_status == "in_progress"
 
     @pytest.mark.asyncio
     async def test_process_message_database_error(self, consumer_instance):
@@ -303,7 +303,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance._process_match_message(message_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_process_main_message_routing(self, consumer_instance):
@@ -475,9 +475,9 @@ class TestFootballKafkaConsumerBatchDelta033:
             # 简化测试：直接测试方法逻辑
             result = await consumer_instance.consume_batch(batch_size=1, timeout=0.1)
 
-            assert isinstance(result, dict)
-            assert "processed" in result
-            assert "failed" in result
+    assert isinstance(result, dict)
+    assert "processed" in result
+    assert "failed" in result
 
     @pytest.mark.asyncio
     async def test_consume_messages_return_type(self, consumer_instance, sample_kafka_message):
@@ -490,7 +490,7 @@ class TestFootballKafkaConsumerBatchDelta033:
             result = await consumer_instance.consume_messages(batch_size=1, timeout=0.1)
 
             # 应该返回列表而不是布尔值
-            assert isinstance(result, list)
+    assert isinstance(result, list)
 
     # === 停止和关闭测试 ===
 
@@ -500,7 +500,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         consumer_instance.stop_consuming()
 
-        assert consumer_instance.running is False
+    assert consumer_instance.running is False
         mock_consumer.close.assert_called_once()
 
     def test_stop_consuming_consumer_none(self, consumer_instance):
@@ -510,7 +510,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         # 应该不抛出异常
         consumer_instance.stop_consuming()
-        assert consumer_instance.running is False
+    assert consumer_instance.running is False
 
     def test_close(self, consumer_instance, mock_consumer):
         """测试关闭消费者"""
@@ -541,7 +541,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
             session = get_session()
 
-            assert session is not None
+    assert session is not None
 
     # === 错误处理测试 ===
 
@@ -556,7 +556,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
             result = await consumer_instance._process_message(mock_message)
 
-            assert result is False
+    assert result is False
 
     def test_subscribe_topics_exception(self, consumer_instance, mock_consumer):
         """测试订阅主题异常处理"""
@@ -574,20 +574,20 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance.consume_batch(batch_size=10, timeout=0.01)
 
-        assert isinstance(result, dict)
-        assert result["processed"] == 0
+    assert isinstance(result, dict)
+    assert result["processed"] == 0
 
     # === 边界条件测试 ===
 
     def test_deserialize_empty_message(self, consumer_instance):
         """测试反序列化空消息"""
         result = consumer_instance._deserialize_message(b"")
-        assert result == {}
+    assert result == {}
 
     def test_deserialize_none_message(self, consumer_instance):
         """测试反序列化None消息"""
         result = consumer_instance._deserialize_message(None)
-        assert result == {}
+    assert result == {}
 
     @pytest.mark.asyncio
     async def test_process_message_none_value(self, consumer_instance):
@@ -598,7 +598,7 @@ class TestFootballKafkaConsumerBatchDelta033:
 
         result = await consumer_instance._process_message(mock_message)
 
-        assert result is False
+    assert result is False
 
     # === 偏移量提交测试 ===
 
@@ -660,4 +660,4 @@ class TestFootballKafkaConsumerBatchDelta033:
 
             result = await consumer_instance.process_message(message_data)
 
-            assert result is True
+    assert result is True

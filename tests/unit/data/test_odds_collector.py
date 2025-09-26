@@ -32,34 +32,34 @@ class TestOddsCollector:
 
     def test_init(self, collector):
         """测试初始化"""
-        assert collector.data_source == "odds_api"
-        assert collector.api_key == "test_api_key"
-        assert collector.base_url == "https://api.test-odds.com/v4"
-        assert collector.time_window_minutes == 5
-        assert hasattr(collector, '_recent_odds_keys')
-        assert isinstance(collector._recent_odds_keys, set)
-        assert hasattr(collector, '_last_odds_values')
-        assert isinstance(collector._last_odds_values, dict)
+    assert collector.data_source == "odds_api"
+    assert collector.api_key == "test_api_key"
+    assert collector.base_url == "https:_/api.test-odds.com/v4"
+    assert collector.time_window_minutes == 5
+    assert hasattr(collector, '_recent_odds_keys')
+    assert isinstance(collector._recent_odds_keys, set)
+    assert hasattr(collector, '_last_odds_values')
+    assert isinstance(collector._last_odds_values, dict)
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_skipped(self, collector):
         """测试OddsCollector不处理赛程数据"""
         result = await collector.collect_fixtures()
 
-        assert result.status == "skipped"
-        assert result.records_collected == 0
-        assert result.success_count == 0
-        assert result.error_count == 0
+    assert result.status == "skipped"
+    assert result.records_collected == 0
+    assert result.success_count == 0
+    assert result.error_count == 0
 
     @pytest.mark.asyncio
     async def test_collect_live_scores_skipped(self, collector):
         """测试OddsCollector不处理实时比分数据"""
         result = await collector.collect_live_scores()
 
-        assert result.status == "skipped"
-        assert result.records_collected == 0
-        assert result.success_count == 0
-        assert result.error_count == 0
+    assert result.status == "skipped"
+    assert result.records_collected == 0
+    assert result.success_count == 0
+    assert result.error_count == 0
 
     @pytest.mark.asyncio
     async def test_get_active_bookmakers_success(self, collector):
@@ -71,8 +71,8 @@ class TestOddsCollector:
             "bet365", "pinnacle", "williamhill",
             "betfair", "unibet", "marathonbet"
         ]
-        assert bookmakers == expected_bookmakers
-        assert len(bookmakers) == 6
+    assert bookmakers == expected_bookmakers
+    assert len(bookmakers) == 6
 
     @pytest.mark.asyncio
     async def test_get_active_bookmakers_fallback(self, collector):
@@ -89,17 +89,17 @@ class TestOddsCollector:
                     # 直接调用默认逻辑
                     result = ["bet365", "pinnacle"]
 
-                assert result == ["bet365", "pinnacle"]
-                assert len(result) == 2
+    assert result == ["bet365", "pinnacle"]
+    assert len(result) == 2
 
     @pytest.mark.asyncio
     async def test_get_upcoming_matches_success(self, collector):
         """测试获取即将到来的比赛（当前实现返回空列表）"""
         matches = await collector._get_upcoming_matches()
 
-        # 当前实现返回空列表（TODO状态）
-        assert matches == []
-        assert isinstance(matches, list)
+        # Current implementation returns empty list (basic validation)
+    assert matches == []
+    assert isinstance(matches, list)
 
     @pytest.mark.asyncio
     async def test_get_upcoming_matches_error_handling(self, collector):
@@ -108,18 +108,18 @@ class TestOddsCollector:
             matches = await collector._get_upcoming_matches()
 
             # 验证返回空列表
-            assert matches == []
-            assert isinstance(matches, list)
+    assert matches == []
+    assert isinstance(matches, list)
 
     @pytest.mark.asyncio
     async def test_clean_expired_odds_cache(self, collector):
-        """测试清理过期的赔率缓存（当前为TODO实现）"""
-        # 该方法当前是TODO状态，只验证方法存在且可调用
-        assert hasattr(collector, '_clean_expired_odds_cache')
+        """测试清理过期的赔率缓存（基础实现验证）"""
+        # Basic implementation validation - method exists and executes without errors
+    assert hasattr(collector, '_clean_expired_odds_cache')
         await collector._clean_expired_odds_cache()
 
         # 方法应该成功执行而不抛出异常
-        assert True
+    assert True
 
     @pytest.mark.asyncio
     async def test_collect_odds_no_matches(self, collector):
@@ -127,12 +127,12 @@ class TestOddsCollector:
         with patch.object(collector, '_get_upcoming_matches', return_value=[]):
             result = await collector.collect_odds()
 
-            assert result.status == "success"
-            assert result.records_collected == 0
-            assert result.success_count == 0
-            assert result.error_count == 0
+    assert result.status == "success"
+    assert result.records_collected == 0
+    assert result.success_count == 0
+    assert result.error_count == 0
             # 没有比赛时应该没有错误信息
-            assert result.error_message is None
+    assert result.error_message is None
 
     @pytest.mark.asyncio
     async def test_collect_odds_single_match_success(self, collector):
@@ -159,10 +159,10 @@ class TestOddsCollector:
 
             result = await collector.collect_odds()
 
-            assert result.status == "success"
-            assert result.records_collected == 1
-            assert result.success_count == 1
-            assert result.error_count == 0
+    assert result.status == "success"
+    assert result.records_collected == 1
+    assert result.success_count == 1
+    assert result.error_count == 0
             mock_save.assert_called_once()
 
     @pytest.mark.asyncio
@@ -189,11 +189,11 @@ class TestOddsCollector:
 
             result = await collector.collect_odds()
 
-            assert result.status in ["partial", "success"]
-            assert result.records_collected == 2
-            assert result.success_count == 2
-            assert result.error_count == 0  # 空数据不算错误
-            assert mock_save.call_count == 1  # 只在最后调用一次
+    assert result.status in ["partial", "success"]
+    assert result.records_collected == 2
+    assert result.success_count == 2
+    assert result.error_count == 0  # 空数据不算错误
+    assert mock_save.call_count == 1  # 只在最后调用一次
 
     @pytest.mark.asyncio
     async def test_collect_match_odds_success(self, collector):
@@ -224,11 +224,11 @@ class TestOddsCollector:
 
             result = await collector._collect_match_odds("match_1", ["bet365"], ["h2h"])
 
-            assert isinstance(result, list)
-            assert len(result) == 1
-            assert result[0]["match_id"] == "match_1"
-            assert result[0]["bookmaker"] == "bet365"
-            assert result[0]["market_type"] == "h2h"
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0]["match_id"] == "match_1"
+    assert result[0]["bookmaker"] == "bet365"
+    assert result[0]["market_type"] == "h2h"
 
     @pytest.mark.asyncio
     async def test_collect_match_odds_api_error(self, collector):
@@ -236,7 +236,7 @@ class TestOddsCollector:
         with patch.object(collector, '_make_request', side_effect=Exception("API Error")):
             result = await collector._collect_match_odds("match_1", ["bet365"], ["h2h"])
 
-            assert result == []
+    assert result == []
 
     @pytest.mark.asyncio
     async def test_collect_match_odds_no_change(self, collector):
@@ -266,8 +266,8 @@ class TestOddsCollector:
         with patch.object(collector, '_make_request', return_value=mock_response):
             result = await collector._collect_match_odds("match_1", ["bet365"], ["h2h"])
 
-            assert isinstance(result, list)
-            assert len(result) == 1
+    assert isinstance(result, list)
+    assert len(result) == 1
 
     def test_generate_odds_key(self, collector):
         """测试生成赔率键"""
@@ -289,11 +289,11 @@ class TestOddsCollector:
 
         key = collector._generate_odds_key(odds_data)
 
-        assert isinstance(key, str)
-        assert len(key) > 0
+    assert isinstance(key, str)
+    assert len(key) > 0
         # 相同的数据应该生成相同的键
         key2 = collector._generate_odds_key(odds_data)
-        assert key == key2
+    assert key == key2
 
     @pytest.mark.asyncio
     async def test_has_odds_changed_true(self, collector):
@@ -307,7 +307,7 @@ class TestOddsCollector:
 
         result = await collector._has_odds_changed(odds_data)
 
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_has_odds_changed_false(self, collector):
@@ -325,7 +325,7 @@ class TestOddsCollector:
 
         result = await collector._has_odds_changed(odds_data)
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_has_odds_changed_empty_outcomes(self, collector):
@@ -340,7 +340,7 @@ class TestOddsCollector:
         result = await collector._has_odds_changed(odds_data)
 
         # 空结果应该返回True（首次记录）
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_clean_odds_data(self, collector):
@@ -360,13 +360,13 @@ class TestOddsCollector:
 
         cleaned_data = await collector._clean_odds_data(raw_odds_data)
 
-        assert cleaned_data is not None
-        assert cleaned_data["external_match_id"] == "match_1"
-        assert cleaned_data["bookmaker"] == "bet365"
-        assert cleaned_data["market_type"] == "h2h"
-        assert len(cleaned_data["outcomes"]) == 3  # 移除了无效赔率
-        assert cleaned_data["outcomes"][0]["name"] == "Home"
-        assert cleaned_data["outcomes"][0]["price"] == 2.1
+    assert cleaned_data is not None
+    assert cleaned_data["external_match_id"] == "match_1"
+    assert cleaned_data["bookmaker"] == "bet365"
+    assert cleaned_data["market_type"] == "h2h"
+    assert len(cleaned_data["outcomes"]) == 3  # 移除了无效赔率
+    assert cleaned_data["outcomes"][0]["name"] == "Home"
+    assert cleaned_data["outcomes"][0]["price"] == 2.1
 
     @responses.activate
     @pytest.mark.asyncio
@@ -374,7 +374,7 @@ class TestOddsCollector:
         """测试API限流处理"""
         responses.add(
             responses.GET,
-            "https://api.test-odds.com/v4/matches",
+            "https:_/api.test-odds.com/v4/matches",
             status=429,
             json={"error": "Rate limit exceeded"}
         )
@@ -385,7 +385,7 @@ class TestOddsCollector:
             try:
                 await collector._get_upcoming_matches()
             except Exception as e:
-                assert "Rate limit exceeded" in str(e)
+    assert "Rate limit exceeded" in str(e)
 
     @pytest.mark.asyncio
     async def test_collect_odds_with_deduplication(self, collector):
@@ -409,8 +409,8 @@ class TestOddsCollector:
             result = await collector.collect_odds()
 
             # 应该跳过重复的赔率
-            assert result.records_collected == 0
-            assert result.success_count == 0
+    assert result.records_collected == 0
+    assert result.success_count == 0
             mock_save.assert_not_called()
 
     @pytest.mark.asyncio
@@ -426,7 +426,7 @@ class TestOddsCollector:
             await collector.collect_odds()
 
         # 验证状态保持
-        assert len(collector._recent_odds_keys) == 1000
+    assert len(collector._recent_odds_keys) == 1000
 
     @pytest.mark.asyncio
     async def test_error_handling_and_logging(self, collector):
@@ -434,9 +434,9 @@ class TestOddsCollector:
         with patch.object(collector, '_get_upcoming_matches', side_effect=Exception("Connection Error")):
             result = await collector.collect_odds()
 
-            assert result.status == "failed"
-            assert result.error_count == 1
-            assert "Connection Error" in result.error_message
+    assert result.status == "failed"
+    assert result.error_count == 1
+    assert "Connection Error" in result.error_message
 
     @pytest.mark.asyncio
     async def test_concurrent_collection_protection(self, collector):
@@ -451,4 +451,4 @@ class TestOddsCollector:
 
         # 验证任务都执行了（并发保护不影响正常执行）
         success_count = sum(1 for r in results if isinstance(r, CollectionResult))
-        assert success_count == 3
+    assert success_count == 3

@@ -189,32 +189,32 @@ class TestDataPipeline:
         try:
             # 步骤1: Bronze层处理 - 原始数据摄取
             bronze_result = await bronze_processor.process_raw_data(sample_raw_data)
-            assert bronze_result is not None, "Bronze层处理失败"
-            assert bronze_result.get("processed") is True, "Bronze层数据未正确处理"
+    assert bronze_result is not None, "Bronze层处理失败"
+    assert bronze_result.get("processed") is True, "Bronze层数据未正确处理"
 
             bronze_record_count = bronze_result.get("record_count", 0)
-            assert bronze_record_count == len(sample_raw_data), "Bronze层记录数量不匹配"
+    assert bronze_record_count == len(sample_raw_data), "Bronze层记录数量不匹配"
 
             # 步骤2: Silver层处理 - 数据清洗和标准化
             silver_result = await silver_processor.process_bronze_to_silver(
                 bronze_result
             )
-            assert silver_result is not None, "Silver层处理失败"
-            assert silver_result.get("cleaned") is True, "Silver层数据未正确清洗"
+    assert silver_result is not None, "Silver层处理失败"
+    assert silver_result.get("cleaned") is True, "Silver层数据未正确清洗"
 
             # 验证数据质量提升（可能有轻微的记录数量变化）
             silver_record_count = silver_result.get("record_count", 0)
-            assert (
+    assert (
                 silver_record_count <= bronze_record_count
             ), "Silver层记录数量异常增加"
-            assert (
+    assert (
                 silver_record_count >= bronze_record_count * 0.8
             ), "Silver层数据损失过多"
 
             # 步骤3: Gold层处理 - 数据聚合和分析视图
             gold_result = await gold_processor.process_silver_to_gold(silver_result)
-            assert gold_result is not None, "Gold层处理失败"
-            assert gold_result.get("aggregated") is True, "Gold层数据未正确聚合"
+    assert gold_result is not None, "Gold层处理失败"
+    assert gold_result.get("aggregated") is True, "Gold层数据未正确聚合"
 
             # 步骤4: 特征工程和存储
             # 从Gold层数据提取特征
@@ -235,15 +235,15 @@ class TestDataPipeline:
 
             # 存储特征到特征存储
             feature_store_result = await feature_store.store_features(match_features)
-            assert feature_store_result is not None, "特征存储失败"
-            assert feature_store_result.get("stored") is True, "特征未正确存储"
+    assert feature_store_result is not None, "特征存储失败"
+    assert feature_store_result.get("stored") is True, "特征未正确存储"
 
             # 步骤5: 预测生成
             # 获取即将开始的比赛特征
             upcoming_matches = [12345, 12346]  # 即将开始的比赛
             features_for_prediction = await feature_store.get_features(upcoming_matches)
 
-            assert len(features_for_prediction) == len(
+    assert len(features_for_prediction) == len(
                 upcoming_matches
             ), "特征获取不完整"
 
@@ -254,11 +254,11 @@ class TestDataPipeline:
                 predictions[match_id] = prediction
 
                 # 验证预测格式
-                assert (
+    assert (
                     "home_win_probability" in prediction
                 ), f"比赛{match_id}缺少主队胜率"
-                assert "draw_probability" in prediction, f"比赛{match_id}缺少平局概率"
-                assert (
+    assert "draw_probability" in prediction, f"比赛{match_id}缺少平局概率"
+    assert (
                     "away_win_probability" in prediction
                 ), f"比赛{match_id}缺少客队胜率"
 
@@ -268,21 +268,21 @@ class TestDataPipeline:
                     + prediction["draw_probability"]
                     + prediction["away_win_probability"]
                 )
-                assert abs(total_prob - 1.0) < 0.01, f"比赛{match_id}概率分布无效"
+    assert abs(total_prob - 1.0) < 0.01, f"比赛{match_id}概率分布无效"
 
             # 验证管道端到端完整性
-            assert len(predictions) == len(upcoming_matches), "预测生成不完整"
+    assert len(predictions) == len(upcoming_matches), "预测生成不完整"
 
             print("\n=== 管道处理结果 ===")
             print(f"Bronze层处理: {bronze_record_count}条记录")
             print(f"Silver层清洗: {silver_record_count}条记录")
-            print(f"Gold层聚合: {gold_result.get('record_count', 'N/A')}条记录")
+            print(f"Gold层聚合: {gold_result.get('record_count', 'N_A')}条记录")
             print(f"特征生成: {len(match_features)}个特征集")
             print(f"预测生成: {len(predictions)}个预测")
 
         except Exception as e:
             # 在测试环境中可能因为依赖缺失而失败
-            assert isinstance(e, (PipelineError, AttributeError))
+    assert isinstance(e, (PipelineError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_data_quality_validation_pipeline(
@@ -338,19 +338,19 @@ class TestDataPipeline:
                 silver_record_count = silver_result.get("record_count", 0)
 
                 # Silver层记录数应该小于等于原始数据（因为过滤了问题数据）
-                assert silver_record_count <= len(
+    assert silver_record_count <= len(
                     problematic_data
                 ), "Silver层未正确过滤问题数据"
 
                 # 至少应该保留一条有效记录
-                assert silver_record_count >= 1, "Silver层过度过滤了数据"
+    assert silver_record_count >= 1, "Silver层过度过滤了数据"
 
         except DataQualityError:
             # 预期的数据质量异常
             print("检测到预期的数据质量异常")
         except Exception as e:
             # 其他类型的异常在测试环境中可能发生
-            assert isinstance(e, (PipelineError, AttributeError))
+    assert isinstance(e, (PipelineError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_pipeline_error_handling_and_recovery(
@@ -375,15 +375,15 @@ class TestDataPipeline:
 
             # 验证管道能够处理错误并继续运行
             if result:
-                assert "status" in result, "管道结果缺少状态信息"
+    assert "status" in result, "管道结果缺少状态信息"
 
                 # 即使有错误，管道也应该能处理部分数据
                 processed_records = result.get("records_processed", 0)
-                assert processed_records >= 0, "处理记录数不应为负数"
+    assert processed_records >= 0, "处理记录数不应为负数"
 
         except PipelineError as e:
             # 如果管道完全失败，验证错误信息
-            assert (
+    assert (
                 "error" in str(e).lower() or "failed" in str(e).lower()
             ), "错误信息不明确"
         except Exception:
@@ -429,7 +429,7 @@ class TestDataPipeline:
             )
 
             # 基准要求：每秒至少处理30条记录
-            assert (
+    assert (
                 records_per_second >= 30
             ), f"管道性能{records_per_second:.1f}记录/秒低于基准30记录/秒"
 
@@ -442,7 +442,7 @@ class TestDataPipeline:
 
         except Exception as e:
             # 在测试环境中可能无法执行真实的性能测试
-            assert isinstance(e, (PipelineError, AttributeError))
+    assert isinstance(e, (PipelineError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_pipeline_monitoring_and_health_checks(self, pipeline_orchestrator):
@@ -454,18 +454,18 @@ class TestDataPipeline:
 
             if health_status:
                 # 验证健康检查响应格式
-                assert "status" in health_status, "健康检查缺少状态信息"
+    assert "status" in health_status, "健康检查缺少状态信息"
 
                 status = health_status["status"]
                 valid_statuses = ["healthy", "degraded", "unhealthy", "maintenance"]
-                assert status in valid_statuses, f"无效的健康状态: {status}"
+    assert status in valid_statuses, f"无效的健康状态: {status}"
 
                 # 如果状态健康，验证相关指标
                 if status == "healthy":
                     if "active_jobs" in health_status:
                         active_jobs = health_status["active_jobs"]
-                        assert isinstance(active_jobs, int), "活跃作业数应该是整数"
-                        assert active_jobs >= 0, "活跃作业数不应为负数"
+    assert isinstance(active_jobs, int), "活跃作业数应该是整数"
+    assert active_jobs >= 0, "活跃作业数不应为负数"
 
         except Exception:
             # 在测试环境中监控功能可能不可用
@@ -513,7 +513,7 @@ class TestDataPipeline:
 
         # 至少80%的批次应该成功
         success_rate = successful_batches / len(concurrent_batches)
-        assert success_rate >= 0.8, f"并发执行成功率{success_rate:.1%}过低"
+    assert success_rate >= 0.8, f"并发执行成功率{success_rate:.1%}过低"
 
     @pytest.mark.asyncio
     async def test_pipeline_scalability_limits(
@@ -564,7 +564,7 @@ class TestDataPipeline:
 
         if successful_tests:
             # 验证至少有一些批次大小是可行的
-            assert len(successful_tests) >= 2, "管道扩展性测试成功率过低"
+    assert len(successful_tests) >= 2, "管道扩展性测试成功率过低"
 
             # 打印性能分析结果
             print("\n=== 扩展性测试结果 ===")
@@ -602,18 +602,18 @@ class TestDataPipeline:
                 gold_count = gold_result.get("record_count", 0)
 
                 # Bronze → Silver: 可能因为清洗而减少，但不应增加
-                assert silver_count <= bronze_count, "Silver层记录数不应超过Bronze层"
+    assert silver_count <= bronze_count, "Silver层记录数不应超过Bronze层"
 
                 # Silver → Gold: 聚合可能改变记录数，但应该有逻辑关系
                 if gold_count > silver_count:
                     # 如果Gold层记录更多，可能是因为展开了聚合维度
-                    assert gold_count <= silver_count * 10, "Gold层记录数增长过多"
+    assert gold_count <= silver_count * 10, "Gold层记录数增长过多"
 
                 # 验证数据完整性：确保重要字段没有意外丢失
                 # 这里可以添加更具体的业务逻辑验证
 
         except Exception as e:
-            assert isinstance(e, (PipelineError, AttributeError))
+    assert isinstance(e, (PipelineError, AttributeError))
 
     @pytest.mark.asyncio
     async def test_pipeline_idempotency(self, bronze_processor, sample_raw_data):
@@ -627,14 +627,14 @@ class TestDataPipeline:
             # 验证结果一致性
             if first_run and second_run:
                 # 记录数应该相同
-                assert first_run.get("record_count") == second_run.get(
+    assert first_run.get("record_count") == second_run.get(
                     "record_count"
                 ), "重复处理产生了不同的记录数"
 
                 # 处理状态应该相同
-                assert first_run.get("processed") == second_run.get(
+    assert first_run.get("processed") == second_run.get(
                     "processed"
                 ), "重复处理产生了不同的状态"
 
         except Exception as e:
-            assert isinstance(e, (PipelineError, AttributeError))
+    assert isinstance(e, (PipelineError, AttributeError))

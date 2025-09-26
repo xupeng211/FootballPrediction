@@ -13,65 +13,65 @@ class TestTimeUtils:
     def test_now_utc(self):
         """测试获取当前UTC时间"""
         result = TimeUtils.now_utc()
-        assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+    assert isinstance(result, datetime)
+    assert result.tzinfo == timezone.utc
 
     def test_timestamp_to_datetime(self):
         """测试时间戳转datetime"""
         timestamp = 1735732800.0  # 2025-01-01 12:00:00 UTC
         result = TimeUtils.timestamp_to_datetime(timestamp)
 
-        assert isinstance(result, datetime)
-        assert result.year == 2025
-        assert result.month == 1
-        assert result.day == 1
-        assert result.hour == 12
-        assert result.tzinfo == timezone.utc
+    assert isinstance(result, datetime)
+    assert result.year == 2025
+    assert result.month == 1
+    assert result.day == 1
+    assert result.hour == 12
+    assert result.tzinfo == timezone.utc
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
         dt = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
         result = TimeUtils.datetime_to_timestamp(dt)
 
-        assert isinstance(result, float)
-        assert result == 1735732800.0
+    assert isinstance(result, float)
+    assert result == 1735732800.0
 
     def test_format_datetime_default(self):
         """测试默认格式的日期时间格式化"""
         dt = datetime(2025, 1, 1, 12, 30, 45)
         result = TimeUtils.format_datetime(dt)
-        assert result == "2025-01-01 12:30:45"
+    assert result == "2025-01-01 12:30:45"
 
     def test_format_datetime_custom(self):
         """测试自定义格式的日期时间格式化"""
         dt = datetime(2025, 1, 1, 12, 30, 45)
-        result = TimeUtils.format_datetime(dt, "%Y/%m/%d %H:%M")
-        assert result == "2025/01/01 12:30"
+        result = TimeUtils.format_datetime(dt, "%Y_%m/%d %H:%M")
+    assert result == "2025/01/01 12:30"
 
     def test_parse_datetime_default(self):
         """测试默认格式的日期时间解析"""
         date_str = "2025-01-01 12:30:45"
         result = TimeUtils.parse_datetime(date_str)
 
-        assert isinstance(result, datetime)
-        assert result.year == 2025
-        assert result.month == 1
-        assert result.day == 1
-        assert result.hour == 12
-        assert result.minute == 30
-        assert result.second == 45
+    assert isinstance(result, datetime)
+    assert result.year == 2025
+    assert result.month == 1
+    assert result.day == 1
+    assert result.hour == 12
+    assert result.minute == 30
+    assert result.second == 45
 
     def test_parse_datetime_custom(self):
         """测试自定义格式的日期时间解析"""
-        date_str = "2025/01/01 12:30"
+        date_str = "2025_01/01 12:30"
         result = TimeUtils.parse_datetime(date_str, "%Y/%m/%d %H:%M")
 
-        assert isinstance(result, datetime)
-        assert result.year == 2025
-        assert result.month == 1
-        assert result.day == 1
-        assert result.hour == 12
-        assert result.minute == 30
+    assert isinstance(result, datetime)
+    assert result.year == 2025
+    assert result.month == 1
+    assert result.day == 1
+    assert result.hour == 12
+    assert result.minute == 30
 
     def test_round_trip_conversion(self):
         """测试datetime和时间戳的往返转换"""
@@ -81,7 +81,7 @@ class TestTimeUtils:
         timestamp = TimeUtils.datetime_to_timestamp(original_dt)
         converted_dt = TimeUtils.timestamp_to_datetime(timestamp)
 
-        assert converted_dt == original_dt
+    assert converted_dt == original_dt
 
     def test_format_parse_round_trip(self):
         """测试格式化和解析的往返转换"""
@@ -91,7 +91,7 @@ class TestTimeUtils:
         formatted = TimeUtils.format_datetime(original_dt)
         parsed_dt = TimeUtils.parse_datetime(formatted)
 
-        assert parsed_dt == original_dt
+    assert parsed_dt == original_dt
 
     def test_all_methods_exist(self):
         """确保所有方法都存在且可调用"""
@@ -104,5 +104,5 @@ class TestTimeUtils:
         ]
 
         for method_name in methods:
-            assert hasattr(TimeUtils, method_name)
-            assert callable(getattr(TimeUtils, method_name))
+    assert hasattr(TimeUtils, method_name)
+    assert callable(getattr(TimeUtils, method_name))

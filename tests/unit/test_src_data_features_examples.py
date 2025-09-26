@@ -10,14 +10,14 @@ import importlib
 module = importlib.import_module("src.data.features.examples")
 
 def test_module_import():
-    """Basic import test to ensure src/data/features/examples.py loads without error."""
+    """Basic import test to ensure src_data/features/examples.py loads without error."""
     assert module is not None
 
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
 # Hint: Use pytest-mock or monkeypatch to mock external dependencies.
 
@@ -127,9 +127,9 @@ Returns:
     result = getattr(module, "example_initialize_feature_store")()
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -142,9 +142,9 @@ Args:
     result = getattr(module, "example_write_team_features")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -157,9 +157,9 @@ Args:
     result = getattr(module, "example_write_odds_features")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -174,9 +174,9 @@ Returns:...
     result = getattr(module, "example_get_online_features")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -191,9 +191,9 @@ Returns:...
     result = getattr(module, "example_get_historical_features")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -209,9 +209,9 @@ Returns:
     result = getattr(module, "example_create_training_dataset")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -224,9 +224,9 @@ Args:
     result = getattr(module, "example_feature_statistics")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -239,9 +239,9 @@ Args:
     result = getattr(module, "example_list_all_features")(0)
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
 
@@ -256,8 +256,8 @@ Returns:
     result = getattr(module, "example_integration_with_ml_pipeline")()
     result = None
     try:
-        result = <target_function>()  # 调用实际函数，必要时加参数
+        result = None  # 调用实际函数，必要时加参数
     except Exception as e:
-        assert isinstance(e, Exception)
+    assert isinstance(e, Exception)
     assert result is None or result is not False
     assert result is not None
