@@ -115,3 +115,22 @@
 - [足球预测系统测试策略总览](TESTING_STRATEGY.md) - Testing
 - [CI Fast vs Slow 测试对比报告](CI_REPORT.md) - Needs Review
 - [Phase 5.3.1 覆盖率基线报告](COVERAGE_BASELINE_REPORT.md) - Testing
+- [🛡️ 失败保护机制演示](FAILURE_PROTECTION_DEMO.md) - Needs Review
+- [异步数据库测试指南](async_database_testing_guide.md) - Testing
+- [🔍 监控系统文档](monitoring.md) - General
+- [🎯 Phase 6：上线前检查与补齐 Blocker 阶段 - 最终验收报告](PHASE6_COMPLETION_REPORT.md) - General
+- [🛡️ CI Guardian 系统使用指南](CI_GUARDIAN_GUIDE.md) - CI/CD
+- [📋 足球预测项目测试质量看板](QA_TEST_KANBAN.md) - General
+- [Phase 5.2 系统性提升阶段完成报告](PHASE5.2_COMPLETION_REPORT.md) - General
+- [🚀 快速开始指南](QUICK_START.md) - Needs Review
+- [上线前优化任务看板](TASKS.md) - General
+- [📖 Makefile 使用指南](MAKEFILE_GUIDE.md) - General
+- [DEVELOPMENT_GUIDE](reference/DEVELOPMENT_GUIDE.md) - Needs Review
+- [DATABASE_SCHEMA](reference/DATABASE_SCHEMA.md) - Needs Review
+- [MONITORING_GUIDE](reference/MONITORING_GUIDE.md) - Needs Review
+- [🎉 特征存储测试问题修复完成](archive/README_FEATURE_STORE_FIXES.md) - Needs Review
+- [异步数据库测试解决方案](archive/README_ASYNC_DB_TESTING.md) - Testing
+- [🎯 足球预测项目分阶段优化方案](archive/分阶段优化方案_FootballPrediction.md) - General
+- [数据管道系统实现报告 - 阶段1&2](archive/README_STAGE1_2_IMPLEMENTATION.md) - Needs Review
+- [🐳 FootballPrediction Docker 部署指南](archive/README_DOCKER.md) - Needs Review
+- [🚀 测试覆盖率全面提升方案](archive/COVERAGE_IMPROVEMENT_COMPREHENSIVE_PLAN.md) - Needs Review
