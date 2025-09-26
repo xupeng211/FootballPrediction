@@ -101,19 +101,19 @@ class TestFeatureExtractionAPI:
         )
 
         # 验证APIResponse结构
-    assert result["success"] is True
-    assert "data" in result
+        assert result["success"] is True
+        assert "data" in result
 
         # 验证数据结构
         data = result["data"]
-    assert data["match_info"]["match_id"] == sample_match_data["match_id"]
-    assert "features" in data
+        assert data["match_info"]["match_id"] == sample_match_data["match_id"]
+        assert "features" in data
 
         # 验证特征数据结构（基于sample_features_data的实际结构）
         features = data["features"]
-    assert "team_form" in features
-    assert features["team_form"]["home_team"]["wins"] == 3
-    assert features["statistical_features"]["home_team_strength"] == 0.75
+        assert "team_form" in features
+        assert features["team_form"]["home_team"]["wins"] == 3
+        assert features["statistical_features"]["home_team_strength"] == 0.75
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, mock_session):
