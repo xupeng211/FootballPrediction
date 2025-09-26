@@ -13,15 +13,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Run Docs Guard
         run: |
-          python -m pip install --upgrade pip
-
-      - name: Run docs guard
-        run: |
+          echo "🛡️ Running Docs Guard checks..."
+          set +e
           python scripts/docs_guard.py
+          STATUS=$?
+          set -e
+
+          if [ $STATUS -ne 0 ]; then
+            echo ""
+            echo -e "\033[31m❌ Docs Guard 检查失败！\033[0m"
+            echo -e "\033[33m请在本地运行以下命令来修复问题：\033[0m"
+            echo ""
+            echo "   make docs.check"
+            echo ""
+            echo -e "\033[33m如果存在孤儿文档，可尝试自动修复：\033[0m"
+            echo ""
+            echo "   make docs.fix"
+            echo ""
+            echo -e "\033[36m提示：所有文档必须满足以下要求：\033[0m"
+            echo "- 没有坏链 (broken links)"
+            echo "- 没有孤儿文档 (orphan docs)"
+            echo "- 没有违规目录 (invalid directories)"
+            echo "- 所有新增文档必须加入 INDEX.md"
+            echo ""
+            exit 1
+          else
+            echo -e "\033[32m✅ Docs Guard 检查通过！\033[0m"
+          fi
