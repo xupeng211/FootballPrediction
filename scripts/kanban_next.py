@@ -15,7 +15,7 @@ def run(cmd):
 
 # 1. 找到进行中任务
 kanban_text = KANBAN.read_text(encoding="utf-8")
-m = re.search(r"- \[ \] Coverage提升阶段 (\d+): .*", kanban_text)
+m = re.search(r"- \[ \] \*\*.*?覆盖率提升阶段 (\d+)\*\*: .*", kanban_text)
 if not m:
     print("❌ No '进行中' coverage task found in Kanban.")
     exit(1)

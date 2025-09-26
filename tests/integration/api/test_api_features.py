@@ -133,24 +133,24 @@ class TestFeaturesAPI:
                 response = client.get("_api/v1/features/1")
 
                 # 验证响应
-    assert response.status_code == 200
+                assert response.status_code == 200
                 data = response.json()
-    assert data["success"] is True
-    assert "data" in data
-    assert "match_info" in data["data"]
-    assert "features" in data["data"]
+                assert data["success"] is True
+                assert "data" in data
+                assert "match_info" in data["data"]
+                assert "features" in data["data"]
 
                 # 验证比赛信息
                 match_info = data["data"]["match_info"]
-    assert match_info["match_id"] == 1
-    assert match_info["home_team_id"] == 1
-    assert match_info["away_team_id"] == 2
+                assert match_info["match_id"] == 1
+                assert match_info["home_team_id"] == 1
+                assert match_info["away_team_id"] == 2
 
                 # 验证特征数据
                 features = data["data"]["features"]
-    assert "team_features" in features
-    assert "h2h_features" in features
-    assert "odds_features" in features
+                assert "team_features" in features
+                assert "h2h_features" in features
+                assert "odds_features" in features
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, client):
@@ -167,9 +167,9 @@ class TestFeaturesAPI:
 
                 response = client.get("_api/v1/features/999")
 
-    assert response.status_code == 404
+                assert response.status_code == 404
                 data = response.json()
-    assert "比赛 999 不存在" in data["detail"]
+                assert "比赛 999 不存在" in data["detail"]
 
     @pytest.mark.asyncio
     async def test_get_team_features_success(self, client, mock_team):
