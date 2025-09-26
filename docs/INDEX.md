@@ -96,3 +96,33 @@
 - [🚀 Football Prediction 项目阶段3优化任务进度报告](legacy/STAGE3_PROGRESS_REPORT.md)
 - [🚀 测试覆盖率全面提升方案](legacy/COVERAGE_IMPROVEMENT_COMPREHENSIVE_PLAN.md)
 - [🛡️ 足球预测系统 - QA验证报告](legacy/reports/QA_VERIFICATION_REPORT.md)
+
+## Additional Reference Documents
+- [CI 修复报告](CI_FIX_REPORT.md) - Needs Review
+- [代码错误修复总结](code_fixes_summary.md) - Needs Review
+- [Caching Implementation Design](CACHING_IMPLEMENTATION_DESIGN.md) - General
+- [Coverage Improvement Roadmap](COVERAGE_ROADMAP.md) - Needs Review
+- [Dependency Files Overview](DEPENDENCY_FILES_OVERVIEW.md) - General
+- [📋 Phase 1-4 完成度审计报告](PHASE_COMPLETION_AUDIT.md) - General
+- [CI 迁移兼容性强化完成报告](CI_MIGRATION_COMPATIBILITY_REPORT.md) - CI/CD
+- [Phase 5.3 覆盖率优化阶段完成报告](PHASE5.3_COMPLETION_REPORT.md) - General
+- [Dependency Management](DEPENDENCY_MANAGEMENT.md) - General
+- [API Documentation Style Guide](API_DOCUMENTATION_STYLE_GUIDE.md) - API
+- [Unused Dependencies Analysis](UNUSED_DEPENDENCIES_ANALYSIS.md) - Needs Review
+- [MCP 健康检查报告](MCP_HEALTH_CHECK.md) - General
+- [Phase 5.2.1 专项修复阶段完成报告](PHASE5.2.1_COMPLETION_REPORT.md) - Needs Review
+- [本地CI模拟执行报告](LOCAL_CI_REPORT.md) - Needs Review
+- [Phase 5.3.2.2 完成报告：全局覆盖率突破阶段](PHASE5322_COMPLETION_REPORT.md) - General
+- [🎯 API 500 错误修复验证报告](REPAIR_VERIFICATION_REPORT.md) - General
+- [足球预测系统测试策略总览](TESTING_STRATEGY.md) - Testing
+- [Phase 5.3.1 覆盖率基线报告](COVERAGE_BASELINE_REPORT.md) - Testing
+- [🛡️ 失败保护机制演示](FAILURE_PROTECTION_DEMO.md) - Needs Review
+- [异步数据库测试指南](async_database_testing_guide.md) - Testing
+- [🔍 监控系统文档](monitoring.md) - General
+- [🎯 Phase 6：上线前检查与补齐 Blocker 阶段 - 最终验收报告](PHASE6_COMPLETION_REPORT.md) - General
+- [🛡️ CI Guardian 系统使用指南](CI_GUARDIAN_GUIDE.md) - CI/CD
+- [📋 足球预测项目测试质量看板](QA_TEST_KANBAN.md) - General
+- [Phase 5.2 系统性提升阶段完成报告](PHASE5.2_COMPLETION_REPORT.md) - General
+- [🚀 快速开始指南](QUICK_START.md) - Needs Review
+- [上线前优化任务看板](TASKS.md) - General
+- [📖 Makefile 使用指南](MAKEFILE_GUIDE.md) - General
