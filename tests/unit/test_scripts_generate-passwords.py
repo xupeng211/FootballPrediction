@@ -101,3 +101,58 @@ def test_class_SecurePasswordGenerator_generate_service_password():
         # Method requires args, skipping minimal call
         result = None
     assert result is None or result is not False
+
+def test_func_generate_all_passwords_business():
+    # Based on docstring: 生成项目所需的所有密码...
+    result = getattr(module, "generate_all_passwords")()
+    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
+
+
+def test_func_generate_env_file_business_args():
+    # Based on docstring: 生成环境变量文件...
+    result = getattr(module, "generate_env_file")(0, 0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_main_business():
+    # Based on docstring: 主函数...
+    result = getattr(module, "main")()
+    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
+
+
+def test_class_SecurePasswordGenerator___init___business():
+    obj = getattr(module, "SecurePasswordGenerator")()
+    result = getattr(obj, "__init__")()
+    # TODO: 根据 docstring 推断业务行为
+    assert result is not None
+
+
+def test_class_SecurePasswordGenerator_generate_password_business_args():
+    obj = getattr(module, "SecurePasswordGenerator")()
+    result = getattr(obj, "generate_password")(0, 0, 0, 0, 0, 0)
+    # TODO: 替换参数为更贴近业务场景的值
+    assert result is not None
+
+
+def test_class_SecurePasswordGenerator_generate_jwt_secret_business_args():
+    obj = getattr(module, "SecurePasswordGenerator")()
+    result = getattr(obj, "generate_jwt_secret")(0)
+    # TODO: 替换参数为更贴近业务场景的值
+    assert result is not None
+
+
+def test_class_SecurePasswordGenerator_generate_db_password_business_args():
+    obj = getattr(module, "SecurePasswordGenerator")()
+    result = getattr(obj, "generate_db_password")(0)
+    # TODO: 替换参数为更贴近业务场景的值
+    assert result is not None
+
+
+def test_class_SecurePasswordGenerator_generate_service_password_business_args():
+    obj = getattr(module, "SecurePasswordGenerator")()
+    result = getattr(obj, "generate_service_password")(0)
+    # TODO: 替换参数为更贴近业务场景的值
+    assert result is not None

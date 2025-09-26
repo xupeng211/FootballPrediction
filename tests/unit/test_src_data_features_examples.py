@@ -113,3 +113,101 @@ def test_func_example_integration_with_ml_pipeline():
         # Function requires args, skipping minimal call
         result = None
     assert result is None or result is not False
+
+def test_func_example_initialize_feature_store_business():
+    # Based on docstring: 示例：初始化特征仓库
+
+Returns:
+    FootballFeatureStore: 特征仓库实例...
+    result = getattr(module, "example_initialize_feature_store")()
+    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
+
+
+def test_func_example_write_team_features_business_args():
+    # Based on docstring: 示例：写入球队特征数据
+
+Args:
+    feature_store: 特征仓库实例...
+    result = getattr(module, "example_write_team_features")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_write_odds_features_business_args():
+    # Based on docstring: 示例：写入赔率特征数据
+
+Args:
+    feature_store: 特征仓库实例...
+    result = getattr(module, "example_write_odds_features")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_get_online_features_business_args():
+    # Based on docstring: 示例：获取在线特征（用于实时预测）
+
+Args:
+    feature_store: 特征仓库实例
+
+Returns:...
+    result = getattr(module, "example_get_online_features")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_get_historical_features_business_args():
+    # Based on docstring: 示例：获取历史特征（用于模型训练）
+
+Args:
+    feature_store: 特征仓库实例
+
+Returns:...
+    result = getattr(module, "example_get_historical_features")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_create_training_dataset_business_args():
+    # Based on docstring: 示例：创建机器学习训练数据集
+
+Args:
+    feature_store: 特征仓库实例
+
+Returns:
+  ...
+    result = getattr(module, "example_create_training_dataset")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_feature_statistics_business_args():
+    # Based on docstring: 示例：获取特征统计信息
+
+Args:
+    feature_store: 特征仓库实例...
+    result = getattr(module, "example_feature_statistics")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_list_all_features_business_args():
+    # Based on docstring: 示例：列出所有特征
+
+Args:
+    feature_store: 特征仓库实例...
+    result = getattr(module, "example_list_all_features")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_example_integration_with_ml_pipeline_business():
+    # Based on docstring: 示例：与机器学习流水线集成
+
+展示如何在ML训练和预测流程中使用特征仓库。
+
+Returns:
+    Dict: 集成...
+    result = getattr(module, "example_integration_with_ml_pipeline")()
+    # TODO: 根据逻辑断言合理的返回值
+    assert result is not None
