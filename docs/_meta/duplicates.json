@@ -1,0 +1,37 @@
+[
+  {
+    "a": "docs/TEST_STRATEGY.md",
+    "b": "docs/TESTING_STRATEGY.md",
+    "similarity": 0.8
+  },
+  {
+    "a": "docs/DEPLOYMENT_GUIDE.md",
+    "b": "docs/PRODUCTION_DEPLOYMENT_GUIDE.md",
+    "similarity": 0.824
+  },
+  {
+    "a": "docs/PHASE5.3.2.2_COMPLETION_REPORT.md",
+    "b": "docs/PHASE5.3_COMPLETION_REPORT.md",
+    "similarity": 0.808
+  },
+  {
+    "a": "docs/PHASE5.3.2.2_COMPLETION_REPORT.md",
+    "b": "docs/PHASE5322_COMPLETION_REPORT.md",
+    "similarity": 0.847
+  },
+  {
+    "a": "docs/COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md",
+    "b": "docs/API_DOCUMENTATION_STYLE_GUIDE.md",
+    "similarity": 0.816
+  },
+  {
+    "a": "docs/CI_FIX_REPORT.md",
+    "b": "docs/CI_FINAL_REPORT.md",
+    "similarity": 0.9
+  },
+  {
+    "a": "docs/archive/COVERAGE_IMPROVEMENT_COMPREHENSIVE_PLAN.md",
+    "b": "docs/archive/COVERAGE_IMPROVEMENT_PLAN.md",
+    "similarity": 0.857
+  }
+]
