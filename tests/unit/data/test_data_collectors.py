@@ -104,12 +104,12 @@ class TestBaseCollector:
             error_message="Some errors occurred",
         )
 
-        assert result.data_source == "test_api"
-        assert result.collection_type == "fixtures"
-        assert result.records_collected == 10
-        assert result.success_count == 8
-        assert result.error_count == 2
-        assert result.status == "partial"
+    assert result.data_source == "test_api"
+    assert result.collection_type == "fixtures"
+    assert result.records_collected == 10
+    assert result.success_count == 8
+    assert result.error_count == 2
+    assert result.status == "partial"
 
     @pytest.mark.asyncio
     async def test_make_request_success(self):
@@ -137,9 +137,9 @@ class TestBaseCollector:
             mock_response.json = AsyncMock(return_value=mock_response_data)
             mock_request.return_value.__aenter__.return_value = mock_response
 
-            result = await collector._make_request("https://api.test.com/matches")
+            result = await collector._make_request("https:_/api.test.com/matches")
 
-            assert result == mock_response_data
+    assert result == mock_response_data
             mock_request.assert_called_once()
 
     @pytest.mark.asyncio
@@ -168,7 +168,7 @@ class TestBaseCollector:
 
             # 应该抛出异常（重试次数用尽）
             with pytest.raises(Exception):
-                await collector._make_request("https://api.test.com/matches")
+                await collector._make_request("https:_/api.test.com/matches")
 
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_raw_match_data(
@@ -230,11 +230,11 @@ class TestBaseCollector:
         key_fields = ["match_id", "team"]
 
         # 应该检测到重复
-        assert collector._is_duplicate_record(new_record, existing_records, key_fields)
+    assert collector._is_duplicate_record(new_record, existing_records, key_fields)
 
         # 修改记录，应该不重复
         new_record["team"] = "阿森纳"
-        assert not collector._is_duplicate_record(
+    assert not collector._is_duplicate_record(
             new_record, existing_records, key_fields
         )
 
@@ -269,10 +269,10 @@ class TestFixturesCollector:
                         ):
                             result = await collector.collect_fixtures()
 
-                            assert result.status == "success"
-                            assert result.success_count == 1
-                            assert result.error_count == 0
-                            assert len(result.collected_data) == 1
+    assert result.status == "success"
+    assert result.success_count == 1
+    assert result.error_count == 0
+    assert len(result.collected_data) == 1
 
     def test_generate_match_key(self, sample_fixture_data):
         """测试比赛唯一键生成"""
@@ -280,12 +280,12 @@ class TestFixturesCollector:
 
         match_key = collector._generate_match_key(sample_fixture_data)
 
-        assert isinstance(match_key, str)
-        assert len(match_key) == 32  # MD5哈希长度
+    assert isinstance(match_key, str)
+    assert len(match_key) == 32  # MD5哈希长度
 
         # 相同数据应该生成相同的键
         match_key2 = collector._generate_match_key(sample_fixture_data)
-        assert match_key == match_key2
+    assert match_key == match_key2
 
     @pytest.mark.asyncio
     async def test_clean_fixture_data(self, sample_fixture_data):
@@ -294,11 +294,11 @@ class TestFixturesCollector:
 
         cleaned_data = await collector._clean_fixture_data(sample_fixture_data)
 
-        assert cleaned_data is not None
-        assert cleaned_data["external_match_id"] == "12345"
-        assert cleaned_data["external_league_id"] == "PL"
-        assert "match_time" in cleaned_data
-        assert cleaned_data["processed"] is False
+    assert cleaned_data is not None
+    assert cleaned_data["external_match_id"] == "12345"
+    assert cleaned_data["external_league_id"] == "PL"
+    assert "match_time" in cleaned_data
+    assert cleaned_data["processed"] is False
 
     @pytest.mark.asyncio
     async def test_clean_fixture_data_invalid(self):
@@ -310,7 +310,7 @@ class TestFixturesCollector:
 
         cleaned_data = await collector._clean_fixture_data(invalid_data)
 
-        assert cleaned_data is None
+    assert cleaned_data is None
 
 
 class TestOddsCollector:
@@ -357,9 +357,9 @@ class TestOddsCollector:
                                 ):
                                     result = await collector.collect_odds()
 
-                                    assert result.status == "success"
-                                    assert result.success_count == 1
-                                    assert result.error_count == 0
+    assert result.status == "success"
+    assert result.success_count == 1
+    assert result.error_count == 0
 
     def test_generate_odds_key(self, sample_odds_data):
         """测试赔率唯一键生成"""
@@ -367,8 +367,8 @@ class TestOddsCollector:
 
         odds_key = collector._generate_odds_key(sample_odds_data)
 
-        assert isinstance(odds_key, str)
-        assert len(odds_key) == 32  # MD5哈希长度
+    assert isinstance(odds_key, str)
+    assert len(odds_key) == 32  # MD5哈希长度
 
     @pytest.mark.asyncio
     async def test_clean_odds_data(self, sample_odds_data):
@@ -377,10 +377,10 @@ class TestOddsCollector:
 
         cleaned_odds = await collector._clean_odds_data(sample_odds_data)
 
-        assert cleaned_odds is not None
-        assert cleaned_odds["external_match_id"] == "12345"
-        assert cleaned_odds["bookmaker"] == "bet365"
-        assert cleaned_odds["market_type"] == "h2h"
+    assert cleaned_odds is not None
+    assert cleaned_odds["external_match_id"] == "12345"
+    assert cleaned_odds["bookmaker"] == "bet365"
+    assert cleaned_odds["market_type"] == "h2h"
 
 
 class TestScoresCollector:
@@ -416,9 +416,9 @@ class TestScoresCollector:
         ):
             result = await collector.collect_live_scores(use_websocket=False)
 
-            assert result.status == "success"
-            assert result.success_count == 1
-            assert result.error_count == 0
+    assert result.status == "success"
+    assert result.success_count == 1
+    assert result.error_count == 0
 
     @pytest.mark.asyncio
     async def test_clean_scores_data(self, sample_scores_data):
@@ -448,12 +448,12 @@ class TestScoresCollector:
 
         cleaned_scores = await collector._clean_live_data(live_data_format)
 
-        assert cleaned_scores is not None
-        assert cleaned_scores["external_match_id"] == "12345"
-        assert cleaned_scores["status"] == "live"
-        assert cleaned_scores["home_score"] == 1
-        assert cleaned_scores["away_score"] == 2
-        assert cleaned_scores["minute"] == 67
+    assert cleaned_scores is not None
+    assert cleaned_scores["external_match_id"] == "12345"
+    assert cleaned_scores["status"] == "live"
+    assert cleaned_scores["home_score"] == 1
+    assert cleaned_scores["away_score"] == 2
+    assert cleaned_scores["minute"] == 67
 
     def test_generate_event_key(self, sample_scores_data):
         """测试事件唯一键生成 - 简化测试"""
@@ -461,8 +461,8 @@ class TestScoresCollector:
 
         # 由于实际方法可能不存在，我们测试其他功能
         # 测试比赛状态判断
-        assert collector._is_match_finished("FINISHED")
-        assert not collector._is_match_finished("LIVE")
+    assert collector._is_match_finished("FINISHED")
+    assert not collector._is_match_finished("LIVE")
 
 
 class TestCollectorIntegration:
@@ -497,14 +497,14 @@ class TestCollectorIntegration:
             with patch.object(collector, "_update_collection_log"):
                 results = await collector.collect_all_data()
 
-                assert len(results) == 3
-                assert "fixtures" in results
-                assert "odds" in results
-                assert "live_scores" in results
+    assert len(results) == 3
+    assert "fixtures" in results
+    assert "odds" in results
+    assert "live_scores" in results
 
                 # 验证所有采集都成功
                 for result in results.values():
-                    assert result.status == "success"
+    assert result.status == "success"
 
     @pytest.mark.asyncio
     async def test_collection_log_creation_and_update(
@@ -543,7 +543,7 @@ class TestCollectorIntegration:
 
             # 测试日志创建
             log_id = await collector._create_collection_log("fixtures")
-            assert log_id == 123
+    assert log_id == 123
             mock_log_instance.mark_started.assert_called_once()
 
             # 测试日志更新
@@ -585,9 +585,9 @@ class TestCollectorIntegration:
                 results = await collector.collect_all_data()
 
                 # fixtures采集应该失败
-                assert results["fixtures"].status == "failed"
-                assert "API connection failed" in results["fixtures"].error_message
+    assert results["fixtures"].status == "failed"
+    assert "API connection failed" in results["fixtures"].error_message
 
                 # 其他采集应该成功
-                assert results["odds"].status == "success"
-                assert results["live_scores"].status == "success"
+    assert results["odds"].status == "success"
+    assert results["live_scores"].status == "success"

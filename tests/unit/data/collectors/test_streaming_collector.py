@@ -55,19 +55,19 @@ class TestStreamingDataCollector:
                     enable_streaming=True,
                 )
 
-                assert collector.data_source == "test_source"
-                assert collector.max_retries == 5
-                assert collector.retry_delay == 10
-                assert collector.timeout == 60
-                assert collector.enable_streaming is True
-                assert collector.kafka_producer is not None
+    assert collector.data_source == "test_source"
+    assert collector.max_retries == 5
+    assert collector.retry_delay == 10
+    assert collector.timeout == 60
+    assert collector.enable_streaming is True
+    assert collector.kafka_producer is not None
 
     def test_init_with_streaming_disabled(self):
         """测试禁用流式处理的初始化"""
         collector = StreamingDataCollector(enable_streaming=False)
 
-        assert collector.enable_streaming is False
-        assert collector.kafka_producer is None
+    assert collector.enable_streaming is False
+    assert collector.kafka_producer is None
 
     def test_init_with_custom_stream_config(self):
         """测试自定义流配置初始化"""
@@ -81,7 +81,7 @@ class TestStreamingDataCollector:
                 enable_streaming=True, stream_config=mock_config
             )
 
-            assert collector.stream_config == mock_config
+    assert collector.stream_config == mock_config
 
     @patch("src.data.collectors.streaming_collector.FootballKafkaProducer")
     def test_initialize_kafka_producer_success(self, mock_producer):
@@ -92,7 +92,7 @@ class TestStreamingDataCollector:
         collector = StreamingDataCollector(enable_streaming=False)
         collector._initialize_kafka_producer()
 
-        assert collector.kafka_producer == mock_instance
+    assert collector.kafka_producer == mock_instance
 
     @patch("src.data.collectors.streaming_collector.FootballKafkaProducer")
     def test_initialize_kafka_producer_failure(self, mock_producer):
@@ -102,8 +102,8 @@ class TestStreamingDataCollector:
         collector = StreamingDataCollector(enable_streaming=False)
         collector._initialize_kafka_producer()
 
-        assert collector.kafka_producer is None
-        assert collector.enable_streaming is False
+    assert collector.kafka_producer is None
+    assert collector.enable_streaming is False
 
     @pytest.mark.asyncio
     async def test_send_to_stream_success(self):
@@ -116,8 +116,8 @@ class TestStreamingDataCollector:
         data_list = [{"id": 1}, {"id": 2}, {"id": 3}, {"id": 4}, {"id": 5}]
         result = await self.collector._send_to_stream(data_list, "test_stream")
 
-        assert result["success"] == 5
-        assert result["failed"] == 0
+    assert result["success"] == 5
+    assert result["failed"] == 0
         mock_producer.send_batch.assert_called_once_with(data_list, "test_stream")
 
     @pytest.mark.asyncio
@@ -131,8 +131,8 @@ class TestStreamingDataCollector:
         data_list = [{"id": 1}, {"id": 2}]
         result = await self.collector._send_to_stream(data_list, "test_stream")
 
-        assert result["success"] == 0
-        assert result["failed"] == 2
+    assert result["success"] == 0
+    assert result["failed"] == 2
 
     @pytest.mark.asyncio
     async def test_send_to_stream_disabled(self):
@@ -142,14 +142,14 @@ class TestStreamingDataCollector:
         data_list = [{"id": 1}]
         result = await self.collector._send_to_stream(data_list, "test_stream")
 
-        assert result["success"] == 0
-        assert result["failed"] == 0
+    assert result["success"] == 0
+    assert result["failed"] == 0
 
     @pytest.mark.asyncio
     async def test_send_to_stream_public_interface_empty_data(self):
         """测试公共接口发送空数据"""
         result = await self.collector.send_to_stream([])
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_send_to_stream_public_interface_match_data(self):
@@ -161,7 +161,7 @@ class TestStreamingDataCollector:
         data = [{"match_id": 123, "home_team": "Team A", "away_team": "Team B"}]
         result = await self.collector.send_to_stream(data)
 
-        assert result is True
+    assert result is True
         mock_producer.send_batch.assert_called_once_with(data, "match")
 
     @pytest.mark.asyncio
@@ -174,7 +174,7 @@ class TestStreamingDataCollector:
         data = [{"odds": 1.5, "bookmaker": "Bet365"}]
         result = await self.collector.send_to_stream(data)
 
-        assert result is True
+    assert result is True
         mock_producer.send_batch.assert_called_once_with(data, "odds")
 
     @pytest.mark.asyncio
@@ -187,7 +187,7 @@ class TestStreamingDataCollector:
         data = [{"score": "2-1", "minute": 45, "live": True}]
         result = await self.collector.send_to_stream(data)
 
-        assert result is True
+    assert result is True
         mock_producer.send_batch.assert_called_once_with(data, "scores")
 
     @pytest.mark.asyncio
@@ -216,8 +216,8 @@ class TestStreamingDataCollector:
 
             result = await self.collector.collect_fixtures_with_streaming()
 
-            assert result.status == "success"
-            assert "流处理" in result.error_message
+    assert result.status == "success"
+    assert "流处理" in result.error_message
 
     @pytest.mark.asyncio
     async def test_collect_odds_with_streaming_success(self):
@@ -240,8 +240,8 @@ class TestStreamingDataCollector:
 
             result = await self.collector.collect_odds_with_streaming()
 
-            assert result.status == "success"
-            assert "流处理" in result.error_message
+    assert result.status == "success"
+    assert "流处理" in result.error_message
 
     @pytest.mark.asyncio
     async def test_collect_live_scores_with_streaming_success(self):
@@ -266,8 +266,8 @@ class TestStreamingDataCollector:
 
             result = await self.collector.collect_live_scores_with_streaming()
 
-            assert result.status == "success"
-            assert "流处理" in result.error_message
+    assert result.status == "success"
+    assert "流处理" in result.error_message
 
     @pytest.mark.asyncio
     async def test_batch_collect_and_stream_success(self):
@@ -296,11 +296,11 @@ class TestStreamingDataCollector:
 
                 result = await self.collector.batch_collect_and_stream(configs)
 
-                assert result["total_collections"] == 2
-                assert result["successful_collections"] == 2
-                assert result["failed_collections"] == 0
-                assert result["total_stream_success"] == 2
-                assert result["total_stream_failed"] == 0
+    assert result["total_collections"] == 2
+    assert result["successful_collections"] == 2
+    assert result["failed_collections"] == 0
+    assert result["total_stream_success"] == 2
+    assert result["total_stream_failed"] == 0
 
     @pytest.mark.asyncio
     async def test_batch_collect_with_exceptions(self):
@@ -333,9 +333,9 @@ class TestStreamingDataCollector:
 
                 result = await self.collector.batch_collect_and_stream(configs)
 
-                assert result["total_collections"] == 2
-                assert result["successful_collections"] == 1
-                assert result["failed_collections"] == 1
+    assert result["total_collections"] == 2
+    assert result["successful_collections"] == 1
+    assert result["failed_collections"] == 1
 
     @pytest.mark.asyncio
     async def test_batch_collect_unknown_type(self):
@@ -344,9 +344,9 @@ class TestStreamingDataCollector:
 
         result = await self.collector.batch_collect_and_stream(configs)
 
-        assert result["total_collections"] == 1
-        assert result["successful_collections"] == 0
-        assert result["failed_collections"] == 0
+    assert result["total_collections"] == 1
+    assert result["successful_collections"] == 0
+    assert result["failed_collections"] == 0
 
     def test_toggle_streaming_enable(self):
         """测试启用流式处理"""
@@ -363,7 +363,7 @@ class TestStreamingDataCollector:
             self.collector.toggle_streaming(True)
 
             mock_init.assert_called_once()
-            assert self.collector.enable_streaming is True
+    assert self.collector.enable_streaming is True
 
     def test_toggle_streaming_disable(self):
         """测试禁用流式处理"""
@@ -371,7 +371,7 @@ class TestStreamingDataCollector:
 
         self.collector.toggle_streaming(False)
 
-        assert self.collector.enable_streaming is False
+    assert self.collector.enable_streaming is False
 
     def test_get_streaming_status_enabled(self):
         """测试获取流式处理状态（启用）"""
@@ -383,10 +383,10 @@ class TestStreamingDataCollector:
 
         status = self.collector.get_streaming_status()
 
-        assert status["streaming_enabled"] is True
-        assert status["kafka_producer_initialized"] is True
-        assert status["stream_config"]["bootstrap_servers"] == ["localhost:9092"]
-        assert "match" in status["stream_config"]["topics"]
+    assert status["streaming_enabled"] is True
+    assert status["kafka_producer_initialized"] is True
+    assert status["stream_config"]["bootstrap_servers"] == ["localhost:9092"]
+    assert "match" in status["stream_config"]["topics"]
 
     def test_get_streaming_status_disabled(self):
         """测试获取流式处理状态（禁用）"""
@@ -394,8 +394,8 @@ class TestStreamingDataCollector:
 
         status = collector.get_streaming_status()
 
-        assert status["streaming_enabled"] is False
-        assert status["kafka_producer_initialized"] is False
+    assert status["streaming_enabled"] is False
+    assert status["kafka_producer_initialized"] is False
 
     def test_close(self):
         """测试关闭采集器"""
@@ -405,7 +405,7 @@ class TestStreamingDataCollector:
         self.collector.close()
 
         mock_producer.close.assert_called_once()
-        assert self.collector.kafka_producer is None
+    assert self.collector.kafka_producer is None
 
     def test_del(self):
         """测试析构函数"""
@@ -420,7 +420,7 @@ class TestStreamingDataCollector:
     async def test_context_manager(self):
         """测试异步上下文管理器"""
         async with self.collector as collector:
-            assert collector == self.collector
+    assert collector == self.collector
 
     @pytest.mark.asyncio
     async def test_abstract_methods_not_implemented(self):
@@ -451,7 +451,7 @@ class TestStreamingDataCollectorEdgeCases:
 
         result = await self.collector.send_to_stream([{"data": 1}])
 
-        assert result is True
+    assert result is True
 
     @pytest.mark.asyncio
     async def test_collect_with_streaming_disabled(self):
@@ -472,9 +472,9 @@ class TestStreamingDataCollectorEdgeCases:
         with patch.object(self.collector, "collect_odds", return_value=mock_result):
             result = await self.collector.collect_odds_with_streaming()
 
-            assert result.status == "success"
+    assert result.status == "success"
             # 不应该有流处理信息
-            assert result.error_message is None or "流处理" not in result.error_message
+    assert result.error_message is None or "流处理" not in result.error_message
 
     @pytest.mark.asyncio
     async def test_collect_with_failed_collection(self):
@@ -497,6 +497,6 @@ class TestStreamingDataCollectorEdgeCases:
         ):
             result = await self.collector.collect_fixtures_with_streaming()
 
-            assert result.status == "failed"
+    assert result.status == "failed"
             # 失败时不应该进行流处理
-            assert "流处理" not in (result.error_message or "")
+    assert "流处理" not in (result.error_message or "")

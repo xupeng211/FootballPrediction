@@ -41,24 +41,24 @@ class TestQualityMonitor:
     def test_quality_monitor_initialization(self, quality_monitor):
         """测试质量监控器初始化"""
         monitor, _ = quality_monitor
-        assert monitor is not None
-        assert hasattr(monitor, "freshness_thresholds")
-        assert hasattr(monitor, "critical_fields")
-        assert hasattr(monitor, "db_manager")
+    assert monitor is not None
+    assert hasattr(monitor, "freshness_thresholds")
+    assert hasattr(monitor, "critical_fields")
+    assert hasattr(monitor, "db_manager")
 
     def test_freshness_thresholds_config(self, quality_monitor):
         """测试新鲜度阈值配置"""
         monitor, _ = quality_monitor
-        assert monitor.freshness_thresholds["matches"] == 24
-        assert monitor.freshness_thresholds["odds"] == 1
-        assert monitor.freshness_thresholds["predictions"] == 2
+    assert monitor.freshness_thresholds["matches"] == 24
+    assert monitor.freshness_thresholds["odds"] == 1
+    assert monitor.freshness_thresholds["predictions"] == 2
 
     def test_critical_fields_config(self, quality_monitor):
         """测试关键字段配置"""
         monitor, _ = quality_monitor
-        assert "matches" in monitor.critical_fields
-        assert "home_team_id" in monitor.critical_fields["matches"]
-        assert "away_team_id" in monitor.critical_fields["matches"]
+    assert "matches" in monitor.critical_fields
+    assert "home_team_id" in monitor.critical_fields["matches"]
+    assert "away_team_id" in monitor.critical_fields["matches"]
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_basic(self, quality_monitor):
@@ -74,8 +74,8 @@ class TestQualityMonitor:
                 threshold_hours=24.0,
             )
             results = await monitor.check_data_freshness(["matches"])
-            assert "matches" in results
-            assert isinstance(results["matches"], DataFreshnessResult)
+    assert "matches" in results
+    assert isinstance(results["matches"], DataFreshnessResult)
 
     @pytest.mark.asyncio
     async def test_check_data_freshness_failure_fallback(self, quality_monitor):
@@ -86,9 +86,9 @@ class TestQualityMonitor:
         ):
             results = await monitor.check_data_freshness(["matches"])
             fallback = results["matches"]
-            assert fallback.is_fresh is False
-            assert fallback.records_count == 0
-            assert fallback.freshness_hours == 999999
+    assert fallback.is_fresh is False
+    assert fallback.records_count == 0
+    assert fallback.freshness_hours == 999999
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_basic(self, quality_monitor):
@@ -105,8 +105,8 @@ class TestQualityMonitor:
                 completeness_score=100.0,
             )
             results = await monitor.check_data_completeness(["matches"])
-            assert "matches" in results
-            assert isinstance(results["matches"], DataCompletenessResult)
+    assert "matches" in results
+    assert isinstance(results["matches"], DataCompletenessResult)
 
     @pytest.mark.asyncio
     async def test_check_data_completeness_handles_error(self, quality_monitor):
@@ -116,7 +116,7 @@ class TestQualityMonitor:
             monitor, "_check_table_completeness", side_effect=RuntimeError("fail")
         ):
             results = await monitor.check_data_completeness(["matches"])
-            assert results == {}
+    assert results == {}
 
     @pytest.mark.asyncio
     async def test_check_data_consistency_basic(self, quality_monitor):
@@ -133,8 +133,8 @@ class TestQualityMonitor:
             mock_odds_check.return_value = {"invalid_odds_range": 0}
             mock_status_check.return_value = {"finished_matches_without_score": 0}
             results = await monitor.check_data_consistency()
-            assert isinstance(results, dict)
-            assert "foreign_key_consistency" in results
+    assert isinstance(results, dict)
+    assert "foreign_key_consistency" in results
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_basic(self, quality_monitor):
@@ -163,8 +163,8 @@ class TestQualityMonitor:
                 "match_status_consistency": {"finished_matches_without_score": 0},
             }
             result = await monitor.calculate_overall_quality_score()
-            assert isinstance(result, dict)
-            assert "overall_score" in result
+    assert isinstance(result, dict)
+    assert "overall_score" in result
 
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score_handles_exception(
@@ -176,17 +176,17 @@ class TestQualityMonitor:
             monitor, "check_data_freshness", side_effect=RuntimeError("boom")
         ):
             result = await monitor.calculate_overall_quality_score()
-            assert result["overall_score"] == 0
-            assert "error" in result
+    assert result["overall_score"] == 0
+    assert "error" in result
 
     def test_get_quality_level(self, quality_monitor):
         """测试质量等级判断"""
         monitor, _ = quality_monitor
-        assert monitor._get_quality_level(96) == "优秀"
-        assert monitor._get_quality_level(90) == "良好"
-        assert monitor._get_quality_level(75) == "一般"
-        assert monitor._get_quality_level(60) == "较差"
-        assert monitor._get_quality_level(40) == "很差"
+    assert monitor._get_quality_level(96) == "优秀"
+    assert monitor._get_quality_level(90) == "良好"
+    assert monitor._get_quality_level(75) == "一般"
+    assert monitor._get_quality_level(60) == "较差"
+    assert monitor._get_quality_level(40) == "很差"
 
     def test_generate_quality_recommendations_alerts(self, quality_monitor):
         """低评分时应生成改进建议"""
@@ -198,9 +198,9 @@ class TestQualityMonitor:
             "overall_score": 65,
         }
         suggestions = monitor._generate_quality_recommendations(quality_data)
-        assert any("新鲜度" in note for note in suggestions)
-        assert any("完整性" in note for note in suggestions)
-        assert any("整体数据质量" in note for note in suggestions)
+    assert any("新鲜度" in note for note in suggestions)
+    assert any("完整性" in note for note in suggestions)
+    assert any("整体数据质量" in note for note in suggestions)
 
     @pytest.mark.asyncio
     async def test_get_quality_trends_basic(self, quality_monitor):
@@ -214,8 +214,8 @@ class TestQualityMonitor:
                 "consistency_score": 80.0,
             }
             result = await monitor.get_quality_trends(7)
-            assert isinstance(result, dict)
-            assert "current_quality" in result
+    assert isinstance(result, dict)
+    assert "current_quality" in result
 
 
 class TestDataResults:
@@ -231,7 +231,7 @@ class TestDataResults:
             is_fresh=True,
             threshold_hours=24.0,
         )
-        assert result.table_name == "test_table"
+    assert result.table_name == "test_table"
 
     def test_data_freshness_result_to_dict(self):
         """测试数据新鲜度结果转字典"""
@@ -245,8 +245,8 @@ class TestDataResults:
             threshold_hours=24.0,
         )
         dict_result = result.to_dict()
-        assert isinstance(dict_result, dict)
-        assert dict_result["table_name"] == "test_table"
+    assert isinstance(dict_result, dict)
+    assert dict_result["table_name"] == "test_table"
 
     def test_data_completeness_result_creation(self):
         """测试数据完整性结果创建"""
@@ -257,7 +257,7 @@ class TestDataResults:
             missing_rate=0.025,
             completeness_score=97.5,
         )
-        assert result.table_name == "test_table"
+    assert result.table_name == "test_table"
 
     def test_data_completeness_result_to_dict(self):
         """测试数据完整性结果转字典"""
@@ -269,5 +269,5 @@ class TestDataResults:
             completeness_score=95.0,
         )
         dict_result = result.to_dict()
-        assert isinstance(dict_result, dict)
-        assert dict_result["table_name"] == "test_table"
+    assert isinstance(dict_result, dict)
+    assert dict_result["table_name"] == "test_table"

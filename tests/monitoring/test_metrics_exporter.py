@@ -36,11 +36,11 @@ class TestMetricsExporter:
 
     def test_init_creates_all_metrics(self):
         """测试初始化时创建所有指标"""
-        assert self.exporter.data_collection_total is not None
-        assert self.exporter.data_collection_errors is not None
-        assert self.exporter.data_cleaning_total is not None
-        assert self.exporter.scheduler_task_delay is not None
-        assert self.exporter.table_row_count is not None  # 修正属性名
+    assert self.exporter.data_collection_total is not None
+    assert self.exporter.data_collection_errors is not None
+    assert self.exporter.data_cleaning_total is not None
+    assert self.exporter.scheduler_task_delay is not None
+    assert self.exporter.table_row_count is not None  # 修正属性名
 
     def test_record_data_collection_success(self):
         """测试记录数据采集成功"""
@@ -57,8 +57,8 @@ class TestMetricsExporter:
         metrics_data = data  # data 已经是字符串类型，不需要decode
 
         # 验证指标被正确设置
-        assert "football_data_collection_total" in metrics_data
-        assert "test_api" in metrics_data  # 修正：应该检查实际使用的data_source
+    assert "football_data_collection_total" in metrics_data
+    assert "test_api" in metrics_data  # 修正：应该检查实际使用的data_source
 
     def test_record_data_collection_failure(self):
         """测试记录数据采集失败"""
@@ -71,7 +71,7 @@ class TestMetricsExporter:
         )
 
         metrics_data = self.exporter.get_metrics()[1]
-        assert "football_data_collection_errors_total" in metrics_data
+    assert "football_data_collection_errors_total" in metrics_data
 
     def test_record_data_cleaning_success(self):
         """测试记录数据清洗成功"""
@@ -81,7 +81,7 @@ class TestMetricsExporter:
 
         headers, data = self.exporter.get_metrics()
         metrics_data = data  # data 已经是字符串类型，不需要decode
-        assert "football_data_cleaning_total" in metrics_data
+    assert "football_data_cleaning_total" in metrics_data
 
     def test_record_scheduler_task(self):
         """测试记录调度任务"""
@@ -99,7 +99,7 @@ class TestMetricsExporter:
 
         headers, data = self.exporter.get_metrics()
         metrics_data = data  # data 已经是字符串类型，不需要decode
-        assert "football_scheduler_task_delay_seconds" in metrics_data
+    assert "football_scheduler_task_delay_seconds" in metrics_data
 
     def test_update_table_row_counts(self):
         """
@@ -116,20 +116,20 @@ class TestMetricsExporter:
 
         # 验证指标被正确记录到我们的独立注册表中
         content_type, metrics_data = self.exporter.get_metrics()
-        assert "football_table_row_count" in metrics_data
-        assert "matches" in metrics_data
+    assert "football_table_row_count" in metrics_data
+    assert "matches" in metrics_data
 
     def test_get_metrics_returns_prometheus_format(self):
         """测试获取Prometheus格式指标"""
         headers, data = self.exporter.get_metrics()
 
         # 验证Content-Type
-        assert headers == "text/plain; version=0.0.4; charset=utf-8"
+    assert headers == "text_plain; version=0.0.4; charset=utf-8"
 
         # 验证数据格式
         metrics_text = data  # data 已经是字符串类型，不需要decode
-        assert isinstance(metrics_text, str)
-        assert "football_system_info_info" in metrics_text
+    assert isinstance(metrics_text, str)
+    assert "football_system_info_info" in metrics_text
 
 
 if __name__ == "__main__":

@@ -86,30 +86,30 @@ class TestFootballFeatureStore:
         """测试实体定义"""
         entities = feature_store.get_entity_definitions()
 
-        assert "match" in entities
-        assert "team" in entities
+    assert "match" in entities
+    assert "team" in entities
 
         match_entity = entities["match"]
-        assert match_entity.name == "match"
+    assert match_entity.name == "match"
         # 新版本Feast不再使用join_keys属性
 
         team_entity = entities["team"]
-        assert team_entity.name == "team"
+    assert team_entity.name == "team"
         # 新版本Feast不再使用join_keys属性
 
     def test_feature_view_definitions(self, feature_store):
         """测试特征视图定义"""
         feature_views = feature_store.get_feature_view_definitions()
 
-        assert "team_recent_performance" in feature_views
-        assert "historical_matchup" in feature_views
-        assert "odds_features" in feature_views
+    assert "team_recent_performance" in feature_views
+    assert "historical_matchup" in feature_views
+    assert "odds_features" in feature_views
 
         # 测试球队近期表现特征视图
         team_fv = feature_views["team_recent_performance"]
-        assert team_fv.name == "team_recent_performance"
-        assert team_fv.entities == ["team"]
-        assert team_fv.ttl == timedelta(days=7)
+    assert team_fv.name == "team_recent_performance"
+    assert team_fv.entities == ["team"]
+    assert team_fv.ttl == timedelta(days=7)
 
         # 验证schema字段
         field_names = [field.name for field in team_fv.schema]
@@ -124,19 +124,19 @@ class TestFootballFeatureStore:
             "recent_5_away_wins",
         ]
         for field in expected_fields:
-            assert field in field_names
+    assert field in field_names
 
         # 测试历史对战特征视图
         h2h_fv = feature_views["historical_matchup"]
-        assert h2h_fv.name == "historical_matchup"
-        assert h2h_fv.entities == ["match"]
-        assert h2h_fv.ttl == timedelta(days=30)
+    assert h2h_fv.name == "historical_matchup"
+    assert h2h_fv.entities == ["match"]
+    assert h2h_fv.ttl == timedelta(days=30)
 
         # 测试赔率特征视图
         odds_fv = feature_views["odds_features"]
-        assert odds_fv.name == "odds_features"
-        assert odds_fv.entities == ["match"]
-        assert odds_fv.ttl == timedelta(hours=6)
+    assert odds_fv.name == "odds_features"
+    assert odds_fv.entities == ["match"]
+    assert odds_fv.ttl == timedelta(hours=6)
 
     @pytest.mark.asyncio
     async def test_register_features(self, feature_store):
@@ -148,8 +148,8 @@ class TestFootballFeatureStore:
         success = await feature_store.register_features()
 
         # 验证注册调用
-        assert success is True
-        assert feature_store.store.apply.call_count >= 5  # 2个实体 + 3个特征视图
+    assert success is True
+    assert feature_store.store.apply.call_count >= 5  # 2个实体 + 3个特征视图
 
     @pytest.mark.asyncio
     async def test_get_online_features(self, feature_store):
@@ -170,11 +170,11 @@ class TestFootballFeatureStore:
         result_df = await feature_store.get_online_features(feature_refs, entity_rows)
 
         # 验证结果
-        assert len(result_df) == 2
-        assert "team_id" in result_df.columns
-        assert "recent_5_wins" in result_df.columns
-        assert result_df.iloc[0]["team_id"] == 1
-        assert result_df.iloc[0]["recent_5_wins"] == 3
+    assert len(result_df) == 2
+    assert "team_id" in result_df.columns
+    assert "recent_5_wins" in result_df.columns
+    assert result_df.iloc[0]["team_id"] == 1
+    assert result_df.iloc[0]["recent_5_wins"] == 3
 
         # 验证调用参数
         feature_store.store.get_online_features.assert_called_once_with(
@@ -214,14 +214,14 @@ class TestFootballFeatureStore:
         )
 
         # 验证结果
-        assert len(result_df) == 2
-        assert "match_id" in result_df.columns
-        assert "recent_5_wins" in result_df.columns
+    assert len(result_df) == 2
+    assert "match_id" in result_df.columns
+    assert "recent_5_wins" in result_df.columns
 
         # 验证调用参数
         feature_store.store.get_historical_features.assert_called_once()
         call_args = feature_store.store.get_historical_features.call_args
-        assert call_args[1]["full_feature_names"] is True
+    assert call_args[1]["full_feature_names"] is True
 
     @pytest.mark.asyncio
     async def test_push_features_to_online_store(self, feature_store):
@@ -245,7 +245,7 @@ class TestFootballFeatureStore:
         )
 
         # 验证结果
-        assert success is True
+    assert success is True
         feature_store.store.push.assert_called_once()
 
     @pytest.mark.asyncio
@@ -273,7 +273,7 @@ class TestFootballFeatureStore:
             )
 
             # 验证结果
-            assert success is True
+    assert success is True
             mock_calc.assert_called_once_with(1, datetime(2025, 9, 15))
             feature_store.store.push.assert_called_once()
 
@@ -316,10 +316,10 @@ class TestFootballFeatureStore:
             )
 
             # 验证结果
-            assert success is True
+    assert success is True
             mock_h2h.assert_called_once()
             mock_odds.assert_called_once()
-            assert feature_store.store.push.call_count == 2  # h2h + odds
+    assert feature_store.store.push.call_count == 2  # h2h + odds
 
     @pytest.mark.asyncio
     async def test_get_match_features_for_prediction(self, feature_store):
@@ -362,14 +362,14 @@ class TestFootballFeatureStore:
         )
 
         # 验证结果结构
-        assert features is not None
-        assert "team_features" in features
-        assert "h2h_features" in features
-        assert "odds_features" in features
+    assert features is not None
+    assert "team_features" in features
+    assert "h2h_features" in features
+    assert "odds_features" in features
 
-        assert len(features["team_features"]) == 2  # 主队 + 客队
-        assert features["h2h_features"]["h2h_total_matches"] == 5
-        assert features["odds_features"]["home_implied_probability"] == 0.45
+    assert len(features["team_features"]) == 2  # 主队 + 客队
+    assert features["h2h_features"]["h2h_total_matches"] == 5
+    assert features["odds_features"]["home_implied_probability"] == 0.45
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features(self, feature_store):
@@ -419,14 +419,14 @@ class TestFootballFeatureStore:
                 )
 
                 # 验证结果
-                assert stats["matches_processed"] == 2
-                assert stats["teams_processed"] == 4  # 每场比赛2支球队
-                assert stats["features_stored"] == 2
-                assert stats["errors"] == 0
+    assert stats["matches_processed"] == 2
+    assert stats["teams_processed"] == 4  # 每场比赛2支球队
+    assert stats["features_stored"] == 2
+    assert stats["errors"] == 0
 
                 # 验证调用次数
-                assert mock_match_calc.call_count == 2
-                assert mock_team_calc.call_count == 4
+    assert mock_match_calc.call_count == 2
+    assert mock_team_calc.call_count == 4
 
     @pytest.mark.asyncio
     async def test_error_handling(self, feature_store):
@@ -445,7 +445,7 @@ class TestFootballFeatureStore:
         success = await feature_store.push_features_to_online_store(
             "non_existent_view", pd.DataFrame()
         )
-        assert success is False
+    assert success is False
 
     @pytest.mark.asyncio
     async def test_feature_store_initialization(self):
@@ -456,8 +456,8 @@ class TestFootballFeatureStore:
             mock_feast_store.return_value = mock_feast_instance
 
             store = FootballFeatureStore("test_path")
-            assert store.feature_store_path == "test_path"
-            assert store.store == mock_feast_instance
+    assert store.feature_store_path == "test_path"
+    assert store.store == mock_feast_instance
             mock_feast_store.assert_called_once_with(repo_path="test_path")
 
         # 测试初始化失败
@@ -466,4 +466,4 @@ class TestFootballFeatureStore:
             side_effect=Exception("初始化失败"),
         ):
             store = FootballFeatureStore()
-            assert store.store is None
+    assert store.store is None

@@ -35,10 +35,10 @@ class TestFootballKafkaProducer:
 
     def test_producer_initialization(self):
         """测试生产者初始化"""
-        assert self.producer is not None
-        assert self.producer.config is not None
-        assert hasattr(self.producer, "producer")
-        assert hasattr(self.producer, "logger")
+    assert self.producer is not None
+    assert self.producer.config is not None
+    assert hasattr(self.producer, "producer")
+    assert hasattr(self.producer, "logger")
 
     def test_producer_initialization_with_custom_config(self):
         """测试使用自定义配置初始化生产者"""
@@ -50,8 +50,8 @@ class TestFootballKafkaProducer:
             mock_producer.return_value = Mock()
             producer = FootballKafkaProducer(custom_config)
 
-            assert producer.config == custom_config
-            assert (
+    assert producer.config == custom_config
+    assert (
                 producer.config.kafka_config.bootstrap_servers == "custom - server:9092"
             )
 
@@ -65,7 +65,7 @@ class TestFootballKafkaProducer:
         producer._create_producer()
 
         mock_producer_class.assert_called_once()
-        assert producer.producer == mock_producer
+    assert producer.producer == mock_producer
 
     @patch("src.streaming.kafka_producer.Producer")
     def test_producer_creation_failure(self, mock_producer_class):
@@ -88,10 +88,10 @@ class TestFootballKafkaProducer:
         serialized = self.producer._serialize_message(test_data)
 
         # 验证序列化结果
-        assert isinstance(serialized, str)
+    assert isinstance(serialized, str)
         deserialized = json.loads(serialized)
-        assert deserialized["match_id"] == 12345
-        assert deserialized["home_team"] == "Team A"
+    assert deserialized["match_id"] == 12345
+    assert deserialized["home_team"] == "Team A"
 
     def test_serialize_message_string(self):
         """测试字符串消息序列化"""
@@ -99,13 +99,13 @@ class TestFootballKafkaProducer:
 
         serialized = self.producer._serialize_message(test_data)
 
-        assert serialized == test_data
+    assert serialized == test_data
 
     def test_serialize_message_none(self):
         """测试None消息序列化"""
         serialized = self.producer._serialize_message(None)
 
-        assert serialized == ""
+    assert serialized == ""
 
     def test_serialize_message_invalid_json(self):
         """测试无效JSON对象序列化"""
@@ -120,7 +120,7 @@ class TestFootballKafkaProducer:
         serialized = self.producer._serialize_message(test_data)
 
         # 应该返回字符串表示
-        assert isinstance(serialized, str)
+    assert isinstance(serialized, str)
 
     def test_delivery_callback_success(self):
         """测试消息投递成功回调"""
@@ -168,7 +168,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is True
+    assert result is True
         mock_producer.produce.assert_called_once()
         mock_producer.poll.assert_called_once_with(0)
 
@@ -189,10 +189,10 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data, key=custom_key)
 
-        assert result is True
+    assert result is True
         # 验证produce调用时使用了自定义key
         call_args = mock_producer.produce.call_args
-        assert call_args[1]["key"] == custom_key
+    assert call_args[1]["key"] == custom_key
 
     @patch("src.streaming.kafka_producer.Producer")
     @pytest.mark.asyncio
@@ -217,7 +217,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_odds_data(odds_data)
 
-        assert result is True
+    assert result is True
         mock_producer.produce.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
@@ -243,7 +243,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_scores_data(scores_data)
 
-        assert result is True
+    assert result is True
         mock_producer.produce.assert_called_once()
 
     @patch("src.streaming.kafka_producer.Producer")
@@ -272,7 +272,7 @@ class TestFootballKafkaProducer:
 
         result = await producer.send_match_data(match_data)
 
-        assert result is False
+    assert result is False
 
     @patch("src.streaming.kafka_producer.Producer")
     @pytest.mark.asyncio
@@ -296,10 +296,10 @@ class TestFootballKafkaProducer:
         result = await producer.send_batch(batch_data, "match")
 
         # send_batch 在没有失败时返回统计字典
-        assert isinstance(result, dict)
-        assert result["success"] == 3
-        assert result["failed"] == 0
-        assert mock_producer.produce.call_count == 3
+    assert isinstance(result, dict)
+    assert result["success"] == 3
+    assert result["failed"] == 0
+    assert mock_producer.produce.call_count == 3
 
     @patch("src.streaming.kafka_producer.Producer")
     @pytest.mark.asyncio
@@ -320,9 +320,9 @@ class TestFootballKafkaProducer:
         result = await producer.send_batch(batch_data, "match")
 
         # send_batch 在有失败时返回统计字典
-        assert isinstance(result, dict)
-        assert result["success"] == 2
-        assert result["failed"] == 1
+    assert isinstance(result, dict)
+    assert result["success"] == 2
+    assert result["failed"] == 1
 
     @pytest.mark.asyncio
     async def test_send_batch_invalid_data_type(self):
@@ -334,9 +334,9 @@ class TestFootballKafkaProducer:
         result = await producer.send_batch(batch_data, "invalid_type")
 
         # send_batch 在不支持的数据类型时返回统计字典
-        assert isinstance(result, dict)
-        assert result["success"] == 0
-        assert result["failed"] == 1
+    assert isinstance(result, dict)
+    assert result["success"] == 0
+    assert result["failed"] == 1
 
     @pytest.mark.asyncio
     async def test_send_batch_empty_data(self):
@@ -346,9 +346,9 @@ class TestFootballKafkaProducer:
         result = await producer.send_batch([], "match")
 
         # send_batch 对于空数据返回统计字典
-        assert isinstance(result, dict)
-        assert result["success"] == 0
-        assert result["failed"] == 0
+    assert isinstance(result, dict)
+    assert result["success"] == 0
+    assert result["failed"] == 0
 
     def test_close_producer_success(self):
         """测试关闭生产者成功"""
@@ -361,7 +361,7 @@ class TestFootballKafkaProducer:
         producer.close()
 
         mock_producer.flush.assert_called_once_with(10.0)  # 默认超时时间
-        assert producer.producer is None
+    assert producer.producer is None
 
     def test_close_producer_none(self):
         """测试关闭未初始化的生产者"""
@@ -396,7 +396,7 @@ class TestFootballKafkaProducer:
 
             with producer:
                 # 在上下文中使用生产者
-                assert producer.producer is not None
+    assert producer.producer is not None
 
             # 上下文退出后应该自动关闭
             mock_producer.flush.assert_called_once()
@@ -407,9 +407,9 @@ class TestFootballKafkaProducer:
 
         config = producer.get_producer_config()
 
-        assert isinstance(config, dict)
-        assert "bootstrap.servers" in config
-        assert "client.id" in config
+    assert isinstance(config, dict)
+    assert "bootstrap.servers" in config
+    assert "client.id" in config
 
     @patch("src.streaming.kafka_producer.Producer")
     def test_producer_health_check(self, mock_producer_class):
@@ -424,7 +424,7 @@ class TestFootballKafkaProducer:
 
         is_healthy = producer.health_check()
 
-        assert is_healthy is True
+    assert is_healthy is True
         mock_producer.list_topics.assert_called_once()
 
     def test_producer_health_check_no_producer(self):
@@ -434,7 +434,7 @@ class TestFootballKafkaProducer:
 
         is_healthy = producer.health_check()
 
-        assert is_healthy is False
+    assert is_healthy is False
 
     @patch("src.streaming.kafka_producer.Producer")
     def test_producer_health_check_exception(self, mock_producer_class):
@@ -448,7 +448,7 @@ class TestFootballKafkaProducer:
 
         is_healthy = producer.health_check()
 
-        assert is_healthy is False
+    assert is_healthy is False
 
 
 class TestProducerPerformance:
@@ -484,10 +484,10 @@ class TestProducerPerformance:
         duration = end_time - start_time
 
         # 验证性能（批量处理应该很快）
-        assert duration < 5.0  # 1000条消息应该在5秒内处理完
-        assert isinstance(result, dict)
-        assert result["success"] == 1000
-        assert result["failed"] == 0
+    assert duration < 5.0  # 1000条消息应该在5秒内处理完
+    assert isinstance(result, dict)
+    assert result["success"] == 1000
+    assert result["failed"] == 0
 
     @patch("src.streaming.kafka_producer.Producer")
     @pytest.mark.asyncio
@@ -510,8 +510,8 @@ class TestProducerPerformance:
         results = await asyncio.gather(*tasks)
 
         # 所有发送都应该成功
-        assert all(results)
-        assert mock_producer.produce.call_count == 10
+    assert all(results)
+    assert mock_producer.produce.call_count == 10
 
 
 class TestErrorHandling:
@@ -534,7 +534,7 @@ class TestErrorHandling:
 
         result = await producer.send_match_data({"match_id": 1})
 
-        assert result is False
+    assert result is False
 
     @patch("src.streaming.kafka_producer.Producer")
     @pytest.mark.asyncio
@@ -549,7 +549,7 @@ class TestErrorHandling:
 
         result = await producer.send_match_data({"match_id": 1})
 
-        assert result is False
+    assert result is False
 
     @patch("src.streaming.kafka_producer.Producer")
     def test_invalid_configuration(self, mock_producer_class):
@@ -592,7 +592,7 @@ class TestMessageValidation:
         valid_data = {"match_id": 12345, "home_team": "Team A", "away_team": "Team B"}
 
         is_valid = producer._validate_match_data(valid_data)
-        assert is_valid is True
+    assert is_valid is True
 
     def test_validate_odds_data(self):
         """测试赔率数据验证"""
@@ -606,7 +606,7 @@ class TestMessageValidation:
         }
 
         is_valid = producer._validate_odds_data(valid_data)
-        assert is_valid is True
+    assert is_valid is True
 
     def test_validate_scores_data(self):
         """测试比分数据验证"""
@@ -616,7 +616,7 @@ class TestMessageValidation:
         valid_data = {"match_id": 12345, "home_score": 2, "away_score": 1}
 
         is_valid = producer._validate_scores_data(valid_data)
-        assert is_valid is True
+    assert is_valid is True
 
 
 if __name__ == "__main__":

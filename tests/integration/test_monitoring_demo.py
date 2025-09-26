@@ -69,14 +69,14 @@ class TestMonitoringDemo:
         metrics_text = metrics_data  # metrics_data 已经是字符串类型，不需要decode
 
         # 验证采集指标
-        assert (
+    assert (
             'football_data_collection_total{collection_type="fixtures",data_source="api_football"} 250.0'
             in metrics_text
         )
-        assert (
+    assert (
             'football_data_cleaning_total{data_type="fixtures"} 245.0' in metrics_text
         )  # records_processed=245
-        assert (
+    assert (
             'football_scheduler_task_delay_seconds{task_name="hourly_fixtures_collection"}'
             in metrics_text
         )
@@ -111,7 +111,7 @@ class TestMonitoringDemo:
         metrics_text = metrics_data  # metrics_data 已经是字符串类型
 
         # 验证有错误计数器被更新
-        assert "football_data_collection_errors_total" in metrics_text
+    assert "football_data_collection_errors_total" in metrics_text
         print("✅ 错误指标验证通过!")
 
     @pytest.mark.asyncio
@@ -147,7 +147,7 @@ class TestMonitoringDemo:
 
             # 验证关键表的指标存在
             # 由于mock的限制，可能指标值为0，我们只检查指标定义是否存在
-            assert "football_table_row_count" in metrics_text
+    assert "football_table_row_count" in metrics_text
             print("✅ 数据库指标验证通过!")
 
     def test_metrics_collection_integration(self):
@@ -166,8 +166,8 @@ class TestMonitoringDemo:
             collector = MetricsCollector(collection_interval=1)
 
             # 验证收集器初始化
-            assert collector.collection_interval == 1
-            assert collector.running is False
+    assert collector.collection_interval == 1
+    assert collector.running is False
 
             print("✅ 指标收集器集成演示完成！收集器正确初始化")
 
@@ -188,12 +188,12 @@ class TestMonitoringDemo:
         metrics_text = metrics_data  # metrics_data 已经是字符串类型
 
         # 验证Prometheus格式
-        assert (
-            headers == "text/plain; version=0.0.4; charset=utf-8"
+    assert (
+            headers == "text_plain; version=0.0.4; charset=utf-8"
         )  # 修正：headers是字符串而不是tuple
-        assert "# HELP football_data_collection_total 数据采集总次数" in metrics_text
-        assert "# TYPE football_data_collection_total counter" in metrics_text
-        assert (
+    assert "# HELP football_data_collection_total 数据采集总次数" in metrics_text
+    assert "# TYPE football_data_collection_total counter" in metrics_text
+    assert (
             'football_system_info_info{component="football_prediction_platform"'
             in metrics_text
         )

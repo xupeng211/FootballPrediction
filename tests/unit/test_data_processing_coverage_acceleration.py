@@ -44,14 +44,14 @@ class TestDataProcessingServiceCoverageAcceleration:
     def test_service_initialization_basic(self, data_processor):
         """测试服务基本初始化"""
         # 验证基本属性初始化
-        assert data_processor.db_manager is None  # Constructor doesn't set db_manager
-        assert data_processor._running is True  # From BaseService
-        assert hasattr(data_processor, 'name')
-        assert hasattr(data_processor, 'logger')
-        assert data_processor.data_cleaner is None
-        assert data_processor.missing_handler is None
-        assert data_processor.data_lake is None
-        assert data_processor.cache_manager is None
+    assert data_processor.db_manager is None  # Constructor doesn't set db_manager
+    assert data_processor._running is True  # From BaseService
+    assert hasattr(data_processor, 'name')
+    assert hasattr(data_processor, 'logger')
+    assert data_processor.data_cleaner is None
+    assert data_processor.missing_handler is None
+    assert data_processor.data_lake is None
+    assert data_processor.cache_manager is None
 
     def test_service_initialization_with_custom_config(self):
         """测试使用自定义配置的服务初始化"""
@@ -71,7 +71,7 @@ class TestDataProcessingServiceCoverageAcceleration:
             processor.logger = Mock()
             # Note: The actual service doesn't take config in constructor
             # We'll test config setting separately
-            assert processor is not None
+    assert processor is not None
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, data_processor):
@@ -80,8 +80,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         # 注意：这个测试会因为依赖问题而失败，但我们可以覆盖其他方法
 
         # 我们改为测试其他已经能工作的方法
-        assert data_processor._running is True
-        assert hasattr(data_processor, 'logger')
+    assert data_processor._running is True
+    assert hasattr(data_processor, 'logger')
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, data_processor):
@@ -91,7 +91,7 @@ class TestDataProcessingServiceCoverageAcceleration:
             result = await data_processor.initialize()
 
             # 验证初始化失败
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_initialize_exception_handling(self, data_processor):
@@ -101,7 +101,7 @@ class TestDataProcessingServiceCoverageAcceleration:
             result = await data_processor.initialize()
 
             # 验证异常处理
-            assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     async def test_shutdown_success(self, data_processor):
@@ -120,7 +120,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.shutdown()
 
         # 验证关闭结果 - shutdown doesn't change _running status
-        assert result is None  # shutdown returns None
+    assert result is None  # shutdown returns None
 
     @pytest.mark.asyncio
     async def test_cleanup_success(self, data_processor):
@@ -134,7 +134,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.cleanup()
 
         # 验证清理结果
-        assert result is True
+    assert result is True
         data_processor._cache.clear.assert_called_once()
 
     @pytest.mark.asyncio
@@ -184,8 +184,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_match_data(raw_data)
 
         # 验证处理结果
-        assert result is not None
-        assert len(result) == 2
+    assert result is not None
+    assert len(result) == 2
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -197,7 +197,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_match_data(invalid_data)
 
         # 验证返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -222,9 +222,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_odds_data(raw_data)
 
         # 验证处理结果
-        assert result is not None
-        assert result["cleaned"] is True
-        assert result["handled"] is True
+    assert result is not None
+    assert result["cleaned"] is True
+    assert result["handled"] is True
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_with_list(self, data_processor):
@@ -246,8 +246,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_odds_data(raw_data)
 
         # 验证处理结果
-        assert result is not None
-        assert len(result) == 2
+    assert result is not None
+    assert len(result) == 2
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_invalid_type(self, data_processor):
@@ -258,7 +258,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_odds_data(invalid_data)
 
         # 验证返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_features_data_success(self, data_processor):
@@ -282,9 +282,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_features_data(raw_data)
 
         # 验证处理结果
-        assert result is not None
-        assert result["cleaned"] is True
-        assert result["handled"] is True
+    assert result is not None
+    assert result["cleaned"] is True
+    assert result["handled"] is True
 
     @pytest.mark.asyncio
     async def test_process_features_data_invalid_type(self, data_processor):
@@ -295,7 +295,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_features_data(invalid_data)
 
         # 验证返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -319,9 +319,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_batch_matches(matches_data, batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 2
-        assert result["failed_count"] == 0
+    assert result["success"] is True
+    assert result["processed_count"] == 2
+    assert result["failed_count"] == 0
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -330,9 +330,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_batch_matches([], batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 0
-        assert result["failed_count"] == 0
+    assert result["success"] is True
+    assert result["processed_count"] == 0
+    assert result["failed_count"] == 0
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -356,9 +356,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_batch_matches(matches_data, batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 1
-        assert result["failed_count"] == 1
+    assert result["success"] is True
+    assert result["processed_count"] == 1
+    assert result["failed_count"] == 1
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -380,10 +380,10 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_bronze_to_silver(batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 2
-        assert "start_time" in result
-        assert "end_time" in result
+    assert result["success"] is True
+    assert result["processed_count"] == 2
+    assert "start_time" in result
+    assert "end_time" in result
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -398,8 +398,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_bronze_to_silver(batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 0
+    assert result["success"] is True
+    assert result["processed_count"] == 0
 
     @pytest.mark.asyncio
     @pytest.mark.asyncio
@@ -421,9 +421,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_bronze_to_silver(batch_size=100)
 
         # 验证处理结果
-        assert result["success"] is True
-        assert result["processed_count"] == 1
-        assert result["failed_count"] == 1
+    assert result["success"] is True
+    assert result["processed_count"] == 1
+    assert result["failed_count"] == 1
 
     def test_validate_data_quality_match_data(self, data_processor):
         """测试验证比赛数据质量"""
@@ -446,9 +446,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.validate_data_quality(match_data, "match")
 
         # 验证验证结果
-        assert result["is_valid"] is True
-        assert result["quality_score"] == 0.95
-        assert len(result["issues"]) == 0
+    assert result["is_valid"] is True
+    assert result["quality_score"] == 0.95
+    assert len(result["issues"]) == 0
 
     def test_validate_data_quality_odds_data(self, data_processor):
         """测试验证赔率数据质量"""
@@ -471,9 +471,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.validate_data_quality(odds_data, "odds")
 
         # 验证验证结果
-        assert result["is_valid"] is True
-        assert result["quality_score"] == 0.88
-        assert "警告：赔率值过高" in result["issues"]
+    assert result["is_valid"] is True
+    assert result["quality_score"] == 0.88
+    assert "警告：赔率值过高" in result["issues"]
 
     def test_validate_data_quality_invalid_type(self, data_processor):
         """测试验证无效数据类型"""
@@ -484,9 +484,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.validate_data_quality(test_data, invalid_type)
 
         # 验证返回默认结果
-        assert result["is_valid"] is False
-        assert result["quality_score"] == 0.0
-        assert len(result["issues"]) > 0
+    assert result["is_valid"] is False
+    assert result["quality_score"] == 0.0
+    assert len(result["issues"]) > 0
 
     def test_get_performance_metrics(self, data_processor):
         """测试获取性能指标"""
@@ -501,12 +501,12 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.get_performance_metrics()
 
         # 验证性能指标
-        assert result["processed_records"] == 1000
-        assert result["processing_time"] == 10.5
-        assert result["cache_hits"] == 250
-        assert result["cache_misses"] == 50
-        assert "cache_hit_rate" in result
-        assert result["cache_hit_rate"] == 250 / (250 + 50)
+    assert result["processed_records"] == 1000
+    assert result["processing_time"] == 10.5
+    assert result["cache_hits"] == 250
+    assert result["cache_misses"] == 50
+    assert "cache_hit_rate" in result
+    assert result["cache_hit_rate"] == 250 / (250 + 50)
 
     def test_update_performance_metrics(self, data_processor):
         """测试更新性能指标"""
@@ -527,45 +527,45 @@ class TestDataProcessingServiceCoverageAcceleration:
         })
 
         # 验证更新结果
-        assert data_processor.performance_metrics["processed_records"] == 150
-        assert data_processor.performance_metrics["processing_time"] == 7.5
-        assert data_processor.performance_metrics["cache_hits"] == 35
-        assert data_processor.performance_metrics["cache_misses"] == 15
+    assert data_processor.performance_metrics["processed_records"] == 150
+    assert data_processor.performance_metrics["processing_time"] == 7.5
+    assert data_processor.performance_metrics["cache_hits"] == 35
+    assert data_processor.performance_metrics["cache_misses"] == 15
 
     def test_is_initialized_property(self, data_processor):
         """测试初始化状态属性"""
         # 测试初始状态
-        assert data_processor.is_initialized is False
+    assert data_processor.is_initialized is False
 
         # 设置初始化状态
         data_processor.initialized = True
-        assert data_processor.is_initialized is True
+    assert data_processor.is_initialized is True
 
     def test_is_running_property(self, data_processor):
         """测试运行状态属性"""
         # 测试初始状态
-        assert data_processor.is_running is False
+    assert data_processor.is_running is False
 
         # 设置运行状态
         data_processor.running = True
-        assert data_processor.is_running is True
+    assert data_processor.is_running is True
 
     def test_get_config_property(self, data_processor):
         """测试获取配置属性"""
         # 验证配置字典存在
         config = data_processor.get_config
-        assert isinstance(config, dict)
-        assert "batch_size" in config
-        assert "cache_ttl" in config
-        assert "enable_data_quality" in config
+    assert isinstance(config, dict)
+    assert "batch_size" in config
+    assert "cache_ttl" in config
+    assert "enable_data_quality" in config
 
     def test_service_string_representation(self, data_processor):
         """测试服务的字符串表示"""
         str_repr = str(data_processor)
         # 验证包含关键信息
-        assert "DataProcessingService" in str_repr
-        assert "initialized" in str_repr
-        assert "running" in str_repr
+    assert "DataProcessingService" in str_repr
+    assert "initialized" in str_repr
+    assert "running" in str_repr
 
     def test_service_dict_representation(self, data_processor):
         """测试服务的字典表示"""
@@ -577,25 +577,25 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.to_dict()
 
         # 验证字典结构
-        assert isinstance(result, dict)
-        assert result["initialized"] is True
-        assert result["running"] is False
-        assert result["performance_metrics"] == {"test": "metrics"}
+    assert isinstance(result, dict)
+    assert result["initialized"] is True
+    assert result["running"] is False
+    assert result["performance_metrics"] == {"test": "metrics"}
 
     def test_service_status_property(self, data_processor):
         """测试服务状态属性"""
         # 测试不同状态
         data_processor.initialized = False
         data_processor.running = False
-        assert data_processor.status == "未初始化"
+    assert data_processor.status == "未初始化"
 
         data_processor.initialized = True
         data_processor.running = False
-        assert data_processor.status == "已初始化"
+    assert data_processor.status == "已初始化"
 
         data_processor.initialized = True
         data_processor.running = True
-        assert data_processor.status == "运行中"
+    assert data_processor.status == "运行中"
 
     @pytest.mark.asyncio
     async def test_health_check_success(self, data_processor):
@@ -614,11 +614,11 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.health_check()
 
         # 验证健康检查结果
-        assert result["healthy"] is True
-        assert result["components"]["data_cleaner"]["healthy"] is True
-        assert result["components"]["missing_handler"]["healthy"] is True
-        assert result["components"]["data_lake"]["healthy"] is True
-        assert result["components"]["cache_manager"]["healthy"] is True
+    assert result["healthy"] is True
+    assert result["components"]["data_cleaner"]["healthy"] is True
+    assert result["components"]["missing_handler"]["healthy"] is True
+    assert result["components"]["data_lake"]["healthy"] is True
+    assert result["components"]["cache_manager"]["healthy"] is True
 
     @pytest.mark.asyncio
     async def test_health_check_with_failures(self, data_processor):
@@ -637,9 +637,9 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.health_check()
 
         # 验证健康检查结果
-        assert result["healthy"] is False
-        assert result["components"]["missing_handler"]["healthy"] is False
-        assert result["components"]["missing_handler"]["error"] == "连接失败"
+    assert result["healthy"] is False
+    assert result["components"]["missing_handler"]["healthy"] is False
+    assert result["components"]["missing_handler"]["error"] == "连接失败"
 
     def test_error_logging_and_recovery(self, data_processor):
         """测试错误记录和恢复机制"""
@@ -655,7 +655,7 @@ class TestDataProcessingServiceCoverageAcceleration:
                 mock_logger.error.assert_called_once()
 
                 # 验证错误计数更新
-                assert "error_count" in data_processor.performance_metrics
+    assert "error_count" in data_processor.performance_metrics
 
     @pytest.mark.asyncio
     async def test_retry_mechanism_success(self, data_processor):
@@ -666,8 +666,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor._retry_with_backoff(mock_operation, max_retries=2)
 
         # 验证重试成功
-        assert result == "成功"
-        assert mock_operation.call_count == 2
+    assert result == "成功"
+    assert mock_operation.call_count == 2
 
     @pytest.mark.asyncio
     async def test_retry_mechanism_failure(self, data_processor):
@@ -678,8 +678,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor._retry_with_backoff(mock_operation, max_retries=2)
 
         # 验证重试失败
-        assert result is None
-        assert mock_operation.call_count == 3  # 初始尝试 + 2次重试
+    assert result is None
+    assert mock_operation.call_count == 3  # 初始尝试 + 2次重试
 
     def test_cache_integration(self, data_processor):
         """测试缓存集成"""
@@ -694,11 +694,11 @@ class TestDataProcessingServiceCoverageAcceleration:
 
         # 测试缓存获取
         result = data_processor.cache_manager.get(cache_key)
-        assert result is None
+    assert result is None
 
         # 测试缓存设置
         success = data_processor.cache_manager.set(cache_key, cache_value, ttl=3600)
-        assert success is True
+    assert success is True
 
     def test_database_transaction_management(self, data_processor):
         """测试数据库事务管理"""
@@ -708,11 +708,11 @@ class TestDataProcessingServiceCoverageAcceleration:
         data_processor.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 验证会话管理
-        assert data_processor.db_manager is not None
+    assert data_processor.db_manager is not None
 
         # 验证可以获取异步会话
         session_context = data_processor.db_manager.get_async_session()
-        assert session_context is not None
+    assert session_context is not None
 
     def test_data_validation_and_sanitization(self, data_processor):
         """测试数据验证和清理"""
@@ -733,8 +733,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         validation_result = data_processor.data_cleaner.validate_match_data(invalid_data)
 
         # 验证验证结果
-        assert validation_result["is_valid"] is False
-        assert len(validation_result["errors"]) == 2
+    assert validation_result["is_valid"] is False
+    assert len(validation_result["errors"]) == 2
 
     def test_configuration_validation(self, data_processor):
         """测试配置验证"""
@@ -747,7 +747,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         }
 
         is_valid = data_processor._validate_config(valid_config)
-        assert is_valid is True
+    assert is_valid is True
 
         # 测试无效配置
         invalid_config = {
@@ -757,7 +757,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         }
 
         is_valid = data_processor._validate_config(invalid_config)
-        assert is_valid is False
+    assert is_valid is False
 
     def test_service_initialization_edge_cases(self):
         """测试服务初始化的边界情况"""
@@ -770,31 +770,31 @@ class TestDataProcessingServiceCoverageAcceleration:
 
             processor = DataProcessingService()
             processor.logger = Mock()
-            assert processor is not None
+    assert processor is not None
 
     def test_start_and_stop_methods(self, data_processor):
         """测试启动和停止方法"""
         # 测试启动方法
         result = data_processor.start()
-        assert result is True
-        assert data_processor._running is True
+    assert result is True
+    assert data_processor._running is True
 
         # 测试停止方法
         result = data_processor.stop()
-        assert result is True
-        assert data_processor._running is False
+    assert result is True
+    assert data_processor._running is False
 
     def test_get_status_method(self, data_processor):
         """测试获取状态方法"""
         # 测试运行状态
         data_processor._running = True
         status = data_processor.get_status()
-        assert status == "running"
+    assert status == "running"
 
         # 测试停止状态
         data_processor._running = False
         status = data_processor.get_status()
-        assert status == "stopped"
+    assert status == "stopped"
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_not_initialized(self, data_processor):
@@ -807,7 +807,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.process_raw_match_data(raw_data)
 
         # 应该返回None并记录错误
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_not_initialized(self, data_processor):
@@ -820,7 +820,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_odds_data(raw_data)
 
         # 应该返回None并记录错误
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_features_data_not_initialized(self, data_processor):
@@ -833,7 +833,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_features_data(raw_data)
 
         # 应该返回None并记录错误
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_invalid_type(self, data_processor):
@@ -844,7 +844,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_match_data(invalid_data)
 
         # 应该返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_invalid_type(self, data_processor):
@@ -855,7 +855,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_raw_odds_data(invalid_data)
 
         # 应该返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_features_data_invalid_type(self, data_processor):
@@ -866,7 +866,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = await data_processor.process_features_data(invalid_data)
 
         # 应该返回None
-        assert result is None
+    assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_empty_list(self, data_processor):
@@ -880,8 +880,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.process_raw_match_data(empty_list)
 
         # 应该返回空的DataFrame
-        assert result is not None
-        assert hasattr(result, 'empty')  # pandas DataFrame
+    assert result is not None
+    assert hasattr(result, 'empty')  # pandas DataFrame
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_empty_list(self, data_processor):
@@ -895,8 +895,8 @@ class TestDataProcessingServiceCoverageAcceleration:
         result = data_processor.process_raw_odds_data(empty_list)
 
         # 应该返回空的DataFrame
-        assert result is not None
-        assert hasattr(result, 'empty')  # pandas DataFrame
+    assert result is not None
+    assert hasattr(result, 'empty')  # pandas DataFrame
 
     def test_performance_monitoring(self, data_processor):
         """测试性能监控"""
@@ -912,7 +912,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         metrics = data_processor.get_performance_metrics()
 
         # 验证性能指标
-        assert "total_processed" in metrics
-        assert "avg_processing_time" in metrics
-        assert "success_rate" in metrics
-        assert metrics["total_processed"] == 1000
+    assert "total_processed" in metrics
+    assert "avg_processing_time" in metrics
+    assert "success_rate" in metrics
+    assert metrics["total_processed"] == 1000

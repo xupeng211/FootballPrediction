@@ -36,7 +36,7 @@ class TestModelsAPI:
         try:
             import src.api.models as models
 
-            assert models is not None
+    assert models is not None
         except ImportError:
             pass
 
@@ -53,10 +53,10 @@ class TestModelsAPI:
             from src.api.models import get_model_info, get_model_predictions
 
             result = await get_model_info(1, mock_session)
-            assert result is not None
+    assert result is not None
 
             result = await get_model_predictions(1, mock_session)
-            assert result is not None
+    assert result is not None
 
         except (ImportError, AttributeError):
             # 如果函数不存在，至少测试模块导入
@@ -67,7 +67,7 @@ class TestModelsAPI:
         try:
             import src.api.models as models_module
 
-            assert models_module is not None
+    assert models_module is not None
         except ImportError:
             pass
 
@@ -80,14 +80,14 @@ class TestModelsAPIIntegration:
         try:
             import src.api.models
 
-            assert src.api.models is not None
+    assert src.api.models is not None
         except ImportError:
             pass
 
     def test_dependency_injection(self):
         """测试依赖注入"""
         mock_session = AsyncMock()
-        assert mock_session is not None
+    assert mock_session is not None
 
 
 class TestModelsAPIBasicFunctionality:
@@ -96,7 +96,7 @@ class TestModelsAPIBasicFunctionality:
     def test_module_structure(self):
         """测试模块结构"""
         try:
-            assert models_module is not None
+    assert models_module is not None
         except ImportError:
             pass
 
@@ -139,7 +139,7 @@ class TestModelsAPIBasicFunctionality:
         try:
             from src.api.models import router
 
-            assert router is not None
+    assert router is not None
         except ImportError:
             pass
 
@@ -167,7 +167,7 @@ class TestModelsAPIEdgeCases:
     def test_api_constants(self):
         """测试API常量"""
 
-        assert router.prefix == "/models"
+    assert router.prefix == "_models"
 
 
 class TestModelsAPISimpleCoverage:
@@ -176,14 +176,14 @@ class TestModelsAPISimpleCoverage:
     def test_basic_imports(self):
         """测试基本导入"""
 
-        assert src.api.models is not None
+    assert src.api.models is not None
 
     def test_router_exists(self):
         """测试路由器存在"""
 
-        assert router is not None
-        assert hasattr(router, "prefix")
-        assert hasattr(router, "tags")
+    assert router is not None
+    assert hasattr(router, "prefix")
+    assert hasattr(router, "tags")
 
     @pytest.mark.asyncio
     async def test_basic_functionality(self):
@@ -194,8 +194,8 @@ class TestModelsAPISimpleCoverage:
         mock_session.execute.return_value = mock_result
 
         # 测试模块是否可以正常工作
-        assert mock_session is not None
-        assert mock_result is not None
+    assert mock_session is not None
+    assert mock_result is not None
 
 
 class TestModelsAPIErrorHandling:
@@ -221,7 +221,7 @@ class TestModelsAPIErrorHandling:
         for invalid_input in invalid_inputs:
             try:
                 # 这里可以测试输入验证逻辑
-                assert invalid_input is not None or invalid_input is None
+    assert invalid_input is not None or invalid_input is None
             except Exception:
                 pass
 
@@ -250,7 +250,7 @@ class TestModelsAPIPerformance:
         response_time = end_time - start_time
 
         # 确保响应时间合理（小于1秒）
-        assert response_time < 1.0
+    assert response_time < 1.0
 
     def test_memory_usage(self):
         """测试内存使用"""
@@ -266,4 +266,4 @@ class TestModelsAPIPerformance:
         modules_after = len(sys.modules)
 
         # 确保没有导入过多的模块
-        assert modules_after - modules_before < 50
+    assert modules_after - modules_before < 50

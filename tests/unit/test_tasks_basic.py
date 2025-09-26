@@ -24,9 +24,9 @@ class TestTaskErrorLogger:
 
     def test_error_logger_initialization(self):
         """测试错误日志器初始化"""
-        assert self.logger is not None
-        assert hasattr(self.logger, "log_task_error")
-        assert hasattr(self.logger, "log_api_failure")
+    assert self.logger is not None
+    assert hasattr(self.logger, "log_task_error")
+    assert hasattr(self.logger, "log_api_failure")
 
     @pytest.mark.asyncio
     @patch("src.tasks.error_logger.DatabaseManager")
@@ -143,10 +143,10 @@ class TestTaskErrorLogger:
 
         stats = await self.logger.get_error_statistics()
 
-        assert isinstance(stats, dict)
-        assert "total_errors" in stats
-        assert "task_errors" in stats
-        assert "type_errors" in stats
+    assert isinstance(stats, dict)
+    assert "total_errors" in stats
+    assert "task_errors" in stats
+    assert "type_errors" in stats
 
     @pytest.mark.asyncio
     @patch("src.tasks.error_logger.DatabaseManager")
@@ -167,7 +167,7 @@ class TestTaskErrorLogger:
         # 假设方法存在且是异步的
         if hasattr(self.logger, "cleanup_old_logs"):
             result = await self.logger.cleanup_old_logs(30)
-            assert isinstance(result, int) or result is None
+    assert isinstance(result, int) or result is None
         else:
             # 如果方法不存在，跳过测试
             pytest.skip("cleanup_old_logs method not implemented")
@@ -186,8 +186,8 @@ class TestTaskUtils:
         result = await mock_function()
 
         # 验证结果
-        assert isinstance(result, bool)
-        assert result is True
+    assert isinstance(result, bool)
+    assert result is True
 
         # 验证调用
         mock_function.assert_called_once()
@@ -213,7 +213,7 @@ class TestTaskUtils:
 
         result = await should_collect_live_scores()
 
-        assert result is False
+    assert result is False
 
     @pytest.mark.asyncio
     @patch("src.tasks.utils.get_upcoming_matches")
@@ -246,8 +246,8 @@ class TestTaskUtils:
         matches = await mock_function(hours=6)
 
         # 验证结果
-        assert isinstance(matches, list)
-        assert len(matches) == 2
+    assert isinstance(matches, list)
+    assert len(matches) == 2
 
         # 验证调用
         mock_function.assert_called_once_with(hours=6)
@@ -259,12 +259,12 @@ class TestTaskUtils:
 
         next_time = calculate_next_collection_time(interval_minutes)
 
-        assert isinstance(next_time, datetime)
-        assert next_time > current_time
+    assert isinstance(next_time, datetime)
+    assert next_time > current_time
 
         # 验证时间间隔
         time_diff = next_time - current_time
-        assert time_diff.total_seconds() >= interval_minutes * 60 - 60  # 允许1分钟误差
+    assert time_diff.total_seconds() >= interval_minutes * 60 - 60  # 允许1分钟误差
 
 
 class TestTaskMonitoring:
@@ -281,9 +281,9 @@ class TestTaskMonitoring:
         )
         queue_size = Gauge("football_queue_size", "Current queue size")
 
-        assert task_counter is not None
-        assert task_duration is not None
-        assert queue_size is not None
+    assert task_counter is not None
+    assert task_duration is not None
+    assert queue_size is not None
 
     def test_record_task_execution(self):
         """测试记录任务执行"""
@@ -295,7 +295,7 @@ class TestTaskMonitoring:
         # 记录任务执行
         task_counter.inc()
 
-        assert task_counter._value._value == initial_value + 1
+    assert task_counter._value._value == initial_value + 1
 
     def test_measure_task_duration(self):
         """测试测量任务执行时间"""
@@ -311,7 +311,7 @@ class TestTaskMonitoring:
 
         duration_histogram.observe(execution_time)
 
-        assert execution_time > 0
+    assert execution_time > 0
 
 
 class TestTaskScheduling:
@@ -329,8 +329,8 @@ class TestTaskScheduling:
         # 按优先级排序（数字越小优先级越高）
         sorted_tasks = sorted(tasks, key=lambda x: x["priority"])
 
-        assert sorted_tasks[0]["name"] == "urgent_task"
-        assert sorted_tasks[-1]["name"] == "low_priority_task"
+    assert sorted_tasks[0]["name"] == "urgent_task"
+    assert sorted_tasks[-1]["name"] == "low_priority_task"
 
     def test_task_retry_logic(self):
         """测试任务重试逻辑"""
@@ -346,8 +346,8 @@ class TestTaskScheduling:
             if current_retry == 2:  # 模拟第二次重试成功
                 break
 
-        assert current_retry == 2
-        assert current_retry <= max_retries
+    assert current_retry == 2
+    assert current_retry <= max_retries
 
     def test_exponential_backoff(self):
         """测试指数退避"""
@@ -359,7 +359,7 @@ class TestTaskScheduling:
         delays = [calculate_backoff_delay(i) for i in range(5)]
         expected_delays = [1, 2, 4, 8, 16]
 
-        assert delays == expected_delays
+    assert delays == expected_delays
 
     def test_task_timeout_handling(self):
         """测试任务超时处理"""
@@ -377,8 +377,8 @@ class TestTaskScheduling:
 
         is_timeout = execution_time > timeout_seconds
 
-        assert not is_timeout  # 应该没有超时
-        assert execution_time < timeout_seconds
+    assert not is_timeout  # 应该没有超时
+    assert execution_time < timeout_seconds
 
 
 class TestTaskErrorHandling:
@@ -391,7 +391,7 @@ class TestTaskErrorHandling:
 
         for task in failed_tasks:
             strategy = recovery_strategies.get(task, "default")
-            assert strategy in ["retry", "skip", "alert", "default"]
+    assert strategy in ["retry", "skip", "alert", "default"]
 
     def test_error_categorization(self):
         """测试错误分类"""
@@ -404,8 +404,8 @@ class TestTaskErrorHandling:
 
         high_severity_errors = [e for e in errors if e["severity"] == "high"]
 
-        assert len(high_severity_errors) == 2
-        assert all(e["severity"] == "high" for e in high_severity_errors)
+    assert len(high_severity_errors) == 2
+    assert all(e["severity"] == "high" for e in high_severity_errors)
 
     def test_alert_threshold_checking(self):
         """测试告警阈值检查"""
@@ -418,4 +418,4 @@ class TestTaskErrorHandling:
             if count >= thresholds.get(error_type, 0):
                 alerts.append(f"{error_type}: {count}")
 
-        assert len(alerts) >= 2  # api_failures 和 database_errors 超过阈值
+    assert len(alerts) >= 2  # api_failures 和 database_errors 超过阈值

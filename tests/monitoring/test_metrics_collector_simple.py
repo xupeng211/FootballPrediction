@@ -26,10 +26,10 @@ class TestMetricsCollectorSimple:
 
     def test_init(self):
         """测试初始化"""
-        assert self.collector.collection_interval == 30
-        assert self.collector.running is False
-        assert self.collector._task is None
-        assert self.collector.metrics_exporter == self.mock_exporter
+    assert self.collector.collection_interval == 30
+    assert self.collector.running is False
+    assert self.collector._task is None
+    assert self.collector.metrics_exporter == self.mock_exporter
 
     def test_init_custom_interval(self):
         """测试自定义间隔时间初始化"""
@@ -38,7 +38,7 @@ class TestMetricsCollectorSimple:
         ) as mock_get_exporter:
             mock_get_exporter.return_value = self.mock_exporter
             collector = MetricsCollector(collection_interval=60)
-            assert collector.collection_interval == 60
+    assert collector.collection_interval == 60
 
     @pytest.mark.asyncio
     async def test_manual_collection(self):

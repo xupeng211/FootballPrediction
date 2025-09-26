@@ -15,10 +15,10 @@ class TestProjectBasics:
         # 这里可以测试项目的基本结构
         import os
 
-        assert os.path.exists("src/api")
-        assert os.path.exists("src/core")
-        assert os.path.exists("src/database")
-        assert os.path.exists("src/services")
+    assert os.path.exists("src_api")
+    assert os.path.exists("src/core")
+    assert os.path.exists("src/database")
+    assert os.path.exists("src/services")
 
 
 class TestUtils:
@@ -27,5 +27,5 @@ class TestUtils:
     def test_setup_logger(self):
         """测试日志记录器设置"""
         logger = Logger.setup_logger("test_logger")
-        assert logger.name == "test_logger"
-        assert logger.level == 20  # INFO level
+    assert logger.name == "test_logger"
+    assert logger.level == 20  # INFO level

@@ -28,9 +28,9 @@ class TestMetricsExporter:
 
     def test_metrics_exporter_initialization(self):
         """测试指标导出器初始化"""
-        assert self.exporter is not None
-        assert hasattr(self.exporter, "record_data_collection_success")
-        assert hasattr(self.exporter, "record_data_collection_failure")
+    assert self.exporter is not None
+    assert hasattr(self.exporter, "record_data_collection_success")
+    assert hasattr(self.exporter, "record_data_collection_failure")
 
     def test_record_data_collection_success(self):
         """测试记录数据收集成功"""
@@ -84,11 +84,11 @@ class TestMetricsExporter:
             result = self.exporter.get_metrics()
 
             # 验证返回的是tuple，包含content_type和metrics_data
-            assert isinstance(result, tuple)
-            assert len(result) == 2
+    assert isinstance(result, tuple)
+    assert len(result) == 2
             content_type, metrics_data = result
-            assert isinstance(content_type, str)
-            assert isinstance(metrics_data, str)
+    assert isinstance(content_type, str)
+    assert isinstance(metrics_data, str)
             mock_generate.assert_called_once()
 
 
@@ -108,9 +108,9 @@ class TestMetricsCollector:
 
     def test_metrics_collector_initialization(self):
         """测试指标收集器初始化"""
-        assert self.collector is not None
-        assert hasattr(self.collector, "collect_system_metrics")
-        assert hasattr(self.collector, "collect_database_metrics")
+    assert self.collector is not None
+    assert hasattr(self.collector, "collect_system_metrics")
+    assert hasattr(self.collector, "collect_database_metrics")
 
     @patch("psutil.cpu_percent")
     @patch("psutil.virtual_memory")
@@ -123,10 +123,10 @@ class TestMetricsCollector:
 
         metrics = self.collector.collect_system_metrics()
 
-        assert "cpu_usage_percent" in metrics
-        assert "memory_usage_percent" in metrics
-        assert "disk_usage_percent" in metrics
-        assert metrics["cpu_usage_percent"] == 45.5
+    assert "cpu_usage_percent" in metrics
+    assert "memory_usage_percent" in metrics
+    assert "disk_usage_percent" in metrics
+    assert metrics["cpu_usage_percent"] == 45.5
 
     @pytest.mark.asyncio
     @patch("src.monitoring.metrics_collector.get_async_session")
@@ -146,8 +146,8 @@ class TestMetricsCollector:
 
         metrics = await self.collector.collect_database_metrics()
 
-        assert "table_counts" in metrics
-        assert isinstance(metrics["table_counts"], dict)
+    assert "table_counts" in metrics
+    assert isinstance(metrics["table_counts"], dict)
 
     def test_collect_application_metrics(self):
         """测试收集应用指标"""
@@ -160,8 +160,8 @@ class TestMetricsCollector:
 
             metrics = self.collector.collect_application_metrics()
 
-            assert "prediction_stats" in metrics
-            assert metrics["prediction_stats"]["total_predictions"] == 1000
+    assert "prediction_stats" in metrics
+    assert metrics["prediction_stats"]["total_predictions"] == 1000
 
     def test_format_metrics_for_export(self):
         """测试格式化指标用于导出"""
@@ -173,9 +173,9 @@ class TestMetricsCollector:
 
         formatted = self.collector.format_metrics_for_export(raw_metrics)
 
-        assert isinstance(formatted, dict)
-        assert "timestamp" in formatted
-        assert "metrics" in formatted
+    assert isinstance(formatted, dict)
+    assert "timestamp" in formatted
+    assert "metrics" in formatted
 
 
 class TestMetricsIntegration:
@@ -193,8 +193,8 @@ class TestMetricsIntegration:
             metrics = collector.collect_system_metrics()
 
             # 验证指标格式
-            assert isinstance(metrics, dict)
-            assert "cpu_usage" in metrics
+    assert isinstance(metrics, dict)
+    assert "cpu_usage" in metrics
 
     def test_prometheus_integration(self):
         """
@@ -215,10 +215,10 @@ class TestMetricsIntegration:
         content_type, prometheus_output = exporter.get_metrics()
 
         # 验证返回格式
-        assert isinstance(content_type, str)
-        assert isinstance(prometheus_output, str)
-        assert len(prometheus_output) > 0
-        assert "text/plain" in content_type
+    assert isinstance(content_type, str)
+    assert isinstance(prometheus_output, str)
+    assert len(prometheus_output) > 0
+    assert "text_plain" in content_type
 
     def test_metrics_persistence(self):
         """测试指标持久化"""
@@ -230,8 +230,8 @@ class TestMetricsIntegration:
         }
 
         # 验证数据格式
-        assert "timestamp" in metrics_data
-        assert isinstance(metrics_data["cpu_usage"], float)
+    assert "timestamp" in metrics_data
+    assert isinstance(metrics_data["cpu_usage"], float)
 
     def test_metrics_alerting_thresholds(self):
         """测试指标告警阈值"""
@@ -252,7 +252,7 @@ class TestMetricsIntegration:
                     f"{metric} is {value}%, threshold is {thresholds[metric]}%"
                 )
 
-        assert len(alerts) == 2  # cpu_usage 和 disk_usage 超过阈值
+    assert len(alerts) == 2  # cpu_usage 和 disk_usage 超过阈值
 
     def test_metrics_aggregation(self):
         """测试指标聚合"""
@@ -270,5 +270,5 @@ class TestMetricsIntegration:
             time_series_data
         )
 
-        assert avg_cpu == 50.0
-        assert len(time_series_data) == 5
+    assert avg_cpu == 50.0
+    assert len(time_series_data) == 5

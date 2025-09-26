@@ -23,8 +23,8 @@ class TestFeaturesImprovedSimple:
                 match_id=-1, include_raw=False, session=mock_session
             )
 
-        assert exc_info.value.status_code == 400
-        assert "比赛ID必须大于0" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 400
+    assert "比赛ID必须大于0" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_improved_zero_match_id(self):
@@ -36,8 +36,8 @@ class TestFeaturesImprovedSimple:
                 match_id=0, include_raw=False, session=mock_session
             )
 
-        assert exc_info.value.status_code == 400
-        assert "比赛ID必须大于0" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 400
+    assert "比赛ID必须大于0" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_improved_feature_store_unavailable(self):
@@ -50,8 +50,8 @@ class TestFeaturesImprovedSimple:
                     match_id=1, include_raw=False, session=mock_session
                 )
 
-            assert exc_info.value.status_code == 503
-            assert "特征存储服务暂时不可用" in str(exc_info.value.detail)
+    assert exc_info.value.status_code == 503
+    assert "特征存储服务暂时不可用" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_features_health_check_basic(self):
@@ -63,29 +63,29 @@ class TestFeaturesImprovedSimple:
             result = await features_health_check()
 
             # 验证基本响应结构
-            assert isinstance(result, dict)
+    assert isinstance(result, dict)
             # 健康检查应该返回某种状态信息
-            assert len(result) > 0
+    assert len(result) > 0
 
     def test_module_level_initialization(self):
         """测试模块级别的初始化代码覆盖率"""
         import src.api.features_improved
 
         # 验证router配置
-        assert src.api.features_improved.router is not None
-        assert src.api.features_improved.router.prefix == "/features"
+    assert src.api.features_improved.router is not None
+    assert src.api.features_improved.router.prefix == "_features"
 
         # 验证logger配置
-        assert src.api.features_improved.logger is not None
-        assert src.api.features_improved.logger.name == "src.api.features_improved"
+    assert src.api.features_improved.logger is not None
+    assert src.api.features_improved.logger.name == "src.api.features_improved"
 
     def test_feature_store_and_calculator_variables(self):
         """测试特征存储和计算器变量"""
         import src.api.features_improved
 
         # 这些变量应该存在（无论是否为None）
-        assert hasattr(src.api.features_improved, "feature_store")
-        assert hasattr(src.api.features_improved, "feature_calculator")
+    assert hasattr(src.api.features_improved, "feature_store")
+    assert hasattr(src.api.features_improved, "feature_calculator")
 
     @pytest.mark.asyncio
     async def test_include_raw_parameter_coverage(self):
@@ -117,15 +117,15 @@ class TestFeaturesImprovedSimple:
                 await get_match_features_improved(
                     match_id=case["match_id"], include_raw=False, session=mock_session
                 )
-            assert exc_info.value.status_code == case["expected_status"]
+    assert exc_info.value.status_code == case["expected_status"]
 
     def test_router_tags_and_configuration(self):
         """测试路由器标签和配置"""
         import src.api.features_improved
 
         router = src.api.features_improved.router
-        assert "features" in router.tags
-        assert router.prefix == "/features"
+    assert "features" in router.tags
+    assert router.prefix == "_features"
 
         # 验证路由是否已注册
-        assert len(router.routes) > 0
+    assert len(router.routes) > 0

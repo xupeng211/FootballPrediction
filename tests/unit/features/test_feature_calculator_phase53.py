@@ -60,10 +60,10 @@ class TestFootballFeatureCalculator:
         print("🧪 测试特征计算器初始化...")
 
         # 测试基本属性
-        assert hasattr(calculator, 'feature_definitions')
-        assert hasattr(calculator, 'calculation_methods')
-        assert hasattr(calculator, 'validation_rules')
-        assert hasattr(calculator, 'feature_cache')
+    assert hasattr(calculator, 'feature_definitions')
+    assert hasattr(calculator, 'calculation_methods')
+    assert hasattr(calculator, 'validation_rules')
+    assert hasattr(calculator, 'feature_cache')
 
         print("✅ 特征计算器初始化测试通过")
 
@@ -74,13 +74,13 @@ class TestFootballFeatureCalculator:
         # 测试特征定义
         definitions = calculator.get_feature_definitions()
 
-        assert isinstance(definitions, dict)
-        assert len(definitions) > 0
+    assert isinstance(definitions, dict)
+    assert len(definitions) > 0
 
         # 验证关键特征存在
         key_features = ['home_team_strength', 'away_team_strength', 'form_rating', 'home_advantage']
         for feature in key_features:
-            assert feature in definitions, f"Missing feature: {feature}"
+    assert feature in definitions, f"Missing feature: {feature}"
 
         print("✅ 特征定义加载测试通过")
 
@@ -103,10 +103,10 @@ class TestFootballFeatureCalculator:
 
             strength_features = await calculator.calculate_team_strength_features('Team A')
 
-            assert strength_features is not None
-            assert isinstance(strength_features, dict)
-            assert 'home_team_strength' in strength_features
-            assert 'away_team_strength' in strength_features
+    assert strength_features is not None
+    assert isinstance(strength_features, dict)
+    assert 'home_team_strength' in strength_features
+    assert 'away_team_strength' in strength_features
 
         print("✅ 球队强度计算测试通过")
 
@@ -128,10 +128,10 @@ class TestFootballFeatureCalculator:
 
             form_features = await calculator.calculate_form_features('Team A')
 
-            assert form_features is not None
-            assert isinstance(form_features, dict)
-            assert 'form_rating' in form_features
-            assert 'recent_performance' in form_features
+    assert form_features is not None
+    assert isinstance(form_features, dict)
+    assert 'form_rating' in form_features
+    assert 'recent_performance' in form_features
 
         print("✅ 近期表现评级计算测试通过")
 
@@ -154,10 +154,10 @@ class TestFootballFeatureCalculator:
 
             h2h_features = await calculator.calculate_head_to_head_features('Team A', 'Team B')
 
-            assert h2h_features is not None
-            assert isinstance(h2h_features, dict)
-            assert 'h2h_win_rate' in h2h_features
-            assert 'h2h_goals_diff' in h2h_features
+    assert h2h_features is not None
+    assert isinstance(h2h_features, dict)
+    assert 'h2h_win_rate' in h2h_features
+    assert 'h2h_goals_diff' in h2h_features
 
         print("✅ 交锋历史特征计算测试通过")
 
@@ -179,10 +179,10 @@ class TestFootballFeatureCalculator:
 
             position_features = await calculator.calculate_league_position_features('Team A')
 
-            assert position_features is not None
-            assert isinstance(position_features, dict)
-            assert 'league_position' in position_features
-            assert 'points_advantage' in position_features
+    assert position_features is not None
+    assert isinstance(position_features, dict)
+    assert 'league_position' in position_features
+    assert 'points_advantage' in position_features
 
         print("✅ 联赛排名特征计算测试通过")
 
@@ -209,10 +209,10 @@ class TestFootballFeatureCalculator:
 
             advantage_features = await calculator.calculate_home_advantage_features('Team A')
 
-            assert advantage_features is not None
-            assert isinstance(advantage_features, dict)
-            assert 'home_advantage' in advantage_features
-            assert 'home_strength' in advantage_features
+    assert advantage_features is not None
+    assert isinstance(advantage_features, dict)
+    assert 'home_advantage' in advantage_features
+    assert 'home_strength' in advantage_features
 
         print("✅ 主场优势特征计算测试通过")
 
@@ -234,10 +234,10 @@ class TestFootballFeatureCalculator:
 
             injury_features = await calculator.calculate_injury_suspension_features('Team A')
 
-            assert injury_features is not None
-            assert isinstance(injury_features, dict)
-            assert 'injury_impact' in injury_features
-            assert 'squad_strength' in injury_features
+    assert injury_features is not None
+    assert isinstance(injury_features, dict)
+    assert 'injury_impact' in injury_features
+    assert 'squad_strength' in injury_features
 
         print("✅ 伤病停赛特征计算测试通过")
 
@@ -261,10 +261,10 @@ class TestFootballFeatureCalculator:
 
             weather_features = await calculator.calculate_weather_features('Team A', 'Team B')
 
-            assert weather_features is not None
-            assert isinstance(weather_features, dict)
-            assert 'weather_impact' in weather_features
-            assert 'temperature_factor' in weather_features
+    assert weather_features is not None
+    assert isinstance(weather_features, dict)
+    assert 'weather_impact' in weather_features
+    assert 'temperature_factor' in weather_features
 
         print("✅ 天气条件特征计算测试通过")
 
@@ -290,14 +290,14 @@ class TestFootballFeatureCalculator:
 
             all_features = await calculator.calculate_all_features(match_data)
 
-            assert all_features is not None
-            assert isinstance(all_features, dict)
-            assert len(all_features) > 0
+    assert all_features is not None
+    assert isinstance(all_features, dict)
+    assert len(all_features) > 0
 
             # 验证特征类型
             feature_types = ['strength_features', 'form_features', 'h2h_features', 'position_features', 'advantage_features']
             for feature_type in feature_types:
-                assert feature_type in all_features
+    assert feature_type in all_features
 
         print("✅ 综合特征计算测试通过")
 
@@ -324,11 +324,11 @@ class TestFootballFeatureCalculator:
 
         # 验证有效特征
         is_valid = await calculator.validate_features(valid_features)
-        assert is_valid is True
+    assert is_valid is True
 
         # 验证无效特征
         is_valid = await calculator.validate_features(invalid_features)
-        assert is_valid is False
+    assert is_valid is False
 
         print("✅ 特征验证测试通过")
 
@@ -354,9 +354,9 @@ class TestFootballFeatureCalculator:
 
             normalized_features = await calculator.normalize_features(raw_features)
 
-            assert normalized_features is not None
-            assert isinstance(normalized_features, dict)
-            assert all(0 <= value <= 1 for value in normalized_features.values())
+    assert normalized_features is not None
+    assert isinstance(normalized_features, dict)
+    assert all(0 <= value <= 1 for value in normalized_features.values())
 
         print("✅ 特征标准化测试通过")
 
@@ -374,11 +374,11 @@ class TestFootballFeatureCalculator:
 
             # 测试缓存命中
             features = await calculator.get_cached_features(cache_key)
-            assert features == cached_features
+    assert features == cached_features
 
             # 测试缓存存储
             await calculator.cache_features(cache_key, features)
-            assert features is not None
+    assert features is not None
 
         print("✅ 特征缓存测试通过")
 
@@ -391,9 +391,9 @@ class TestFootballFeatureCalculator:
 
             result = await calculator.calculate_team_strength_features('Team A')
 
-            assert result is not None
-            assert 'error' in result
-            assert 'Database connection failed' in result['error']
+    assert result is not None
+    assert 'error' in result
+    assert 'Database connection failed' in result['error']
 
         print("✅ 计算错误处理测试通过")
 
@@ -410,11 +410,11 @@ class TestFootballFeatureCalculator:
 
         quality_metrics = calculator.calculate_feature_quality_metrics(feature_data)
 
-        assert quality_metrics is not None
-        assert isinstance(quality_metrics, dict)
-        assert 'feature_importance' in quality_metrics
-        assert 'prediction_accuracy' in quality_metrics
-        assert 'data_completeness' in quality_metrics
+    assert quality_metrics is not None
+    assert isinstance(quality_metrics, dict)
+    assert 'feature_importance' in quality_metrics
+    assert 'prediction_accuracy' in quality_metrics
+    assert 'data_completeness' in quality_metrics
 
         print("✅ 特征质量指标测试通过")
 

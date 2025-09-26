@@ -27,8 +27,8 @@ class TestFileUtils:
         with tempfile.TemporaryDirectory() as temp_dir:
             test_path = Path(temp_dir) / "test" / "nested" / "dir"
             result = FileUtils.ensure_dir(test_path)
-            assert result.exists()
-            assert result.is_dir()
+    assert result.exists()
+    assert result.is_dir()
 
     def test_read_json_success(self):
         """测试读取JSON文件成功"""
@@ -38,7 +38,7 @@ class TestFileUtils:
             f.flush()
 
             result = FileUtils.read_json(f.name)
-            assert result == test_data
+    assert result == test_data
 
     def test_read_json_file_not_found(self):
         """测试读取不存在的JSON文件"""
@@ -62,10 +62,10 @@ class TestFileUtils:
 
             FileUtils.write_json(test_data, file_path)
 
-            assert file_path.exists()
+    assert file_path.exists()
             with open(file_path, "r", encoding="utf-8") as f:
                 result = json.load(f)
-            assert result == test_data
+    assert result == test_data
 
     def test_write_json_ensure_dir(self):
         """测试写入JSON文件时自动创建目录"""
@@ -75,8 +75,8 @@ class TestFileUtils:
 
             FileUtils.write_json(test_data, file_path, ensure_dir=True)
 
-            assert file_path.exists()
-            assert file_path.parent.exists()
+    assert file_path.exists()
+    assert file_path.parent.exists()
 
     def test_get_file_hash(self):
         """测试获取文件哈希值"""
@@ -85,8 +85,8 @@ class TestFileUtils:
             f.flush()
 
             hash_value = FileUtils.get_file_hash(f.name)
-            assert isinstance(hash_value, str)
-            assert len(hash_value) == 32  # MD5哈希长度
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 32  # MD5哈希长度
 
     def test_get_file_size(self):
         """测试获取文件大小"""
@@ -96,7 +96,7 @@ class TestFileUtils:
             f.flush()
 
             size = FileUtils.get_file_size(f.name)
-            assert size == len(test_content.encode("utf-8"))
+    assert size == len(test_content.encode("utf-8"))
 
 
 class TestDataValidator:
@@ -110,7 +110,7 @@ class TestDataValidator:
             "user+tag@example.co.uk",
         ]
         for email in valid_emails:
-            assert DataValidator.is_valid_email(email)
+    assert DataValidator.is_valid_email(email)
 
     def test_is_valid_email_invalid(self):
         """测试无效邮箱验证"""
@@ -121,29 +121,29 @@ class TestDataValidator:
             "user@@domain.com",
         ]
         for email in invalid_emails:
-            assert not DataValidator.is_valid_email(email)
+    assert not DataValidator.is_valid_email(email)
 
     def test_is_valid_url_valid(self):
         """测试有效URL验证"""
         valid_urls = [
-            "http://example.com",
+            "http:_/example.com",
             "https://www.example.com",
             "http://localhost:8080",
             "https://192.168.1.1:3000/path",
         ]
         for url in valid_urls:
-            assert DataValidator.is_valid_url(url)
+    assert DataValidator.is_valid_url(url)
 
     def test_is_valid_url_invalid(self):
         """测试无效URL验证"""
         invalid_urls = [
             "invalid-url",
-            "ftp://example.com",
+            "ftp:_/example.com",
             "example.com",
             "http://",
         ]
         for url in invalid_urls:
-            assert not DataValidator.is_valid_url(url)
+    assert not DataValidator.is_valid_url(url)
 
     def test_validate_required_fields_all_present(self):
         """测试验证必需字段 - 全部存在"""
@@ -151,7 +151,7 @@ class TestDataValidator:
         required_fields = ["name", "age", "email"]
 
         missing = DataValidator.validate_required_fields(data, required_fields)
-        assert missing == []
+    assert missing == []
 
     def test_validate_required_fields_some_missing(self):
         """测试验证必需字段 - 部分缺失"""
@@ -159,9 +159,9 @@ class TestDataValidator:
         required_fields = ["name", "age", "email"]
 
         missing = DataValidator.validate_required_fields(data, required_fields)
-        assert "email" in missing
-        assert "age" in missing
-        assert "name" not in missing
+    assert "email" in missing
+    assert "age" in missing
+    assert "name" not in missing
 
     def test_validate_data_types_all_correct(self):
         """测试验证数据类型 - 全部正确"""
@@ -169,7 +169,7 @@ class TestDataValidator:
         type_specs = {"name": str, "age": int, "active": bool}
 
         invalid = DataValidator.validate_data_types(data, type_specs)
-        assert invalid == []
+    assert invalid == []
 
     def test_validate_data_types_some_incorrect(self):
         """测试验证数据类型 - 部分错误"""
@@ -177,9 +177,9 @@ class TestDataValidator:
         type_specs = {"name": str, "age": int, "active": bool}
 
         invalid = DataValidator.validate_data_types(data, type_specs)
-        assert len(invalid) == 2
-        assert any("age" in error for error in invalid)
-        assert any("active" in error for error in invalid)
+    assert len(invalid) == 2
+    assert any("age" in error for error in invalid)
+    assert any("active" in error for error in invalid)
 
 
 class TestTimeUtils:
@@ -188,24 +188,24 @@ class TestTimeUtils:
     def test_now_utc(self):
         """测试获取当前UTC时间"""
         now = TimeUtils.now_utc()
-        assert isinstance(now, datetime)
-        assert now.tzinfo == timezone.utc
+    assert isinstance(now, datetime)
+    assert now.tzinfo == timezone.utc
 
     def test_timestamp_to_datetime(self):
         """测试时间戳转datetime"""
         timestamp = 1640995200.0  # 2022-01-01 00:00:00 UTC
         dt = TimeUtils.timestamp_to_datetime(timestamp)
 
-        assert isinstance(dt, datetime)
-        assert dt.tzinfo == timezone.utc
+    assert isinstance(dt, datetime)
+    assert dt.tzinfo == timezone.utc
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
         dt = datetime(2022, 1, 1, tzinfo=timezone.utc)
         timestamp = TimeUtils.datetime_to_timestamp(dt)
 
-        assert isinstance(timestamp, float)
-        assert timestamp == 1640995200.0
+    assert isinstance(timestamp, float)
+    assert timestamp == 1640995200.0
 
     def test_format_datetime(self):
         """测试格式化日期时间"""
@@ -213,22 +213,22 @@ class TestTimeUtils:
 
         # 默认格式
         formatted = TimeUtils.format_datetime(dt)
-        assert formatted == "2022-01-01 12:30:45"
+    assert formatted == "2022-01-01 12:30:45"
 
         # 自定义格式
-        formatted_custom = TimeUtils.format_datetime(dt, "%Y/%m/%d")
-        assert formatted_custom == "2022/01/01"
+        formatted_custom = TimeUtils.format_datetime(dt, "%Y_%m/%d")
+    assert formatted_custom == "2022/01/01"
 
     def test_parse_datetime(self):
         """测试解析日期时间字符串"""
         date_str = "2022-01-01 12:30:45"
         dt = TimeUtils.parse_datetime(date_str)
 
-        assert isinstance(dt, datetime)
-        assert dt.year == 2022
-        assert dt.month == 1
-        assert dt.day == 1
-        assert dt.hour == 12
+    assert isinstance(dt, datetime)
+    assert dt.year == 2022
+    assert dt.month == 1
+    assert dt.day == 1
+    assert dt.hour == 12
 
 
 class TestCryptoUtils:
@@ -239,37 +239,37 @@ class TestCryptoUtils:
         uuid1 = CryptoUtils.generate_uuid()
         uuid2 = CryptoUtils.generate_uuid()
 
-        assert isinstance(uuid1, str)
-        assert isinstance(uuid2, str)
-        assert uuid1 != uuid2
-        assert len(uuid1) == 36  # UUID长度
+    assert isinstance(uuid1, str)
+    assert isinstance(uuid2, str)
+    assert uuid1 != uuid2
+    assert len(uuid1) == 36  # UUID长度
 
     def test_generate_short_id(self):
         """测试生成短ID"""
         # 默认长度
         short_id = CryptoUtils.generate_short_id()
-        assert isinstance(short_id, str)
-        assert len(short_id) == 8
+    assert isinstance(short_id, str)
+    assert len(short_id) == 8
 
         # 自定义长度
         custom_id = CryptoUtils.generate_short_id(12)
-        assert len(custom_id) == 12
+    assert len(custom_id) == 12
 
     def test_hash_string_md5(self):
         """测试字符串MD5哈希"""
         text = "test string"
         hash_value = CryptoUtils.hash_string(text, "md5")
 
-        assert isinstance(hash_value, str)
-        assert len(hash_value) == 32
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 32
 
     def test_hash_string_sha256(self):
         """测试字符串SHA256哈希"""
         text = "test string"
         hash_value = CryptoUtils.hash_string(text, "sha256")
 
-        assert isinstance(hash_value, str)
-        assert len(hash_value) == 64
+    assert isinstance(hash_value, str)
+    assert len(hash_value) == 64
 
     def test_hash_string_unsupported_algorithm(self):
         """测试不支持的哈希算法"""
@@ -283,14 +283,14 @@ class TestCryptoUtils:
         # 不提供salt
         hash1 = CryptoUtils.hash_password(password)
         hash2 = CryptoUtils.hash_password(password)
-        assert hash1 != hash2  # 由于随机salt，结果不同
+    assert hash1 != hash2  # 由于随机salt，结果不同
 
         # 提供salt
         salt = "fixed_salt"
         hash3 = CryptoUtils.hash_password(password, salt)
         hash4 = CryptoUtils.hash_password(password, salt)
-        assert CryptoUtils.verify_password(password, hash3)  # 验证密码
-        assert CryptoUtils.verify_password(password, hash4)  # 验证密码
+    assert CryptoUtils.verify_password(password, hash3)  # 验证密码
+    assert CryptoUtils.verify_password(password, hash4)  # 验证密码
 
 
 class TestStringUtils:
@@ -300,20 +300,20 @@ class TestStringUtils:
         """测试截断短字符串"""
         text = "short"
         result = StringUtils.truncate(text, 10)
-        assert result == text
+    assert result == text
 
     def test_truncate_long_string(self):
         """测试截断长字符串"""
         text = "这是一个很长的字符串需要被截断"
         result = StringUtils.truncate(text, 10)
-        assert len(result) == 10
-        assert result.endswith("...")
+    assert len(result) == 10
+    assert result.endswith("...")
 
     def test_slugify(self):
         """测试转换为URL友好字符串"""
         text = "Hello World Test"
         result = StringUtils.slugify(text)
-        assert result == "hello-world-test"
+    assert result == "hello-world-test"
 
     def test_camel_to_snake(self):
         """测试驼峰命名转下划线命名"""
@@ -324,7 +324,7 @@ class TestStringUtils:
         ]
         for camel, expected_snake in cases:
             result = StringUtils.camel_to_snake(camel)
-            assert result == expected_snake
+    assert result == expected_snake
 
     def test_snake_to_camel(self):
         """测试下划线命名转驼峰命名"""
@@ -335,20 +335,20 @@ class TestStringUtils:
         ]
         for snake, expected_camel in cases:
             result = StringUtils.snake_to_camel(snake)
-            assert result == expected_camel
+    assert result == expected_camel
 
     def test_clean_text(self):
         """测试清理文本"""
         text = "  这是   一个\t测试\n文本  "
         result = StringUtils.clean_text(text)
-        assert result == "这是 一个 测试 文本"
+    assert result == "这是 一个 测试 文本"
 
     def test_extract_numbers(self):
         """测试从文本中提取数字"""
         text = "价格是123.45元，数量-10个"
         numbers = StringUtils.extract_numbers(text)
-        assert 123.45 in numbers
-        assert -10.0 in numbers
+    assert 123.45 in numbers
+    assert -10.0 in numbers
 
 
 class TestDictUtils:
@@ -361,7 +361,7 @@ class TestDictUtils:
 
         result = DictUtils.deep_merge(dict1, dict2)
         expected = {"a": 1, "b": 3, "c": 4}
-        assert result == expected
+    assert result == expected
 
     def test_deep_merge_nested(self):
         """测试嵌套字典深度合并"""
@@ -370,13 +370,13 @@ class TestDictUtils:
 
         result = DictUtils.deep_merge(dict1, dict2)
         expected = {"a": {"x": 1, "y": 3, "z": 4}, "b": 3, "c": 5}
-        assert result == expected
+    assert result == expected
 
     def test_flatten_dict_simple(self):
         """测试扁平化简单字典"""
         d = {"a": 1, "b": 2}
         result = DictUtils.flatten_dict(d)
-        assert result == d
+    assert result == d
 
     def test_flatten_dict_nested(self):
         """测试扁平化嵌套字典"""
@@ -384,18 +384,18 @@ class TestDictUtils:
 
         result = DictUtils.flatten_dict(d)
         expected = {"a": 1, "b.x": 2, "b.y.z": 3}
-        assert result == expected
+    assert result == expected
 
     def test_flatten_dict_custom_separator(self):
         """测试自定义分隔符的扁平化"""
         d = {"a": {"b": {"c": 1}}}
         result = DictUtils.flatten_dict(d, sep="_")
         expected = {"a_b_c": 1}
-        assert result == expected
+    assert result == expected
 
     def test_filter_none_values(self):
         """测试过滤None值"""
         d = {"a": 1, "b": None, "c": "test", "d": None}
         result = DictUtils.filter_none_values(d)
         expected = {"a": 1, "c": "test"}
-        assert result == expected
+    assert result == expected

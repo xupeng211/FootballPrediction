@@ -142,7 +142,7 @@ async def test_get_queue_sizes_updates_prometheus_metrics(monitor_with_registry)
         metric_value = registry.get_sample_value(
             "football_queue_size", {"queue_name": queue}
         )
-        assert metric_value == expected
+    assert metric_value == expected
 
 
 @pytest.mark.asyncio
@@ -275,7 +275,7 @@ def test_generate_monitoring_report_structure(monitor_with_registry):
     report = monitor.generate_monitoring_report()
 
     assert report["monitoring_status"] == "active"
-    assert report["prometheus_endpoint"] == "/metrics"
+    assert report["prometheus_endpoint"] == "_metrics"
     assert report["health_check_endpoint"] == "/health / tasks"
     assert "report_generated_at" in report
     assert "metrics_available" in report
