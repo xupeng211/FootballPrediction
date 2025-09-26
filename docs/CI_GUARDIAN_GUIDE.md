@@ -362,7 +362,7 @@ CI Guardian系统会在项目中生成以下文件：
 │   ├── validation_results.json    # 验证结果
 │   └── integration_report.md      # 集成报告
 ├── docs/                          # 文档目录
-│   ├── ci_defense_mechanisms.md   # 防御机制说明
+│   ├── ../legacy/ci_defense_mechanisms.md   # 防御机制说明
 │   └── CI_GUARDIAN_GUIDE.md       # 本指南
 ├── pyproject.toml                 # Ruff配置（已更新）
 ├── mypy.ini                       # MyPy配置（新增）
@@ -566,9 +566,9 @@ CI Guardian系统提供了完整的CI质量保障解决方案：
 ---
 
 **🔗 相关文档**:
-- [防御机制详细说明](ci_defense_mechanisms.md)
-- [项目开发规范](../rules.md)
-- [Cursor闭环开发提示](../Cursor_ClosedLoop_Prompt.md)
+- [防御机制详细说明](../legacy/ci_defense_mechanisms.md)
+- [项目开发规范](../legacy/rules.md)
+- [Cursor闭环开发提示](../legacy/Cursor_ClosedLoop_Prompt.md)
 
 **🐛 问题反馈**: 如发现问题或有改进建议，请在项目仓库提交Issue。
 

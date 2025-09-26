@@ -224,6 +224,30 @@ class DynamicModuleImporter:
             def reset_index(self, drop=False): return MockDataFrame()
             def set_index(self, keys): return MockDataFrame()
             def sort_values(self, by): return MockDataFrame()
+            def select_dtypes(self, include=None, exclude=None):
+                """Mock select_dtypes method - filter columns by data type"""
+                # For simplicity, return all columns when include/exclude not specified
+                if include is None and exclude is None:
+                    return MockDataFrame(self.data.copy(), self.columns.copy(), self.index.copy())
+
+                # Mock basic type filtering
+                filtered_data = {}
+                filtered_columns = []
+
+                for col in self.columns:
+                    # Simple mock logic - include numeric columns if 'number' in include
+                    if include and 'number' in include:
+                        if col in ['age', 'score', 'value', 'count', 'mean', 'std']:  # Common numeric column names
+                            if isinstance(self.data, dict):
+                                filtered_data[col] = self.data.get(col, [])
+                            filtered_columns.append(col)
+                    else:
+                        # Default behavior - include all columns
+                        if isinstance(self.data, dict):
+                            filtered_data[col] = self.data.get(col, [])
+                        filtered_columns.append(col)
+
+                return MockDataFrame(filtered_data, filtered_columns, self.index.copy())
             def copy(self): return MockDataFrame(self.data.copy(), self.columns.copy(), self.index.copy())
             def apply(self, func, axis=1):
                 """Mock apply method - for axis=1, apply function to each row"""
@@ -247,6 +271,16 @@ class DynamicModuleImporter:
                         yield i, {col: self.data.get(col, [])[i] for col in self.columns}
                     elif isinstance(self.data, list) and i < len(self.data):
                         yield i, self.data[i]
+
+            def select_dtypes(self, include=None, exclude=None):
+                """Mock select columns by data type"""
+                # For simplicity, return all columns when include is numeric
+                if include and 'number' in str(include):
+                    return MockDataFrame({
+                        col: self.data[col] for col in self.columns
+                        if col in self.data  # Just return numeric columns
+                    })
+                return self
 
         class MockSeries:
             def __init__(self, data=None, name=None):
@@ -552,6 +586,21 @@ class DynamicModuleImporter:
             def __len__(self):
                 return len(self.data)
 
+            def __getitem__(self, key):
+                if isinstance(key, int):
+                    return self.data[key] if key < len(self.data) else None
+                elif isinstance(key, slice):
+                    return MockNumpyArray(self.data[key])
+                return MockNumpyArray([])
+
+            def __setitem__(self, key, value):
+                if isinstance(key, int) and key < len(self.data):
+                    self.data[key] = value
+
+            def __iter__(self):
+                """支持迭代"""
+                return iter(self.data)
+
             def mean(self):
                 return sum(self.data) / len(self.data) if self.data else 0
 
@@ -561,6 +610,9 @@ class DynamicModuleImporter:
             def reshape(self, shape):
                 return MockNumpyArray(self.data)
 
+            def __repr__(self):
+                return f"MockNumpyArray({self.data})"
+
         mock_numpy = Mock()
         mock_numpy.array = MockNumpyArray
         mock_numpy.asarray = Mock(return_value=MockNumpyArray([]))
@@ -569,6 +621,19 @@ class DynamicModuleImporter:
         mock_numpy.__version__ = "1.24.0"
         mock_numpy.inf = float('inf')
         mock_numpy.NINF = float('-inf')
+
+        # 添加必要的函数
+        def mock_where(condition):
+            """智能模拟np.where功能，找到满足条件的索引"""
+            if hasattr(condition, '__iter__') and not isinstance(condition, str):
+                # 找到True值的索引
+                indices = [i for i, val in enumerate(condition) if val]
+                return (MockNumpyArray(indices),)
+            else:
+                # 简单情况
+                return (MockNumpyArray([0]),)
+
+        mock_numpy.where = Mock(side_effect=mock_where)
 
         # 添加必要的子模块
         mock_numpy.core = Mock()
@@ -1337,6 +1402,31 @@ def mock_pandas():
         def sort_values(self, by):
             return MockDataFrame()
 
+        def select_dtypes(self, include=None, exclude=None):
+            """Mock select_dtypes method - filter columns by data type"""
+            # For simplicity, return all columns when include/exclude not specified
+            if include is None and exclude is None:
+                return MockDataFrame(self.data.copy(), self.columns.copy(), self.index.copy())
+
+            # Mock basic type filtering
+            filtered_data = {}
+            filtered_columns = []
+
+            for col in self.columns:
+                # Simple mock logic - include numeric columns if 'number' in include
+                if include and 'number' in include:
+                    if col in ['age', 'score', 'value', 'count', 'mean', 'std']:  # Common numeric column names
+                        if isinstance(self.data, dict):
+                            filtered_data[col] = self.data.get(col, [])
+                        filtered_columns.append(col)
+                else:
+                    # Default behavior - include all columns
+                    if isinstance(self.data, dict):
+                        filtered_data[col] = self.data.get(col, [])
+                    filtered_columns.append(col)
+
+            return MockDataFrame(filtered_data, filtered_columns, self.index.copy())
+
         def iterrows(self):
             for i in range(len(self)):
                 yield i, {col: self.data.get(col, [])[i] for col in self.columns}
@@ -1754,6 +1844,7 @@ def mock_numpy():
     mock_numpy.array = MockArray
     mock_numpy.zeros = Mock(return_value=MockArray([]))
     mock_numpy.ones = Mock(return_value=MockArray([]))
+    mock_numpy.where = Mock(side_effect=lambda cond, x=None, y=None: [i for i, c in enumerate(cond) if c == -1] if x is None and y is None else [x if c else y for c in cond])
     mock_numpy.empty = Mock(return_value=MockArray([]))
     mock_numpy.arange = Mock(return_value=MockArray([]))
     mock_numpy.linspace = Mock(return_value=MockArray([]))
@@ -1766,8 +1857,8 @@ def mock_numpy():
     mock_numpy.mean = Mock(return_value=0.0)
     mock_numpy.sum = Mock(return_value=0.0)
     mock_numpy.std = Mock(return_value=0.0)
-    mock_numpy.min = Mock(return_value=0)
-    mock_numpy.max = Mock(return_value=0)
+    mock_numpy.min = Mock(side_effect=lambda x: min(x) if hasattr(x, '__iter__') else 0)
+    mock_numpy.max = Mock(side_effect=lambda x: max(x) if hasattr(x, '__iter__') else 0)
     mock_numpy.abs = Mock(return_value=MockArray([]))
     mock_numpy.log = Mock(return_value=MockArray([]))
     mock_numpy.exp = Mock(return_value=MockArray([]))

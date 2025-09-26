@@ -1573,10 +1573,10 @@ class PerformanceMonitor:
                 f.write(f"- Maximum: {report_data['application_stats']['max_throughput']:.2f} req/s\n\n")
 
                 # 生成趋势图
-                self.generate_metrics_trend_chart(metrics_history, "performance_trend.png")
+                self.generate_metrics_trend_chart(metrics_history, "../assets/performance_trend.png")
 
                 f.write("## Visualizations\n\n")
-                f.write("![Performance Trend](performance_trend.png)\n")
+                f.write("![Performance Trend](../assets/performance_trend.png)\n")
 
             print(f"Performance report generated: {output_file}")
 

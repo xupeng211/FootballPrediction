@@ -18,6 +18,8 @@ The project includes comprehensive AI development guidelines in `.cursor/rules/`
 - **Code Style**: Black formatting, mypy type checking, flake8 linting
 - **Documentation**: Clear comments and structured output
 - **Docker CI**: Validate with `./ci-verify.sh` before pushing
+- **Modify Over Create**: Prioritize modifying existing files over creating new ones
+- **Context Loading**: Always run `make context` first to understand project state
 
 ## 📋 Common Commands
 
@@ -128,7 +130,7 @@ src/
 ### Key Architectural Patterns
 
 #### Async-First Architecture
-- **128+ async Python files** with comprehensive async/await patterns
+- **129+ async Python files** with comprehensive async/await patterns
 - **Dual database support**: PostgreSQL (production) + SQLite (testing) via aiosqlite/asyncpg
 - **Background processing**: Celery with Redis for async task queue
 - **Connection pooling**: Advanced database connection management
@@ -194,10 +196,15 @@ Data Collection → Processing → Feature Store → ML Models → Predictions
 - `docker-compose.yml` - Complete development environment (15+ services)
 - `docker-compose.test.yml` - CI testing environment
 - `docker-compose.grafana.yml` - Monitoring stack (Grafana, Prometheus)
+- `docker-compose.override.yml` - Development environment overrides
+- `docker-compose.dev.yml` - Development-specific configuration
+- `docker-compose.staging.yml` - Staging environment configuration
+- `docker-compose.prometheus.yml` - Prometheus monitoring configuration
 - `pytest.ini` - pytest configuration with 80% coverage threshold and comprehensive test markers
 - `.coveragerc` - Coverage configuration with exclusions for fast development
 - `ci-verify.sh` - Complete CI verification script with Docker environment
 - `Makefile` - Comprehensive build automation with 50+ commands
+- `.cursor/rules/` - AI development guidelines and project standards
 
 ### Development Guidelines
 
@@ -223,12 +230,14 @@ The project follows established development patterns with comprehensive tooling 
 - **Async mode**: auto with function fixture loop scope
 - **Test discovery**: test_*.py files, Test* classes, test_* functions
 - **Warning filters**: Handles deprecation warnings and third-party compatibility issues
+- **Test paths**: tests/ directory with comprehensive organization
 
 ### Coverage Configuration (.coveragerc)
 - **Source paths**: src/ directory
 - **Exclusions**: Tests, migrations, scripts, main.py, and heavy integration layers
 - **Fast coverage**: Excludes API, data, services, utils, cache, monitoring layers for speed
 - **Report settings**: Shows missing lines, generates HTML reports in htmlcov/
+- **Branch coverage**: Enabled for comprehensive test coverage analysis
 
 ### Testing Tips & Troubleshooting
 

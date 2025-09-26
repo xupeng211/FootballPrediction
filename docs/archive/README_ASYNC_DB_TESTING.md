@@ -137,9 +137,9 @@ class TestMyDatabase:
 
 ## 📖 详细文档
 
-- **完整指南**: [docs/async_database_testing_guide.md](docs/async_database_testing_guide.md)
-- **标准模板**: [templates/async_database_test_template.py](templates/async_database_test_template.py)
-- **重构示例**: [examples/refactored_test_index_existence.py](examples/refactored_test_index_existence.py)
+- **完整指南**: [../../legacy/async_database_testing_guide.md](../../legacy/async_database_testing_guide.md)
+- **标准模板**: [../../legacy/async_database_test_template.py](../../legacy/async_database_test_template.py)
+- **重构示例**: [../../legacy/refactored_test_index_existence.py](../../legacy/refactored_test_index_existence.py)
 
 ## 🔧 迁移现有测试
 
@@ -217,9 +217,9 @@ tests/test_database_performance_optimization.py::TestDatabasePartitioning::test_
 
 如果遇到问题：
 
-1. **查看详细指南**: [docs/async_database_testing_guide.md](docs/async_database_testing_guide.md)
-2. **参考重构示例**: [examples/refactored_test_index_existence.py](examples/refactored_test_index_existence.py)
-3. **检查模板实现**: [templates/async_database_test_template.py](templates/async_database_test_template.py)
+1. **查看详细指南**: [../../legacy/async_database_testing_guide.md](../../legacy/async_database_testing_guide.md)
+2. **参考重构示例**: [../../legacy/refactored_test_index_existence.py](../../legacy/refactored_test_index_existence.py)
+3. **检查模板实现**: [../../legacy/async_database_test_template.py](../../legacy/async_database_test_template.py)
 
 ## 🔄 版本信息
 

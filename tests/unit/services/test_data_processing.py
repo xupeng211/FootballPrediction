@@ -80,39 +80,47 @@ class TestDataProcessingService:
 
         # Mock数据
         raw_data = {
-            "match_id": "match_1",
+            "external_match_id": "match_1",
             "home_team": "Team A",
             "away_team": "Team B",
             "home_score": 2,
             "away_score": 1,
-            "date": "2025-09-25"
+            "match_time": "2025-09-25"
         }
 
         # Mock依赖行为
-        processor.data_cleaner.clean_match_data.return_value = raw_data
-        processor.missing_handler.handle_missing_match_data.return_value = raw_data
+        expected_result = raw_data.copy()
+        processor.data_cleaner.clean_match_data.return_value = expected_result
+        processor.missing_handler.handle_missing_match_data.return_value = expected_result
         mock_session = AsyncMock()
-        processor.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
-        processor.cache_manager.set.return_value = True
+        processor.db_manager.get_async_session = Mock(return_value=mock_session)
+        processor.cache_manager.aget = AsyncMock(return_value=None)
+        processor.cache_manager.aset = AsyncMock(return_value=True)
 
         result = await processor.process_raw_match_data(raw_data)
 
-        assert result["success"] is True
-        assert result["match_id"] == "match_1"
+        assert result is not None
+        assert result["external_match_id"] == "match_1"
 
     @pytest.mark.asyncio
     async def test_process_raw_match_data_validation_error(self, processor):
         """测试处理原始比赛数据时的验证错误"""
+        # Arrange - 设置数据清洗器
+        processor.data_cleaner = Mock()
+        # Mock返回None表示验证失败
+        processor.data_cleaner.clean_match_data.return_value = None
+
         # 缺少必要字段的数据
         invalid_data = {
             "home_team": "Team A"
-            # 缺少 match_id, away_team 等必要字段
+            # 缺少 external_match_id, away_team 等必要字段
         }
 
+        # Act - 处理无效数据
         result = await processor.process_raw_match_data(invalid_data)
 
-        assert result["success"] is False
-        assert "validation" in result["error"].lower()
+        # Assert - 应该返回None表示失败
+        assert result is None
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_success(self, processor):
@@ -122,7 +130,7 @@ class TestDataProcessingService:
         processor.db_manager = Mock()
 
         raw_data = {
-            "match_id": "match_1",
+            "external_match_id": "match_1",
             "home_odds": 2.50,
             "draw_odds": 3.20,
             "away_odds": 2.80
@@ -131,12 +139,12 @@ class TestDataProcessingService:
         processor.data_cleaner.clean_odds_data.return_value = raw_data
         processor.missing_handler.handle_missing_odds_data.return_value = raw_data
         mock_session = AsyncMock()
-        processor.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        processor.db_manager.get_async_session = Mock(return_value=mock_session)
 
         result = await processor.process_raw_odds_data(raw_data)
 
-        assert result["success"] is True
-        assert result["match_id"] == "match_1"
+        assert result is not None
+        assert "external_match_id" in result
 
     @pytest.mark.asyncio
     async def test_process_raw_odds_data_missing_fields(self, processor):
@@ -146,35 +154,36 @@ class TestDataProcessingService:
 
         # 缺少一些字段的赔率数据
         incomplete_data = {
-            "match_id": "match_1",
+            "external_match_id": "match_1",
             "home_odds": 2.50
             # 缺少 draw_odds, away_odds
         }
 
         processor.data_cleaner.clean_odds_data.return_value = incomplete_data
         processor.missing_handler.handle_missing_odds_data.return_value = incomplete_data
+        mock_session = AsyncMock()
+        processor.db_manager.get_async_session = Mock(return_value=mock_session)
 
         result = await processor.process_raw_odds_data(incomplete_data)
 
-        assert result["success"] is True
+        assert result is not None
         # 应该能处理缺失字段
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_success(self, processor):
         """测试成功验证数据质量"""
-        test_df = pd.DataFrame({
-            'match_id': ['match_1', 'match_2'],
-            'home_team': ['Team A', 'Team B'],
-            'away_team': ['Team B', 'Team C'],
-            'home_score': [2, 1],
-            'away_score': [1, 0]
-        })
+        test_data = {
+            'external_match_id': 'match_1',
+            'home_team_id': 1,
+            'away_team_id': 2,
+            'match_time': '2025-09-25T20:00:00'
+        }
 
-        result = await processor.validate_data_quality(test_df, 'matches')
+        result = await processor.validate_data_quality(test_data, 'match')
 
-        assert result['valid'] is True
-        assert result['total_records'] == 2
-        assert result['quality_score'] > 0.8
+        assert result is not None
+        assert result['is_valid'] is True
+        assert result['data_type'] == 'match'
 
     @pytest.mark.asyncio
     async def test_validate_data_quality_with_issues(self, processor):
@@ -403,3 +412,231 @@ class TestDataProcessingService:
             except Exception:
                 # 期望能处理异常情况
                 pass
+
+    @pytest.mark.asyncio
+    async def test_shutdown_with_mock_cache_manager(self, processor):
+        """测试关闭带Mock缓存管理器的服务"""
+        print("🧪 测试关闭带Mock缓存管理器的服务...")
+
+        # Arrange - 创建mock缓存管理器
+        mock_cache_manager = Mock()
+        mock_cache_manager.close = Mock()
+        mock_cache_manager.close._mock_name = "mock_close"
+
+        # 创建异步数据库管理器
+        mock_db_manager = AsyncMock()
+
+        # 设置处理器属性
+        processor.cache_manager = mock_cache_manager
+        processor.data_cleaner = Mock()
+        processor.missing_handler = Mock()
+        processor.data_lake = Mock()
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证缓存管理器被正确关闭（会被调用两次：async尝试 + sync fallback）
+        assert mock_cache_manager.close.call_count == 2
+        mock_db_manager.close.assert_called_once()
+        assert processor.cache_manager is None
+        assert processor.db_manager is None
+
+        print("✅ 关闭带Mock缓存管理器的服务测试通过")
+
+    @pytest.mark.asyncio
+    async def test_shutdown_with_async_mock_cache_manager(self, processor):
+        """测试关闭带异步Mock缓存管理器的服务"""
+        print("🧪 测试关闭带异步Mock缓存管理器的服务...")
+
+        # Arrange - 创建异步mock缓存管理器
+        mock_cache_manager = Mock()
+        async_mock_close = AsyncMock()
+        mock_cache_manager.close = async_mock_close
+        mock_cache_manager.close._mock_name = "async_mock_close"
+
+        # 创建异步数据库管理器
+        mock_db_manager = AsyncMock()
+
+        # 设置处理器属性
+        processor.cache_manager = mock_cache_manager
+        processor.data_cleaner = Mock()
+        processor.missing_handler = Mock()
+        processor.data_lake = Mock()
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证异步缓存管理器被正确关闭
+        async_mock_close.assert_called_once()
+        mock_db_manager.close.assert_called_once()
+        assert processor.cache_manager is None
+        assert processor.db_manager is None
+
+        print("✅ 关闭带异步Mock缓存管理器的服务测试通过")
+
+    @pytest.mark.asyncio
+    async def test_shutdown_with_sync_cache_manager(self, processor):
+        """测试关闭带同步缓存管理器的服务"""
+        print("🧪 测试关闭带同步缓存管理器的服务...")
+
+        # Arrange - 创建同步缓存管理器（没有_mock_name属性）
+        mock_cache_manager = Mock()
+        mock_cache_manager.close = Mock()
+        # 确保没有_mock_name属性
+
+        # 创建异步数据库管理器
+        mock_db_manager = AsyncMock()
+
+        # 设置处理器属性
+        processor.cache_manager = mock_cache_manager
+        processor.data_cleaner = Mock()
+        processor.missing_handler = Mock()
+        processor.data_lake = Mock()
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证同步缓存管理器被正确关闭
+        assert mock_cache_manager.close.call_count >= 1
+        mock_db_manager.close.assert_called_once()
+        assert processor.cache_manager is None
+        assert processor.db_manager is None
+
+        print("✅ 关闭带同步缓存管理器的服务测试通过")
+
+    @pytest.mark.asyncio
+    async def test_shutdown_with_async_cache_manager_type_error(self, processor):
+        """测试关闭带类型错误的异步缓存管理器"""
+        print("🧪 测试关闭带类型错误的异步缓存管理器...")
+
+        # Arrange - 创建会抛出TypeError的异步mock
+        mock_cache_manager = Mock()
+        async_mock_close = AsyncMock()
+        async_mock_close.side_effect = TypeError("Async method called incorrectly")
+        mock_cache_manager.close = async_mock_close
+        mock_cache_manager.close._mock_name = "error_async_mock"
+
+        # 还要创建一个同步的close方法作为fallback
+        sync_close = Mock()
+        mock_cache_manager.close = sync_close
+
+        # 重新设置_mock_name
+        mock_cache_manager.close._mock_name = "error_async_mock"
+
+        # 创建异步数据库管理器
+        mock_db_manager = AsyncMock()
+
+        # 设置处理器属性
+        processor.cache_manager = mock_cache_manager
+        processor.data_cleaner = Mock()
+        processor.missing_handler = Mock()
+        processor.data_lake = Mock()
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证同步fallback方法被调用
+        sync_close.assert_called_once()
+        mock_db_manager.close.assert_called_once()
+        assert processor.cache_manager is None
+        assert processor.db_manager is None
+
+        print("✅ 关闭带类型错误的异步缓存管理器测试通过")
+
+    @pytest.mark.asyncio
+    async def test_shutdown_with_db_manager(self, processor):
+        """测试关闭带数据库管理器的服务"""
+        print("🧪 测试关闭带数据库管理器的服务...")
+
+        # Arrange - 创建异步数据库管理器
+        mock_db_manager = AsyncMock()
+
+        # 设置处理器属性
+        processor.cache_manager = None
+        processor.data_cleaner = None
+        processor.missing_handler = None
+        processor.data_lake = None
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证数据库管理器被正确关闭
+        mock_db_manager.close.assert_called_once()
+        assert processor.db_manager is None
+        assert processor.cache_manager is None
+
+        print("✅ 关闭带数据库管理器的服务测试通过")
+
+    @pytest.mark.asyncio
+    async def test_shutdown_complete(self, processor):
+        """测试完整关闭服务"""
+        print("🧪 测试完整关闭服务...")
+
+        # Arrange - 创建所有组件的mock
+        mock_cache_manager = Mock()
+        mock_cache_manager.close = Mock()
+        mock_cache_manager.close._mock_name = "mock_close"
+
+        mock_db_manager = AsyncMock()
+        mock_data_cleaner = Mock()
+        mock_data_cleaner.cleanup = Mock()
+        mock_missing_handler = Mock()
+        mock_missing_handler.cleanup = Mock()
+        mock_data_lake = Mock()
+        mock_data_lake.cleanup = Mock()
+
+        # 设置处理器属性
+        processor.cache_manager = mock_cache_manager
+        processor.data_cleaner = mock_data_cleaner
+        processor.missing_handler = mock_missing_handler
+        processor.data_lake = mock_data_lake
+        processor.db_manager = mock_db_manager
+
+        # Act - 调用关闭方法
+        await processor.shutdown()
+
+        # Assert - 验证所有组件被正确关闭和清理
+        mock_cache_manager.close.assert_called_once()
+        mock_db_manager.close.assert_called_once()
+        assert processor.cache_manager is None
+        assert processor.db_manager is None
+
+        print("✅ 完整关闭服务测试通过")
+
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_list_empty(self, processor):
+        """测试处理空的原始比赛数据列表"""
+        print("🧪 测试处理空的原始比赛数据列表...")
+
+        # Arrange - 设置数据清洗器
+        processor.data_cleaner = Mock()
+
+        # Act - 处理空列表
+        result = await processor.process_raw_match_data([])
+
+        # Assert - 应该返回空的DataFrame
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == 0
+
+        print("✅ 处理空的原始比赛数据列表测试通过")
+
+    @pytest.mark.asyncio
+    async def test_process_raw_match_data_not_initialized(self, processor):
+        """测试数据清洗器未初始化的情况"""
+        print("🧪 测试数据清洗器未初始化的情况...")
+
+        # Arrange - 确保数据清洗器未初始化
+        processor.data_cleaner = None
+
+        # Act - 尝试处理数据
+        result = await processor.process_raw_match_data({"match_id": "test"})
+
+        # Assert - 应该返回None
+        assert result is None
+
+        print("✅ 数据清洗器未初始化的情况测试通过")

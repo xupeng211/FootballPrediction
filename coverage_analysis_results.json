@@ -1,0 +1,1120 @@
+{
+  "timestamp": "Fri Sep 26 13:19:52 CST 2025",
+  "total_files": 129,
+  "top_10_files": [
+    {
+      "file_path": "src/data/quality/anomaly_detector.py",
+      "loc": 1081,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/anomaly_detector.py"
+    },
+    {
+      "file_path": "src/services/data_processing.py",
+      "loc": 872,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/data_processing.py"
+    },
+    {
+      "file_path": "src/models/prediction_service.py",
+      "loc": 868,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/prediction_service.py"
+    },
+    {
+      "file_path": "src/database/connection.py",
+      "loc": 844,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/connection.py"
+    },
+    {
+      "file_path": "src/monitoring/quality_monitor.py",
+      "loc": 767,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/quality_monitor.py"
+    },
+    {
+      "file_path": "src/services/audit_service.py",
+      "loc": 748,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/audit_service.py"
+    },
+    {
+      "file_path": "src/cache/redis_manager.py",
+      "loc": 734,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/cache/redis_manager.py"
+    },
+    {
+      "file_path": "src/tasks/backup_tasks.py",
+      "loc": 693,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/backup_tasks.py"
+    },
+    {
+      "file_path": "src/monitoring/alert_manager.py",
+      "loc": 657,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/alert_manager.py"
+    },
+    {
+      "file_path": "src/data/storage/data_lake_storage.py",
+      "loc": 638,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/storage/data_lake_storage.py"
+    }
+  ],
+  "all_files": [
+    {
+      "file_path": "src/data/quality/anomaly_detector.py",
+      "loc": 1081,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/anomaly_detector.py"
+    },
+    {
+      "file_path": "src/services/data_processing.py",
+      "loc": 872,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/data_processing.py"
+    },
+    {
+      "file_path": "src/models/prediction_service.py",
+      "loc": 868,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/prediction_service.py"
+    },
+    {
+      "file_path": "src/database/connection.py",
+      "loc": 844,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/connection.py"
+    },
+    {
+      "file_path": "src/monitoring/quality_monitor.py",
+      "loc": 767,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/quality_monitor.py"
+    },
+    {
+      "file_path": "src/services/audit_service.py",
+      "loc": 748,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/audit_service.py"
+    },
+    {
+      "file_path": "src/cache/redis_manager.py",
+      "loc": 734,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/cache/redis_manager.py"
+    },
+    {
+      "file_path": "src/tasks/backup_tasks.py",
+      "loc": 693,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/backup_tasks.py"
+    },
+    {
+      "file_path": "src/monitoring/alert_manager.py",
+      "loc": 657,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/alert_manager.py"
+    },
+    {
+      "file_path": "src/data/storage/data_lake_storage.py",
+      "loc": 638,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/storage/data_lake_storage.py"
+    },
+    {
+      "file_path": "src/monitoring/anomaly_detector.py",
+      "loc": 602,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/anomaly_detector.py"
+    },
+    {
+      "file_path": "src/scheduler/recovery_handler.py",
+      "loc": 594,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/recovery_handler.py"
+    },
+    {
+      "file_path": "src/api/models.py",
+      "loc": 591,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/models.py"
+    },
+    {
+      "file_path": "src/features/feature_store.py",
+      "loc": 550,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/features/feature_store.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/d6d814cc1078_database_performance_optimization_.py",
+      "loc": 525,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/d6d814cc1078_database_performance_optimization_.py"
+    },
+    {
+      "file_path": "src/monitoring/metrics_collector.py",
+      "loc": 501,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/metrics_collector.py"
+    },
+    {
+      "file_path": "src/data/quality/exception_handler.py",
+      "loc": 499,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/exception_handler.py"
+    },
+    {
+      "file_path": "src/models/model_training.py",
+      "loc": 481,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/model_training.py"
+    },
+    {
+      "file_path": "src/features/feature_calculator.py",
+      "loc": 474,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/features/feature_calculator.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/d56c8d0d5aa0_initial_database_schema.py",
+      "loc": 468,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/d56c8d0d5aa0_initial_database_schema.py"
+    },
+    {
+      "file_path": "src/api/features.py",
+      "loc": 451,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/features.py"
+    },
+    {
+      "file_path": "src/api/data.py",
+      "loc": 446,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/data.py"
+    },
+    {
+      "file_path": "src/monitoring/metrics_exporter.py",
+      "loc": 438,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/metrics_exporter.py"
+    },
+    {
+      "file_path": "src/tasks/data_collection_tasks.py",
+      "loc": 437,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/data_collection_tasks.py"
+    },
+    {
+      "file_path": "src/lineage/metadata_manager.py",
+      "loc": 432,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/lineage/metadata_manager.py"
+    },
+    {
+      "file_path": "src/api/predictions.py",
+      "loc": 429,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/predictions.py"
+    },
+    {
+      "file_path": "src/scheduler/tasks.py",
+      "loc": 428,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/tasks.py"
+    },
+    {
+      "file_path": "src/streaming/kafka_consumer.py",
+      "loc": 418,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/streaming/kafka_consumer.py"
+    },
+    {
+      "file_path": "src/scheduler/task_scheduler.py",
+      "loc": 410,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/task_scheduler.py"
+    },
+    {
+      "file_path": "src/data/quality/great_expectations_config.py",
+      "loc": 407,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/great_expectations_config.py"
+    },
+    {
+      "file_path": "src/data/collectors/base_collector.py",
+      "loc": 407,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/base_collector.py"
+    },
+    {
+      "file_path": "src/scheduler/job_manager.py",
+      "loc": 398,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/job_manager.py"
+    },
+    {
+      "file_path": "src/streaming/kafka_producer.py",
+      "loc": 389,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/streaming/kafka_producer.py"
+    },
+    {
+      "file_path": "src/tasks/monitoring.py",
+      "loc": 386,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/monitoring.py"
+    },
+    {
+      "file_path": "src/scheduler/dependency_resolver.py",
+      "loc": 379,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/dependency_resolver.py"
+    },
+    {
+      "file_path": "src/data/collectors/scores_collector.py",
+      "loc": 367,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/scores_collector.py"
+    },
+    {
+      "file_path": "src/database/models/audit_log.py",
+      "loc": 366,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/audit_log.py"
+    },
+    {
+      "file_path": "src/api/health.py",
+      "loc": 364,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/health.py"
+    },
+    {
+      "file_path": "src/data/quality/data_quality_monitor.py",
+      "loc": 364,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/data_quality_monitor.py"
+    },
+    {
+      "file_path": "src/data/processing/football_data_cleaner.py",
+      "loc": 355,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/processing/football_data_cleaner.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/09d03cebf664_implement_partitioned_tables_and_indexes.py",
+      "loc": 349,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/09d03cebf664_implement_partitioned_tables_and_indexes.py"
+    },
+    {
+      "file_path": "src/streaming/stream_processor.py",
+      "loc": 347,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/streaming/stream_processor.py"
+    },
+    {
+      "file_path": "src/database/models/predictions.py",
+      "loc": 345,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/predictions.py"
+    },
+    {
+      "file_path": "src/data/features/feature_store.py",
+      "loc": 343,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/features/feature_store.py"
+    },
+    {
+      "file_path": "src/utils/retry.py",
+      "loc": 340,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/retry.py"
+    },
+    {
+      "file_path": "src/tasks/streaming_tasks.py",
+      "loc": 339,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/streaming_tasks.py"
+    },
+    {
+      "file_path": "src/lineage/lineage_reporter.py",
+      "loc": 339,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/lineage/lineage_reporter.py"
+    },
+    {
+      "file_path": "src/data/collectors/odds_collector.py",
+      "loc": 337,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/odds_collector.py"
+    },
+    {
+      "file_path": "src/data/features/examples.py",
+      "loc": 336,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/features/examples.py"
+    },
+    {
+      "file_path": "src/tasks/maintenance_tasks.py",
+      "loc": 328,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/maintenance_tasks.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/004_configure_database_permissions.py",
+      "loc": 313,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/004_configure_database_permissions.py"
+    },
+    {
+      "file_path": "src/models/common_models.py",
+      "loc": 312,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/common_models.py"
+    },
+    {
+      "file_path": "src/data/collectors/streaming_collector.py",
+      "loc": 308,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/streaming_collector.py"
+    },
+    {
+      "file_path": "src/data/collectors/fixtures_collector.py",
+      "loc": 306,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/fixtures_collector.py"
+    },
+    {
+      "file_path": "src/tasks/error_logger.py",
+      "loc": 297,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/error_logger.py"
+    },
+    {
+      "file_path": "src/data/quality/ge_prometheus_exporter.py",
+      "loc": 285,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/ge_prometheus_exporter.py"
+    },
+    {
+      "file_path": "src/database/sql_compatibility.py",
+      "loc": 283,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/sql_compatibility.py"
+    },
+    {
+      "file_path": "src/api/monitoring.py",
+      "loc": 280,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/monitoring.py"
+    },
+    {
+      "file_path": "src/database/models/features.py",
+      "loc": 274,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/features.py"
+    },
+    {
+      "file_path": "src/database/models/odds.py",
+      "loc": 272,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/odds.py"
+    },
+    {
+      "file_path": "src/database/models/match.py",
+      "loc": 268,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/match.py"
+    },
+    {
+      "file_path": "src/cache/ttl_cache.py",
+      "loc": 248,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/cache/ttl_cache.py"
+    },
+    {
+      "file_path": "src/features/feature_definitions.py",
+      "loc": 237,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/features/feature_definitions.py"
+    },
+    {
+      "file_path": "src/database/models/team.py",
+      "loc": 232,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/team.py"
+    },
+    {
+      "file_path": "src/database/models/raw_data.py",
+      "loc": 226,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/raw_data.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/005_create_audit_logs_table.py",
+      "loc": 221,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/005_create_audit_logs_table.py"
+    },
+    {
+      "file_path": "src/models/metrics_exporter.py",
+      "loc": 209,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/metrics_exporter.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/f48d412852cc_add_data_collection_logs_and_bronze_layer_tables.py",
+      "loc": 209,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/f48d412852cc_add_data_collection_logs_and_bronze_layer_tables.py"
+    },
+    {
+      "file_path": "src/tasks/celery_app.py",
+      "loc": 203,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/celery_app.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/006_add_missing_database_indexes.py",
+      "loc": 185,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/006_add_missing_database_indexes.py"
+    },
+    {
+      "file_path": "src/tasks/utils.py",
+      "loc": 185,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/utils.py"
+    },
+    {
+      "file_path": "src/api/features_improved.py",
+      "loc": 175,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/features_improved.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/002_add_raw_scores_data_and_upgrade_jsonb.py",
+      "loc": 171,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/002_add_raw_scores_data_and_upgrade_jsonb.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/a20f91c49306_add_business_constraints.py",
+      "loc": 164,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/a20f91c49306_add_business_constraints.py"
+    },
+    {
+      "file_path": "src/scheduler/celery_config.py",
+      "loc": 158,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/scheduler/celery_config.py"
+    },
+    {
+      "file_path": "src/data/features/feature_definitions.py",
+      "loc": 153,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/features/feature_definitions.py"
+    },
+    {
+      "file_path": "src/core/config.py",
+      "loc": 151,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/core/config.py"
+    },
+    {
+      "file_path": "src/data/processing/missing_data_handler.py",
+      "loc": 144,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/processing/missing_data_handler.py"
+    },
+    {
+      "file_path": "src/database/models/data_collection_log.py",
+      "loc": 143,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/data_collection_log.py"
+    },
+    {
+      "file_path": "src/main.py",
+      "loc": 137,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/main.py"
+    },
+    {
+      "file_path": "src/streaming/stream_config.py",
+      "loc": 132,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/streaming/stream_config.py"
+    },
+    {
+      "file_path": "src/database/models/data_quality_log.py",
+      "loc": 130,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/data_quality_log.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/c1d8ae5075f0_add_jsonb_sqlite_compatibility.py",
+      "loc": 119,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/c1d8ae5075f0_add_jsonb_sqlite_compatibility.py"
+    },
+    {
+      "file_path": "src/database/types.py",
+      "loc": 111,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/types.py"
+    },
+    {
+      "file_path": "src/database/migrations/env.py",
+      "loc": 108,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/env.py"
+    },
+    {
+      "file_path": "src/database/config.py",
+      "loc": 100,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/config.py"
+    },
+    {
+      "file_path": "src/utils/crypto_utils.py",
+      "loc": 91,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/crypto_utils.py"
+    },
+    {
+      "file_path": "src/utils/file_utils.py",
+      "loc": 90,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/file_utils.py"
+    },
+    {
+      "file_path": "src/features/entities.py",
+      "loc": 87,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/features/entities.py"
+    },
+    {
+      "file_path": "src/utils/warning_filters.py",
+      "loc": 85,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/warning_filters.py"
+    },
+    {
+      "file_path": "src/database/base.py",
+      "loc": 85,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/base.py"
+    },
+    {
+      "file_path": "src/utils/data_validator.py",
+      "loc": 82,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/data_validator.py"
+    },
+    {
+      "file_path": "src/services/user_profile.py",
+      "loc": 82,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/user_profile.py"
+    },
+    {
+      "file_path": "src/utils/response.py",
+      "loc": 68,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/response.py"
+    },
+    {
+      "file_path": "src/services/content_analysis.py",
+      "loc": 61,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/content_analysis.py"
+    },
+    {
+      "file_path": "src/database/models/league.py",
+      "loc": 59,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/league.py"
+    },
+    {
+      "file_path": "src/services/manager.py",
+      "loc": 55,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/manager.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/d82ea26f05d0_add_mlops_support_to_predictions_table.py",
+      "loc": 52,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/d82ea26f05d0_add_mlops_support_to_predictions_table.py"
+    },
+    {
+      "file_path": "src/api/schemas.py",
+      "loc": 46,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/schemas.py"
+    },
+    {
+      "file_path": "src/utils/string_utils.py",
+      "loc": 40,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/string_utils.py"
+    },
+    {
+      "file_path": "src/services/base.py",
+      "loc": 40,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/base.py"
+    },
+    {
+      "file_path": "src/database/models/__init__.py",
+      "loc": 39,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/models/__init__.py"
+    },
+    {
+      "file_path": "src/utils/dict_utils.py",
+      "loc": 38,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/dict_utils.py"
+    },
+    {
+      "file_path": "src/core/exceptions.py",
+      "loc": 38,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/core/exceptions.py"
+    },
+    {
+      "file_path": "src/cache/consistency_manager.py",
+      "loc": 35,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/cache/consistency_manager.py"
+    },
+    {
+      "file_path": "src/api/buggy_api.py",
+      "loc": 34,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/buggy_api.py"
+    },
+    {
+      "file_path": "src/models/__init__.py",
+      "loc": 31,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/models/__init__.py"
+    },
+    {
+      "file_path": "src/data/quality/__init__.py",
+      "loc": 31,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/quality/__init__.py"
+    },
+    {
+      "file_path": "src/core/__init__.py",
+      "loc": 30,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/core/__init__.py"
+    },
+    {
+      "file_path": "src/tasks/__init__.py",
+      "loc": 30,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/tasks/__init__.py"
+    },
+    {
+      "file_path": "src/utils/time_utils.py",
+      "loc": 29,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/time_utils.py"
+    },
+    {
+      "file_path": "src/features/__init__.py",
+      "loc": 29,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/features/__init__.py"
+    },
+    {
+      "file_path": "src/data/features/__init__.py",
+      "loc": 26,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/features/__init__.py"
+    },
+    {
+      "file_path": "src/utils/__init__.py",
+      "loc": 24,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/utils/__init__.py"
+    },
+    {
+      "file_path": "src/streaming/__init__.py",
+      "loc": 22,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/streaming/__init__.py"
+    },
+    {
+      "file_path": "src/core/logger.py",
+      "loc": 21,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/core/logger.py"
+    },
+    {
+      "file_path": "src/services/__init__.py",
+      "loc": 21,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/services/__init__.py"
+    },
+    {
+      "file_path": "src/__init__.py",
+      "loc": 20,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/__init__.py"
+    },
+    {
+      "file_path": "src/database/migrations/versions/9ac2aff86228_merge_multiple_migration_heads.py",
+      "loc": 19,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/migrations/versions/9ac2aff86228_merge_multiple_migration_heads.py"
+    },
+    {
+      "file_path": "src/data/collectors/__init__.py",
+      "loc": 19,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/collectors/__init__.py"
+    },
+    {
+      "file_path": "src/core/logging.py",
+      "loc": 16,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/core/logging.py"
+    },
+    {
+      "file_path": "src/database/__init__.py",
+      "loc": 15,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/database/__init__.py"
+    },
+    {
+      "file_path": "src/data/__init__.py",
+      "loc": 13,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/__init__.py"
+    },
+    {
+      "file_path": "src/data/processing/__init__.py",
+      "loc": 11,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/processing/__init__.py"
+    },
+    {
+      "file_path": "src/cache/__init__.py",
+      "loc": 10,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/cache/__init__.py"
+    },
+    {
+      "file_path": "src/monitoring/__init__.py",
+      "loc": 8,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/monitoring/__init__.py"
+    },
+    {
+      "file_path": "src/data/storage/__init__.py",
+      "loc": 8,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/data/storage/__init__.py"
+    },
+    {
+      "file_path": "src/lineage/__init__.py",
+      "loc": 8,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/lineage/__init__.py"
+    },
+    {
+      "file_path": "src/api/__init__.py",
+      "loc": 6,
+      "total_stmts": 0,
+      "missing_stmts": 0,
+      "coverage": 0.0,
+      "abs_path": "/home/user/projects/FootballPrediction/src/api/__init__.py"
+    }
+  ]
+}

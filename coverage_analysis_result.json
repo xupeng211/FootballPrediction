@@ -1,0 +1,66 @@
+{
+  "current_total_coverage": 21.67,
+  "target_total_coverage": 30,
+  "lowest_files": [
+    {
+      "file_path": "src/services/data_processing.py",
+      "coverage": 7.0,
+      "total_stmts": 503,
+      "impact_score": 467.79
+    },
+    {
+      "file_path": "src/data/quality/anomaly_detector.py",
+      "coverage": 8.0,
+      "total_stmts": 458,
+      "impact_score": 421.36
+    },
+    {
+      "file_path": "src/cache/redis_manager.py",
+      "coverage": 15.0,
+      "total_stmts": 429,
+      "impact_score": 364.65
+    },
+    {
+      "file_path": "src/services/audit_service.py",
+      "coverage": 11.0,
+      "total_stmts": 359,
+      "impact_score": 319.51
+    },
+    {
+      "file_path": "src/data/storage/data_lake_storage.py",
+      "coverage": 6.0,
+      "total_stmts": 322,
+      "impact_score": 302.68
+    },
+    {
+      "file_path": "src/monitoring/quality_monitor.py",
+      "coverage": 8.0,
+      "total_stmts": 323,
+      "impact_score": 297.16
+    },
+    {
+      "file_path": "src/monitoring/anomaly_detector.py",
+      "coverage": 12.0,
+      "total_stmts": 248,
+      "impact_score": 218.24
+    },
+    {
+      "file_path": "src/streaming/kafka_consumer.py",
+      "coverage": 10.0,
+      "total_stmts": 242,
+      "impact_score": 217.8
+    },
+    {
+      "file_path": "src/monitoring/metrics_collector.py",
+      "coverage": 18.0,
+      "total_stmts": 248,
+      "impact_score": 203.36
+    },
+    {
+      "file_path": "src/tasks/backup_tasks.py",
+      "coverage": 16.0,
+      "total_stmts": 242,
+      "impact_score": 203.28
+    }
+  ]
+}
