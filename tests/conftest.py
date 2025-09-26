@@ -102,8 +102,17 @@ class DynamicModuleImporter:
 
             def __init__(self, data=None, columns=None, index=None, **kwargs):
                 self.data = data or {}
-                self.columns = columns or list(data.keys()) if isinstance(data, dict) else []
-                self.index = index or list(range(len(next(iter(data.values())) if data else [])))
+                # Handle both dictionary and list of dictionaries
+                if isinstance(data, dict):
+                    self.columns = columns or list(data.keys()) if data else []
+                    self.index = index or list(range(len(next(iter(data.values())) if data else [])))
+                elif isinstance(data, list) and data:
+                    # For list of dictionaries, extract keys from first item
+                    self.columns = columns or list(data[0].keys()) if data[0] else []
+                    self.index = index or list(range(len(data)))
+                else:
+                    self.columns = columns or []
+                    self.index = index or []
                 self._shape = (len(self.index), len(self.columns))
 
             # 使mock可迭代
@@ -115,11 +124,30 @@ class DynamicModuleImporter:
 
             def __getitem__(self, key):
                 if isinstance(key, str):
-                    return MockDataFrame({key: self.data.get(key, [])})
+                    if isinstance(self.data, dict):
+                        return MockDataFrame({key: self.data.get(key, [])})
+                    elif isinstance(self.data, list):
+                        # Extract the key from each dictionary in the list
+                        values = [item.get(key, None) for item in self.data]
+                        return MockDataFrame({key: values})
+                    return MockDataFrame({key: []})
                 return MockDataFrame()
 
             def __setitem__(self, key, value):
-                self.data[key] = value
+                if isinstance(self.data, dict):
+                    self.data[key] = value
+                elif isinstance(self.data, list):
+                    # For list data, add the key to each row
+                    if hasattr(value, 'data') and isinstance(value.data, list):
+                        # If value is a MockSeries, extract its data
+                        values = value.data
+                        for i, row in enumerate(self.data):
+                            if i < len(values):
+                                row[key] = values[i]
+                    else:
+                        # If value is a single value, add to all rows
+                        for row in self.data:
+                            row[key] = value
                 if key not in self.columns:
                     self.columns.append(key)
 
@@ -128,15 +156,47 @@ class DynamicModuleImporter:
                 return self._shape
 
             @property
+            def empty(self):
+                return len(self.data) == 0
+
+            @property
+            def iloc(self):
+                class MockILoc:
+                    def __init__(self, dataframe):
+                        self.dataframe = dataframe
+
+                    def __getitem__(self, key):
+                        if isinstance(key, int):
+                            if isinstance(self.dataframe.data, dict):
+                                return {col: self.dataframe.data.get(col, [])[key] for col in self.dataframe.columns}
+                            elif isinstance(self.dataframe.data, list) and key < len(self.dataframe.data):
+                                return self.dataframe.data[key]
+                        return {}
+
+                return MockILoc(self)
+
+            @property
             def values(self):
-                return list(self.data.values())
+                if isinstance(self.data, dict):
+                    return list(self.data.values())
+                elif isinstance(self.data, list):
+                    return self.data
+                return []
 
             def head(self, n=5):
-                return MockDataFrame(
-                    {k: v[:n] for k, v in self.data.items()},
-                    self.columns,
-                    self.index[:n]
-                )
+                if isinstance(self.data, dict):
+                    return MockDataFrame(
+                        {k: v[:n] for k, v in self.data.items()},
+                        self.columns,
+                        self.index[:n]
+                    )
+                elif isinstance(self.data, list):
+                    return MockDataFrame(
+                        self.data[:n],
+                        self.columns,
+                        self.index[:n]
+                    )
+                return MockDataFrame()
 
             def mean(self):
                 return MockSeries()
@@ -146,10 +206,13 @@ class DynamicModuleImporter:
 
             def to_dict(self, orient='records'):
                 if orient == 'records':
-                    return [
-                        {col: self.data.get(col, [])[i] for col in self.columns}
-                        for i in range(len(self))
-                    ]
+                    if isinstance(self.data, dict):
+                        return [
+                            {col: self.data.get(col, [])[i] for col in self.columns}
+                            for i in range(len(self))
+                        ]
+                    elif isinstance(self.data, list):
+                        return self.data
                 return self.data
 
             # 添加更多pandas DataFrame方法
@@ -162,9 +225,28 @@ class DynamicModuleImporter:
             def set_index(self, keys): return MockDataFrame()
             def sort_values(self, by): return MockDataFrame()
             def copy(self): return MockDataFrame(self.data.copy(), self.columns.copy(), self.index.copy())
+            def apply(self, func, axis=1):
+                """Mock apply method - for axis=1, apply function to each row"""
+                if axis == 1:
+                    if isinstance(self.data, list):
+                        result = []
+                        for row in self.data:
+                            result.append(func(row))
+                        return MockSeries(result)
+                    elif isinstance(self.data, dict):
+                        # Convert dict format to list format for processing
+                        rows = []
+                        for i in range(len(self)):
+                            row = {col: self.data.get(col, [])[i] for col in self.columns}
+                            rows.append(func(row))
+                        return MockSeries(rows)
+                return MockSeries()
             def iterrows(self):
                 for i in range(len(self)):
-                    yield i, {col: self.data.get(col, [])[i] for col in self.columns}
+                    if isinstance(self.data, dict):
+                        yield i, {col: self.data.get(col, [])[i] for col in self.columns}
+                    elif isinstance(self.data, list) and i < len(self.data):
+                        yield i, self.data[i]
 
         class MockSeries:
             def __init__(self, data=None, name=None):
@@ -1110,8 +1192,21 @@ def mock_pandas():
         def loc(self):
             return MockDataFrame()
 
+        @property
         def iloc(self):
-            return MockDataFrame()
+            class MockILoc:
+                def __init__(self, dataframe):
+                    self.dataframe = dataframe
+
+                def __getitem__(self, key):
+                    if isinstance(key, int):
+                        if isinstance(self.dataframe.data, dict):
+                            return {col: self.dataframe.data.get(col, [])[key] for col in self.dataframe.columns}
+                        elif isinstance(self.dataframe.data, list) and key < len(self.dataframe.data):
+                            return self.dataframe.data[key]
+                    return {}
+
+            return MockILoc(self)
 
     class MockSeries:
         def __init__(self, data=None, name=None):
