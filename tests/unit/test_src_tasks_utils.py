@@ -47,3 +47,41 @@ def test_func_get_task_priority():
         # Function requires args, skipping minimal call
         result = None
     assert result is None or result is not False
+
+def test_func_is_match_day_business_args():
+    # Based on docstring: 检查指定日期是否有比赛
+
+Args:
+    date: 要检查的日期，默认为今天
+
+Returns:
+    是否有比...
+    result = getattr(module, "is_match_day")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_calculate_next_collection_time_business_args():
+    # Based on docstring: 计算下次采集时间
+
+Args:
+    task_name: 任务名称
+
+Returns:
+    下次执行时间...
+    result = getattr(module, "calculate_next_collection_time")(0, 0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
+
+
+def test_func_get_task_priority_business_args():
+    # Based on docstring: 获取任务优先级
+
+Args:
+    task_name: 任务名称
+
+Returns:
+    优先级数值（数字越小优...
+    result = getattr(module, "get_task_priority")(0)
+    # TODO: 根据逻辑断言正确性
+    assert result is not None
