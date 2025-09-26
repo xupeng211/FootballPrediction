@@ -9,4 +9,4 @@
 - [ops/](ops/) 部署与运维
 - [release/](release/) 发布与变更
 - [staging/](staging/) 上线前预演
-- [reference/glossary.md](reference/glossary.md) 术语表
+- [glossary.md](glossary.md) 术语表
