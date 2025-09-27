@@ -4,6 +4,7 @@ from pathlib import Path
 
 REPORT_DIR = Path("docs/_reports")
 fix_plan = REPORT_DIR / "COVERAGE_FIX_PLAN.md"
+todo_file = REPORT_DIR / "BUGFIX_TODO.md"
 
 # 找到最新的 Bugfix 报告
 reports = sorted(glob.glob(str(REPORT_DIR / "BUGFIX_REPORT_*.md")))
@@ -45,4 +46,25 @@ fix_plan.write_text(
     encoding="utf-8"
 )
 
+# 自动更新 BUGFIX_TODO.md
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+with open(todo_file, "w", encoding="utf-8") as todo:
+    todo.write(f"# 🐞 AI Bugfix TODO Board\n\n")
+    todo.write(f"自动更新于: {timestamp}\n\n")
+    todo.write(f"## 📊 来源报告\n- Fix Plan: {fix_plan.name}\n- Bugfix Report: {Path(latest).name if latest else '无'}\n\n")
+    todo.write(f"## 🚧 当前待修复任务\n\n")
+    if low_cov_files:
+        for file_name, pc in low_cov_files[:10]:  # 只取前10个
+            todo.write(f"- [ ] {file_name} — {pc}% 覆盖率\n")
+    else:
+        todo.write("✅ 没有低覆盖率文件需要处理\n")
+
+    todo.write(f"\n## 📋 测试状态\n- 退出码: {exit_code}\n- 总覆盖率: {coverage}%\n\n")
+    todo.write(f"## 🔧 建议行动\n")
+    todo.write(f"- 修复失败用例（见 pytest_failures.log）\n")
+    todo.write(f"- 补充低覆盖率文件的测试\n")
+    todo.write(f"- 运行 `python scripts/run_tests_with_report.py` 更新报告\n")
+    todo.write(f"- 提交改进结果并更新 Kanban\n")
+
 print(f"✅ Coverage Fix Plan generated: {fix_plan}")
+print(f"✅ TODO Board updated: {todo_file}")
