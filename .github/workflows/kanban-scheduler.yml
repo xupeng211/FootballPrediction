@@ -1,4 +1,4 @@
-name: Kanban Coverage Scheduler
+name: Kanban & Coverage Dashboard Scheduler
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:       # 支持手动触发
 
 jobs:
-  kanban:
+  kanban_dashboard:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,10 +26,14 @@ jobs:
         run: |
           python scripts/kanban_next.py
 
+      - name: Run Coverage Dashboard Update
+        run: |
+          python scripts/coverage_dashboard.py
+
       - name: Commit & Push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/_reports/ coverage.json || true
-          git commit -m "ci: weekly Kanban coverage update [skip ci]" || echo "No changes to commit"
+          git commit -m "ci: weekly Kanban + Dashboard coverage update [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${GITHUB_REF#refs/heads/}
