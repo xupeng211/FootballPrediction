@@ -291,6 +291,12 @@ context: ## Load project context for AI development
 	$(PYTHON) scripts/context_loader.py --summary && \
 	echo "$(GREEN)✅ Context loaded$(RESET)"
 
+docs-index: ## Documentation: Generate automated documentation index
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Generating documentation index...$(RESET)" && \
+	$(PYTHON) scripts/generate_docs_index.py && \
+	echo "$(GREEN)✅ Documentation index generated$(RESET)"
+
 # ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
 # ============================================================================
@@ -581,7 +587,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context clean \
+.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context docs-index clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \
