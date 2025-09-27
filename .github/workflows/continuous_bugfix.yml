@@ -1,0 +1,111 @@
+name: Continuous Bugfix Loop
+
+on:
+  schedule:
+    # 每天凌晨 2 点运行（UTC 时间，根据需要调整时区）
+    - cron: "0 2 * * *"
+  workflow_dispatch:  # 手动触发也可
+    inputs:
+      max_iterations:
+        description: 'Maximum number of bugfix iterations (default: 3)'
+        required: false
+        default: '3'
+        type: string
+
+jobs:
+  continuous-bugfix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install
+          make env-check
+
+      - name: Verify environment
+        run: |
+          python --version
+          pip list | grep -E "(pytest|fastapi|sqlalchemy)" || true
+
+      - name: Run Continuous Bugfix Loop
+        run: |
+          make context
+          python scripts/continuous_bugfix.py --max-iterations ${{ github.event.inputs.max_iterations || 3 }}
+        continue-on-error: true  # 非阻塞模式，即使部分失败也继续
+        timeout-minutes: 60  # 60分钟超时
+
+      - name: Upload bugfix reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bugfix-reports-${{ github.run_number }}
+          path: |
+            docs/_reports/BUGFIX_TODO.md
+            docs/_reports/CONTINUOUS_FIX_REPORT_*.md
+            docs/_reports/mutation/
+            docs/_reports/flaky/
+            docs/_reports/performance/
+            docs/_reports/validation/
+          retention-days: 30
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bugfix-logs-${{ github.run_number }}
+          path: |
+            logs/
+            pytest_failures.log
+            coverage.json
+          retention-days: 7
+
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## 📊 Continuous Bugfix Loop Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "docs/_reports/BUGFIX_TODO.md" ]; then
+            echo "### 📋 Latest BUGFIX_TODO" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            head -20 docs/_reports/BUGFIX_TODO.md >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if ls docs/_reports/CONTINUOUS_FIX_REPORT_*.md 1> /dev/null 2>&1; then
+            echo "### 🔄 Latest Continuous Report" >> $GITHUB_STEP_SUMMARY
+            LATEST_REPORT=$(ls -t docs/_reports/CONTINUOUS_FIX_REPORT_*.md | head -1)
+            if [ -f "$LATEST_REPORT" ]; then
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              head -30 "$LATEST_REPORT" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Check for critical issues
+        if: always()
+        run: |
+          if [ -f "docs/_reports/BUGFIX_TODO.md" ]; then
+            # 检查是否有高优先级的修复建议
+            if grep -q "高置信度" docs/_reports/BUGFIX_TODO.md; then
+              echo "⚠️ 发现高置信度修复建议，请查看详细报告"
+              echo "HIGH_PRIORITY_FIXES=true" >> $GITHUB_ENV
+            fi
+          fi
