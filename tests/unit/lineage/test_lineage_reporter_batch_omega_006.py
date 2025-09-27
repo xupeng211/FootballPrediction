@@ -140,12 +140,12 @@ class TestLineageReporterBatchOmega006:
     assert isinstance(run_id, str)
     assert len(run_id) > 0
 
-            # 验证活跃运行记录
+    # 验证活跃运行记录
     assert "test_job" in reporter._active_runs
     assert reporter._active_runs["test_job"] == run_id
 
-            # 验证客户端emit被调用
-            mock_openlineage_client.emit.assert_called_once()
+    # 验证客户端emit被调用
+    mock_openlineage_client.emit.assert_called_once()
 
     def test_start_job_run_with_inputs(self, reporter, mock_openlineage_client, sample_inputs):
         """测试开始作业运行带输入数据集"""
@@ -161,8 +161,8 @@ class TestLineageReporterBatchOmega006:
     assert isinstance(run_id, str)
     assert "test_job" in reporter._active_runs
 
-            # 验证客户端emit被调用
-            mock_openlineage_client.emit.assert_called_once()
+    # 验证客户端emit被调用
+    mock_openlineage_client.emit.assert_called_once()
 
     def test_start_job_run_with_sql(self, reporter, mock_openlineage_client):
         """测试开始作业运行带SQL转换"""

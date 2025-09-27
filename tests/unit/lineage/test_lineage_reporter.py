@@ -43,6 +43,49 @@ class DummyRun:
         self.runId = kwargs.get("runId")
 
 
+class DummySchemaDatasetFacet:
+    def __init__(self, fields):
+        self.fields = fields
+
+class DummySchemaDataset:
+    SchemaDatasetFacet = DummySchemaDatasetFacet
+
+class DummySourceCodeLocationJobFacet:
+    def __init__(self, type, url):
+        self.type = type
+        self.url = url
+
+class DummySourceCodeLocationJob:
+    SourceCodeLocationJobFacet = DummySourceCodeLocationJobFacet
+
+class DummySQLJobFacet:
+    def __init__(self, query):
+        self.query = query
+
+    def __getitem__(self, key):
+        if key == "query":
+            return self.query
+        raise KeyError(key)
+
+class DummySQLJob:
+    SQLJobFacet = DummySQLJobFacet
+
+class DummyParentRunFacet:
+    def __init__(self, run):
+        self.run = run
+
+class DummyParentRun:
+    ParentRunFacet = DummyParentRunFacet
+
+class DummyErrorMessageRunFacet:
+    def __init__(self, message, programmingLanguage):
+        self.message = message
+        self.programmingLanguage = programmingLanguage
+
+class DummyErrorMessageRun:
+    ErrorMessageRunFacet = DummyErrorMessageRunFacet
+
+
 @pytest.fixture(autouse=True)
 def patch_openlineage(monkeypatch):
     monkeypatch.setattr(lineage_module, "OpenLineageClient", DummyClient)
@@ -51,17 +94,11 @@ def patch_openlineage(monkeypatch):
     monkeypatch.setattr(lineage_module, "OutputDataset", DummyDataset)
     monkeypatch.setattr(lineage_module, "Run", DummyRun)
     monkeypatch.setattr(lineage_module, "Job", DummyJob)
-    monkeypatch.setattr(
-        lineage_module, "schema_dataset", lambda schema: {"schema": schema}
-    )
-    monkeypatch.setattr(
-        lineage_module, "source_code_location_job", lambda payload: payload
-    )
-    monkeypatch.setattr(lineage_module, "sql_job", lambda sql: {"query": sql})
-    monkeypatch.setattr(lineage_module, "parent_run", lambda payload: payload)
-    monkeypatch.setattr(
-        lineage_module, "error_message_run", lambda payload: {"error": payload}
-    )
+    monkeypatch.setattr(lineage_module, "schema_dataset", DummySchemaDataset)
+    monkeypatch.setattr(lineage_module, "source_code_location_job", DummySourceCodeLocationJob)
+    monkeypatch.setattr(lineage_module, "sql_job", DummySQLJob)
+    monkeypatch.setattr(lineage_module, "parent_run", DummyParentRun)
+    monkeypatch.setattr(lineage_module, "error_message_run", DummyErrorMessageRun)
     reporter = lineage_module.LineageReporter(marquez_url="http://test")
     monkeypatch.setattr(lineage_module, "lineage_reporter", reporter)
     yield
