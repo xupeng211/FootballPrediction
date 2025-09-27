@@ -50,6 +50,11 @@ jobs:
         export PYTHONPATH="$(pwd):${PYTHONPATH}"
         pytest tests/unit --maxfail=1 --disable-warnings --cov=src --cov-report=term --cov-report=xml --cov-fail-under=80
 
+    - name: Check Docs Auto Index
+      run: |
+        source .venv/bin/activate
+        make check-docs-index
+
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
       uses: codecov/codecov-action@v3

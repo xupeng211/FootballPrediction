@@ -297,6 +297,12 @@ docs-index: ## Documentation: Generate automated documentation index
 	$(PYTHON) scripts/generate_docs_index.py && \
 	echo "$(GREEN)✅ Documentation index generated$(RESET)"
 
+check-docs-index: ## Documentation: Check if docs auto index is up to date
+	@echo "$(YELLOW)🔍 Checking docs auto index...$(RESET)" && \
+	$(PYTHON) scripts/generate_docs_index.py && \
+	git diff --exit-code docs/DOCS_AUTO_INDEX.md || (echo "$(RED)❌ docs/DOCS_AUTO_INDEX.md is outdated. Please run 'make docs-index' and commit changes.$(RESET)" && exit 1) && \
+	echo "$(GREEN)✅ Docs index is up to date$(RESET)"
+
 # ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
 # ============================================================================
@@ -587,7 +593,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context docs-index clean \
+.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context docs-index check-docs-index clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \
