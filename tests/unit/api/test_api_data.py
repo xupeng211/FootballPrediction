@@ -39,8 +39,8 @@ class TestDataAPI:
 
     def test_router_creation(self):
         """测试路由器创建"""
-    assert router.prefix == "_data"
-    assert "data" in router.tags
+        assert router.prefix == "/data"
+        assert "data" in router.tags
 
     @pytest.mark.asyncio
     async def test_get_match_features_success(self, mock_session):
@@ -55,8 +55,8 @@ class TestDataAPI:
             }
 
             result = await mock_get_features(1, mock_session)
-    assert result is not None
-    assert result["match_id"] == 1
+            assert result is not None
+            assert result["match_id"] == 1
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, mock_session):
