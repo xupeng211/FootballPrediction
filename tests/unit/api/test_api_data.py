@@ -236,16 +236,18 @@ class TestDataAPISimpleCoverage:
                 router,
             )
 
-    assert router is not None
-    assert get_match_features is not None
-    assert get_team_stats is not None
-    assert get_dashboard_data is not None
-    assert logger is not None
+            assert router is not None
+            assert get_match_features is not None
+            assert get_team_stats is not None
+            assert get_dashboard_data is not None
+            assert logger is not None
         except ImportError:
             # 如果某些函数不存在，至少测试基本导入
+            pass
 
-    assert router is not None
-    assert logger is not None
+        # 基本检查
+        assert router is not None
+        assert logger is not None
 
     @pytest.mark.asyncio
     async def test_mock_all_endpoints(self):
