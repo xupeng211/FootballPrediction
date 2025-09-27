@@ -9,9 +9,15 @@ jobs:
   bugfix-loop:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write   # 允许推送更新
+      pull-requests: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0   # 确保能切换分支
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -22,6 +28,9 @@ jobs:
         run: |
           pip install pytest pytest-cov pytest-xdist coverage
 
-      - name: Run Bugfix Loop
+      - name: Run Bugfix Loop (with protection logic)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "🚀 Running Bugfix loop with protection logic..."
           python scripts/coverage_bugfix_loop.py
