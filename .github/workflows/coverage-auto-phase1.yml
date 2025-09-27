@@ -1,0 +1,18 @@
+name: Auto Coverage Phase1 Loop
+
+on:
+  schedule:
+    - cron: "0 4 * * *"   # 每天凌晨 4 点跑
+  workflow_dispatch:
+
+jobs:
+  auto-phase1-loop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - run: pip install pytest pytest-cov pytest-xdist coverage
+      - run: python scripts/coverage_auto_phase1.py
