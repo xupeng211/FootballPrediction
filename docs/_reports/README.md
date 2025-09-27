@@ -7,6 +7,8 @@
 - 📊 [测试覆盖率分析报告](COVERAGE_FIX_PLAN.md) - 显示当前测试覆盖率和需要修复的模块列表
 - 📋 [Phase 1.5 完成报告](PHASE1_5_COMPLETION_REPORT_2025-09-27.md) - 第一阶段覆盖率提升任务完成情况
 - 📊 [Bug 自动修复闭环流程图](../BUGFIX_CYCLE_OVERVIEW.md) - 展示项目内置的自动化 Bug 修复循环机制
+- 📕 [AI 集成改进风险评估](../AI_INTEGRATION_RISKS.md) - 解释为什么必须采用分阶段策略来引入 AI 改进
+- 🚀 [AI 集成改进实施计划](../AI_IMPROVEMENT_PLAN.md) - 分阶段列出具体的执行目标和任务
 
 ## 🔄 报告生成机制
 
