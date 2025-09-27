@@ -1,0 +1,27 @@
+name: Coverage Bugfix Loop
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # 每30分钟检查一次
+  workflow_dispatch:         # 支持手动触发
+
+jobs:
+  bugfix-loop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-cov pytest-xdist coverage
+
+      - name: Run Bugfix Loop
+        run: |
+          python scripts/coverage_bugfix_loop.py
