@@ -77,7 +77,7 @@ class TestHealthCheckAPI:
             response = test_client.get("_health")
 
         # 健康检查可能返回503如果依赖服务不可用
-    assert response.status_code in [200, 503]
+        assert response.status_code in [200, 503]
         data = response.json()
 
         # 当返回503时，错误信息在detail字段中
@@ -85,22 +85,22 @@ class TestHealthCheckAPI:
             # 503错误时，数据结构在detail中
             if "detail" in data:
                 detail = data["detail"]
-    assert detail["status"] in ["healthy", "unhealthy"]
-    assert "timestamp" in detail
-    assert "uptime" in detail
-    assert "version" in detail
+                assert detail["status"] in ["healthy", "unhealthy"]
+                assert "timestamp" in detail
+                assert "uptime" in detail
+                assert "version" in detail
             else:
                 # 如果没有detail，直接检查顶级字段
-    assert data["status"] in ["healthy", "unhealthy"]
-    assert "timestamp" in data
-    assert "uptime" in data
-    assert "version" in data
+                assert data["status"] in ["healthy", "unhealthy"]
+                assert "timestamp" in data
+                assert "uptime" in data
+                assert "version" in data
         else:
             # 200成功时，直接检查顶级字段
-    assert data["status"] in ["healthy", "unhealthy"]
-    assert "timestamp" in data
-    assert "uptime" in data
-    assert "version" in data
+            assert data["status"] in ["healthy", "unhealthy"]
+            assert "timestamp" in data
+            assert "uptime" in data
+            assert "version" in data
 
     @pytest.mark.asyncio
     async def test_detailed_health_check_success(self, test_client):
@@ -153,15 +153,15 @@ class TestHealthCheckAPI:
 
             response = test_client.get("_health")
 
-    assert response.status_code == 200
+            assert response.status_code == 200
             result = response.json()
 
-    assert result["status"] == "healthy"
-    assert result["checks"]["database"]["status"] == "healthy"
-    assert result["checks"]["redis"]["status"] == "healthy"
-    assert result["checks"]["kafka"]["status"] == "healthy"
-    assert result["checks"]["mlflow"]["status"] == "healthy"
-    assert result["checks"]["filesystem"]["status"] == "healthy"
+            assert result["status"] == "healthy"
+            assert result["checks"]["database"]["status"] == "healthy"
+            assert result["checks"]["redis"]["status"] == "healthy"
+            assert result["checks"]["kafka"]["status"] == "healthy"
+            assert result["checks"]["mlflow"]["status"] == "healthy"
+            assert result["checks"]["filesystem"]["status"] == "healthy"
 
     @pytest.mark.asyncio
     async def test_health_check_database_failure(self, test_client):
@@ -203,13 +203,13 @@ class TestHealthCheckAPI:
 
             response = test_client.get("_health")
 
-    assert (
+            assert (
                 response.status_code == 503
             )  # Service unavailable due to database failure
             result = response.json()
 
-    assert result["detail"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["database"]["status"] == "unhealthy"
+            assert result["detail"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["database"]["status"] == "unhealthy"
 
     @pytest.mark.asyncio
     async def test_health_check_redis_failure(self, test_client):
@@ -251,13 +251,13 @@ class TestHealthCheckAPI:
 
             response = test_client.get("_health")
 
-    assert (
+            assert (
                 response.status_code == 503
             )  # Service unavailable due to Redis failure
             result = response.json()
 
-    assert result["detail"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["redis"]["status"] == "unhealthy"
+            assert result["detail"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["redis"]["status"] == "unhealthy"
 
     @pytest.mark.asyncio
     async def test_health_check_all_services_failed(self, test_client):
@@ -299,14 +299,14 @@ class TestHealthCheckAPI:
 
             response = test_client.get("_health")
 
-    assert response.status_code == 503  # Service unavailable
+            assert response.status_code == 503  # Service unavailable
             result = response.json()
 
-    assert result["detail"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["database"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["redis"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["kafka"]["status"] == "unhealthy"
-    assert result["detail"]["checks"]["mlflow"]["status"] == "unhealthy"
+            assert result["detail"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["database"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["redis"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["kafka"]["status"] == "unhealthy"
+            assert result["detail"]["checks"]["mlflow"]["status"] == "unhealthy"
 
 
 class TestDatabaseHealthCheck:
@@ -328,9 +328,9 @@ class TestDatabaseHealthCheck:
 
         result = await check_database_health(mock_session)
 
-    assert result["status"] == "healthy"
-    assert "response_time_ms" in result
-    assert result["response_time_ms"] < 1000.0  # 响应时间应该很快
+        assert result["status"] == "healthy"
+        assert "response_time_ms" in result
+        assert result["response_time_ms"] < 1000.0  # 响应时间应该很快
 
     @pytest.mark.asyncio
     async def test_database_health_check_connection_error(self):
@@ -344,9 +344,9 @@ class TestDatabaseHealthCheck:
 
         result = await _check_database(mock_session)
 
-    assert result["status"] == "unhealthy"
-    assert "details" in result
-    assert "Connection failed" in result["details"]["error"]
+        assert result["status"] == "unhealthy"
+        assert "details" in result
+        assert "Connection failed" in result["details"]["error"]
 
     @pytest.mark.asyncio
     async def test_database_health_check_timeout(self):
@@ -515,9 +515,9 @@ class TestHealthEndpoints:
         """测试活跃性探针"""
         response = test_client.get("_health/liveness")
 
-    assert response.status_code == 200
+        assert response.status_code == 200
         data = response.json()
-    assert data["status"] == "alive"
+        assert data["status"] == "alive"
 
     def test_readiness_probe_healthy(self, test_client):
         """测试就绪性探针 - 健康状态"""
@@ -551,9 +551,9 @@ class TestHealthEndpoints:
 
                 response = test_client.get("_health/readiness")
 
-    assert response.status_code == 200
+                assert response.status_code == 200
                 data = response.json()
-    assert data["ready"] is True
+                assert data["ready"] is True
         finally:
             # Clean up the override
             test_client.app.dependency_overrides.clear()
@@ -590,9 +590,9 @@ class TestHealthEndpoints:
 
                 response = test_client.get("_health/readiness")
 
-    assert response.status_code == 503  # Service Unavailable
+                assert response.status_code == 503  # Service Unavailable
                 data = response.json()
-    assert data["detail"]["ready"] is False
+                assert data["detail"]["ready"] is False
         finally:
             # Clean up the override
             test_client.app.dependency_overrides.clear()
