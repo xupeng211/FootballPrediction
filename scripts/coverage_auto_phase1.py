@@ -1,58 +1,64 @@
-#!/usr/bin/env python3
-import json, subprocess, datetime, time
-from pathlib import Path
+import subprocess, time, datetime, argparse
+
+def run(cmd, check=True):
+    print(f"⚙️ Running: {cmd}")
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True, check=check)
 
 def get_coverage():
-    coverage_json = Path("coverage.json")
-    if not coverage_json.exists():
+    try:
+        out = run("coverage report -m", check=False).stdout
+        for line in out.splitlines():
+            if "TOTAL" in line:
+                return float(line.split()[-1].replace("%", ""))
+    except Exception:
         return 0.0
-    data = json.load(open(coverage_json))
-    return data.get("totals", {}).get("percent_covered", 0.0)
+    return 0.0
 
-rounds = 0
-while True:
-    current_cov = get_coverage()
-    print(f"📊 Current coverage: {current_cov}%")
+def execute_once():
+    now = datetime.datetime.now().strftime("%Y%m%d%H%M")
+    branch = f"chore/coverage-phase1-{now}"
 
-    if current_cov >= 40.0:
-        print("✅ Target 40% reached! Stopping loop.")
-        break
+    # 1. 创建分支
+    run(f"git checkout -b {branch}", check=False)
 
-    rounds += 1
-    print(f"🚀 Starting iteration {rounds}...")
+    # 2. 运行测试并生成报告
+    run("pytest --maxfail=5 --disable-warnings -q --cov=. --cov-report=json:coverage.json || true", check=False)
 
-    ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    branch = f"chore/coverage-phase1-{ts}"
+    # 3. 生成 Bugfix 报告
+    run("python scripts/generate_fix_plan.py", check=False)
 
-    # Step 1: Create new branch
-    subprocess.run(["git", "checkout", "-b", branch])
+    # 4. 更新 Kanban + Dashboard
+    run("python scripts/kanban_next.py", check=False)
+    run("python scripts/coverage_dashboard.py", check=False)
 
-    # Step 2: Generate new tests (Claude Code can auto-fill here)
-    print("⚡ Generating new tests for low coverage files...")
+    # 5. 提交并推送
+    run("git add docs/_reports/* coverage.json || true", check=False)
+    run(f"git commit -m 'chore: auto coverage improvement round {now}' || true", check=False)
+    run(f"git push origin {branch}", check=False)
 
-    # Step 3: Run tests & generate reports
-    subprocess.run(["python", "scripts/run_tests_with_report.py"], check=False)
+    # 6. 创建并合并 PR
+    run(f"gh pr create --base main --head {branch} --title 'ci: auto coverage improvement {now}' --body 'Automated coverage improvement iteration.' || true", check=False)
+    run("gh pr merge --squash --auto || true", check=False)
 
-    # Step 4: Update fix plan, dashboard, and kanban
-    subprocess.run(["python", "scripts/generate_fix_plan.py"])
-    subprocess.run(["python", "scripts/coverage_dashboard.py"])
-    subprocess.run(["python", "scripts/kanban_next.py"])
+def loop_until_target(target=40.0):
+    round_num = 1
+    while True:
+        print(f"🚀 Iteration {round_num} started...")
+        cov = get_coverage()
+        if cov >= target:
+            print(f"✅ Target reached: {cov}% >= {target}%")
+            break
+        execute_once()
+        print(f"⏳ Waiting before next iteration...")
+        time.sleep(60)
+        round_num += 1
 
-    # Step 5: Commit and push
-    subprocess.run(["git", "add", "tests/unit/", "docs/_reports/*"])
-    subprocess.run(["git", "commit", "-m", f"test(phase1): auto coverage improvement {ts}"])
-    subprocess.run(["git", "push", "origin", branch])
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--once", action="store_true", help="Run only one iteration and exit")
+    args = parser.parse_args()
 
-    # Step 6: Create and merge PR
-    subprocess.run([
-        "gh","pr","create",
-        "--base","main",
-        "--head",branch,
-        "--title",f"test(phase1): auto coverage improvement {ts}",
-        "--body","Automated Phase 1 coverage improvement loop iteration"
-    ])
-    subprocess.run(["gh","pr","merge","--squash","--delete-branch","--auto"])
-
-    # Step 7: Wait before next iteration
-    print("⏳ Waiting for changes to propagate...")
-    time.sleep(60)
+    if args.once:
+        execute_once()
+    else:
+        loop_until_target()
