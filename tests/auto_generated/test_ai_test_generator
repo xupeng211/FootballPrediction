@@ -1,0 +1,191 @@
+"""
+Auto-generated tests for src/ai/test_generator.py
+Generated at: 2025-09-27T23:29:58.858123
+"""
+
+import pytest
+from unittest.mock import Mock, patch
+import sys
+from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+import ai.test_generator
+
+# Project fixtures
+from tests.conftest import *
+
+class TestTestGenerationConfig:
+    """
+    Auto-generated tests for TestGenerationConfig
+    """
+
+    def test_class_initialization(self):
+        """Test class can be initialized"""
+        # TODO: Implement initialization test for TestGenerationConfig
+        pass
+
+class TestAITestGenerator:
+    """
+    Auto-generated tests for AITestGenerator
+    """
+
+    def test_class_initialization(self):
+        """Test class can be initialized"""
+        # TODO: Implement initialization test for AITestGenerator
+        pass
+
+    def test___init___normal(self):
+        """Test __init__ with normal input"""
+        # TODO: Generate normal test case for __init__
+        result = target_function(arg_self={TODO}, arg_config={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test___init___boundary(self):
+        """Test __init__ with boundary conditions"""
+        # TODO: Generate boundary test cases for __init__
+        pass
+
+    def test___init___exception(self):
+        """Test __init__ with invalid input"""
+        # TODO: Generate exception test cases for __init__
+        pass
+
+    @pytest.mark.parametrize("input_data,expected", [
+        # TODO: Add test cases for __init__
+        ({}, {}),  # Normal case
+        ({}, {}),  # Edge case
+    ])
+    def test___init___parameterized(self, input_data, expected):
+        """Test __init__ with parameterized input"""
+        result = target_function(**input_data)
+        assert result == expected
+
+    def test_analyze_file_normal(self):
+        """Test analyze_file with normal input"""
+        # TODO: Generate normal test case for analyze_file
+        result = target_function(arg_self={TODO}, arg_file_path={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test_analyze_file_boundary(self):
+        """Test analyze_file with boundary conditions"""
+        # TODO: Generate boundary test cases for analyze_file
+        pass
+
+    def test_analyze_file_exception(self):
+        """Test analyze_file with invalid input"""
+        # TODO: Generate exception test cases for analyze_file
+        pass
+
+    @pytest.mark.parametrize("input_data,expected", [
+        # TODO: Add test cases for analyze_file
+        ({}, {}),  # Normal case
+        ({}, {}),  # Edge case
+    ])
+    def test_analyze_file_parameterized(self, input_data, expected):
+        """Test analyze_file with parameterized input"""
+        result = target_function(**input_data)
+        assert result == expected
+
+    def test_generate_tests_for_file_normal(self):
+        """Test generate_tests_for_file with normal input"""
+        # TODO: Generate normal test case for generate_tests_for_file
+        result = target_function(arg_self={TODO}, arg_file_path={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test_generate_tests_for_file_boundary(self):
+        """Test generate_tests_for_file with boundary conditions"""
+        # TODO: Generate boundary test cases for generate_tests_for_file
+        pass
+
+    def test_generate_tests_for_file_exception(self):
+        """Test generate_tests_for_file with invalid input"""
+        # TODO: Generate exception test cases for generate_tests_for_file
+        pass
+
+    @pytest.mark.parametrize("input_data,expected", [
+        # TODO: Add test cases for generate_tests_for_file
+        ({}, {}),  # Normal case
+        ({}, {}),  # Edge case
+    ])
+    def test_generate_tests_for_file_parameterized(self, input_data, expected):
+        """Test generate_tests_for_file with parameterized input"""
+        result = target_function(**input_data)
+        assert result == expected
+
+    def test_generate_tests_for_directory_normal(self):
+        """Test generate_tests_for_directory with normal input"""
+        # TODO: Generate normal test case for generate_tests_for_directory
+        result = target_function(arg_self={TODO}, arg_directory={TODO}, arg_pattern={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test_generate_tests_for_directory_boundary(self):
+        """Test generate_tests_for_directory with boundary conditions"""
+        # TODO: Generate boundary test cases for generate_tests_for_directory
+        pass
+
+    def test_generate_tests_for_directory_exception(self):
+        """Test generate_tests_for_directory with invalid input"""
+        # TODO: Generate exception test cases for generate_tests_for_directory
+        pass
+
+    @pytest.mark.parametrize("input_data,expected", [
+        # TODO: Add test cases for generate_tests_for_directory
+        ({}, {}),  # Normal case
+        ({}, {}),  # Edge case
+    ])
+    def test_generate_tests_for_directory_parameterized(self, input_data, expected):
+        """Test generate_tests_for_directory with parameterized input"""
+        result = target_function(**input_data)
+        assert result == expected
+
+    def test_get_generation_statistics_normal(self):
+        """Test get_generation_statistics with normal input"""
+        # TODO: Generate normal test case for get_generation_statistics
+        result = target_function(arg_self={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test_get_generation_statistics_boundary(self):
+        """Test get_generation_statistics with boundary conditions"""
+        # TODO: Generate boundary test cases for get_generation_statistics
+        pass
+
+    def test_get_generation_statistics_exception(self):
+        """Test get_generation_statistics with invalid input"""
+        # TODO: Generate exception test cases for get_generation_statistics
+        pass
+
+    def test_cleanup_generated_tests_normal(self):
+        """Test cleanup_generated_tests with normal input"""
+        # TODO: Generate normal test case for cleanup_generated_tests
+        result = target_function(arg_self={TODO})
+        assert result is not None, "Function should return result"
+        # Add more specific assertions based on expected behavior
+
+    def test_cleanup_generated_tests_boundary(self):
+        """Test cleanup_generated_tests with boundary conditions"""
+        # TODO: Generate boundary test cases for cleanup_generated_tests
+        pass
+
+    def test_cleanup_generated_tests_exception(self):
+        """Test cleanup_generated_tests with invalid input"""
+        # TODO: Generate exception test cases for cleanup_generated_tests
+        pass
+
+def test_main_normal(self):
+    """Test main with normal input"""
+    # TODO: Generate normal test case for main
+    result = target_function()
+    assert result is not None, "Function should return result"
+    # Add more specific assertions based on expected behavior
+
+def test_main_exception(self):
+    """Test main with invalid input"""
+    # TODO: Generate exception test cases for main
+    pass
