@@ -271,10 +271,10 @@ class TestFeaturesAPI:
                 response = client.post("_api/v1/features/calculate/1")
 
     assert response.status_code == 200
-                data = response.json()
+    data = response.json()
     assert data["success"] is True
 
-                result_data = data["data"]
+    result_data = data["data"]
     assert result_data["match_id"] == 1
     assert result_data["match_features_stored"] is True
     assert result_data["home_team_features_stored"] is True
