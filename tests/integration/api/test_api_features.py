@@ -201,16 +201,16 @@ class TestFeaturesAPI:
                 response = client.get("_api/v1/features/teams/1")
 
     assert response.status_code == 200
-                data = response.json()
+    data = response.json()
     assert data["success"] is True
 
-                # 验证球队信息
-                team_info = data["data"]["team_info"]
+    # 验证球队信息
+    team_info = data["data"]["team_info"]
     assert team_info["team_id"] == 1
     assert team_info["team_name"] == "测试球队"
 
-                # 验证特征数据
-                features = data["data"]["features"]
+    # 验证特征数据
+    features = data["data"]["features"]
     assert features["recent_5_wins"] == 3
     assert features["recent_5_goals_for"] == 8
 
@@ -245,7 +245,7 @@ class TestFeaturesAPI:
                 response = client.get("_api/v1/features/teams/1?include_raw=true")
 
     assert response.status_code == 200
-                data = response.json()
+    data = response.json()
     assert data["success"] is True
     assert "raw_features" in data["data"]
 
