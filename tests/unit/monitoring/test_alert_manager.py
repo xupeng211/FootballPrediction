@@ -5,7 +5,7 @@ Unit tests for alert manager module.
 Tests for src/monitoring/alert_manager.py module classes and functions.
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch, call, Mock
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 import hashlib
@@ -514,14 +514,23 @@ class TestAlertManager:
             source="test",
         )
 
-        manager._update_alert_metrics(alert, "test_rule")
+        # Mock the metrics to avoid Prometheus dependency issues
+        with patch.object(manager.metrics, 'alerts_fired_total') as mock_fired, \
+             patch.object(manager.metrics, 'active_alerts') as mock_active:
 
-        # Verify metrics were updated
-        manager.metrics.alerts_fired_total.labels.assert_called_with(
-            level="warning", source="test", rule_id="test_rule"
-        )
-        manager.metrics.alerts_fired_total.labels.return_value.inc.assert_called()
-        manager.metrics.active_alerts.labels.assert_called_with(level="warning")
+            mock_labels_fired = Mock()
+            mock_labels_active = Mock()
+            mock_fired.labels.return_value = mock_labels_fired
+            mock_active.labels.return_value = mock_labels_active
+
+            manager._update_alert_metrics(alert, "test_rule")
+
+            # Verify metrics were updated
+            mock_fired.labels.assert_called_with(
+                level="warning", source="test", rule_id="test_rule"
+            )
+            mock_labels_fired.inc.assert_called()
+            mock_active.labels.assert_called_with(level="warning")
 
     def test_log_handler_info_level(self):
         """Test log handler for INFO level alerts."""

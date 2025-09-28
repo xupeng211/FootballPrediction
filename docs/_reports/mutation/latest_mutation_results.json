@@ -1,0 +1,14 @@
+{
+  "execution_mode": "incremental",
+  "test_files": [],
+  "execution_time": 0.017780542373657227,
+  "timeout_used": 300,
+  "results": {
+    "total": 0,
+    "killed": 0,
+    "survived": 0,
+    "timeout": 0,
+    "score": 0
+  },
+  "timestamp": 1758987544.6140933
+}

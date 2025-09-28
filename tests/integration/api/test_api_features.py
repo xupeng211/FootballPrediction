@@ -302,10 +302,10 @@ class TestFeaturesAPI:
                 response = client.post("_api/v1/features/calculate/teams/1")
 
     assert response.status_code == 200
-                data = response.json()
+    data = response.json()
     assert data["success"] is True
 
-                result_data = data["data"]
+    result_data = data["data"]
     assert result_data["team_id"] == 1
     assert result_data["team_name"] == "测试球队"
     assert result_data["features_stored"] is True
@@ -334,10 +334,10 @@ class TestFeaturesAPI:
             )
 
     assert response.status_code == 200
-            data = response.json()
+    data = response.json()
     assert data["success"] is True
 
-            result_data = data["data"]
+    result_data = data["data"]
     assert "date_range" in result_data
     assert result_data["date_range"]["start_date"] == "2025-09-10T00:00:00"
     assert result_data["date_range"]["end_date"] == "2025-09-17T00:00:00"
@@ -356,7 +356,7 @@ class TestFeaturesAPI:
         )
 
     assert response.status_code == 400
-        data = response.json()
+    data = response.json()
     assert "开始日期必须早于结束日期" in data["detail"]
 
     @pytest.mark.asyncio
@@ -392,10 +392,10 @@ class TestFeaturesAPI:
                 )
 
     assert response.status_code == 200
-                data = response.json()
+    data = response.json()
     assert data["success"] is True
 
-                result_data = data["data"]
+    result_data = data["data"]
     assert result_data["match_id"] == 1
     assert result_data["feature_count"] == 5  # DataFrame列数
     assert result_data["record_count"] == 2  # DataFrame行数

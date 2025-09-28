@@ -10,13 +10,29 @@ import sys
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-import aiohttp
-from confluent_kafka import Producer, Consumer, KafkaException
 
 # 添加 src 目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from data.collectors.streaming_collector import StreamingCollector, DataStream, StreamConfig
+# 清理Prometheus注册表以避免重复注册
+try:
+    from prometheus_client import REGISTRY
+    # 清理所有收集器
+    collectors = list(REGISTRY._collector_to_names.keys())
+    for collector in collectors:
+        REGISTRY.unregister(collector)
+except ImportError:
+    pass
+
+# 模拟外部依赖
+with patch.dict('sys.modules', {
+    'aiohttp': Mock(),
+    'confluent_kafka': Mock(),
+    'prometheus_client': Mock(),
+    'prometheus_client.registry': Mock(),
+    'prometheus_client.core': Mock()
+}):
+    from data.collectors.streaming_collector import StreamingCollector, DataStream, StreamConfig
 
 
 class TestStreamConfig:

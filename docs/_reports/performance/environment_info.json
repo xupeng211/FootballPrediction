@@ -1,0 +1,13 @@
+{
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+  "python_version": "3.11.9",
+  "cpu_count": 8,
+  "memory_total_gb": 7.76,
+  "cpu_freq": 4399.907,
+  "load_average": [
+    0.384765625,
+    0.2685546875,
+    0.21240234375
+  ],
+  "git_commit": "cd3ec69"
+}

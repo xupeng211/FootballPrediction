@@ -260,17 +260,21 @@ class TestBatchPredictMatches:
             assert len(result["data"]["predictions"]) == 3
 
     @pytest.mark.asyncio
-    async def test_batch_predict_matches_empty_request(self, mock_session):
+    async def test_batch_predict_matches_empty_request(self, mock_session, mock_prediction_service):
         """Test batch match prediction with empty request."""
         # Setup empty match IDs list
         match_ids = []
 
-        # Execute function
-        result = await batch_predict_matches(match_ids, mock_session)
+        # Mock prediction service to return empty result
+        mock_prediction_service.batch_predict_matches.return_value = []
 
-        # Verify result
-        assert result["success"] is True
-        assert len(result["data"]["predictions"]) == 0
+        with patch('src.api.predictions.prediction_service', mock_prediction_service):
+            # Execute function
+            result = await batch_predict_matches(match_ids, mock_session)
+
+            # Verify result
+            assert result["success"] is True
+            assert len(result["data"]["predictions"]) == 0
 
     @pytest.mark.asyncio
     async def test_batch_predict_matches_partial_failure(self, mock_session, mock_prediction_service):

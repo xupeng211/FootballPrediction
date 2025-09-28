@@ -89,10 +89,10 @@ class TestDataAPI:
 
         result = await get_team_stats(1, mock_session)
 
-    assert result is not None
-    assert "team_id" in result
-    assert "team_name" in result
-    assert result["team_name"] == "Test Team"
+        assert result is not None
+        assert "team_id" in result
+        assert "team_name" in result
+        assert result["team_name"] == "Test Team"
 
     @pytest.mark.asyncio
     async def test_get_dashboard_data_success(self, mock_session):

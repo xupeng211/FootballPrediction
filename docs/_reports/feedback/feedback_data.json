@@ -1,0 +1,367 @@
+[
+  {
+    "id": "fb_20250927_232959_a5d589c2",
+    "timestamp": "2025-09-27T23:29:59.491474",
+    "hash": "45bf463b905f1ac9b979b5246c2e85c0",
+    "data": {
+      "type": "test_generation",
+      "file_path": "src/ai/test_generator.py",
+      "generation_result": {
+        "original_file": "src/ai/test_generator.py",
+        "test_file": "tests/auto_generated/test_ai_test_generator",
+        "analysis": {
+          "file_path": "src/ai/test_generator.py",
+          "classes": [
+            {
+              "name": "TestGenerationConfig",
+              "methods": [],
+              "docstring": "测试生成配置",
+              "line_number": 20
+            },
+            {
+              "name": "AITestGenerator",
+              "methods": [
+                {
+                  "name": "__init__",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "config",
+                      "annotation": "Optional[TestGenerationConfig]"
+                    }
+                  ],
+                  "defaults": [
+                    "None"
+                  ],
+                  "returns": null,
+                  "docstring": null,
+                  "line_number": 45,
+                  "is_async": false
+                },
+                {
+                  "name": "_analyze_project_patterns",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "分析项目测试模式",
+                  "line_number": 54,
+                  "is_async": false
+                },
+                {
+                  "name": "_discover_fixtures",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "List[str]",
+                  "docstring": "发现项目中可用的fixtures",
+                  "line_number": 91,
+                  "is_async": false
+                },
+                {
+                  "name": "analyze_file",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "file_path",
+                      "annotation": "str"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "分析指定文件的函数和类",
+                  "line_number": 112,
+                  "is_async": false
+                },
+                {
+                  "name": "_analyze_class",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "node",
+                      "annotation": "ast.ClassDef"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "分析类定义",
+                  "line_number": 151,
+                  "is_async": false
+                },
+                {
+                  "name": "_analyze_function",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "node",
+                      "annotation": "ast.FunctionDef"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "分析函数定义",
+                  "line_number": 167,
+                  "is_async": false
+                },
+                {
+                  "name": "generate_tests_for_file",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "file_path",
+                      "annotation": "str"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "为指定文件生成测试",
+                  "line_number": 193,
+                  "is_async": false
+                },
+                {
+                  "name": "_generate_test_file_content",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "analysis",
+                      "annotation": "Dict[str, Any]"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "str",
+                  "docstring": "生成测试文件内容",
+                  "line_number": 229,
+                  "is_async": false
+                },
+                {
+                  "name": "_get_module_import",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "file_path",
+                      "annotation": "str"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "str",
+                  "docstring": "获取模块导入路径",
+                  "line_number": 273,
+                  "is_async": false
+                },
+                {
+                  "name": "_get_test_file_path",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "original_file",
+                      "annotation": "str"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Path",
+                  "docstring": "获取测试文件路径",
+                  "line_number": 281,
+                  "is_async": false
+                },
+                {
+                  "name": "_generate_class_tests",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "class_info",
+                      "annotation": "Dict[str, Any]"
+                    },
+                    {
+                      "name": "imports",
+                      "annotation": "List[str]"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "List[str]",
+                  "docstring": "为类生成测试",
+                  "line_number": 292,
+                  "is_async": false
+                },
+                {
+                  "name": "_generate_function_tests",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "func_info",
+                      "annotation": "Dict[str, Any]"
+                    },
+                    {
+                      "name": "imports",
+                      "annotation": "List[str]"
+                    },
+                    {
+                      "name": "indent",
+                      "annotation": "int"
+                    }
+                  ],
+                  "defaults": [
+                    "0"
+                  ],
+                  "returns": "List[str]",
+                  "docstring": "为函数生成测试",
+                  "line_number": 322,
+                  "is_async": false
+                },
+                {
+                  "name": "_validate_generated_test",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "test_file_path",
+                      "annotation": "Path"
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "验证生成的测试文件",
+                  "line_number": 391,
+                  "is_async": false
+                },
+                {
+                  "name": "generate_tests_for_directory",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    },
+                    {
+                      "name": "directory",
+                      "annotation": "str"
+                    },
+                    {
+                      "name": "pattern",
+                      "annotation": "str"
+                    }
+                  ],
+                  "defaults": [
+                    "'*.py'"
+                  ],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "为目录下的所有文件生成测试",
+                  "line_number": 452,
+                  "is_async": false
+                },
+                {
+                  "name": "get_generation_statistics",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": "Dict[str, Any]",
+                  "docstring": "获取测试生成统计信息",
+                  "line_number": 484,
+                  "is_async": false
+                },
+                {
+                  "name": "cleanup_generated_tests",
+                  "args": [
+                    {
+                      "name": "self",
+                      "annotation": null
+                    }
+                  ],
+                  "defaults": [],
+                  "returns": null,
+                  "docstring": "清理生成的测试文件",
+                  "line_number": 524,
+                  "is_async": false
+                }
+              ],
+              "docstring": "AI 测试生成器",
+              "line_number": 42
+            }
+          ],
+          "functions": [
+            {
+              "name": "main",
+              "args": [],
+              "defaults": [],
+              "returns": null,
+              "docstring": "主函数 - 用于测试",
+              "line_number": 534,
+              "is_async": false
+            }
+          ],
+          "imports": [
+            "ast",
+            "json",
+            "logging",
+            "subprocess",
+            "time",
+            "pathlib",
+            "typing",
+            "dataclasses",
+            "datetime",
+            "re",
+            "argparse"
+          ],
+          "dependencies": []
+        },
+        "validation": {
+          "file_exists": true,
+          "syntax_valid": true,
+          "has_assertions": true,
+          "has_todo": true,
+          "test_count": 26,
+          "assertion_count": 11,
+          "todo_count": 32,
+          "line_count": 192,
+          "passes_pytest": false,
+          "pytest_error": "ERROR: not found: /home/user/projects/FootballPrediction/tests/auto_generated/test_ai_test_generator\n(no match in any of [<Dir auto_generated>])\n\n"
+        },
+        "execution_time": 0.6381776332855225,
+        "timestamp": "2025-09-27T23:29:59.491388"
+      },
+      "status": "completed"
+    }
+  }
+]

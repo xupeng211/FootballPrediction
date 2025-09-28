@@ -3,9 +3,9 @@
 # ⚽ FootballPrediction - 足球预测系统
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
-[![Code Coverage](https://img.shields.io/badge/Coverage-96.35%25-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
-[![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Code Coverage](https://img.shields.io/badge/Coverage-19.8%25-yellow?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Code Quality](https://img.shields.io/badge/Code%20Quality-45.2%2F100-yellow?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Tests](https://img.shields.io/badge/Tests-34%20auto--generated-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
 
@@ -16,11 +16,11 @@
 ## ✨ 核心特性
 
 ### 🏆 质量保证
-- 📊 **高测试覆盖率** - pytest 默认启用 `--cov=src` 并强制 ≥80% 阈值，
-  最近报告为 **96.35%**
+- 📊 **自动化测试覆盖率** - 当前 **19.8%** (基线 7.7%)，34个自动生成测试文件，持续提升中
 - 🛡️ **安全性验证** - 通过bandit安全扫描，依赖漏洞已修复
-- 📏 **代码质量** - 通过flake8、mypy、black等全套质量检查
+- 📏 **代码质量** - 通过flake8、mypy、black等全套质量检查，当前质量分数 **45.2/100**
 - 🎯 **类型安全** - 完整的Python类型注解和静态检查
+- 🤖 **AI驱动质量改进** - 自动化缺陷发现、测试生成和质量追踪系统
 
 ### 🚀 技术架构
 - 🏗️ **现代化架构** - FastAPI + SQLAlchemy + Redis + PostgreSQL
@@ -31,8 +31,9 @@
 ### 🤖 开发体验
 - 🛠️ **完整工具链** - 613行Makefile驱动的开发流程
 - 🔍 **AI辅助开发** - 内置Cursor规则和AI工作流程指引
-- 📚 **完善文档** - 10+个文档文件，覆盖开发到部署全流程
-- 🔄 **实时监控** - CI状态监控、代码质量分析
+- 📚 **完善文档** - 15+个文档文件，覆盖开发到部署全流程
+- 🔄 **实时监控** - CI状态监控、代码质量分析、自动化质量看板
+- 📊 **智能质量系统** - 自动化测试生成、缺陷发现、质量追踪和可视化
 
 ## 🚀 快速开始
 
@@ -48,8 +49,9 @@ cd FootballPrediction
 ```bash
 make install      # 安装依赖
 make context      # 加载项目上下文 (⭐ 最重要)
-make test         # 运行测试 (385个测试用例)
-make coverage     # 查看96.35%覆盖率报告
+make test         # 运行测试 (34个自动生成测试文件)
+make coverage     # 查看19.8%覆盖率报告
+make quality-dashboard  # 查看综合质量看板
 ```
 
 ### 3. 验证部署就绪
