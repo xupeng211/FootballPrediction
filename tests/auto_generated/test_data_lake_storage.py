@@ -16,7 +16,7 @@ import asyncio
 # 添加 src 目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-# 模拟外部依赖
+# 模拟数据湖存储特定的外部依赖
 with patch.dict('sys.modules', {
     'pandas': Mock(),
     'pyarrow': Mock(),
@@ -24,7 +24,7 @@ with patch.dict('sys.modules', {
     'pyarrow.fs': Mock(),
     'boto3': Mock()
 }):
-    from data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
+    from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
 
 
 class TestDataLakeStorage:

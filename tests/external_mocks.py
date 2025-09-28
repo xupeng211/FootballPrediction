@@ -581,8 +581,8 @@ class ExternalDependencyMockContext:
         # 启动所有patches
         patches = [
             patch("src.cache.redis_manager.RedisManager", MockRedisManager),
-            patch("src.streaming.kafka_manager.KafkaProducer", MockKafkaProducer),
-            patch("src.streaming.kafka_manager.KafkaConsumer", MockKafkaConsumer),
+            patch("src.streaming.kafka_producer.KafkaProducer", MockKafkaProducer),
+            patch("src.streaming.kafka_consumer.KafkaConsumer", MockKafkaConsumer),
             patch("src.features.feature_store.FootballFeatureStore", MockFeatureStore),
             patch("mlflow.client.MlflowClient", MockMLflowClient),
             patch("mlflow.tracking.MlflowClient", MockMLflowTrackingClient),

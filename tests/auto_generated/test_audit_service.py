@@ -1,6 +1,6 @@
 """
 audit_service.py 测试文件
-测试权限审计服务功能，包括装饰器模式和上下文管理
+测试权限审计服务功能，基于实际实现
 """
 import pytest
 from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
@@ -9,33 +9,13 @@ from typing import Dict, Any, Optional
 import asyncio
 import inspect
 
-# 模拟外部依赖
-with patch.dict('sys.modules', {
-    'fastapi': Mock(),
-    'src.database.connection': Mock(),
-    'src.database.models.audit_log': Mock()
-}):
-    # 模拟 fastapi.Request
-    class MockRequest:
-        def __init__(self, client=None, headers=None):
-            self.client = client or {}
-            self.headers = headers or {}
-
-# 清理Prometheus注册表以避免重复注册
-try:
-    from prometheus_client import REGISTRY
-    collectors = list(REGISTRY._collector_to_names.keys())
-    for collector in collectors:
-        REGISTRY.unregister(collector)
-except ImportError:
-    pass
-
 # 添加 src 目录到路径
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from services.audit_service import AuditContext, audit_context, AuditAction, AuditSeverity, AuditLog
+from src.services.audit_service import AuditContext, AuditService, audit_operation, audit_context
+from src.database.models.audit_log import AuditAction, AuditSeverity
 
 
 class TestAuditContext:
@@ -70,93 +50,223 @@ class TestAuditContext:
         assert context.ip_address is None
         assert context.user_agent is None
 
-    def test_audit_context_from_request(self):
-        """测试从FastAPI请求创建审计上下文"""
-        mock_request = MockRequest(
-            headers={
-                "x-user-id": "user123",
-                "x-username": "test_user",
-                "x-user-role": "admin",
-                "x-session-id": "session456",
-                "x-forwarded-for": "192.168.1.1",
-                "user-agent": "Mozilla/5.0"
-            }
+    def test_audit_context_to_dict(self):
+        """测试审计上下文转换为字典"""
+        context = AuditContext(
+            user_id="user123",
+            username="test_user",
+            user_role="admin",
+            session_id="session456",
+            ip_address="192.168.1.1",
+            user_agent="Mozilla/5.0"
         )
 
-        context = AuditContext.from_request(mock_request)
+        context_dict = context.to_dict()
 
-        assert context.user_id == "user123"
-        assert context.username == "test_user"
-        assert context.user_role == "admin"
-        assert context.session_id == "session456"
-        assert context.ip_address == "192.168.1.1"
-        assert context.user_agent == "Mozilla/5.0"
+        assert context_dict["user_id"] == "user123"
+        assert context_dict["username"] == "test_user"
+        assert context_dict["user_role"] == "admin"
+        assert context_dict["session_id"] == "session456"
+        assert context_dict["ip_address"] == "192.168.1.1"
+        assert context_dict["user_agent"] == "Mozilla/5.0"
 
-    def test_audit_context_from_request_partial_headers(self):
-        """测试从部分头部信息创建审计上下文"""
-        mock_request = MockRequest(
-            headers={
-                "x-user-id": "user123",
-                "user-agent": "Mozilla/5.0"
-            }
-        )
-
-        context = AuditContext.from_request(mock_request)
-
-        assert context.user_id == "user123"
-        assert context.username is None
-        assert context.user_role is None
-        assert context.session_id is None
-        assert context.ip_address is None
-        assert context.user_agent == "Mozilla/5.0"
-
-    def test_audit_context_context_manager(self):
-        """测试审计上下文作为上下文管理器"""
+    def test_audit_context_methods(self):
+        """测试审计上下文方法"""
         context = AuditContext(user_id="user123", username="test_user")
 
-        # 测试进入上下文
-        token = context.__enter__()
-        assert token == context
+        # 测试to_dict方法
+        context_dict = context.to_dict()
+        assert context_dict["user_id"] == "user123"
+        assert context_dict["username"] == "test_user"
 
-        # 测试退出上下文
-        context.__exit__(None, None, None)
-        # 应该无异常
-
-    def test_audit_context_context_manager_with_exception(self):
-        """测试审计上下文处理异常情况"""
-        context = AuditContext(user_id="user123")
-
-        context.__enter__()
-        # 模拟异常处理
-        result = context.__exit__(ValueError("Test error"), None, None)
-        assert result is None  # 不处理异常
+        # 测试基本属性
+        assert context.user_id == "user123"
+        assert context.username == "test_user"
 
 
-class TestAuditDecorators:
-    """测试审计装饰器功能"""
+class TestAuditService:
+    """测试审计服务功能"""
 
-    def test_audit_function_decorator(self):
-        """测试函数装饰器"""
-        from services.audit_service import audit_operation
+    def test_audit_service_creation(self):
+        """测试审计服务创建"""
+        with patch('src.services.audit_service.DatabaseManager') as mock_db_manager:
+            service = AuditService()
 
-        @audit_operation("test_operation", "测试操作")
+            assert service.db_manager is not None
+            assert service.logger is not None
+            assert "users" in service.sensitive_tables
+            assert "password" in service.sensitive_columns
+            assert AuditAction.DELETE in service.high_risk_actions
+
+    def test_hash_sensitive_value(self):
+        """测试敏感数据哈希处理"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试正常值
+            hashed = service._hash_sensitive_value("test_password")
+            assert len(hashed) == 64  # SHA256哈希长度
+            assert hashed != "test_password"
+
+            # 测试空值
+            empty_hashed = service._hash_sensitive_value("")
+            assert empty_hashed == ""
+
+            # 测试None值
+            none_hashed = service._hash_sensitive_value(None)
+            assert none_hashed == ""
+
+    def test_hash_sensitive_data_alias(self):
+        """测试敏感数据哈希处理别名方法"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试别名方法
+            hashed = service._hash_sensitive_data("test_data")
+            expected = service._hash_sensitive_value("test_data")
+            assert hashed == expected
+
+    def test_sanitize_data(self):
+        """测试数据清理"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试包含敏感数据的字典
+            data = {
+                "username": "test_user",
+                "password": "secret123",
+                "email": "test@example.com",
+                "profile": {
+                    "age": 25,
+                    "token": "secret_token"
+                }
+            }
+
+            sanitized = service._sanitize_data(data)
+
+            assert sanitized["username"] == "test_user"
+            assert len(sanitized["password"]) == 64  # 哈希后的密码
+            assert sanitized["email"] == "test@example.com"  # 邮箱不被认为是高敏感字段
+            assert sanitized["profile"]["age"] == 25
+            assert len(sanitized["profile"]["token"]) == 64  # 嵌套的敏感数据也被哈希
+
+    def test_is_sensitive_table(self):
+        """测试敏感表判断"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试敏感表
+            assert service._is_sensitive_table("users") is True
+            assert service._is_sensitive_table("passwords") is True
+            assert service._is_sensitive_table("api_keys") is True
+
+            # 测试非敏感表
+            assert service._is_sensitive_table("matches") is False
+            assert service._is_sensitive_table("teams") is False
+
+            # 测试None值
+            assert service._is_sensitive_table(None) is False
+
+    def test_is_sensitive_data_with_column(self):
+        """测试敏感数据判断（包含列名）"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试敏感列
+            assert service._is_sensitive_data(None, "password") is True
+            assert service._is_sensitive_data(None, "api_key") is True
+            assert service._is_sensitive_data(None, "credit_card") is True
+
+            # 测试非敏感列
+            assert service._is_sensitive_data(None, "username") is False
+            assert service._is_sensitive_data(None, "score") is False
+
+            # 测试表和列组合
+            assert service._is_sensitive_data("users", "email") is True
+            assert service._is_sensitive_data("matches", "home_team_id") is False
+
+    def test_contains_pii(self):
+        """测试PII数据判断"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试包含PII的数据
+            pii_data = {"email": "test@example.com", "phone": "1234567890"}
+            assert service._contains_pii(pii_data) is True
+
+            # 测试不包含PII的数据
+            non_pii_data = {"username": "test_user", "age": 25}
+            assert service._contains_pii(non_pii_data) is False
+
+            # 测试空数据
+            assert service._contains_pii({}) is False
+            assert service._contains_pii(None) is False
+
+    def test_determine_severity(self):
+        """测试严重程度判断"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试高风险操作
+            assert service._determine_severity(AuditAction.DELETE, "users") == AuditSeverity.HIGH
+            assert service._determine_severity(AuditAction.GRANT, None) == AuditSeverity.HIGH
+
+            # 测试敏感表操作
+            assert service._determine_severity(AuditAction.UPDATE, "users") == AuditSeverity.HIGH
+            assert service._determine_severity(AuditAction.CREATE, "api_keys") == AuditSeverity.HIGH
+
+            # 测试包含PII的操作
+            pii_data = {"email": "test@example.com", "username": "test"}
+            assert service._determine_severity(AuditAction.UPDATE, "profiles", pii_data) == AuditSeverity.MEDIUM
+
+            # 测试读操作
+            assert service._determine_severity(AuditAction.READ, "teams") == AuditSeverity.LOW
+
+            # 测试普通操作
+            assert service._determine_severity(AuditAction.CREATE, "matches") == AuditSeverity.MEDIUM
+
+    def test_determine_compliance_category(self):
+        """测试合规分类判断"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
+
+            # 测试敏感数据分类
+            assert service._determine_compliance_category(AuditAction.READ, "users", True) == "PII"
+
+            # 测试访问控制分类
+            assert service._determine_compliance_category(AuditAction.GRANT, None, False) == "ACCESS_CONTROL"
+            assert service._determine_compliance_category(AuditAction.REVOKE, None, False) == "ACCESS_CONTROL"
+
+            # 测试数据保护分类
+            assert service._determine_compliance_category(AuditAction.BACKUP, None, False) == "DATA_PROTECTION"
+            assert service._determine_compliance_category(AuditAction.RESTORE, None, False) == "DATA_PROTECTION"
+
+    @patch('src.services.audit_service.DatabaseManager')
+    def test_audit_operation_decorator(self, mock_db_manager):
+        """测试审计操作装饰器"""
+        # 创建审计服务实例
+        service = AuditService()
+
+        # 使用装饰器
+        @audit_operation("test_operation", "test_table", service_instance=service)
         def test_function(param1, param2):
             return f"result_{param1}_{param2}"
 
-        # 模拟装饰器环境
+        # 调用被装饰的函数
         result = test_function("value1", "value2")
         assert result == "result_value1_value2"
 
-    def test_audit_async_function_decorator(self):
-        """测试异步函数装饰器"""
-        from services.audit_service import audit_operation
+    @patch('src.services.audit_service.DatabaseManager')
+    def test_audit_operation_decorator_async(self, mock_db_manager):
+        """测试异步审计操作装饰器"""
+        service = AuditService()
 
-        @audit_operation("async_test_operation", "异步测试操作")
+        @audit_operation("async_operation", "test_table", service_instance=service)
         async def async_test_function(param1, param2):
             await asyncio.sleep(0.001)
             return f"async_result_{param1}_{param2}"
 
-        # 模拟异步装饰器
+        # 调用异步函数
         async def run_test():
             result = await async_test_function("value1", "value2")
             return result
@@ -164,136 +274,9 @@ class TestAuditDecorators:
         result = asyncio.run(run_test())
         assert result == "async_result_value1_value2"
 
-    def test_audit_class_method_decorator(self):
-        """测试类方法装饰器"""
-        from services.audit_service import audit_operation
-
-        class TestClass:
-            @audit_operation("class_method", "类方法操作")
-            def test_method(self, value):
-                return f"class_result_{value}"
-
-        test_obj = TestClass()
-        result = test_obj.test_method("test_value")
-        assert result == "class_result_test_value"
-
-    def test_audit_operation_with_severity(self):
-        """测试带严重程度的审计操作"""
-        from services.audit_service import audit_operation, AuditSeverity
-
-        @audit_operation("high_risk_operation", "高风险操作", severity=AuditSeverity.HIGH)
-        def high_risk_function():
-            return "high_risk_result"
-
-        result = high_risk_function()
-        assert result == "high_risk_result"
-
-    def test_audit_operation_with_custom_action(self):
-        """测试自定义审计动作"""
-        from services.audit_service import audit_operation, AuditAction
-
-        @audit_operation("custom_action", "自定义操作", action=AuditAction.UPDATE)
-        def custom_action_function():
-            return "custom_result"
-
-        result = custom_action_function()
-        assert result == "custom_result"
-
-
-class TestAuditLog:
-    """测试审计日志功能"""
-
-    def test_audit_log_creation(self):
-        """测试审计日志创建"""
-        from services.audit_service import AuditLog
-
-        log = AuditLog(
-            user_id="user123",
-            action="CREATE",
-            resource_type="user_profile",
-            resource_id="profile456",
-            details={"field": "email", "old_value": "old@email.com", "new_value": "new@email.com"},
-            severity="INFO",
-            ip_address="192.168.1.1",
-            user_agent="Mozilla/5.0"
-        )
-
-        assert log.user_id == "user123"
-        assert log.action == "CREATE"
-        assert log.resource_type == "user_profile"
-        assert log.resource_id == "profile456"
-        assert log.details["field"] == "email"
-        assert log.severity == "INFO"
-        assert log.ip_address == "192.168.1.1"
-        assert log.user_agent == "Mozilla/5.0"
-
-    def test_audit_log_serialization(self):
-        """测试审计日志序列化"""
-        from services.audit_service import AuditLog
-
-        log = AuditLog(
-            user_id="user123",
-            action="UPDATE",
-            resource_type="settings",
-            resource_id="settings789",
-            details={"setting": "theme", "value": "dark"},
-            severity="MEDIUM"
-        )
-
-        # 测试转换为字典
-        log_dict = log.to_dict() if hasattr(log, 'to_dict') else log.__dict__
-        assert log_dict["user_id"] == "user123"
-        assert log_dict["action"] == "UPDATE"
-        assert log_dict["resource_type"] == "settings"
-
-    def test_audit_log_validation(self):
-        """测试审计日志验证"""
-        from services.audit_service import AuditLog
-
-        # 测试必填字段
-        log = AuditLog(
-            user_id="user123",
-            action="DELETE",
-            resource_type="data",
-            resource_id="data123"
-        )
-
-        assert log.user_id == "user123"
-        assert log.action == "DELETE"
-        assert log.resource_type == "data"
-        assert log.resource_id == "data123"
-        # 可选字段应该有默认值
-        assert hasattr(log, 'severity') or True  # 可能有不同的实现
-
-
-class TestAuditServiceIntegration:
-    """测试审计服务集成功能"""
-
-    @patch('services.audit_service.DatabaseManager')
-    def test_audit_service_database_integration(self, mock_db_manager):
-        """测试审计服务数据库集成"""
-        # 模拟数据库操作
-        mock_session = Mock()
-        mock_db_manager.get_session.return_value = mock_session
-
-        from services.audit_service import AuditService
-
-        service = AuditService()
-        result = service.log_audit_event(
-            user_id="user123",
-            action="LOGIN",
-            resource_type="session",
-            resource_id="session456",
-            details={"login_method": "password"}
-        )
-
-        assert result is not None
-        mock_db_manager.get_session.assert_called_once()
-
-    def test_audit_context_variable_management(self):
+    @patch('src.services.audit_service.DatabaseManager')
+    def test_audit_context_variable_management(self, mock_db_manager):
         """测试审计上下文变量管理"""
-        from services.audit_service import audit_context
-
         # 测试设置上下文
         context_data = {
             "user_id": "user123",
@@ -308,145 +291,95 @@ class TestAuditServiceIntegration:
 
         # 测试重置上下文
         audit_context.reset(token)
-        # 上下文应该被重置
-
-    def test_audit_bulk_operations(self):
-        """测试批量审计操作"""
-        from services.audit_service import AuditService
-
-        # 模拟批量操作
-        operations = [
-            {
-                "user_id": "user123",
-                "action": "CREATE",
-                "resource_type": "record",
-                "resource_id": f"record_{i}",
-                "details": {"batch_id": "batch123"}
-            }
-            for i in range(5)
-        ]
-
-        service = AuditService()
-        results = []
-        for op in operations:
-            result = service.log_audit_event(**op)
-            results.append(result)
-
-        assert len(results) == 5
-        # 验证批量操作的结果
+        # 上下文应该被重置为默认值
+        reset_context = audit_context.get()
+        assert reset_context == {}
 
     def test_audit_error_handling(self):
         """测试审计错误处理"""
-        from services.audit_service import AuditService
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
 
-        service = AuditService()
+            # 测试哈希空值处理
+            result1 = service._hash_sensitive_value(None)
+            assert result1 == ""
 
-        # 测试无效输入
-        with pytest.raises(ValueError):
-            service.log_audit_event(
-                user_id="",  # 空用户ID
-                action="INVALID",
-                resource_type="test"
-            )
+            result2 = service._hash_sensitive_value("")
+            assert result2 == ""
 
-        # 测试缺失必填字段
-        with pytest.raises(ValueError):
-            service.log_audit_event(
-                user_id="user123"
-                # 缺少 action, resource_type 等必填字段
-            )
+            # 测试清理非字典数据
+            result3 = service._sanitize_data("not_a_dict")
+            assert result3 == "not_a_dict"
 
-    def test_audit_performance_monitoring(self):
-        """测试审计性能监控"""
-        from services.audit_service import AuditService
+            # 测试清理None数据
+            result4 = service._sanitize_data(None)
+            assert result4 is None
 
-        service = AuditService()
+    def test_audit_service_configuration(self):
+        """测试审计服务配置"""
+        with patch('src.services.audit_service.DatabaseManager'):
+            service = AuditService()
 
-        import time
-        start_time = time.time()
+            # 测试敏感表配置
+            expected_tables = {
+                "users", "permissions", "tokens", "passwords", "api_keys",
+                "user_profiles", "payment_info", "personal_data"
+            }
+            assert service.sensitive_tables == expected_tables
 
-        # 执行多个审计操作
-        for i in range(100):
-            service.log_audit_event(
-                user_id=f"user_{i}",
-                action="PERFORMANCE_TEST",
-                resource_type="test",
-                resource_id=f"test_{i}"
-            )
+            # 测试敏感列配置
+            expected_columns = {
+                "password", "token", "secret", "key", "email", "phone",
+                "ssn", "credit_card", "bank_account", "api_key"
+            }
+            assert service.sensitive_columns == expected_columns
 
-        end_time = time.time()
-        execution_time = end_time - start_time
-
-        # 性能应该在合理范围内
-        assert execution_time < 5.0  # 100次操作应该在5秒内完成
-
-    def test_audit_concurrent_operations(self):
-        """测试并发审计操作"""
-        from services.audit_service import AuditService
-
-        service = AuditService()
-
-        async def concurrent_audit_operation(user_id_suffix):
-            return service.log_audit_event(
-                user_id=f"concurrent_user_{user_id_suffix}",
-                action="CONCURRENT_TEST",
-                resource_type="concurrent_resource",
-                resource_id=f"concurrent_{user_id_suffix}"
-            )
-
-        # 运行并发操作
-        tasks = [concurrent_audit_operation(i) for i in range(20)]
-        results = asyncio.run(asyncio.gather(*tasks, return_exceptions=True))
-
-        # 验证所有操作都完成
-        assert len(results) == 20
-        # 检查是否有异常
-        exceptions = [r for r in results if isinstance(r, Exception)]
-        assert len(exceptions) == 0, f"Concurrent operations had exceptions: {exceptions}"
-
-
-class TestAuditSeverityAndActions:
-    """测试审计严重程度和动作类型"""
+            # 测试高风险操作配置
+            expected_actions = {
+                AuditAction.DELETE, AuditAction.GRANT, AuditAction.REVOKE,
+                AuditAction.BACKUP, AuditAction.RESTORE, AuditAction.SCHEMA_CHANGE
+            }
+            assert service.high_risk_actions == expected_actions
 
     def test_audit_severity_levels(self):
         """测试审计严重程度级别"""
-        from services.audit_service import AuditSeverity
-
-        # 测试所有严重程度级别
-        severities = [AuditSeverity.LOW, AuditSeverity.MEDIUM, AuditSeverity.HIGH, AuditSeverity.CRITICAL]
-
-        for severity in severities:
-            assert hasattr(severity, 'value')
-            assert severity.value in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+        # 测试严重程度枚举值
+        assert AuditSeverity.LOW.value == "LOW"
+        assert AuditSeverity.MEDIUM.value == "MEDIUM"
+        assert AuditSeverity.HIGH.value == "HIGH"
+        assert AuditSeverity.CRITICAL.value == "CRITICAL"
 
     def test_audit_action_types(self):
         """测试审计动作类型"""
-        from services.audit_service import AuditAction
+        # 测试动作枚举值
+        assert AuditAction.CREATE.value == "CREATE"
+        assert AuditAction.READ.value == "READ"
+        assert AuditAction.UPDATE.value == "UPDATE"
+        assert AuditAction.DELETE.value == "DELETE"
+        assert AuditAction.GRANT.value == "GRANT"
+        assert AuditAction.LOGIN.value == "LOGIN"
 
-        # 测试所有动作类型
-        actions = [AuditAction.CREATE, AuditAction.READ, AuditAction.UPDATE, AuditAction.DELETE, AuditAction.EXECUTE]
 
-        for action in actions:
-            assert hasattr(action, 'value')
-            assert action.value in ['CREATE', 'READ', 'UPDATE', 'DELETE', 'EXECUTE']
+class TestAuditServiceIntegration:
+    """测试审计服务集成功能"""
 
-    def test_audit_severity_impact_mapping(self):
-        """测试严重程度影响映射"""
-        from services.audit_service import AuditSeverity, AuditService
-
+    @patch('src.services.audit_service.DatabaseManager')
+    def test_audit_service_logger_initialization(self, mock_db_manager):
+        """测试审计服务日志器初始化"""
         service = AuditService()
 
-        # 测试不同严重程度的影响
-        severity_impact = {
-            AuditSeverity.LOW: "informational",
-            AuditSeverity.MEDIUM: "warning",
-            AuditSeverity.HIGH: "alert",
-            AuditSeverity.CRITICAL: "critical"
-        }
+        # 检查日志器名称
+        expected_logger_name = f"audit.{service.__class__.__name__}"
+        assert service.logger.name == expected_logger_name
 
-        for severity, expected_impact in severity_impact.items():
-            impact = service.get_severity_impact(severity)
-            assert impact == expected_impact
+    @patch('src.services.audit_service.DatabaseManager')
+    def test_audit_service_database_manager_initialization(self, mock_db_manager):
+        """测试审计服务数据库管理器初始化"""
+        service = AuditService()
+
+        # 检查数据库管理器是否正确初始化
+        assert service.db_manager is not None
+        mock_db_manager.assert_called_once()
 
 
 if __name__ == "__main__":

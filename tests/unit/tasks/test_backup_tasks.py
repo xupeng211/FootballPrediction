@@ -37,8 +37,8 @@ class TestDatabaseBackupTask:
         """测试任务初始化"""
         task = DatabaseBackupTask()
 
-    assert task.error_logger is not None
-    assert task.backup_script_path.endswith("backup.sh")
+        assert task.error_logger is not None
+        assert task.backup_script_path.endswith("backup.sh")
     assert task.restore_script_path.endswith("restore.sh")
 
     @patch("src.tasks.backup_tasks.subprocess.run")
@@ -55,18 +55,18 @@ class TestDatabaseBackupTask:
 
         success, output, stats = task.run_backup_script("full", "test_db")
 
-    assert success is True
-    assert output == "备份完成"
-    assert "start_time" in stats
-    assert "end_time" in stats
-    assert "duration_seconds" in stats
-    assert stats["exit_code"] == 0
+        assert success is True
+        assert output == "备份完成"
+        assert "start_time" in stats
+        assert "end_time" in stats
+        assert "duration_seconds" in stats
+        assert stats["exit_code"] == 0
 
         # 验证subprocess调用
         mock_subprocess.assert_called_once()
         call_args = mock_subprocess.call_args
-    assert "--type" in call_args[0][0]
-    assert "full" in call_args[0][0]
+        assert "--type" in call_args[0][0]
+        assert "full" in call_args[0][0]
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_run_backup_script_failure(self, mock_subprocess):
@@ -82,8 +82,8 @@ class TestDatabaseBackupTask:
 
         success, output, stats = task.run_backup_script("full", "test_db")
 
-    assert success is False
-    assert "备份执行失败" in output
+        assert success is False
+        assert "备份执行失败" in output
     assert "数据库连接错误" in output
     assert stats["exit_code"] == 1
 
@@ -97,8 +97,8 @@ class TestDatabaseBackupTask:
 
         success, output, stats = task.run_backup_script("full", "test_db")
 
-    assert success is False
-    assert "备份执行超时" in output
+        assert success is False
+        assert "备份执行超时" in output
     assert stats["error"] == "timeout"
 
     @patch("src.tasks.backup_tasks.subprocess.run")
@@ -113,7 +113,7 @@ class TestDatabaseBackupTask:
         task = DatabaseBackupTask()
         size = task._get_latest_backup_size("full")
 
-    assert size == 1048576
+        assert size == 1048576
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_get_latest_backup_size_failure(self, mock_subprocess):
@@ -126,7 +126,7 @@ class TestDatabaseBackupTask:
         task = DatabaseBackupTask()
         size = task._get_latest_backup_size("full")
 
-    assert size is None
+        assert size is None
 
     @patch("src.tasks.backup_tasks.asyncio.get_event_loop")
     @patch("src.tasks.backup_tasks.TaskErrorLogger")
@@ -163,10 +163,10 @@ class TestBackupTasks:
 
         result = daily_full_backup_task.apply(args=["test_db"]).get()
 
-    assert result["success"] is True
-    assert result["task_type"] == "daily_full_backup"
-    assert result["database_name"] == "test_db"
-    assert "timestamp" in result
+        assert result["success"] is True
+        assert result["task_type"] == "daily_full_backup"
+        assert result["database_name"] == "test_db"
+        assert "timestamp" in result
 
         mock_run_script.assert_called_once_with(
             backup_type="full", database_name="test_db"
@@ -184,8 +184,8 @@ class TestBackupTasks:
 
         result = daily_full_backup_task.apply(args=["test_db"]).get()
 
-    assert result["success"] is False
-    assert "数据库连接失败" in result["output"]
+        assert result["success"] is False
+        assert "数据库连接失败" in result["output"]
 
     @patch.object(DatabaseBackupTask, "run_backup_script")
     def test_hourly_incremental_backup_task(self, mock_run_script):
@@ -194,8 +194,8 @@ class TestBackupTasks:
 
         result = hourly_incremental_backup_task.apply(args=["test_db"]).get()
 
-    assert result["success"] is True
-    assert result["task_type"] == "hourly_incremental_backup"
+        assert result["success"] is True
+        assert result["task_type"] == "hourly_incremental_backup"
 
         mock_run_script.assert_called_once_with(
             backup_type="incremental", database_name="test_db"
@@ -208,8 +208,8 @@ class TestBackupTasks:
 
         result = weekly_wal_archive_task.apply(args=["test_db"]).get()
 
-    assert result["success"] is True
-    assert result["task_type"] == "weekly_wal_archive"
+        assert result["success"] is True
+        assert result["task_type"] == "weekly_wal_archive"
 
         mock_run_script.assert_called_once_with(
             backup_type="wal", database_name="test_db"
@@ -222,8 +222,8 @@ class TestBackupTasks:
 
         result = cleanup_old_backups_task.apply(args=["test_db"]).get()
 
-    assert result["success"] is True
-    assert result["task_type"] == "cleanup_old_backups"
+        assert result["success"] is True
+        assert result["task_type"] == "cleanup_old_backups"
 
         mock_run_script.assert_called_once_with(
             backup_type="full", database_name="test_db", additional_args=["--cleanup"]
@@ -241,8 +241,8 @@ class TestBackupTasks:
         backup_file = "_path/to/backup.sql.gz"
         result = verify_backup_task.apply(args=[backup_file, "test_db"]).get()
 
-    assert result["success"] is True
-    assert result["task_type"] == "verify_backup"
+        assert result["success"] is True
+        assert result["task_type"] == "verify_backup"
     assert result["backup_file_path"] == backup_file
 
     @patch("src.tasks.backup_tasks.subprocess.run")
@@ -257,8 +257,8 @@ class TestBackupTasks:
         backup_file = "_path/to/backup.sql.gz"
         result = verify_backup_task.apply(args=[backup_file, "test_db"]).get()
 
-    assert result["success"] is False
-    assert result["error_output"] == "备份文件损坏"
+        assert result["success"] is False
+        assert result["error_output"] == "备份文件损坏"
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_verify_backup_task_timeout(self, mock_subprocess):
@@ -268,8 +268,8 @@ class TestBackupTasks:
         backup_file = "_path/to/backup.sql.gz"
         result = verify_backup_task.apply(args=[backup_file, "test_db"]).get()
 
-    assert result["success"] is False
-    assert result["error"] == "timeout"
+        assert result["success"] is False
+        assert result["error"] == "timeout"
 
 
 class TestHelperTasks:
@@ -289,8 +289,8 @@ class TestHelperTasks:
 
         result = get_backup_status.apply().get()
 
-    assert "full_backups" in result
-    assert "incremental_backups" in result
+        assert "full_backups" in result
+        assert "incremental_backups" in result
     assert "timestamp" in result
     assert result["full_backups"]["count"] == 2
     assert result["full_backups"]["total_size_bytes"] == 3145728  # 1MB + 2MB
@@ -302,8 +302,8 @@ class TestHelperTasks:
 
         result = get_backup_status.apply().get()
 
-    assert "error" in result
-    assert "timestamp" in result
+        assert "error" in result
+        assert "timestamp" in result
 
     @patch("src.tasks.backup_tasks.daily_full_backup_task")
     def test_manual_backup_task_full(self, mock_daily_task):
@@ -312,10 +312,10 @@ class TestHelperTasks:
 
         result = manual_backup_task.apply(args=["full", "test_db"]).get()
 
-    assert result["success"] is True
+        assert result["success"] is True
         mock_daily_task.apply_async.assert_called_once_with(args=["test_db"])
 
-    @patch("src.tasks.backup_tasks.hourly_incremental_backup_task")
+        @patch("src.tasks.backup_tasks.hourly_incremental_backup_task")
     def test_manual_backup_task_incremental(self, mock_incremental_task):
         """测试手动触发增量备份"""
         mock_incremental_task.apply_async.return_value.get.return_value = {
@@ -324,7 +324,7 @@ class TestHelperTasks:
 
         result = manual_backup_task.apply(args=["incremental", "test_db"]).get()
 
-    assert result["success"] is True
+        assert result["success"] is True
         mock_incremental_task.apply_async.assert_called_once_with(args=["test_db"])
 
     @patch("src.tasks.backup_tasks.group")
@@ -340,8 +340,8 @@ class TestHelperTasks:
 
         result = manual_backup_task.apply(args=["all", "test_db"]).get()
 
-    assert result["task_type"] == "manual_backup_all"
-    assert result["database_name"] == "test_db"
+        assert result["task_type"] == "manual_backup_all"
+        assert result["database_name"] == "test_db"
     assert "results" in result
 
     def test_manual_backup_task_invalid_type(self):
@@ -426,15 +426,15 @@ class TestPrometheusMetrics:
 
         # 通过collect方法验证指标值（避免访问私有属性）
         metric_families = list(success_counter.collect())
-    assert len(metric_families) == 1
+        assert len(metric_families) == 1
 
         samples = metric_families[0].samples
         # Counter会生成2个样本：主要计数器和_created时间戳
-    assert len(samples) == 2
+        assert len(samples) == 2
 
         # 找到主要计数器样本（不是_created样本）
         main_sample = next(s for s in samples if not s.name.endswith("_created"))
-    assert main_sample.value == 1.0
+        assert main_sample.value == 1.0
 
     def test_backup_failure_total_metric(self, mock_backup_metrics):
         """
@@ -451,15 +451,15 @@ class TestPrometheusMetrics:
 
         # 通过collect方法验证指标值
         metric_families = list(failure_counter.collect())
-    assert len(metric_families) == 1
+        assert len(metric_families) == 1
 
         samples = metric_families[0].samples
         # Counter会生成2个样本：主要计数器和_created时间戳
-    assert len(samples) == 2
+        assert len(samples) == 2
 
         # 找到主要计数器样本（不是_created样本）
         main_sample = next(s for s in samples if not s.name.endswith("_created"))
-    assert main_sample.value == 1.0
+        assert main_sample.value == 1.0
 
     def test_last_backup_timestamp_metric(self, mock_backup_metrics):
         """
@@ -475,11 +475,11 @@ class TestPrometheusMetrics:
 
         # 通过collect方法验证设置值
         metric_families = list(timestamp_gauge.collect())
-    assert len(metric_families) == 1
+        assert len(metric_families) == 1
 
         samples = metric_families[0].samples
-    assert len(samples) == 1
-    assert samples[0].value == timestamp
+        assert len(samples) == 1
+        assert samples[0].value == timestamp
 
     def test_backup_duration_seconds_metric(self, mock_backup_metrics):
         """
@@ -495,15 +495,15 @@ class TestPrometheusMetrics:
 
         # 通过collect方法验证观察值被记录
         metric_families = list(duration_histogram.collect())
-    assert len(metric_families) == 1
+        assert len(metric_families) == 1
 
         samples = metric_families[0].samples
         # histogram会产生多个样本：_bucket, _count, _sum
         sum_sample = next(s for s in samples if s.name.endswith("_sum"))
         count_sample = next(s for s in samples if s.name.endswith("_count"))
 
-    assert sum_sample.value == duration
-    assert count_sample.value == 1
+        assert sum_sample.value == duration
+        assert count_sample.value == 1
 
     def test_backup_file_size_bytes_metric(self, mock_backup_metrics):
         """
@@ -517,11 +517,11 @@ class TestPrometheusMetrics:
 
         # 通过collect方法验证设置值
         metric_families = list(size_gauge.collect())
-    assert len(metric_families) == 1
+        assert len(metric_families) == 1
 
         samples = metric_families[0].samples
-    assert len(samples) == 1
-    assert samples[0].value == file_size
+        assert len(samples) == 1
+        assert samples[0].value == file_size
 
 
 class TestBackupScriptIntegration:
@@ -530,14 +530,14 @@ class TestBackupScriptIntegration:
     def test_backup_script_exists(self):
         """测试备份脚本文件存在"""
         task = DatabaseBackupTask()
-    assert os.path.exists(task.backup_script_path)
+        assert os.path.exists(task.backup_script_path)
 
-    def test_restore_script_exists(self):
+        def test_restore_script_exists(self):
         """测试恢复脚本文件存在"""
         task = DatabaseBackupTask()
-    assert os.path.exists(task.restore_script_path)
+        assert os.path.exists(task.restore_script_path)
 
-    @patch("src.tasks.backup_tasks.subprocess.run")
+        @patch("src.tasks.backup_tasks.subprocess.run")
     def test_backup_script_help_command(self, mock_subprocess):
         """测试备份脚本帮助命令"""
         mock_result = Mock()
@@ -552,7 +552,7 @@ class TestBackupScriptIntegration:
         subprocess.run(cmd, capture_output=True, text=True)
 
         # 由于是mock，我们只验证路径正确
-    assert task.backup_script_path.endswith("backup.sh")
+        assert task.backup_script_path.endswith("backup.sh")
 
     @patch("src.tasks.backup_tasks.subprocess.run")
     def test_restore_script_help_command(self, mock_subprocess):
@@ -569,7 +569,7 @@ class TestBackupScriptIntegration:
         subprocess.run(cmd, capture_output=True, text=True)
 
         # 由于是mock，我们只验证路径正确
-    assert task.restore_script_path.endswith("restore.sh")
+        assert task.restore_script_path.endswith("restore.sh")
 
 
 class TestErrorHandling:
@@ -583,8 +583,8 @@ class TestErrorHandling:
         task = DatabaseBackupTask()
         success, output, stats = task.run_backup_script("full", "test_db")
 
-    assert success is False
-    assert "脚本文件不存在" in output
+        assert success is False
+        assert "脚本文件不存在" in output
     assert "error" in stats
 
     @patch("src.tasks.backup_tasks.subprocess.run")
@@ -595,8 +595,8 @@ class TestErrorHandling:
         task = DatabaseBackupTask()
         success, output, stats = task.run_backup_script("full", "test_db")
 
-    assert success is False
-    assert "权限不足" in output
+        assert success is False
+        assert "权限不足" in output
 
     @patch.object(DatabaseBackupTask, "run_backup_script")
     def test_task_retry_on_failure(self, mock_run_script):
@@ -611,13 +611,13 @@ class TestErrorHandling:
         # 第一次和第二次调用应该失败，第三次成功
         # 注意：实际的重试逻辑由Celery处理，这里只测试任务逻辑
         result1 = daily_full_backup_task.apply(args=["test_db"]).get()
-    assert result1["success"] is False
+        assert result1["success"] is False
 
         result2 = daily_full_backup_task.apply(args=["test_db"]).get()
-    assert result2["success"] is False
+        assert result2["success"] is False
 
         result3 = daily_full_backup_task.apply(args=["test_db"]).get()
-    assert result3["success"] is True
+        assert result3["success"] is True
 
 
 class TestDataConsistency:
@@ -644,13 +644,13 @@ class TestDataConsistency:
             "command",
         ]
         for field in required_fields:
-    assert field in stats
+        assert field in stats
 
         # 验证时间一致性
         start_time = datetime.fromisoformat(stats["start_time"])
         end_time = datetime.fromisoformat(stats["end_time"])
-    assert end_time >= start_time
-    assert stats["duration_seconds"] >= 0
+        assert end_time >= start_time
+        assert stats["duration_seconds"] >= 0
 
     def test_metric_labels_consistency(self):
         """
@@ -681,7 +681,7 @@ class TestDataConsistency:
 
         # 验证标签一致性 - 所有指标都应该使用相同的标签
         # 这里主要验证不会抛出异常
-    assert True  # 如果执行到这里，说明标签使用一致
+        assert True  # 如果执行到这里，说明标签使用一致
 
 
 # 集成测试标记
@@ -704,8 +704,8 @@ class TestBackupTasksIntegration:
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         # 验证脚本可以执行且返回帮助信息
-    assert result.returncode == 0
-    assert "用法" in result.stdout or "Usage" in result.stdout
+        assert result.returncode == 0
+        assert "用法" in result.stdout or "Usage" in result.stdout
 
     @pytest.mark.skipif(
         not os.getenv("RUN_INTEGRATION_TESTS"),
@@ -720,8 +720,8 @@ class TestBackupTasksIntegration:
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         # 验证脚本可以执行且返回帮助信息
-    assert result.returncode == 0
-    assert "用法" in result.stdout or "Usage" in result.stdout
+        assert result.returncode == 0
+        assert "用法" in result.stdout or "Usage" in result.stdout
 
 
 if __name__ == "__main__":
