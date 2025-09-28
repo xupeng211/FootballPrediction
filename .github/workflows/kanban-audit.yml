@@ -1,0 +1,308 @@
+name: Kanban Audit
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  kanban-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Run Kanban audit
+        id: audit
+        run: |
+          # 设置变量
+          REPORT_FILE="docs/_reports/TEST_IMPROVEMENT_AUDIT.md"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          COMMIT_SHA="${{ github.sha }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          # 确保报告目录存在
+          mkdir -p docs/_reports
+
+          echo "🔍 开始 Kanban 验收审计..."
+          echo "PR: #$PR_NUMBER"
+          echo "Commit: $COMMIT_SHA"
+
+          # 初始化审计结果
+          TOTAL_CHECKS=0
+          PASSED_CHECKS=0
+          FAILED_CHECKS=0
+
+          # 生成报告头部
+          cat > "$REPORT_FILE" << EOF
+          # 📋 Kanban 自动验收报告
+
+          **审计时间**: $TIMESTAMP
+          **触发原因**: PR #$PR_NUMBER 合并
+          **提交 SHA**: $COMMIT_SHA
+          **审计类型**: 自动化验收审计
+
+          ---
+
+          ## 📊 验收结果汇总
+
+          EOF
+
+          # 检查函数
+          check_item() {
+            local description="$1"
+            local check_command="$2"
+            local notes="$3"
+
+            TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+            echo "检查: $description"
+
+            if eval "$check_command" >/dev/null 2>&1; then
+              echo "  ✅ 通过"
+              echo "- ✅ **$description**" >> "$REPORT_FILE"
+              PASSED_CHECKS=$((PASSED_CHECKS + 1))
+              return 0
+            else
+              echo "  ❌ 失败"
+              echo "- ❌ **$description**" >> "$REPORT_FILE"
+              if [ -n "$notes" ]; then
+                echo "  *原因: $notes*" >> "$REPORT_FILE"
+              fi
+              FAILED_CHECKS=$((FAILED_CHECKS + 1))
+              return 1
+            fi
+          }
+
+          # 开始各项检查
+
+          ## 1. Kanban 看板检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 1. Kanban 看板" >> "$REPORT_FILE"
+
+          check_item "文件 docs/_reports/TEST_OPTIMIZATION_KANBAN.md 是否存在" \
+                     "[ -f 'docs/_reports/TEST_OPTIMIZATION_KANBAN.md' ]" \
+                     "Kanban 看板文件不存在"
+
+          if [ -f "docs/_reports/TEST_OPTIMIZATION_KANBAN.md" ]; then
+            check_item "文件内容是否包含 Phase 1/2/3 三个阶段" \
+                       "grep -q 'Phase 1.*短期修复' docs/_reports/TEST_OPTIMIZATION_KANBAN.md && grep -q 'Phase 2.*结构优化' docs/_reports/TEST_OPTIMIZATION_KANBAN.md && grep -q 'Phase 3.*长期质量建设' docs/_reports/TEST_OPTIMIZATION_KANBAN.md" \
+                       "缺少完整的三个阶段定义"
+
+            check_item "是否存在 In Progress 和 Done 区域" \
+                       "grep -q '进行中.*In Progress' docs/_reports/TEST_OPTIMIZATION_KANBAN.md && grep -q '已完成.*Done' docs/_reports/TEST_OPTIMIZATION_KANBAN.md" \
+                       "缺少状态管理区域"
+
+            check_item "是否有自动维护规则" \
+                       "grep -q '自动维护规则' docs/_reports/TEST_OPTIMIZATION_KANBAN.md" \
+                       "缺少自动维护规则"
+          fi
+
+          ## 2. CI Hook 守护检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 2. CI Hook 守护" >> "$REPORT_FILE"
+
+          check_item "本地 pre-commit hook 是否存在" \
+                     "[ -f '.git/hooks/pre-commit' ]" \
+                     "pre-commit hook 文件不存在"
+
+          if [ -f ".git/hooks/pre-commit" ]; then
+            check_item "pre-commit hook 是否包含检查逻辑" \
+                       "grep -q 'TEST_OPTIMIZATION_KANBAN.md' .git/hooks/pre-commit" \
+                       "pre-commit hook 缺少检查逻辑"
+          fi
+
+          check_item "Makefile 是否有 setup-hooks 目标" \
+                     "grep -q '^setup-hooks:' Makefile" \
+                     "Makefile 缺少 setup-hooks 目标"
+
+          check_item "GitHub Actions kanban-check.yml 是否存在" \
+                     "[ -f '.github/workflows/kanban-check.yml' ]" \
+                     "GitHub Actions 工作流文件不存在"
+
+          if [ -f ".github/workflows/kanban-check.yml" ]; then
+            check_item "CI 是否检查 Kanban 文件更新" \
+                       "grep -q 'Check if Kanban updated' .github/workflows/kanban-check.yml" \
+                       "缺少 Kanban 检查步骤"
+
+            check_item "日志输出是否美化（彩色提示）" \
+                       "grep -q '\033\[' .github/workflows/kanban-check.yml" \
+                       "缺少彩色日志输出"
+          fi
+
+          ## 3. 缓存与优化检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 3. 缓存与优化" >> "$REPORT_FILE"
+
+          if [ -f ".github/workflows/kanban-check.yml" ]; then
+            check_item "是否有统一的缓存步骤" \
+                       "grep -A5 'Cache hooks and Kanban file' .github/workflows/kanban-check.yml | grep -q '\.git/hooks'" \
+                       "缺少统一的缓存步骤"
+
+            check_item "缓存是否包含 .git/hooks 和 Kanban 文件 hash" \
+                       "grep -A10 'key: kanban-check-' .github/workflows/kanban-check.yml | grep -q 'hashFiles'" \
+                       "缓存 key 配置不正确"
+
+            check_item "是否有 cache hit 状态输出" \
+                       "grep -q 'Cache hit:' .github/workflows/kanban-check.yml" \
+                       "缺少缓存状态输出"
+          fi
+
+          ## 4. CI 失败报告检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 4. CI 失败报告" >> "$REPORT_FILE"
+
+          if [ -f ".github/workflows/kanban-check.yml" ]; then
+            check_item "检查失败时是否会生成 KANBAN_CHECK_REPORT.md" \
+                       "grep -q 'KANBAN_CHECK_REPORT.md' .github/workflows/kanban-check.yml" \
+                       "缺少失败报告生成逻辑"
+
+            check_item "报告内容是否包含时间/提交 SHA/CI Run ID" \
+                       "grep -q '生成时间.*GITHUB_RUN_ID.*GITHUB_SHA' .github/workflows/kanban-check.yml" \
+                       "报告内容不完整"
+          fi
+
+          ## 5. 周报机制检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 5. 周报机制" >> "$REPORT_FILE"
+
+          check_item "是否有 kanban-history.yml 工作流" \
+                     "[ -f '.github/workflows/kanban-history.yml' ]" \
+                     "周报工作流文件不存在"
+
+          if [ -f ".github/workflows/kanban-history.yml" ]; then
+            check_item "是否会定时生成 KANBAN_HISTORY.md" \
+                       "grep -q 'KANBAN_HISTORY.md' .github/workflows/kanban-history.yml" \
+                       "缺少历史汇总生成逻辑"
+
+            check_item "是否配置了定时触发" \
+                       "grep -q 'cron.*0 2 \* \* 1' .github/workflows/kanban-history.yml" \
+                       "缺少定时触发配置"
+          fi
+
+          ## 6. 指南文档检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 6. 指南文档" >> "$REPORT_FILE"
+
+          check_item "是否存在 TEST_IMPROVEMENT_GUIDE.md" \
+                     "[ -f 'docs/TEST_IMPROVEMENT_GUIDE.md' ]" \
+                     "指南文档文件不存在"
+
+          if [ -f "docs/TEST_IMPROVEMENT_GUIDE.md" ]; then
+            check_item "是否包含 Kanban 说明" \
+                       "grep -q 'Kanban 看板' docs/TEST_IMPROVEMENT_GUIDE.md" \
+                       "缺少 Kanban 说明"
+
+            check_item "是否包含 CI Hook 说明" \
+                       "grep -q 'CI Hook 守护' docs/TEST_IMPROVEMENT_GUIDE.md" \
+                       "缺少 CI Hook 说明"
+
+            check_item "是否包含周报说明" \
+                       "grep -q '周报机制' docs/TEST_IMPROVEMENT_GUIDE.md" \
+                       "缺少周报说明"
+          fi
+
+          ## 7. README 集成检查
+          echo "" >> "$REPORT_FILE"
+          echo "### 7. README 集成" >> "$REPORT_FILE"
+
+          check_item "README.md 是否包含测试改进机制指南链接" \
+                     "grep -q '测试改进机制指南' README.md" \
+                     "缺少指南链接"
+
+          check_item "README.md 顶部是否有 Test Improvement Guide 徽章" \
+                     "grep -q 'Test Improvement Guide.*blue' README.md" \
+                     "缺少指南徽章"
+
+          check_item "README.md 顶部是否有 Kanban Check CI 状态徽章" \
+                     "grep -q 'Kanban Check.*badge.svg' README.md" \
+                     "缺少 CI 状态徽章"
+
+          # 计算通过率
+          PASS_RATE=$(( PASSED_CHECKS * 100 / TOTAL_CHECKS ))
+
+          # 生成汇总结果
+          echo "" >> "$REPORT_FILE"
+          echo "---" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "## 📈 审计统计" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "- **总检查项**: $TOTAL_CHECKS" >> "$REPORT_FILE"
+          echo "- **通过项**: $PASSED_CHECKS" >> "$REPORT_FILE"
+          echo "- **失败项**: $FAILED_CHECKS" >> "$REPORT_FILE"
+          echo "- **通过率**: $PASS_RATE%" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+
+          # 生成结论
+          echo "## 🎯 审计结论" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+
+          if [ $FAILED_CHECKS -eq 0 ]; then
+            echo "✅ **所有检查项均通过！测试改进机制运行正常。**" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "建议继续保持当前状态，定期回顾机制执行效果。" >> "$REPORT_FILE"
+            AUDIT_STATUS="✅ 全部通过"
+          else
+            echo "⚠️ **发现 $FAILED_CHECKS 个问题需要修复。**" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "### 🔧 待修复任务" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "请根据上述 ❌ 标记的检查项进行修复：" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "1. 优先修复影响核心功能的问题" >> "$REPORT_FILE"
+            echo "2. 确保所有文件和配置正确" >> "$REPORT_FILE"
+            echo "3. 验证修复后的功能正常工作" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "建议在下一次提交前完成修复。" >> "$REPORT_FILE"
+            AUDIT_STATUS="⚠️ 部分问题待修复"
+          fi
+
+          # 添加审计完成信息
+          echo "" >> "$REPORT_FILE"
+          echo "---" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "**审计完成时间**: $TIMESTAMP" >> "$REPORT_FILE"
+          echo "**审计工具**: GitHub Actions 自动化审计" >> "$REPORT_FILE"
+          echo "**审计状态**: $AUDIT_STATUS" >> "$REPORT_FILE"
+
+          echo "✅ 审计完成，通过率: $PASS_RATE% ($PASSED_CHECKS/$TOTAL_CHECKS)"
+          echo "audit_status=$AUDIT_STATUS" >> $GITHUB_OUTPUT
+          echo "pass_rate=$PASS_RATE%" >> $GITHUB_OUTPUT
+
+      - name: Commit audit report
+        run: |
+          REPORT_FILE="docs/_reports/TEST_IMPROVEMENT_AUDIT.md"
+
+          # 检查是否有变化
+          if ! git diff --quiet "$REPORT_FILE" || [ ! -f "$REPORT_FILE" ]; then
+            echo "📤 提交审计报告..."
+            git add "$REPORT_FILE"
+            git commit -m "chore(audit): update TEST_IMPROVEMENT_AUDIT.md after PR merge
+
+            Auto-generated audit report for PR #${{ github.event.pull_request.number }}
+            Audit status: ${{ steps.audit.outputs.audit_status }}
+            Pass rate: ${{ steps.audit.outputs.pass_rate }}"
+            git push origin main
+            echo "✅ 审计报告已提交"
+          else
+            echo "ℹ️ 审计报告无变化，跳过提交"
+          fi
+
+      - name: Audit summary
+        run: |
+          echo "🎯 Kanban 审计完成"
+          echo "   状态: ${{ steps.audit.outputs.audit_status }}"
+          echo "   通过率: ${{ steps.audit.outputs.pass_rate }}"
+          echo "   PR: #${{ github.event.pull_request.number }}"
+          echo "   提交: ${{ github.sha }}"
