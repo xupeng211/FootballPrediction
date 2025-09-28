@@ -11,7 +11,7 @@ import signal
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from .metrics_exporter import get_metrics_exporter
+from src.monitoring.metrics_exporter import get_metrics_exporter
 
 logger = logging.getLogger(__name__)
 
