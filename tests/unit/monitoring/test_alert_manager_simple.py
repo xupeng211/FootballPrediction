@@ -18,14 +18,14 @@ class TestAlertRule:
 
     def test_alert_rule_import(self):
         """测试告警规则类导入"""
-        from src.monitoring.alert_manager import AlertRule
+        from monitoring.alert_manager import AlertRule
 
         # 验证类可以导入
         assert AlertRule is not None
 
     def test_alert_rule_creation(self):
         """测试告警规则创建"""
-        from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
+        from monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
 
         rule = AlertRule(
             rule_id="test_rule_id",
@@ -51,7 +51,7 @@ class TestAlertRule:
     ])
     def test_alert_rule_parameters(self, condition, level_name, channel_name):
         """测试告警规则参数"""
-        from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
+        from monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
 
         rule = AlertRule(
             rule_id=f"test_{level_name.lower()}",
@@ -72,7 +72,7 @@ class TestAlertManager:
 
     def test_alert_manager_initialization(self):
         """测试告警管理器初始化"""
-        from src.monitoring.alert_manager import AlertManager
+        from monitoring.alert_manager import AlertManager
 
         manager = AlertManager()
 
@@ -88,7 +88,7 @@ class TestAlertManager:
 
     def test_add_alert_rule(self):
         """测试添加告警规则"""
-        from src.monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
+        from monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
 
         manager = AlertManager()
         initial_rule_count = len(manager.rules)
@@ -109,7 +109,7 @@ class TestAlertManager:
 
     def test_remove_alert_rule(self):
         """测试移除告警规则"""
-        from src.monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
+        from monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
 
         manager = AlertManager()
         initial_rule_count = len(manager.rules)
@@ -131,7 +131,7 @@ class TestAlertManager:
 
     def test_get_alert_rule(self):
         """测试获取告警规则"""
-        from src.monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
+        from monitoring.alert_manager import AlertManager, AlertRule, AlertLevel, AlertChannel
 
         manager = AlertManager()
         rule = AlertRule(
@@ -153,7 +153,7 @@ class TestAlertManager:
 
     def test_fire_alert(self):
         """测试触发告警"""
-        from src.monitoring.alert_manager import AlertManager, AlertLevel
+        from monitoring.alert_manager import AlertManager, AlertLevel
 
         manager = AlertManager()
 
@@ -173,7 +173,7 @@ class TestAlertManager:
 
     def test_register_handler(self):
         """测试注册处理器"""
-        from src.monitoring.alert_manager import AlertManager, AlertChannel
+        from monitoring.alert_manager import AlertManager, AlertChannel
 
         manager = AlertManager()
 
@@ -189,7 +189,7 @@ class TestAlertManager:
 
     def test_resolve_alert(self):
         """测试解决告警"""
-        from src.monitoring.alert_manager import AlertManager, AlertLevel
+        from monitoring.alert_manager import AlertManager, AlertLevel
 
         manager = AlertManager()
 
@@ -209,7 +209,7 @@ class TestAlertManager:
 
     def test_get_active_alerts(self):
         """测试获取活跃告警"""
-        from src.monitoring.alert_manager import AlertManager, AlertLevel
+        from monitoring.alert_manager import AlertManager, AlertLevel
 
         manager = AlertManager()
 
@@ -238,7 +238,7 @@ class TestAlertManager:
 
     def test_get_alert_summary(self):
         """测试获取告警摘要"""
-        from src.monitoring.alert_manager import AlertManager, AlertLevel
+        from monitoring.alert_manager import AlertManager, AlertLevel
 
         manager = AlertManager()
 

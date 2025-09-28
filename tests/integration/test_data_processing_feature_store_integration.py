@@ -56,7 +56,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_data_collection_processing_integration(self):
         """测试数据采集与处理的集成"""
         # 模拟数据采集
-        with patch('src.data.collectors.DataCollector') as mock_collector_class:
+        with patch('data.collectors.DataCollector') as mock_collector_class:
             mock_collector = AsyncMock()
             mock_collector_class.return_value = mock_collector
 
@@ -73,7 +73,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟数据处理器
-            with patch('src.data.processing.DataProcessor') as mock_processor_class:
+            with patch('data.processing.DataProcessor') as mock_processor_class:
                 mock_processor = AsyncMock()
                 mock_processor_class.return_value = mock_processor
 
@@ -102,7 +102,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_feature_engineering_integration(self):
         """测试特征工程的集成"""
         # 模拟特征计算器
-        with patch('src.features.feature_calculator.FeatureCalculator') as mock_calculator_class:
+        with patch('features.feature_calculator.FeatureCalculator') as mock_calculator_class:
             mock_calculator = AsyncMock()
             mock_calculator_class.return_value = mock_calculator
 
@@ -125,7 +125,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟特征存储
-            with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+            with patch('features.feature_store.FeatureStore') as mock_store_class:
                 mock_store = AsyncMock()
                 mock_store_class.return_value = mock_store
 
@@ -150,7 +150,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_online_feature_retrieval_integration(self):
         """测试在线特征检索的集成"""
         # 模拟特征存储
-        with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+        with patch('features.feature_store.FeatureStore') as mock_store_class:
             mock_store = AsyncMock()
             mock_store_class.return_value = mock_store
 
@@ -170,7 +170,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟预测服务
-            with patch('src.models.prediction_service.PredictionService') as mock_service_class:
+            with patch('models.prediction_service.PredictionService') as mock_service_class:
                 mock_service = AsyncMock()
                 mock_service_class.return_value = mock_service
 
@@ -201,7 +201,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_historical_feature_analysis_integration(self):
         """测试历史特征分析的集成"""
         # 模拟特征存储
-        with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+        with patch('features.feature_store.FeatureStore') as mock_store_class:
             mock_store = AsyncMock()
             mock_store_class.return_value = mock_store
 
@@ -229,7 +229,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟特征分析器
-            with patch('src.features.feature_analyzer.FeatureAnalyzer') as mock_analyzer_class:
+            with patch('features.feature_analyzer.FeatureAnalyzer') as mock_analyzer_class:
                 mock_analyzer = AsyncMock()
                 mock_analyzer_class.return_value = mock_analyzer
 
@@ -265,7 +265,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_feature_quality_validation_integration(self):
         """测试特征质量验证的集成"""
         # 模拟特征质量检查器
-        with patch('src.features.quality.FeatureQualityChecker') as mock_checker_class:
+        with patch('features.quality.FeatureQualityChecker') as mock_checker_class:
             mock_checker = AsyncMock()
             mock_checker_class.return_value = mock_checker
 
@@ -287,7 +287,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟特征存储
-            with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+            with patch('features.feature_store.FeatureStore') as mock_store_class:
                 mock_store = AsyncMock()
                 mock_store_class.return_value = mock_store
 
@@ -319,7 +319,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_model_prediction_pipeline_integration(self):
         """测试模型预测管道的完整集成"""
         # 模拟完整的预测管道
-        with patch('src.models.prediction_pipeline.PredictionPipeline') as mock_pipeline_class:
+        with patch('models.prediction_pipeline.PredictionPipeline') as mock_pipeline_class:
             mock_pipeline = AsyncMock()
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -369,7 +369,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_real_time_feature_update_integration(self):
         """测试实时特征更新的集成"""
         # 模拟实时特征更新器
-        with patch('src.features.realtime_updater.RealtimeFeatureUpdater') as mock_updater_class:
+        with patch('features.realtime_updater.RealtimeFeatureUpdater') as mock_updater_class:
             mock_updater = AsyncMock()
             mock_updater_class.return_value = mock_updater
 
@@ -383,7 +383,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟特征存储
-            with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+            with patch('features.feature_store.FeatureStore') as mock_store_class:
                 mock_store = AsyncMock()
                 mock_store_class.return_value = mock_store
 
@@ -419,7 +419,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_feature_monitoring_integration(self):
         """测试特征监控的集成"""
         # 模拟特征监控器
-        with patch('src.features.monitoring.FeatureMonitor') as mock_monitor_class:
+        with patch('features.monitoring.FeatureMonitor') as mock_monitor_class:
             mock_monitor = AsyncMock()
             mock_monitor_class.return_value = mock_monitor
 
@@ -441,7 +441,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -459,7 +459,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_feature_drift_detection_integration(self):
         """测试特征漂移检测的集成"""
         # 模拟特征漂移检测器
-        with patch('src.features.drift_detector.FeatureDriftDetector') as mock_detector_class:
+        with patch('features.drift_detector.FeatureDriftDetector') as mock_detector_class:
             mock_detector = AsyncMock()
             mock_detector_class.return_value = mock_detector
 
@@ -479,7 +479,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟模型管理器
-            with patch('src.models.model_manager.ModelManager') as mock_manager_class:
+            with patch('models.model_manager.ModelManager') as mock_manager_class:
                 mock_manager = AsyncMock()
                 mock_manager_class.return_value = mock_manager
 
@@ -515,7 +515,7 @@ class TestDataProcessingFeaturePipeline:
     async def test_feature_abtesting_integration(self):
         """测试特征A/B测试的集成"""
         # 模拟特征A/B测试管理器
-        with patch('src.features.abtesting.FeatureABTestManager') as mock_abtest_class:
+        with patch('features.abtesting.FeatureABTestManager') as mock_abtest_class:
             mock_abtest = AsyncMock()
             mock_abtest_class.return_value = mock_abtest
 
@@ -537,7 +537,7 @@ class TestDataProcessingFeaturePipeline:
             }
 
             # 模拟特征存储
-            with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+            with patch('features.feature_store.FeatureStore') as mock_store_class:
                 mock_store = AsyncMock()
                 mock_store_class.return_value = mock_store
 

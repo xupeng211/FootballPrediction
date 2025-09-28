@@ -52,7 +52,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_cache_miss_database_query_api_fallback(self):
         """测试缓存未命中→数据库查询→API回退的完整流程"""
         # 模拟缓存未命中
-        with patch('src.cache.redis_manager.RedisManager') as mock_cache_class:
+        with patch('cache.redis_manager.RedisManager') as mock_cache_class:
             mock_cache = AsyncMock()
             mock_cache_class.return_value = mock_cache
 
@@ -60,7 +60,7 @@ class TestCacheDatabaseApiIntegration:
             mock_cache.get.return_value = None
 
             # 模拟数据库查询
-            with patch('src.database.connection.DatabaseManager') as mock_db_class:
+            with patch('database.connection.DatabaseManager') as mock_db_class:
                 mock_db = AsyncMock()
                 mock_db_class.return_value = mock_db
 
@@ -68,7 +68,7 @@ class TestCacheDatabaseApiIntegration:
                 mock_db.execute_query.return_value = []
 
                 # 模拟外部API调用
-                with patch('src.data.collectors.ExternalAPIClient') as mock_api_class:
+                with patch('data.collectors.ExternalAPIClient') as mock_api_class:
                     mock_api = AsyncMock()
                     mock_api_class.return_value = mock_api
 
@@ -115,7 +115,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_cache_hit_optimization(self):
         """测试缓存命中优化流程"""
         # 模拟缓存命中
-        with patch('src.cache.redis_manager.RedisManager') as mock_cache_class:
+        with patch('cache.redis_manager.RedisManager') as mock_cache_class:
             mock_cache = AsyncMock()
             mock_cache_class.return_value = mock_cache
 
@@ -139,12 +139,12 @@ class TestCacheDatabaseApiIntegration:
     async def test_cache_invalidation_consistency(self):
         """测试缓存失效和数据一致性"""
         # 模拟缓存失效
-        with patch('src.cache.redis_manager.RedisManager') as mock_cache_class:
+        with patch('cache.redis_manager.RedisManager') as mock_cache_class:
             mock_cache = AsyncMock()
             mock_cache_class.return_value = mock_cache
 
             # 模拟数据库管理器
-            with patch('src.database.connection.DatabaseManager') as mock_db_class:
+            with patch('database.connection.DatabaseManager') as mock_db_class:
                 mock_db = AsyncMock()
                 mock_db_class.return_value = mock_db
 
@@ -179,7 +179,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_database_connection_pool_integration(self):
         """测试数据库连接池集成"""
         # 模拟连接池管理
-        with patch('src.database.connection.DatabaseConnectionPool') as mock_pool_class:
+        with patch('database.connection.DatabaseConnectionPool') as mock_pool_class:
             mock_pool = AsyncMock()
             mock_pool_class.return_value = mock_pool
 
@@ -218,7 +218,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_api_rate_limiting_integration(self):
         """测试API限流集成"""
         # 模拟API限流器
-        with patch('src.data.collectors.RateLimiter') as mock_limiter_class:
+        with patch('data.collectors.RateLimiter') as mock_limiter_class:
             mock_limiter = AsyncMock()
             mock_limiter_class.return_value = mock_limiter
 
@@ -231,7 +231,7 @@ class TestCacheDatabaseApiIntegration:
             }
 
             # 模拟API客户端
-            with patch('src.data.collectors.ExternalAPIClient') as mock_api_class:
+            with patch('data.collectors.ExternalAPIClient') as mock_api_class:
                 mock_api = AsyncMock()
                 mock_api_class.return_value = mock_api
 
@@ -253,12 +253,12 @@ class TestCacheDatabaseApiIntegration:
     async def test_multi_level_cache_integration(self):
         """测试多级缓存集成"""
         # 模拟L1缓存 (内存)
-        with patch('src.cache.memory_cache.MemoryCache') as mock_l1_cache_class:
+        with patch('cache.memory_cache.MemoryCache') as mock_l1_cache_class:
             mock_l1_cache = AsyncMock()
             mock_l1_cache_class.return_value = mock_l1_cache
 
             # 模拟L2缓存 (Redis)
-            with patch('src.cache.redis_manager.RedisManager') as mock_l2_cache_class:
+            with patch('cache.redis_manager.RedisManager') as mock_l2_cache_class:
                 mock_l2_cache = AsyncMock()
                 mock_l2_cache_class.return_value = mock_l2_cache
 
@@ -287,7 +287,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_circuit_breaker_integration(self):
         """测试断路器集成"""
         # 模拟断路器
-        with patch('src.utils.circuit_breaker.CircuitBreaker') as mock_breaker_class:
+        with patch('utils.circuit_breaker.CircuitBreaker') as mock_breaker_class:
             mock_breaker = AsyncMock()
             mock_breaker_class.return_value = mock_breaker
 
@@ -318,7 +318,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_retry_mechanism_integration(self):
         """测试重试机制集成"""
         # 模拟重试管理器
-        with patch('src.utils.retry_manager.RetryManager') as mock_retry_class:
+        with patch('utils.retry_manager.RetryManager') as mock_retry_class:
             mock_retry = AsyncMock()
             mock_retry_class.return_value = mock_retry
 
@@ -353,7 +353,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_data_consistency_check_integration(self):
         """测试数据一致性检查集成"""
         # 模拟一致性检查器
-        with patch('src.data.consistency.DataConsistencyChecker') as mock_checker_class:
+        with patch('data.consistency.DataConsistencyChecker') as mock_checker_class:
             mock_checker = AsyncMock()
             mock_checker_class.return_value = mock_checker
 
@@ -367,7 +367,7 @@ class TestCacheDatabaseApiIntegration:
             }
 
             # 模拟数据同步器
-            with patch('src.data.synchronizer.DataSynchronizer') as mock_sync_class:
+            with patch('data.synchronizer.DataSynchronizer') as mock_sync_class:
                 mock_sync = AsyncMock()
                 mock_sync_class.return_value = mock_sync
 
@@ -400,7 +400,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_performance_monitoring_integration(self):
         """测试性能监控集成"""
         # 模拟性能监控器
-        with patch('src.monitoring.performance_monitor.PerformanceMonitor') as mock_monitor_class:
+        with patch('monitoring.performance_monitor.PerformanceMonitor') as mock_monitor_class:
             mock_monitor = AsyncMock()
             mock_monitor_class.return_value = mock_monitor
 
@@ -425,7 +425,7 @@ class TestCacheDatabaseApiIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -444,7 +444,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_error_handling_and_recovery_integration(self):
         """测试错误处理和恢复集成"""
         # 模拟错误处理器
-        with patch('src.utils.error_handler.ErrorHandler') as mock_handler_class:
+        with patch('utils.error_handler.ErrorHandler') as mock_handler_class:
             mock_handler = AsyncMock()
             mock_handler_class.return_value = mock_handler
 
@@ -458,7 +458,7 @@ class TestCacheDatabaseApiIntegration:
             }
 
             # 模拟恢复管理器
-            with patch('src.utils.recovery_manager.RecoveryManager') as mock_recovery_class:
+            with patch('utils.recovery_manager.RecoveryManager') as mock_recovery_class:
                 mock_recovery = AsyncMock()
                 mock_recovery_class.return_value = mock_recovery
 
@@ -495,7 +495,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_health_check_integration(self):
         """测试健康检查集成"""
         # 模拟健康检查器
-        with patch('src.monitoring.health_checker.HealthChecker') as mock_checker_class:
+        with patch('monitoring.health_checker.HealthChecker') as mock_checker_class:
             mock_checker = AsyncMock()
             mock_checker_class.return_value = mock_checker
 
@@ -529,7 +529,7 @@ class TestCacheDatabaseApiIntegration:
     async def test_scaling_integration(self):
         """测试扩展集成"""
         # 模拟扩展管理器
-        with patch('src.utils.scaling_manager.ScalingManager') as mock_scaling_class:
+        with patch('utils.scaling_manager.ScalingManager') as mock_scaling_class:
             mock_scaling = AsyncMock()
             mock_scaling_class.return_value = mock_scaling
 
