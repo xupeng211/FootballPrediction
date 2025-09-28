@@ -106,15 +106,15 @@ class TestDataAPI:
             }
 
             result = await mock_get_dashboard(mock_session)
-    assert result is not None
-    assert result["total_matches"] == 100
+        assert result is not None
+        assert result["total_matches"] == 100
 
     def test_api_module_imports(self):
         """测试API模块导入"""
         from src.api import data
 
-    assert hasattr(data, "router")
-    assert hasattr(data, "get_match_features")
+        assert hasattr(data, "router")
+        assert hasattr(data, "get_match_features")
 
     @pytest.mark.asyncio
     async def test_api_error_handling(self, mock_session):

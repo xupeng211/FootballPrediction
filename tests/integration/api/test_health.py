@@ -362,9 +362,9 @@ class TestDatabaseHealthCheck:
 
         result = await check_database_health(mock_session)
 
-    assert result["status"] == "unhealthy"
-    assert "details" in result
-    assert "Database timeout" in result["details"]["error"]
+        assert result["status"] == "unhealthy"
+        assert "details" in result
+        assert "Database timeout" in result["details"]["error"]
 
     @pytest.mark.asyncio
     async def test_database_health_check_slow_response(self):
@@ -386,9 +386,9 @@ class TestDatabaseHealthCheck:
 
         result = await check_database_health(mock_session)
 
-    assert result["status"] == "healthy"
-    assert result["response_time_ms"] >= 0  # 只验证字段存在
-    assert "details" in result
+        assert result["status"] == "healthy"
+        assert result["response_time_ms"] >= 0  # 只验证字段存在
+        assert "details" in result
 
 
 class TestRedisHealthCheck:
@@ -402,9 +402,9 @@ class TestRedisHealthCheck:
         result = await _check_redis()
 
         # Redis状态取决于服务是否可用（实际会尝试连接）
-    assert result["status"] in ["healthy", "unhealthy"]
-    assert "response_time_ms" in result
-    assert "details" in result
+        assert result["status"] in ["healthy", "unhealthy"]
+        assert "response_time_ms" in result
+        assert "details" in result
 
     @pytest.mark.asyncio
     async def test_redis_health_check_connection_failed(self):
@@ -419,9 +419,9 @@ class TestRedisHealthCheck:
             result = await _check_redis()
 
             # Redis连接失败时应返回unhealthy状态
-    assert result["status"] == "unhealthy"
-    assert "response_time_ms" in result
-    assert "details" in result
+            assert result["status"] == "unhealthy"
+            assert "response_time_ms" in result
+            assert "details" in result
 
     @pytest.mark.asyncio
     async def test_redis_health_check_no_manager(self):
@@ -434,9 +434,9 @@ class TestRedisHealthCheck:
             result = await _check_redis()
 
             # Redis管理器不可用时应返回unhealthy状态
-    assert result["status"] == "unhealthy"
-    assert "response_time_ms" in result
-    assert "details" in result
+            assert result["status"] == "unhealthy"
+            assert "response_time_ms" in result
+            assert "details" in result
 
     @pytest.mark.asyncio
     async def test_redis_health_check_memory_usage(self):
@@ -446,9 +446,9 @@ class TestRedisHealthCheck:
         result = await _check_redis()
 
         # Redis状态取决于服务是否可用
-    assert result["status"] in ["healthy", "unhealthy"]
-    assert "response_time_ms" in result
-    assert "details" in result
+        assert result["status"] in ["healthy", "unhealthy"]
+        assert "response_time_ms" in result
+        assert "details" in result
 
 
 class TestExternalServicesCheck:

@@ -116,30 +116,30 @@ class TestDatabasePartitioning:
 
     assert match_id is not None, "分区表插入应该返回有效的ID"
 
-        await async_session.commit()
+    await async_session.commit()
 
-        # 验证数据插入到正确的分区
-        september_query = text(
+    # 验证数据插入到正确的分区
+    september_query = text(
             """
             SELECT COUNT(*) FROM matches_2025_09
             WHERE match_time >= '2025-09-01' AND match_time < '2025-10-01';
         """
         )
 
-        september_result = await async_session.execute(september_query)
-        september_count = september_result.scalar()
+    september_result = await async_session.execute(september_query)
+    september_count = september_result.scalar()
 
     assert september_count >= 1, "9月数据应该插入到2025_09分区"
 
-        october_query = text(
+    october_query = text(
             """
             SELECT COUNT(*) FROM matches_2025_10
             WHERE match_time >= '2025-10-01' AND match_time < '2025-11-01';
         """
         )
 
-        october_result = await async_session.execute(october_query)
-        october_count = october_result.scalar()
+    october_result = await async_session.execute(october_query)
+    october_count = october_result.scalar()
 
     assert october_count >= 1, "10月数据应该插入到2025_10分区"
 

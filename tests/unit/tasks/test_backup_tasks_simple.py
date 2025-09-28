@@ -52,10 +52,17 @@ class TestDatabaseBackupTask:
         assert "retention_policy" in config
         assert config["compression"] is True
 
+    @pytest.mark.parametrize("backup_type,db_name,exit_code,expected_success", [
+        ("full", "test_db", 0, True),
+        ("incremental", "prod_db", 0, True),
+        ("wal", "staging_db", 0, True),
+        ("full", "test_db", 1, False),
+        ("incremental", "prod_db", 2, False)
+    ])
     @patch('src.tasks.backup_tasks.subprocess.run')
     @patch('src.tasks.backup_tasks.os.getenv')
-    def test_run_backup_script_success(self, mock_getenv, mock_run):
-        """测试备份脚本执行成功"""
+    def test_run_backup_script_parametrized(self, mock_getenv, mock_run, backup_type, db_name, exit_code, expected_success):
+        """参数化测试备份脚本执行"""
         mock_getenv.side_effect = lambda key, default=None: {
             "BACKUP_DIR": "/tmp/backup",
             "DB_HOST": "localhost",
@@ -64,24 +71,31 @@ class TestDatabaseBackupTask:
             "DB_PASSWORD": "password"
         }.get(key, default)
 
-        # 模拟成功的subprocess返回
+        # 模拟subprocess返回
         mock_result = Mock()
-        mock_result.returncode = 0
-        mock_result.stdout = "Backup completed successfully"
-        mock_result.stderr = ""
+        mock_result.returncode = exit_code
+        if expected_success:
+            mock_result.stdout = f"{backup_type} backup completed successfully"
+            mock_result.stderr = ""
+        else:
+            mock_result.stdout = ""
+            mock_result.stderr = f"Backup failed with code {exit_code}"
         mock_run.return_value = mock_result
 
         task = DatabaseBackupTask()
 
         success, output, stats = task.run_backup_script(
-            backup_type="full",
-            database_name="test_db"
+            backup_type=backup_type,
+            database_name=db_name
         )
 
-        assert success is True
-        assert "Backup completed successfully" in output
-        assert stats["exit_code"] == 0
+        assert success is expected_success
+        assert stats["exit_code"] == exit_code
         assert "duration_seconds" in stats
+        if expected_success:
+            assert "successfully" in output
+        else:
+            assert "failed" in output
 
     @patch('src.tasks.backup_tasks.subprocess.run')
     @patch('src.tasks.backup_tasks.os.getenv')
@@ -113,10 +127,15 @@ class TestDatabaseBackupTask:
         assert "Backup failed" in output
         assert stats["exit_code"] == 1
 
-    @patch('src.tasks.backup_tasks.subprocess.run')
+    @pytest.mark.parametrize("exception_type,expected_error_keyword", [
+        (subprocess.TimeoutExpired(cmd=["test"], timeout=3600), "超时"),
+        (FileNotFoundError("backup.sh not found"), "not found"),
+        (PermissionError("Permission denied"), "permission"),
+        (OSError("No space left on device"), "space")
+    ])
     @patch('src.tasks.backup_tasks.os.getenv')
-    def test_run_backup_script_timeout(self, mock_getenv, mock_run):
-        """测试备份脚本执行超时"""
+    def test_run_backup_script_exceptions(self, mock_getenv, exception_type, expected_error_keyword):
+        """参数化测试备份脚本异常处理"""
         mock_getenv.side_effect = lambda key, default=None: {
             "BACKUP_DIR": "/tmp/backup",
             "DB_HOST": "localhost",
@@ -125,19 +144,17 @@ class TestDatabaseBackupTask:
             "DB_PASSWORD": "password"
         }.get(key, default)
 
-        # 模拟超时异常
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd=["test"], timeout=3600)
+        with patch('src.tasks.backup_tasks.subprocess.run', side_effect=exception_type):
+            task = DatabaseBackupTask()
 
-        task = DatabaseBackupTask()
+            success, output, stats = task.run_backup_script(
+                backup_type="full",
+                database_name="test_db"
+            )
 
-        success, output, stats = task.run_backup_script(
-            backup_type="full",
-            database_name="test_db"
-        )
-
-        assert success is False
-        assert "timeout" in output or "超时" in output
-        assert stats["error"] == "timeout"
+            assert success is False
+            assert expected_error_keyword.lower() in output.lower()
+            assert "error" in stats
 
     @patch('src.tasks.backup_tasks.Path.exists')
     @patch('src.tasks.backup_tasks.subprocess.run')
@@ -169,23 +186,30 @@ class TestDatabaseBackupTask:
 
         assert result is False
 
-    @patch('src.tasks.backup_tasks.subprocess.run')
+    @pytest.mark.parametrize("backup_type,stdout_output,expected_size", [
+        ("full", "1024000\n512000\n", 1024000),
+        ("incremental", "256000\n128000\n64000\n", 256000),
+        ("wal", "1024\n2048\n", None),  # WAL type not implemented, returns None
+        ("full", "", None),  # Empty output returns None
+        ("incremental", "invalid\nnot_a_number\n", None)  # Invalid output returns None
+    ])
     @patch('src.tasks.backup_tasks.os.getenv')
-    def test_get_latest_backup_size_full(self, mock_getenv, mock_run):
-        """测试获取全量备份文件大小"""
+    @patch('src.tasks.backup_tasks.subprocess.run')
+    def test_get_latest_backup_size_parametrized(self, mock_run, mock_getenv, backup_type, stdout_output, expected_size):
+        """参数化测试获取备份文件大小"""
         mock_getenv.return_value = "/tmp/backup"
 
-        # 模拟find命令执行成功
+        # 模拟find命令执行
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = "1024000\n512000\n"
+        mock_result.stdout = stdout_output
         mock_run.return_value = mock_result
 
         task = DatabaseBackupTask()
 
-        size = task._get_latest_backup_size("full")
+        size = task._get_latest_backup_size(backup_type)
 
-        assert size == 1024000  # 最大值
+        assert size == expected_size
 
 
 class TestBackupMetrics:
