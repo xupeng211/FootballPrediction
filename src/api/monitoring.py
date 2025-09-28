@@ -25,8 +25,8 @@ from src.core.logging import get_logger
 from src.database.connection import get_db_session
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
-from ..monitoring.metrics_collector import get_metrics_collector
-from ..monitoring.metrics_exporter import get_metrics_exporter
+from src.monitoring.metrics_collector import get_metrics_collector
+from src.monitoring.metrics_exporter import get_metrics_exporter
 
 logger = get_logger(__name__)
 

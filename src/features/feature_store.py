@@ -630,7 +630,7 @@ class FootballFeatureStore:
                 # 获取时间范围内的比赛
                 from sqlalchemy import select
 
-                from ..database.models.match import Match
+                from src.database.models.match import Match
 
                 matches_query = select(Match).where(
                     Match.match_time.between(start_date, end_date)
