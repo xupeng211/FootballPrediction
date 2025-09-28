@@ -116,7 +116,7 @@ class TestRecoveryHandlerBatchOmega004:
         )
 
     assert len(failure.recovery_attempts) == 1
-        attempt = failure.recovery_attempts[0]
+    attempt = failure.recovery_attempts[0]
     assert attempt["strategy"] == RecoveryStrategy.IMMEDIATE_RETRY.value
     assert attempt["success"] is True
     assert attempt["attempt_time"] == attempt_time.isoformat()
@@ -211,15 +211,15 @@ class TestRecoveryHandlerBatchOmega004:
     assert len(recovery_handler.failure_patterns["task_001"]) == 1
     assert recovery_handler.failure_patterns["task_001"][0] == FailureType.TIMEOUT
 
-        # 第二次失败
-        recovery_handler._update_failure_patterns("task_001", FailureType.CONNECTION_ERROR)
+    # 第二次失败
+    recovery_handler._update_failure_patterns("task_001", FailureType.CONNECTION_ERROR)
     assert len(recovery_handler.failure_patterns["task_001"]) == 2
 
-        # 测试超过10条记录的情况
-        for i in range(12):
-            recovery_handler._update_failure_patterns("task_001", FailureType.DATA_ERROR)
+    # 测试超过10条记录的情况
+    for i in range(12):
+        recovery_handler._update_failure_patterns("task_001", FailureType.DATA_ERROR)
 
-        # 应该只保留最近10条
+    # 应该只保留最近10条
     assert len(recovery_handler.failure_patterns["task_001"]) == 10
 
     @patch('src.scheduler.recovery_handler.datetime')
