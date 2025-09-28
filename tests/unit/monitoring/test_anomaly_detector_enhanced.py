@@ -24,7 +24,7 @@ class TestAnomalyTypeAndSeverity:
 
     def test_anomaly_type_enum(self):
         """测试异常类型枚举"""
-        from src.monitoring.anomaly_detector import AnomalyType
+        from monitoring.anomaly_detector import AnomalyType
 
         # 验证所有异常类型存在
         assert AnomalyType.OUTLIER.value == "outlier"
@@ -39,7 +39,7 @@ class TestAnomalyTypeAndSeverity:
 
     def test_anomaly_severity_enum(self):
         """测试异常严重程度枚举"""
-        from src.monitoring.anomaly_detector import AnomalySeverity
+        from monitoring.anomaly_detector import AnomalySeverity
 
         # 验证所有严重程度存在
         assert AnomalySeverity.LOW.value == "low"
@@ -56,7 +56,7 @@ class TestAnomalyResult:
 
     def test_anomaly_result_initialization(self):
         """测试AnomalyResult初始化"""
-        from src.monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
+        from monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
 
         # 测试最小参数初始化
         result = AnomalyResult(
@@ -82,7 +82,7 @@ class TestAnomalyResult:
 
     def test_anomaly_result_full_initialization(self):
         """测试AnomalyResult完整参数初始化"""
-        from src.monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
+        from monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
 
         test_timestamp = datetime(2025, 9, 28, 12, 0, 0)
         test_values = [150, 160, 170]
@@ -111,7 +111,7 @@ class TestAnomalyResult:
 
     def test_anomaly_result_to_dict(self):
         """测试AnomalyResult转换为字典"""
-        from src.monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
+        from monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
 
         result = AnomalyResult(
             table_name="sensor_data",
@@ -139,7 +139,7 @@ class TestAnomalyResult:
 
     def test_anomaly_result_str_representation(self):
         """测试AnomalyResult字符串表示"""
-        from src.monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
+        from monitoring.anomaly_detector import AnomalyResult, AnomalyType, AnomalySeverity
 
         result = AnomalyResult(
             table_name="request_logs",
@@ -185,7 +185,7 @@ class TestAnomalyDetector:
 
     def test_detector_initialization(self):
         """测试检测器初始化"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -195,10 +195,10 @@ class TestAnomalyDetector:
         assert 'odds' in detector.detection_config
         assert 'predictions' in detector.detection_config
 
-    @patch('src.monitoring.anomaly_detector.DatabaseManager')
+    @patch('monitoring.anomaly_detector.DatabaseManager')
     def test_detector_initialization_with_mock(self, mock_db_manager_class):
         """测试检测器初始化（使用模拟数据库管理器）"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         # 设置模拟返回值
         mock_db_manager = Mock()
@@ -213,10 +213,10 @@ class TestAnomalyDetector:
     # 简化异常检测测试，避免异步上下文管理器问题
     def test_detect_anomalies_basic_functionality(self):
         """测试基本异常检测功能"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         # 模拟数据库管理器
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -229,9 +229,9 @@ class TestAnomalyDetector:
     @pytest.mark.asyncio
     async def test_detect_anomalies_with_table_names(self):
         """测试指定表名的异常检测"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -251,9 +251,9 @@ class TestAnomalyDetector:
     @pytest.mark.asyncio
     async def test_detect_anomalies_with_methods(self):
         """测试指定检测方法的异常检测"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -272,7 +272,7 @@ class TestAnomalyDetector:
 
     def test_detection_config_structure(self):
         """测试检测配置结构"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -298,7 +298,7 @@ class TestAnomalyDetectorEdgeCases:
 
     def test_detection_config_completeness(self):
         """测试检测配置完整性"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -309,7 +309,7 @@ class TestAnomalyDetectorEdgeCases:
 
     def test_thresholds_validity(self):
         """测试阈值有效性"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -325,7 +325,7 @@ class TestAnomalyDetectorEdgeCases:
 
     def test_column_definitions(self):
         """测试列定义"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 
@@ -338,7 +338,7 @@ class TestAnomalyDetectorEdgeCases:
 
     def test_config_immutability(self):
         """测试配置不可变性"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector1 = AnomalyDetector()
         detector2 = AnomalyDetector()
@@ -357,9 +357,9 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_detect_anomalies_database_error(self):
         """测试数据库错误处理"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -380,9 +380,9 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_detect_anomalies_empty_table_list(self):
         """测试空表列表处理"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -403,9 +403,9 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_detect_anomalies_empty_methods_list(self):
         """测试空方法列表处理"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
-        with patch('src.monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
+        with patch('monitoring.anomaly_detector.DatabaseManager') as mock_db_class:
             mock_db_manager = AsyncMock()
             mock_db_class.return_value = mock_db_manager
 
@@ -428,7 +428,7 @@ class TestInitialization:
 
     def test_multiple_instances(self):
         """测试多个实例独立性"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector1 = AnomalyDetector()
         detector2 = AnomalyDetector()
@@ -440,7 +440,7 @@ class TestInitialization:
 
     def test_config_deep_copy(self):
         """测试配置深拷贝"""
-        from src.monitoring.anomaly_detector import AnomalyDetector
+        from monitoring.anomaly_detector import AnomalyDetector
 
         detector = AnomalyDetector()
 

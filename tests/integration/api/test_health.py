@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.health import router
+from api.health import router
 
 pytestmark = pytest.mark.integration
 
@@ -29,7 +29,7 @@ class TestHealthCheckAPI:
         """测试客户端 - 配置了数据库依赖覆盖"""
         from fastapi import FastAPI
 
-        from src.database.connection import get_db_session
+        from database.connection import get_db_session
 
         app = FastAPI()
         app.include_router(router)
@@ -324,7 +324,7 @@ class TestDatabaseHealthCheck:
         mock_result.scalar.return_value = 1
         mock_session.execute.return_value = mock_result
 
-        from src.api.health import check_database_health
+        from api.health import check_database_health
 
         result = await check_database_health(mock_session)
 
@@ -340,7 +340,7 @@ class TestDatabaseHealthCheck:
         # 模拟数据库连接异常
         mock_session.execute.side_effect = Exception("Connection failed")
 
-        from src.api.health import _check_database
+        from api.health import _check_database
 
         result = await _check_database(mock_session)
 
@@ -358,7 +358,7 @@ class TestDatabaseHealthCheck:
         # 模拟其他类型的数据库异常
         mock_session.execute.side_effect = Exception("Database timeout")
 
-        from src.api.health import check_database_health
+        from api.health import check_database_health
 
         result = await check_database_health(mock_session)
 
@@ -382,7 +382,7 @@ class TestDatabaseHealthCheck:
 
         mock_session.execute.side_effect = slow_execute
 
-        from src.api.health import check_database_health
+        from api.health import check_database_health
 
         result = await check_database_health(mock_session)
 
@@ -397,7 +397,7 @@ class TestRedisHealthCheck:
     @pytest.mark.asyncio
     async def test_redis_health_check_success(self):
         """测试Redis健康检查成功"""
-        from src.api.health import _check_redis
+        from api.health import _check_redis
 
         result = await _check_redis()
 
@@ -409,7 +409,7 @@ class TestRedisHealthCheck:
     @pytest.mark.asyncio
     async def test_redis_health_check_connection_failed(self):
         """测试Redis连接失败"""
-        from src.api.health import _check_redis
+        from api.health import _check_redis
 
         with patch("src.cache.RedisManager") as mock_redis_manager:
             mock_manager = Mock()
@@ -426,7 +426,7 @@ class TestRedisHealthCheck:
     @pytest.mark.asyncio
     async def test_redis_health_check_no_manager(self):
         """测试Redis管理器不可用"""
-        from src.api.health import _check_redis
+        from api.health import _check_redis
 
         with patch("src.cache.RedisManager") as mock_redis_manager:
             mock_redis_manager.side_effect = Exception("Redis connection failed")
@@ -441,7 +441,7 @@ class TestRedisHealthCheck:
     @pytest.mark.asyncio
     async def test_redis_health_check_memory_usage(self):
         """测试Redis内存使用情况"""
-        from src.api.health import _check_redis
+        from api.health import _check_redis
 
         result = await _check_redis()
 
@@ -527,7 +527,7 @@ class TestHealthEndpoints:
         mock_session = Mock()
 
         # Override the database dependency
-        from src.database.connection import get_db_session
+        from database.connection import get_db_session
 
         test_client.app.dependency_overrides[get_db_session] = lambda: mock_session
 
@@ -566,7 +566,7 @@ class TestHealthEndpoints:
         mock_session = Mock()
 
         # Override the database dependency
-        from src.database.connection import get_db_session
+        from database.connection import get_db_session
 
         test_client.app.dependency_overrides[get_db_session] = lambda: mock_session
 

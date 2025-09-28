@@ -50,7 +50,7 @@ class TestStreamingMetricsIntegration:
     async def test_kafka_consumer_metrics_integration(self):
         """测试Kafka消费者与指标的集成"""
         # 模拟Kafka消费者处理消息
-        with patch('src.streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
+        with patch('streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
             mock_consumer = AsyncMock()
             mock_consumer_class.return_value = mock_consumer
 
@@ -69,7 +69,7 @@ class TestStreamingMetricsIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -87,7 +87,7 @@ class TestStreamingMetricsIntegration:
     async def test_kafka_producer_metrics_integration(self):
         """测试Kafka生产者与指标的集成"""
         # 模拟Kafka生产者发送消息
-        with patch('src.streaming.kafka_producer.KafkaProducer') as mock_producer_class:
+        with patch('streaming.kafka_producer.KafkaProducer') as mock_producer_class:
             mock_producer = AsyncMock()
             mock_producer_class.return_value = mock_producer
 
@@ -108,7 +108,7 @@ class TestStreamingMetricsIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -126,7 +126,7 @@ class TestStreamingMetricsIntegration:
     async def test_stream_processor_metrics_integration(self):
         """测试流处理器与指标的集成"""
         # 模拟流处理器
-        with patch('src.streaming.stream_processor.StreamProcessor') as mock_processor_class:
+        with patch('streaming.stream_processor.StreamProcessor') as mock_processor_class:
             mock_processor = AsyncMock()
             mock_processor_class.return_value = mock_processor
 
@@ -139,7 +139,7 @@ class TestStreamingMetricsIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -160,7 +160,7 @@ class TestStreamingMetricsIntegration:
     async def test_stream_quality_metrics_integration(self):
         """测试流质量与指标的集成"""
         # 模拟流质量检查
-        with patch('src.data.quality.StreamQualityChecker') as mock_checker_class:
+        with patch('data.quality.StreamQualityChecker') as mock_checker_class:
             mock_checker = AsyncMock()
             mock_checker_class.return_value = mock_checker
 
@@ -174,7 +174,7 @@ class TestStreamingMetricsIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -192,7 +192,7 @@ class TestStreamingMetricsIntegration:
     async def test_stream_performance_metrics_integration(self):
         """测试流性能与指标的集成"""
         # 模拟流性能监控
-        with patch('src.streaming.performance_monitor.StreamPerformanceMonitor') as mock_monitor_class:
+        with patch('streaming.performance_monitor.StreamPerformanceMonitor') as mock_monitor_class:
             mock_monitor = AsyncMock()
             mock_monitor_class.return_value = mock_monitor
 
@@ -208,7 +208,7 @@ class TestStreamingMetricsIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -248,7 +248,7 @@ class TestAnomalyDetectionAlertIntegration:
     async def test_anomaly_detection_alert_workflow(self):
         """测试异常检测触发告警的工作流"""
         # 模拟异常检测
-        with patch('src.monitoring.anomaly_detector.AnomalyDetector') as mock_detector_class:
+        with patch('monitoring.anomaly_detector.AnomalyDetector') as mock_detector_class:
             mock_detector = AsyncMock()
             mock_detector_class.return_value = mock_detector
 
@@ -265,7 +265,7 @@ class TestAnomalyDetectionAlertIntegration:
             ]
 
             # 模拟告警管理器
-            with patch('src.monitoring.alert_manager.AlertManager') as mock_alert_class:
+            with patch('monitoring.alert_manager.AlertManager') as mock_alert_class:
                 mock_alert = AsyncMock()
                 mock_alert_class.return_value = mock_alert
 
@@ -296,7 +296,7 @@ class TestAnomalyDetectionAlertIntegration:
     async def test_stream_anomaly_metrics_integration(self):
         """测试流异常与指标的集成"""
         # 模拟流异常检测
-        with patch('src.streaming.anomaly_detector.StreamAnomalyDetector') as mock_detector_class:
+        with patch('streaming.anomaly_detector.StreamAnomalyDetector') as mock_detector_class:
             mock_detector = AsyncMock()
             mock_detector_class.return_value = mock_detector
 
@@ -310,7 +310,7 @@ class TestAnomalyDetectionAlertIntegration:
             }
 
             # 模拟指标导出器
-            with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+            with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
                 mock_exporter = Mock()
                 mock_exporter_class.return_value = mock_exporter
 
@@ -329,7 +329,7 @@ class TestAnomalyDetectionAlertIntegration:
     async def test_alert_threshold_integration(self):
         """测试告警阈值的集成"""
         # 模拟告警阈值配置
-        with patch('src.monitoring.alert_manager.AlertManager') as mock_alert_class:
+        with patch('monitoring.alert_manager.AlertManager') as mock_alert_class:
             mock_alert = AsyncMock()
             mock_alert_class.return_value = mock_alert
 
@@ -350,7 +350,7 @@ class TestAnomalyDetectionAlertIntegration:
     async def test_alert_notification_integration(self):
         """测试告警通知的集成"""
         # 模拟告警通知服务
-        with patch('src.monitoring.notification_service.NotificationService') as mock_notification_class:
+        with patch('monitoring.notification_service.NotificationService') as mock_notification_class:
             mock_notification = AsyncMock()
             mock_notification_class.return_value = mock_notification
 
@@ -363,7 +363,7 @@ class TestAnomalyDetectionAlertIntegration:
             }
 
             # 模拟告警管理器
-            with patch('src.monitoring.alert_manager.AlertManager') as mock_alert_class:
+            with patch('monitoring.alert_manager.AlertManager') as mock_alert_class:
                 mock_alert = AsyncMock()
                 mock_alert_class.return_value = mock_alert
 
@@ -382,7 +382,7 @@ class TestAnomalyDetectionAlertIntegration:
     async def test_alert_history_integration(self):
         """测试告警历史的集成"""
         # 模拟告警历史记录
-        with patch('src.monitoring.alert_manager.AlertManager') as mock_alert_class:
+        with patch('monitoring.alert_manager.AlertManager') as mock_alert_class:
             mock_alert = AsyncMock()
             mock_alert_class.return_value = mock_alert
 
@@ -420,7 +420,7 @@ class TestRealTimeDataFlowIntegration:
     async def test_kafka_to_database_integration(self):
         """测试Kafka到数据库的集成"""
         # 模拟Kafka消费者
-        with patch('src.streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
+        with patch('streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
             mock_consumer = AsyncMock()
             mock_consumer_class.return_value = mock_consumer
 
@@ -431,7 +431,7 @@ class TestRealTimeDataFlowIntegration:
             ]
 
             # 模拟数据库写入
-            with patch('src.database.connection.DatabaseManager') as mock_db_class:
+            with patch('database.connection.DatabaseManager') as mock_db_class:
                 mock_db = AsyncMock()
                 mock_db_class.return_value = mock_db
 
@@ -458,7 +458,7 @@ class TestRealTimeDataFlowIntegration:
     async def test_stream_processing_pipeline_integration(self):
         """测试流处理管道的集成"""
         # 模拟完整的流处理管道
-        with patch('src.streaming.pipeline.StreamProcessingPipeline') as mock_pipeline_class:
+        with patch('streaming.pipeline.StreamProcessingPipeline') as mock_pipeline_class:
             mock_pipeline = AsyncMock()
             mock_pipeline_class.return_value = mock_pipeline
 
@@ -488,7 +488,7 @@ class TestRealTimeDataFlowIntegration:
     async def test_real_time_feature_computation_integration(self):
         """测试实时特征计算的集成"""
         # 模拟特征计算服务
-        with patch('src.features.realtime_computer.RealtimeFeatureComputer') as mock_computer_class:
+        with patch('features.realtime_computer.RealtimeFeatureComputer') as mock_computer_class:
             mock_computer = AsyncMock()
             mock_computer_class.return_value = mock_computer
 
@@ -519,7 +519,7 @@ class TestRealTimeDataFlowIntegration:
     async def test_stream_backup_recovery_integration(self):
         """测试流备份恢复的集成"""
         # 模拟流备份管理器
-        with patch('src.streaming.backup.StreamBackupManager') as mock_backup_class:
+        with patch('streaming.backup.StreamBackupManager') as mock_backup_class:
             mock_backup = AsyncMock()
             mock_backup_class.return_value = mock_backup
 
@@ -555,7 +555,7 @@ class TestRealTimeDataFlowIntegration:
     async def test_stream_scaling_integration(self):
         """测试流扩展的集成"""
         # 模拟流扩展管理器
-        with patch('src.streaming.scaling.StreamScalingManager') as mock_scaling_class:
+        with patch('streaming.scaling.StreamScalingManager') as mock_scaling_class:
             mock_scaling = AsyncMock()
             mock_scaling_class.return_value = mock_scaling
 

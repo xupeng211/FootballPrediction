@@ -48,20 +48,20 @@ class TestApiDatabaseTaskPipeline:
     def test_api_request_database_task_workflow(self):
         """测试API请求触发数据库操作和任务执行的工作流"""
         # 模拟API请求处理流程
-        from src.api.features import get_features
+        from api.features import get_features
 
         # 模拟数据库查询
-        with patch('src.api.features.DatabaseManager') as mock_db_class:
+        with patch('api.features.DatabaseManager') as mock_db_class:
             mock_db = AsyncMock()
             mock_db_class.return_value = mock_db
 
             # 模拟任务队列
-            with patch('src.api.features.TaskQueue') as mock_task_class:
+            with patch('api.features.TaskQueue') as mock_task_class:
                 mock_task = AsyncMock()
                 mock_task_class.return_value = mock_task
 
                 # 模拟缓存
-                with patch('src.api.features.CacheManager') as mock_cache_class:
+                with patch('api.features.CacheManager') as mock_cache_class:
                     mock_cache = AsyncMock()
                     mock_cache_class.return_value = mock_cache
 
@@ -72,7 +72,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_feature_api_integration(self):
         """测试特征API的集成流程"""
         # 模拟完整的特征获取流程
-        with patch('src.features.feature_store.FeatureStore') as mock_store_class:
+        with patch('features.feature_store.FeatureStore') as mock_store_class:
             mock_store = AsyncMock()
             mock_store_class.return_value = mock_store
 
@@ -96,7 +96,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_prediction_api_integration(self):
         """测试预测API的集成流程"""
         # 模拟预测请求流程
-        with patch('src.models.prediction_service.PredictionService') as mock_service_class:
+        with patch('models.prediction_service.PredictionService') as mock_service_class:
             mock_service = AsyncMock()
             mock_service_class.return_value = mock_service
 
@@ -121,7 +121,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_data_collection_integration(self):
         """测试数据采集的集成流程"""
         # 模拟数据采集任务链路
-        with patch('src.tasks.data_collection_tasks.collect_fixtures_task') as mock_task:
+        with patch('tasks.data_collection_tasks.collect_fixtures_task') as mock_task:
             mock_task.run = AsyncMock()
             mock_task.run.return_value = {'status': 'success', 'records': 100}
 
@@ -135,7 +135,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_cache_database_integration(self):
         """测试缓存和数据库的集成"""
         # 模拟缓存未命中，查询数据库的场景
-        with patch('src.cache.redis_manager.RedisManager') as mock_redis_class:
+        with patch('cache.redis_manager.RedisManager') as mock_redis_class:
             mock_redis = AsyncMock()
             mock_redis_class.return_value = mock_redis
 
@@ -143,7 +143,7 @@ class TestApiDatabaseTaskPipeline:
             mock_redis.get.return_value = None
 
             # 模拟数据库查询
-            with patch('src.database.connection.DatabaseManager') as mock_db_class:
+            with patch('database.connection.DatabaseManager') as mock_db_class:
                 mock_db = AsyncMock()
                 mock_db_class.return_value = mock_db
 
@@ -170,7 +170,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_api_error_handling_integration(self):
         """测试API错误处理的集成"""
         # 模拟API错误场景
-        with patch('src.api.features.DatabaseManager') as mock_db_class:
+        with patch('api.features.DatabaseManager') as mock_db_class:
             mock_db = AsyncMock()
             mock_db_class.return_value = mock_db
 
@@ -187,7 +187,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_task_retry_integration(self):
         """测试任务重试机制的集成"""
         # 模拟任务重试流程
-        with patch('src.tasks.celery_app.app') as mock_app:
+        with patch('tasks.celery_app.app') as mock_app:
             mock_app.send_task = AsyncMock()
             mock_app.send_task.return_value = {'id': 'task_123'}
 
@@ -214,7 +214,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_monitoring_integration(self):
         """测试监控系统的集成"""
         # 模拟监控数据收集流程
-        with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+        with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
             mock_exporter = Mock()
             mock_exporter_class.return_value = mock_exporter
 
@@ -223,7 +223,7 @@ class TestApiDatabaseTaskPipeline:
             mock_exporter.record_system_health = Mock()
 
             # 模拟API调用
-            with patch('src.api.monitoring.get_metrics') as mock_get_metrics:
+            with patch('api.monitoring.get_metrics') as mock_get_metrics:
                 mock_get_metrics.return_value = {
                     'cpu_usage': 75.0,
                     'memory_usage': 60.0,
@@ -242,7 +242,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_data_pipeline_integration(self):
         """测试数据管道的集成"""
         # 模拟数据从采集到处理的完整流程
-        with patch('src.data.processing.DataProcessor') as mock_processor_class:
+        with patch('data.processing.DataProcessor') as mock_processor_class:
             mock_processor = AsyncMock()
             mock_processor_class.return_value = mock_processor
 
@@ -267,7 +267,7 @@ class TestApiDatabaseTaskPipeline:
     async def test_external_api_integration(self):
         """测试外部API集成的流程"""
         # 模拟外部API调用
-        with patch('src.data.collectors.ExternalAPIClient') as mock_client_class:
+        with patch('data.collectors.ExternalAPIClient') as mock_client_class:
             mock_client = AsyncMock()
             mock_client_class.return_value = mock_client
 
@@ -288,7 +288,7 @@ class TestApiDatabaseTaskPipeline:
     def test_configuration_integration(self):
         """测试配置管理的集成"""
         # 模拟配置加载和验证
-        with patch('src.core.config.Config') as mock_config_class:
+        with patch('core.config.Config') as mock_config_class:
             mock_config = Mock()
             mock_config_class.return_value = mock_config
 
@@ -331,7 +331,7 @@ class TestStreamingMonitoringIntegration:
     async def test_stream_processing_alert_integration(self):
         """测试流处理触发告警的集成"""
         # 模拟流处理异常触发告警
-        with patch('src.streaming.stream_processor.StreamProcessor') as mock_processor_class:
+        with patch('streaming.stream_processor.StreamProcessor') as mock_processor_class:
             mock_processor = AsyncMock()
             mock_processor_class.return_value = mock_processor
 
@@ -339,7 +339,7 @@ class TestStreamingMonitoringIntegration:
             mock_processor.process_stream.side_effect = Exception("Stream processing failed")
 
             # 模拟告警管理器
-            with patch('src.monitoring.alert_manager.AlertManager') as mock_alert_class:
+            with patch('monitoring.alert_manager.AlertManager') as mock_alert_class:
                 mock_alert = AsyncMock()
                 mock_alert_class.return_value = mock_alert
 
@@ -354,12 +354,12 @@ class TestStreamingMonitoringIntegration:
     async def test_metrics_stream_integration(self):
         """测试指标和流处理的集成"""
         # 模拟流处理指标收集
-        with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+        with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
             mock_exporter = Mock()
             mock_exporter_class.return_value = mock_exporter
 
             # 模拟流处理器
-            with patch('src.streaming.stream_processor.StreamProcessor') as mock_processor_class:
+            with patch('streaming.stream_processor.StreamProcessor') as mock_processor_class:
                 mock_processor = AsyncMock()
                 mock_processor_class.return_value = mock_processor
 
@@ -383,7 +383,7 @@ class TestStreamingMonitoringIntegration:
     async def test_anomaly_detection_integration(self):
         """测试异常检测和流处理的集成"""
         # 模拟流数据异常检测
-        with patch('src.monitoring.anomaly_detector.AnomalyDetector') as mock_detector_class:
+        with patch('monitoring.anomaly_detector.AnomalyDetector') as mock_detector_class:
             mock_detector = AsyncMock()
             mock_detector_class.return_value = mock_detector
 
@@ -408,7 +408,7 @@ class TestStreamingMonitoringIntegration:
     async def test_kafka_monitoring_integration(self):
         """测试Kafka和监控的集成"""
         # 模拟Kafka消费者监控
-        with patch('src.streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
+        with patch('streaming.kafka_consumer.KafkaConsumer') as mock_consumer_class:
             mock_consumer = AsyncMock()
             mock_consumer_class.return_value = mock_consumer
 
@@ -429,7 +429,7 @@ class TestStreamingMonitoringIntegration:
     async def test_database_monitoring_integration(self):
         """测试数据库监控的集成"""
         # 模拟数据库性能监控
-        with patch('src.database.connection.DatabaseManager') as mock_db_class:
+        with patch('database.connection.DatabaseManager') as mock_db_class:
             mock_db = AsyncMock()
             mock_db_class.return_value = mock_db
 
@@ -450,7 +450,7 @@ class TestStreamingMonitoringIntegration:
     async def test_cache_monitoring_integration(self):
         """测试缓存监控的集成"""
         # 模拟Redis缓存监控
-        with patch('src.cache.redis_manager.RedisManager') as mock_redis_class:
+        with patch('cache.redis_manager.RedisManager') as mock_redis_class:
             mock_redis = AsyncMock()
             mock_redis_class.return_value = mock_redis
 
@@ -471,10 +471,10 @@ class TestStreamingMonitoringIntegration:
     async def test_end_to_end_integration(self):
         """测试端到端集成流程"""
         # 模拟完整的端到端流程
-        with patch('src.data.collectors.ExternalAPIClient') as mock_client_class, \
-             patch('src.data.processing.DataProcessor') as mock_processor_class, \
-             patch('src.features.feature_store.FeatureStore') as mock_store_class, \
-             patch('src.models.prediction_service.PredictionService') as mock_service_class:
+        with patch('data.collectors.ExternalAPIClient') as mock_client_class, \
+             patch('data.processing.DataProcessor') as mock_processor_class, \
+             patch('features.feature_store.FeatureStore') as mock_store_class, \
+             patch('models.prediction_service.PredictionService') as mock_service_class:
 
             # 模拟数据采集
             mock_client = AsyncMock()
@@ -513,7 +513,7 @@ class TestStreamingMonitoringIntegration:
     async def test_error_recovery_integration(self):
         """测试错误恢复的集成"""
         # 模拟错误恢复流程
-        with patch('src.tasks.backup_tasks.BackupManager') as mock_backup_class:
+        with patch('tasks.backup_tasks.BackupManager') as mock_backup_class:
             mock_backup = AsyncMock()
             mock_backup_class.return_value = mock_backup
 
@@ -529,7 +529,7 @@ class TestStreamingMonitoringIntegration:
     async def test_performance_monitoring_integration(self):
         """测试性能监控的集成"""
         # 模拟性能监控流程
-        with patch('src.monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
+        with patch('monitoring.metrics_exporter.MetricsExporter') as mock_exporter_class:
             mock_exporter = Mock()
             mock_exporter_class.return_value = mock_exporter
 

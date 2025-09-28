@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from src.main import app
+from main import app
 
 
 def pytest_db_available():
@@ -23,7 +23,7 @@ def pytest_db_available():
     try:
         import sqlalchemy as sa
 
-        from src.database.connection import get_database_manager
+        from database.connection import get_database_manager
 
         # 检查数据库连接
         db_manager = get_database_manager()
@@ -60,7 +60,7 @@ pytestmark = pytest.mark.skipif(
 def client():
     """创建测试客户端"""
     # 初始化多用户数据库管理器以避免运行时错误
-    from src.database.connection import initialize_multi_user_database
+    from database.connection import initialize_multi_user_database
 
     try:
         initialize_multi_user_database()

@@ -7,7 +7,7 @@ import threading
 import pytest
 import uvicorn
 
-from src.main import app
+from main import app
 
 
 class IntegrationTestServer(uvicorn.Server):

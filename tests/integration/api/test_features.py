@@ -94,7 +94,7 @@ class TestFeatureExtractionAPI:
         # 配置异步mock的返回值
         mock_get_features.return_value = sample_features_data
 
-        from src.api.features import get_match_features
+        from api.features import get_match_features
 
         result = await get_match_features(
             match_id=sample_match_data["match_id"], session=mock_session
@@ -123,24 +123,24 @@ class TestFeatureExtractionAPI:
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
-        from src.api.features import get_match_features
+        from api.features import get_match_features
 
         with pytest.raises(HTTPException) as exc_info:
             await get_match_features(match_id=99999, session=mock_session)
 
-    assert exc_info.value.status_code == 404
-    assert "比赛" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 404
+        assert "比赛" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_match_features_invalid_id(self, mock_session):
         """测试无效的比赛ID"""
-        from src.api.features import get_match_features
+        from api.features import get_match_features
 
         # 测试负数ID
         with pytest.raises(HTTPException) as exc_info:
             await get_match_features(match_id=-1, session=mock_session)
 
-    assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 400
 
     @pytest.mark.asyncio
     @patch("src.api.features.feature_store.get_match_features_for_prediction")
@@ -162,14 +162,14 @@ class TestFeatureExtractionAPI:
 
         # 验证是否捕获了HTTPException 500
         with pytest.raises(HTTPException) as exc_info:
-            from src.api.features import get_match_features
+            from api.features import get_match_features
 
             await get_match_features(
                 match_id=sample_match_data["match_id"], session=mock_session
             )
 
-    assert exc_info.value.status_code == 500
-    assert "获取特征数据失败" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 500
+        assert "获取特征数据失败" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_success(self, mock_session):
@@ -198,14 +198,14 @@ class TestFeatureExtractionAPI:
                 "team_form": {"home": 0.8, "away": 0.6}
             }
 
-            from src.api.features import batch_calculate_features
+            from api.features import batch_calculate_features
 
             result = await batch_calculate_features(
                 start_date=start_date, end_date=end_date, session=mock_session
             )
 
             # 验证结果
-    assert isinstance(result, dict)
+            assert isinstance(result, dict)
             # 验证基本结构，具体字段根据实际API调整
 
     @pytest.mark.asyncio
@@ -213,7 +213,7 @@ class TestFeatureExtractionAPI:
         """测试空的比赛ID列表"""
         from datetime import datetime, timedelta
 
-        from src.api.features import batch_calculate_features
+        from api.features import batch_calculate_features
 
         # 测试空的日期范围（开始日期晚于结束日期）
         start_date = datetime.now()
@@ -224,15 +224,15 @@ class TestFeatureExtractionAPI:
                 start_date=start_date, end_date=end_date, session=mock_session
             )
 
-    assert exc_info.value.status_code == 400
-    assert "开始日期必须早于结束日期" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 400
+        assert "开始日期必须早于结束日期" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_batch_calculate_features_date_range_too_large(self, mock_session):
         """测试当日期范围超过30天时，API应返回400错误"""
         from datetime import datetime, timedelta
 
-        from src.api.features import batch_calculate_features
+        from api.features import batch_calculate_features
 
         start_date = datetime.now()
         end_date = start_date + timedelta(days=31)  # 超过30天限制
@@ -242,8 +242,8 @@ class TestFeatureExtractionAPI:
                 start_date=start_date, end_date=end_date, session=mock_session
             )
 
-    assert exc_info.value.status_code == 400
-    assert "时间范围不能超过30天" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 400
+        assert "时间范围不能超过30天" in str(exc_info.value.detail)
 
 
 @pytest.mark.integration

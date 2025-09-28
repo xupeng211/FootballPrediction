@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.slow
 async def test_check_redis_basic_functionality():
     """验证Redis健康检查在真实等待下的表现。"""
-    from src.api.health import _check_redis
+    from api.health import _check_redis
 
     result = await _check_redis()
 

@@ -17,7 +17,7 @@ class TestMetricsExporterBasic:
 
     def test_metrics_exporter_initialization(self):
         """测试MetricsExporter初始化"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
 
         # 测试默认初始化
         exporter = MetricsExporter()
@@ -33,7 +33,7 @@ class TestMetricsExporterBasic:
 
     def test_system_info_metrics(self):
         """测试系统信息指标"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -51,7 +51,7 @@ class TestMetricsExporterBasic:
 
     def test_record_data_collection_basic(self):
         """测试基本数据采集记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -71,7 +71,7 @@ class TestMetricsExporterBasic:
 
     def test_record_data_collection_with_error(self):
         """测试带错误的数据采集记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -91,7 +91,7 @@ class TestMetricsExporterBasic:
 
     def test_record_data_cleaning_basic(self):
         """测试基本数据清洗记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -110,7 +110,7 @@ class TestMetricsExporterBasic:
 
     def test_record_data_cleaning_with_error(self):
         """测试带错误的数据清洗记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -130,7 +130,7 @@ class TestMetricsExporterBasic:
     @pytest.mark.skip("MetricsExporter doesn't have record_prediction_metrics method")
     def test_record_prediction_metrics(self):
         """测试预测指标记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -150,7 +150,7 @@ class TestMetricsExporterBasic:
     @pytest.mark.skip("MetricsExporter doesn't have record_system_health method")
     def test_record_system_health(self):
         """测试系统健康指标记录"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -169,7 +169,7 @@ class TestMetricsExporterBasic:
     @pytest.mark.skip("MetricsExporter doesn't have update_metrics_timestamp method")
     def test_update_metrics_timestamp(self):
         """测试更新指标时间戳"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -184,7 +184,7 @@ class TestMetricsExporterBasic:
     @pytest.mark.skip("MetricsExporter doesn't have export_metrics method")
     def test_export_metrics(self):
         """测试导出指标"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -199,7 +199,7 @@ class TestMetricsExporterBasic:
 
     def test_increment_data_collection_total(self):
         """测试增加数据采集总数"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -216,7 +216,7 @@ class TestMetricsExporterBasic:
 
     def test_observe_data_collection_duration(self):
         """测试观察数据采集持续时间"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -233,7 +233,7 @@ class TestMetricsExporterBasic:
 
     def test_increment_prediction_count(self):
         """测试增加预测计数"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -249,7 +249,7 @@ class TestMetricsExporterBasic:
 
     def test_observe_prediction_latency(self):
         """测试观察预测延迟"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -265,7 +265,7 @@ class TestMetricsExporterBasic:
 
     def test_set_system_health_gauge(self):
         """测试设置系统健康仪表"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -281,7 +281,7 @@ class TestMetricsExporterBasic:
 
     def test_metrics_accessible(self):
         """测试指标可访问性"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
@@ -296,7 +296,7 @@ class TestMetricsExporterBasic:
 
     def test_registry_integration(self):
         """测试registry集成"""
-        from src.monitoring.metrics_exporter import MetricsExporter
+        from monitoring.metrics_exporter import MetricsExporter
         from prometheus_client import CollectorRegistry
 
         registry = CollectorRegistry()
