@@ -74,7 +74,7 @@ class TestCleanupErrorLogsTask:
 
     assert result["status"] == "success"
     assert result["deleted_count"] == 10
-        mock_logger_instance.cleanup_old_errors.assert_called_once_with(7)
+    mock_logger_instance.cleanup_old_errors.assert_called_once_with(7)
 
     @patch("src.tasks.maintenance_tasks.TaskErrorLogger")
     def test_cleanup_failure(self, mock_error_logger):

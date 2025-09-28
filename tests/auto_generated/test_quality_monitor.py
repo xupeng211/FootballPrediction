@@ -345,11 +345,9 @@ class TestQualityMonitor:
         total_result = Mock()
         total_result.first.return_value = total_row
 
-        # 模拟缺失字段查询
-        missing_row = Mock()
-        missing_row.missing = 5
+        # 模拟缺失字段查询 - 返回标量值而不是Mock对象
         missing_result = Mock()
-        missing_result.first.return_value = missing_row
+        missing_result.scalar.return_value = 5
 
         def execute_side_effect(query):
             if "COUNT(*) as total" in str(query):
