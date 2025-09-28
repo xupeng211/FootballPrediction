@@ -1,4 +1,6 @@
 ![Docs Guard Status](https://img.shields.io/badge/Docs%20Guard-Passing-brightgreen?style=flat-square)
+[![Test Improvement Guide](https://img.shields.io/badge/📊%20Test%20Improvement%20Guide-blue?style=flat-square)](docs/TEST_IMPROVEMENT_GUIDE.md)
+[![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
 
 # ⚽ FootballPrediction - 足球预测系统
 
@@ -92,6 +94,9 @@ make sync-issues  # GitHub Issues 同步 🔄
 - 代码质量和测试工具 ✨
 - 环境管理和容器工具 🐳
 - AI 助手使用指南 🤖
+
+## 📚 文档入口
+- [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
 
 ## 🤖 AI辅助开发
 
