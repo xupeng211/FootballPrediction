@@ -31,7 +31,6 @@ class TestMLflowDatabaseIntegration:
         mock_manager = Mock()
         mock_session_context = AsyncMock()
         mock_session_context.__aenter__ = AsyncMock(return_value=mock_db_session)
-        mock_session_context.__aenter__.return_value = mock_db_session
         mock_session_context.__aexit__ = AsyncMock(return_value=None)
         mock_manager.get_async_session = Mock(return_value=mock_session_context)
         return mock_manager
@@ -121,14 +120,14 @@ class TestMLflowDatabaseIntegration:
         experiment_id = mock_mlflow_module.create_experiment(experiment_name)
 
         # 验证注册成功
-    assert experiment_id == "experiment_123"
+        assert experiment_id == "experiment_123"
 
         # 模拟模型注册
         model_name = f"test_model_{int(datetime.now().timestamp())}"
         model_version = mock_mlflow_module.register_model("fake_uri", model_name)
 
         # 验证模型版本
-    assert model_version.version == "1"
+        assert model_version.version == "1"
 
     @pytest.mark.asyncio
     async def test_model_stage_transition(
@@ -176,12 +175,12 @@ class TestMLflowDatabaseIntegration:
             result = await prediction_service.predict_match(1)
 
             # 验证结果
-    assert isinstance(result, PredictionResult)
-    assert result.match_id == 1
-    assert result.model_version == "1"
-    assert hasattr(result, "home_win_probability")
-    assert hasattr(result, "draw_probability")
-    assert hasattr(result, "away_win_probability")
+            assert isinstance(result, PredictionResult)
+            assert result.match_id == 1
+            assert result.model_version == "1"
+            assert hasattr(result, "home_win_probability")
+            assert hasattr(result, "draw_probability")
+            assert hasattr(result, "away_win_probability")
 
     @pytest.mark.asyncio
     async def test_model_caching_in_prediction_service(
@@ -199,11 +198,11 @@ class TestMLflowDatabaseIntegration:
         model2, version2 = await prediction_service.get_production_model()
 
         # 验证模型相同（来自缓存）
-    assert model1 == model2
-    assert version1 == version2
+        assert model1 == model2
+        assert version1 == version2
 
         # 验证MLflow客户端只被调用一次（第一次）
-    assert (
+        assert (
             mock_mlflow_client.get_latest_versions.call_count <= 2
         )  # 允许一些缓存行为
 
@@ -228,9 +227,10 @@ class TestMLflowDatabaseIntegration:
 
             # Mock数据库会话
             mock_session = AsyncMock()
-            db_manager.get_async_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_session_context = AsyncMock()
+            mock_session_context.__aenter__.return_value = mock_session
+            mock_session_context.__aexit__.return_value = None
+            db_manager.get_async_session.return_value = mock_session_context
 
             # 存储预测结果
             await prediction_service._store_prediction(prediction_result)
@@ -250,9 +250,10 @@ class TestMLflowDatabaseIntegration:
         try:
             # Mock数据库会话和查询结果
             mock_session = AsyncMock()
-            db_manager.get_async_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_session_context = AsyncMock()
+            mock_session_context.__aenter__.return_value = mock_session
+            mock_session_context.__aexit__.return_value = None
+            db_manager.get_async_session.return_value = mock_session_context
 
             # Mock查询结果
             mock_result = Mock()
@@ -300,15 +301,16 @@ class TestMLflowDatabaseIntegration:
 
                 # Mock数据库存储
                 mock_session = AsyncMock()
-                db_manager.get_async_session.return_value.__aenter__.return_value = (
-                    mock_session
-                )
+                mock_session_context = AsyncMock()
+                mock_session_context.__aenter__.return_value = mock_session
+                mock_session_context.__aexit__.return_value = None
+                db_manager.get_async_session.return_value = mock_session_context
 
                 # 执行预测
                 result = await prediction_service.predict_match(1)
 
                 # 验证预测结果的一致性
-    assert (
+                assert (
                     abs(
                         result.home_win_probability
                         + result.draw_probability
@@ -319,8 +321,8 @@ class TestMLflowDatabaseIntegration:
                 ), "概率分布不一致"
 
                 # 验证预测结果与存储的一致性
-    assert result.match_id == 1
-    assert result.model_version == "1.0"
+                assert result.match_id == 1
+                assert result.model_version == "1.0"
 
         except Exception as e:
             pytest.skip(f"数据一致性测试跳过: {str(e)}")
@@ -356,6 +358,7 @@ class TestMLflowDatabaseIntegration:
         mock_session.commit.side_effect = Exception("数据库连接失败")
         mock_session_context = AsyncMock()
         mock_session_context.__aenter__.return_value = mock_session
+        mock_session_context.__aexit__.return_value = None
         db_manager.get_async_session.return_value = mock_session_context
 
         # 存储预测结果应该抛出异常
@@ -396,6 +399,10 @@ class TestMLflowDatabaseIntegration:
             avg_response_time = (end_time - start_time) / 10
 
             # 验证性能（平均响应时间应小于1秒）
-    assert (
+            assert (
                 avg_response_time < 1.0
             ), f"预测响应时间过长: {avg_response_time:.2f}秒"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--cov=src.models.prediction_service", "--cov-report=term-missing"])
