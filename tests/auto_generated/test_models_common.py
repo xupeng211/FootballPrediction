@@ -14,8 +14,8 @@ class TestCommonModels:
     def test_common_models_import(self):
         """测试通用模型导入"""
         try:
-            from src.models.common_models import *
-            assert 'BaseModel' in globals() or 'PredictionModel' in globals()
+            from src.models.common_models import BaseModel, PredictionModel
+            assert BaseModel is not None or PredictionModel is not None
         except ImportError as e:
             pytest.skip(f"Cannot import common models: {e}")
 
