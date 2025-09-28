@@ -1,0 +1,11 @@
+{
+  "summary": {
+    "total_tests": 0,
+    "flaky_tests": 0,
+    "external_tests": 0,
+    "execution_time": 0.0004398822784423828,
+    "detection_mode": "incremental"
+  },
+  "flaky_tests": [],
+  "timestamp": 1758987544.6148982
+}

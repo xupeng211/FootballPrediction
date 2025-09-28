@@ -15,7 +15,17 @@ from typing import Dict, Any, List
 # 添加 src 目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from api.models import router
+# 模拟外部依赖
+with patch.dict('sys.modules', {
+    'mlflow': Mock(),
+    'mlflow.tracking': Mock(),
+    'mlflow.tracking.client': Mock(),
+    'mlflow.entities': Mock(),
+    'prometheus_client': Mock(),
+    'sqlalchemy': Mock(),
+    'sqlalchemy.orm': Mock()
+}):
+    from api.models import router
 
 # 定义测试用的数据模型
 from pydantic import BaseModel, Field

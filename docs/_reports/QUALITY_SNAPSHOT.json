@@ -1,0 +1,87 @@
+{
+  "timestamp": "2025-09-28T07:59:47.993142",
+  "run_env": {
+    "python_version": "3.11.9",
+    "platform": "linux",
+    "project_root": "/home/user/projects/FootballPrediction"
+  },
+  "coverage": {
+    "coverage_percent": 19.8,
+    "total_lines": 2734,
+    "covered_lines": 541,
+    "missed_lines": 2193
+  },
+  "mutation": {
+    "mutation_score": 0.0,
+    "total_mutants": 0,
+    "killed_mutants": 0,
+    "survived_mutants": 0
+  },
+  "flaky": {
+    "flaky_rate": 0.0,
+    "total_tests": 0,
+    "flaky_tests": 0,
+    "flaky_test_list": []
+  },
+  "performance": {
+    "performance_regressions": 0,
+    "performance_improvements": 0,
+    "benchmark_count": 0,
+    "avg_performance_delta": 0.0
+  },
+  "auto_tests": {
+    "auto_tests_added": 34,
+    "auto_test_files": [
+      "test_lineage_lineage_reporter.py",
+      "test_data_validator.py",
+      "test_data_collectors_streaming_collector.py",
+      "test_main.py",
+      "test_quality_monitor.py",
+      "test_retry.py",
+      "test_dict_utils.py",
+      "test_time_utils.py",
+      "test_tasks_utils.py",
+      "test_crypto_utils.py",
+      "test_config.py",
+      "test_exceptions.py",
+      "test_core_logging.py",
+      "test_metrics_collector.py",
+      "test_scheduler.py",
+      "test_metrics_exporter.py",
+      "test_api_health.py",
+      "test_sql_compatibility.py",
+      "test_models_common.py",
+      "test_alert_manager.py",
+      "test_lineage_metadata_manager.py",
+      "test_cache.py",
+      "test_streaming.py",
+      "test_anomaly_detector.py",
+      "test_file_utils.py",
+      "test_database_connection.py",
+      "test_string_utils.py",
+      "test_response.py",
+      "test_data_features_examples.py",
+      "test_tasks_error_logger.py",
+      "test_warning_filters.py",
+      "test_api_schemas.py",
+      "test_core_logger.py",
+      "test_services.py"
+    ],
+    "total_test_methods": 803
+  },
+  "ai_fix": {
+    "ai_fix_attempts": 0,
+    "ai_fix_successes": 0,
+    "ai_fix_pass_rate": 0.0,
+    "recent_fix_reports": []
+  },
+  "summary": {
+    "overall_score": 7.920000000000001,
+    "coverage_percent": 19.8,
+    "mutation_score": 0.0,
+    "flaky_rate": 0.0,
+    "performance_regressions": 0,
+    "auto_tests_added": 34,
+    "ai_fix_pass_rate": 0.0
+  }
+}

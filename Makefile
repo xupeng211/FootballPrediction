@@ -38,15 +38,17 @@ RESET := \033[0m
 help: ## 📋 Show available commands
 	@echo "$(BLUE)🚀 Football Prediction Project Commands$(RESET)"
 	@echo "$(YELLOW)Environment:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Environment/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Environment/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Code Quality:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality.*[^System]/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Quality System:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality System/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Testing:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Test/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Test/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)CI/Container:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*(CI|Container)/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*(CI|Container)/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Other:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && !/Environment|Quality|Test|CI|Container/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && !/Environment|Quality|Test|CI|Container/ {printf "  $(GREEN)%-16s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # ============================================================================
 # 🌍 Environment Management
@@ -149,6 +151,9 @@ fmt: ## Quality: Format code with black and isort
 quality: lint fmt test ## Quality: Complete quality check (lint + format + test)
 	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
 
+quality-plus: quality quality-snapshot ## Quality: Extended quality check with quality system
+	@echo "$(GREEN)✅ Extended quality check with quality system completed$(RESET)"
+
 check: quality ## Quality: Alias for quality command
 	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
 
@@ -228,6 +233,54 @@ type-check: ## Quality: Run type checking with mypy
 	echo "$(GREEN)✅ Type checking passed$(RESET)"
 
 # ============================================================================
+# 🎯 Quality System
+# ============================================================================
+quality-snapshot: ## Quality System: Generate quality snapshot with metrics
+	@echo "$(BLUE)📊 Generating quality snapshot...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/generate_quality_snapshot.py && \
+	echo "$(GREEN)✅ Quality snapshot generated$(RESET)"
+
+quality-dashboard: ## Quality System: Update quality dashboard and badges
+	@echo "$(BLUE)📊 Updating quality dashboard...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/update_quality_dashboard.py && \
+	echo "$(GREEN)✅ Quality dashboard updated$(RESET)"
+
+generate-badges: ## Quality System: Generate quality badges
+	@echo "$(BLUE)🎨 Generating quality badges...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/generate_badges.py --all && \
+	echo "$(GREEN)✅ Quality badges generated$(RESET)"
+
+quality-gates: ## Quality System: Check quality gates against snapshot
+	@echo "$(BLUE)🎯 Checking quality gates...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/check_quality_gates.py docs/_reports/QUALITY_SNAPSHOT.json && \
+	echo "$(GREEN)✅ Quality gates check completed$(RESET)"
+
+quality-trends: ## Quality System: Generate quality trends analysis
+	@echo "$(BLUE)📈 Analyzing quality trends...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/generate_quality_trends.py docs/_reports/QUALITY_HISTORY.csv . && \
+	echo "$(GREEN)✅ Quality trends analysis completed$(RESET)"
+
+bugfix-analysis: ## Quality System: Analyze and report bugs for auto-fix
+	@echo "$(BLUE)🐛 Running bugfix analysis...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/analyze_bugfix.py && \
+	echo "$(GREEN)✅ Bugfix analysis completed$(RESET)"
+
+quality-all: quality-snapshot quality-dashboard generate-badges ## Quality System: Run complete quality system update
+	@echo "$(GREEN)🎯 Complete quality system update finished$(RESET)"
+
+quality-dry-run: ## Quality System: Dry run quality system without commiting
+	@echo "$(BLUE)🧪 Quality system dry run...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/generate_quality_snapshot.py && \
+	echo "$(GREEN)✅ Quality system dry run completed$(RESET)"
+
+# ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
 prepush: ## Quality: Complete pre-push validation (format + lint + type-check + test)
@@ -302,6 +355,39 @@ check-docs-index: ## Documentation: Check if docs auto index is up to date
 	$(PYTHON) scripts/generate_docs_index.py && \
 	git diff --exit-code docs/DOCS_AUTO_INDEX.md || (echo "$(RED)❌ docs/DOCS_AUTO_INDEX.md is outdated. Please run 'make docs-index' and commit changes.$(RESET)" && exit 1) && \
 	echo "$(GREEN)✅ Docs index is up to date$(RESET)"
+
+ai-bugfix-analyze: ## AI: Run AI-powered bug analysis and generate fix suggestions
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🤖 Running AI bug analysis...$(RESET)" && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode analyze && \
+	echo "$(GREEN)✅ AI analysis completed$(RESET)"
+
+ai-bugfix-fix: ## AI: Apply AI-recommended fixes
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🔧 Applying AI-recommended fixes...$(RESET)" && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode fix && \
+	echo "$(GREEN)✅ AI fixes applied$(RESET)"
+
+ai-bugfix-validate: ## AI: Validate applied AI fixes
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)✅ Validating AI fixes...$(RESET)" && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode validate && \
+	echo "$(GREEN)✅ AI fixes validated$(RESET)"
+
+ai-bugfix-report: ## AI: Generate AI bugfix activity report
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📊 Generating AI bugfix report...$(RESET)" && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode report && \
+	echo "$(GREEN)✅ AI report generated$(RESET)"
+
+ai-bugfix-full: ## AI: Run complete AI bugfix cycle (analyze -> fix -> validate)
+	@$(ACTIVATE) && \
+	echo "$(BLUE)🚀 Starting complete AI bugfix cycle...$(RESET)" && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode analyze && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode fix && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode validate && \
+	$(PYTHON) scripts/ai_enhanced_bugfix.py --mode report && \
+	echo "$(GREEN)✅ Complete AI bugfix cycle finished$(RESET)"
 
 # ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
@@ -593,7 +679,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 # 📝 Phony Targets
 # ============================================================================
-.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context docs-index check-docs-index clean \
+.PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context docs-index check-docs-index ai-bugfix-analyze ai-bugfix-fix ai-bugfix-validate ai-bugfix-report ai-bugfix-full clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
         feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \

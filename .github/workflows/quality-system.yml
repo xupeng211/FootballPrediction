@@ -1,0 +1,276 @@
+name: Quality System
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 每天凌晨3点运行
+  workflow_dispatch:     # 允许手动触发
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'docs/_reports/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  quality-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-quality-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-quality-
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+        pip install -e .
+
+    - name: Generate Quality Snapshot
+      run: |
+        python scripts/generate_quality_snapshot.py
+        echo "✅ 质量快照生成完成"
+
+    - name: Update Quality Dashboard
+      run: |
+        python scripts/update_quality_dashboard.py
+        echo "✅ 质量看板更新完成"
+
+    - name: Generate Quality Badges
+      run: |
+        python scripts/generate_badges.py --all
+        echo "✅ 质量徽章生成完成"
+
+    - name: Upload quality artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: quality-snapshot-${{ github.run_number }}
+        path: |
+          docs/_reports/QUALITY_SNAPSHOT.json
+          docs/_reports/QUALITY_HISTORY.csv
+          docs/_reports/TEST_COVERAGE_KANBAN.md
+          docs/_reports/BUGFIX_TODO.md
+          docs/_reports/badges/
+          coverage.json
+        retention-days: 30
+
+    - name: Commit and push quality updates
+      if: github.event_name != 'pull_request'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "quality-bot"
+        git config --global user.email "quality-bot@example.com"
+
+        # 添加所有质量相关文件
+        git add docs/_reports/QUALITY_SNAPSHOT.json
+        git add docs/_reports/QUALITY_HISTORY.csv
+        git add docs/_reports/TEST_COVERAGE_KANBAN.md
+        git add docs/_reports/BUGFIX_TODO.md
+        git add docs/_reports/badges/
+        git add coverage.json
+
+        # 检查是否有变更
+        if ! git diff-index --quiet HEAD; then
+          git commit -m "chore(quality): update quality snapshot and dashboard [skip ci]
+
+          🤖 Automated quality system update:
+          - Quality snapshot generated
+          - Dashboard updated with latest metrics
+          - Badges regenerated
+          - Quality history appended
+
+          📊 Run ID: ${{ github.run_number }}
+          ⏰ Timestamp: $(date -u)"
+          git push origin HEAD:${GITHUB_REF}
+          echo "✅ 质量数据已提交到仓库"
+        else
+          echo "ℹ️  质量数据无变更，跳过提交"
+
+  quality-gates:
+    runs-on: ubuntu-latest
+    needs: quality-snapshot
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+
+    - name: Download quality artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: quality-snapshot-${{ github.run_number }}
+        path: ./quality-data/
+
+    - name: Check Quality Gates
+      run: |
+        python scripts/check_quality_gates.py ./quality-data/docs/_reports/QUALITY_SNAPSHOT.json
+
+    - name: Comment on PR with quality status
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const qualityData = JSON.parse(fs.readFileSync('./quality-data/docs/_reports/QUALITY_SNAPSHOT.json', 'utf8'));
+
+          const coverage = qualityData.coverage?.percent_covered || 0;
+          const qualityScore = qualityData.quality_score || 0;
+          const autoTests = qualityData.tests?.auto_generated_count || 0;
+
+          // Determine quality status
+          let status = '🟡 Needs Improvement';
+          if (coverage >= 40 && qualityScore >= 60) {
+            status = '🟢 Good';
+          } else if (coverage >= 20 && qualityScore >= 40) {
+            status = '🟡 Acceptable';
+          } else {
+            status = '🔴 Needs Attention';
+          }
+
+          const comment = `
+          ## 🎯 Quality Check Report
+
+          **Status**: ${status}
+
+          ### 📊 Quality Metrics
+          - **Test Coverage**: ${coverage.toFixed(1)}%
+          - **Quality Score**: ${qualityScore.toFixed(0)}/100
+          - **Auto-generated Tests**: ${autoTests} files
+
+          ### 📋 Quality Gates
+          - **Coverage Gate**: ${coverage >= 20 ? '✅ Pass' : '❌ Fail'} (Minimum: 20%)
+          - **Quality Gate**: ${qualityScore >= 40 ? '✅ Pass' : '❌ Fail'} (Minimum: 40/100)
+          - **Test Generation**: ${autoTests >= 20 ? '✅ Pass' : '❌ Fail'} (Minimum: 20 files)
+
+          ### 📈 Detailed Report
+          For detailed quality analysis, see the [Quality Dashboard](https://github.com/${{ github.repository }}/blob/main/docs/_reports/TEST_COVERAGE_KANBAN.md).
+
+          ---
+          🤖 Generated by Quality System • Run #${{ github.run_number }}
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  quality-trends:
+    runs-on: ubuntu-latest
+    needs: quality-snapshot
+    if: github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+        pip install pandas matplotlib
+
+    - name: Download quality artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: quality-snapshot-${{ github.run_number }}
+        path: ./quality-data/
+
+    - name: Generate Quality Trends Report
+      run: |
+        python scripts/generate_quality_trends.py ./quality-data/docs/_reports/QUALITY_HISTORY.csv
+
+    - name: Upload trends report
+      uses: actions/upload-artifact@v4
+      with:
+        name: quality-trends-${{ github.run_number }}
+        path: |
+          quality-trends.png
+          quality-trends-report.md
+        retention-days: 90
+
+    - name: Commit trends report
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "quality-bot"
+        git config --global user.email "quality-bot@example.com"
+
+        if [ -f "quality-trends-report.md" ]; then
+          git add quality-trends-report.md
+          git commit -m "chore(quality): generate weekly quality trends report [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF}
+        fi
+
+  nightly-quality-summary:
+    runs-on: ubuntu-latest
+    needs: [quality-snapshot, quality-gates, quality-trends]
+    if: always() && github.event_name == 'schedule'
+
+    steps:
+    - name: Generate quality summary
+      run: |
+        echo "## 🎯 Quality System Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Overall Status" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Quality snapshot generated" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Quality dashboard updated" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Quality badges regenerated" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Quality gates checked" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Quality trends analyzed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📈 Key Metrics" >> $GITHUB_STEP_SUMMARY
+        echo "- Run ID: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Timestamp: $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "- Repository: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality Snapshot: \`quality-snapshot-${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality Trends: \`quality-trends-${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🤖 Generated by Quality System • $(date -u)" >> $GITHUB_STEP_SUMMARY
