@@ -1,0 +1,112 @@
+name: Kanban History Summary
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"  # 每周一 02:00 UTC 执行
+  workflow_dispatch:     # 允许手动触发
+
+jobs:
+  generate-kanban-history:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Scan Kanban check reports
+        id: scan-reports
+        run: |
+          REPORTS_DIR="docs/_reports"
+          HISTORY_FILE="$REPORTS_DIR/KANBAN_HISTORY.md"
+          TODAY=$(date -u +"%Y-%m-%d")
+
+          # 确保报告目录存在
+          mkdir -p "$REPORTS_DIR"
+
+          # 查找所有 KANBAN_CHECK_REPORT 文件
+          REPORT_FILES=$(find "$REPORTS_DIR" -name "KANBAN_CHECK_REPORT*.md" -type f | sort -r)
+
+          if [ -z "$REPORT_FILES" ]; then
+            echo "📋 本周无失败记录"
+            echo "no_reports=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📋 发现 $(echo "$REPORT_FILES" | wc -l) 个检查报告"
+
+          # 生成新的汇总内容
+          NEW_CONTENT="# 🗂️ Kanban 检查历史汇总\n\n"
+          NEW_CONTENT="$NEW_CONTENT**最后更新**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")\n\n"
+
+          # 处理每个报告文件
+          for report_file in $REPORT_FILES; do
+            echo "📄 处理报告: $report_file"
+
+            # 提取报告信息
+            if [ -f "$report_file" ]; then
+              # 提取生成时间
+              gen_time=$(grep "生成时间:" "$report_file" | sed 's/**生成时间**: //')
+
+              # 提取 CI 编号
+              ci_run=$(grep "CI 运行编号:" "$report_file" | sed 's/**CI 运行编号**: //')
+
+              # 提取提交 SHA
+              commit_sha=$(grep "提交 SHA:" "$report_file" | sed 's/**提交 SHA**: //')
+
+              # 提取失败原因
+              reason=$(grep "原因:" "$report_file" | sed 's/.*原因: //')
+
+              # 提取日期作为标题
+              if [ -n "$gen_time" ]; then
+                date_title=$(echo "$gen_time" | cut -d' ' -f1)
+                NEW_CONTENT="$NEW_CONTENT## $date_title\n"
+                NEW_CONTENT="$NEW_CONTENT- 状态: ❌ 失败\n"
+                NEW_CONTENT="$NEW_CONTENT- 原因: $reason\n"
+                NEW_CONTENT="$NEW_CONTENT- 提交 SHA: $commit_sha\n"
+                NEW_CONTENT="$NEW_CONTENT- CI 运行编号: $ci_run\n"
+                NEW_CONTENT="$NEW_CONTENT\n---\n\n"
+              fi
+            fi
+          done
+
+          # 移除最后的分隔线
+          NEW_CONTENT=$(echo "$NEW_CONTENT" | sed '/^---$/N;/^\n$/D')
+
+          # 写入历史文件
+          echo "$NEW_CONTENT" > "$HISTORY_FILE"
+          echo "✅ 历史汇总已生成: $HISTORY_FILE"
+          echo "has_reports=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        if: steps.scan-reports.outputs.has_reports == 'true'
+        run: |
+          HISTORY_FILE="docs/_reports/KANBAN_HISTORY.md"
+
+          # 检查是否有变化
+          if ! git diff --quiet "$HISTORY_FILE"; then
+            echo "📤 提交历史汇总更新..."
+            git add "$HISTORY_FILE"
+            git commit -m "chore(report): update KANBAN_HISTORY.md (weekly summary)"
+            git push origin main
+            echo "✅ 提交成功"
+          else
+            echo "ℹ️ 无变化需要提交"
+          fi
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.scan-reports.outputs.has_reports }}" = "true" ]; then
+            echo "✅ \033[32mKanban 历史汇总更新完成\033[0m"
+          else
+            echo "📋 \033[36m本周无失败记录，无需更新\033[0m"
+          fi
