@@ -37,7 +37,7 @@ The project includes comprehensive AI development guidelines in `.cursor/rules/`
 - `make quality` - Complete quality check (lint + format + test)
 
 ### Testing
-- `make test` - Run pytest unit tests
+- `make test` - Run pytest unit tests (385+ tests, 96.35% coverage)
 - `make coverage` - Run tests with coverage report (80% threshold enforced in CI, 20% for local development)
 - `make coverage-fast` - Run fast coverage (unit tests only, 20% threshold for development)
 - `make test-quick` - Quick test run (unit tests with timeout)
@@ -67,7 +67,7 @@ The project includes comprehensive AI development guidelines in `.cursor/rules/`
 
 ### Project Context
 - `make context` - Load project context for AI development (⭐ Most important)
-- `make sync-issues` - Sync GitHub issues between local and GitHub
+- `make sync-issues` - Sync GitHub issues between local and GitHub (bidirectional sync with kanban workflow)
 
 ### Single Test Execution
 - `pytest tests/unit/test_specific_module.py` - Run specific test file
@@ -176,7 +176,7 @@ Data Collection → Processing → Feature Store → ML Models → Predictions
 3. **Local CI**: Use `./ci-verify.sh` to simulate full CI environment locally (⭐ Required before pushing)
 
 ### Critical Requirements
-- **Test Coverage**: CI enforces 80%+ minimum (local dev uses 20-50% for faster iteration) with comprehensive test suite
+- **Test Coverage**: Currently 96.35% coverage with 385+ tests; CI enforces 80%+ minimum (local dev uses 20-50% for faster iteration)
 - **Type Safety**: Full mypy type checking required for all code (with some module exclusions)
 - **Code Formatting**: Black and isort automatically applied with flake8 linting
 - **Database**: Uses both SQLite (testing) and PostgreSQL (production) with compatibility layer
