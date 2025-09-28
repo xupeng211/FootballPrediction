@@ -726,6 +726,9 @@ class TestAlertManager:
             throttle_seconds=300  # 5 minutes
         )
 
+        # Add rule to manager for throttle testing
+        manager.rules[rule.rule_id] = rule
+
         # No last_fired time, should not throttle
         assert not manager._should_throttle("test_alert", "test_rule")
 

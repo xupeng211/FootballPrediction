@@ -161,47 +161,73 @@ class TestQualityMonitor:
 
     def setup_method(self):
         """设置测试环境"""
-        self.monitor = QualityMonitor()
+        # Don't create monitor here because it needs to be mocked
+        pass
 
-    def test_quality_monitor_initialization(self):
+    @patch('src.database.connection.DatabaseManager')
+    def test_quality_monitor_initialization(self, mock_db_manager_class):
         """测试质量监控器初始化"""
-        assert hasattr(self.monitor, 'freshness_thresholds')
-        assert hasattr(self.monitor, 'critical_fields')
-        assert hasattr(self.monitor, 'db_manager')
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
+        assert hasattr(monitor, 'freshness_thresholds')
+        assert hasattr(monitor, 'critical_fields')
+        assert hasattr(monitor, 'db_manager')
 
         # 检查默认配置
-        assert "matches" in self.monitor.freshness_thresholds
-        assert "odds" in self.monitor.freshness_thresholds
-        assert "predictions" in self.monitor.freshness_thresholds
+        assert "matches" in monitor.freshness_thresholds
+        assert "odds" in monitor.freshness_thresholds
+        assert "predictions" in monitor.freshness_thresholds
 
-        assert "matches" in self.monitor.critical_fields
-        assert "odds" in self.monitor.critical_fields
-        assert "predictions" in self.monitor.critical_fields
+        assert "matches" in monitor.critical_fields
+        assert "odds" in monitor.critical_fields
+        assert "predictions" in monitor.critical_fields
 
-    def test_freshness_thresholds_configuration(self):
+    @patch('src.database.connection.DatabaseManager')
+    def test_freshness_thresholds_configuration(self, mock_db_manager_class):
         """测试新鲜度阈值配置"""
-        thresholds = self.monitor.freshness_thresholds
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+        thresholds = monitor.freshness_thresholds
         assert thresholds["matches"] == 24  # 24小时
         assert thresholds["odds"] == 1      # 1小时
         assert thresholds["predictions"] == 2  # 2小时
         assert thresholds["teams"] == 168   # 1周
         assert thresholds["leagues"] == 720  # 1个月
 
-    def test_critical_fields_configuration(self):
+    @patch('src.database.connection.DatabaseManager')
+    def test_critical_fields_configuration(self, mock_db_manager_class):
         """测试关键字段配置"""
-        fields = self.monitor.critical_fields
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+        fields = monitor.critical_fields
         assert "home_team_id" in fields["matches"]
         assert "away_team_id" in fields["matches"]
         assert "match_id" in fields["odds"]
         assert "model_name" in fields["predictions"]
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_data_freshness_all_tables(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_data_freshness_all_tables(self, mock_db_manager_class):
         """测试检查所有表的数据新鲜度"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         # 模拟数据库会话
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         mock_row = Mock()
@@ -213,17 +239,26 @@ class TestQualityMonitor:
         mock_result.first.return_value = mock_row
         mock_session.execute.return_value = mock_result
 
-        results = await self.monitor.check_data_freshness()
+        # 在patched context中创建monitor
+        monitor = QualityMonitor()
+
+        results = await monitor.check_data_freshness()
 
         assert isinstance(results, dict)
         assert len(results) > 0
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_data_freshness_specific_tables(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_data_freshness_specific_tables(self, mock_db_manager_class):
         """测试检查特定表的数据新鲜度"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         mock_row = Mock()
         mock_row.last_update = datetime.now() - timedelta(hours=6)
@@ -233,16 +268,23 @@ class TestQualityMonitor:
         mock_session.execute.return_value = mock_result
 
         table_names = ["matches", "odds"]
-        results = await self.monitor.check_data_freshness(table_names)
+        monitor = QualityMonitor()
+        results = await monitor.check_data_freshness(table_names)
 
         assert isinstance(results, dict)
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_table_freshness_matches(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_table_freshness_matches(self, mock_db_manager_class):
         """测试检查matches表的新鲜度"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         mock_row = Mock()
         mock_row.last_update = datetime.now() - timedelta(hours=12)
@@ -251,18 +293,25 @@ class TestQualityMonitor:
         mock_result.first.return_value = mock_row
         mock_session.execute.return_value = mock_result
 
-        result = await self.monitor._check_table_freshness(mock_session, "matches")
+        monitor = QualityMonitor()
+        result = await monitor._check_table_freshness(mock_session, "matches")
 
         assert result.table_name == "matches"
         assert result.records_count == 100
         assert result.is_fresh == True  # 12小时 < 24小时阈值
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_table_freshness_expired_data(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_table_freshness_expired_data(self, mock_db_manager_class):
         """测试过期数据的新鲜度检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         mock_row = Mock()
         mock_row.last_update = datetime.now() - timedelta(hours=30)
@@ -271,17 +320,24 @@ class TestQualityMonitor:
         mock_result.first.return_value = mock_row
         mock_session.execute.return_value = mock_result
 
-        result = await self.monitor._check_table_freshness(mock_session, "odds")
+        monitor = QualityMonitor()
+        result = await monitor._check_table_freshness(mock_session, "odds")
 
         assert result.table_name == "odds"
         assert result.is_fresh == False  # 30小时 > 1小时阈值
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_data_completeness_all_tables(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_data_completeness_all_tables(self, mock_db_manager_class):
         """测试检查所有表的数据完整性"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟总记录数查询
         total_row = Mock()
@@ -303,17 +359,24 @@ class TestQualityMonitor:
 
         mock_session.execute.side_effect = execute_side_effect
 
-        results = await self.monitor.check_data_completeness()
+        monitor = QualityMonitor()
+        results = await monitor.check_data_completeness()
 
         assert isinstance(results, dict)
         assert len(results) > 0
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_table_completeness_normal_case(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_table_completeness_normal_case(self, mock_db_manager_class):
         """测试正常情况下的表完整性检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟总记录数
         total_row = Mock()
@@ -335,18 +398,25 @@ class TestQualityMonitor:
 
         mock_session.execute.side_effect = execute_side_effect
 
-        result = await self.monitor._check_table_completeness(mock_session, "matches")
+        monitor = QualityMonitor()
+        result = await monitor._check_table_completeness(mock_session, "matches")
 
         assert result.table_name == "matches"
         assert result.total_records == 1000
         assert result.completeness_score > 90  # 应该有较高的完整性评分
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_data_consistency(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_data_consistency(self, mock_db_manager_class):
         """测试数据一致性检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         query_row = Mock()
@@ -355,19 +425,26 @@ class TestQualityMonitor:
         query_result.first.return_value = query_row
         mock_session.execute.return_value = query_result
 
-        results = await self.monitor.check_data_consistency()
+        monitor = QualityMonitor()
+        results = await monitor.check_data_consistency()
 
         assert isinstance(results, dict)
         assert "foreign_key_consistency" in results
         assert "odds_consistency" in results
         assert "match_status_consistency" in results
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_calculate_overall_quality_score(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_calculate_overall_quality_score(self, mock_db_manager_class):
         """测试总体质量评分计算"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟各种查询结果
         row = Mock()
@@ -376,7 +453,8 @@ class TestQualityMonitor:
         result.first.return_value = row
         mock_session.execute.return_value = result
 
-        quality_score = await self.monitor.calculate_overall_quality_score()
+        monitor = QualityMonitor()
+        quality_score = await monitor.calculate_overall_quality_score()
 
         assert isinstance(quality_score, dict)
         assert "overall_score" in quality_score
@@ -387,42 +465,78 @@ class TestQualityMonitor:
         assert "check_time" in quality_score
         assert isinstance(quality_score["overall_score"], (int, float))
 
-    def test_get_quality_level_excellent(self):
-        """测试优秀质量等级"""
-        assert self.monitor._get_quality_level(95) == "优秀"
-        assert self.monitor._get_quality_level(98) == "优秀"
-        assert self.monitor._get_quality_level(100) == "优秀"
+    @patch('src.database.connection.DatabaseManager')
+    def test_get_quality_level_excellent(self, mock_db_manager_class):
+        """测试优秀质量等级"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
 
-    def test_get_quality_level_good(self):
-        """测试良好质量等级"""
-        assert self.monitor._get_quality_level(85) == "良好"
-        assert self.monitor._get_quality_level(90) == "良好"
-        assert self.monitor._get_quality_level(94) == "良好"
+        monitor = QualityMonitor()
 
-    def test_get_quality_level_average(self):
-        """测试一般质量等级"""
-        assert self.monitor._get_quality_level(70) == "一般"
-        assert self.monitor._get_quality_level(80) == "一般"
-        assert self.monitor._get_quality_level(84) == "一般"
+        assert monitor._get_quality_level(95) == "优秀"
+        assert monitor._get_quality_level(98) == "优秀"
+        assert monitor._get_quality_level(100) == "优秀"
 
-    def test_get_quality_level_poor(self):
-        """测试较差质量等级"""
-        assert self.monitor._get_quality_level(50) == "较差"
-        assert self.monitor._get_quality_level(60) == "较差"
-        assert self.monitor._get_quality_level(69) == "较差"
+    @patch('src.database.connection.DatabaseManager')
+    def test_get_quality_level_good(self, mock_db_manager_class):
+        """测试良好质量等级"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
 
-    def test_get_quality_level_very_poor(self):
-        """测试很差质量等级"""
-        assert self.monitor._get_quality_level(0) == "很差"
-        assert self.monitor._get_quality_level(30) == "很差"
-        assert self.monitor._get_quality_level(49) == "很差"
+        monitor = QualityMonitor()
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_get_quality_trends(self, mock_db_manager):
+        assert monitor._get_quality_level(85) == "良好"
+        assert monitor._get_quality_level(90) == "良好"
+        assert monitor._get_quality_level(94) == "良好"
+
+    @patch('src.database.connection.DatabaseManager')
+    def test_get_quality_level_average(self, mock_db_manager_class):
+        """测试一般质量等级"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
+        assert monitor._get_quality_level(70) == "一般"
+        assert monitor._get_quality_level(80) == "一般"
+        assert monitor._get_quality_level(84) == "一般"
+
+    @patch('src.database.connection.DatabaseManager')
+    def test_get_quality_level_poor(self, mock_db_manager_class):
+        """测试较差质量等级"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
+        assert monitor._get_quality_level(50) == "较差"
+        assert monitor._get_quality_level(60) == "较差"
+        assert monitor._get_quality_level(69) == "较差"
+
+    @patch('src.database.connection.DatabaseManager')
+    def test_get_quality_level_very_poor(self, mock_db_manager_class):
+        """测试很差质量等级"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
+        assert monitor._get_quality_level(0) == "很差"
+        assert monitor._get_quality_level(30) == "很差"
+        assert monitor._get_quality_level(49) == "很差"
+
+    @patch('src.database.connection.DatabaseManager')
+    async def test_get_quality_trends(self, mock_db_manager_class):
         """测试质量趋势获取"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         row = Mock()
@@ -431,7 +545,8 @@ class TestQualityMonitor:
         result.first.return_value = row
         mock_session.execute.return_value = result
 
-        trends = await self.monitor.get_quality_trends(days=7)
+        monitor = QualityMonitor()
+        trends = await monitor.get_quality_trends(days=7)
 
         assert isinstance(trends, dict)
         assert "current_quality" in trends
@@ -441,60 +556,90 @@ class TestQualityMonitor:
         assert trends["trend_period_days"] == 7
         assert isinstance(trends["recommendations"], list)
 
-    def test_generate_quality_recommendations_excellent(self):
-        """测试优秀质量的改进建议"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_generate_quality_recommendations_excellent(self, mock_db_manager_class):
+        """测试优秀质量的改进建议"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         quality_data = {
             "overall_score": 95,
             "freshness_score": 95,
             "completeness_score": 95,
             "consistency_score": 95
         }
-        recommendations = self.monitor._generate_quality_recommendations(quality_data)
+        recommendations = monitor._generate_quality_recommendations(quality_data)
         # 优秀质量应该没有改进建议
         assert len(recommendations) == 0
 
-    def test_generate_quality_recommendations_poor_freshness(self):
-        """测试新鲜度差的改进建议"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_generate_quality_recommendations_poor_freshness(self, mock_db_manager_class):
+        """测试新鲜度差的改进建议"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         quality_data = {
             "overall_score": 60,
             "freshness_score": 70,  # 新鲜度较低
             "completeness_score": 90,
             "consistency_score": 95
         }
-        recommendations = self.monitor._generate_quality_recommendations(quality_data)
+        recommendations = monitor._generate_quality_recommendations(quality_data)
         assert any("数据新鲜度较低" in rec for rec in recommendations)
 
-    def test_generate_quality_recommendations_poor_completeness(self):
-        """测试完整性差的改进建议"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_generate_quality_recommendations_poor_completeness(self, mock_db_manager_class):
+        """测试完整性差的改进建议"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         quality_data = {
             "overall_score": 70,
             "freshness_score": 90,
             "completeness_score": 80,  # 完整性较低
             "consistency_score": 95
         }
-        recommendations = self.monitor._generate_quality_recommendations(quality_data)
+        recommendations = monitor._generate_quality_recommendations(quality_data)
         assert any("数据完整性有待提升" in rec for rec in recommendations)
 
-    def test_generate_quality_recommendations_poor_consistency(self):
-        """测试一致性差的改进建议"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_generate_quality_recommendations_poor_consistency(self, mock_db_manager_class):
+        """测试一致性差的改进建议"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         quality_data = {
             "overall_score": 75,
             "freshness_score": 90,
             "completeness_score": 90,
             "consistency_score": 85  # 一致性较低
         }
-        recommendations = self.monitor._generate_quality_recommendations(quality_data)
+        recommendations = monitor._generate_quality_recommendations(quality_data)
         assert any("数据一致性存在问题" in rec for rec in recommendations)
 
-    def test_generate_quality_recommendations_very_poor(self):
-        """测试整体质量差的改进建议"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_generate_quality_recommendations_very_poor(self, mock_db_manager_class):
+        """测试整体质量差的改进建议"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         quality_data = {
             "overall_score": 50,
             "freshness_score": 60,
             "completeness_score": 70,
             "consistency_score": 65
         }
-        recommendations = self.monitor._generate_quality_recommendations(quality_data)
+        recommendations = monitor._generate_quality_recommendations(quality_data)
         assert any("整体数据质量需要重点关注" in rec for rec in recommendations)
 
 
@@ -531,8 +676,14 @@ class TestQualityMonitorIntegration:
         # 由于数据库连接的限制，这个测试主要用于验证代码结构
         # 在实际环境中需要适当的数据库连接池配置
 
-    def test_performance_monitoring(self):
-        """测试性能监控"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_performance_monitoring(self, mock_db_manager_class):
+        """测试性能监控"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 质量监控器应该能够高效执行检查
         # 这里主要验证代码结构，实际性能需要在集成测试中验证
         assert hasattr(self.monitor, 'check_data_freshness')
@@ -540,41 +691,65 @@ class TestQualityMonitorIntegration:
         assert hasattr(self.monitor, 'check_data_consistency')
         assert hasattr(self.monitor, 'calculate_overall_quality_score')
 
-    def test_configuration_validation(self):
-        """测试配置验证"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_configuration_validation(self, mock_db_manager_class):
+        """测试配置验证"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 验证阈值配置的合理性
-        for table, threshold in self.monitor.freshness_thresholds.items():
+        for table, threshold in monitor.freshness_thresholds.items():
             assert isinstance(table, str)
             assert isinstance(threshold, (int, float))
             assert threshold > 0
 
         # 验证关键字段配置
-        for table, fields in self.monitor.critical_fields.items():
+        for table, fields in monitor.critical_fields.items():
             assert isinstance(table, str)
             assert isinstance(fields, list)
             assert len(fields) > 0
             for field in fields:
                 assert isinstance(field, str)
 
-    def test_error_logging(self):
-        """测试错误日志记录"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_error_logging(self, mock_db_manager_class):
+        """测试错误日志记录"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 验证监控器有适当的错误处理和日志记录
         assert hasattr(self.monitor, 'db_manager')
         # 实际的日志记录测试需要集成测试环境
 
-    def test_memory_usage(self):
-        """测试内存使用"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_memory_usage(self, mock_db_manager_class):
+        """测试内存使用"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 质量监控器不应该有内存泄漏
         # 这里主要验证基本属性，实际内存测试需要性能测试工具
-        assert isinstance(self.monitor.freshness_thresholds, dict)
-        assert isinstance(self.monitor.critical_fields, dict)
+        assert isinstance(monitor.freshness_thresholds, dict)
+        assert isinstance(monitor.critical_fields, dict)
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_foreign_key_consistency_integration(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_foreign_key_consistency_integration(self, mock_db_manager_class):
         """测试外键一致性集成检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         row = Mock()
@@ -583,7 +758,8 @@ class TestQualityMonitorIntegration:
         result.first.return_value = row
         mock_session.execute.return_value = result
 
-        consistency = await self.monitor._check_foreign_key_consistency(mock_session)
+        monitor = QualityMonitor()
+        consistency = await monitor._check_foreign_key_consistency(mock_session)
 
         assert "orphaned_home_teams" in consistency
         assert "orphaned_away_teams" in consistency
@@ -592,12 +768,18 @@ class TestQualityMonitorIntegration:
         assert isinstance(consistency["orphaned_away_teams"], int)
         assert isinstance(consistency["orphaned_odds"], int)
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_odds_consistency_integration(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_odds_consistency_integration(self, mock_db_manager_class):
         """测试赔率一致性集成检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         row = Mock()
@@ -606,19 +788,26 @@ class TestQualityMonitorIntegration:
         result.first.return_value = row
         mock_session.execute.return_value = result
 
-        consistency = await self.monitor._check_odds_consistency(mock_session)
+        monitor = QualityMonitor()
+        consistency = await monitor._check_odds_consistency(mock_session)
 
         assert "invalid_odds_range" in consistency
         assert "invalid_probability_sum" in consistency
         assert isinstance(consistency["invalid_odds_range"], int)
         assert isinstance(consistency["invalid_probability_sum"], int)
 
-    @patch('monitoring.quality_monitor.DatabaseManager')
-    async def test_check_match_status_consistency_integration(self, mock_db_manager):
+    @patch('src.database.connection.DatabaseManager')
+    async def test_check_match_status_consistency_integration(self, mock_db_manager_class):
         """测试比赛状态一致性集成检查"""
+        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
         mock_session = AsyncMock()
-        mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_db_manager.return_value.get_async_session.return_value.__aexit__.return_value = None
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+        mock_db_manager.get_async_session.return_value = mock_context_manager
 
         # 模拟查询结果
         row = Mock()
@@ -627,7 +816,8 @@ class TestQualityMonitorIntegration:
         result.first.return_value = row
         mock_session.execute.return_value = result
 
-        consistency = await self.monitor._check_match_status_consistency(mock_session)
+        monitor = QualityMonitor()
+        consistency = await monitor._check_match_status_consistency(mock_session)
 
         assert "finished_matches_without_score" in consistency
         assert "scheduled_matches_with_score" in consistency
@@ -670,8 +860,14 @@ class TestQualityMonitorIntegration:
                     if input_val not in ["matches", "odds", "predictions", "teams", "leagues"]:
                         raise ValueError(f"Invalid table name: {input_val}")
 
-    def test_async_operation_handling(self):
-        """测试异步操作处理"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_async_operation_handling(self, mock_db_manager_class):
+        """测试异步操作处理"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 验证异步方法的正确实现
         async_methods = [
             'check_data_freshness',
@@ -688,11 +884,17 @@ class TestQualityMonitorIntegration:
             import inspect
             assert inspect.iscoroutinefunction(method), f"{method_name} should be a coroutine function"
 
-    def test_database_session_management(self):
-        """测试数据库会话管理"""
+    @patch('src.database.connection.DatabaseManager')
+    def test_database_session_management(self, mock_db_manager_class):
+        """测试数据库会话管理"""        # 设置mock实例
+        mock_db_manager = Mock()
+        mock_db_manager_class.return_value = mock_db_manager
+
+        monitor = QualityMonitor()
+
         # 验证数据库会话的正确管理
         assert hasattr(self.monitor, 'db_manager')
-        assert hasattr(self.monitor.db_manager, 'get_async_session')
+        assert hasattr(monitor.db_manager, 'get_async_session')
 
         # 验证上下文管理器的使用
         # 在实际实现中，所有数据库操作都应该使用 async with 语句

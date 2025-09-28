@@ -28,11 +28,15 @@ with patch.dict('sys.modules', {
     'sqlalchemy.text': Mock(),
     'src.core': Mock(),
     'src.database': Mock(),
+    'src.database.models': Mock(),
+    'src.database.connection': Mock(),
+    'src.features': Mock(),
+    'src.features.feature_store': Mock(),
     'src.monitoring': Mock(),
     'src.monitoring.metrics_collector': Mock(),
     'src.monitoring.metrics_exporter': Mock()
 }):
-    from data.quality.anomaly_detector import (
+    from src.data.quality.anomaly_detector import (
         AnomalyDetectionResult,
         StatisticalAnomalyDetector,
         MachineLearningAnomalyDetector,
@@ -152,8 +156,8 @@ class TestStatisticalAnomalyDetector:
 
     def test_detect_outliers_3sigma_normal_data(self):
         """测试3σ检测正常数据"""
-        np.random.seed(42)
-        data = pd.Series(np.random.normal(50, 10, 100))
+        # Create actual test data instead of using mocked numpy
+        data = pd.Series([50 + 10 * (i - 50) / 20 for i in range(100)])  # Normal-like distribution
 
         result = self.detector.detect_outliers_3sigma(data, "test_table", "test_column")
 
@@ -199,8 +203,8 @@ class TestStatisticalAnomalyDetector:
 
     def test_detect_distribution_shift_normal_data(self):
         """测试分布偏移检测正常数据"""
-        baseline_data = pd.Series(np.random.normal(50, 10, 100))
-        current_data = pd.Series(np.random.normal(50, 10, 100))
+        baseline_data = pd.Series([50 + 10 * (i - 50) / 20 for i in range(100)])
+        current_data = pd.Series([50 + 10 * (i - 50) / 20 for i in range(100)])
 
         result = self.detector.detect_distribution_shift(
             baseline_data, current_data, "test_table", "test_column"
@@ -216,8 +220,8 @@ class TestStatisticalAnomalyDetector:
 
     def test_detect_distribution_shift_with_shift(self):
         """测试检测到分布偏移"""
-        baseline_data = pd.Series(np.random.normal(50, 10, 100))
-        current_data = pd.Series(np.random.normal(80, 10, 100))  # 明显的偏移
+        baseline_data = pd.Series([50 + 10 * (i - 50) / 20 for i in range(100)])
+        current_data = pd.Series([80 + 10 * (i - 50) / 20 for i in range(100)])  # 明显的偏移
 
         with patch('data.quality.anomaly_detector.stats.ks_2samp') as mock_ks:
             mock_ks.return_value = (0.3, 0.001)  # 显著的偏移
@@ -255,8 +259,8 @@ class TestStatisticalAnomalyDetector:
 
     def test_detect_outliers_iqr_normal_data(self):
         """测试IQR检测正常数据"""
-        np.random.seed(42)
-        data = pd.Series(np.random.normal(50, 10, 100))
+        # Create actual test data instead of using mocked numpy
+        data = pd.Series([50 + 10 * (i - 50) / 20 for i in range(100)])
 
         result = self.detector.detect_outliers_iqr(data, "test_table", "test_column")
 
@@ -344,18 +348,18 @@ class TestMachineLearningAnomalyDetector:
     def test_detect_anomalies_isolation_forest_normal_data(self):
         """测试Isolation Forest检测正常数据"""
         # 创建正常数据
-        np.random.seed(42)
+        # Create actual test data instead of using mocked numpy
         data = pd.DataFrame({
-            "feature1": np.random.normal(50, 10, 100),
-            "feature2": np.random.normal(30, 5, 100)
+            "feature1": [50 + 10 * (i - 50) / 20 for i in range(100)],
+            "feature2": [30 + 5 * (i - 50) / 20 for i in range(100)]
         })
 
         # 模拟scaler和isolation forest
-        self.detector.scaler.fit_transform = Mock(return_value=np.random.rand(100, 2))
+        self.detector.scaler.fit_transform = Mock(return_value=[[i/100, j/100] for i, j in zip(range(100), range(100))])
 
         mock_if = Mock()
         mock_if.fit_predict.return_value = np.array([1] * 95 + [-1] * 5)  # 5个异常值
-        mock_if.decision_function.return_value = np.random.rand(100)
+        mock_if.decision_function.return_value = [i/100 for i in range(100)]
         self.detector.isolation_forest = mock_if
 
         with patch('data.quality.anomaly_detector.IsolationForest') as mock_if_class:
@@ -387,7 +391,7 @@ class TestMachineLearningAnomalyDetector:
 
             mock_if = Mock()
             mock_if.fit_predict.return_value = np.array(labels)
-            mock_if.decision_function.return_value = np.random.rand(len(labels))
+            mock_if.decision_function.return_value = [i/len(labels) for i in range(len(labels))]
 
             with patch('data.quality.anomaly_detector.IsolationForest') as mock_if_class:
                 mock_if_class.return_value = mock_if
@@ -426,12 +430,12 @@ class TestMachineLearningAnomalyDetector:
     def test_detect_data_drift_with_drift(self):
         """测试检测到数据漂移"""
         baseline_data = pd.DataFrame({
-            "feature1": np.random.normal(50, 10, 100),
-            "feature2": np.random.normal(30, 5, 100)
+            "feature1": [50 + 10 * (i - 100//2) / 20 for i in range(100)],
+            "feature2": [30 + 5 * (i - 100//2) / 20 for i in range(100)]
         })
         current_data = pd.DataFrame({
-            "feature1": np.random.normal(80, 10, 100),  # 明显漂移
-            "feature2": np.random.normal(30, 5, 100)
+            "feature1": [80 + 10 * (i - 100//2) / 20 for i in range(100)],  # 明显漂移
+            "feature2": [30 + 5 * (i - 100//2) / 20 for i in range(100)]
         })
 
         with patch('data.quality.anomaly_detector.stats.ks_2samp') as mock_ks:
@@ -469,12 +473,12 @@ class TestMachineLearningAnomalyDetector:
     def test_detect_anomalies_clustering_normal_data(self):
         """测试DBSCAN聚类检测正常数据"""
         data = pd.DataFrame({
-            "feature1": np.random.normal(50, 10, 50),
-            "feature2": np.random.normal(30, 5, 50)
+            "feature1": [50 + 10 * (i - 50//2) / 20 for i in range(50)],
+            "feature2": [30 + 5 * (i - 50//2) / 20 for i in range(50)]
         })
 
         # 模拟scaler和DBSCAN
-        self.detector.scaler.fit_transform = Mock(return_value=np.random.rand(50, 2))
+        self.detector.scaler.fit_transform = Mock(return_value=[[i/50, j/50] for i, j in zip(range(50), range(50))])
 
         mock_dbscan = Mock()
         mock_dbscan.fit_predict.return_value = np.array([0] * 45 + [-1] * 5)  # 5个噪声点
@@ -1020,8 +1024,8 @@ class TestAnomalyDetectorIntegration:
 
     def test_detection_consistency_across_methods(self):
         """测试不同检测方法的一致性"""
-        np.random.seed(42)
-        normal_data = pd.Series(np.random.normal(50, 10, 100))
+        # np.random.seed(42)  # Removed - using deterministic data
+        normal_data = pd.Series([50 + 10 * (i - 100//2) / 20 for i in range(100)])
 
         # 对正常数据进行多种检测
         result_3sigma = self.statistical_detector.detect_outliers_3sigma(
