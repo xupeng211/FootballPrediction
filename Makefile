@@ -588,7 +588,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
         docs-api docs-code docs-architecture docs-stats docs-all serve-docs \
         db-init db-migrate db-seed db-backup db-restore db-reset db-shell \
         security-check license-check dependency-check secret-scan audit \
-        dev-stats code-quality-report workflow-analysis
+        dev-stats code-quality-report workflow-analysis setup-hooks
 
 .PHONY: docs.check
 ## 运行文档质量检查（坏链/孤儿/目录规范）
@@ -599,3 +599,19 @@ docs.check:
 ## 自动化修复文档问题（如孤儿批次处理）
 docs.fix:
 	@python3 scripts/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
+
+# ============================================================================
+# 🪝 Git Hooks Setup
+# ============================================================================
+setup-hooks: ## Git: Setup pre-commit hooks permissions
+	@echo "$(YELLOW)Setting up git hooks...$(RESET)"
+	@if [ -f ".git/hooks/pre-commit" ]; then \
+		if [ -x ".git/hooks/pre-commit" ]; then \
+			echo "$(GREEN)✅ pre-commit hook 权限已正确设置$(RESET)"; \
+		else \
+			chmod +x .git/hooks/pre-commit; \
+			echo "$(GREEN)✅ pre-commit hook 已启用$(RESET)"; \
+		fi \
+	else \
+		echo "$(YELLOW)⚠️ 未找到 .git/hooks/pre-commit$(RESET)"; \
+	fi
