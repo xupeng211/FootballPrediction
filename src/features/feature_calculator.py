@@ -18,9 +18,9 @@ from typing import Dict, List, Optional
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database.connection import DatabaseManager
-from ..database.models.match import Match
-from ..database.models.odds import Odds
+from src.database.connection import DatabaseManager
+from src.database.models.match import Match
+from src.database.models.odds import Odds
 from .entities import MatchEntity, TeamEntity
 from .feature_definitions import (
     AllMatchFeatures,

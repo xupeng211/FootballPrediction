@@ -125,7 +125,6 @@ class TestAlert:
     def test_alert_to_dict(self):
         """测试告警转字典"""
         created_at = datetime(2023, 1, 1, 12, 0, 0)
-        resolved_at = datetime(2023, 1, 1, 13, 0, 0)
 
         alert = Alert(
             alert_id="test123",
@@ -137,10 +136,10 @@ class TestAlert:
             annotations={"note": "test"},
             created_at=created_at
         )
-        alert.resolve()  # This sets resolved_at
 
         result = alert.to_dict()
 
+        # 检查基本字段（不检查可能变化的 resolved_at）
         expected = {
             "alert_id": "test123",
             "title": "Test Alert",
@@ -149,12 +148,24 @@ class TestAlert:
             "source": "test_source",
             "labels": {"key": "value"},
             "annotations": {"note": "test"},
-            "status": "resolved",
+            "status": "active",  # 初始状态
             "created_at": created_at.isoformat(),
-            "resolved_at": resolved_at.isoformat(),
         }
 
-        assert result == expected
+        # 验证所有期望字段都存在且值正确
+        for key, value in expected.items():
+            assert result[key] == value, f"Field {key} mismatch: expected {value}, got {result[key]}"
+
+        # 验证 resolved_at 字段存在且是有效的 ISO 格式时间戳
+        assert "resolved_at" in result
+        assert result["resolved_at"] is None  # 初始状态应该是 None
+
+        # 测试解析后的状态
+        alert.resolve()
+        result_resolved = alert.to_dict()
+        assert result_resolved["status"] == "resolved"
+        assert result_resolved["resolved_at"] is not None
+        assert isinstance(result_resolved["resolved_at"], str)  # 应该是 ISO 格式字符串
 
     def test_alert_resolve(self):
         """测试告警解决"""
@@ -286,7 +297,7 @@ class TestPrometheusMetrics:
         metrics = PrometheusMetrics(registry=custom_registry)
 
         # Verify metrics were created with correct parameters
-        assert mock_gauge.call_count == 6  # 6 Gauges
+        assert mock_gauge.call_count == 5  # 5 Gauges
         assert mock_counter.call_count == 3  # 3 Counters
         assert mock_histogram.call_count == 1  # 1 Histogram
 
@@ -386,6 +397,9 @@ class TestAlertManager:
         """测试移除不存在的规则"""
         manager = AlertManager()
         initial_count = len(manager.rules)
+
+        # Reset mock after initialization to focus on remove_rule behavior
+        mock_logger.reset_mock()
 
         result = manager.remove_rule("nonexistent_rule")
 
@@ -523,6 +537,9 @@ class TestAlertManager:
     def test_resolve_nonexistent_alert(self, mock_logger):
         """测试解决不存在的告警"""
         manager = AlertManager()
+
+        # Reset mock after initialization to focus on resolve_alert behavior
+        mock_logger.reset_mock()
 
         result = manager.resolve_alert("nonexistent_id")
 

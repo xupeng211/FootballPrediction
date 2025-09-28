@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.sql import func
 
-from ..base import BaseModel
-from ..types import SQLiteCompatibleJSONB
+from src.database.base import BaseModel
+from src.database.types import SQLiteCompatibleJSONB
 
 
 class AuditAction(str, Enum):
