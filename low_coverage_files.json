@@ -1,0 +1,152 @@
+[
+  {
+    "file": "src/api/buggy_api.py",
+    "coverage": 0.0,
+    "missing_lines": 16,
+    "total_lines": 16
+  },
+  {
+    "file": "src/api/features_improved.py",
+    "coverage": 0.0,
+    "missing_lines": 105,
+    "total_lines": 105
+  },
+  {
+    "file": "src/api/models.py",
+    "coverage": 0.0,
+    "missing_lines": 192,
+    "total_lines": 192
+  },
+  {
+    "file": "src/cache/consistency_manager.py",
+    "coverage": 0.0,
+    "missing_lines": 11,
+    "total_lines": 11
+  },
+  {
+    "file": "src/data/collectors/streaming_collector.py",
+    "coverage": 0.0,
+    "missing_lines": 145,
+    "total_lines": 145
+  },
+  {
+    "file": "src/data/features/examples.py",
+    "coverage": 0.0,
+    "missing_lines": 126,
+    "total_lines": 126
+  },
+  {
+    "file": "src/lineage/lineage_reporter.py",
+    "coverage": 0.0,
+    "missing_lines": 110,
+    "total_lines": 110
+  },
+  {
+    "file": "src/lineage/metadata_manager.py",
+    "coverage": 0.0,
+    "missing_lines": 155,
+    "total_lines": 155
+  },
+  {
+    "file": "src/monitoring/alert_manager.py",
+    "coverage": 0.0,
+    "missing_lines": 233,
+    "total_lines": 233
+  },
+  {
+    "file": "src/monitoring/anomaly_detector.py",
+    "coverage": 0.0,
+    "missing_lines": 248,
+    "total_lines": 248
+  },
+  {
+    "file": "src/monitoring/quality_monitor.py",
+    "coverage": 0.0,
+    "missing_lines": 323,
+    "total_lines": 323
+  },
+  {
+    "file": "src/services/audit_service.py",
+    "coverage": 0.0,
+    "missing_lines": 359,
+    "total_lines": 359
+  },
+  {
+    "file": "src/streaming/kafka_consumer.py",
+    "coverage": 0.0,
+    "missing_lines": 242,
+    "total_lines": 242
+  },
+  {
+    "file": "src/streaming/kafka_producer.py",
+    "coverage": 0.0,
+    "missing_lines": 211,
+    "total_lines": 211
+  },
+  {
+    "file": "src/streaming/stream_config.py",
+    "coverage": 0.0,
+    "missing_lines": 48,
+    "total_lines": 48
+  },
+  {
+    "file": "src/streaming/stream_processor.py",
+    "coverage": 0.0,
+    "missing_lines": 177,
+    "total_lines": 177
+  },
+  {
+    "file": "src/tasks/backup_tasks.py",
+    "coverage": 0.0,
+    "missing_lines": 242,
+    "total_lines": 242
+  },
+  {
+    "file": "src/tasks/maintenance_tasks.py",
+    "coverage": 0.0,
+    "missing_lines": 150,
+    "total_lines": 150
+  },
+  {
+    "file": "src/tasks/streaming_tasks.py",
+    "coverage": 0.0,
+    "missing_lines": 134,
+    "total_lines": 134
+  },
+  {
+    "file": "src/tasks/utils.py",
+    "coverage": 0.0,
+    "missing_lines": 82,
+    "total_lines": 82
+  },
+  {
+    "file": "src/data/storage/data_lake_storage.py",
+    "coverage": 5.777777777777778,
+    "missing_lines": 296,
+    "total_lines": 322
+  },
+  {
+    "file": "src/services/data_processing.py",
+    "coverage": 6.657018813314037,
+    "missing_lines": 457,
+    "total_lines": 503
+  },
+  {
+    "file": "src/data/quality/anomaly_detector.py",
+    "coverage": 7.77027027027027,
+    "missing_lines": 412,
+    "total_lines": 458
+  },
+  {
+    "file": "src/data/quality/exception_handler.py",
+    "coverage": 8.695652173913043,
+    "missing_lines": 175,
+    "total_lines": 197
+  },
+  {
+    "file": "src/data/collectors/odds_collector.py",
+    "coverage": 8.947368421052632,
+    "missing_lines": 127,
+    "total_lines": 144
+  }
+]

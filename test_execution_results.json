@@ -1,0 +1,14 @@
+{
+  "tests/unit/monitoring/test_alert_manager_simple.py": {
+    "source_file": "src/monitoring/alert_manager.py",
+    "coverage": 0.0,
+    "status": "\u26a0\ufe0f TEST FAILURES",
+    "output": ""
+  },
+  "tests/unit/tasks/test_streaming_tasks_simple.py": {
+    "source_file": "src/tasks/streaming_tasks.py",
+    "coverage": 0.0,
+    "status": "\u26a0\ufe0f TEST FAILURES",
+    "output": ""
+  }
+}

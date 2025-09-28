@@ -1,0 +1,331 @@
+[
+  {
+    "source_file": "src/api/buggy_api.py",
+    "coverage": 0.0,
+    "relative_path": "api/buggy_api",
+    "expected_test_patterns": [
+      "tests/unit/api/test_buggy_api.py",
+      "tests/unit/api/test_buggy_api_simple.py",
+      "tests/integration/test_buggy_api.py",
+      "tests/integration/test_api_buggy_api.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/api/features_improved.py",
+    "coverage": 0.0,
+    "relative_path": "api/features_improved",
+    "expected_test_patterns": [
+      "tests/unit/api/test_features_improved.py",
+      "tests/unit/api/test_features_improved_simple.py",
+      "tests/integration/test_features_improved.py",
+      "tests/integration/test_api_features_improved.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/api/models.py",
+    "coverage": 0.0,
+    "relative_path": "api/models",
+    "expected_test_patterns": [
+      "tests/unit/api/test_models.py",
+      "tests/unit/api/test_models_simple.py",
+      "tests/integration/test_models.py",
+      "tests/integration/test_api_models.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/cache/consistency_manager.py",
+    "coverage": 0.0,
+    "relative_path": "cache/consistency_manager",
+    "expected_test_patterns": [
+      "tests/unit/cache/test_consistency_manager.py",
+      "tests/unit/cache/test_consistency_manager_simple.py",
+      "tests/integration/test_consistency_manager.py",
+      "tests/integration/test_cache_consistency_manager.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/collectors/streaming_collector.py",
+    "coverage": 0.0,
+    "relative_path": "data/collectors/streaming_collector",
+    "expected_test_patterns": [
+      "tests/unit/collectors/test_streaming_collector.py",
+      "tests/unit/collectors/test_streaming_collector_simple.py",
+      "tests/integration/test_streaming_collector.py",
+      "tests/integration/test_collectors_streaming_collector.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/features/examples.py",
+    "coverage": 0.0,
+    "relative_path": "data/features/examples",
+    "expected_test_patterns": [
+      "tests/unit/features/test_examples.py",
+      "tests/unit/features/test_examples_simple.py",
+      "tests/integration/test_examples.py",
+      "tests/integration/test_features_examples.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/lineage/lineage_reporter.py",
+    "coverage": 0.0,
+    "relative_path": "lineage/lineage_reporter",
+    "expected_test_patterns": [
+      "tests/unit/lineage/test_lineage_reporter.py",
+      "tests/unit/lineage/test_lineage_reporter_simple.py",
+      "tests/integration/test_lineage_reporter.py",
+      "tests/integration/test_lineage_lineage_reporter.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/lineage/metadata_manager.py",
+    "coverage": 0.0,
+    "relative_path": "lineage/metadata_manager",
+    "expected_test_patterns": [
+      "tests/unit/lineage/test_metadata_manager.py",
+      "tests/unit/lineage/test_metadata_manager_simple.py",
+      "tests/integration/test_metadata_manager.py",
+      "tests/integration/test_lineage_metadata_manager.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/monitoring/alert_manager.py",
+    "coverage": 0.0,
+    "relative_path": "monitoring/alert_manager",
+    "expected_test_patterns": [
+      "tests/unit/monitoring/test_alert_manager.py",
+      "tests/unit/monitoring/test_alert_manager_simple.py",
+      "tests/integration/test_alert_manager.py",
+      "tests/integration/test_monitoring_alert_manager.py"
+    ],
+    "existing_tests": [
+      "tests/unit/monitoring/test_alert_manager_simple.py"
+    ],
+    "has_tests": true
+  },
+  {
+    "source_file": "src/monitoring/anomaly_detector.py",
+    "coverage": 0.0,
+    "relative_path": "monitoring/anomaly_detector",
+    "expected_test_patterns": [
+      "tests/unit/monitoring/test_anomaly_detector.py",
+      "tests/unit/monitoring/test_anomaly_detector_simple.py",
+      "tests/integration/test_anomaly_detector.py",
+      "tests/integration/test_monitoring_anomaly_detector.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/monitoring/quality_monitor.py",
+    "coverage": 0.0,
+    "relative_path": "monitoring/quality_monitor",
+    "expected_test_patterns": [
+      "tests/unit/monitoring/test_quality_monitor.py",
+      "tests/unit/monitoring/test_quality_monitor_simple.py",
+      "tests/integration/test_quality_monitor.py",
+      "tests/integration/test_monitoring_quality_monitor.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/services/audit_service.py",
+    "coverage": 0.0,
+    "relative_path": "services/audit_service",
+    "expected_test_patterns": [
+      "tests/unit/services/test_audit_service.py",
+      "tests/unit/services/test_audit_service_simple.py",
+      "tests/integration/test_audit_service.py",
+      "tests/integration/test_services_audit_service.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/streaming/kafka_consumer.py",
+    "coverage": 0.0,
+    "relative_path": "streaming/kafka_consumer",
+    "expected_test_patterns": [
+      "tests/unit/streaming/test_kafka_consumer.py",
+      "tests/unit/streaming/test_kafka_consumer_simple.py",
+      "tests/integration/test_kafka_consumer.py",
+      "tests/integration/test_streaming_kafka_consumer.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/streaming/kafka_producer.py",
+    "coverage": 0.0,
+    "relative_path": "streaming/kafka_producer",
+    "expected_test_patterns": [
+      "tests/unit/streaming/test_kafka_producer.py",
+      "tests/unit/streaming/test_kafka_producer_simple.py",
+      "tests/integration/test_kafka_producer.py",
+      "tests/integration/test_streaming_kafka_producer.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/streaming/stream_config.py",
+    "coverage": 0.0,
+    "relative_path": "streaming/stream_config",
+    "expected_test_patterns": [
+      "tests/unit/streaming/test_stream_config.py",
+      "tests/unit/streaming/test_stream_config_simple.py",
+      "tests/integration/test_stream_config.py",
+      "tests/integration/test_streaming_stream_config.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/streaming/stream_processor.py",
+    "coverage": 0.0,
+    "relative_path": "streaming/stream_processor",
+    "expected_test_patterns": [
+      "tests/unit/streaming/test_stream_processor.py",
+      "tests/unit/streaming/test_stream_processor_simple.py",
+      "tests/integration/test_stream_processor.py",
+      "tests/integration/test_streaming_stream_processor.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/tasks/backup_tasks.py",
+    "coverage": 0.0,
+    "relative_path": "tasks/backup_tasks",
+    "expected_test_patterns": [
+      "tests/unit/tasks/test_backup_tasks.py",
+      "tests/unit/tasks/test_backup_tasks_simple.py",
+      "tests/integration/test_backup_tasks.py",
+      "tests/integration/test_tasks_backup_tasks.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/tasks/maintenance_tasks.py",
+    "coverage": 0.0,
+    "relative_path": "tasks/maintenance_tasks",
+    "expected_test_patterns": [
+      "tests/unit/tasks/test_maintenance_tasks.py",
+      "tests/unit/tasks/test_maintenance_tasks_simple.py",
+      "tests/integration/test_maintenance_tasks.py",
+      "tests/integration/test_tasks_maintenance_tasks.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/tasks/streaming_tasks.py",
+    "coverage": 0.0,
+    "relative_path": "tasks/streaming_tasks",
+    "expected_test_patterns": [
+      "tests/unit/tasks/test_streaming_tasks.py",
+      "tests/unit/tasks/test_streaming_tasks_simple.py",
+      "tests/integration/test_streaming_tasks.py",
+      "tests/integration/test_tasks_streaming_tasks.py"
+    ],
+    "existing_tests": [
+      "tests/unit/tasks/test_streaming_tasks_simple.py"
+    ],
+    "has_tests": true
+  },
+  {
+    "source_file": "src/tasks/utils.py",
+    "coverage": 0.0,
+    "relative_path": "tasks/utils",
+    "expected_test_patterns": [
+      "tests/unit/tasks/test_utils.py",
+      "tests/unit/tasks/test_utils_simple.py",
+      "tests/integration/test_utils.py",
+      "tests/integration/test_tasks_utils.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/storage/data_lake_storage.py",
+    "coverage": 5.777777777777778,
+    "relative_path": "data/storage/data_lake_storage",
+    "expected_test_patterns": [
+      "tests/unit/storage/test_data_lake_storage.py",
+      "tests/unit/storage/test_data_lake_storage_simple.py",
+      "tests/integration/test_data_lake_storage.py",
+      "tests/integration/test_storage_data_lake_storage.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/services/data_processing.py",
+    "coverage": 6.657018813314037,
+    "relative_path": "services/data_processing",
+    "expected_test_patterns": [
+      "tests/unit/services/test_data_processing.py",
+      "tests/unit/services/test_data_processing_simple.py",
+      "tests/integration/test_data_processing.py",
+      "tests/integration/test_services_data_processing.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/quality/anomaly_detector.py",
+    "coverage": 7.77027027027027,
+    "relative_path": "data/quality/anomaly_detector",
+    "expected_test_patterns": [
+      "tests/unit/quality/test_anomaly_detector.py",
+      "tests/unit/quality/test_anomaly_detector_simple.py",
+      "tests/integration/test_anomaly_detector.py",
+      "tests/integration/test_quality_anomaly_detector.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/quality/exception_handler.py",
+    "coverage": 8.695652173913043,
+    "relative_path": "data/quality/exception_handler",
+    "expected_test_patterns": [
+      "tests/unit/quality/test_exception_handler.py",
+      "tests/unit/quality/test_exception_handler_simple.py",
+      "tests/integration/test_exception_handler.py",
+      "tests/integration/test_quality_exception_handler.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  },
+  {
+    "source_file": "src/data/collectors/odds_collector.py",
+    "coverage": 8.947368421052632,
+    "relative_path": "data/collectors/odds_collector",
+    "expected_test_patterns": [
+      "tests/unit/collectors/test_odds_collector.py",
+      "tests/unit/collectors/test_odds_collector_simple.py",
+      "tests/integration/test_odds_collector.py",
+      "tests/integration/test_collectors_odds_collector.py"
+    ],
+    "existing_tests": [],
+    "has_tests": false
+  }
+]
