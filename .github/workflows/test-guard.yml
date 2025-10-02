@@ -27,6 +27,47 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt || pip install -r requirements-dev.txt
 
+      - name: Ruff Lint
+        run: |
+          echo "🔍 Running Ruff linting on changed files..."
+          set +e
+
+          # 获取改动的 Python 文件
+          CHANGED_FILES=$(git diff --name-only origin/main | grep '\.py$' || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "🟡 No Python files changed, skipping Ruff check"
+          else
+            echo "📋 Checking files:"
+            echo "$CHANGED_FILES"
+
+            # 运行 Ruff 检查
+            ruff check $CHANGED_FILES
+            STATUS=$?
+
+            if [ $STATUS -ne 0 ]; then
+              echo ""
+              echo -e "\033[31m❌ Ruff 检查失败！\033[0m"
+              echo -e "\033[33m请在本地运行以下命令来修复：\033[0m"
+              echo ""
+              echo "   ruff check --fix <file.py>"
+              echo "   # 或对特定文件:"
+              for file in $CHANGED_FILES; do
+                echo "   ruff check --fix $file"
+              done
+              echo ""
+              echo -e "\033[36mRuff 质量要求：\033[0m"
+              echo "- 所有新提交的 Python 文件必须通过 Ruff 检查"
+              echo "- 使用 'ruff check --fix' 自动修复可修复的问题"
+              echo "- 语法错误必须完全修复"
+              echo ""
+              exit 1
+            else
+              echo -e "\033[32m✅ Ruff 检查通过！\033[0m"
+            fi
+          fi
+          set -e
+
       - name: Run tests with coverage
         run: |
           echo "🧪 Running pytest with coverage enforcement..."

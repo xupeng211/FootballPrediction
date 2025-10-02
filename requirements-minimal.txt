@@ -1,0 +1,15 @@
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+SQLAlchemy==2.0.43
+sqlalchemy-utils==0.41.2
+psycopg2-binary==2.9.10
+psycopg==3.2.10
+asyncpg==0.30.0
+aiofiles==24.1.0
+aiosqlite==0.21.0
+pydantic==2.9.2
+pydantic-settings==2.11.0
+python-dotenv==1.0.1
+redis==6.4.0
+prometheus-client==0.23.1
+psutil==6.0.0

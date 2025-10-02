@@ -30,11 +30,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.data import router as data_router
-from src.api.features import router as features_router
 from src.api.health import router as health_router
-from src.api.monitoring import router as monitoring_router
-from src.api.predictions import router as predictions_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
 from src.monitoring.metrics_collector import (
@@ -47,6 +43,8 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+MINIMAL_API_MODE = os.getenv("MINIMAL_API_MODE", "false").lower() == "true"
 
 
 @asynccontextmanager
@@ -102,10 +100,18 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(health_router)
-app.include_router(monitoring_router, prefix="/api/v1")
-app.include_router(features_router, prefix="/api/v1")
-app.include_router(data_router, prefix="/api/v1")
-app.include_router(predictions_router, prefix="/api/v1")
+if MINIMAL_API_MODE:
+    logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
+else:
+    from src.api.data import router as data_router  # noqa: WPS433 - runtime import for minimal mode
+    from src.api.features import router as features_router  # noqa: WPS433
+    from src.api.monitoring import router as monitoring_router  # noqa: WPS433
+    from src.api.predictions import router as predictions_router  # noqa: WPS433
+
+    app.include_router(monitoring_router, prefix="/api/v1")
+    app.include_router(features_router, prefix="/api/v1")
+    app.include_router(data_router, prefix="/api/v1")
+    app.include_router(predictions_router, prefix="/api/v1")
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)

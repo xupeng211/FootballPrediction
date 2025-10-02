@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-import subprocess, datetime, json
+import subprocess
+import datetime
+import json
 from pathlib import Path
 
 REPORT_DIR = Path("docs/_reports")
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
 ts = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-# 1. 并行运行测试（最大化利用 CPU 核心）
+# 1. 运行测试（使用 pytest.ini 配置）
 cmd = [
     "pytest",
-    "-n", "auto",                     # 自动使用所有可用核心
-    "--maxfail=5",                    # 最多显示 5 个失败用例，快速定位
-    "--disable-warnings",
-    "--cov=.", "--cov-report=json:coverage.json",
-    "--cov-report=term-missing"
+    "-vv", "-ra", "--maxfail=5",       # 保持与pytest.ini一致
+    "--cov=src", "--cov-report=json:coverage.json",
+    "--cov-report=term-missing", "-p", "no:xdist"  # 保持与pytest.ini一致
 ]
 
-print("🚀 Running tests in parallel...")
+print("🚀 Running tests...")
 result = subprocess.run(cmd, text=True)
 
 # 2. 解析覆盖率
@@ -39,7 +39,7 @@ log_file = Path("pytest_failures.log")
 if result.returncode != 0:
     lines.append("## ❌ 失败用例日志\n")
     with open(log_file, "w", encoding="utf-8") as f:
-        proc = subprocess.run(["pytest", "-n", "auto", "--maxfail=10", "-q", "--tb=short"],
+        proc = subprocess.run(["pytest", "--maxfail=10", "--tb=short"],
                               text=True, stdout=f, stderr=f)
     lines.append("以下是失败用例的详细输出，请对照修复：\n")
     lines.append(f"日志文件: `{log_file}`\n")

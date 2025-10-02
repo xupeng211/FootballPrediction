@@ -8,8 +8,7 @@ ModelTraining 功能测试 - Phase 5.2 Batch-Δ-016
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+from unittest.mock import Mock, patch
 
 warnings.filterwarnings('ignore')
 
@@ -141,9 +140,9 @@ def test_model_training_structure():
             for test_name, config_params in config_tests:
                 try:
                     if config_params:
-                        test_trainer = BaselineModelTrainer(**config_params)
+                        BaselineModelTrainer(**config_params)
                     else:
-                        test_trainer = BaselineModelTrainer()
+                        BaselineModelTrainer()
                     print(f"  ✅ {test_name}: 训练器创建成功")
                 except Exception as e:
                     print(f"  ❌ {test_name}: 错误 - {e}")
@@ -258,7 +257,7 @@ def test_model_training_structure():
                         # 模拟实验名称参数
                         print(f"  ✅ {param_name}: 可接受字符串")
                     else:
-                        test_trainer = BaselineModelTrainer(mlflow_tracking_uri=param_value)
+                        BaselineModelTrainer(mlflow_tracking_uri=param_value)
                         print(f"  ✅ {param_name}: {param_value} 可接受")
                 except Exception as e:
                     print(f"  ❌ {param_name}: 错误 - {e}")

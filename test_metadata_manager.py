@@ -153,7 +153,7 @@ def test_metadata_manager():
             try:
                 # 测试参数传递不崩溃
                 if isinstance(test_value, str):
-                    temp_manager = MetadataManager(marquez_url="http://test.com")
+                    MetadataManager(marquez_url="http://test.com")
                     # 只验证参数能被接受，不发送请求
                     print(f"  ✅ {scenario_name}: 参数可接受")
                 else:

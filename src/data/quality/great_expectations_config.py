@@ -13,13 +13,29 @@ Great Expectations 配置模块
 
 import logging
 import os
+from src.database.connection import DatabaseManager
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 # Temporarily commented out for pytest testing
-# import great_expectations as gx
-# from great_expectations.core.yaml_handler import YAMLHandler
-# from great_expectations.exceptions import DataContextError
+try:
+    import great_expectations as gx
+    from great_expectations.core.yaml_handler import YAMLHandler
+    from great_expectations.exceptions import DataContextError
+    HAS_GREAT_EXPECTATIONS = True
+except ImportError:
+    HAS_GREAT_EXPECTATIONS = False
+    # Create placeholder objects to prevent undefined errors
+    class MockGX:
+        def get_context(self, **kwargs):
+            raise ImportError("great_expectations not available")
+
+    class MockDataContextError(Exception):
+        pass
+
+    gx = MockGX()
+    DataContextError = MockDataContextError
+    YAMLHandler = None
 
 # type: ignore
 
@@ -34,8 +50,6 @@ from typing import Any, Dict, Optional
 #         # 如果都不存在，使用 Any 类型占位
 #         RuntimeBatchRequest = Any
 RuntimeBatchRequest = Any  # Placeholder for testing
-
-from src.database.connection import DatabaseManager
 
 
 class GreatExpectationsConfig:

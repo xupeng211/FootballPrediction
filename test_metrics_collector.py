@@ -8,8 +8,7 @@ MetricsCollector 功能测试 - Phase 5.2 Batch-Δ-019
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Dict, Any, List, Optional
+from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 warnings.filterwarnings('ignore')

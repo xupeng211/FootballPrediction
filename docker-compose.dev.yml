@@ -24,7 +24,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - # "6379:6379"  # 移除外部端口映射
+      - "6379:6379"  # Redis port for development
     volumes:
       - redis_dev_data:/data
 

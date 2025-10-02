@@ -6,7 +6,6 @@
 
 import re
 import subprocess
-from pathlib import Path
 from typing import Dict, List, Tuple
 import json
 
@@ -23,7 +22,7 @@ def extract_coverage_from_pytest_output() -> Dict[str, Dict]:
         ], capture_output=True, text=True, cwd='/home/user/projects/FootballPrediction')
 
         if result.returncode != 0:
-            print(f"⚠️ pytest运行存在错误，但继续分析...")
+            print("⚠️ pytest运行存在错误，但继续分析...")
 
         # 解析覆盖率数据
         coverage_data = {}
@@ -168,8 +167,8 @@ def main():
 
     # 输出摘要
     print("\n📊 分析摘要:")
-    print(f"当前整体覆盖率: 21.67%")
-    print(f"目标整体覆盖率: ≥30%")
+    print("当前整体覆盖率: 21.67%")
+    print("目标整体覆盖率: ≥30%")
     print(f"\n优先处理的 {len(lowest_files)} 个文件:")
 
     for i, (file_path, data) in enumerate(lowest_files[:5], 1):

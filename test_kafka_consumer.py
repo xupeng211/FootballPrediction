@@ -21,7 +21,7 @@ async def test_kafka_consumer():
 
         # 测试 StreamConfig
         config = StreamConfig()
-        print(f"✅ StreamConfig 创建成功")
+        print("✅ StreamConfig 创建成功")
         print(f"   Kafka 服务器: {getattr(config, 'kafka_servers', ['localhost:9092'])}")
         print(f"   Kafka 主题: {getattr(config, 'kafka_topics', ['matches', 'odds', 'scores'])}")
 
@@ -77,7 +77,7 @@ async def test_kafka_consumer():
         for i, test_msg in enumerate(test_messages):
             try:
                 import json
-                message_bytes = json.dumps(test_msg, ensure_ascii=False).encode('utf-8')
+                json.dumps(test_msg, ensure_ascii=False).encode('utf-8')
                 # 测试反序列化（需要实例方法）
                 print(f"  ✅ 消息 {i+1}: {type(test_msg).__name__} 可序列化/反序列化")
             except Exception as e:

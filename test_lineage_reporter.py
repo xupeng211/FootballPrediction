@@ -8,10 +8,8 @@ LineageReporter 功能测试 - Phase 5.2 Batch-Δ-018
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Dict, Any, List
+from unittest.mock import Mock, patch
 from datetime import datetime, timezone
-from uuid import uuid4
 
 warnings.filterwarnings('ignore')
 
@@ -86,7 +84,7 @@ def test_lineage_reporter_structure():
             # 测试 LineageReporter 初始化
             print("\n📊 测试 LineageReporter:")
             reporter = LineageReporter(marquez_url="http://test:5000", namespace="test_namespace")
-            print(f"  ✅ 报告器创建成功")
+            print("  ✅ 报告器创建成功")
             print(f"  ✅ 命名空间: {reporter.namespace}")
             print(f"  ✅ OpenLineage 客户端: {type(reporter.client).__name__}")
             print(f"  ✅ 活跃运行: {len(reporter._active_runs)} 个")
@@ -123,9 +121,9 @@ def test_lineage_reporter_structure():
             for test_name, config_params in config_tests:
                 try:
                     if config_params:
-                        test_reporter = LineageReporter(**config_params)
+                        LineageReporter(**config_params)
                     else:
-                        test_reporter = LineageReporter()
+                        LineageReporter()
                     print(f"  ✅ {test_name}: 报告器创建成功")
                 except Exception as e:
                     print(f"  ❌ {test_name}: 错误 - {e}")
@@ -166,7 +164,7 @@ def test_lineage_reporter_structure():
             print("\n⚠️ 失败处理测试:")
             try:
                 # 开始新作业
-                fail_run_id = reporter.start_job_run(
+                reporter.start_job_run(
                     job_name="fail_test_job",
                     job_type="BATCH"
                 )
@@ -293,7 +291,7 @@ def test_lineage_reporter_structure():
             print("\n🔗 OpenLineage 集成测试:")
             try:
                 # 验证客户端调用
-                test_run_id = reporter.start_job_run(
+                reporter.start_job_run(
                     job_name="integration_test",
                     inputs=[{"name": "integration_input", "schema": {"field": "type"}}]
                 )

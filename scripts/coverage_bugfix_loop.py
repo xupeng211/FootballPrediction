@@ -1,4 +1,9 @@
-import subprocess, time, re, datetime, pathlib, os, json
+import subprocess
+import time
+import re
+import datetime
+import pathlib
+import json
 
 STATE_FILE = pathlib.Path("docs/_meta/last_processed_run.json")
 
@@ -50,7 +55,7 @@ while True:
         # 生成 Bugfix 报告
         report_name = f"docs/_reports/BUGFIX_REPORT_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.md"
         with open(report_name, "w", encoding="utf-8") as f:
-            f.write(f"# 🐞 Bugfix Report\n\n")
+            f.write("# 🐞 Bugfix Report\n\n")
             f.write(f"**Generated:** {datetime.datetime.now()}\n\n")
             f.write(f"## 📊 Test Status\n- Run ID: {latest_run_id}\n- Status: {status}\n- Conclusion: {conclusion}\n\n")
             f.write(f"## ❌ Failures\n{errors}\n\n")
@@ -73,7 +78,7 @@ while True:
         subprocess.run(f"git commit -m 'docs: add bugfix report {latest_run_id} and update Kanban (with state tracking)'", shell=True)
         subprocess.run(f"git push origin {branch}", shell=True)
         subprocess.run(f"gh pr create --base main --head {branch} --title 'docs: bugfix report {latest_run_id}' --body 'Auto-generated bugfix report, updated Kanban, and saved last processed run state.'", shell=True)
-        subprocess.run(f"gh pr merge --squash --auto", shell=True)
+        subprocess.run("gh pr merge --squash --auto", shell=True)
 
         print("✅ Bugfix report + Kanban update completed and merged.")
 
