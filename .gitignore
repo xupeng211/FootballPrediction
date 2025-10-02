@@ -3,6 +3,26 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# 临时报告文件
+bandit*.json
+coverage*.json
+coverage_analysis*.json
+ruff*.json
+*_REPORT_*.md
+*_REPORT_*.txt
+
+# 测试临时文件
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# AI生成临时文件
+TEMP_*.md
+CLAUDE_*.md.bak
+*_ANALYSIS.md
+*_SUMMARY.md
+
 # 分发/打包
 .Python
 build/

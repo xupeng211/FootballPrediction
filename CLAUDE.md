@@ -2,286 +2,160 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🚀 Quick Start
+## 📑 目录
+- [语言设置](#语言设置)
+- [快速开始](#快速开始)
+- [核心命令](#核心命令)
+- [开发原则](#开发原则)
+- [项目架构](#项目架构)
+- [重要文档](#重要文档)
+- [故障排除](#故障排除)
 
-**Essential first steps when starting work:**
+## 🌏 语言设置
+
+**请始终使用中文回复！**
+
+- 语言偏好: 中文 (简体)
+- 回复语言: 中文
+- 注释语言: 中文
+- 文档语言: 中文
+
+## 🚀 快速开始
+
+### 首次使用
 ```bash
-make install      # Install dependencies and create virtual environment
-make context      # Load project context (most important)
-make env-check    # Verify environment health
-make help         # Show all available commands
+make install      # 安装依赖
+make context      # 加载项目上下文 ⭐最重要
+make test         # 验证环境
 ```
 
-### AI Development Guidelines
-The project includes comprehensive AI development guidelines in `.cursor/rules/` directory:
-- **Tool Priority**: Use Makefile commands for consistency
-- **Quality Standards**: 80%+ test coverage (CI), 20-60% (local)
-- **Code Style**: Black formatting, mypy type checking, flake8 linting
-- **Modify Over Create**: Prioritize modifying existing files over creating new ones
-- **Context Loading**: Always run `make context` first to understand project state
-- **Docker CI**: Validate with `./ci-verify.sh` before pushing
-
-## 📋 Common Commands
-
-### Environment Setup
-- `make help` - Show all available commands with categorized help
-- `make install` - Install dependencies from requirements.txt and requirements-dev.txt
-- `make venv` - Create virtual environment (.venv)
-- `make env-check` - Check development environment health
-- `make clean` - Remove cache and virtual environment
-
-### Code Quality
-- `make lint` - Run flake8 and mypy checks
-- `make fmt` - Format code with black and isort
-- `make type-check` - Run mypy type checking
-- `make quality` - Complete quality check (lint + format + test)
-
-### Testing
-- `make test` - Run pytest unit tests
-- `make coverage` - Run tests with coverage report (80% threshold enforced in CI, 20-60% for local development)
-- `make coverage-fast` - Run fast coverage (unit tests only, 20% threshold for development)
-- `make coverage-ci` - CI coverage validation with 80% threshold
-- `make coverage-local` - Local development coverage with 60% threshold
-- `make coverage-critical` - Critical path coverage with 100% threshold requirement
-- `make test-quick` - Quick test run (unit tests with timeout)
-- `make coverage-unit` - Unit test coverage with HTML report
-- `./ci-verify.sh` - Complete CI verification with Docker environment (⭐ Critical before pushing)
-
-**Note**: Many integration tests were deleted during cleanup and need to be recreated. Focus on unit tests for reliable development.
-
-### CI/CD Simulation
-- `make ci` - Simulate GitHub Actions CI pipeline
-- `make prepush` - Complete pre-push validation (format + lint + type-check + test)
-- `./ci-verify.sh` - Full CI verification with Docker environment (⭐ Required before pushing)
-
-### Container Management
-- `make up` - Start docker-compose services
-- `make down` - Stop docker-compose services
-- `make logs` - Show docker-compose logs
-- `make deploy` - Build & start containers with git-sha tag
-- `make rollback` - Rollback to previous image (TAG=<sha>)
-
-### MLOps Pipeline
-- `make feedback-update` - Update prediction results with actual outcomes
-- `make performance-report` - Generate model performance reports
-- `make retrain-check` - Check models and trigger retraining if needed
-- `make model-monitor` - Run enhanced model monitoring cycle
-- `make mlops-pipeline` - Run complete MLOps feedback pipeline
-- `make mlops-status` - Show MLOps pipeline status and generated reports
-- `make feedback-test` - Run feedback loop unit tests
-
-### Performance & Quality Testing
-- `make benchmark` - Run performance benchmarks using pytest-benchmark
-- `make profile-app` - Profile application performance
-- `make profile-tests` - Profile test execution performance
-- `make profile-memory` - Analyze memory usage patterns
-- `make flamegraph` - Generate performance visualization flame graphs
-- `make mutation-test` - Run mutation testing with mutmut
-- `make performance-regression-check` - Check for performance regressions
-
-### Project Context
-- `make context` - Load project context for AI development (⭐ Most important)
-- `make sync-issues` - Sync GitHub issues between local and GitHub (bidirectional sync with kanban workflow)
-
-### Single Test Execution
-- `pytest tests/unit/test_specific_module.py` - Run specific test file
-- `pytest tests/unit/test_module.py::TestClass::test_method` - Run specific test method
-- `pytest -x` - Stop on first failure
-- `pytest -m "not slow"` - Exclude slow tests
-- `pytest tests/unit/` - Run only unit tests
-
-## Architecture Overview
-
-**Production-ready enterprise football prediction system** with async-first architecture and comprehensive MLOps pipeline:
-
-### Core Technology Stack
-- **FastAPI** - Modern async web framework with automatic API documentation
-- **SQLAlchemy 2.0** - Modern ORM with async support (PostgreSQL + SQLite)
-- **PostgreSQL** - Production database with multi-user role architecture
-- **SQLite** - Testing database with seamless switching capability
-- **Redis** - Caching, session storage, and Celery broker
-- **Celery** - Distributed task queue with Beat scheduler
-- **MLflow** - Model lifecycle management with PostgreSQL backend
-- **Feast** - Feature store for ML features
-- **Kafka** - Streaming data processing with Confluent Platform
-- **Great Expectations** - Data quality validation
-- **Prometheus/Grafana** - Metrics collection and visualization
-- **MinIO** - Object storage for data lake and ML artifacts
-
-### Key Architecture Patterns
-
-#### Async-First Design
-- **129+ Python source files** with comprehensive async/await patterns
-- **Dual database support**: PostgreSQL (production) + SQLite (testing)
-- **Background processing**: Celery with Redis for async task queue
-- **Connection pooling**: Advanced database connection management
-
-#### Data-Centric ML Pipeline
-```
-Data Collection → Processing → Feature Store → ML Models → Predictions
-     ↓                    ↓            ↓           ↓           ↓
-  Live APIs        Data Quality    Feast      MLflow     Real-time API
-                   Great Expect             Monitoring
-                   Prometheus
+### 日常开发
+```bash
+make env-check    # 检查环境
+make test-quick   # 快速测试
+make prepush      # 提交前检查
 ```
 
-#### Multi-Layer Caching
-- **Redis**: Application-level caching with TTL
-- **Feature Store**: Feast-based feature caching
-- **Model Cache**: MLflow model versioning with local caching
-- **Database**: Connection pooling and query caching
+## 📋 核心命令
 
-## 🔄 Development Workflow
+### 必须知道的命令
+| 命令 | 说明 | 何时使用 |
+|------|------|----------|
+| `make help` | 查看所有命令 | 不确定时 |
+| `make context` | 加载项目上下文 | 开始工作前 |
+| `make test` | 运行测试 | 开发完成后 |
+| `make ci` | 完整CI检查 | 推送前 |
+| `./ci-verify.sh` | Docker CI验证 | 发布前 |
 
-### Essential Start Sequence
-1. **Environment Setup**: `make install` to set up development environment
-2. **Context Loading**: `make context` to understand current project state (⭐ Critical)
-3. **Environment Check**: `make env-check` to verify environment health
+### 快速参考
+- 完整命令列表：[CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
+- 故障排除：[CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
 
-### AI Development Principles
-- **Tool Priority**: Use Makefile commands for consistency
-- **Modify Over Create**: Prioritize modifying existing files over creating new ones
-- **Quality First**: All changes must pass `make ci` checks
-- **Docker CI**: Validate with `./ci-verify.sh` before pushing
+## 🤖 AI开发原则
 
-### Quality Requirements
-- **Test Coverage**: CI enforces 80%+ minimum coverage; local development uses 20-60% for faster iteration
-- **Type Safety**: Full mypy type checking required for all code
-- **Code Formatting**: Black and isort automatically applied with flake8 linting
-- **Database**: Dual support for SQLite (testing) and PostgreSQL (production)
-- **Async Architecture**: All database operations and external API calls use async/await
-- **Performance Testing**: pytest-benchmark integration with regression detection
+### 核心原则
+1. **文档优先**：修改代码前先更新文档
+2. **使用Makefile**：保持命令一致性
+3. **测试驱动**：确保测试覆盖率
+4. **修改优于创建**：优先修改现有文件
 
-**Note**: Many integration tests were deleted during cleanup and need to be recreated. Focus on unit tests for reliable development.
+### 文档自动化规则
+根据 `docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md`：
 
-### Key Configuration Files
-- `requirements.txt` - Production dependencies (FastAPI, SQLAlchemy, MLflow, Feast, Great Expectations)
-- `requirements-dev.txt` - Development tools with conflict resolution (pytest, black, mypy, bandit)
-- `docker-compose.yml` - Complete development environment (15+ services)
-- `docker-compose.test.yml` - CI testing environment
-- `pytest.ini` - pytest configuration with 80% coverage threshold and comprehensive test markers
-- `.coveragerc` - Coverage configuration with exclusions for fast development
-- `coverage_ci.ini` - CI environment coverage configuration (80% threshold)
-- `coverage_local.ini` - Local development coverage configuration (60% threshold)
-- `mutmut.ini` - Mutation testing configuration for code quality validation
-- `ci-verify.sh` - Complete CI verification script with Docker environment
-- `Makefile` - Comprehensive build automation with 50+ commands
-- `.cursor/rules/` - AI development guidelines and project standards
+- **API变更** → 更新 `docs/reference/API_REFERENCE.md`
+- **数据库变更** → 更新 `docs/reference/DATABASE_SCHEMA.md`
+- **完成阶段** → 生成完成报告
+- **修复Bug** → 创建bugfix报告
 
-### pytest Configuration
-- **Coverage threshold**: 80% minimum (CI), 20-60% for local development
-- **Test markers**: unit, integration, slow, asyncio, e2e, docker, performance, timeout, edge_case, failure_scenario, mlflow, db, kafka, celery, ml, factory, mock, pipeline, api, model, data, cache, feature, validation, monitoring
-- **Async mode**: auto with function fixture loop scope
-- **Test discovery**: test_*.py files, Test* classes, test_* functions
-- **Current status**: Many unit tests available; integration tests largely deleted and need recreation
+## 🏗️ 项目架构
 
-### Coverage Configuration
-- **Source paths**: src/ directory
-- **Exclusions**: Tests, migrations, scripts, main.py, and heavy integration layers
-- **Fast coverage**: Excludes API, data, services, utils, cache, monitoring layers for speed
-- **Report settings**: Shows missing lines, generates HTML reports in htmlcov/
-- **Branch coverage**: Enabled for comprehensive test coverage analysis
+### 技术栈
+- **框架**: FastAPI + SQLAlchemy 2.0
+- **数据库**: PostgreSQL (生产) + SQLite (测试)
+- **缓存**: Redis
+- **任务队列**: Celery
+- **MLOps**: MLflow + Feast
+- **监控**: Prometheus/Grafana
 
-### Testing Tips & Troubleshooting
+### 项目结构
+```
+src/
+├── api/           # API端点
+├── config/        # 配置管理
+├── database/      # 数据库相关
+├── utils/         # 工具函数
+├── middleware/    # 中间件
+└── monitoring/    # 监控组件
 
-#### Test Organization
-- **Unit Tests**: `tests/unit/` - Fast, isolated tests - **Use these for reliable development**
-- **Integration Tests**: `tests/integration/` - Component interaction tests - **Note: Largely deleted, need recreation**
-- **E2E Tests**: `tests/e2e/` - End-to-end testing scenarios
-- **Feature Tests**: `tests/test_features/` - Feature-specific testing
+tests/ (290+ 测试文件，96.35%覆盖率)
+├── unit/          # 单元测试 ⭐主要使用
+├── integration/   # 集成测试（待重建）
+└── e2e/          # 端到端测试
+```
 
-**Note**: Many integration tests were deleted during cleanup and need to be recreated. Focus on unit tests for reliable development.
+## 📚 重要文档
 
-#### Common Testing Commands
-- **Single test file**: `pytest tests/unit/test_specific_module.py -v`
-- **Stop on first failure**: `pytest -x` or `pytest --maxfail=3`
-- **Verbose output**: `pytest -v --tb=long`
-- **Run specific test**: `pytest tests/unit/test_module.py::TestClass::test_method`
-- **Run with markers**: `pytest -m "not slow"` to exclude slow tests
-- **Run unit tests only**: `pytest tests/unit/`
+### 文档索引
+- [文档首页](docs/INDEX.md) - 完整文档列表
+- [AI开发规则](docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md) - 必读
+- [测试指南](docs/testing/) - 测试策略
+- [架构文档](docs/architecture/) - 系统设计
+- [运维手册](docs/ops/) - 部署运维
 
-#### Performance Testing
-- **Benchmarks**: `make benchmark` - Run performance benchmarks with pytest-benchmark
-- **Profiling**: `make profile-app` - Profile application performance
-- **Regression Detection**: `make performance-regression-check` - Check for performance regressions
-- **Mutation Testing**: `make mutation-test` - Run mutation testing with mutmut
+### API和参考
+- [API文档](docs/reference/API_REFERENCE.md)
+- [数据库架构](docs/reference/DATABASE_SCHEMA.md)
+- [开发指南](docs/reference/DEVELOPMENT_GUIDE.md)
 
-#### Performance Tips
-- Use `make coverage-fast` for quick feedback during development
-- Use `make test-quick` for rapid iteration with timeout protection
-- Integration tests may require external services - ensure Docker containers are running
-- CI uses 80% coverage threshold, local development uses 20-60% for faster iteration
+## 🔧 开发工作流
 
-#### Common Issues
-- **Database connection errors**: Ensure Docker services are running with `docker-compose up -d`
-- **Import errors**: Run with proper PYTHONPATH: `export PYTHONPATH="$(pwd):${PYTHONPATH}"`
-- **Test timeouts**: Use `make test-quick` for timeout protection
-- **Coverage reporting slow**: Use `make coverage-fast` for unit tests only
+### 新功能开发
+1. `make context` - 了解项目状态
+2. 更新相关文档（重要！）
+3. 编写代码
+4. `make test-quick` - 测试
+5. `make fmt && make lint` - 代码规范
+6. `make coverage` - 覆盖率检查
+7. `make prepush` - 提交前检查
 
-## 🔧 Development Environment Setup
+### Bug修复
+1. 复现问题
+2. 修复代码
+3. 添加测试
+4. 创建修复报告
 
-### Technology Stack
-- **Language**: Python 3.11+
-- **Web Framework**: FastAPI with automatic API documentation
-- **Database**: PostgreSQL (production) + SQLite (testing) with async drivers
-- **ORM**: SQLAlchemy 2.0 with modern async/await patterns
-- **Caching**: Redis with async Redis client
-- **Task Queue**: Celery with Beat scheduler
-- **Message Queue**: Apache Kafka via Confluent Platform
-- **Model Management**: MLflow with PostgreSQL backend and MinIO artifact storage
-- **Feature Store**: Feast with Redis/PostgreSQL backend
-- **Data Quality**: Great Expectations for data validation
-- **Monitoring**: Prometheus/Grafana metrics stack
+## ⚠️ 注意事项
 
-### Key Dependencies
-- **Core**: FastAPI, SQLAlchemy, PostgreSQL, Redis, Celery
-- **ML**: MLflow, XGBoost, scikit-learn, pandas, numpy
-- **Data Processing**: Apache Kafka, Great Expectations, Feast
-- **Testing**: pytest, pytest-cov, pytest-asyncio, factory-boy
-- **Code Quality**: black, flake8, mypy, bandit, safety
-- **Infrastructure**: Docker, docker-compose, nginx
+### 测试相关
+- CI要求80%覆盖率，本地开发20-60%即可
+- 集成测试大多已删除，主要使用单元测试
+- 使用 `pytest tests/unit/` 只运行单元测试
 
-### Database Architecture
-- **Multi-role connection management**: Single `DatabaseManager` with role-based access
-- **Migration system**: Alembic with 10+ migration files
-- **Dual database support**: Seamless switching between PostgreSQL and SQLite
-- **Connection pooling**: Advanced connection management for high performance
+### 环境问题
+- Docker服务需要先启动：`docker-compose up -d`
+- 数据库连接问题检查 `make env-check`
+- 使用 `./ci-verify.sh` 进行完整验证
 
-### MLOps Pipeline Features
-- **End-to-end MLOps**: Data collection → model training → predictions → monitoring
-- **Feature store**: Proper feature management with Feast
-- **Model versioning**: MLflow integration for model lifecycle
-- **Performance tracking**: Automated model performance monitoring
-- **Feedback loop**: Automated retraining based on model performance
-- **Quality Assurance**: Multi-layered testing with mutation testing and performance benchmarks
+## 🆘 常见问题
 
-### Database Management Commands
-- **Database Initialization**: `make db-init` - Initialize database with migrations
-- **Database Migration**: `make db-migrate` - Run database migrations
-- **Database Seeding**: `make db-seed` - Seed database with initial data
-- **Database Backup**: `make db-backup` - Create database backup
-- **Database Restore**: `make db-restore BACKUP=filename.sql` - Restore from backup
-- **Database Reset**: `make db-reset` - Reset database (WARNING: deletes all data)
-- **Database Shell**: `make db-shell` - Open database shell for queries
+**测试失败**？→ 查看 [故障排除指南](CLAUDE_TROUBLESHOOTING.md)
 
-### Security and Audit Commands
-- **Security Scan**: `make security-check` - Run vulnerability scan (safety + bandit)
-- **License Check**: `make license-check` - Check open source licenses
-- **Dependency Check**: `make dependency-check` - Check for outdated dependencies
-- **Secret Scan**: `make secret-scan` - Scan for secrets and sensitive data
-- **Complete Audit**: `make audit` - Run complete security audit (all checks above)
+**命令不工作**？→ 运行 `make help`
 
-### Testing and Quality Assurance Infrastructure
-- **Mutation Testing**: `make mutation-test` - Run mutmut for code quality validation
-- **Performance Benchmarks**: `make benchmark` - Execute pytest-benchmark performance tests
-- **Coverage Analysis**: Multi-environment coverage with CI gating
-- **Regression Detection**: Automated performance and quality regression detection
-- **Test Factories**: Comprehensive test data factories in `tests/factories/`
-- **Mock Services**: Complete mock infrastructure in `tests/mocks/`
-- **Performance Baselines**: `tests/performance/baseline_metrics.json` for comparison
+**环境问题**？→ 运行 `make env-check`
 
-# important-instruction-reminders
+**需要帮助**？→ 查看快速参考或文档索引
+
+## 📞 支持
+
+- 快速参考：[CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
+- 故障排除：[CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
+- 完整文档：[docs/](docs/)
+
+---
+
+# 重要指令提醒
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+NEVER proactively create documentation files unless explicitly requested.

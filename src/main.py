@@ -29,6 +29,7 @@ except ImportError:
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from src.middleware.i18n import I18nMiddleware
 
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
@@ -87,6 +88,9 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# 添加国际化中间件
+app.add_middleware(I18nMiddleware)
 
 # 添加CORS中间件
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
