@@ -8,8 +8,7 @@ KafkaProducer 功能测试 - Phase 5.2 Batch-Δ-020
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Dict, Any, List, Optional
+from unittest.mock import Mock, patch
 from datetime import datetime
 
 warnings.filterwarnings('ignore')
@@ -80,7 +79,7 @@ def test_kafka_producer_structure():
             # 测试 FootballKafkaProducer 初始化
             print("\n📡 测试 FootballKafkaProducer:")
             producer = FootballKafkaProducer()
-            print(f"  ✅ 生产者创建成功")
+            print("  ✅ 生产者创建成功")
             print(f"  ✅ 配置对象: {type(producer.config).__name__}")
             print(f"  ✅ Kafka Producer: {type(producer.producer).__name__}")
             print(f"  ✅ 日志记录器: {type(producer.logger).__name__}")
@@ -112,9 +111,9 @@ def test_kafka_producer_structure():
             for test_name, config_params in config_tests:
                 try:
                     if config_params:
-                        test_producer = FootballKafkaProducer(**config_params)
+                        FootballKafkaProducer(**config_params)
                     else:
-                        test_producer = FootballKafkaProducer()
+                        FootballKafkaProducer()
                     print(f"  ✅ {test_name}: 生产者创建成功")
                 except Exception as e:
                     print(f"  ❌ {test_name}: 错误 - {e}")
@@ -205,7 +204,7 @@ def test_kafka_producer_structure():
 
                 # 测试异步上下文管理器
                 async def test_async_context():
-                    async with FootballKafkaProducer() as async_producer:
+                    async with FootballKafkaProducer():
                         print("  ✅ 异步上下文管理器进入")
                         return True
 
@@ -218,11 +217,6 @@ def test_kafka_producer_structure():
             print("\n📦 批量发送功能测试:")
             try:
                 # 模拟批量数据
-                batch_data = [
-                    {"match_id": 1, "home_team": "A", "away_team": "B"},
-                    {"match_id": 2, "home_team": "C", "away_team": "D"},
-                    {"match_id": 3, "home_team": "E", "away_team": "F"}
-                ]
 
                 print("  ✅ 批量发送方法存在")
                 print("  ✅ 支持的数据类型: match, odds, scores")

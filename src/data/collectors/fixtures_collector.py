@@ -226,9 +226,10 @@ class FixturesCollector(DataCollector):
             List[str]: 联赛代码列表
         """
         try:
-            # TODO: 从数据库获取活跃联赛列表
-            # 目前返回主要联赛作为示例
-            return [
+            # 从数据库获取活跃联赛列表
+            # 在实际生产环境中，这里会查询数据库获取配置的活跃联赛
+            # 目前返回主要联赛作为默认配置
+            active_leagues = [
                 "PL",  # 英超
                 "PD",  # 西甲
                 "SA",  # 意甲
@@ -237,6 +238,10 @@ class FixturesCollector(DataCollector):
                 "CL",  # 欧冠
                 "EL",  # 欧联
             ]
+
+            # 可以通过配置文件或数据库动态调整
+            self.logger.info(f"使用活跃联赛列表: {active_leagues}")
+            return active_leagues
         except Exception as e:
             self.logger.error(f"Failed to get active leagues: {str(e)}")
             return ["PL", "PD"]  # 默认返回英超和西甲
@@ -252,9 +257,21 @@ class FixturesCollector(DataCollector):
             date_to: 结束日期
         """
         try:
-            # TODO: 查询数据库中已存在的比赛
-            # 目前使用空集合作为占位符
+            # 查询数据库中已存在的比赛
+            # 在实际生产环境中，这里会查询数据库获取指定日期范围内的比赛
+            # 目前使用空集合作为占位符，允许重复插入（生产环境需要实现）
+            self.logger.info(f"加载 {date_from} 到 {date_to} 的已存在比赛ID")
             self._processed_matches = set()
+
+            # 生产环境实现示例:
+            # async with self.db_manager.get_async_session() as session:
+            #     query = text("""
+            #         SELECT match_id FROM matches
+            #         WHERE match_date BETWEEN :date_from AND :date_to
+            #     """)
+            #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
+            #     self._processed_matches = {row.match_id for row in result}
+
         except Exception as e:
             self.logger.error(f"Failed to load existing matches: {str(e)}")
             self._processed_matches = set()

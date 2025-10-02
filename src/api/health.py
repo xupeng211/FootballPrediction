@@ -6,16 +6,17 @@
 
 import asyncio
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.api.schemas import HealthCheckResponse
-from src.database.connection import get_db_session
+from src.database.connection import get_database_manager
 from src.utils.retry import CircuitBreaker
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,10 @@ logger = logging.getLogger(__name__)
 _app_start_time = time.time()
 
 router = APIRouter(tags=["健康检查"])
+
+
+FAST_FAIL = os.getenv("FAST_FAIL", "true").lower() == "true"
+MINIMAL_HEALTH_MODE = os.getenv("MINIMAL_HEALTH_MODE", "false").lower() == "true"
 
 
 class ServiceCheckError(RuntimeError):
@@ -45,13 +50,34 @@ _mlflow_circuit_breaker = CircuitBreaker(
 )
 
 
+def _optional_checks_enabled() -> bool:
+    """是否在健康检查中执行可选依赖检查"""
+    return FAST_FAIL and not MINIMAL_HEALTH_MODE
+
+
+def _optional_check_skipped(service: str) -> Dict[str, Any]:
+    """生成可选检查跳过时的统一响应"""
+    return {
+        "healthy": True,
+        "status": "skipped",
+        "response_time_ms": 0.0,
+        "details": {"message": f"{service} check skipped in minimal mode"},
+    }
+
+
+async def _collect_database_health() -> Dict[str, Any]:
+    """获取数据库健康状态（内部使用）"""
+    with get_database_manager().get_session() as session:
+        return await _check_database(session)
+
+
 @router.get(
     "/health",
     summary="系统健康检查",
     description="检查API、数据库、缓存等服务状态",
     response_model=HealthCheckResponse,
 )
-async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+async def health_check() -> Dict[str, Any]:
     """
     系统健康检查端点
 
@@ -59,6 +85,7 @@ async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
         Dict[str, Any]: 系统健康状态信息
     """
     start_time = time.time()
+    logger.info("健康检查请求: minimal_mode=%s", MINIMAL_HEALTH_MODE)
     health_status: Dict[str, Any] = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -69,30 +96,41 @@ async def health_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
     }
 
     try:
+        optional_checks_enabled = _optional_checks_enabled()
+        health_status["mode"] = "full" if optional_checks_enabled else "minimal"
+
         # 检查数据库连接
-        health_status["checks"]["database"] = await _check_database(db)
+        if MINIMAL_HEALTH_MODE:
+            health_status["checks"]["database"] = _optional_check_skipped("database")
+        else:
+            health_status["checks"]["database"] = await _collect_database_health()
 
-        # 检查Redis连接
-        health_status["checks"]["redis"] = await _check_redis()
+        if optional_checks_enabled:
+            # 检查Redis连接
+            health_status["checks"]["redis"] = await _check_redis()
 
-        # 检查Kafka连接
-        health_status["checks"]["kafka"] = await _check_kafka()
+            # 检查Kafka连接
+            health_status["checks"]["kafka"] = await _check_kafka()
 
-        # 检查MLflow服务
-        health_status["checks"]["mlflow"] = await _check_mlflow()
+            # 检查MLflow服务
+            health_status["checks"]["mlflow"] = await _check_mlflow()
 
-        # 检查文件系统
-        health_status["checks"]["filesystem"] = await _check_filesystem()
+            # 检查文件系统
+            health_status["checks"]["filesystem"] = await _check_filesystem()
+        else:
+            for service in ("redis", "kafka", "mlflow", "filesystem"):
+                health_status["checks"][service] = _optional_check_skipped(service)
 
         # 计算响应时间
         response_time = round((time.time() - start_time) * 1000, 2)
         health_status["response_time_ms"] = response_time
 
         # 检查是否有任何服务不健康
+        allowed_status = {"healthy", "skipped"}
         failed_checks = [
             check_name
             for check_name, check_result in health_status["checks"].items()
-            if check_result.get("status") != "healthy"
+            if check_result.get("status") not in allowed_status
         ]
 
         if failed_checks:
@@ -134,7 +172,7 @@ async def liveness_check() -> Dict[str, Any]:
     summary="就绪性检查",
     description="检查服务是否就绪，包括依赖服务检查",
 )
-async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+async def readiness_check() -> Dict[str, Any]:
     """就绪性检查 - 用于K8s readiness probe"""
     checks: Dict[str, Any] = {}
 
@@ -145,10 +183,20 @@ async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, An
             checks[check_name] = {"healthy": False, "error": str(exc)}
 
     # 检查核心依赖
-    await _capture("database", _check_database(db))
-    await _capture("redis", _check_redis())
-    await _capture("kafka", _check_kafka())
-    await _capture("mlflow", _check_mlflow())
+    optional_checks_enabled = _optional_checks_enabled()
+
+    if MINIMAL_HEALTH_MODE:
+        checks["database"] = _optional_check_skipped("database")
+    else:
+        await _capture("database", _collect_database_health())
+
+    if optional_checks_enabled:
+        await _capture("redis", _check_redis())
+        await _capture("kafka", _check_kafka())
+        await _capture("mlflow", _check_mlflow())
+    else:
+        for service in ("redis", "kafka", "mlflow"):
+            checks[service] = _optional_check_skipped(service)
 
     # 判断整体就绪状态
     all_healthy = all(check.get("healthy", False) for check in checks.values())

@@ -264,7 +264,7 @@ class TaskMonitor:
                 # 统计查询
                 if db_type == "sqlite":
                     stats_query = text(
-                        f"""
+                        """
                         SELECT
                             task_name,
                             COUNT(*) as total_executions,
@@ -273,12 +273,12 @@ class TaskMonitor:
                             AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
                             SUM(retry_count) as total_retries
                         FROM error_logs
-                        WHERE created_at >= datetime('now', '-{hours} hours')
+                        WHERE created_at >= datetime('now', :hours_param || ' hours')
                         GROUP BY task_name
                         ORDER BY total_executions DESC
                     """
                     )
-                    result = await session.execute(stats_query)
+                    result = await session.execute(stats_query, {"hours_param": f"-{hours}"})
                 else:
                     stats_query = text(
                         """

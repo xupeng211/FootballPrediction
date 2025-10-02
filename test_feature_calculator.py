@@ -8,8 +8,7 @@ FeatureCalculator 功能测试 - Phase 5.2 Batch-Δ-017
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+from unittest.mock import Mock, patch
 
 warnings.filterwarnings('ignore')
 
@@ -178,9 +177,9 @@ def test_feature_calculator_structure():
             for test_name, config_params in config_tests:
                 try:
                     if config_params:
-                        test_calculator = FeatureCalculator(config=config_params)
+                        FeatureCalculator(config=config_params)
                     else:
-                        test_calculator = FeatureCalculator()
+                        FeatureCalculator()
                     print(f"  ✅ {test_name}: 计算器创建成功")
                 except Exception as e:
                     print(f"  ❌ {test_name}: 错误 - {e}")
@@ -318,7 +317,7 @@ def test_feature_calculator_structure():
 
             for param_name, param_value in test_params:
                 try:
-                    test_calculator = FeatureCalculator(config=param_value)
+                    FeatureCalculator(config=param_value)
                     print(f"  ✅ {param_name}: 配置可接受")
                 except Exception as e:
                     print(f"  ❌ {param_name}: 错误 - {e}")
@@ -335,13 +334,13 @@ def test_feature_calculator_structure():
             for scenario_name, test_value in error_scenarios:
                 try:
                     if scenario_name == "空数据":
-                        result = calculator.calculate_mean(test_value)
+                        calculator.calculate_mean(test_value)
                         print(f"  ✅ {scenario_name}: 可处理空列表")
                     elif scenario_name == "None值":
-                        result = calculator.calculate_mean(test_value)
+                        calculator.calculate_mean(test_value)
                         print(f"  ✅ {scenario_name}: 可处理 None 值")
                     else:
-                        test_calculator = FeatureCalculator(config=test_value)
+                        FeatureCalculator(config=test_value)
                         print(f"  ✅ {scenario_name}: 配置可接受")
                 except Exception as e:
                     print(f"  ❌ {scenario_name}: 错误 - {e}")

@@ -8,10 +8,8 @@ FeatureCalculator 简化功能测试 - Phase 5.2 Batch-Δ-017
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock
-from typing import Dict, Any, List
+from unittest.mock import Mock
 import ast
-import inspect
 
 warnings.filterwarnings('ignore')
 
@@ -51,7 +49,7 @@ def analyze_feature_calculator_code():
             elif isinstance(node, ast.FunctionDef):
                 functions.append(node.name)
 
-        print(f"\n📊 代码结构分析:")
+        print("\n📊 代码结构分析:")
         print(f"  ✅ 发现 {len(classes)} 个类")
         print(f"  ✅ 发现 {len(functions)} 个函数")
         print(f"  ✅ 发现 {len(async_functions)} 个异步方法")
@@ -59,7 +57,7 @@ def analyze_feature_calculator_code():
         # 分析 FeatureCalculator 类
         for cls in classes:
             if cls["name"] == "FeatureCalculator":
-                print(f"\n🏗️ FeatureCalculator 类分析:")
+                print("\n🏗️ FeatureCalculator 类分析:")
                 print(f"  ✅ 方法总数: {len(cls['methods'])}")
 
                 # 分类方法
@@ -84,7 +82,7 @@ def analyze_feature_calculator_code():
                 if node.module:
                     imports.append(node.module)
 
-        print(f"\n📦 导入模块分析:")
+        print("\n📦 导入模块分析:")
         print(f"  ✅ 导入模块数: {len(set(imports))}")
         important_modules = ['sqlalchemy', 'asyncio', 'statistics', 'typing', 'datetime', 'decimal']
         for module in important_modules:
@@ -100,11 +98,11 @@ def analyze_feature_calculator_code():
                     isinstance(node.body[0].value.value, str)):
                     docstrings.append(node.name)
 
-        print(f"\n📝 文档字符串分析:")
+        print("\n📝 文档字符串分析:")
         print(f"  ✅ 有文档字符串的函数/类: {len(docstrings)} 个")
 
         # 分析异步函数特征
-        print(f"\n🔄 异步功能分析:")
+        print("\n🔄 异步功能分析:")
         async_features = {
             'calculate_recent_performance_features': '近期战绩特征计算',
             'calculate_historical_matchup_features': '历史对战特征计算',
@@ -168,7 +166,7 @@ def test_feature_calculator_concepts():
 
         # 测试统计计算
         test_data = [1.0, 2.0, 3.0, 4.0, 5.0]
-        print(f"\n📊 统计计算测试:")
+        print("\n📊 统计计算测试:")
         print(f"  ✅ 均值: {calculator.calculate_mean(test_data)}")
         print(f"  ✅ 标准差: {calculator.calculate_std(test_data)}")
         print(f"  ✅ 最小值: {calculator.calculate_min(test_data)}")
@@ -176,7 +174,7 @@ def test_feature_calculator_concepts():
         print(f"  ✅ 滚动均值: {len(calculator.calculate_rolling_mean(test_data, 3))} 个值")
 
         # 测试特征管理
-        print(f"\n📝 特征管理测试:")
+        print("\n📝 特征管理测试:")
         features_to_add = [
             {"name": "home_form", "type": "numerical", "description": "主队近期战绩"},
             {"name": "away_form", "type": "numerical", "description": "客队近期战绩"},
@@ -191,7 +189,7 @@ def test_feature_calculator_concepts():
         print(f"  ✅ 特征总数: {len(calculator.features)}")
 
         # 测试特征计算类型
-        print(f"\n🎯 特征类型测试:")
+        print("\n🎯 特征类型测试:")
         feature_categories = {
             "近期战绩特征": ["home_form", "away_form", "recent_performance"],
             "历史对战特征": ["head_to_head", "historical_matchup"],
@@ -204,7 +202,7 @@ def test_feature_calculator_concepts():
             print(f"  ✅ {category}: {len(examples)} 个示例特征")
 
         # 测试数据流概念
-        print(f"\n🔄 数据流概念测试:")
+        print("\n🔄 数据流概念测试:")
         data_flow = [
             "原始比赛数据获取",
             "数据清洗和验证",
@@ -218,7 +216,7 @@ def test_feature_calculator_concepts():
             print(f"  ✅ {step}")
 
         # 测试并发处理概念
-        print(f"\n🚀 并发处理概念测试:")
+        print("\n🚀 并发处理概念测试:")
         concurrency_features = [
             "异步数据获取",
             "并发特征计算",

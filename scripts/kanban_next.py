@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import subprocess, json, datetime, re, os
+import subprocess
+import json
+import datetime
+import re
 from pathlib import Path
 
 KANBAN = Path("docs/_reports/TEST_COVERAGE_KANBAN.md")

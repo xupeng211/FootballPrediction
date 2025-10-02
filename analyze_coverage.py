@@ -4,7 +4,6 @@
 扫描src/目录下所有.py文件，获取代码行数和覆盖率数据
 """
 
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -142,7 +141,7 @@ def main():
         print(f"         - 代码行数: {item['loc']:,} 行")
         print(f"         - 语句总数: {item['total_stmts']:,} 句")
         print(f"         - 当前覆盖率: {item['coverage']:.1f}%")
-        print(f"         - 目标覆盖率: ≥70%")
+        print("         - 目标覆盖率: ≥70%")
         print()
 
     # 保存结果到文件

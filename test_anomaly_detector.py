@@ -8,8 +8,7 @@ AnomalyDetector 功能测试 - Phase 5.2 Batch-Δ-015
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+from unittest.mock import Mock, patch
 
 warnings.filterwarnings('ignore')
 
@@ -33,7 +32,6 @@ def test_anomaly_detector_structure():
             'sklearn.preprocessing': Mock(),
             'sklearn.metrics': Mock(),
             'sklearn.model_selection': Mock(),
-            'prometheus_client': Mock(),
             'prometheus_client': Mock(),
             'sqlalchemy': Mock(),
             'sqlalchemy.text': Mock(),
@@ -114,7 +112,7 @@ def test_anomaly_detector_structure():
 
                 # 测试 StatisticalAnomalyDetector
                 print("\n🔬 测试 StatisticalAnomalyDetector:")
-                with patch('src.data.quality.anomaly_detector.DatabaseManager') as mock_db:
+                with patch('src.data.quality.anomaly_detector.DatabaseManager'):
                     detector = StatisticalAnomalyDetector(sigma_threshold=3.0)
                     print(f"  ✅ 检测器创建: σ阈值={detector.sigma_threshold}")
 
@@ -132,9 +130,9 @@ def test_anomaly_detector_structure():
 
                 # 测试 MachineLearningAnomalyDetector
                 print("\n🤖 测试 MachineLearningAnomalyDetector:")
-                with patch('src.data.quality.anomaly_detector.DatabaseManager') as mock_db:
+                with patch('src.data.quality.anomaly_detector.DatabaseManager'):
                     ml_detector = MachineLearningAnomalyDetector()
-                    print(f"  ✅ ML检测器创建")
+                    print("  ✅ ML检测器创建")
 
                     # 测试方法存在性
                     ml_methods = [
@@ -150,9 +148,9 @@ def test_anomaly_detector_structure():
 
                 # 测试 AdvancedAnomalyDetector
                 print("\n🚀 测试 AdvancedAnomalyDetector:")
-                with patch('src.data.quality.anomaly_detector.DatabaseManager') as mock_db:
+                with patch('src.data.quality.anomaly_detector.DatabaseManager'):
                     adv_detector = AdvancedAnomalyDetector()
-                    print(f"  ✅ 高级检测器创建")
+                    print("  ✅ 高级检测器创建")
 
                     # 测试组件集成
                     has_statistical = hasattr(adv_detector, 'statistical_detector')
@@ -199,12 +197,12 @@ def test_anomaly_detector_structure():
                     try:
                         if isinstance(param_value, str):
                             # 测试字符串参数
-                            temp_detector = StatisticalAnomalyDetector()
+                            StatisticalAnomalyDetector()
                             print(f"  ✅ {param_name}: 可接受字符串")
                         elif isinstance(param_value, (int, float)):
                             # 测试数值参数
                             if param_name == "σ阈值":
-                                temp_detector = StatisticalAnomalyDetector(sigma_threshold=param_value)
+                                StatisticalAnomalyDetector(sigma_threshold=param_value)
                                 print(f"  ✅ {param_name}: {param_value} 可接受")
                             else:
                                 print(f"  ✅ {param_name}: {param_value} 可接受")

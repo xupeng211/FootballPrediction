@@ -7,11 +7,8 @@ This script tests main.py functions directly without pytest to avoid dependency 
 
 import sys
 import os
-import importlib.util
 from unittest.mock import MagicMock, AsyncMock, patch
 import asyncio
-import tempfile
-import shutil
 
 # Add src to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
@@ -189,12 +186,12 @@ def test_exception_handlers():
     print("Testing exception handlers...")
 
     try:
-        from fastapi import FastAPI, HTTPException
+        from fastapi import HTTPException
         from fastapi.responses import JSONResponse
 
         # Test HTTP exception handler
         async def test_http_exception_handler():
-            mock_logger = MagicMock()
+            MagicMock()
             mock_request = MagicMock()
             mock_request.url = "http://test.com/api/test"
 
@@ -221,7 +218,7 @@ def test_exception_handlers():
 
         # Test general exception handler
         async def test_general_exception_handler():
-            mock_logger = MagicMock()
+            MagicMock()
             mock_request = MagicMock()
             mock_request.url = "http://test.com/api/test"
 

@@ -6,7 +6,7 @@
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 import json
 
 
@@ -122,7 +122,7 @@ def main():
         print(f"         - 当前覆盖率: {item['coverage']:.1f}%")
         print(f"         - 未覆盖语句: {item['missing_stmts']:,} 句")
         print(f"         - 影响分数: {impact_score:.1f}")
-        print(f"         - 目标覆盖率: ≥70%")
+        print("         - 目标覆盖率: ≥70%")
         print()
 
     # 计算总体统计
@@ -131,7 +131,7 @@ def main():
     total_stmts = sum(item['total_stmts'] for item in filtered_results)
     weighted_coverage = sum(item['coverage'] * item['total_stmts'] for item in filtered_results) / total_stmts if total_stmts > 0 else 0
 
-    print(f"📊 总体统计:")
+    print("📊 总体统计:")
     print(f"   - 总文件数: {total_files}")
     print(f"   - 总代码行数: {total_loc:,} 行")
     print(f"   - 总语句数: {total_stmts:,} 句")

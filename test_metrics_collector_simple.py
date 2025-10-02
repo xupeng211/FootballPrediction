@@ -8,10 +8,8 @@ MetricsCollector 简化功能测试 - Phase 5.2 Batch-Δ-019
 import sys
 import warnings
 import asyncio
-from unittest.mock import Mock, AsyncMock
-from typing import Dict, Any, List
+from unittest.mock import Mock
 import ast
-import inspect
 
 warnings.filterwarnings('ignore')
 
@@ -51,7 +49,7 @@ def analyze_metrics_collector_code():
             elif isinstance(node, ast.FunctionDef):
                 functions.append(node.name)
 
-        print(f"\n📊 代码结构分析:")
+        print("\n📊 代码结构分析:")
         print(f"  ✅ 发现 {len(classes)} 个类")
         print(f"  ✅ 发现 {len(functions)} 个函数")
         print(f"  ✅ 发现 {len(async_functions)} 个异步方法")
@@ -84,7 +82,7 @@ def analyze_metrics_collector_code():
                 if node.module:
                     imports.append(node.module)
 
-        print(f"\n📦 导入模块分析:")
+        print("\n📦 导入模块分析:")
         print(f"  ✅ 导入模块数: {len(set(imports))}")
         important_modules = ['asyncio', 'logging', 'signal', 'datetime', 'psutil', 'prometheus_client']
         for module in important_modules:
@@ -100,11 +98,11 @@ def analyze_metrics_collector_code():
                     isinstance(node.body[0].value.value, str)):
                     docstrings.append(node.name)
 
-        print(f"\n📝 文档字符串分析:")
+        print("\n📝 文档字符串分析:")
         print(f"  ✅ 有文档字符串的函数/类: {len(docstrings)} 个")
 
         # 分析监控功能特征
-        print(f"\n📈 监控功能分析:")
+        print("\n📈 监控功能分析:")
         monitoring_features = {
             'collect_system_metrics': '系统指标收集',
             'collect_database_metrics': '数据库指标收集',
@@ -205,7 +203,7 @@ def test_metrics_collector_concepts():
         print("✅ 模拟 MetricsCollector 创建成功")
 
         # 测试生命周期管理
-        print(f"\n🔄 生命周期管理测试:")
+        print("\n🔄 生命周期管理测试:")
         collector.start()
         print(f"  ✅ 启动状态: {collector.running}")
 
@@ -223,7 +221,7 @@ def test_metrics_collector_concepts():
         print(f"  ✅ 停止状态: {collector.running}")
 
         # 测试指标收集
-        print(f"\n📈 指标收集测试:")
+        print("\n📈 指标收集测试:")
         system_metrics = collector.collect_system_metrics()
         print(f"  ✅ 系统指标: {len(system_metrics)} 项")
 
@@ -234,7 +232,7 @@ def test_metrics_collector_concepts():
         print(f"  ✅ 应用指标: {len(app_metrics)} 项")
 
         # 测试特殊化收集器
-        print(f"\n🎯 特殊化收集器测试:")
+        print("\n🎯 特殊化收集器测试:")
         specialized_collectors = [
             "SystemMetricsCollector",
             "DatabaseMetricsCollector",
@@ -245,7 +243,7 @@ def test_metrics_collector_concepts():
             print(f"  ✅ {collector_type}: 架构支持")
 
         # 测试监控维度
-        print(f"\n📏 监控维度测试:")
+        print("\n📏 监控维度测试:")
         monitoring_dimensions = {
             "性能监控": ["CPU使用率", "内存使用率", "磁盘使用率", "网络流量"],
             "数据库监控": ["连接数", "查询性能", "表大小", "索引效率"],
@@ -259,7 +257,7 @@ def test_metrics_collector_concepts():
                 print(f"    - {metric}")
 
         # 测试收集策略
-        print(f"\n🔄 收集策略测试:")
+        print("\n🔄 收集策略测试:")
         collection_strategies = [
             {"strategy": "periodic", "interval": 30, "description": "定期收集（30秒间隔）"},
             {"strategy": "event_driven", "trigger": "events", "description": "事件驱动收集"},
@@ -271,7 +269,7 @@ def test_metrics_collector_concepts():
             print(f"  ✅ {strategy['strategy']}: {strategy['description']}")
 
         # 测试数据存储和导出
-        print(f"\n💾 数据存储和导出测试:")
+        print("\n💾 数据存储和导出测试:")
         storage_options = [
             {"backend": "prometheus", "format": "time_series", "description": "Prometheus时序数据库"},
             {"backend": "influxdb", "format": "time_series", "description": "InfluxDB时序数据库"},
@@ -283,7 +281,7 @@ def test_metrics_collector_concepts():
             print(f"  ✅ {option['backend']}: {option['description']}")
 
         # 测试告警机制
-        print(f"\n🚨 告警机制测试:")
+        print("\n🚨 告警机制测试:")
         alerting_types = [
             {"type": "threshold", "condition": "> 80%", "description": "阈值告警"},
             {"type": "trend", "condition": "increasing", "description": "趋势告警"},
