@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [快速开始](#快速开始)
 - [核心命令](#核心命令)
 - [开发原则](#开发原则)
+- [工作流系统](#工作流系统)
 - [项目架构](#项目架构)
 - [重要文档](#重要文档)
 - [故障排除](#故障排除)
@@ -107,6 +108,34 @@ tests/ (290+ 测试文件，96.35%覆盖率)
 - [数据库架构](docs/reference/DATABASE_SCHEMA.md)
 - [开发指南](docs/reference/DEVELOPMENT_GUIDE.md)
 
+## 🔄 工作流系统
+
+### ⚠️ 重要：理解工作流
+这个项目有6个自动化工作流，请务必阅读：
+- **[Claude工作流指南](docs/ai/CLAUDE_WORKFLOW_GUIDE.md)** - 必读！
+- **[工作流文档](.github/workflows/README.md)** - 完整说明
+
+### 核心工作流
+1. **CI Pipeline** - 代码质量检查（自动触发）
+2. **Deploy** - 自动部署到staging
+3. **MLOps** - 模型自动管理（每日8:00）
+4. **Issue Tracker** - 问题自动跟踪
+5. **Project Sync** - 看板状态同步
+6. **Project Maintenance** - 项目维护（每周一）
+
+### 必须遵守的规则
+```bash
+# 提交前必须运行
+make prepush
+# 或
+./ci-verify.sh
+```
+
+### CI失败处理
+- Issue Tracker会自动创建Issue
+- Issue包含详细错误信息
+- 修复后自动关闭Issue
+
 ## 🔧 开发工作流
 
 ### 新功能开发
@@ -116,13 +145,14 @@ tests/ (290+ 测试文件，96.35%覆盖率)
 4. `make test-quick` - 测试
 5. `make fmt && make lint` - 代码规范
 6. `make coverage` - 覆盖率检查
-7. `make prepush` - 提交前检查
+7. `make prepush` - 提交前检查（触发CI）
 
 ### Bug修复
-1. 复现问题
-2. 修复代码
-3. 添加测试
-4. 创建修复报告
+1. 查看Issue Tracker的Issue
+2. 理解失败原因
+3. 修复代码
+4. 添加测试
+5. 推送修复（CI自动运行）
 
 ## ⚠️ 注意事项
 
