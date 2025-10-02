@@ -1,5 +1,8 @@
 # 📑 INDEX
 
+## AI Development Rules
+- [🤖 AI开发文档维护规则](AI_DEVELOPMENT_DOCUMENTATION_RULES.md) - **重要！AI开发必须遵守**
+
 ## Architecture
 - [数据架构优化改进说明](architecture/ARCHITECTURE_IMPROVEMENTS.md)
 - [Caching Implementation Design](architecture/CACHING_IMPLEMENTATION_DESIGN.md)
