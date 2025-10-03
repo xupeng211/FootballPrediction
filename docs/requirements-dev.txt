@@ -1,0 +1,65 @@
+# Development requirements for Football Prediction System
+# 开发环境依赖包 - 包含所有开发工具
+
+# Core Web Framework (inherited from requirements.txt)
+-r requirements.txt
+
+# Development Tools
+black==25.9.0              # 代码格式化
+ruff==0.12.10              # 代码检查和格式化
+mypy==1.8.0                # 类型检查
+isort==6.0.1               # Import排序
+bandit==1.8.3               # 安全检查
+flake8==7.1.1              # 代码风格检查
+pylint==3.3.2              # 代码质量检查
+
+# Testing
+pytest==8.4.2
+pytest-asyncio==1.1.0
+pytest-cov==4.1.0
+pytest-mock==3.14.0
+pytest-benchmark==5.1.0
+pytest-xdist==3.6.1        # 并行测试
+pytest-profiling==1.7.0    # 性能分析测试
+factory-boy==3.3.3         # 测试数据工厂
+
+# Coverage and Profiling
+coverage==7.6.10
+py-spy==0.3.14              # Python性能分析
+memory-profiler==0.61.0     # 内存分析
+
+# Documentation
+sphinx==8.1.3              # 文档生成
+sphinx-rtd-theme==3.0.2     # 文档主题
+mkdocs==1.6.1               # 文档生成
+mkdocs-material==9.5.50     # 文档主题
+
+# Jupyter Notebooks (for analysis)
+jupyter==1.1.1
+ipykernel==6.29.5
+notebook==7.3.2
+ipywidgets==8.1.5
+
+# Data Science (development)
+matplotlib==3.9.3           # 绘图
+seaborn==0.13.2             # 统计绘图
+jupyterlab==4.3.2           # Jupyter Lab
+
+# Pre-commit hooks
+pre-commit==4.0.1          # Git钩子管理
+
+# Performance monitoring
+py-spy==0.3.14
+py-spy==0.3.14
+
+# Utilities
+rich==13.9.4               # 终端美化
+typer==0.17.4              # CLI框架
+click==8.2.1                # CLI框架
+tqdm==4.67.1                # 进度条
+
+# Type stubs
+types-PyYAML==6.0.12.12
+types-requests==2.32.0.20241016
+types-python-dateutil==2.9.0.20241003
+types-redis==4.6.0.20241004

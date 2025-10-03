@@ -57,9 +57,25 @@ class ServiceManager:
             except Exception as e:
                 # 关闭失败不应阻止其他服务的正常关闭
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
-# 全局服务管理器实例
-service_manager = ServiceManager()
-# 注册默认服务
-service_manager.register_service("ContentAnalysisService", ContentAnalysisService())
-service_manager.register_service("UserProfileService", UserProfileService())
-service_manager.register_service("DataProcessingService", DataProcessingService())
+# 全局服务管理器实例 - 延迟初始化
+_service_manager = None
+
+def get_service_manager():
+    """获取全局服务管理器实例（延迟初始化）"""
+    global _service_manager
+    if _service_manager is None:
+        _service_manager = ServiceManager()
+        # 注册默认服务
+        _service_manager.register_service("ContentAnalysisService", ContentAnalysisService())
+        _service_manager.register_service("UserProfileService", UserProfileService())
+        _service_manager.register_service("DataProcessingService", DataProcessingService())
+    return _service_manager
+
+# 提供向后兼容
+class ServiceManagerProxy:
+    """服务管理器代理，用于延迟初始化"""
+    def __getattr__(self, name):
+        manager = get_service_manager()
+        return getattr(manager, name)
+
+service_manager = ServiceManagerProxy()

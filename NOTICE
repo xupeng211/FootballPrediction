@@ -1,0 +1,163 @@
+NOTICE
+
+Football Prediction System
+Copyright (c) 2024 Football Prediction Team
+
+This product includes software developed under the following open source licenses:
+
+---
+
+## Core Dependencies
+
+### FastAPI v0.116.1
+Copyright (c) 2018 Sebastián Ramírez
+License: MIT License
+Project: https://github.com/tiangolo/fastapi
+
+### SQLAlchemy v2.0.36
+Copyright (c) 2005-2024 SQLAlchemy authors and contributors
+License: MIT License
+Project: https://www.sqlalchemy.org/
+
+### Pydantic v2.10.5
+Copyright (c) 2017-Present Pydantic & Associates Inc.
+License: MIT License
+Project: https://github.com/pydantic/pydantic
+
+### Uvicorn v0.34.0
+Copyright (c) 2017-present Tom Christie
+License: BSD License
+Project: https://github.com/encode/uvicorn
+
+### Redis v5.2.1
+Copyright (c) 2009-2024 Redis Ltd
+License: BSD-3-Clause License
+Project: https://redis.io/
+
+### Celery v5.4.0
+Copyright (c) 2009-2024 Ask Solem & contributors
+License: BSD License
+Project: https://github.com/celery/celery
+
+---
+
+## Authentication and Security
+
+### python-jose v3.3.0
+Copyright (c) 2014 Michael Davis
+License: MIT License
+Project: https://github.com/mpdavis/python-jose
+
+### Passlib v1.7.4
+Copyright (c) 2008-2024 Eli Collins
+License: BSD License
+Project: https://passlib.readthedocs.io/
+
+### Cryptography v44.0.0
+Copyright (c) 2013-2024 Cryptography Developers
+License: Apache License 2.0
+Project: https://cryptography.io/
+
+---
+
+## Data Processing
+
+### pandas v2.2.3
+Copyright (c) 2008-2024, pandas Developers
+License: BSD-3-Clause License
+Project: https://pandas.pydata.org/
+
+### NumPy v1.26.4
+Copyright (c) 2005-2024 NumPy Developers
+License: BSD License
+Project: https://numpy.org/
+
+### scikit-learn v1.5.2
+Copyright (c) 2007-2024 scikit-learn developers
+License: BSD License
+Project: https://scikit-learn.org/
+
+---
+
+## Database Drivers
+
+### asyncpg v0.30.0
+Copyright (c) 2016-2024, MagicStack Inc
+License: Apache License 2.0
+Project: https://github.com/MagicStack/asyncpg
+
+### psycopg2-binary v2.9.10
+Copyright (c) 2001-2024 Federico Di Gregorio
+License: LGPL with exceptions or ZPL
+Project: https://www.psycopg.org/
+
+---
+
+## HTTP Clients
+
+### httpx v0.28.1
+Copyright (c) 2019, Tom Christie
+License: BSD License
+Project: https://github.com/encode/httpx
+
+### Requests v2.32.3
+Copyright (c) 2019 Kenneth Reitz
+License: Apache License 2.0
+Project: https://requests.readthedocs.io/
+
+---
+
+## Utilities
+
+### PyYAML v6.0.2
+Copyright (c) 2017-2024 Ingy döt Net <ingy@ingy.net>
+License: MIT License
+Project: https://pyyaml.org/
+
+### python-dotenv v1.0.1
+Copyright (c) 2012 Saurabh Kumar
+License: BSD-3-Clause License
+Project: https://github.com/theskumar/python-dotenv
+
+### Click v8.1.7
+Copyright (c) 2014 Armin Ronacher
+License: BSD-3-Clause License
+Project: https://click.palletsprojects.com/
+
+---
+
+## Monitoring
+
+### Prometheus Client v0.21.0
+Copyright (c) 2013 Brian Brazil
+License: Apache License 2.0
+Project: https://github.com/prometheus/client_python
+
+### Rich v13.9.4
+Copyright (c) 2020 Will McGugan
+License: MIT License
+Project: https://github.com/Textualize/rich
+
+---
+
+## Third-Party Components
+
+This product also includes third-party components that may have their own
+license requirements. The full list of dependencies and their licenses can
+be found in the dependency documentation at:
+docs/operations/DEPENDENCIES.md
+
+---
+
+## License Information
+
+The complete source code for this project, including license texts for all
+dependencies, is available at:
+https://github.com/your-org/football-prediction
+
+For questions about licensing, please contact:
+legal@football-prediction.com
+
+---
+
+*This NOTICE file is generated automatically on 2025-01-02*

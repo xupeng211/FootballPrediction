@@ -20,15 +20,32 @@ except ImportError:
     # 如果警告过滤器模块不可用，不影响正常功能
     pass
 
-# 导入核心模块
+# 延迟导入核心模块 - 避免在导入时加载所有模块
 if os.getenv("MINIMAL_API_MODE", "false").lower() == "true":
     __all__ = []
 else:
-    from . import core, models, services, utils  # noqa: WPS433 - runtime import for minimal mode
-
+    # 使用延迟导入，只在真正需要时加载
     __all__ = [
         "core",
         "models",
         "services",
         "utils",
     ]
+
+def _lazy_import():
+    """延迟导入模块"""
+    from . import core, models, services, utils
+    return core, models, services, utils
+
+# 提供一个属性来按需加载
+class LazyImporter:
+    def __init__(self):
+        self._modules = None
+
+    def __getattr__(self, name):
+        if self._modules is None:
+            self._modules = _lazy_import()
+        return getattr(self._modules, name)
+
+# 创建延迟导入实例
+_lazy_importer = LazyImporter()

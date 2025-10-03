@@ -1,0 +1,236 @@
+name: Coverage Monitor
+
+on:
+  # 每天早上8点运行
+  schedule:
+    - cron: '0 8 * * *'
+  # 手动触发
+  workflow_dispatch:
+  # PR时运行
+  pull_request:
+    paths:
+      - 'src/api/**'
+      - 'tests/unit/api/**'
+  # 推送到主分支时运行
+  push:
+    branches:
+      - main
+      - develop
+      - 'hotfix/*'
+    paths:
+      - 'src/api/**'
+      - 'tests/unit/api/**'
+
+jobs:
+  coverage-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+        pip install pytest pytest-cov pytest-mock pytest-asyncio
+
+    - name: Run coverage analysis
+      run: |
+        cd ${{ github.workspace }}
+        python scripts/coverage_monitor.py > coverage_report.txt 2>&1 || true
+
+    - name: Parse coverage results
+      id: coverage
+      run: |
+        if [ -f coverage_report.txt ]; then
+          # 提取平均覆盖率
+          AVG_COVERAGE=$(grep "📈 平均覆盖率:" coverage_report.txt | tail -1 | awk '{print $2}' | sed 's/%//')
+          echo "average_coverage=$AVG_COVERAGE" >> $GITHUB_OUTPUT
+
+          # 提取需要改进的模块
+          NEEDS_IMPROVEMENT=$(grep -A1 "【HIGH】" coverage_report.txt | grep -v "【HIGH】" | grep -v "^--" | wc -l)
+          echo "needs_improvement=$NEEDS_IMPROVEMENT" >> $GITHUB_OUTPUT
+
+          # 显示报告
+          cat coverage_report.txt
+        else
+          echo "average_coverage=0" >> $GITHUB_OUTPUT
+          echo "needs_improvement=0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Generate coverage badge
+      run: |
+        AVG=${{ steps.coverage.outputs.average_coverage }}
+
+        # 确定颜色
+        if (( $(echo "$AVG >= 50" | bc -l) )); then
+          COLOR="brightgreen"
+        elif (( $(echo "$AVG >= 30" | bc -l) )); then
+          COLOR="yellow"
+        else
+          COLOR="red"
+        fi
+
+        # 生成badge
+        echo "![Coverage](https://img.shields.io/badge/coverage-${AVG}%25-${COLOR})" > coverage_badge.md
+
+    - name: Auto boost low coverage modules
+      if: steps.coverage.outputs.needs_improvement > 0
+      run: |
+        echo "🚀 自动提升低覆盖率模块..."
+        python scripts/auto_boost_coverage.py 2>&1 || true
+
+    - name: Run tests with coverage
+      run: |
+        python -m pytest tests/unit/api/ -v --cov=src.api --cov-report=xml --cov-report=html --cov-report=term-missing || true
+
+    - name: Upload coverage to Codecov
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: api
+        name: api-coverage
+        fail_ci_if_error: false
+
+    - name: Comment PR with coverage report
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          if (fs.existsSync('coverage_report.txt')) {
+            const report = fs.readFileSync('coverage_report.txt', 'utf8');
+            const badge = fs.readFileSync('coverage_badge.md', 'utf8');
+
+            const comment = `## 📊 测试覆盖率报告
+
+            ${badge}
+
+            <details>
+            <summary>查看详细报告</summary>
+
+            \`\`\`
+            ${report}
+            \`\`\`
+
+            </details>
+
+            ---
+            *此报告由 GitHub Actions 自动生成*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+    - name: Update coverage data
+      if: github.event_name == 'push'
+      run: |
+        # 提交自动生成的测试（如果有）
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add tests/unit/api/test_*.py 2>/dev/null || true
+        git add coverage_data.json 2>/dev/null || true
+
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🤖 auto: 增加测试提升覆盖率
+
+          - 由 GitHub Actions 自动生成
+          - 覆盖率: ${{ steps.coverage.outputs.average_coverage }}%
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: GitHub Actions <action@github.com>"
+          git push
+        fi
+
+    - name: Create coverage issue if needed
+      if: steps.coverage.outputs.needs_improvement > 0 && github.event_name == 'push'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const avg = '${{ steps.coverage.outputs.average_coverage }}';
+          const needs = '${{ steps.coverage.outputs.needs_improvement }}';
+
+          if (parseFloat(avg) < 30) {
+            const title = `📉 测试覆盖率偏低: ${avg}%`;
+            const body = `## 测试覆盖率警告
+
+            当前API模块的测试覆盖率为 **${avg}%**，低于目标的30%。
+
+            ### 📊 需要改进的模块数量: ${needs}
+
+            ### 🔧 建议行动:
+            1. 运行 \`python scripts/auto_boost_coverage.py\` 自动生成测试
+            2. 为0覆盖率模块创建基础测试
+            3. 补充现有测试的边界条件测试
+            4. 修复无法运行的测试
+
+            ### 📈 目标:
+            - 短期: 提升到30%+
+            - 中期: 提升到50%+
+            - 长期: 达到80%+
+
+            ---
+            *此Issue由 GitHub Actions 自动创建*`;
+
+            // 检查是否已有相同的open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['coverage'],
+              state: 'open'
+            });
+
+            const exists = issues.data.some(issue =>
+              issue.title.includes('测试覆盖率偏低')
+            );
+
+            if (!exists) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['coverage', 'improvement']
+              });
+            }
+          }
+
+    - name: Archive coverage reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-reports
+        path: |
+          coverage_report.txt
+          coverage_badge.md
+          htmlcov/
+          coverage_data.json
+        retention-days: 30

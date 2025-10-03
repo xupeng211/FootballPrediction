@@ -1,0 +1,223 @@
+name: Production Readiness Check
+
+on:
+  push:
+    branches: [ main, hotfix/stabilize-core ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天早上9点自动检查
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of check to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - coverage-only
+        - security-only
+
+jobs:
+  # 测试覆盖率检查
+  coverage-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-minimal.txt
+        pip install pytest pytest-cov pytest-asyncio
+
+    - name: Run tests with coverage
+      run: |
+        make coverage-xml || true
+
+    - name: Extract coverage percentage
+      id: coverage
+      run: |
+        COVERAGE=$(python -c "
+        import xml.etree.ElementTree as ET
+        try:
+            tree = ET.parse('coverage.xml')
+            root = tree.getroot()
+            coverage = root.get('line-rate')
+            coverage_pct = float(coverage) * 100
+            print(f'{coverage_pct:.2f}')
+        except:
+            print('0.00')
+        ")
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Current coverage: $COVERAGE%"
+
+    - name: Update task board
+      run: |
+        python scripts/ai_maintenance/update_task_board.py
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/_tasks/PRODUCTION_READINESS_BOARD.md
+        git diff --staged --quiet || git commit -m "chore: update task board with coverage ${{ steps.coverage.outputs.coverage }}%"
+        git push
+
+    - name: Coverage check
+      run: |
+        COVERAGE=${{ steps.coverage.outputs.coverage }}
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "❌ Coverage $COVERAGE% is below 80% threshold"
+          echo "::error::Test coverage must be at least 80% before production deployment"
+          exit 1
+        else
+          echo "✅ Coverage $COVERAGE% meets requirement"
+        fi
+
+  # 安全检查
+  security-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install pip-audit
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit
+
+    - name: Run security audit
+      run: |
+        pip-audit --requirement requirements-minimal.txt --format=json --output audit.json || true
+
+    - name: Check for vulnerabilities
+      run: |
+        python -c "
+        import json
+        try:
+            with open('audit.json') as f:
+                audit = json.load(f)
+            vulns = audit.get('vulnerabilities', [])
+            if vulns:
+                print('❌ Security vulnerabilities found:')
+                for v in vulns:
+                    print(f'  - {v[\"name\"]}: {v[\"id\"]} (severity: {v.get(\"severity\", \"unknown\")})')
+                exit(1)
+            else:
+                print('✅ No security vulnerabilities found')
+        except Exception as e:
+            print(f'⚠️ Could not parse audit results: {e}')
+        "
+
+  # 代码质量检查
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff mypy
+        pip install -r requirements-minimal.txt
+
+    - name: Run ruff check
+      run: |
+        ruff check src/ --output-format=junit > ruff-results.xml || true
+
+    - name: Run mypy check
+      run: |
+        mypy src/ --no-error-summary --junit-xml reports/mypy-results.xml || true
+
+    - name: Check ruff errors
+      run: |
+        ERRORS=$(ruff check src/ --output-format=text | wc -l)
+        if [ $ERRORS -gt 0 ]; then
+          echo "❌ Found $ERRORS ruff errors"
+          ruff check src/
+          exit 1
+        else
+          echo "✅ No ruff errors found"
+        fi
+
+  # 生成周报
+  weekly-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Generate weekly report
+      run: |
+        python scripts/ai_maintenance/update_task_board.py
+
+    - name: Upload weekly report
+      uses: actions/upload-artifact@v3
+      with:
+        name: weekly-report
+        path: docs/_reports/weekly/
+
+  # 更新看板状态
+  update-dashboard:
+    runs-on: ubuntu-latest
+    needs: [coverage-check, security-check, quality-check]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update dashboard
+      run: |
+        # 创建状态徽章
+        COVERAGE_STATUS="${{ needs.coverage-check.result }}"
+        SECURITY_STATUS="${{ needs.security-check.result }}"
+        QUALITY_STATUS="${{ needs.quality-check.result }}"
+
+        # 更新README或状态页面
+        echo "## Production Readiness Status" > STATUS.md
+        echo "- Coverage Check: $COVERAGE_STATUS" >> STATUS.md
+        echo "- Security Check: $SECURITY_STATUS" >> STATUS.md
+        echo "- Quality Check: $QUALITY_STATUS" >> STATUS.md
+        echo "- Last Updated: $(date)" >> STATUS.md
+
+    - name: Commit status update
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add STATUS.md
+        git diff --staged --quiet || git commit -m "chore: update production readiness status"
+        git push

@@ -3,7 +3,7 @@ FastAPI 中文配置
 """
 
 from fastapi import FastAPI
-from src.utils.i18n import _, init_i18n, get_language_from_request
+from src.utils.i18n import _, init_i18n
 
 
 def create_chinese_app() -> FastAPI:

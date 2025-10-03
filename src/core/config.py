@@ -20,9 +20,11 @@ try:
 except ImportError:
     try:
         # Pydantic v1
-        from pydantic import BaseSettings, Field
+        from pydantic import BaseSettings as BaseSettingsV1, Field as FieldV1
 
         HAS_PYDANTIC = True
+        BaseSettings = BaseSettingsV1
+        Field = FieldV1
     except ImportError:
         HAS_PYDANTIC = False
         BaseSettings = object

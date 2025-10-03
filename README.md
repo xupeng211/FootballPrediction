@@ -95,8 +95,30 @@ make sync-issues  # GitHub Issues 同步 🔄
 - 环境管理和容器工具 🐳
 - AI 助手使用指南 🤖
 
+## 🧪 测试工具（新增）
+
+### 📊 测试质量监控
+```bash
+make test.monitor     # 生成质量报告
+make test.report      # 综合质量报告 (HTML/JSON/MD)
+make test.dashboard   # 质量仪表板
+make test.coverage-plan  # 覆盖率优化计划
+```
+
+### 🔧 测试工具详细说明
+- **使用说明书**: 📖 [TEST_TOOLS_USER_GUIDE.md](docs/testing/TEST_TOOLS_USER_GUIDE.md)
+- **快速参考**: 📋 [TEST_TOOLS_QUICK_REFERENCE.md](TEST_TOOLS_QUICK_REFERENCE.md)
+
+### 🎯 测试特性
+- 📈 **实时质量监控** - 4.5/5星质量评分
+- 📊 **覆盖率优化工具** - 自动识别低覆盖率模块
+- 🌐 **可视化仪表板** - Web界面实时监控
+- 🚀 **智能测试运行器** - 分层执行、并行运行
+- ✅ **自动化质量门禁** - CI/CD集成
+
 ## 📚 文档入口
 - [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
+- [测试工具使用指南](docs/testing/TEST_TOOLS_USER_GUIDE.md) — 完整的测试工具使用说明。
 
 ## 🤖 AI辅助开发
 

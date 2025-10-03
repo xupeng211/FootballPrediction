@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.core import logger
+import logging
 
 """
 足球预测系统基础服务模块
@@ -11,7 +11,7 @@ class BaseService:
     """基础服务类"""
     def __init__(self, name: str = "BaseService"):
         self.name = name
-        self.logger = logger
+        self.logger = logging.getLogger(name)
         self._running = True
     async def initialize(self) -> bool:
         """服务初始化"""
@@ -34,7 +34,7 @@ class AbstractBaseService(ABC):
     """抽象基础服务类 - 供需要强制实现的服务继承"""
     def __init__(self, name: str):
         self.name = name
-        self.logger = logger
+        self.logger = logging.getLogger(name)
     @abstractmethod
     async def initialize(self) -> bool:
         """服务初始化"""

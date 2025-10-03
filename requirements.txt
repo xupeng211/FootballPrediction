@@ -1,0 +1,83 @@
+# Production requirements for Football Prediction System
+# 生产环境依赖包 - 包含所有必要的库和安全版本
+
+# Core Web Framework
+fastapi==0.116.1
+uvicorn[standard]==0.34.0
+starlette==0.47.3
+sse-starlette==3.0.2
+
+# Database
+sqlalchemy==2.0.43
+psycopg2-binary==2.9.10
+alembic==1.16.5
+sqlalchemy-utils==0.42.0
+
+# Cache
+redis==4.6.0
+hiredis==2.4.0
+
+# HTTP Client
+httpx==0.28.1
+requests==2.32.4
+
+# Data Models
+pydantic==2.11.9
+pydantic-settings==2.11.0
+pydantic-extra-types==2.10.5
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+bcrypt==4.3.0
+
+# Monitoring
+prometheus-client==0.22.1
+prometheus-fastapi-instrumentator==7.1.0
+
+# Task Queue
+celery==5.5.3
+redis==4.6.0
+
+# API Documentation
+# (Included with FastAPI)
+
+# Testing (minimal for production)
+pytest==8.4.2
+pytest-asyncio==1.1.0
+pytest-cov==4.1.0
+httpx==0.28.1
+
+# Logging
+structlog==25.4.0
+
+# Utilities
+python-dotenv==1.1.1
+click==8.2.1
+typer==0.17.4
+rich==13.9.4
+
+# Data Processing (minimal)
+pandas==2.3.2
+numpy==2.3.3
+
+# ML (minimal)
+# Add only essential ML packages to avoid bloat
+scikit-learn==1.7.1
+
+# Security & Encryption
+cryptography==44.0.2
+pyyaml==6.0.2
+
+# Development & Production Tools
+pip-audit==2.7.3
+bandit==1.8.3
+
+# Development tools (comment out in production)
+# black==25.9.0
+# ruff==0.12.10
+# mypy==1.8.0
+# pytest==8.4.2
+# pytest-asyncio==1.1.0
+# pytest-cov==4.1.0

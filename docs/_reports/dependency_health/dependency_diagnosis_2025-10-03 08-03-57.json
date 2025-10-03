@@ -1,0 +1,5705 @@
+{
+  "timestamp": "2025-10-03 08:03:57",
+  "environment": {
+    "python_version": "3.11.9 (main, Aug  8 2025, 00:29:36) [GCC 11.4.0]",
+    "platform": "linux",
+    "executable": "/home/user/.pyenv/versions/3.11.9/bin/python",
+    "pip_version": "pip 25.2 from /home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/pip (python 3.11)",
+    "virtual_env": "None",
+    "conda_env": "None"
+  },
+  "packages": {
+    "APScheduler": {
+      "name": "APScheduler",
+      "version": "3.10.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "six>=1.4.0",
+        "pytz",
+        "tzlocal!=3.*,>=2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Brotli": {
+      "name": "Brotli",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Cerberus": {
+      "name": "Cerberus",
+      "version": "1.3.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Deprecated": {
+      "name": "Deprecated",
+      "version": "1.2.18",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "wrapt<2,>=1.10"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Flask-Limiter": {
+      "name": "Flask-Limiter",
+      "version": "3.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "limits>=2.8",
+        "Flask>=2",
+        "ordered-set<5,>4",
+        "rich<14,>=12",
+        "typing-extensions>=4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Flask-Login": {
+      "name": "Flask-Login",
+      "version": "0.6.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "Flask>=1.0.4",
+        "Werkzeug>=1.0.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "MarkupSafe": {
+      "name": "MarkupSafe",
+      "version": "3.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PyJWT": {
+      "name": "PyJWT",
+      "version": "2.10.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PyQt5": {
+      "name": "PyQt5",
+      "version": "5.15.11",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "PyQt5-sip<13,>=12.15",
+        "PyQt5-Qt5<5.16.0,>=5.15.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PyQt5-Qt5": {
+      "name": "PyQt5-Qt5",
+      "version": "5.15.17",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PyQt5-sip": {
+      "name": "PyQt5-sip",
+      "version": "12.17.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PySocks": {
+      "name": "PySocks",
+      "version": "1.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "PyYAML": {
+      "name": "PyYAML",
+      "version": "6.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "Send2Trash": {
+      "name": "Send2Trash",
+      "version": "1.8.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "adal": {
+      "name": "adal",
+      "version": "1.2.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "PyJWT<3,>=1.0.0",
+        "requests<3,>=2.0.0",
+        "python-dateutil<3,>=2.1.0",
+        "cryptography>=1.1.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "aiculture-kit": {
+      "name": "aiculture-kit",
+      "version": "0.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=8.0.0",
+        "jinja2>=3.0.0",
+        "pyyaml>=6.0.0",
+        "gitpython>=3.1.0",
+        "cookiecutter>=2.1.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "aiohappyeyeballs": {
+      "name": "aiohappyeyeballs",
+      "version": "2.6.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "aiohttp": {
+      "name": "aiohttp",
+      "version": "3.12.15",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "aiohappyeyeballs>=2.5.0",
+        "aiosignal>=1.4.0",
+        "attrs>=17.3.0",
+        "frozenlist>=1.1.1",
+        "multidict<7.0,>=4.5",
+        "propcache>=0.2.0",
+        "yarl<2.0,>=1.17.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "aiosignal": {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "frozenlist>=1.1.0",
+        "typing-extensions>=4.2; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "aiosqlite": {
+      "name": "aiosqlite",
+      "version": "0.21.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing_extensions>=4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "alabaster": {
+      "name": "alabaster",
+      "version": "0.7.16",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "alembic": {
+      "name": "alembic",
+      "version": "1.16.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "SQLAlchemy>=1.4.0",
+        "Mako",
+        "typing-extensions>=4.12"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "altair": {
+      "name": "altair",
+      "version": "4.2.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "entrypoints",
+        "jinja2",
+        "jsonschema>=3.0",
+        "numpy",
+        "pandas>=0.18",
+        "toolz"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "amqp": {
+      "name": "amqp",
+      "version": "5.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "vine<6.0.0,>=5.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "annotated-types": {
+      "name": "annotated-types",
+      "version": "0.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "anyio": {
+      "name": "anyio",
+      "version": "4.10.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "idna>=2.8",
+        "sniffio>=1.1",
+        "typing_extensions>=4.5; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "apprise": {
+      "name": "apprise",
+      "version": "1.9.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests",
+        "requests-oauthlib",
+        "click>=5.0",
+        "markdown",
+        "PyYAML",
+        "certifi"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "argcomplete": {
+      "name": "argcomplete",
+      "version": "3.6.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "argon2-cffi": {
+      "name": "argon2-cffi",
+      "version": "25.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "argon2-cffi-bindings"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "argon2-cffi-bindings": {
+      "name": "argon2-cffi-bindings",
+      "version": "25.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cffi>=1.0.1; python_version < \"3.14\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "arrow": {
+      "name": "arrow",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "python-dateutil>=2.7.0",
+        "types-python-dateutil>=2.8.10"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "asgi-lifespan": {
+      "name": "asgi-lifespan",
+      "version": "2.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "sniffio"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "astroid": {
+      "name": "astroid",
+      "version": "3.3.11",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "asttokens": {
+      "name": "asttokens",
+      "version": "3.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "async-lru": {
+      "name": "async-lru",
+      "version": "2.0.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "async-timeout": {
+      "name": "async-timeout",
+      "version": "5.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "asyncpg": {
+      "name": "asyncpg",
+      "version": "0.30.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "attrs": {
+      "name": "attrs",
+      "version": "25.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "authlib": {
+      "name": "authlib",
+      "version": "1.6.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cryptography"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "autoflake": {
+      "name": "autoflake",
+      "version": "2.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyflakes>=3.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "autopep8": {
+      "name": "autopep8",
+      "version": "2.3.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pycodestyle>=2.12.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "babel": {
+      "name": "babel",
+      "version": "2.17.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "backcall": {
+      "name": "backcall",
+      "version": "0.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "backoff": {
+      "name": "backoff",
+      "version": "2.2.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "backports.tempfile": {
+      "name": "backports.tempfile",
+      "version": "1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "backports.weakref"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "backports.weakref": {
+      "name": "backports.weakref",
+      "version": "1.0.post1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "bandit": {
+      "name": "bandit",
+      "version": "1.8.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "PyYAML>=5.3.1",
+        "stevedore>=1.20.0",
+        "rich"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "bcrypt": {
+      "name": "bcrypt",
+      "version": "4.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "beautifulsoup4": {
+      "name": "beautifulsoup4",
+      "version": "4.12.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "soupsieve>1.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "bidict": {
+      "name": "bidict",
+      "version": "0.23.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "bigtree": {
+      "name": "bigtree",
+      "version": "0.31.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "billiard": {
+      "name": "billiard",
+      "version": "4.2.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "binaryornot": {
+      "name": "binaryornot",
+      "version": "0.4.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "chardet>=3.0.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "black": {
+      "name": "black",
+      "version": "25.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=8.0.0",
+        "mypy-extensions>=0.4.3",
+        "packaging>=22.0",
+        "pathspec>=0.9.0",
+        "platformdirs>=2",
+        "pytokens>=0.1.10"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "bleach": {
+      "name": "bleach",
+      "version": "6.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "webencodings"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "blinker": {
+      "name": "blinker",
+      "version": "1.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "boolean-py": {
+      "name": "boolean-py",
+      "version": "5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "boto3": {
+      "name": "boto3",
+      "version": "1.34.51",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "botocore<1.35.0,>=1.34.51",
+        "jmespath<2.0.0,>=0.7.1",
+        "s3transfer<0.11.0,>=0.10.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "botocore": {
+      "name": "botocore",
+      "version": "1.34.51",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jmespath<2.0.0,>=0.7.1",
+        "python-dateutil<3.0.0,>=2.1",
+        "urllib3<2.1,>=1.25.4; python_version >= \"3.10\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "build": {
+      "name": "build",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging>=19.1",
+        "pyproject_hooks"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cachecontrol": {
+      "name": "cachecontrol",
+      "version": "0.14.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests>=2.16.0",
+        "msgpack<2.0.0,>=0.5.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cachetools": {
+      "name": "cachetools",
+      "version": "5.5.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "celery": {
+      "name": "celery",
+      "version": "5.5.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "billiard<5.0,>=4.2.1",
+        "kombu<5.6,>=5.5.2",
+        "vine<6.0,>=5.1.0",
+        "click<9.0,>=8.1.2",
+        "click-didyoumean>=0.3.0",
+        "click-repl>=0.2.0",
+        "click-plugins>=1.1.1",
+        "python-dateutil>=2.8.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "certifi": {
+      "name": "certifi",
+      "version": "2025.8.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cffi": {
+      "name": "cffi",
+      "version": "1.17.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pycparser"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cfgv": {
+      "name": "cfgv",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "chardet": {
+      "name": "chardet",
+      "version": "5.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "charset-normalizer": {
+      "name": "charset-normalizer",
+      "version": "3.4.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "click": {
+      "name": "click",
+      "version": "8.2.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "click-didyoumean": {
+      "name": "click-didyoumean",
+      "version": "0.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=7"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "click-plugins": {
+      "name": "click-plugins",
+      "version": "1.1.1.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "click-repl": {
+      "name": "click-repl",
+      "version": "0.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=7.0",
+        "prompt-toolkit>=3.0.36"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cloudpickle": {
+      "name": "cloudpickle",
+      "version": "3.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "colorama": {
+      "name": "colorama",
+      "version": "0.4.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "comm": {
+      "name": "comm",
+      "version": "0.2.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "configargparse": {
+      "name": "configargparse",
+      "version": "1.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "confluent-kafka": {
+      "name": "confluent-kafka",
+      "version": "2.11.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "contextlib2": {
+      "name": "contextlib2",
+      "version": "21.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "contourpy": {
+      "name": "contourpy",
+      "version": "1.3.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy>=1.25"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cookiecutter": {
+      "name": "cookiecutter",
+      "version": "2.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "binaryornot>=0.4.4",
+        "Jinja2<4.0.0,>=2.7",
+        "click<9.0.0,>=7.0",
+        "pyyaml>=5.3.1",
+        "python-slugify>=4.0.0",
+        "requests>=2.23.0",
+        "arrow",
+        "rich"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "coolname": {
+      "name": "coolname",
+      "version": "2.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "coverage": {
+      "name": "coverage",
+      "version": "7.10.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "croniter": {
+      "name": "croniter",
+      "version": "2.0.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "python-dateutil",
+        "pytz>2021.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cryptography": {
+      "name": "cryptography",
+      "version": "45.0.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cffi>=1.14; platform_python_implementation != \"PyPy\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cycler": {
+      "name": "cycler",
+      "version": "0.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cyclonedx-python-lib": {
+      "name": "cyclonedx-python-lib",
+      "version": "6.4.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "license-expression<31,>=30",
+        "packageurl-python<2,>=0.11",
+        "py-serializable<2,>=0.16",
+        "sortedcontainers<3.0.0,>=2.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "cyclopts": {
+      "name": "cyclopts",
+      "version": "3.24.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "attrs>=23.1.0",
+        "docstring-parser>=0.15; python_version < \"4.0\"",
+        "rich>=13.6.0",
+        "rich-rst<2.0.0,>=1.3.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "dask": {
+      "name": "dask",
+      "version": "2025.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=8.1",
+        "cloudpickle>=3.0.0",
+        "fsspec>=2021.09.0",
+        "packaging>=20.0",
+        "partd>=1.4.0",
+        "pyyaml>=5.3.1",
+        "toolz>=0.10.0",
+        "importlib_metadata>=4.13.0; python_version < \"3.12\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "databricks-sdk": {
+      "name": "databricks-sdk",
+      "version": "0.65.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests<3,>=2.28.1",
+        "google-auth~=2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "dateparser": {
+      "name": "dateparser",
+      "version": "1.2.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "python-dateutil>=2.7.0",
+        "pytz>=2024.2",
+        "regex>=2024.9.11",
+        "tzlocal>=0.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "debugpy": {
+      "name": "debugpy",
+      "version": "1.8.16",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "decorator": {
+      "name": "decorator",
+      "version": "5.2.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "defusedxml": {
+      "name": "defusedxml",
+      "version": "0.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "detect-secrets": {
+      "name": "detect-secrets",
+      "version": "1.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyyaml",
+        "requests"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "diff-cover": {
+      "name": "diff-cover",
+      "version": "9.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "Jinja2>=2.7.1",
+        "Pygments<3.0.0,>=2.19.1",
+        "chardet>=3.0.0",
+        "pluggy<2,>=0.13.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "dill": {
+      "name": "dill",
+      "version": "0.3.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "distlib": {
+      "name": "distlib",
+      "version": "0.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "distro": {
+      "name": "distro",
+      "version": "1.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "dnspython": {
+      "name": "dnspython",
+      "version": "2.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "docker": {
+      "name": "docker",
+      "version": "6.1.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging>=14.0",
+        "requests>=2.26.0",
+        "urllib3>=1.26.0",
+        "websocket-client>=0.32.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "docopt": {
+      "name": "docopt",
+      "version": "0.6.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "docstring-parser": {
+      "name": "docstring-parser",
+      "version": "0.17.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "docutils": {
+      "name": "docutils",
+      "version": "0.18.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "dparse": {
+      "name": "dparse",
+      "version": "0.6.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "email-validator": {
+      "name": "email-validator",
+      "version": "2.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "dnspython>=2.0.0",
+        "idna>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "entrypoints": {
+      "name": "entrypoints",
+      "version": "0.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "et-xmlfile": {
+      "name": "et-xmlfile",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "exceptiongroup": {
+      "name": "exceptiongroup",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions>=4.6.0; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "execnet": {
+      "name": "execnet",
+      "version": "2.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "executing": {
+      "name": "executing",
+      "version": "2.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "factory-boy": {
+      "name": "factory-boy",
+      "version": "3.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "Faker>=0.7.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "faker": {
+      "name": "faker",
+      "version": "37.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "tzdata"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fancycompleter": {
+      "name": "fancycompleter",
+      "version": "0.11.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyrepl>=0.11.3; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fastapi": {
+      "name": "fastapi",
+      "version": "0.116.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "starlette<0.48.0,>=0.40.0",
+        "pydantic!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0,>=1.7.4",
+        "typing-extensions>=4.8.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fastapi-cli": {
+      "name": "fastapi-cli",
+      "version": "0.0.8",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typer>=0.15.1",
+        "uvicorn[standard]>=0.15.0",
+        "rich-toolkit>=0.14.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fastjsonschema": {
+      "name": "fastjsonschema",
+      "version": "2.21.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fastmcp": {
+      "name": "fastmcp",
+      "version": "2.12.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "authlib>=1.5.2",
+        "cyclopts>=3.0.0",
+        "exceptiongroup>=1.2.2",
+        "httpx>=0.28.1",
+        "mcp<2.0.0,>=1.12.4",
+        "openapi-core>=0.19.5",
+        "openapi-pydantic>=0.5.1",
+        "pydantic[email]>=2.11.7",
+        "pyperclip>=1.9.0",
+        "python-dotenv>=1.1.0",
+        "rich>=13.9.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "feast": {
+      "name": "feast",
+      "version": "0.53.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click<9.0.0,>=7.0.0",
+        "colorama<1,>=0.3.9",
+        "dill~=0.3.0",
+        "protobuf>=4.24.0",
+        "Jinja2<4,>=2",
+        "jsonschema",
+        "mmh3",
+        "numpy<3,>=2.0.0",
+        "pandas<3,>=1.4.3",
+        "pyarrow<=17.0.0",
+        "pydantic==2.10.6",
+        "pygments<3,>=2.12.0",
+        "PyYAML<7,>=5.4.0",
+        "requests",
+        "SQLAlchemy[mypy]>1",
+        "tabulate<1,>=0.8.0",
+        "tenacity<9,>=7",
+        "toml<1,>=0.10.0",
+        "tqdm<5,>=4",
+        "typeguard>=4.0.0",
+        "fastapi>=0.68.0",
+        "uvicorn[standard]==0.34.0",
+        "uvicorn-worker",
+        "gunicorn; platform_system != \"Windows\"",
+        "dask[dataframe]>=2024.2.1",
+        "prometheus_client",
+        "psutil",
+        "bigtree>=0.19.2",
+        "pyjwt"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "filelock": {
+      "name": "filelock",
+      "version": "3.16.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "flake8": {
+      "name": "flake8",
+      "version": "7.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "mccabe<0.8.0,>=0.7.0",
+        "pycodestyle<2.15.0,>=2.14.0",
+        "pyflakes<3.5.0,>=3.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "flask": {
+      "name": "flask",
+      "version": "3.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "Werkzeug>=3.0.0",
+        "Jinja2>=3.1.2",
+        "itsdangerous>=2.1.2",
+        "click>=8.1.3",
+        "blinker>=1.6.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "flask-cors": {
+      "name": "flask-cors",
+      "version": "6.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "flask>=0.9",
+        "Werkzeug>=0.7"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "flask-talisman": {
+      "name": "flask-talisman",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fonttools": {
+      "name": "fonttools",
+      "version": "4.59.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "football-predict-system": {
+      "name": "football-predict-system",
+      "version": "0.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "fastapi>=0.100.0",
+        "numpy>=1.24.0",
+        "pandas>=2.0.0",
+        "prefect>=2.0.0",
+        "psycopg2-binary>=2.9.0",
+        "pydantic>=2.0.0",
+        "scikit-learn>=1.3.0",
+        "sqlalchemy>=2.0.0",
+        "uvicorn[standard]>=0.23.0",
+        "xgboost>=1.7.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "football-prediction": {
+      "name": "football-prediction",
+      "version": "0.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "football-predictor": {
+      "name": "football-predictor",
+      "version": "0.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "pydantic-settings",
+        "xgboost",
+        "pandas",
+        "numpy",
+        "psycopg[binary]",
+        "sqlalchemy",
+        "prefect",
+        "prometheus-client",
+        "httpx",
+        "beautifulsoup4",
+        "structlog",
+        "pytest",
+        "pytest-cov"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "footballprediction": {
+      "name": "footballprediction",
+      "version": "0.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "fastapi>=0.100.0",
+        "uvicorn[standard]>=0.24.0",
+        "sqlalchemy>=2.0.0",
+        "psycopg2-binary>=2.9.0",
+        "asyncpg>=0.28.0",
+        "alembic>=1.12.0",
+        "redis>=4.5.0",
+        "pandas>=2.0.0",
+        "numpy>=1.24.0",
+        "scikit-learn>=1.3.0",
+        "requests>=2.31.0",
+        "httpx>=0.25.0",
+        "pydantic>=2.0.0",
+        "python-dotenv>=1.0.0",
+        "structlog>=23.1.0",
+        "click>=8.1.0",
+        "python-dateutil>=2.8.0",
+        "pytz>=2023.3",
+        "orjson>=3.9.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fqdn": {
+      "name": "fqdn",
+      "version": "1.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "frozenlist": {
+      "name": "frozenlist",
+      "version": "1.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "fsspec": {
+      "name": "fsspec",
+      "version": "2025.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "gevent": {
+      "name": "gevent",
+      "version": "25.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "greenlet>=3.2.2; platform_python_implementation == \"CPython\"",
+        "zope.event",
+        "zope.interface"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "geventhttpclient": {
+      "name": "geventhttpclient",
+      "version": "2.3.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "gevent",
+        "certifi",
+        "brotli",
+        "urllib3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "gitdb": {
+      "name": "gitdb",
+      "version": "4.0.12",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "smmap<6,>=3.0.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "gitpython": {
+      "name": "gitpython",
+      "version": "3.1.45",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "gitdb<5,>=4.0.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-api-core": {
+      "name": "google-api-core",
+      "version": "2.25.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "googleapis-common-protos<2.0.0,>=1.56.2",
+        "protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.19.5",
+        "proto-plus<2.0.0,>=1.22.3",
+        "google-auth<3.0.0,>=2.14.1",
+        "requests<3.0.0,>=2.18.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-auth": {
+      "name": "google-auth",
+      "version": "2.40.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cachetools<6.0,>=2.0.0",
+        "pyasn1-modules>=0.2.1",
+        "rsa<5,>=3.1.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-cloud-core": {
+      "name": "google-cloud-core",
+      "version": "2.4.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.6",
+        "google-auth<3.0dev,>=1.25.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-cloud-storage": {
+      "name": "google-cloud-storage",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "google-auth<3.0.0,>=2.26.1",
+        "google-api-core<3.0.0,>=2.15.0",
+        "google-cloud-core<3.0.0,>=2.4.2",
+        "google-resumable-media<3.0.0,>=2.7.2",
+        "requests<3.0.0,>=2.22.0",
+        "google-crc32c<2.0.0,>=1.1.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-crc32c": {
+      "name": "google-crc32c",
+      "version": "1.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "google-resumable-media": {
+      "name": "google-resumable-media",
+      "version": "2.7.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "google-crc32c<2.0dev,>=1.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "googleapis-common-protos": {
+      "name": "googleapis-common-protos",
+      "version": "1.70.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "protobuf!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.20.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "graphene": {
+      "name": "graphene",
+      "version": "3.4.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "graphql-core<3.3,>=3.1",
+        "graphql-relay<3.3,>=3.1",
+        "python-dateutil<3,>=2.7.0",
+        "typing-extensions<5,>=4.7.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "graphql-core": {
+      "name": "graphql-core",
+      "version": "3.2.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "graphql-relay": {
+      "name": "graphql-relay",
+      "version": "3.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "graphql-core<3.3,>=3.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "graphviz": {
+      "name": "graphviz",
+      "version": "0.21",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "great-expectations": {
+      "name": "great-expectations",
+      "version": "1.5.11",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "altair<5.0.0,>=4.2.1",
+        "cryptography>=3.2",
+        "jinja2>=3",
+        "jsonschema>=2.5.1",
+        "marshmallow<4.0.0,>=3.7.1",
+        "mistune>=0.8.4",
+        "numpy>=1.22.4; python_version >= \"3.10\"",
+        "packaging",
+        "pandas<2.2,>=1.3.0; python_version >= \"3.10\"",
+        "posthog>3",
+        "pydantic>=1.10.7",
+        "pyparsing>=2.4",
+        "python-dateutil>=2.8.1",
+        "requests>=2.20",
+        "ruamel.yaml>=0.16",
+        "scipy>=1.6.0",
+        "tqdm>=4.59.0",
+        "typing-extensions>=4.1.0",
+        "tzlocal>=1.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "greenlet": {
+      "name": "greenlet",
+      "version": "3.2.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "griffe": {
+      "name": "griffe",
+      "version": "1.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "colorama>=0.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "gunicorn": {
+      "name": "gunicorn",
+      "version": "23.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "h11": {
+      "name": "h11",
+      "version": "0.16.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "h2": {
+      "name": "h2",
+      "version": "4.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "hyperframe<7,>=6.1",
+        "hpack<5,>=4.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "hiredis": {
+      "name": "hiredis",
+      "version": "2.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "holidays": {
+      "name": "holidays",
+      "version": "0.69",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "python-dateutil"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "hpack": {
+      "name": "hpack",
+      "version": "4.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "html5lib": {
+      "name": "html5lib",
+      "version": "1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "six>=1.9",
+        "webencodings"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "httpcore": {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "certifi",
+        "h11>=0.16"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "httptools": {
+      "name": "httptools",
+      "version": "0.6.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "httpx": {
+      "name": "httpx",
+      "version": "0.28.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio",
+        "certifi",
+        "httpcore==1.*",
+        "idna"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "httpx-sse": {
+      "name": "httpx-sse",
+      "version": "0.4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "humanfriendly": {
+      "name": "humanfriendly",
+      "version": "10.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "humanize": {
+      "name": "humanize",
+      "version": "4.12.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "hyperframe": {
+      "name": "hyperframe",
+      "version": "6.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "identify": {
+      "name": "identify",
+      "version": "2.6.13",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "idna": {
+      "name": "idna",
+      "version": "3.10",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "imagesize": {
+      "name": "imagesize",
+      "version": "1.4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "importlib-metadata": {
+      "name": "importlib-metadata",
+      "version": "8.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "zipp>=3.20"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "importlib-resources": {
+      "name": "importlib-resources",
+      "version": "6.4.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "iniconfig": {
+      "name": "iniconfig",
+      "version": "2.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ipdb": {
+      "name": "ipdb",
+      "version": "0.13.13",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "ipython>=7.31.1; python_version >= \"3.11\"",
+        "decorator; python_version >= \"3.11\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ipykernel": {
+      "name": "ipykernel",
+      "version": "6.30.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "comm>=0.1.1",
+        "debugpy>=1.6.5",
+        "ipython>=7.23.1",
+        "jupyter-client>=8.0.0",
+        "jupyter-core!=5.0.*,>=4.12",
+        "matplotlib-inline>=0.1",
+        "nest-asyncio>=1.4",
+        "packaging>=22",
+        "psutil>=5.7",
+        "pyzmq>=25",
+        "tornado>=6.2",
+        "traitlets>=5.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ipython": {
+      "name": "ipython",
+      "version": "8.12.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "backcall",
+        "decorator",
+        "jedi>=0.16",
+        "matplotlib-inline",
+        "pickleshare",
+        "prompt-toolkit!=3.0.37,<3.1.0,>=3.0.30",
+        "pygments>=2.4.0",
+        "stack-data",
+        "traitlets>=5",
+        "pexpect>4.3; sys_platform != \"win32\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ipywidgets": {
+      "name": "ipywidgets",
+      "version": "8.1.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "comm>=0.1.3",
+        "ipython>=6.1.0",
+        "traitlets>=4.3.1",
+        "widgetsnbextension~=4.0.14",
+        "jupyterlab_widgets~=3.0.15"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "isodate": {
+      "name": "isodate",
+      "version": "0.7.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "isoduration": {
+      "name": "isoduration",
+      "version": "20.11.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "arrow>=0.15.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "isort": {
+      "name": "isort",
+      "version": "5.13.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "itsdangerous": {
+      "name": "itsdangerous",
+      "version": "2.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jedi": {
+      "name": "jedi",
+      "version": "0.19.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "parso<0.9.0,>=0.8.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jeepney": {
+      "name": "jeepney",
+      "version": "0.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jinja2": {
+      "name": "jinja2",
+      "version": "3.1.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "MarkupSafe>=2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jinja2-humanize-extension": {
+      "name": "jinja2-humanize-extension",
+      "version": "0.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jinja2",
+        "humanize>=3.14.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jiter": {
+      "name": "jiter",
+      "version": "0.11.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jmespath": {
+      "name": "jmespath",
+      "version": "1.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "joblib": {
+      "name": "joblib",
+      "version": "1.5.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "json5": {
+      "name": "json5",
+      "version": "0.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonpatch": {
+      "name": "jsonpatch",
+      "version": "1.33",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jsonpointer>=1.9"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonpickle": {
+      "name": "jsonpickle",
+      "version": "4.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonpointer": {
+      "name": "jsonpointer",
+      "version": "3.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonschema": {
+      "name": "jsonschema",
+      "version": "4.25.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "attrs>=22.2.0",
+        "jsonschema-specifications>=2023.03.6",
+        "referencing>=0.28.4",
+        "rpds-py>=0.7.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonschema-path": {
+      "name": "jsonschema-path",
+      "version": "0.3.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "PyYAML>=5.1",
+        "pathable<0.5.0,>=0.4.1",
+        "referencing<0.37.0",
+        "requests<3.0.0,>=2.31.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jsonschema-specifications": {
+      "name": "jsonschema-specifications",
+      "version": "2025.4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "referencing>=0.31.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter": {
+      "name": "jupyter",
+      "version": "1.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "notebook",
+        "jupyter-console",
+        "nbconvert",
+        "ipykernel",
+        "ipywidgets",
+        "jupyterlab"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-client": {
+      "name": "jupyter-client",
+      "version": "8.6.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jupyter-core!=5.0.*,>=4.12",
+        "python-dateutil>=2.8.2",
+        "pyzmq>=23.0",
+        "tornado>=6.2",
+        "traitlets>=5.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-console": {
+      "name": "jupyter-console",
+      "version": "6.6.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "ipykernel>=6.14",
+        "ipython",
+        "jupyter-client>=7.0.0",
+        "jupyter-core!=5.0.*,>=4.12",
+        "prompt-toolkit>=3.0.30",
+        "pygments",
+        "pyzmq>=17",
+        "traitlets>=5.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-core": {
+      "name": "jupyter-core",
+      "version": "5.8.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "platformdirs>=2.5",
+        "traitlets>=5.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-events": {
+      "name": "jupyter-events",
+      "version": "0.12.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jsonschema[format-nongpl]>=4.18.0",
+        "packaging",
+        "python-json-logger>=2.0.4",
+        "pyyaml>=5.3",
+        "referencing",
+        "rfc3339-validator",
+        "rfc3986-validator>=0.1.1",
+        "traitlets>=5.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-lsp": {
+      "name": "jupyter-lsp",
+      "version": "2.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jupyter_server>=1.1.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-server": {
+      "name": "jupyter-server",
+      "version": "2.17.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio>=3.1.0",
+        "argon2-cffi>=21.1",
+        "jinja2>=3.0.3",
+        "jupyter-client>=7.4.4",
+        "jupyter-core!=5.0.*,>=4.12",
+        "jupyter-events>=0.11.0",
+        "jupyter-server-terminals>=0.4.4",
+        "nbconvert>=6.4.4",
+        "nbformat>=5.3.0",
+        "overrides>=5.0; python_version < \"3.12\"",
+        "packaging>=22.0",
+        "prometheus-client>=0.9",
+        "pyzmq>=24",
+        "send2trash>=1.8.2",
+        "terminado>=0.8.3",
+        "tornado>=6.2.0",
+        "traitlets>=5.6.0",
+        "websocket-client>=1.7"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyter-server-terminals": {
+      "name": "jupyter-server-terminals",
+      "version": "0.5.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "terminado>=0.8.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyterlab": {
+      "name": "jupyterlab",
+      "version": "4.4.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "async-lru>=1.0.0",
+        "httpx<1,>=0.25.0",
+        "ipykernel!=6.30.0,>=6.5.0",
+        "jinja2>=3.0.3",
+        "jupyter-core",
+        "jupyter-lsp>=2.0.0",
+        "jupyter-server<3,>=2.4.0",
+        "jupyterlab-server<3,>=2.27.1",
+        "notebook-shim>=0.2",
+        "packaging",
+        "setuptools>=41.1.0",
+        "tornado>=6.2.0",
+        "traitlets"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyterlab-pygments": {
+      "name": "jupyterlab-pygments",
+      "version": "0.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyterlab-server": {
+      "name": "jupyterlab-server",
+      "version": "2.27.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "babel>=2.10",
+        "jinja2>=3.0.3",
+        "json5>=0.9.0",
+        "jsonschema>=4.18.0",
+        "jupyter-server<3,>=1.21",
+        "packaging>=21.3",
+        "requests>=2.31"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jupyterlab-widgets": {
+      "name": "jupyterlab-widgets",
+      "version": "3.0.15",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "kafka-python": {
+      "name": "kafka-python",
+      "version": "2.2.15",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "kiwisolver": {
+      "name": "kiwisolver",
+      "version": "1.4.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "kombu": {
+      "name": "kombu",
+      "version": "5.5.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "amqp<6.0.0,>=5.1.1",
+        "vine==5.1.0",
+        "tzdata>=2025.2; python_version >= \"3.9\"",
+        "packaging"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "kubernetes": {
+      "name": "kubernetes",
+      "version": "29.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "certifi>=14.05.14",
+        "six>=1.9.0",
+        "python-dateutil>=2.5.3",
+        "pyyaml>=5.4.1",
+        "google-auth>=1.0.1",
+        "websocket-client!=0.40.0,!=0.41.*,!=0.42.*,>=0.32.0",
+        "requests",
+        "requests-oauthlib",
+        "oauthlib>=3.2.2",
+        "urllib3>=1.24.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "lark": {
+      "name": "lark",
+      "version": "1.2.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "lazy-object-proxy": {
+      "name": "lazy-object-proxy",
+      "version": "1.12.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "libcst": {
+      "name": "libcst",
+      "version": "1.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyyaml>=5.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "license-expression": {
+      "name": "license-expression",
+      "version": "30.4.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "boolean.py>=4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "limits": {
+      "name": "limits",
+      "version": "5.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "deprecated>=1.2",
+        "packaging>=21",
+        "typing_extensions"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "linkify-it-py": {
+      "name": "linkify-it-py",
+      "version": "2.0.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "uc-micro-py"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "locket": {
+      "name": "locket",
+      "version": "1.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "locust": {
+      "name": "locust",
+      "version": "2.38.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "configargparse>=1.7.1",
+        "flask-cors>=3.0.10",
+        "flask-login>=0.6.3",
+        "flask>=2.0.0",
+        "gevent<26.0.0,>=24.10.1",
+        "geventhttpclient>=2.3.1",
+        "locust-cloud>=1.26.3",
+        "msgpack>=1.0.0",
+        "psutil>=5.9.1",
+        "pyzmq>=25.0.0",
+        "requests>=2.26.0; python_version <= \"3.11\"",
+        "setuptools>=70.0.0",
+        "werkzeug>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "locust-cloud": {
+      "name": "locust-cloud",
+      "version": "1.26.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "configargparse>=1.7.1",
+        "gevent<26.0.0,>=24.10.1",
+        "platformdirs<5.0.0,>=4.3.6",
+        "python-engineio>=4.12.2",
+        "python-socketio[client]==5.13.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "lxml": {
+      "name": "lxml",
+      "version": "4.9.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mako": {
+      "name": "mako",
+      "version": "1.3.10",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "MarkupSafe>=0.9.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mando": {
+      "name": "mando",
+      "version": "0.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "six"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "markdown": {
+      "name": "markdown",
+      "version": "3.8.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "markdown-it-py": {
+      "name": "markdown-it-py",
+      "version": "3.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "mdurl~=0.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "marshmallow": {
+      "name": "marshmallow",
+      "version": "3.26.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging>=17.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "matplotlib": {
+      "name": "matplotlib",
+      "version": "3.10.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "contourpy>=1.0.1",
+        "cycler>=0.10",
+        "fonttools>=4.22.0",
+        "kiwisolver>=1.3.1",
+        "numpy>=1.23",
+        "packaging>=20.0",
+        "pillow>=8",
+        "pyparsing>=2.3.1",
+        "python-dateutil>=2.7"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "matplotlib-inline": {
+      "name": "matplotlib-inline",
+      "version": "0.1.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "traitlets"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mccabe": {
+      "name": "mccabe",
+      "version": "0.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mcp": {
+      "name": "mcp",
+      "version": "1.14.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio>=4.5",
+        "httpx-sse>=0.4",
+        "httpx>=0.27.1",
+        "jsonschema>=4.20.0",
+        "pydantic-settings>=2.5.2",
+        "pydantic<3.0.0,>=2.11.0",
+        "python-multipart>=0.0.9",
+        "sse-starlette>=1.6.1",
+        "starlette>=0.27",
+        "uvicorn>=0.31.1; sys_platform != \"emscripten\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mdit-py-plugins": {
+      "name": "mdit-py-plugins",
+      "version": "0.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "markdown-it-py<5.0.0,>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mdurl": {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "memory-profiler": {
+      "name": "memory-profiler",
+      "version": "0.61.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "psutil"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mirakuru": {
+      "name": "mirakuru",
+      "version": "2.6.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "psutil>=4.0.0; sys_platform != \"cygwin\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mistune": {
+      "name": "mistune",
+      "version": "3.1.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mlflow": {
+      "name": "mlflow",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "mlflow-skinny==3.4.0",
+        "mlflow-tracing==3.4.0",
+        "Flask<4",
+        "alembic!=1.10.0,<2",
+        "cryptography<46,>=43.0.0",
+        "docker<8,>=4.0.0",
+        "fastmcp<3,>=2.0.0",
+        "graphene<4",
+        "gunicorn<24; platform_system != \"Windows\"",
+        "matplotlib<4",
+        "numpy<3",
+        "pandas<3",
+        "pyarrow<22,>=4.0.0",
+        "scikit-learn<2",
+        "scipy<2",
+        "sqlalchemy<3,>=1.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mlflow-skinny": {
+      "name": "mlflow-skinny",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cachetools<7,>=5.0.0",
+        "click<9,>=7.0",
+        "cloudpickle<4",
+        "databricks-sdk<1,>=0.20.0",
+        "fastapi<1",
+        "gitpython<4,>=3.1.9",
+        "importlib_metadata!=4.7.0,<9,>=3.7.0",
+        "opentelemetry-api<3,>=1.9.0",
+        "opentelemetry-proto<3,>=1.9.0",
+        "opentelemetry-sdk<3,>=1.9.0",
+        "packaging<26",
+        "protobuf<7,>=3.12.0",
+        "pydantic<3,>=1.10.8",
+        "python-dotenv<2,>=0.19.0",
+        "pyyaml<7,>=5.1",
+        "requests<3,>=2.17.3",
+        "sqlparse<1,>=0.4.0",
+        "typing-extensions<5,>=4.0.0",
+        "uvicorn<1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mlflow-tracing": {
+      "name": "mlflow-tracing",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cachetools<7,>=5.0.0",
+        "databricks-sdk<1,>=0.20.0",
+        "opentelemetry-api<3,>=1.9.0",
+        "opentelemetry-proto<3,>=1.9.0",
+        "opentelemetry-sdk<3,>=1.9.0",
+        "packaging<26",
+        "protobuf<7,>=3.12.0",
+        "pydantic<3,>=1.10.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mmh3": {
+      "name": "mmh3",
+      "version": "5.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "more-itertools": {
+      "name": "more-itertools",
+      "version": "10.8.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mplcursors": {
+      "name": "mplcursors",
+      "version": "0.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "matplotlib!=3.7.1,>=3.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "msal": {
+      "name": "msal",
+      "version": "1.34.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests<3,>=2.0.0",
+        "PyJWT[crypto]<3,>=1.0.0",
+        "cryptography<49,>=2.5"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "msal-extensions": {
+      "name": "msal-extensions",
+      "version": "1.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "msal<2,>=1.29"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "msgpack": {
+      "name": "msgpack",
+      "version": "1.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "multidict": {
+      "name": "multidict",
+      "version": "6.6.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mutmut": {
+      "name": "mutmut",
+      "version": "3.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "libcst~=1.7.0",
+        "click",
+        "setproctitle",
+        "textual",
+        "pytest"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mypy": {
+      "name": "mypy",
+      "version": "1.8.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions>=4.1.0",
+        "mypy-extensions>=1.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "mypy-extensions": {
+      "name": "mypy-extensions",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nbclient": {
+      "name": "nbclient",
+      "version": "0.10.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jupyter-client>=6.1.12",
+        "jupyter-core!=5.0.*,>=4.12",
+        "nbformat>=5.1",
+        "traitlets>=5.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nbconvert": {
+      "name": "nbconvert",
+      "version": "7.16.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "beautifulsoup4",
+        "bleach[css]!=5.0.0",
+        "defusedxml",
+        "jinja2>=3.0",
+        "jupyter-core>=4.7",
+        "jupyterlab-pygments",
+        "markupsafe>=2.0",
+        "mistune<4,>=2.0.3",
+        "nbclient>=0.5.0",
+        "nbformat>=5.7",
+        "packaging",
+        "pandocfilters>=1.4.1",
+        "pygments>=2.4.1",
+        "traitlets>=5.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nbformat": {
+      "name": "nbformat",
+      "version": "5.10.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "fastjsonschema>=2.15",
+        "jsonschema>=2.6",
+        "jupyter-core!=5.0.*,>=4.12",
+        "traitlets>=5.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ndg-httpsclient": {
+      "name": "ndg-httpsclient",
+      "version": "0.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "PyOpenSSL",
+        "pyasn1>=0.1.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nest-asyncio": {
+      "name": "nest-asyncio",
+      "version": "1.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nltk": {
+      "name": "nltk",
+      "version": "3.9.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click",
+        "joblib",
+        "regex>=2021.8.3",
+        "tqdm"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nodeenv": {
+      "name": "nodeenv",
+      "version": "1.9.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "notebook": {
+      "name": "notebook",
+      "version": "7.4.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jupyter-server<3,>=2.4.0",
+        "jupyterlab-server<3,>=2.27.1",
+        "jupyterlab<4.5,>=4.4.5",
+        "notebook-shim<0.3,>=0.2",
+        "tornado>=6.2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "notebook-shim": {
+      "name": "notebook-shim",
+      "version": "0.2.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jupyter-server<3,>=1.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "numpy": {
+      "name": "numpy",
+      "version": "2.3.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "nvidia-nccl-cu12": {
+      "name": "nvidia-nccl-cu12",
+      "version": "2.27.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "oauthlib": {
+      "name": "oauthlib",
+      "version": "3.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openai": {
+      "name": "openai",
+      "version": "1.107.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio<5,>=3.5.0",
+        "distro<2,>=1.7.0",
+        "httpx<1,>=0.23.0",
+        "jiter<1,>=0.4.0",
+        "pydantic<3,>=1.9.0",
+        "sniffio",
+        "tqdm>4",
+        "typing-extensions<5,>=4.11"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openapi-core": {
+      "name": "openapi-core",
+      "version": "0.19.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "isodate",
+        "jsonschema<5.0.0,>=4.18.0",
+        "jsonschema-path<0.4.0,>=0.3.1",
+        "more-itertools",
+        "openapi-schema-validator<0.7.0,>=0.6.0",
+        "openapi-spec-validator<0.8.0,>=0.7.1",
+        "parse",
+        "typing-extensions<5.0.0,>=4.8.0",
+        "werkzeug<3.1.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openapi-pydantic": {
+      "name": "openapi-pydantic",
+      "version": "0.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pydantic>=1.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openapi-schema-validator": {
+      "name": "openapi-schema-validator",
+      "version": "0.6.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jsonschema<5.0.0,>=4.19.1",
+        "jsonschema-specifications>=2023.5.2",
+        "rfc3339-validator"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openapi-spec-validator": {
+      "name": "openapi-spec-validator",
+      "version": "0.7.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "jsonschema<5.0.0,>=4.18.0",
+        "jsonschema-path<0.4.0,>=0.3.1",
+        "lazy-object-proxy<2.0.0,>=1.7.1",
+        "openapi-schema-validator<0.7.0,>=0.6.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openlineage-python": {
+      "name": "openlineage-python",
+      "version": "1.37.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "attrs>=20.0",
+        "build>=1.2.2",
+        "httpx>=0.27.0",
+        "packaging>=21.0",
+        "python-dateutil>=2.8.2",
+        "pyyaml>=5.4",
+        "requests>=2.32.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openlineage-sql": {
+      "name": "openlineage-sql",
+      "version": "1.37.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "openpyxl": {
+      "name": "openpyxl",
+      "version": "3.1.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "et-xmlfile"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "opentelemetry-api": {
+      "name": "opentelemetry-api",
+      "version": "1.36.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "importlib-metadata<8.8.0,>=6.0",
+        "typing-extensions>=4.5.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "opentelemetry-proto": {
+      "name": "opentelemetry-proto",
+      "version": "1.37.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "protobuf<7.0,>=5.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "opentelemetry-sdk": {
+      "name": "opentelemetry-sdk",
+      "version": "1.36.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "opentelemetry-api==1.36.0",
+        "opentelemetry-semantic-conventions==0.57b0",
+        "typing-extensions>=4.5.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "opentelemetry-semantic-conventions": {
+      "name": "opentelemetry-semantic-conventions",
+      "version": "0.57b0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "opentelemetry-api==1.36.0",
+        "typing-extensions>=4.5.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ordered-set": {
+      "name": "ordered-set",
+      "version": "4.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "orjson": {
+      "name": "orjson",
+      "version": "3.11.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "overrides": {
+      "name": "overrides",
+      "version": "7.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "packageurl-python": {
+      "name": "packageurl-python",
+      "version": "0.17.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "packaging": {
+      "name": "packaging",
+      "version": "25.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pandas": {
+      "name": "pandas",
+      "version": "2.3.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy>=1.23.2; python_version == \"3.11\"",
+        "python-dateutil>=2.8.2",
+        "pytz>=2020.1",
+        "tzdata>=2022.7"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pandocfilters": {
+      "name": "pandocfilters",
+      "version": "1.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "paramiko": {
+      "name": "paramiko",
+      "version": "3.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "bcrypt>=3.2",
+        "cryptography>=3.3",
+        "pynacl>=1.5"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "parse": {
+      "name": "parse",
+      "version": "1.20.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "parso": {
+      "name": "parso",
+      "version": "0.8.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "partd": {
+      "name": "partd",
+      "version": "1.4.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "locket",
+        "toolz"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "passlib": {
+      "name": "passlib",
+      "version": "1.7.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pathable": {
+      "name": "pathable",
+      "version": "0.4.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pathspec": {
+      "name": "pathspec",
+      "version": "0.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pbr": {
+      "name": "pbr",
+      "version": "7.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "setuptools"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pdbpp": {
+      "name": "pdbpp",
+      "version": "0.11.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "fancycompleter>=0.11.0",
+        "pygments"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pendulum": {
+      "name": "pendulum",
+      "version": "3.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "python-dateutil>=2.6",
+        "tzdata>=2020.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pep517": {
+      "name": "pep517",
+      "version": "0.13.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pexpect": {
+      "name": "pexpect",
+      "version": "4.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "ptyprocess>=0.5"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pickleshare": {
+      "name": "pickleshare",
+      "version": "0.7.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pillow": {
+      "name": "pillow",
+      "version": "11.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pip": {
+      "name": "pip",
+      "version": "25.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pip-api": {
+      "name": "pip-api",
+      "version": "0.0.34",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pip"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pip-audit": {
+      "name": "pip-audit",
+      "version": "2.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "CacheControl[filecache]>=0.13.0",
+        "cyclonedx-python-lib<7,>=5",
+        "html5lib>=1.1",
+        "packaging>=23.0.0",
+        "pip-api>=0.0.28",
+        "pip-requirements-parser>=32.0.0",
+        "requests>=2.31.0",
+        "rich>=12.4",
+        "toml>=0.10"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pip-requirements-parser": {
+      "name": "pip-requirements-parser",
+      "version": "32.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging",
+        "pyparsing"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pip-tools": {
+      "name": "pip-tools",
+      "version": "7.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "build>=1.0.0",
+        "click>=8",
+        "pip>=22.2",
+        "pyproject_hooks",
+        "setuptools",
+        "wheel"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pipdeptree": {
+      "name": "pipdeptree",
+      "version": "2.28.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging>=24.1",
+        "pip>=24.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pipreqs": {
+      "name": "pipreqs",
+      "version": "0.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "docopt==0.6.2",
+        "ipython==8.12.3",
+        "nbconvert<8.0.0,>=7.11.0",
+        "yarg==0.1.9"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pkginfo": {
+      "name": "pkginfo",
+      "version": "1.12.1.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "platformdirs": {
+      "name": "platformdirs",
+      "version": "4.3.8",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "plette": {
+      "name": "plette",
+      "version": "2.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "tomlkit"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pluggy": {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "port-for": {
+      "name": "port-for",
+      "version": "0.7.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "posthog": {
+      "name": "posthog",
+      "version": "6.7.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests<3.0,>=2.7",
+        "six>=1.5",
+        "python-dateutil>=2.2",
+        "backoff>=1.10.0",
+        "distro>=1.5.0",
+        "typing-extensions>=4.2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pre-commit": {
+      "name": "pre-commit",
+      "version": "3.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cfgv>=2.0.0",
+        "identify>=1.0.0",
+        "nodeenv>=0.11.1",
+        "pyyaml>=5.1",
+        "virtualenv>=20.10.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "prefect": {
+      "name": "prefect",
+      "version": "3.4.20",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "aiosqlite<1.0.0,>=0.17.0",
+        "alembic<2.0.0,>=1.7.5",
+        "anyio<5.0.0,>=4.4.0",
+        "apprise<2.0.0,>=1.1.0",
+        "asgi-lifespan<3.0,>=1.0",
+        "asyncpg<1.0.0,>=0.23",
+        "cachetools<7.0,>=5.3",
+        "click<9,>=8.0",
+        "cloudpickle<4.0,>=2.0",
+        "coolname<3.0.0,>=1.0.4",
+        "cryptography>=36.0.1",
+        "dateparser<2.0.0,>=1.1.1",
+        "docker<8.0,>=4.0",
+        "exceptiongroup>=1.0.0",
+        "fastapi<1.0.0,>=0.111.0",
+        "fsspec>=2022.5.0",
+        "graphviz>=0.20.1",
+        "griffe<2.0.0,>=0.49.0",
+        "httpcore<2.0.0,>=1.0.5",
+        "httpx[http2]!=0.23.2,>=0.23",
+        "humanize<5.0.0,>=4.9.0",
+        "jinja2-humanize-extension>=0.4.0",
+        "jinja2<4.0.0,>=3.1.6",
+        "jsonpatch<2.0,>=1.32",
+        "jsonschema<5.0.0,>=4.18.0",
+        "opentelemetry-api<2.0.0,>=1.27.0",
+        "orjson<4.0,>=3.7",
+        "packaging<25.1,>=21.3",
+        "pathspec>=0.8.0",
+        "pendulum<4,>=3.0.0; python_version < \"3.13\"",
+        "prometheus-client>=0.20.0",
+        "pydantic!=2.11.0,!=2.11.1,!=2.11.2,!=2.11.3,!=2.11.4,<3.0.0,>=2.10.1",
+        "pydantic-core<3.0.0,>=2.12.0",
+        "pydantic-extra-types<3.0.0,>=2.8.2",
+        "pydantic-settings!=2.9.0,<3.0.0,>2.2.1",
+        "python-dateutil<3.0.0,>=2.8.2",
+        "python-slugify<9.0,>=5.0",
+        "python-socks[asyncio]<3.0,>=2.5.3",
+        "pytz<2026,>=2021.1",
+        "pyyaml<7.0.0,>=5.4.1",
+        "readchar<5.0.0,>=4.0.0",
+        "rfc3339-validator<0.2.0,>=0.1.4",
+        "rich<15.0,>=11.0",
+        "ruamel-yaml>=0.17.0",
+        "semver>=3.0.4",
+        "sniffio<2.0.0,>=1.3.0",
+        "sqlalchemy[asyncio]<3.0.0,>=2.0",
+        "toml>=0.10.0",
+        "typer!=0.12.2,<0.18.0,>=0.12.0",
+        "typing-extensions<5.0.0,>=4.10.0",
+        "uv>=0.6.0",
+        "uvicorn!=0.29.0,>=0.14.0",
+        "websockets<16.0,>=13.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "prometheus-client": {
+      "name": "prometheus-client",
+      "version": "0.22.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "prometheus-fastapi-instrumentator": {
+      "name": "prometheus-fastapi-instrumentator",
+      "version": "7.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "prometheus-client<1.0.0,>=0.8.0",
+        "starlette<1.0.0,>=0.30.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "prometheus-flask-exporter": {
+      "name": "prometheus-flask-exporter",
+      "version": "0.23.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "prometheus_client",
+        "flask"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "prompt-toolkit": {
+      "name": "prompt-toolkit",
+      "version": "3.0.51",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "wcwidth"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "propcache": {
+      "name": "propcache",
+      "version": "0.3.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "proto-plus": {
+      "name": "proto-plus",
+      "version": "1.26.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "protobuf<7.0.0,>=3.19.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "protobuf": {
+      "name": "protobuf",
+      "version": "6.32.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "psutil": {
+      "name": "psutil",
+      "version": "6.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "psycopg": {
+      "name": "psycopg",
+      "version": "3.2.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions>=4.6; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "psycopg2-binary": {
+      "name": "psycopg2-binary",
+      "version": "2.9.10",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "psycopg-binary": {
+      "name": "psycopg-binary",
+      "version": "3.2.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "psycopg-pool": {
+      "name": "psycopg-pool",
+      "version": "3.2.6",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions>=4.6"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ptyprocess": {
+      "name": "ptyprocess",
+      "version": "0.7.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pure-eval": {
+      "name": "pure-eval",
+      "version": "0.2.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "py-cpuinfo": {
+      "name": "py-cpuinfo",
+      "version": "9.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "py-serializable": {
+      "name": "py-serializable",
+      "version": "1.1.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "defusedxml<0.8.0,>=0.7.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyarrow": {
+      "name": "pyarrow",
+      "version": "17.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy>=1.16.6"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyasn1": {
+      "name": "pyasn1",
+      "version": "0.6.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyasn1-modules": {
+      "name": "pyasn1-modules",
+      "version": "0.4.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyasn1<0.7.0,>=0.6.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pycodestyle": {
+      "name": "pycodestyle",
+      "version": "2.14.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pycparser": {
+      "name": "pycparser",
+      "version": "2.22",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pydantic": {
+      "name": "pydantic",
+      "version": "2.11.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "annotated-types>=0.6.0",
+        "pydantic-core==2.33.2",
+        "typing-extensions>=4.12.2",
+        "typing-inspection>=0.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pydantic-core": {
+      "name": "pydantic-core",
+      "version": "2.33.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions!=4.7.0,>=4.6.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pydantic-extra-types": {
+      "name": "pydantic-extra-types",
+      "version": "2.10.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pydantic>=2.5.2",
+        "typing-extensions"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pydantic-settings": {
+      "name": "pydantic-settings",
+      "version": "2.11.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pydantic>=2.7.0",
+        "python-dotenv>=0.21.0",
+        "typing-inspection>=0.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyflakes": {
+      "name": "pyflakes",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pygame": {
+      "name": "pygame",
+      "version": "2.5.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pygments": {
+      "name": "pygments",
+      "version": "2.19.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pylint": {
+      "name": "pylint",
+      "version": "3.3.8",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "astroid<=3.4.0.dev0,>=3.3.8",
+        "dill>=0.3.6; python_version >= \"3.11\"",
+        "isort!=5.13,<7,>=4.2.5",
+        "mccabe<0.8,>=0.6",
+        "platformdirs>=2.2",
+        "tomlkit>=0.10.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pynacl": {
+      "name": "pynacl",
+      "version": "1.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cffi>=1.4.1; platform_python_implementation != \"PyPy\" and python_version < \"3.14\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyopenssl": {
+      "name": "pyopenssl",
+      "version": "25.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cryptography<47,>=45.0.7",
+        "typing-extensions>=4.9; python_version < \"3.13\" and python_version >= \"3.8\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyparsing": {
+      "name": "pyparsing",
+      "version": "3.2.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyperclip": {
+      "name": "pyperclip",
+      "version": "1.11.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyproject-api": {
+      "name": "pyproject-api",
+      "version": "1.9.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "packaging>=25"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyproject-hooks": {
+      "name": "pyproject-hooks",
+      "version": "1.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyrepl": {
+      "name": "pyrepl",
+      "version": "0.11.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pysftp": {
+      "name": "pysftp",
+      "version": "0.2.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "paramiko>=1.17"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyspnego": {
+      "name": "pyspnego",
+      "version": "0.11.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cryptography"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest": {
+      "name": "pytest",
+      "version": "8.4.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "iniconfig>=1",
+        "packaging>=20",
+        "pluggy<2,>=1.5",
+        "pygments>=2.7.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-asyncio": {
+      "name": "pytest-asyncio",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pytest<9,>=8.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-benchmark": {
+      "name": "pytest-benchmark",
+      "version": "5.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pytest>=8.1",
+        "py-cpuinfo"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-cov": {
+      "name": "pytest-cov",
+      "version": "4.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pytest>=4.6",
+        "coverage[toml]>=5.2.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-mock": {
+      "name": "pytest-mock",
+      "version": "3.14.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pytest>=6.2.5"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-postgresql": {
+      "name": "pytest-postgresql",
+      "version": "7.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pytest>=7.2",
+        "port-for>=0.7.3",
+        "mirakuru>=2.6.0",
+        "packaging",
+        "psycopg>=3.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytest-xdist": {
+      "name": "pytest-xdist",
+      "version": "3.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "execnet>=1.1",
+        "pytest>=6.2.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-dateutil": {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "six>=1.5"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-dotenv": {
+      "name": "python-dotenv",
+      "version": "1.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-engineio": {
+      "name": "python-engineio",
+      "version": "4.12.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "simple-websocket>=0.10.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-json-logger": {
+      "name": "python-json-logger",
+      "version": "2.0.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-multipart": {
+      "name": "python-multipart",
+      "version": "0.0.20",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-slugify": {
+      "name": "python-slugify",
+      "version": "8.0.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "text-unidecode>=1.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-socketio": {
+      "name": "python-socketio",
+      "version": "5.13.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "bidict>=0.21.0",
+        "python-engineio>=4.11.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "python-socks": {
+      "name": "python-socks",
+      "version": "2.7.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytokens": {
+      "name": "pytokens",
+      "version": "0.1.10",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytz": {
+      "name": "pytz",
+      "version": "2025.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pytzdata": {
+      "name": "pytzdata",
+      "version": "2020.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pywinrm": {
+      "name": "pywinrm",
+      "version": "0.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests>=2.9.1",
+        "requests-ntlm>=1.1.0",
+        "xmltodict"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "pyzmq": {
+      "name": "pyzmq",
+      "version": "27.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "radon": {
+      "name": "radon",
+      "version": "6.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "mando<0.8,>=0.6",
+        "colorama>=0.4.1; python_version > \"3.4\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "readchar": {
+      "name": "readchar",
+      "version": "4.2.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "redis": {
+      "name": "redis",
+      "version": "4.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "referencing": {
+      "name": "referencing",
+      "version": "0.36.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "attrs>=22.2.0",
+        "rpds-py>=0.7.0",
+        "typing-extensions>=4.4.0; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "regex": {
+      "name": "regex",
+      "version": "2025.7.34",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requests": {
+      "name": "requests",
+      "version": "2.32.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "charset_normalizer<4,>=2",
+        "idna<4,>=2.5",
+        "urllib3<3,>=1.21.1",
+        "certifi>=2017.4.17"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requests-auth-aws-sigv4": {
+      "name": "requests-auth-aws-sigv4",
+      "version": "0.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requests-mock": {
+      "name": "requests-mock",
+      "version": "1.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests<3,>=2.22"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requests-ntlm": {
+      "name": "requests-ntlm",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cryptography>=1.3",
+        "pyspnego>=0.4.0",
+        "requests>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requests-oauthlib": {
+      "name": "requests-oauthlib",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "oauthlib>=3.0.0",
+        "requests>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "requirementslib": {
+      "name": "requirementslib",
+      "version": "3.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "distlib>=0.2.8",
+        "pep517>=0.5.0",
+        "pip>=23.1",
+        "platformdirs",
+        "plette[validation]",
+        "pydantic",
+        "requests",
+        "setuptools>=40.8",
+        "tomlkit>=0.5.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "responses": {
+      "name": "responses",
+      "version": "0.25.8",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests<3.0,>=2.30.0",
+        "urllib3<3.0,>=1.25.10",
+        "pyyaml"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rfc3339-validator": {
+      "name": "rfc3339-validator",
+      "version": "0.1.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "six"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rfc3986-validator": {
+      "name": "rfc3986-validator",
+      "version": "0.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rfc3987-syntax": {
+      "name": "rfc3987-syntax",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "lark>=1.2.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rich": {
+      "name": "rich",
+      "version": "13.9.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "markdown-it-py>=2.2.0",
+        "pygments<3.0.0,>=2.13.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rich-rst": {
+      "name": "rich-rst",
+      "version": "1.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "docutils",
+        "rich>=12.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rich-toolkit": {
+      "name": "rich-toolkit",
+      "version": "0.15.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=8.1.7",
+        "rich>=13.7.1",
+        "typing-extensions>=4.12.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rpds-py": {
+      "name": "rpds-py",
+      "version": "0.27.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "rsa": {
+      "name": "rsa",
+      "version": "4.9.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pyasn1>=0.1.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ruamel.yaml": {
+      "name": "ruamel.yaml",
+      "version": "0.17.40",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "ruamel.yaml.clib>=0.2.7; platform_python_implementation == \"CPython\" and python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ruamel.yaml.clib": {
+      "name": "ruamel.yaml.clib",
+      "version": "0.2.12",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ruff": {
+      "name": "ruff",
+      "version": "0.12.10",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "s3transfer": {
+      "name": "s3transfer",
+      "version": "0.10.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "botocore<2.0a.0,>=1.33.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "safety": {
+      "name": "safety",
+      "version": "2.3.5",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "setuptools>=19.3",
+        "Click>=8.0.2",
+        "requests",
+        "packaging<22.0,>=21.0",
+        "dparse>=0.6.2",
+        "ruamel.yaml>=0.17.21"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "safety-schemas": {
+      "name": "safety-schemas",
+      "version": "0.0.14",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "dparse>=0.6.4",
+        "packaging>=21.0",
+        "pydantic<2.10.0,>=2.6.0",
+        "ruamel-yaml>=0.17.21",
+        "typing-extensions>=4.7.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "schedule": {
+      "name": "schedule",
+      "version": "1.2.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "scikit-learn": {
+      "name": "scikit-learn",
+      "version": "1.7.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy>=1.22.0",
+        "scipy>=1.8.0",
+        "joblib>=1.2.0",
+        "threadpoolctl>=3.1.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "scipy": {
+      "name": "scipy",
+      "version": "1.16.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy<2.6,>=1.25.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "seaborn": {
+      "name": "seaborn",
+      "version": "0.13.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy!=1.24.0,>=1.20",
+        "pandas>=1.2",
+        "matplotlib!=3.6.1,>=3.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "secretstorage": {
+      "name": "secretstorage",
+      "version": "3.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cryptography>=2.0",
+        "jeepney>=0.6"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "semver": {
+      "name": "semver",
+      "version": "3.0.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "setproctitle": {
+      "name": "setproctitle",
+      "version": "1.3.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "setuptools": {
+      "name": "setuptools",
+      "version": "80.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "shellcheck-py": {
+      "name": "shellcheck-py",
+      "version": "0.11.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "shellingham": {
+      "name": "shellingham",
+      "version": "1.5.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "simple-websocket": {
+      "name": "simple-websocket",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "wsproto"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "six": {
+      "name": "six",
+      "version": "1.17.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "slowapi": {
+      "name": "slowapi",
+      "version": "0.1.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "limits>=2.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "smmap": {
+      "name": "smmap",
+      "version": "5.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sniffio": {
+      "name": "sniffio",
+      "version": "1.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "snowballstemmer": {
+      "name": "snowballstemmer",
+      "version": "3.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sortedcontainers": {
+      "name": "sortedcontainers",
+      "version": "2.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "soupsieve": {
+      "name": "soupsieve",
+      "version": "2.7",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinx": {
+      "name": "sphinx",
+      "version": "7.1.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "sphinxcontrib-applehelp",
+        "sphinxcontrib-devhelp",
+        "sphinxcontrib-jsmath",
+        "sphinxcontrib-htmlhelp>=2.0.0",
+        "sphinxcontrib-serializinghtml>=1.1.5",
+        "sphinxcontrib-qthelp",
+        "Jinja2>=3.0",
+        "Pygments>=2.13",
+        "docutils<0.21,>=0.18.1",
+        "snowballstemmer>=2.0",
+        "babel>=2.9",
+        "alabaster<0.8,>=0.7",
+        "imagesize>=1.3",
+        "requests>=2.25.0",
+        "packaging>=21.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinx-rtd-theme": {
+      "name": "sphinx-rtd-theme",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "sphinx<8,>=1.6",
+        "docutils<0.19",
+        "sphinxcontrib-jquery<5,>=4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-applehelp": {
+      "name": "sphinxcontrib-applehelp",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-devhelp": {
+      "name": "sphinxcontrib-devhelp",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-htmlhelp": {
+      "name": "sphinxcontrib-htmlhelp",
+      "version": "2.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-jquery": {
+      "name": "sphinxcontrib-jquery",
+      "version": "4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "Sphinx>=1.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-jsmath": {
+      "name": "sphinxcontrib-jsmath",
+      "version": "1.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-qthelp": {
+      "name": "sphinxcontrib-qthelp",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sphinxcontrib-serializinghtml": {
+      "name": "sphinxcontrib-serializinghtml",
+      "version": "2.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sqlalchemy": {
+      "name": "sqlalchemy",
+      "version": "2.0.43",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "greenlet>=1; python_version < \"3.14\" and (platform_machine == \"aarch64\" or (platform_machine == \"ppc64le\" or (platform_machine == \"x86_64\" or (platform_machine == \"amd64\" or (platform_machine == \"AMD64\" or (platform_machine == \"win32\" or platform_machine == \"WIN32\"))))))",
+        "typing-extensions>=4.6.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sqlalchemy-utils": {
+      "name": "sqlalchemy-utils",
+      "version": "0.42.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "SQLAlchemy>=1.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sqlparse": {
+      "name": "sqlparse",
+      "version": "0.5.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "sse-starlette": {
+      "name": "sse-starlette",
+      "version": "3.0.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio>=4.7.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "stack-data": {
+      "name": "stack-data",
+      "version": "0.6.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "executing>=1.2.0",
+        "asttokens>=2.1.0",
+        "pure-eval"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "starlette": {
+      "name": "starlette",
+      "version": "0.47.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio<5,>=3.6.2",
+        "typing-extensions>=4.10.0; python_version < \"3.13\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "stevedore": {
+      "name": "stevedore",
+      "version": "5.4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pbr>=2.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "structlog": {
+      "name": "structlog",
+      "version": "25.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tabulate": {
+      "name": "tabulate",
+      "version": "0.9.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tenacity": {
+      "name": "tenacity",
+      "version": "8.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "terminado": {
+      "name": "terminado",
+      "version": "0.18.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "ptyprocess; os_name != \"nt\"",
+        "tornado>=6.1.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "text-unidecode": {
+      "name": "text-unidecode",
+      "version": "1.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "textual": {
+      "name": "textual",
+      "version": "6.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "markdown-it-py[linkify,plugins]>=2.1.0",
+        "platformdirs<5,>=3.6.0",
+        "pygments<3.0.0,>=2.19.2",
+        "rich>=13.3.3",
+        "typing-extensions<5.0.0,>=4.4.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "threadpoolctl": {
+      "name": "threadpoolctl",
+      "version": "3.6.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tinycss2": {
+      "name": "tinycss2",
+      "version": "1.4.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "webencodings>=0.4"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "toml": {
+      "name": "toml",
+      "version": "0.10.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tomlkit": {
+      "name": "tomlkit",
+      "version": "0.13.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "toolz": {
+      "name": "toolz",
+      "version": "1.0.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tornado": {
+      "name": "tornado",
+      "version": "6.5.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tox": {
+      "name": "tox",
+      "version": "4.11.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "cachetools>=5.3.1",
+        "chardet>=5.2",
+        "colorama>=0.4.6",
+        "filelock>=3.12.3",
+        "packaging>=23.1",
+        "platformdirs>=3.10",
+        "pluggy>=1.3",
+        "pyproject-api>=1.6.1",
+        "virtualenv>=20.24.3"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tqdm": {
+      "name": "tqdm",
+      "version": "4.67.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "traitlets": {
+      "name": "traitlets",
+      "version": "5.14.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "typeguard": {
+      "name": "typeguard",
+      "version": "4.4.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing_extensions>=4.14.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "typer": {
+      "name": "typer",
+      "version": "0.17.4",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=8.0.0",
+        "typing-extensions>=3.7.4.3",
+        "shellingham>=1.3.0",
+        "rich>=10.11.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-cachetools": {
+      "name": "types-cachetools",
+      "version": "6.2.0.20250827",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-cffi": {
+      "name": "types-cffi",
+      "version": "1.17.0.20250822",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "types-setuptools"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-croniter": {
+      "name": "types-croniter",
+      "version": "6.0.0.20250809",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-jsonschema": {
+      "name": "types-jsonschema",
+      "version": "4.25.1.20250822",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "referencing"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-psutil": {
+      "name": "types-psutil",
+      "version": "7.0.0.20250822",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-psycopg2": {
+      "name": "types-psycopg2",
+      "version": "2.9.21.20250809",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-pyOpenSSL": {
+      "name": "types-pyOpenSSL",
+      "version": "24.1.0.20240722",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "types-cffi",
+        "cryptography>=35.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-python-dateutil": {
+      "name": "types-python-dateutil",
+      "version": "2.9.0.20250809",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-pytz": {
+      "name": "types-pytz",
+      "version": "2025.2.0.20250809",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-pyyaml": {
+      "name": "types-pyyaml",
+      "version": "6.0.12.20250809",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-redis": {
+      "name": "types-redis",
+      "version": "4.6.0.20241004",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "types-pyOpenSSL",
+        "cryptography>=35.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-requests": {
+      "name": "types-requests",
+      "version": "2.32.0.20240712",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "urllib3>=2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-setuptools": {
+      "name": "types-setuptools",
+      "version": "80.9.0.20250822",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "types-urllib3": {
+      "name": "types-urllib3",
+      "version": "1.26.25.14",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "typing-extensions": {
+      "name": "typing-extensions",
+      "version": "4.14.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "typing-inspection": {
+      "name": "typing-inspection",
+      "version": "0.4.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "typing-extensions>=4.12.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tzdata": {
+      "name": "tzdata",
+      "version": "2025.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tzlocal": {
+      "name": "tzlocal",
+      "version": "5.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uc-micro-py": {
+      "name": "uc-micro-py",
+      "version": "1.0.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "ujson": {
+      "name": "ujson",
+      "version": "5.10.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uri-template": {
+      "name": "uri-template",
+      "version": "1.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "urllib3": {
+      "name": "urllib3",
+      "version": "2.5.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uv": {
+      "name": "uv",
+      "version": "0.8.13",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uvicorn": {
+      "name": "uvicorn",
+      "version": "0.34.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "click>=7.0",
+        "h11>=0.8"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uvicorn-worker": {
+      "name": "uvicorn-worker",
+      "version": "0.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "gunicorn>=20.1.0",
+        "uvicorn>=0.15.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "uvloop": {
+      "name": "uvloop",
+      "version": "0.21.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "vine": {
+      "name": "vine",
+      "version": "5.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "virtualenv": {
+      "name": "virtualenv",
+      "version": "20.34.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "distlib<1,>=0.3.7",
+        "filelock<4,>=3.12.2",
+        "platformdirs<5,>=3.9.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "watchfiles": {
+      "name": "watchfiles",
+      "version": "1.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "anyio>=3.0.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "wcwidth": {
+      "name": "wcwidth",
+      "version": "0.2.13",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "webcolors": {
+      "name": "webcolors",
+      "version": "24.11.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "webencodings": {
+      "name": "webencodings",
+      "version": "0.5.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "websocket-client": {
+      "name": "websocket-client",
+      "version": "1.8.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "websockets": {
+      "name": "websockets",
+      "version": "15.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "werkzeug": {
+      "name": "werkzeug",
+      "version": "3.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "MarkupSafe>=2.1.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "wheel": {
+      "name": "wheel",
+      "version": "0.42.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "widgetsnbextension": {
+      "name": "widgetsnbextension",
+      "version": "4.0.14",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "wrapt": {
+      "name": "wrapt",
+      "version": "1.17.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "wsproto": {
+      "name": "wsproto",
+      "version": "1.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "h11<1,>=0.9.0"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "xgboost": {
+      "name": "xgboost",
+      "version": "2.0.3",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "numpy",
+        "scipy"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "xlrd": {
+      "name": "xlrd",
+      "version": "2.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "xmltodict": {
+      "name": "xmltodict",
+      "version": "0.14.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "xtquant": {
+      "name": "xtquant",
+      "version": "240613.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests",
+        "pandas",
+        "numpy"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "yamllint": {
+      "name": "yamllint",
+      "version": "1.37.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "pathspec>=0.5.3",
+        "pyyaml"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "yarg": {
+      "name": "yarg",
+      "version": "0.1.9",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "requests"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "yarl": {
+      "name": "yarl",
+      "version": "1.20.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "idna>=2.0",
+        "multidict>=4.0",
+        "propcache>=0.2.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "zipp": {
+      "name": "zipp",
+      "version": "3.23.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "zope.interface": {
+      "name": "zope.interface",
+      "version": "7.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "setuptools"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "zope-event": {
+      "name": "zope-event",
+      "version": "5.1.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages",
+      "dependencies": [
+        "setuptools>=75.8.2"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "autocommand": {
+      "name": "autocommand",
+      "version": "2.2.2",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "backports.tarfile": {
+      "name": "backports.tarfile",
+      "version": "1.2.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "inflect": {
+      "name": "inflect",
+      "version": "7.3.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [
+        "more-itertools>=8.5.0",
+        "typeguard>=4.0.1"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jaraco.collections": {
+      "name": "jaraco.collections",
+      "version": "5.1.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [
+        "jaraco.text"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jaraco.context": {
+      "name": "jaraco.context",
+      "version": "5.3.0",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [
+        "backports.tarfile; python_version < \"3.12\""
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jaraco.functools": {
+      "name": "jaraco.functools",
+      "version": "4.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [
+        "more-itertools"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "jaraco.text": {
+      "name": "jaraco.text",
+      "version": "3.12.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [
+        "jaraco.functools",
+        "jaraco.context>=4.1",
+        "autocommand",
+        "inflect",
+        "more-itertools"
+      ],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    },
+    "tomli": {
+      "name": "tomli",
+      "version": "2.0.1",
+      "location": "/home/user/.pyenv/versions/3.11.9/lib/python3.11/site-packages/setuptools/_vendor",
+      "dependencies": [],
+      "dependents": [],
+      "size": 0,
+      "install_time": ""
+    }
+  },
+  "issues": [
+    {
+      "type": "conflict",
+      "package": "pydantic, fastapi",
+      "description": "版本差异: DeprecationWarning或API不兼容",
+      "severity": "critical",
+      "solution": "确保pydantic >= 2.0且与fastapi兼容",
+      "affected_modules": []
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "urgent",
+      "action": "立即解决关键冲突",
+      "description": "发现 1 个关键问题，需要立即处理"
+    },
+    {
+      "priority": "medium",
+      "action": "创建requirements.lock",
+      "description": "锁定所有依赖版本，确保环境一致性"
+    },
+    {
+      "priority": "medium",
+      "action": "设置虚拟环境",
+      "description": "使用独立的Python虚拟环境，避免全局污染"
+    }
+  ]
+}

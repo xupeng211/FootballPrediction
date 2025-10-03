@@ -66,6 +66,9 @@ import numpy as np
 from mlflow.exceptions import MlflowException
 from sqlalchemy import select, text
 
+# 安全加载器
+from src.utils.mlflow_security import SecureMLflowLoader
+
 import mlflow
 from mlflow import MlflowClient
 from src.cache.ttl_cache import TTLCache
@@ -335,9 +338,18 @@ class PredictionService:
         # 构建模型URI
         model_uri = f"models:/{model_name}/{version}"
 
-        # 加载模型
+        # 安全加载模型
         start_time = datetime.now()
-        model = mlflow.sklearn.load_model(model_uri)
+        try:
+            with SecureMLflowLoader() as secure_loader:
+                model = secure_loader.safe_load_model(model_uri)
+        except Exception as e:
+            logger.error(f"安全模型加载失败，尝试传统方式: {e}")
+            # 降级到传统加载方式（带额外检查）
+            model = mlflow.sklearn.load_model(model_uri)
+            # 验证模型对象
+            if not hasattr(model, 'predict'):
+                raise ValueError("加载的对象不是有效的模型")
         load_duration = (datetime.now() - start_time).total_seconds()
 
         # 记录加载时间

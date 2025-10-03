@@ -7,6 +7,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Optional
 
 # 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
 try:
@@ -30,14 +31,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from src.middleware.i18n import I18nMiddleware
-
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
-from src.monitoring.metrics_collector import (
-    start_metrics_collection,
-    stop_metrics_collection,
-)
 
 # 配置日志
 logging.basicConfig(
@@ -47,17 +43,73 @@ logger = logging.getLogger(__name__)
 
 MINIMAL_API_MODE = os.getenv("MINIMAL_API_MODE", "false").lower() == "true"
 
+if not MINIMAL_API_MODE:
+    from src.middleware.security import SecurityMiddleware
+    from src.middleware.performance import (
+        ResponseCacheMiddleware,
+        CompressionMiddleware,
+        BatchProcessingMiddleware,
+        PerformanceMonitoringMiddleware,
+    )
+    from src.cache.redis_manager import RedisManager
+    from src.cache.init_cache import init_cache_system, shutdown_cache_system
+    from src.monitoring.metrics_collector import (
+        start_metrics_collection,
+        stop_metrics_collection,
+    )
+else:
+    SecurityMiddleware = None  # type: ignore[misc]
+    ResponseCacheMiddleware = None  # type: ignore[assignment]
+    CompressionMiddleware = None  # type: ignore[assignment]
+    BatchProcessingMiddleware = None  # type: ignore[assignment]
+    PerformanceMonitoringMiddleware = None  # type: ignore[assignment]
+    RedisManager = None  # type: ignore[assignment]
+
+    async def init_cache_system(*_args, **_kwargs) -> bool:  # type: ignore[override]
+        return True
+
+    async def shutdown_cache_system(*_args, **_kwargs) -> None:  # type: ignore[override]
+        return None
+
+    async def start_metrics_collection() -> None:  # type: ignore[override]
+        return None
+
+    async def stop_metrics_collection() -> None:  # type: ignore[override]
+        return None
+
+# 全局Redis管理器实例
+redis_manager: Optional["RedisManager"] = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    global redis_manager
+
     # 启动时初始化
     logger.info("🚀 足球预测API启动中...")
+
+    if MINIMAL_API_MODE:
+        logger.info("⚙️ MINIMAL_API_MODE 启用：跳过数据库、Redis、监控初始化")
+        yield
+        logger.info("✅ MINIMAL_API_MODE 关闭流程完成")
+        return
 
     try:
         # 初始化数据库连接
         logger.info("📊 初始化数据库连接...")
         initialize_database()
+
+        # 初始化Redis管理器
+        logger.info("🗄️ 初始化Redis缓存管理器...")
+        redis_manager = RedisManager()
+        await redis_manager._init_async_pool()
+
+        # 初始化缓存系统
+        logger.info("⚡ 初始化缓存系统...")
+        cache_success = await init_cache_system(redis_manager)
+        if not cache_success:
+            logger.warning("⚠️ 缓存系统初始化失败，将继续使用但不启用缓存")
 
         # 启动监控指标收集
         logger.info("📈 启动监控指标收集...")
@@ -74,9 +126,16 @@ async def lifespan(app: FastAPI):
     # 关闭时清理
     logger.info("🛑 服务正在关闭...")
 
-    # 停止监控指标收集
-    logger.info("📉 停止监控指标收集...")
-    await stop_metrics_collection()
+    if not MINIMAL_API_MODE:
+        logger.info("📉 停止监控指标收集...")
+        await stop_metrics_collection()
+
+        logger.info("🗄️ 关闭缓存系统...")
+        await shutdown_cache_system()
+
+        if redis_manager:
+            logger.info("🔌 关闭Redis连接...")
+            await redis_manager.aclose()
 
 
 # 创建FastAPI应用
@@ -89,18 +148,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 添加安全与性能中间件（仅在非最小化模式下启用）
+if not MINIMAL_API_MODE:
+    security_middleware = SecurityMiddleware(app)
+    app.add_middleware(PerformanceMonitoringMiddleware, slow_query_threshold=0.5)
+    if redis_manager:
+        app.add_middleware(
+            ResponseCacheMiddleware,
+            cache_manager=redis_manager,
+            default_ttl=300,
+        )
+    app.add_middleware(CompressionMiddleware, minimum_size=1024)
+    app.add_middleware(BatchProcessingMiddleware, max_batch_size=50)
+else:
+    security_middleware = None
+    logger.info("MINIMAL_API_MODE 启用：跳过安全与性能中间件")
+
 # 添加国际化中间件
 app.add_middleware(I18nMiddleware)
-
-# 添加CORS中间件
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
 
 # 注册路由
 app.include_router(health_router)
@@ -111,11 +176,13 @@ else:
     from src.api.features import router as features_router  # noqa: WPS433
     from src.api.monitoring import router as monitoring_router  # noqa: WPS433
     from src.api.predictions import router as predictions_router  # noqa: WPS433
+    from src.api.cache import router as cache_router  # noqa: WPS433
 
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
     app.include_router(data_router, prefix="/api/v1")
     app.include_router(predictions_router, prefix="/api/v1")
+    app.include_router(cache_router, prefix="/api/v1")
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)

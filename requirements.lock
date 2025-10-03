@@ -1,0 +1,62 @@
+# Production Dependencies Lock File
+# 生产环境依赖锁定文件
+# Generated on: 2025-01-02
+# Python Version: 3.11
+
+# Core Framework
+fastapi==0.116.1
+starlette==0.47.3
+uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# Redis & Cache
+redis==5.2.1
+aioredis==2.0.1
+hiredis==2.3.2
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.18
+cryptography==44.0.0
+pydantic-settings==2.7.0
+
+# HTTP & API
+httpx==0.28.1
+aiohttp==3.11.12
+requests==2.32.3
+
+# Background Tasks
+celery==5.4.0
+flower==2.0.1
+
+# Data Processing
+pandas==2.2.3
+numpy==1.26.4
+python-dateutil==2.9.0.post0
+pytz==2024.2
+
+# Monitoring & Logging
+prometheus-client==0.21.0
+structlog==24.4.0
+rich==13.9.4
+
+# Utilities
+pyyaml==6.0.2
+python-dotenv==1.0.1
+click==8.1.7
+typer==0.15.1
+tqdm==4.67.1
+
+# Machine Learning (Optional)
+joblib==1.4.2
+scikit-learn==1.5.2
+
+# Development Tools (exclude in production)
+# - Install requirements-dev.txt for development

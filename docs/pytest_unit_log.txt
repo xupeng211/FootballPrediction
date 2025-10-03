@@ -1,0 +1,49 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.9, pytest-8.4.2, pluggy-1.6.0
+rootdir: /home/user/projects/FootballPrediction
+configfile: pyproject.toml
+plugins: asyncio-1.2.0, typeguard-4.4.4, anyio-4.11.0, postgresql-7.0.2, xdist-3.8.0, requests-mock-1.12.1, Faker-37.8.0, timeout-2.4.0, cov-7.0.0, mock-3.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 545 items
+
+tests/unit/api/test_cache.py ..............                              [  2%]
+tests/unit/api/test_data_comprehensive.py F
+
+=================================== FAILURES ===================================
+_____________________ TestDataAPI.test_get_matches_success _____________________
+
+self = <test_data_comprehensive.TestDataAPI object at 0x711f2d99bd50>
+
+    @pytest.mark.asyncio
+    async def test_get_matches_success(self):
+        """测试获取比赛列表成功"""
+        # 创建测试比赛数据
+        matches = [self.test_match]
+        for i in range(4):
+            match = MagicMock()
+            match.id = 12346 + i
+            match.home_team_id = 1
+            match.away_team_id = 2
+            match.league_id = 1
+            match.match_time = datetime.now() + timedelta(days=i+1)
+            match.match_status = "scheduled"
+            match.season = "2024-25"
+            matches.append(match)
+    
+        session_mock = AsyncMock()
+        result = MagicMock()
+        result.scalars.return_value.all.return_value = matches
+        result.scalars.return_value.first.return_value = None
+        session_mock.execute.return_value = result
+    
+        with patch('src.api.data.get_async_session') as mock_get_session:
+            mock_get_session.return_value.__aenter__.return_value = session_mock
+    
+>           from src.api.data import get_matches
+E           ImportError: cannot import name 'get_matches' from 'src.api.data' (/home/user/projects/FootballPrediction/tests/../src/api/data.py)
+
+tests/unit/api/test_data_comprehensive.py:75: ImportError
+=========================== short test summary info ============================
+FAILED tests/unit/api/test_data_comprehensive.py::TestDataAPI::test_get_matches_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 14 passed, 4 warnings in 4.43s ===================
