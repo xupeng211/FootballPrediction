@@ -8,6 +8,7 @@ from src.database.models import Match, Prediction
 from src.models.prediction_service import PredictionResult
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 """
 Test suite for predictions API endpoints
@@ -40,12 +41,12 @@ def mock_prediction_service_fixture():
     mock_match.away_team_id = 20
     mock_match.league_id = 1
     mock_match.match_time = datetime.now()
-    mock_match.match_status = "scheduled[": mock_match.season = "]2024-25["""""
+    mock_match.match_status = os.getenv("TEST_API_PREDICTIONS_MATCH_STATUS_43"): mock_match.season = os.getenv("TEST_API_PREDICTIONS_SEASON_43")""""
     # Mock cached prediction
     mock_prediction = MagicMock(spec=Prediction)
     mock_prediction.id = 1
     mock_prediction.match_id = 12345
-    mock_prediction.model_version = "]1.0[": mock_prediction.model_name = "]football_model[": mock_prediction.home_win_probability = 0.45[": mock_prediction.draw_probability = 0.30[": mock_prediction.away_win_probability = 0.25[": mock_prediction.predicted_result = "]]]]home[": mock_prediction.confidence_score = 0.45[": mock_prediction.created_at = datetime.now()": mock_prediction.is_correct = None[": mock_prediction.actual_result = None"
+    mock_prediction.model_version = "]1.0[": mock_prediction.model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_47"): mock_prediction.home_win_probability = 0.45[": mock_prediction.draw_probability = 0.30[": mock_prediction.away_win_probability = 0.25[": mock_prediction.predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_48"): mock_prediction.confidence_score = 0.45[": mock_prediction.created_at = datetime.now()": mock_prediction.is_correct = None[": mock_prediction.actual_result = None"
     mock_prediction.verified_at = None
     with patch("]]]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
@@ -79,12 +80,12 @@ def test_get_match_prediction_success_with_real_prediction(
     mock_match.away_team_id = 20
     mock_match.league_id = 1
     mock_match.match_time = datetime.now()
-    mock_match.match_status = "scheduled[": mock_match.season = "]2024-25["""""
+    mock_match.match_status = os.getenv("TEST_API_PREDICTIONS_MATCH_STATUS_43"): mock_match.season = os.getenv("TEST_API_PREDICTIONS_SEASON_43")""""
     # Mock prediction result
     mock_prediction_result = PredictionResult(
         match_id=12345,
-        model_version="]1.0[",": model_name="]football_model[",": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
-        predicted_result="]home[",": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
+        model_version="]1.0[",": model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_82"),": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
+        predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_84"),": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
         mock_session = AsyncMock(spec=AsyncSession)
         mock_query_result = AsyncMock()
@@ -124,12 +125,12 @@ def test_get_match_prediction_match_not_found(client):
     mock_match.away_team_id = 20
     mock_match.league_id = 1
     mock_match.match_time = datetime.now()
-    mock_match.match_status = "scheduled[": mock_match.season = "]2024-25["""""
+    mock_match.match_status = os.getenv("TEST_API_PREDICTIONS_MATCH_STATUS_43"): mock_match.season = os.getenv("TEST_API_PREDICTIONS_SEASON_43")""""
     # Mock prediction result
     mock_prediction_result = PredictionResult(
         match_id=12345,
-        model_version="]1.0[",": model_name="]football_model[",": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
-        predicted_result="]home[",": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
+        model_version="]1.0[",": model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_82"),": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
+        predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_84"),": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
         mock_session = AsyncMock(spec=AsyncSession)
         mock_query_result = AsyncMock()
@@ -165,8 +166,8 @@ def test_get_match_prediction_match_not_found(client):
     # Mock prediction result
     mock_prediction_result = PredictionResult(
         match_id=12345,
-        model_version="1.0[",": model_name="]football_model[",": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
-        predicted_result="]home[",": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
+        model_version="1.0[",": model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_82"),": home_win_probability=0.45,": draw_probability=0.30,": away_win_probability=0.25,"
+        predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_84"),": confidence_score=0.45,": created_at=datetime.now())": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
         mock_session = AsyncMock(spec=AsyncSession)
         mock_query_result = AsyncMock()
@@ -190,7 +191,7 @@ def test_get_match_prediction_match_not_found(client):
     mock_prediction = MagicMock()
     mock_prediction.id = 1
     mock_prediction.match_id = 12345
-    mock_prediction.model_version = "1.0[": mock_prediction.model_name = "]football_model[": mock_prediction.home_win_probability = 0.45[": mock_prediction.draw_probability = 0.30[": mock_prediction.away_win_probability = 0.25[": mock_prediction.predicted_result = "]]]]home[": mock_prediction.confidence_score = 0.45[": mock_prediction.created_at = datetime.now()": mock_prediction.is_correct = None[": mock_prediction.actual_result = None"
+    mock_prediction.model_version = "1.0[": mock_prediction.model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_47"): mock_prediction.home_win_probability = 0.45[": mock_prediction.draw_probability = 0.30[": mock_prediction.away_win_probability = 0.25[": mock_prediction.predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_48"): mock_prediction.confidence_score = 0.45[": mock_prediction.created_at = datetime.now()": mock_prediction.is_correct = None[": mock_prediction.actual_result = None"
     mock_prediction.verified_at = None
     with patch("]]]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
@@ -226,10 +227,10 @@ def test_get_match_prediction_match_not_found(client):
     # Mock result object for recent predictions query = mock_result MagicMock()
     mock_result.id = 1
     mock_result.match_id = 12345
-    mock_result.model_version = "1.0[": mock_result.model_name = "]football_model[": mock_result.predicted_result = "]home[": mock_result.confidence_score = 0.45[": mock_result.created_at = datetime.now()": mock_result.is_correct = None[": mock_result.home_team_id = 10"
+    mock_result.model_version = "1.0[": mock_result.model_name = os.getenv("TEST_API_PREDICTIONS_MODEL_NAME_47"): mock_result.predicted_result = os.getenv("TEST_API_PREDICTIONS_PREDICTED_RESULT_221"): mock_result.confidence_score = 0.45[": mock_result.created_at = datetime.now()": mock_result.is_correct = None[": mock_result.home_team_id = 10"
     mock_result.away_team_id = 20
     mock_result.match_time = datetime.now()
-    mock_result.match_status = "]]]scheduled[": with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
+    mock_result.match_status = os.getenv("TEST_API_PREDICTIONS_MATCH_STATUS_224"): with patch("]src.api.predictions.get_async_session[") as mock_session_gen:""""
         # Create the actual session mock
         mock_session = AsyncMock(spec=AsyncSession)
         mock_query_result = AsyncMock()

@@ -4,6 +4,7 @@ from src.monitoring.metrics_collector import MetricsCollector
 from src.monitoring.metrics_exporter import MetricsExporter
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 监控指标模块测试
@@ -138,7 +139,7 @@ class TestMetricsIntegration:
         # 使用mock模拟指标更新，因为实际方法是async且需要数据库连接
         with patch.object(exporter, "_get_or_create_gauge[") as mock_gauge:": mock_metric = Mock()": mock_gauge.return_value = mock_metric[""
             # 模拟更新表行数指标
-            exporter.table_row_count.labels(table_name="]]test_table[").set(100)""""
+            exporter.table_row_count.labels(table_name = os.getenv("TEST_MONITORING_METRICS_TABLE_NAME_141")).set(100)""""
         # 获取Prometheus格式输出
         content_type, prometheus_output = exporter.get_metrics()
         # 验证返回格式

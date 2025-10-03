@@ -211,8 +211,7 @@ class TestFeaturesImprovedEnhanced:
         validation_patterns = [
             "match_id: int",
             "include_raw: bool",
-            "Query(default=",
-            "AsyncSession = Depends",
+            "Query(default = os.getenv("TEST_FEATURES_IMPROVED_ENHANCED_DEFAULT_214")AsyncSession = Depends",
             "match_id <= 0",
             "HTTPException(status_code=400"
         ]

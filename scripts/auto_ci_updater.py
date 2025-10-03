@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 自动CI配置更新器 - 将防御机制自动集成到CI流程中
@@ -982,13 +983,13 @@ python scripts/ci_guardian.py -c "make quality" -s
 
 
 @click.command()
-@click.option("--defenses-file", "-d", help="防御机制JSON文件路径")
-@click.option("--project-root", "-p", help="项目根目录路径")
-@click.option("--validate-only", "-v", is_flag=True, help="仅验证现有集成")
-@click.option("--makefile-only", "-m", is_flag=True, help="仅更新Makefile")
-@click.option("--github-only", "-g", is_flag=True, help="仅更新GitHub Actions")
+@click.option("--defenses-file", "-d", help = os.getenv("AUTO_CI_UPDATER_HELP_985"))
+@click.option("--project-root", "-p", help = os.getenv("AUTO_CI_UPDATER_HELP_986"))
+@click.option("--validate-only", "-v", is_flag=True, help = os.getenv("AUTO_CI_UPDATER_HELP_986"))
+@click.option("--makefile-only", "-m", is_flag=True, help = os.getenv("AUTO_CI_UPDATER_HELP_987"))
+@click.option("--github-only", "-g", is_flag=True, help = os.getenv("AUTO_CI_UPDATER_HELP_988"))
 @click.option("--docs-only", "-doc", is_flag=True, help="仅更新文档")
-@click.option("--summary", "-s", is_flag=True, help="显示集成摘要")
+@click.option("--summary", "-s", is_flag=True, help = os.getenv("AUTO_CI_UPDATER_HELP_989"))
 def main(
     defenses_file,
     project_root,

@@ -200,3 +200,46 @@ audit-report.json
 vulnerabilities.csv
 vulnerabilities.json
 # 构建目录
+
+# 敏感文件保护
+*.env
+*.env.*
+*.env.local
+*.env.production
+!*.env.example
+!*.env.template
+# 证书和密钥
+*.p12
+*.pfx
+*.crt
+*.cer
+config/secrets.yaml
+config/secrets.yml
+# AWS/云服务配置
+.aws/
+aws-credentials.json
+google-credentials.json
+*.keytab
+# SSH密钥
+id_rsa*
+id_ed25519*
+ssh_host_*
+# 备份文件
+*~
+# 日志文件（可能包含敏感信息）
+.tmp/
+temp/
+tmp/
+# IDE配置（可能包含密码）
+.vscode/settings.json
+.idea/workspace.xml
+# 系统文件
+# Python缓存
+# 虚拟环境
+.venv/
+# 测试覆盖率
+# 构建产物
+# 报告文件（可能包含敏感信息）
+# MLflow（可能包含敏感配置）
+mlruns/
+.mlflow/

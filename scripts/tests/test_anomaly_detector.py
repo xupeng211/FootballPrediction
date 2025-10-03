@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 AnomalyDetector 功能测试 - Phase 5.2 Batch-Δ-015
@@ -81,10 +82,10 @@ def test_anomaly_detector_structure():
                 # 测试 AnomalyDetectionResult
                 print("\n📊 测试 AnomalyDetectionResult:")
                 result = AnomalyDetectionResult(
-                    table_name="test_table",
-                    detection_method="3sigma",
-                    anomaly_type="statistical_outlier",
-                    severity="medium"
+                    table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_84"),
+                    detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_84"),
+                    anomaly_type = os.getenv("TEST_ANOMALY_DETECTOR_ANOMALY_TYPE_85"),
+                    severity = os.getenv("TEST_ANOMALY_DETECTOR_SEVERITY_85")
                 )
 
                 print(f"  ✅ 结果创建: {result.table_name}, {result.detection_method}")

@@ -5,6 +5,7 @@ from src.data.collectors.scores_collector import ScoresCollector, MatchStatus, E
 from unittest.mock import AsyncMock, patch
 import asyncio
 import pytest
+import os
 
 #!/usr/bin/env python3
 """
@@ -26,7 +27,7 @@ class TestScoresCollector:
     def setup_method(self):
         """设置测试环境"""
         self.collector = ScoresCollector(
-            data_source="test_scores_api[",": api_key="]test_key[",": base_url = "]https//api.test.com/v4[",": websocket_url = "]wss//api.test.com/ws[",": polling_interval=60)": def test_init_with_default_values(self):""
+            data_source = os.getenv("TEST_SCORES_COLLECTOR_DATA_SOURCE_29"),": api_key = os.getenv("TEST_SCORES_COLLECTOR_API_KEY_29"),": base_url = os.getenv("TEST_SCORES_COLLECTOR_BASE_URL_29"),": websocket_url = os.getenv("TEST_SCORES_COLLECTOR_WEBSOCKET_URL_29"),": polling_interval=60)": def test_init_with_default_values(self):""
         "]""测试默认初始化"""
         collector = ScoresCollector()
         assert collector.data_source =="scores_api[" assert collector.api_key is None[""""
@@ -38,7 +39,7 @@ class TestScoresCollector:
     def test_init_with_custom_values(self):
         "]]""测试自定义初始化"""
         collector = ScoresCollector(
-            data_source="custom_scores_api[",": api_key="]custom_key[",": base_url = "]https//custom.api.com[",": websocket_url = "]wss//custom.api.com/ws[",": polling_interval=30)": assert collector.data_source =="]custom_scores_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com[" assert collector.websocket_url =="]wss//custom.api.com/ws[" assert collector.polling_interval ==30[""""
+            data_source = os.getenv("TEST_SCORES_COLLECTOR_DATA_SOURCE_38"),": api_key = os.getenv("TEST_SCORES_COLLECTOR_API_KEY_38"),": base_url = os.getenv("TEST_SCORES_COLLECTOR_BASE_URL_39"),": websocket_url = os.getenv("TEST_SCORES_COLLECTOR_WEBSOCKET_URL_40"),": polling_interval=30)": assert collector.data_source =="]custom_scores_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com[" assert collector.websocket_url =="]wss//custom.api.com/ws[" assert collector.polling_interval ==30[""""
     @pytest.mark.asyncio
     async def test_collect_fixtures_skipped(self):
         "]]""测试赛程采集被跳过"""
@@ -246,7 +247,7 @@ class TestScoresCollector:
     async def test_collect_via_websocket_no_url(self):
         "]""测试WebSocket URL未配置的情况"""
         self.collector.websocket_url = None
-        with pytest.raises(ValueError, match = "WebSocket URL not configured[")": await self.collector._collect_via_websocket(["]1["])""""
+        with pytest.raises(ValueError, match = os.getenv("TEST_SCORES_COLLECTOR_MATCH_244"))": await self.collector._collect_via_websocket(["]1["])""""
     @pytest.mark.asyncio
     async def test_collect_via_polling_success(self):
         "]""测试成功通过轮询采集数据"""
@@ -331,8 +332,8 @@ class TestScoresCollector:
         """测试启动持续监控模式成功"""
         with patch.object(:
             self.collector, "_get_live_matches[", return_value=["]1["]""""
-        ), patch.object(self.collector, "]collect_live_scores[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source="]test[",": collection_type="]live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-                status="]success[")""""
+        ), patch.object(self.collector, "]collect_live_scores[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source = os.getenv("TEST_SCORES_COLLECTOR_DATA_SOURCE_331"),": collection_type = os.getenv("TEST_SCORES_COLLECTOR_COLLECTION_TYPE_332"),": records_collected=1,": success_count=1,": error_count=0,"
+                status = os.getenv("TEST_SCORES_COLLECTOR_STATUS_334"))""""
             # Run for a short time then cancel = task asyncio.create_task(self.collector.start_continuous_monitoring())
             await asyncio.sleep(0.5)  # Give it more time to run
             task.cancel()
@@ -345,7 +346,7 @@ class TestScoresCollectorEdgeCases:
     "]""测试实时比分采集器边界情况"""
     def setup_method(self):
         """设置测试环境"""
-        self.collector = ScoresCollector(websocket_url="wss//test.com/ws[")""""
+        self.collector = ScoresCollector(websocket_url = os.getenv("TEST_SCORES_COLLECTOR_WEBSOCKET_URL_337"))""""
     @pytest.mark.asyncio
     async def test_collect_live_scores_timeout_during_websocket(self):
         "]""测试WebSocket采集过程中的超时处理"""
@@ -446,8 +447,8 @@ class TestScoresCollectorEdgeCases:
         "]]""测试持续监控模式中的错误处理"""
         with patch.object(:
             self.collector, "_get_live_matches[", return_value=["]1["]""""
-        ), patch.object(self.collector, "]collect_live_scores[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source="]test[",": collection_type="]live_scores[",": records_collected=0,": success_count=0,": error_count=1,"
-                status="]failed[",": error_message="]API Error[")""""
+        ), patch.object(self.collector, "]collect_live_scores[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source = os.getenv("TEST_SCORES_COLLECTOR_DATA_SOURCE_331"),": collection_type = os.getenv("TEST_SCORES_COLLECTOR_COLLECTION_TYPE_332"),": records_collected=0,": success_count=0,": error_count=1,"
+                status = os.getenv("TEST_SCORES_COLLECTOR_STATUS_446"),": error_message = os.getenv("TEST_SCORES_COLLECTOR_ERROR_MESSAGE_446"))""""
             # Run for a short time then cancel = task asyncio.create_task(self.collector.start_continuous_monitoring())
             await asyncio.sleep(0.1)
             task.cancel()

@@ -192,7 +192,7 @@ class DatabaseBackupTask(Task):
         # 执行备份脚本
         success, output, stats = backup_task.run_backup_script(
             backup_type="full",
-            database_name="football_prediction"
+            database_name = os.getenv("BACKUP_TASKS_DATABASE_NAME_195")
         )
 
         if success:
@@ -269,7 +269,7 @@ class DatabaseBackupTask(Task):
     def run_backup_script(
         self,
         backup_type: str,
-        database_name: str = "football_prediction",
+        database_name: str = os.getenv("BACKUP_TASKS_STR_271"),
         additional_args: Optional[list] = None,
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
@@ -310,7 +310,7 @@ class DatabaseBackupTask(Task):
             # 执行全量备份
             success, output, stats = backup_task.run_backup_script(
                 backup_type="full",
-                database_name="football_prediction"
+                database_name = os.getenv("BACKUP_TASKS_DATABASE_NAME_195")
             )
 
             if success:
@@ -401,7 +401,7 @@ class DatabaseBackupTask(Task):
                 self.metrics["failure_total"].labels(
                     backup_type=backup_type,
                     database_name=database_name,
-                    error_type="script_execution_failed",
+                    error_type = os.getenv("BACKUP_TASKS_ERROR_TYPE_403"),
                 ).inc()
 
                 return False, f"{error_msg}\n{result.stderr}", stats
@@ -413,7 +413,7 @@ class DatabaseBackupTask(Task):
             self.metrics["failure_total"].labels(
                 backup_type=backup_type,
                 database_name=database_name,
-                error_type="timeout",
+                error_type = os.getenv("BACKUP_TASKS_ERROR_TYPE_414"),
             ).inc()
 
             return False, error_msg, {"error": "timeout"}
@@ -561,7 +561,7 @@ class DatabaseBackupTask(Task):
 
 
 @app.task(base=DatabaseBackupTask, bind=True)
-def daily_full_backup_task(self, database_name: str = "football_prediction"):
+def daily_full_backup_task(self, database_name: str = os.getenv("BACKUP_TASKS_STR_271")):
     """
     每日全量备份任务
 
@@ -596,7 +596,7 @@ def daily_full_backup_task(self, database_name: str = "football_prediction"):
 
 
 @app.task(base=DatabaseBackupTask, bind=True)
-def hourly_incremental_backup_task(self, database_name: str = "football_prediction"):
+def hourly_incremental_backup_task(self, database_name: str = os.getenv("BACKUP_TASKS_STR_271")):
     """
     每小时增量备份任务
 
@@ -609,7 +609,7 @@ def hourly_incremental_backup_task(self, database_name: str = "football_predicti
     logger.info("开始执行每小时增量备份任务")
 
     success, output, stats = self.run_backup_script(
-        backup_type="incremental", database_name=database_name
+        backup_type = os.getenv("BACKUP_TASKS_BACKUP_TYPE_606"), database_name=database_name
     )
 
     result = {
@@ -630,7 +630,7 @@ def hourly_incremental_backup_task(self, database_name: str = "football_predicti
 
 
 @app.task(base=DatabaseBackupTask, bind=True)
-def weekly_wal_archive_task(self, database_name: str = "football_prediction"):
+def weekly_wal_archive_task(self, database_name: str = os.getenv("BACKUP_TASKS_STR_271")):
     """
     每周WAL归档任务
 
@@ -664,7 +664,7 @@ def weekly_wal_archive_task(self, database_name: str = "football_prediction"):
 
 
 @app.task(base=DatabaseBackupTask, bind=True)
-def cleanup_old_backups_task(self, database_name: str = "football_prediction"):
+def cleanup_old_backups_task(self, database_name: str = os.getenv("BACKUP_TASKS_STR_271")):
     """
     清理旧备份文件任务
 
@@ -701,7 +701,7 @@ def cleanup_old_backups_task(self, database_name: str = "football_prediction"):
 
 @app.task(base=DatabaseBackupTask, bind=True)
 def verify_backup_task(
-    self, backup_file_path: str, database_name: str = "football_prediction"
+    self, backup_file_path: str, database_name: str = os.getenv("BACKUP_TASKS_STR_271")
 ):
     """
     验证备份文件任务
@@ -864,7 +864,7 @@ def get_backup_status():
 
 @app.task
 def manual_backup_task(
-    backup_type: str = "full", database_name: str = "football_prediction"
+    backup_type: str = "full", database_name: str = os.getenv("BACKUP_TASKS_STR_271")
 ):
     """
     手动触发备份任务

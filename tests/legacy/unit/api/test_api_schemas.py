@@ -14,15 +14,15 @@ pytestmark = pytest.mark.filterwarnings("ignore::UserWarning")
 
 def test_health_check_response_serialization():
     payload = HealthCheckResponse(
-        status="healthy",
+        status = os.getenv("TEST_API_SCHEMAS_STATUS_17"),
         timestamp=datetime.utcnow().isoformat(),
-        service="football-prediction-api",
+        service = os.getenv("TEST_API_SCHEMAS_SERVICE_18"),
         version="1.0.0",
         uptime=12.5,
         response_time_ms=8.2,
         checks={
             "database": ServiceCheck(
-                status="healthy",
+                status = os.getenv("TEST_API_SCHEMAS_STATUS_17"),
                 response_time_ms=1.0,
                 details={"message": "db ok"},
             )

@@ -1,3 +1,4 @@
+import os
 """
 预测服务全面测试
 Comprehensive tests for prediction service to boost coverage
@@ -74,7 +75,7 @@ class TestPredictionService:
                 predicted_result="home",
                 confidence_score=0.55,
                 model_version="1.0",
-                model_name="football_predictor_v1"
+                model_name = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_MODEL_NAME_7")
             )
 
             result = await self.service.predict_match(self.test_match_id)
@@ -103,7 +104,7 @@ class TestPredictionService:
         """测试预测已结束的比赛"""
         with patch.object(self.service, 'get_match') as mock_get_match:
             mock_match = MagicMock()
-            mock_match.status = "finished"
+            mock_match.status = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_STATUS_105")
             mock_get_match.return_value = mock_match
 
             with pytest.raises(ValueError) as exc_info:
@@ -373,7 +374,7 @@ class TestModelManager:
 
     def test_model_performance_tracking(self):
         """测试模型性能跟踪"""
-        model_name = "test_model"
+        model_name = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_MODEL_NAME_3")
         metrics = {
             "accuracy": 0.75,
             "precision": 0.73,
@@ -618,7 +619,7 @@ class TestBatchPrediction:
 
     def test_batch_progress_tracking(self):
         """测试批量预测进度跟踪"""
-        batch_id = "batch_12345"
+        batch_id = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_BATCH_ID_616")
         total_matches = 100
 
         # 初始化进度

@@ -1,3 +1,4 @@
+import os
 """
 Unit tests for model evaluation functionality.
 
@@ -37,7 +38,7 @@ class TestModelMetricsExporter:
         return PredictionResult(
             match_id=12345,
             model_version="1.0",
-            model_name="football_baseline_model",
+            model_name = os.getenv("TEST_MODEL_EVALUATION_MODEL_NAME_40"),
             home_win_probability=0.5,
             draw_probability=0.3,
             away_win_probability=0.2,

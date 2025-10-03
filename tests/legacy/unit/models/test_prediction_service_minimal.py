@@ -4,6 +4,7 @@ from src.models.prediction_service import PredictionService
 from unittest.mock import patch
 import numpy
 import pytest
+import os
 
 """
 PredictionService 最小化测试套件
@@ -103,7 +104,7 @@ class TestPredictionServiceMinimal:
             with patch.object(:
                 prediction_service.db_manager, "get_match["""""
             ) as mock_get_match:
-                mock_get_match.side_effect = Exception("]数据库连接失败[")": with pytest.raises(Exception, match = "]数据库连接失败[")": await prediction_service._get_match_info(12345)": class TestMethodAvailability:""
+                mock_get_match.side_effect = Exception("]数据库连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_MINIMAL_MATCH_106"))": await prediction_service._get_match_info(12345)": class TestMethodAvailability:""
         "]""测试方法可用性"""
         def test_private_methods_exist(self, prediction_service):
             """测试私有方法存在"""

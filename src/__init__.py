@@ -6,8 +6,8 @@ FootballPrediction - 基于机器学习的足球比赛结果预测系统
 """
 
 __version__ = "0.1.0"
-__author__ = "FootballPrediction Team"
-__email__ = "football@prediction.com"
+__author__ = os.getenv("__INIT_____AUTHOR___9")
+__email__ = os.getenv("__INIT_____EMAIL___9")
 
 import os
 

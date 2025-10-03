@@ -72,7 +72,7 @@ class TestCacheModels:
         """测试缓存键请求模型"""
         request = CacheKeyRequest(
             keys=["key1", "key2", "key3"],
-            pattern="test:*"
+            pattern = os.getenv("TEST_CACHE_API_COMPLETE_PATTERN_75")
         )
         assert request.keys == ["key1", "key2", "key3"]
         assert request.pattern == "test:*"
@@ -176,7 +176,7 @@ class TestClearCache:
         """测试成功清理缓存"""
         request = CacheKeyRequest(
             keys=["key1", "key2", "key3"],
-            pattern="test:*"
+            pattern = os.getenv("TEST_CACHE_API_COMPLETE_PATTERN_75")
         )
 
         mock_background_tasks = Mock()
@@ -234,7 +234,7 @@ class TestClearCache:
     @pytest.mark.asyncio
     async def test_clear_cache_with_pattern_only(self):
         """测试仅使用模式清理"""
-        request = CacheKeyRequest(keys=[], pattern="temp:*")
+        request = CacheKeyRequest(keys=[], pattern = os.getenv("TEST_CACHE_API_COMPLETE_PATTERN_235"))
 
         mock_background_tasks = Mock()
         mock_background_tasks.add_task = Mock()
@@ -686,7 +686,7 @@ class TestCacheEdgeCases:
         """测试清理包含特殊字符的键"""
         request = CacheKeyRequest(
             keys=["test:key:1", "user@domain.com", "path/to/resource"],
-            pattern="*:special:*"
+            pattern = os.getenv("TEST_CACHE_API_COMPLETE_PATTERN_686")
         )
 
         mock_background_tasks = Mock()

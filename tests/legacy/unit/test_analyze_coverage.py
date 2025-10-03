@@ -29,21 +29,21 @@ def test_function():
 class TestClass:
     pass
 "]"""
-        test_file.write_text(test_content, encoding="utf-8[")": result = count_lines_of_code(str(test_file))"""
+        test_file.write_text(test_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))": result = count_lines_of_code(str(test_file))"""
         # 应该排除空行和注释行，只计算实际代码行
         assert (
             result ==6
         )  # def + x=1 + y=2 + return + class + pass (shebang is treated as comment)
     def test_count_lines_of_code_empty_file(self, tmp_path):
         "]""测试空文件的代码行数计算"""
-        test_file = tmp_path / "empty.py[": test_file.write_text("]", encoding="utf-8[")": result = count_lines_of_code(str(test_file))": assert result ==0[" def test_count_lines_of_code_comments_only(self, tmp_path):"
+        test_file = tmp_path / "empty.py[": test_file.write_text("]", encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))": result = count_lines_of_code(str(test_file))": assert result ==0[" def test_count_lines_of_code_comments_only(self, tmp_path):"
         "]]""测试只有注释的文件"""
         test_file = tmp_path / "comments.py[": test_content = "]""#!/usr/bin/env python3[""""
 # 注释1
 # 注释2
 # 更多注释
 "]"""
-        test_file.write_text(test_content, encoding="utf-8[")": result = count_lines_of_code(str(test_file))": assert result ==0  # shebang 也被当作注释处理[" def test_count_lines_of_code_file_not_found(self):"
+        test_file.write_text(test_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))": result = count_lines_of_code(str(test_file))": assert result ==0  # shebang 也被当作注释处理[" def test_count_lines_of_code_file_not_found(self):"
         "]]""测试不存在的文件"""
         result = count_lines_of_code("/nonexistent/file.py[")": assert result ==0[" def test_count_lines_of_code_mixed_content(self, tmp_path):""
         "]]""测试混合内容（代码、注释、空行）"""
@@ -62,7 +62,7 @@ class TestClass:
         '''方法文档'''
         return "]test["""""
 "]"""
-        test_file.write_text(test_content, encoding="utf-8[")": result = count_lines_of_code(str(test_file))"""
+        test_file.write_text(test_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))": result = count_lines_of_code(str(test_file))"""
         # def + docstring(算代码) + x=1 + y=2 + return + def + pass + class + def + docstring + return
         assert result ==11
 class TestGetCoverageData:
@@ -92,7 +92,7 @@ class TestGetCoverageData:
     @patch("subprocess.run[")": def test_get_coverage_data_malformed_output(self, mock_run):"""
         "]""测试格式错误的输出"""
         mock_result = Mock()
-        mock_result.stdout = ": malformed output without proper format["""""
+        mock_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_STDOUT_92")""""
         mock_result.returncode = 0
         mock_run.return_value = mock_result
         result = get_coverage_data()
@@ -101,7 +101,7 @@ class TestGetCoverageData:
         "]""测试子进程错误"""
         mock_result = Mock()
         mock_result.returncode = 1
-        mock_result.stderr = "Error running pytest[": mock_result.stdout = "]"  # 确保stdout是字符串[": mock_run.return_value = mock_result[": result = get_coverage_data()": assert result =={}"
+        mock_result.stderr = os.getenv("TEST_ANALYZE_COVERAGE_STDERR_100"): mock_result.stdout = "]"  # 确保stdout是字符串[": mock_run.return_value = mock_result[": result = get_coverage_data()": assert result =={}"
 class TestAnalyzeSourceFiles:
     "]]""测试源文件分析功能"""
     @patch("analyze_coverage.Path[")": def test_analyze_source_files_success(self, mock_path_class):"""
@@ -111,7 +111,7 @@ class TestAnalyzeSourceFiles:
         mock_path_class.return_value = mock_src_dir
         # 模拟文件列表
         mock_files = [
-            Mock(name="file1.py[", relative_to=Mock(return_value=Path("]src/file1.py["))),": Mock(name="]file2.py[", relative_to=Mock(return_value=Path("]src/file2.py["))),": Mock(": name="]__pycache__/cache.py[",": relative_to=Mock(return_value=Path("]__pycache__/cache.py["))),  # 应该被跳过[""""
+            Mock(name="file1.py[", relative_to=Mock(return_value=Path("]src/file1.py["))),": Mock(name = os.getenv("TEST_ANALYZE_COVERAGE_NAME_111"), relative_to=Mock(return_value=Path("]src/file2.py["))),": Mock(": name = os.getenv("TEST_ANALYZE_COVERAGE_NAME_114"),": relative_to=Mock(return_value=Path("]__pycache__/cache.py["))),  # 应该被跳过[""""
         ]
         mock_src_dir.rglob.return_value = mock_files
         # 模拟 count_lines_of_code 函数
@@ -159,7 +159,7 @@ class TestAnalyzeSourceFiles:
         mock_file = mock_open()
         # 模拟日期命令
         mock_date_result = Mock()
-        mock_date_result.stdout = "]]2025-09-27 12:0000[": mock_subprocess.return_value = mock_date_result[""""
+        mock_date_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_STDOUT_156"): mock_subprocess.return_value = mock_date_result[""""
         # 捕获打印输出
         with patch("]]builtins.print["):": result = main()"""
             # 验证结果
@@ -181,7 +181,7 @@ class TestAnalyzeSourceFiles:
         mock_get_coverage.return_value = {}  # 空的覆盖率数据
         mock_open()
         mock_date_result = Mock()
-        mock_date_result.stdout = "]2025-09-27 12:0000[": mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print["):": result = main()"""
+        mock_date_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_STDOUT_177"): mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print["):": result = main()"""
             # 验证没有覆盖率数据的文件被设置为0
             assert result[0]"]file_path[" =="]src/file1.py[" assert result[0]"]coverage[" ==0.0[" class TestIntegration:"""
     "]]""集成测试"""
@@ -192,10 +192,10 @@ class TestAnalyzeSourceFiles:
         # 创建测试Python文件
         test_file1 = test_dir / "]file1.py[": test_file1.write_text(""""
             "]""#!/usr/bin/env python3[": def test_func():": return "]test["""""
-"]"",": encoding="utf-8[")": test_file2 = test_dir / "]file2.py[": test_file2.write_text(""""
+"]"",": encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))": test_file2 = test_dir / "]file2.py[": test_file2.write_text(""""
             "]""#!/usr/bin/env python3[""""
 # 只有一个注释的文件
-"]"",": encoding="utf-8[")""""
+"]"",": encoding = os.getenv("TEST_ANALYZE_COVERAGE_ENCODING_32"))""""
         # 临时修改工作目录
         original_cwd = os.getcwd()
         try:
@@ -221,8 +221,8 @@ class TestAnalyzeSourceFiles:
         "]""测试子进程超时错误"""
         mock_run.side_effect = Exception("TimeoutExpired[")""""
         # 由于函数没有异常处理，预期会抛出异常
-        with pytest.raises(Exception, match = "]TimeoutExpired[")": get_coverage_data()": def test_analyze_source_files_permission_error(self):""
+        with pytest.raises(Exception, match = os.getenv("TEST_ANALYZE_COVERAGE_MATCH_217"))": get_coverage_data()": def test_analyze_source_files_permission_error(self):""
         "]""测试文件权限错误"""
         with patch("analyze_coverage.Path[") as mock_path:": mock_src_dir = Mock()": mock_path.return_value = mock_src_dir[": mock_src_dir.rglob.side_effect = PermissionError("]]Permission denied[")""""
             # 由于函数没有异常处理，预期会抛出异常
-            with pytest.raises(PermissionError, match = "]Permission denied[")"]": analyze_source_files()
+            with pytest.raises(PermissionError, match = os.getenv("TEST_ANALYZE_COVERAGE_MATCH_224"))"]": analyze_source_files()

@@ -1,3 +1,4 @@
+import os
 """
 Redis管理器简单测试
 Simple tests for Redis manager to boost coverage
@@ -25,7 +26,7 @@ class TestRedisManagerSimple:
             pytest.skip("RedisManager not available")
 
         # 创建测试实例
-        self.redis_url = "redis://localhost:6379/0"
+        self.redis_url = os.getenv("TEST_REDIS_MANAGER_SIMPLE_REDIS_URL_28")
         self.manager = RedisManager(
             redis_url=self.redis_url,
             max_connections=10,

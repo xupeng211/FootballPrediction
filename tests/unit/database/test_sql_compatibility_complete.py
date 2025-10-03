@@ -1,3 +1,4 @@
+import os
 """
 SQL兼容性模块测试
 SQL Compatibility Module Tests
@@ -19,12 +20,12 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # 测试字符串URL
-        url = "sqlite:///test.db"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_22")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "sqlite"
 
         # 测试内存SQLite
-        url = "sqlite:///:memory:"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_24")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "sqlite"
 
@@ -38,12 +39,12 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # 测试字符串URL
-        url = "postgresql://user:pass@localhost/test"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_38")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "postgresql"
 
         # 测试 psycopg3 URL
-        url = "postgresql+psycopg3://user:pass@localhost/test"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_42")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "postgresql"
 
@@ -52,12 +53,12 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # 测试字符串URL
-        url = "mysql://user:pass@localhost/test"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_52")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "mysql"
 
         # 测试 PyMySQL URL
-        url = "mysql+pymysql://user:pass@localhost/test"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_56")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "mysql"
 
@@ -66,7 +67,7 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # 测试未知URL
-        url = "oracle://user:pass@localhost/test"
+        url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_65")
         db_type = SQLCompatibilityHelper.detect_database_type(url)
         assert db_type == "unknown"
 
@@ -81,7 +82,7 @@ class TestSQLCompatibilityHelper:
         # 自定义参数
         sql = SQLCompatibilityHelper.get_interval_sql(
             "postgresql",
-            base_time="created_at",
+            base_time = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_BASE_TIME_79"),
             interval_value=7,
             interval_unit="day"
         )
@@ -147,7 +148,7 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         sql = SQLCompatibilityHelper.get_epoch_extract_sql("sqlite", "created_at")
-        expected = "((julianday(created_at) - julianday('1970 - 01 - 01 00:00:00')) * 86400)"
+        expected = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_EXPECTED_146")1970 - 01 - 01 00:00:00')) * 86400)"
         assert sql == expected
 
         # 测试函数调用
@@ -306,12 +307,12 @@ class TestSQLCompatibilityHelper:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # PostgreSQL到SQLite的转换
-        pg_sql = "SELECT * FROM users WHERE created_at > NOW() - INTERVAL '1 day'"
+        pg_sql = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_PG_SQL_302")1 day'"
         sqlite_sql = SQLCompatibilityHelper.convert_sql_dialect(pg_sql, "postgresql", "sqlite")
         assert "datetime" in sqlite_sql or "sqlite" in sqlite_sql.lower()
 
         # 测试不需要转换的情况
-        simple_sql = "SELECT * FROM users"
+        simple_sql = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_SIMPLE_SQL_310")
         converted = SQLCompatibilityHelper.convert_sql_dialect(simple_sql, "sqlite", "postgresql")
         # 应该保持原样或做最小改动
 
@@ -449,7 +450,7 @@ class TestUtilityFunctions:
 
         # 测试模拟的PostgreSQL引擎
         mock_engine = Mock()
-        mock_engine.url = "postgresql://user:pass@localhost/test"
+        mock_engine.url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_38")
         db_type = get_db_type_from_engine(mock_engine)
         assert db_type == "postgresql"
 
@@ -464,7 +465,7 @@ class TestUtilityFunctions:
 
         # 测试模拟的PostgreSQL引擎
         mock_engine = Mock()
-        mock_engine.url = "postgresql://user:pass@localhost/test"
+        mock_engine.url = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_URL_38")
         builder = create_compatible_query_builder(mock_engine)
         assert builder.db_type == "postgresql"
 
@@ -676,7 +677,7 @@ class TestSQLCompatibilityIntegration:
         from src.database.sql_compatibility import SQLCompatibilityHelper
 
         # 构建一个查询，在不同数据库中使用不同的语法
-        base_query = "SELECT * FROM events WHERE "
+        base_query = os.getenv("TEST_SQL_COMPATIBILITY_COMPLETE_BASE_QUERY_670")
 
         db_specific_clauses = {}
         for db_type in ["postgresql", "sqlite", "mysql"]:

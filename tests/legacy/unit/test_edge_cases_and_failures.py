@@ -89,7 +89,7 @@ class TestEdgeCasesAndFailureScenarios:
             # Mock the model to avoid MLflow connection
             mock_model = Mock()
             mock_model.predict_proba = Mock(return_value=np.array([[0.33, 0.33, 0.34]]))
-            mock_model.predict = Mock(return_value=np.array("]draw["))": mock_get_model.return_value = (mock_model, "]1.0[")": with pytest.raises(ValueError, match = "]比赛 0 不存在[")": await prediction_service.predict_match(0)": with pytest.raises(ValueError, match = "]比赛 -1 不存在[")": await prediction_service.predict_match(-1)"""
+            mock_model.predict = Mock(return_value=np.array("]draw["))": mock_get_model.return_value = (mock_model, "]1.0[")": with pytest.raises(ValueError, match = os.getenv("TEST_EDGE_CASES_AND_FAILURES_MATCH_92"))": await prediction_service.predict_match(0)": with pytest.raises(ValueError, match = os.getenv("TEST_EDGE_CASES_AND_FAILURES_MATCH_92"))": await prediction_service.predict_match(-1)"""
     @pytest.mark.asyncio
     async def test_predict_match_with_extreme_id_values(self, prediction_service):
         "]""测试使用极端比赛ID值进行预测"""
@@ -201,7 +201,7 @@ class TestEdgeCasesAndFailureScenarios:
         mock_session_context
         )
         # 创建预测结果
-        prediction_result = PredictionResult(match_id=1, model_version="]]1.0[")""""
+        prediction_result = PredictionResult(match_id=1, model_version = os.getenv("TEST_EDGE_CASES_AND_FAILURES_MODEL_VERSION_202"))""""
         # 存储预测结果应该失败并触发回滚
         with pytest.raises(Exception):
             await prediction_service._store_prediction(prediction_result)
@@ -218,7 +218,7 @@ class TestEdgeCasesAndFailureScenarios:
         # Mock模型加载失败
         mock_mlflow_module.sklearn.load_model.side_effect = Exception("模型文件损坏[")""""
         # 获取模型应该失败
-        with pytest.raises(Exception, match = "]模型文件损坏[")": await prediction_service.get_production_model()"""
+        with pytest.raises(Exception, match = os.getenv("TEST_EDGE_CASES_AND_FAILURES_MATCH_219"))": await prediction_service.get_production_model()"""
     @pytest.mark.asyncio
     async def test_model_version_not_found(
         self, prediction_service, mock_mlflow_client
@@ -228,7 +228,7 @@ class TestEdgeCasesAndFailureScenarios:
         mock_mlflow_client.get_latest_versions.return_value = []
         # 获取模型应该失败
         with pytest.raises(:
-            ValueError, match="模型 football_baseline_model 没有可用版本["""""
+            ValueError, match = os.getenv("TEST_EDGE_CASES_AND_FAILURES_MATCH_227")""""
         ):
             await prediction_service.get_production_model()
     # ================================

@@ -1,3 +1,4 @@
+import os
 """""""
 Mutation testing runner for the football prediction system.
 
@@ -174,10 +175,10 @@ class MutationTestRunner:
 
         # Write report
         try:
-            Path("docs/_reports[").mkdir(exist_ok=True)": with open(report_file, "]w[", encoding="]utf-8[") as f:": f.write(report_content)": print(f["]📄 Mutation report saved to["]: [{report_file}])": return report_file[": except Exception as e:": print(f["]]❌ Failed to save report["]: [{e}])": return None[": def _generate_files_table(self, files: List[str]) -> str:""
+            Path("docs/_reports[").mkdir(exist_ok=True)": with open(report_file, "]w[", encoding = os.getenv("RUN_MUTATION_TESTS_ENCODING_177")) as f:": f.write(report_content)": print(f["]📄 Mutation report saved to["]: [{report_file}])": return report_file[": except Exception as e:": print(f["]]❌ Failed to save report["]: [{e}])": return None[": def _generate_files_table(self, files: List[str]) -> str:""
         "]]""Generate a markdown table of tested files."""""""
         if not files:
-            return "No files were tested.": table = "| File | Category | Threshold | Status |\n[": table += "]|------|----------|-----------|--------|\n[": for file_path in files:": category = self.config.get_file_category(file_path)": threshold = self.config.get_threshold_for_file(file_path)": status = "]✅ Tested[": if file_path in files else "]❌ Skipped[": file_name = file_path.replace("]src/", "").replace(".py[", "]")": table += f["| `{file_name}` | {category} | {threshold}% | {status} |\n["]"]": return table[": def validate_thresholds(self, results: Dict[str, Any]) -> Dict[str, Any]:"
+            return "No files were tested.": table = os.getenv("RUN_MUTATION_TESTS_TABLE_180"): table += "]|------|----------|-----------|--------|\n[": for file_path in files:": category = self.config.get_file_category(file_path)": threshold = self.config.get_threshold_for_file(file_path)": status = os.getenv("RUN_MUTATION_TESTS_STATUS_180"): if file_path in files else "]❌ Skipped[": file_name = file_path.replace("]src/", "").replace(".py[", "]")": table += f["| `{file_name}` | {category} | {threshold}% | {status} |\n["]"]": return table[": def validate_thresholds(self, results: Dict[str, Any]) -> Dict[str, Any]:"
         "]""Validate mutation scores against thresholds."""""""
         validation = {"passed[": True, "]failures[": [], "]warnings[": []}": actual_score = results["]summary["]["]mutation_score["]": overall_threshold = self.config.THRESHOLDS["]overall["]": if actual_score < overall_threshold:": validation["]passed["] = False[": validation["]]failures["].append(": f["]Overall mutation score {actual_score:.1f}% below threshold {overall_threshold}%"]""""
             )

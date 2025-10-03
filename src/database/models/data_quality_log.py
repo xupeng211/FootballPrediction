@@ -1,3 +1,4 @@
+import os
 """
 数据质量日志数据库模型
 
@@ -27,40 +28,40 @@ class DataQualityLog(BaseModel):
     包括数据异常、处理结果和人工干预需求。
     """
 
-    __tablename__ = "data_quality_logs"
+    __tablename__ = os.getenv("DATA_QUALITY_LOG___TABLENAME___30")
 
     # 基础信息
-    id = Column(Integer, primary_key=True, index=True, comment="日志记录唯一标识")
+    id = Column(Integer, primary_key=True, index=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_33"))
     table_name = Column(
-        String(100), nullable=False, index=True, comment="出现问题的表名"
+        String(100), nullable=False, index=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_34")
     )
-    record_id = Column(Integer, nullable=True, index=True, comment="出现问题的记录ID")
+    record_id = Column(Integer, nullable=True, index=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_35"))
 
     # 问题分类
     error_type = Column(String(100), nullable=False, index=True, comment="错误类型")
     severity = Column(
-        String(20), default="medium", comment="严重程度: low/medium/high/critical"
+        String(20), default = os.getenv("DATA_QUALITY_LOG_DEFAULT_40"), comment = os.getenv("DATA_QUALITY_LOG_COMMENT_40")
     )
 
     # 错误详情
-    error_data = Column(JSON, nullable=True, comment="错误数据和上下文信息")
-    error_message = Column(Text, nullable=True, comment="详细错误描述")
+    error_data = Column(JSON, nullable=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_42"))
+    error_message = Column(Text, nullable=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_42"))
 
     # 处理状态
     status = Column(
         String(20),
-        default="logged",
+        default = os.getenv("DATA_QUALITY_LOG_DEFAULT_46"),
         index=True,
-        comment="处理状态: logged/in_progress/resolved/ignored",
+        comment = os.getenv("DATA_QUALITY_LOG_COMMENT_46"),
     )
     requires_manual_review = Column(
-        Boolean, default=False, index=True, comment="是否需要人工审核"
+        Boolean, default=False, index=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_50")
     )
 
     # 处理信息
     handled_by = Column(String(100), nullable=True, comment="处理人员")
     handled_at = Column(DateTime, nullable=True, comment="处理时间")
-    resolution_notes = Column(Text, nullable=True, comment="解决方案说明")
+    resolution_notes = Column(Text, nullable=True, comment = os.getenv("DATA_QUALITY_LOG_COMMENT_57"))
 
     # 时间戳
     detected_at = Column(
@@ -107,21 +108,21 @@ class DataQualityLog(BaseModel):
 
     def mark_as_resolved(self, handler: str, notes: str) -> None:
         """标记为已解决"""
-        self.status = "resolved"
+        self.status = os.getenv("DATA_QUALITY_LOG_STATUS_103")
         self.handled_by = handler
         self.handled_at = datetime.now()
         self.resolution_notes = notes
 
     def mark_as_ignored(self, handler: str, reason: str) -> None:
         """标记为忽略"""
-        self.status = "ignored"
+        self.status = os.getenv("DATA_QUALITY_LOG_STATUS_108")
         self.handled_by = handler
         self.handled_at = datetime.now()
         self.resolution_notes = f"忽略原因: {reason}"
 
     def assign_to_handler(self, handler: str) -> None:
         """分配给处理人员"""
-        self.status = "in_progress"
+        self.status = os.getenv("DATA_QUALITY_LOG_STATUS_113")
         self.handled_by = handler
 
     @classmethod
@@ -147,15 +148,15 @@ class DataQualityLog(BaseModel):
         return cls(
             table_name=table_name,
             record_id=None,
-            error_type="ge_validation_failed",
-            severity="medium",
+            error_type = os.getenv("DATA_QUALITY_LOG_ERROR_TYPE_136"),
+            severity = os.getenv("DATA_QUALITY_LOG_SEVERITY_137"),
             error_data={
                 "validation_result": validation_result,
                 "failed_expectations": validation_result.get("failed_expectations", []),
                 "success_rate": validation_result.get("success_rate", 0),
             },
             error_message=f"GE数据质量验证失败，成功率: {validation_result.get('success_rate', 0)}%",
-            status="logged",
+            status = os.getenv("DATA_QUALITY_LOG_STATUS_150"),
             requires_manual_review=validation_result.get("success_rate", 0) < 80,
             detected_at=datetime.now(),
         )

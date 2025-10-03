@@ -1,3 +1,4 @@
+import os
 """主应用模块测试"""
 
 import pytest
@@ -141,7 +142,7 @@ class TestMainApp:
     @patch('src.main.os.getenv')
     def test_environment_based_config(self, mock_getenv):
         """测试基于环境的配置"""
-        mock_getenv.return_value = "test_value"
+        mock_getenv.return_value = os.getenv("TEST_MAIN_RETURN_VALUE_144")
 
         # 测试不同环境下的配置
         # 根据实际的环境配置逻辑调整

@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy
 import pandas
 import pytest
+import os
 
 """
 Test suite for anomaly detector module
@@ -49,9 +50,9 @@ def test_anomaly_detector_initialization(anomaly_detector):
 def test_anomaly_result_initialization():
     "]]""Test initialization of AnomalyResult"""
     result = AnomalyResult(
-        table_name="test_table[",": column_name="]test_column[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[1, 2, 3],"
+        table_name = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_TABLE_NAME_52"),": column_name = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_COLUMN_NAME_52"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[1, 2, 3],"
         anomaly_score=0.5,
-        detection_method="]test_method[",": description="]test description[")": assert result.table_name =="]test_table[" assert result.column_name =="]test_column[" assert result.anomaly_type ==AnomalyType.OUTLIER[""""
+        detection_method = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_DETECTION_METHOD_"),": description = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_DESCRIPTION_52"))": assert result.table_name =="]test_table[" assert result.column_name =="]test_column[" assert result.anomaly_type ==AnomalyType.OUTLIER[""""
     assert result.severity ==AnomalySeverity.HIGH
     assert result.anomalous_values ==[1, 2, 3]
     assert result.anomaly_score ==0.5
@@ -59,9 +60,9 @@ def test_anomaly_result_initialization():
     """"
     "]""Test conversion of AnomalyResult to dictionary"""
     result = AnomalyResult(
-        table_name="test_table[",": column_name="]test_column[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[1, 2, 3],"
+        table_name = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_TABLE_NAME_52"),": column_name = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_COLUMN_NAME_52"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[1, 2, 3],"
         anomaly_score=0.56789,
-        detection_method="]test_method[",": description="]test description[")": result_dict = result.to_dict()": assert result_dict["]table_name["] =="]test_table[" assert result_dict["]column_name["] =="]test_column[" assert result_dict["]anomaly_type["] =="]outlier[" assert result_dict["]severity["] =="]high[" assert result_dict["]anomalous_values["] ==[1, 2, 3]" assert result_dict["]anomaly_score["] ==0.5679  # Rounded to 4 decimal places[" assert result_dict["]]detection_method["] =="]test_method[" assert result_dict["]description["] =="]test description[" def test_detect_three_sigma_anomalies("
+        detection_method = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_DETECTION_METHOD_"),": description = os.getenv("TEST_MONITORING_ANOMALY_DETECTOR_DESCRIPTION_52"))": result_dict = result.to_dict()": assert result_dict["]table_name["] =="]test_table[" assert result_dict["]column_name["] =="]test_column[" assert result_dict["]anomaly_type["] =="]outlier[" assert result_dict["]severity["] =="]high[" assert result_dict["]anomalous_values["] ==[1, 2, 3]" assert result_dict["]anomaly_score["] ==0.5679  # Rounded to 4 decimal places[" assert result_dict["]]detection_method["] =="]test_method[" assert result_dict["]description["] =="]test description[" def test_detect_three_sigma_anomalies("
     """"
     "]""Test 3-sigma rule anomaly detection"""
     results = anomaly_detector._detect_three_sigma_anomalies(

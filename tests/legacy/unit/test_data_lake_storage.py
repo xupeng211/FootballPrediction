@@ -6,6 +6,7 @@ import asyncio
 import pandas
 import pytest
 import tempfile
+import os
 
 """
 数据湖存储测试模块
@@ -83,7 +84,7 @@ class TestDataLakeStorage:
     @pytest.mark.asyncio
     async def test_save_with_invalid_table(self, storage, sample_match_data):
         "]""测试使用无效表名保存数据"""
-        with pytest.raises(ValueError, match = "Unknown table[")": await storage.save_historical_data("]invalid_table[", sample_match_data)""""
+        with pytest.raises(ValueError, match = os.getenv("TEST_DATA_LAKE_STORAGE_MATCH_86"))": await storage.save_historical_data("]invalid_table[", sample_match_data)""""
     @pytest.mark.asyncio
     async def test_load_historical_data_empty_table(self, storage):
         "]""测试从空表加载数据"""

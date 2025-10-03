@@ -93,22 +93,22 @@ class DependencyTaskBoard:
         # Phase 1: 诊断与分析
         self.add_task(Task(
             id="PH1-1",
-            title="创建依赖诊断工具",
-            description="开发一个全面的依赖诊断工具，能够检测版本冲突、循环依赖等问题",
+            title = os.getenv("TASK_BOARD_TITLE_96"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_96"),
             status=TaskStatus.TODO,
             priority=TaskPriority.URGENT,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             tags=["diagnosis", "tooling"]
         ))
 
         self.add_task(Task(
             id="PH1-2",
-            title="生成完整依赖树",
-            description="使用pipdeptree等工具生成项目的完整依赖关系图",
+            title = os.getenv("TASK_BOARD_TITLE_105"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_106"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=0.5,
             dependencies=["PH1-1"],
             tags=["diagnosis", "analysis"]
@@ -116,11 +116,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH1-3",
-            title="识别冲突源头",
-            description="分析依赖树，定位scipy/highspy等具体冲突点",
+            title = os.getenv("TASK_BOARD_TITLE_114"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_114"),
             status=TaskStatus.TODO,
             priority=TaskPriority.URGENT,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH1-2"],
             tags=["conflict", "analysis"]
@@ -128,11 +128,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH1-4",
-            title="分析版本兼容性矩阵",
-            description="创建各包版本的兼容性矩阵，找出最佳组合",
+            title = os.getenv("TASK_BOARD_TITLE_124"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_125"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.5,
             dependencies=["PH1-3"],
             tags=["compatibility", "matrix"]
@@ -141,11 +141,11 @@ class DependencyTaskBoard:
         # Phase 2: 紧急修复
         self.add_task(Task(
             id="PH2-1",
-            title="备份当前环境",
-            description="使用pip freeze备份当前所有依赖版本",
+            title = os.getenv("TASK_BOARD_TITLE_135"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_135"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=0.5,
             dependencies=["PH1-4"],
             tags=["backup", "safety"]
@@ -153,11 +153,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH2-2",
-            title="创建干净虚拟环境",
-            description="创建全新的Python虚拟环境，避免污染",
+            title = os.getenv("TASK_BOARD_TITLE_146"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_147"),
             status=TaskStatus.TODO,
             priority=TaskPriority.URGENT,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=0.5,
             dependencies=["PH2-1"],
             tags=["environment", "clean"]
@@ -165,11 +165,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH2-3",
-            title="解决关键冲突",
-            description="修复scipy/highspy类型注册冲突",
+            title = os.getenv("TASK_BOARD_TITLE_157"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_157"),
             status=TaskStatus.TODO,
             priority=TaskPriority.URGENT,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=2.0,
             dependencies=["PH2-2"],
             tags=["fix", "conflict"]
@@ -177,11 +177,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH2-4",
-            title="验证核心功能",
-            description="测试导入和基本功能是否正常",
+            title = os.getenv("TASK_BOARD_TITLE_167"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_168"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH2-3"],
             tags=["validation", "testing"]
@@ -190,11 +190,11 @@ class DependencyTaskBoard:
         # Phase 3: 自动化工具建设
         self.add_task(Task(
             id="PH3-1",
-            title="开发依赖检测脚本",
-            description="创建自动检测依赖冲突的脚本",
+            title = os.getenv("TASK_BOARD_TITLE_178"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_179"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=3.0,
             dependencies=["PH2-4"],
             tags=["automation", "detection"]
@@ -202,11 +202,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH3-2",
-            title="创建CI检查流程",
-            description="在GitHub Actions中添加依赖冲突检查",
+            title = os.getenv("TASK_BOARD_TITLE_186"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_187"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=2.0,
             dependencies=["PH3-1"],
             tags=["CI", "automation"]
@@ -214,11 +214,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH3-3",
-            title="建立依赖监控仪表板",
-            description="创建Web界面展示依赖状态",
+            title = os.getenv("TASK_BOARD_TITLE_197"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_197"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=3.0,
             dependencies=["PH3-2"],
             tags=["dashboard", "monitoring"]
@@ -226,11 +226,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH3-4",
-            title="设置自动化报告",
-            description="定期生成依赖健康报告",
+            title = os.getenv("TASK_BOARD_TITLE_207"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_208"),
             status=TaskStatus.TODO,
             priority=TaskPriority.LOW,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH3-3"],
             tags=["report", "automation"]
@@ -239,11 +239,11 @@ class DependencyTaskBoard:
         # Phase 4: 预防机制
         self.add_task(Task(
             id="PH4-1",
-            title="依赖锁定策略",
-            description="制定和实施依赖版本锁定策略",
+            title = os.getenv("TASK_BOARD_TITLE_218"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_219"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=2.0,
             dependencies=["PH3-4"],
             tags=["strategy", "locking"]
@@ -251,11 +251,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH4-2",
-            title="版本管理规范",
-            description="建立包版本更新和管理规范",
+            title = os.getenv("TASK_BOARD_TITLE_229"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_229"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.5,
             dependencies=["PH4-1"],
             tags=["management", "process"]
@@ -263,11 +263,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH4-3",
-            title="更新流程标准化",
-            description="标准化依赖更新流程",
+            title = os.getenv("TASK_BOARD_TITLE_237"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_239"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH4-2"],
             tags=["process", "standardization"]
@@ -276,10 +276,10 @@ class DependencyTaskBoard:
         self.add_task(Task(
             id="PH4-4",
             title="文档和培训",
-            description="编写文档并培训团队",
+            description = os.getenv("TASK_BOARD_DESCRIPTION_248"),
             status=TaskStatus.TODO,
             priority=TaskPriority.LOW,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH4-3"],
             tags=["documentation", "training"]
@@ -289,10 +289,10 @@ class DependencyTaskBoard:
         self.add_task(Task(
             id="PH5-1",
             title="端到端测试",
-            description="运行完整的测试套件验证修复",
+            description = os.getenv("TASK_BOARD_DESCRIPTION_258"),
             status=TaskStatus.TODO,
             priority=TaskPriority.HIGH,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=2.0,
             dependencies=["PH4-4"],
             tags=["testing", "E2E"]
@@ -300,11 +300,11 @@ class DependencyTaskBoard:
 
         self.add_task(Task(
             id="PH5-2",
-            title="性能基准测试",
-            description="测试修复后的性能表现",
+            title = os.getenv("TASK_BOARD_TITLE_268"),
+            description = os.getenv("TASK_BOARD_DESCRIPTION_269"),
             status=TaskStatus.TODO,
             priority=TaskPriority.MEDIUM,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH5-1"],
             tags=["performance", "benchmark"]
@@ -313,10 +313,10 @@ class DependencyTaskBoard:
         self.add_task(Task(
             id="PH5-3",
             title="文档更新",
-            description="更新所有相关文档",
+            description = os.getenv("TASK_BOARD_DESCRIPTION_279"),
             status=TaskStatus.TODO,
             priority=TaskPriority.LOW,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH5-2"],
             tags=["documentation", "update"]
@@ -325,10 +325,10 @@ class DependencyTaskBoard:
         self.add_task(Task(
             id="PH5-4",
             title="团队培训",
-            description="培训团队使用新工具和流程",
+            description = os.getenv("TASK_BOARD_DESCRIPTION_291"),
             status=TaskStatus.TODO,
             priority=TaskPriority.LOW,
-            assignee="AI Assistant",
+            assignee = os.getenv("TASK_BOARD_ASSIGNEE_99"),
             estimated_hours=1.0,
             dependencies=["PH5-3"],
             tags=["training", "team"]
@@ -465,25 +465,25 @@ class DependencyTaskBoard:
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class = os.getenv("TASK_BOARD_CLASS_447")>
         <h1>🎯 依赖解决任务看板</h1>
         <p>生成时间: {timestamp}</p>
     </div>
 
     <div class="stats">
-        <div class="stat-box">
+        <div class = os.getenv("TASK_BOARD_CLASS_449")>
             <h3>{total}</h3>
             <p>总任务数</p>
         </div>
-        <div class="stat-box">
+        <div class = os.getenv("TASK_BOARD_CLASS_449")>
             <h3>{done}</h3>
             <p>已完成</p>
         </div>
-        <div class="stat-box">
+        <div class = os.getenv("TASK_BOARD_CLASS_449")>
             <h3>{in_progress}</h3>
             <p>进行中</p>
         </div>
-        <div class="stat-box">
+        <div class = os.getenv("TASK_BOARD_CLASS_449")>
             <h3>{todo}</h3>
             <p>待处理</p>
         </div>
@@ -506,23 +506,23 @@ class DependencyTaskBoard:
 
         for phase_id, phase_name in phases.items():
             html += f'<div class="phase">\n'
-            html += f'<div class="phase-header">{phase_id}: {phase_name}</div>\n'
+            html += f'<div class = os.getenv("TASK_BOARD_CLASS_463")>{phase_id}: {phase_name}</div>\n'
 
             phase_tasks = [t for t in self.tasks.values() if t.id.startswith(phase_id)]
             for task in sorted(phase_tasks, key=lambda t: t.id):
                 priority_class = f"priority-{task.priority.name.lower()}"
                 status_class = f"status-{task.status.name.lower()}"
 
-                html += f'<div class="task {priority_class} {status_class}">\n'
-                html += f'<div class="task-header">\n'
-                html += f'<span class="task-title">[{task.id}] {task.title}</span>\n'
+                html += f'<div class = os.getenv("TASK_BOARD_CLASS_475")>\n'
+                html += f'<div class = os.getenv("TASK_BOARD_CLASS_478")>\n'
+                html += f'<span class = os.getenv("TASK_BOARD_CLASS_479")>[{task.id}] {task.title}</span>\n'
                 html += f'<span>{task.estimated_hours}h</span>\n'
                 html += f'</div>\n'
-                html += f'<div class="task-meta">\n'
+                html += f'<div class = os.getenv("TASK_BOARD_CLASS_486")>\n'
                 html += f'状态: {task.status.value} | 负责人: {task.assignee}\n'
                 html += f'</div>\n'
                 if task.dependencies:
-                    html += f'<div class="dependencies">依赖: {", ".join(task.dependencies)}</div>\n'
+                    html += f'<div class = os.getenv("TASK_BOARD_CLASS_493")>依赖: {", ".join(task.dependencies)}</div>\n'
                 html += f'</div>\n'
 
             html += f'</div>\n'

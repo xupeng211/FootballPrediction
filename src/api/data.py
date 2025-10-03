@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 数据API接口
@@ -115,9 +116,9 @@ def format_pagination(limit: int, offset: int, total: int) -> Dict[str, Any]:
 def validate_pagination(limit: int, offset: int) -> None:
     """校验分页参数，非法时抛出 HTTP 400。"""
     if limit <= 0:
-        raise HTTPException(status_code=400, detail="limit must be greater than 0")
+        raise HTTPException(status_code=400, detail = os.getenv("DATA_DETAIL_118"))
     if offset < 0:
-        raise HTTPException(status_code=400, detail="offset must be non-negative")
+        raise HTTPException(status_code=400, detail = os.getenv("DATA_DETAIL_120"))
 
 
 def validate_date_format(date_str: str) -> datetime:
@@ -346,7 +347,7 @@ async def get_match_features(
         raise
     except Exception as e:
         logger.error(f"获取比赛特征失败: {str(e)}")
-        raise HTTPException(status_code=500, detail="获取比赛特征失败")
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_349"))
 
 
 @router.get("/teams/{team_id}/stats")
@@ -440,7 +441,7 @@ async def get_team_stats(
         raise
     except Exception as e:
         logger.error(f"获取球队统计失败: {str(e)}")
-        raise HTTPException(status_code=500, detail="获取球队统计失败")
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_443"))
 
 
 @router.get("/teams/{team_id}/recent_stats")
@@ -572,7 +573,7 @@ async def get_team_recent_stats(
         raise
     except Exception as e:
         logger.error(f"获取球队统计失败: {str(e)}")
-        raise HTTPException(status_code=500, detail="获取球队统计失败")
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_443"))
 
 
 @router.get("/dashboard/data")
@@ -660,7 +661,7 @@ async def get_dashboard_data(session: AsyncSession = Depends(get_async_session))
 
     except Exception as e:
         logger.error(f"获取仪表板数据失败: {str(e)}")
-        raise HTTPException(status_code=500, detail="获取仪表板数据失败")
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_662"))
 
 
 @router.get("/matches")
@@ -723,7 +724,7 @@ async def get_matches(
         raise
     except Exception as exc:  # pragma: no cover - 日志保留上下文
         logger.error("获取比赛列表失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取比赛列表失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_725")) from exc
 
 
 @router.get("/teams")
@@ -785,7 +786,7 @@ async def get_teams(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取球队列表失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取球队列表失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_786")) from exc
 
 
 @router.get("/teams/{team_id}")
@@ -816,7 +817,7 @@ async def get_team_by_id(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取球队信息失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取球队信息失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_817")) from exc
 
 
 @router.get("/leagues")
@@ -899,7 +900,7 @@ async def get_leagues(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取联赛列表失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取联赛列表失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_899")) from exc
 
 
 @router.get("/leagues/{league_id}")
@@ -932,7 +933,7 @@ async def get_league_by_id(
         stats_result = await session.execute(stats_query)
         stats = stats_result.first()
         if not stats or (getattr(stats, "total_matches", 0) or 0) == 0:
-            raise HTTPException(status_code=404, detail="联赛不存在或无比赛数据")
+            raise HTTPException(status_code=404, detail = os.getenv("DATA_DETAIL_932"))
 
         recent_matches_query = (
             select(Match)
@@ -961,7 +962,7 @@ async def get_league_by_id(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取联赛信息失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取联赛信息失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_959")) from exc
 
 
 @router.get("/matches/{match_id}")
@@ -982,7 +983,7 @@ async def get_match_by_id(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取比赛详情失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取比赛详情失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_979")) from exc
 
 
 @router.get("/matches/date-range")
@@ -996,7 +997,7 @@ async def get_matches_by_date_range(
         start_dt = validate_date_format(start_date)
         end_dt = validate_date_format(end_date)
         if start_dt > end_dt:
-            raise HTTPException(status_code=400, detail="start_date must be <= end_date")
+            raise HTTPException(status_code=400, detail = os.getenv("DATA_DETAIL_992"))
 
         query = (
             select(Match)
@@ -1019,7 +1020,7 @@ async def get_matches_by_date_range(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("按日期范围获取比赛失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取比赛列表失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_725")) from exc
 
 
 @router.get("/matches/live")
@@ -1044,7 +1045,7 @@ async def get_live_matches(session: AsyncSession = Depends(get_async_session)):
 
     except Exception as exc:  # pragma: no cover
         logger.error("获取进行中比赛失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取比赛列表失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_725")) from exc
 
 
 @router.get("/teams/{team_id}/matches")
@@ -1097,7 +1098,7 @@ async def get_team_matches(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取球队比赛历史失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取球队比赛失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_1091")) from exc
 
 
 @router.get("/leagues/{league_id}/standings")
@@ -1194,7 +1195,7 @@ async def get_league_standings(
         raise
     except Exception as exc:  # pragma: no cover
         logger.error("获取联赛积分榜失败: %s", exc)
-        raise HTTPException(status_code=500, detail="获取联赛积分榜失败") from exc
+        raise HTTPException(status_code=500, detail = os.getenv("DATA_DETAIL_1188")) from exc
 
 
 async def get_matches_batch(match_ids: List[int], session: AsyncSession) -> List[Dict[str, Any]]:
@@ -1220,11 +1221,11 @@ async def get_system_health(session: AsyncSession) -> Dict[str, Any]:
     """
     try:
         # 检查数据库连接
-        db_health = "healthy"
+        db_health = os.getenv("DATA_DB_HEALTH_1207")
         try:
             await session.execute(select(1))
         except Exception:
-            db_health = "unhealthy"
+            db_health = os.getenv("DATA_DB_HEALTH_1211")
 
         # 检查最近的数据采集状态
         recent_logs_query = (
@@ -1236,15 +1237,15 @@ async def get_system_health(session: AsyncSession) -> Dict[str, Any]:
         logs_result = await session.execute(recent_logs_query)
         recent_logs = logs_result.scalars().all()
 
-        collection_health = "healthy"
+        collection_health = os.getenv("DATA_COLLECTION_HEALTH_1231")
         if not recent_logs:
-            collection_health = "no_data"
+            collection_health = os.getenv("DATA_COLLECTION_HEALTH_1232")
         else:
             failed_logs = [log for log in recent_logs if log.status == "failed"]
             if len(failed_logs) > len(recent_logs) * 0.5:
-                collection_health = "unhealthy"
+                collection_health = os.getenv("DATA_COLLECTION_HEALTH_1236")
             elif failed_logs:
-                collection_health = "warning"
+                collection_health = os.getenv("DATA_COLLECTION_HEALTH_1239")
 
         return {
             "database": db_health,

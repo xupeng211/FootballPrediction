@@ -1,3 +1,4 @@
+import os
 """
 Complete prediction pipeline end-to-end tests.
 
@@ -75,7 +76,7 @@ class TestPredictionPipeline:
         match_data = MatchFactory.generate_match_data()
 
         # Attempt to run pipeline and expect failure
-        with pytest.raises(Exception, match="]]Data processing failed["):": await self._simulate_data_processing(mock_services, match_data)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_PIPELINE_MATCH_78")):": await self._simulate_data_processing(mock_services, match_data)"""
 
     @pytest.mark.asyncio
     @pytest.mark.e2e

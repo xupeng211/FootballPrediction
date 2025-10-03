@@ -29,7 +29,7 @@ class TestQualityMonitorBatchGamma006:
     def sample_freshness_result(self):
         """示例新鲜度结果"""
         return DataFreshnessResult(
-            table_name="matches[",": last_update_time=datetime.now(),": records_count=1000,": freshness_hours=5.0,"
+            table_name = os.getenv("MONITORING_QUALITY_MONITOR_BATCH_GAMMA__TABLE_NAME"),": last_update_time=datetime.now(),": records_count=1000,": freshness_hours=5.0,"
             is_fresh=True,
             threshold_hours=24.0)
     def test_quality_monitor_initialization(self, quality_monitor):
@@ -73,7 +73,7 @@ class TestQualityMonitorBatchGamma006:
     """"
         "]""测试DataFreshnessResult初始化"""
         result = DataFreshnessResult(
-            table_name="test_table[",": last_update_time=datetime.now(),": records_count=500,": freshness_hours=2.5,"
+            table_name = os.getenv("MONITORING_QUALITY_MONITOR_BATCH_GAMMA__TABLE_NAME"),": last_update_time=datetime.now(),": records_count=500,": freshness_hours=2.5,"
             is_fresh=True,
             threshold_hours=24.0)
         # 验证所有属性正确设置
@@ -98,7 +98,7 @@ class TestQualityMonitorBatchGamma006:
     def test_data_freshness_result_to_dict_with_none_time(self):
         "]]""测试DataFreshnessResult转换为字典 - 无时间戳"""
         result = DataFreshnessResult(
-            table_name="test_table[",": last_update_time=None,": records_count=0,": freshness_hours=0.0,"
+            table_name = os.getenv("MONITORING_QUALITY_MONITOR_BATCH_GAMMA__TABLE_NAME"),": last_update_time=None,": records_count=0,": freshness_hours=0.0,"
             is_fresh=False,
             threshold_hours=24.0)
         result_dict = result.to_dict()

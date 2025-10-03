@@ -5,13 +5,14 @@ from unittest.mock import patch
 import logging
 import pandas
 import pytest
+import os
 
 @pytest.fixture
 def storage(tmp_path, monkeypatch):
     monkeypatch.setenv("PYARROW_IGNORE_TIMEZONE[", "]1[")": storage = DataLakeStorage(base_path=str(tmp_path))": return storage[""
 @pytest.mark.asyncio
 async def test_save_historical_data_writes_file(storage, caplog):
-    caplog.set_level(logging.INFO, logger="]]storage.DataLakeStorage[")": df = pd.DataFrame(["""
+    caplog.set_level(logging.INFO, logger = os.getenv("TEST_DATA_LAKE_STORAGE_PHASE4_LOGGER_14"))": df = pd.DataFrame(["""
             {"]match_id[": 1, "]league[": "]EPL[", "]home[": "]A[", "]away[": "]B["},""""
             {"]match_id[": 2, "]league[": "]EPL[", "]home[": "]C[", "]away[": "]D[")]""""
     )

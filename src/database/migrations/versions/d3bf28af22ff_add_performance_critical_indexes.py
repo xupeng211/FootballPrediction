@@ -1,3 +1,4 @@
+import os
 """add_performance_critical_indexes
 
 添加性能关键索引，优化高频查询性能。
@@ -21,7 +22,7 @@ from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision: str = "d3bf28af22ff"
+revision: str = os.getenv("D3BF28AF22FF_ADD_PERFORMANCE_CRITICAL_INDEXES_STR_")
 down_revision: Union[str, None] = "006_missing_indexes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

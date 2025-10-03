@@ -7,6 +7,7 @@ from src.streaming.kafka_consumer import FootballKafkaConsumer
 from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
 import asyncio
 import pytest
+import os
 
 """
 Kafka消费者测试 - Batch-Δ-033 Phase 5.3.2.1
@@ -29,7 +30,7 @@ class TestFootballKafkaConsumerBatchDelta033:
         }
         config.kafka_config = Mock()
         config.kafka_config.topics = Mock()
-        config.kafka_config.topics.matches = "]]matches-topic[": config.kafka_config.topics.odds = "]odds-topic[": config.kafka_config.topics.scores = "]scores-topic[": config.is_valid_topic = Mock(return_value=True)": return config["""
+        config.kafka_config.topics.matches = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_MATCHES_32"): config.kafka_config.topics.odds = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_ODDS_32"): config.kafka_config.topics.scores = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_SCORES_32"): config.is_valid_topic = Mock(return_value=True)": return config["""
     @pytest.fixture
     def mock_consumer(self):
         "]]""创建模拟Kafka消费者"""
@@ -47,7 +48,7 @@ class TestFootballKafkaConsumerBatchDelta033:
     def sample_kafka_message(self):
         "]]""创建示例Kafka消息"""
         mock_msg = Mock()
-        mock_msg.topic.return_value = "matches-topic[": mock_msg.partition.return_value = 0[": mock_msg.offset.return_value = 123[": mock_msg.value.return_value = json.dumps({""
+        mock_msg.topic.return_value = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_RETURN_VALUE_4"): mock_msg.partition.return_value = 0[": mock_msg.offset.return_value = 123[": mock_msg.value.return_value = json.dumps({""
         "]]]data_type[": ["]match[",""""
         "]source[": ["]test_source[",""""
         "]data[": {""""
@@ -80,13 +81,13 @@ class TestFootballKafkaConsumerBatchDelta033:
         """测试使用自定义消费者组ID初始化"""
         with patch("src.streaming.kafka_consumer.DatabaseManager[") as mock_db_manager, \:": patch("]confluent_kafka.Consumer[") as mock_consumer_class:": mock_consumer_class.return_value = mock_consumer[": mock_db_manager.return_value = Mock()": consumer = FootballKafkaConsumer("
             config=mock_stream_config,
-            consumer_group_id="]]custom_group["""""
+            consumer_group_id = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_CONSUMER_GROUP")""""
             )
             # 验证使用了自定义组ID
     assert consumer.consumer_group_id =="]custom_group[" def test_initialization_failure("
     """"
         "]""测试初始化失败"""
-        with patch("src.streaming.kafka_consumer.DatabaseManager[") as mock_db_manager, \:": patch("]confluent_kafka.Consumer[") as mock_consumer_class:": mock_consumer_class.side_effect = Exception("]Kafka连接失败[")": mock_db_manager.return_value = Mock()": with pytest.raises(Exception, match = "]Kafka连接失败[")": FootballKafkaConsumer(config=mock_stream_config)"""
+        with patch("src.streaming.kafka_consumer.DatabaseManager[") as mock_db_manager, \:": patch("]confluent_kafka.Consumer[") as mock_consumer_class:": mock_consumer_class.side_effect = Exception("]Kafka连接失败[")": mock_db_manager.return_value = Mock()": with pytest.raises(Exception, match = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_MATCH_89"))": FootballKafkaConsumer(config=mock_stream_config)"""
     # === 消费者创建测试 ===
     def test_create_consumer_when_none(self, consumer_instance, mock_consumer):
         "]""测试当consumer为None时创建"""
@@ -228,7 +229,7 @@ class TestFootballKafkaConsumerBatchDelta033:
         topics = ["matches-topic[", "]odds-topic[", "]scores-topic["]": consumer_instance.subscribe_topics(topics)": mock_consumer.subscribe.assert_called_once_with(topics)": def test_subscribe_topics_consumer_not_initialized(self, consumer_instance):"
         "]""测试消费者未初始化时订阅主题"""
         consumer_instance.consumer = None
-        topics = "matches-topic["""""
+        topics = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_TOPICS_228")""""
         # 应该不抛出异常
         consumer_instance.subscribe_topics(topics)
     def test_subscribe_topics_with_validation(self, consumer_instance, mock_consumer):
@@ -415,7 +416,7 @@ class TestFootballKafkaConsumerBatchDelta033:
         mock_message = Mock()
         mock_message.value.return_value = json.dumps({"data_type[": ["]match[")).encode('utf-8')": with patch.object(consumer_instance, '_process_match_message') as mock_process:": mock_process.side_effect = Exception("]处理失败[")": result = await consumer_instance._process_message(mock_message)": assert result is False[" def test_subscribe_topics_exception(self, consumer_instance, mock_consumer):"
         "]]""测试订阅主题异常处理"""
-        mock_consumer.subscribe.side_effect = Exception("订阅失败[")": topics = "]test-topic[": with pytest.raises(Exception, match = "]订阅失败[")": consumer_instance.subscribe_topics(topics)"""
+        mock_consumer.subscribe.side_effect = Exception("订阅失败[")": topics = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_TOPICS_416"): with pytest.raises(Exception, match = os.getenv("TEST_KAFKA_CONSUMER_BATCH_DELTA_033_MATCH_416"))": consumer_instance.subscribe_topics(topics)"""
     @pytest.mark.asyncio
     async def test_consume_batch_timeout(self, consumer_instance, mock_consumer):
         "]""测试批量消费超时"""

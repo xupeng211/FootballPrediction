@@ -1,3 +1,4 @@
+import os
 """
 通用数据模型定义
 
@@ -23,7 +24,7 @@ class ContentType(Enum):
     IMAGE = "image"
     VIDEO = "video"
     AUDIO = "audio"
-    DOCUMENT = "document"
+    DOCUMENT = os.getenv("COMMON_MODELS_DOCUMENT_26")
 
 
 class UserRole(Enum):
@@ -32,7 +33,7 @@ class UserRole(Enum):
     ADMIN = "admin"
     USER = "user"
     GUEST = "guest"
-    MODERATOR = "moderator"
+    MODERATOR = os.getenv("COMMON_MODELS_MODERATOR_33")
 
 
 @dataclass

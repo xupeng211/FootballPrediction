@@ -40,8 +40,8 @@ except ImportError:
 
 # 配置常量
 LOCAL_ISSUES_FILE = "issues.yaml"
-GITHUB_TOKEN_ENV = "GITHUB_TOKEN"
-GITHUB_REPO_ENV = "GITHUB_REPO"
+GITHUB_TOKEN_ENV = os.getenv("SYNC_ISSUES_GITHUB_TOKEN_ENV_43")
+GITHUB_REPO_ENV = os.getenv("SYNC_ISSUES_GITHUB_REPO_ENV_43")
 
 
 def load_local_issues() -> List[Dict[str, Any]]:
@@ -324,7 +324,7 @@ def sync_issues(action: str) -> None:
 def main():
     """主函数：处理命令行参数并执行相应操作"""
     parser = argparse.ArgumentParser(
-        description="GitHub Issues 双向同步工具",
+        description = os.getenv("SYNC_ISSUES_DESCRIPTION_325"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
@@ -341,7 +341,7 @@ def main():
     parser.add_argument(
         "action",
         choices=["pull", "push", "sync"],
-        help="同步操作: pull(拉取), push(推送), sync(双向同步)",
+        help = os.getenv("SYNC_ISSUES_HELP_341"),
     )
 
     args = parser.parse_args()

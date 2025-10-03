@@ -1,3 +1,4 @@
+import os
 """
 缺失数据处理器
 
@@ -160,7 +161,7 @@ class MissingDataHandler:
         """
         try:
             # 使用线性插值
-            return data.interpolate(method="linear")
+            return data.interpolate(method = os.getenv("MISSING_DATA_HANDLER_METHOD_163"))
         except Exception as e:
             self.logger.error(f"Failed to interpolate time series data: {str(e)}")
             return data

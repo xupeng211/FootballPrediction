@@ -1,3 +1,4 @@
+import os
 """
 审计服务全面测试
 Comprehensive tests for audit service to boost coverage
@@ -49,9 +50,9 @@ class TestAuditService:
             pytest.skip("AuditService not available")
 
         self.service = AuditService()
-        self.test_user_id = "user123"
-        self.test_action = "PREDICTION_REQUEST"
-        self.test_resource = "match/12345"
+        self.test_user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_TEST_USER_ID_52")
+        self.test_action = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_TEST_ACTION_52")
+        self.test_resource = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_TEST_RESOURCE_53")
 
     def test_service_initialization(self):
         """测试服务初始化"""
@@ -107,7 +108,7 @@ class TestAuditService:
 
         with patch.object(self.service, 'write_log') as mock_write:
             log_system_event(
-                event="MODEL_LOADED",
+                event = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_EVENT_106"),
                 details={
                     "model_name": "football_predictor_v1",
                     "model_version": "1.0.0",
@@ -129,8 +130,8 @@ class TestAuditService:
 
         with patch.object(self.service, 'write_log') as mock_write:
             log_security_event(
-                event_type="UNAUTHORIZED_ACCESS",
-                user_id="unknown",
+                event_type = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_EVENT_TYPE_127"),
+                user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_ID_128"),
                 resource="/admin/panel",
                 details={
                     "ip": "10.0.0.50",
@@ -173,7 +174,7 @@ class TestAuditService:
         """测试审计日志验证"""
         # 有效的日志
         valid_log = AuditLog(
-            user_id="user123",
+            user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_ID_166"),
             action="LOGIN",
             resource="/auth",
             timestamp=datetime.now(),
@@ -201,7 +202,7 @@ class TestAuditService:
             severity=AuditSeverity.WARNING,
             details={"error": "Test error"},
             ip_address="192.168.1.1",
-            user_agent="TestAgent/1.0"
+            user_agent = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_AGENT_195")
         )
 
         # 测试JSON序列化
@@ -247,14 +248,14 @@ class TestAuditService:
             ),
             AuditLog(
                 user_id="user2",
-                action="FAILED_LOGIN",
+                action = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_ACTION_237"),
                 resource="/auth",
                 timestamp=datetime.now() - timedelta(hours=1),
                 severity=AuditSeverity.WARNING
             ),
             AuditLog(
                 user_id="user1",
-                action="LOGOUT",
+                action = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_ACTION_246"),
                 resource="/auth",
                 timestamp=datetime.now() - timedelta(minutes=30),
                 severity=AuditSeverity.INFO
@@ -281,7 +282,7 @@ class TestAuditService:
         if audit_trail is None:
             pytest.skip("audit_trail not available")
 
-        resource_id = "resource_123"
+        resource_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_RESOURCE_ID_270")
         trail = audit_trail(resource_id)
 
         # 应该返回对该资源的所有操作
@@ -325,7 +326,7 @@ class TestAuditService:
             ),
             AuditLog(
                 user_id="user2",
-                action="PREDICTION",
+                action = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_ACTION_311"),
                 resource="/predict/12345",
                 timestamp=datetime.now(),
                 severity=AuditSeverity.INFO
@@ -388,8 +389,8 @@ class TestAuditService:
 
         # 触发关键事件
         critical_log = AuditLog(
-            user_id="attacker",
-            action="UNAUTHORIZED_ACCESS",
+            user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_ID_371"),
+            action = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_ACTION_371"),
             resource="/admin",
             timestamp=datetime.now(),
             severity=AuditSeverity.CRITICAL
@@ -419,7 +420,7 @@ class TestAuditService:
         assert is_valid is True
 
         # 篡改日志后验证失败
-        log.user_id = "attacker"
+        log.user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_ID_398")
         is_valid = self.service.verify_log_signature(log, signature)
         assert is_valid is False
 
@@ -534,7 +535,7 @@ class TestAuditService:
     def test_compliance_features(self):
         """测试合规性功能"""
         # GDPR - 被遗忘权
-        user_id = "user123"
+        user_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_USER_ID_517")
         with patch.object(self.service, 'anonymize_user_logs') as mock_anonymize:
             mock_anonymize.return_value = 150  # 匿名化了150条日志
 
@@ -544,14 +545,14 @@ class TestAuditService:
 
         # SOX - 财务相关审计
         financial_logs = self.service.get_financial_audit_logs(
-            quarter="2024Q3",
+            quarter = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_QUARTER_527"),
             include_sensitive=True
         )
         assert isinstance(financial_logs, list)
 
         # HIPAA - 受保护健康信息
         phi_logs = self.service.get_phi_audit_logs(
-            patient_id="patient456",
+            patient_id = os.getenv("TEST_AUDIT_SERVICE_COMPREHENSIVE_PATIENT_ID_534"),
             date_range=30
         )
         assert isinstance(phi_logs, list)

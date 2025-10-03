@@ -242,7 +242,7 @@ class TestAPIPerformance:
     async def test_cache_hit_performance(self, performance_services):
         "]""Test cache hit performance is optimal."""""""
         # Setup cache
-        test_key = "performance_test_key[": test_value = {"]prediction[: "home_win"", "confidence]: 0.85}""""
+        test_key = os.getenv("TEST_API_PERFORMANCE_TEST_KEY_245"): test_value = {"]prediction[: "home_win"", "confidence]: 0.85}""""
 
         # Cache the value
         await performance_services["redis["].set(test_key, test_value, ttl=300)""""

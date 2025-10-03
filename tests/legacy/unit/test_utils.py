@@ -17,13 +17,13 @@ Test suite for utility modules
 
 def test_api_response_success():
     """Test APIResponse success method"""
-    response = APIResponse.success(data={"key[": [value["]), message="]Success])": assert response["success["] is True["]"]" assert response["data["]"]key[" =="]value[" assert response["]message["] =="]Success[" assert "]error[" not in response[""""
+    response = APIResponse.success(data={"key[": [value["]), message = os.getenv("TEST_UTILS_MESSAGE_20"): assert response["success["] is True["]"]" assert response["data["]"]key[" =="]value[" assert response["]message["] =="]Success[" assert "]error[" not in response[""""
 def test_api_response_error():
     "]]""Test APIResponse error method"""
-    response = APIResponse.error(message="Error occurred[", data={"]info[": "]details["))": assert response["]success["] is False[" assert response["]]message["] =="]Error occurred[" assert response["]data["]"]info[" =="]details[" assert "]code[" in response[""""
+    response = APIResponse.error(message = os.getenv("TEST_UTILS_MESSAGE_23"), data={"]info[": "]details["))": assert response["]success["] is False[" assert response["]]message["] =="]Error occurred[" assert response["]data["]"]info[" =="]details[" assert "]code[" in response[""""
     assert response["]]code["] ==500[" def test_api_response_with_none_data():"""
     "]]""Test APIResponse with None data"""
-    response = APIResponse.success(data=None, message="Success[")": assert response["]success["] is True[" assert response["]]message["] =="]Success[" assert "]data[" not in response  # None data is not included[""""
+    response = APIResponse.success(data=None, message = os.getenv("TEST_UTILS_MESSAGE_26"))": assert response["]success["] is True[" assert response["]]message["] =="]Success[" assert "]data[" not in response  # None data is not included[""""
 def test_deep_merge():
     "]]""Test deep merge utility function"""
     dict1 = {"a[": 1, "]b[": {"]c[": 2, "]d[: "1, 2, 3["}}"]": dict2 = {""
@@ -49,26 +49,26 @@ def test_deep_merge():
     assert filtered["]]a["] ==1[" assert filtered["]]c["] =="]value[" def test_truncate_string("
     """"
     "]""Test string truncation"""
-    long_string = "This is a very long string that needs to be truncated["""""
+    long_string = os.getenv("TEST_UTILS_LONG_STRING_49")""""
     # Test with truncation = truncated StringUtils.truncate(long_string, length=20)
     assert len(truncated) <= 20  # Account for the appended "]..." assert truncated.endswith("...")""""
     # Test with no truncation needed = short_string "Short[": result = StringUtils.truncate(short_string, length=20)": assert result ==short_string[" def test_slugify():""
     "]]""Test slugify utility function"""
-    text = "Hello World! This is a test.": slug = StringUtils.slugify(text)": assert slug =="hello-world-this-is-a-test[" def test_camel_to_snake("
+    text = os.getenv("TEST_UTILS_TEXT_55"): slug = StringUtils.slugify(text)": assert slug =="hello-world-this-is-a-test[" def test_camel_to_snake("
     """"
     "]""Test camel to snake case conversion"""
-    camel = "camelCaseString[": snake = StringUtils.camel_to_snake(camel)": assert snake =="]camel_case_string[" def test_snake_to_camel("
+    camel = os.getenv("TEST_UTILS_CAMEL_58"): snake = StringUtils.camel_to_snake(camel)": assert snake =="]camel_case_string[" def test_snake_to_camel("
     """"
     "]""Test snake to camel case conversion"""
-    snake = "snake_case_string[": camel = StringUtils.snake_to_camel(snake)": assert camel =="]snakeCaseString[" def test_clean_text("
+    snake = os.getenv("TEST_UTILS_SNAKE_60"): camel = StringUtils.snake_to_camel(snake)": assert camel =="]snakeCaseString[" def test_clean_text("
     """"
     "]""Test text cleaning function"""
-    dirty_text = ": This   is   a   test   string  \n\t  """""
+    dirty_text = os.getenv("TEST_UTILS_DIRTY_TEXT_63")""""
     clean = StringUtils.clean_text(dirty_text)
     assert clean =="This is a test string[" def test_extract_numbers("
     """"
     "]""Test number extraction from text"""
-    text = "The price is 123.45 and quantity is 10[": numbers = StringUtils.extract_numbers(text)": assert len(numbers) ==2[" assert 123.45 in numbers[""
+    text = os.getenv("TEST_UTILS_TEXT_68"): numbers = StringUtils.extract_numbers(text)": assert len(numbers) ==2[" assert 123.45 in numbers[""
     assert 10 in numbers
 def test_now_utc():
     "]]]""Test getting current UTC time"""
@@ -110,7 +110,7 @@ def test_read_json_file_nonexistent():
     "]""Test getting file hash"""
     with tempfile.TemporaryDirectory() as temp_dir = file_path os.path.join(temp_dir, "test.txt[")""""
         # Write content to file
-        content = "]Test content[": with open(file_path, "]w[") as f:": f.write(content)"""
+        content = os.getenv("TEST_UTILS_CONTENT_111"): with open(file_path, "]w[") as f:": f.write(content)"""
         # Get hash
         file_hash = FileUtils.get_file_hash(file_path)
         assert isinstance(file_hash, str)
@@ -119,13 +119,13 @@ def test_get_file_size():
     "]""Test getting file size"""
     with tempfile.TemporaryDirectory() as temp_dir = file_path os.path.join(temp_dir, "test.txt[")""""
         # Write content to file
-        content = "]Test content[": with open(file_path, "]w[") as f:": f.write(content)"""
+        content = os.getenv("TEST_UTILS_CONTENT_111"): with open(file_path, "]w[") as f:": f.write(content)"""
         # Get file size
         size = FileUtils.get_file_size(file_path)
         assert size ==len(content)
 def test_crypto_utils_hash_string():
     "]""Test string hashing"""
-    original = "test_string["""""
+    original = os.getenv("TEST_UTILS_ORIGINAL_125")""""
     # Test with MD5 algorithm = hashed_md5 CryptoUtils.hash_string(original, "]md5[")""""
     # Check that hash is not the same as original
     assert hashed_md5 != original
@@ -133,17 +133,17 @@ def test_crypto_utils_hash_string():
     assert len(hashed_md5) ==32  # MD5 hash length
     # Test with SHA256 algorithm = hashed_sha256 CryptoUtils.hash_string(original, "]sha256[")": assert len(hashed_sha256) ==64  # SHA256 hash length[" def test_crypto_utils_verify_password():""
     "]]""Test password verification"""
-    original = "test_password_123[": wrong_password = "]wrong_password[": password_hash = CryptoUtils.hash_password(original)": assert CryptoUtils.verify_password(original, password_hash) is True[" assert CryptoUtils.verify_password(wrong_password, password_hash) is False[""
+    original = os.getenv("TEST_UTILS_ORIGINAL_134"): wrong_password = os.getenv("TEST_UTILS_WRONG_PASSWORD_134"): password_hash = CryptoUtils.hash_password(original)": assert CryptoUtils.verify_password(original, password_hash) is True[" assert CryptoUtils.verify_password(wrong_password, password_hash) is False[""
 def test_hash_consistency():
     "]]]""Test that the same input always produces the same hash"""
-    original = "test_string[": hash1 = CryptoUtils.hash_string(original, "]md5[")": hash2 = CryptoUtils.hash_string(original, "]md5[")""""
+    original = os.getenv("TEST_UTILS_ORIGINAL_125"): hash1 = CryptoUtils.hash_string(original, "]md5[")": hash2 = CryptoUtils.hash_string(original, "]md5[")""""
     # Same input with same algorithm should produce same hash:
     assert hash1 ==hash2
 def test_deep_merge_with_empty_dict():
     "]""Test deep merge with empty dictionaries"""
     result = DictUtils.deep_merge({}, {"a[": 1))": assert result =={"]a[" 1}" result = DictUtils.deep_merge({"]a[": 1}, {))": assert result =={"]a[" 1}" def test_truncate_string_shorter_than_limit():"""
     "]""Test truncation of string shorter than limit"""
-    short_string = "short[": result = StringUtils.truncate(short_string, length=20)": assert result ==short_string  # Should not be modified[" def test_parse_datetime_with_microseconds():""
+    short_string = os.getenv("TEST_UTILS_SHORT_STRING_144"): result = StringUtils.truncate(short_string, length=20)": assert result ==short_string  # Should not be modified[" def test_parse_datetime_with_microseconds():""
     "]]""Test datetime parsing with microseconds"""
     date_str = "2023-10-15 10:3000[": dt = TimeUtils.parse_datetime(date_str)": assert dt.year ==2023[" assert dt.month ==10[""
     assert dt.day ==15

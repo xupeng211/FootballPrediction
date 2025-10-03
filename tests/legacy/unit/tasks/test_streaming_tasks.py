@@ -4,6 +4,7 @@ import asyncio
 import pytest
 import src.streaming
 import src.tasks.streaming_tasks
+import os
 
 class DummyErrorLogger:
     def __init__(self):
@@ -53,7 +54,7 @@ def patch_error_logger(monkeypatch):
         def __init__(self):
             self.logger = SimpleNamespace(info=Mock(), error=Mock())
             self.error_logger = error_logger
-            self.request = SimpleNamespace(id="]]task-123[", retries=0)": def run_async(self, coro):": return base.run_async(coro)": return TaskWrapper()"
+            self.request = SimpleNamespace(id = os.getenv("TEST_STREAMING_TASKS_ID_56"), retries=0)": def run_async(self, coro):": return base.run_async(coro)": return TaskWrapper()"
 def call_task(task_func, task, *args, **kwargs):
     return task_func.run.__func__(task, *args, **kwargs)
 def test_consume_kafka_streams_success(monkeypatch, patch_error_logger):
@@ -79,7 +80,7 @@ def test_consume_kafka_streams_failure(monkeypatch, patch_error_logger):
         streaming_tasks.start_continuous_consumer_task,
         task,
         topics=None,
-        consumer_group_id="]group-1[")": assert result["]status["] =="]completed[" assert consumer.subscribed_all is True[""""
+        consumer_group_id = os.getenv("TEST_STREAMING_TASKS_CONSUMER_GROUP_ID_81"))": assert result["]status["] =="]completed[" assert consumer.subscribed_all is True[""""
     assert consumer.stopped is True
     task.logger.info.assert_called_once()
 def test_start_continuous_consumer_failure(monkeypatch, patch_error_logger):
@@ -126,22 +127,22 @@ def test_stream_data_processing_timeout(monkeypatch, patch_error_logger):
     assert result["]status["] =="]success[" assert processor.stopped is True[""""
 def test_kafka_topic_management_list(monkeypatch, patch_error_logger):
     config = DummyConfig()
-    monkeypatch.setattr(streaming_pkg, "]]StreamConfig[", lambda: config)": task = build_task(patch_error_logger)": result = call_task(streaming_tasks.kafka_topic_management_task, task, action="]list[")": assert result["]topics["] ==["]matches[", "]odds["]" task.logger.info.assert_called_once()"""
+    monkeypatch.setattr(streaming_pkg, "]]StreamConfig[", lambda: config)": task = build_task(patch_error_logger)": result = call_task(streaming_tasks.kafka_topic_management_task, task, action = os.getenv("TEST_STREAMING_TASKS_ACTION_129"))": assert result["]topics["] ==["]matches[", "]odds["]" task.logger.info.assert_called_once()"""
 def test_kafka_topic_management_create_existing(monkeypatch, patch_error_logger):
     config = DummyConfig(existing_topic=True)
     monkeypatch.setattr(streaming_pkg, "]StreamConfig[", lambda: config)": task = build_task(patch_error_logger)": result = call_task(": streaming_tasks.kafka_topic_management_task,"
         task,
-        action="]create[",": topic_name="]matches[")": assert result["]status["] =="]success[" assert result["]message["] =="]Topic配置已存在[" task.logger.info.assert_called_once()""""
+        action = os.getenv("TEST_STREAMING_TASKS_ACTION_132"),": topic_name = os.getenv("TEST_STREAMING_TASKS_TOPIC_NAME_132"))": assert result["]status["] =="]success[" assert result["]message["] =="]Topic配置已存在[" task.logger.info.assert_called_once()""""
 def test_kafka_topic_management_invalid(monkeypatch, patch_error_logger):
     config = DummyConfig(existing_topic=False)
     monkeypatch.setattr(streaming_pkg, "]StreamConfig[", lambda: config)": task = build_task(patch_error_logger)": result = call_task(": streaming_tasks.kafka_topic_management_task,"
         task,
-        action="]create[",": topic_name="]invalid[")": assert result["]status["] =="]failed[" assert "]error[" in result[""""
+        action = os.getenv("TEST_STREAMING_TASKS_ACTION_132"),": topic_name = os.getenv("TEST_STREAMING_TASKS_TOPIC_NAME_137"))": assert result["]status["] =="]failed[" assert "]error[" in result[""""
 def test_kafka_topic_management_failure(monkeypatch, patch_error_logger):
     def broken_config():
-        raise RuntimeError("]]config error[")": monkeypatch.setattr(streaming_pkg, "]StreamConfig[", broken_config)": task = build_task(patch_error_logger)": task.request.retries = 3[": result = call_task(streaming_tasks.kafka_topic_management_task, task, action="]]list[")": assert result["]status["] =="]failed[" task.logger.error.assert_called_once()""""
+        raise RuntimeError("]]config error[")": monkeypatch.setattr(streaming_pkg, "]StreamConfig[", broken_config)": task = build_task(patch_error_logger)": task.request.retries = 3[": result = call_task(streaming_tasks.kafka_topic_management_task, task, action = os.getenv("TEST_STREAMING_TASKS_ACTION_141"))": assert result["]status["] =="]failed[" task.logger.error.assert_called_once()""""
     assert patch_error_logger.calls[0]["]retry_count["] ==3[" def test_kafka_topic_management_unsupported(monkeypatch, patch_error_logger):"""
     config = DummyConfig()
     monkeypatch.setattr(streaming_pkg, "]]StreamConfig[", lambda: config)": task = build_task(patch_error_logger)": result = call_task(": streaming_tasks.kafka_topic_management_task,"
         task,
-        action="]delete[",": topic_name=None)": assert result["]status["] =="]failed[" assert result["]error["] =="]不支持的操作或缺少参数"
+        action = os.getenv("TEST_STREAMING_TASKS_ACTION_143"),": topic_name=None)": assert result["]status["] =="]failed[" assert result["]error["] =="]不支持的操作或缺少参数"

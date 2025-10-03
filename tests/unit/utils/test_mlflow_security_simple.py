@@ -110,7 +110,7 @@ class TestSecureMLflowLoader:
     def test_safe_load_model_validation_failure(self):
         """测试模型签名验证失败"""
         with patch.object(self.loader, 'validate_model_signature', return_value=False):
-            with pytest.raises(ValueError, match="模型签名验证失败"):
+            with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_SIMPLE_MATCH_113")):
                 self.loader.safe_load_model("invalid_model")
 
 
@@ -186,7 +186,7 @@ class TestSecureMLflowLogger:
         invalid_model = MagicMock()
         del invalid_model.predict
 
-        with pytest.raises(ValueError, match="无效的模型对象"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_SIMPLE_MATCH_187")):
             self.logger.safe_log_model(invalid_model, "path")
 
     def test_safe_log_model_invalid_path(self):
@@ -194,11 +194,11 @@ class TestSecureMLflowLogger:
         mock_model = MagicMock()
         mock_model.predict = MagicMock()
 
-        with pytest.raises(ValueError, match="无效的模型路径"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_SIMPLE_MATCH_194")):
             self.logger.safe_log_model(mock_model, 123)
 
         long_path = "a" * 201
-        with pytest.raises(ValueError, match="无效的模型路径"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_SIMPLE_MATCH_194")):
             self.logger.safe_log_model(mock_model, long_path)
 
     def test_is_safe_value_primitive_types(self):

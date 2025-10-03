@@ -1,3 +1,4 @@
+import os
 """
 模型API端点测试 / Tests for Models API Endpoints
 
@@ -21,8 +22,8 @@ class TestModelsAPI:
     def mock_registered_model(self):
         """模拟注册模型"""
         model = MagicMock()
-        model.name = "football_prediction_v1"
-        model.description = "足球预测模型"
+        model.name = os.getenv("TEST_MODELS_COMPREHENSIVE_NAME_24")
+        model.description = os.getenv("TEST_MODELS_COMPREHENSIVE_DESCRIPTION_24")
         model.creation_timestamp = datetime.now()
         model.last_updated_timestamp = datetime.now()
         return model
@@ -31,13 +32,13 @@ class TestModelsAPI:
     def mock_model_version(self):
         """模拟模型版本"""
         version = MagicMock()
-        version.name = "football_prediction_v1"
+        version.name = os.getenv("TEST_MODELS_COMPREHENSIVE_NAME_24")
         version.version = "3"
         version.creation_timestamp = datetime.now()
         version.last_updated_timestamp = datetime.now()
         version.description = "模型版本3"
         version.tags = {"stage": "Production"}
-        version.run_id = "run_123"
+        version.run_id = os.getenv("TEST_MODELS_COMPREHENSIVE_RUN_ID_38")
         return version
 
     @pytest.mark.asyncio
@@ -153,9 +154,9 @@ class TestModelsAPI:
 
         # 设置模拟
         model1 = mock_registered_model()
-        model1.name = "model_1"
+        model1.name = os.getenv("TEST_MODELS_COMPREHENSIVE_NAME_151")
         model2 = mock_registered_model()
-        model2.name = "model_2"
+        model2.name = os.getenv("TEST_MODELS_COMPREHENSIVE_NAME_155")
 
         mock_client.search_registered_models.return_value = [model1, model2]
         mock_client.get_latest_versions.return_value = [mock_model_version()]

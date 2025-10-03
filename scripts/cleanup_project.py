@@ -329,10 +329,10 @@ class ProjectCleaner:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="项目清理工具")
-    parser.add_argument("--project-root", help="项目根目录路径", default=None)
-    parser.add_argument("--logs-days", type=int, default=30, help="清理多少天前的日志")
-    parser.add_argument("--reports-days", type=int, default=90, help="归档多少天前的报告")
+    parser = argparse.ArgumentParser(description = os.getenv("CLEANUP_PROJECT_DESCRIPTION_332"))
+    parser.add_argument("--project-root", help = os.getenv("CLEANUP_PROJECT_HELP_333"), default=None)
+    parser.add_argument("--logs-days", type=int, default=30, help = os.getenv("CLEANUP_PROJECT_HELP_333"))
+    parser.add_argument("--reports-days", type=int, default=90, help = os.getenv("CLEANUP_PROJECT_HELP_334"))
 
     args = parser.parse_args()
 

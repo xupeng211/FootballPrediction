@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple
 class CoverageBooster:
     """覆盖率提升器"""
 
-    def __init__(self, src_dir: str = "src/api", test_dir: str = "tests/unit/api"):
+    def __init__(self, src_dir: str = os.getenv("AUTO_BOOST_COVERAGE_STR_15"), test_dir: str = os.getenv("AUTO_BOOST_COVERAGE_STR_15")):
         self.src_dir = Path(src_dir)
         self.test_dir = Path(test_dir)
         self.coverage_threshold = 30  # 目标覆盖率
@@ -289,20 +289,20 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="自动覆盖率提升工具")
+    parser = argparse.ArgumentParser(description = os.getenv("AUTO_BOOST_COVERAGE_DESCRIPTION_290"))
     parser.add_argument(
         "modules",
         nargs="*",
-        help="要提升的模块名（不指定则处理所有模块）"
+        help = os.getenv("AUTO_BOOST_COVERAGE_HELP_292")
     )
     parser.add_argument(
         "--src-dir",
-        default="src/api",
+        default = os.getenv("AUTO_BOOST_COVERAGE_DEFAULT_296"),
         help="源代码目录"
     )
     parser.add_argument(
         "--test-dir",
-        default="tests/unit/api",
+        default = os.getenv("AUTO_BOOST_COVERAGE_DEFAULT_299"),
         help="测试目录"
     )
 

@@ -4,6 +4,7 @@ import json
 import sys
 
 import pytest
+import os
 
 """
 告警验证功能单元测试
@@ -279,11 +280,11 @@ class TestAlertVerificationIntegration:
         # 创建临时结果文件
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S[")": results_file = tmp_path / f["]alert_verification_mock_{timestamp}.json["]""""
         # 保存结果到文件
-        with open(results_file, "]w[", encoding = "]utf-8[") as f[": json.dump(results, f, ensure_ascii=False, indent=2, default=str)"""
+        with open(results_file, "]w[", encoding = os.getenv("TEST_ALERT_VERIFICATION_ENCODING_282")) as f[": json.dump(results, f, ensure_ascii=False, indent=2, default=str)"""
         # 验证文件创建成功
         assert results_file.exists()
         # 验证文件内容
-        with open(results_file, "]]r[", encoding = "]utf-8[") as f[": loaded_results = json.load(f)": assert loaded_results is not None[" assert isinstance(loaded_results, dict)"
+        with open(results_file, "]]r[", encoding = os.getenv("TEST_ALERT_VERIFICATION_ENCODING_282")) as f[": loaded_results = json.load(f)": assert loaded_results is not None[" assert isinstance(loaded_results, dict)"
         assert "]]]verification_summary[" in loaded_results[""""
         assert loaded_results["]]verification_summary["]"]mode[" =="]mock_simulation["""""
 # 运行测试的便利函数

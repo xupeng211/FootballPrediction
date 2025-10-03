@@ -113,7 +113,7 @@ def vulnerable_function():
     subprocess.call("echo 'hello'", shell=True)
 
     # 不安全的eval使用
-    user_input = "print('hello')"
+    user_input = os.getenv("DEMO_CI_GUARDIAN_USER_INPUT_116")hello')"
     eval(user_input)
 """,
             "test_demo_failure.py": '''
@@ -422,10 +422,10 @@ def test_import_failure():
 
 
 @click.command()
-@click.option("--project-root", "-p", help="项目根目录路径")
-@click.option("--quick", "-q", is_flag=True, help="快速演示（跳过某些步骤）")
-@click.option("--cleanup-only", "-c", is_flag=True, help="仅清理演示环境")
-@click.option("--summary", "-s", is_flag=True, help="显示演示摘要")
+@click.option("--project-root", "-p", help = os.getenv("DEMO_CI_GUARDIAN_HELP_425"))
+@click.option("--quick", "-q", is_flag=True, help = os.getenv("DEMO_CI_GUARDIAN_HELP_425"))
+@click.option("--cleanup-only", "-c", is_flag=True, help = os.getenv("DEMO_CI_GUARDIAN_HELP_426"))
+@click.option("--summary", "-s", is_flag=True, help = os.getenv("DEMO_CI_GUARDIAN_HELP_427"))
 def main(project_root, quick, cleanup_only, summary):
     """
     🎭 CI Guardian 系统演示

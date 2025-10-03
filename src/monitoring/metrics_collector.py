@@ -653,7 +653,7 @@ if __name__ == "__main__":
     # 配置日志
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format = os.getenv("METRICS_COLLECTOR_FORMAT_656"),
     )
 
     asyncio.run(main())

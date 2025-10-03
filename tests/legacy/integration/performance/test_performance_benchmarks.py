@@ -289,7 +289,7 @@ class TestPredictionServiceBenchmarks:
         metrics["]]memory_usage_per_100_predictions_mb["] = final_memory - initial_memory[""""
 
         # Store baseline metrics for future regression detection
-        baseline_file = "]]tests/performance/baseline_metrics.json[": try:": with open(baseline_file, "]w[") as f:": json.dump("""
+        baseline_file = os.getenv("TEST_PERFORMANCE_BENCHMARKS_BASELINE_FILE_292"): try:": with open(baseline_file, "]w[") as f:": json.dump("""
                     {"]timestamp[": datetime.now().isoformat(), "]metrics[": metrics},": f,": indent=2,""
                 )
         except Exception:
@@ -345,7 +345,7 @@ class TestPredictionServiceBenchmarks:
         results["]batch_prediction_pps["] = len(batch_predictions) / batch_time[""""
 
         # Test cache read baseline
-        cache_key = "]]baseline_test_key[": await benchmark_services["]redis["].set(cache_key, prediction, ttl=300)": start_time = time.time()": asyncio.run(benchmark_services["]redis["].get(cache_key))": cache_read_time = (time.time() - start_time) * 1000[": results["]]cache_read_ms["] = cache_read_time[""""
+        cache_key = os.getenv("TEST_PERFORMANCE_BENCHMARKS_CACHE_KEY_347"): await benchmark_services["]redis["].set(cache_key, prediction, ttl=300)": start_time = time.time()": asyncio.run(benchmark_services["]redis["].get(cache_key))": cache_read_time = (time.time() - start_time) * 1000[": results["]]cache_read_ms["] = cache_read_time[""""
 
         # Validate against baselines
         violations = []

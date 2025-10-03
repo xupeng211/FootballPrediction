@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """MLflow 安全审计和修复脚本
 
@@ -14,7 +15,7 @@ import logging
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format = os.getenv("MLFLOW_AUDIT_FORMAT_17")
 )
 logger = logging.getLogger(__name__)
 
@@ -321,26 +322,26 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='MLflow 安全审计工具')
+    parser = argparse.ArgumentParser(description = os.getenv("MLFLOW_AUDIT_DESCRIPTION_324"))
     parser.add_argument(
         '--project-root',
         default='.',
-        help='项目根目录路径'
+        help = os.getenv("MLFLOW_AUDIT_HELP_327")
     )
     parser.add_argument(
         '--output',
-        help='输出报告文件路径'
+        help = os.getenv("MLFLOW_AUDIT_HELP_330")
     )
     parser.add_argument(
         '--fix',
-        action='store_true',
-        help='尝试自动修复问题'
+        action = os.getenv("MLFLOW_AUDIT_ACTION_332"),
+        help = os.getenv("MLFLOW_AUDIT_HELP_334")
     )
     parser.add_argument(
         '--dry-run',
-        action='store_true',
+        action = os.getenv("MLFLOW_AUDIT_ACTION_332"),
         default=True,
-        help='模拟运行，不实际修复'
+        help = os.getenv("MLFLOW_AUDIT_HELP_337")
     )
 
     args = parser.parse_args()

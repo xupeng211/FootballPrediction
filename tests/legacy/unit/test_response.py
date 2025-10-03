@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import ValidationError
 from src.utils.response import APIResponse, APIResponseModel
 import pytest
+import os
 
 """
 API响应工具类的单元测试
@@ -34,7 +35,7 @@ class TestAPIResponseModel:
     def test_response_model_invalid_data(self):
         "]]""测试无效的响应模型数据"""
         with pytest.raises(ValidationError):
-            APIResponseModel(success="not_boolean[", message="]test[")": def test_response_model_missing_required_fields(self):"""
+            APIResponseModel(success = os.getenv("TEST_RESPONSE_SUCCESS_37"), message = os.getenv("TEST_RESPONSE_MESSAGE_37"))": def test_response_model_missing_required_fields(self):"""
         "]""测试缺少必需字段的响应模型"""
         with pytest.raises(ValidationError):
             APIResponseModel(success=True)  # 缺少message字段
@@ -55,10 +56,10 @@ class TestAPIResponse:
         "]metadata[": {"]type[": "]user[", "]active[": True}}": response = APIResponse.success(data=test_data)": assert response["]success["] is True[" assert response["]]message["] =="]操作成功[" assert response["]data["] ==test_data[" assert "]]timestamp[" in response[""""
     def test_success_with_custom_message(self):
         "]]""测试自定义消息的成功响应"""
-        custom_message = "数据保存成功[": response = APIResponse.success(message=custom_message)": assert response["]success["] is True[" assert response["]]message["] ==custom_message[" assert "]]timestamp[" in response[""""
+        custom_message = os.getenv("TEST_RESPONSE_CUSTOM_MESSAGE_56"): response = APIResponse.success(message=custom_message)": assert response["]success["] is True[" assert response["]]message["] ==custom_message[" assert "]]timestamp[" in response[""""
     def test_success_with_data_and_message(self):
         "]]""测试带数据和自定义消息的成功响应"""
-        test_data = {"result[": ["]completed["}": custom_message = "]任务执行完成[": response = APIResponse.success(data=test_data, message=custom_message)": assert response["]success["] is True[" assert response["]]message["] ==custom_message[" assert response["]]data["] ==test_data[" assert "]]timestamp[" in response[""""
+        test_data = {"result[": ["]completed["}": custom_message = os.getenv("TEST_RESPONSE_CUSTOM_MESSAGE_59"): response = APIResponse.success(data=test_data, message=custom_message)": assert response["]success["] is True[" assert response["]]message["] ==custom_message[" assert response["]]data["] ==test_data[" assert "]]timestamp[" in response[""""
     def test_success_response_alias(self):
         "]]""测试success_response别名方法"""
         test_data = {"alias[": ["]test["}": response = APIResponse.success_response(data=test_data)": assert response["]success["] is True[" assert response["]]data["] ==test_data[" assert "]]timestamp[" in response[""""
@@ -69,17 +70,17 @@ class TestAPIResponse:
     assert "]]data[" not in response[""""
     def test_error_with_custom_message(self):
         "]]""测试自定义消息的错误响应"""
-        error_message = "用户名已存在[": response = APIResponse.error(message=error_message)": assert response["]success["] is False[" assert response["]]message["] ==error_message[" assert response["]]code["] ==500[" assert "]]timestamp[" in response[""""
+        error_message = os.getenv("TEST_RESPONSE_ERROR_MESSAGE_69"): response = APIResponse.error(message=error_message)": assert response["]success["] is False[" assert response["]]message["] ==error_message[" assert response["]]code["] ==500[" assert "]]timestamp[" in response[""""
     def test_error_with_custom_code(self):
         "]]""测试自定义错误代码的错误响应"""
         error_code = 404
-        error_message = "资源未找到[": response = APIResponse.error(message=error_message, code=error_code)": assert response["]success["] is False[" assert response["]]message["] ==error_message[" assert response["]]code["] ==error_code[" assert "]]timestamp[" in response[""""
+        error_message = os.getenv("TEST_RESPONSE_ERROR_MESSAGE_72"): response = APIResponse.error(message=error_message, code=error_code)": assert response["]success["] is False[" assert response["]]message["] ==error_message[" assert response["]]code["] ==error_code[" assert "]]timestamp[" in response[""""
     def test_error_with_data(self):
         "]]""测试带附加数据的错误响应"""
         error_data = {
         "field[": ["]email[",""""
         "]errors[": ["]格式不正确[", "]已被使用["],""""
-        "]suggestions[": "]user@example.com["}": response = APIResponse.error(message="]验证失败[", code=400, data=error_data)": assert response["]success["] is False[" assert response["]]message["] =="]验证失败[" assert response["]code["] ==400[" assert response["]]data["] ==error_data[" assert "]]timestamp[" in response[""""
+        "]suggestions[": "]user@example.com["}": response = APIResponse.error(message = os.getenv("TEST_RESPONSE_MESSAGE_78"), code=400, data=error_data)": assert response["]success["] is False[" assert response["]]message["] =="]验证失败[" assert response["]code["] ==400[" assert response["]]data["] ==error_data[" assert "]]timestamp[" in response[""""
     def test_error_response_alias(self):
         "]]""测试error_response别名方法"""
         error_message = "权限不足[": error_code = 403[": response = APIResponse.error_response(message=error_message, code=error_code)": assert response["]]success["] is False[""""
@@ -89,7 +90,7 @@ class TestAPIResponse:
         response = APIResponse.error(message="测试错误[", data=None)": assert response["]success["] is False[" assert response["]]message["] =="]测试错误[" assert "]data[" not in response[""""
     def test_success_with_none_data(self):
         "]]""测试data为None的成功响应"""
-        response = APIResponse.success(data=None, message="无数据返回[")": assert response["]success["] is True[" assert response["]]message["] =="]无数据返回[" assert "]data[" not in response[""""
+        response = APIResponse.success(data=None, message = os.getenv("TEST_RESPONSE_MESSAGE_89"))": assert response["]success["] is True[" assert response["]]message["] =="]无数据返回[" assert "]data[" not in response[""""
     def test_response_timestamp_format(self):
         "]]""测试响应时间戳格式的一致性"""
         success_response = APIResponse.success()

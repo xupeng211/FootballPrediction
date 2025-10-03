@@ -249,7 +249,7 @@ class TestDataLakeStorageBatchGamma005:
         storage_custom = DataLakeStorage(
             base_path=temp_dir, partition_cols=["]year[", "]month[", "]competition["]""""
         )
-        assert storage_year.partition_cols =="]year[" assert storage_year_month.partition_cols ==["]year[", "]month["]" assert storage_custom.partition_cols ==["]year[", "]month[", "]competition["]" storage_gzip = DataLakeStorage(compression="]gzip[")": storage_snappy = DataLakeStorage(compression="]snappy[")": storage_none = DataLakeStorage(compression=None)": assert storage_gzip.compression =="]gzip[" assert storage_snappy.compression =="]snappy[" assert storage_none.compression is None[""""
+        assert storage_year.partition_cols =="]year[" assert storage_year_month.partition_cols ==["]year[", "]month["]" assert storage_custom.partition_cols ==["]year[", "]month[", "]competition["]" storage_gzip = DataLakeStorage(compression = os.getenv("DATA_STORAGE_DATA_LAKE_STORAGE_BATCH_GAMMA__COMPRE"))": storage_snappy = DataLakeStorage(compression = os.getenv("DATA_STORAGE_DATA_LAKE_STORAGE_BATCH_GAMMA__COMPRE"))": storage_none = DataLakeStorage(compression=None)": assert storage_gzip.compression =="]gzip[" assert storage_snappy.compression =="]snappy[" assert storage_none.compression is None[""""
     def test_partition_columns_configuration(self, temp_dir):
         "]]""测试分区列配置"""
         # 测试不同分区列配置
@@ -274,9 +274,9 @@ class TestDataLakeStorageBatchGamma005:
     def test_base_path_resolution(self):
         "]]""测试基础路径解析"""
         # 测试相对路径
-        storage_relative = DataLakeStorage(base_path="./test_data[")": assert storage_relative.base_path.is_absolute()"""
+        storage_relative = DataLakeStorage(base_path = os.getenv("DATA_STORAGE_DATA_LAKE_STORAGE_BATCH_GAMMA__BASE_P"))": assert storage_relative.base_path.is_absolute()"""
         # 测试绝对路径
-        abs_path = "]/tmp/test_data[": storage_absolute = DataLakeStorage(base_path=abs_path)": assert storage_absolute.base_path ==Path(abs_path)" def test_error_handling_permissions(self, temp_dir):""
+        abs_path = os.getenv("DATA_STORAGE_DATA_LAKE_STORAGE_BATCH_GAMMA__ABS_PA"): storage_absolute = DataLakeStorage(base_path=abs_path)": assert storage_absolute.base_path ==Path(abs_path)" def test_error_handling_permissions(self, temp_dir):""
         "]""测试权限错误处理"""
         # Mock权限错误
         with patch("pathlib.Path.mkdir[", side_effect = PermissionError("]权限不足["))": with pytest.raises(PermissionError):": DataLakeStorage(base_path=temp_dir)": def test_error_handling_file_operations(self, storage, sample_dataframe):"
@@ -397,7 +397,7 @@ class TestDataLakeStorageBatchGamma005:
         "]]""测试无效压缩格式边界情况"""
         # 测试无效压缩格式
         with pytest.raises(ValueError):
-            DataLakeStorage(base_path=temp_dir, compression="invalid_format[")": def test_edge_case_empty_partition_cols(self, temp_dir):"""
+            DataLakeStorage(base_path=temp_dir, compression = os.getenv("DATA_STORAGE_DATA_LAKE_STORAGE_BATCH_GAMMA__COMPRE"))": def test_edge_case_empty_partition_cols(self, temp_dir):"""
         "]""测试空分区列边界情况"""
         # 测试空分区列
         storage = DataLakeStorage(base_path=temp_dir, partition_cols=[])

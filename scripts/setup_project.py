@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 🔧 项目初始化脚本
@@ -144,7 +145,7 @@ def test_example():
 
 def test_string_operations():
     """字符串操作测试"""
-    text = "Hello, World!"
+    text = os.getenv("SETUP_PROJECT_TEXT_147")
     assert text.upper() == "HELLO, WORLD!"
     assert text.lower() == "hello, world!"
 

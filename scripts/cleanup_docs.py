@@ -355,9 +355,9 @@ class DocumentCleaner:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="文档清理工具")
-    parser.add_argument("--project-root", help="项目根目录路径", default=None)
-    parser.add_argument("--dry-run", action="store_true", help="试运行，不实际删除文件")
+    parser = argparse.ArgumentParser(description = os.getenv("CLEANUP_DOCS_DESCRIPTION_358"))
+    parser.add_argument("--project-root", help = os.getenv("CLEANUP_DOCS_HELP_359"), default=None)
+    parser.add_argument("--dry-run", action = os.getenv("CLEANUP_DOCS_ACTION_359"), help = os.getenv("CLEANUP_DOCS_HELP_359"))
 
     args = parser.parse_args()
 

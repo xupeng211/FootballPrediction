@@ -18,11 +18,11 @@ class KafkaConfig:
     """Kafka基础配置"""
 
     # 连接配置
-    bootstrap_servers: str = "localhost:9092"
-    security_protocol: str = "PLAINTEXT"
+    bootstrap_servers: str = os.getenv("STREAM_CONFIG_STR_21")
+    security_protocol: str = os.getenv("STREAM_CONFIG_STR_22")
 
     # 生产者配置
-    producer_client_id: str = "football-prediction-producer"
+    producer_client_id: str = os.getenv("STREAM_CONFIG_STR_22")
     producer_acks: str = "all"  # 等待所有副本确认
     producer_retries: int = 3
     producer_retry_backoff_ms: int = 1000
@@ -30,15 +30,15 @@ class KafkaConfig:
     producer_batch_size: int = 16384  # 16KB批量大小
 
     # 消费者配置
-    consumer_group_id: str = "football-prediction-consumers"
-    consumer_client_id: str = "football-prediction-consumer"
-    consumer_auto_offset_reset: str = "latest"
+    consumer_group_id: str = os.getenv("STREAM_CONFIG_STR_30")
+    consumer_client_id: str = os.getenv("STREAM_CONFIG_STR_33")
+    consumer_auto_offset_reset: str = os.getenv("STREAM_CONFIG_STR_34")
     consumer_enable_auto_commit: bool = True
     consumer_auto_commit_interval_ms: int = 5000
     consumer_max_poll_records: int = 500
 
     # 序列化配置
-    key_serializer: str = "string"
+    key_serializer: str = os.getenv("STREAM_CONFIG_STR_38")
     value_serializer: str = "json"
 
 
@@ -49,7 +49,7 @@ class TopicConfig:
     name: str
     partitions: int = 3
     replication_factor: int = 1
-    cleanup_policy: str = "delete"
+    cleanup_policy: str = os.getenv("STREAM_CONFIG_STR_47")
     retention_ms: int = 604800000  # 7天
     segment_ms: int = 86400000  # 1天
 
@@ -92,25 +92,25 @@ class StreamConfig:
         return {
             # 比赛数据流
             "matches-stream": TopicConfig(
-                name="matches-stream",
+                name = os.getenv("STREAM_CONFIG_NAME_90"),
                 partitions=3,
                 retention_ms=86400000,  # 1天
             ),
             # 赔率数据流
             "odds-stream": TopicConfig(
-                name="odds-stream",
+                name = os.getenv("STREAM_CONFIG_NAME_96"),
                 partitions=6,  # 赔率数据量大，更多分区
                 retention_ms=43200000,  # 12小时
             ),
             # 比分数据流
             "scores-stream": TopicConfig(
-                name="scores-stream",
+                name = os.getenv("STREAM_CONFIG_NAME_102"),
                 partitions=3,
                 retention_ms=21600000,  # 6小时
             ),
             # 处理结果流
             "processed-data-stream": TopicConfig(
-                name="processed-data-stream",
+                name = os.getenv("STREAM_CONFIG_NAME_107"),
                 partitions=3,
                 retention_ms=604800000,  # 7天
             ),

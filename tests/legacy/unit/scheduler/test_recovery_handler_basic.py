@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from src.scheduler.recovery_handler import (
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 RecoveryHandler 基础测试套件
@@ -23,7 +24,7 @@ class TestRecoveryHandlerBasic:
     def sample_task(self):
         """创建示例任务"""
         task = Mock()
-        task.task_id = "test_task[": task.name = "]测试任务[": task.enabled = True[": task.retry_count = 0[": return task[": class TestInitialization:"
+        task.task_id = os.getenv("TEST_RECOVERY_HANDLER_BASIC_TASK_ID_26"): task.name = os.getenv("TEST_RECOVERY_HANDLER_BASIC_NAME_26"): task.enabled = True[": task.retry_count = 0[": return task[": class TestInitialization:"
         "]]]]""测试初始化"""
         def test_init_success(self):
             """测试成功初始化"""
@@ -89,7 +90,7 @@ class TestRecoveryHandlerBasic:
                 task_id=sample_task.task_id,
                 failure_time=datetime.now(),
                 failure_type=FailureType.CONNECTION_ERROR,
-                error_message="数据库连接失败[")": with patch.object(:": recovery_handler, "]_exponential_backoff_retry["""""
+                error_message = os.getenv("TEST_RECOVERY_HANDLER_BASIC_ERROR_MESSAGE_90"))": with patch.object(:": recovery_handler, "]_exponential_backoff_retry["""""
             ) as mock_retry:
                 mock_retry.return_value = True
                 result = recovery_handler._execute_recovery_strategy(
@@ -104,7 +105,7 @@ class TestRecoveryHandlerBasic:
             failure = TaskFailure(
                 task_id=sample_task.task_id,
                 failure_type=FailureType.DATA_ERROR,
-                error_message="数据格式错误[",": failure_time=datetime.now())": with patch.object(recovery_handler, "]_fixed_delay_retry[") as mock_retry:": mock_retry.return_value = True[": result = recovery_handler._execute_recovery_strategy(": sample_task, failure"
+                error_message = os.getenv("TEST_RECOVERY_HANDLER_BASIC_ERROR_MESSAGE_104"),": failure_time=datetime.now())": with patch.object(recovery_handler, "]_fixed_delay_retry[") as mock_retry:": mock_retry.return_value = True[": result = recovery_handler._execute_recovery_strategy(": sample_task, failure"
                 )
                 assert result is True
                 mock_retry.assert_called_once()
@@ -130,12 +131,12 @@ class TestRecoveryHandlerBasic:
             """测试发送警报"""
             # 创建一个有完整属性的mock任务
             mock_task = Mock()
-            mock_task.task_id = "test_task[": mock_task.name = "]测试任务[": mock_task.retry_count = 3  # 设置重试次数以触发告警[": mock_task.cron_expression = "]]0 0 * * *": mock_task.priority = 1[": mock_task.timeout = 60[": with patch.object(recovery_handler, "]]_send_alert[") as mock_send_alert:": recovery_handler.handle_task_failure(mock_task, "]严重错误[")": mock_send_alert.assert_called()": def test_register_alert_handler(self, recovery_handler):""
+            mock_task.task_id = os.getenv("TEST_RECOVERY_HANDLER_BASIC_TASK_ID_26"): mock_task.name = os.getenv("TEST_RECOVERY_HANDLER_BASIC_NAME_26"): mock_task.retry_count = 3  # 设置重试次数以触发告警[": mock_task.cron_expression = os.getenv("TEST_RECOVERY_HANDLER_BASIC_CRON_EXPRESSION_131"): mock_task.priority = 1[": mock_task.timeout = 60[": with patch.object(recovery_handler, "]]_send_alert[") as mock_send_alert:": recovery_handler.handle_task_failure(mock_task, "]严重错误[")": mock_send_alert.assert_called()": def test_register_alert_handler(self, recovery_handler):""
             "]""测试注册警报处理器"""
             # 创建一个有 __name__ 属性的mock函数
             def custom_handler(alert_data):
                 pass
-            custom_handler.__name__ = "custom_handler[": recovery_handler.register_alert_handler(custom_handler)""""
+            custom_handler.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BASIC___NAME___133"): recovery_handler.register_alert_handler(custom_handler)""""
             # 触发警报
             recovery_handler._send_alert("]INFO[", "]测试消息[", {})""""
             # 由于我们无法直接验证内部调用，我们验证处理器已被注册
@@ -173,19 +174,19 @@ class TestRecoveryHandlerBasic:
         def test_task_failure_creation(self):
             """测试TaskFailure创建"""
             failure = TaskFailure(
-                task_id="test_task[",": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message="]网络错误[")": assert failure.task_id =="]test_task[" assert failure.failure_type ==FailureType.CONNECTION_ERROR[""""
+                task_id = os.getenv("TEST_RECOVERY_HANDLER_BASIC_TASK_ID_167"),": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BASIC_ERROR_MESSAGE_169"))": assert failure.task_id =="]test_task[" assert failure.failure_type ==FailureType.CONNECTION_ERROR[""""
             assert failure.error_message =="]]网络错误[" assert failure.failure_time is not None[""""
             assert len(failure.recovery_attempts) ==0
         def test_task_failure_add_recovery_attempt(self):
             "]]""测试添加恢复尝试"""
             failure = TaskFailure(
-                task_id="test_task[",": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message="]网络错误[")": failure.add_recovery_attempt(": RecoveryStrategy.IMMEDIATE_RETRY, False, datetime.now(), "]重试失败["""""
+                task_id = os.getenv("TEST_RECOVERY_HANDLER_BASIC_TASK_ID_167"),": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BASIC_ERROR_MESSAGE_169"))": failure.add_recovery_attempt(": RecoveryStrategy.IMMEDIATE_RETRY, False, datetime.now(), "]重试失败["""""
             )
             assert len(failure.recovery_attempts) ==1
             assert failure.recovery_attempts[0]["]strategy["] =="]immediate_retry[" assert failure.recovery_attempts[0]["]success["] is False[" def test_task_failure_to_dict(self):"""
             "]]""测试TaskFailure转换为字典"""
             failure = TaskFailure(
-                task_id="test_task[",": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message="]网络错误[")": failure_dict = failure.to_dict()": assert isinstance(failure_dict, dict)" assert failure_dict["]task_id["] ==failure.task_id[" assert ("""
+                task_id = os.getenv("TEST_RECOVERY_HANDLER_BASIC_TASK_ID_167"),": failure_time=datetime.now(),": failure_type=FailureType.CONNECTION_ERROR,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BASIC_ERROR_MESSAGE_169"))": failure_dict = failure.to_dict()": assert isinstance(failure_dict, dict)" assert failure_dict["]task_id["] ==failure.task_id[" assert ("""
                 failure_dict["]]failure_type["] ==failure.failure_type.value[""""
             )  # 修正：enum转换为字符串值
             assert failure_dict["]]error_message["] ==failure.error_message[" class TestErrorHandling:"""

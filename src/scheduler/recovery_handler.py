@@ -1,3 +1,4 @@
+import os
 """
 恢复处理器
 
@@ -18,22 +19,22 @@ logger = logging.getLogger(__name__)
 class FailureType(Enum):
     """失败类型枚举"""
 
-    TIMEOUT = "timeout"
-    CONNECTION_ERROR = "connection_error"
-    DATA_ERROR = "data_error"
-    RESOURCE_ERROR = "resource_error"
-    PERMISSION_ERROR = "permission_error"
-    UNKNOWN_ERROR = "unknown_error"
+    TIMEOUT = os.getenv("RECOVERY_HANDLER_TIMEOUT_21")
+    CONNECTION_ERROR = os.getenv("RECOVERY_HANDLER_CONNECTION_ERROR_21")
+    DATA_ERROR = os.getenv("RECOVERY_HANDLER_DATA_ERROR_22")
+    RESOURCE_ERROR = os.getenv("RECOVERY_HANDLER_RESOURCE_ERROR_22")
+    PERMISSION_ERROR = os.getenv("RECOVERY_HANDLER_PERMISSION_ERROR_23")
+    UNKNOWN_ERROR = os.getenv("RECOVERY_HANDLER_UNKNOWN_ERROR_23")
 
 
 class RecoveryStrategy(Enum):
     """恢复策略枚举"""
 
-    IMMEDIATE_RETRY = "immediate_retry"
-    EXPONENTIAL_BACKOFF = "exponential_backoff"
-    FIXED_DELAY = "fixed_delay"
-    MANUAL_INTERVENTION = "manual_intervention"
-    SKIP_AND_CONTINUE = "skip_and_continue"
+    IMMEDIATE_RETRY = os.getenv("RECOVERY_HANDLER_IMMEDIATE_RETRY_25")
+    EXPONENTIAL_BACKOFF = os.getenv("RECOVERY_HANDLER_EXPONENTIAL_BACKOFF_25")
+    FIXED_DELAY = os.getenv("RECOVERY_HANDLER_FIXED_DELAY_26")
+    MANUAL_INTERVENTION = os.getenv("RECOVERY_HANDLER_MANUAL_INTERVENTION_26")
+    SKIP_AND_CONTINUE = os.getenv("RECOVERY_HANDLER_SKIP_AND_CONTINUE_30")
 
 
 class TaskFailure:
@@ -530,7 +531,7 @@ class RecoveryHandler:
 
         # 发送紧急告警
         self._send_alert(
-            level="CRITICAL",
+            level = os.getenv("RECOVERY_HANDLER_LEVEL_519"),
             message=f"任务 {task.task_id} 需要人工干预",
             details={
                 "task_id": task.task_id,
@@ -585,7 +586,7 @@ class RecoveryHandler:
         # 检查是否达到告警阈值
         if task.retry_count >= alert_threshold:
             self._send_alert(
-                level="WARNING",
+                level = os.getenv("RECOVERY_HANDLER_LEVEL_574"),
                 message=f"任务 {task.task_id} 连续失败 {task.retry_count} 次",
                 details={
                     "task_id": task.task_id,

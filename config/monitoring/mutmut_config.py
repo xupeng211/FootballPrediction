@@ -1,3 +1,4 @@
+import os
 """
 Mutation testing configuration for the football prediction system.
 
@@ -36,7 +37,7 @@ class MutationConfig:
     ]
 
     # Test runner command
-    TEST_RUNNER = "python -m pytest tests/unit/ -x -q --tb=short"
+    TEST_RUNNER = os.getenv("MUTMUT_CONFIG_TEST_RUNNER_39")
 
     # Files that should have higher coverage requirements
     CRITICAL_FILES = [

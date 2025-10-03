@@ -12,6 +12,7 @@ import hashlib
 import inspect
 import logging
 import time
+import os
 
 """
 权限审计服务
@@ -274,10 +275,10 @@ class AuditService:
             if is_sensitive:
                 if old_value:
                     old_value_hash = self._hash_sensitive_value(old_value)
-                    old_value = "[SENSITIVE]"  # 掩码处理
+                    old_value = os.getenv("AUDIT_SERVICE_OLD_VALUE_277")  # 掩码处理
                 if new_value:
                     new_value_hash = self._hash_sensitive_value(new_value)
-                    new_value = "[SENSITIVE]"  # 掩码处理
+                    new_value = os.getenv("AUDIT_SERVICE_NEW_VALUE_279")  # 掩码处理
             # 创建审计日志条目
             audit_entry = AuditLog(
                 # 用户信息（从上下文获取）

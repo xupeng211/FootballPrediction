@@ -1,3 +1,4 @@
+import os
 """
 支持流式处理的数据采集器
 
@@ -30,7 +31,7 @@ class StreamingDataCollector(DataCollector):
 
     def __init__(
         self,
-        data_source: str = "default_source",
+        data_source: str = os.getenv("STREAMING_COLLECTOR_STR_33"),
         max_retries: int = 3,
         retry_delay: int = 5,
         timeout: int = 30,
@@ -124,7 +125,7 @@ class StreamingDataCollector(DataCollector):
                 elif any(key in data[0] for key in ["odds", "price", "bookmaker"]):
                     stream_type = "odds"
                 elif any(key in data[0] for key in ["score", "minute", "live"]):
-                    stream_type = "scores"
+                    stream_type = os.getenv("STREAMING_COLLECTOR_STREAM_TYPE_126")
 
             stats = await self._send_to_stream(data, stream_type)
             return stats["success"] > 0 or len(data) == 0

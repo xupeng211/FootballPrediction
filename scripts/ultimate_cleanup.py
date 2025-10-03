@@ -321,9 +321,9 @@ class UltimateCleaner:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="终极项目清理工具")
-    parser.add_argument("--project-root", help="项目根目录路径", default=None)
-    parser.add_argument("--dry-run", action="store_true", help="试运行，不实际删除文件")
+    parser = argparse.ArgumentParser(description = os.getenv("ULTIMATE_CLEANUP_DESCRIPTION_324"))
+    parser.add_argument("--project-root", help = os.getenv("ULTIMATE_CLEANUP_HELP_325"), default=None)
+    parser.add_argument("--dry-run", action = os.getenv("ULTIMATE_CLEANUP_ACTION_325"), help = os.getenv("ULTIMATE_CLEANUP_HELP_325"))
 
     args = parser.parse_args()
 

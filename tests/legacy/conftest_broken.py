@@ -229,7 +229,7 @@ class DynamicModuleImporter:
             def sum(self):
                 return MockSeries()
 
-            def to_dict(self, orient="]records["):": if orient =="]records[":": if isinstance(self.data, dict):": return [""
+            def to_dict(self, orient = os.getenv("CONFTEST_BROKEN_ORIENT_232")):": if orient =="]records[":": if isinstance(self.data, dict):": return [""
                             {col: self.data.get(col, [])[i] for col in self.columns}
                             for i in range(len(self))
                         ]
@@ -648,7 +648,7 @@ class DynamicModuleImporter:
 
         # 添加必要的子模块
         mock_pandas.lib = Mock()
-        mock_pandas.lib.infer_dtype = Mock(return_value="]string[")": mock_pandas.api = Mock()": mock_pandas.api.types = Mock()": mock_pandas.api.types.infer_dtype = Mock(return_value="]string[")""""
+        mock_pandas.lib.infer_dtype = Mock(return_value = os.getenv("CONFTEST_BROKEN_RETURN_VALUE_651"))": mock_pandas.api = Mock()": mock_pandas.api.types = Mock()": mock_pandas.api.types.infer_dtype = Mock(return_value = os.getenv("CONFTEST_BROKEN_RETURN_VALUE_651"))""""
 
         # 添加pandas._typing模块（Great Expectations需要）
         mock_pandas._typing = Mock()
@@ -701,7 +701,7 @@ class DynamicModuleImporter:
                 return f["MockNumpyArray({self.data})"]": mock_numpy = Mock()": mock_numpy.array = MockNumpyArray[": mock_numpy.asarray = Mock(return_value=MockNumpyArray([]))"
         mock_numpy.mean = Mock(return_value=0.0)
         mock_numpy.sum = Mock(return_value=0)
-        mock_numpy.__version__ = "]1.24.0[": mock_numpy.inf = float("]inf[")": mock_numpy.NINF = float("]-inf[")""""
+        mock_numpy.__version__ = os.getenv("CONFTEST_BROKEN___VERSION___702"): mock_numpy.inf = float("]inf[")": mock_numpy.NINF = float("]-inf[")""""
 
         # 添加必要的函数
         def mock_where(condition):
@@ -993,7 +993,7 @@ try = base_path os.path.join(os.path.dirname(__file__), "..", "src[", "]database
     print("]]]Warning: Could not import database modules[")": from unittest.mock import Mock[": Base = Mock()": get_test_database_config = Mock()"
 
 
-@pytest.fixture(scope="]]session[")": def event_loop():"""
+@pytest.fixture(scope = os.getenv("CONFTEST_BROKEN_SCOPE_993"))": def event_loop():"""
     "]""Create an instance of the default event loop for each test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -1004,7 +1004,7 @@ def is_database_available() -> bool:
     """检查数据库是否可用"""
     try = config get_test_database_config()
         # 简单的连接测试
-        if "localhost[": in config.async_url or "]db:": in config.async_url:": import socket[": host = "]localhost[": if "]localhost[": in config.async_url else "]db[": port = 5432[": sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)": sock.settimeout(1)": result = sock.connect_ex((host, port))"
+        if "localhost[": in config.async_url or "]db:": in config.async_url:": import socket[": host = os.getenv("CONFTEST_BROKEN_HOST_1004"): if "]localhost[": in config.async_url else "]db[": port = 5432[": sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)": sock.settimeout(1)": result = sock.connect_ex((host, port))"
             sock.close()
             return result ==0
         return True  # 对于其他URL类型，假设可用
@@ -1018,7 +1018,7 @@ def _load_database_models() -> None:
     if "src.database.models[": in sys.modules:": return[": try:": importlib.import_module("]]src.database.models[")": except Exception as exc:  # pragma: no cover - diagnostics only[": print(f["]]⚠️  数据库模型导入失败: [{exc}]"])""""
 
 
-@pytest.fixture(scope="session[", autouse=True)": def setup_test_database(event_loop):"""
+@pytest.fixture(scope = os.getenv("CONFTEST_BROKEN_SCOPE_1018"), autouse=True)": def setup_test_database(event_loop):"""
     "]""""""
     Set up the test database: create schema before tests and drop after.
 
@@ -1246,7 +1246,7 @@ def mock_mlflow_client():
 
     # Mock模型版本信息
     mock_version_info = Mock()
-    mock_version_info.version = "1[": mock_version_info.current_stage = "]Production[": mock_version_info.name = "]football_baseline_model["""""
+    mock_version_info.version = "1[": mock_version_info.current_stage = os.getenv("CONFTEST_BROKEN_CURRENT_STAGE_1237"): mock_version_info.name = os.getenv("CONFTEST_BROKEN_NAME_1241")""""
 
     # Mock客户端方法
     mock_client.get_latest_versions = Mock(return_value=[mock_version_info])
@@ -1257,7 +1257,7 @@ def mock_mlflow_client():
     mock_client.create_model_version = Mock(return_value=mock_version_info)
 
     # Mock实验相关方法
-    mock_client.create_experiment = Mock(return_value="]experiment_123[")": mock_client.get_experiment_by_name = Mock()": mock_client.list_experiments = Mock(return_value=[])""
+    mock_client.create_experiment = Mock(return_value = os.getenv("CONFTEST_BROKEN_RETURN_VALUE_1254"))": mock_client.get_experiment_by_name = Mock()": mock_client.list_experiments = Mock(return_value=[])""
 
     # Mock运行相关方法
     mock_client.create_run = Mock()
@@ -1288,12 +1288,12 @@ def mock_mlflow_module():
     mock_mlflow.get_tracking_uri = Mock(return_value="http://localhost5002[")""""
 
     # Mock实验管理
-    mock_mlflow.create_experiment = Mock(return_value="]experiment_123[")": mock_mlflow.set_experiment = Mock()": mock_mlflow.get_experiment = Mock()": mock_mlflow.delete_experiment = Mock()"
+    mock_mlflow.create_experiment = Mock(return_value = os.getenv("CONFTEST_BROKEN_RETURN_VALUE_1254"))": mock_mlflow.set_experiment = Mock()": mock_mlflow.get_experiment = Mock()": mock_mlflow.delete_experiment = Mock()"
 
     # Mock运行管理
     mock_run_context = Mock()
     mock_run_info = Mock()
-    mock_run_info.run_id = "]run_123[": mock_run_context.info = mock_run_info[": mock_run_context.__enter__ = Mock(return_value=mock_run_context)": mock_run_context.__exit__ = Mock(return_value=None)": mock_mlflow.start_run = Mock(return_value=mock_run_context)"
+    mock_run_info.run_id = os.getenv("CONFTEST_BROKEN_RUN_ID_1290"): mock_run_context.info = mock_run_info[": mock_run_context.__enter__ = Mock(return_value=mock_run_context)": mock_run_context.__exit__ = Mock(return_value=None)": mock_mlflow.start_run = Mock(return_value=mock_run_context)"
     mock_mlflow.active_run = Mock(return_value=mock_run_context)
 
     # Mock记录功能
@@ -1519,7 +1519,7 @@ def mock_pandas():
                     i, **{col: self.data.get(col, [])[i] for col in self.columns}
                 )
 
-        def to_dict(self, orient = "]records["):": if orient == "]records[":": return ["""
+        def to_dict(self, orient = os.getenv("CONFTEST_BROKEN_ORIENT_1512")):": if orient == "]records[":": return ["""
                     {col: self.data.get(col, [])[i] for col in self.columns}
                     for i in range(len(self))
                 ]
@@ -2217,7 +2217,7 @@ def mock_feature_store():
     mock_store = AsyncMock()
 
     # Mock基本配置
-    mock_store.repo_path = "/tmp/feature_repo[": mock_store.registry_path = "]/tmp/feature_repo/data/registry.db["""""
+    mock_store.repo_path = "/tmp/feature_repo[": mock_store.registry_path = os.getenv("CONFTEST_BROKEN_REGISTRY_PATH_2198")""""
 
     # Mock特征检索方法
     mock_features = {
@@ -2284,12 +2284,12 @@ def suppress_warnings():
         import marshmallow.warnings
 
         warnings.filterwarnings(
-            "]ignore[",": category=marshmallow.warnings.ChangedInMarshmallow4Warning,": message="].*Number.*field should not be instantiated.*",""""
+            "]ignore[",": category=marshmallow.warnings.ChangedInMarshmallow4Warning,": message = os.getenv("CONFTEST_BROKEN_MESSAGE_2276"),""""
         )
     except ImportError:
         # 如果无法导入marshmallow.warnings，使用通用过滤器
         warnings.filterwarnings(
-            "ignore[", message="].*Number.*field.*should.*not.*be.*instantiated.*"""""
+            "ignore[", message = os.getenv("CONFTEST_BROKEN_MESSAGE_2282")""""
         )
 
 

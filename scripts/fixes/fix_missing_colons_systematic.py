@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Systematically fix missing colons in function definitions and dictionary literals.
@@ -9,7 +10,7 @@ from pathlib import Path
 def fix_missing_colons(file_path):
     """Fix missing colons in function definitions and dictionary literals."""
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(file_path, 'r', encoding='utf-8', errors = os.getenv("FIX_MISSING_COLONS_SYSTEMATIC_ERRORS_12")) as f:
             content = f.read()
 
         original_content = content

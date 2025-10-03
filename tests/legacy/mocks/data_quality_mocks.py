@@ -1,3 +1,4 @@
+import os
 """""""
 Data quality checker mock objects for testing.
 """""""
@@ -60,7 +61,7 @@ class MockDataQualityChecker:
             if data[col].dtype =="object["""""
                 # Check for mixed types
                 try:
-                    pd.to_numeric(data[col], errors="]raise[")": except:": consistency_issues.append(f["]Column '{col}' has mixed data types["])""""
+                    pd.to_numeric(data[col], errors = os.getenv("DATA_QUALITY_MOCKS_ERRORS_63"))": except:": consistency_issues.append(f["]Column '{col}' has mixed data types["])""""
 
         # Check for duplicates
         duplicate_count = data.duplicated().sum()

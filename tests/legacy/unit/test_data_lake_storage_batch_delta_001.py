@@ -56,7 +56,7 @@ class TestDataLakeStorageBatchDelta001:
         ]
     def test_data_lake_initialization_default_path(self):
         """测试数据湖默认路径初始化"""
-        with patch('os.getcwd', return_value = '_test/dir')
+        with patch('os.getcwd', return_value = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_RETURN_VALU"))
             with patch('os.path.join', return_value = '/test/dir/data/football_lake')
                 with patch.object(Path, 'mkdir'):
                     data_lake = DataLakeStorage()
@@ -105,7 +105,7 @@ class TestDataLakeStorageBatchDelta001:
            pass  # Auto-fixed empty except block
  pass
             result = await data_lake.save_historical_data(
-            table_name="raw_matches[",": data=sample_dataframe,": partition_date=datetime(2025, 1, 1)""
+            table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": data=sample_dataframe,": partition_date=datetime(2025, 1, 1)""
             )
             # 如果方法成功执行，验证返回结果类型
         assert isinstance(result, str) or result is None
@@ -126,7 +126,7 @@ class TestDataLakeStorageBatchDelta001:
            pass  # Auto-fixed empty except block
  pass
             result = await data_lake.save_historical_data(
-            table_name="raw_matches[",": data=sample_dict_data,": partition_date=datetime(2025, 1, 1)""
+            table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": data=sample_dict_data,": partition_date=datetime(2025, 1, 1)""
             )
             # 如果方法成功执行，验证返回结果类型
         assert isinstance(result, str) or result is None
@@ -139,14 +139,14 @@ class TestDataLakeStorageBatchDelta001:
         "]""测试保存到无效表名"""
         with pytest.raises(ValueError):
             await data_lake.save_historical_data(
-            table_name="invalid_table[",": data=sample_dataframe["""
+            table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": data=sample_dataframe["""
             )
         @pytest.mark.asyncio
     async def test_save_historical_data_empty_data(self, data_lake):
         "]]""测试保存空数据"""
         empty_df = pd.DataFrame()
         result = await data_lake.save_historical_data(
-        table_name="raw_matches[",": data=empty_df["""
+        table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": data=empty_df["""
         )
         # 验证返回空字符串而不是引发异常
         assert result == 
@@ -163,7 +163,7 @@ class TestDataLakeStorageBatchDelta001:
            pass  # Auto-fixed empty except block
  pass
             result = await data_lake.load_historical_data(
-            table_name="raw_matches[",": date_from=datetime(2025, 1, 1),": date_to=datetime(2025, 1, 31)""
+            table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": date_from=datetime(2025, 1, 1),": date_to=datetime(2025, 1, 31)""
             )
             # 如果方法成功执行，验证返回结果类型
         assert isinstance(result, pd.DataFrame) or result is None
@@ -175,7 +175,7 @@ class TestDataLakeStorageBatchDelta001:
     async def test_load_historical_data_invalid_table_name(self, data_lake):
         "]""测试从无效表名加载数据"""
         result = await data_lake.load_historical_data(
-        table_name="invalid_table[",": date_from=datetime(2025, 1, 1),": date_to=datetime(2025, 1, 31)""
+        table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": date_from=datetime(2025, 1, 1),": date_to=datetime(2025, 1, 31)""
         )
         # 验证返回空DataFrame而不是引发异常
         assert isinstance(result, pd.DataFrame)
@@ -195,7 +195,7 @@ class TestDataLakeStorageBatchDelta001:
             from datetime import datetime, timedelta
             archive_before = datetime.now() - timedelta(days=365)
             result = await data_lake.archive_old_data(
-            table_name="raw_matches[",": archive_before=archive_before["""
+            table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": archive_before=archive_before["""
             )
             # 如果方法成功执行，验证返回结果类型
         assert isinstance(result, int) and result >= 0
@@ -215,7 +215,7 @@ class TestDataLakeStorageBatchDelta001:
         except Exception as e:
            pass  # Auto-fixed empty except block
  pass
-            result = await data_lake.get_table_stats(table_name="raw_matches[")""""
+            result = await data_lake.get_table_stats(table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"))""""
             # 验证统计信息结构
         assert isinstance(result, dict)
         if result:  # 如果返回非空字典:
@@ -236,7 +236,7 @@ class TestDataLakeStorageBatchDelta001:
         except Exception as e:
            pass  # Auto-fixed empty except block
  pass
-            result = await data_lake.cleanup_empty_partitions(table_name="raw_matches[")""""
+            result = await data_lake.cleanup_empty_partitions(table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"))""""
             # 验证清理调用
         assert isinstance(result, int)
         assert result >= 0
@@ -303,7 +303,7 @@ class TestDataLakeStorageBatchDelta001:
         except Exception as e:
            pass  # Auto-fixed empty except block
  pass
-            result = await data_lake.save_historical_data(table_name="raw_matches[",": data = pd.DataFrame({'test': [1]))"""
+            result = await data_lake.save_historical_data(table_name = os.getenv("TEST_DATA_LAKE_STORAGE_BATCH_DELTA_001_TABLE_NAME_"),": data = pd.DataFrame({'test': [1]))"""
             )
             # 如果方法成功执行，验证返回结果
         assert isinstance(result, str) or result is None

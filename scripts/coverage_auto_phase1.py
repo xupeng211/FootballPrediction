@@ -2,6 +2,7 @@ import subprocess
 import time
 import datetime
 import argparse
+import os
 
 def run(cmd, check=True):
     print(f"⚙️ Running: {cmd}")
@@ -58,7 +59,7 @@ def loop_until_target(target=40.0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--once", action="store_true", help="Run only one iteration and exit")
+    parser.add_argument("--once", action = os.getenv("COVERAGE_AUTO_PHASE1_ACTION_61"), help = os.getenv("COVERAGE_AUTO_PHASE1_HELP_61"))
     args = parser.parse_args()
 
     if args.once:

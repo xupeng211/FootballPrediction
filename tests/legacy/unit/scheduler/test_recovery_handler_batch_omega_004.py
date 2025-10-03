@@ -32,7 +32,7 @@ class TestRecoveryHandlerBatchOmega004:
     def mock_task(self):
         """创建模拟任务对象"""
         task = Mock()
-        task.task_id = "test_task_001[": task.name = "]测试任务[": task.cron_expression = "]0 * * * *": task.priority = 1[": task.timeout = 300[": task.retry_count = 0[": task.max_retries = 3"
+        task.task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_35"): task.name = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_NAME_35"): task.cron_expression = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_CRON_EXPRESS"): task.priority = 1[": task.timeout = 300[": task.retry_count = 0[": task.max_retries = 3"
         task.next_run_time = None
         task._update_next_run_time = Mock()
         return task
@@ -40,7 +40,7 @@ class TestRecoveryHandlerBatchOmega004:
     def sample_failure(self):
         "]]]""示例失败记录"""
         return TaskFailure(
-        task_id="test_task_001[",": failure_time=datetime.now() - timedelta(hours=1),": failure_type=FailureType.TIMEOUT,": error_message="]Task timeout[",": retry_count=1,": context = {"]task_name[" "]测试任务["}""""
+        task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_37"),": failure_time=datetime.now() - timedelta(hours=1),": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG"),": retry_count=1,": context = {"]task_name[" "]测试任务["}""""
         )
     def test_recovery_handler_initialization(self, recovery_handler):
         "]""测试 RecoveryHandler 初始化"""
@@ -60,7 +60,7 @@ class TestRecoveryHandlerBatchOmega004:
     def test_task_failure_initialization(self):
         """测试 TaskFailure 初始化"""
         failure_time = datetime.now()
-        context = {"task_name[: "测试任务"", "priority]: 1}": failure = TaskFailure(": task_id="test_task_001[",": failure_time=failure_time,": failure_type=FailureType.TIMEOUT,": error_message="]Task timeout[",": retry_count=1,": context=context[""
+        context = {"task_name[: "测试任务"", "priority]: 1}": failure = TaskFailure(": task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_37"),": failure_time=failure_time,": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG"),": retry_count=1,": context=context[""
         )
     assert failure.task_id =="]]test_task_001[" assert failure.failure_time ==failure_time[""""
     assert failure.failure_type ==FailureType.TIMEOUT
@@ -70,14 +70,14 @@ class TestRecoveryHandlerBatchOmega004:
     def test_task_failure_add_recovery_attempt(self):
         "]]""测试 TaskFailure 添加恢复尝试记录"""
         failure = TaskFailure(
-        task_id="test_task_001[",": failure_time=datetime.now(),": failure_type=FailureType.TIMEOUT,": error_message="]Task timeout["""""
+        task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_37"),": failure_time=datetime.now(),": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG")""""
         )
         attempt_time = datetime.now()
         failure.add_recovery_attempt(
             strategy=RecoveryStrategy.IMMEDIATE_RETRY,
             success=True,
             attempt_time=attempt_time,
-            details="]立即重试成功["""""
+            details = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_DETAILS_73")""""
         )
     assert len(failure.recovery_attempts) ==1
     attempt = failure.recovery_attempts[0]
@@ -86,7 +86,7 @@ class TestRecoveryHandlerBatchOmega004:
         "]""测试 TaskFailure 转换为字典"""
         failure_time = datetime.now()
         failure = TaskFailure(
-        task_id="test_task_001[",": failure_time=failure_time,": failure_type=FailureType.TIMEOUT,": error_message="]Task timeout[",": retry_count=1,": context = {"]task_name[: "测试任务["}"]"""
+        task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_37"),": failure_time=failure_time,": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG"),": retry_count=1,": context = {"]task_name[: "测试任务["}"]"""
         )
         # 添加恢复尝试
         failure.add_recovery_attempt(
@@ -322,7 +322,7 @@ class TestRecoveryHandlerBatchOmega004:
         mock_calls = []
         def mock_handler(alert_data):
             mock_calls.append(alert_data)
-        mock_handler.__name__ = "test_handler[": recovery_handler.register_alert_handler(mock_handler)": recovery_handler._send_alert(": level="]WARNING[",": message="]Test alert[",": details = {"]key[": ["]value["}""""
+        mock_handler.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___312"): recovery_handler.register_alert_handler(mock_handler)": recovery_handler._send_alert(": level = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_LEVEL_313"),": message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_MESSAGE_313"),": details = {"]key[": ["]value["}""""
         )
         # 验证告警处理器被调用
     assert len(mock_calls) ==1
@@ -332,14 +332,14 @@ class TestRecoveryHandlerBatchOmega004:
         "]""测试告警处理器异常"""
         # 注册一个会抛出异常的处理器
         def mock_handler(alert_data):
-            raise Exception("Handler error[")": mock_handler.__name__ = "]error_handler[": recovery_handler.register_alert_handler(mock_handler)""""
+            raise Exception("Handler error[")": mock_handler.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___325"): recovery_handler.register_alert_handler(mock_handler)""""
         # 不应该抛出异常
         recovery_handler._send_alert("]WARNING[", "]Test alert[", {})": def test_register_alert_handler(self, recovery_handler):"""
         "]""测试注册告警处理器"""
         # 创建一个带有 __name__ 属性的可调用对象
         def mock_handler(alert_data):
             pass
-        mock_handler.__name__ = "test_handler[": recovery_handler.register_alert_handler(mock_handler)": assert len(recovery_handler.alert_handlers) ==1[" assert recovery_handler.alert_handlers[0] ==mock_handler[""
+        mock_handler.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___312"): recovery_handler.register_alert_handler(mock_handler)": assert len(recovery_handler.alert_handlers) ==1[" assert recovery_handler.alert_handlers[0] ==mock_handler[""
     def test_get_failure_statistics_empty(self, recovery_handler):
         "]]]""测试获取失败统计信息（空状态）"""
         stats = recovery_handler.get_failure_statistics()
@@ -372,17 +372,17 @@ class TestRecoveryHandlerBatchOmega004:
         mock_datetime.now.return_value = mock_now
         # 创建旧的和新的失败记录
         old_failure = TaskFailure(
-        task_id="old_task[",": failure_time=mock_now - timedelta(days=35),": failure_type=FailureType.TIMEOUT,": error_message="]Old error["""""
+        task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_360"),": failure_time=mock_now - timedelta(days=35),": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG")""""
         )
         new_failure = TaskFailure(
-            task_id="]new_task[",": failure_time=mock_now - timedelta(days=10),": failure_type=FailureType.TIMEOUT,": error_message="]New error["""""
+            task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_363"),": failure_time=mock_now - timedelta(days=10),": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG")""""
         )
         recovery_handler.failure_history = ["]old_failure[", new_failure]": cleared_count = recovery_handler.clear_old_failures(days_to_keep=30)": assert cleared_count ==1[" assert len(recovery_handler.failure_history) ==1"
     assert recovery_handler.failure_history[0].task_id =="]]new_task[" def test_clear_old_failures_no_old_records("
     """"
         "]""测试清理旧的失败记录（无旧记录）"""
         failure = TaskFailure(
-        task_id="new_task[",": failure_time=datetime.now() - timedelta(days=10),": failure_type=FailureType.TIMEOUT,": error_message="]New error["""""
+        task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_373"),": failure_time=datetime.now() - timedelta(days=10),": failure_type=FailureType.TIMEOUT,": error_message = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_ERROR_MESSAG")""""
         )
         recovery_handler.failure_history = ["]failure[": cleared_count = recovery_handler.clear_old_failures(days_to_keep=30)": assert cleared_count ==0[" assert len(recovery_handler.failure_history) ==1[""
     def test_edge_case_empty_recovery_configs(self, recovery_handler):
@@ -414,7 +414,7 @@ class TestRecoveryHandlerBatchOmega004:
         mock_calls = []
         def mock_handler(alert_data):
             mock_calls.append(alert_data)
-        mock_handler.__name__ = "integration_test_handler[": recovery_handler.register_alert_handler(mock_handler)""""
+        mock_handler.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___393"): recovery_handler.register_alert_handler(mock_handler)""""
         # 处理任务失败
         with patch.object(recovery_handler, '_execute_recovery_strategy') as mock_execute:
             mock_execute.return_value = True
@@ -434,7 +434,7 @@ class TestRecoveryHandlerBatchOmega004:
         calls1 = []
         def handler1(alert_data):
             calls1.append(alert_data)
-        handler1.__name__ = "handler1[": calls2 = []": def handler2(alert_data):": calls2.append(alert_data)": handler2.__name__ = "]handler2[": recovery_handler.register_alert_handler(handler1)": recovery_handler.register_alert_handler(handler2)"""
+        handler1.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___420"): calls2 = []": def handler2(alert_data):": calls2.append(alert_data)": handler2.__name__ = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004___NAME___421"): recovery_handler.register_alert_handler(handler1)": recovery_handler.register_alert_handler(handler2)"""
         # 发送告警
         recovery_handler._send_alert("]WARNING[", "]Test alert[", {})""""
         # 两个处理器都应该被调用
@@ -444,7 +444,7 @@ class TestRecoveryHandlerBatchOmega004:
         "]""测试错误处理：无效的任务属性"""
         # 创建缺少必要属性的任务
         invalid_task = Mock()
-        invalid_task.task_id = "invalid_task["""""
+        invalid_task.task_id = os.getenv("TEST_RECOVERY_HANDLER_BATCH_OMEGA_004_TASK_ID_429")""""
         # 缺少其他属性
         # 应该能处理而不崩溃
         try:

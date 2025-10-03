@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 修复剩余的lint问题
@@ -82,12 +83,7 @@ class RemainingLintFixer:
                                 )
                         elif undefined_name == "result" and "# result" not in content:
                             # 对于被注释的变量，恢复它们
-                            content = content.replace("# result =", "result =")
-
-            # 添加缺失的导入
-            if imports_to_add:
-                # 找到导入区域
-                lines = content.split("\n")
+                            content = content.replace("# result =", "result = os.getenv("FIX_REMAINING_LINT_RESULT_85")\n")
                 import_line = -1
 
                 for i, line in enumerate(lines):

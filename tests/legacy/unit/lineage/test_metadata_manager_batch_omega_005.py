@@ -46,7 +46,7 @@ class TestMetadataManagerBatchOmega005:
     def test_metadata_manager_initialization(self):
         """测试 MetadataManager 初始化"""
         from src.lineage.metadata_manager import MetadataManager
-        manager = MetadataManager(marquez_url="http:_/localhost5000[")": assert manager.marquez_url =="]http//localhost5000[" assert manager.base_url =="]http//localhost5000[" assert manager.api_url =="]http//localhost5000/api/v1/" assert isinstance(manager.session, requests.Session)""""
+        manager = MetadataManager(marquez_url = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_MARQUEZ_URL_"))": assert manager.marquez_url =="]http//localhost5000[" assert manager.base_url =="]http//localhost5000[" assert manager.api_url =="]http//localhost5000/api/v1/" assert isinstance(manager.session, requests.Session)""""
     assert manager.session.headers["Content-Type["] =="]application/json[" assert manager.session.headers["]Accept["] =="]application/json[" def test_metadata_manager_default_url("
     """"
         "]""测试 MetadataManager 默认 URL"""
@@ -57,7 +57,7 @@ class TestMetadataManagerBatchOmega005:
         """测试创建命名空间基本功能"""
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             result = metadata_manager.create_namespace(
-            name="test_namespace[",": description="]Test namespace[",": owner_name="]test_owner["""""
+            name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_59"),": description = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_DESCRIPTION_"),": owner_name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_OWNER_NAME_6")""""
             )
     assert result =={
         "]id[: "test-id[","]"""
@@ -73,20 +73,20 @@ class TestMetadataManagerBatchOmega005:
     """"
         "]""测试创建命名空间最小参数"""
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
-            result = metadata_manager.create_namespace(name="minimal_namespace[")": assert result is not None["""
+            result = metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_72"))": assert result is not None["""
         # 验证调用参数
         call_args = metadata_manager.session.put.call_args
         payload = call_args[1]["]]json["]": assert payload["]name["] =="]minimal_namespace[" assert payload["]description["] =="]命名空间 minimal_namespace[" assert "]ownerName[" not in payload[""""
     def test_create_namespace_error(self, metadata_manager):
         "]]""测试创建命名空间错误处理"""
         error_response = Mock()
-        error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'put', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.create_namespace(name="]error_namespace[")": def test_create_dataset_basic(self, metadata_manager, mock_response):"""
+        error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'put', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_83"))": def test_create_dataset_basic(self, metadata_manager, mock_response):"""
         "]""测试创建数据集基本功能"""
         schema_fields = [
             {"name[: "id"", "type]},""""
             {"name[: "name"", "type]}""""
         ]
-        tags = ["test[", "]data["]": with patch.object(metadata_manager.session, 'put', return_value = mock_response)": result = metadata_manager.create_dataset(": namespace="]test_namespace[",": name="]test_dataset[",": description="]Test dataset[",": schema_fields=schema_fields,": tags=tags,": source_name="]test_source["""""
+        tags = ["test[", "]data["]": with patch.object(metadata_manager.session, 'put', return_value = mock_response)": result = metadata_manager.create_dataset(": namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86"),": description = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_DESCRIPTION_"),": schema_fields=schema_fields,": tags=tags,": source_name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_SOURCE_NAME_")""""
             )
     assert result is not None
             # 验证调用参数
@@ -96,7 +96,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试创建数据集最小参数"""
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             result = metadata_manager.create_dataset(
-            namespace="test_namespace[",": name="]minimal_dataset["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_94")""""
             )
     assert result is not None
         # 验证调用参数
@@ -113,7 +113,7 @@ class TestMetadataManagerBatchOmega005:
         ]
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             metadata_manager.create_dataset(
-            namespace="test_namespace[",": name="]schema_dataset[",": schema_fields=schema_fields["""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_105"),": schema_fields=schema_fields["""
             )
             # 验证Schema字段处理
             call_args = metadata_manager.session.put.call_args
@@ -123,7 +123,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试创建数据集错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'put', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.create_dataset("
-                namespace="]test_namespace[",": name="]error_dataset["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_120")""""
                 )
     def test_create_job_basic(self, metadata_manager, mock_response):
         "]""测试创建作业基本功能"""
@@ -136,7 +136,7 @@ class TestMetadataManagerBatchOmega005:
         ]
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             result = metadata_manager.create_job(
-            namespace="test_namespace[",": name="]test_job[",": description="]Test job[",": job_type="]BATCH[",": input_datasets=input_datasets,": output_datasets=output_datasets,": location="]_path/to/job.py["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_125"),": description = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_DESCRIPTION_"),": job_type = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_JOB_TYPE_126"),": input_datasets=input_datasets,": output_datasets=output_datasets,": location = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_LOCATION_126")""""
             )
     assert result is not None
             # 验证调用参数
@@ -146,7 +146,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试创建作业最小参数"""
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             result = metadata_manager.create_job(
-            namespace="test_namespace[",": name="]minimal_job["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_139")""""
             )
     assert result is not None
         # 验证调用参数
@@ -158,7 +158,7 @@ class TestMetadataManagerBatchOmega005:
         "]]""测试创建流式作业"""
         with patch.object(metadata_manager.session, 'put', return_value = mock_response)
             metadata_manager.create_job(
-            namespace="test_namespace[",": name="]stream_job[",": job_type="]STREAM["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_144"),": job_type = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_JOB_TYPE_144")""""
             )
             # 验证作业类型
             call_args = metadata_manager.session.put.call_args
@@ -167,13 +167,13 @@ class TestMetadataManagerBatchOmega005:
         "]""测试创建作业错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'put', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.create_job("
-                namespace="]test_namespace[",": name="]error_job["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_154")""""
                 )
     def test_get_dataset_lineage(self, metadata_manager, mock_response):
         "]""测试获取数据集血缘关系"""
         with patch.object(metadata_manager.session, 'get', return_value = mock_response)
             result = metadata_manager.get_dataset_lineage(
-            namespace="test_namespace[",": name="]test_dataset[",": depth=5["""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86"),": depth=5["""
             )
     assert result is not None
         # 验证调用参数
@@ -184,7 +184,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试获取数据集血缘关系默认深度"""
         with patch.object(metadata_manager.session, 'get', return_value = mock_response)
             metadata_manager.get_dataset_lineage(
-            namespace="test_namespace[",": name="]test_dataset["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86")""""
             )
             # 验证默认深度
             call_args = metadata_manager.session.get.call_args
@@ -193,7 +193,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试获取数据集血缘关系错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'get', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.get_dataset_lineage("
-                namespace="]test_namespace[",": name="]error_dataset["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_120")""""
                 )
     def test_search_datasets(self, metadata_manager, mock_response):
         "]""测试搜索数据集"""
@@ -207,7 +207,7 @@ class TestMetadataManagerBatchOmega005:
         search_result.raise_for_status.return_value = None
         with patch.object(metadata_manager.session, 'get', return_value = search_result)
             result = metadata_manager.search_datasets(
-            query="test_query[",": namespace="]test_namespace[",": limit=50["""
+            query = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_QUERY_184"),": namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": limit=50["""
             )
     assert len(result) ==2
     assert result[0]["]]name["] =="]dataset1["""""
@@ -218,7 +218,7 @@ class TestMetadataManagerBatchOmega005:
     """"
         "]""测试搜索数据集最小参数"""
         search_result = Mock()
-        search_result.json.return_value = {"results[" []}": search_result.raise_for_status.return_value = None[": with patch.object(metadata_manager.session, 'get', return_value = search_result)": result = metadata_manager.search_datasets(query="]]test[")": assert result ==[]"""
+        search_result.json.return_value = {"results[" []}": search_result.raise_for_status.return_value = None[": with patch.object(metadata_manager.session, 'get', return_value = search_result)": result = metadata_manager.search_datasets(query = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_QUERY_195"))": assert result ==[]"""
         # 验证调用参数
         call_args = metadata_manager.session.get.call_args
         params = call_args[1]["]params["]": assert params["]q["] =="]test[" assert "]namespace[" not in params[""""
@@ -226,7 +226,7 @@ class TestMetadataManagerBatchOmega005:
     """"
         "]""测试搜索数据集错误处理"""
         error_response = Mock()
-        error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'get', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.search_datasets(query="]test[")": def test_get_dataset_versions(self, metadata_manager, mock_response):"""
+        error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'get', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.search_datasets(query = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_QUERY_207"))": def test_get_dataset_versions(self, metadata_manager, mock_response):"""
         "]""测试获取数据集版本历史"""
         versions_result = Mock()
         versions_result.json.return_value = {
@@ -238,7 +238,7 @@ class TestMetadataManagerBatchOmega005:
         versions_result.raise_for_status.return_value = None
         with patch.object(metadata_manager.session, 'get', return_value = versions_result)
             result = metadata_manager.get_dataset_versions(
-            namespace="test_namespace[",": name="]test_dataset["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86")""""
             )
     assert len(result) ==2
     assert result[0]["]version["] =="]v1["""""
@@ -249,7 +249,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试获取数据集版本历史错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'get', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.get_dataset_versions("
-                namespace="]test_namespace[",": name="]error_dataset["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_120")""""
                 )
     def test_get_job_runs(self, metadata_manager, mock_response):
         "]""测试获取作业运行历史"""
@@ -263,7 +263,7 @@ class TestMetadataManagerBatchOmega005:
         runs_result.raise_for_status.return_value = None
         with patch.object(metadata_manager.session, 'get', return_value = runs_result)
             result = metadata_manager.get_job_runs(
-            namespace="test_namespace[",": job_name="]test_job[",": limit=100["""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": job_name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_125"),": limit=100["""
             )
     assert len(result) ==2
     assert result[0]["]]id["] =="]run1["""""
@@ -274,7 +274,7 @@ class TestMetadataManagerBatchOmega005:
         "]]""测试获取作业运行历史默认限制"""
         runs_result = Mock()
         runs_result.json.return_value = {"runs[" []}": runs_result.raise_for_status.return_value = None[": with patch.object(metadata_manager.session, 'get', return_value = runs_result)": metadata_manager.get_job_runs("
-            namespace="]]test_namespace[",": job_name="]test_job["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_24"),": job_name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_125")""""
             )
             # 验证默认限制
             call_args = metadata_manager.session.get.call_args
@@ -282,13 +282,13 @@ class TestMetadataManagerBatchOmega005:
         "]]""测试获取作业运行历史错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'get', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.get_job_runs("
-                namespace="]test_namespace[",": job_name="]error_job["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": job_name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_154")""""
                 )
     def test_add_dataset_tag(self, metadata_manager, mock_response):
         "]""测试为数据集添加标签"""
         with patch.object(metadata_manager.session, 'post', return_value = mock_response)
             result = metadata_manager.add_dataset_tag(
-            namespace="test_namespace[",": name="]test_dataset[",": tag="]test_tag["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_94"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86"),": tag = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_TAG_262")""""
             )
     assert result is not None
         # 验证调用参数
@@ -298,7 +298,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试添加数据集标签错误处理"""
         error_response = Mock()
         error_response.raise_for_status.side_effect = RequestException("API Error[")": with patch.object(metadata_manager.session, 'post', return_value = error_response)": with pytest.raises(RequestException):": metadata_manager.add_dataset_tag("
-                namespace="]test_namespace[",": name="]test_dataset[",": tag="]error_tag["""""
+                namespace = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAMESPACE_85"),": name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_86"),": tag = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_TAG_273")""""
                 )
     def test_setup_football_metadata_success(self, metadata_manager):
         "]""测试设置足球预测平台元数据 - 成功场景"""
@@ -369,7 +369,7 @@ class TestMetadataManagerBatchOmega005:
         """测试获取已存在的元数据管理器实例"""
         from src.lineage.metadata_manager import get_metadata_manager, MetadataManager
         # 创建一个实例
-        custom_manager = MetadataManager(marquez_url="http:_/custom5000[")""""
+        custom_manager = MetadataManager(marquez_url = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_MARQUEZ_URL_"))""""
         # 设置全局实例
         import src.lineage.metadata_manager
         src.lineage.metadata_manager._metadata_manager = custom_manager
@@ -381,7 +381,7 @@ class TestMetadataManagerBatchOmega005:
         "]""测试URL构建边界情况"""
         from src.lineage.metadata_manager import MetadataManager
         # 测试不同URL格式 - 需要考虑urljoin的行为
-        manager1 = MetadataManager(marquez_url="http:_/localhost5000/")": assert manager1.api_url =="http//localhost5000/api/v1/" manager2 = MetadataManager(marquez_url="http://localhost5000/path[")""""
+        manager1 = MetadataManager(marquez_url = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_MARQUEZ_URL_"))": assert manager1.api_url =="http//localhost5000/api/v1/" manager2 = MetadataManager(marquez_url="http://localhost5000/path[")""""
         # urljoin 会忽略基础路径，直接使用第二个参数
     assert manager2.api_url =="]http//localhost5000/api/v1/" def test_request_headers_configuration("
     """"
@@ -420,7 +420,7 @@ class TestMetadataManagerBatchOmega005:
         with patch('src.lineage.metadata_manager.logger') as mock_logger:
             # 模拟成功响应
             success_response = Mock()
-            success_response.json.return_value = {"id[": ["]test["}": success_response.raise_for_status.return_value = None[": with patch.object(metadata_manager.session, 'put', return_value = success_response)": metadata_manager.create_namespace(name="]]test_namespace[")""""
+            success_response.json.return_value = {"id[": ["]test["}": success_response.raise_for_status.return_value = None[": with patch.object(metadata_manager.session, 'put', return_value = success_response)": metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_376"))""""
                 # 验证日志记录
                 mock_logger.info.assert_called_with("]创建命名空间成功[": ["]test_namespace[")": def test_error_logging(self, metadata_manager):"""
         "]""测试错误日志记录"""
@@ -441,7 +441,7 @@ class TestMetadataManagerBatchOmega005:
                 except Exception as e:
                    pass  # Auto-fixed empty except block
  pass
-                    metadata_manager.create_namespace(name="]test_namespace[")": except RequestException:": pass[""
+                    metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_BATCH_OMEGA_005_NAME_392"))": except RequestException:": pass[""
                 # 验证错误日志记录
                 mock_logger.error.assert_called_with("]]创建命名空间失败 test_namespace[": [API Error])": def test_type_hints_and_return_types(self, metadata_manager):"""
         "]""测试类型提示和返回类型"""

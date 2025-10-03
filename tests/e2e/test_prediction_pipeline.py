@@ -1,3 +1,4 @@
+import os
 """预测管道端到端冒烟测试"""
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -9,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope = os.getenv("TEST_PREDICTION_PIPELINE_SCOPE_12"))
 def client():
     from src.main import app
     from src.api import health as health_module
@@ -20,7 +21,7 @@ def client():
     return TestClient(app, base_url="http://localhost")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope = os.getenv("TEST_PREDICTION_PIPELINE_SCOPE_12"))
 def session():
     engine = create_engine(
         "sqlite://",
@@ -46,8 +47,8 @@ async def test_prediction_workflow(client):
     mock_match.id = 12345
     mock_match.home_team_id = 1
     mock_match.away_team_id = 2
-    mock_match.match_status = MagicMock(value="scheduled")
-    mock_match.season = "2024-25"
+    mock_match.match_status = MagicMock(value = os.getenv("TEST_PREDICTION_PIPELINE_VALUE_47"))
+    mock_match.season = os.getenv("TEST_PREDICTION_PIPELINE_SEASON_48")
     mock_match.match_time = MagicMock()
     mock_match.home_score = None
     mock_match.away_score = None

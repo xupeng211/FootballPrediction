@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import asyncio
 import pytest
 import time
+import os
 
 """
 Unit tests for scheduler module functionality.:
@@ -30,9 +31,9 @@ class TestScheduledTask:
     def sample_task(self, sample_task_function):
         "]]""Create sample ScheduledTask for testing."""
         return ScheduledTask(
-            task_id="test_task[",": name="]Test Task[",": cron_expression="]0 * * * *",  # 每小时[": task_function=sample_task_function,": priority=5,": max_retries=3,"
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_33"),": name = os.getenv("TEST_TASK_SCHEDULER_NAME_33"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_CRON_EXPRESSION_33"),  # 每小时[": task_function=sample_task_function,": priority=5,": max_retries=3,"
             timeout=300,
-            description = "]Test task for unit testing[")": def test_task_initialization(self, sample_task):"""
+            description = os.getenv("TEST_TASK_SCHEDULER_DESCRIPTION_33"))": def test_task_initialization(self, sample_task):"""
         "]""Test task initialization with correct parameters."""
         assert sample_task.task_id =="test_task[" assert sample_task.name =="]Test Task[" assert sample_task.cron_expression =="]0 * * * *" assert sample_task.priority ==5[""""
         assert sample_task.max_retries ==3
@@ -60,14 +61,14 @@ class TestScheduledTask:
         """Test marking task as completed successfully."""
         sample_task.is_running = True
         sample_task.retry_count = 2
-        sample_task.last_error = "Previous error[": sample_task.mark_completed(success=True)": assert not sample_task.is_running[" assert sample_task.retry_count ==0[""
+        sample_task.last_error = os.getenv("TEST_TASK_SCHEDULER_LAST_ERROR_60"): sample_task.mark_completed(success=True)": assert not sample_task.is_running[" assert sample_task.retry_count ==0[""
         assert sample_task.last_error is None
         assert sample_task.last_run_time is not None
     def test_mark_completed_failure(self, sample_task):
         "]]]""Test marking task as completed with failure."""
         sample_task.is_running = True
         initial_retry_count = sample_task.retry_count
-        sample_task.mark_completed(success=False, error="Task failed[")": assert not sample_task.is_running[" assert sample_task.retry_count ==initial_retry_count + 1[""
+        sample_task.mark_completed(success=False, error = os.getenv("TEST_TASK_SCHEDULER_ERROR_67"))": assert not sample_task.is_running[" assert sample_task.retry_count ==initial_retry_count + 1[""
         assert sample_task.last_error =="]]]Task failed[" assert sample_task.last_run_time is not None[""""
     def test_to_dict_conversion(self, sample_task):
         "]]""Test task to dictionary conversion."""
@@ -77,7 +78,7 @@ class TestScheduledTask:
         "]]""Test handling of invalid cron expressions."""
         # Should handle invalid cron gracefully without raising exception
         task = ScheduledTask(
-            task_id="invalid_task[",": name="]Invalid Task[",": cron_expression="]invalid_cron[",": task_function=sample_task_function)"""
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_76"),": name = os.getenv("TEST_TASK_SCHEDULER_NAME_77"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_CRON_EXPRESSION_77"),": task_function=sample_task_function)"""
         # Verify that invalid cron results in None next_run_time
         assert task.next_run_time is None
 class TestTaskScheduler:
@@ -120,7 +121,7 @@ class TestTaskScheduler:
     def scheduled_task(self, sample_task):
         "]]""Sample scheduled task."""
         return ScheduledTask(
-            task_id="test_task[",": name="]Test Task[",": cron_expression="]0 * * * *",": task_function=sample_task,": priority=5)": def test_scheduler_initialization(self, scheduler):"
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_33"),": name = os.getenv("TEST_TASK_SCHEDULER_NAME_33"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_CRON_EXPRESSION_33"),": task_function=sample_task,": priority=5)": def test_scheduler_initialization(self, scheduler):"
         """Test scheduler initialization."""
         assert not scheduler.is_running
         assert scheduler.tasks =={}
@@ -139,7 +140,7 @@ class TestTaskScheduler:
     def test_register_task_invalid_cron(self, scheduler, sample_task):
         """Test task registration with invalid cron expression."""
         invalid_task = ScheduledTask(
-            task_id="invalid_task[",": name="]Invalid Task[",": cron_expression="]invalid[",": task_function=sample_task)": result = scheduler.register_task(invalid_task)": assert result is False"
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_76"),": name = os.getenv("TEST_TASK_SCHEDULER_NAME_77"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_CRON_EXPRESSION_136"),": task_function=sample_task)": result = scheduler.register_task(invalid_task)": assert result is False"
         assert invalid_task.task_id not in scheduler.tasks
     def test_unregister_task(self, scheduler, scheduled_task):
         "]""Test task unregistration."""
@@ -261,7 +262,7 @@ class TestTaskScheduler:
         "]]""Test updating task schedule."""
         scheduler.register_task(scheduled_task)
         old_cron = scheduled_task.cron_expression
-        new_cron = "*/30 * * * *"  # Every 30 minutes[": result = scheduler.update_task_schedule(scheduled_task.task_id, new_cron)": assert result is True[" assert scheduled_task.cron_expression ==new_cron"
+        new_cron = os.getenv("TEST_TASK_SCHEDULER_NEW_CRON_257")  # Every 30 minutes[": result = scheduler.update_task_schedule(scheduled_task.task_id, new_cron)": assert result is True[" assert scheduled_task.cron_expression ==new_cron"
         assert scheduled_task.cron_expression != old_cron
     def test_update_task_schedule_invalid_task(self, scheduler):
         "]]""Test updating schedule for non-existent task."""
@@ -314,7 +315,7 @@ class TestJobManager:
     def test_execute_sync_job_success(self, job_manager, sample_task_function):
         """Test successful sync job execution."""
         result = job_manager.execute_job(
-            task_id="test_job[",": task_function=sample_task_function,": args=(5),": kwargs = {"]y[": 10},": timeout=60)": assert result is True[" assert job_manager.total_jobs_executed ==1"
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_307"),": task_function=sample_task_function,": args=(5),": kwargs = {"]y[": 10},": timeout=60)": assert result is True[" assert job_manager.total_jobs_executed ==1"
         assert job_manager.successful_jobs ==1
         assert job_manager.failed_jobs ==0
         assert len(job_manager.execution_history) ==1
@@ -324,14 +325,14 @@ class TestJobManager:
             await asyncio.sleep(0.1)  # Simulate async work
             return x + y
         result = job_manager.execute_job(
-            task_id="async_test_job[",": task_function=async_task,": args=(5),": kwargs = {"]y[": 10},": timeout=60)": assert result is True[" assert job_manager.total_jobs_executed ==1"
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_317"),": task_function=async_task,": args=(5),": kwargs = {"]y[": 10},": timeout=60)": assert result is True[" assert job_manager.total_jobs_executed ==1"
         assert job_manager.successful_jobs ==1
     def test_execute_job_timeout(self, job_manager):
         "]]""Test job execution timeout."""
         def slow_task():
             time.sleep(10)  # Will timeout
         result = job_manager.execute_job(
-            task_id="slow_job[", task_function=slow_task, timeout=1[""""
+            task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_324"), task_function=slow_task, timeout=1[""""
         )
         assert result is False
         assert job_manager.total_jobs_executed ==1
@@ -341,7 +342,7 @@ class TestJobManager:
     def test_execute_job_exception(self, job_manager):
         "]]""Test job execution with exception."""
         def failing_task():
-            raise ValueError("Test error[")": result = job_manager.execute_job(": task_id="]failing_job[", task_function=failing_task, timeout=60[""""
+            raise ValueError("Test error[")": result = job_manager.execute_job(": task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_333"), task_function=failing_task, timeout=60[""""
         )
         assert result is False
         assert job_manager.total_jobs_executed ==1
@@ -350,7 +351,7 @@ class TestJobManager:
     def test_execute_already_running_job(self, job_manager, sample_task_function):
         "]]""Test executing job that's already running."""
         # Simulate job already running
-        job_manager.running_jobs["duplicate_job["] = MagicMock()": result = job_manager.execute_job(": task_id="]duplicate_job[", task_function=sample_task_function, timeout=60[""""
+        job_manager.running_jobs["duplicate_job["] = MagicMock()": result = job_manager.execute_job(": task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_344"), task_function=sample_task_function, timeout=60[""""
         )
         assert result is False
         assert job_manager.total_jobs_executed ==0  # Should not execute
@@ -430,8 +431,8 @@ class TestJobExecutionResult:
         start_time = datetime.now() - timedelta(seconds=5)
         end_time = datetime.now()
         return JobExecutionResult(
-            job_id="test_job[",": success=True,": start_time=start_time,": end_time=end_time,"
-            result="]task_completed[",": execution_time=5.0,": memory_usage=100.5,": cpu_usage=25.3)"
+            job_id = os.getenv("TEST_TASK_SCHEDULER_JOB_ID_417"),": success=True,": start_time=start_time,": end_time=end_time,"
+            result = os.getenv("TEST_TASK_SCHEDULER_RESULT_420"),": execution_time=5.0,": memory_usage=100.5,": cpu_usage=25.3)"
     def test_execution_result_initialization(self, execution_result):
         "]""Test execution result initialization."""
         assert execution_result.job_id =="test_job[" assert execution_result.success is True[""""
@@ -449,7 +450,7 @@ class TestJobExecutionResult:
         start_time = datetime.now() - timedelta(seconds=2)
         end_time = datetime.now()
         failed_result = JobExecutionResult(
-            job_id="failed_job[",": success=False,": start_time=start_time,": end_time=end_time,"
-            error="]Task failed due to timeout[")": assert failed_result.success is False[" assert failed_result.error =="]]Task failed due to timeout[" assert failed_result.result is None[""""
+            job_id = os.getenv("TEST_TASK_SCHEDULER_JOB_ID_443"),": success=False,": start_time=start_time,": end_time=end_time,"
+            error = os.getenv("TEST_TASK_SCHEDULER_ERROR_445"))": assert failed_result.success is False[" assert failed_result.error =="]]Task failed due to timeout[" assert failed_result.result is None[""""
         result_dict = failed_result.to_dict()
         assert result_dict["]]success["] is False[" assert result_dict["]]error["] =="]Task failed due to timeout[" assert result_dict["]result"] is None

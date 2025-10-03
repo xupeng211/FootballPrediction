@@ -55,7 +55,7 @@ class TestKafkaConsumerBatchGamma008:
     def mock_message(self):
         "]]""创建模拟 Kafka 消息"""
         mock_msg = Mock()
-        mock_msg.topic = "football_matches[": mock_msg.partition = 0[": mock_msg.offset = 123[": mock_msg.key = b["]]]match_123["]: mock_msg.value = (": b'{"]match_id[": 123, "]home_team[": "]Team A[", "]away_team[": "]Team B["}'""""
+        mock_msg.topic = os.getenv("STREAMING_KAFKA_CONSUMER_BATCH_GAMMA__TOPIC_58"): mock_msg.partition = 0[": mock_msg.offset = 123[": mock_msg.key = b["]]]match_123["]: mock_msg.value = (": b'{"]match_id[": 123, "]home_team[": "]Team A[", "]away_team[": "]Team B["}'""""
         )
         mock_msg.headers = []
         mock_msg.timestamp = datetime.now().timestamp()
@@ -86,7 +86,7 @@ class TestKafkaConsumerBatchGamma008:
         topics = ["matches[", "]odds["]": kafka_consumer.subscribe(topics)": assert set(kafka_consumer.topic_subscriptions) ==set(topics)" kafka_consumer.consumer.subscribe.assert_called_once_with(topics)"
     def test_subscribe_to_single_topic(self, kafka_consumer):
         "]""测试订阅单个主题"""
-        topic = "matches[": kafka_consumer.subscribe(topic)": assert kafka_consumer.topic_subscriptions ==["]topic[" kafka_consumer.consumer.subscribe.assert_called_once_with(["]topic[")": def test_subscribe_empty_topics(self, kafka_consumer):"""
+        topic = os.getenv("STREAMING_KAFKA_CONSUMER_BATCH_GAMMA__TOPIC_87"): kafka_consumer.subscribe(topic)": assert kafka_consumer.topic_subscriptions ==["]topic[" kafka_consumer.consumer.subscribe.assert_called_once_with(["]topic[")": def test_subscribe_empty_topics(self, kafka_consumer):"""
         "]""测试订阅空主题列表"""
         with pytest.raises(Exception):
             kafka_consumer.subscribe([])
@@ -266,7 +266,7 @@ class TestKafkaConsumerBatchGamma008:
         messages = []
         for i in range(5):
             msg = Mock()
-            msg.topic = "matches[": msg.value = f'{{"]match_id[" {i}}}'": messages.append(msg)": kafka_consumer.consumer.poll.side_effect = messages + ["]None[": processed_messages = []": def callback(message):": processed_messages.append(message)": kafka_consumer.running = True"
+            msg.topic = os.getenv("STREAMING_KAFKA_CONSUMER_BATCH_GAMMA__TOPIC_87"): msg.value = f'{{"]match_id[" {i}}}'": messages.append(msg)": kafka_consumer.consumer.poll.side_effect = messages + ["]None[": processed_messages = []": def callback(message):": processed_messages.append(message)": kafka_consumer.running = True"
         with patch("]time.sleep["):": kafka_consumer.start_consuming(callback, timeout=0.1, batch_size=5)": assert len(processed_messages) ==5[" for i, msg in enumerate(processed_messages):"
             assert msg["]]value["]"]match_id[" ==i[" def test_error_handling_in_consume_loop(self, kafka_consumer):"""
         "]]""测试消费循环中的错误处理"""

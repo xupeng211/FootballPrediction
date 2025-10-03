@@ -1,3 +1,4 @@
+import os
 """
 API响应模型测试
 测试覆盖src/api/schemas.py中的所有模型
@@ -24,7 +25,7 @@ class TestServiceCheck:
     def test_service_check_creation_success(self):
         """测试创建服务检查结果成功"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=15.5,
             details={"message": "服务正常"}
         )
@@ -36,7 +37,7 @@ class TestServiceCheck:
     def test_service_check_creation_without_details(self):
         """测试创建服务检查结果（无详细信息）"""
         check = ServiceCheck(
-            status="unhealthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_38"),
             response_time_ms=100.0
         )
 
@@ -77,7 +78,7 @@ class TestServiceCheck:
         }
 
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=25.3,
             details=details
         )
@@ -92,15 +93,15 @@ class TestHealthCheckResponse:
     def test_health_check_response_creation(self):
         """测试健康检查响应创建"""
         checks = {
-            "database": ServiceCheck(status="healthy", response_time_ms=5.0),
-            "redis": ServiceCheck(status="healthy", response_time_ms=2.0),
-            "kafka": ServiceCheck(status="degraded", response_time_ms=50.0)
+            "database": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_27"), response_time_ms=5.0),
+            "redis": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_27"), response_time_ms=2.0),
+            "kafka": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_95"), response_time_ms=50.0)
         }
 
         response = HealthCheckResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             timestamp="2024-01-15T10:00:00Z",
-            service="football-prediction-api",
+            service = os.getenv("TEST_SCHEMAS_SERVICE_97"),
             version="1.0.0",
             uptime=3600.0,
             response_time_ms=15.5,
@@ -117,14 +118,14 @@ class TestHealthCheckResponse:
     def test_health_check_response_unhealthy(self):
         """测试不健康的健康检查响应"""
         checks = {
-            "database": ServiceCheck(status="unhealthy", response_time_ms=1000.0),
-            "redis": ServiceCheck(status="healthy", response_time_ms=2.0)
+            "database": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_38"), response_time_ms=1000.0),
+            "redis": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_27"), response_time_ms=2.0)
         }
 
         response = HealthCheckResponse(
-            status="unhealthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_38"),
             timestamp="2024-01-15T10:00:00Z",
-            service="football-prediction-api",
+            service = os.getenv("TEST_SCHEMAS_SERVICE_97"),
             version="1.0.0",
             uptime=100.0,
             response_time_ms=1200.0,
@@ -139,7 +140,7 @@ class TestHealthCheckResponse:
         # 测试缺少必要字段
         with pytest.raises(ValidationError) as exc_info:
             HealthCheckResponse(
-                status="healthy",
+                status = os.getenv("TEST_SCHEMAS_STATUS_27"),
                 timestamp="2024-01-15T10:00:00Z"
                 # 缺少其他必要字段
             )
@@ -155,15 +156,15 @@ class TestHealthCheckResponse:
 
         for service in services:
             checks[service] = ServiceCheck(
-                status="healthy",
+                status = os.getenv("TEST_SCHEMAS_STATUS_27"),
                 response_time_ms=10.0,
                 details={"message": f"{service} is running"}
             )
 
         response = HealthCheckResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             timestamp=datetime.now().isoformat(),
-            service="test-service",
+            service = os.getenv("TEST_SCHEMAS_SERVICE_156"),
             version="2.0.0",
             uptime=86400.0,
             response_time_ms=25.0,
@@ -187,7 +188,7 @@ class TestStatusResponse:
         }
 
         response = StatusResponse(
-            status="degraded",
+            status = os.getenv("TEST_SCHEMAS_STATUS_95"),
             timestamp="2024-01-15T10:00:00Z",
             services=services
         )
@@ -200,7 +201,7 @@ class TestStatusResponse:
     def test_status_response_all_healthy(self):
         """测试所有服务健康的状态响应"""
         response = StatusResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             timestamp="2024-01-15T10:00:00Z",
             services={
                 "api": "healthy",
@@ -216,7 +217,7 @@ class TestStatusResponse:
         """测试状态响应验证"""
         with pytest.raises(ValidationError):
             StatusResponse(
-                status="healthy"
+                status = os.getenv("TEST_SCHEMAS_STATUS_27")
                 # 缺少timestamp和services
             )
 
@@ -245,7 +246,7 @@ class TestMetricsResponse:
         }
 
         response = MetricsResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=10.5,
             system=system_metrics,
             database=database_metrics,
@@ -268,7 +269,7 @@ class TestMetricsResponse:
     def test_metrics_response_with_nested_data(self):
         """测试带有嵌套数据的监控指标响应"""
         response = MetricsResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=5.0,
             system={
                 "load_average": [1.0, 1.2, 1.1],
@@ -289,7 +290,7 @@ class TestMetricsResponse:
     def test_metrics_response_minimal(self):
         """测试最小监控指标响应"""
         response = MetricsResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=1.0,
             system={},
             database={},
@@ -310,9 +311,9 @@ class TestRootResponse:
     def test_root_response_creation(self):
         """测试根路径响应创建"""
         response = RootResponse(
-            service="Football Prediction API",
+            service = os.getenv("TEST_SCHEMAS_SERVICE_291"),
             version="1.2.3",
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             docs_url="/docs",
             health_check="/health"
         )
@@ -329,9 +330,9 @@ class TestRootResponse:
 
         for version in versions:
             response = RootResponse(
-                service="Test API",
+                service = os.getenv("TEST_SCHEMAS_SERVICE_314"),
                 version=version,
-                status="healthy",
+                status = os.getenv("TEST_SCHEMAS_STATUS_27"),
                 docs_url="/docs",
                 health_check="/health"
             )
@@ -341,7 +342,7 @@ class TestRootResponse:
         """测试根路径响应验证"""
         with pytest.raises(ValidationError) as exc_info:
             RootResponse(
-                service="Test API"
+                service = os.getenv("TEST_SCHEMAS_SERVICE_314")
                 # 缺少其他必要字段
             )
 
@@ -358,7 +359,7 @@ class TestErrorResponse:
         response = ErrorResponse(
             error=True,
             status_code=404,
-            message="Resource not found",
+            message = os.getenv("TEST_SCHEMAS_MESSAGE_337"),
             path="/api/v1/predictions/999"
         )
 
@@ -390,7 +391,7 @@ class TestErrorResponse:
 
     def test_error_response_with_special_characters(self):
         """测试包含特殊字符的错误响应"""
-        special_chars = "中文消息 & émoji 🚨 & special chars: <>&\"'"
+        special_chars = os.getenv("TEST_SCHEMAS_SPECIAL_CHARS_370")'"
 
         response = ErrorResponse(
             error=True,
@@ -416,7 +417,7 @@ class TestModelSerialization:
     def test_service_check_serialization(self):
         """测试ServiceCheck序列化"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=10.5,
             details={"cpu": 50.0}
         )
@@ -430,11 +431,11 @@ class TestModelSerialization:
     def test_health_check_response_serialization(self):
         """测试HealthCheckResponse序列化"""
         checks = {
-            "db": ServiceCheck(status="healthy", response_time_ms=5.0)
+            "db": ServiceCheck(status = os.getenv("TEST_SCHEMAS_STATUS_27"), response_time_ms=5.0)
         }
 
         response = HealthCheckResponse(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             timestamp="2024-01-15T10:00:00Z",
             service="test",
             version="1.0",
@@ -452,9 +453,9 @@ class TestModelSerialization:
     def test_model_json_serialization(self):
         """测试模型JSON序列化"""
         response = RootResponse(
-            service="Test API",
+            service = os.getenv("TEST_SCHEMAS_SERVICE_314"),
             version="1.0",
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             docs_url="/docs",
             health_check="/health"
         )
@@ -477,7 +478,7 @@ class TestModelEdgeCases:
     def test_response_time_zero(self):
         """测试响应时间为0"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=0.0
         )
         assert check.response_time_ms == 0.0
@@ -485,7 +486,7 @@ class TestModelEdgeCases:
     def test_negative_response_time(self):
         """测试负响应时间（应该被允许）"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=-1.0
         )
         assert check.response_time_ms == -1.0
@@ -494,7 +495,7 @@ class TestModelEdgeCases:
         """测试非常大的值"""
         large_value = 999999999.0
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=large_value
         )
         assert check.response_time_ms == large_value
@@ -502,7 +503,7 @@ class TestModelEdgeCases:
     def test_empty_details(self):
         """测试空的详细信息"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=10.0,
             details={}
         )
@@ -511,7 +512,7 @@ class TestModelEdgeCases:
     def test_none_details(self):
         """测试None详细信息"""
         check = ServiceCheck(
-            status="healthy",
+            status = os.getenv("TEST_SCHEMAS_STATUS_27"),
             response_time_ms=10.0,
             details=None
         )

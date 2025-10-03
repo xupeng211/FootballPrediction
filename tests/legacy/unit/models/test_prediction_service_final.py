@@ -4,6 +4,7 @@ from src.models.prediction_service import PredictionService
 from unittest.mock import AsyncMock, Mock, patch
 import numpy
 import pytest
+import os
 
 """
 PredictionService 最终测试套件
@@ -75,7 +76,7 @@ class TestPredictionServiceFinal:
             mock_match.away_team_id = 15
             mock_match.league_id = 1
             mock_match.match_time = datetime.now()
-            mock_match.match_status = "scheduled[": mock_match.season = "]2023-2024[": mock_result = Mock()": mock_result.first.return_value = mock_match[": mock_async_session.execute.return_value = mock_result[": result = await prediction_service._get_match_info(12345)"
+            mock_match.match_status = os.getenv("TEST_PREDICTION_SERVICE_FINAL_MATCH_STATUS_78"): mock_match.season = os.getenv("TEST_PREDICTION_SERVICE_FINAL_SEASON_78"): mock_result = Mock()": mock_result.first.return_value = mock_match[": mock_async_session.execute.return_value = mock_result[": result = await prediction_service._get_match_info(12345)"
             assert result is not None
             assert result["]]]id["] ==12345[" assert result["]]home_team_id["] ==10[" assert result["]]away_team_id["] ==15[""""
         @pytest.mark.asyncio
@@ -166,7 +167,7 @@ class TestPredictionServiceFinal:
             """测试成功存储预测"""
             from src.models.prediction_service import PredictionResult
             prediction_result = PredictionResult(match_id=12345,
-                model_version="v1.0[",": predicted_result="]home[",": confidence_score=0.6,": features_used = {"]feature1[": 0.5),": created_at=datetime.now())"""
+                model_version="v1.0[",": predicted_result = os.getenv("TEST_PREDICTION_SERVICE_FINAL_PREDICTED_RESULT_168"),": confidence_score=0.6,": features_used = {"]feature1[": 0.5),": created_at=datetime.now())"""
             # 模拟数据库查询结果（比赛已存在）
             mock_match = Mock()
             mock_result = Mock()
@@ -249,7 +250,7 @@ class TestPredictionServiceFinal:
             mock_match.away_team_id = 15
             mock_match.league_id = 1
             mock_match.match_time = datetime.now()
-            mock_match.match_status = "scheduled[": mock_match.season = "]2023-2024[": mock_result = Mock()": mock_result.first.return_value = mock_match[": mock_async_session.execute.return_value = mock_result[""
+            mock_match.match_status = os.getenv("TEST_PREDICTION_SERVICE_FINAL_MATCH_STATUS_78"): mock_match.season = os.getenv("TEST_PREDICTION_SERVICE_FINAL_SEASON_78"): mock_result = Mock()": mock_result.first.return_value = mock_match[": mock_async_session.execute.return_value = mock_result[""
             # 执行异步方法
             result = await prediction_service._get_match_info(12345)
             # 验证结果

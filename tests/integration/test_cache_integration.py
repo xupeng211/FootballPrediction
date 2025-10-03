@@ -1,3 +1,4 @@
+import os
 """
 缓存系统集成测试
 Integration tests for cache system
@@ -28,7 +29,7 @@ class TestCacheIntegration:
     def redis_manager(self):
         """创建Redis管理器实例"""
         return RedisManager(
-            redis_url="redis://localhost:6379/1",
+            redis_url = os.getenv("TEST_CACHE_INTEGRATION_REDIS_URL_31"),
             max_connections=10
         )
 
@@ -208,7 +209,7 @@ class TestCacheIntegration:
     @pytest.mark.asyncio
     async def test_cache_ttl_expiration(self, mock_redis):
         """测试缓存TTL过期"""
-        cache_key = "test:ttl"
+        cache_key = os.getenv("TEST_CACHE_INTEGRATION_CACHE_KEY_210")
 
         # Mock不同的TTL响应
         mock_redis.ttl.side_effect = [3600, -1, -2]  # 有效、无过期、不存在

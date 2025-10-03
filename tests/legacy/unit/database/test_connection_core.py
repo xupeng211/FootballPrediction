@@ -4,6 +4,7 @@ from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from src.database.connection import DatabaseManager
 from unittest.mock import AsyncMock, Mock, patch
 import pytest
+import os
 
 """
 核心数据库连接测试 - 覆盖率急救
@@ -66,7 +67,7 @@ class TestDatabaseManagerCore:
             with patch(:
                 "src.database.connection.get_connection_string["""""
             ) as mock_conn_str:
-                mock_conn_str.return_value = "]postgresql://testtest@localhost/test[": with patch(:""""
+                mock_conn_str.return_value = os.getenv("TEST_CONNECTION_CORE_RETURN_VALUE_69"): with patch(:""""
                     "]src.database.connection.create_engine["""""
                 ) as mock_create_engine:
                     with patch(:

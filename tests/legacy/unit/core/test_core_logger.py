@@ -2,6 +2,7 @@ from src.core.logger import Logger
 from unittest.mock import Mock, patch
 import logging
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 class TestLogger:
@@ -17,7 +18,7 @@ class TestLogger:
         "]]""测试级别设置大小写不敏感"""
         logger = Logger.setup_logger("test_lower[", "]debug[")": assert logger.level ==logging.DEBUG[" logger = Logger.setup_logger("]]test_mixed[", "]Info[")": assert logger.level ==logging.INFO[" def test_setup_logger_handler_not_duplicated(self):""
         "]]""测试重复调用不会添加重复的handler"""
-        logger_name = "test_no_duplicate[": logger1 = Logger.setup_logger(logger_name)": logger2 = Logger.setup_logger(logger_name)"""
+        logger_name = os.getenv("TEST_CORE_LOGGER_LOGGER_NAME_20"): logger1 = Logger.setup_logger(logger_name)": logger2 = Logger.setup_logger(logger_name)"""
         # 应该是同一个logger实例
         assert logger1 is logger2
         # handler不应该重复添加
@@ -26,7 +27,7 @@ class TestLogger:
         "]""测试日志格式器"""
         logger = Logger.setup_logger("test_format[")": handler = logger.handlers[0]": formatter = handler.formatter[""
         # 检查格式字符串
-        expected_format = "]]%(asctime)s - %(name)s - %(levelname)s - %(message)s[": assert formatter._fmt ==expected_format[" def test_global_logger_instance(self):"""
+        expected_format = os.getenv("TEST_CORE_LOGGER_EXPECTED_FORMAT_28"): assert formatter._fmt ==expected_format[" def test_global_logger_instance(self):"""
         "]]""测试全局日志实例"""
         from src.core.logger import logger
         assert isinstance(logger, logging.Logger)

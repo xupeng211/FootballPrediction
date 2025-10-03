@@ -73,7 +73,7 @@ class TestMetadataManagerComprehensive:
     def test_initialization_custom_url(self):
         "]]""测试自定义 URL 初始化"""
         from src.lineage.metadata_manager import MetadataManager
-        custom_url = "http:_/custom-marquez8080[": manager = MetadataManager(marquez_url=custom_url)": assert manager.marquez_url ==custom_url[" assert manager.base_url ==custom_url[""
+        custom_url = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_CUSTOM_URL_76"): manager = MetadataManager(marquez_url=custom_url)": assert manager.marquez_url ==custom_url[" assert manager.base_url ==custom_url[""
     assert manager.api_url ==f["]]]{custom_url}/api/v1/"] def test_session_headers_configuration(self)""""
         """测试会话头部配置"""
         from src.lineage.metadata_manager import MetadataManager
@@ -95,7 +95,7 @@ class TestMetadataManagerComprehensive:
     def test_create_namespace_minimal_params(self, mock_post, manager, mock_response):
         "]]""测试最小参数创建命名空间"""
         mock_post.return_value = mock_response
-        result = manager.create_namespace(name="test_namespace[")": assert result is not None[" mock_post.assert_called_once()""
+        result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_98"))": assert result is not None[" mock_post.assert_called_once()""
         call_args = mock_post.call_args
         expected_data = {"]]name[": ["]test_namespace["}": assert call_args[1]["]json["] ==expected_data[""""
     @patch('requests.Session.post')
@@ -103,12 +103,12 @@ class TestMetadataManagerComprehensive:
         "]]""测试命名空间创建 API 错误"""
         error_response = Mock()
         error_response.status_code = 400
-        error_response.text = "Bad Request[": error_response.json.return_value = {"]error[: "Namespace already exists["}"]": mock_post.return_value = error_response[": result = manager.create_namespace(name="]]existing_namespace[")": assert result is not None["""
+        error_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_104"): error_response.json.return_value = {"]error[: "Namespace already exists["}"]": mock_post.return_value = error_response[": result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_106"))": assert result is not None["""
         # 应该包含错误信息
     @patch('requests.Session.post')
     def test_create_namespace_network_error(self, mock_post, manager):
         "]]""测试命名空间创建网络错误"""
-        mock_post.side_effect = RequestException("Network error[")": result = manager.create_namespace(name="]test_namespace[")": assert result is not None["""
+        mock_post.side_effect = RequestException("Network error[")": result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_109"))": assert result is not None["""
         # 应该处理网络错误
     # === 数据集管理测试 ===
     @patch('requests.Session.post')
@@ -193,7 +193,7 @@ class TestMetadataManagerComprehensive:
         "]]""测试获取不存在的数据集血缘"""
         not_found_response = Mock()
         not_found_response.status_code = 404
-        not_found_response.text = "Dataset not found[": mock_get.return_value = not_found_response[": result = manager.get_dataset_lineage("]]nonexistent[", "]dataset[")": assert result is not None["""
+        not_found_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_192"): mock_get.return_value = not_found_response[": result = manager.get_dataset_lineage("]]nonexistent[", "]dataset[")": assert result is not None["""
         # 应该处理 404 错误
     # === 数据集搜索测试 ===
     @patch('requests.Session.get')
@@ -207,11 +207,11 @@ class TestMetadataManagerComprehensive:
             "total[": 2[""""
         }
         mock_get.return_value = mock_response
-        result = manager.search_datasets("]]test_namespace[", keyword="]test[")": assert result is not None[" mock_get.assert_called_once()""
+        result = manager.search_datasets("]]test_namespace[", keyword = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_KEYWORD_204"))": assert result is not None[" mock_get.assert_called_once()""
     @patch('requests.Session.get')
     def test_search_datasets_with_filters(self, mock_get, manager, mock_response):
         "]]""测试带过滤条件的数据集搜索"""
-        mock_response.json.return_value = {"datasets[": [], "]total[": 0}": mock_get.return_value = mock_response[": result = manager.search_datasets(": namespace="]]test_namespace[",": keyword="]football[",": tag="]raw[",": limit=10,": offset=20[""
+        mock_response.json.return_value = {"datasets[": [], "]total[": 0}": mock_get.return_value = mock_response[": result = manager.search_datasets(": namespace = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAMESPACE_211"),": keyword = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_KEYWORD_212"),": tag="]raw[",": limit=10,": offset=20[""
         )
     assert result is not None
         mock_get.assert_called_once()
@@ -244,7 +244,7 @@ class TestMetadataManagerComprehensive:
     @patch('requests.Session.get')
     def test_get_job_runs_with_filters(self, mock_get, manager, mock_response):
         "]]""测试带过滤条件的作业运行查询"""
-        mock_response.json.return_value = {"runs[": [], "]total[": 0}": mock_get.return_value = mock_response[": result = manager.get_job_runs(": namespace="]]test_namespace[",": job_name="]test_job[",": limit=5,": status="]completed["""""
+        mock_response.json.return_value = {"runs[": [], "]total[": 0}": mock_get.return_value = mock_response[": result = manager.get_job_runs(": namespace = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAMESPACE_211"),": job_name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_JOB_NAME_243"),": limit=5,": status = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_STATUS_243")""""
         )
     assert result is not None
         mock_get.assert_called_once()
@@ -258,7 +258,7 @@ class TestMetadataManagerComprehensive:
         "]]""测试添加数据集标签错误处理"""
         error_response = Mock()
         error_response.status_code = 404
-        error_response.text = "Dataset not found[": mock_post.return_value = error_response[": result = manager.add_dataset_tag("]]nonexistent[", "]dataset[", "]tag[")": assert result is not None["""
+        error_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_192"): mock_post.return_value = error_response[": result = manager.add_dataset_tag("]]nonexistent[", "]dataset[", "]tag[")": assert result is not None["""
         # 应该处理错误
     # === 足球元数据设置测试 ===
     @patch('requests.Session.post')
@@ -276,7 +276,7 @@ class TestMetadataManagerComprehensive:
         # 第一个调用成功，后续调用失败
         success_response = Mock()
         success_response.status_code = 200
-        success_response.json.return_value = {"success[": True}": error_response = Mock()": error_response.status_code = 400[": error_response.text = "]]Resource already exists[": mock_post.side_effect = ["]success_response[", error_response, error_response]""""
+        success_response.json.return_value = {"success[": True}": error_response = Mock()": error_response.status_code = 400[": error_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_269"): mock_post.side_effect = ["]success_response[", error_response, error_response]""""
         # 应该继续执行即使部分失败
         result = manager.setup_football_metadata()
     assert result is None
@@ -286,19 +286,19 @@ class TestMetadataManagerComprehensive:
         "]""测试 HTTP 错误处理"""
         error_response = Mock()
         error_response.status_code = 500
-        error_response.text = "Internal Server Error[": error_response.json.return_value = {"]error[: "Server error["}"]": mock_post.return_value = error_response[": result = manager.create_namespace(name="]]test_namespace[")": assert result is not None["""
+        error_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_279"): error_response.json.return_value = {"]error[: "Server error["}"]": mock_post.return_value = error_response[": result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_279"))": assert result is not None["""
         # 应该包含错误信息但不崩溃
     @patch('requests.Session.post')
     def test_network_error_handling(self, mock_post, manager):
         "]]""测试网络错误处理"""
-        mock_post.side_effect = RequestException("Connection failed[")": result = manager.create_namespace(name="]test_namespace[")": assert result is not None["""
+        mock_post.side_effect = RequestException("Connection failed[")": result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_109"))": assert result is not None["""
         # 应该处理网络错误
     @patch('requests.Session.post')
     def test_json_decode_error_handling(self, mock_post, manager):
         "]]""测试 JSON 解码错误处理"""
         invalid_response = Mock()
         invalid_response.status_code = 200
-        invalid_response.json.side_effect = ValueError("Invalid JSON[")": invalid_response.text = "]Invalid response[": mock_post.return_value = invalid_response[": result = manager.create_namespace(name="]]test_namespace[")": assert result is not None["""
+        invalid_response.json.side_effect = ValueError("Invalid JSON[")": invalid_response.text = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TEXT_289"): mock_post.return_value = invalid_response[": result = manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_279"))": assert result is not None["""
         # 应该处理 JSON 解码错误
     # === 边界条件测试 ===
     def test_empty_parameters_handling(self, manager):
@@ -341,7 +341,7 @@ class TestMetadataManagerComprehensive:
         # 模拟一些操作
         with patch('requests.Session.post') as mock_post = mock_response Mock()
             mock_response.status_code = 200
-            mock_response.json.return_value = {"success[": True}": mock_post.return_value = mock_response[": manager.create_namespace(name="]]test[")""""
+            mock_response.json.return_value = {"success[": True}": mock_post.return_value = mock_response[": manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_330"))""""
         # 验证头部没有被修改
     assert manager.session.headers ==original_headers
     # === 集成测试 ===
@@ -354,11 +354,11 @@ class TestMetadataManagerComprehensive:
         mock_get.return_value = mock_response
         # 执行完整工作流
         namespace_result = manager.create_namespace("test_workflow[", "]Test workflow namespace[")": assert namespace_result is not None[" dataset_result = manager.create_dataset(""
-        namespace="]]test_workflow[",": name="]test_dataset[",": description="]Test dataset[",": fields = [{"]name[: "id"", "type]}]""""
+        namespace = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAMESPACE_343"),": name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_344"),": description = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_DESCRIPTION_34"),": fields = [{"]name[: "id"", "type]}]""""
         )
     assert dataset_result is not None
         job_result = manager.create_job(
-        namespace="test_workflow[",": name="]test_job[",": description="]Test job[",": type="]batch["""""
+        namespace = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAMESPACE_344"),": name = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_NAME_346"),": description = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_DESCRIPTION_34"),": type = os.getenv("TEST_METADATA_MANAGER_COMPREHENSIVE_TYPE_346")""""
         )
     assert job_result is not None
         lineage_result = manager.get_dataset_lineage("]test_workflow[", "]test_dataset[")": assert lineage_result is not None[" search_result = manager.search_datasets("]]test_workflow[", "]test[")": assert search_result is not None[" versions_result = manager.get_dataset_versions("]]test_workflow[", "]test_dataset[")": assert versions_result is not None["""

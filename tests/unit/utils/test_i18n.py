@@ -115,14 +115,14 @@ class TestI18n:
 
     def test_get_language_from_request_with_multiple_languages(self):
         """测试Accept-Language包含多个语言"""
-        accept_language = "fr-FR,en-US;q=0.9,zh-CN;q=0.8"
+        accept_language = os.getenv("TEST_I18N_ACCEPT_LANGUAGE_118")
         result = get_language_from_request(accept_language)
         # fr-FR不支持，所以应该匹配en-US
         assert result == "en_US"  # 第一个支持的
 
     def test_get_language_from_request_with_quality_values(self):
         """测试带质量值的Accept-Language"""
-        accept_language = "en-US;q=0.9,zh-CN;q=0.8"
+        accept_language = os.getenv("TEST_I18N_ACCEPT_LANGUAGE_124")
         result = get_language_from_request(accept_language)
         assert result == "en_US"  # en-US在前面
 

@@ -1,3 +1,4 @@
+import os
 """""""
 Mock service layer objects for testing.
 """""""
@@ -95,7 +96,7 @@ class MockPredictionService:
     def __init__(self, should_fail = False):
         self.should_fail = should_fail
         self.predictions = {}
-        self.model_versions = ["v1.0[", "]v1.1[", "]v1.2["]": self.current_model = "]v1.2[": self.stats = {""""
+        self.model_versions = ["v1.0[", "]v1.1[", "]v1.2["]": self.current_model = os.getenv("SERVICE_MOCKS_CURRENT_MODEL_98"): self.stats = {""""
             "]total_predictions[": 0,""""
             "]successful_predictions[": 0,""""
             "]failed_predictions[": 0,""""

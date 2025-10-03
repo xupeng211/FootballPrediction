@@ -31,7 +31,7 @@ class TestAlertManagerBatchOmega002:
         """示例告警对象"""
         from src.monitoring.alert_manager import Alert, AlertLevel, AlertStatus
         return Alert(
-        alert_id="test-001[",": title="]Test Alert[",": message="]This is a test alert[",": level=AlertLevel.WARNING,": source="]test_source["""""
+        alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_34"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_34"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     def test_alert_manager_initialization(self, alert_manager):
         "]""测试 AlertManager 初始化"""
@@ -46,7 +46,7 @@ class TestAlertManagerBatchOmega002:
         """测试 Alert 对象创建"""
         from src.monitoring.alert_manager import Alert, AlertLevel, AlertStatus
         alert = Alert(
-        alert_id="test-001[",": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.ERROR,": source="]test_source["""""
+        alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_34"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     assert alert.alert_id =="]test-001[" assert alert.title =="]Test Alert[" assert alert.level ==AlertLevel.ERROR[""""
     assert alert.message =="]]Test message[" assert alert.source =="]test_source[" assert alert.status ==AlertStatus.ACTIVE[""""
@@ -56,7 +56,7 @@ class TestAlertManagerBatchOmega002:
     def test_alert_with_labels_and_annotations(self):
         "]]""测试带标签和注释的 Alert 对象"""
         from src.monitoring.alert_manager import Alert, AlertLevel
-        labels = {"service[: "api"", "environment[" "]test]}": annotations = {"description[: "Test alert"", "severity]}": alert = Alert(": alert_id="test-002[",": title = "]Alert with metadata[",": message = "]Test with metadata[",": level=AlertLevel.INFO,": source="]test_source[",": labels=labels,": annotations=annotations[""
+        labels = {"service[: "api"", "environment[" "]test]}": annotations = {"description[: "Test alert"", "severity]}": alert = Alert(": alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_54"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_54"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_55"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34"),": labels=labels,": annotations=annotations[""
         )
     assert alert.labels ==labels
     assert alert.annotations ==annotations
@@ -69,7 +69,7 @@ class TestAlertManagerBatchOmega002:
         "]""测试解决告警"""
         from src.monitoring.alert_manager import Alert, AlertLevel, AlertStatus
         alert = Alert(
-        alert_id="test-001[",": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.ERROR,": source="]test_source["""""
+        alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_34"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     assert alert.status ==AlertStatus.ACTIVE
     assert alert.resolved_at is None
@@ -80,7 +80,7 @@ class TestAlertManagerBatchOmega002:
         "]""测试静默告警"""
         from src.monitoring.alert_manager import Alert, AlertLevel, AlertStatus
         alert = Alert(
-        alert_id="test-001[",": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.ERROR,": source="]test_source["""""
+        alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_34"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     assert alert.status ==AlertStatus.ACTIVE
         alert.silence()
@@ -89,7 +89,7 @@ class TestAlertManagerBatchOmega002:
         "]""测试 AlertRule 对象创建"""
         from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
         rule = AlertRule(
-        rule_id="test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],": throttle_seconds=600,"
+        rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_77"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],": throttle_seconds=600,"
             enabled=True
         )
     assert rule.rule_id =="]test_rule[" assert rule.name =="]Test Rule[" assert rule.condition =="]error_count > 10[" assert rule.level ==AlertLevel.WARNING[""""
@@ -102,7 +102,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试添加告警规则"""
         from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
         rule = AlertRule(
-        rule_id="test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
+        rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_77"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
         )
         alert_manager.add_rule(rule)
     assert "]test_rule[" in alert_manager.rules[""""
@@ -110,7 +110,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试移除告警规则"""
         from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
         rule = AlertRule(
-        rule_id="test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
+        rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_77"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
         )
         alert_manager.add_rule(rule)
     assert "]test_rule[" in alert_manager.rules[""""
@@ -120,7 +120,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试基本告警触发"""
         from src.monitoring.alert_manager import AlertLevel
         alert = alert_manager.fire_alert(
-        title="Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_105"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     assert alert is not None
     assert alert.title =="]Test Alert[" assert alert.level ==AlertLevel.WARNING[""""
@@ -128,7 +128,7 @@ class TestAlertManagerBatchOmega002:
     def test_fire_alert_with_labels_and_annotations(self, alert_manager):
         "]]""测试带标签和注释的告警触发"""
         from src.monitoring.alert_manager import AlertLevel
-        labels = {"service[: "api"", "environment]}": annotations = {"description[: "Test alert["}"]": alert = alert_manager.fire_alert(": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.ERROR,": source="]test_source[",": labels=labels,": annotations=annotations[""
+        labels = {"service[: "api"", "environment]}": annotations = {"description[: "Test alert["}"]": alert = alert_manager.fire_alert(": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34"),": labels=labels,": annotations=annotations[""
         )
     assert alert is not None
     assert alert.labels ==labels
@@ -137,7 +137,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试带规则ID的告警触发"""
         from src.monitoring.alert_manager import AlertLevel
         alert = alert_manager.fire_alert(
-        title="Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source[",": rule_id="]data_freshness_warning["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_105"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34"),": rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_121")""""
         )
     assert alert is not None
     def test_fire_alert_throttling(self, alert_manager):
@@ -145,17 +145,17 @@ class TestAlertManagerBatchOmega002:
         from src.monitoring.alert_manager import AlertLevel, AlertRule, AlertChannel
         # 创建一个去重时间很短的规则
         rule = AlertRule(
-        rule_id="test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG],": throttle_seconds=1  # 1秒去重"
+        rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_77"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG],": throttle_seconds=1  # 1秒去重"
         )
         alert_manager.add_rule(rule)
         # 第一次触发应该成功
         alert1 = alert_manager.fire_alert(
-            title="]Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source[",": rule_id="]test_rule["""""
+            title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34"),": rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_130")""""
         )
     assert alert1 is not None
         # 立即再次触发应该被去重
         alert2 = alert_manager.fire_alert(
-        title="]Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source[",": rule_id="]test_rule["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34"),": rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_130")""""
         )
     assert alert2 is None
     def test_register_handler(self, alert_manager):
@@ -171,7 +171,7 @@ class TestAlertManagerBatchOmega002:
         """测试日志处理器"""
         from src.monitoring.alert_manager import Alert, AlertLevel
         alert = Alert(
-        alert_id="test-001[",": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.ERROR,": source="]test_source["""""
+        alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_34"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         alert_manager._log_handler(alert)
         # 检查是否调用了相应级别的日志
@@ -181,7 +181,7 @@ class TestAlertManagerBatchOmega002:
         from src.monitoring.alert_manager import AlertLevel
         # 先触发一个告警
         alert = alert_manager.fire_alert(
-        title="Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_105"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
     assert alert is not None
     assert alert.status.value =="]active["""""
@@ -195,10 +195,10 @@ class TestAlertManagerBatchOmega002:
         from src.monitoring.alert_manager import AlertLevel
         # 触发多个告警
         alert1 = alert_manager.fire_alert(
-        title="Alert 1[",": message="]Message 1[",": level=AlertLevel.WARNING,": source="]test_source["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_153"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_154"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         alert2 = alert_manager.fire_alert(
-            title="]Alert 2[",": message="]Message 2[",": level=AlertLevel.ERROR,": source="]test_source["""""
+            title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_158"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_158"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         # 解决其中一个
         alert_manager.resolve_alert(alert1.alert_id)
@@ -215,10 +215,10 @@ class TestAlertManagerBatchOmega002:
         from src.monitoring.alert_manager import AlertLevel
         # 触发告警
         alert_manager.fire_alert(
-        title="Warning Alert[",": message="]Warning message[",": level=AlertLevel.WARNING,": source="]test_source["""""
+        title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_169"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_169"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         alert_manager.fire_alert(
-            title="]Error Alert[",": message="]Error message[",": level=AlertLevel.ERROR,": source="]test_source["""""
+            title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_172"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_173"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         summary = alert_manager.get_alert_summary()
     assert isinstance(summary, dict)
@@ -260,7 +260,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试更新异常检测指标"""
         # 创建模拟的异常对象
         mock_anomaly = Mock()
-        mock_anomaly.table_name = "matches[": mock_anomaly.column_name = "]home_score[": mock_anomaly.anomaly_type = Mock()": mock_anomaly.anomaly_type.value = "]statistical[": mock_anomaly.severity = Mock()": mock_anomaly.severity.value = "]high[": mock_anomaly.anomaly_score = 0.15[": anomalies = ["]]mock_anomaly[": alert_manager.update_anomaly_metrics(anomalies)""""
+        mock_anomaly.table_name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TABLE_NAME_201"): mock_anomaly.column_name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_COLUMN_NAME_201"): mock_anomaly.anomaly_type = Mock()": mock_anomaly.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_VALUE_202"): mock_anomaly.severity = Mock()": mock_anomaly.severity.value = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_VALUE_205"): mock_anomaly.anomaly_score = 0.15[": anomalies = ["]]mock_anomaly[": alert_manager.update_anomaly_metrics(anomalies)""""
         # 检查指标是否更新（这里我们主要确保不抛出异常）
     assert True
     def test_check_and_fire_quality_alerts(self, alert_manager):
@@ -283,7 +283,7 @@ class TestAlertManagerBatchOmega002:
         "]]""测试检查异常并触发告警"""
         # 创建模拟的异常对象
         mock_anomaly = Mock()
-        mock_anomaly.table_name = "matches[": mock_anomaly.column_name = "]home_score[": mock_anomaly.anomaly_type = Mock()": mock_anomaly.anomaly_type.value = "]statistical[": mock_anomaly.severity = Mock()": mock_anomaly.severity.value = "]high[": mock_anomaly.description = "]异常高的得分[": mock_anomaly.anomaly_score = 0.25  # 超过0.2[": anomalies = ["]]mock_anomaly[": alerts = alert_manager.check_and_fire_anomaly_alerts(anomalies)""""
+        mock_anomaly.table_name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TABLE_NAME_201"): mock_anomaly.column_name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_COLUMN_NAME_201"): mock_anomaly.anomaly_type = Mock()": mock_anomaly.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_VALUE_202"): mock_anomaly.severity = Mock()": mock_anomaly.severity.value = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_VALUE_205"): mock_anomaly.description = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_DESCRIPTION_227"): mock_anomaly.anomaly_score = 0.25  # 超过0.2[": anomalies = ["]]mock_anomaly[": alerts = alert_manager.check_and_fire_anomaly_alerts(anomalies)""""
         # 应该触发告警
     assert len(alerts) > 0
     assert alerts[0].level.value =="]critical[" def test_generate_alert_id("
@@ -299,7 +299,7 @@ class TestAlertManagerBatchOmega002:
         from src.monitoring.alert_manager import AlertRule, AlertLevel, AlertChannel
         # 创建一个规则
         rule = AlertRule(
-        rule_id="test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG],": throttle_seconds=60  # 60秒去重"
+        rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_77"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG],": throttle_seconds=60  # 60秒去重"
         )
         alert_manager.add_rule(rule)
         # 没有最后触发时间，不应该去重
@@ -317,12 +317,12 @@ class TestAlertManagerBatchOmega002:
             raise Exception("Handler error[")": alert_manager.register_handler(AlertChannel.LOG, error_handler)"""
         # 创建规则
         rule = AlertRule(
-            rule_id="]test_rule[",": name="]Test Rule[",": condition="]error_count > 10[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
+            rule_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_RULE_ID_130"),": name = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_NAME_77"),": condition = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_CONDITION_78"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG]""
         )
         alert_manager.add_rule(rule)
         # 创建告警
         alert = Alert(
-            alert_id="]test-001[",": title="]Test Alert[",": message="]Test message[",": level=AlertLevel.WARNING,": source="]test_source["""""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_ALERT_ID_273"),": title = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_TITLE_34"),": message = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_MESSAGE_46"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_BATCH_OMEGA_002_SOURCE_34")""""
         )
         # 发送告警（不应该抛出异常）
         alert_manager._send_alert(alert, "]test_rule[")""""

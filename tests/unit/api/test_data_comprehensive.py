@@ -1,3 +1,4 @@
+import os
 """
 数据API端点测试 / Tests for Data API Endpoints
 
@@ -27,9 +28,9 @@ class TestDataAPI:
         match.home_team_id = 10
         match.away_team_id = 20
         match.league_id = 1
-        match.season = "2024-25"
+        match.season = os.getenv("TEST_DATA_COMPREHENSIVE_SEASON_30")
         match.match_time = datetime.now() + timedelta(days=1)
-        match.match_status = "scheduled"
+        match.match_status = os.getenv("TEST_DATA_COMPREHENSIVE_MATCH_STATUS_31")
         match.home_score = None
         match.away_score = None
         return match
@@ -39,13 +40,13 @@ class TestDataAPI:
         """模拟球队数据"""
         team = MagicMock()
         team.id = 10
-        team.team_name = "Manchester United"
-        team.name = "Manchester United FC"
+        team.team_name = os.getenv("TEST_DATA_COMPREHENSIVE_TEAM_NAME_39")
+        team.name = os.getenv("TEST_DATA_COMPREHENSIVE_NAME_41")
         team.short_name = "MUFC"
         team.founded_year = 1878
-        team.country = "England"
+        team.country = os.getenv("TEST_DATA_COMPREHENSIVE_COUNTRY_43")
         team.league_id = 1
-        team.stadium = "Old Trafford"
+        team.stadium = os.getenv("TEST_DATA_COMPREHENSIVE_STADIUM_44")
         team.website = "https://www.manutd.com"
         return team
 
@@ -54,9 +55,9 @@ class TestDataAPI:
         """模拟联赛数据"""
         league = MagicMock()
         league.id = 1
-        league.league_name = "Premier League"
-        league.name = "English Premier League"
-        league.country = "England"
+        league.league_name = os.getenv("TEST_DATA_COMPREHENSIVE_LEAGUE_NAME_49")
+        league.name = os.getenv("TEST_DATA_COMPREHENSIVE_NAME_50")
+        league.country = os.getenv("TEST_DATA_COMPREHENSIVE_COUNTRY_43")
         league.league_code = "EPL"
         league.level = 1
         league.is_active = True
@@ -70,9 +71,9 @@ class TestDataAPI:
         match.home_team_id = 10
         match.away_team_id = 20
         match.league_id = 1
-        match.season = "2024-25"
+        match.season = os.getenv("TEST_DATA_COMPREHENSIVE_SEASON_30")
         match.match_time = datetime.now()
-        match.match_status = "scheduled"
+        match.match_status = os.getenv("TEST_DATA_COMPREHENSIVE_MATCH_STATUS_31")
         match.home_score = 0
         match.away_score = 0
 
@@ -105,12 +106,12 @@ class TestDataAPI:
         """测试球队数据格式化"""
         team = MagicMock()
         team.id = 10
-        team.team_name = "Test Team"
-        team.name = "Test Team FC"
+        team.team_name = os.getenv("TEST_DATA_COMPREHENSIVE_TEAM_NAME_95")
+        team.name = os.getenv("TEST_DATA_COMPREHENSIVE_NAME_97")
         team.short_name = "TT"
         team.founded_year = 1900
-        team.country = "Test Country"
-        team.stadium = "Test Stadium"
+        team.country = os.getenv("TEST_DATA_COMPREHENSIVE_COUNTRY_100")
+        team.stadium = os.getenv("TEST_DATA_COMPREHENSIVE_STADIUM_101")
 
         response = format_team_response(team)
 
@@ -141,8 +142,8 @@ class TestDataAPI:
         """测试联赛数据格式化"""
         league = MagicMock()
         league.id = 1
-        league.league_name = "Test League"
-        league.country = "Test Nation"
+        league.league_name = os.getenv("TEST_DATA_COMPREHENSIVE_LEAGUE_NAME_127")
+        league.country = os.getenv("TEST_DATA_COMPREHENSIVE_COUNTRY_128")
         league.league_code = "TL"
         league.level = 1
         league.is_active = True
@@ -189,7 +190,7 @@ class TestDataAPI:
         from src.api.data import get_matches
         response = await get_matches(
             league_id=1,
-            season="2024-25",
+            season = os.getenv("TEST_DATA_COMPREHENSIVE_SEASON_174"),
             limit=10,
             offset=0,
             session=mock_session
@@ -298,7 +299,7 @@ class TestDataAPI:
         # 执行测试
         from src.api.data import get_leagues
         response = await get_leagues(
-            country="England",
+            country = os.getenv("TEST_DATA_COMPREHENSIVE_COUNTRY_283"),
             is_active=True,
             session=mock_session
         )
@@ -336,7 +337,7 @@ class TestDataAPI:
         mock_session = AsyncMock()
         mock_result = AsyncMock()
         mock_feature = MagicMock()
-        mock_feature.feature_name = "home_win_rate"
+        mock_feature.feature_name = os.getenv("TEST_DATA_COMPREHENSIVE_FEATURE_NAME_319")
         mock_feature.feature_value = 0.65
         mock_result.scalars.return_value.all.return_value = [mock_feature]
         mock_session.execute.return_value = mock_result

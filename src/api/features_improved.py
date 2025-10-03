@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 改进版特征服务 API
@@ -39,12 +40,12 @@ except Exception as e:
 
 @router.get(
     "/{match_id}",
-    summary="获取比赛特征",
-    description="获取指定比赛的所有特征，包括球队近期表现、历史对战、赔率等",
+    summary = os.getenv("FEATURES_IMPROVED_SUMMARY_42"),
+    description = os.getenv("FEATURES_IMPROVED_DESCRIPTION_42"),
 )
 async def get_match_features_improved(
     match_id: int,
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description = os.getenv("FEATURES_IMPROVED_DESCRIPTION_46")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -62,13 +63,13 @@ async def get_match_features_improved(
     # 1. 参数验证
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
-        raise HTTPException(status_code=400, detail="比赛ID必须大于0")
+        raise HTTPException(status_code=400, detail = os.getenv("FEATURES_IMPROVED_DETAIL_64"))
 
     # 2. 服务可用性检查
     if feature_store is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
-            status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
+            status_code=503, detail = os.getenv("FEATURES_IMPROVED_DETAIL_68")
         )
 
     try:
@@ -92,10 +93,10 @@ async def get_match_features_improved(
             raise
         except SQLAlchemyError as db_error:
             logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
-            raise HTTPException(status_code=500, detail="数据库查询失败，请稍后重试")
+            raise HTTPException(status_code=500, detail = os.getenv("FEATURES_IMPROVED_DETAIL_93"))
         except Exception as query_error:
             logger.error(f"查询比赛信息时发生未知错误: {query_error}")
-            raise HTTPException(status_code=500, detail="查询比赛信息失败")
+            raise HTTPException(status_code=500, detail = os.getenv("FEATURES_IMPROVED_DETAIL_95"))
 
         # 4. 构造比赛实体（防御性编程）
         try:
@@ -110,7 +111,7 @@ async def get_match_features_improved(
             logger.debug("比赛实体构造成功")
         except Exception as entity_error:
             logger.error(f"构造比赛实体失败: {entity_error}")
-            raise HTTPException(status_code=500, detail="处理比赛数据时发生错误")
+            raise HTTPException(status_code=500, detail = os.getenv("FEATURES_IMPROVED_DETAIL_108"))
 
         # 5. 获取特征数据（优雅降级）
         features = None
@@ -192,7 +193,7 @@ async def get_match_features_improved(
 
 
 # 健康检查端点
-@router.get("/health", summary="特征服务健康检查")
+@router.get("/health", summary = os.getenv("FEATURES_IMPROVED_SUMMARY_186"))
 async def features_health_check():
     """
     特征服务健康检查

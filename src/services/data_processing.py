@@ -11,6 +11,7 @@ from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresDat
 import asyncio
 
 from .base import BaseService
+import os
 
 """
 足球预测系统数据处理服务模块
@@ -161,7 +162,7 @@ class DataProcessingService(BaseService):
             # 将处理后的数据存入缓存
             if match_id and self.cache_manager and processed_data:
                 await self.cache_manager.aset(
-                    cache_key, processed_data, cache_type="match_info"
+                    cache_key, processed_data, cache_type = os.getenv("DATA_PROCESSING_CACHE_TYPE_164")
                 )
             self.logger.debug(
                 f"成功处理比赛数据: {processed_data.get('external_match_id')}"
@@ -429,7 +430,7 @@ class DataProcessingService(BaseService):
                     if self.data_lake is None:
                         raise RuntimeError("Data lake not initialized")
                     await self.data_lake.save_historical_data(
-                        table_name="processed_matches", data=processed_matches
+                        table_name = os.getenv("DATA_PROCESSING_TABLE_NAME_431"), data=processed_matches
                     )
                 # 提交数据库事务
                 session.commit()
@@ -498,7 +499,7 @@ class DataProcessingService(BaseService):
                 if all_processed_odds:
                     # 保存到Silver层
                     await self.data_lake.save_historical_data(
-                        table_name="processed_odds", data=all_processed_odds
+                        table_name = os.getenv("DATA_PROCESSING_TABLE_NAME_500"), data=all_processed_odds
                     )
                 # 提交数据库事务
                 session.commit()
@@ -571,7 +572,7 @@ class DataProcessingService(BaseService):
                 if processed_scores:
                     # 保存到Silver层（可以考虑单独建一个processed_scores表）
                     await self.data_lake.save_historical_data(
-                        table_name="processed_matches",  # 合并到matches表中
+                        table_name = os.getenv("DATA_PROCESSING_TABLE_NAME_431"),  # 合并到matches表中
                         data=processed_scores,
                     )
                 # 提交数据库事务

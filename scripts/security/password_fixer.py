@@ -98,7 +98,7 @@ class PasswordFixer:
                         var_name = groups[0]
                         password = groups[1]
                     elif pattern_type == 'auth_tuple':
-                        # 处理 auth = ("username", "password") 格式
+                        # 处理 auth = (os.getenv("PASSWORD_FIXER_AUTH_101_USER"), os.getenv("PASSWORD_FIXER_AUTH_101_PASS")) 格式
                         username = groups[0]
                         password = groups[1]
                         var_name = 'auth'
@@ -382,10 +382,10 @@ JWT_SECRET=your-jwt-secret
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="密码安全修复工具")
+    parser = argparse.ArgumentParser(description = os.getenv("PASSWORD_FIXER_DESCRIPTION_385"))
     parser.add_argument("--project-root", help="项目根目录", default=None)
-    parser.add_argument("--dry-run", action="store_true", help="试运行，不修改文件")
-    parser.add_argument("--no-template", action="store_true", help="不生成环境变量模板")
+    parser.add_argument("--dry-run", action = os.getenv("PASSWORD_FIXER_ACTION_387"), help = os.getenv("PASSWORD_FIXER_HELP_387"))
+    parser.add_argument("--no-template", action = os.getenv("PASSWORD_FIXER_ACTION_387"), help = os.getenv("PASSWORD_FIXER_HELP_387"))
 
     args = parser.parse_args()
 

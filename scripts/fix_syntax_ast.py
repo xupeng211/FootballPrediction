@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 AST 驱动的 Python 语法修复工具
@@ -308,11 +309,11 @@ class ASTSyntaxFixer:
                 f.write(f"- **{fix_type}**: {count} 次\n")
 
 def main():
-    parser = argparse.ArgumentParser(description='AST 驱动的 Python 语法修复工具')
-    parser.add_argument('directory', nargs='?', default='tests/unit', help='要修复的目录')
-    parser.add_argument('--max-files', type=int, default=30, help='每批处理的文件数')
-    parser.add_argument('--report', help='报告文件路径')
-    parser.add_argument('--unfixed-report', default='docs/_reports/UNFIXED_FILES.md', help='无法修复文件报告')
+    parser = argparse.ArgumentParser(description = os.getenv("FIX_SYNTAX_AST_DESCRIPTION_311"))
+    parser.add_argument('directory', nargs='?', default = os.getenv("FIX_SYNTAX_AST_DEFAULT_312"), help = os.getenv("FIX_SYNTAX_AST_HELP_312"))
+    parser.add_argument('--max-files', type=int, default=30, help = os.getenv("FIX_SYNTAX_AST_HELP_312"))
+    parser.add_argument('--report', help = os.getenv("FIX_SYNTAX_AST_HELP_313"))
+    parser.add_argument('--unfixed-report', default = os.getenv("FIX_SYNTAX_AST_DEFAULT_313"), help = os.getenv("FIX_SYNTAX_AST_HELP_314"))
 
     args = parser.parse_args()
 

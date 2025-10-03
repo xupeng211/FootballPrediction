@@ -1,3 +1,4 @@
+import os
 """
 任务调度器主模块
 
@@ -201,57 +202,57 @@ class TaskScheduler:
         # 定义预设任务
         predefined_tasks = [
             ScheduledTask(
-                task_id="fixtures_collection",
-                name="赛程数据采集",
-                cron_expression="0 2 * * *",  # 每日凌晨2:00
+                task_id = os.getenv("TASK_SCHEDULER_TASK_ID_204"),
+                name = os.getenv("TASK_SCHEDULER_NAME_204"),
+                cron_expression = os.getenv("TASK_SCHEDULER_CRON_EXPRESSION_205"),  # 每日凌晨2:00
                 task_function=collect_fixtures,
                 priority=1,
                 max_retries=3,
                 timeout=600,
-                description="采集比赛赛程数据，更新比赛安排信息",
+                description = os.getenv("TASK_SCHEDULER_DESCRIPTION_208"),
             ),
             ScheduledTask(
-                task_id="odds_collection",
-                name="赔率数据采集",
-                cron_expression="*/5 * * * *",  # 每5分钟
+                task_id = os.getenv("TASK_SCHEDULER_TASK_ID_211"),
+                name = os.getenv("TASK_SCHEDULER_NAME_211"),
+                cron_expression = os.getenv("TASK_SCHEDULER_CRON_EXPRESSION_213"),  # 每5分钟
                 task_function=collect_odds,
                 dependencies=["fixtures_collection"],
                 priority=2,
                 max_retries=2,
                 timeout=300,
-                description="采集博彩公司赔率数据，支持实时更新",
+                description = os.getenv("TASK_SCHEDULER_DESCRIPTION_216"),
             ),
             ScheduledTask(
-                task_id="live_scores_collection",
-                name="实时比分采集",
-                cron_expression="*/2 * * * *",  # 每2分钟（比赛期间）
+                task_id = os.getenv("TASK_SCHEDULER_TASK_ID_218"),
+                name = os.getenv("TASK_SCHEDULER_NAME_220"),
+                cron_expression = os.getenv("TASK_SCHEDULER_CRON_EXPRESSION_221"),  # 每2分钟（比赛期间）
                 task_function=collect_live_scores_conditional,
                 dependencies=["fixtures_collection"],
                 priority=1,
                 max_retries=5,
                 timeout=120,
-                description="采集比赛实时比分和状态数据",
+                description = os.getenv("TASK_SCHEDULER_DESCRIPTION_227"),
             ),
             ScheduledTask(
-                task_id="feature_calculation",
+                task_id = os.getenv("TASK_SCHEDULER_TASK_ID_227"),
                 name="特征计算",
-                cron_expression="0 * * * *",  # 每小时
+                cron_expression = os.getenv("TASK_SCHEDULER_CRON_EXPRESSION_229"),  # 每小时
                 task_function=calculate_features_batch,
                 dependencies=["fixtures_collection", "odds_collection"],
                 priority=3,
                 max_retries=3,
                 timeout=900,
-                description="计算机器学习特征，为预测模型提供数据",
+                description = os.getenv("TASK_SCHEDULER_DESCRIPTION_236"),
             ),
             ScheduledTask(
-                task_id="data_cleanup",
+                task_id = os.getenv("TASK_SCHEDULER_TASK_ID_238"),
                 name="数据清理",
-                cron_expression="0 3 * * 0",  # 每周日凌晨3:00
+                cron_expression = os.getenv("TASK_SCHEDULER_CRON_EXPRESSION_238"),  # 每周日凌晨3:00
                 task_function=cleanup_data,
                 priority=5,
                 max_retries=2,
                 timeout=1800,
-                description="清理过期数据，优化数据库性能",
+                description = os.getenv("TASK_SCHEDULER_DESCRIPTION_242"),
             ),
         ]
 
@@ -421,7 +422,7 @@ class TaskScheduler:
 
             # 启动调度器线程
             self.scheduler_thread = threading.Thread(
-                target=self._scheduler_loop, name="TaskScheduler"
+                target=self._scheduler_loop, name = os.getenv("TASK_SCHEDULER_NAME_400")
             )
             self.scheduler_thread.daemon = True
             self.scheduler_thread.start()

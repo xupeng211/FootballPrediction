@@ -23,7 +23,7 @@ class TestMainApplication:
         """测试FastAPI应用配置"""
         # 创建一个模拟的FastAPI应用来测试配置逻辑
         test_app = FastAPI(
-            title="足球预测API[",": description="]基于机器学习的足球比赛结果预测系统[",": version="]1.0.0[",": docs_url="]/docs[",": redoc_url="]/redoc[")": assert test_app.title =="]足球预测API["""""
+            title = os.getenv("TEST_MAIN_TITLE_26"),": description = os.getenv("TEST_MAIN_DESCRIPTION_26"),": version = os.getenv("TEST_MAIN_VERSION_26"),": docs_url = os.getenv("TEST_MAIN_DOCS_URL_26"),": redoc_url = os.getenv("TEST_MAIN_REDOC_URL_26"))": assert test_app.title =="]足球预测API["""""
         : assert test_app.description =="]基于机器学习的足球比赛结果预测系统["""""
         : assert test_app.version =="]1.0.0[" assert test_app.docs_url =="]/docs[" assert test_app.redoc_url =="]/redoc[" def test_cors_middleware_configuration("
     """"
@@ -49,7 +49,7 @@ class TestMainApplication:
         # 创建RootResponse模型
         class RootResponse(BaseModel):
             """根路径API响应模型"""
-            service = str Field(..., description="服务名称[")": version = str Field(..., description="]版本号[")": status = str Field(..., description="]服务状态[")": docs_url = str Field(..., description="]API文档地址[")": health_check = str Field(..., description="]健康检查地址[")""""
+            service = str Field(..., description="服务名称[")": version = str Field(..., description="]版本号[")": status = str Field(..., description = os.getenv("TEST_MAIN_DESCRIPTION_52"))": docs_url = str Field(..., description = os.getenv("TEST_MAIN_DESCRIPTION_52"))": health_check = str Field(..., description = os.getenv("TEST_MAIN_DESCRIPTION_52"))""""
         # 创建一个简单的FastAPI应用来测试根路径逻辑
         test_app = FastAPI()
         @test_app.get("]/")": async def test_root():": return {""
@@ -70,9 +70,9 @@ class TestMainApplication:
         mock_logger = MagicMock()
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http_/test.com/api/test["""""
+        mock_request.url = os.getenv("TEST_MAIN_URL_66")""""
         # 创建HTTP异常
-        exception = HTTPException(status_code=404, detail="]页面未找到[")""""
+        exception = HTTPException(status_code=404, detail = os.getenv("TEST_MAIN_DETAIL_70"))""""
         # 创建HTTP异常处理器函数
         async def http_exception_handler(request, exc: HTTPException):
             mock_logger.error(f["]HTTP异常["]: [{exc.status_code} - {exc.detail)])": return JSONResponse(status_code=exc.status_code,": content={""
@@ -96,7 +96,7 @@ class TestMainApplication:
         mock_logger = MagicMock()
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http_/test.com/api/test["""""
+        mock_request.url = os.getenv("TEST_MAIN_URL_66")""""
         # 创建通用异常
         exception = ValueError("]测试异常[")""""
         # 创建通用异常处理器函数
@@ -162,7 +162,7 @@ class TestMainApplication:
         # 创建测试应用
         test_app = FastAPI(lifespan=test_lifespan)
         # 验证异常抛出
-        with pytest.raises(Exception, match = "]]]数据库连接失败[")": async def test_startup_failure():": async with test_lifespan(test_app):": pass"
+        with pytest.raises(Exception, match = os.getenv("TEST_MAIN_MATCH_161"))": async def test_startup_failure():": async with test_lifespan(test_app):": pass"
             asyncio.run(test_startup_failure())
         # 验证错误日志
         mock_logger.error.assert_called_with("]❌ 启动失败[": [数据库连接失败])": def test_warning_filters_setup_success(self):"""
@@ -197,18 +197,18 @@ class TestMainApplication:
             # 模拟日志配置
             logging.basicConfig(
                 level=logging.INFO,
-                format="]%(asctime)s - %(name)s - %(levelname)s - %(message)s[")""""
+                format = os.getenv("TEST_MAIN_FORMAT_193"))""""
             # 验证调用
             mock_basicConfig.assert_called_with(
                 level=logging.INFO,
-                format="]%(asctime)s - %(name)s - %(levelname)s - %(message)s[")": def test_environment_variable_parsing(self):"""
+                format = os.getenv("TEST_MAIN_FORMAT_193"))": def test_environment_variable_parsing(self):"""
         "]""测试环境变量解析"""
         # 测试开发环境配置
         with patch.dict(:
             os.environ,
-            {"API_PORT[: "9000"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": assert port ==9000[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": assert host =="]0.0.0.0["""""
+            {"API_PORT[: "9000"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": assert port ==9000[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_207"): else:": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_208"): host = os.getenv("]API_HOST[", default_host)": assert host =="]0.0.0.0["""""
         # 测试生产环境配置
-        with patch.dict(os.environ, {"]API_PORT[: "8080"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": assert port ==8080[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": assert host =="]127.0.0.1[" def test_route_registration("
+        with patch.dict(os.environ, {"]API_PORT[: "8080"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": assert port ==8080[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_207"): else:": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_208"): host = os.getenv("]API_HOST[", default_host)": assert host =="]127.0.0.1[" def test_route_registration("
     """"
         "]""测试路由注册逻辑"""
         # 创建一个简单的FastAPI应用来测试路由注册
@@ -267,11 +267,11 @@ class TestMainApplication:
         # 测试开发环境配置
         with patch.dict(:
             os.environ,
-            {"API_PORT[: "9000"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development["""""
+            {"API_PORT[: "9000"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_207"): else:": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_208"): host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development["""""
             : assert port ==9000
             assert host =="]0.0.0.0[" assert reload is True[""""
         # 测试生产环境配置
-        with patch.dict(os.environ, {"]]API_PORT[: "8080"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development["""""
+        with patch.dict(os.environ, {"]]API_PORT[: "8080"", "ENVIRONMENT])):": port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_207"): else:": default_host = os.getenv("TEST_MAIN_DEFAULT_HOST_208"): host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development["""""
             : assert port ==8080
             assert host =="]127.0.0.1[" assert reload is False[""""
     def test_import_structure_validation(self):

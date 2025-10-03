@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 告警策略验证脚本（模拟版本）
@@ -417,7 +418,7 @@ async def main():
     """主函数"""
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format = os.getenv("ALERT_VERIFICATION_MOCK_FORMAT_420"),
     )
 
     tester = MockAlertVerificationTester()
@@ -449,7 +450,7 @@ async def main():
                 print(f"{scenario}: {status}")
 
         print("=" * 60)
-        final_status = "✅ 完全成功" if overall_success else "⚠️ 部分失败"
+        final_status = os.getenv("ALERT_VERIFICATION_MOCK_FINAL_STATUS_452") if overall_success else "⚠️ 部分失败"
         print(f"整体验证状态: {final_status}")
 
         # 显示告警通知示例

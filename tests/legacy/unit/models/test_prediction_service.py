@@ -4,6 +4,7 @@ from src.models.prediction_service import PredictionResult, PredictionService
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import numpy
 import pytest
+import os
 
 """
 测试预测服务模块
@@ -16,7 +17,7 @@ class TestPredictionResult:
         result = PredictionResult(
         match_id=1,
         model_version="v1.0[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5)": assert result.match_id ==1[" assert result.model_version =="]]v1.0[" assert result.home_win_probability ==0.5[""""
+            predicted_result = os.getenv("TEST_PREDICTION_SERVICE_PREDICTED_RESULT_19"),": confidence_score=0.5)": assert result.match_id ==1[" assert result.model_version =="]]v1.0[" assert result.home_win_probability ==0.5[""""
     assert result.predicted_result =="]]home[" def test_prediction_result_to_dict("
     """"
         "]""测试预测结果转换为字典"""
@@ -57,7 +58,7 @@ class TestPredictionService:
         "]""测试成功获取生产模型"""
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1[": mock_version_info.current_stage = "]Production[": mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
+        mock_version_info.version = "1[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_CURRENT_STAGE_60"): mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ), patch(
             "]]src.models.prediction_service.mlflow.sklearn.load_model[",": return_value=mock_model):": model, version = await prediction_service.get_production_model()": assert model ==mock_model"
@@ -65,7 +66,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_production_model_from_cache(self, prediction_service):
         "]""测试从缓存获取模型"""
-        model_name = "football_baseline_model[": cache_key = f["]model{model_name}"]: cached_model = Mock()": cached_version = "1["""""
+        model_name = os.getenv("TEST_PREDICTION_SERVICE_MODEL_NAME_66"): cache_key = f["]model{model_name}"]: cached_model = Mock()": cached_version = "1["""""
         # 使用正确的缓存键设置缓存
         await prediction_service.model_cache.set(
         cache_key, (cached_model, cached_version)
@@ -83,7 +84,7 @@ class TestPredictionService:
         "]]""测试回退到Staging版本"""
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1[": mock_version_info.current_stage = "]Staging["""""
+        mock_version_info.version = "1[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_CURRENT_STAGE_84")""""
         # 第一次调用返回空（没有Production版本）
         # 第二次调用返回Staging版本
         mock_client.get_latest_versions.side_effect = [[], "]mock_version_info[": mock_model = Mock()": with patch(:"""
@@ -100,7 +101,7 @@ class TestPredictionService:
             "src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ):
             with pytest.raises(:
-                ValueError, match="]]模型 football_baseline_model 没有可用版本["""""
+                ValueError, match = os.getenv("TEST_PREDICTION_SERVICE_MATCH_100")""""
             ):
                 await prediction_service.get_production_model()
     @pytest.mark.asyncio
@@ -125,7 +126,7 @@ class TestPredictionService:
         prediction_service.model_cache.set = AsyncMock()
         with patch.object(:
             prediction_service,
-            "get_production_model_with_retry[",": new=AsyncMock(side_effect=RuntimeError("]mlflow down["))):": with pytest.raises(RuntimeError, match = "]mlflow down[")": await prediction_service.get_production_model("]unstable[")": prediction_service.model_cache.set.assert_not_awaited()": assert "]models_unstable[" not in prediction_service.model_metadata_cache[""""
+            "get_production_model_with_retry[",": new=AsyncMock(side_effect=RuntimeError("]mlflow down["))):": with pytest.raises(RuntimeError, match = os.getenv("TEST_PREDICTION_SERVICE_MATCH_127"))": await prediction_service.get_production_model("]unstable[")": prediction_service.model_cache.set.assert_not_awaited()": assert "]models_unstable[" not in prediction_service.model_metadata_cache[""""
     def test_get_default_features(self, prediction_service):
         "]]""测试获取默认特征"""
         features = prediction_service._get_default_features()
@@ -168,7 +169,7 @@ class TestPredictionService:
         mock_match.away_team_id = 20
         mock_match.league_id = 1
         mock_match.match_time = datetime.now()
-        mock_match.match_status = "scheduled[": mock_match.season = "]2023-24[": mock_result.first.return_value = mock_match[": mock_session.execute.return_value = mock_result[": match_info = await prediction_service._get_match_info(1)": assert match_info is not None"
+        mock_match.match_status = os.getenv("TEST_PREDICTION_SERVICE_MATCH_STATUS_166"): mock_match.season = os.getenv("TEST_PREDICTION_SERVICE_SEASON_167"): mock_result.first.return_value = mock_match[": mock_session.execute.return_value = mock_result[": match_info = await prediction_service._get_match_info(1)": assert match_info is not None"
     assert match_info["]]]id["] ==1[" assert match_info["]]home_team_id["] ==10[" assert match_info["]]away_team_id["] ==20[""""
     @pytest.mark.asyncio
     async def test_get_match_info_not_found(self, prediction_service, mock_db_manager):
@@ -192,7 +193,7 @@ class TestPredictionService:
         result = PredictionResult(
         match_id=1,
         model_version="v1.0[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5)": await prediction_service._store_prediction(result)": mock_session.add.assert_called_once()"
+            predicted_result = os.getenv("TEST_PREDICTION_SERVICE_PREDICTED_RESULT_19"),": confidence_score=0.5)": await prediction_service._store_prediction(result)": mock_session.add.assert_called_once()"
         mock_session.commit.assert_called_once()
     @pytest.mark.asyncio
     async def test_store_prediction_failure(self, prediction_service, mock_db_manager):
@@ -200,7 +201,7 @@ class TestPredictionService:
         mock_session = AsyncMock()
         mock_session.commit.side_effect = Exception("Database error[")": mock_db_manager.get_async_session.return_value.__aenter__.return_value = (": mock_session[""
         )
-        result = PredictionResult(match_id=1, model_version="]]v1.0[")": with pytest.raises(Exception, match = "]Database error[")": await prediction_service._store_prediction(result)": mock_session.rollback.assert_called_once()""
+        result = PredictionResult(match_id=1, model_version = os.getenv("TEST_PREDICTION_SERVICE_MODEL_VERSION_198"))": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_MATCH_199"))": await prediction_service._store_prediction(result)": mock_session.rollback.assert_called_once()""
     @pytest.mark.asyncio
     async def test_predict_match_success(
         self, prediction_service, mock_feature_store, mock_metrics_exporter
@@ -262,7 +263,7 @@ class TestPredictionService:
         "]""测试比赛不存在的情况"""
         with patch.object(:
             prediction_service, "get_production_model[", return_value=(Mock(), "]v1.0[")""""
-        ), patch.object(prediction_service, "]_get_match_info[", return_value = None)": with pytest.raises(ValueError, match = "]比赛 999 不存在[")": await prediction_service.predict_match(999)"""
+        ), patch.object(prediction_service, "]_get_match_info[", return_value = None)": with pytest.raises(ValueError, match = os.getenv("TEST_PREDICTION_SERVICE_MATCH_259"))": await prediction_service.predict_match(999)"""
     @pytest.mark.asyncio
     async def test_verify_prediction_success(self, prediction_service, mock_db_manager):
         "]""测试成功验证预测结果"""
@@ -276,7 +277,7 @@ class TestPredictionService:
         mock_match.id = 1
         mock_match.home_score = 2
         mock_match.away_score = 1
-        mock_match.match_status = "completed[": mock_match_result.first.return_value = mock_match[": mock_session.execute.side_effect = ["]]mock_match_result[", Mock()]": result = await prediction_service.verify_prediction(1)": assert result is True[" assert mock_session.execute.call_count ==2"
+        mock_match.match_status = os.getenv("TEST_PREDICTION_SERVICE_MATCH_STATUS_267"): mock_match_result.first.return_value = mock_match[": mock_session.execute.side_effect = ["]]mock_match_result[", Mock()]": result = await prediction_service.verify_prediction(1)": assert result is True[" assert mock_session.execute.call_count ==2"
         mock_session.commit.assert_called_once()
     @pytest.mark.asyncio
     async def test_verify_prediction_match_not_completed(
@@ -343,7 +344,7 @@ class TestPredictionService:
         match_ids = [1, 99, 3]  # 99 will fail
         async def predict_match_side_effect(match_id):
         if match_id ==99
-        raise ValueError("Prediction failed[")": return PredictionResult(match_id=match_id, model_version="]v1.0[")": with patch.object(:": prediction_service, "]get_production_model[", return_value=(Mock(), "]v1.0[")""""
+        raise ValueError("Prediction failed[")": return PredictionResult(match_id=match_id, model_version = os.getenv("TEST_PREDICTION_SERVICE_MODEL_VERSION_338"))": with patch.object(:": prediction_service, "]get_production_model[", return_value=(Mock(), "]v1.0[")""""
         ):
             with patch.object(:
                 prediction_service,

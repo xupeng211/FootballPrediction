@@ -21,17 +21,17 @@ from src.data.collectors.base_collector import (
 class SimpleDataCollector(DataCollector):
     """简单的测试用数据采集器"""
 
-    def __init__(self, data_source: str = "test_source", **kwargs):
+    def __init__(self, data_source: str = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STR_24"), **kwargs):
         super().__init__(data_source, **kwargs)
 
     async def collect_fixtures(self, **kwargs) -> CollectionResult:
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_COLLECTION_TYPE_29"),
             records_collected=5,
             success_count=5,
             error_count=0,
-            status="success"
+            status = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STATUS_31")
         )
 
     async def collect_odds(self, **kwargs) -> CollectionResult:
@@ -41,17 +41,17 @@ class SimpleDataCollector(DataCollector):
             records_collected=3,
             success_count=3,
             error_count=0,
-            status="success"
+            status = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STATUS_31")
         )
 
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="live_scores",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_COLLECTION_TYPE_45"),
             records_collected=2,
             success_count=2,
             error_count=0,
-            status="success"
+            status = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STATUS_31")
         )
 
 
@@ -62,11 +62,11 @@ class TestCollectionResult:
         """测试基本采集结果"""
         result = CollectionResult(
             data_source="test",
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_COLLECTION_TYPE_29"),
             records_collected=10,
             success_count=8,
             error_count=2,
-            status="partial"
+            status = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STATUS_61")
         )
 
         assert result.data_source == "test"
@@ -81,11 +81,11 @@ class TestCollectionResult:
         data = [{"id": 1}, {"id": 2}]
         result = CollectionResult(
             data_source="test",
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_COLLECTION_TYPE_29"),
             records_collected=2,
             success_count=2,
             error_count=0,
-            status="success",
+            status = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_STATUS_31"),
             collected_data=data
         )
 
@@ -110,7 +110,7 @@ class TestDataCollectorBasic:
     def test_collector_custom_params(self):
         """测试自定义参数"""
         collector = SimpleDataCollector(
-            data_source="custom_api",
+            data_source = os.getenv("TEST_BASE_COLLECTOR_SIMPLE_DATA_SOURCE_101"),
             max_retries=5,
             retry_delay=10,
             timeout=60

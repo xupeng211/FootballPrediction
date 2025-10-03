@@ -1,3 +1,4 @@
+import os
 """
 特征仓库使用示例
 
@@ -52,7 +53,7 @@ def example_initialize_feature_store() -> FootballFeatureStore:
 
     # 初始化特征仓库
     feature_store = initialize_feature_store(
-        project_name="football_prediction_demo",
+        project_name = os.getenv("EXAMPLES_PROJECT_NAME_55"),
         postgres_config=postgres_config,
         redis_config=redis_config,
     )
@@ -129,7 +130,7 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
     df = pd.DataFrame(team_stats_data)
 
     # 写入特征数据
-    feature_store.write_features(feature_view_name="team_recent_stats", df=df)
+    feature_store.write_features(feature_view_name = os.getenv("EXAMPLES_FEATURE_VIEW_NAME_132"), df=df)
 
     print(f"✅ 成功写入 {len(df)} 条球队统计特征！")
 
@@ -198,7 +199,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
     df = pd.DataFrame(odds_data)
 
     # 写入赔率特征
-    feature_store.write_features(feature_view_name="odds_features", df=df)
+    feature_store.write_features(feature_view_name = os.getenv("EXAMPLES_FEATURE_VIEW_NAME_200"), df=df)
 
     print(f"✅ 成功写入 {len(df)} 条赔率特征！")
 
@@ -221,7 +222,7 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
 
     # 获取实时预测特征
     features_df = feature_store.get_online_features(
-        feature_service_name="real_time_prediction_v1", entity_df=entity_df
+        feature_service_name = os.getenv("EXAMPLES_FEATURE_SERVICE_NAME_222"), entity_df=entity_df
     )
 
     print("✅ 成功获取在线特征！")
@@ -258,7 +259,7 @@ def example_get_historical_features(
 
     # 获取完整的比赛预测特征
     training_df = feature_store.get_historical_features(
-        feature_service_name="match_prediction_v1",
+        feature_service_name = os.getenv("EXAMPLES_FEATURE_SERVICE_NAME_257"),
         entity_df=entity_df,
         full_feature_names=True,
     )
@@ -437,7 +438,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
         # 获取实时特征
         features_df = feature_store.get_online_features(
-            feature_service_name="real_time_prediction_v1",
+            feature_service_name = os.getenv("EXAMPLES_FEATURE_SERVICE_NAME_222"),
             entity_df=prediction_entities,
         )
 

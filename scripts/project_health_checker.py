@@ -553,8 +553,8 @@ class ProjectHealthChecker:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="项目健康检查工具")
-    parser.add_argument("--project-root", help="项目根目录路径", default=None)
+    parser = argparse.ArgumentParser(description = os.getenv("PROJECT_HEALTH_CHECKER_DESCRIPTION_556"))
+    parser.add_argument("--project-root", help = os.getenv("PROJECT_HEALTH_CHECKER_HELP_556"), default=None)
 
     args = parser.parse_args()
 

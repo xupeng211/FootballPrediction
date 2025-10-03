@@ -161,7 +161,7 @@ def mock_external_dependencies():
         """
         # 创建mock的Celery应用实例
         mock_app = MagicMock()
-        mock_app.main = "football_prediction_tasks[": mock_app.conf = MagicMock()": mock_app.conf.broker_url = "]redis://localhost6379/0[": mock_app.conf.result_backend = "]redis://localhost6379/0[": mock_celery_class.return_value = mock_app[""""
+        mock_app.main = os.getenv("TEST_TASK_SCHEDULER_MAIN_164"): mock_app.conf = MagicMock()": mock_app.conf.broker_url = os.getenv("TEST_TASK_SCHEDULER_BROKER_URL_164"): mock_app.conf.result_backend = os.getenv("TEST_TASK_SCHEDULER_RESULT_BACKEND_164"): mock_celery_class.return_value = mock_app[""""
         # 模拟应用创建过程
         # 验证基本配置
         assert mock_app is not None
@@ -273,7 +273,7 @@ def mock_external_dependencies():
         mock_conf = MagicMock()
         mock_conf.task_soft_time_limit = 300  # 5分钟软超时
         mock_conf.task_time_limit = 600  # 10分钟硬超时
-        mock_conf.accept_content = ["json["]": mock_conf.task_serializer = "]json[": mock_conf.result_serializer = "]json[": mock_celery_app.conf = mock_conf[": conf = mock_celery_app.conf["""
+        mock_conf.accept_content = ["json["]": mock_conf.task_serializer = os.getenv("TEST_TASK_SCHEDULER_TASK_SERIALIZER_276"): mock_conf.result_serializer = os.getenv("TEST_TASK_SCHEDULER_RESULT_SERIALIZER_276"): mock_celery_app.conf = mock_conf[": conf = mock_celery_app.conf["""
         # 验证超时配置
         assert conf.task_soft_time_limit ==300  # 5分钟软超时
         assert conf.task_time_limit ==600  # 10分钟硬超时
@@ -325,7 +325,7 @@ def mock_external_dependencies():
             mock_collector = AsyncMock()
             # 创建一个具有必要属性的Mock对象，而不是字典
             mock_result = MagicMock()
-            mock_result.status = "]success[": mock_result.records_collected = 50[": mock_result.success_count = 45[": mock_result.error_count = 5[": mock_collector.collect_fixtures.return_value = mock_result"
+            mock_result.status = os.getenv("TEST_TASK_SCHEDULER_STATUS_324"): mock_result.records_collected = 50[": mock_result.success_count = 45[": mock_result.error_count = 5[": mock_collector.collect_fixtures.return_value = mock_result"
             mock_collector_class.return_value = mock_collector
             # Mock asyncio.run - 控制异步任务执行，避免真实异步调用
             with patch(:
@@ -354,7 +354,7 @@ def mock_external_dependencies():
             # Mock赔率采集器，创建具有属性的结果对象
             mock_collector = AsyncMock()
             mock_result = MagicMock()
-            mock_result.status = "]success[": mock_result.records_collected = 100[": mock_result.success_count = 95[": mock_result.error_count = 5[": mock_collector.collect_odds.return_value = mock_result"
+            mock_result.status = os.getenv("TEST_TASK_SCHEDULER_STATUS_324"): mock_result.records_collected = 100[": mock_result.success_count = 95[": mock_result.error_count = 5[": mock_collector.collect_odds.return_value = mock_result"
             mock_collector_class.return_value = mock_collector
             # Mock异步执行，避免真实网络调用
             with patch(:
@@ -381,7 +381,7 @@ def mock_external_dependencies():
             # Mock比分采集器，创建具有属性的结果对象
             mock_collector = AsyncMock()
             mock_result = MagicMock()
-            mock_result.status = "]success[": mock_result.records_collected = 15[": mock_result.success_count = 12[": mock_result.error_count = 3[": mock_collector.collect_live_scores.return_value = mock_result"
+            mock_result.status = os.getenv("TEST_TASK_SCHEDULER_STATUS_324"): mock_result.records_collected = 15[": mock_result.success_count = 12[": mock_result.error_count = 3[": mock_collector.collect_live_scores.return_value = mock_result"
             mock_collector_class.return_value = mock_collector
             # Mock should_collect_live_scores 函数以避免数据库查询 - 修正导入路径
             with patch(:
@@ -497,7 +497,7 @@ class TestErrorLogger:
         ) as mock_save:
             # 记录任务错误
             await error_logger.log_task_error(
-                task_name="]]collect_fixtures_task[",": task_id="]task-123[",": error=Exception("]测试错误["),": context = {"]leagues[": ["]Premier League["]},": retry_count=2)"""
+                task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_494"),": task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_495"),": error=Exception("]测试错误["),": context = {"]leagues[": ["]Premier League["]},": retry_count=2)"""
             # 验证_save_error_to_db被调用
             mock_save.assert_called_once()
             # 验证传递的参数
@@ -511,7 +511,7 @@ class TestErrorLogger:
             error_logger, "_save_error_to_db[", new_callable=AsyncMock[""""
         ) as mock_save:
             await error_logger.log_api_failure(
-            task_name="]]collect_odds_task[",": api_endpoint = "]https_/api-football.com/v3/odds[",": http_status=503,": error_message="]Service Unavailable[",": retry_count=1)"""
+            task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_507"),": api_endpoint = os.getenv("TEST_TASK_SCHEDULER_API_ENDPOINT_507"),": http_status=503,": error_message = os.getenv("TEST_TASK_SCHEDULER_ERROR_MESSAGE_509"),": retry_count=1)"""
             # 验证_save_error_to_db被调用
             mock_save.assert_called_once()
             # 验证传递的参数
@@ -535,7 +535,7 @@ class TestErrorLogger:
             mock_log_entry = MagicMock()
             mock_log_entry.id = 123
             # 使用patch来Mock DataCollectionLog的创建
-            with patch("src.tasks.error_logger.DataCollectionLog[") as mock_log_class:": mock_log_class.return_value = mock_log_entry[": result = await error_logger.log_data_collection_error(": data_source="]]API-FOOTBALL[",": collection_type="]fixtures[",": error_message="]解析JSON失败[")""""
+            with patch("src.tasks.error_logger.DataCollectionLog[") as mock_log_class:": mock_log_class.return_value = mock_log_entry[": result = await error_logger.log_data_collection_error(": data_source = os.getenv("TEST_TASK_SCHEDULER_DATA_SOURCE_533"),": collection_type = os.getenv("TEST_TASK_SCHEDULER_COLLECTION_TYPE_534"),": error_message = os.getenv("TEST_TASK_SCHEDULER_ERROR_MESSAGE_535"))""""
             # 验证返回值
             assert result ==123
             # 验证DataCollectionLog被正确创建
@@ -554,7 +554,7 @@ class TestErrorLogger:
             mock_result_count = MagicMock()
             mock_result_count.scalar.return_value = 7  # 总错误数
             mock_result_tasks = [
-            MagicMock(task_name="collect_odds_task[", error_count=5),": MagicMock(task_name="]collect_scores_task[", error_count=2)]": mock_result_types = [": MagicMock(error_type="]API_FAILURE[", error_count=4),": MagicMock(error_type="]DATABASE_ERROR[", error_count=3)]""""
+            MagicMock(task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_545"), error_count=5),": MagicMock(task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_546"), error_count=2)]": mock_result_types = [": MagicMock(error_type = os.getenv("TEST_TASK_SCHEDULER_ERROR_TYPE_549"), error_count=4),": MagicMock(error_type = os.getenv("TEST_TASK_SCHEDULER_ERROR_TYPE_550"), error_count=3)]""""
             # 设置execute的多次调用返回不同结果
             mock_session.execute.side_effect = ["]mock_result_count[",": mock_result_tasks,": mock_result_types]": yield mock_session"
             error_logger.db_manager.get_async_session = mock_session_context
@@ -769,10 +769,10 @@ class TestMaintenanceTasks:
             mock_result.__iter__ = lambda self iter(
             [
             MagicMock(
-            task_name="]collect_odds_task[", total_tasks=30, failed_tasks=3[""""
+            task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_759"), total_tasks=30, failed_tasks=3[""""
                 ),
                 MagicMock(
-                    task_name="]]collect_scores_task[", total_tasks=60, failed_tasks=1[""""
+                    task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_761"), total_tasks=60, failed_tasks=1[""""
                     )]
             )
             mock_session.execute.return_value = mock_result
@@ -882,10 +882,10 @@ class TestMaintenanceTasks:
             match1.away_team_id = 20
             match1.league_id = 1
             match1.match_time = future_time1
-            match1.match_status = "scheduled[": match2 = MagicMock()": match2.id = 2[": match2.home_team_id = 30[": match2.away_team_id = 40"
+            match1.match_status = os.getenv("TEST_TASK_SCHEDULER_MATCH_STATUS_869"): match2 = MagicMock()": match2.id = 2[": match2.home_team_id = 30[": match2.away_team_id = 40"
             match2.league_id = 1
             match2.match_time = future_time2
-            match2.match_status = "]]]scheduled["""""
+            match2.match_status = os.getenv("TEST_TASK_SCHEDULER_MATCH_STATUS_875")""""
             # Mock查询结果 - 返回可迭代的比赛列表
             mock_result = ["]match1[", match2]": mock_session.execute.return_value = mock_result[": yield mock_session[": with patch("]]]src.tasks.utils.DatabaseManager[") as mock_db_class:": mock_db_instance = AsyncMock()": mock_db_instance.get_async_session = mock_session_context[": mock_db_class.return_value = mock_db_instance"
             upcoming = await get_upcoming_matches(hours=6)
@@ -1001,7 +1001,7 @@ class TestEdgeCases:
                pass  # Auto-fixed empty except block
  pass
                 await logger.log_task_error(
-                task_name="]test_task[",": task_id="]test-123[",": error=Exception("]测试错误["),": context={},": retry_count=0)""
+                task_name = os.getenv("TEST_TASK_SCHEDULER_TASK_NAME_983"),": task_id = os.getenv("TEST_TASK_SCHEDULER_TASK_ID_984"),": error=Exception("]测试错误["),": context={},": retry_count=0)""
                 # 如果没有抛出异常，说明错误被妥善处理了
         assert True
             except Exception as e:

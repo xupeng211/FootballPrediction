@@ -4,6 +4,7 @@ from src.models.model_training import BaselineModelTrainer
 from unittest.mock import patch
 import pandas
 import pytest
+import os
 
 """
 BaselineModelTrainer 基础测试套件
@@ -72,7 +73,7 @@ class TestModelTrainingBasic:
         async def test_prepare_training_data_insufficient_samples(self, trainer):
             """测试训练数据不足"""
             # 创建少量数据的DataFrame
-            small_df = pd.DataFrame({"id[: "1[", "]]match_time[": [datetime.now())": with patch.object(trainer, "]_get_historical_matches[") as mock_get_matches:": mock_get_matches.return_value = small_df[": with pytest.raises(ValueError, match = "]]训练数据不足[")": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
+            small_df = pd.DataFrame({"id[: "1[", "]]match_time[": [datetime.now())": with patch.object(trainer, "]_get_historical_matches[") as mock_get_matches:": mock_get_matches.return_value = small_df[": with pytest.raises(ValueError, match = os.getenv("TEST_MODEL_TRAINING_BASIC_MATCH_75"))": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
                         min_samples=100)
     class TestIntegrationPoints:
         "]""测试集成点"""

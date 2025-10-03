@@ -30,7 +30,7 @@ def test_performance_optimization_migration():
             # 检查分区表是否存在
             result = session.execute(
                 text(
-                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches_2025_09')"
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = os.getenv("TEST_PERFORMANCE_MIGRATION_TABLE_NAME_33"))"
                 )
             )
             partition_exists = result.scalar()
@@ -49,7 +49,7 @@ def test_performance_optimization_migration():
                 FROM information_schema.table_constraints tc
                 JOIN information_schema.key_column_usage kcu
                     ON tc.constraint_name = kcu.constraint_name
-                WHERE tc.constraint_type = 'FOREIGN KEY'
+                WHERE tc.constraint_type = os.getenv("TEST_PERFORMANCE_MIGRATION_CONSTRAINT_TYPE_51")
                 ORDER BY tc.table_name;
             """
                 )
@@ -66,7 +66,7 @@ def test_performance_optimization_migration():
                 FROM information_schema.table_constraints tc
                 JOIN information_schema.key_column_usage kcu
                     ON tc.constraint_name = kcu.constraint_name
-                WHERE tc.table_name = 'matches' AND tc.constraint_type = 'PRIMARY KEY'
+                WHERE tc.table_name = os.getenv("TEST_PERFORMANCE_MIGRATION_TABLE_NAME_68") AND tc.constraint_type = os.getenv("TEST_PERFORMANCE_MIGRATION_CONSTRAINT_TYPE_68")
                 ORDER BY kcu.ordinal_position;
             """
                 )

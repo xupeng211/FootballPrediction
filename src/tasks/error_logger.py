@@ -1,3 +1,4 @@
+import os
 """
 任务错误日志记录器
 
@@ -242,9 +243,9 @@ class TaskErrorLogger:
                 if engine:
                     self._db_type = get_db_type_from_engine(engine)
                 else:
-                    self._db_type = "postgresql"  # 默认值
+                    self._db_type = os.getenv("ERROR_LOGGER__DB_TYPE_245")  # 默认值
             except Exception:
-                self._db_type = "postgresql"  # 默认值
+                self._db_type = os.getenv("ERROR_LOGGER__DB_TYPE_245")  # 默认值
         return self._db_type
 
     async def _get_query_builder(self) -> CompatibleQueryBuilder:

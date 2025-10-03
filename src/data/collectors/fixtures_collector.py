@@ -1,3 +1,4 @@
+import os
 """
 赛程数据采集器
 
@@ -30,7 +31,7 @@ class FixturesCollector(DataCollector):
 
     def __init__(
         self,
-        data_source: str = "football_api",
+        data_source: str = os.getenv("FIXTURES_COLLECTOR_STR_33"),
         api_key: Optional[str] = None,
         base_url: str = "https://api.football-data.org/v4",
         **kwargs,
@@ -160,15 +161,15 @@ class FixturesCollector(DataCollector):
             # 确定最终状态
             total_collected = len(collected_data)
             if error_count == 0:
-                status = "success"
+                status = os.getenv("FIXTURES_COLLECTOR_STATUS_162")
             elif success_count > 0:
-                status = "partial"
+                status = os.getenv("FIXTURES_COLLECTOR_STATUS_163")
             else:
-                status = "failed"
+                status = os.getenv("FIXTURES_COLLECTOR_STATUS_165")
 
             result = CollectionResult(
                 data_source=self.data_source,
-                collection_type="fixtures",
+                collection_type = os.getenv("FIXTURES_COLLECTOR_COLLECTION_TYPE_167"),
                 records_collected=total_collected,
                 success_count=success_count,
                 error_count=error_count,
@@ -188,11 +189,11 @@ class FixturesCollector(DataCollector):
             self.logger.error(f"Fixtures collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
-                collection_type="fixtures",
+                collection_type = os.getenv("FIXTURES_COLLECTOR_COLLECTION_TYPE_167"),
                 records_collected=0,
                 success_count=0,
                 error_count=1,
-                status="failed",
+                status = os.getenv("FIXTURES_COLLECTOR_STATUS_190"),
                 error_message=str(e),
             )
 
@@ -204,18 +205,18 @@ class FixturesCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("FIXTURES_COLLECTOR_STATUS_199"),
         )
 
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理实时比分数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="live_scores",
+            collection_type = os.getenv("FIXTURES_COLLECTOR_COLLECTION_TYPE_206"),
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("FIXTURES_COLLECTOR_STATUS_199"),
         )
 
     async def _get_active_leagues(self) -> List[str]:

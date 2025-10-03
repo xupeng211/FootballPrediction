@@ -1,3 +1,4 @@
+import os
 """
 数据API接口测试
 测试覆盖src/api/data.py中的所有路由
@@ -25,7 +26,7 @@ class TestDataHelpers:
         match_orm.season = 2024
         match_orm.match_time = datetime(2024, 1, 15, 15, 0)
         match_orm.match_status = MagicMock()
-        match_orm.match_status.value = "finished"
+        match_orm.match_status.value = os.getenv("TEST_DATA_API_VALUE_28")
         match_orm.home_score = 2
         match_orm.away_score = 1
 
@@ -62,12 +63,12 @@ class TestDataHelpers:
         """测试ORM对象的球队响应格式化"""
         team_orm = MagicMock()
         team_orm.id = 10
-        team_orm.team_name = "Test Team"
+        team_orm.team_name = os.getenv("TEST_DATA_API_TEAM_NAME_64")
         team_orm.short_name = "TT"
         team_orm.founded_year = 1900
-        team_orm.country = "Test Country"
+        team_orm.country = os.getenv("TEST_DATA_API_COUNTRY_67")
         team_orm.league_id = 100
-        team_orm.stadium = "Test Stadium"
+        team_orm.stadium = os.getenv("TEST_DATA_API_STADIUM_68")
         team_orm.website = "http://test.com"
 
         result = format_team_response(team_orm)
@@ -98,8 +99,8 @@ class TestDataHelpers:
         """测试联赛响应格式化"""
         league = MagicMock()
         league.id = 100
-        league.league_name = "Test League"
-        league.country = "Test Country"
+        league.league_name = os.getenv("TEST_DATA_API_LEAGUE_NAME_97")
+        league.country = os.getenv("TEST_DATA_API_COUNTRY_67")
         league.league_code = "TL"
         league.level = 1
         league.is_active = True
@@ -211,7 +212,7 @@ class TestTeamEndpoints:
         # 模拟球队数据
         mock_team = MagicMock()
         mock_team.id = 10
-        mock_team.team_name = "Test Team"
+        mock_team.team_name = os.getenv("TEST_DATA_API_TEAM_NAME_64")
         mock_session.execute.return_value.scalars.return_value.all.return_value = [mock_team]
 
         from src.api.data import get_teams
@@ -231,7 +232,7 @@ class TestTeamEndpoints:
         # 模拟球队存在
         mock_team = MagicMock()
         mock_team.id = 10
-        mock_team.team_name = "Test Team"
+        mock_team.team_name = os.getenv("TEST_DATA_API_TEAM_NAME_64")
         mock_session.execute.return_value.scalar_one_or_none.return_value = mock_team
 
         from src.api.data import get_team_by_id
@@ -309,7 +310,7 @@ class TestLeagueEndpoints:
         # 模拟联赛数据
         mock_league = MagicMock()
         mock_league.id = 100
-        mock_league.league_name = "Test League"
+        mock_league.league_name = os.getenv("TEST_DATA_API_LEAGUE_NAME_97")
         mock_session.execute.return_value.scalars.return_value.all.return_value = [mock_league]
 
         from src.api.data import get_leagues
@@ -329,7 +330,7 @@ class TestLeagueEndpoints:
         # 模拟联赛存在
         mock_league = MagicMock()
         mock_league.id = 100
-        mock_league.league_name = "Test League"
+        mock_league.league_name = os.getenv("TEST_DATA_API_LEAGUE_NAME_97")
         mock_session.execute.return_value.scalar_one_or_none.return_value = mock_league
 
         from src.api.data import get_league_by_id

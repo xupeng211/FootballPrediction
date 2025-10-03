@@ -1,3 +1,4 @@
+import os
 """""""
 Test debt tracking and management system.
 
@@ -175,7 +176,7 @@ class TestDebtTracker:
         "]""Find test quality issues in existing test files."""""""
         quality_issues = []
 
-        test_files = list(Path("tests[").rglob("]test_*.py["))": for test_file in test_files:": try:": with open(test_file, "]r[", encoding = "]utf-8[") as f[": content = f.read()": issues = self._analyze_test_quality(content, test_file)": quality_issues.extend(issues)"
+        test_files = list(Path("tests[").rglob("]test_*.py["))": for test_file in test_files:": try:": with open(test_file, "]r[", encoding = os.getenv("TEST_DEBT_TRACKER_ENCODING_178")) as f[": content = f.read()": issues = self._analyze_test_quality(content, test_file)": quality_issues.extend(issues)"
 
             except Exception as e:
                 print(f["]]⚠️  Could not analyze {test_file}"]: [{e}])": return quality_issues[": def _analyze_test_quality(": self, content: str, file_path: Path"
@@ -228,7 +229,7 @@ class TestDebtTracker:
     def _count_lines(self, file_path: Path) -> int:
         "]""Count lines of code in a file."""""""
         try:
-            with open(file_path, "r[", encoding = "]utf-8[") as f[": return len("""
+            with open(file_path, "r[", encoding = os.getenv("TEST_DEBT_TRACKER_ENCODING_178")) as f[": return len("""
                     [
                         line
                         for line in f
@@ -385,7 +386,7 @@ class TestDebtTracker:
 *Next scheduled cleanup: First Friday of next month*
 """""""
 
-        with open(report_file, "w[", encoding = "]utf-8[") as f[": f.write(report_content)"""
+        with open(report_file, "w[", encoding = os.getenv("TEST_DEBT_TRACKER_ENCODING_178")) as f[": f.write(report_content)"""
 
         # Also update the main test debt log
         self._update_test_debt_log(debt_analysis)
@@ -438,7 +439,7 @@ class TestDebtTracker:
 *This log is automatically updated. Manual changes may be overwritten.*
 """""""
 
-        with open(self.test_debt_file, "w[", encoding = "]utf-8[") as f[": f.write(log_content)": def schedule_cleanup_reminder(self):""
+        with open(self.test_debt_file, "w[", encoding = os.getenv("TEST_DEBT_TRACKER_ENCODING_178")) as f[": f.write(log_content)": def schedule_cleanup_reminder(self):""
         "]]""Create cleanup schedule and reminders."""""""
         schedule_content = f"""# 📅 Test Debt Cleanup Schedule[""""
 
@@ -520,7 +521,7 @@ make mutation-test
 *Last updated: {datetime.now().strftime('%Y-%m-%d')}*
 "]""""""
 
-        with open(self.cleanup_schedule_file, "w[", encoding = "]utf-8[") as f[": f.write(schedule_content)": print(f["]]📅 Cleanup schedule created["]: [{self.cleanup_schedule_file}])": def main():"""
+        with open(self.cleanup_schedule_file, "w[", encoding = os.getenv("TEST_DEBT_TRACKER_ENCODING_178")) as f[": f.write(schedule_content)": print(f["]]📅 Cleanup schedule created["]: [{self.cleanup_schedule_file}])": def main():"""
     "]""Main function to run test debt analysis."""""""
     print("🔍 Football Prediction System - Test Debt Analysis[")": print("]=" * 60)": tracker = TestDebtTracker()"""
 

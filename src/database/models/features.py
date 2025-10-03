@@ -1,3 +1,4 @@
+import os
 """
 比赛特征数据模型
 
@@ -30,40 +31,40 @@ class Features(BaseModel):
     存储用于机器学习预测的各种特征
     """
 
-    __tablename__ = "features"
+    __tablename__ = os.getenv("FEATURES___TABLENAME___33")
 
     # 关联信息
     match_id: Mapped[int] = mapped_column(
-        ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, comment="比赛ID"
+        ForeignKey("matches.id", ondelete = os.getenv("FEATURES_ONDELETE_37")), nullable=False, comment="比赛ID"
     )
 
     team_id: Mapped[int] = mapped_column(
-        ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, comment="球队ID"
+        ForeignKey("teams.id", ondelete = os.getenv("FEATURES_ONDELETE_37")), nullable=False, comment="球队ID"
     )
 
     team_type: Mapped[TeamType] = mapped_column(
-        SQLEnum(TeamType), nullable=False, comment="球队类型（主队/客队）"
+        SQLEnum(TeamType), nullable=False, comment = os.getenv("FEATURES_COMMENT_44")
     )
 
     # 近期表现（最近5场）
     recent_5_wins: Mapped[int] = mapped_column(
-        Integer, default=0, comment="近5场胜利数"
+        Integer, default=0, comment = os.getenv("FEATURES_COMMENT_45")
     )
 
     recent_5_draws: Mapped[int] = mapped_column(
-        Integer, default=0, comment="近5场平局数"
+        Integer, default=0, comment = os.getenv("FEATURES_COMMENT_50")
     )
 
     recent_5_losses: Mapped[int] = mapped_column(
-        Integer, default=0, comment="近5场失败数"
+        Integer, default=0, comment = os.getenv("FEATURES_COMMENT_54")
     )
 
     recent_5_goals_for: Mapped[int] = mapped_column(
-        Integer, default=0, comment="近5场进球数"
+        Integer, default=0, comment = os.getenv("FEATURES_COMMENT_57")
     )
 
     recent_5_goals_against: Mapped[int] = mapped_column(
-        Integer, default=0, comment="近5场失球数"
+        Integer, default=0, comment = os.getenv("FEATURES_COMMENT_61")
     )
 
     # 主客场记录
@@ -80,18 +81,18 @@ class Features(BaseModel):
     away_losses: Mapped[int] = mapped_column(Integer, default=0, comment="客场失败数")
 
     # 对战历史
-    h2h_wins = mapped_column(Integer, default=0, comment="对战历史胜利数")
+    h2h_wins = mapped_column(Integer, default=0, comment = os.getenv("FEATURES_COMMENT_76"))
 
-    h2h_draws = mapped_column(Integer, default=0, comment="对战历史平局数")
+    h2h_draws = mapped_column(Integer, default=0, comment = os.getenv("FEATURES_COMMENT_78"))
 
-    h2h_losses = mapped_column(Integer, default=0, comment="对战历史失败数")
+    h2h_losses = mapped_column(Integer, default=0, comment = os.getenv("FEATURES_COMMENT_80"))
 
-    h2h_goals_for = mapped_column(Integer, default=0, comment="对战历史进球数")
+    h2h_goals_for = mapped_column(Integer, default=0, comment = os.getenv("FEATURES_COMMENT_83"))
 
-    h2h_goals_against = mapped_column(Integer, default=0, comment="对战历史失球数")
+    h2h_goals_against = mapped_column(Integer, default=0, comment = os.getenv("FEATURES_COMMENT_85"))
 
     # 联赛排名和积分
-    league_position = mapped_column(Integer, nullable=True, comment="当前联赛排名")
+    league_position = mapped_column(Integer, nullable=True, comment = os.getenv("FEATURES_COMMENT_87"))
 
     points = mapped_column(Integer, nullable=True, comment="当前积分")
 
@@ -99,17 +100,17 @@ class Features(BaseModel):
 
     # 其他特征
     days_since_last_match = mapped_column(
-        Integer, nullable=True, comment="距离上场比赛天数"
+        Integer, nullable=True, comment = os.getenv("FEATURES_COMMENT_91")
     )
 
-    is_derby = mapped_column(Boolean, nullable=True, comment="是否为德比战")
+    is_derby = mapped_column(Boolean, nullable=True, comment = os.getenv("FEATURES_COMMENT_94"))
 
     avg_possession: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(5, 2), nullable=True, comment="平均控球率"
     )
 
     avg_shots_per_game: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(5, 2), nullable=True, comment="场均射门次数"
+        DECIMAL(5, 2), nullable=True, comment = os.getenv("FEATURES_COMMENT_101")
     )
 
     # 扩展特征
@@ -118,7 +119,7 @@ class Features(BaseModel):
     )
 
     avg_shots_on_target: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(5, 2), nullable=True, comment="场均射正次数"
+        DECIMAL(5, 2), nullable=True, comment = os.getenv("FEATURES_COMMENT_108")
     )
 
     avg_corners_per_game: Mapped[Optional[Decimal]] = mapped_column(
@@ -132,12 +133,12 @@ class Features(BaseModel):
     clean_sheets: Mapped[int] = mapped_column(Integer, default=0, comment="零封场次")
 
     avg_cards_per_game: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(5, 2), nullable=True, comment="场均红黄牌数"
+        DECIMAL(5, 2), nullable=True, comment = os.getenv("FEATURES_COMMENT_121")
     )
 
     # 连胜/连败记录
     current_form: Mapped[Optional[str]] = mapped_column(
-        String(20), nullable=True, comment="当前状态（如 WWDLW）"
+        String(20), nullable=True, comment = os.getenv("FEATURES_COMMENT_125")
     )
 
     win_streak = mapped_column(Integer, default=0, comment="连胜场次")
@@ -145,9 +146,9 @@ class Features(BaseModel):
     unbeaten_streak = mapped_column(Integer, default=0, comment="不败场次")
 
     # 关系定义
-    match = relationship("Match", back_populates="features")
+    match = relationship("Match", back_populates = os.getenv("FEATURES_BACK_POPULATES_132"))
 
-    team = relationship("Team", back_populates="features")
+    team = relationship("Team", back_populates = os.getenv("FEATURES_BACK_POPULATES_132"))
 
     # 索引定义
     __table_args__ = (
@@ -160,7 +161,7 @@ class Features(BaseModel):
     def __repr__(self) -> str:
         return (
             f"<Features(id={self.id}, match_id={self.match_id}, "
-            f"team_id={self.team_id}, type='{self.team_type.value}')>"
+            f"team_id={self.team_id}, type = os.getenv("FEATURES_TYPE_145"))>"
         )
 
     @property

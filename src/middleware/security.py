@@ -1,3 +1,4 @@
+import os
 """
 安全中间件模块
 Security Middleware Module
@@ -131,7 +132,7 @@ class SecurityMiddleware:
             if client_ip in self.blocked_ips:
                 raise HTTPException(
                     status_code=403,
-                    detail="IP address blocked"
+                    detail = os.getenv("SECURITY_DETAIL_134")
                 )
 
             # 路径特定的限流规则
@@ -142,7 +143,7 @@ class SecurityMiddleware:
             if not self.rate_limiter.is_allowed(client_ip, limit, window):
                 raise HTTPException(
                     status_code=429,
-                    detail="Rate limit exceeded",
+                    detail = os.getenv("SECURITY_DETAIL_145"),
                     headers={
                         "X-RateLimit-Limit": str(limit),
                         "X-RateLimit-Window": str(window),
@@ -168,7 +169,7 @@ class SecurityMiddleware:
             if content_length and int(content_length) > 10 * 1024 * 1024:  # 10MB
                 raise HTTPException(
                     status_code=413,
-                    detail="Request entity too large"
+                    detail = os.getenv("SECURITY_DETAIL_170")
                 )
 
             return await call_next(request)

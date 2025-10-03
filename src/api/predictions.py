@@ -1,3 +1,4 @@
+import os
 """
 预测API端点 / Prediction API Endpoints
 
@@ -61,8 +62,8 @@ prediction_service = PredictionService()
 
 @router.get(
     "/{match_id}",
-    summary="获取比赛预测结果 / Get Match Prediction",
-    description="获取指定比赛的预测结果，如果不存在则实时生成 / Get prediction result for specified match, generate in real-time if not exists",
+    summary = os.getenv("PREDICTIONS_SUMMARY_64"),
+    description = os.getenv("PREDICTIONS_DESCRIPTION_65"),
     responses={
         200: {
             "description": "成功获取预测结果 / Successfully retrieved prediction",
@@ -100,10 +101,10 @@ prediction_service = PredictionService()
 )
 async def get_match_prediction(
     match_id: int = Path(
-        ..., description="比赛唯一标识符 / Unique match identifier", ge=1, example=12345
+        ..., description = os.getenv("PREDICTIONS_DESCRIPTION_103"), ge=1, example=12345
     ),
     force_predict: bool = Query(
-        default=False, description="是否强制重新预测 / Whether to force re-prediction"
+        default=False, description = os.getenv("PREDICTIONS_DESCRIPTION_106")
     ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
@@ -229,8 +230,8 @@ async def get_match_prediction(
 
 @router.post(
     "/{match_id}/predict",
-    summary="实时预测比赛结果",
-    description="对指定比赛进行实时预测",
+    summary = os.getenv("PREDICTIONS_SUMMARY_235"),
+    description = os.getenv("PREDICTIONS_DESCRIPTION_233"),
 )
 async def predict_match(
     match_id: int, session: AsyncSession = Depends(get_async_session)
@@ -270,7 +271,7 @@ async def predict_match(
         raise HTTPException(status_code=500, detail="预测失败")
 
 
-@router.post("/batch", summary="批量预测比赛", description="对多场比赛进行批量预测")
+@router.post("/batch", summary = os.getenv("PREDICTIONS_SUMMARY_273"), description = os.getenv("PREDICTIONS_DESCRIPTION_273"))
 async def batch_predict_matches(
     match_ids: List[int], session: AsyncSession = Depends(get_async_session)
 ) -> Dict[str, Any]:
@@ -288,7 +289,7 @@ async def batch_predict_matches(
         logger.info(f"开始批量预测 {len(match_ids)} 场比赛")
 
         if len(match_ids) > 50:
-            raise HTTPException(status_code=400, detail="批量预测最多支持50场比赛")
+            raise HTTPException(status_code=400, detail = os.getenv("PREDICTIONS_DETAIL_290"))
 
         # 验证比赛存在
         valid_matches_query = select(Match.id).where(Match.id.in_(match_ids))
@@ -316,17 +317,17 @@ async def batch_predict_matches(
         raise
     except Exception as e:
         logger.error(f"批量预测失败: {e}")
-        raise HTTPException(status_code=500, detail="批量预测失败")
+        raise HTTPException(status_code=500, detail = os.getenv("PREDICTIONS_DETAIL_317"))
 
 
 @router.get(
     "/history/{match_id}",
-    summary="获取比赛历史预测",
-    description="获取指定比赛的所有历史预测记录",
+    summary = os.getenv("PREDICTIONS_SUMMARY_319"),
+    description = os.getenv("PREDICTIONS_DESCRIPTION_319"),
 )
 async def get_match_prediction_history(
     match_id: int,
-    limit: int = Query(10, description="返回记录数量限制", ge=1, le=100),
+    limit: int = Query(10, description = os.getenv("PREDICTIONS_DESCRIPTION_324"), ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -397,13 +398,13 @@ async def get_match_prediction_history(
         raise
     except Exception as e:
         logger.error(f"获取比赛 {match_id} 历史预测失败: {e}")
-        raise HTTPException(status_code=500, detail="获取历史预测失败")
+        raise HTTPException(status_code=500, detail = os.getenv("PREDICTIONS_DETAIL_392"))
 
 
-@router.get("/recent", summary="获取最近的预测", description="获取最近的预测记录")
+@router.get("/recent", summary = os.getenv("PREDICTIONS_SUMMARY_396"), description = os.getenv("PREDICTIONS_DESCRIPTION_397"))
 async def get_recent_predictions(
-    hours: int = Query(default=24, description="时间范围（小时）", ge=1, le=168),
-    limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
+    hours: int = Query(default=24, description = os.getenv("PREDICTIONS_DESCRIPTION_400"), ge=1, le=168),
+    limit: int = Query(50, description = os.getenv("PREDICTIONS_DESCRIPTION_324"), ge=1, le=200),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -479,13 +480,13 @@ async def get_recent_predictions(
 
     except Exception as e:
         logger.error(f"获取最近预测失败: {e}")
-        raise HTTPException(status_code=500, detail="获取最近预测失败")
+        raise HTTPException(status_code=500, detail = os.getenv("PREDICTIONS_DETAIL_470"))
 
 
 @router.post(
     "/{match_id}/verify",
-    summary="验证预测结果",
-    description="验证指定比赛的预测结果（比赛结束后调用）",
+    summary = os.getenv("PREDICTIONS_SUMMARY_474"),
+    description = os.getenv("PREDICTIONS_DESCRIPTION_474"),
 )
 async def verify_prediction(
     match_id: int, session: AsyncSession = Depends(get_async_session)
@@ -509,14 +510,14 @@ async def verify_prediction(
         if success:
             return APIResponse.success(
                 data={"match_id": match_id, "verified": True},
-                message="预测结果验证完成",
+                message = os.getenv("PREDICTIONS_MESSAGE_491"),
             )
         else:
             return APIResponse.error(
-                message="预测结果验证失败",
+                message = os.getenv("PREDICTIONS_MESSAGE_500"),
                 data={"match_id": match_id, "verified": False},
             )
 
     except Exception as e:
         logger.error(f"验证预测结果失败: {e}")
-        raise HTTPException(status_code=500, detail="验证预测结果失败")
+        raise HTTPException(status_code=500, detail = os.getenv("PREDICTIONS_DETAIL_510"))

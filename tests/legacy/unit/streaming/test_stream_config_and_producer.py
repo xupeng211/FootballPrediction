@@ -5,6 +5,7 @@ from src.streaming import kafka_producer
 from src.streaming.stream_config import StreamConfig
 import logging
 import pytest
+import os
 
 class DummyProducer:
     def __init__(self, config):
@@ -43,7 +44,7 @@ async def test_send_batch_counts_results(producer_instance):
         return False
     producer_instance.send_match_data = success
     producer_instance.send_odds_data = failure
-    stats = await producer_instance.send_batch([{"]match_id[": 1}, {"]match_id[": 2)],": data_type="]match[")": assert stats =={"]success[" 2, "]failed[" 0}" stats = await producer_instance.send_batch([{"]match_id[": 3)],": data_type="]odds[")": assert stats =={"]success[" 0, "]failed[" 1}" def test_validation_helpers(producer_instance):": assert producer_instance._validate_match_data({"]match_id[" 1)) is True[" assert producer_instance._validate_match_data({)) is False["""
+    stats = await producer_instance.send_batch([{"]match_id[": 1}, {"]match_id[": 2)],": data_type = os.getenv("TEST_STREAM_CONFIG_AND_PRODUCER_DATA_TYPE_46"))": assert stats =={"]success[" 2, "]failed[" 0}" stats = await producer_instance.send_batch([{"]match_id[": 3)],": data_type = os.getenv("TEST_STREAM_CONFIG_AND_PRODUCER_DATA_TYPE_46"))": assert stats =={"]success[" 0, "]failed[" 1}" def test_validation_helpers(producer_instance):": assert producer_instance._validate_match_data({"]match_id[" 1)) is True[" assert producer_instance._validate_match_data({)) is False["""
     assert producer_instance._validate_odds_data({"]]]match_id[" 1, "]home_odds[" 1.5))" assert (" producer_instance._validate_odds_data({"]match_id[" 1, "]home_odds[": "]bad["))": is False["""
     )
     assert producer_instance._validate_scores_data({"]]match_id[" 1, "]home_score[" 2))" assert (" producer_instance._validate_scores_data({"]match_id[" 1, "]home_score[": 2.5))": is False["""

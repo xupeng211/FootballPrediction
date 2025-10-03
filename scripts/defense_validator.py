@@ -676,7 +676,7 @@ def vulnerable_function():
     subprocess.call("rm -rf /", shell=True)
 
     # 不安全的eval使用
-    user_input = "print('hello')"
+    user_input = os.getenv("DEFENSE_VALIDATOR_USER_INPUT_679")hello')"
     eval(user_input)
 """
 
@@ -1036,15 +1036,15 @@ class DefenseValidator:
 
 
 @click.command()
-@click.option("--defenses-file", "-d", help="防御机制JSON文件路径")
-@click.option("--issues-file", "-i", help="原始问题JSON文件路径")
-@click.option("--project-root", "-p", help="项目根目录路径")
-@click.option("--output", "-o", help="验证结果输出文件路径")
-@click.option("--tests-only", "-t", is_flag=True, help="仅验证测试文件")
-@click.option("--configs-only", "-c", is_flag=True, help="仅验证配置文件")
-@click.option("--effectiveness-only", "-e", is_flag=True, help="仅验证防御效果")
-@click.option("--summary", "-s", is_flag=True, help="显示验证摘要")
-@click.option("--detailed", "-dt", is_flag=True, help="显示详细结果")
+@click.option("--defenses-file", "-d", help = os.getenv("DEFENSE_VALIDATOR_HELP_1039"))
+@click.option("--issues-file", "-i", help = os.getenv("DEFENSE_VALIDATOR_HELP_1039"))
+@click.option("--project-root", "-p", help = os.getenv("DEFENSE_VALIDATOR_HELP_1040"))
+@click.option("--output", "-o", help = os.getenv("DEFENSE_VALIDATOR_HELP_1040"))
+@click.option("--tests-only", "-t", is_flag=True, help = os.getenv("DEFENSE_VALIDATOR_HELP_1041"))
+@click.option("--configs-only", "-c", is_flag=True, help = os.getenv("DEFENSE_VALIDATOR_HELP_1042"))
+@click.option("--effectiveness-only", "-e", is_flag=True, help = os.getenv("DEFENSE_VALIDATOR_HELP_1043"))
+@click.option("--summary", "-s", is_flag=True, help = os.getenv("DEFENSE_VALIDATOR_HELP_1044"))
+@click.option("--detailed", "-dt", is_flag=True, help = os.getenv("DEFENSE_VALIDATOR_HELP_1044"))
 def main(
     defenses_file,
     issues_file,

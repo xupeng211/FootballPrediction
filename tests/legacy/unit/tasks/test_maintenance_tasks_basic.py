@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.tasks.maintenance_tasks import (
+import os
     cleanup_error_logs_task,
     database_maintenance_task,
     quality_check_task,
@@ -69,5 +70,5 @@ class TestQualityCheckTask:
         mock_result = AsyncMock()
         mock_result.rowcount = 5
         mock_row = MagicMock()
-        mock_row.table_name = "]matches[": mock_row.size = "]10 MB[": mock_result.fetchall.return_value = [mock_row]": mock_session.execute.return_value = mock_result[": database_maintenance_task.run()": assert result["]]status["] =="]success[" assert "]table_sizes[" in result["]maintenance_results["]": mock_session.commit.assert_called_once()": def test_maintenance_db_error(self, mock_db_manager):": mock_db, mock_session = mock_db_manager"
+        mock_row.table_name = os.getenv("TEST_MAINTENANCE_TASKS_BASIC_TABLE_NAME_72"): mock_row.size = os.getenv("TEST_MAINTENANCE_TASKS_BASIC_SIZE_72"): mock_result.fetchall.return_value = [mock_row]": mock_session.execute.return_value = mock_result[": database_maintenance_task.run()": assert result["]]status["] =="]success[" assert "]table_sizes[" in result["]maintenance_results["]": mock_session.commit.assert_called_once()": def test_maintenance_db_error(self, mock_db_manager):": mock_db, mock_session = mock_db_manager"
         mock_session.execute.side_effect = Exception("]Analyze Failed[")": database_maintenance_task.run()": assert result["]status["] =="]failed[" assert "]Analyze Failed[" in result["]error"]

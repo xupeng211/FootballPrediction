@@ -73,8 +73,8 @@ async def _collect_database_health() -> Dict[str, Any]:
 
 @router.get(
     "/health",
-    summary="系统健康检查",
-    description="检查API、数据库、缓存等服务状态",
+    summary = os.getenv("HEALTH_SUMMARY_76"),
+    description = os.getenv("HEALTH_DESCRIPTION_76"),
     response_model=HealthCheckResponse,
 )
 async def health_check() -> Dict[str, Any]:
@@ -157,7 +157,7 @@ async def health_check() -> Dict[str, Any]:
 @router.get(
     "/health/liveness",
     summary="存活性检查",
-    description="简单的存活性检查，仅返回基本状态",
+    description = os.getenv("HEALTH_DESCRIPTION_158"),
 )
 async def liveness_check() -> Dict[str, Any]:
     """存活性检查 - 用于K8s liveness probe"""
@@ -170,7 +170,7 @@ async def liveness_check() -> Dict[str, Any]:
 @router.get(
     "/health/readiness",
     summary="就绪性检查",
-    description="检查服务是否就绪，包括依赖服务检查",
+    description = os.getenv("HEALTH_DESCRIPTION_170"),
 )
 async def readiness_check() -> Dict[str, Any]:
     """就绪性检查 - 用于K8s readiness probe"""

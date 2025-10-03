@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 创建干净的虚拟环境
@@ -15,7 +16,7 @@ def create_clean_environment():
     print("="*60)
 
     # 虚拟环境配置
-    venv_name = "venv_clean"
+    venv_name = os.getenv("CREATE_CLEAN_ENV_VENV_NAME_18")
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
 
     # 推荐的稳定版本（来自兼容性矩阵分析）

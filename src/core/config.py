@@ -79,16 +79,16 @@ class Settings(SettingsClass):
     # 数据库配置
     database_url: str = (
         Field(
-            default="sqlite+aiosqlite:///./data/football_prediction.db",
-            description="数据库连接URL",
+            default = os.getenv("CONFIG_DEFAULT_82"),
+            description = os.getenv("CONFIG_DESCRIPTION_83"),
         )
         if HAS_PYDANTIC
         else "sqlite+aiosqlite:///./data/football_prediction.db"
     )
     test_database_url: str = (
         Field(
-            default="postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test",
-            description="测试数据库连接URL",
+            default = os.getenv("CONFIG_DEFAULT_90"),
+            description = os.getenv("CONFIG_DESCRIPTION_92"),
         )
         if HAS_PYDANTIC
         else "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
@@ -96,24 +96,24 @@ class Settings(SettingsClass):
 
     # Redis配置
     redis_url: str = (
-        Field(default="redis://redis:6379/0", description="Redis连接URL")
+        Field(default = os.getenv("CONFIG_DEFAULT_99"), description = os.getenv("CONFIG_DESCRIPTION_99"))
         if HAS_PYDANTIC
         else "redis://redis:6379/0"
     )
 
     # API配置
     api_host: str = (
-        Field(default="localhost", description="API服务器主机")
+        Field(default="localhost", description = os.getenv("CONFIG_DESCRIPTION_106"))
         if HAS_PYDANTIC
         else "localhost"
     )
     api_port: int = (
-        Field(default=8000, description="API服务器端口") if HAS_PYDANTIC else 8000
+        Field(default=8000, description = os.getenv("CONFIG_DESCRIPTION_109")) if HAS_PYDANTIC else 8000
     )
 
     # 环境配置
     environment: str = (
-        Field(default="development", description="运行环境")
+        Field(default = os.getenv("CONFIG_DEFAULT_111"), description="运行环境")
         if HAS_PYDANTIC
         else "development"
     )
@@ -123,19 +123,19 @@ class Settings(SettingsClass):
 
     # MLflow配置
     mlflow_tracking_uri: str = (
-        Field(default="file:///tmp/mlflow", description="MLflow跟踪URI")
+        Field(default = os.getenv("CONFIG_DEFAULT_121"), description = os.getenv("CONFIG_DESCRIPTION_122"))
         if HAS_PYDANTIC
         else "file:///tmp/mlflow"
     )
 
     # 外部API配置
     api_football_key: Optional[str] = (
-        Field(default=None, description="API-Football密钥") if HAS_PYDANTIC else None
+        Field(default=None, description = os.getenv("CONFIG_DESCRIPTION_127")) if HAS_PYDANTIC else None
     )
     api_football_url: str = (
         Field(
             default="https://api-football-v1.p.rapidapi.com/v3",
-            description="API-Football基础URL",
+            description = os.getenv("CONFIG_DESCRIPTION_133"),
         )
         if HAS_PYDANTIC
         else "https://api-football-v1.p.rapidapi.com/v3"
@@ -152,14 +152,14 @@ class Settings(SettingsClass):
 
         def __init__(self, **kwargs):
             # 设置默认值
-            self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
-            self.redis_url = "redis://redis:6379/0"
+            self.database_url = os.getenv("CONFIG_DATABASE_URL_147")
+            self.test_database_url = os.getenv("CONFIG_TEST_DATABASE_URL_149")
+            self.redis_url = os.getenv("CONFIG_REDIS_URL_155")
             self.api_host = "localhost"
             self.api_port = 8000
-            self.environment = "development"
+            self.environment = os.getenv("CONFIG_ENVIRONMENT_157")
             self.log_level = "INFO"
-            self.mlflow_tracking_uri = "file:///tmp/mlflow"
+            self.mlflow_tracking_uri = os.getenv("CONFIG_MLFLOW_TRACKING_URI_158")
             self.api_football_key = None
             self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
 

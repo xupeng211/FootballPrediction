@@ -3,6 +3,7 @@ from datetime import datetime
 from src.tasks.data_collection_tasks import (
 from unittest.mock import Mock, patch, AsyncMock
 import pytest
+import os
 
 """
 数据采集任务测试套件
@@ -33,7 +34,7 @@ class TestDataCollectionTask:
     def data_collection_task(self, mock_error_logger):
         """创建DataCollectionTask实例"""
         with patch(:
-            "src.tasks.data_collection_tasks.TaskErrorLogger[",": return_value=mock_error_logger):": task = DataCollectionTask()": task.name = "]test.data_collection_task[": return task[": def test_data_collection_task_init(self, data_collection_task):"""
+            "src.tasks.data_collection_tasks.TaskErrorLogger[",": return_value=mock_error_logger):": task = DataCollectionTask()": task.name = os.getenv("TEST_DATA_COLLECTION_TASKS_NAME_36"): return task[": def test_data_collection_task_init(self, data_collection_task):"""
         "]]""测试DataCollectionTask初始化"""
         assert data_collection_task.error_logger is not None
         assert hasattr(data_collection_task, "on_failure[")" assert hasattr(data_collection_task, "]on_success[")" def test_on_failure_success(self, data_collection_task, mock_error_logger):"""
@@ -41,7 +42,7 @@ class TestDataCollectionTask:
         # 模拟任务请求对象
         data_collection_task.request = Mock()
         data_collection_task.request.retries = 2
-        exc = Exception("Test error[")": task_id = "]test-task-id[": args = ["]arg1[", "]arg2["]": kwargs = {"]kwarg1[": ["]value1["}": einfo = Mock()": einfo.__str__ = Mock(return_value="]Error info[")""""
+        exc = Exception("Test error[")": task_id = os.getenv("TEST_DATA_COLLECTION_TASKS_TASK_ID_44"): args = ["]arg1[", "]arg2["]": kwargs = {"]kwarg1[": ["]value1["}": einfo = Mock()": einfo.__str__ = Mock(return_value = os.getenv("TEST_DATA_COLLECTION_TASKS_RETURN_VALUE_44"))""""
         # 调用on_failure
         data_collection_task.on_failure(exc, task_id, args, kwargs, einfo)
         # 验证错误日志被调用
@@ -50,7 +51,7 @@ class TestDataCollectionTask:
         assert call_args["]task_name["] =="]data_collection_task[" assert call_args["]task_id["] ==task_id[" assert call_args["]]error["] ==exc[" assert call_args["]]retry_count["] ==2[" def test_on_failure_without_request(self, data_collection_task, mock_error_logger):"""
         "]]""测试任务失败处理（无request对象）"""
         # 确保没有request对象
-        assert not hasattr(data_collection_task, "request[")" exc = Exception("]Test error[")": task_id = "]test-task-id[": args = []": kwargs = {}": einfo = Mock()""
+        assert not hasattr(data_collection_task, "request[")" exc = Exception("]Test error[")": task_id = os.getenv("TEST_DATA_COLLECTION_TASKS_TASK_ID_44"): args = []": kwargs = {}": einfo = Mock()""
         # 调用on_failure
         data_collection_task.on_failure(exc, task_id, args, kwargs, einfo)
         # 验证错误日志被调用，重试次数为0
@@ -59,20 +60,20 @@ class TestDataCollectionTask:
         assert call_args["]retry_count["] ==0[" def test_on_failure_logger_exception(self, data_collection_task, mock_error_logger):"""
         "]]""测试错误日志记录失败"""
         # 模拟日志记录失败
-        mock_error_logger.log_task_error.side_effect = Exception("Logger failed[")": data_collection_task.request = Mock()": data_collection_task.request.retries = 1[": exc = Exception("]]Test error[")": task_id = "]test-task-id[": args = []": kwargs = {}": einfo = Mock()""
+        mock_error_logger.log_task_error.side_effect = Exception("Logger failed[")": data_collection_task.request = Mock()": data_collection_task.request.retries = 1[": exc = Exception("]]Test error[")": task_id = os.getenv("TEST_DATA_COLLECTION_TASKS_TASK_ID_44"): args = []": kwargs = {}": einfo = Mock()""
         # 调用on_failure不应该抛出异常
         data_collection_task.on_failure(exc, task_id, args, kwargs, einfo)
         # 验证错误日志被调用
         mock_error_logger.log_task_error.assert_called_once()
     def test_on_success(self, data_collection_task):
         "]""测试任务成功处理"""
-        data_collection_task.name = "test.success_task[": retval = {"]status[": ["]success["}": task_id = "]test-task-id[": args = []": kwargs = {}"""
+        data_collection_task.name = "test.success_task[": retval = {"]status[": ["]success["}": task_id = os.getenv("TEST_DATA_COLLECTION_TASKS_TASK_ID_44"): args = []": kwargs = {}"""
         # 调用on_success（不应该抛出异常）
         data_collection_task.on_success(retval, task_id, args, kwargs)
     def test_on_success_without_name(self, data_collection_task):
         "]""测试任务成功处理（无任务名称）"""
         data_collection_task.name = None
-        retval = {"status[": ["]success["}": task_id = "]test-task-id[": args = []": kwargs = {}"""
+        retval = {"status[": ["]success["}": task_id = os.getenv("TEST_DATA_COLLECTION_TASKS_TASK_ID_44"): args = []": kwargs = {}"""
         # 调用on_success（不应该抛出异常）
         data_collection_task.on_success(retval, task_id, args, kwargs)
 class TestCollectFixturesTask:
@@ -157,7 +158,7 @@ class TestCollectFixturesTask:
             "]status[": ["]failed[",""""
             "]error_message[: "API Error["}"]"""
         # 调用任务应该抛出异常
-        with pytest.raises(Exception, match = "]赛程采集失败[": [API Error])": collect_fixtures_task(mock_task_self)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_DATA_COLLECTION_TASKS_MATCH_156"): [API Error])": collect_fixtures_task(mock_task_self)"""
     @patch("]src.tasks.data_collection_tasks.RealFixturesCollector[")""""
     @patch("]src.tasks.data_collection_tasks.asyncio.run[")": def test_collect_fixtures_task_api_exception(": self,": mock_asyncio_run,"
         mock_collector_class,
@@ -171,7 +172,7 @@ class TestCollectFixturesTask:
         )
         mock_asyncio_run.side_effect = Exception("]API connection failed[")""""
         # 调用任务应该抛出异常
-        with pytest.raises(Exception, match = "]API connection failed[")": collect_fixtures_task(mock_task_self)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_DATA_COLLECTION_TASKS_MATCH_168"))": collect_fixtures_task(mock_task_self)"""
     @patch("]src.tasks.data_collection_tasks.RealFixturesCollector[")""""
     @patch("]src.tasks.data_collection_tasks.asyncio.run[")""""
     @patch("]src.tasks.data_collection_tasks.TaskRetryConfig[")": def test_collect_fixtures_task_retry(": self,": mock_retry_config,"
@@ -222,7 +223,7 @@ class TestCollectFixturesTask:
         )
         mock_asyncio_run.side_effect = Exception("]Permanent error[")""""
         # 调用任务应该抛出异常
-        with pytest.raises(Exception, match = "]Permanent error[")": collect_fixtures_task(mock_task_self)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_DATA_COLLECTION_TASKS_MATCH_219"))": collect_fixtures_task(mock_task_self)"""
         # 验证数据采集错误被记录
         mock_task_self.error_logger.log_data_collection_error.assert_called_once()
         call_args = mock_task_self.error_logger.log_data_collection_error.call_args[1]
@@ -236,7 +237,7 @@ class TestCollectFixturesTask:
         # 创建模拟对象结果
         class MockResult:
             def __init__(self):
-                self.status = "success[": self.success_count = 8[": self.error_count = 1[": self.records_collected = 9[": mock_result = MockResult()"
+                self.status = os.getenv("TEST_DATA_COLLECTION_TASKS_STATUS_231"): self.success_count = 8[": self.error_count = 1[": self.records_collected = 9[": mock_result = MockResult()"
         mock_collector_class.return_value = mock_fixtures_collector
         mock_fixtures_collector.collect_fixtures.return_value = mock_result
         mock_asyncio_run.return_value = mock_result
@@ -319,7 +320,7 @@ class TestCollectFixturesTask:
             "]error_count[": 0,""""
             "]records_collected[": 3}""""
         # 调用任务（兼容性参数）
-        result = collect_odds_task(mock_task_self, match_id=123, bookmaker="]bet365[")""""
+        result = collect_odds_task(mock_task_self, match_id=123, bookmaker = os.getenv("TEST_DATA_COLLECTION_TASKS_BOOKMAKER_314"))""""
         # 验证结果
         assert result["]status["] =="]success[" assert result["]records_collected["] ==3[" assert result["]]success_count["] ==1[""""
     @patch("]]src.tasks.data_collection_tasks.RealOddsCollector[")""""

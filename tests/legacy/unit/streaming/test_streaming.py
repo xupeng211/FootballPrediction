@@ -7,6 +7,7 @@ from src.streaming import (
 from src.streaming.stream_processor import StreamProcessorManager
 from unittest.mock import AsyncMock, Mock, patch
 import pytest
+import os
 
 """
 流式数据处理测试
@@ -48,7 +49,7 @@ import pytest
 要将测试Mock替换为真实Kafka，需要：
 
 1. 环境配置：
-   export KAFKA_BOOTSTRAP_SERVERS = "localhost9092[": export KAFKA_GROUP_ID="]football-data-consumers[": 2. 依赖安装：": pip install confluent-kafka["""
+   export KAFKA_BOOTSTRAP_SERVERS = os.getenv("TEST_STREAMING_KAFKA_BOOTSTRAP_SERVERS_51"): export KAFKA_GROUP_ID = os.getenv("TEST_STREAMING_KAFKA_GROUP_ID_51"): 2. 依赖安装：": pip install confluent-kafka["""
 
 3. 代码修改（在非测试环境）：
    - 移除patch装饰器
@@ -284,7 +285,7 @@ class MockMessage:
     5. 确定性：测试结果不受外部数据源影响
     """
     def __init__(
-        self, value=None, error=None, topic="test-topic[", partition=0, offset=0[""""
+        self, value=None, error=None, topic = os.getenv("TEST_STREAMING_TOPIC_285"), partition=0, offset=0[""""
         ):
         "]]"""
         初始化模拟消息对象
@@ -769,8 +770,8 @@ class TestStreamingDataCollector:
         ) as mock_base_collect:
             # 设置 mock 返回值
             from src.data.collectors.base_collector import CollectionResult
-            mock_result = CollectionResult(data_source="]]test_source[",": collection_type="]fixtures[",": records_collected=1,": success_count=1,": error_count=0,"
-                status="]success[",": collected_data = [{"]fixture[": {"]id[": 1})])": mock_base_collect.return_value = mock_result[": mock_producer = AsyncMock()": mock_producer.send_match_data.return_value = True"
+            mock_result = CollectionResult(data_source = os.getenv("TEST_STREAMING_DATA_SOURCE_771"),": collection_type = os.getenv("TEST_STREAMING_COLLECTION_TYPE_771"),": records_collected=1,": success_count=1,": error_count=0,"
+                status = os.getenv("TEST_STREAMING_STATUS_772"),": collected_data = [{"]fixture[": {"]id[": 1})])": mock_base_collect.return_value = mock_result[": mock_producer = AsyncMock()": mock_producer.send_match_data.return_value = True"
             mock_producer.close = Mock()  # close不是协程方法
             mock_producer_class.return_value = mock_producer
             collector = StreamingDataCollector()
@@ -791,8 +792,8 @@ class TestStreamingDataCollector:
         ) as mock_base_collect:
             # 设置 mock 返回值
             from src.data.collectors.base_collector import CollectionResult
-            mock_result = CollectionResult(data_source="]]test_source[",": collection_type="]odds[",": records_collected=1,": success_count=1,": error_count=0,"
-                status="]success[",": collected_data = [{"]bookmakers[": [{"]name[": "]test[", "]bets[" []}])])": mock_base_collect.return_value = mock_result[": mock_producer = AsyncMock()": mock_producer.send_odds_data.return_value = True"
+            mock_result = CollectionResult(data_source = os.getenv("TEST_STREAMING_DATA_SOURCE_771"),": collection_type = os.getenv("TEST_STREAMING_COLLECTION_TYPE_791"),": records_collected=1,": success_count=1,": error_count=0,"
+                status = os.getenv("TEST_STREAMING_STATUS_772"),": collected_data = [{"]bookmakers[": [{"]name[": "]test[", "]bets[" []}])])": mock_base_collect.return_value = mock_result[": mock_producer = AsyncMock()": mock_producer.send_odds_data.return_value = True"
             mock_producer.close = Mock()  # close不是协程方法
             mock_producer_class.return_value = mock_producer
             collector = StreamingDataCollector()
@@ -811,8 +812,8 @@ class TestStreamingDataCollector:
         ) as mock_base_collect:
             # 设置 mock 返回值
             from src.data.collectors.base_collector import CollectionResult
-            mock_result = CollectionResult(data_source="]]test_source[",": collection_type="]live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-                status="]success[",": collected_data=["""
+            mock_result = CollectionResult(data_source = os.getenv("TEST_STREAMING_DATA_SOURCE_771"),": collection_type = os.getenv("TEST_STREAMING_COLLECTION_TYPE_810"),": records_collected=1,": success_count=1,": error_count=0,"
+                status = os.getenv("TEST_STREAMING_STATUS_772"),": collected_data=["""
                 {"]fixture[": {"]id[": 1}, "]goals[": {"]home[": 2, "]away[": 1})""""
                 ])
             mock_base_collect.return_value = mock_result

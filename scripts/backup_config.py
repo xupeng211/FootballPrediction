@@ -55,7 +55,7 @@ class ConfigBackup:
         # 预定义的备份配置
         self.backup_configs = {
             "env": BackupConfig(
-                name="environment",
+                name = os.getenv("BACKUP_CONFIG_NAME_58"),
                 source_files=[
                     project_root / ".env.production",
                     project_root / ".env.local",
@@ -66,7 +66,7 @@ class ConfigBackup:
                 encrypt=True
             ),
             "config": BackupConfig(
-                name="configuration",
+                name = os.getenv("BACKUP_CONFIG_NAME_68"),
                 source_files=[
                     project_root / "config" / "production.yaml",
                     project_root / "config" / "staging.yaml",
@@ -77,7 +77,7 @@ class ConfigBackup:
                 encrypt=True
             ),
             "secrets": BackupConfig(
-                name="secrets",
+                name = os.getenv("BACKUP_CONFIG_NAME_79"),
                 source_files=[
                     project_root / ".config_key",
                     project_root / ".config_key.salt",
@@ -87,7 +87,7 @@ class ConfigBackup:
                 encrypt=True
             ),
             "certificates": BackupConfig(
-                name="certificates",
+                name = os.getenv("BACKUP_CONFIG_NAME_88"),
                 source_files=[
                     project_root / "certs",
                 ],
@@ -441,15 +441,15 @@ class ConfigBackup:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="配置备份工具")
+    parser = argparse.ArgumentParser(description = os.getenv("BACKUP_CONFIG_DESCRIPTION_437"))
     parser.add_argument('command', choices=[
         'backup', 'restore', 'list', 'cleanup', 'backup-all'
-    ], help="要执行的命令")
+    ], help = os.getenv("BACKUP_CONFIG_HELP_444"))
 
     parser.add_argument('--config', '-c', help="配置名称")
     parser.add_argument('--timestamp', '-t', help="备份时间戳")
-    parser.add_argument('--password', '-p', action='store_true', help="使用密码")
-    parser.add_argument('--force', '-f', action='store_true', help="强制覆盖")
+    parser.add_argument('--password', '-p', action = os.getenv("BACKUP_CONFIG_ACTION_449"), help="使用密码")
+    parser.add_argument('--force', '-f', action = os.getenv("BACKUP_CONFIG_ACTION_449"), help="强制覆盖")
     parser.add_argument('--days', '-d', type=int, default=30, help="保留天数")
 
     args = parser.parse_args()

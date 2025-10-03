@@ -1,19 +1,20 @@
 from src.utils.crypto_utils import CryptoUtils
 from src.utils.data_validator import DataValidator
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 class TestCryptoUtils:
     """测试加密工具类"""
     def test_hash_password(self):
         """测试密码哈希"""
-        password = "test_password[": CryptoUtils.hash_password(password)": assert hashed != password[" assert len(hashed) > 0[""
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_10"): CryptoUtils.hash_password(password)": assert hashed != password[" assert len(hashed) > 0[""
         # bcrypt哈希应该以$2b$开头
     assert hashed.startswith("]]]$2b$")" def test_verify_password_correct(self):"""
         """测试验证正确密码"""
-        password = "test_password[": hashed = CryptoUtils.hash_password(password)": CryptoUtils.verify_password(password, hashed)": assert result is True[" def test_verify_password_incorrect(self):"
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_10"): hashed = CryptoUtils.hash_password(password)": CryptoUtils.verify_password(password, hashed)": assert result is True[" def test_verify_password_incorrect(self):"
         "]]""测试验证错误密码"""
-        password = "test_password[": wrong_password = "]wrong_password[": hashed = CryptoUtils.hash_password(password)": CryptoUtils.verify_password(wrong_password, hashed)": assert result is False[" def test_generate_salt(self):"
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_10"): wrong_password = os.getenv("TEST_UTILS_COMPREHENSIVE_WRONG_PASSWORD_14"): hashed = CryptoUtils.hash_password(password)": CryptoUtils.verify_password(wrong_password, hashed)": assert result is False[" def test_generate_salt(self):"
         "]]""测试生成盐值"""
         CryptoUtils.generate_salt()
         CryptoUtils.generate_salt()
@@ -34,9 +35,9 @@ class TestCryptoUtils:
     assert len(token) ==32  # 16 bytes * 2 (hex)
     def test_different_passwords_different_hashes(self):
         """测试不同密码产生不同哈希"""
-        password1 = "password1[": password2 = "]password2[": CryptoUtils.hash_password(password1)": CryptoUtils.hash_password(password2)": assert hash1 != hash2[" def test_same_password_different_hashes(self):"
+        password1 = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD1_34"): password2 = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD2_34"): CryptoUtils.hash_password(password1)": CryptoUtils.hash_password(password2)": assert hash1 != hash2[" def test_same_password_different_hashes(self):"
         "]]""测试相同密码产生不同哈希（因为盐值不同）"""
-        password = "same_password[": CryptoUtils.hash_password(password)": CryptoUtils.hash_password(password)"""
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_37"): CryptoUtils.hash_password(password)": CryptoUtils.hash_password(password)"""
         # 即使是相同密码，由于盐值不同，哈希也应该不同
     assert hash1 != hash2
         # 但两个哈希都应该能验证原始密码

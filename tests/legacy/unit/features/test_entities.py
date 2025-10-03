@@ -2,6 +2,7 @@ from datetime import datetime
 
 from src.features.entities import MatchEntity, TeamEntity, FeatureKey
 import pytest
+import os
 
 """
 特征实体测试套件
@@ -38,7 +39,7 @@ class TestMatchEntity:
             away_team_id=2,
             league_id=10,
             match_time=sample_datetime,
-            season="2024-25[")": assert match.match_id ==12345[" assert match.home_team_id ==1[""
+            season = os.getenv("TEST_ENTITIES_SEASON_41"))": assert match.match_id ==12345[" assert match.home_team_id ==1[""
         assert match.away_team_id ==2
         assert match.league_id ==10
         assert match.match_time ==sample_datetime
@@ -51,7 +52,7 @@ class TestMatchEntity:
             away_team_id=2,
             league_id=10,
             match_time=sample_datetime,
-            season="2024-25[")": result = match.to_dict()": expected = {""
+            season = os.getenv("TEST_ENTITIES_SEASON_41"))": result = match.to_dict()": expected = {""
             "]match_id[": 12345,""""
             "]home_team_id[": 1,""""
             "]away_team_id[": 2,""""
@@ -74,7 +75,7 @@ class TestMatchEntity:
             away_team_id=200,
             league_id=50,
             match_time=sample_datetime,
-            season="2025-26[")""""
+            season = os.getenv("TEST_ENTITIES_SEASON_75"))""""
         # 序列化
         dict_data = original.to_dict()
         # 反序列化
@@ -103,7 +104,7 @@ class TestMatchEntity:
             away_team_id=999999999,
             league_id=999999999,
             match_time=datetime.now(),
-            season="]]9999-99[")": assert match_max.match_id ==999999999[" def test_match_entity_datetime_formats(self):""
+            season = os.getenv("TEST_ENTITIES_SEASON_104"))": assert match_max.match_id ==999999999[" def test_match_entity_datetime_formats(self):""
         "]]""测试不同的datetime格式"""
         # 测试带毫秒的datetime
         dt_with_ms = datetime(2025, 9, 29, 15, 30, 45, 123456)
@@ -113,7 +114,7 @@ class TestMatchEntity:
             away_team_id=2,
             league_id=1,
             match_time=dt_with_ms,
-            season="2024-25[")": dict_result = match.to_dict()": assert "]2025-09-29T153045[" in dict_result["]match_time["]""""
+            season = os.getenv("TEST_ENTITIES_SEASON_41"))": dict_result = match.to_dict()": assert "]2025-09-29T153045[" in dict_result["]match_time["]""""
         # 测试UTC时间
         dt_utc = datetime(2025, 9, 29, 12, 0, 0)
         match_utc = MatchEntity(
@@ -122,7 +123,7 @@ class TestMatchEntity:
             away_team_id=2,
             league_id=1,
             match_time=dt_utc,
-            season="]2024-25[")": assert match_utc.match_time ==dt_utc[" class TestTeamEntity:""
+            season = os.getenv("TEST_ENTITIES_SEASON_120"))": assert match_utc.match_time ==dt_utc[" class TestTeamEntity:""
     "]]""TeamEntity测试类"""
     @pytest.fixture
     def sample_team_data(self):
@@ -134,7 +135,7 @@ class TestMatchEntity:
             "]home_venue[: "Test Stadium["}"]": def test_team_entity_creation_success(self):""
         "]""测试成功创建TeamEntity"""
         team = TeamEntity(
-            team_id=100, team_name="Test FC[", league_id=10, home_venue="]Test Stadium["""""
+            team_id=100, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_134"), league_id=10, home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_134")""""
         )
         assert team.team_id ==100
         assert team.team_name =="]Test FC[" assert team.league_id ==10[""""
@@ -143,7 +144,7 @@ class TestMatchEntity:
         "]""测试不包含主场的TeamEntity创建"""
         team = TeamEntity(
             team_id=100,
-            team_name="Test FC[",": league_id=10,"""
+            team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_134"),": league_id=10,"""
             # home_venue 使用默认值 None
         )
         assert team.team_id ==100
@@ -152,7 +153,7 @@ class TestMatchEntity:
     def test_team_entity_to_dict(self):
         "]]""测试TeamEntity转字典"""
         team = TeamEntity(
-            team_id=100, team_name="Test FC[", league_id=10, home_venue="]Test Stadium["""""
+            team_id=100, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_134"), league_id=10, home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_134")""""
         )
         result = team.to_dict()
         expected = {
@@ -161,7 +162,7 @@ class TestMatchEntity:
             "]league_id[": 10,""""
             "]home_venue[: "Test Stadium["}"]": assert result ==expected[" def test_team_entity_to_dict_without_venue(self):"
         "]]""测试不包含主场的TeamEntity转字典"""
-        team = TeamEntity(team_id=100, team_name="Test FC[", league_id=10)": result = team.to_dict()": expected = {""
+        team = TeamEntity(team_id=100, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_134"), league_id=10)": result = team.to_dict()": expected = {""
             "]team_id[": 100,""""
             "]team_name[: "Test FC[","]"""
             "]league_id[": 10,""""
@@ -178,7 +179,7 @@ class TestMatchEntity:
     def test_team_entity_round_trip(self):
         "]]""测试TeamEntity序列化和反序列化往返"""
         original = TeamEntity(
-            team_id=999, team_name="Test Team FC[", league_id=50, home_venue="]Test Arena["""""
+            team_id=999, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_176"), league_id=50, home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_176")""""
         )
         # 序列化
         dict_data = original.to_dict()
@@ -193,12 +194,12 @@ class TestMatchEntity:
         "]""测试Unicode球队名称"""
         team = TeamEntity(
             team_id=100,
-            team_name="测试球队 FC 中文 español 日本語[",": league_id=10,": home_venue="]测试体育场 🏟️")": assert team.team_name =="测试球队 FC 中文 español 日本語[" assert team.home_venue =="]测试体育场 🏟️" def test_team_entity_special_characters("
+            team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_186"),": league_id=10,": home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_188"))": assert team.team_name =="测试球队 FC 中文 español 日本語[" assert team.home_venue =="]测试体育场 🏟️" def test_team_entity_special_characters("
     """"
         """测试特殊字符"""
         team = TeamEntity(
             team_id=100,
-            team_name='Special "Chars[": FC\'s & Co.',": league_id=10,": home_venue='Stadium "]The[": Ground\'s')": assert team.team_name =='Special "]Chars[" FC\'s & Co.'""""
+            team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_192")Chars[": FC\'s & Co.',": league_id=10,": home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_194")]The[": Ground\'s')": assert team.team_name =='Special "]Chars[" FC\'s & Co.'""""
         assert team.home_venue =='Stadium "]The[" Ground\'s'""""
 class TestFeatureKey:
     "]""FeatureKey测试类"""
@@ -209,7 +210,7 @@ class TestFeatureKey:
     def test_feature_key_creation_match(self, sample_datetime):
         """测试创建比赛特征的FeatureKey"""
         key = FeatureKey(
-            entity_type="match[", entity_id=12345, feature_timestamp=sample_datetime[""""
+            entity_type = os.getenv("TEST_ENTITIES_ENTITY_TYPE_201"), entity_id=12345, feature_timestamp=sample_datetime[""""
         )
         assert key.entity_type =="]]match[" assert key.entity_id ==12345[""""
         assert key.feature_timestamp ==sample_datetime
@@ -289,13 +290,13 @@ class TestFeatureKey:
             away_team_id=2,
             league_id=10,
             match_time=dt,
-            season="2024-25[")""""
+            season = os.getenv("TEST_ENTITIES_SEASON_41"))""""
         # 创建球队实体
         home_team = TeamEntity(
-            team_id=1, team_name="]Home FC[", league_id=10, home_venue="]Home Stadium["""""
+            team_id=1, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_280"), league_id=10, home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_280")""""
         )
         away_team = TeamEntity(
-            team_id=2, team_name="]Away FC[", league_id=10, home_venue="]Away Stadium["""""
+            team_id=2, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_280"), league_id=10, home_venue = os.getenv("TEST_ENTITIES_HOME_VENUE_282")""""
         )
         # 创建特征键
         match_key = FeatureKey("]match[", match.match_id, dt)": home_team_key = FeatureKey("]team[", home_team.team_id, dt)": away_team_key = FeatureKey("]team[", away_team.team_id, dt)""""
@@ -316,7 +317,7 @@ class TestFeatureKey:
             away_team_id=2,
             league_id=10,
             match_time=dt,
-            season="2024-25[")": team = TeamEntity(team_id=1, team_name="]Test FC[", league_id=10)""""
+            season = os.getenv("TEST_ENTITIES_SEASON_41"))": team = TeamEntity(team_id=1, team_name = os.getenv("TEST_ENTITIES_TEAM_NAME_303"), league_id=10)""""
         # 序列化为字典
         match_dict = match.to_dict()
         team_dict = team.to_dict()

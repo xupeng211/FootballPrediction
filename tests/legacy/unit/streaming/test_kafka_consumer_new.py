@@ -1,6 +1,7 @@
 from src.streaming.kafka_consumer import FootballKafkaConsumer
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 Kafka消费者测试套件
@@ -51,7 +52,7 @@ class TestFootballKafkaConsumer:
             assert consumer.consumer ==mock_consumer
     def test_kafka_consumer_init_failure(self, mock_config):
         "]]""测试KafkaConsumer初始化失败"""
-        with patch("confluent_kafka.Consumer[") as mock_consumer_class:": mock_consumer_class.side_effect = Exception("]连接失败[")": with pytest.raises(Exception, match = "]连接失败[")": KafkaConsumer(mock_config)": def test_subscribe_topics_success(self, consumer):""
+        with patch("confluent_kafka.Consumer[") as mock_consumer_class:": mock_consumer_class.side_effect = Exception("]连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_KAFKA_CONSUMER_NEW_MATCH_54"))": KafkaConsumer(mock_config)": def test_subscribe_topics_success(self, consumer):""
         "]""测试成功订阅主题"""
         topics = ["test-topic1[", "]test-topic2["]": consumer.consumer.subscribe.return_value = None[": result = consumer.subscribe_topics(topics)": assert result is True"
         consumer.consumer.subscribe.assert_called_once_with(topics)
@@ -62,10 +63,10 @@ class TestFootballKafkaConsumer:
         consumer.consumer.subscribe.assert_not_called()
     def test_subscribe_topics_failure(self, consumer):
         """测试订阅主题失败"""
-        topics = "test-topic[": consumer.consumer.subscribe.side_effect = Exception("]订阅失败[")": result = consumer.subscribe_topics(topics)": assert result is False[" def test_poll_message_success(self, consumer):"
+        topics = os.getenv("TEST_KAFKA_CONSUMER_NEW_TOPICS_63"): consumer.consumer.subscribe.side_effect = Exception("]订阅失败[")": result = consumer.subscribe_topics(topics)": assert result is False[" def test_poll_message_success(self, consumer):"
         "]]""测试成功轮询消息"""
         mock_message = Mock()
-        mock_message.value = b'{"test[": ["]data["}'": mock_message.topic = "]test-topic[": mock_message.partition = 0[": mock_message.offset = 123[": consumer.consumer.poll.return_value = mock_message[": result = consumer.poll_message(timeout=1.0)"
+        mock_message.value = b'{"test[": ["]data["}'": mock_message.topic = os.getenv("TEST_KAFKA_CONSUMER_NEW_TOPIC_67"): mock_message.partition = 0[": mock_message.offset = 123[": consumer.consumer.poll.return_value = mock_message[": result = consumer.poll_message(timeout=1.0)"
         assert result ==mock_message
         consumer.consumer.poll.assert_called_once_with(1.0)
     def test_poll_message_no_message(self, consumer):
@@ -108,7 +109,7 @@ class TestFootballKafkaConsumer:
         consumer.consumer.commit.side_effect = Exception("提交失败[")": result = consumer.commit(offsets={))": assert result is False[" def test_consumer_store_offsets(self, consumer):"
         "]]""测试存储偏移量"""
         message = Mock()
-        message.topic = "test-topic[": message.partition = 0[": message.offset = 123[": consumer.consumer.store_offsets.return_value = None[": result = consumer.store_offsets(message=message)"
+        message.topic = os.getenv("TEST_KAFKA_CONSUMER_NEW_TOPIC_108"): message.partition = 0[": message.offset = 123[": consumer.consumer.store_offsets.return_value = None[": result = consumer.store_offsets(message=message)"
         assert result is True
         consumer.consumer.store_offsets.assert_called_once_with(message=message)
     def test_consumer_store_offsets_failure(self, consumer):

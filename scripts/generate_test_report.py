@@ -83,12 +83,12 @@ class TestReportGenerator:
         overall_coverage = quality_report.get("coverage", {}).get("overall_coverage", 0)
 
         # 计算趋势
-        trend = "stable"
+        trend = os.getenv("GENERATE_TEST_REPORT_TREND_86")
         if "trends" in quality_report:
             if quality_report["trends"].get("coverage_trend") == "improving":
-                trend = "improving"
+                trend = os.getenv("GENERATE_TEST_REPORT_TREND_88")
             elif quality_report["trends"].get("coverage_trend") == "degrading":
-                trend = "degrading"
+                trend = os.getenv("GENERATE_TEST_REPORT_TREND_90")
 
         return {
             "quality_score": quality_score,
@@ -164,11 +164,11 @@ class TestReportGenerator:
         change = ((end - start) / start * 100) if start > 0 else 0
 
         if change > 5:
-            status = "improving"
+            status = os.getenv("GENERATE_TEST_REPORT_STATUS_164")
         elif change < -5:
-            status = "degrading"
+            status = os.getenv("GENERATE_TEST_REPORT_STATUS_164")
         else:
-            status = "stable"
+            status = os.getenv("GENERATE_TEST_REPORT_STATUS_167")
 
         return {
             "status": status,
@@ -329,7 +329,7 @@ class TestReportGenerator:
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name = os.getenv("GENERATE_TEST_REPORT_NAME_322") content = os.getenv("GENERATE_TEST_REPORT_CONTENT_323")>
     <title>测试质量报告 - Football Prediction</title>
     <style>
         * {{
@@ -468,52 +468,52 @@ class TestReportGenerator:
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_459")>
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_460")>
             <h1>📊 测试质量报告</h1>
             <p>Football Prediction Project - {exec_summary.get('generated_at', '').split('T')[0]}</p>
         </div>
 
-        <div class="summary-grid">
-            <div class="summary-card">
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_468")>
+            <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_471")>
                 <h3>质量评分</h3>
                 <div class="value">{exec_summary['quality_score']}</div>
                 <span class="grade">{exec_summary['quality_grade']}</span>
             </div>
 
-            <div class="summary-card">
+            <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_471")>
                 <h3>代码覆盖率</h3>
                 <div class="value">{exec_summary['overall_coverage']:.1f}%</div>
-                <div style="color: #666;">{exec_summary['trend']}</div>
+                <div style = os.getenv("GENERATE_TEST_REPORT_STYLE_478")>{exec_summary['trend']}</div>
             </div>
 
-            <div class="summary-card">
+            <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_471")>
                 <h3>总体状态</h3>
-                <div class="value" style="font-size: 1.5rem;">{exec_summary['status']}</div>
+                <div class="value" style = os.getenv("GENERATE_TEST_REPORT_STYLE_481")>{exec_summary['status']}</div>
             </div>
 
-            <div class="summary-card">
+            <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_471")>
                 <h3>低覆盖率模块</h3>
                 <div class="value">{len(coverage_analysis.get('low_coverage_modules', []))}</div>
-                <div style="color: #666;">需要关注</div>
+                <div style = os.getenv("GENERATE_TEST_REPORT_STYLE_478")>需要关注</div>
             </div>
         </div>
 
-        <div class="section">
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_490")>
             <h2>📋 关键发现</h2>
-            <ul style="list-style: none; padding: 0;">
-                {"".join([f'<li style="padding: 8px 0;">• {finding}</li>' for finding in exec_summary['key_findings']])}
+            <ul style = os.getenv("GENERATE_TEST_REPORT_STYLE_491")>
+                {"".join([f'<li style = os.getenv("GENERATE_TEST_REPORT_STYLE_492")>• {finding}</li>' for finding in exec_summary['key_findings']])}
             </ul>
         </div>
 
-        <div class="section">
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_490")>
             <h2>💡 改进建议</h2>
-            <div class="recommendations">
+            <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_497")>
                 {"".join([self._format_recommendation(rec) for rec in recommendations])}
             </div>
         </div>
 
-        <div class="footer">
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_498")>
             <p>报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
             <p>自动化测试质量监控系统</p>
         </div>
@@ -529,10 +529,10 @@ class TestReportGenerator:
         actions = "".join([f"<li>{action}</li>" for action in rec.get('actions', [])])
 
         return f"""
-        <div class="recommendation-item {priority_class}">
+        <div class = os.getenv("GENERATE_TEST_REPORT_CLASS_510")>
             <h4>{rec['title']}</h4>
             <p>{rec['description']}</p>
-            <ul style="margin-top: 10px; padding-left: 20px;">
+            <ul style = os.getenv("GENERATE_TEST_REPORT_STYLE_512")>
                 {actions}
             </ul>
         </div>
@@ -611,9 +611,9 @@ class TestReportGenerator:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="测试质量报告生成器")
+    parser = argparse.ArgumentParser(description = os.getenv("GENERATE_TEST_REPORT_DESCRIPTION_589"))
     parser.add_argument("--output", "-o", help="输出目录")
-    parser.add_argument("--quiet", "-q", action="store_true", help="静默模式")
+    parser.add_argument("--quiet", "-q", action = os.getenv("GENERATE_TEST_REPORT_ACTION_595"), help="静默模式")
 
     args = parser.parse_args()
 

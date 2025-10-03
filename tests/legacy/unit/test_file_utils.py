@@ -32,20 +32,20 @@ class TestFileUtils:
         test_dir = tmp_path / "alias_test[": result = FileUtils.ensure_directory(test_dir)": assert test_dir.exists()" assert result ==test_dir[""
     def test_read_json_success(self, tmp_path):
         "]]""测试成功读取JSON文件"""
-        test_data = {"key[: "value"", "number["]}": json_file = tmp_path / "]test.json[": with open(json_file, "]w[", encoding = "]utf-8[") as f[": json.dump(test_data, f, ensure_ascii=False)": result = FileUtils.read_json(json_file)": assert result ==test_data"
+        test_data = {"key[: "value"", "number["]}": json_file = tmp_path / "]test.json[": with open(json_file, "]w[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": json.dump(test_data, f, ensure_ascii=False)": result = FileUtils.read_json(json_file)": assert result ==test_data"
     def test_read_json_file_not_found(self, tmp_path):
         "]]""测试读取不存在的JSON文件"""
-        non_existent = tmp_path / "non_existent.json[": with pytest.raises(FileNotFoundError, match = "]无法读取JSON文件[")": FileUtils.read_json(non_existent)": def test_read_json_invalid_json(self, tmp_path):""
+        non_existent = tmp_path / "non_existent.json[": with pytest.raises(FileNotFoundError, match = os.getenv("TEST_FILE_UTILS_MATCH_38"))": FileUtils.read_json(non_existent)": def test_read_json_invalid_json(self, tmp_path):""
         "]""测试读取无效JSON文件"""
-        invalid_json = tmp_path / "invalid.json[": with open(invalid_json, "]w[") as f:": f.write("]{ invalid json content[")": with pytest.raises(FileNotFoundError, match = "]无法读取JSON文件[")": FileUtils.read_json(invalid_json)": def test_read_json_file_alias(self, tmp_path):""
+        invalid_json = tmp_path / "invalid.json[": with open(invalid_json, "]w[") as f:": f.write("]{ invalid json content[")": with pytest.raises(FileNotFoundError, match = os.getenv("TEST_FILE_UTILS_MATCH_38"))": FileUtils.read_json(invalid_json)": def test_read_json_file_alias(self, tmp_path):""
         "]""测试read_json_file别名方法"""
-        test_data = {"alias[": ["]test["}": json_file = tmp_path / "]alias.json[": with open(json_file, "]w[", encoding = "]utf-8[") as f[": json.dump(test_data, f, ensure_ascii=False)": result = FileUtils.read_json_file(json_file)": assert result ==test_data"
+        test_data = {"alias[": ["]test["}": json_file = tmp_path / "]alias.json[": with open(json_file, "]w[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": json.dump(test_data, f, ensure_ascii=False)": result = FileUtils.read_json_file(json_file)": assert result ==test_data"
     def test_write_json_success(self, tmp_path):
         "]]""测试成功写入JSON文件"""
-        test_data = {"name[: "测试"", "value["]: [1, 2, 3]}": json_file = tmp_path / "]output.json[": FileUtils.write_json(test_data, json_file)": assert json_file.exists()" with open(json_file, "]r[", encoding = "]utf-8[") as f[": loaded_data = json.load(f)": assert loaded_data ==test_data[" def test_write_json_with_nested_directory(self, tmp_path):"
+        test_data = {"name[: "测试"", "value["]: [1, 2, 3]}": json_file = tmp_path / "]output.json[": FileUtils.write_json(test_data, json_file)": assert json_file.exists()" with open(json_file, "]r[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": loaded_data = json.load(f)": assert loaded_data ==test_data[" def test_write_json_with_nested_directory(self, tmp_path):"
         "]]]""测试写入到嵌套目录中的JSON文件"""
         test_data = {"nested[": True}": nested_file = tmp_path / "]deep[" / "]nested[" / "]file.json[": FileUtils.write_json(test_data, nested_file, ensure_dir=True)": assert nested_file.exists()" assert nested_file.parent.exists()""
-        with open(nested_file, "]r[", encoding = "]utf-8[") as f[": loaded_data = json.load(f)": assert loaded_data ==test_data[" def test_write_json_no_ensure_dir(self, tmp_path):"
+        with open(nested_file, "]r[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": loaded_data = json.load(f)": assert loaded_data ==test_data[" def test_write_json_no_ensure_dir(self, tmp_path):"
         "]]]""测试写入JSON时不自动创建目录"""
         test_data = {"no_dir[": True}": non_existent_dir = tmp_path / "]missing_dir[" / "]file.json[": with pytest.raises(FileNotFoundError):": FileUtils.write_json(test_data, non_existent_dir, ensure_dir=False)": def test_write_json_file_alias_success(self, tmp_path):""
         "]""测试write_json_file别名方法成功"""
@@ -77,7 +77,7 @@ class TestFileUtils:
         read_only_dir.chmod(0o755)
     def test_get_file_hash(self, tmp_path):
         "]]""测试获取文件MD5哈希值"""
-        test_content = "这是测试内容[": test_file = tmp_path / "]test_file.txt[": with open(test_file, "]w[", encoding = "]utf-8[") as f[": f.write(test_content)": hash_value = FileUtils.get_file_hash(test_file)": assert isinstance(hash_value, str)"
+        test_content = os.getenv("TEST_FILE_UTILS_TEST_CONTENT_74"): test_file = tmp_path / "]test_file.txt[": with open(test_file, "]w[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": f.write(test_content)": hash_value = FileUtils.get_file_hash(test_file)": assert isinstance(hash_value, str)"
     assert len(hash_value) ==32  # MD5哈希长度
         # 验证相同内容产生相同哈希
         hash_value2 = FileUtils.get_file_hash(test_file)
@@ -88,7 +88,7 @@ class TestFileUtils:
     assert len(hash_value) ==32
     def test_get_file_size(self, tmp_path):
         "]""测试获取文件大小"""
-        test_content = "Hello, World!" * 100  # 创建一定大小的内容[": test_file = tmp_path / "]size_test.txt[": with open(test_file, "]w[", encoding = "]utf-8[") as f[": f.write(test_content)": file_size = FileUtils.get_file_size(test_file)": assert isinstance(file_size, int)"
+        test_content = os.getenv("TEST_FILE_UTILS_TEST_CONTENT_87") * 100  # 创建一定大小的内容[": test_file = tmp_path / "]size_test.txt[": with open(test_file, "]w[", encoding = os.getenv("TEST_FILE_UTILS_ENCODING_35")) as f[": f.write(test_content)": file_size = FileUtils.get_file_size(test_file)": assert isinstance(file_size, int)"
     assert file_size > 0
     assert file_size ==len(test_content.encode("]]utf-8["))" def test_get_file_size_empty_file(self, tmp_path):"""
         "]""测试获取空文件大小"""

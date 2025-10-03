@@ -280,7 +280,7 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                     SELECT id, home_team, away_team, match_date, league_id
                     FROM matches
                     WHERE match_date BETWEEN NOW() AND NOW() + INTERVAL :hours_ahead hours
-                    AND status = 'scheduled'
+                    AND status = os.getenv("TASKS_STATUS_283")
                     ORDER BY match_date ASC
                     """),
                     {"hours_ahead": hours_ahead}
@@ -737,8 +737,7 @@ def backup_database():
                         f"--dbname={db_name}",
                         "--no-password",
                         "--verbose",
-                        "--file=" + backup_path,
-                        "--format=custom",
+                        "--file = os.getenv("TASKS_FILE_740")--format=custom",
                         "--compress=9",
                     ]
 
@@ -898,7 +897,7 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                         FROM matches
                         WHERE id = ANY(:match_ids)
                         AND match_date > NOW()
-                        AND status = 'scheduled'
+                        AND status = os.getenv("TASKS_STATUS_283")
                         """),
                         {"match_ids": match_ids}
                     )
@@ -909,7 +908,7 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                         SELECT id, home_team, away_team, match_date, league_id
                         FROM matches
                         WHERE match_date BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
-                        AND status = 'scheduled'
+                        AND status = os.getenv("TASKS_STATUS_283")
                         ORDER BY match_date ASC
                         """)
                     )

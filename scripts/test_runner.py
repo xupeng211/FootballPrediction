@@ -377,25 +377,25 @@ class TestRunner:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="智能测试运行器")
+    parser = argparse.ArgumentParser(description = os.getenv("TEST_RUNNER_DESCRIPTION_380"))
     parser.add_argument("--layers", "-l", nargs="+",
                        choices=["unit", "integration", "e2e"],
-                       help="指定要运行的测试层级")
-    parser.add_argument("--parallel", "-p", action="store_true", default=True,
-                       help="并行执行测试")
-    parser.add_argument("--no-parallel", action="store_true",
-                       help="禁用并行执行")
-    parser.add_argument("--failing-only", "-f", action="store_true",
-                       help="仅运行失败的测试")
-    parser.add_argument("--quality-gate", "-q", action="store_true",
-                       help="执行质量门禁")
+                       help = os.getenv("TEST_RUNNER_HELP_382"))
+    parser.add_argument("--parallel", "-p", action = os.getenv("TEST_RUNNER_ACTION_383"), default=True,
+                       help = os.getenv("TEST_RUNNER_HELP_384"))
+    parser.add_argument("--no-parallel", action = os.getenv("TEST_RUNNER_ACTION_383"),
+                       help = os.getenv("TEST_RUNNER_HELP_385"))
+    parser.add_argument("--failing-only", "-f", action = os.getenv("TEST_RUNNER_ACTION_383"),
+                       help = os.getenv("TEST_RUNNER_HELP_386"))
+    parser.add_argument("--quality-gate", "-q", action = os.getenv("TEST_RUNNER_ACTION_383"),
+                       help = os.getenv("TEST_RUNNER_HELP_388"))
     parser.add_argument("--coverage", "-c", type=float, default=20,
-                       help="最小覆盖率要求（默认20%%）")
+                       help = os.getenv("TEST_RUNNER_HELP_389"))
     parser.add_argument("--success-rate", "-s", type=float, default=90,
-                       help="最小成功率要求（默认90%%）")
-    parser.add_argument("--matrix", "-m", action="store_true",
-                       help="输出测试矩阵（用于CI）")
-    parser.add_argument("--output", "-o", help="输出结果到文件")
+                       help = os.getenv("TEST_RUNNER_HELP_391"))
+    parser.add_argument("--matrix", "-m", action = os.getenv("TEST_RUNNER_ACTION_383"),
+                       help = os.getenv("TEST_RUNNER_HELP_392"))
+    parser.add_argument("--output", "-o", help = os.getenv("TEST_RUNNER_HELP_393"))
 
     args = parser.parse_args()
 

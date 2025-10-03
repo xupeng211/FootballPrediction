@@ -19,7 +19,7 @@ class TestCryptoUtilsComplete:
 
     def test_hash_password_with_bcrypt(self):
         """测试使用bcrypt的密码哈希"""
-        password = "my_secure_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_22")
 
         # 哈希密码
         hashed = CryptoUtils.hash_password(password)
@@ -38,8 +38,8 @@ class TestCryptoUtilsComplete:
         """测试当bcrypt不可用时的回退机制"""
         # 注意：由于bcrypt已安装，我们无法真正禁用它
         # 但可以测试哈希功能本身
-        password = "test_password"
-        salt = "testsalt"
+        password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_39")
+        salt = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_SALT_41")
 
         # 使用自定义salt哈希（当bcrypt不可用时的逻辑）
         salted_password = f"{password}{salt}"
@@ -85,7 +85,7 @@ class TestCryptoUtilsComplete:
 
     def test_hash_string_unsupported_algorithm(self):
         """测试不支持的哈希算法"""
-        with pytest.raises(ValueError, match="不支持的哈希算法"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_MATCH_86")):
             CryptoUtils.hash_string("test", "unknown_algorithm")
 
     def test_generate_short_id_large_length(self):
@@ -122,7 +122,7 @@ class TestCryptoUtilsComplete:
 
     def test_password_hash_security(self):
         """测试密码哈希的安全性"""
-        password = "password123"
+        password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_120")
 
         # 相同密码应该产生不同哈希（因为有随机盐）
         hash1 = CryptoUtils.hash_password(password)
@@ -163,7 +163,7 @@ class TestCryptoUtilsComplete:
 
     def test_hash_algorithm_consistency(self):
         """测试哈希算法的一致性"""
-        test_string = "consistency_test"
+        test_string = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_TEST_STRING_159")
 
         # 多次哈希应该产生相同结果
         hash1 = CryptoUtils.hash_string(test_string, "md5")
@@ -194,7 +194,7 @@ class TestCryptoUtilsComplete:
     def test_password_hash_with_bytes(self):
         """测试字节类型的密码"""
         # 虽然接口期望字符串，但测试字节处理
-        password_str = "test_password"
+        password_str = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_STR_189")
         password_bytes = password_str.encode('utf-8')
 
         # 哈希
@@ -212,8 +212,8 @@ class TestCryptoUtilsSecurityIssues:
         """测试时序攻击抵抗（基本检查）"""
         import time
 
-        password = "correct_password"
-        wrong_password = "wrong_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_204")
+        wrong_password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_WRONG_PASSWORD_205")
         hashed = CryptoUtils.hash_password(password)
 
         # 多次验证正确密码
@@ -256,7 +256,7 @@ class TestCryptoUtilsSecurityIssues:
     def test_sensitive_data_handling(self):
         """测试敏感数据处理"""
         # 确保密码不会在日志或异常中泄露
-        password = "sensitive_password_123!"
+        password = os.getenv("TEST_CRYPTO_UTILS_COMPLETE_PASSWORD_245")
 
         try:
             # 哈希密码

@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 物化视图刷新脚本
@@ -31,7 +32,7 @@ from src.database.config import get_database_config
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format = os.getenv("REFRESH_MATERIALIZED_VIEWS_FORMAT_34")
 )
 logger = logging.getLogger(__name__)
 
@@ -230,7 +231,7 @@ class MaterializedViewRefresher:
                         hasindexes as has_indexes,
                         ispopulated as is_populated
                     FROM pg_matviews
-                    WHERE schemaname = 'public'
+                    WHERE schemaname = os.getenv("REFRESH_MATERIALIZED_VIEWS_SCHEMANAME_233")
                     ORDER BY matviewname;
                 """
                 )
@@ -308,18 +309,18 @@ class MaterializedViewRefresher:
 
 async def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="物化视图刷新工具")
+    parser = argparse.ArgumentParser(description = os.getenv("REFRESH_MATERIALIZED_VIEWS_DESCRIPTION_310"))
     parser.add_argument(
         "--view",
         choices=["team_performance", "odds_trends"],
-        help="指定要刷新的物化视图",
+        help = os.getenv("REFRESH_MATERIALIZED_VIEWS_HELP_312"),
     )
     parser.add_argument(
         "--concurrent",
-        action="store_true",
-        help="使用并发刷新模式（需要视图有唯一索引）",
+        action = os.getenv("REFRESH_MATERIALIZED_VIEWS_ACTION_315"),
+        help = os.getenv("REFRESH_MATERIALIZED_VIEWS_HELP_315"),
     )
-    parser.add_argument("--info", action="store_true", help="显示物化视图信息")
+    parser.add_argument("--info", action = os.getenv("REFRESH_MATERIALIZED_VIEWS_ACTION_315"), help = os.getenv("REFRESH_MATERIALIZED_VIEWS_HELP_318"))
 
     args = parser.parse_args()
 

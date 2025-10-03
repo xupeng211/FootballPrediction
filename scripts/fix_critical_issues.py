@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 紧急安全问题修复脚本 - 自动修复AICultureKit项目中的致命安全风险
@@ -114,7 +115,7 @@ class CriticalIssueFixer:
 def main():
     """主程序入口 - 提供命令行接口和使用帮助"""
     parser = argparse.ArgumentParser(
-        description="AICultureKit 致命问题检查工具",
+        description = os.getenv("FIX_CRITICAL_ISSUES_DESCRIPTION_117"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
@@ -124,15 +125,15 @@ def main():
     )
 
     parser.add_argument(
-        "--check-only", action="store_true", help="仅检查问题，不执行修复"
+        "--check-only", action = os.getenv("FIX_CRITICAL_ISSUES_ACTION_126"), help = os.getenv("FIX_CRITICAL_ISSUES_HELP_127")
     )
 
     parser.add_argument(
-        "--auto-fix", action="store_true", help="自动修复模式（未实现，请手动修复）"
+        "--auto-fix", action = os.getenv("FIX_CRITICAL_ISSUES_ACTION_126"), help = os.getenv("FIX_CRITICAL_ISSUES_HELP_127")
     )
 
     parser.add_argument(
-        "--project-root", default=".", help="项目根目录路径 (默认: 当前目录)"
+        "--project-root", default=".", help = os.getenv("FIX_CRITICAL_ISSUES_HELP_131")
     )
 
     args = parser.parse_args()

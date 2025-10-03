@@ -5,6 +5,7 @@ from src.models.prediction_service import PredictionResult, PredictionService
 from unittest.mock import AsyncMock, Mock, patch
 import numpy
 import pytest
+import os
 
 """
 预测服务缓存测试 / Prediction Service Cache Tests
@@ -56,7 +57,7 @@ class TestPredictionServiceCaching:
         "]]""测试生产模型缓存 / Test production model caching"""
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1[": mock_version_info.current_stage = "]Production[": mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
+        mock_version_info.version = "1[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_CACHING_CURRENT_STAGE_59"): mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ), patch(
             "]]src.models.prediction_service.mlflow.sklearn.load_model[",": return_value=mock_model):"""
@@ -76,14 +77,14 @@ class TestPredictionServiceCaching:
         prediction_service.model_cache_ttl = timedelta(milliseconds=50)
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1[": mock_version_info.current_stage = "]Production[": mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
+        mock_version_info.version = "1[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_CACHING_CURRENT_STAGE_59"): mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ), patch(
             "]]src.models.prediction_service.mlflow.sklearn.load_model[",": return_value=mock_model):"""
             # 第一次获取模型
             model1, version1 = await prediction_service.get_production_model()
             # 模拟缓存过期，避免真实等待
-            cache_key = "]modelfootball_baseline_model[": cached_entry = prediction_service.model_cache._cache.get(cache_key)": assert cached_entry is not None[" cached_entry.created_at -= prediction_service.model_cache_ttl + timedelta(""
+            cache_key = os.getenv("TEST_PREDICTION_SERVICE_CACHING_CACHE_KEY_84"): cached_entry = prediction_service.model_cache._cache.get(cache_key)": assert cached_entry is not None[" cached_entry.created_at -= prediction_service.model_cache_ttl + timedelta(""
         milliseconds=10
         )
         # 第二次获取模型（缓存应该已过期）

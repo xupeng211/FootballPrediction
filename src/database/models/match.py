@@ -1,3 +1,4 @@
+import os
 """
 比赛模型
 
@@ -19,10 +20,10 @@ from src.database.base import BaseModel
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
-    SCHEDULED = "scheduled"  # 已安排
+    SCHEDULED = os.getenv("MATCH_SCHEDULED_22")  # 已安排
     LIVE = "live"  # 进行中
-    FINISHED = "finished"  # 已结束
-    CANCELLED = "cancelled"  # 已取消
+    FINISHED = os.getenv("MATCH_FINISHED_23")  # 已结束
+    CANCELLED = os.getenv("MATCH_CANCELLED_24")  # 已取消
 
 
 class Match(BaseModel):
@@ -32,19 +33,19 @@ class Match(BaseModel):
     对应 architecture.md 中的 matches 表设计
     """
 
-    __tablename__ = "matches"
+    __tablename__ = os.getenv("MATCH___TABLENAME___30")
 
     # 外键关联
     home_team_id: Mapped[int] = mapped_column(
-        ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, comment="主队ID"
+        ForeignKey("teams.id", ondelete = os.getenv("MATCH_ONDELETE_37")), nullable=False, comment="主队ID"
     )
 
     away_team_id: Mapped[int] = mapped_column(
-        ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, comment="客队ID"
+        ForeignKey("teams.id", ondelete = os.getenv("MATCH_ONDELETE_37")), nullable=False, comment="客队ID"
     )
 
     league_id: Mapped[int] = mapped_column(
-        ForeignKey("leagues.id", ondelete="CASCADE"), nullable=False, comment="联赛ID"
+        ForeignKey("leagues.id", ondelete = os.getenv("MATCH_ONDELETE_37")), nullable=False, comment="联赛ID"
     )
 
     season: Mapped[str] = mapped_column(String(20), nullable=False, comment="赛季")
@@ -71,15 +72,15 @@ class Match(BaseModel):
     )
 
     home_ht_score: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True, comment="主队半场比分"
+        Integer, nullable=True, comment = os.getenv("MATCH_COMMENT_69")
     )
 
     away_ht_score: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True, comment="客队半场比分"
+        Integer, nullable=True, comment = os.getenv("MATCH_COMMENT_73")
     )
 
     minute: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True, comment="比赛进行时间（分钟）"
+        Integer, nullable=True, comment = os.getenv("MATCH_COMMENT_77")
     )
 
     # 比赛详情
@@ -97,31 +98,31 @@ class Match(BaseModel):
 
     # 关系定义
     home_team = relationship(
-        "Team", foreign_keys="Match.home_team_id", back_populates="home_matches"
+        "Team", foreign_keys="Match.home_team_id", back_populates = os.getenv("MATCH_BACK_POPULATES_91")
     )
 
     away_team = relationship(
-        "Team", foreign_keys="Match.away_team_id", back_populates="away_matches"
+        "Team", foreign_keys="Match.away_team_id", back_populates = os.getenv("MATCH_BACK_POPULATES_95")
     )
 
-    league = relationship("League", back_populates="matches")
+    league = relationship("League", back_populates = os.getenv("MATCH_BACK_POPULATES_100"))
 
     # 赔率信息
     odds = relationship(
-        "Odds", back_populates="match", lazy="dynamic", cascade="all, delete-orphan"
+        "Odds", back_populates="match", lazy = os.getenv("MATCH_LAZY_103"), cascade = os.getenv("MATCH_CASCADE_103")
     )
 
     # 特征数据
     features = relationship(
-        "Features", back_populates="match", lazy="dynamic", cascade="all, delete-orphan"
+        "Features", back_populates="match", lazy = os.getenv("MATCH_LAZY_103"), cascade = os.getenv("MATCH_CASCADE_103")
     )
 
     # 预测结果
     predictions = relationship(
         "Predictions",
         back_populates="match",
-        lazy="dynamic",
-        cascade="all, delete-orphan",
+        lazy = os.getenv("MATCH_LAZY_103"),
+        cascade = os.getenv("MATCH_CASCADE_103"),
     )
 
     # 索引和约束定义
@@ -135,36 +136,36 @@ class Match(BaseModel):
         Index("idx_matches_away_team_date", "away_team_id", "match_time"),
         # CHECK约束定义 - 确保数据完整性
         CheckConstraint(
-            "home_score >= 0 AND home_score <= 99", name="ck_matches_home_score_range"
+            "home_score >= 0 AND home_score <= 99", name = os.getenv("MATCH_NAME_131")
         ),
         CheckConstraint(
-            "away_score >= 0 AND away_score <= 99", name="ck_matches_away_score_range"
+            "away_score >= 0 AND away_score <= 99", name = os.getenv("MATCH_NAME_133")
         ),
         CheckConstraint(
             "home_ht_score >= 0 AND home_ht_score <= 99",
-            name="ck_matches_home_ht_score_range",
+            name = os.getenv("MATCH_NAME_135"),
         ),
         CheckConstraint(
             "away_ht_score >= 0 AND away_ht_score <= 99",
-            name="ck_matches_away_ht_score_range",
+            name = os.getenv("MATCH_NAME_138"),
         ),
         CheckConstraint(
-            "match_time > '2000-01-01'", name="ck_matches_match_time_range"
+            "match_time > '2000-01-01'", name = os.getenv("MATCH_NAME_141")
         ),
         CheckConstraint(
-            "home_team_id != away_team_id", name="ck_matches_different_teams"
+            "home_team_id != away_team_id", name = os.getenv("MATCH_NAME_144")
         ),
         CheckConstraint(
-            "minute >= 0 AND minute <= 120", name="ck_matches_minute_range"
+            "minute >= 0 AND minute <= 120", name = os.getenv("MATCH_NAME_148")
         ),
     )
 
     def __repr__(self) -> str:
         return (
             f"<Match(id={self.id}, "
-            f"home='{self.home_team.team_name if self.home_team else 'Unknown'}', "
-            f"away='{self.away_team.team_name if self.away_team else 'Unknown'}', "
-            f"date='{self.match_time}')>"
+            f"home = os.getenv("MATCH_HOME_152")Unknown'}', "
+            f"away = os.getenv("MATCH_AWAY_155")Unknown'}', "
+            f"date = os.getenv("MATCH_DATE_156"))>"
         )
 
     @property

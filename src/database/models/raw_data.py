@@ -1,3 +1,4 @@
+import os
 """
 Bronze层原始数据模型
 
@@ -24,20 +25,20 @@ class RawMatchData(BaseModel):
     作为数据处理管道的输入源。
     """
 
-    __tablename__ = "raw_match_data"
+    __tablename__ = os.getenv("RAW_DATA___TABLENAME___27")
 
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data = Column(JsonbType, nullable=False, comment = os.getenv("RAW_DATA_COMMENT_32"))
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
     processed = Column(Boolean, nullable=False, default=False, comment="是否已处理")
 
     # 快速检索字段（从JSON/JSONB中提取）
-    external_match_id = Column(String(100), nullable=True, comment="外部比赛ID")
-    external_league_id = Column(String(100), nullable=True, comment="外部联赛ID")
+    external_match_id = Column(String(100), nullable=True, comment = os.getenv("RAW_DATA_COMMENT_39"))
+    external_league_id = Column(String(100), nullable=True, comment = os.getenv("RAW_DATA_COMMENT_39"))
     match_time = Column(DateTime, nullable=True, comment="比赛时间")
 
     # 元数据字段
@@ -106,19 +107,19 @@ class RawOddsData(BaseModel):
     支持高频更新和历史变化追踪。
     """
 
-    __tablename__ = "raw_odds_data"
+    __tablename__ = os.getenv("RAW_DATA___TABLENAME___101")
 
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data = Column(JsonbType, nullable=False, comment = os.getenv("RAW_DATA_COMMENT_32"))
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
     processed = Column(Boolean, nullable=False, default=False, comment="是否已处理")
 
     # 快速检索字段（从JSON/JSONB中提取）
-    external_match_id = Column(String(100), nullable=True, comment="外部比赛ID")
+    external_match_id = Column(String(100), nullable=True, comment = os.getenv("RAW_DATA_COMMENT_39"))
     bookmaker = Column(String(100), nullable=True, comment="博彩公司")
     market_type = Column(String(50), nullable=True, comment="市场类型")
 
@@ -188,19 +189,19 @@ class RawScoresData(BaseModel):
     包括比赛进程、半场比分、最终比分等信息。
     """
 
-    __tablename__ = "raw_scores_data"
+    __tablename__ = os.getenv("RAW_DATA___TABLENAME___178")
 
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data = Column(JsonbType, nullable=False, comment = os.getenv("RAW_DATA_COMMENT_32"))
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
     processed = Column(Boolean, nullable=False, default=False, comment="是否已处理")
 
     # 快速检索字段（从JSON/JSONB中提取）
-    external_match_id = Column(String(100), nullable=True, comment="外部比赛ID")
+    external_match_id = Column(String(100), nullable=True, comment = os.getenv("RAW_DATA_COMMENT_39"))
     match_status = Column(String(50), nullable=True, comment="比赛状态")
     home_score = Column(Integer, nullable=True, comment="主队比分")
     away_score = Column(Integer, nullable=True, comment="客队比分")

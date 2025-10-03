@@ -5,6 +5,7 @@ from scripts.ci_monitor import GitHubCIMonitor
 from unittest.mock import Mock, patch
 import pytest
 import tempfile
+import os
 
 pytestmark = pytest.mark.unit
 class TestGitHubCIMonitor:
@@ -29,9 +30,9 @@ class TestGitHubCIMonitor:
         "]""测试仓库信息解析 - 验证HTTPS和SSH格式URL的正确解析"""
         # 测试HTTPS格式URL
         mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "https_/github.com/owner/repo.git[": monitor = GitHubCIMonitor(str(self.test_project_root))": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]owner[" assert repo_info["]repo["] =="]repo[" assert repo_info["]full_name["] =="]owner/repo["""""
+        mock_run.return_value.stdout = os.getenv("TEST_CI_MONITOR_STDOUT_32"): monitor = GitHubCIMonitor(str(self.test_project_root))": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]owner[" assert repo_info["]repo["] =="]repo[" assert repo_info["]full_name["] =="]owner/repo["""""
         # 测试SSH格式URL
-        mock_run.return_value.stdout = "]git@github.comowner/repo.git[": monitor = GitHubCIMonitor(str(self.test_project_root))": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]owner[" assert repo_info["]repo["] =="]repo["""""
+        mock_run.return_value.stdout = os.getenv("TEST_CI_MONITOR_STDOUT_34"): monitor = GitHubCIMonitor(str(self.test_project_root))": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]owner[" assert repo_info["]repo["] =="]repo["""""
     @patch("]requests.get[")": def test_get_latest_workflows(self, mock_get):"""
         "]""测试获取工作流列表 - 验证GitHub API调用和响应数据处理"""
         # 模拟GitHub API响应
@@ -52,7 +53,7 @@ class TestGitHubCIMonitor:
         }
         mock_get.return_value = mock_response
         # 设置必要的属性确保API调用能够执行
-        self.monitor.token = "]test_token[": self.monitor.repo_info = {"]full_name[: "owner/repo["}"]": workflows = self.monitor.get_latest_workflows(limit=5)": assert len(workflows) ==1"
+        self.monitor.token = os.getenv("TEST_CI_MONITOR_TOKEN_55"): self.monitor.repo_info = {"]full_name[: "owner/repo["}"]": workflows = self.monitor.get_latest_workflows(limit=5)": assert len(workflows) ==1"
     assert workflows[0]"]id[" ==123456[" assert workflows[0]"]]status[" =="]completed[" assert workflows[0]"]conclusion[" =="]success["""""
         # 验证API调用参数
         mock_get.assert_called_once()
@@ -110,7 +111,7 @@ class TestGitHubCIMonitor:
     @patch("]requests.get[")": def test_api_error_handling(self, mock_get):"""
         "]""测试API错误处理 - 验证网络错误和认证失败的优雅处理"""
         # 模拟网络错误
-        mock_get.side_effect = Exception("网络连接失败[")": self.monitor.token = "]test_token[": self.monitor.repo_info = {"]full_name[": ["]owner_repo["}": workflows = self.monitor.get_latest_workflows()": assert workflows ==[]  # 错误时应返回空列表[""
+        mock_get.side_effect = Exception("网络连接失败[")": self.monitor.token = os.getenv("TEST_CI_MONITOR_TOKEN_55"): self.monitor.repo_info = {"]full_name[": ["]owner_repo["}": workflows = self.monitor.get_latest_workflows()": assert workflows ==[]  # 错误时应返回空列表[""
         # 模拟认证错误
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = Exception("]]认证失败[")": mock_get.return_value = mock_response[": mock_get.side_effect = None[": workflows = self.monitor.get_latest_workflows()"
@@ -134,7 +135,7 @@ class TestCIMonitorIntegration:
         "]""测试Git仓库检测 - 验证不同Git配置下的仓库信息获取"""
         # 模拟成功的Git命令
         mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "https_/github.com/test/repo.git[": with tempfile.TemporaryDirectory() as temp_dir:": monitor = GitHubCIMonitor(temp_dir)": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]test[" assert repo_info["]repo["] =="]repo[" def test_full_workflow_status_display("
+        mock_run.return_value.stdout = os.getenv("TEST_CI_MONITOR_STDOUT_136"): with tempfile.TemporaryDirectory() as temp_dir:": monitor = GitHubCIMonitor(temp_dir)": repo_info = monitor._get_repository_info()": assert repo_info["]owner["] =="]test[" assert repo_info["]repo["] =="]repo[" def test_full_workflow_status_display("
     """"
         "]""测试完整工作流状态显示 - 验证状态格式化和用户界面输出"""
         mock_workflows = [

@@ -5,6 +5,7 @@ import json
 from src.utils import (
 import pytest
 import tempfile
+import os
 
 pytestmark = pytest.mark.unit
 import pytest
@@ -22,15 +23,15 @@ class TestFileUtils:
         with tempfile.TemporaryDirectory() as temp_dir = test_path Path(temp_dir) / "test[" / "]nested[" / "]dir[": result = FileUtils.ensure_dir(test_path)": assert result.exists()" assert result.is_dir()""
     def test_read_json_success(self):
         "]""测试读取JSON文件成功"""
-        with tempfile.NamedTemporaryFile(mode = "w[", suffix="].json[", delete=False) as f[": test_data = {"]]key[: "value"", "number]: 123}": json.dump(test_data, f)": f.flush()": result = FileUtils.read_json(f.name)"
+        with tempfile.NamedTemporaryFile(mode = "w[", suffix = os.getenv("TEST_UTILS_SUFFIX_25"), delete=False) as f[": test_data = {"]]key[: "value"", "number]: 123}": json.dump(test_data, f)": f.flush()": result = FileUtils.read_json(f.name)"
     assert result ==test_data
     def test_read_json_file_not_found(self):
         """测试读取不存在的JSON文件"""
-        with pytest.raises(FileNotFoundError, match = "无法读取JSON文件[")": FileUtils.read_json("]nonexistent_file.json[")": def test_read_json_invalid_format(self):"""
+        with pytest.raises(FileNotFoundError, match = os.getenv("TEST_UTILS_MATCH_29"))": FileUtils.read_json("]nonexistent_file.json[")": def test_read_json_invalid_format(self):"""
         "]""测试读取格式错误的JSON文件"""
-        with tempfile.NamedTemporaryFile(mode = "w[", suffix="].json[", delete=False) as f[": f.write("]]invalid json content[")": f.flush()": with pytest.raises(FileNotFoundError, match = "]无法读取JSON文件[")": FileUtils.read_json(f.name)": def test_write_json(self):""
+        with tempfile.NamedTemporaryFile(mode = "w[", suffix = os.getenv("TEST_UTILS_SUFFIX_25"), delete=False) as f[": f.write("]]invalid json content[")": f.flush()": with pytest.raises(FileNotFoundError, match = os.getenv("TEST_UTILS_MATCH_31"))": FileUtils.read_json(f.name)": def test_write_json(self):""
         "]""测试写入JSON文件"""
-        with tempfile.TemporaryDirectory() as temp_dir = test_data {"测试[: "数据"", "数字]: 42}": file_path = Path(temp_dir) / "test.json[": FileUtils.write_json(test_data, file_path)": assert file_path.exists()" with open(file_path, "]r[", encoding = "]utf-8[") as f[": result = json.load(f)": assert result ==test_data[" def test_write_json_ensure_dir(self):"
+        with tempfile.TemporaryDirectory() as temp_dir = test_data {"测试[: "数据"", "数字]: 42}": file_path = Path(temp_dir) / "test.json[": FileUtils.write_json(test_data, file_path)": assert file_path.exists()" with open(file_path, "]r[", encoding = os.getenv("TEST_UTILS_ENCODING_33")) as f[": result = json.load(f)": assert result ==test_data[" def test_write_json_ensure_dir(self):"
         "]]]""测试写入JSON文件时自动创建目录"""
         with tempfile.TemporaryDirectory() as temp_dir = test_data {"key[": ["]value["}": file_path = Path(temp_dir) / "]nested[" / "]dir[" / "]test.json[": FileUtils.write_json(test_data, file_path, ensure_dir=True)": assert file_path.exists()" assert file_path.parent.exists()""
     def test_get_file_hash(self):
@@ -39,7 +40,7 @@ class TestFileUtils:
     assert len(hash_value) ==32  # MD5哈希长度
     def test_get_file_size(self):
         "]""测试获取文件大小"""
-        with tempfile.NamedTemporaryFile(mode = "w[", delete=False) as f[": test_content = "]]test content[": f.write(test_content)": f.flush()": size = FileUtils.get_file_size(f.name)": assert size ==len(test_content.encode("]utf-8["))" class TestDataValidator:"""
+        with tempfile.NamedTemporaryFile(mode = "w[", delete=False) as f[": test_content = os.getenv("TEST_UTILS_TEST_CONTENT_40"): f.write(test_content)": f.flush()": size = FileUtils.get_file_size(f.name)": assert size ==len(test_content.encode("]utf-8["))" class TestDataValidator:"""
     "]""测试数据验证工具类"""
     def test_is_valid_email_valid(self):
         """测试有效邮箱验证"""
@@ -131,30 +132,30 @@ class TestCryptoUtils:
     assert len(custom_id) ==12
     def test_hash_string_md5(self):
         """测试字符串MD5哈希"""
-        text = "test string[": hash_value = CryptoUtils.hash_string(text, "]md5[")": assert isinstance(hash_value, str)" assert len(hash_value) ==32[""
+        text = os.getenv("TEST_UTILS_TEXT_130"): hash_value = CryptoUtils.hash_string(text, "]md5[")": assert isinstance(hash_value, str)" assert len(hash_value) ==32[""
     def test_hash_string_sha256(self):
         "]]""测试字符串SHA256哈希"""
-        text = "test string[": hash_value = CryptoUtils.hash_string(text, "]sha256[")": assert isinstance(hash_value, str)" assert len(hash_value) ==64[""
+        text = os.getenv("TEST_UTILS_TEXT_130"): hash_value = CryptoUtils.hash_string(text, "]sha256[")": assert isinstance(hash_value, str)" assert len(hash_value) ==64[""
     def test_hash_string_unsupported_algorithm(self):
         "]]""测试不支持的哈希算法"""
-        with pytest.raises(ValueError, match = "不支持的哈希算法[")": CryptoUtils.hash_string("]test[", "]unsupported[")": def test_hash_password(self):"""
+        with pytest.raises(ValueError, match = os.getenv("TEST_UTILS_MATCH_137"))": CryptoUtils.hash_string("]test[", "]unsupported[")": def test_hash_password(self):"""
         "]""测试密码哈希"""
-        password = "test_password["""""
+        password = os.getenv("TEST_UTILS_PASSWORD_140")""""
         # 不提供salt
         hash1 = CryptoUtils.hash_password(password)
         hash2 = CryptoUtils.hash_password(password)
     assert hash1 != hash2  # 由于随机salt，结果不同
         # 提供salt
-        salt = "]fixed_salt[": hash3 = CryptoUtils.hash_password(password, salt)": hash4 = CryptoUtils.hash_password(password, salt)": assert CryptoUtils.verify_password(password, hash3)  # 验证密码[" assert CryptoUtils.verify_password(password, hash4)  # 验证密码"
+        salt = os.getenv("TEST_UTILS_SALT_142"): hash3 = CryptoUtils.hash_password(password, salt)": hash4 = CryptoUtils.hash_password(password, salt)": assert CryptoUtils.verify_password(password, hash3)  # 验证密码[" assert CryptoUtils.verify_password(password, hash4)  # 验证密码"
 class TestStringUtils:
     "]]""测试字符串处理工具类"""
     def test_truncate_short_string(self):
         """测试截断短字符串"""
-        text = "short[": result = StringUtils.truncate(text, 10)": assert result ==text[" def test_truncate_long_string(self):""
+        text = os.getenv("TEST_UTILS_TEXT_148"): result = StringUtils.truncate(text, 10)": assert result ==text[" def test_truncate_long_string(self):""
         "]]""测试截断长字符串"""
-        text = "这是一个很长的字符串需要被截断[": result = StringUtils.truncate(text, 10)": assert len(result) ==10[" assert result.endswith("]]...")" def test_slugify(self):"""
+        text = os.getenv("TEST_UTILS_TEXT_150"): result = StringUtils.truncate(text, 10)": assert len(result) ==10[" assert result.endswith("]]...")" def test_slugify(self):"""
         """测试转换为URL友好字符串"""
-        text = "Hello World Test[": result = StringUtils.slugify(text)": assert result =="]hello-world-test[" def test_camel_to_snake("
+        text = os.getenv("TEST_UTILS_TEXT_153"): result = StringUtils.slugify(text)": assert result =="]hello-world-test[" def test_camel_to_snake("
     """"
         "]""测试驼峰命名转下划线命名"""
         cases = [
@@ -167,7 +168,7 @@ class TestStringUtils:
         ("]simple_test[", "]simpleTest["),""""
         ("]multi_word_test[", "]multiWordTest[")]": for snake, expected_camel in cases = result StringUtils.snake_to_camel(snake)": assert result ==expected_camel[" def test_clean_text(self):"
         "]]""测试清理文本"""
-        text = "  这是   一个\t测试\n文本  ": result = StringUtils.clean_text(text)": assert result =="这是 一个 测试 文本[" def test_extract_numbers("
+        text = os.getenv("TEST_UTILS_TEXT_166"): result = StringUtils.clean_text(text)": assert result =="这是 一个 测试 文本[" def test_extract_numbers("
     """"
         "]""测试从文本中提取数字"""
         text = "价格是123.45元，数量-10个[": numbers = StringUtils.extract_numbers(text)": assert 123.45 in numbers[" assert -10.0 in numbers[""

@@ -1,3 +1,4 @@
+import os
 """
 缓存API端点测试 / Tests for Cache API Endpoints
 
@@ -153,7 +154,7 @@ class TestCacheAPIEndpoints:
 
         # 创建请求
         from src.api.cache import CacheKeyRequest
-        request = CacheKeyRequest(keys=[], pattern="test:*")
+        request = CacheKeyRequest(keys=[], pattern = os.getenv("TEST_CACHE_API_ENDPOINTS_PATTERN_156"))
 
         # 执行测试
         from src.api.cache import clear_cache
@@ -391,7 +392,7 @@ class TestCacheAPIEndpoints:
         assert request.pattern is None
 
         # 测试有键和模式
-        request = CacheKeyRequest(keys=["key1"], pattern="test:*")
+        request = CacheKeyRequest(keys=["key1"], pattern = os.getenv("TEST_CACHE_API_ENDPOINTS_PATTERN_156"))
         assert request.pattern == "test:*"
 
     def test_cache_prewarm_request_model(self):

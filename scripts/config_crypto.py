@@ -286,21 +286,21 @@ class ConfigCrypto:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="配置加密存储工具")
+    parser = argparse.ArgumentParser(description = os.getenv("CONFIG_CRYPTO_DESCRIPTION_289"))
     parser.add_argument('command', choices=[
         'encrypt', 'decrypt', 'encrypt-env', 'decrypt-env',
         'backup', 'list', 'delete-key'
-    ], help="要执行的命令")
+    ], help = os.getenv("CONFIG_CRYPTO_HELP_292"))
 
-    parser.add_argument('--input', '-i', type=Path, help="输入文件路径")
-    parser.add_argument('--output', '-o', type=Path, help="输出文件路径")
+    parser.add_argument('--input', '-i', type=Path, help = os.getenv("CONFIG_CRYPTO_HELP_293"))
+    parser.add_argument('--output', '-o', type=Path, help = os.getenv("CONFIG_CRYPTO_HELP_295"))
     parser.add_argument('--backup-dir', '-b', type=Path,
                        default=project_root / "backups",
                        help="备份目录")
-    parser.add_argument('--password', '-p', action='store_true',
-                       help="使用密码保护")
+    parser.add_argument('--password', '-p', action = os.getenv("CONFIG_CRYPTO_ACTION_298"),
+                       help = os.getenv("CONFIG_CRYPTO_HELP_299"))
     parser.add_argument('--key-file', '-k', type=Path,
-                       help="自定义密钥文件路径")
+                       help = os.getenv("CONFIG_CRYPTO_HELP_300"))
 
     args = parser.parse_args()
 

@@ -369,10 +369,10 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='检测和修复未定义变量 (F821)')
-    parser.add_argument('directory', nargs='?', default='.', help='要修复的目录 (默认: 当前目录)')
-    parser.add_argument('--report', default='docs/_reports/UNDEFINED_VARS_REPORT.md',
-                       help='报告输出路径 (默认: docs/_reports/UNDEFINED_VARS_REPORT.md)')
+    parser = argparse.ArgumentParser(description = os.getenv("FIX_UNDEFINED_VARS_DESCRIPTION_372"))
+    parser.add_argument('directory', nargs='?', default='.', help = os.getenv("FIX_UNDEFINED_VARS_HELP_373"))
+    parser.add_argument('--report', default = os.getenv("FIX_UNDEFINED_VARS_DEFAULT_373"),
+                       help = os.getenv("FIX_UNDEFINED_VARS_HELP_374"))
 
     args = parser.parse_args()
 

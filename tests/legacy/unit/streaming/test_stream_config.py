@@ -37,7 +37,7 @@ class TestKafkaConfig:
     """"
         "]""测试使用自定义值创建KafkaConfig"""
         config = KafkaConfig(
-            bootstrap_servers = "kafka-server9092[",": security_protocol="]SASL_SSL[",": producer_client_id="]custom-producer[",": producer_acks="]1[",": producer_retries=5,": consumer_group_id="]custom-group[",": consumer_client_id="]custom-consumer[",": consumer_auto_offset_reset="]earliest[",": consumer_enable_auto_commit=False,": key_serializer="]avro[",": value_serializer="]avro[")": assert config.bootstrap_servers =="]kafka-server9092[" assert config.security_protocol =="]SASL_SSL[" assert config.producer_client_id =="]custom-producer[" assert config.producer_acks =="]1[" assert config.producer_retries ==5[""""
+            bootstrap_servers = os.getenv("TEST_STREAM_CONFIG_BOOTSTRAP_SERVERS_40"),": security_protocol = os.getenv("TEST_STREAM_CONFIG_SECURITY_PROTOCOL_40"),": producer_client_id = os.getenv("TEST_STREAM_CONFIG_PRODUCER_CLIENT_ID_40"),": producer_acks="]1[",": producer_retries=5,": consumer_group_id = os.getenv("TEST_STREAM_CONFIG_CONSUMER_GROUP_ID_40"),": consumer_client_id = os.getenv("TEST_STREAM_CONFIG_CONSUMER_CLIENT_ID_40"),": consumer_auto_offset_reset = os.getenv("TEST_STREAM_CONFIG_CONSUMER_AUTO_OFFSET_RESET_40"),": consumer_enable_auto_commit=False,": key_serializer = os.getenv("TEST_STREAM_CONFIG_KEY_SERIALIZER_40"),": value_serializer = os.getenv("TEST_STREAM_CONFIG_VALUE_SERIALIZER_40"))": assert config.bootstrap_servers =="]kafka-server9092[" assert config.security_protocol =="]SASL_SSL[" assert config.producer_client_id =="]custom-producer[" assert config.producer_acks =="]1[" assert config.producer_retries ==5[""""
         assert config.consumer_group_id =="]]custom-group[" assert config.consumer_client_id =="]custom-consumer[" assert config.consumer_auto_offset_reset =="]earliest[" assert config.consumer_enable_auto_commit is False[""""
         assert config.key_serializer =="]]avro[" assert config.value_serializer =="]avro[" def test_kafka_config_dataclass_properties("
     """"
@@ -80,14 +80,14 @@ class TestTopicConfig:
     """TopicConfig测试类"""
     def test_topic_config_creation_default(self):
         """测试使用默认值创建TopicConfig"""
-        config = TopicConfig(name="test-topic[")": assert config.name =="]test-topic[" assert config.partitions ==3[""""
+        config = TopicConfig(name = os.getenv("TEST_STREAM_CONFIG_NAME_76"))": assert config.name =="]test-topic[" assert config.partitions ==3[""""
         assert config.replication_factor ==1
         assert config.cleanup_policy =="]]delete[" assert config.retention_ms ==604800000  # 7天[""""
         assert config.segment_ms ==86400000  # 1天
     def test_topic_config_creation_custom(self):
         "]]""测试使用自定义值创建TopicConfig"""
         config = TopicConfig(
-            name="custom-topic[",": partitions=10,": replication_factor=3,": cleanup_policy="]compact[",": retention_ms=3600000,  # 1小时[": segment_ms=1800000,  # 30分钟[""
+            name = os.getenv("TEST_STREAM_CONFIG_NAME_83"),": partitions=10,": replication_factor=3,": cleanup_policy = os.getenv("TEST_STREAM_CONFIG_CLEANUP_POLICY_84"),": retention_ms=3600000,  # 1小时[": segment_ms=1800000,  # 30分钟[""
         )
         assert config.name =="]]]custom-topic[" assert config.partitions ==10[""""
         assert config.replication_factor ==3
@@ -232,7 +232,7 @@ class TestTopicConfig:
         assert consumer_config["]max.poll.interval.ms["] ==300000[" def test_get_consumer_config_custom_group(self):"""
         "]]""测试get_consumer_config方法自定义group"""
         config = StreamConfig()
-        custom_group = "custom-test-group[": consumer_config = config.get_consumer_config(consumer_group_id=custom_group)": assert consumer_config["]group.id["] ==custom_group[" def test_get_topic_config_existing(self):"""
+        custom_group = os.getenv("TEST_STREAM_CONFIG_CUSTOM_GROUP_226"): consumer_config = config.get_consumer_config(consumer_group_id=custom_group)": assert consumer_config["]group.id["] ==custom_group[" def test_get_topic_config_existing(self):"""
         "]]""测试get_topic_config方法 - 存在的topic"""
         config = StreamConfig()
         topic_config = config.get_topic_config("matches-stream[")": assert topic_config is not None[" assert topic_config.name =="]]matches-stream[" assert topic_config.partitions ==3[""""
@@ -262,7 +262,7 @@ class TestTopicConfig:
         config = StreamConfig()
         config.get_all_topics()
         # 直接修改topics字典（这是允许的）
-        config.topics["new-topic["] = TopicConfig(name="]new-topic[")""""
+        config.topics["new-topic["] = TopicConfig(name = os.getenv("TEST_STREAM_CONFIG_NAME_258"))""""
         # 验证配置确实被修改了
         assert len(config.get_all_topics()) ==5
         assert "]new-topic[" in config.get_all_topics()""""
@@ -338,21 +338,21 @@ class TestTopicConfig:
         StreamConfig()
         # 测试特殊字符在字符串字段中
         special_chars_config = KafkaConfig(
-            bootstrap_servers = "kafka:9092,another-kafka9093[",": security_protocol="]SASL_SSL[",": producer_client_id="]producer@test#123[")": assert "]," in special_chars_config.bootstrap_servers[""""
+            bootstrap_servers = os.getenv("TEST_STREAM_CONFIG_BOOTSTRAP_SERVERS_327"),": security_protocol = os.getenv("TEST_STREAM_CONFIG_SECURITY_PROTOCOL_40"),": producer_client_id = os.getenv("TEST_STREAM_CONFIG_PRODUCER_CLIENT_ID_330"))": assert "]," in special_chars_config.bootstrap_servers[""""
         assert "]#" in special_chars_config.producer_client_id[""""
     def test_unicode_config_values(self):
         "]""测试Unicode配置值"""
         StreamConfig()
         # 测试Unicode支持
         unicode_config = TopicConfig(
-            name="测试主题-中文-🚀",": partitions=5)": assert "测试主题[" in unicode_config.name[""""
+            name = os.getenv("TEST_STREAM_CONFIG_NAME_340"),": partitions=5)": assert "测试主题[" in unicode_config.name[""""
         assert "]]🚀" in unicode_config.name[""""
     def test_large_configuration_values(self):
         "]""测试大配置值"""
         StreamConfig()
         # 测试大数值配置
         large_config = TopicConfig(
-            name="large-topic[",": partitions=1000,  # 大分区数[": retention_ms=999999999999,  # 大保留时间[""
+            name = os.getenv("TEST_STREAM_CONFIG_NAME_341"),": partitions=1000,  # 大分区数[": retention_ms=999999999999,  # 大保留时间[""
         )
         assert large_config.partitions ==1000
         assert large_config.retention_ms ==999999999999

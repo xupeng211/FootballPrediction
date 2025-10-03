@@ -1,3 +1,4 @@
+import os
 """add_data_collection_logs_and_bronze_layer_tables
 
 
@@ -13,7 +14,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "f48d412852cc"
+revision: str = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L")
 down_revision: Union[str, None] = "d56c8d0d5aa0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,7 +41,7 @@ def upgrade() -> None:
             "collection_type",
             sa.String(length=50),
             nullable=False,
-            comment="采集类型(fixtures/odds/scores)",
+            comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
         ),
         sa.Column("start_time", sa.DateTime(), nullable=False, comment="开始时间"),
         sa.Column("end_time", sa.DateTime(), nullable=True, comment="结束时间"),
@@ -61,12 +62,12 @@ def upgrade() -> None:
             "status",
             sa.String(length=20),
             nullable=False,
-            comment="状态(success/failed/partial)",
+            comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
         ),
         sa.Column("error_message", sa.Text(), nullable=True, comment="错误信息"),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.PrimaryKeyConstraint("id"),
-        comment="数据采集日志表",
+        comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
     )
 
     # 为采集日志表创建索引
@@ -87,7 +88,7 @@ def upgrade() -> None:
         sa.Column(
             "data_source", sa.String(length=100), nullable=False, comment="数据源标识"
         ),
-        sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
+        sa.Column("raw_data", sa.JSON(), nullable=False, comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L")),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
             "processed",
@@ -100,18 +101,18 @@ def upgrade() -> None:
             "external_match_id",
             sa.String(length=100),
             nullable=True,
-            comment="外部比赛ID",
+            comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
         ),
         sa.Column(
             "external_league_id",
             sa.String(length=100),
             nullable=True,
-            comment="外部联赛ID",
+            comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
         ),
         sa.Column("match_time", sa.DateTime(), nullable=True, comment="比赛时间"),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.PrimaryKeyConstraint("id"),
-        comment="Bronze层原始比赛数据表",
+        comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
     )
 
     # 为Bronze层比赛数据表创建索引
@@ -137,7 +138,7 @@ def upgrade() -> None:
             "external_match_id",
             sa.String(length=100),
             nullable=True,
-            comment="外部比赛ID",
+            comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
         ),
         sa.Column(
             "bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"
@@ -145,7 +146,7 @@ def upgrade() -> None:
         sa.Column(
             "market_type", sa.String(length=50), nullable=True, comment="市场类型"
         ),
-        sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
+        sa.Column("raw_data", sa.JSON(), nullable=False, comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L")),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
             "processed",
@@ -156,7 +157,7 @@ def upgrade() -> None:
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.PrimaryKeyConstraint("id"),
-        comment="Bronze层原始赔率数据表",
+        comment = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"),
     )
 
     # 为Bronze层赔率数据表创建索引
@@ -236,23 +237,23 @@ def downgrade() -> None:
         print(f"Warning: Could not drop columns from features table: {e}")
 
     # 删除Bronze层赔率数据表
-    op.drop_index("idx_raw_odds_data_market_type", table_name="raw_odds_data")
-    op.drop_index("idx_raw_odds_data_match_bookmaker", table_name="raw_odds_data")
-    op.drop_index("idx_raw_odds_data_processed", table_name="raw_odds_data")
-    op.drop_index("idx_raw_odds_data_collected_at", table_name="raw_odds_data")
-    op.drop_index("idx_raw_odds_data_source", table_name="raw_odds_data")
+    op.drop_index("idx_raw_odds_data_market_type", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_odds_data_match_bookmaker", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_odds_data_processed", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_odds_data_collected_at", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_odds_data_source", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
     op.drop_table("raw_odds_data")
 
     # 删除Bronze层比赛数据表
-    op.drop_index("idx_raw_match_data_match_time", table_name="raw_match_data")
-    op.drop_index("idx_raw_match_data_external_id", table_name="raw_match_data")
-    op.drop_index("idx_raw_match_data_processed", table_name="raw_match_data")
-    op.drop_index("idx_raw_match_data_collected_at", table_name="raw_match_data")
-    op.drop_index("idx_raw_match_data_source", table_name="raw_match_data")
+    op.drop_index("idx_raw_match_data_match_time", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_match_data_external_id", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_match_data_processed", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_match_data_collected_at", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_raw_match_data_source", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
     op.drop_table("raw_match_data")
 
     # 删除数据采集日志表
-    op.drop_index("idx_collection_logs_status", table_name="data_collection_logs")
-    op.drop_index("idx_collection_logs_start_time", table_name="data_collection_logs")
-    op.drop_index("idx_collection_logs_source_type", table_name="data_collection_logs")
+    op.drop_index("idx_collection_logs_status", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_collection_logs_start_time", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
+    op.drop_index("idx_collection_logs_source_type", table_name = os.getenv("F48D412852CC_ADD_DATA_COLLECTION_LOGS_AND_BRONZE_L"))
     op.drop_table("data_collection_logs")

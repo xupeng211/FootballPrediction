@@ -1,3 +1,4 @@
+import os
 """监控和告警端到端测试"""
 
 import pytest
@@ -24,18 +25,18 @@ class TestMonitoringPipeline:
         """测试告警创建和解决流程"""
         # 1. 创建一些告警
         alert1 = alert_manager.fire_alert(
-            title="数据质量告警",
-            message="测试数据完整性低于阈值",
+            title = os.getenv("TEST_MONITORING_PIPELINE_TITLE_27"),
+            message = os.getenv("TEST_MONITORING_PIPELINE_MESSAGE_27"),
             level=AlertLevel.WARNING,
-            source="e2e_test",
+            source = os.getenv("TEST_MONITORING_PIPELINE_SOURCE_28"),
             labels={"table": "matches", "metric": "completeness"}
         )
 
         alert2 = alert_manager.fire_alert(
-            title="系统性能告警",
-            message="API响应时间过长",
+            title = os.getenv("TEST_MONITORING_PIPELINE_TITLE_31"),
+            message = os.getenv("TEST_MONITORING_PIPELINE_MESSAGE_31"),
             level=AlertLevel.ERROR,
-            source="e2e_test",
+            source = os.getenv("TEST_MONITORING_PIPELINE_SOURCE_28"),
             labels={"endpoint": "/predictions/", "response_time": "2000ms"}
         )
 

@@ -123,7 +123,7 @@ class TestMemoryDatabase:
         assert count == 2
 
         # 验证具体数据
-        cursor.execute("SELECT home_team, away_team FROM matches WHERE status = 'scheduled'")
+        cursor.execute("SELECT home_team, away_team FROM matches WHERE status = os.getenv("TEST_MEMORY_DATABASE_STATUS_126")")
         match = cursor.fetchone()
         assert match[0] == "Team A"
         assert match[1] == "Team B"
@@ -212,24 +212,24 @@ class TestMemoryDatabase:
         memory_db.commit()
 
         # 查询活跃告警
-        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = 'active'")
+        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = os.getenv("TEST_MEMORY_DATABASE_STATUS_215")")
         active_count = cursor.fetchone()[0]
         assert active_count == 2
 
         # 解决一个告警
         cursor.execute("""
             UPDATE alerts
-            SET status = 'resolved', resolved_at = ?
+            SET status = os.getenv("TEST_MEMORY_DATABASE_STATUS_220"), resolved_at = ?
             WHERE title = ?
         """, (datetime.now(), "Test Alert"))
         memory_db.commit()
 
         # 验证告警已解决
-        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = 'active'")
+        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = os.getenv("TEST_MEMORY_DATABASE_STATUS_215")")
         active_count = cursor.fetchone()[0]
         assert active_count == 1
 
-        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = 'resolved'")
+        cursor.execute("SELECT COUNT(*) FROM alerts WHERE status = os.getenv("TEST_MEMORY_DATABASE_STATUS_220")")
         resolved_count = cursor.fetchone()[0]
         assert resolved_count == 1
 

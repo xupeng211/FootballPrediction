@@ -1,5 +1,6 @@
 from tests.external_mocks import (
 import pytest
+import os
 
 """
 外部依赖Mock测试
@@ -58,7 +59,7 @@ class TestRedisMocks:
         producer = MockKafkaProducer()
         # 发送消息
         await producer.start()
-        await producer.send("test_topic[", {"]data[": "]test["), key="]test_key[")""""
+        await producer.send("test_topic[", {"]data[": "]test["), key = os.getenv("TEST_EXTERNAL_MOCKS_KEY_61"))""""
         # 验证消息
         assert len(producer.messages) ==1
         assert producer.messages[0]"]topic[" =="]test_topic[" assert producer.messages[0]"]value[" =={"]data[" "]test["}" assert producer.messages[0]"]key[" =="]test_key[" await producer.stop()""""
@@ -99,7 +100,7 @@ class TestFeatureStoreMocks:
         counter.inc()
         assert counter.get_value() ==1.0
         # 带标签计数
-        counter.labels(method="]get[", endpoint="]_api[").inc()": counter.labels(method="]post[", endpoint="]/api[").inc()": assert len(counter._values) ==2[" def test_mock_gauge(self):""
+        counter.labels(method="]get[", endpoint = os.getenv("TEST_EXTERNAL_MOCKS_ENDPOINT_102")).inc()": counter.labels(method = os.getenv("TEST_EXTERNAL_MOCKS_METHOD_102"), endpoint = os.getenv("TEST_EXTERNAL_MOCKS_ENDPOINT_102")).inc()": assert len(counter._values) ==2[" def test_mock_gauge(self):""
         "]]""测试仪表Mock"""
         gauge = MockGauge("test_gauge[", "]Test gauge[")""""
         # 设置值

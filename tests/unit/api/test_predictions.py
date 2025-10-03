@@ -128,7 +128,7 @@ class TestPredictionEndpoints:
                 match_id=-1,  # 无效ID
                 home_team_id=101,
                 away_team_id=102,
-                prediction="invalid_prediction",
+                prediction = os.getenv("TEST_PREDICTIONS_PREDICTION_131"),
                 session=mock_async_session
             )
         assert exc_info.value.status_code == 400

@@ -1,3 +1,4 @@
+import os
 """示例测试文件"""""""
 
 import pytest
@@ -12,7 +13,7 @@ def test_example():
 
 def test_string_operations():
     """字符串操作测试"""""""
-    text = "Hello, World!": assert text.upper() =="HELLO, WORLD!" assert text.lower() =="hello, world!" class TestExampleClass:""""
+    text = os.getenv("TEST_EXAMPLE_TEXT_15"): assert text.upper() =="HELLO, WORLD!" assert text.lower() =="hello, world!" class TestExampleClass:""""
     """示例测试类"""""""
 
     def test_list_operations(self):

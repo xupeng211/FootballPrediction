@@ -122,7 +122,7 @@ except ImportError as e:
         with patch.object(pipeline, '_create_model', return_value = mock_model), \
             patch.object(pipeline, '_train_model'), \
             patch.object(pipeline, '_evaluate_model', return_value = {'accuracy': 0.85)), \
-            patch.object(pipeline, '_save_model', return_value = 'model_v1')
+            patch.object(pipeline, '_save_model', return_value = os.getenv("TEST_MODEL_TRAINING_PHASE53_RETURN_VALUE_125"))
             result = await pipeline.train_model(training_data)
     assert result is not None
     assert result['model_id'] =='model_v1'
@@ -168,7 +168,7 @@ except ImportError as e:
             'confusion_matrix': [[1, 1], [0, 2]]
         }
         with patch.object(pipeline, '_calculate_metrics', return_value = evaluation_metrics), \
-            patch.object(pipeline, '_generate_classification_report', return_value='classification_report'), \
+            patch.object(pipeline, '_generate_classification_report', return_value = os.getenv("TEST_MODEL_TRAINING_PHASE53_RETURN_VALUE_171")), \
             patch.object(pipeline, '_log_evaluation_results'):
             result = await pipeline.evaluate_model(y_true, y_pred)
     assert result is not None
@@ -195,7 +195,7 @@ except ImportError as e:
             patch('mlflow.log_params'), \
             patch('mlflow.log_metrics'), \
              patch('mlflow.log_artifact'):
-            run_info = await pipeline.log_mlflow_run(run_id='test_run',
+            run_info = await pipeline.log_mlflow_run(run_id = os.getenv("TEST_MODEL_TRAINING_PHASE53_RUN_ID_197"),
                 params = {'n_estimators': 100},
                 metrics = {'accuracy': 0.85},
                 artifacts = {'model' 'model.pkl')

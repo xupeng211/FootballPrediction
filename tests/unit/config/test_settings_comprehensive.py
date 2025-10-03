@@ -30,25 +30,25 @@ except ImportError:
 
     @dataclass
     class DatabaseSettings:
-        url: str = "sqlite:///./test.db"
+        url: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_33")
         echo: bool = False
         pool_size: int = 10
         max_overflow: int = 20
 
     @dataclass
     class RedisSettings:
-        url: str = "redis://localhost:6379/0"
+        url: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_39")
         max_connections: int = 50
         socket_timeout: float = 3.0
 
     @dataclass
     class MLflowSettings:
         tracking_uri: str = "http://localhost:5000"
-        experiment_name: str = "football_prediction"
+        experiment_name: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_46")
 
     @dataclass
     class APISettings:
-        title: str = "Football Prediction API"
+        title: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_47")
         version: str = "1.0.0"
         host: str = "0.0.0.0"
         port: int = 8000
@@ -57,7 +57,7 @@ except ImportError:
     @dataclass
     class LoggingSettings:
         level: str = "INFO"
-        format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_55")
 
     @dataclass
     class Settings:
@@ -66,7 +66,7 @@ except ImportError:
         mlflow: MLflowSettings
         api: APISettings
         logging: LoggingSettings
-        environment: str = "development"
+        environment: str = os.getenv("TEST_SETTINGS_COMPREHENSIVE_STR_66")
         debug: bool = False
 
     Environment = type("Environment", (), {
@@ -278,7 +278,7 @@ class TestSettings:
             # 如果实现了不可变配置
             if hasattr(settings, '__setattr__'):
                 try:
-                    settings.database.url = "new_url"
+                    settings.database.url = os.getenv("TEST_SETTINGS_COMPREHENSIVE_URL_278")
                     # 如果没有抛出异常，检查值是否实际改变
                 except (AttributeError, TypeError):
                     # 配置是不可变的，这是期望的行为

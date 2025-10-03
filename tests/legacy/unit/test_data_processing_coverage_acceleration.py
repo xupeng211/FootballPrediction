@@ -161,7 +161,7 @@ class TestDataProcessingServiceCoverageAcceleration:
     async def test_process_raw_match_data_invalid_type(self, data_processor):
         """测试处理无效类型的原始比赛数据"""
         # 测试无效数据类型
-        invalid_data = "invalid_data_type[": result = await data_processor.process_raw_match_data(invalid_data)""""
+        invalid_data = os.getenv("TEST_DATA_PROCESSING_COVERAGE_ACCELERATION_INVALID"): result = await data_processor.process_raw_match_data(invalid_data)""""
         # 验证返回None
     assert result is None
     @pytest.mark.asyncio
@@ -371,7 +371,7 @@ class TestDataProcessingServiceCoverageAcceleration:
     """"
         "]""测试验证无效数据类型"""
         # 测试无效数据类型
-        invalid_type = "invalid_type[": test_data = {"]some[": ["]data["}": result = data_processor.validate_data_quality(test_data, invalid_type)"""
+        invalid_type = os.getenv("TEST_DATA_PROCESSING_COVERAGE_ACCELERATION_INVALID"): test_data = {"]some[": ["]data["}": result = data_processor.validate_data_quality(test_data, invalid_type)"""
         # 验证返回默认结果
     assert result["]is_valid["] is False[" assert result["]]quality_score["] ==0.0[" assert len(result["]]issues["]) > 0[" def test_get_performance_metrics(self, data_processor):"""
         "]]""测试获取性能指标"""
@@ -525,7 +525,7 @@ class TestDataProcessingServiceCoverageAcceleration:
         data_processor.cache_manager.get = Mock(return_value=None)
         data_processor.cache_manager.set = Mock(return_value=True)
         # 测试缓存键
-        cache_key = "test_key[": cache_value = {"]test[": ["]value["}""""
+        cache_key = os.getenv("TEST_DATA_PROCESSING_COVERAGE_ACCELERATION_CACHE_K"): cache_value = {"]test[": ["]value["}""""
         # 测试缓存获取
         result = data_processor.cache_manager.get(cache_key)
     assert result is None
@@ -656,7 +656,7 @@ class TestDataProcessingServiceCoverageAcceleration:
     async def test_process_features_data_invalid_type(self, data_processor):
         """测试处理无效类型的特征数据"""
         # 测试无效数据类型
-        invalid_data = "invalid_string[": result = await data_processor.process_features_data(invalid_data)""""
+        invalid_data = os.getenv("TEST_DATA_PROCESSING_COVERAGE_ACCELERATION_INVALID"): result = await data_processor.process_features_data(invalid_data)""""
         # 应该返回None
     assert result is None
     @pytest.mark.asyncio

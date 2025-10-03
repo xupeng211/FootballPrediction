@@ -4,6 +4,7 @@ from src.data.features.examples import (
 from unittest.mock import Mock, patch
 import pandas
 import pytest
+import os
 
 """
 data/features/examples.py 测试套件
@@ -56,7 +57,7 @@ class TestFeatureStoreExamples:
             result = example_initialize_feature_store()
             assert result ==mock_store
             mock_init.assert_called_once_with(
-                project_name="football_prediction_demo[",": postgres_config={"""
+                project_name = os.getenv("TEST_EXAMPLES_PROJECT_NAME_59"),": postgres_config={"""
                     "]host[": ["]localhost[",""""
                     "]port[": 5432,""""
                     "]database[": ["]football_prediction_dev[",""""
@@ -64,7 +65,7 @@ class TestFeatureStoreExamples:
                     "]password[": ["]reader_password_2025["},": redis_config = {"]connection_string[: "redis://localhost6379/1["})"]"""
         @patch("]src.data.features.examples.initialize_feature_store[")": def test_example_initialize_feature_store_error(self, mock_init):"""
             "]""测试初始化特征仓库示例错误处理"""
-            mock_init.side_effect = Exception("连接失败[")": with pytest.raises(Exception, match = "]连接失败[")": example_initialize_feature_store()": class TestWriteTeamFeaturesExample:""
+            mock_init.side_effect = Exception("连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_EXAMPLES_MATCH_67"))": example_initialize_feature_store()": class TestWriteTeamFeaturesExample:""
         "]""测试写入球队特征示例"""
         def test_example_write_team_features_success(self, mock_feature_store):
             """测试成功写入球队特征示例"""
@@ -77,7 +78,7 @@ class TestFeatureStoreExamples:
             "]""测试写入球队特征时的错误处理"""
             mock_feature_store.write_features.side_effect = Exception("写入失败[")""""
             # 应该抛出异常而不是静默失败
-            with pytest.raises(Exception, match = "]写入失败[")": example_write_team_features(mock_feature_store)": class TestWriteOddsFeaturesExample:""
+            with pytest.raises(Exception, match = os.getenv("TEST_EXAMPLES_MATCH_79"))": example_write_team_features(mock_feature_store)": class TestWriteOddsFeaturesExample:""
         "]""测试写入赔率特征示例"""
         def test_example_write_odds_features_success(self, mock_feature_store):
             """测试成功写入赔率特征示例"""
@@ -100,7 +101,7 @@ class TestFeatureStoreExamples:
             """测试获取在线特征时的错误处理"""
             mock_feature_store.get_online_features.side_effect = Exception("获取失败[")""""
             # 应该抛出异常
-            with pytest.raises(Exception, match = "]获取失败[")": example_get_online_features(mock_feature_store)": class TestGetHistoricalFeaturesExample:""
+            with pytest.raises(Exception, match = os.getenv("TEST_EXAMPLES_MATCH_101"))": example_get_online_features(mock_feature_store)": class TestGetHistoricalFeaturesExample:""
         "]""测试获取历史特征示例"""
         def test_example_get_historical_features_success(self, mock_feature_store):
             """测试成功获取历史特征示例"""

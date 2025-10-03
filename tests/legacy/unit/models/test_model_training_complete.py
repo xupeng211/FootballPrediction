@@ -8,6 +8,7 @@ import asyncio
 import numpy
 import pandas
 import pytest
+import os
 
 """
 ModelTraining 完整测试套件
@@ -20,7 +21,7 @@ class TestModelTrainingComplete:
     def training_config(self):
         """创建训练配置"""
         return TrainingConfig(
-            model_type="xgboost[",": test_size=0.2,": random_state=42,": n_estimators=100,"
+            model_type = os.getenv("TEST_MODEL_TRAINING_COMPLETE_MODEL_TYPE_23"),": test_size=0.2,": random_state=42,": n_estimators=100,"
             max_depth=6,
             learning_rate=0.1,
             early_stopping_rounds=10,
@@ -30,7 +31,7 @@ class TestModelTrainingComplete:
         "]""创建模型训练器实例"""
         return BaselineModelTrainer(
             config=training_config,
-            mlflow_tracking_uri = "http://localhost5002[",": experiment_name="]football_prediction[")""""
+            mlflow_tracking_uri = "http://localhost5002[",": experiment_name = os.getenv("TEST_MODEL_TRAINING_COMPLETE_EXPERIMENT_NAME_33"))""""
     @pytest.fixture
     def mock_dependencies(self):
         "]""Mock 所有外部依赖"""
@@ -84,17 +85,17 @@ class TestModelTrainingComplete:
             "]""测试自定义配置初始化"""
             trainer = ModelTraining(
                 config=training_config,
-                mlflow_tracking_uri = "http://custom5000[",": experiment_name="]custom_experiment[")": assert trainer.config ==training_config[" assert trainer.mlflow_tracking_uri =="]]http//custom5000[" assert trainer.experiment_name =="]custom_experiment[" def test_training_config_validation("
+                mlflow_tracking_uri = "http://custom5000[",": experiment_name = os.getenv("TEST_MODEL_TRAINING_COMPLETE_EXPERIMENT_NAME_86"))": assert trainer.config ==training_config[" assert trainer.mlflow_tracking_uri =="]]http//custom5000[" assert trainer.experiment_name =="]custom_experiment[" def test_training_config_validation("
     """"
             "]""测试训练配置验证"""
             # 有效配置
             config = TrainingConfig(
-                model_type="xgboost[", test_size=0.2, random_state=42[""""
+                model_type = os.getenv("TEST_MODEL_TRAINING_COMPLETE_MODEL_TYPE_23"), test_size=0.2, random_state=42[""""
             )
             assert config.model_type =="]]xgboost[" assert 0 < config.test_size < 1[""""
             # 无效配置
             with pytest.raises(ValueError):
-                TrainingConfig(model_type="]]invalid_model[")": with pytest.raises(ValueError):": TrainingConfig(test_size=1.5)  # 超出范围[": class TestDataCollection:"
+                TrainingConfig(model_type = os.getenv("TEST_MODEL_TRAINING_COMPLETE_MODEL_TYPE_94"))": with pytest.raises(ValueError):": TrainingConfig(test_size=1.5)  # 超出范围[": class TestDataCollection:"
         "]]""测试数据收集"""
         @pytest.mark.asyncio
         async def test_collect_training_data_success(
@@ -104,7 +105,7 @@ class TestModelTrainingComplete:
             mock_dependencies["database["].get_training_data.return_value = ("]": sample_matches_data[""
             )
             with patch.object(model_trainer, "]_get_training_data[") as mock_get_data:": mock_get_data.return_value = sample_matches_data[": data = await model_trainer._collect_training_data(": league_ids=[1],"
-                    seasons="]]2024[",": start_date=datetime.now() - timedelta(days=365),": end_date=datetime.now())": assert data is not None"
+                    seasons = os.getenv("TEST_MODEL_TRAINING_COMPLETE_SEASONS_106"),": start_date=datetime.now() - timedelta(days=365),": end_date=datetime.now())": assert data is not None"
                 assert len(data) ==100
                 assert "]match_id[" in data.columns[""""
         @pytest.mark.asyncio
@@ -205,7 +206,7 @@ class TestModelTrainingComplete:
                 model_trainer, "]_validate_model["""""
             ) as mock_validate:
                 mock_prepare.return_value = (X, y)
-                mock_create_model.return_value = mock_dependencies["]model["]: mock_validate.return_value = True[": model = await model_trainer.train_model(": league_ids=[1], seasons="]]2024["""""
+                mock_create_model.return_value = mock_dependencies["]model["]: mock_validate.return_value = True[": model = await model_trainer.train_model(": league_ids=[1], seasons = os.getenv("TEST_MODEL_TRAINING_COMPLETE_SEASONS_106")""""
                 )
                 assert model is not None
                 mock_dependencies["]model["].fit.assert_called_once()": mock_validate.assert_called_once()"""
@@ -221,7 +222,7 @@ class TestModelTrainingComplete:
                 model_trainer, "]_create_model["""""
             ) as mock_create_model:
                 mock_prepare.return_value = (X, y)
-                mock_create_model.return_value = mock_dependencies["]model["]: await model_trainer.train_model(": league_ids=[1], seasons="]2024["""""
+                mock_create_model.return_value = mock_dependencies["]model["]: await model_trainer.train_model(": league_ids=[1], seasons = os.getenv("TEST_MODEL_TRAINING_COMPLETE_SEASONS_220")""""
                 )
                 # 验证早停参数被传递
                 call_kwargs = mock_dependencies["]model["].fit.call_args[1]": assert "]early_stopping_rounds[" in call_kwargs[""""
@@ -306,11 +307,11 @@ class TestModelTrainingComplete:
         @pytest.mark.asyncio
         async def test_log_model_to_mlflow(self, model_trainer, mock_dependencies):
             """测试记录模型到 MLflow"""
-            mock_dependencies["mlflow["].log_model.return_value = "]model_uri[": mock_dependencies["]mlflow["].log_metrics.return_value = None[": mock_dependencies["]]mlflow["].log_params.return_value = None[": metrics = {"]]accuracy[": 0.85, "]precision[": 0.83, "]recall[": 0.84}": params = {"]n_estimators[": 100, "]max_depth[": 6}": with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: success = await model_trainer._log_to_mlflow(": model=mock_dependencies["]model["],": metrics=metrics,": params=params,": run_name="]test_run[")": assert success is True[" mock_dependencies["]]mlflow["].log_model.assert_called_once()": mock_dependencies["]mlflow["].log_metrics.assert_called_once_with(metrics)": mock_dependencies["]mlflow["].log_params.assert_called_once_with(params)""""
+            mock_dependencies["mlflow["].log_model.return_value = os.getenv("TEST_MODEL_TRAINING_COMPLETE_RETURN_VALUE_304"): mock_dependencies["]mlflow["].log_metrics.return_value = None[": mock_dependencies["]]mlflow["].log_params.return_value = None[": metrics = {"]]accuracy[": 0.85, "]precision[": 0.83, "]recall[": 0.84}": params = {"]n_estimators[": 100, "]max_depth[": 6}": with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: success = await model_trainer._log_to_mlflow(": model=mock_dependencies["]model["],": metrics=metrics,": params=params,": run_name = os.getenv("TEST_MODEL_TRAINING_COMPLETE_RUN_NAME_309"))": assert success is True[" mock_dependencies["]]mlflow["].log_model.assert_called_once()": mock_dependencies["]mlflow["].log_metrics.assert_called_once_with(metrics)": mock_dependencies["]mlflow["].log_params.assert_called_once_with(params)""""
         @pytest.mark.asyncio
         async def test_create_mlflow_experiment(self, model_trainer, mock_dependencies):
             "]""测试创建 MLflow 实验"""
-            mock_dependencies["mlflow["].create_experiment.return_value = "]experiment_id[": with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: experiment_id = await model_trainer._create_mlflow_experiment(""""
+            mock_dependencies["mlflow["].create_experiment.return_value = os.getenv("TEST_MODEL_TRAINING_COMPLETE_RETURN_VALUE_309"): with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: experiment_id = await model_trainer._create_mlflow_experiment(""""
                     "]test_experiment["""""
                 )
                 assert experiment_id =="]experiment_id[" mock_dependencies["]mlflow["].create_experiment.assert_called_once_with(""""
@@ -324,7 +325,7 @@ class TestModelTrainingComplete:
             mock_dependencies["mlflow["].log_model.side_effect = Exception("]"""
                 "MLflow error["""""
             )
-            with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: success = await model_trainer._log_to_mlflow(": model=MagicMock(),": metrics = {"]accuracy[": 0.85},": params={},": run_name="]test_run[")": assert success is False[" class TestModelPersistence:""
+            with patch("]src.models.model_training.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: success = await model_trainer._log_to_mlflow(": model=MagicMock(),": metrics = {"]accuracy[": 0.85},": params={},": run_name = os.getenv("TEST_MODEL_TRAINING_COMPLETE_RUN_NAME_309"))": assert success is False[" class TestModelPersistence:""
         "]]""测试模型持久化"""
         def test_save_model_locally(self, model_trainer, mock_dependencies, tmp_path):
             """测试本地保存模型"""

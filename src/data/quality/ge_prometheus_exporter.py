@@ -1,3 +1,4 @@
+import os
 """
 Great Expectations Prometheus 指标导出器
 
@@ -201,7 +202,7 @@ class GEPrometheusExporter:
             overall_success_rate = overall_stats.get("overall_success_rate", 0)
 
             # 设置总体质量评分
-            self.quality_score.labels(table_name="overall").set(overall_success_rate)
+            self.quality_score.labels(table_name = os.getenv("GE_PROMETHEUS_EXPORTER_TABLE_NAME_204")).set(overall_success_rate)
 
             # 记录总体统计
             self.logger.info(
@@ -232,7 +233,7 @@ class GEPrometheusExporter:
                     "hours_since_update", float("inf")
                 )
                 self.data_freshness_hours.labels(
-                    table_name="matches", data_type="fixtures"
+                    table_name = os.getenv("GE_PROMETHEUS_EXPORTER_TABLE_NAME_234"), data_type = os.getenv("GE_PROMETHEUS_EXPORTER_DATA_TYPE_234")
                 ).set(hours_since_update if hours_since_update != float("inf") else 999)
 
             # 导出赔率数据新鲜度
@@ -264,13 +265,13 @@ class GEPrometheusExporter:
             for anomaly in anomalies:
                 anomaly_type = anomaly.get("type", "unknown")
                 severity = anomaly.get("severity", "unknown")
-                table_name = "unknown"
+                table_name = os.getenv("GE_PROMETHEUS_EXPORTER_TABLE_NAME_265")
 
                 # 根据异常类型确定表名
                 if "odds" in anomaly_type.lower():
                     table_name = "odds"
                 elif "score" in anomaly_type.lower() or "match" in anomaly_type.lower():
-                    table_name = "matches"
+                    table_name = os.getenv("GE_PROMETHEUS_EXPORTER_TABLE_NAME_270")
 
                 key = (table_name, anomaly_type, severity)
                 anomaly_stats[key] = anomaly_stats.get(key, 0) + 1

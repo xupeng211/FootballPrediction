@@ -1,3 +1,4 @@
+import os
 """
 核心模块测试的通用Mock Fixtures
 用于解决外部依赖问题，提升核心模块覆盖率
@@ -66,7 +67,7 @@ def mock_mlflow_client():
     """模拟MLflow客户端"""
     mlflow_mock = MagicMock()
     mlflow_mock.get_experiment_by_name.return_value = None
-    mlflow_mock.create_experiment.return_value = MagicMock(experiment_id="test_exp")
+    mlflow_mock.create_experiment.return_value = MagicMock(experiment_id = os.getenv("CONFTEST_CORE_MOCKS_EXPERIMENT_ID_69"))
     mlflow_mock.log_metric.return_value = None
     mlflow_mock.log_param.return_value = None
     mlflow_tracker = MagicMock()

@@ -192,7 +192,7 @@ class TestCacheModels:
             # 测试带模式的请求
             request2 = KeyRequestClass(
                 keys=["key1"],
-                pattern="test:*"
+                pattern = os.getenv("TEST_CACHE_COMPREHENSIVE_PATTERN_195")
             )
             assert request2.keys == ["key1"]
             assert request2.pattern == "test:*"

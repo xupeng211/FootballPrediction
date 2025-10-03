@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 class ValidationSeverity(Enum):
     """验证严重程度"""
     INFO = "info"
-    WARNING = "warning"
+    WARNING = os.getenv("ENV_VALIDATOR_WARNING_23")
     ERROR = "error"
-    CRITICAL = "critical"
+    CRITICAL = os.getenv("ENV_VALIDATOR_CRITICAL_23")
 
 
 @dataclass
@@ -51,7 +51,7 @@ class EnvVarDefinition:
     pattern: Optional[str] = None
     validator: Optional[callable] = None
     secret: bool = False
-    category: str = "General"
+    category: str = os.getenv("ENV_VALIDATOR_STR_52")
 
 
 class EnvironmentValidator:
@@ -67,10 +67,10 @@ class EnvironmentValidator:
         """设置默认的环境变量定义"""
         # 基础配置
         self.add_definition(EnvVarDefinition(
-            name="ENVIRONMENT",
+            name = os.getenv("ENV_VALIDATOR_NAME_67"),
             type=str,
             required=True,
-            default="development",
+            default = os.getenv("ENV_VALIDATOR_DEFAULT_70"),
             choices=["development", "testing", "staging", "production"],
             description="运行环境",
             category="基础配置"
@@ -78,92 +78,92 @@ class EnvironmentValidator:
 
         # 数据库配置
         self.add_definition(EnvVarDefinition(
-            name="DATABASE_URL",
+            name = os.getenv("ENV_VALIDATOR_NAME_75"),
             type=str,
             required=True,
-            description="数据库连接URL",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_80"),
             validator=self._validate_database_url,
             secret=True,
             category="数据库"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="DB_POOL_SIZE",
+            name = os.getenv("ENV_VALIDATOR_NAME_84"),
             type=int,
             required=False,
             default=10,
             min_value=1,
             max_value=100,
-            description="数据库连接池大小",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_90"),
             category="数据库"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="DB_MAX_OVERFLOW",
+            name = os.getenv("ENV_VALIDATOR_NAME_94"),
             type=int,
             required=False,
             default=20,
             min_value=0,
             max_value=100,
-            description="连接池最大溢出数",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_98"),
             category="数据库"
         ))
 
         # Redis配置
         self.add_definition(EnvVarDefinition(
-            name="REDIS_HOST",
+            name = os.getenv("ENV_VALIDATOR_NAME_103"),
             type=str,
             required=False,
-            default="localhost",
-            description="Redis主机地址",
+            default="localhost"  # 生产环境应通过环境变量HOST配置,
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_108"),
             category="Redis"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="REDIS_PORT",
+            name = os.getenv("ENV_VALIDATOR_NAME_113"),
             type=int,
             required=False,
             default=6379,
             min_value=1,
             max_value=65535,
-            description="Redis端口",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_117"),
             category="Redis"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="REDIS_PASSWORD",
+            name = os.getenv("ENV_VALIDATOR_NAME_120"),
             type=str,
             required=False,
             default=None,
-            description="Redis密码",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_124"),
             secret=True,
             category="Redis"
         ))
 
         # API配置
         self.add_definition(EnvVarDefinition(
-            name="API_HOST",
+            name = os.getenv("ENV_VALIDATOR_NAME_129"),
             type=str,
             required=False,
-            default="0.0.0.0",
+            default="localhost"  # 生产环境应通过环境变量HOST配置,
             validator=self._validate_host,
-            description="API服务器地址",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_134"),
             category="API"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="API_PORT",
+            name = os.getenv("ENV_VALIDATOR_NAME_138"),
             type=int,
             required=False,
             default=8000,
             min_value=1,
             max_value=65535,
-            description="API服务器端口",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_144"),
             category="API"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="API_LOG_LEVEL",
+            name = os.getenv("ENV_VALIDATOR_NAME_147"),
             type=str,
             required=False,
             default="info",
@@ -174,17 +174,17 @@ class EnvironmentValidator:
 
         # 安全配置
         self.add_definition(EnvVarDefinition(
-            name="JWT_SECRET_KEY",
+            name = os.getenv("ENV_VALIDATOR_NAME_157"),
             type=str,
             required=True,
-            description="JWT签名密钥",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_160"),
             validator=self._validate_secret_key,
             secret=True,
             category="安全"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="SECRET_KEY",
+            name = os.getenv("ENV_VALIDATOR_NAME_166"),
             type=str,
             required=True,
             description="应用密钥",
@@ -194,87 +194,87 @@ class EnvironmentValidator:
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="ACCESS_TOKEN_EXPIRE_MINUTES",
+            name = os.getenv("ENV_VALIDATOR_NAME_175"),
             type=int,
             required=False,
             default=30,
             min_value=1,
             max_value=1440,  # 24小时
-            description="访问令牌过期时间（分钟）",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_180"),
             category="安全"
         ))
 
         # 缓存配置
         self.add_definition(EnvVarDefinition(
-            name="CACHE_ENABLED",
+            name = os.getenv("ENV_VALIDATOR_NAME_183"),
             type=bool,
             required=False,
             default=True,
-            description="是否启用缓存",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_187"),
             category="缓存"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="CACHE_DEFAULT_TTL",
+            name = os.getenv("ENV_VALIDATOR_NAME_191"),
             type=int,
             required=False,
             default=300,
             min_value=0,
-            description="默认缓存TTL（秒）",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_197"),
             category="缓存"
         ))
 
         # CORS配置
         self.add_definition(EnvVarDefinition(
-            name="CORS_ORIGINS",
+            name = os.getenv("ENV_VALIDATOR_NAME_201"),
             type=str,
             required=False,
             default=None,
             validator=self._validate_cors_origins,
-            description="CORS允许的源",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_207"),
             category="API"
         ))
 
         # 监控配置
         self.add_definition(EnvVarDefinition(
-            name="METRICS_ENABLED",
+            name = os.getenv("ENV_VALIDATOR_NAME_211"),
             type=bool,
             required=False,
             default=True,
-            description="是否启用指标收集",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_213"),
             category="监控"
         ))
 
         self.add_definition(EnvVarDefinition(
-            name="SENTRY_DSN",
+            name = os.getenv("ENV_VALIDATOR_NAME_218"),
             type=str,
             required=False,
             default=None,
             validator=self._validate_sentry_dsn,
             secret=True,
-            description="Sentry错误追踪DSN",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_223"),
             category="监控"
         ))
 
         # 性能配置
         self.add_definition(EnvVarDefinition(
-            name="PERF_SLOW_QUERY_THRESHOLD",
+            name = os.getenv("ENV_VALIDATOR_NAME_229"),
             type=float,
             required=False,
             default=1.0,
             min_value=0.1,
             max_value=10.0,
-            description="慢查询阈值（秒）",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_234"),
             category="性能"
         ))
 
         # Celery配置
         self.add_definition(EnvVarDefinition(
-            name="CELERY_BROKER_URL",
+            name = os.getenv("ENV_VALIDATOR_NAME_239"),
             type=str,
             required=False,
             default=None,
-            description="Celery代理URL",
+            description = os.getenv("ENV_VALIDATOR_DESCRIPTION_242"),
             category="任务队列"
         ))
 
@@ -339,7 +339,7 @@ class EnvironmentValidator:
                 self.validation_results.append(ValidationResult(
                     is_valid=False,
                     severity=ValidationSeverity.ERROR,
-                    message="缺少必需的环境变量",
+                    message = os.getenv("ENV_VALIDATOR_MESSAGE_315"),
                     var_name=var_name,
                     suggestion=f"请设置 {var_name} 环境变量"
                 ))
@@ -450,7 +450,7 @@ class EnvironmentValidator:
             severity=ValidationSeverity.INFO,
             message="验证通过",
             var_name=var_name,
-            actual_value="********" if definition.secret else value
+            actual_value = os.getenv("ENV_VALIDATOR_ACTUAL_VALUE_421") if definition.secret else value
         ))
 
     def _convert_to_bool(self, value: str) -> bool:
@@ -467,9 +467,9 @@ class EnvironmentValidator:
                     is_valid=False,
                     severity=ValidationSeverity.ERROR,
                     message=f"不支持的数据库类型: {parsed.scheme}",
-                    var_name="DATABASE_URL",
+                    var_name = os.getenv("ENV_VALIDATOR_NAME_75"),
                     actual_value=value,
-                    suggestion="使用: postgresql://, sqlite:///"
+                    suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_440")
                 )
 
             if parsed.scheme == 'postgresql':
@@ -477,16 +477,16 @@ class EnvironmentValidator:
                     return ValidationResult(
                         is_valid=False,
                         severity=ValidationSeverity.ERROR,
-                        message="PostgreSQL URL缺少主机或数据库名",
-                        var_name="DATABASE_URL",
+                        message = os.getenv("ENV_VALIDATOR_MESSAGE_451"),
+                        var_name = os.getenv("ENV_VALIDATOR_NAME_75"),
                         actual_value=value
                     )
 
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="数据库URL格式正确",
-                var_name="DATABASE_URL"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_458"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_75")
             )
 
         except Exception as e:
@@ -494,7 +494,7 @@ class EnvironmentValidator:
                 is_valid=False,
                 severity=ValidationSeverity.ERROR,
                 message=f"数据库URL解析失败: {e}",
-                var_name="DATABASE_URL",
+                var_name = os.getenv("ENV_VALIDATOR_NAME_75"),
                 actual_value=value
             )
 
@@ -504,8 +504,8 @@ class EnvironmentValidator:
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="主机地址有效",
-                var_name="API_HOST"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_475"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_129")
             )
 
         # 简单的IP验证
@@ -514,8 +514,8 @@ class EnvironmentValidator:
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="主机地址有效",
-                var_name="API_HOST"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_475"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_129")
             )
 
         # 域名验证
@@ -524,17 +524,17 @@ class EnvironmentValidator:
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="主机地址有效",
-                var_name="API_HOST"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_475"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_129")
             )
 
         return ValidationResult(
             is_valid=False,
             severity=ValidationSeverity.WARNING,
-            message="主机地址格式可能不正确",
-            var_name="API_HOST",
+            message = os.getenv("ENV_VALIDATOR_MESSAGE_496"),
+            var_name = os.getenv("ENV_VALIDATOR_NAME_129"),
             actual_value=value,
-            suggestion="使用: 0.0.0.0, 127.0.0.1, localhost 或有效域名"
+            suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_498")
         )
 
     def _validate_secret_key(self, value: str) -> ValidationResult:
@@ -544,9 +544,9 @@ class EnvironmentValidator:
                 is_valid=False,
                 severity=ValidationSeverity.ERROR,
                 message=f"密钥长度不足: {len(value)} < 32",
-                var_name="secret_key",
+                var_name = os.getenv("ENV_VALIDATOR_VAR_NAME_508"),
                 actual_value=f"长度:{len(value)}",
-                suggestion="使用至少32个字符的强密钥"
+                suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_511")
             )
 
         # 检查是否为弱密钥
@@ -561,17 +561,17 @@ class EnvironmentValidator:
                 return ValidationResult(
                     is_valid=False,
                     severity=ValidationSeverity.CRITICAL,
-                    message="使用了弱密钥",
-                    var_name="secret_key",
+                    message = os.getenv("ENV_VALIDATOR_MESSAGE_522"),
+                    var_name = os.getenv("ENV_VALIDATOR_VAR_NAME_508"),
                     actual_value="weak",
-                    suggestion="请生成强随机密钥"
+                    suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_525")
                 )
 
         return ValidationResult(
             is_valid=True,
             severity=ValidationSeverity.INFO,
-            message="密钥强度良好",
-            var_name="secret_key"
+            message = os.getenv("ENV_VALIDATOR_MESSAGE_528"),
+            var_name = os.getenv("ENV_VALIDATOR_VAR_NAME_508")
         )
 
     def _validate_cors_origins(self, value: str) -> ValidationResult:
@@ -580,8 +580,8 @@ class EnvironmentValidator:
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="CORS未配置",
-                var_name="CORS_ORIGINS"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_537"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_201")
             )
 
         origins = [o.strip() for o in value.split(',')]
@@ -598,16 +598,16 @@ class EnvironmentValidator:
                 is_valid=False,
                 severity=ValidationSeverity.WARNING,
                 message=f"CORS源格式不正确: {invalid_origins}",
-                var_name="CORS_ORIGINS",
+                var_name = os.getenv("ENV_VALIDATOR_NAME_201"),
                 actual_value=value,
-                suggestion="使用: https://example.com,https://app.com"
+                suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_555")
             )
 
         return ValidationResult(
             is_valid=True,
             severity=ValidationSeverity.INFO,
-            message="CORS配置有效",
-            var_name="CORS_ORIGINS"
+            message = os.getenv("ENV_VALIDATOR_MESSAGE_561"),
+            var_name = os.getenv("ENV_VALIDATOR_NAME_201")
         )
 
     def _validate_sentry_dsn(self, value: str) -> ValidationResult:
@@ -616,24 +616,24 @@ class EnvironmentValidator:
             return ValidationResult(
                 is_valid=True,
                 severity=ValidationSeverity.INFO,
-                message="Sentry未配置",
-                var_name="SENTRY_DSN"
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_567"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_218")
             )
 
         if not value.startswith('https://'):
             return ValidationResult(
                 is_valid=False,
                 severity=ValidationSeverity.ERROR,
-                message="Sentry DSN必须使用HTTPS",
-                var_name="SENTRY_DSN",
+                message = os.getenv("ENV_VALIDATOR_MESSAGE_574"),
+                var_name = os.getenv("ENV_VALIDATOR_NAME_218"),
                 actual_value=value[:20] + "..."
             )
 
         return ValidationResult(
             is_valid=True,
             severity=ValidationSeverity.INFO,
-            message="Sentry DSN格式正确",
-            var_name="SENTRY_DSN"
+            message = os.getenv("ENV_VALIDATOR_MESSAGE_582"),
+            var_name = os.getenv("ENV_VALIDATOR_NAME_218")
         )
 
     def _check_extra_variables(self):
@@ -651,10 +651,10 @@ class EnvironmentValidator:
                 self.validation_results.append(ValidationResult(
                     is_valid=False,
                     severity=ValidationSeverity.ERROR,
-                    message="生产环境不应该使用通配符CORS",
-                    var_name="CORS_ORIGINS",
+                    message = os.getenv("ENV_VALIDATOR_MESSAGE_600"),
+                    var_name = os.getenv("ENV_VALIDATOR_NAME_201"),
                     actual_value=cors_origins,
-                    suggestion="请明确指定允许的源"
+                    suggestion = os.getenv("ENV_VALIDATOR_SUGGESTION_602")
                 ))
 
     def get_summary(self) -> Dict[str, Any]:

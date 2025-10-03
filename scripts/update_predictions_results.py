@@ -393,12 +393,12 @@ class PredictionResultUpdater:
 
 
 @click.command()
-@click.option("--update", is_flag=True, help="更新预测结果")
-@click.option("--report", is_flag=True, help="生成准确率报告")
-@click.option("--trends", is_flag=True, help="计算准确率趋势")
+@click.option("--update", is_flag=True, help = os.getenv("UPDATE_PREDICTIONS_RESULTS_HELP_396"))
+@click.option("--report", is_flag=True, help = os.getenv("UPDATE_PREDICTIONS_RESULTS_HELP_396"))
+@click.option("--trends", is_flag=True, help = os.getenv("UPDATE_PREDICTIONS_RESULTS_HELP_397"))
 @click.option("--days", default=30, help="回看天数")
-@click.option("--window", default=10, help="移动平均窗口大小")
-@click.option("--limit", default=100, help="单次处理限制")
+@click.option("--window", default=10, help = os.getenv("UPDATE_PREDICTIONS_RESULTS_HELP_398"))
+@click.option("--limit", default=100, help = os.getenv("UPDATE_PREDICTIONS_RESULTS_HELP_399"))
 @click.option("--verbose", is_flag=True, help="详细输出")
 def main(
     update: bool,

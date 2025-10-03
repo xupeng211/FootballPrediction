@@ -146,7 +146,7 @@ class TestPredictionEndpoints:
                 result = await get_prediction_history(
                     limit=10,
                     offset=0,
-                    status="completed",
+                    status = os.getenv("TEST_PREDICTIONS_SIMPLE_STATUS_149"),
                     session=mock_async_session
                 )
 

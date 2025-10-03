@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """Run a synthetic end-to-end pipeline for CI smoke validation.
 
@@ -85,7 +86,7 @@ def collect_synthetic_matches(
 
 def clean_matches(raw_matches: List[Dict[str, float]]) -> pd.DataFrame:
     df = pd.DataFrame(raw_matches)
-    df = df.drop_duplicates(subset="match_id").reset_index(drop=True)
+    df = df.drop_duplicates(subset = os.getenv("RUN_PIPELINE_SUBSET_88")).reset_index(drop=True)
     df = df[
         (
             df[
@@ -134,7 +135,7 @@ def engineer_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, np.ndarray]:
 
 
 def train_model(features: pd.DataFrame, targets: np.ndarray) -> LogisticRegression:
-    model = LogisticRegression(max_iter=200, multi_class="multinomial")
+    model = LogisticRegression(max_iter=200, multi_class = os.getenv("RUN_PIPELINE_MULTI_CLASS_137"))
     model.fit(features.values, targets)
     logger.info("Trained logistic regression model on %s samples", len(features))
     return model
@@ -184,15 +185,15 @@ def write_report(
 
 def configure_logging(verbose: bool) -> None:
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(level=level, format = os.getenv("RUN_PIPELINE_FORMAT_186"))
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Synthetic pipeline runner for CI")
+    parser = argparse.ArgumentParser(description = os.getenv("RUN_PIPELINE_DESCRIPTION_190"))
     parser.add_argument("--output", type=Path, default=Path("artifacts/pipeline"))
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--samples", type=int, default=64)
-    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--verbose", action = os.getenv("RUN_PIPELINE_ACTION_194"))
     return parser.parse_args()
 
 

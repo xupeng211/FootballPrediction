@@ -119,7 +119,7 @@ class PredictionResult:
 
     match_id: int
     model_version: str
-    model_name: str = "football_baseline_model"
+    model_name: str = os.getenv("PREDICTION_SERVICE_STR_122")
 
     # 预测概率 / Prediction probabilities
     home_win_probability: float = 0.0
@@ -243,7 +243,7 @@ class PredictionService:
 
     @retry(MLFLOW_RETRY_CONFIG)
     async def get_production_model_with_retry(
-        self, model_name: str = "football_baseline_model"
+        self, model_name: str = os.getenv("PREDICTION_SERVICE_STR_122")
     ) -> Tuple[Any, str]:
         """
         获取生产环境模型（带重试机制） / Get Production Model (with Retry Mechanism)
@@ -289,7 +289,7 @@ class PredictionService:
         return await self._load_model_from_mlflow(model_name)
 
     async def _load_model_from_mlflow(
-        self, model_name: str = "football_baseline_model"
+        self, model_name: str = os.getenv("PREDICTION_SERVICE_STR_122")
     ) -> Tuple[Any, str]:
         """
         从MLflow加载模型 / Load model from MLflow
@@ -360,7 +360,7 @@ class PredictionService:
         return model, version
 
     async def get_production_model(
-        self, model_name: str = "football_baseline_model"
+        self, model_name: str = os.getenv("PREDICTION_SERVICE_STR_122")
     ) -> Tuple[Any, str]:
         """
         获取生产环境模型 / Get Production Model
@@ -542,7 +542,7 @@ class PredictionService:
             result = PredictionResult(
                 match_id=match_id,
                 model_version=model_version,
-                model_name="football_baseline_model",
+                model_name = os.getenv("PREDICTION_SERVICE_MODEL_NAME_544"),
                 home_win_probability=float(prob_dict.get("home", 0.0)),
                 draw_probability=float(prob_dict.get("draw", 0.0)),
                 away_win_probability=float(prob_dict.get("away", 0.0)),
@@ -566,7 +566,7 @@ class PredictionService:
             # 记录预测时间
             prediction_duration = (datetime.now() - start_time).total_seconds()
             self.metrics_exporter.prediction_duration.labels(
-                model_name="football_baseline_model", model_version=model_version
+                model_name = os.getenv("PREDICTION_SERVICE_MODEL_NAME_544"), model_version=model_version
             ).observe(prediction_duration)
 
             # 缓存预测结果（带TTL） / Cache prediction result with TTL
@@ -894,7 +894,7 @@ class PredictionService:
             return "draw"
 
     async def get_model_accuracy(
-        self, model_name: str = "football_baseline_model", days: int = 7
+        self, model_name: str = os.getenv("PREDICTION_SERVICE_STR_122"), days: int = 7
     ) -> Optional[float]:
         """
         获取模型准确率 / Get Model Accuracy

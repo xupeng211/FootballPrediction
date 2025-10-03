@@ -1,3 +1,4 @@
+import os
 """
 监控API模块基础测试
 目标：将 src/api/monitoring.py 的覆盖率从0%提升到20%+
@@ -93,13 +94,13 @@ class TestMetricsCollection:
             from src.api.monitoring import record_metric
 
             # 测试记录计数器
-            record_metric("custom_counter", 1, metric_type="counter")
+            record_metric("custom_counter", 1, metric_type = os.getenv("TEST_MONITORING_METRIC_TYPE_96"))
 
             # 测试记录仪表
             record_metric("custom_gauge", 75.5, metric_type="gauge")
 
             # 测试记录直方图
-            record_metric("response_time", 150.0, metric_type="histogram")
+            record_metric("response_time", 150.0, metric_type = os.getenv("TEST_MONITORING_METRIC_TYPE_102"))
         except ImportError:
             pytest.skip("record_metric not available")
 
@@ -341,7 +342,7 @@ class TestLoggingAndTracing:
     @pytest.mark.asyncio
     async def test_trace_request(self):
         """测试请求追踪"""
-        trace_id = "trace_12345"
+        trace_id = os.getenv("TEST_MONITORING_TRACE_ID_341")
         request_data = {
             "method": "POST",
             "path": "/api/v1/predict",

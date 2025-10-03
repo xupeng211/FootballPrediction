@@ -23,19 +23,19 @@ from src.data.collectors.base_collector import (
 class MockDataCollector(DataCollector):
     """用于测试的模拟数据采集器"""
 
-    def __init__(self, data_source: str = "test_source", **kwargs):
+    def __init__(self, data_source: str = os.getenv("TEST_BASE_COLLECTOR_STR_26"), **kwargs):
         super().__init__(data_source, **kwargs)
 
     async def collect_fixtures(self, **kwargs) -> CollectionResult:
         """模拟采集赛程数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_32"),
             records_collected=10,
             success_count=8,
             error_count=2,
-            status="partial",
-            error_message="Some records failed",
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_34"),
+            error_message = os.getenv("TEST_BASE_COLLECTOR_ERROR_MESSAGE_36"),
             collected_data=[{"id": i} for i in range(10)]
         )
 
@@ -47,7 +47,7 @@ class MockDataCollector(DataCollector):
             records_collected=5,
             success_count=5,
             error_count=0,
-            status="success",
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_46"),
             collected_data=[{"match_id": i, "odds": 1.5} for i in range(5)]
         )
 
@@ -55,12 +55,12 @@ class MockDataCollector(DataCollector):
         """模拟采集实时比分数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="live_scores",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_54"),
             records_collected=3,
             success_count=2,
             error_count=1,
-            status="partial",
-            error_message="Connection timeout",
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_34"),
+            error_message = os.getenv("TEST_BASE_COLLECTOR_ERROR_MESSAGE_58"),
             collected_data=[{"match_id": i, "score": f"{i}-0"} for i in range(3)]
         )
 
@@ -71,12 +71,12 @@ class TestCollectionResult:
     def test_collection_result_creation(self):
         """测试创建采集结果"""
         result = CollectionResult(
-            data_source="test_api",
-            collection_type="fixtures",
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_63"),
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_32"),
             records_collected=100,
             success_count=95,
             error_count=5,
-            status="success"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_46")
         )
 
         assert result.data_source == "test_api"
@@ -91,13 +91,13 @@ class TestCollectionResult:
     def test_collection_result_with_optional_fields(self):
         """测试带可选字段的采集结果"""
         result = CollectionResult(
-            data_source="test_api",
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_63"),
             collection_type="odds",
             records_collected=50,
             success_count=45,
             error_count=5,
-            status="partial",
-            error_message="Some API calls failed",
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_34"),
+            error_message = os.getenv("TEST_BASE_COLLECTOR_ERROR_MESSAGE_88"),
             collected_data=[{"match_id": 1, "odds": 2.0}]
         )
 
@@ -127,7 +127,7 @@ class TestDataCollectorInit:
     def test_collector_initialization(self):
         """测试采集器初始化参数"""
         collector = MockDataCollector(
-            data_source="football_api",
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_112"),
             max_retries=5,
             retry_delay=10,
             timeout=60
@@ -304,7 +304,7 @@ class TestMakeRequest:
             with patch('asyncio.sleep') as mock_sleep:
                 mock_retry.side_effect = Exception("Persistent failure")
 
-                with pytest.raises(Exception, match="Persistent failure"):
+                with pytest.raises(Exception, match = os.getenv("TEST_BASE_COLLECTOR_MATCH_295")):
                     await collector._make_request("https://api.example.com")
 
                 assert mock_retry.call_count == 2
@@ -364,7 +364,7 @@ class TestSaveToBronzeLayer:
         """测试保存到不支持的表"""
         collector = MockDataCollector()
 
-        with pytest.raises(ValueError, match="Unsupported table name"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_BASE_COLLECTOR_MATCH_350")):
             await collector._save_to_bronze_layer("invalid_table", [{"test": "data"}])
 
     @pytest.mark.asyncio
@@ -491,11 +491,11 @@ class TestCollectionLog:
 
         result = CollectionResult(
             data_source="test",
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_32"),
             records_collected=10,
             success_count=10,
             error_count=0,
-            status="success"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_46")
         )
 
         with patch('src.data.collectors.base_collector.DatabaseManager') as mock_db:
@@ -506,7 +506,7 @@ class TestCollectionLog:
 
             with patch('src.data.collectors.base_collector.DataCollectionLog') as mock_log_class:
                 with patch('src.data.collectors.base_collector.CollectionStatus') as mock_status:
-                    mock_status.SUCCESS = "SUCCESS"
+                    mock_status.SUCCESS = os.getenv("TEST_BASE_COLLECTOR_SUCCESS_496")
 
                     await collector._update_collection_log(123, result)
 
@@ -520,11 +520,11 @@ class TestCollectionLog:
 
         result = CollectionResult(
             data_source="test",
-            collection_type="fixtures",
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_32"),
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="failed"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_508")
         )
 
         with patch.object(collector.logger, 'warning') as mock_logger:

@@ -102,7 +102,7 @@ app.conf.beat_schedule = {
 }
 
 # 队列配置
-app.conf.task_default_queue = "default"
+app.conf.task_default_queue = os.getenv("CELERY_CONFIG_TASK_DEFAULT_QUEUE_105")
 app.conf.task_queues = {
     "default": {
         "exchange": "default",

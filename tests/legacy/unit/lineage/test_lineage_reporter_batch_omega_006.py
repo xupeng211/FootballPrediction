@@ -72,7 +72,7 @@ class TestLineageReporterBatchOmega006:
         from src.lineage.lineage_reporter import LineageReporter
         # Patch the OpenLineageClient initialization to use our mock
         with patch('src.lineage.lineage_reporter.OpenLineageClient', return_value = mock_openlineage_client)
-            return LineageReporter(marquez_url = "http//localhost5000[")""""
+            return LineageReporter(marquez_url = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_MARQUEZ_URL_"))""""
     @pytest.fixture
     def mock_openlineage_client(self):
         "]""创建模拟 OpenLineage 客户端"""
@@ -109,7 +109,7 @@ class TestLineageReporterBatchOmega006:
         "]""测试 LineageReporter 初始化"""
         from src.lineage.lineage_reporter import LineageReporter
         reporter = LineageReporter(
-        marquez_url = "http:_/localhost5000[",": namespace="]test_namespace["""""
+        marquez_url = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_MARQUEZ_URL_"),": namespace = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_NAMESPACE_11")""""
         )
     assert reporter.namespace =="]test_namespace[" assert reporter._active_runs =={}""""
     assert hasattr(reporter, 'client')
@@ -122,7 +122,7 @@ class TestLineageReporterBatchOmega006:
         "]""测试开始作业运行基本功能"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             run_id = reporter.start_job_run(
-            job_name="test_job[",": job_type="]BATCH["""""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": job_type = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_TYPE_123")""""
             )
             # 验证返回了有效的运行ID
     assert isinstance(run_id, str)
@@ -136,7 +136,7 @@ class TestLineageReporterBatchOmega006:
         "]]""测试开始作业运行带输入数据集"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             run_id = reporter.start_job_run(
-            job_name="test_job[",": job_type="]BATCH[",": inputs=sample_inputs,": description="]Test job description[",": source_location = "]https_/github.com/test/repo["""""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": job_type = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_TYPE_123"),": inputs=sample_inputs,": description = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_DESCRIPTION_"),": source_location = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_SOURCE_LOCAT")""""
             )
     assert isinstance(run_id, str)
     assert "]test_job[" in reporter._active_runs[""""
@@ -146,7 +146,7 @@ class TestLineageReporterBatchOmega006:
         "]]""测试开始作业运行带SQL转换"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             run_id = reporter.start_job_run(
-            job_name="test_job[",": job_type="]BATCH[",": transformation_sql="]SELECT * FROM table["""""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": job_type = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_TYPE_123"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TRANSFORMATI")""""
             )
     assert isinstance(run_id, str)
     assert "]test_job[" in reporter._active_runs[""""
@@ -156,7 +156,7 @@ class TestLineageReporterBatchOmega006:
         "]]""测试开始作业运行空输入"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             run_id = reporter.start_job_run(
-            job_name="test_job[",": inputs=None["""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": inputs=None["""
             )
     assert isinstance(run_id, str)
     assert "]]test_job[" in reporter._active_runs[""""
@@ -165,11 +165,11 @@ class TestLineageReporterBatchOmega006:
     def test_start_job_run_emit_error(self, reporter):
         "]]""测试开始作业运行发送错误"""
         mock_client = Mock()
-        mock_client.emit.side_effect = Exception("Emit error[")": with patch.object(reporter, 'client', mock_client):": with pytest.raises(Exception, match = "]Emit error[")": reporter.start_job_run(job_name="]test_job[")": def test_complete_job_run_basic(self, reporter, mock_openlineage_client):"""
+        mock_client.emit.side_effect = Exception("Emit error[")": with patch.object(reporter, 'client', mock_client):": with pytest.raises(Exception, match = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_MATCH_157"))": reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"))": def test_complete_job_run_basic(self, reporter, mock_openlineage_client):"""
         "]""测试完成作业运行基本功能"""
         # 先开始一个运行，使用mock client
         with patch.object(reporter, 'client', mock_openlineage_client):
-            run_id = reporter.start_job_run(job_name="test_job[")": result = reporter.complete_job_run(job_name="]test_job[")": assert result is True["""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": result = reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"))": assert result is True["""
         # 验证活跃运行被清理
     assert "]]test_job[" not in reporter._active_runs[""""
         # 验证客户端emit被调用
@@ -178,7 +178,7 @@ class TestLineageReporterBatchOmega006:
         "]]""测试完成作业运行带输出数据集"""
         # 使用mock client
         with patch.object(reporter, 'client', mock_openlineage_client):
-            run_id = reporter.start_job_run(job_name="test_job[")": result = reporter.complete_job_run(": job_name="]test_job[",": outputs=sample_outputs,": metrics = {"]processed[": 1000}""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": result = reporter.complete_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"),": outputs=sample_outputs,": metrics = {"]processed[": 1000}""""
             )
     assert result is True
     assert "]test_job[" not in reporter._active_runs[""""
@@ -189,28 +189,28 @@ class TestLineageReporterBatchOmega006:
         custom_run_id = str(uuid.uuid4())
         with patch.object(reporter, 'client', mock_openlineage_client):
             result = reporter.complete_job_run(
-            job_name="test_job[",": run_id=custom_run_id["""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": run_id=custom_run_id["""
             )
     assert result is True
     assert "]]test_job[" not in reporter._active_runs  # 不应该影响活跃运行[""""
     def test_complete_job_run_no_active_run(self, reporter, mock_openlineage_client):
         "]]""测试完成作业运行无活跃运行"""
         with patch.object(reporter, 'client', mock_openlineage_client):
-            result = reporter.complete_job_run(job_name="nonexistent_job[")": assert result is False[" def test_complete_job_run_emit_error(self, reporter, mock_openlineage_client):""
+            result = reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_181"))": assert result is False[" def test_complete_job_run_emit_error(self, reporter, mock_openlineage_client):""
         "]]""测试完成作业运行发送错误"""
         # 先开始一个运行，使用mock client
         with patch.object(reporter, 'client', mock_openlineage_client):
-            run_id = reporter.start_job_run(job_name="test_job[")""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
         # 然后模拟emit错误
         mock_client = Mock()
-        mock_client.emit.side_effect = Exception("]Emit error[")": with patch.object(reporter, 'client', mock_client):": result = reporter.complete_job_run(job_name="]test_job[")": assert result is False["""
+        mock_client.emit.side_effect = Exception("]Emit error[")": with patch.object(reporter, 'client', mock_client):": result = reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"))": assert result is False["""
             # 运行应该被清理
     assert "]]test_job[" not in reporter._active_runs[""""
     def test_fail_job_run_basic(self, reporter, mock_openlineage_client):
         "]]""测试标记作业运行失败基本功能"""
         # 使用mock client
         with patch.object(reporter, 'client', mock_openlineage_client):
-            run_id = reporter.start_job_run(job_name="test_job[")": result = reporter.fail_job_run(": job_name="]test_job[",": error_message="]Test error["""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": result = reporter.fail_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"),": error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG")""""
             )
     assert result is True
         # 验证活跃运行被清理
@@ -223,24 +223,24 @@ class TestLineageReporterBatchOmega006:
         custom_run_id = str(uuid.uuid4())
         with patch.object(reporter, 'client', mock_openlineage_client):
             result = reporter.fail_job_run(
-            job_name="test_job[",": error_message="]Test error[",": run_id=custom_run_id["""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG"),": run_id=custom_run_id["""
             )
     assert result is True
     def test_fail_job_run_no_active_run(self, reporter, mock_openlineage_client):
         "]]""测试标记作业运行失败无活跃运行"""
         with patch.object(reporter, 'client', mock_openlineage_client):
             result = reporter.fail_job_run(
-            job_name="nonexistent_job[",": error_message="]Test error["""""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_181"),": error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG")""""
             )
     assert result is False
     def test_fail_job_run_emit_error(self, reporter, mock_openlineage_client):
         "]""测试标记作业运行失败发送错误"""
         # 先开始一个运行，使用mock client
         with patch.object(reporter, 'client', mock_openlineage_client):
-            run_id = reporter.start_job_run(job_name="test_job[")""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
         # 然后模拟emit错误
         mock_client = Mock()
-        mock_client.emit.side_effect = Exception("]Emit error[")": with patch.object(reporter, 'client', mock_client):": result = reporter.fail_job_run(": job_name="]test_job[",": error_message="]Test error["""""
+        mock_client.emit.side_effect = Exception("]Emit error[")": with patch.object(reporter, 'client', mock_client):": result = reporter.fail_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"),": error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG")""""
             )
     assert result is False
             # 运行不会被清理（因为emit失败，清理只在成功时执行）
@@ -251,7 +251,7 @@ class TestLineageReporterBatchOmega006:
         with patch.object(reporter, 'client', mock_openlineage_client), \:
             patch.object(reporter, 'start_job_run') as mock_start, \
             patch.object(reporter, 'complete_job_run') as mock_complete:
-            mock_start.return_value = "test_run_id[": run_id = reporter.report_data_collection(": source_name="]api_source[",": target_table="]raw_data[",": records_collected=1000,": collection_time=collection_time[""
+            mock_start.return_value = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_RETURN_VALUE"): run_id = reporter.report_data_collection(": source_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_SOURCE_NAME_"),": target_table = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TARGET_TABLE"),": records_collected=1000,": collection_time=collection_time[""
             )
     assert run_id =="]]test_run_id["""""
             # 验证调用了start和complete
@@ -264,7 +264,7 @@ class TestLineageReporterBatchOmega006:
         "]""测试报告数据采集带配置"""
         collection_time = datetime.now(timezone.utc)
         source_config = {"schema[": [{"]name[": "]id[", "]type[" "]integer["}]}": with patch.object(reporter, 'client', mock_openlineage_client), \:": patch.object(reporter, 'start_job_run') as mock_start, \": patch.object(reporter, 'complete_job_run') as mock_complete:"
-            mock_start.return_value = "]test_run_id[": run_id = reporter.report_data_collection(": source_name="]api_source[",": target_table="]raw_data[",": records_collected=1000,": collection_time=collection_time,": source_config=source_config"
+            mock_start.return_value = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_RETURN_VALUE"): run_id = reporter.report_data_collection(": source_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_SOURCE_NAME_"),": target_table = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TARGET_TABLE"),": records_collected=1000,": collection_time=collection_time,": source_config=source_config"
             )
     assert run_id =="]test_run_id["""""
             # 验证schema传递
@@ -274,7 +274,7 @@ class TestLineageReporterBatchOmega006:
         with patch.object(reporter, 'client', mock_openlineage_client), \:
             patch.object(reporter, 'start_job_run') as mock_start, \
             patch.object(reporter, 'complete_job_run') as mock_complete:
-            mock_start.return_value = "test_run_id[": run_id = reporter.report_data_transformation(": source_tables=["]source1[", "]source2["],": target_table="]target_table[",": transformation_sql="]SELECT * FROM source1[",": records_processed=500["""
+            mock_start.return_value = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_RETURN_VALUE"): run_id = reporter.report_data_transformation(": source_tables=["]source1[", "]source2["],": target_table = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TARGET_TABLE"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TRANSFORMATI"),": records_processed=500["""
             )
     assert run_id =="]]test_run_id["""""
             # 验证调用了start和complete
@@ -288,7 +288,7 @@ class TestLineageReporterBatchOmega006:
         with patch.object(reporter, 'client', mock_openlineage_client), \:
             patch.object(reporter, 'start_job_run') as mock_start, \
             patch.object(reporter, 'complete_job_run') as mock_complete:
-            mock_start.return_value = "test_run_id[": run_id = reporter.report_data_transformation(": source_tables=["]source1["],": target_table="]target_table[",": transformation_sql="]SELECT * FROM source1[",": records_processed=500,": transformation_type="]CLEANING["""""
+            mock_start.return_value = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_RETURN_VALUE"): run_id = reporter.report_data_transformation(": source_tables=["]source1["],": target_table = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TARGET_TABLE"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TRANSFORMATI"),": records_processed=500,": transformation_type = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TRANSFORMATI")""""
             )
     assert run_id =="]test_run_id["""""
             # 验证转换类型传递
@@ -298,17 +298,17 @@ class TestLineageReporterBatchOmega006:
     """"
         "]""测试获取活跃运行"""
         # 开始几个运行
-        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name="]job2[")": active_runs = reporter.get_active_runs()": assert isinstance(active_runs, dict)" assert len(active_runs) ==2"
+        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_275"))": active_runs = reporter.get_active_runs()": assert isinstance(active_runs, dict)" assert len(active_runs) ==2"
     assert active_runs["]job1["] ==run_id1[" assert active_runs["]]job2["] ==run_id2[""""
         # 验证返回的是副本
         active_runs["]]job1["] = "]modified[": assert reporter._active_runs["]job1["] ==run_id1[" def test_clear_active_runs(self, reporter):"""
         "]]""测试清理活跃运行"""
         # 开始几个运行
-        reporter.start_job_run(job_name="job1[")": reporter.start_job_run(job_name="]job2[")": assert len(reporter._active_runs) ==2[" reporter.clear_active_runs()""
+        reporter.start_job_run(job_name="job1[")": reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_275"))": assert len(reporter._active_runs) ==2[" reporter.clear_active_runs()""
     assert len(reporter._active_runs) ==0
     def test_uuid_generation(self, reporter):
         "]]""测试UUID生成"""
-        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name="]job2[")""""
+        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_275"))""""
         # 验证UUID是唯一的
     assert run_id1 != run_id2
     assert isinstance(run_id1, str)
@@ -317,21 +317,21 @@ class TestLineageReporterBatchOmega006:
         "]""测试开始事件构建"""
         with patch('src.lineage.lineage_reporter.RunEvent') as mock_event_class = mock_event Mock()
             mock_event_class.return_value = mock_event
-            run_id = reporter.start_job_run(job_name="test_job[")""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
             # 验证RunEvent被正确构造
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
     assert call_args["]eventType["] =="]START[" assert call_args["]run["].runId ==run_id[" assert call_args["]]job["].name =="]test_job[" assert call_args["]job["].namespace =="]football_prediction[" assert call_args["]producer["] =="]football_prediction_lineage_reporter[" def test_event_construction_complete("
     """"
         "]""测试完成事件构建"""
-        run_id = reporter.start_job_run(job_name="test_job[")": with patch('src.lineage.lineage_reporter.RunEvent') as mock_event_class = mock_event Mock()": mock_event_class.return_value = mock_event[": reporter.complete_job_run(job_name="]]test_job[")""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": with patch('src.lineage.lineage_reporter.RunEvent') as mock_event_class = mock_event Mock()": mock_event_class.return_value = mock_event[": reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_296"))""""
             # 验证RunEvent被正确构造
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
     assert call_args["]eventType["] =="]COMPLETE[" assert call_args["]run["].runId ==run_id[" assert call_args["]]job["].name =="]test_job[" assert call_args["]producer["] =="]football_prediction_lineage_reporter[" def test_event_construction_fail("
     """"
         "]""测试失败事件构建"""
-        run_id = reporter.start_job_run(job_name="test_job[")": with patch('src.lineage.lineage_reporter.RunEvent') as mock_event_class = mock_event Mock()": mock_event_class.return_value = mock_event[": reporter.fail_job_run(job_name="]]test_job[", error_message="]Test error[")""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": with patch('src.lineage.lineage_reporter.RunEvent') as mock_event_class = mock_event Mock()": mock_event_class.return_value = mock_event[": reporter.fail_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_296"), error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG"))""""
             # 验证RunEvent被正确构造
             mock_event_class.assert_called_once()
             call_args = mock_event_class.call_args[1]
@@ -347,7 +347,7 @@ class TestLineageReporterBatchOmega006:
         ]
         with patch('src.lineage.lineage_reporter.InputDataset') as mock_input_dataset:
             mock_input_dataset.return_value = Mock()
-            run_id = reporter.start_job_run(job_name="]test_job[", inputs=inputs_with_schema)""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"), inputs=inputs_with_schema)""""
             # 验证InputDataset被正确构造
             mock_input_dataset.assert_called_once()
             call_args = mock_input_dataset.call_args[1]
@@ -356,15 +356,15 @@ class TestLineageReporterBatchOmega006:
         "]]""测试作业facet处理"""
         with patch('src.lineage.lineage_reporter.source_code_location_job') as mock_source_code, \:
             patch('src.lineage.lineage_reporter.sql_job') as mock_sql_job = run_id reporter.start_job_run(
-            job_name="test_job[",": description="]Test description[",": source_location = "]https_/github.com/test/repo[",": transformation_sql="]SELECT * FROM table["""""
+            job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"),": description = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_DESCRIPTION_"),": source_location = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_SOURCE_LOCAT"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_TRANSFORMATI")""""
             )
             # 验证facet被正确处理
             mock_source_code.SourceCodeLocationJobFacet.assert_called_once_with(
-                type = "]git[", url="]https//github.com/test/repo["""""
+                type = "]git[", url = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_URL_327")""""
             )
-            mock_sql_job.SQLJobFacet.assert_called_once_with(query="]SELECT * FROM table[")": def test_metrics_facet_handling(self, reporter):"""
+            mock_sql_job.SQLJobFacet.assert_called_once_with(query = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_QUERY_327"))": def test_metrics_facet_handling(self, reporter):"""
         "]""测试指标facet处理"""
-        run_id = reporter.start_job_run(job_name="test_job[")": outputs = ["""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": outputs = ["""
             {
             "]name[": ["]test_table[",""""
             "]namespace[": ["]test_namespace[",""""
@@ -373,31 +373,31 @@ class TestLineageReporterBatchOmega006:
         ]
         with patch('src.lineage.lineage_reporter.OutputDataset') as mock_output_dataset:
             mock_output_dataset.return_value = Mock()
-            reporter.complete_job_run(job_name = "]test_job[", outputs=outputs, metrics={"]processed[": 1000})""""
+            reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_334"), outputs=outputs, metrics={"]processed[": 1000})""""
             # 验证OutputDataset被正确构造
             mock_output_dataset.assert_called_once()
             call_args = mock_output_dataset.call_args[1]
     assert "]facets[" in call_args[""""
     def test_error_facet_handling(self, reporter):
         "]]""测试错误facet处理"""
-        run_id = reporter.start_job_run(job_name="test_job[")": with patch('src.lineage.lineage_reporter.error_message_run') as mock_error_message:": mock_error_message.ErrorMessageRunFacet.return_value = Mock()": reporter.fail_job_run(job_name="]test_job[", error_message="]Test error[")""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))": with patch('src.lineage.lineage_reporter.error_message_run') as mock_error_message:": mock_error_message.ErrorMessageRunFacet.return_value = Mock()": reporter.fail_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"), error_message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_ERROR_MESSAG"))""""
             # 验证错误facet被正确构造
             mock_error_message.ErrorMessageRunFacet.assert_called_once_with(
-            message="]Test error[", programmingLanguage="]PYTHON["""""
+            message = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_MESSAGE_340"), programmingLanguage = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_PROGRAMMINGL")""""
             )
     def test_namespace_handling(self, reporter):
         "]""测试命名空间处理"""
         # 测试默认命名空间
-        run_id = reporter.start_job_run(job_name="test_job[")""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
         # 验证使用了默认命名空间
     assert reporter.namespace =="]football_prediction["""""
         # 测试自定义命名空间
-        custom_reporter = reporter.__class__(namespace="]custom_namespace[")": assert custom_reporter.namespace =="]custom_namespace[" def test_logging_functionality("
+        custom_reporter = reporter.__class__(namespace = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_NAMESPACE_35"))": assert custom_reporter.namespace =="]custom_namespace[" def test_logging_functionality("
     """"
         "]""测试日志记录功能"""
         with patch('src.lineage.lineage_reporter.logger') as mock_logger = mock_client Mock()
             reporter.client = mock_client
-            run_id = reporter.start_job_run(job_name="test_job[")""""
+            run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
             # 验证日志记录
             mock_logger.info.assert_called_with(f["]Started job run["]: [test_job with run_id]):": def test_error_logging(self, reporter):"""
         "]""测试错误日志记录"""
@@ -418,12 +418,12 @@ class TestLineageReporterBatchOmega006:
             except Exception as e:
                pass  # Auto-fixed empty except block
  pass
-                reporter.start_job_run(job_name="]]test_job[")": except Exception:": pass[""
+                reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_296"))": except Exception:": pass[""
             # 验证错误日志记录
             mock_logger.error.assert_called_with("]]Failed to emit start event for job test_job[": [Test error]):": def test_concurrent_job_runs(self, reporter):"""
         "]""测试并发作业运行"""
         # 开始多个作业运行
-        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name="]job2[")": run_id3 = reporter.start_job_run(job_name="]job3[")""""
+        run_id1 = reporter.start_job_run(job_name="job1[")": run_id2 = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_275"))": run_id3 = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_369"))""""
         # 验证所有运行都在活跃状态
         active_runs = reporter.get_active_runs()
     assert len(active_runs) ==3
@@ -431,7 +431,7 @@ class TestLineageReporterBatchOmega006:
     assert "]]job2[" in active_runs[""""
     assert "]]job3[" in active_runs[""""
         # 完成部分作业
-        reporter.complete_job_run(job_name="]]job2[")""""
+        reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_376"))""""
         # 验证剩余活跃运行
         active_runs = reporter.get_active_runs()
     assert len(active_runs) ==2
@@ -441,18 +441,18 @@ class TestLineageReporterBatchOmega006:
     def test_run_id_consistency(self, reporter):
         "]]""测试运行ID一致性"""
         # 开始作业运行
-        run_id = reporter.start_job_run(job_name="test_job[")""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"))""""
         # 验证活跃运行中的ID一致
     assert reporter._active_runs["]test_job["] ==run_id[""""
         # 完成作业时使用相同的ID
         with patch.object(reporter.client, 'emit'):
-            result = reporter.complete_job_run(job_name="]]test_job[")": assert result is True[" def test_empty_parameters_handling(self, reporter):""
+            result = reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_296"))": assert result is True[" def test_empty_parameters_handling(self, reporter):""
         "]]""测试空参数处理"""
         # 测试空输入
-        run_id = reporter.start_job_run(job_name="test_job[", inputs=[])""""
+        run_id = reporter.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_123"), inputs=[])""""
         # 测试空输出
         with patch.object(reporter.client, 'emit'):
-            result = reporter.complete_job_run(job_name="]test_job[", outputs=[])": assert result is True[" def test_global_instance(self):""
+            result = reporter.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_BATCH_OMEGA_006_JOB_NAME_158"), outputs=[])": assert result is True[" def test_global_instance(self):""
         "]]""测试全局实例"""
         from src.lineage.lineage_reporter import lineage_reporter
         # 验证全局实例存在

@@ -1,3 +1,4 @@
+import os
 """
 足球预测系统特征定义
 
@@ -97,39 +98,39 @@ class MockFileSource:
 
 # 实体定义
 match_entity = MockEntity(
-    name="match_id", description="比赛唯一标识符", join_keys=["match_id"]
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_100"), description = os.getenv("FEATURE_DEFINITIONS_DESCRIPTION_100"), join_keys=["match_id"]
 )
 
 team_entity = MockEntity(
-    name="team_id", description="球队唯一标识符", join_keys=["team_id"]
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_100"), description = os.getenv("FEATURE_DEFINITIONS_DESCRIPTION_100"), join_keys=["team_id"]
 )
 
 league_entity = MockEntity(
-    name="league_id", description="联赛唯一标识符", join_keys=["league_id"]
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_104"), description = os.getenv("FEATURE_DEFINITIONS_DESCRIPTION_104"), join_keys=["league_id"]
 )
 
 # 数据源定义
 match_features_source = MockFileSource(
-    name="match_features_source",
-    path="data/match_features.parquet",
-    timestamp_field="event_timestamp",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_107"),
+    path = os.getenv("FEATURE_DEFINITIONS_PATH_108"),
+    timestamp_field = os.getenv("FEATURE_DEFINITIONS_TIMESTAMP_FIELD_108"),
 )
 
 team_stats_source = MockFileSource(
-    name="team_recent_stats_source",
-    path="data/team_stats.parquet",
-    timestamp_field="event_timestamp",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_108"),
+    path = os.getenv("FEATURE_DEFINITIONS_PATH_112"),
+    timestamp_field = os.getenv("FEATURE_DEFINITIONS_TIMESTAMP_FIELD_108"),
 )
 
 odds_features_source = MockFileSource(
-    name="odds_features_source",
-    path="data/odds_features.parquet",
-    timestamp_field="event_timestamp",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_114"),
+    path = os.getenv("FEATURE_DEFINITIONS_PATH_115"),
+    timestamp_field = os.getenv("FEATURE_DEFINITIONS_TIMESTAMP_FIELD_108"),
 )
 
 # 特征视图定义
 match_features_view = MockFeatureView(
-    name="match_features",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_119"),
     entities=[match_entity],
     ttl=timedelta(days=30),
     source=match_features_source,
@@ -137,7 +138,7 @@ match_features_view = MockFeatureView(
 )
 
 team_recent_stats_view = MockFeatureView(
-    name="team_recent_stats",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_125"),
     entities=[team_entity],
     ttl=timedelta(days=7),
     source=team_stats_source,
@@ -145,7 +146,7 @@ team_recent_stats_view = MockFeatureView(
 )
 
 odds_features_view = MockFeatureView(
-    name="odds_features",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_131"),
     entities=[match_entity],
     ttl=timedelta(hours=6),
     source=odds_features_source,
@@ -153,7 +154,7 @@ odds_features_view = MockFeatureView(
 )
 
 head_to_head_features_view = MockFeatureView(
-    name="head_to_head_features",
+    name = os.getenv("FEATURE_DEFINITIONS_NAME_139"),
     entities=[match_entity],
     ttl=timedelta(days=365),
     source=odds_features_source,  # 复用数据源

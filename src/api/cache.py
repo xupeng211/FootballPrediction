@@ -1,3 +1,4 @@
+import os
 """
 缓存管理API
 Cache Management API
@@ -20,32 +21,32 @@ router = APIRouter(prefix="/cache", tags=["缓存管理"])
 
 class CacheStatsResponse(BaseModel):
     """缓存统计响应"""
-    l1_cache: Dict[str, Any] = Field(description="L1缓存统计")
-    l2_cache: Dict[str, Any] = Field(description="L2缓存统计")
+    l1_cache: Dict[str, Any] = Field(description = os.getenv("CACHE_DESCRIPTION_23"))
+    l2_cache: Dict[str, Any] = Field(description = os.getenv("CACHE_DESCRIPTION_24"))
     overall: Dict[str, Any] = Field(description="总体统计")
     config: Dict[str, Any] = Field(description="缓存配置")
 
 
 class CacheOperationResponse(BaseModel):
     """缓存操作响应"""
-    success: bool = Field(description="操作是否成功")
-    message: str = Field(description="操作结果消息")
+    success: bool = Field(description = os.getenv("CACHE_DESCRIPTION_29"))
+    message: str = Field(description = os.getenv("CACHE_DESCRIPTION_31"))
     data: Optional[Dict[str, Any]] = Field(default=None, description="附加数据")
 
 
 class CacheKeyRequest(BaseModel):
     """缓存键请求"""
-    keys: List[str] = Field(description="要操作的缓存键列表")
-    pattern: Optional[str] = Field(description="键模式（支持通配符）")
+    keys: List[str] = Field(description = os.getenv("CACHE_DESCRIPTION_33"))
+    pattern: Optional[str] = Field(description = os.getenv("CACHE_DESCRIPTION_36"))
 
 
 class CachePrewarmRequest(BaseModel):
     """缓存预热请求"""
-    task_types: List[str] = Field(description="预热任务类型列表")
-    force: bool = Field(default=False, description="是否强制重新预热")
+    task_types: List[str] = Field(description = os.getenv("CACHE_DESCRIPTION_39"))
+    force: bool = Field(default=False, description = os.getenv("CACHE_DESCRIPTION_39"))
 
 
-@router.get("/stats", response_model=CacheStatsResponse, summary="获取缓存统计")
+@router.get("/stats", response_model=CacheStatsResponse, summary = os.getenv("CACHE_SUMMARY_44"))
 async def get_cache_stats():
     """
     获取缓存系统统计信息
@@ -61,7 +62,7 @@ async def get_cache_stats():
         if not cache_manager:
             raise HTTPException(
                 status_code=503,
-                detail="缓存管理器未初始化"
+                detail = os.getenv("CACHE_DETAIL_53")
             )
 
         stats = cache_manager.get_stats()
@@ -93,7 +94,7 @@ async def clear_cache(
         if not cache_manager:
             raise HTTPException(
                 status_code=503,
-                detail="缓存管理器未初始化"
+                detail = os.getenv("CACHE_DETAIL_53")
             )
 
         cleared_keys = []
@@ -149,7 +150,7 @@ async def prewarm_cache(
         if not cache_initializer:
             raise HTTPException(
                 status_code=503,
-                detail="缓存初始化器未初始化"
+                detail = os.getenv("CACHE_DETAIL_141")
             )
 
         # 验证任务类型
@@ -199,7 +200,7 @@ async def optimize_cache(background_tasks: BackgroundTasks):
         if not cache_initializer:
             raise HTTPException(
                 status_code=503,
-                detail="缓存初始化器未初始化"
+                detail = os.getenv("CACHE_DETAIL_141")
             )
 
         # 在后台执行优化任务
@@ -209,7 +210,7 @@ async def optimize_cache(background_tasks: BackgroundTasks):
 
         return CacheOperationResponse(
             success=True,
-            message="已启动缓存优化任务"
+            message = os.getenv("CACHE_MESSAGE_200")
         )
 
     except HTTPException:
@@ -222,7 +223,7 @@ async def optimize_cache(background_tasks: BackgroundTasks):
         )
 
 
-@router.get("/health", summary="缓存健康检查")
+@router.get("/health", summary = os.getenv("CACHE_SUMMARY_211"))
 async def cache_health_check():
     """
     检查缓存系统健康状态
@@ -284,7 +285,7 @@ async def cache_health_check():
         )
 
 
-@router.get("/config", summary="获取缓存配置")
+@router.get("/config", summary = os.getenv("CACHE_SUMMARY_272"))
 async def get_cache_config():
     """
     获取当前缓存配置

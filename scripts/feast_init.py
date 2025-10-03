@@ -95,12 +95,12 @@ class FeastInitializer:
         return [
             Entity(
                 name="team",
-                description="球队实体，用于球队级别的特征",
+                description = os.getenv("FEAST_INIT_DESCRIPTION_98"),
                 value_type=ValueType.INT64,
             ),
             Entity(
                 name="match",
-                description="比赛实体，用于比赛级别的特征",
+                description = os.getenv("FEAST_INIT_DESCRIPTION_102"),
                 value_type=ValueType.INT64,
             ),
         ]
@@ -110,7 +110,7 @@ class FeastInitializer:
 
         # 球队近期表现特征数据源
         team_performance_source = PostgreSQLSource(
-            name="team_performance_source",
+            name = os.getenv("FEAST_INIT_NAME_112"),
             query="""
                 SELECT
                     team_id,
@@ -128,12 +128,12 @@ class FeastInitializer:
                 FROM team_recent_performance_features
                 WHERE calculation_date >= NOW() - INTERVAL '1 year'
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEAST_INIT_TIMESTAMP_FIELD_129"),
         )
 
         # 历史对战特征数据源
         h2h_source = PostgreSQLSource(
-            name="historical_matchup_source",
+            name = os.getenv("FEAST_INIT_NAME_131"),
             query="""
                 SELECT
                     match_id,
@@ -149,12 +149,12 @@ class FeastInitializer:
                 FROM historical_matchup_features
                 WHERE calculation_date >= NOW() - INTERVAL '1 year'
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEAST_INIT_TIMESTAMP_FIELD_129"),
         )
 
         # 赔率特征数据源
         odds_source = PostgreSQLSource(
-            name="odds_source",
+            name = os.getenv("FEAST_INIT_NAME_152"),
             query="""
                 SELECT
                     match_id,
@@ -170,7 +170,7 @@ class FeastInitializer:
                 FROM odds_features
                 WHERE calculation_date >= NOW() - INTERVAL '1 year'
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEAST_INIT_TIMESTAMP_FIELD_129"),
         )
 
         # 获取已注册的实体
@@ -180,57 +180,57 @@ class FeastInitializer:
 
         return [
             FeatureView(
-                name="team_recent_performance",
+                name = os.getenv("FEAST_INIT_NAME_177"),
                 entities=[team_entity],
                 ttl=timedelta(days=7),
                 schema=[
-                    Field(name="recent_5_wins", dtype=Int64),
-                    Field(name="recent_5_draws", dtype=Int64),
-                    Field(name="recent_5_losses", dtype=Int64),
-                    Field(name="recent_5_goals_for", dtype=Int64),
-                    Field(name="recent_5_goals_against", dtype=Int64),
-                    Field(name="recent_5_points", dtype=Int64),
-                    Field(name="recent_5_home_wins", dtype=Int64),
-                    Field(name="recent_5_away_wins", dtype=Int64),
-                    Field(name="recent_5_home_goals_for", dtype=Int64),
-                    Field(name="recent_5_away_goals_for", dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_183"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_184"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_185"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_187"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_188"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_189"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_189"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_190"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_191"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_192"), dtype=Int64),
                 ],
                 source=team_performance_source,
-                description="球队近期表现特征（最近5场比赛）",
+                description = os.getenv("FEAST_INIT_DESCRIPTION_194"),
             ),
             FeatureView(
-                name="historical_matchup",
+                name = os.getenv("FEAST_INIT_NAME_195"),
                 entities=[match_entity],
                 ttl=timedelta(days=30),
                 schema=[
-                    Field(name="home_team_id", dtype=Int64),
-                    Field(name="away_team_id", dtype=Int64),
-                    Field(name="h2h_total_matches", dtype=Int64),
-                    Field(name="h2h_home_wins", dtype=Int64),
-                    Field(name="h2h_away_wins", dtype=Int64),
-                    Field(name="h2h_draws", dtype=Int64),
-                    Field(name="h2h_home_goals_total", dtype=Int64),
-                    Field(name="h2h_away_goals_total", dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_197"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_199"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_199"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_202"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_203"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_205"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_206"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_207"), dtype=Int64),
                 ],
                 source=h2h_source,
-                description="球队历史对战特征",
+                description = os.getenv("FEAST_INIT_DESCRIPTION_208"),
             ),
             FeatureView(
-                name="odds_features",
+                name = os.getenv("FEAST_INIT_NAME_209"),
                 entities=[match_entity],
                 ttl=timedelta(hours=6),
                 schema=[
-                    Field(name="home_odds_avg", dtype=Float64),
-                    Field(name="draw_odds_avg", dtype=Float64),
-                    Field(name="away_odds_avg", dtype=Float64),
-                    Field(name="home_implied_probability", dtype=Float64),
-                    Field(name="draw_implied_probability", dtype=Float64),
-                    Field(name="away_implied_probability", dtype=Float64),
-                    Field(name="bookmaker_count", dtype=Int64),
-                    Field(name="bookmaker_consensus", dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_211"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_212"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_213"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_213"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_216"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_218"), dtype=Float64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_220"), dtype=Int64),
+                    Field(name = os.getenv("FEAST_INIT_NAME_221"), dtype=Float64),
                 ],
                 source=odds_source,
-                description="赔率衍生特征",
+                description = os.getenv("FEAST_INIT_DESCRIPTION_223"),
             ),
         ]
 

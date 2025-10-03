@@ -1,10 +1,11 @@
+import os
 #!/usr/bin/env python3
 """
 Fix syntax errors in conftest.py by removing extra quotes
 """
 
 def fix_conftest_syntax():
-    file_path = "tests/conftest.py"
+    file_path = os.getenv("FIX_CONFTEST_SYNTAX_FILE_PATH_7")
 
     # Read the file
     with open(file_path, 'r', encoding='utf-8') as f:

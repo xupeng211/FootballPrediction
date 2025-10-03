@@ -1,6 +1,7 @@
 from src.lineage.metadata_manager import MetadataManager
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 Unit tests for metadata manager module.:
@@ -18,7 +19,7 @@ def metadata_manager():
     "]""Create a MetadataManager instance for testing."""
     with patch("requests.Session[") as mock_session_class:": mock_session_instance = Mock()": mock_session_instance.headers = {""
             "]Content-Type[: "application/json[","]"""
-            "]Accept[: "application/json["}"]": mock_session_class.return_value = mock_session_instance[": manager = MetadataManager(marquez_url="]]http://test5000[")": manager.session = mock_session_instance[": return manager[": class TestMetadataManagerInitialization:"
+            "]Accept[: "application/json["}"]": mock_session_class.return_value = mock_session_instance[": manager = MetadataManager(marquez_url = os.getenv("TEST_METADATA_MANAGER_MARQUEZ_URL_21"))": manager.session = mock_session_instance[": return manager[": class TestMetadataManagerInitialization:"
     "]]]""Test cases for MetadataManager initialization."""
     def test_init_default_url(self):
         """Test initialization with default URL."""
@@ -28,7 +29,7 @@ def metadata_manager():
     def test_init_custom_url(self):
         "]""Test initialization with custom URL."""
         with patch("requests.Session[") as mock_session_class:": mock_session_instance = Mock()": mock_session_instance.headers = {}": mock_session_class.return_value = mock_session_instance"
-            manager = MetadataManager(marquez_url="]http://custom8080[")": assert manager.marquez_url =="]http//custom8080[" assert manager.base_url =="]http//custom8080[" assert manager.api_url =="]http//custom8080/api/v1/" def test_session_headers("
+            manager = MetadataManager(marquez_url = os.getenv("TEST_METADATA_MANAGER_MARQUEZ_URL_31"))": assert manager.marquez_url =="]http//custom8080[" assert manager.base_url =="]http//custom8080[" assert manager.api_url =="]http//custom8080/api/v1/" def test_session_headers("
     """"
         """Test that session headers are properly set."""
         with patch("requests.Session[") as mock_session_class:": mock_session_instance = Mock()": mock_session_class.return_value = mock_session_instance[": MetadataManager()"
@@ -48,10 +49,10 @@ class TestCreateNamespace:
             "]description[: "Test namespace[","]"""
             "]ownerName[": ["]test_owner[",""""
             "]createdAt[: "2024-01-01T00:00:00Z["}"]": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_namespace("
-            name="]]test_namespace[", description="]Test namespace[", owner_name="]test_owner["""""
+            name = os.getenv("TEST_METADATA_MANAGER_NAME_50"), description = os.getenv("TEST_METADATA_MANAGER_DESCRIPTION_50"), owner_name = os.getenv("TEST_METADATA_MANAGER_OWNER_NAME_51")""""
         )
         # Verify the call
-        expected_url = "]http://test5000/api/v1/namespaces[": expected_data = {""""
+        expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_51"): expected_data = {""""
             "]name[": ["]test_namespace[",""""
             "]description[: "Test namespace[","]"""
             "]ownerName[": ["]test_owner["}": metadata_manager.session.post.assert_called_once_with(": expected_url, json=expected_data[""
@@ -62,7 +63,7 @@ class TestCreateNamespace:
         "]""Test namespace creation with minimal parameters."""
         mock_response = Mock()
         mock_response.status_code = 201
-        mock_response.json.return_value = {"name[": ["]minimal_namespace["}": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_namespace(name="]]minimal_namespace[")": expected_data = {"]name[": ["]minimal_namespace["}": metadata_manager.session.post.assert_called_once_with("""
+        mock_response.json.return_value = {"name[": ["]minimal_namespace["}": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_NAME_65"))": expected_data = {"]name[": ["]minimal_namespace["}": metadata_manager.session.post.assert_called_once_with("""
             "]http://test:5000/api/v1/namespaces[", json=expected_data[""""
         )
         assert result["]]name["] =="]minimal_namespace[" def test_create_namespace_http_error("
@@ -74,9 +75,9 @@ class TestCreateNamespace:
             "Namespace already exists["""""
         )
         metadata_manager.session.post.return_value = mock_response
-        with pytest.raises(Exception, match = "]Namespace already exists[")": metadata_manager.create_namespace(name="]existing_namespace[")": def test_create_namespace_connection_error(self, metadata_manager):"""
+        with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_73"))": metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_NAME_74"))": def test_create_namespace_connection_error(self, metadata_manager):"""
         "]""Test namespace creation with connection error."""
-        metadata_manager.session.post.side_effect = Exception("Connection failed[")": with pytest.raises(Exception, match = "]Connection failed[")": metadata_manager.create_namespace(name="]test_namespace[")": class TestGetNamespace:"""
+        metadata_manager.session.post.side_effect = Exception("Connection failed[")": with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_77"))": metadata_manager.create_namespace(name = os.getenv("TEST_METADATA_MANAGER_NAME_78"))": class TestGetNamespace:"""
     "]""Test cases for get_namespace method."""
     def test_get_namespace_success(self, metadata_manager):
         """Test successful namespace retrieval."""
@@ -85,12 +86,12 @@ class TestCreateNamespace:
         mock_response.json.return_value = {
             "name[": ["]test_namespace[",""""
             "]description[: "Test namespace[","]"""
-            "]ownerName[": ["]test_owner["}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_namespace("]]test_namespace[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]name["] =="]test_namespace[" def test_get_namespace_not_found("
+            "]ownerName[": ["]test_owner["}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_namespace("]]test_namespace[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_85"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]name["] =="]test_namespace[" def test_get_namespace_not_found("
     """"
         "]""Test namespace retrieval when not found."""
         mock_response = Mock()
         mock_response.status_code = 404
-        mock_response.raise_for_status.side_effect = Exception("Not found[")": metadata_manager.session.get.return_value = mock_response[": with pytest.raises(Exception, match = "]]Not found[")": metadata_manager.get_namespace("]nonexistent_namespace[")": class TestListNamespaces:"""
+        mock_response.raise_for_status.side_effect = Exception("Not found[")": metadata_manager.session.get.return_value = mock_response[": with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_90"))": metadata_manager.get_namespace("]nonexistent_namespace[")": class TestListNamespaces:"""
     "]""Test cases for list_namespaces method."""
     def test_list_namespaces_success(self, metadata_manager):
         """Test successful namespace listing."""
@@ -118,16 +119,16 @@ class TestCreateNamespace:
             "name[": ["]test_dataset[",""""
             "]namespace[": ["]test_namespace[",""""
             "]description[: "Test dataset["}"]": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_dataset("
-            namespace="]]test_namespace[", name="]test_dataset[", description="]Test dataset["""""
+            namespace = os.getenv("TEST_METADATA_MANAGER_NAMESPACE_117"), name = os.getenv("TEST_METADATA_MANAGER_NAME_117"), description = os.getenv("TEST_METADATA_MANAGER_DESCRIPTION_118")""""
         )
-        expected_url = "]http://test5000/api/v1/namespaces/test_namespace/datasets[": expected_data = {"]name[: "test_dataset"", "description]}": metadata_manager.session.post.assert_called_once_with(": expected_url, json=expected_data[""
+        expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_119"): expected_data = {"]name[: "test_dataset"", "description]}": metadata_manager.session.post.assert_called_once_with(": expected_url, json=expected_data[""
         )
         assert result["]name["] =="]test_dataset[" def test_create_dataset_with_fields("
     """"
         "]""Test dataset creation with schema fields."""
         mock_response = Mock()
         mock_response.status_code = 201
-        mock_response.json.return_value = {"name[": ["]test_dataset["}": metadata_manager.session.post.return_value = mock_response[": fields = [{"]]name[: "id"", "type]}]": metadata_manager.create_dataset(": namespace="test_namespace[", name="]test_dataset[", fields=fields[""""
+        mock_response.json.return_value = {"name[": ["]test_dataset["}": metadata_manager.session.post.return_value = mock_response[": fields = [{"]]name[: "id"", "type]}]": metadata_manager.create_dataset(": namespace = os.getenv("TEST_METADATA_MANAGER_NAMESPACE_125"), name = os.getenv("TEST_METADATA_MANAGER_NAME_117"), fields=fields[""""
         )
         expected_data = {"]]name[: "test_dataset"", "fields] fields}": metadata_manager.session.post.assert_called_once_with("""
             "http://test:5000/api/v1/namespaces/test_namespace/datasets[",": json=expected_data)": class TestGetDataset:""
@@ -155,7 +156,7 @@ class TestCreateNamespace:
                 {"name[: "dataset2"", "namespace]}]""""
         }
         metadata_manager.session.get.return_value = mock_response
-        result = metadata_manager.list_datasets("test_namespace[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/datasets[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert len(result["]datasets["]) ==2[" class TestCreateJob:"""
+        result = metadata_manager.list_datasets("test_namespace[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_119"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert len(result["]datasets["]) ==2[" class TestCreateJob:"""
     "]]""Test cases for create_job method."""
     def test_create_job_success(self, metadata_manager):
         """Test successful job creation."""
@@ -165,7 +166,7 @@ class TestCreateNamespace:
             "name[": ["]test_job[",""""
             "]namespace[": ["]test_namespace[",""""
             "]description[: "Test job[","]"""
-            "]type[": ["]BATCH["}": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_job(": namespace="]]test_namespace[",": name="]test_job[",": description="]Test job[",": job_type="]BATCH[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/jobs[": expected_data = {"]name[: "test_job"", "description]}": metadata_manager.session.post.assert_called_once_with(": expected_url, json=expected_data[""
+            "]type[": ["]BATCH["}": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_job(": namespace = os.getenv("TEST_METADATA_MANAGER_NAMESPACE_117"),": name = os.getenv("TEST_METADATA_MANAGER_NAME_161"),": description = os.getenv("TEST_METADATA_MANAGER_DESCRIPTION_162"),": job_type = os.getenv("TEST_METADATA_MANAGER_JOB_TYPE_163"))": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_163"): expected_data = {"]name[: "test_job"", "description]}": metadata_manager.session.post.assert_called_once_with(": expected_url, json=expected_data[""
         )
         assert result["]name["] =="]test_job[" class TestGetJob:""""
     "]""Test cases for get_job method."""
@@ -176,7 +177,7 @@ class TestCreateNamespace:
         mock_response.json.return_value = {
             "name[": ["]test_job[",""""
             "]namespace[": ["]test_namespace[",""""
-            "]type[": ["]BATCH["}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_job("]]test_namespace[", "]test_job[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/jobs/test_job[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]name["] =="]test_job[" class TestListJobs:""""
+            "]type[": ["]BATCH["}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_job("]]test_namespace[", "]test_job[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_170"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]name["] =="]test_job[" class TestListJobs:""""
     "]""Test cases for list_jobs method."""
     def test_list_jobs_success(self, metadata_manager):
         """Test successful job listing."""
@@ -188,7 +189,7 @@ class TestCreateNamespace:
                 {"name[: "job2"", "namespace]}]""""
         }
         metadata_manager.session.get.return_value = mock_response
-        result = metadata_manager.list_jobs("test_namespace[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/jobs[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert len(result["]jobs["]) ==2[" class TestCreateRun:"""
+        result = metadata_manager.list_jobs("test_namespace[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_163"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert len(result["]jobs["]) ==2[" class TestCreateRun:"""
     "]]""Test cases for create_run method."""
     def test_create_run_success(self, metadata_manager):
         """Test successful run creation."""
@@ -198,7 +199,7 @@ class TestCreateNamespace:
             "id[": ["]test_run_id[",""""
             "]nominalStartTime[: "2024-01-01T00:00:00Z[","]"""
             "]nominalEndTime[: "2024-01-01T01:00:00Z["}"]": metadata_manager.session.post.return_value = mock_response[": result = metadata_manager.create_run("
-            namespace="]]test_namespace[",": job_name="]test_job[",": nominal_start_time = "]2024-01-01T00:0000Z[",": nominal_end_time = "]2024-01-01T01:0000Z[")": expected_url = ("""
+            namespace = os.getenv("TEST_METADATA_MANAGER_NAMESPACE_117"),": job_name = os.getenv("TEST_METADATA_MANAGER_NAME_161"),": nominal_start_time = os.getenv("TEST_METADATA_MANAGER_NOMINAL_START_TIME_192"),": nominal_end_time = os.getenv("TEST_METADATA_MANAGER_NOMINAL_END_TIME_193"))": expected_url = ("""
             "]http://test:5000/api/v1/namespaces/test_namespace/jobs/test_job/runs["""""
         )
         expected_data = {
@@ -213,7 +214,7 @@ class TestCreateNamespace:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "id[": ["]test_run_id[",""""
-            "]nominalStartTime[: "2024-01-01T00:00:00Z["}"]": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_run("]]test_namespace[", "]test_job[", "]test_run_id[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/jobs/test_job/runs/test_run_id[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]id["] =="]test_run_id[" class TestListRuns:""""
+            "]nominalStartTime[: "2024-01-01T00:00:00Z["}"]": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_run("]]test_namespace[", "]test_job[", "]test_run_id[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_206"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]id["] =="]test_run_id[" class TestListRuns:""""
     "]""Test cases for list_runs method."""
     def test_list_runs_success(self, metadata_manager):
         """Test successful run listing."""
@@ -237,7 +238,7 @@ class TestCreateNamespace:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "id[": ["]latest_run_id[",""""
-            "]nominalStartTime[: "2024-01-01T00:00:00Z["}"]": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_latest_run("]]test_namespace[", "]test_job[")": expected_url = "]http://test5000/api/v1/namespaces/test_namespace/jobs/test_job/runs/latest[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]id["] =="]latest_run_id[" class TestSearchMetadata:""""
+            "]nominalStartTime[: "2024-01-01T00:00:00Z["}"]": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.get_latest_run("]]test_namespace[", "]test_job[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_231"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]id["] =="]latest_run_id[" class TestSearchMetadata:""""
     "]""Test cases for search_metadata method."""
     def test_search_metadata_success(self, metadata_manager):
         """Test successful metadata search."""
@@ -249,7 +250,7 @@ class TestCreateNamespace:
                 {"name[: "job1"", "type]}]""""
         }
         metadata_manager.session.get.return_value = mock_response
-        result = metadata_manager.search_metadata("test_query[")": expected_url = "]http://test5000/api/v1/search[": expected_params = {"]q[": ["]test_query["}": metadata_manager.session.get.assert_called_once_with(": expected_url, params=expected_params[""
+        result = metadata_manager.search_metadata("test_query[")": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_240"): expected_params = {"]q[": ["]test_query["}": metadata_manager.session.get.assert_called_once_with(": expected_url, params=expected_params[""
         )
         assert len(result["]]results["]) ==2[" def test_search_metadata_with_filters(self, metadata_manager):"""
         "]]""Test metadata search with filters."""
@@ -267,7 +268,7 @@ class TestHealthCheck:
         """Test successful health check."""
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"status[: "healthy"", "version]}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.health_check()": expected_url = "]http://test5000/api/v1/health[": metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]status["] =="]healthy[" def test_health_check_unhealthy("
+        mock_response.json.return_value = {"status[: "healthy"", "version]}": metadata_manager.session.get.return_value = mock_response[": result = metadata_manager.health_check()": expected_url = os.getenv("TEST_METADATA_MANAGER_EXPECTED_URL_260"): metadata_manager.session.get.assert_called_once_with(expected_url)": assert result["]status["] =="]healthy[" def test_health_check_unhealthy("
     """"
         "]""Test health check when service is unhealthy."""
         mock_response = Mock()
@@ -278,11 +279,11 @@ class TestHealthCheck:
         """Test HTTP error handling."""
         mock_response = Mock()
         mock_response.status_code = 500
-        mock_response.raise_for_status.side_effect = Exception("Internal server error[")": metadata_manager.session.get.return_value = mock_response[": with pytest.raises(Exception, match = "]]Internal server error[")": metadata_manager.get_namespace("]test_namespace[")": def test_connection_error_handling(self, metadata_manager):"""
+        mock_response.raise_for_status.side_effect = Exception("Internal server error[")": metadata_manager.session.get.return_value = mock_response[": with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_275"))": metadata_manager.get_namespace("]test_namespace[")": def test_connection_error_handling(self, metadata_manager):"""
         "]""Test connection error handling."""
-        metadata_manager.session.get.side_effect = Exception("Connection refused[")": with pytest.raises(Exception, match = "]Connection refused[")": metadata_manager.get_namespace("]test_namespace[")": def test_timeout_error_handling(self, metadata_manager):"""
+        metadata_manager.session.get.side_effect = Exception("Connection refused[")": with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_277"))": metadata_manager.get_namespace("]test_namespace[")": def test_timeout_error_handling(self, metadata_manager):"""
         "]""Test timeout error handling."""
-        metadata_manager.session.get.side_effect = Exception("Request timeout[")": with pytest.raises(Exception, match = "]Request timeout[")": metadata_manager.get_namespace("]test_namespace[")": class TestMetadataManagerEdgeCases:"""
+        metadata_manager.session.get.side_effect = Exception("Request timeout[")": with pytest.raises(Exception, match = os.getenv("TEST_METADATA_MANAGER_MATCH_281"))": metadata_manager.get_namespace("]test_namespace[")": class TestMetadataManagerEdgeCases:"""
     "]""Test cases for edge cases in MetadataManager."""
     def test_empty_string_parameters(self, metadata_manager):
         """Test handling of empty string parameters."""

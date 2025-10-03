@@ -1,3 +1,4 @@
+import os
 """
 数据库连接简单测试
 Simple tests for database connection to boost coverage
@@ -43,7 +44,7 @@ class TestDatabaseConnection:
 
         # 测试SQLite URL
         url = create_database_url(
-            driver="sqlite",
+            driver = os.getenv("TEST_CONNECTION_SIMPLE_DRIVER_46"),
             database="test.db"
         )
         assert "sqlite" in url
@@ -51,12 +52,12 @@ class TestDatabaseConnection:
 
         # 测试PostgreSQL URL
         url = create_database_url(
-            driver="postgresql",
+            driver = os.getenv("TEST_CONNECTION_SIMPLE_DRIVER_53"),
             username="user",
-            password="pass",
+            password = os.getenv("TEST_CONNECTION_SIMPLE_PASSWORD_56"),
             host="localhost",
             port=5432,
-            database="testdb"
+            database = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_56")
         )
         assert "postgresql" in url
         assert "user" in url
@@ -68,7 +69,7 @@ class TestDatabaseConnection:
             pytest.skip("DatabaseManager not available")
 
         manager = DatabaseManager(
-            database_url="sqlite:///./test.db",
+            database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"),
             echo=False
         )
 
@@ -83,7 +84,7 @@ class TestDatabaseConnection:
 
         # 测试同步引擎
         engine = get_db_engine(
-            database_url="sqlite:///./test.db",
+            database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"),
             echo=False,
             sync=True
         )
@@ -92,7 +93,7 @@ class TestDatabaseConnection:
         # 测试异步引擎
         try:
             async_engine = get_db_engine(
-                database_url="sqlite+aiosqlite:///./test.db",
+                database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_87"),
                 echo=False,
                 sync=False
             )
@@ -133,7 +134,7 @@ class TestDatabaseConnection:
             pytest.skip("DatabaseManager not available")
 
         manager = DatabaseManager(
-            database_url="sqlite:///./test.db",
+            database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"),
             pool_size=10,
             max_overflow=20
         )
@@ -147,7 +148,7 @@ class TestDatabaseConnection:
         if DatabaseManager is None:
             pytest.skip("DatabaseManager not available")
 
-        manager = DatabaseManager(database_url="sqlite:///./test.db")
+        manager = DatabaseManager(database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"))
 
         # Mock健康检查方法
         if hasattr(manager, 'health_check'):
@@ -185,7 +186,7 @@ class TestDatabaseConnection:
 
         # 测试连接超时设置
         manager = DatabaseManager(
-            database_url="sqlite:///./test.db",
+            database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"),
             connect_timeout=30,
             pool_timeout=60
         )
@@ -198,7 +199,7 @@ class TestDatabaseConnection:
         if DatabaseManager is None:
             pytest.skip("DatabaseManager not available")
 
-        manager = DatabaseManager(database_url="sqlite:///./test.db")
+        manager = DatabaseManager(database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"))
 
         # Mock连接失败和重试
         with patch('src.database.connection.create_engine') as mock_engine:
@@ -253,7 +254,7 @@ class TestDatabaseConnection:
         if DatabaseManager is None:
             pytest.skip("DatabaseManager not available")
 
-        manager = DatabaseManager(database_url="sqlite:///./test.db")
+        manager = DatabaseManager(database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"))
 
         # 测试连接错误
         with patch('src.database.connection.create_engine') as mock_engine:
@@ -296,7 +297,7 @@ class TestDatabaseConnection:
         if DatabaseManager is None:
             pytest.skip("DatabaseManager not available")
 
-        manager = DatabaseManager(database_url="sqlite:///./test.db")
+        manager = DatabaseManager(database_url = os.getenv("TEST_CONNECTION_SIMPLE_DATABASE_URL_67"))
 
         # Mock性能监控
         if hasattr(manager, 'get_connection_stats'):
@@ -330,7 +331,7 @@ class TestDatabaseConnection:
     def test_database_readonly_access(self):
         """测试只读数据库访问"""
         # 测试只读连接字符串
-        readonly_url = "postgresql://readonly_user:pass@localhost:5432/db?readonly=true"
+        readonly_url = os.getenv("TEST_CONNECTION_SIMPLE_READONLY_URL_320")
 
         assert "readonly" in readonly_url
         assert "readonly_user" in readonly_url
@@ -501,5 +502,5 @@ class TestDatabaseTransactions:
             assert "_" in level
 
         # 测试设置隔离级别
-        default_level = "READ_COMMITTED"
+        default_level = os.getenv("TEST_CONNECTION_SIMPLE_DEFAULT_LEVEL_488")
         assert default_level in isolation_levels

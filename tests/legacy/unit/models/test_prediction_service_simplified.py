@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import numpy
 import pandas
 import pytest
+import os
 
 """
 PredictionService 完整测试套件
@@ -126,7 +127,7 @@ class TestPredictionServiceComplete:
         @pytest.mark.asyncio
         async def test_model_loading_error_handling(self, prediction_service):
             """测试模型加载错误处理"""
-            with patch("mlflow.sklearn.load_model[") as mock_load_model:": mock_load_model.side_effect = Exception("]模型加载失败[")": with pytest.raises(Exception, match = "]模型加载失败[")": await prediction_service._load_model_from_mlflow("]invalid_model[")": class TestConfiguration:"""
+            with patch("mlflow.sklearn.load_model[") as mock_load_model:": mock_load_model.side_effect = Exception("]模型加载失败[")": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_SIMPLIFIED_MATCH_129"))": await prediction_service._load_model_from_mlflow("]invalid_model[")": class TestConfiguration:"""
         "]""测试配置"""
         def test_mlflow_configuration(self, prediction_service):
             """测试MLflow配置"""

@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 特征服务 API
@@ -44,12 +45,12 @@ except Exception as e:
 
 @router.get(
     "/{match_id}",
-    summary="获取比赛特征",
-    description="获取指定比赛的所有特征，包括球队近期表现、历史对战、赔率等",
+    summary = os.getenv("FEATURES_SUMMARY_47"),
+    description = os.getenv("FEATURES_DESCRIPTION_47"),
 )
 async def get_match_features(
     match_id: int,
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description = os.getenv("FEATURES_DESCRIPTION_52")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -68,13 +69,13 @@ async def get_match_features(
     # 1. 参数验证
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
-        raise HTTPException(status_code=400, detail="比赛ID必须大于0")
+        raise HTTPException(status_code=400, detail = os.getenv("FEATURES_DETAIL_70"))
 
     # 2. 服务可用性检查
     if feature_store is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
-            status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
+            status_code=503, detail = os.getenv("FEATURES_DETAIL_75")
         )
 
     try:
@@ -96,7 +97,7 @@ async def get_match_features(
 
         except SQLAlchemyError as db_error:
             logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
-            raise HTTPException(status_code=500, detail="数据库查询失败，请稍后重试")
+            raise HTTPException(status_code=500, detail = os.getenv("FEATURES_DETAIL_98"))
 
         # 4. 构造比赛实体（防御性编程）
         try:
@@ -111,7 +112,7 @@ async def get_match_features(
             logger.debug("比赛实体构造成功")
         except Exception as entity_error:
             logger.error(f"构造比赛实体失败: {entity_error}")
-            raise HTTPException(status_code=500, detail="处理比赛数据时发生错误")
+            raise HTTPException(status_code=500, detail = os.getenv("FEATURES_DETAIL_112"))
 
         # 5. 获取特征数据（优雅降级）
         features = None
@@ -195,15 +196,15 @@ async def get_match_features(
 
 @router.get(
     "/teams/{team_id}",
-    summary="获取球队特征",
-    description="获取指定球队的特征，包括近期表现、统计数据等",
+    summary = os.getenv("FEATURES_SUMMARY_191"),
+    description = os.getenv("FEATURES_DESCRIPTION_192"),
 )
 async def get_team_features(
     team_id: int,
     calculation_date: Optional[datetime] = Query(
-        None, description="特征计算日期，默认为当前时间"
+        None, description = os.getenv("FEATURES_DESCRIPTION_198")
     ),
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
+    include_raw: bool = Query(default=False, description = os.getenv("FEATURES_DESCRIPTION_52")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -288,12 +289,12 @@ async def get_team_features(
 
 @router.post(
     "/calculate/{match_id}",
-    summary="计算比赛特征",
-    description="实时计算指定比赛的所有特征并存储到特征存储",
+    summary = os.getenv("FEATURES_SUMMARY_280"),
+    description = os.getenv("FEATURES_DESCRIPTION_280"),
 )
 async def calculate_match_features(
     match_id: int,
-    force_recalculate: bool = Query(default=False, description="是否强制重新计算"),
+    force_recalculate: bool = Query(default=False, description = os.getenv("FEATURES_DESCRIPTION_286")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -345,7 +346,7 @@ async def calculate_match_features(
                 "away_team_features_stored": away_team_success,
                 "calculation_time": datetime.now().isoformat(),
             },
-            message="特征计算完成",
+            message = os.getenv("FEATURES_MESSAGE_342"),
         )
 
     except HTTPException:
@@ -356,13 +357,13 @@ async def calculate_match_features(
 
 @router.post(
     "/calculate/teams/{team_id}",
-    summary="计算球队特征",
-    description="实时计算指定球队的特征并存储到特征存储",
+    summary = os.getenv("FEATURES_SUMMARY_346"),
+    description = os.getenv("FEATURES_DESCRIPTION_346"),
 )
 async def calculate_team_features(
     team_id: int,
     calculation_date: Optional[datetime] = Query(
-        default=None, description="特征计算日期"
+        default=None, description = os.getenv("FEATURES_DESCRIPTION_353")
     ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
@@ -412,8 +413,8 @@ async def calculate_team_features(
 
 @router.post(
     "/batch/calculate",
-    summary="批量计算特征",
-    description="批量计算指定时间范围内的特征",
+    summary = os.getenv("FEATURES_SUMMARY_400"),
+    description = os.getenv("FEATURES_DESCRIPTION_400"),
 )
 async def batch_calculate_features(
     start_date: datetime = Query(..., description="开始日期"),
@@ -421,10 +422,10 @@ async def batch_calculate_features(
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     if start_date >= end_date:
-        raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
+        raise HTTPException(status_code=400, detail = os.getenv("FEATURES_DETAIL_413"))
 
     if (end_date - start_date).days > 30:
-        raise HTTPException(status_code=400, detail="时间范围不能超过30天")
+        raise HTTPException(status_code=400, detail = os.getenv("FEATURES_DETAIL_416"))
 
     """
     批量计算特征
@@ -439,7 +440,7 @@ async def batch_calculate_features(
     """
     try:
         if start_date >= end_date:
-            raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
+            raise HTTPException(status_code=400, detail = os.getenv("FEATURES_DETAIL_413"))
 
         # 执行批量计算
         stats = await feature_store.batch_calculate_features(start_date, end_date)
@@ -453,7 +454,7 @@ async def batch_calculate_features(
                 "statistics": stats,
                 "completion_time": datetime.now().isoformat(),
             },
-            message="批量特征计算完成",
+            message = os.getenv("FEATURES_MESSAGE_442"),
         )
 
     except HTTPException:
@@ -464,12 +465,12 @@ async def batch_calculate_features(
 
 @router.get(
     "/historical/{match_id}",
-    summary="获取历史特征",
-    description="获取比赛的历史特征数据，用于模型训练",
+    summary = os.getenv("FEATURES_SUMMARY_449"),
+    description = os.getenv("FEATURES_DESCRIPTION_449"),
 )
 async def get_historical_features(
     match_id: int,
-    feature_refs: List[str] = Query(..., description="特征引用列表"),
+    feature_refs: List[str] = Query(..., description = os.getenv("FEATURES_DESCRIPTION_452")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -521,7 +522,7 @@ async def get_historical_features(
                 "feature_count": len(historical_features.columns),
                 "record_count": len(historical_features),
             },
-            message="成功获取历史特征数据",
+            message = os.getenv("FEATURES_MESSAGE_506"),
         )
 
     except HTTPException:
@@ -531,7 +532,7 @@ async def get_historical_features(
 
 
 # 健康检查端点
-@router.get("/health", summary="特征服务健康检查")
+@router.get("/health", summary = os.getenv("FEATURES_SUMMARY_513"))
 async def features_health_check():
     """
     特征服务健康检查

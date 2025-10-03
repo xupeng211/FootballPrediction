@@ -32,7 +32,7 @@ class SecureMLflowLoader:
 
     def __enter__(self):
         """创建临时沙箱目录"""
-        self.temp_dir = tempfile.mkdtemp(prefix='mlflow_sandbox_')
+        self.temp_dir = tempfile.mkdtemp(prefix = os.getenv("MLFLOW_SECURITY_PREFIX_35"))
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

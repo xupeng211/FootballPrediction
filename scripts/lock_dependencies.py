@@ -462,12 +462,12 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="依赖锁定工具")
+    parser = argparse.ArgumentParser(description = os.getenv("LOCK_DEPENDENCIES_DESCRIPTION_465"))
     parser.add_argument('command', choices=[
         'generate', 'verify', 'install', 'update'
     ], help="命令")
     parser.add_argument('--requirements', '-r', type=Path,
-                       help="requirements文件路径")
+                       help = os.getenv("LOCK_DEPENDENCIES_HELP_469"))
 
     args = parser.parse_args()
 

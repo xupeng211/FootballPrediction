@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+import os
 
 """
 足球预测系统基础服务模块
@@ -9,7 +10,7 @@ import logging
 
 class BaseService:
     """基础服务类"""
-    def __init__(self, name: str = "BaseService"):
+    def __init__(self, name: str = os.getenv("BASE_STR_12")):
         self.name = name
         self.logger = logging.getLogger(name)
         self._running = True

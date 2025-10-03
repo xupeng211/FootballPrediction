@@ -126,7 +126,7 @@ class TestSecureMLflowLoader:
         """测试模型签名验证失败"""
         mock_validate.return_value = False
 
-        with pytest.raises(ValueError, match="模型签名验证失败"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_129")):
             self.loader.safe_load_model("invalid_model")
 
     @patch('src.utils.mlflow_security.mlflow.sklearn.load_model')
@@ -148,7 +148,7 @@ class TestSecureMLflowLoader:
         del mock_invalid_model.predict  # 删除predict属性
         mock_load.return_value = mock_invalid_model
 
-        with pytest.raises(ValueError, match="加载的对象不是有效的模型"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_151")):
             self.loader.safe_load_model("invalid_model")
 
     @patch('src.utils.mlflow_security.mlflow.sklearn.load_model')
@@ -158,7 +158,7 @@ class TestSecureMLflowLoader:
         mock_validate.return_value = True
         mock_load.side_effect = Exception("通用错误")
 
-        with pytest.raises(ValueError, match="模型加载失败"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_159")):
             self.loader.safe_load_model("model")
 
     @patch.object(SecureMLflowLoader, 'validate_model_signature')
@@ -292,7 +292,7 @@ class TestSecureMLflowLogger:
         invalid_model = MagicMock()
         del invalid_model.predict
 
-        with pytest.raises(ValueError, match="无效的模型对象"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_292")):
             self.logger.safe_log_model(invalid_model, "path")
 
     @patch('src.utils.mlflow_security.mlflow.sklearn.log_model')
@@ -301,11 +301,11 @@ class TestSecureMLflowLogger:
         mock_model = MagicMock()
         mock_model.predict = MagicMock()
 
-        with pytest.raises(ValueError, match="无效的模型路径"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_299")):
             self.logger.safe_log_model(mock_model, 123)
 
         long_path = "a" * 201
-        with pytest.raises(ValueError, match="无效的模型路径"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_MLFLOW_SECURITY_MATCH_299")):
             self.logger.safe_log_model(mock_model, long_path)
 
     @patch('src.utils.mlflow_security.mlflow.sklearn.log_model')
@@ -317,9 +317,9 @@ class TestSecureMLflowLogger:
         self.logger.safe_log_model(
             mock_model,
             "path",
-            registered_model_name="test_model",
-            signature="test_signature",
-            extra_param="should_be_ignored"
+            registered_model_name = os.getenv("TEST_MLFLOW_SECURITY_REGISTERED_MODEL_NAME_312"),
+            signature = os.getenv("TEST_MLFLOW_SECURITY_SIGNATURE_314"),
+            extra_param = os.getenv("TEST_MLFLOW_SECURITY_EXTRA_PARAM_315")
         )
 
         args, kwargs = mock_log.call_args

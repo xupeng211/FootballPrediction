@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 LineageReporter 功能测试 - Phase 5.2 Batch-Δ-018
@@ -83,7 +84,7 @@ def test_lineage_reporter_structure():
 
             # 测试 LineageReporter 初始化
             print("\n📊 测试 LineageReporter:")
-            reporter = LineageReporter(marquez_url="http://test:5000", namespace="test_namespace")
+            reporter = LineageReporter(marquez_url="http://test:5000", namespace = os.getenv("TEST_LINEAGE_REPORTER_NAMESPACE_86"))
             print("  ✅ 报告器创建成功")
             print(f"  ✅ 命名空间: {reporter.namespace}")
             print(f"  ✅ OpenLineage 客户端: {type(reporter.client).__name__}")
@@ -133,10 +134,10 @@ def test_lineage_reporter_structure():
             try:
                 # 测试开始作业运行
                 run_id = reporter.start_job_run(
-                    job_name="test_job",
+                    job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_135"),
                     job_type="BATCH",
                     inputs=[{"name": "test_input", "namespace": "test"}],
-                    description="Test job for lineage tracking"
+                    description = os.getenv("TEST_LINEAGE_REPORTER_DESCRIPTION_138")
                 )
                 print(f"  ✅ 开始作业运行: {run_id}")
 
@@ -147,7 +148,7 @@ def test_lineage_reporter_structure():
 
                 # 测试完成作业运行
                 success = reporter.complete_job_run(
-                    job_name="test_job",
+                    job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_135"),
                     outputs=[{"name": "test_output", "namespace": "test"}],
                     metrics={"processed_records": 100}
                 )
@@ -165,14 +166,14 @@ def test_lineage_reporter_structure():
             try:
                 # 开始新作业
                 reporter.start_job_run(
-                    job_name="fail_test_job",
+                    job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_164"),
                     job_type="BATCH"
                 )
 
                 # 模拟失败
                 fail_success = reporter.fail_job_run(
-                    job_name="fail_test_job",
-                    error_message="Test failure for lineage tracking"
+                    job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_164"),
+                    error_message = os.getenv("TEST_LINEAGE_REPORTER_ERROR_MESSAGE_169")
                 )
                 print(f"  ✅ 失败报告: {fail_success}")
 
@@ -187,8 +188,8 @@ def test_lineage_reporter_structure():
             print("\n📥 数据采集报告测试:")
             try:
                 collection_run_id = reporter.report_data_collection(
-                    source_name="football_api",
-                    target_table="raw_matches",
+                    source_name = os.getenv("TEST_LINEAGE_REPORTER_SOURCE_NAME_183"),
+                    target_table = os.getenv("TEST_LINEAGE_REPORTER_TARGET_TABLE_184"),
                     records_collected=500,
                     collection_time=datetime.now(timezone.utc),
                     source_config={"schema": {"id": "int", "home_team": "str"}}
@@ -203,8 +204,8 @@ def test_lineage_reporter_structure():
             try:
                 transformation_run_id = reporter.report_data_transformation(
                     source_tables=["raw_matches", "raw_odds"],
-                    target_table="processed_features",
-                    transformation_sql="SELECT * FROM raw_matches WHERE processed = false",
+                    target_table = os.getenv("TEST_LINEAGE_REPORTER_TARGET_TABLE_198"),
+                    transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_TRANSFORMATION_SQL_199"),
                     records_processed=450,
                     transformation_type="ETL"
                 )
@@ -292,7 +293,7 @@ def test_lineage_reporter_structure():
             try:
                 # 验证客户端调用
                 reporter.start_job_run(
-                    job_name="integration_test",
+                    job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_286"),
                     inputs=[{"name": "integration_input", "schema": {"field": "type"}}]
                 )
 

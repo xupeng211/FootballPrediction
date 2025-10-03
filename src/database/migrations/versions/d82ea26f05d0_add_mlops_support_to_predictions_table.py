@@ -1,3 +1,4 @@
+import os
 """Add MLOps support to predictions table
 
 Revision ID: d82ea26f05d0
@@ -10,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "d82ea26f05d0"
-down_revision = "d6d814cc1078"
+revision = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")
+down_revision = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")
 branch_labels = None
 depends_on = None
 
@@ -23,12 +24,12 @@ def upgrade() -> None:
     op.add_column(
         "predictions",
         sa.Column(
-            "actual_result", sa.String(10), nullable=True, comment="实际比赛结果"
+            "actual_result", sa.String(10), nullable=True, comment = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")
         ),
     )
     op.add_column(
         "predictions",
-        sa.Column("is_correct", sa.Boolean(), nullable=True, comment="预测是否正确"),
+        sa.Column("is_correct", sa.Boolean(), nullable=True, comment = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")),
     )
     op.add_column(
         "predictions",
@@ -39,13 +40,13 @@ def upgrade() -> None:
     op.add_column(
         "predictions",
         sa.Column(
-            "features_used", sa.JSON(), nullable=True, comment="预测时使用的特征数据"
+            "features_used", sa.JSON(), nullable=True, comment = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")
         ),
     )
     op.add_column(
         "predictions",
         sa.Column(
-            "prediction_metadata", sa.JSON(), nullable=True, comment="预测相关的元数据"
+            "prediction_metadata", sa.JSON(), nullable=True, comment = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL")
         ),
     )
 
@@ -60,8 +61,8 @@ def downgrade() -> None:
     """移除MLOps支持字段"""
 
     # 删除索引
-    op.drop_index("idx_predictions_actual_result", table_name="predictions")
-    op.drop_index("idx_predictions_verification", table_name="predictions")
+    op.drop_index("idx_predictions_actual_result", table_name = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL"))
+    op.drop_index("idx_predictions_verification", table_name = os.getenv("D82EA26F05D0_ADD_MLOPS_SUPPORT_TO_PREDICTIONS_TABL"))
 
     # 删除字段
     op.drop_column("predictions", "prediction_metadata")

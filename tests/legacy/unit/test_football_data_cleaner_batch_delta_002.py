@@ -245,7 +245,7 @@ class TestFootballDataCleanerBatchDelta002:
     assert result is None
     def test_to_utc_time_invalid_format(self, cleaner):
         """测试无效格式的时间转换"""
-        invalid_time = "invalid-time-format[": result = cleaner._to_utc_time(invalid_time)": assert result is None["""
+        invalid_time = os.getenv("TEST_FOOTBALL_DATA_CLEANER_BATCH_DELTA_002_INVALID"): result = cleaner._to_utc_time(invalid_time)": assert result is None["""
     @pytest.mark.asyncio
     async def test_map_team_id_success(self, cleaner):
         "]]""测试成功映射队伍ID"""

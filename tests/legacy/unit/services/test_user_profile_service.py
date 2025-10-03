@@ -26,15 +26,15 @@ async def service():
 @pytest.fixture
 def sample_user() -> User:
     profile = UserProfile(
-        user_id="user-1",
-        display_name="Analyst",
-        email="analyst@example.com",
+        user_id = os.getenv("TEST_USER_PROFILE_SERVICE_USER_ID_29"),
+        display_name = os.getenv("TEST_USER_PROFILE_SERVICE_DISPLAY_NAME_29"),
+        email = os.getenv("TEST_USER_PROFILE_SERVICE_EMAIL_29"),
         preferences={"favorite_teams": ["Team A"]},
         created_at=datetime.utcnow(),
     )
     return User(
-        id="user-1",
-        username="analyst",
+        id = os.getenv("TEST_USER_PROFILE_SERVICE_ID_32"),
+        username = os.getenv("TEST_USER_PROFILE_SERVICE_USERNAME_32"),
         role=UserRole.USER,
         profile=profile,
     )

@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 QualityMonitor 功能测试 - Phase 5.1 Batch-Δ-012
@@ -26,7 +27,7 @@ async def test_quality_monitor():
         # 测试 DataFreshnessResult
         from datetime import datetime, timedelta
         freshness_result = DataFreshnessResult(
-            table_name="matches",
+            table_name = os.getenv("TEST_QUALITY_MONITOR_TABLE_NAME_29"),
             last_update_time=datetime.now() - timedelta(hours=1),
             records_count=1000,
             freshness_hours=1.0,
@@ -40,7 +41,7 @@ async def test_quality_monitor():
 
         # 测试 DataCompletenessResult
         completeness_result = DataCompletenessResult(
-            table_name="matches",
+            table_name = os.getenv("TEST_QUALITY_MONITOR_TABLE_NAME_29"),
             total_records=1000,
             missing_critical_fields={"home_score": 25, "away_score": 25},
             missing_rate=0.05,

@@ -107,7 +107,7 @@ class TestSQLiteIntegration:
         from fastapi import FastAPI
         import sqlite3
 
-        app = FastAPI(title="Test API")
+        app = FastAPI(title = os.getenv("TEST_SQLITE_INTEGRATION_TITLE_110"))
 
         @app.get("/health")
         async def health():
@@ -146,17 +146,17 @@ class TestSQLiteIntegration:
 
         # 创建一些告警
         alert1 = manager.fire_alert(
-            title="数据库连接告警",
-            message="SQLite连接测试",
+            title = os.getenv("TEST_SQLITE_INTEGRATION_TITLE_148"),
+            message = os.getenv("TEST_SQLITE_INTEGRATION_MESSAGE_149"),
             level=AlertLevel.INFO,
-            source="integration_test"
+            source = os.getenv("TEST_SQLITE_INTEGRATION_SOURCE_150")
         )
 
         alert2 = manager.fire_alert(
-            title="数据完整性告警",
-            message="测试数据完整性",
+            title = os.getenv("TEST_SQLITE_INTEGRATION_TITLE_151"),
+            message = os.getenv("TEST_SQLITE_INTEGRATION_MESSAGE_152"),
             level=AlertLevel.WARNING,
-            source="integration_test"
+            source = os.getenv("TEST_SQLITE_INTEGRATION_SOURCE_150")
         )
 
         # 验证告警

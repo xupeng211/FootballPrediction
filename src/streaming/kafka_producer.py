@@ -1,3 +1,4 @@
+import os
 """
 Kafka生产者实现
 
@@ -140,7 +141,7 @@ class FootballKafkaProducer:
                 self.logger.error("Kafka Producer初始化失败")
                 return False
 
-            topic = "matches-stream"
+            topic = os.getenv("KAFKA_PRODUCER_TOPIC_143")
             message_key = key or str(match_data.get("match_id", ""))
 
             # 添加元数据
@@ -189,7 +190,7 @@ class FootballKafkaProducer:
                 self.logger.error("Kafka Producer初始化失败")
                 return False
 
-            topic = "odds-stream"
+            topic = os.getenv("KAFKA_PRODUCER_TOPIC_190")
             message_key = key or str(odds_data.get("match_id", ""))
 
             # 添加元数据
@@ -240,7 +241,7 @@ class FootballKafkaProducer:
                 self.logger.error("Kafka Producer初始化失败")
                 return False
 
-            topic = "scores-stream"
+            topic = os.getenv("KAFKA_PRODUCER_TOPIC_240")
             message_key = key or str(scores_data.get("match_id", ""))
 
             # 添加元数据

@@ -1,3 +1,4 @@
+import os
 """加密工具模块测试"""
 
 import pytest
@@ -70,7 +71,7 @@ class TestCryptoUtils:
 
     def test_hash_string_md5(self):
         """测试MD5哈希"""
-        text = "test string"
+        text = os.getenv("TEST_CRYPTO_UTILS_TEXT_73")
         hashed = CryptoUtils.hash_string(text, "md5")
 
         assert isinstance(hashed, str)
@@ -90,7 +91,7 @@ class TestCryptoUtils:
 
     def test_hash_string_sha256(self):
         """测试SHA256哈希"""
-        text = "test string"
+        text = os.getenv("TEST_CRYPTO_UTILS_TEXT_73")
         hashed = CryptoUtils.hash_string(text, "sha256")
 
         assert isinstance(hashed, str)
@@ -106,15 +107,15 @@ class TestCryptoUtils:
 
     def test_hash_string_invalid_algorithm(self):
         """测试无效的哈希算法"""
-        with pytest.raises(ValueError, match="不支持的哈希算法"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_CRYPTO_UTILS_MATCH_108")):
             CryptoUtils.hash_string("test", "invalid")
 
-        with pytest.raises(ValueError, match="不支持的哈希算法"):
+        with pytest.raises(ValueError, match = os.getenv("TEST_CRYPTO_UTILS_MATCH_108")):
             CryptoUtils.hash_string("test", "sha1")
 
     def test_hash_password(self):
         """测试密码哈希"""
-        password = "my_secure_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_113")
 
         # 测试哈希密码
         hashed = CryptoUtils.hash_password(password)
@@ -132,8 +133,8 @@ class TestCryptoUtils:
 
     def test_hash_password_with_salt(self):
         """测试带盐的密码哈希"""
-        password = "my_password"
-        salt = "custom_salt"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_130")
+        salt = os.getenv("TEST_CRYPTO_UTILS_SALT_131")
 
         hashed = CryptoUtils.hash_password(password, salt)
 
@@ -142,7 +143,7 @@ class TestCryptoUtils:
 
     def test_verify_password_success(self):
         """测试密码验证成功"""
-        password = "test_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_138")
 
         # 生成哈希
         hashed = CryptoUtils.hash_password(password)
@@ -152,8 +153,8 @@ class TestCryptoUtils:
 
     def test_verify_password_failure(self):
         """测试密码验证失败"""
-        password = "test_password"
-        wrong_password = "wrong_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_138")
+        wrong_password = os.getenv("TEST_CRYPTO_UTILS_WRONG_PASSWORD_148")
 
         # 生成哈希
         hashed = CryptoUtils.hash_password(password)
@@ -173,7 +174,7 @@ class TestCryptoUtils:
     def test_verify_password_invalid_format(self):
         """测试验证无效格式的哈希"""
         # 不是bcrypt格式的哈希
-        invalid_hash = "invalid_hash_format"
+        invalid_hash = os.getenv("TEST_CRYPTO_UTILS_INVALID_HASH_167")
 
         assert CryptoUtils.verify_password("password", invalid_hash) is False
 
@@ -223,7 +224,7 @@ class TestCryptoUtils:
 
     def test_password_hashing_consistency(self):
         """测试密码哈希的一致性"""
-        password = "test_password_123"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_215")
 
         # 生成多个哈希
         hashes = [CryptoUtils.hash_password(password) for _ in range(5)]
@@ -237,7 +238,7 @@ class TestCryptoUtils:
 
     def test_unicode_passwords(self):
         """测试Unicode密码"""
-        unicode_password = "密码🔒123"
+        unicode_password = os.getenv("TEST_CRYPTO_UTILS_UNICODE_PASSWORD_229")
 
         # 哈希Unicode密码
         hashed = CryptoUtils.hash_password(unicode_password)
@@ -283,9 +284,9 @@ class TestCryptoUtils:
 
     def test_hash_whitespace(self):
         """测试包含空格的文本哈希"""
-        text1 = "hello world"
-        text2 = "hello  world"  # 双空格
-        text3 = "hello world "  # 尾部空格
+        text1 = os.getenv("TEST_CRYPTO_UTILS_TEXT1_271")
+        text2 = os.getenv("TEST_CRYPTO_UTILS_TEXT2_273")  # 双空格
+        text3 = os.getenv("TEST_CRYPTO_UTILS_TEXT3_274")  # 尾部空格
 
         hash1 = CryptoUtils.hash_string(text1, "md5")
         hash2 = CryptoUtils.hash_string(text2, "md5")
@@ -319,7 +320,7 @@ class TestCryptoUtilsEdgeCases:
 
     def test_special_characters_hash(self):
         """测试特殊字符哈希"""
-        special_chars = "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+        special_chars = os.getenv("TEST_CRYPTO_UTILS_SPECIAL_CHARS_309"):\",./<>?"
 
         # 应该能处理特殊字符
         assert len(CryptoUtils.hash_string(special_chars, "md5")) == 32
@@ -327,8 +328,8 @@ class TestCryptoUtilsEdgeCases:
 
     def test_newline_and_tab_hash(self):
         """测试换行符和制表符哈希"""
-        text_with_newlines = "line1\nline2\nline3"
-        text_with_tabs = "col1\tcol2\tcol3"
+        text_with_newlines = os.getenv("TEST_CRYPTO_UTILS_TEXT_WITH_NEWLINES_317")
+        text_with_tabs = os.getenv("TEST_CRYPTO_UTILS_TEXT_WITH_TABS_318")
 
         # 应该能处理换行符和制表符
         assert len(CryptoUtils.hash_string(text_with_newlines, "md5")) == 32

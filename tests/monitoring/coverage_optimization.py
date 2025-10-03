@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 覆盖率优化工具
@@ -266,7 +267,7 @@ class Test{module.title().replace('.', '')}:
         # 为每个函数生成测试
         for func_type, func_name in functions:
             if func_type == "async def":
-                decorator = "@pytest.mark.asyncio\n    "
+                decorator = os.getenv("COVERAGE_OPTIMIZATION_DECORATOR_269")
             else:
                 decorator = "    "
 
@@ -393,10 +394,10 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="覆盖率优化工具")
-    parser.add_argument("--module", "-m", help="为指定模块生成测试模板")
-    parser.add_argument("--plan", "-p", action="store_true", help="生成优化计划")
-    parser.add_argument("--template", "-t", help="生成测试模板并保存到文件")
+    parser = argparse.ArgumentParser(description = os.getenv("COVERAGE_OPTIMIZATION_DESCRIPTION_396"))
+    parser.add_argument("--module", "-m", help = os.getenv("COVERAGE_OPTIMIZATION_HELP_396"))
+    parser.add_argument("--plan", "-p", action = os.getenv("COVERAGE_OPTIMIZATION_ACTION_397"), help = os.getenv("COVERAGE_OPTIMIZATION_HELP_397"))
+    parser.add_argument("--template", "-t", help = os.getenv("COVERAGE_OPTIMIZATION_HELP_398"))
 
     args = parser.parse_args()
 

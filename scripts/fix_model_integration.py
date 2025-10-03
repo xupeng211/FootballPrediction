@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Quick fix for remaining syntax errors in test_model_integration.py
@@ -7,7 +8,7 @@ import re
 
 def fix_model_integration_file():
     """Fix indentation issues in test_model_integration.py"""
-    file_path = 'tests/integration/models/test_model_integration.py'
+    file_path = os.getenv("FIX_MODEL_INTEGRATION_FILE_PATH_10")
 
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()

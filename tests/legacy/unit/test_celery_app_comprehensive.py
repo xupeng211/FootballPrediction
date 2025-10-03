@@ -1,6 +1,7 @@
 from src.tasks.celery_app import app
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 Celery应用的全面单元测试
@@ -63,7 +64,7 @@ class TestCeleryApp:
     assert bound_task is not None
     assert hasattr(bound_task, "request[")" def test_task_routing(self):"""
         "]""测试任务路由"""
-        @app.task(queue="test_queue[")": def routed_task():": return "]routed[": assert routed_task is not None[""""
+        @app.task(queue = os.getenv("TEST_CELERY_APP_COMPREHENSIVE_QUEUE_66"))": def routed_task():": return "]routed[": assert routed_task is not None[""""
         # 验证路由配置
     assert True  # 占位验证
     def test_task_retry_configuration(self):

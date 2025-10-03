@@ -4,6 +4,7 @@ from src.lineage.lineage_reporter import LineageReporter
 from unittest.mock import Mock, patch
 from uuid import uuid4
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 import pytest
@@ -27,11 +28,11 @@ class TestLineageReporterBasic:
                 schema_dataset = lambda x x,
                 error_message_run = lambda x x):
                 reporter = LineageReporter(
-                marquez_url = "]http:_/localhost8080[", namespace="]test_namespace["""""
+                marquez_url = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_MARQUEZ_URL_30"), namespace = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_NAMESPACE_30")""""
                 )
     assert reporter.client ==mock_client
     assert reporter.namespace =="]test_namespace[" assert reporter._active_runs =={}""""
-        mock_client_class.assert_called_once_with(url = "]http://localhost8080[")": def test_lineage_reporter_default_initialization(self):"""
+        mock_client_class.assert_called_once_with(url = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_URL_33"))": def test_lineage_reporter_default_initialization(self):"""
         "]""测试血缘报告器默认初始化"""
         with patch(:
             "src.lineage.lineage_reporter.OpenLineageClient["""""
@@ -91,7 +92,7 @@ class TestJobRunLifecycle:
                 schema_dataset = lambda x x,
                 error_message_run = lambda x x):
                 reporter = LineageReporter()
-                with pytest.raises(Exception, match = "]Connection failed[")": reporter.start_job_run("]test_job[")": def test_complete_job_run_minimal(self):"""
+                with pytest.raises(Exception, match = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_MATCH_92"))": reporter.start_job_run("]test_job[")": def test_complete_job_run_minimal(self):"""
         "]""测试完成作业运行（最小参数）"""
         with patch(:
             "src.lineage.lineage_reporter.OpenLineageClient["""""
@@ -209,7 +210,7 @@ class TestSpecializedReporting:
                 reporter = LineageReporter()
                 collection_time = datetime.now(timezone.utc)
                 run_id = reporter.report_data_collection(
-                source_name="]football_api[",": target_table="]raw_matches[",": records_collected=500,": collection_time=collection_time,": source_config = {"]schema[": {"]type[": "]json["}})": assert run_id is not None["""
+                source_name = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_SOURCE_NAME_210"),": target_table = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TARGET_TABLE_210"),": records_collected=500,": collection_time=collection_time,": source_config = {"]schema[": {"]type[": "]json["}})": assert run_id is not None["""
                 # 应该调用了 start_job_run 和 complete_job_run，所以 emit 被调用两次
     assert mock_client.emit.call_count ==2
     def test_report_data_transformation(self):
@@ -230,7 +231,7 @@ class TestSpecializedReporting:
                 error_message_run = lambda x x):
                 reporter = LineageReporter()
                 run_id = reporter.report_data_transformation(
-                source_tables=["]raw_matches[", "]raw_teams["],": target_table="]processed_matches[",": transformation_sql="]SELECT * FROM raw_matches JOIN raw_teams...",": records_processed=300,": transformation_type="CLEANING[")": assert run_id is not None[" assert mock_client.emit.call_count ==2[""
+                source_tables=["]raw_matches[", "]raw_teams["],": target_table = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TARGET_TABLE_230"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TRANSFORMATION_SQL_23"),": records_processed=300,": transformation_type = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TRANSFORMATION_TYPE_2"))": assert run_id is not None[" assert mock_client.emit.call_count ==2[""
 class TestActiveRunsManagement:
     "]]]""活跃运行管理测试"""
     def test_get_active_runs(self):
@@ -458,7 +459,7 @@ class TestLineageReporterErrorHandling:
                 # collection_time 参数是必需的，不能为 None，应该抛出 AttributeError
                 with pytest.raises(:
                     AttributeError,
-                    match="]'NoneType' object has no attribute 'isoformat'"):": reporter.report_data_collection(": source_name="test_source[",": target_table="]test_table[",": records_collected=100,": collection_time=None)": def test_report_data_transformation_empty_sources(self):"
+                    match="]'NoneType' object has no attribute 'isoformat'"):": reporter.report_data_collection(": source_name = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_SOURCE_NAME_456"),": target_table = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TARGET_TABLE_457"),": records_collected=100,": collection_time=None)": def test_report_data_transformation_empty_sources(self):"
         "]""测试报告数据转换（空数据源）"""
         with patch(:
             "src.lineage.lineage_reporter.OpenLineageClient["""""
@@ -477,5 +478,5 @@ class TestLineageReporterErrorHandling:
                 reporter = LineageReporter()
                 run_id = reporter.report_data_transformation(
                 source_tables=[],  # 空数据源列表
-                target_table="]target_table[",": transformation_sql="]SELECT 1[",": records_processed=1)": assert run_id is not None[" assert mock_client.emit.call_count ==2"
+                target_table = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TARGET_TABLE_471"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_PHASE5_TRANSFORMATION_SQL_47"),": records_processed=1)": assert run_id is not None[" assert mock_client.emit.call_count ==2"
 if __name__ =="]]__main__[": pytest.main(["]__file__[", "]-v"])

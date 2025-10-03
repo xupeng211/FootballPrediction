@@ -6,6 +6,7 @@ from src.features.feature_calculator import FeatureCalculator
 from src.features.feature_definitions import (
 from unittest.mock import AsyncMock, Mock, patch
 import pytest
+import os
 
 """
 特征计算器测试
@@ -47,7 +48,7 @@ def pytest_db_available():
         # 检查关键表是否存在
         with db_manager.get_session() as session = result session.execute(
             sa.text(
-            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"""""
+            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = os.getenv("TEST_FEATURE_CALCULATOR_TABLE_NAME_50"))"""""
             )
             )
             matches_exists = result.scalar()
@@ -62,7 +63,7 @@ def pytest_db_available():
         return False
 # 跳过需要数据库的测试，如果数据库不可用
 pytestmark = pytest.mark.skipif(
-    not pytest_db_available(), reason="Database connection not available["""""
+    not pytest_db_available(), reason = os.getenv("TEST_FEATURE_CALCULATOR_REASON_64")""""
 )
 @pytest.fixture
 def feature_calculator():
@@ -77,12 +78,12 @@ def sample_match_entity():
     away_team_id=2,
     league_id=1,
         match_time=datetime(2025, 9, 15, 15, 0),
-        season="2024-25[")""""
+        season = os.getenv("TEST_FEATURE_CALCULATOR_SEASON_79"))""""
 @pytest.fixture
 def sample_team_entity():
     "]""示例球队实体"""
     return TeamEntity(
-    team_id=1, team_name="测试球队[", league_id=1, home_venue="]测试球场["""""
+    team_id=1, team_name="测试球队[", league_id=1, home_venue = os.getenv("TEST_FEATURE_CALCULATOR_HOME_VENUE_82")""""
     )
 class TestFeatureCalculator:
     "]""特征计算器测试类"""
@@ -204,7 +205,7 @@ class TestFeatureCalculator:
         # 模拟赔率数据
         mock_odds = [
         Mock(
-        bookmaker="Bet365[",": home_odds=Decimal("]2.10["),": draw_odds=Decimal("]3.20["),": away_odds=Decimal("]3.50[")),": Mock(": bookmaker="]William Hill[",": home_odds=Decimal("]2.05["),": draw_odds=Decimal("]3.30["),": away_odds=Decimal("]3.60[")),": Mock(": bookmaker="]Pinnacle[",": home_odds=Decimal("]2.15["),": draw_odds=Decimal("]3.15["),": away_odds=Decimal("]3.45["))]""""
+        bookmaker = os.getenv("TEST_FEATURE_CALCULATOR_BOOKMAKER_202"),": home_odds=Decimal("]2.10["),": draw_odds=Decimal("]3.20["),": away_odds=Decimal("]3.50[")),": Mock(": bookmaker = os.getenv("TEST_FEATURE_CALCULATOR_BOOKMAKER_206"),": home_odds=Decimal("]2.05["),": draw_odds=Decimal("]3.30["),": away_odds=Decimal("]3.60[")),": Mock(": bookmaker = os.getenv("TEST_FEATURE_CALCULATOR_BOOKMAKER_207"),": home_odds=Decimal("]2.15["),": draw_odds=Decimal("]3.15["),": away_odds=Decimal("]3.45["))]""""
         # Mock数据库管理器的get_async_session方法
         mock_session = AsyncMock()
         # 创建正确的mock链
@@ -257,7 +258,7 @@ class TestFeatureCalculator:
         ]
         mock_odds = [
             Mock(
-            bookmaker="Bet365[",": home_odds=Decimal("]2.0["),": draw_odds=Decimal("]3.0["),": away_odds=Decimal("]3.5["))""""
+            bookmaker = os.getenv("TEST_FEATURE_CALCULATOR_BOOKMAKER_202"),": home_odds=Decimal("]2.0["),": draw_odds=Decimal("]3.0["),": away_odds=Decimal("]3.5["))""""
         ]
         # 模拟数据库查询，按调用顺序返回不同结果
         with patch.object(:

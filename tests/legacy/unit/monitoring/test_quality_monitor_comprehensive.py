@@ -34,7 +34,7 @@ class TestQualityMonitorComprehensive:
         """示例新鲜度结果"""
         from src.monitoring.quality_monitor import DataFreshnessResult
         return DataFreshnessResult(
-        table_name="matches[",": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_COMPREHENSIVE_TABLE_NAME_37"),": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
             is_fresh=True,
             threshold_hours=24.0
         )
@@ -43,7 +43,7 @@ class TestQualityMonitorComprehensive:
         "]""示例完整性结果"""
         from src.monitoring.quality_monitor import DataCompletenessResult
         return DataCompletenessResult(
-        table_name="matches[",": total_records=1000,": complete_records=950,": missing_records=50,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_COMPREHENSIVE_TABLE_NAME_37"),": total_records=1000,": complete_records=950,": missing_records=50,"
             completeness_rate=0.95,
             missing_fields=["]home_score[", "]away_score["],": is_complete=True["""
         )
@@ -63,7 +63,7 @@ class TestQualityMonitorComprehensive:
         "]]""测试 DataFreshnessResult 处理 None 时间"""
         from src.monitoring.quality_monitor import DataFreshnessResult
         result = DataFreshnessResult(
-        table_name="matches[",": last_update_time=None,": records_count=0,": freshness_hours=0.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_COMPREHENSIVE_TABLE_NAME_37"),": last_update_time=None,": records_count=0,": freshness_hours=0.0,"
             is_fresh=False,
             threshold_hours=24.0
         )

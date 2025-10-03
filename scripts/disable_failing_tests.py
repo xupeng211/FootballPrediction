@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 禁用有问题的测试
@@ -36,7 +37,7 @@ def disable_tests():
     for test_name in failing_tests:
         # 在测试方法前添加 @pytest.mark.skip 装饰器
         pattern = rf'(async def {test_name}\(self.*?\):.*?"""[^"]*""".*?)(\s+@pytest\.mark\.asyncio)'
-        replacement = r'\1\n    @pytest.mark.skip(reason="Function not implemented in src.api.data")\2'
+        replacement = r'\1\n    @pytest.mark.skip(reason = os.getenv("DISABLE_FAILING_TESTS_REASON_39"))\2'
         content = re.sub(pattern, replacement, content, flags=re.DOTALL)
 
     # 保存文件

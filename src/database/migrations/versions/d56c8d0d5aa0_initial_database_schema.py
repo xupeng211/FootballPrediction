@@ -1,3 +1,4 @@
+import os
 """Initial database schema
 
 
@@ -13,7 +14,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "d56c8d0d5aa0"
+revision: str = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_STR_16")
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,12 +33,12 @@ def upgrade() -> None:
         ),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
         sa.Column("level", sa.Integer(), nullable=True, comment="联赛级别"),
-        sa.Column("api_league_id", sa.Integer(), nullable=True, comment="API联赛ID"),
+        sa.Column("api_league_id", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_35")),
         sa.Column(
-            "season_start_month", sa.Integer(), nullable=True, comment="赛季开始月份"
+            "season_start_month", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_35")
         ),
         sa.Column(
-            "season_end_month", sa.Integer(), nullable=True, comment="赛季结束月份"
+            "season_end_month", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_37")
         ),
         sa.Column(
             "is_active", sa.Boolean(), nullable=False, default=True, comment="是否活跃"
@@ -60,8 +61,8 @@ def upgrade() -> None:
         ),
         sa.Column("team_code", sa.String(length=10), nullable=True, comment="球队代码"),
         sa.Column("country", sa.String(length=50), nullable=True, comment="所属国家"),
-        sa.Column("api_team_id", sa.Integer(), nullable=True, comment="API球队ID"),
-        sa.Column("league_id", sa.Integer(), nullable=True, comment="所属联赛ID"),
+        sa.Column("api_team_id", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_61")),
+        sa.Column("league_id", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_62")),
         sa.Column("founded_year", sa.Integer(), nullable=True, comment="成立年份"),
         sa.Column(
             "stadium", sa.String(length=100), nullable=True, comment="主场体育场"
@@ -83,22 +84,22 @@ def upgrade() -> None:
     op.create_table(
         "matches",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
-        sa.Column("home_team_id", sa.Integer(), nullable=False, comment="主场球队ID"),
-        sa.Column("away_team_id", sa.Integer(), nullable=False, comment="客场球队ID"),
+        sa.Column("home_team_id", sa.Integer(), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_79")),
+        sa.Column("away_team_id", sa.Integer(), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_80")),
         sa.Column("league_id", sa.Integer(), nullable=False, comment="联赛ID"),
         sa.Column("season", sa.String(length=20), nullable=True, comment="赛季"),
-        sa.Column("match_date", sa.DateTime(), nullable=False, comment="比赛日期时间"),
+        sa.Column("match_date", sa.DateTime(), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_86")),
         sa.Column(
             "match_status",
-            sa.Enum("scheduled", "live", "finished", "cancelled", name="matchstatus"),
+            sa.Enum("scheduled", "live", "finished", "cancelled", name = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_NAME_87")),
             nullable=False,
-            default="scheduled",
+            default = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_DEFAULT_87"),
             comment="比赛状态",
         ),
         sa.Column("home_score", sa.Integer(), nullable=True, comment="主队得分"),
         sa.Column("away_score", sa.Integer(), nullable=True, comment="客队得分"),
-        sa.Column("home_goals_ht", sa.Integer(), nullable=True, comment="主队半场得分"),
-        sa.Column("away_goals_ht", sa.Integer(), nullable=True, comment="客队半场得分"),
+        sa.Column("home_goals_ht", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_90")),
+        sa.Column("away_goals_ht", sa.Integer(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_93")),
         sa.Column("attendance", sa.Integer(), nullable=True, comment="观众人数"),
         sa.Column("referee", sa.String(length=100), nullable=True, comment="主裁判"),
         sa.Column("venue", sa.String(length=100), nullable=True, comment="比赛场地"),
@@ -129,7 +130,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
         sa.Column("match_id", sa.Integer(), nullable=False, comment="比赛ID"),
         sa.Column(
-            "bookmaker", sa.String(length=50), nullable=False, comment="博彩公司名称"
+            "bookmaker", sa.String(length=50), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_116")
         ),
         sa.Column(
             "market_type",
@@ -138,10 +139,10 @@ def upgrade() -> None:
                 "over_under",
                 "asian_handicap",
                 "both_teams_score",
-                name="markettype",
+                name = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_NAME_120"),
             ),
             nullable=False,
-            comment="赔率市场类型",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_122"),
         ),
         sa.Column(
             "home_odds",
@@ -180,7 +181,7 @@ def upgrade() -> None:
             comment="盘口值",
         ),
         sa.Column(
-            "collected_at", sa.DateTime(), nullable=False, comment="赔率收集时间"
+            "collected_at", sa.DateTime(), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_153")
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.Column("updated_at", sa.DateTime(), nullable=False, comment="更新时间"),
@@ -200,7 +201,7 @@ def upgrade() -> None:
         sa.Column("team_id", sa.Integer(), nullable=False, comment="球队ID"),
         sa.Column(
             "team_type",
-            sa.Enum("home", "away", name="teamtype"),
+            sa.Enum("home", "away", name = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_NAME_185")),
             nullable=False,
             comment="球队类型",
         ),
@@ -210,70 +211,70 @@ def upgrade() -> None:
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="最近5场胜利场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_190"),
         ),
         sa.Column(
             "recent_5_draws",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="最近5场平局场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_192"),
         ),
         sa.Column(
             "recent_5_losses",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="最近5场失败场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_197"),
         ),
         sa.Column(
             "recent_5_goals_for",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="最近5场进球数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_200"),
         ),
         sa.Column(
             "recent_5_goals_against",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="最近5场失球数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_203"),
         ),
         # 主客场特征
         sa.Column(
-            "home_wins", sa.Integer(), nullable=False, default=0, comment="主场胜利场次"
+            "home_wins", sa.Integer(), nullable=False, default=0, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_208")
         ),
         sa.Column(
             "home_draws",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="主场平局场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_213"),
         ),
         sa.Column(
             "home_losses",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="主场失败场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_219"),
         ),
         sa.Column(
-            "away_wins", sa.Integer(), nullable=False, default=0, comment="客场胜利场次"
+            "away_wins", sa.Integer(), nullable=False, default=0, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_222")
         ),
         sa.Column(
             "away_draws",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="客场平局场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_227"),
         ),
         sa.Column(
             "away_losses",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="客场失败场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_233"),
         ),
         # 对战历史特征
         sa.Column(
@@ -281,35 +282,35 @@ def upgrade() -> None:
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="历史交锋胜利场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_238"),
         ),
         sa.Column(
             "h2h_draws",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="历史交锋平局场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_243"),
         ),
         sa.Column(
             "h2h_losses",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="历史交锋失败场次",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_245"),
         ),
         sa.Column(
             "h2h_goals_for",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="历史交锋进球数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_252"),
         ),
         sa.Column(
             "h2h_goals_against",
             sa.Integer(),
             nullable=False,
             default=0,
-            comment="历史交锋失球数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_258"),
         ),
         # 联赛排名特征
         sa.Column("league_position", sa.Integer(), nullable=True, comment="联赛排名"),
@@ -320,14 +321,14 @@ def upgrade() -> None:
             "days_since_last_match",
             sa.Integer(),
             nullable=True,
-            comment="距离上场比赛天数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_269"),
         ),
         sa.Column(
             "is_derby",
             sa.Boolean(),
             nullable=False,
             default=False,
-            comment="是否为德比战",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_274"),
         ),
         sa.Column(
             "avg_possession",
@@ -339,7 +340,7 @@ def upgrade() -> None:
             "avg_shots_per_game",
             sa.DECIMAL(precision=5, scale=2),
             nullable=True,
-            comment="场均射门次数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_284"),
         ),
         # 扩展特征
         sa.Column(
@@ -352,7 +353,7 @@ def upgrade() -> None:
             "avg_shots_on_target",
             sa.DECIMAL(precision=5, scale=2),
             nullable=True,
-            comment="场均射正次数",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_296"),
         ),
         sa.Column(
             "avg_corners_per_game",
@@ -415,15 +416,15 @@ def upgrade() -> None:
         ),
         sa.Column(
             "predicted_result",
-            sa.Enum("home_win", "draw", "away_win", name="predictedresult"),
+            sa.Enum("home_win", "draw", "away_win", name = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_NAME_360")),
             nullable=False,
-            comment="预测的比赛结果",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_363"),
         ),
         sa.Column(
             "home_win_probability",
             sa.DECIMAL(precision=5, scale=4),
             nullable=False,
-            comment="主队获胜概率",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_369"),
         ),
         sa.Column(
             "draw_probability",
@@ -435,19 +436,19 @@ def upgrade() -> None:
             "away_win_probability",
             sa.DECIMAL(precision=5, scale=4),
             nullable=False,
-            comment="客队获胜概率",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_382"),
         ),
         sa.Column(
             "predicted_home_score",
             sa.DECIMAL(precision=3, scale=2),
             nullable=True,
-            comment="预测主队得分",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_386"),
         ),
         sa.Column(
             "predicted_away_score",
             sa.DECIMAL(precision=3, scale=2),
             nullable=True,
-            comment="预测客队得分",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_393"),
         ),
         sa.Column(
             "over_2_5_probability",
@@ -459,19 +460,19 @@ def upgrade() -> None:
             "both_teams_score_probability",
             sa.DECIMAL(precision=5, scale=4),
             nullable=True,
-            comment="双方进球概率",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_399"),
         ),
         sa.Column(
             "confidence_score",
             sa.DECIMAL(precision=5, scale=4),
             nullable=True,
-            comment="预测置信度评分",
+            comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_403"),
         ),
         sa.Column(
-            "feature_importance", sa.JSON(), nullable=True, comment="特征重要性数据"
+            "feature_importance", sa.JSON(), nullable=True, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_407")
         ),
         sa.Column(
-            "predicted_at", sa.DateTime(), nullable=False, comment="预测生成时间"
+            "predicted_at", sa.DateTime(), nullable=False, comment = os.getenv("D56C8D0D5AA0_INITIAL_DATABASE_SCHEMA_COMMENT_409")
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.Column("updated_at", sa.DateTime(), nullable=False, comment="更新时间"),

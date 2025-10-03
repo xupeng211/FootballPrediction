@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 数据质量异常处理机制
@@ -352,7 +353,7 @@ class DataQualityExceptionHandler:
                         SELECT AVG(home_score::float) as avg_score
                         FROM matches
                         WHERE home_team_id = :team_id
-                        AND match_status = 'finished'
+                        AND match_status = os.getenv("EXCEPTION_HANDLER_MATCH_STATUS_355")
                         AND home_score IS NOT NULL
                         AND match_time > NOW() - INTERVAL ':days days'
                     """
@@ -363,7 +364,7 @@ class DataQualityExceptionHandler:
                         SELECT AVG(away_score::float) as avg_score
                         FROM matches
                         WHERE away_team_id = :team_id
-                        AND match_status = 'finished'
+                        AND match_status = os.getenv("EXCEPTION_HANDLER_MATCH_STATUS_355")
                         AND away_score IS NOT NULL
                         AND match_time > NOW() - INTERVAL ':days days'
                     """
@@ -457,7 +458,7 @@ class DataQualityExceptionHandler:
                 session=session,
                 table_name="odds",
                 record_id=odds_record.get("id"),
-                error_type="suspicious_odds",
+                error_type = os.getenv("EXCEPTION_HANDLER_ERROR_TYPE_458"),
                 error_data={
                     "match_id": odds_record.get("match_id"),
                     "bookmaker": odds_record.get("bookmaker"),
@@ -482,7 +483,7 @@ class DataQualityExceptionHandler:
                     session=session,
                     table_name=table_name,
                     record_id=None,
-                    error_type="missing_values_filled",
+                    error_type = os.getenv("EXCEPTION_HANDLER_ERROR_TYPE_482"),
                     error_data={
                         "filled_columns": missing_counts,
                         "total_filled": sum(missing_counts.values()),
@@ -513,7 +514,7 @@ class DataQualityExceptionHandler:
                 error_type=error_type,
                 error_data=error_data,
                 requires_manual_review=requires_manual_review,
-                status="logged",
+                status = os.getenv("EXCEPTION_HANDLER_STATUS_513"),
                 detected_at=datetime.now(),
             )
 

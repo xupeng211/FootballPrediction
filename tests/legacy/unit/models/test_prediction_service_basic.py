@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import asyncio
 import numpy
 import pytest
+import os
 
 """
 PredictionService 基础测试套件
@@ -44,7 +45,7 @@ class TestPredictionServiceBasic:
         @pytest.mark.asyncio
         async def test_load_model_from_mlflow_failure(self, prediction_service):
             "]]""测试从MLflow加载模型失败"""
-            with patch("mlflow.sklearn.load_model[") as mock_load_model:": mock_load_model.side_effect = Exception("]模型加载失败[")": with pytest.raises(Exception, match = "]模型加载失败[")": await prediction_service._load_model_from_mlflow("]invalid_model[")": class TestMatchInfoRetrieval:"""
+            with patch("mlflow.sklearn.load_model[") as mock_load_model:": mock_load_model.side_effect = Exception("]模型加载失败[")": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_BASIC_MATCH_47"))": await prediction_service._load_model_from_mlflow("]invalid_model[")": class TestMatchInfoRetrieval:"""
         "]""测试比赛信息获取"""
         @pytest.mark.asyncio
         async def test_get_match_info_success(self, prediction_service):
@@ -79,7 +80,7 @@ class TestPredictionServiceBasic:
             """测试成功存储预测"""
             from src.models.prediction_service import PredictionResult
             prediction_result = PredictionResult(match_id=12345,
-                predicted_result="home_win[",": confidence=0.6,": model_version="]v1.0[",": features = {"]feature1[": 0.5),": prediction_time=datetime.now())": with patch.object(prediction_service.db_manager, "]execute[") as mock_execute:": mock_execute.return_value = {"]id[": 1}": await prediction_service._store_prediction(prediction_result)": mock_execute.assert_called_once()": class TestResultCalculation:"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_BASIC_PREDICTED_RESULT_81"),": confidence=0.6,": model_version = os.getenv("TEST_PREDICTION_SERVICE_BASIC_MODEL_VERSION_82"),": features = {"]feature1[": 0.5),": prediction_time=datetime.now())": with patch.object(prediction_service.db_manager, "]execute[") as mock_execute:": mock_execute.return_value = {"]id[": 1}": await prediction_service._store_prediction(prediction_result)": mock_execute.assert_called_once()": class TestResultCalculation:"
         "]""测试结果计算"""
         def test_calculate_actual_result_home_win(self, prediction_service):
             """测试计算主场胜利结果"""
@@ -97,7 +98,7 @@ class TestPredictionServiceBasic:
         @pytest.mark.asyncio
         async def test_database_error_handling(self, prediction_service):
             """测试数据库错误处理"""
-            with patch.object(prediction_service.db_manager, "fetch_one[") as mock_fetch:": mock_fetch.side_effect = Exception("]数据库连接失败[")": with pytest.raises(Exception, match = "]数据库连接失败[")": await prediction_service._get_match_info(12345)": class TestConfiguration:""
+            with patch.object(prediction_service.db_manager, "fetch_one[") as mock_fetch:": mock_fetch.side_effect = Exception("]数据库连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_BASIC_MATCH_100"))": await prediction_service._get_match_info(12345)": class TestConfiguration:""
         "]""测试配置"""
         def test_mlflow_uri_configuration(self, prediction_service):
             """测试MLflow URI配置"""

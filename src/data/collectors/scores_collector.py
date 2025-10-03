@@ -1,3 +1,4 @@
+import os
 """
 实时比分采集器
 
@@ -27,25 +28,25 @@ from .base_collector import CollectionResult, DataCollector
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
-    NOT_STARTED = "not_started"
-    FIRST_HALF = "first_half"
-    HALF_TIME = "half_time"
-    SECOND_HALF = "second_half"
-    FINISHED = "finished"
-    POSTPONED = "postponed"
-    CANCELLED = "cancelled"
+    NOT_STARTED = os.getenv("SCORES_COLLECTOR_NOT_STARTED_30")
+    FIRST_HALF = os.getenv("SCORES_COLLECTOR_FIRST_HALF_30")
+    HALF_TIME = os.getenv("SCORES_COLLECTOR_HALF_TIME_31")
+    SECOND_HALF = os.getenv("SCORES_COLLECTOR_SECOND_HALF_31")
+    FINISHED = os.getenv("SCORES_COLLECTOR_FINISHED_32")
+    POSTPONED = os.getenv("SCORES_COLLECTOR_POSTPONED_32")
+    CANCELLED = os.getenv("SCORES_COLLECTOR_CANCELLED_32")
 
 
 class EventType(Enum):
     """比赛事件类型枚举"""
 
     GOAL = "goal"
-    YELLOW_CARD = "yellow_card"
-    RED_CARD = "red_card"
-    SUBSTITUTION = "substitution"
-    PENALTY = "penalty"
-    OWN_GOAL = "own_goal"
-    VAR_DECISION = "var_decision"
+    YELLOW_CARD = os.getenv("SCORES_COLLECTOR_YELLOW_CARD_34")
+    RED_CARD = os.getenv("SCORES_COLLECTOR_RED_CARD_35")
+    SUBSTITUTION = os.getenv("SCORES_COLLECTOR_SUBSTITUTION_35")
+    PENALTY = os.getenv("SCORES_COLLECTOR_PENALTY_36")
+    OWN_GOAL = os.getenv("SCORES_COLLECTOR_OWN_GOAL_36")
+    VAR_DECISION = os.getenv("SCORES_COLLECTOR_VAR_DECISION_36")
 
 
 class ScoresCollector(DataCollector):
@@ -58,7 +59,7 @@ class ScoresCollector(DataCollector):
 
     def __init__(
         self,
-        data_source: str = "scores_api",
+        data_source: str = os.getenv("SCORES_COLLECTOR_STR_45"),
         api_key: Optional[str] = None,
         base_url: str = "https://api.football-data.org/v4",
         websocket_url: Optional[str] = None,
@@ -92,11 +93,11 @@ class ScoresCollector(DataCollector):
         """实时比分采集器不处理赛程数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="fixtures",
+            collection_type = os.getenv("SCORES_COLLECTOR_COLLECTION_TYPE_82"),
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("SCORES_COLLECTOR_STATUS_87"),
         )
 
     async def collect_odds(self, **kwargs) -> CollectionResult:
@@ -107,7 +108,7 @@ class ScoresCollector(DataCollector):
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("SCORES_COLLECTOR_STATUS_87"),
         )
 
     async def collect_live_scores(
@@ -146,11 +147,11 @@ class ScoresCollector(DataCollector):
                 self.logger.info("No live matches found")
                 return CollectionResult(
                     data_source=self.data_source,
-                    collection_type="live_scores",
+                    collection_type = os.getenv("SCORES_COLLECTOR_COLLECTION_TYPE_130"),
                     records_collected=0,
                     success_count=0,
                     error_count=0,
-                    status="success",
+                    status = os.getenv("SCORES_COLLECTOR_STATUS_137"),
                 )
 
             self.logger.info(
@@ -190,15 +191,15 @@ class ScoresCollector(DataCollector):
             # 确定最终状态
             total_collected = len(collected_data)
             if error_count == 0:
-                status = "success"
+                status = os.getenv("SCORES_COLLECTOR_STATUS_177")
             elif success_count > 0:
-                status = "partial"
+                status = os.getenv("SCORES_COLLECTOR_STATUS_179")
             else:
-                status = "failed"
+                status = os.getenv("SCORES_COLLECTOR_STATUS_180")
 
             result = CollectionResult(
                 data_source=self.data_source,
-                collection_type="live_scores",
+                collection_type = os.getenv("SCORES_COLLECTOR_COLLECTION_TYPE_130"),
                 records_collected=total_collected,
                 success_count=success_count,
                 error_count=error_count,
@@ -218,11 +219,11 @@ class ScoresCollector(DataCollector):
             self.logger.error(f"Live scores collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
-                collection_type="live_scores",
+                collection_type = os.getenv("SCORES_COLLECTOR_COLLECTION_TYPE_130"),
                 records_collected=0,
                 success_count=0,
                 error_count=1,
-                status="failed",
+                status = os.getenv("SCORES_COLLECTOR_STATUS_205"),
                 error_message=str(e),
             )
 
