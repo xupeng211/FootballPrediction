@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Deploy
 
 on:
   workflow_run:
@@ -17,241 +17,262 @@ on:
         - staging
         - production
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  check-secrets:
+  # 确定部署环境
+  determine-environment:
+    name: Determine Environment
     runs-on: ubuntu-latest
     outputs:
-      docker-secrets-available: ${{ steps.check-docker.outputs.available }}
-      aws-secrets-available: ${{ steps.check-aws.outputs.available }}
-    steps:
-    - name: Check Docker Hub secrets
-      id: check-docker
-      run: |
-        if [[ -n "${{ secrets.DOCKERHUB_USERNAME }}" && -n "${{ secrets.DOCKERHUB_TOKEN }}" ]]; then
-          echo "available=true" >> $GITHUB_OUTPUT
-        else
-          echo "available=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Check AWS secrets
-      id: check-aws
-      run: |
-        if [[ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" && -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]]; then
-          echo "available=true" >> $GITHUB_OUTPUT
-        else
-          echo "available=false" >> $GITHUB_OUTPUT
-        fi
-
-  build:
-    runs-on: ubuntu-latest
-    needs: check-secrets
-    if: (github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch') && needs.check-secrets.outputs.docker-secrets-available == 'true'
+      environment: ${{ steps.env.outputs.environment }}
+      deploy-to-production: ${{ steps.env.outputs.deploy-to-production }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/football-prediction:${{ github.sha }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/football-prediction:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-  build-skip-notification:
-    runs-on: ubuntu-latest
-    needs: check-secrets
-    if: needs.check-secrets.outputs.docker-secrets-available == 'false'
-    steps:
-    - name: Skip build notification
-      run: |
-        echo "⏭️ 跳过Docker构建步骤"
-        echo "💡 原因: 缺少DockerHub认证配置"
-        echo "🔧 解决方案: 在GitHub仓库Settings -> Secrets中配置:"
-        echo "   - DOCKERHUB_USERNAME: DockerHub用户名"
-        echo "   - DOCKERHUB_TOKEN: DockerHub访问令牌"
-
-  deploy-staging:
-    runs-on: ubuntu-latest
-    needs: [check-secrets]
-    if: |
-      ((github.ref == 'refs/heads/develop' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')) &&
-      needs.check-secrets.outputs.aws-secrets-available == 'true'
-    environment: staging
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set environment variables
-      run: |
-        echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-        echo "APP_NAME=football-prediction-staging" >> $GITHUB_ENV
-        echo "DOMAIN=staging-api.footballpred.com" >> $GITHUB_ENV
-        echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build and push image to ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: football-prediction
-        IMAGE_TAG: staging-${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:staging-latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging-latest
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Deploy to ECS Staging
-      env:
-        IMAGE_URI: ${{ steps.build-image.outputs.image }}
-        CLUSTER_NAME: football-prediction-staging
-        SERVICE_NAME: football-prediction-staging
-        TASK_DEFINITION: football-prediction-staging
-      run: |
-        aws ecs update-service \
-          --cluster $CLUSTER_NAME \
-          --service $SERVICE_NAME \
-          --force-new-deployment
-
-        aws ecs wait services-stable \
-          --cluster $CLUSTER_NAME \
-          --services $SERVICE_NAME
-
-  deploy-skip-notification:
-    runs-on: ubuntu-latest
-    needs: check-secrets
-    if: needs.check-secrets.outputs.aws-secrets-available == 'false'
-    steps:
-    - name: Skip deployment notification
-      run: |
-        echo "⏭️ 跳过AWS部署步骤"
-        echo "💡 原因: 缺少AWS认证配置"
-        echo "🔧 解决方案: 在GitHub仓库Settings -> Secrets中配置:"
-        echo "   - AWS_ACCESS_KEY_ID: AWS访问密钥ID"
-        echo "   - AWS_SECRET_ACCESS_KEY: AWS私有访问密钥"
-        echo "📝 注意: 这些是可选配置，只在需要自动部署到AWS时才需要"
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: [check-secrets]
-    if: |
-      (github.ref == 'refs/heads/main' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')) &&
-      needs.check-secrets.outputs.aws-secrets-available == 'true'
-    environment: production
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set environment variables
-      run: |
-        echo "ENVIRONMENT=production" >> $GITHUB_ENV
-        echo "APP_NAME=football-prediction-prod" >> $GITHUB_ENV
-        echo "DOMAIN=api.footballpred.com" >> $GITHUB_ENV
-        echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-
-    - name: Backup production database
-      run: |
-        echo "🔄 Creating database backup before production deployment..."
-        aws rds create-db-snapshot \
-          --db-instance-identifier football-prediction-prod \
-          --db-snapshot-identifier prod-backup-$(date +%Y%m%d-%H%M%S) \
-          --region us-east-1 || echo "Database backup failed, continuing..."
-
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build and push image to ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: football-prediction
-        IMAGE_TAG: production-${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:production-latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:production-latest
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-    - name: Deploy to ECS Production
-      env:
-        IMAGE_URI: ${{ steps.build-image.outputs.image }}
-        CLUSTER_NAME: football-prediction-production
-        SERVICE_NAME: football-prediction-production
-        TASK_DEFINITION: football-prediction-production
-      run: |
-        aws ecs update-service \
-          --cluster $CLUSTER_NAME \
-          --service $SERVICE_NAME \
-          --force-new-deployment
-
-        aws ecs wait services-stable \
-          --cluster $CLUSTER_NAME \
-          --services $SERVICE_NAME
-
-    - name: Run database migrations
-      run: |
-        echo "🔄 Running database migrations on production..."
-        echo "Migrations will be run automatically by the application on startup"
-
-    - name: Health check
-      run: |
-        echo "🔍 Performing health check..."
-        sleep 30  # Wait for service to start
-
-        for i in {1..15}; do
-          if curl -f -s "https://${{ env.DOMAIN }}/health" > /dev/null 2>&1; then
-            echo "✅ Health check passed!"
-            exit 0
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENVIRONMENT="staging"
           else
-            echo "⏳ Waiting for service to be healthy... (attempt $i/15)"
-            sleep 20
+            echo "Not deploying from branch ${{ github.ref }}"
+            exit 0
           fi
-        done
 
-        echo "❌ Health check failed after 5 minutes"
-        echo "Service may still be starting up. Check AWS console for details."
+          DEPLOY_TO_PRODUCTION=false
+          if [ "$ENVIRONMENT" = "production" ]; then
+            DEPLOY_TO_PRODUCTION=true
+          fi
 
-    - name: Notify deployment success
-      if: success()
-      run: |
-        echo "🎉 Successfully deployed to production!"
-        echo "🔗 Service URL: https://${{ env.DOMAIN }}"
-        echo "🚀 Image: ${{ steps.build-image.outputs.image }}"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "deploy-to-production=$DEPLOY_TO_PRODUCTION" >> $GITHUB_OUTPUT
+
+  # 准备部署
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    needs: [determine-environment]
+    if: needs.determine-environment.outputs.environment != ''
+
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: ${{ needs.determine-environment.outputs.environment == 'production' && 'https://api.footballprediction.com' || 'https://staging-api.footballprediction.com' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Get image tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            SHA="${{ github.event.workflow_run.head_sha }}"
+          else
+            SHA="${{ github.sha }}"
+          fi
+          echo "tag=${SHA:0:7}" >> $GITHUB_OUTPUT
+
+      - name: Build and push to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: football-prediction
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          docker buildx build \
+            --target production \
+            --platform linux/amd64 \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --push \
+            .
+
+      - name: Generate deployment manifest
+        run: |
+          cat > deployment.yaml <<EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: football-prediction
+            namespace: ${{ needs.determine-environment.outputs.environment }}
+          spec:
+            replicas: ${{ needs.determine-environment.outputs.environment == 'production' && '3' || '1' }}
+            selector:
+              matchLabels:
+                app: football-prediction
+            template:
+              metadata:
+                labels:
+                  app: football-prediction
+              spec:
+                containers:
+                - name: app
+                  image: ${{ steps.login-ecr.outputs.registry }}/football-prediction:${{ steps.meta.outputs.tag }}
+                  ports:
+                  - containerPort: 8000
+                  env:
+                  - name: ENVIRONMENT
+                    value: "${{ needs.determine-environment.outputs.environment }}"
+                  - name: DATABASE_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: football-prediction-secrets
+                        key: database-url
+                  - name: REDIS_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: football-prediction-secrets
+                        key: redis-url
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 256Mi
+                    limits:
+                      cpu: 500m
+                      memory: 512Mi
+                  livenessProbe:
+                    httpGet:
+                      path: /health
+                      port: 8000
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                  readinessProbe:
+                    httpGet:
+                      path: /ready
+                      port: 8000
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+          EOF
+
+      - name: Upload deployment manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest
+          path: deployment.yaml
+          retention-days: 1
+
+  # 执行部署
+  deploy:
+    name: Deploy to ${{ needs.determine-environment.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [determine-environment, prepare]
+    if: needs.determine-environment.outputs.environment != ''
+
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: ${{ needs.determine-environment.outputs.environment == 'production' && 'https://api.footballprediction.com' || 'https://staging-api.footballprediction.com' }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name football-prediction-${{ needs.determine-environment.outputs.environment }}
+
+      - name: Download deployment manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-manifest
+
+      - name: Deploy application
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl rollout status deployment/football-prediction -n ${{ needs.determine-environment.outputs.environment }} --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ${{ needs.determine-environment.outputs.environment }}
+          kubectl get services -n ${{ needs.determine-environment.outputs.environment }}
+
+  # 生产环境额外检查
+  production-checks:
+    name: Production Health Checks
+    runs-on: ubuntu-latest
+    needs: [determine-environment, deploy]
+    if: needs.determine-environment.outputs.deploy-to-production == 'true'
+
+    steps:
+      - name: Wait for deployment to be ready
+        run: sleep 60
+
+      - name: Health check
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://api.footballprediction.com/health)
+          if [ $response -ne 200 ]; then
+            echo "Health check failed with status $response"
+            exit 1
+          fi
+
+      - name: Run smoke tests
+        run: |
+          curl -f https://api.footballprediction.com/health || exit 1
+          curl -f https://api.footballprediction.com/ready || exit 1
+          curl -f https://api.footballprediction.com/metrics || exit 1
+
+      - name: Notify team
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+
+  # 回滚准备（仅生产环境）
+  prepare-rollback:
+    name: Prepare Rollback
+    runs-on: ubuntu-latest
+    needs: [determine-environment, deploy]
+    if: needs.determine-environment.outputs.deploy-to-production == 'true' && failure()
+
+    steps:
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Deployment Failed - Rollback Needed',
+              body: `
+              Deployment failed for commit: ${{ github.sha }}
+
+              ### Rollback Commands:
+              \`\`\`bash
+              # Get previous deployment
+              kubectl rollout history deployment/football-prediction -n production
+
+              # Rollback to previous revision
+              kubectl rollout undo deployment/football-prediction -n production
+
+              # Check status
+              kubectl rollout status deployment/football-prediction -n production
+              \`\`\`
+
+              Please investigate and rollback immediately.
+              `,
+              labels: ['urgent', 'rollback', 'production']
+            })
