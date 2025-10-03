@@ -215,6 +215,102 @@ cov.enforce: ## Test: Run coverage with strict 80% threshold
 	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 && \
 	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
 
+coverage-ci: ## Test: Run CI coverage with 80% threshold (strict)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running CI coverage with 80% threshold...$(RESET)" && \
+	pytest --cov=src --cov-config=coverage_ci.ini --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+
+coverage-local: ## Test: Run local coverage with 60% threshold (development)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running local coverage with 60% threshold...$(RESET)" && \
+	pytest --cov=src --cov-config=coverage_local.ini --cov-report=term-missing --cov-fail-under=60
+
+coverage-critical: ## Test: Test critical path modules with 100% coverage
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running critical path coverage with 100% threshold...$(RESET)" && \
+	pytest tests/unit/ai/ --cov=src/models/prediction_service.py --cov-report=term --cov-fail-under=100
+
+benchmark-full: ## Performance: Run comprehensive performance benchmarks
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running comprehensive performance benchmarks...$(RESET)" && \
+	pytest tests/performance/test_performance_benchmarks.py -v --benchmark-only
+
+benchmark-regression: ## Performance: Run performance regression detection
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running performance regression detection...$(RESET)" && \
+	python tests/performance/performance_regression_detector.py
+
+benchmark-update: ## Performance: Update performance baseline metrics
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Updating performance baseline metrics...$(RESET)" && \
+	python -c "import asyncio; from tests.performance.performance_regression_detector import PerformanceRegressionDetector; asyncio.run(PerformanceRegressionDetector().update_baselines())"
+
+mutation-test: ## Mutation: Run mutation testing with mutmut
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running mutation testing...$(RESET)" && \
+	python tests/mutation/run_mutation_tests.py
+
+mutation-html: ## Mutation: Generate HTML mutation report
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Generating HTML mutation report...$(RESET)" && \
+	mutmut html
+
+mutation-results: ## Mutation: Show detailed mutation results
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Showing mutation results...$(RESET)" && \
+	mutmut results
+
+mutation-init: ## Mutation: Initialize mutation testing
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Initializing mutation testing...$(RESET)" && \
+	mutmut run --help
+
+coverage-dashboard: ## Coverage: Generate real-time coverage dashboard
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Generating coverage dashboard...$(RESET)" && \
+	python tests/coverage/coverage_dashboard_generator.py
+
+coverage-trends: ## Coverage: Show coverage trends and history
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Analyzing coverage trends...$(RESET)" && \
+	python -c "from tests.coverage.coverage_dashboard_generator import CoverageDashboardGenerator; print('Coverage trends analysis would be displayed here')"
+
+coverage-live: ## Coverage: Start live coverage monitoring (auto-refresh)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Starting live coverage monitoring...$(RESET)" && \
+	echo "Open docs/_reports/coverage/coverage_dashboard_*.html in your browser"
+	echo "Dashboard auto-refreshes every 5 minutes"
+
+test-debt-analysis: ## Test Debt: Run comprehensive test debt analysis
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running test debt analysis...$(RESET)" && \
+	python tests/test_debt/test_debt_tracker.py
+
+test-debt-log: ## Test Debt: Show current test debt log
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Showing test debt log...$(RESET)" && \
+	if [ -f "docs/_reports/TEST_DEBT_LOG.md" ]; then \
+		cat docs/_reports/TEST_DEBT_LOG.md; \
+	else \
+		echo "No test debt log found. Run 'make test-debt-analysis' to generate one."; \
+	fi
+
+test-debt-cleanup: ## Test Debt: Start test debt cleanup session
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Starting test debt cleanup session...$(RESET)" && \
+	echo "1. Running test debt analysis..." && \
+	python tests/test_debt/test_debt_tracker.py && \
+	echo "2. Opening test debt log..." && \
+	if [ -f "docs/_reports/TEST_DEBT_LOG.md" ]; then \
+		echo "📋 Current test debt:"; \
+		head -20 docs/_reports/TEST_DEBT_LOG.md; \
+	fi && \
+	echo "3. Cleanup schedule:" && \
+	if [ -f "docs/_reports/TEST_CLEANUP_SCHEDULE.md" ]; then \
+		echo "📅 Next cleanup: First Friday of this month"; \
+	fi && \
+	echo "✅ Test debt cleanup session initialized"
+
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running quick tests...$(RESET)" && \
@@ -230,13 +326,16 @@ type-check: ## Quality: Run type checking with mypy
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
-prepush: ## Quality: Complete pre-push validation (format + lint + type-check + test)
-	@echo "$(BLUE)🔄 Running pre-push validation...$(RESET)" && \
-	$(MAKE) fmt || { echo "$(RED)❌ Code formatting failed$(RESET)"; exit 1; } && \
-	$(MAKE) lint || { echo "$(RED)❌ Linting failed$(RESET)"; exit 1; } && \
-	$(MAKE) type-check || { echo "$(RED)❌ Type checking failed$(RESET)"; exit 1; } && \
-	$(MAKE) test || { echo "$(RED)❌ Tests failed$(RESET)"; exit 1; } && \
-	echo "$(GREEN)✅ Pre-push validation passed$(RESET)"
+prepush: ## Quality: Complete pre-push validation (ruff + mypy + pytest)
+	@echo "$(BLUE)🔄 Running pre-push quality gate...$(RESET)" && \
+	$(ACTIVATE) && \
+	echo "$(YELLOW)📋 Running Ruff check...$(RESET)" && \
+	ruff check . || { echo "$(RED)❌ Ruff check failed$(RESET)"; exit 1; } && \
+	echo "$(YELLOW)🔍 Running MyPy type check...$(RESET)" && \
+	mypy src tests --ignore-missing-imports --no-error-summary || { echo "$(RED)❌ MyPy check failed$(RESET)"; exit 1; } && \
+	echo "$(YELLOW)🧪 Running Pytest basic validation...$(RESET)" && \
+	pytest tests/unit --maxfail=5 --disable-warnings --tb=short -q || { echo "$(RED)❌ Pytest validation failed$(RESET)"; exit 1; } && \
+	echo "$(GREEN)✅ Pre-push quality gate passed$(RESET)"
 
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \

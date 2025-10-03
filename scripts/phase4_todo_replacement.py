@@ -126,7 +126,7 @@ def main():
         if process_file(test_file):
             updated_files.append(test_file)
 
-    print(f"\n📊 Phase 4 Summary:")
+    print("\n📊 Phase 4 Summary:")
     print(f"✅ Updated files: {len(updated_files)}")
 
     if updated_files:
