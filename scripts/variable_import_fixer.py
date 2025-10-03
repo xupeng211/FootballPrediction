@@ -5,11 +5,9 @@ Variable and import fixer for Phase 4 Batch 2.
 Fixes F821 (undefined variable), F401 (unused import), and F841 (unused variable) errors.
 """
 
-import os
 import re
-import ast
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Set
 
 
 class VariableImportFixer:
@@ -132,7 +130,7 @@ class VariableImportFixer:
                     self.total_fixes += fixes
                     print(f"Fixed {file_path} ({fixes} fixes)")
 
-        print(f"\n=== Variable and Import Fix Summary ===")
+        print("\n=== Variable and Import Fix Summary ===")
         print(f"Files fixed: {self.files_fixed}")
         print(f"Total fixes: {self.total_fixes}")
         print(f"✅ Successfully fixed variable/import errors in {self.files_fixed} files!")

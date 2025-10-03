@@ -1,0 +1,231 @@
+name: License Compliance Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天UTC 04:00运行 (北京时间12:00)
+    - cron: '0 4 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-licenses
+        pip install -r requirements.txt
+
+    - name: Check license compliance
+      run: |
+        echo "📄 Checking license compliance..."
+
+        # 生成许可证报告
+        pip-licenses --from=mixed --format=json > license-report.json
+
+        # 检查不兼容的许可证
+        echo "🔍 Checking for incompatible licenses..."
+
+        # 检查禁止的许可证
+        if pip-licenses --from=mixed --fail-on="Commercial;Proprietary" 2>/dev/null; then
+          echo "✅ No prohibited licenses found"
+        else
+          echo "❌ Prohibited licenses detected!"
+          pip-licenses --from=mixed --format=table
+          exit 1
+        fi
+
+        # 运行自定义许可证检查脚本
+        if [ -f "scripts/check_licenses.py" ]; then
+          echo "🔍 Running custom license check..."
+          python scripts/check_licenses.py --format json --output license-detailed-report.json
+
+          # 检查是否有许可证问题
+          if python -c "
+import json
+with open('license-detailed-report.json', 'r') as f:
+    report = json.load(f)
+
+# 统计问题
+issue_stats = report.get('issues', {})
+if issue_stats.get('total', 0) > 0:
+    print(f'❌ Found {issue_stats[\"total\"]} license issues')
+    if issue_stats.get('blocked', 0) > 0:
+        print(f'  - {issue_stats[\"blocked\"]} blocked licenses')
+    if issue_stats.get('warning', 0) > 0:
+        print(f'  - {issue_stats[\"warning\"]} copyleft licenses')
+    if issue_stats.get('unknown', 0) > 0:
+        print(f'  - {issue_stats[\"unknown\"]} unknown licenses')
+    exit(1)
+else:
+    print('✅ All licenses are compliant')
+"; then
+            echo "✅ License compliance check passed"
+          else
+            echo "❌ License compliance check failed"
+            exit 1
+          fi
+        fi
+
+    - name: Generate license summary
+      run: |
+        echo "## 📄 License Summary" > license-summary.md
+        echo "" >> license-summary.md
+
+        # 统计许可证类型
+        echo "### License Distribution" >> license-summary.md
+        pip-licenses --from=mixed --format=markdown >> license-summary.md
+
+        # 添加依赖总数
+        TOTAL_DEPS=$(pip list --format=json | jq length)
+        echo "" >> license-summary.md
+        echo "**Total Dependencies:** $TOTAL_DEPS" >> license-summary.md
+
+        # 检查是否有需要特别注意的许可证
+        echo "" >> license-summary.md
+        echo "### ⚠️ Licenses Requiring Attention" >> license-summary.md
+        if pip-licenses --from=mixed --format=json | jq -r '.[] | select(.license | test("GPL|LGPL|AGPL")) | "\(.name)==\(.version) (\(.license))"' > gpl-licenses.txt; then
+          if [ -s gpl-licenses.txt ]; then
+            echo "The following packages use copyleft licenses:" >> license-summary.md
+            cat gpl-licenses.txt | sed 's/^/- /' >> license-summary.md
+          else
+            echo "No copyleft licenses found." >> license-summary.md
+          fi
+        fi
+
+        # 生成NOTICE文件建议
+        echo "" >> license-summary.md
+        echo "### 📋 NOTICE File Requirements" >> license-summary.md
+        echo "The following packages require attribution in NOTICE file:" >> license-summary.md
+        pip-licenses --from=mixed --format=json | jq -r '.[] | select(.license | test("MIT|BSD|Apache")) | "- \(.name) (\(.license))"' >> license-summary.md
+
+        cat license-summary.md
+
+    - name: Upload license reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: license-reports
+        path: |
+          license-report.json
+          license-detailed-report.json
+          license-summary.md
+        retention-days: 90
+
+    - name: Comment PR with license summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          try {
+            const summary = fs.readFileSync('license-summary.md', 'utf8');
+
+            const comment = `## 📄 License Compliance Check
+
+            ${summary}
+
+            ---
+
+            📊 [View detailed reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            This comment is automatically generated by license check workflow`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Could not read license summary:', error);
+          }
+
+    - name: Check for license policy violations
+      run: |
+        echo "🔍 Checking license policy compliance..."
+
+        # 定义允许的许可证列表
+        ALLOWED_LICENSES="MIT BSD Apache GPL LGPL AGPL ISC MPL PSF"
+
+        # 检查是否有未在允许列表中的许可证
+        VIOLATIONS=0
+
+        while IFS= read -r line; do
+          if [[ $line == *"=="* ]]; then
+            PACKAGE=$(echo $line | cut -d' ' -f1)
+            LICENSE=$(echo $line | cut -d'(' -f2 | cut -d')' -f1)
+
+            # 检查许可证是否在允许列表中
+            if [[ ! " $ALLOWED_LICENSES " =~ " $LICENSE " ]]; then
+              echo "⚠️ Unknown license: $PACKAGE uses $LICENSE"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          fi
+        done <<< "$(pip-licenses --from=mixed --format=table | tail -n +3)"
+
+        if [ $VIOLATIONS -gt 0 ]; then
+          echo "❌ Found $VIOLATIONS license policy violations"
+          echo "Please review the license policy and add any new licenses to the allowed list"
+          exit 1
+        else
+          echo "✅ All licenses comply with policy"
+        fi
+
+    - name: Update dependency documentation
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "📝 Updating dependency documentation..."
+
+        # 创建依赖列表文档
+        mkdir -p docs/operations
+
+        cat > docs/operations/DEPENDENCIES.md << 'EOF'
+        # Dependencies Documentation
+
+        ## Overview
+
+        This document lists all dependencies used in the Football Prediction System.
+
+        ## Production Dependencies
+
+        EOF
+
+        # 添加依赖列表
+        pip-licenses --from=mixed --format=markdown >> docs/operations/DEPENDENCIES.md
+
+        # 添加生成时间
+        echo "" >> docs/operations/DEPENDENCIES.md
+        echo "---" >> docs/operations/DEPENDENCIES.md
+        echo "*Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")*" >> docs/operations/DEPENDENCIES.md
+
+        # 提交更改
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/operations/DEPENDENCIES.md
+        git diff --staged --quiet || git commit -m "docs: update dependency documentation"
+        git push || echo "No changes to commit or push failed"

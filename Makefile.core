@@ -1,0 +1,183 @@
+# =============================================================================
+# Football Prediction Project - Core Makefile (简化版)
+# =============================================================================
+# 这个文件包含了项目最常用的30个命令
+# 完整命令请参考 Makefile.full
+
+.PHONY: help install env-check venv dev test test-quick lint fmt coverage prepush ci up down docker-build db-init db-migrate docs clean
+
+# 默认目标
+.DEFAULT_GOAL := help
+
+# 颜色定义
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+BLUE := \033[0;34m
+NC := \033[0m # No Color
+
+# =============================================================================
+# 环境管理
+# =============================================================================
+
+help: ## 显示帮助信息
+	@echo "$(BLUE)=== Football Prediction Project - Core Commands ===$(NC)"
+	@echo ""
+	@echo "$(GREEN)环境管理:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(install|env-check|venv)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)开发日常:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(dev|test|lint|fmt)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)质量保证:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(coverage|prepush|ci)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)Docker:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(up|down|docker)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)数据库:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(db-)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(GREEN)其他:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -vE "(install|env-check|venv|dev|test|lint|fmt|coverage|prepush|ci|up|down|docker|db-)" | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)提示: 使用 'make -f Makefile.full <command>' 查看所有86个命令$(NC)"
+
+install: ## 安装项目依赖
+	@echo "$(GREEN)安装项目依赖...$(NC)"
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
+	@echo "$(GREEN)依赖安装完成!$(NC)"
+
+env-check: ## 检查环境配置
+	@echo "$(BLUE)检查环境配置...$(NC)"
+	@python -c "import sys; print(f'Python: {sys.version}')" || (echo "$(RED)Python未安装$(NC)" && exit 1)
+	@pip --version || (echo "$(RED)Pip未安装$(NC)" && exit 1)
+	@test -f ".env" || echo "$(YELLOW)警告: .env文件不存在$(NC)"
+	@test -d "src" || (echo "$(RED)src目录不存在$(NC)" && exit 1)
+	@echo "$(GREEN)环境检查完成!$(NC)"
+
+venv: ## 创建虚拟环境
+	@echo "$(GREEN)创建虚拟环境...$(NC)"
+	python -m venv .venv
+	@echo "$(YELLOW)请运行: source .venv/bin/activate$(NC)"
+
+# =============================================================================
+# 开发日常
+# =============================================================================
+
+dev: ## 启动开发服务器
+	@echo "$(GREEN)启动开发服务器...$(NC)"
+	uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+test: ## 运行测试（默认单元测试）
+	@echo "$(GREEN)运行测试...$(NC)"
+	pytest tests/unit/ -v --tb=short
+
+test-quick: ## 快速测试（跳过慢测试）
+	@echo "$(GREEN)运行快速测试...$(NC)"
+	pytest tests/unit/ -v -m "not slow" --tb=short
+
+lint: ## 代码质量检查
+	@echo "$(GREEN)运行代码检查...$(NC)"
+	ruff check src/ tests/
+	@echo "$(GREEN)代码检查完成!$(NC)"
+
+fmt: ## 代码格式化
+	@echo "$(GREEN)格式化代码...$(NC)"
+	ruff format src/ tests/
+	@echo "$(GREEN)代码格式化完成!$(NC)"
+
+# =============================================================================
+# 质量保证
+# =============================================================================
+
+coverage: ## 生成测试覆盖率报告
+	@echo "$(GREEN)生成覆盖率报告...$(NC)"
+	pytest tests/unit/ --cov=src --cov-report=html --cov-report=term
+	@echo "$(GREEN)覆盖率报告已生成: htmlcov/index.html$(NC)"
+
+prepush: ## 提交前检查（测试+格式化+检查）
+	@echo "$(BLUE)执行提交前检查...$(NC)"
+	$(MAKE) fmt
+	$(MAKE) lint
+	$(MAKE) test-quick
+	@echo "$(GREEN)提交前检查完成! 可以提交了!$(NC)"
+
+ci: ## 完整CI检查（模拟CI流水线）
+	@echo "$(BLUE)执行完整CI检查...$(NC)"
+	$(MAKE) env-check
+	$(MAKE) install
+	$(MAKE) lint
+	$(MAKE) test
+	$(MAKE) coverage
+	@echo "$(GREEN)CI检查完成!$(NC)"
+
+# =============================================================================
+# Docker
+# =============================================================================
+
+up: ## 启动Docker服务
+	@echo "$(GREEN)启动Docker服务...$(NC)"
+	docker-compose up -d
+	@echo "$(GREEN)服务已启动!$(NC)"
+
+down: ## 停止Docker服务
+	@echo "$(YELLOW)停止Docker服务...$(NC)"
+	docker-compose down
+	@echo "$(GREEN)服务已停止!$(NC)"
+
+docker-build: ## 构建Docker镜像
+	@echo "$(GREEN)构建Docker镜像...$(NC)"
+	docker build -t football-prediction .
+	@echo "$(GREEN)镜像构建完成!$(NC)"
+
+# =============================================================================
+# 数据库
+# =============================================================================
+
+db-init: ## 初始化数据库
+	@echo "$(GREEN)初始化数据库...$(NC)"
+	alembic upgrade head
+	@echo "$(GREEN)数据库初始化完成!$(NC)"
+
+db-migrate: ## 运行数据库迁移
+	@echo "$(GREEN)运行数据库迁移...$(NC)"
+	alembic revision --autogenerate -m "Auto migration"
+	alembic upgrade head
+	@echo "$(GREEN)迁移完成!$(NC)"
+
+# =============================================================================
+# 其他
+# =============================================================================
+
+docs: ## 生成文档
+	@echo "$(GREEN)生成文档...$(NC)"
+	@if [ -d "docs" ]; then \
+		cd docs && make html; \
+	else \
+		echo "$(YELLOW)docs目录不存在$(NC)"; \
+	fi
+
+clean: ## 清理项目临时文件
+	@echo "$(GREEN)清理项目...$(NC)"
+	python scripts/cleanup_project.py
+	@echo "$(GREEN)项目清理完成!$(NC)"
+
+# =============================================================================
+# 快捷命令
+# =============================================================================
+
+# 快速启动开发环境
+quickstart: install env-check up ## 快速启动开发环境（安装+检查+启动服务）
+	@echo "$(GREEN)开发环境已就绪!$(NC)"
+	@echo "$(BLUE)访问: http://localhost:8000$(NC)"
+	@echo "$(BLUE)API文档: http://localhost:8000/docs$(NC)"
+
+# 完整测试流程
+test-all: test coverage ## 运行完整测试流程（测试+覆盖率）
+	@echo "$(GREEN)所有测试完成!$(NC)"
+
+# 项目健康检查
+health: env-check lint test-quick ## 项目健康检查（环境+检查+快速测试）
+	@echo "$(GREEN)项目状态健康!$(NC)"

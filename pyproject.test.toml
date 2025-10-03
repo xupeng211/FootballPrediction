@@ -1,0 +1,133 @@
+[tool.pytest.ini_options]
+# 测试分层配置
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# 标记定义
+markers = [
+    # 分层标记
+    "unit: Unit tests - fast, isolated tests",
+    "integration: Integration tests - test component interactions",
+    "e2e: End-to-end tests - full workflow tests",
+
+    # 速度标记
+    "slow: Tests that take more than 1 second to run",
+    "fast: Tests that should complete quickly (< 1s)",
+
+    # 类型标记
+    "api: API endpoint tests",
+    "database: Database-related tests",
+    "cache: Cache-related tests",
+    "model: ML model tests",
+    "service: Service layer tests",
+
+    # 质量标记
+    "critical: Critical path tests that must always pass",
+    "regression: Regression tests for known issues",
+    "smoke: Basic smoke tests",
+
+    # 功能标记
+    "prediction: Prediction-related tests",
+    "match: Match-related tests",
+    "team: Team-related tests",
+    "league: League-related tests",
+
+    # 环境标记
+    "local: Tests that can run locally",
+    "ci: Tests for CI environment",
+    "staging: Tests for staging environment",
+    "production: Tests for production environment"
+]
+
+# 最小版本要求
+minversion = "6.0"
+
+# 添加选项
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "--showlocals",
+    "--disable-warnings",
+    "--color=yes"
+]
+
+# 异步测试配置
+asyncio_mode = "auto"
+
+# 测试发现配置
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
+    "CVS",
+    "_darcs",
+    "{arch}",
+    "*.egg",
+    "venv",
+    "env",
+    "virtualenv"
+]
+
+# 日志配置
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# 覆盖率配置（当使用pytest-cov时）
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/virtualenv/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*/conftest.py"
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+show_missing = true
+precision = 2
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"
+skip_covered = false
+
+# 性能测试配置（当使用pytest-benchmark时）
+[tool.benchmark]
+min_rounds = 3
+max_time = 1.0
+min_time = 0.005
+timer = "time.perf_counter"
+sort = "mean"
+histogram = true
+save_data = true
+json_file = "benchmark.json"
+
+# 并行测试配置（当使用pytest-xdist时）
+[tool.xdist]
+dist = "auto"
+looponfailroots = ["src", "tests"]
+
+# Mock配置
+[tool.pytest_mock]
+mock_class = "unittest.mock.MagicMock"

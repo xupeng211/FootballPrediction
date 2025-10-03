@@ -1,0 +1,210 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天凌晨2点运行
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit bandit safety pip-licenses
+        pip install -r requirements.txt
+
+    - name: Run pip-audit
+      run: |
+        echo "🔒 Running pip-audit..."
+        pip-audit --requirement requirements.txt --output audit-report.json || true
+
+    - name: Run Bandit security linter
+      run: |
+        echo "🛡️ Running Bandit..."
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Run Safety check
+      run: |
+        echo "🔍 Running Safety..."
+        safety check --json --output safety-report.json || true
+
+    - name: Run license check
+      run: |
+        echo "📄 Running license check..."
+        pip-licenses --from=mixed --format=json > license-report.json || true
+
+        # Run custom license check script if available
+        if [ -f "scripts/check_licenses.py" ]; then
+          python scripts/check_licenses.py --format json --output license-detailed-report.json || true
+        fi
+
+    - name: Run Snyk security scan
+      continue-on-error: true
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          audit-report.json
+          bandit-report.json
+          safety-report.json
+          license-report.json
+          license-detailed-report.json
+        retention-days: 30
+
+    - name: Comment PR with security issues
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // 读取审计报告
+          let auditIssues = 0;
+          let banditIssues = 0;
+          let safetyIssues = 0;
+
+          try {
+            const auditReport = JSON.parse(fs.readFileSync('audit-report.json', 'utf8'));
+            auditIssues = auditReport.vulnerabilities ? auditReport.vulnerabilities.length : 0;
+          } catch (e) {}
+
+          try {
+            const banditReport = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+            banditIssues = banditReport.results ? banditReport.results.length : 0;
+          } catch (e) {}
+
+          try {
+            const safetyReport = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+            safetyIssues = safetyReport.vulnerabilities ? safetyReport.vulnerabilities.length : 0;
+          } catch (e) {}
+
+          const totalIssues = auditIssues + banditIssues + safetyIssues;
+
+          if (totalIssues > 0) {
+            const comment = `## 🔒 安全扫描报告
+
+            发现 **${totalIssues}** 个安全问题：
+
+            - **pip-audit**: ${auditIssues} 个漏洞
+            - **Bandit**: ${banditIssues} 个问题
+            - **Safety**: ${safetyIssues} 个问题
+
+            请查看 [Actions](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 获取详细信息。
+
+            ---
+
+            此评论由自动安全扫描生成`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  license-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install pip-licenses
+      run: pip install pip-licenses
+
+    - name: Check licenses
+      run: |
+        echo "📄 Checking licenses..."
+        pip-licenses --from=mixed --format=json > license-report.json
+
+        # 检查不兼容的许可证
+        pip-licenses --from=mixed --fail-on="BSD;MIT;Apache-2.0;PSF" || true
+
+    - name: Upload license report
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-report
+        path: license-report.json
+        retention-days: 30
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  dependency-graph:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Submit dependency graph
+      uses: github/dependency-submission-toolkit@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}

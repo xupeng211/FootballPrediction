@@ -1,0 +1,378 @@
+name: Test Quality Gate
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天早上8点运行质量检查
+    - cron: '0 8 * * *'
+
+jobs:
+  # 快速单元测试检查
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Run unit tests with coverage
+      run: |
+        make test.unit
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # 集成测试
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Run integration tests
+      env:
+        DATABASE_URL: postgresql://postgres:test@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        ENVIRONMENT: testing
+      run: |
+        make test.integration
+      continue-on-error: true
+
+  # E2E测试（仅在主分支）
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Run E2E tests
+      run: |
+        make test.e2e
+      continue-on-error: true
+
+  # 测试质量监控
+  quality-monitor:
+    name: Test Quality Monitor
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Generate quality report
+      run: |
+        make test.monitor
+
+    - name: Upload quality report
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-report
+        path: tests/metrics/report_*.json
+
+    - name: Comment PR with quality report
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+
+          // 查找最新的质量报告
+          const reports = fs.readdirSync('tests/metrics')
+            .filter(f => f.startsWith('report_') && f.endsWith('.json'))
+            .sort()
+            .reverse();
+
+          if (reports.length > 0) {
+            const reportPath = path.join('tests/metrics', reports[0]);
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+            const quality = report.quality_score;
+            const coverage = report.coverage?.overall_coverage || 0;
+            const performance = report.performance?.total_time || 0;
+
+            const comment = `
+            ## 📊 Test Quality Report
+
+            | Metric | Score | Status |
+            |--------|-------|--------|
+            | 🎯 Overall Quality | ${quality.total_score}/${quality.max_score} (${quality.grade}) | ${quality.grade >= 'B' ? '✅' : '⚠️'} |
+            | 📈 Coverage | ${coverage.toFixed(1)}% | ${coverage >= 20 ? '✅' : '❌'} |
+            | ⚡ Performance | ${performance.toFixed(1)}s | ${performance <= 60 ? '✅' : '⚠️'} |
+
+            ### 💡 Recommendations
+            ${report.recommendations.map(r => `- ${r}`).join('\n')}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  # 质量门禁检查
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Run quality gate
+      run: |
+        make test.quality-gate
+
+    - name: Quality gate status
+      if: failure()
+      run: |
+        echo "❌ Quality gate failed!"
+        echo "Please review the test results and fix the issues."
+        exit 1
+
+  # 测试矩阵生成（用于并行化）
+  test-matrix:
+    name: Generate Test Matrix
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Generate test matrix
+      id: set-matrix
+      run: |
+        matrix=$(python scripts/test_runner.py --matrix)
+        echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+  # 性能回归测试
+  performance-tests:
+    name: Performance Regression Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      fetch-depth: 0  # 需要完整历史来比较性能
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        make install
+
+    - name: Run performance benchmarks
+      run: |
+        make benchmark-regression
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-results
+        path: tests/performance/results/
+
+  # 安全扫描
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Bandit Security Scan
+      run: |
+        pip install bandit[toml]
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Run Safety Check
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # 测试报告汇总
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, quality-gate]
+    if: always()
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate summary report
+      run: |
+        echo "# 📊 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## ✅ Completed Jobs" >> $GITHUB_STEP_SUMMARY
+        echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality Gate: ${{ needs.quality-gate.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📈 Quality Metrics" >> $GITHUB_STEP_SUMMARY
+
+        if [ -f "quality-report/report_"*.json ]; then
+          python -c "
+import json
+import glob
+import os
+
+reports = glob.glob('quality-report/report_*.json')
+if reports:
+    latest = max(reports, key=os.path.getctime)
+    with open(latest) as f:
+        data = json.load(f)
+
+    quality = data['quality_score']
+    coverage = data.get('coverage', {}).get('overall_coverage', 0)
+
+    print(f'- Overall Quality: {quality[\"total_score\"]}/{quality[\"max_score\"]} ({quality[\"grade\"]})')
+    print(f'- Test Coverage: {coverage:.1f}%')
+    print(f'- Execution Time: {data.get(\"performance\", {}).get(\"total_time\", 0):.1f}s')
+  " >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Notify on failure
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `Test Quality Gate Failed - ${context.sha}`,
+            body: `
+            ## ❌ Test Quality Gate Failed
+
+            **Commit**: ${context.sha}
+            **Branch**: ${context.ref}
+            **Workflow**: ${context.workflow}
+
+            Please review the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the issues.
+            `,
+            labels: ['bug', 'ci-failure']
+          })

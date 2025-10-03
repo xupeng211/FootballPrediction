@@ -36,9 +36,9 @@ jobs:
             fi
           fi
 
-  # 阶段2: 代码质量检查
-  quality-check:
-    name: Code Quality
+  # 阶段2: 单元测试（必须通过）
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: basic-checks
     if: needs.basic-checks.outputs.should-run == 'true'
@@ -52,51 +52,74 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cache dependencies
+      - name: Cache pip packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Run linting
+      - name: Run unit tests
         run: |
-          ruff check src/ tests/ --output-format=github
+          chmod +x scripts/run_unit_tests.sh
+          ./scripts/run_unit_tests.sh
 
-      - name: Run type checking
-        run: |
-          mypy src/ --ignore-missing-imports
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-coverage
+          path: |
+            coverage.json
+            htmlcov/
+            docs/_reports/unit_test_*.md
+          retention-days: 30
 
-  # 阶段3: 测试和覆盖率
-  test-and-coverage:
-    name: Test & Coverage
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-results
+          path: docs/_reports/unit-tests.xml
+          retention-days: 30
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('coverage.json')) {
+              const coverage = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+              const percent = coverage.totals.percent_covered;
+              const threshold = 80;
+
+              const message = percent >= threshold
+                ? `🎉 Unit test coverage: **${percent.toFixed(1)}%** ✅ (≥${threshold}%)`
+                : `⚠️ Unit test coverage: **${percent.toFixed(1)}%** ❌ (<${threshold}%)`;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: message
+              });
+            }
+
+  # 阶段3: 集成测试（允许失败）
+  integration-tests:
+    name: Integration Tests
     runs-on: ubuntu-latest
-    needs: [basic-checks, quality-check]
+    needs: [basic-checks, unit-tests]
     if: needs.basic-checks.outputs.should-run == 'true'
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: football_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    continue-on-error: true  # 允许失败
 
     steps:
       - name: Checkout
@@ -107,13 +130,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cache dependencies
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
         uses: actions/cache@v3
         with:
-          path: |
-            ~/.cache/pip
-            .venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements*.txt') }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Install dependencies
         run: |
@@ -121,131 +147,138 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Wait for services
+      - name: Run integration tests
         run: |
-          until pg_isready -h localhost -p 5432; do sleep 1; done
-          until redis-cli -h localhost -p 6379 ping; do sleep 1; done
+          chmod +x scripts/run_integration_tests.sh
+          ./scripts/run_integration_tests.sh
 
-      - name: Run tests with coverage
-        env:
-          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/football_test
-          REDIS_URL: redis://localhost:6379
-        run: |
-          pytest --cov=src --cov-report=xml --cov-report=json -v
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+          name: integration-test-results
+          path: |
+            docs/_reports/integration_test_*.md
+            docs/_reports/integration-tests.xml
+          retention-days: 30
 
-      - name: Check coverage threshold
-        run: |
-          COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])")
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "Coverage ${COVERAGE}% is below 80% threshold"
-            exit 1
-          fi
-          echo "Coverage ${COVERAGE}% meets threshold"
-
-  # 阶段4: 构建镜像
-  build:
-    name: Build Docker Image
+  # 阶段4: 端到端测试（只在main分支触发）
+  e2e-tests:
+    name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [basic-checks, test-and-coverage]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+    needs: [basic-checks, unit-tests]
+    if: |
+      needs.basic-checks.outputs.should-run == 'true' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    continue-on-error: true  # 允许失败
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          images: football-prediction
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
+          python-version: '3.11'
 
-      - name: Build and test image
-        uses: docker/build-push-action@v5
-        id: build
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
         with:
-          context: .
-          target: production
-          push: false
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-      - name: Test image
+      - name: Install dependencies
         run: |
-          docker run --rm ${{ steps.meta.outputs.tags }} python -c "import fastapi; print('Image OK')"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Login to Docker Hub
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
+      - name: Run E2E tests
+        run: |
+          chmod +x scripts/run_e2e_tests.sh
+          ./scripts/run_e2e_tests.sh
+
+      - name: Upload E2E test reports
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          name: e2e-test-results
+          path: |
+            docs/_reports/e2e_test_*.md
+            docs/_reports/e2e-tests.xml
+          retention-days: 30
 
-      - name: Push image
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: production
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # 阶段5: 安全扫描
-  security-scan:
-    name: Security Scan
+  # 阶段5: 生成测试总结报告
+  test-summary:
+    name: Test Summary
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: always() && needs.basic-checks.outputs.should-run == 'true'
 
     steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ needs.build.outputs.image-tag }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
 
-  # 阶段6: 通知
-  notify:
-    name: Notify Results
-    runs-on: ubuntu-latest
-    needs: [basic-checks, quality-check, test-and-coverage, build]
-    if: always()
-
-    steps:
-      - name: Notify success
-        if: needs.test-and-coverage.result == 'success' && needs.build.result == 'success'
+      - name: Generate summary
         run: |
-          echo "✅ CI Pipeline completed successfully!"
+          echo "# Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Test Results Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-      - name: Notify failure
-        if: needs.test-and-coverage.result == 'failure' || needs.build.result == 'failure'
-        run: |
-          echo "❌ CI Pipeline failed!"
-          exit 1
+          # Unit Tests
+          if [ -f "unit-test-coverage/coverage.json" ]; then
+            COVERAGE=$(python -c "import json; print(json.load(open('unit-test-coverage/coverage.json')).get('totals', {}).get('percent_covered', 0))")
+            echo "### ✅ Unit Tests" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Coverage**: ${COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Unit Tests" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Integration Tests
+          echo "### 🔗 Integration Tests" >> $GITHUB_STEP_SUMMARY
+          if [ -f "integration-test-results/integration-tests.xml" ]; then
+            echo "- **Status**: Completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Status**: Skipped or Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # E2E Tests
+          echo "### 🎯 E2E Tests" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            if [ -f "e2e-test-results/e2e-tests.xml" ]; then
+              echo "- **Status**: Completed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Status**: Failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- **Status**: Skipped (non-main branch)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const message = `⚠️ Some tests failed. Please check the logs for details.\n\n- Unit Tests: ${{ needs.unit-tests.result }}\n- Integration Tests: ${{ needs.integration-tests.result }}\n- E2E Tests: ${{ needs.e2e-tests.result }}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

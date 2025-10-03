@@ -3,22 +3,27 @@ services:
     image: postgres:15
     restart: unless-stopped
     env_file:
-      - .env.minimal
+      - ../docker/.env.minimal
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-testpassword}
+      POSTGRES_DB: ${DB_NAME:-footballprediction_test}
     volumes:
       - minimal_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   api:
-    image: python:3.11-slim
+    build:
+      context: ../..
+      dockerfile: config/docker/Dockerfile.minimal
+    image: footballprediction/minimal-api:latest
     working_dir: /app
-    command: bash -c "pip install --no-cache-dir -r requirements-minimal.txt && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000
     volumes:
-      - .:/app
+      - ../..:/app
     env_file:
-      - .env.minimal
+      - ../docker/.env.minimal
     environment:
       FAST_FAIL: "false"
       MINIMAL_HEALTH_MODE: "true"
@@ -26,9 +31,16 @@ services:
       ENABLE_METRICS: "false"
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
     restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
 volumes:
   minimal_pgdata:

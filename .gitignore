@@ -159,3 +159,44 @@ clash_dns_fix.yaml
 clash_rules_patch.yaml
 tests/sedony8lS
 ting workflow documentation
+
+# 自动添加的清理规则
+__pycache__/
+*.py[cod]
+*$py.class
+.cleanup_backup/
+logs/*.log
+*.tmp
+*.bak
+*_working.py
+*_fixed.py
+*_temp.py
+.DS_Store
+Thumbs.db
+
+# 缓存目录
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 临时报告
+TEMP_*.md
+CLAUDE_*.md.bak
+*_ANALYSIS.md
+*_SUMMARY.md
+# 深度清理规则
+*_temp*
+*_backup*
+*_working*
+TEMP_*
+*.orig
+*.rej
+# 报告文件
+coverage.json
+audit-report.json
+*_report.json
+vulnerabilities.csv
+vulnerabilities.json
+# 构建目录

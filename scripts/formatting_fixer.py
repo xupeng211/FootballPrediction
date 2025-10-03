@@ -5,8 +5,6 @@ Formatting fixer for Phase 4 Batch 3.
 Fixes I001 (import order) and E501 (line length) errors.
 """
 
-import os
-import re
 from pathlib import Path
 from typing import List
 
@@ -167,7 +165,7 @@ class FormattingFixer:
                     self.total_fixes += fixes
                     print(f"Fixed {file_path} ({fixes} fixes)")
 
-        print(f"\n=== Formatting Fix Summary ===")
+        print("\n=== Formatting Fix Summary ===")
         print(f"Files fixed: {self.files_fixed}")
         print(f"Total fixes: {self.total_fixes}")
         print(f"✅ Successfully fixed formatting issues in {self.files_fixed} files!")

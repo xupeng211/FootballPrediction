@@ -1,0 +1,183 @@
+name: 依赖安全扫描
+
+on:
+  push:
+    branches: [ main, develop, hotfix/* ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 每周一早上 8:00 运行
+    - cron: '0 8 * * 1'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  dependency-security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout 代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 缓存 pip
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit safety
+        pip install -r requirements-minimal.txt 2>/dev/null || true
+
+    - name: 运行 pip-audit 扫描
+      id: audit
+      run: |
+        echo "运行 pip-audit 依赖安全扫描..."
+        pip-audit --format json --output vulnerability-report.json || true
+
+        # 检查是否有高危漏洞
+        if [ -f vulnerability-report.json ]; then
+          HIGH_VULNS=$(jq -r '.dependencies[] | select(.vulns != []) | .vulns[] | select(.id | startswith("GHSA-")) | .id' vulnerability-report.json | wc -l || echo "0")
+          CRITICAL_VULNS=$(jq -r '.dependencies[] | select(.vulns != []) | .vulns[] | select(.id | startswith("CVE-")) | .id' vulnerability-report.json | wc -l || echo "0")
+
+          echo "high-vulnerabilities=$HIGH_VULNS" >> $GITHUB_OUTPUT
+          echo "critical-vulnerabilities=$CRITICAL_VULNS" >> $GITHUB_OUTPUT
+
+          if [ "$HIGH_VULNS" -gt 0 ] || [ "$CRITICAL_VULNS" -gt 0 ]; then
+            echo "❌ 发现高危或严重漏洞！"
+            pip-audit
+            exit 1
+          fi
+        fi
+
+    - name: 上传漏洞报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: vulnerability-report
+        path: vulnerability-report.json
+
+    - name: 运行 MLflow 安全审计
+      run: |
+        echo "运行 MLflow 安全审计..."
+        python scripts/security/mlflow_audit.py --project-root . --output mlflow-security-report.md || true
+
+        # 检查高危问题
+        HIGH_ISSUES=$(grep -c "🚨 高危问题:" mlflow-security-report.md || echo "0")
+        if [ "$HIGH_ISSUES" -gt 0 ]; then
+          echo "❌ 发现 MLflow 高危安全问题！"
+          cat mlflow-security-report.md
+          exit 1
+        fi
+
+    - name: 上传 MLflow 安全报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: mlflow-security-report
+        path: mlflow-security-report.md
+
+    - name: 创建安全 Issue（如果发现问题）
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // 读取漏洞报告
+          let vulnerabilityText = '';
+          if (fs.existsSync('vulnerability-report.json')) {
+            const report = JSON.parse(fs.readFileSync('vulnerability-report.json', 'utf8'));
+            const vulns = report.dependencies.filter(d => d.vulns && d.vulns.length > 0);
+            if (vulns.length > 0) {
+              vulnerabilityText = '\n### 🚨 发现的依赖漏洞\n\n';
+              vulns.forEach(vuln => {
+                vuln.vulns.forEach(v => {
+                  vulnerabilityText += `- **${vuln.name}**: ${v.id} (${v.aliases?.join(', ') || ''})\n`;
+                  vulnerabilityText += `  - 严重性: ${v.id.includes('CRITICAL') ? '严重' : v.id.includes('HIGH') ? '高危' : '中危'}\n`;
+                  vulnerabilityText += `  - 描述: ${v.description?.substring(0, 200)}...\n\n`;
+                });
+              });
+            }
+          }
+
+          // 读取 MLflow 安全报告
+          let mlflowText = '';
+          if (fs.existsSync('mlflow-security-report.md')) {
+            const report = fs.readFileSync('mlflow-security-report.md', 'utf8');
+            if (report.includes('🚨 高危问题:')) {
+              mlflowText = '\n### 🔍 MLflow 安全问题\n\n请查看 [MLflow 安全报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) 了解详细信息。\n';
+            }
+          }
+
+          if (vulnerabilityText || mlflowText) {
+            const title = `🔒 安全扫描发现问题 - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 安全扫描报告
+
+            扫描时间: ${new Date().toISOString()}
+            分支: ${{ github.ref_name }}
+            提交: ${{ github.sha }}
+
+            ${vulnerabilityText}
+            ${mlflowText}
+
+            ### 📋 修复建议
+
+            1. 立即升级有漏洞的依赖包
+            2. 对于无法升级的依赖，评估风险并实施缓解措施
+            3. 更新 SECURITY_RISK_ACCEPTED.md 文档
+            4. 在 CI 中阻止引入新的高危依赖
+
+            ---
+            此 Issue 由自动化安全扫描创建。`;
+
+            // 检查是否已有相同的 Issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security']
+            });
+
+            const hasSimilarIssue = existingIssues.data.some(issue =>
+              issue.title.includes('安全扫描发现问题') &&
+              issue.title.includes(new Date().toISOString().split('T')[0])
+            );
+
+            if (!hasSimilarIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'high-priority']
+              });
+            }
+          }
+
+    - name: 通知安全团队（如果有严重漏洞）
+      if: failure() && (steps.audit.outputs.critical-vulnerabilities > 0)
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: |
+          🚨 发现严重依赖漏洞！
+
+          分支: ${{ github.ref_name }}
+          提交: ${{ github.sha }}
+          严重漏洞数: ${{ steps.audit.outputs.critical-vulnerabilities }}
+          高危漏洞数: ${{ steps.audit.outputs.high-vulnerabilities }}
+
+          请立即查看并修复安全问题。
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SECURITY_SLACK_WEBHOOK }}
