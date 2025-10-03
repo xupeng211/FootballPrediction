@@ -70,7 +70,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         matches = db.execute(text("SELECT COUNT(*) FROM matches"))
         predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))
         active = db.execute(
-            text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
+            text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = os.getenv("MONITORING_STATE_73")")
         )
 
         def _val(res: Any) -> int:
@@ -280,7 +280,7 @@ async def prometheus_metrics():
         return Response(content=metrics_data, media_type=content_type)
     except Exception as e:
         logger.error(f"获取Prometheus指标失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="获取监控指标失败")
+        raise HTTPException(status_code=500, detail = os.getenv("MONITORING_DETAIL_283"))
 
 
 # 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
@@ -318,7 +318,7 @@ async def collector_status() -> Dict[str, Any]:
         return collector.get_status()
     except Exception as e:
         logger.error(f"获取收集器状态失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="获取状态失败")
+        raise HTTPException(status_code=500, detail = os.getenv("MONITORING_DETAIL_320"))
 
 
 @router.post("/collector/start")

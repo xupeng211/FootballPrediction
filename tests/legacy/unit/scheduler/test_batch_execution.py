@@ -5,6 +5,7 @@ from src.scheduler.task_scheduler import TaskScheduler, ScheduledTask
 from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import pytest
+import os
 
 """
 Unit tests for batch task execution functionality.:
@@ -51,7 +52,7 @@ class TestBatchTaskExecution:
         tasks = []
         for i in range(5):
             task = ScheduledTask(
-                task_id=f["batch_task_{i}"],": name=f["Batch Task {i}"],": func = lambda x f["result_{x}"],": args=["i[",": cron_expression="]0 8 * * *",  # Daily at 8 AM[": enabled=True,": timeout=300,": retry_count=3)"
+                task_id=f["batch_task_{i}"],": name=f["Batch Task {i}"],": func = lambda x f["result_{x}"],": args=["i[",": cron_expression = os.getenv("TEST_BATCH_EXECUTION_CRON_EXPRESSION_54"),  # Daily at 8 AM[": enabled=True,": timeout=300,": retry_count=3)"
             tasks.append(task)
         return tasks
     @pytest.fixture
@@ -60,7 +61,7 @@ class TestBatchTaskExecution:
         tasks = []
         for i in range(3):
             task = ScheduledTask(
-                task_id=f["failing_task_{i}"],": name=f["Failing Task {i}"],": func = lambda x 1 / 0,  # This will raise ZeroDivisionError[": args=["]i[",": cron_expression="]0 8 * * *",": enabled=True,": timeout=300,": retry_count=2)"
+                task_id=f["failing_task_{i}"],": name=f["Failing Task {i}"],": func = lambda x 1 / 0,  # This will raise ZeroDivisionError[": args=["]i[",": cron_expression = os.getenv("TEST_BATCH_EXECUTION_CRON_EXPRESSION_54"),": enabled=True,": timeout=300,": retry_count=2)"
             tasks.append(task)
         return tasks
     class TestBulkTaskRegistration:
@@ -93,7 +94,7 @@ class TestBatchTaskExecution:
         def test_register_mixed_valid_invalid_tasks(self, task_scheduler):
             """Test registration mix of valid and invalid tasks."""
             valid_task = ScheduledTask(
-                task_id="valid_task[",": name="]Valid Task[",": func = lambda "]valid_result[",": cron_expression="]0 8 * * *",": enabled=True)": invalid_task = ScheduledTask(": task_id="",  # Invalid empty ID[": name="]Invalid Task[",": func = lambda "]invalid_result[",": cron_expression="]invalid_cron[",  # Invalid cron[": enabled=True)"""
+                task_id = os.getenv("TEST_BATCH_EXECUTION_TASK_ID_94"),": name = os.getenv("TEST_BATCH_EXECUTION_NAME_94"),": func = lambda "]valid_result[",": cron_expression = os.getenv("TEST_BATCH_EXECUTION_CRON_EXPRESSION_54"),": enabled=True)": invalid_task = ScheduledTask(": task_id="",  # Invalid empty ID[": name = os.getenv("TEST_BATCH_EXECUTION_NAME_96"),": func = lambda "]invalid_result[",": cron_expression = os.getenv("TEST_BATCH_EXECUTION_CRON_EXPRESSION_96"),  # Invalid cron[": enabled=True)"""
             # Should handle both without crashing
             valid_result = task_scheduler.register_task(valid_task)
             invalid_result = task_scheduler.register_task(invalid_task)
@@ -181,7 +182,7 @@ class TestBatchTaskExecution:
                 {"task_id[: "queue_task_2"", "data]},""""
                 {"task_id[: "queue_task_3"", "data]}]": mock_task_queue.get.side_effect = mock_tasks + ["None["  # None to signal end[": processed_tasks = []": def mock_process_task(task_data):": processed_tasks.append(task_data)"
                 return JobExecutionResult(
-                    task_id=task_data["]]task_id["],": status="]success[",": result=f["]processed_{task_data['data']}"],": start_time=datetime.now(),": end_time=datetime.now(),": duration_ms=100)"
+                    task_id=task_data["]]task_id["],": status = os.getenv("TEST_BATCH_EXECUTION_STATUS_182"),": result=f["]processed_{task_data['data']}"],": start_time=datetime.now(),": end_time=datetime.now(),": duration_ms=100)"
             # Process queue
             while True = task_data mock_task_queue.get()
                 if task_data is None:
@@ -291,7 +292,7 @@ errors.append(e)
             duration_ms = (end_time - start_time).total_seconds() * 1000
             # Create execution result
             result = JobExecutionResult(
-                task_id="performance_test[",": status="]success[",": result="]test_completed[",": start_time=start_time,": end_time=end_time,": duration_ms=duration_ms)"
+                task_id = os.getenv("TEST_BATCH_EXECUTION_TASK_ID_287"),": status = os.getenv("TEST_BATCH_EXECUTION_STATUS_182"),": result = os.getenv("TEST_BATCH_EXECUTION_RESULT_289"),": start_time=start_time,": end_time=end_time,": duration_ms=duration_ms)"
             # Verify timing accuracy
             assert result.duration_ms >= 80  # At least 80ms (allowing for overhead)
             assert result.duration_ms <= 200  # At most 200ms

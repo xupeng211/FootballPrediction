@@ -3,6 +3,7 @@ from datetime import datetime
 from src.tasks import utils
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 # tests/unit/tasks/test_utils.py
 
@@ -62,7 +63,7 @@ def test_is_match_day_default_date():
     )
     assert await utils.should_collect_live_scores() is False
 @pytest.mark.asyncio
-@patch("]src.tasks.utils.DatabaseManager[")": async def test_get_active_leagues_success(MockDatabaseManager):": mock_row = MagicMock()": mock_row.name = "]Premier League[": mock_result = ["]mock_row["]": mock_session = AsyncMock()": mock_session.execute.return_value = mock_result[": mock_db_manager = MockDatabaseManager.return_value"
+@patch("]src.tasks.utils.DatabaseManager[")": async def test_get_active_leagues_success(MockDatabaseManager):": mock_row = MagicMock()": mock_row.name = os.getenv("TEST_UTILS_NAME_65"): mock_result = ["]mock_row["]": mock_session = AsyncMock()": mock_session.execute.return_value = mock_result[": mock_db_manager = MockDatabaseManager.return_value"
     mock_db_manager.get_async_session.return_value.__aenter__.return_value = (
         mock_session
     )

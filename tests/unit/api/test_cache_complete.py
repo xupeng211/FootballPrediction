@@ -125,7 +125,7 @@ class TestCacheClear:
         mock_manager = MagicMock()
         mock_get_manager.return_value = mock_manager
 
-        request = CacheKeyRequest(keys=[], pattern="test:*")
+        request = CacheKeyRequest(keys=[], pattern = os.getenv("TEST_CACHE_COMPLETE_PATTERN_128"))
         background_tasks = BackgroundTasks()
 
         result = await clear_cache(request, background_tasks)
@@ -324,7 +324,7 @@ class TestCacheModels:
         assert request.pattern is None
 
         # 带模式
-        request2 = CacheKeyRequest(keys=["key1"], pattern="test:*")
+        request2 = CacheKeyRequest(keys=["key1"], pattern = os.getenv("TEST_CACHE_COMPLETE_PATTERN_128"))
         assert request2.pattern == "test:*"
 
     def test_cache_prewarm_request_creation(self):

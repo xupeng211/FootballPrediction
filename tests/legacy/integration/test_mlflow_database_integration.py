@@ -1,3 +1,4 @@
+import os
 """
 MLflow与数据库集成测试
 
@@ -35,7 +36,7 @@ class TestMLflowDatabaseIntegration:
         with patch("src.models.prediction_service.MlflowClient[") as mock_client:""""
             # 模拟模型版本
             mock_version = Mock()
-            mock_version.version = "]1[": mock_version.current_stage = "]Production[": mock_client.get_latest_versions.return_value = [mock_version]""""
+            mock_version.version = "]1[": mock_version.current_stage = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_CURRENT_STAGE_38"): mock_client.get_latest_versions.return_value = [mock_version]""""
 
             # 模拟模型加载
             mock_model = RandomForestClassifier()
@@ -46,8 +47,8 @@ class TestMLflowDatabaseIntegration:
         "]]""示例预测结果"""
         return PredictionResult(
             match_id=1,
-            model_version="1[",": model_name="]test_model[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5,"""
+            model_version="1[",": model_name = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_MODEL_NAME_48"),": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
+            predicted_result = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_PREDICTED_RESULT_"),": confidence_score=0.5,"""
         )
 
     def test_mlflow_model_loading(self, mock_mlflow_client):
@@ -80,7 +81,7 @@ class TestMLflowDatabaseIntegration:
         "]]""测试MLflow实验跟踪"""
         # 模拟实验操作
         mock_experiment = Mock()
-        mock_experiment.experiment_id = "test_experiment_123[": mock_mlflow_client.get_experiment_by_name.return_value = mock_experiment[""""
+        mock_experiment.experiment_id = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_EXPERIMENT_ID_79"): mock_mlflow_client.get_experiment_by_name.return_value = mock_experiment[""""
 
         # 验证实验跟踪功能
         mock_mlflow_client.get_experiment_by_name.assert_called_once()
@@ -98,7 +99,7 @@ class TestMLflowDatabaseIntegration:
         "]]""测试模型版本管理"""
         # 模拟版本管理操作
         mock_version = Mock()
-        mock_version.version = "2[": mock_version.current_stage = "]Staging[": mock_mlflow_client.get_latest_versions.return_value = [mock_version]""""
+        mock_version.version = "2[": mock_version.current_stage = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_CURRENT_STAGE_97"): mock_mlflow_client.get_latest_versions.return_value = [mock_version]""""
 
         # 验证版本管理
         versions = mock_mlflow_client.get_latest_versions()
@@ -120,8 +121,8 @@ class TestMLflowDatabaseIntegration:
         # 验证预测结果的数据结构
         result = PredictionResult(
             match_id=1,
-            model_version="1[",": model_name="]test_model[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5,"""
+            model_version="1[",": model_name = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_MODEL_NAME_48"),": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
+            predicted_result = os.getenv("TEST_MLFLOW_DATABASE_INTEGRATION_PREDICTED_RESULT_"),": confidence_score=0.5,"""
         )
 
         # 验证概率总和为1（允许小的浮点误差）

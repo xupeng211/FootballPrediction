@@ -665,7 +665,7 @@ class QualityChecker:
 
         self.iteration_log.append(log_entry)
 
-    def save_results(self, output_file: str = "logs/quality_check.json") -> None:
+    def save_results(self, output_file: str = os.getenv("QUALITY_CHECKER_STR_668")) -> None:
         """保存检查结果"""
         output_path = self.project_root / output_file
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -677,7 +677,7 @@ class QualityChecker:
 
         self.logger.info(f"💾 检查结果已保存到: {output_path}")
 
-    def save_iteration_log(self, log_file: str = "logs/iteration.log") -> None:
+    def save_iteration_log(self, log_file: str = os.getenv("QUALITY_CHECKER_STR_680")) -> None:
         """保存迭代日志"""
         log_path = self.project_root / log_file
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -708,13 +708,13 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="代码质量检查器")
+    parser = argparse.ArgumentParser(description = os.getenv("QUALITY_CHECKER_DESCRIPTION_711"))
     parser.add_argument("--project-root", default=".", help="项目根目录")
-    parser.add_argument("--max-retries", type=int, default=3, help="最大重试次数")
+    parser.add_argument("--max-retries", type=int, default=3, help = os.getenv("QUALITY_CHECKER_HELP_712"))
     parser.add_argument(
-        "--output", default="logs/quality_check.json", help="结果输出文件"
+        "--output", default = os.getenv("QUALITY_CHECKER_DEFAULT_713"), help = os.getenv("QUALITY_CHECKER_HELP_713")
     )
-    parser.add_argument("--summary", action="store_true", help="显示摘要")
+    parser.add_argument("--summary", action = os.getenv("QUALITY_CHECKER_ACTION_715"), help="显示摘要")
 
     args = parser.parse_args()
 

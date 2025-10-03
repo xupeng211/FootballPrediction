@@ -462,9 +462,9 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="测试质量监控工具")
-    parser.add_argument("--output", "-o", help="输出文件路径")
-    parser.add_argument("--quiet", "-q", action="store_true", help="静默模式")
+    parser = argparse.ArgumentParser(description = os.getenv("TEST_QUALITY_MONITOR_DESCRIPTION_465"))
+    parser.add_argument("--output", "-o", help = os.getenv("TEST_QUALITY_MONITOR_HELP_466"))
+    parser.add_argument("--quiet", "-q", action = os.getenv("TEST_QUALITY_MONITOR_ACTION_466"), help="静默模式")
     args = parser.parse_args()
 
     # 创建监控器

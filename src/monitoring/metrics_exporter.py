@@ -1,3 +1,4 @@
+import os
 """
 监控指标导出器
 
@@ -243,7 +244,7 @@ class MetricsExporter:
         """
         self.record_data_collection(
             data_source=data_source,
-            collection_type="default",
+            collection_type = os.getenv("METRICS_EXPORTER_COLLECTION_TYPE_246"),
             success=True,
             duration=0.0,
             records_count=records_count,
@@ -261,7 +262,7 @@ class MetricsExporter:
         """
         self.record_data_collection(
             data_source=data_source,
-            collection_type="default",
+            collection_type = os.getenv("METRICS_EXPORTER_COLLECTION_TYPE_246"),
             success=False,
             duration=0.0,
             error_type=error_message,
@@ -275,7 +276,7 @@ class MetricsExporter:
             records_processed: 处理记录数
         """
         self.record_data_cleaning(
-            data_type="default",
+            data_type = os.getenv("METRICS_EXPORTER_DATA_TYPE_275"),
             success=True,
             duration=0.0,
             records_processed=records_processed,
@@ -334,7 +335,7 @@ class MetricsExporter:
         # 记录失败（如果失败）
         if not success:
             self.scheduler_task_failures.labels(
-                task_name=task_name, failure_reason="test_failure"
+                task_name=task_name, failure_reason = os.getenv("METRICS_EXPORTER_FAILURE_REASON_334")
             ).inc()
 
     def update_table_row_counts(self, table_counts: dict = None) -> None:

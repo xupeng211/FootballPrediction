@@ -224,7 +224,7 @@ class TestDataProcessingServiceBatchGamma001:
         # 验证质量检查失败
         assert result["]valid["] is False[" assert result["]]score["] ==0.65[" assert len(result["]]issues["]) ==2[" def test_process_text(self, data_processing_service):"""
         "]]""测试文本处理"""
-        text = "Team A vs Team B 2-1[": result = data_processing_service.process_text(text)""""
+        text = os.getenv("SERVICES_DATA_PROCESSING_BATCH_GAMMA__TEXT_227"): result = data_processing_service.process_text(text)""""
         # 验证文本处理结果
         assert isinstance(result, dict)
         assert "]processed[" in result[""""
@@ -310,7 +310,7 @@ class TestDataProcessingServiceBatchGamma001:
     @pytest.mark.asyncio
     async def test_cache_processing_results(self, data_processing_service):
         "]]""测试缓存处理结果"""
-        cache_key = "test_cache_key[": data = {"]test[": ["]data["}""""
+        cache_key = os.getenv("SERVICES_DATA_PROCESSING_BATCH_GAMMA__CACHE_KEY_31"): data = {"]test[": ["]data["}""""
         # Mock缓存操作
         data_processing_service.cache_manager.setex = AsyncMock()
         result = await data_processing_service.cache_processing_results(cache_key, data)
@@ -319,7 +319,7 @@ class TestDataProcessingServiceBatchGamma001:
     @pytest.mark.asyncio
     async def test_get_cached_results(self, data_processing_service):
         "]]""测试获取缓存结果"""
-        cache_key = "test_cache_key[": cached_data = {"]cached[": ["]result["}""""
+        cache_key = os.getenv("SERVICES_DATA_PROCESSING_BATCH_GAMMA__CACHE_KEY_31"): cached_data = {"]cached[": ["]result["}""""
         # Mock缓存获取
         data_processing_service.cache_manager.get = AsyncMock(return_value=cached_data)
         result = await data_processing_service.get_cached_results(cache_key)
@@ -328,7 +328,7 @@ class TestDataProcessingServiceBatchGamma001:
     @pytest.mark.asyncio
     async def test_get_cached_results_miss(self, data_processing_service):
         "]""测试缓存未命中"""
-        cache_key = "nonexistent_key["""""
+        cache_key = os.getenv("SERVICES_DATA_PROCESSING_BATCH_GAMMA__CACHE_KEY_32")""""
         # Mock缓存未命中
         data_processing_service.cache_manager.get = AsyncMock(return_value=None)
         result = await data_processing_service.get_cached_results(cache_key)

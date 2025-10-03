@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 告警策略验证脚本
@@ -169,7 +170,7 @@ class AlertVerificationTester:
         current_delays = {}
         for task_name, delay_seconds in delayed_tasks:
             current_delays[task_name] = await self._get_prometheus_metric_value(
-                f'football_scheduler_task_delay_seconds{{task_name="{task_name}"}}'
+                f'football_scheduler_task_delay_seconds{{task_name = os.getenv("ALERT_VERIFICATION_TASK_NAME_172")}}'
             )
 
         self.verification_log.append(
@@ -217,7 +218,7 @@ class AlertVerificationTester:
             > 0,
             "scheduler_delay_high": any(
                 await self._get_prometheus_metric_value(
-                    f'football_scheduler_task_delay_seconds{{task_name="{task}"}}'
+                    f'football_scheduler_task_delay_seconds{{task_name = os.getenv("ALERT_VERIFICATION_TASK_NAME_220")}}'
                 )
                 > 600
                 for task in [
@@ -385,7 +386,7 @@ async def main():
     """主函数"""
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format = os.getenv("ALERT_VERIFICATION_FORMAT_385"),
     )
 
     tester = AlertVerificationTester()
@@ -417,7 +418,7 @@ async def main():
                 print(f"{scenario}: {status}")
 
         print("=" * 50)
-        final_status = "✅ 完全成功" if overall_success else "⚠️ 部分失败"
+        final_status = os.getenv("ALERT_VERIFICATION_FINAL_STATUS_417") if overall_success else "⚠️ 部分失败"
         print(f"整体验证状态: {final_status}")
 
         if overall_success:

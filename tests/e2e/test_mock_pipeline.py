@@ -16,7 +16,7 @@ class TestMockPipeline:
     @pytest.fixture(scope="class")
     def mock_app(self):
         """创建模拟应用"""
-        app = FastAPI(title="Mock Football API")
+        app = FastAPI(title = os.getenv("TEST_MOCK_PIPELINE_TITLE_19"))
 
         @app.get("/health")
         async def health():

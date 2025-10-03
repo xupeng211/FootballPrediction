@@ -1,3 +1,4 @@
+import os
 """
 from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表
@@ -16,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # 版本标识
 revision = "005"
-down_revision = "004_configure_permissions"
+down_revision = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_DOWN_REVISION_19")
 branch_labels = None
 depends_on = None
 
@@ -29,11 +30,11 @@ def upgrade():
         "audit_logs",
         # 主键
         sa.Column(
-            "id", sa.Integer(), autoincrement=True, nullable=False, comment="审计日志ID"
+            "id", sa.Integer(), autoincrement=True, nullable=False, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_32")
         ),
         # 用户信息
         sa.Column(
-            "user_id", sa.String(length=100), nullable=False, comment="操作用户ID"
+            "user_id", sa.String(length=100), nullable=False, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_35")
         ),
         sa.Column(
             "username", sa.String(length=100), nullable=True, comment="操作用户名"
@@ -46,7 +47,7 @@ def upgrade():
             "severity",
             sa.String(length=20),
             nullable=False,
-            server_default="MEDIUM",
+            server_default = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_SERVER_DEFAULT_44"),
             comment="严重级别",
         ),
         sa.Column(
@@ -63,24 +64,24 @@ def upgrade():
             "old_value_hash",
             sa.String(length=64),
             nullable=True,
-            comment="旧值哈希（敏感数据）",
+            comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_61"),
         ),
         sa.Column(
             "new_value_hash",
             sa.String(length=64),
             nullable=True,
-            comment="新值哈希（敏感数据）",
+            comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_65"),
         ),
         # 上下文信息
         sa.Column(
-            "ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"
+            "ip_address", sa.String(length=45), nullable=True, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_69")
         ),
         sa.Column("user_agent", sa.Text(), nullable=True, comment="用户代理"),
         sa.Column(
             "request_path", sa.String(length=500), nullable=True, comment="请求路径"
         ),
         sa.Column(
-            "request_method", sa.String(length=10), nullable=True, comment="HTTP方法"
+            "request_method", sa.String(length=10), nullable=True, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_76")
         ),
         # 操作结果
         sa.Column(
@@ -88,7 +89,7 @@ def upgrade():
             sa.Boolean(),
             nullable=False,
             server_default="true",
-            comment="操作是否成功",
+            comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_80"),
         ),
         sa.Column("error_message", sa.Text(), nullable=True, comment="错误信息"),
         # 时间信息
@@ -100,7 +101,7 @@ def upgrade():
             comment="操作时间戳",
         ),
         sa.Column(
-            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"
+            "duration_ms", sa.Integer(), nullable=True, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_91")
         ),
         # 扩展信息
         sa.Column(
@@ -110,7 +111,7 @@ def upgrade():
             comment="扩展元数据",
         ),
         sa.Column(
-            "tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"
+            "tags", sa.String(length=500), nullable=True, comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_100")
         ),
         # 合规相关
         sa.Column(
@@ -124,14 +125,14 @@ def upgrade():
             sa.Integer(),
             nullable=True,
             server_default="2555",
-            comment="保留期限（天）",
+            comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_112"),
         ),  # 7年
         sa.Column(
             "is_sensitive",
             sa.Boolean(),
             nullable=False,
             server_default="false",
-            comment="是否包含敏感数据",
+            comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_117"),
         ),
         # 继承BaseModel的字段
         sa.Column(
@@ -151,7 +152,7 @@ def upgrade():
         # 主键约束
         sa.PrimaryKeyConstraint("id"),
         # 表注释
-        comment="权限审计日志表，记录所有敏感操作的详细信息",
+        comment = os.getenv("005_CREATE_AUDIT_LOGS_TABLE_COMMENT_133"),
     )
 
     # 创建索引以优化查询性能

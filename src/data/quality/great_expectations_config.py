@@ -389,8 +389,8 @@ class GreatExpectationsConfig:
 
             # 创建运行时批次请求
             batch_request = RuntimeBatchRequest(
-                datasource_name="football_postgres",
-                data_connector_name="default_runtime_data_connector",
+                datasource_name = os.getenv("GREAT_EXPECTATIONS_CONFIG_DATASOURCE_NAME_392"),
+                data_connector_name = os.getenv("GREAT_EXPECTATIONS_CONFIG_DATA_CONNECTOR_NAME_392"),
                 data_asset_name=table_name,
                 batch_identifiers={"default_identifier_name": f"{table_name}_batch"},
                 runtime_parameters=self._get_safe_query_parameters(

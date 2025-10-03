@@ -1,3 +1,4 @@
+import os
 """
 模型API简单测试
 Models API Simple Tests
@@ -198,7 +199,7 @@ class TestModelAPIEdgeCases:
     def test_missing_model(self):
         """测试缺失模型"""
         # 测试处理不存在的模型
-        model_name = "nonexistent_model"
+        model_name = os.getenv("TEST_MODELS_SIMPLE2_MODEL_NAME_201")
 
         with patch('mlflow.tracking.client.MlflowClient') as mock_client:
             mock_client.return_value.get_model_version.side_effect = Exception("Model not found")

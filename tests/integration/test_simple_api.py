@@ -54,7 +54,7 @@ class TestSimpleAPI:
 
     async def test_async_client(self):
         """测试异步客户端"""
-        app = FastAPI(title="Test App")
+        app = FastAPI(title = os.getenv("TEST_SIMPLE_API_TITLE_57"))
 
         @app.get("/test")
         async def test_endpoint():

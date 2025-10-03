@@ -2,6 +2,7 @@ from src.services.data_processing import DataProcessingService
 from unittest.mock import AsyncMock, Mock, patch
 import asyncio
 import pytest
+import os
 
 """
 数据处理服务测试模块
@@ -168,7 +169,7 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_process_text(self, service):
         "]]""测试处理文本数据"""
-        text = "This is a test text for processing[": result = await service.process_text(text)": assert isinstance(result, dict)" assert "]processed_text[" in result[""""
+        text = os.getenv("TEST_DATA_PROCESSING_SERVICE_TEXT_171"): result = await service.process_text(text)": assert isinstance(result, dict)" assert "]processed_text[" in result[""""
     assert result["]]processed_text["] ==text[""""
     @pytest.mark.asyncio
     async def test_process_batch_data_list(self, service):

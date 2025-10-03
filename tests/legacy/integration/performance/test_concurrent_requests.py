@@ -81,7 +81,7 @@ class TestConcurrentRequests:
         # Setup strict rate limiter
         strict_limiter = MockRateLimiter(max_requests=10, window_seconds=1)
 
-        user_id = "test_user[": requests_made = 0[": allowed_requests = 0[": blocked_requests = 0[""
+        user_id = os.getenv("TEST_CONCURRENT_REQUESTS_USER_ID_84"): requests_made = 0[": allowed_requests = 0[": blocked_requests = 0[""
 
         # Simulate burst of requests
         for i in range(20):  # More than rate limit
@@ -105,7 +105,7 @@ class TestConcurrentRequests:
     async def test_cache_performance_under_concurrency(self, concurrent_services):
         "]""Test cache performance under concurrent access."""""""
         num_concurrent_users = 30
-        cache_key = "concurrent_test_key[": test_value = {"]prediction[: "home_win"", "confidence]: 0.85}""""
+        cache_key = os.getenv("TEST_CONCURRENT_REQUESTS_CACHE_KEY_107"): test_value = {"]prediction[: "home_win"", "confidence]: 0.85}""""
 
         # Set initial cache value
         await concurrent_services["redis["].set(cache_key, test_value, ttl=300)": async def concurrent_cache_access(user_id):"""

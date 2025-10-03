@@ -1,6 +1,7 @@
 from src.data.collectors.base_collector import CollectionResult, DataCollector
 from unittest.mock import patch
 import pytest
+import os
 
 """
 单元测试：数据收集器模块
@@ -17,42 +18,42 @@ class TestCollectionResult:
     """测试采集结果数据结构"""
     def test_collection_result_creation(self):
         """测试采集结果创建"""
-        result = CollectionResult(data_source="test_api[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-            status="]partial[",": error_message="]Some records failed[",": collected_data = [{"]id[": 1}, {"]id[": 2)])": assert result.data_source =="]test_api[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
+        result = CollectionResult(data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_20"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_20"),": records_collected=10,": success_count=8,": error_count=2,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_20"),": error_message = os.getenv("TEST_DATA_COLLECTORS_ERROR_MESSAGE_20"),": collected_data = [{"]id[": 1}, {"]id[": 2)])": assert result.data_source =="]test_api[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
     assert result.success_count ==8
     assert result.error_count ==2
     assert result.status =="]]partial[" assert result.error_message =="]Some records failed[" assert len(result.collected_data) ==2[""""
     def test_collection_result_success(self):
         "]]""测试成功的采集结果"""
         result = CollectionResult(
-        data_source="football_api[",": collection_type="]odds[",": records_collected=5,": success_count=5,": error_count=0,"
-            status="]success[")": assert result.status =="]success[" assert result.error_count ==0[""""
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_24"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_25"),": records_collected=5,": success_count=5,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"))": assert result.status =="]success[" assert result.error_count ==0[""""
     assert result.error_message is None
     def test_collection_result_failure(self):
         "]]""测试失败的采集结果"""
         result = CollectionResult(
-        data_source="football_api[",": collection_type="]live_scores[",": records_collected=0,": success_count=0,": error_count=1,"
-            status="]failed[",": error_message="]API connection timeout[")": assert result.status =="]failed[" assert result.records_collected ==0[""""
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_24"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_29"),": records_collected=0,": success_count=0,": error_count=1,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_30"),": error_message = os.getenv("TEST_DATA_COLLECTORS_ERROR_MESSAGE_31"))": assert result.status =="]failed[" assert result.records_collected ==0[""""
     assert result.error_message =="]]API connection timeout[" class MockDataCollector(DataCollector):""""
     "]""Mock数据收集器用于测试"""
     async def collect_fixtures(self, **kwargs):
     """Mock赛程采集"""
     return CollectionResult(data_source=self.data_source,
-    collection_type="fixtures[",": records_collected=3,": success_count=3,": error_count=0,"
-            status="]success[",": collected_data=["""
+    collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_35"),": records_collected=3,": success_count=3,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"),": collected_data=["""
             {"]id[": 1, "]home[": "]Arsenal[", "]away[": "]Chelsea["},""""
             {"]id[": 2, "]home[": "]Liverpool[", "]away[": "]City["},""""
             {"]id[": 3, "]home[": "]United[", "]away[": "]Spurs[")])": async def collect_odds(self, **kwargs):"""
         "]""Mock赔率采集"""
         return CollectionResult(data_source=self.data_source,
         collection_type="odds[",": records_collected=2,": success_count=2,": error_count=0,"
-            status="]success[",": collected_data=["""
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"),": collected_data=["""
             {"]match_id[": 1, "]home_odds[": 2.1, "]draw_odds[": 3.4, "]away_odds[": 3.2},""""
             {"]match_id[": 2, "]home_odds[": 1.8, "]draw_odds[": 3.6, "]away_odds[": 4.5)])": async def collect_live_scores(self, **kwargs):"""
         "]""Mock实时比分采集"""
         return CollectionResult(data_source=self.data_source,
-        collection_type="live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-            status="]success[",": collected_data=["""
+        collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_48"),": records_collected=1,": success_count=1,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"),": collected_data=["""
             {"]match_id[": 1, "]home_score[": 2, "]away_score[": 1, "]status[": "]live[")""""
             ])
 class TestDataCollector:
@@ -60,7 +61,7 @@ class TestDataCollector:
     @pytest.fixture
     def mock_collector(self):
         """创建Mock数据收集器"""
-        with patch("src.data.collectors.base_collector.DatabaseManager["):": return MockDataCollector(": data_source="]test_api[", max_retries=2, retry_delay=1[""""
+        with patch("src.data.collectors.base_collector.DatabaseManager["):": return MockDataCollector(": data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_53"), max_retries=2, retry_delay=1[""""
             )
     def test_data_collector_initialization(self, mock_collector):
         "]]""测试数据收集器初始化"""
@@ -111,10 +112,10 @@ class TestDataCollector:
         class ErrorDataCollector(DataCollector):
             async def collect_fixtures(self, **kwargs):
             raise Exception("API connection failed[")": async def collect_odds(self, **kwargs):": return CollectionResult(": data_source=self.data_source,"
-            collection_type="]odds[",": records_collected=0,": success_count=0,": error_count=1,"
-                    status="]failed[",": error_message="]Invalid API response[")": async def collect_live_scores(self, **kwargs):": return CollectionResult(": data_source=self.data_source,"
-                collection_type="]live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-                    status="]success[")": with patch("]src.data.collectors.base_collector.DatabaseManager["):": return ErrorDataCollector(data_source="]error_api[")""""
+            collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_25"),": records_collected=0,": success_count=0,": error_count=1,"
+                    status = os.getenv("TEST_DATA_COLLECTORS_STATUS_30"),": error_message = os.getenv("TEST_DATA_COLLECTORS_ERROR_MESSAGE_105"))": async def collect_live_scores(self, **kwargs):": return CollectionResult(": data_source=self.data_source,"
+                collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_29"),": records_collected=1,": success_count=1,": error_count=0,"
+                    status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"))": with patch("]src.data.collectors.base_collector.DatabaseManager["):": return ErrorDataCollector(data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_113"))""""
     @pytest.mark.asyncio
     async def test_collect_all_data_with_errors(self, error_collector):
         "]""测试带错误的完整采集流程"""
@@ -134,13 +135,13 @@ class TestDataCollectorEdgeCases:
     def test_collection_result_empty_data(self):
         """测试空数据的采集结果"""
         result = CollectionResult(
-        data_source="empty_api[",": collection_type="]fixtures[",": records_collected=0,": success_count=0,": error_count=0,"
-            status="]success[",": collected_data=[])": assert result.records_collected ==0[" assert result.collected_data ==[]"
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_121"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_20"),": records_collected=0,": success_count=0,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"),": collected_data=[])": assert result.records_collected ==0[" assert result.collected_data ==[]"
     assert result.status =="]]success["  # 空结果也可能是成功的[" def test_collection_result_no_collected_data(self):"""
         "]]""测试没有collected_data字段的采集结果"""
         result = CollectionResult(
-        data_source="minimal_api[",": collection_type="]odds[",": records_collected=5,": success_count=5,": error_count=0,"
-            status="]success[",""""
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_129"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_25"),": records_collected=5,": success_count=5,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_27"),""""
             # 没有 collected_data 字段
         )
     assert result.collected_data is None
@@ -149,7 +150,7 @@ class TestDataCollectorEdgeCases:
     @pytest.mark.asyncio
     async def test_collector_with_custom_params(self):
         "]""测试带自定义参数的收集器"""
-        with patch("src.data.collectors.base_collector.DatabaseManager["):": collector = MockDataCollector(": data_source="]custom_api[", max_retries=5, retry_delay=10[""""
+        with patch("src.data.collectors.base_collector.DatabaseManager["):": collector = MockDataCollector(": data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_137"), max_retries=5, retry_delay=10[""""
             )
     assert collector.data_source =="]]custom_api[" assert collector.max_retries ==5[""""
     assert collector.retry_delay ==10

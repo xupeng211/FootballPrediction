@@ -69,7 +69,7 @@ class TestAnomalyDetectorBatchDelta004:
     def test_anomaly_detection_result_initialization(self):
         """测试异常检测结果初始化"""
         result = AnomalyDetectionResult(
-        table_name="test_table[",": detection_method="]3sigma[",": anomaly_type="]statistical_outlier[",": severity="]medium["""""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_TABLE_NAME_7"),": detection_method = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_DETECTION_ME"),": anomaly_type = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_ANOMALY_TYPE"),": severity = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_SEVERITY_72")""""
         )
         # 验证初始化属性
         assert result.table_name =="]test_table[" assert result.detection_method =="]3sigma[" assert result.anomaly_type =="]statistical_outlier[" assert result.severity =="]medium[" assert isinstance(result.timestamp, datetime)""""
@@ -117,7 +117,7 @@ class TestAnomalyDetectorBatchDelta004:
     def test_statistical_detector_detect_outliers_3sigma_empty_data(self, statistical_detector):
         "]]""测试3σ检测空数据"""
         empty_data = pd.Series([])
-        with pytest.raises(ValueError, match = "输入数据为空[")": statistical_detector.detect_outliers_3sigma(empty_data, "]test_table[", "]test_column[")": def test_statistical_detector_detect_outliers_3sigma_all_same_values(self, statistical_detector):"""
+        with pytest.raises(ValueError, match = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_MATCH_116"))": statistical_detector.detect_outliers_3sigma(empty_data, "]test_table[", "]test_column[")": def test_statistical_detector_detect_outliers_3sigma_all_same_values(self, statistical_detector):"""
         "]""测试3σ检测所有值相同的数据"""
         same_values_data = pd.Series([5.0, 5.0, 5.0, 5.0, 5.0])
         result = statistical_detector.detect_outliers_3sigma(
@@ -219,7 +219,7 @@ class TestAnomalyDetectorBatchDelta004:
         except Exception as e:
            pass  # Auto-fixed empty except block
  pass
-            with pytest.raises(ValueError, match = "]没有可用的数值列进行异常检测[")": ml_detector.detect_anomalies_isolation_forest(non_numeric_df, "]test_table[")": except Exception as e:": pass  # Auto-fixed empty except block[""
+            with pytest.raises(ValueError, match = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_MATCH_211"))": ml_detector.detect_anomalies_isolation_forest(non_numeric_df, "]test_table[")": except Exception as e:": pass  # Auto-fixed empty except block[""
            # 如果由于ML库不可用而失败，这是预期的
             # 验证逻辑路径正确
         assert isinstance(e, (ImportError, AttributeError, TypeError))
@@ -335,7 +335,7 @@ class TestAnomalyDetectorBatchDelta004:
         except Exception as e:
            pass  # Auto-fixed empty except block
  pass
-            with pytest.raises(ValueError, match = "]没有可用的数值列进行聚类异常检测[")": ml_detector.detect_anomalies_clustering(non_numeric_df, "]test_table[")": except Exception as e:": pass  # Auto-fixed empty except block[""
+            with pytest.raises(ValueError, match = os.getenv("TEST_ANOMALY_DETECTOR_BATCH_DELTA_004_MATCH_326"))": ml_detector.detect_anomalies_clustering(non_numeric_df, "]test_table[")": except Exception as e:": pass  # Auto-fixed empty except block[""
            # 如果由于ML库不可用而失败，这是预期的
         assert isinstance(e, (ImportError, AttributeError, TypeError))
     def test_advanced_detector_initialization(self, advanced_detector):

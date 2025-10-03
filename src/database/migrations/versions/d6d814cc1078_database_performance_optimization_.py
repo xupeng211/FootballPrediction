@@ -1,3 +1,4 @@
+import os
 """database_performance_optimization_partitioning_indexes_materialized_views
 
 
@@ -20,7 +21,7 @@ from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision: str = "d6d814cc1078"
+revision: str = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__ST")
 down_revision: Union[str, None] = "004_configure_permissions"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -307,8 +308,8 @@ def upgrade() -> None:
         BEGIN
             IF NOT EXISTS (
                 SELECT 1 FROM pg_indexes
-                WHERE tablename = 'features'
-                AND indexname = 'idx_features_match_team'
+                WHERE tablename = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__TA")
+                AND indexname = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__IN")
             ) THEN
                 CREATE INDEX idx_features_match_team ON features (match_id, team_id);
             END IF;
@@ -324,8 +325,8 @@ def upgrade() -> None:
         BEGIN
             IF NOT EXISTS (
                 SELECT 1 FROM pg_indexes
-                WHERE tablename = 'features'
-                AND indexname = 'idx_features_team_created'
+                WHERE tablename = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__TA")
+                AND indexname = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__IN")
             ) THEN
                 CREATE INDEX idx_features_team_created ON features (team_id, created_at DESC);
             END IF;
@@ -351,36 +352,36 @@ def upgrade() -> None:
             t.id as team_id,
             t.team_name,
             -- 最近5场比赛统计（作为主队）
-            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_home_matches,
-            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.home_score > m.away_score
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_home_wins,
-            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.home_score = m.away_score
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_home_draws,
 
             -- 最近5场比赛统计（作为客队）
-            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_away_matches,
-            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.away_score > m.home_score
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_away_wins,
-            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+            COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                        AND m.away_score = m.home_score
                        AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_away_draws,
 
             -- 进球数据
-            COALESCE(SUM(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+            COALESCE(SUM(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                               AND m.match_time >= CURRENT_DATE - INTERVAL '30 days'
                               THEN m.home_score END), 0) as recent_home_goals_for,
-            COALESCE(SUM(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+            COALESCE(SUM(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                               AND m.match_time >= CURRENT_DATE - INTERVAL '30 days'
                               THEN m.away_score END), 0) as recent_home_goals_against,
-            COALESCE(SUM(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+            COALESCE(SUM(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                               AND m.match_time >= CURRENT_DATE - INTERVAL '30 days'
                               THEN m.away_score END), 0) as recent_away_goals_for,
-            COALESCE(SUM(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+            COALESCE(SUM(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__MA")
                               AND m.match_time >= CURRENT_DATE - INTERVAL '30 days'
                               THEN m.home_score END), 0) as recent_away_goals_against,
 
@@ -503,7 +504,7 @@ def upgrade() -> None:
             """
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_schema = 'public'
+        WHERE table_schema = os.getenv("D6D814CC1078_DATABASE_PERFORMANCE_OPTIMIZATION__TA")
         AND table_name IN ('leagues', 'teams')
         ORDER BY table_name;
     """

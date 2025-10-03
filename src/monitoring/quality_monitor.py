@@ -1,3 +1,4 @@
+import os
 """
 数据质量监控器 / Data Quality Monitor
 
@@ -764,7 +765,7 @@ class QualityMonitor:
                     """
                     SELECT COUNT(*) as count
                     FROM matches
-                    WHERE match_status = 'finished'
+                    WHERE match_status = os.getenv("QUALITY_MONITOR_MATCH_STATUS_767")
                       AND (home_score IS NULL OR away_score IS NULL)
                 """
                 )
@@ -789,7 +790,7 @@ class QualityMonitor:
                     """
                     SELECT COUNT(*) as count
                     FROM matches
-                    WHERE match_status = 'scheduled'
+                    WHERE match_status = os.getenv("QUALITY_MONITOR_MATCH_STATUS_791")
                       AND (home_score IS NOT NULL OR away_score IS NOT NULL)
                 """
                 )

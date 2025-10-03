@@ -49,7 +49,7 @@ class FootballFeatureStore:
 
     def __init__(
         self,
-        project_name: str = "football_prediction",
+        project_name: str = os.getenv("FEATURE_STORE_STR_52"),
         repo_path: Optional[str] = None,
         postgres_config: Optional[Dict[str, Any]] = None,
         redis_config: Optional[Dict[str, Any]] = None,
@@ -99,7 +99,7 @@ class FootballFeatureStore:
                 project=self.project_name,
                 provider="local",
                 offline_store=PostgreSQLOfflineStoreConfig(
-                    type="postgres",
+                    type = os.getenv("FEATURE_STORE_TYPE_102"),
                     host=self.postgres_config["host"],
                     port=self.postgres_config["port"],
                     database=self.postgres_config["database"],
@@ -158,7 +158,7 @@ class FootballFeatureStore:
         self,
         feature_view_name: str,
         df: pd.DataFrame,
-        timestamp_column: str = "event_timestamp",
+        timestamp_column: str = os.getenv("FEATURE_STORE_STR_160"),
     ) -> None:
         """
         写入特征数据到特征仓库
@@ -181,7 +181,7 @@ class FootballFeatureStore:
 
             # 写入特征数据
             self._store.push(
-                push_source_name=feature_view_name, df=df, to="online_and_offline"
+                push_source_name=feature_view_name, df=df, to = os.getenv("FEATURE_STORE_TO_184")
             )
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
@@ -302,7 +302,7 @@ class FootballFeatureStore:
 
             # 获取训练特征
             training_df = self.get_historical_features(
-                feature_service_name="match_prediction_v1",
+                feature_service_name = os.getenv("FEATURE_STORE_FEATURE_SERVICE_NAME_304"),
                 entity_df=entity_df,
                 full_feature_names=True,
             )
@@ -428,7 +428,7 @@ def get_feature_store() -> FootballFeatureStore:
 
 
 def initialize_feature_store(
-    project_name: str = "football_prediction",
+    project_name: str = os.getenv("FEATURE_STORE_STR_52"),
     repo_path: Optional[str] = None,
     postgres_config: Optional[Dict[str, Any]] = None,
     redis_config: Optional[Dict[str, Any]] = None,

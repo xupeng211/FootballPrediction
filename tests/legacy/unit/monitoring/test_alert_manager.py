@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from src.monitoring.alert_manager import (
 from unittest.mock import MagicMock, patch, call
+import os
 
 #!/usr/bin/env python3
 """
@@ -33,7 +34,7 @@ class TestAlertLevel:
     def test_alert_creation_minimal(self):
         """Test Alert creation with minimal parameters."""
         alert = Alert(
-            alert_id="test-123[",": title="]Test Alert[",": message="]This is a test alert[",": level=AlertLevel.WARNING,": source="]test[")": assert alert.alert_id =="]test-123[" assert alert.title =="]Test Alert[" assert alert.message =="]This is a test alert[" assert alert.level ==AlertLevel.WARNING[""""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_36"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_36"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_36"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": assert alert.alert_id =="]test-123[" assert alert.title =="]Test Alert[" assert alert.message =="]This is a test alert[" assert alert.level ==AlertLevel.WARNING[""""
         assert alert.source =="]]test[" assert alert.labels =={}""""
         assert alert.annotations =={}
         assert alert.status ==AlertStatus.ACTIVE
@@ -42,13 +43,13 @@ class TestAlertLevel:
     def test_alert_creation_with_all_parameters(self):
         "]""Test Alert creation with all parameters."""
         custom_time = datetime(2024, 1, 1, 12, 0, 0)
-        labels = {"env[: "test"", "service[" "]api]}": annotations = {"runbook_url[: "https//example.com/runbook["}"]": alert = Alert(": alert_id="]test-456[",": title="]Complete Alert[",": message = "]Complete alert with all params[",": level=AlertLevel.CRITICAL,": source="]monitoring[",": labels=labels,": annotations=annotations,": created_at=custom_time)"
+        labels = {"env[: "test"", "service[" "]api]}": annotations = {"runbook_url[: "https//example.com/runbook["}"]": alert = Alert(": alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_45"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_45"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_45"),": level=AlertLevel.CRITICAL,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_45"),": labels=labels,": annotations=annotations,": created_at=custom_time)"
         assert alert.alert_id =="]test-456[" assert alert.labels ==labels[""""
         assert alert.annotations ==annotations
         assert alert.created_at ==custom_time
     def test_alert_to_dict(self):
         "]]""Test Alert to_dict conversion."""
-        alert = Alert(alert_id="test-789[",": title="]Dict Test[",": message="]Test dictionary conversion[",": level=AlertLevel.ERROR,": source="]unittest[",": labels = {"]key[": ["]value["))": result = alert.to_dict()": expected = {""
+        alert = Alert(alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_46"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_47"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_47"),": level=AlertLevel.ERROR,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_49"),": labels = {"]key[": ["]value["))": result = alert.to_dict()": expected = {""
             "]alert_id[: "test-789[","]"""
             "]title[: "Dict Test[","]"""
             "]message[: "Test dictionary conversion[","]"""
@@ -60,18 +61,18 @@ class TestAlertLevel:
             "]created_at[": alert.created_at.isoformat()": assert result ==expected[" def test_alert_resolve(self):""
         "]]""Test alert resolution."""
         alert = Alert(
-            alert_id="test-resolve[",": title="]Resolve Test[",": message="]Test resolution[",": level=AlertLevel.INFO,": source="]test[")": initial_time = alert.created_at[": alert.resolve()": assert alert.status ==AlertStatus.RESOLVED"
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_57"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_57"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_58"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": initial_time = alert.created_at[": alert.resolve()": assert alert.status ==AlertStatus.RESOLVED"
         assert alert.resolved_at is not None
         assert alert.resolved_at > initial_time
     def test_alert_silence(self):
         "]]""Test alert silencing."""
         alert = Alert(
-            alert_id="test-silence[",": title="]Silence Test[",": message="]Test silencing[",": level=AlertLevel.INFO,": source="]test[")": alert.silence()": assert alert.status ==AlertStatus.SILENCED[" class TestAlertRule:"
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_63"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_63"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_63"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": alert.silence()": assert alert.status ==AlertStatus.SILENCED[" class TestAlertRule:"
     "]]""Test cases for AlertRule class."""
     def test_alert_rule_creation(self):
         """Test AlertRule creation."""
         rule = AlertRule(
-            rule_id="rule-123[",": name="]Test Rule[",": condition="]error_rate > 0.1[",": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],": throttle_seconds=600,"
+            rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_67"),": name = os.getenv("TEST_ALERT_MANAGER_NAME_67"),": condition = os.getenv("TEST_ALERT_MANAGER_CONDITION_68"),": level=AlertLevel.WARNING,": channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],": throttle_seconds=600,"
             enabled=True)
         assert rule.rule_id =="]rule-123[" assert rule.name =="]Test Rule[" assert rule.condition =="]error_rate > 0.1[" assert rule.level ==AlertLevel.WARNING[""""
         assert AlertChannel.LOG in rule.channels
@@ -82,7 +83,7 @@ class TestAlertLevel:
     def test_alert_rule_defaults(self):
         "]]""Test AlertRule default parameters."""
         rule = AlertRule(
-            rule_id="rule-default[",": name="]Default Rule[",": condition="]cpu_usage > 80[",": level=AlertLevel.ERROR,": channels=[AlertChannel.LOG])": assert rule.throttle_seconds ==300  # Default value"
+            rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_74"),": name = os.getenv("TEST_ALERT_MANAGER_NAME_74"),": condition = os.getenv("TEST_ALERT_MANAGER_CONDITION_74"),": level=AlertLevel.ERROR,": channels=[AlertChannel.LOG])": assert rule.throttle_seconds ==300  # Default value"
         assert rule.enabled is True  # Default value
 class TestPrometheusMetrics:
     "]""Test cases for PrometheusMetrics class."""
@@ -138,7 +139,7 @@ class TestAlertManager:
         "]""Test adding alert rule."""
         manager = AlertManager()
         new_rule = AlertRule(
-            rule_id="custom_rule[",": name="]Custom Rule[",": condition="]custom_condition[",": level=AlertLevel.INFO,": channels=[AlertChannel.LOG])": manager.add_rule(new_rule)"
+            rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_128"),": name = os.getenv("TEST_ALERT_MANAGER_NAME_128"),": condition = os.getenv("TEST_ALERT_MANAGER_CONDITION_128"),": level=AlertLevel.INFO,": channels=[AlertChannel.LOG])": manager.add_rule(new_rule)"
         assert "]custom_rule[" in manager.rules[""""
         assert manager.rules["]]custom_rule["] ==new_rule[" def test_remove_rule_success(self):"""
         "]]""Test successful rule removal."""
@@ -152,17 +153,17 @@ class TestAlertManager:
     @patch("]]src.monitoring.alert_manager.logger[")": def test_fire_alert_success(self, mock_logger):"""
         "]""Test successful alert firing."""
         manager = AlertManager()
-        alert = manager.fire_alert(title="Test Alert[",": message="]This is a test[",": level=AlertLevel.WARNING,": source="]test[",": labels = {"]env[": ["]test["))": assert alert is not None[" assert alert.title =="]]Test Alert[" assert alert in manager.alerts[""""
+        alert = manager.fire_alert(title = os.getenv("TEST_ALERT_MANAGER_TITLE_143"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_143"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"),": labels = {"]env[": ["]test["))": assert alert is not None[" assert alert.title =="]]Test Alert[" assert alert in manager.alerts[""""
         mock_logger.info.assert_called_with("]]触发告警: Test Alert ["warning"")""""
     @patch("src.monitoring.alert_manager.logger[")": def test_fire_alert_throttled(self, mock_logger):"""
         "]""Test alert throttling."""
         manager = AlertManager()
         # First alert should fire
         alert1 = manager.fire_alert(
-            title="Throttle Test[",": message="]First alert[",": level=AlertLevel.INFO,": source="]test[",": rule_id="]data_freshness_critical[")": assert alert1 is not None["""
+            title = os.getenv("TEST_ALERT_MANAGER_TITLE_151"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_152"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"),": rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_152"))": assert alert1 is not None["""
         # Second identical alert should be throttled
         alert2 = manager.fire_alert(
-            title="]]Throttle Test[",": message="]Second alert[",": level=AlertLevel.INFO,": source="]test[",": rule_id="]data_freshness_critical[")": assert alert2 is None[" mock_logger.debug.assert_called_once()""
+            title = os.getenv("TEST_ALERT_MANAGER_TITLE_155"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_155"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"),": rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_152"))": assert alert2 is None[" mock_logger.debug.assert_called_once()""
         # Check that the debug call contains the throttling message
         call_args = mock_logger.debug.call_args[0][0]
         assert "]]告警被去重[" in call_args[""""
@@ -171,7 +172,7 @@ class TestAlertManager:
         manager = AlertManager()
         # Multiple alerts without rule should all fire
         alert1 = manager.fire_alert(
-            title="No Throttle Test[",": message="]First alert[",": level=AlertLevel.INFO,": source="]test[")": alert2 = manager.fire_alert(": title="]No Throttle Test[",": message="]Second alert[",": level=AlertLevel.INFO,": source="]test[")": assert alert1 is not None[" assert alert2 is not None[""
+            title = os.getenv("TEST_ALERT_MANAGER_TITLE_162"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_152"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": alert2 = manager.fire_alert(": title = os.getenv("TEST_ALERT_MANAGER_TITLE_162"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_155"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": assert alert1 is not None[" assert alert2 is not None[""
         assert len(manager.alerts) ==2
     def test_generate_alert_id(self):
         "]]]""Test alert ID generation."""
@@ -202,19 +203,19 @@ class TestAlertManager:
         mock_handler = MagicMock()
         manager.register_handler(AlertChannel.LOG, mock_handler)
         alert = Alert(
-            alert_id="test-send[",": title="]Send Test[",": message="]Test sending[",": level=AlertLevel.INFO,": source="]test[")": manager._send_alert(alert, "]data_freshness_critical[")  # Has LOG and PROMETHEUS[": mock_handler.assert_called_once_with(alert)"""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_192"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_192"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_192"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": manager._send_alert(alert, "]data_freshness_critical[")  # Has LOG and PROMETHEUS[": mock_handler.assert_called_once_with(alert)"""
     @patch("]]src.monitoring.alert_manager.logger[")": def test_send_alert_without_rule(self, mock_logger):"""
         "]""Test sending alert without rule."""
         manager = AlertManager()
         mock_handler = MagicMock()
         manager.register_handler(AlertChannel.LOG, mock_handler)
         alert = Alert(
-            alert_id="test-send-no-rule[",": title="]Send Test No Rule[",": message="]Test sending without rule[",": level=AlertLevel.INFO,": source="]test[")": manager._send_alert(alert, None)  # No rule specified[": mock_handler.assert_called_once_with(alert)""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_196"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_196"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_197"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": manager._send_alert(alert, None)  # No rule specified[": mock_handler.assert_called_once_with(alert)""
     @patch("]]src.monitoring.alert_manager.logger[")": def test_send_alert_handler_error(self, mock_logger):"""
         "]""Test handling of alert handler errors."""
         manager = AlertManager()
         def error_handler(alert):
-            raise Exception("Handler error[")": manager.register_handler(AlertChannel.LOG, error_handler)": alert = Alert(": alert_id="]test-error[",": title="]Error Test[",": message="]Test error handling[",": level=AlertLevel.INFO,": source="]test[")""""
+            raise Exception("Handler error[")": manager.register_handler(AlertChannel.LOG, error_handler)": alert = Alert(": alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_202"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_203"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_203"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))""""
         # Should not raise exception
         manager._send_alert(alert, "]data_freshness_critical[")""""
         # Should log error and increment error counter
@@ -225,32 +226,32 @@ class TestAlertManager:
         "]""Test updating alert metrics."""
         manager = AlertManager()
         alert = Alert(
-            alert_id="test-metrics[",": title="]Metrics Test[",": message="]Test metrics update[",": level=AlertLevel.WARNING,": source="]test[")": manager._update_alert_metrics(alert, "]test_rule[")""""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_208"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_209"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_209"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": manager._update_alert_metrics(alert, "]test_rule[")""""
         # Verify metrics were updated
         manager.metrics.alerts_fired_total.labels.assert_called_with(
-            level="]warning[", source="]test[", rule_id="]test_rule["""""
+            level = os.getenv("TEST_ALERT_MANAGER_LEVEL_212"), source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"), rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_212")""""
         )
         manager.metrics.alerts_fired_total.labels.return_value.inc.assert_called()
-        manager.metrics.active_alerts.labels.assert_called_with(level="]warning[")": def test_log_handler_info_level(self):"""
+        manager.metrics.active_alerts.labels.assert_called_with(level = os.getenv("TEST_ALERT_MANAGER_LEVEL_212"))": def test_log_handler_info_level(self):"""
         "]""Test log handler for INFO level alerts."""
         manager = AlertManager()
-        with patch("src.monitoring.alert_manager.logger[") as mock_logger:": alert = Alert(alert_id="]test-log-info[",": title="]Log Info Test[",": message="]Test info logging[",": level=AlertLevel.INFO,": source="]test[",": labels = {"]env[": ["]test["))": manager._log_handler(alert)": mock_logger.log.assert_called_with(": logging.INFO,"
+        with patch("src.monitoring.alert_manager.logger[") as mock_logger:": alert = Alert(alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_217"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_217"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_217"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"),": labels = {"]env[": ["]test["))": manager._log_handler(alert)": mock_logger.log.assert_called_with(": logging.INFO,"
                 "]": [["ALERT[": Log Info Test])": def test_log_handler_critical_level(self):"""
         "]""Test log handler for CRITICAL level alerts."""
         manager = AlertManager()
-        with patch("src.monitoring.alert_manager.logger[") as mock_logger:": alert = Alert(": alert_id="]test-log-critical[",": title="]Log Critical Test[",": message="]Test critical logging[",": level=AlertLevel.CRITICAL,": source="]test[")": manager._log_handler(alert)": mock_logger.log.assert_called_with(": logging.CRITICAL,"
+        with patch("src.monitoring.alert_manager.logger[") as mock_logger:": alert = Alert(": alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_221"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_222"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_222"),": level=AlertLevel.CRITICAL,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": manager._log_handler(alert)": mock_logger.log.assert_called_with(": logging.CRITICAL,"
                 "]": [["ALERT[": Log Critical Test])": def test_prometheus_handler(self):"""
         "]""Test Prometheus handler."""
         manager = AlertManager()
         alert = Alert(
-            alert_id="test-prometheus[",": title="]Prometheus Test[",": message="]Test Prometheus handler[",": level=AlertLevel.WARNING,": source="]test[")""""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_228"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_228"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_228"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))""""
         # Should not raise exception
         manager._prometheus_handler(alert)
     def test_resolve_alert_success(self):
         "]""Test successful alert resolution."""
         manager = AlertManager()
         alert = Alert(
-            alert_id="test-resolve-alert[",": title="]Resolve Alert Test[",": message="]Test alert resolution[",": level=AlertLevel.INFO,": source="]test[")": manager.alerts.append(alert)": result = manager.resolve_alert("]test-resolve-alert[")": assert result is True[" assert alert.status ==AlertStatus.RESOLVED[""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_231"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_231"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_231"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": manager.alerts.append(alert)": result = manager.resolve_alert("]test-resolve-alert[")": assert result is True[" assert alert.status ==AlertStatus.RESOLVED[""
         assert alert.resolved_at is not None
     def test_resolve_alert_not_found(self):
         "]]]""Test alert resolution when alert not found."""
@@ -259,7 +260,7 @@ class TestAlertManager:
         "]]""Test alert resolution when alert is already resolved."""
         manager = AlertManager()
         alert = Alert(
-            alert_id="test-already-resolved[",": title="]Already Resolved[",": message="]Test already resolved alert[",": level=AlertLevel.INFO,": source="]test[")": alert.resolve()": manager.alerts.append(alert)": result = manager.resolve_alert("]test-already-resolved[")": assert result is False  # Should not resolve already resolved alert[" def test_get_active_alerts_all(self):""
+            alert_id = os.getenv("TEST_ALERT_MANAGER_ALERT_ID_237"),": title = os.getenv("TEST_ALERT_MANAGER_TITLE_237"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_237"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))": alert.resolve()": manager.alerts.append(alert)": result = manager.resolve_alert("]test-already-resolved[")": assert result is False  # Should not resolve already resolved alert[" def test_get_active_alerts_all(self):""
         "]]""Test getting all active alerts."""
         manager = AlertManager()
         # Create test alerts
@@ -296,7 +297,7 @@ class TestAlertManager:
         # Verify metrics were updated
         manager.metrics.data_freshness_hours.labels.assert_has_calls(
             [
-                call(table_name="]matches["),": call(table_name="]teams[")]""""
+                call(table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272")),": call(table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272"))]""""
         )
     def test_update_quality_metrics_completeness(self):
         "]""Test updating data quality metrics for completeness."""
@@ -310,7 +311,7 @@ class TestAlertManager:
         # Verify metrics were updated
         manager.metrics.data_completeness_ratio.labels.assert_has_calls(
             [
-                call(table_name="]matches["),": call(table_name="]teams[")]""""
+                call(table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272")),": call(table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272"))]""""
         )
     def test_update_quality_metrics_overall_score(self):
         "]""Test updating data quality metrics for overall score."""
@@ -320,7 +321,7 @@ class TestAlertManager:
             "]overall_score[": 0.85}": manager.update_quality_metrics(quality_data)"""
         # Verify overall score was set for each table:
         manager.metrics.data_quality_score.labels.assert_called_with(
-            table_name="]matches["""""
+            table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272")""""
         )
     def test_update_anomaly_metrics(self):
         "]""Test updating anomaly metrics."""
@@ -328,10 +329,10 @@ class TestAlertManager:
         # Mock anomaly object
         class MockAnomaly:
             def __init__(self):
-                self.table_name = "matches[": self.column_name = "]home_score[": self.anomaly_type = MagicMock()": self.anomaly_type.value = "]outlier[": self.severity = MagicMock()": self.severity.value = "]high[": self.anomaly_score = 0.15[": anomalies = [MockAnomaly()]": manager.update_anomaly_metrics(anomalies)""
+                self.table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_283"): self.column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_284"): self.anomaly_type = MagicMock()": self.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_VALUE_286"): self.severity = MagicMock()": self.severity.value = os.getenv("TEST_ALERT_MANAGER_VALUE_286"): self.anomaly_score = 0.15[": anomalies = [MockAnomaly()]": manager.update_anomaly_metrics(anomalies)""
         # Verify metrics were updated
         manager.metrics.anomalies_detected_total.labels.assert_called_with(
-            table_name="]]matches[",": column_name="]home_score[",": anomaly_type="]outlier[",": severity="]high[")": manager.metrics.anomaly_score.labels.assert_called_with(": table_name="]matches[", column_name="]home_score["""""
+            table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_287"),": column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_288"),": anomaly_type = os.getenv("TEST_ALERT_MANAGER_ANOMALY_TYPE_288"),": severity = os.getenv("TEST_ALERT_MANAGER_SEVERITY_288"))": manager.metrics.anomaly_score.labels.assert_called_with(": table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_272"), column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_288")""""
         )
     def test_check_and_fire_quality_alerts_freshness_critical(self):
         "]""Test quality alerts for critical freshness issues."""
@@ -392,7 +393,7 @@ class TestAlertManager:
         # Mock anomaly object
         class MockAnomaly:
             def __init__(self):
-                self.table_name = "matches[": self.column_name = "]home_score[": self.anomaly_type = MagicMock()": self.anomaly_type.value = "]outlier[": self.anomaly_score = 0.25  # > 0.2[": self.description = "]]High score detected[": anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==1[" assert alerts[0].level ==AlertLevel.CRITICAL"
+                self.table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_283"): self.column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_284"): self.anomaly_type = MagicMock()": self.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_VALUE_286"): self.anomaly_score = 0.25  # > 0.2[": self.description = os.getenv("TEST_ALERT_MANAGER_DESCRIPTION_337"): anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==1[" assert alerts[0].level ==AlertLevel.CRITICAL"
         assert "]]数据异常严重告警[" in alerts[0].title[""""
     def test_check_and_fire_anomaly_alerts_warning(self):
         "]]""Test anomaly alerts for warning anomalies."""
@@ -400,7 +401,7 @@ class TestAlertManager:
         # Mock anomaly object
         class MockAnomaly:
             def __init__(self):
-                self.table_name = "matches[": self.column_name = "]home_score[": self.anomaly_type = MagicMock()": self.anomaly_type.value = "]outlier[": self.anomaly_score = 0.15  # > 0.1[": self.description = "]]Medium score detected[": anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==1[" assert alerts[0].level ==AlertLevel.WARNING"
+                self.table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_283"): self.column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_284"): self.anomaly_type = MagicMock()": self.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_VALUE_286"): self.anomaly_score = 0.15  # > 0.1[": self.description = os.getenv("TEST_ALERT_MANAGER_DESCRIPTION_352"): anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==1[" assert alerts[0].level ==AlertLevel.WARNING"
         assert "]]数据异常警告[" in alerts[0].title[""""
     def test_check_and_fire_anomaly_alerts_low_score(self):
         "]]""Test anomaly alerts for low score anomalies (should not fire)."""
@@ -408,14 +409,14 @@ class TestAlertManager:
         # Mock anomaly object
         class MockAnomaly:
             def __init__(self):
-                self.table_name = "matches[": self.column_name = "]home_score[": self.anomaly_type = MagicMock()": self.anomaly_type.value = "]outlier[": self.anomaly_score = 0.05  # < 0.1[": self.description = "]]Low score detected[": anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==0[" class TestAlertManagerIntegration:"
+                self.table_name = os.getenv("TEST_ALERT_MANAGER_TABLE_NAME_283"): self.column_name = os.getenv("TEST_ALERT_MANAGER_COLUMN_NAME_284"): self.anomaly_type = MagicMock()": self.anomaly_type.value = os.getenv("TEST_ALERT_MANAGER_VALUE_286"): self.anomaly_score = 0.05  # < 0.1[": self.description = os.getenv("TEST_ALERT_MANAGER_DESCRIPTION_369"): anomalies = [MockAnomaly()]": alerts = manager.check_and_fire_anomaly_alerts(anomalies)": assert len(alerts) ==0[" class TestAlertManagerIntegration:"
     "]]""Integration tests for AlertManager functionality."""
     @patch("src.monitoring.alert_manager.logger[")": def test_full_alert_workflow(self, mock_logger):"""
         "]""Test complete alert workflow from firing to resolution."""
         manager = AlertManager()
         # Fire alert
         alert = manager.fire_alert(
-            title="Workflow Test[",": message="]Testing complete workflow[",": level=AlertLevel.WARNING,": source="]integration_test[",": rule_id="]data_freshness_warning[")": assert alert is not None[" assert alert.status ==AlertStatus.ACTIVE[""
+            title = os.getenv("TEST_ALERT_MANAGER_TITLE_380"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_381"),": level=AlertLevel.WARNING,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_382"),": rule_id = os.getenv("TEST_ALERT_MANAGER_RULE_ID_383"))": assert alert is not None[" assert alert.status ==AlertStatus.ACTIVE[""
         # Check active alerts
         active_alerts = manager.get_active_alerts()
         assert len(active_alerts) ==1
@@ -463,6 +464,6 @@ class TestAlertManager:
         manager.register_handler(AlertChannel.LOG, success_handler)
         # This should not raise an exception despite handler error
         alert = manager.fire_alert(
-            title="]]Error Handling Test[",": message="]Testing error handling[",": level=AlertLevel.INFO,": source="]test[")"]": assert alert is not None""
+            title = os.getenv("TEST_ALERT_MANAGER_TITLE_411"),": message = os.getenv("TEST_ALERT_MANAGER_MESSAGE_411"),": level=AlertLevel.INFO,": source = os.getenv("TEST_ALERT_MANAGER_SOURCE_36"))"]": assert alert is not None""
         # Error should be logged
         mock_logger.error.assert_called()

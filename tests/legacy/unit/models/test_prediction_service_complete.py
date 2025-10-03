@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import asyncio
 import numpy
 import pytest
+import os
 
 """
 PredictionService 完整测试套件
@@ -22,7 +23,7 @@ class TestPredictionServiceComplete:
     @pytest.fixture
     def prediction_service(self):
         """创建预测服务实例"""
-        return PredictionService(mlflow_tracking_uri = "http//localhost5002[")""""
+        return PredictionService(mlflow_tracking_uri = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_MLFLOW_TRACKING_U"))""""
     @pytest.fixture
     def mock_dependencies(self):
         "]""Mock 所有外部依赖"""
@@ -79,7 +80,7 @@ class TestPredictionServiceComplete:
             self, prediction_service, mock_dependencies
         ):
             """测试成功从 MLflow 加载模型"""
-            mock_dependencies["mlflow["].get_latest_model_version.return_value = "]1.0.0[": mock_dependencies["]mlflow["].load_model.return_value = mock_dependencies[""""
+            mock_dependencies["mlflow["].get_latest_model_version.return_value = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_RETURN_VALUE_82"): mock_dependencies["]mlflow["].load_model.return_value = mock_dependencies[""""
                 "]model["""""
             ]
             with patch("]src.models.prediction_service.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: model = await prediction_service._load_model_from_mlflow(""""
@@ -119,7 +120,7 @@ class TestPredictionServiceComplete:
             )
             with patch(:
                 "]src.models.prediction_service.MlflowClient["""""
-            ) as mlflow_mock, patch("]asyncio.sleep[") as sleep_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: with pytest.raises(Exception, match = "]Network error[")": await prediction_service._load_model_from_mlflow("""
+            ) as mlflow_mock, patch("]asyncio.sleep[") as sleep_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_MATCH_122"))": await prediction_service._load_model_from_mlflow("""
                         "]football-predictor["""""
                     )
                 assert (
@@ -132,7 +133,7 @@ class TestPredictionServiceComplete:
         ):
             "]]""测试模型缓存功能"""
             # 第一次加载
-            mock_dependencies["mlflow["].get_latest_model_version.return_value = "]1.0.0[": mock_dependencies["]mlflow["].load_model.return_value = mock_dependencies[""""
+            mock_dependencies["mlflow["].get_latest_model_version.return_value = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_RETURN_VALUE_82"): mock_dependencies["]mlflow["].load_model.return_value = mock_dependencies[""""
                 "]model["""""
             ]
             with patch("]src.models.prediction_service.MlflowClient[") as mlflow_mock:": mlflow_mock.return_value = mock_dependencies["]mlflow["]: model1 = await prediction_service._get_cached_model(""""
@@ -277,25 +278,25 @@ class TestPredictionServiceComplete:
             result = PredictionResult(
                 match_id=123,
                 model_version="1.0.0[",": home_win_probability=0.6,": draw_probability=0.3,": away_win_probability=0.1,"
-                predicted_result="]home[",": confidence_score=0.6)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is True"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.6)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is True"
         def test_verify_prediction_invalid_probabilities(self):
             "]""测试无效概率验证"""
             result = PredictionResult(
                 match_id=123,
                 model_version="1.0.0[",": home_win_probability=0.8,": draw_probability=0.3,": away_win_probability=0.1,"
-                predicted_result="]home[",": confidence_score=0.8)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False  # 总和 > 1"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.8)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False  # 总和 > 1"
         def test_verify_prediction_negative_probabilities(self):
             "]""测试负概率验证"""
             result = PredictionResult(
                 match_id=123,
                 model_version="1.0.0[",": home_win_probability=-0.1,": draw_probability=0.3,": away_win_probability=0.8,"
-                predicted_result="]home[",": confidence_score=0.8)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.8)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False"
         def test_verify_prediction_mismatch_result(self):
             "]""测试预测结果不匹配"""
             result = PredictionResult(
                 match_id=123,
                 model_version="1.0.0[",": home_win_probability=0.3,": draw_probability=0.6,": away_win_probability=0.1,"
-                predicted_result="]home[",  # 应该是 draw[": confidence_score=0.6)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),  # 应该是 draw[": confidence_score=0.6)": is_valid = PredictionService.verify_prediction(result)": assert is_valid is False"
     class TestCacheOperations:
         "]]""测试缓存操作"""
         @pytest.mark.asyncio
@@ -332,7 +333,7 @@ class TestPredictionServiceComplete:
             result = PredictionResult(
                 match_id=12345,
                 model_version="1.0.0[",": home_win_probability=0.6,": draw_probability=0.3,": away_win_probability=0.1,"
-                predicted_result="]home[",": confidence_score=0.6)": with patch.object(prediction_service, "]_cache_result[") as mock_cache:": await prediction_service._cache_prediction_result(result)": mock_cache.assert_called_once()": class TestDatabaseOperations:"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.6)": with patch.object(prediction_service, "]_cache_result[") as mock_cache:": await prediction_service._cache_prediction_result(result)": mock_cache.assert_called_once()": class TestDatabaseOperations:"
         "]""测试数据库操作"""
         @pytest.mark.asyncio
         async def test_save_prediction_to_db_success(
@@ -342,7 +343,7 @@ class TestPredictionServiceComplete:
             result = PredictionResult(
                 match_id=12345,
                 model_version="1.0.0[",": home_win_probability=0.6,": draw_probability=0.3,": away_win_probability=0.1,"
-                predicted_result="]home[",": confidence_score=0.6)": with patch.object(prediction_service, "]_save_to_database[") as mock_save:": mock_save.return_value = True[": success = await prediction_service._save_prediction_to_db(result)": assert success is True"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.6)": with patch.object(prediction_service, "]_save_to_database[") as mock_save:": mock_save.return_value = True[": success = await prediction_service._save_prediction_to_db(result)": assert success is True"
                 mock_save.assert_called_once_with(result)
         @pytest.mark.asyncio
         async def test_save_prediction_to_db_failure(self, prediction_service):
@@ -350,7 +351,7 @@ class TestPredictionServiceComplete:
             result = PredictionResult(
                 match_id=12345,
                 model_version="1.0.0[",": home_win_probability=0.6,": draw_probability=0.3,": away_win_probability=0.1,"
-                predicted_result="]home[",": confidence_score=0.6)": with patch.object(prediction_service, "]_save_to_database[") as mock_save:": mock_save.side_effect = Exception("]Database error[")": success = await prediction_service._save_prediction_to_db(result)": assert success is False[" class TestMetricsCollection:"
+                predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPLETE_PREDICTED_RESULT_"),": confidence_score=0.6)": with patch.object(prediction_service, "]_save_to_database[") as mock_save:": mock_save.side_effect = Exception("]Database error[")": success = await prediction_service._save_prediction_to_db(result)": assert success is False[" class TestMetricsCollection:"
         "]]""测试指标收集"""
         def test_metrics_counter_increment(self, prediction_service):
             """测试指标计数器递增"""

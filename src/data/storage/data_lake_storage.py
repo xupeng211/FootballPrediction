@@ -45,7 +45,7 @@ class DataLakeStorage:
     def __init__(
         self,
         base_path: Optional[str] = None,
-        compression: str = "snappy",
+        compression: str = os.getenv("DATA_LAKE_STORAGE_STR_48"),
         partition_cols: Optional[List[str]] = None,
         max_file_size_mb: int = 100,
     ):
@@ -362,11 +362,7 @@ class DataLakeStorage:
                     if "year" in parquet_file_obj.schema.names:
                         # 从分区路径提取日期
                         parts = parquet_file.parts
-                        year_part = [p for p in parts if p.startswith("year=")]
-                        month_part = [p for p in parts if p.startswith("month=")]
-
-                        if year_part and month_part:
-                            year = int(year_part[0].split("=")[1])
+                        year_part = [p for p in parts if p.startswith("year = os.getenv("DATA_LAKE_STORAGE_YEAR_365")month = os.getenv("DATA_LAKE_STORAGE_MONTH_365")=")[1])
                             month = int(month_part[0].split("=")[1])
                             date_ranges.append(datetime(year, month, 1))
 
@@ -456,8 +452,8 @@ class S3DataLakeStorage:
         endpoint_url: Optional[str] = None,
         access_key: Optional[str] = None,
         secret_key: Optional[str] = None,
-        region: str = "us-east-1",
-        compression: str = "snappy",
+        region: str = os.getenv("DATA_LAKE_STORAGE_STR_456"),
+        compression: str = os.getenv("DATA_LAKE_STORAGE_STR_48"),
         use_ssl: bool = False,
     ):
         """
@@ -598,7 +594,7 @@ class S3DataLakeStorage:
                 Bucket=bucket_name,
                 Key=object_key,
                 Body=buffer.getvalue(),
-                ContentType="application/octet-stream",
+                ContentType = os.getenv("DATA_LAKE_STORAGE_CONTENTTYPE_597"),
                 Metadata={
                     "table_name": table_name,
                     "partition_date": partition_date.isoformat(),
@@ -741,12 +737,9 @@ class S3DataLakeStorage:
             day_part = None
 
             for part in parts:
-                if part.startswith("year="):
-                    year_part = int(part.split("=")[1])
-                elif part.startswith("month="):
-                    month_part = int(part.split("=")[1])
-                elif part.startswith("day="):
-                    day_part = int(part.split("=")[1])
+                if part.startswith("year = os.getenv("DATA_LAKE_STORAGE_YEAR_740")=")[1])
+                elif part.startswith("month = os.getenv("DATA_LAKE_STORAGE_MONTH_742")=")[1])
+                elif part.startswith("day = os.getenv("DATA_LAKE_STORAGE_DAY_743")=")[1])
 
             if year_part and month_part and day_part:
                 obj_date = datetime(year_part, month_part, day_part)
@@ -801,12 +794,9 @@ class S3DataLakeStorage:
                             parts = obj["Key"].split("/")
                             year_part = month_part = day_part = None
                             for part in parts:
-                                if part.startswith("year="):
-                                    year_part = int(part.split("=")[1])
-                                elif part.startswith("month="):
-                                    month_part = int(part.split("=")[1])
-                                elif part.startswith("day="):
-                                    day_part = int(part.split("=")[1])
+                                if part.startswith("year = os.getenv("DATA_LAKE_STORAGE_YEAR_798")=")[1])
+                                elif part.startswith("month = os.getenv("DATA_LAKE_STORAGE_MONTH_799")=")[1])
+                                elif part.startswith("day = os.getenv("DATA_LAKE_STORAGE_DAY_802")=")[1])
 
                             if year_part and month_part and day_part:
                                 date_ranges.append(

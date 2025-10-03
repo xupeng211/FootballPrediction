@@ -80,7 +80,7 @@ async def test_batch_analyze_handles_multiple_items(service):
 def test_analyze_text_structure():
     svc = ContentAnalysisService()
 
-    text = "football analytics delivers repeatable value"
+    text = os.getenv("TEST_CONTENT_ANALYSIS_SERVICE_TEXT_83")
     analysis = svc.analyze_text(text)
 
     assert analysis["word_count"] == len(text.split())

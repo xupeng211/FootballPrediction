@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import asyncio
 import numpy
 import pytest
+import os
 
 """
 预测服务全面测试
@@ -22,7 +23,7 @@ class TestPredictionResult:
         result = PredictionResult(
         match_id=123,
         model_version="1.0.0[",": home_win_probability=0.6,": draw_probability=0.3,": away_win_probability=0.1,"
-            predicted_result="]home[",": confidence_score=0.6)": assert result.match_id ==123[" assert result.model_version =="]]1.0.0[" assert result.predicted_result =="]home[" assert result.confidence_score ==0.6[""""
+            predicted_result = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_PREDICTED_RE"),": confidence_score=0.6)": assert result.match_id ==123[" assert result.model_version =="]]1.0.0[" assert result.predicted_result =="]home[" assert result.confidence_score ==0.6[""""
     def test_prediction_result_to_dict(self):
         "]]""测试预测结果转换为字典"""
         created_at = datetime.now()
@@ -63,7 +64,7 @@ class TestPredictionService:
             "]metrics[": mock_metrics,""""
             "]mlflow[": mock_mlflow}": def test_prediction_service_initialization(self, mock_dependencies):"""
         "]""测试预测服务初始化"""
-        service = PredictionService(mlflow_tracking_uri="http:_/test5002[")": assert service.mlflow_tracking_uri =="]http//test5002[" assert isinstance(service.model_cache, dict)""""
+        service = PredictionService(mlflow_tracking_uri = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_MLFLOW_TRACK"))": assert service.mlflow_tracking_uri =="]http//test5002[" assert isinstance(service.model_cache, dict)""""
     assert isinstance(service.model_metadata_cache, dict)
         mock_dependencies["]mlflow["].set_tracking_uri.assert_called_with(""""
         "]http://test:5002["""""
@@ -74,7 +75,7 @@ class TestPredictionService:
         # 模拟MLflow客户端
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1.0.0[": mock_version_info.current_stage = "]Production[": mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
+        mock_version_info.version = "1.0.0[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_CURRENT_STAG"): mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ), patch(
             "]]src.models.prediction_service.mlflow.sklearn.load_model[",": return_value=mock_model):": service = PredictionService()": model, version = await service.get_production_model("]test_model[")": assert model ==mock_model[" assert version =="]]1.0.0[" assert "]models_test_model/1.0.0[" in service.model_cache[""""
@@ -83,7 +84,7 @@ class TestPredictionService:
         "]]""测试回退到Staging版本（实际业务场景）"""
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "0.9.0[": mock_version_info.current_stage = "]Staging["""""
+        mock_version_info.version = "0.9.0[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_CURRENT_STAG")""""
         # 第一次调用（Production）返回空，第二次调用（Staging）返回版本
         mock_client.get_latest_versions.side_effect = [[], "]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
@@ -100,13 +101,13 @@ class TestPredictionService:
             "src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ):
             service = PredictionService()
-            with pytest.raises(ValueError, match = "]]模型 test_model 没有可用版本[")": await service.get_production_model("]test_model[")""""
+            with pytest.raises(ValueError, match = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_MATCH_99"))": await service.get_production_model("]test_model[")""""
     @pytest.mark.asyncio
     async def test_get_production_model_caching(self, mock_dependencies):
         "]""测试模型缓存机制（性能优化测试）"""
         mock_client = Mock()
         mock_version_info = Mock()
-        mock_version_info.version = "1.0.0[": mock_version_info.current_stage = "]Production[": mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
+        mock_version_info.version = "1.0.0[": mock_version_info.current_stage = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_CURRENT_STAG"): mock_client.get_latest_versions.return_value = ["]mock_version_info[": mock_model = Mock()": with patch(:"""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
         ), patch(
             "]]src.models.prediction_service.mlflow.sklearn.load_model[",": return_value=mock_model) as mock_load = service PredictionService()"""
@@ -165,7 +166,7 @@ class TestPredictionService:
         return None
         with patch.object(:
             service, "get_production_model[", return_value=(Mock(), "]1.0.0[")""""
-        ), patch.object(service, "]_get_match_info[", side_effect = mock_get_match_info)": with pytest.raises(ValueError, match = "]比赛 999 不存在[")": await service.predict_match(999)"""
+        ), patch.object(service, "]_get_match_info[", side_effect = mock_get_match_info)": with pytest.raises(ValueError, match = os.getenv("TEST_PREDICTION_SERVICE_COMPREHENSIVE_MATCH_164"))": await service.predict_match(999)"""
     @pytest.mark.asyncio
     async def test_predict_match_no_features_fallback(self, mock_dependencies):
         "]""测试无特征时的回退机制（实际业务场景）"""

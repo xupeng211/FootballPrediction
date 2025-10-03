@@ -136,7 +136,7 @@ class TaskMonitor:
         logger.info(f"任务开始: {task_name} (ID: {task_id})")
 
     def record_task_completion(
-        self, task_name: str, task_id: str, duration: float, status: str = "success"
+        self, task_name: str, task_id: str, duration: float, status: str = os.getenv("MONITORING_STR_139")
     ) -> None:
         """
         记录任务完成
@@ -176,9 +176,9 @@ class TaskMonitor:
                 if engine:
                     self._db_type = get_db_type_from_engine(engine)
                 else:
-                    self._db_type = "postgresql"  # 默认值
+                    self._db_type = os.getenv("MONITORING__DB_TYPE_179")  # 默认值
             except Exception:
-                self._db_type = "postgresql"  # 默认值
+                self._db_type = os.getenv("MONITORING__DB_TYPE_179")  # 默认值
         return self._db_type
 
     async def _get_query_builder(self) -> CompatibleQueryBuilder:

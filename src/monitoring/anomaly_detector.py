@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 统计学异常检测器
@@ -26,21 +27,21 @@ logger = logging.getLogger(__name__)
 class AnomalyType(Enum):
     """异常类型枚举"""
 
-    OUTLIER = "outlier"  # 离群值
-    TREND_CHANGE = "trend_change"  # 趋势变化
-    PATTERN_BREAK = "pattern_break"  # 模式中断
-    VALUE_RANGE = "value_range"  # 数值范围异常
-    FREQUENCY = "frequency"  # 频率异常
-    NULL_SPIKE = "null_spike"  # 空值激增
+    OUTLIER = os.getenv("ANOMALY_DETECTOR_OUTLIER_29")  # 离群值
+    TREND_CHANGE = os.getenv("ANOMALY_DETECTOR_TREND_CHANGE_29")  # 趋势变化
+    PATTERN_BREAK = os.getenv("ANOMALY_DETECTOR_PATTERN_BREAK_30")  # 模式中断
+    VALUE_RANGE = os.getenv("ANOMALY_DETECTOR_VALUE_RANGE_30")  # 数值范围异常
+    FREQUENCY = os.getenv("ANOMALY_DETECTOR_FREQUENCY_31")  # 频率异常
+    NULL_SPIKE = os.getenv("ANOMALY_DETECTOR_NULL_SPIKE_31")  # 空值激增
 
 
 class AnomalySeverity(Enum):
     """异常严重程度"""
 
     LOW = "low"
-    MEDIUM = "medium"
+    MEDIUM = os.getenv("ANOMALY_DETECTOR_MEDIUM_33")
     HIGH = "high"
-    CRITICAL = "critical"
+    CRITICAL = os.getenv("ANOMALY_DETECTOR_CRITICAL_33")
 
 
 class AnomalyResult:
@@ -395,7 +396,7 @@ class AnomalyDetector:
                         severity=severity,
                         anomalous_values=outliers.tolist(),
                         anomaly_score=anomaly_score,
-                        detection_method="3sigma",
+                        detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_393"),
                         description=f"发现 {len(outliers)} 个3σ规则异常值，超出范围 [{lower_bound:.2f}, {upper_bound:.2f}]",
                     )
                 ]
@@ -499,7 +500,7 @@ class AnomalyDetector:
                         severity=severity,
                         anomalous_values=outliers.tolist(),
                         anomaly_score=anomaly_score,
-                        detection_method="z_score",
+                        detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_496"),
                         description=f"发现 {len(outliers)} 个Z-score异常值，最大Z-score: {outlier_scores.max():.2f}",
                     )
                 ]
@@ -555,7 +556,7 @@ class AnomalyDetector:
                         severity=severity,
                         anomalous_values=outliers,
                         anomaly_score=anomaly_score,
-                        detection_method="range_check",
+                        detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_551"),
                         description=f"发现 {len(outliers)} 个范围异常值，预期范围: [{min_val}, {max_val}]",
                     )
                 ]
@@ -606,7 +607,7 @@ class AnomalyDetector:
                         severity=severity,
                         anomalous_values=anomalous_values,
                         anomaly_score=anomaly_score,
-                        detection_method="frequency",
+                        detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_601"),
                         description=f"发现 {len(anomalous_values)} 个频率异常值，预期频率: {expected_freq:.1f}",
                     )
                 ]
@@ -669,7 +670,7 @@ class AnomalyDetector:
                         severity=severity,
                         anomalous_values=anomalous_gaps.tolist(),
                         anomaly_score=anomaly_score,
-                        detection_method="time_gap",
+                        detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_662"),
                         description=f"发现 {len(anomalous_gaps)} 个时间间隔异常，正常范围: {lower_bound:.0f}-{upper_bound:.0f}秒",
                     )
                 ]

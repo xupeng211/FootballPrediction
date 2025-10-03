@@ -1,3 +1,4 @@
+import os
 """
 Health API模块覆盖率提升测试
 目标：将 src/api/health.py 的覆盖率从17%提升到45%+
@@ -38,7 +39,7 @@ class TestDatabaseHealthCheck:
         """测试数据库连接失败"""
         mock_db_manager = MagicMock()
         mock_db_manager.check_connection.return_value = False
-        mock_db_manager.get_last_error.return_value = "Connection timeout"
+        mock_db_manager.get_last_error.return_value = os.getenv("TEST_HEALTH_RETURN_VALUE_41")
 
         with patch('src.api.health.DatabaseManager', mock_db_manager):
             try:
@@ -71,7 +72,7 @@ class TestDatabaseHealthCheck:
     async def test_database_migration_status(self):
         """测试数据库迁移状态"""
         mock_alembic = MagicMock()
-        mock_alembic.get_current_head.return_value = "abc123"
+        mock_alembic.get_current_head.return_value = os.getenv("TEST_HEALTH_RETURN_VALUE_74")
         mock_alembic.get_heads.return_value = ["abc123"]
 
         with patch('src.api.health.alembic', mock_alembic):

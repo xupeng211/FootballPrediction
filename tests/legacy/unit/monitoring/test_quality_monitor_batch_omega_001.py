@@ -38,7 +38,7 @@ class TestQualityMonitorBatchOmega001:
         """示例新鲜度结果"""
         from src.monitoring.quality_monitor import DataFreshnessResult
         return DataFreshnessResult(
-        table_name="matches[",": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
             is_fresh=True,
             threshold_hours=24.0
         )
@@ -46,7 +46,7 @@ class TestQualityMonitorBatchOmega001:
     def sample_completeness_result(self):
         "]""示例完整性结果"""
         from src.monitoring.quality_monitor import DataCompletenessResult
-        return DataCompletenessResult(table_name="matches[",": total_records=1000,": missing_critical_fields = {"]home_score[": 50, "]away_score[": 30),": missing_rate=0.08,": completeness_score=0.92[""
+        return DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": total_records=1000,": missing_critical_fields = {"]home_score[": 50, "]away_score[": 30),": missing_rate=0.08,": completeness_score=0.92[""
         )
     def test_quality_monitor_initialization(self, monitor):
         "]]""测试 QualityMonitor 初始化"""
@@ -67,7 +67,7 @@ class TestQualityMonitorBatchOmega001:
         from src.monitoring.quality_monitor import DataFreshnessResult
         last_update = datetime.now() - timedelta(hours=1)
         result = DataFreshnessResult(
-        table_name="matches[",": last_update_time=last_update,": records_count=1000,": freshness_hours=1.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=last_update,": records_count=1000,": freshness_hours=1.0,"
             is_fresh=True,
             threshold_hours=24.0
         )
@@ -81,7 +81,7 @@ class TestQualityMonitorBatchOmega001:
         from src.monitoring.quality_monitor import DataFreshnessResult
         last_update = datetime.now() - timedelta(hours=1)
         result = DataFreshnessResult(
-        table_name="matches[",": last_update_time=last_update,": records_count=1000,": freshness_hours=1.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=last_update,": records_count=1000,": freshness_hours=1.0,"
             is_fresh=True,
             threshold_hours=24.0
         )
@@ -91,7 +91,7 @@ class TestQualityMonitorBatchOmega001:
         "]]""测试 DataFreshnessResult 转换为字典 (None 时间)"""
         from src.monitoring.quality_monitor import DataFreshnessResult
         result = DataFreshnessResult(
-        table_name="matches[",": last_update_time=None,": records_count=1000,": freshness_hours=0.0,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=None,": records_count=1000,": freshness_hours=0.0,"
             is_fresh=False,
             threshold_hours=24.0
         )
@@ -99,7 +99,7 @@ class TestQualityMonitorBatchOmega001:
     assert result_dict["]last_update_time["] is None[" def test_data_completeness_result_initialization(self):"""
         "]]""测试 DataCompletenessResult 初始化"""
         from src.monitoring.quality_monitor import DataCompletenessResult
-        missing_fields = {"home_score[": 50, "]away_score[": 30}": result = DataCompletenessResult(": table_name="]matches[",": total_records=1000,": missing_critical_fields=missing_fields,": missing_rate=0.08,"
+        missing_fields = {"home_score[": 50, "]away_score[": 30}": result = DataCompletenessResult(": table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_99"),": total_records=1000,": missing_critical_fields=missing_fields,": missing_rate=0.08,"
             completeness_score=0.92
         )
     assert result.table_name =="]matches[" assert result.total_records ==1000[""""
@@ -109,7 +109,7 @@ class TestQualityMonitorBatchOmega001:
     def test_data_completeness_result_to_dict(self):
         "]]""测试 DataCompletenessResult 转换为字典"""
         from src.monitoring.quality_monitor import DataCompletenessResult
-        missing_fields = {"home_score[": 50, "]away_score[": 30}": result = DataCompletenessResult(": table_name="]matches[",": total_records=1000,": missing_critical_fields=missing_fields,": missing_rate=0.08,"
+        missing_fields = {"home_score[": 50, "]away_score[": 30}": result = DataCompletenessResult(": table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_99"),": total_records=1000,": missing_critical_fields=missing_fields,": missing_rate=0.08,"
             completeness_score=0.92
         )
         result_dict = result.to_dict()
@@ -122,7 +122,7 @@ class TestQualityMonitorBatchOmega001:
         with patch.object(monitor.db_manager, 'get_async_session') as mock_get_session, \:
             patch.object(monitor, '_check_table_freshness') as mock_check:
             mock_check.return_value = DataFreshnessResult(
-            table_name="matches[",": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
                 is_fresh=True,
                 threshold_hours=24.0
             )
@@ -151,7 +151,7 @@ class TestQualityMonitorBatchOmega001:
         with patch.object(monitor.db_manager, 'get_async_session') as mock_get_session, \:
             patch.object(monitor, '_check_table_freshness') as mock_check:
             mock_check.return_value = DataFreshnessResult(
-            table_name="matches[",": last_update_time=datetime.now() - timedelta(hours=30),": records_count=1000,": freshness_hours=30.0,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=datetime.now() - timedelta(hours=30),": records_count=1000,": freshness_hours=30.0,"
                 is_fresh=False,
                 threshold_hours=24.0
             )
@@ -168,7 +168,7 @@ class TestQualityMonitorBatchOmega001:
         # Mock the database manager
         with patch.object(monitor.db_manager, 'get_async_session') as mock_get_session, \:
             patch.object(monitor, '_check_table_completeness') as mock_check:
-            mock_check.return_value = DataCompletenessResult(table_name="matches[",": total_records=1000,": missing_critical_fields = {"]home_team_id[": 5, "]away_team_id[": 3),": missing_rate=0.008,": completeness_score=0.992[""
+            mock_check.return_value = DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": total_records=1000,": missing_critical_fields = {"]home_team_id[": 5, "]away_team_id[": 3),": missing_rate=0.008,": completeness_score=0.992[""
             )
             # Mock the async context manager
             mock_session = AsyncMock()
@@ -221,7 +221,7 @@ class TestQualityMonitorBatchOmega001:
         assert result1.freshness_hours ==1.0
         # 30分钟前 (0.5小时)
         result2 = DataFreshnessResult(
-            table_name="]test[",": last_update_time=now - timedelta(minutes=30),": records_count=100,": freshness_hours=0.5,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_21"),": last_update_time=now - timedelta(minutes=30),": records_count=100,": freshness_hours=0.5,"
             is_fresh=True,
             threshold_hours=24.0
         )
@@ -235,7 +235,7 @@ class TestQualityMonitorBatchOmega001:
     assert result1.missing_rate ==0.08
     assert result1.completeness_score ==0.92
         # 100%缺失率 (极端情况)
-        result2 = DataCompletenessResult(table_name="]]test[",": total_records=1000,": missing_critical_fields = {"]field1[": 1000),": missing_rate=1.0,": completeness_score=0.0[""
+        result2 = DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_22"),": total_records=1000,": missing_critical_fields = {"]field1[": 1000),": missing_rate=1.0,": completeness_score=0.0[""
         )
         assert result2.missing_rate ==1.0
     assert result2.completeness_score ==0.0
@@ -253,13 +253,13 @@ class TestQualityMonitorBatchOmega001:
         from src.monitoring.quality_monitor import DataFreshnessResult, DataCompletenessResult
         # 大记录数
         result1 = DataFreshnessResult(
-        table_name="big_table[",": last_update_time=datetime.now(),": records_count=1000000,": freshness_hours=0.1,"
+        table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_23"),": last_update_time=datetime.now(),": records_count=1000000,": freshness_hours=0.1,"
             is_fresh=True,
             threshold_hours=24.0
         )
     assert result1.records_count ==1000000
         # 大缺失字段数
-        result2 = DataCompletenessResult(table_name="]big_table[",": total_records=1000000,": missing_critical_fields = {"]big_field[": 100000),": missing_rate=0.1,": completeness_score=0.9[""
+        result2 = DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_24"),": total_records=1000000,": missing_critical_fields = {"]big_field[": 100000),": missing_rate=0.1,": completeness_score=0.9[""
         )
     assert result2.total_records ==1000000
     assert result2.missing_critical_fields["]]big_field["] ==100000[""""
@@ -326,7 +326,7 @@ class TestQualityMonitorBatchOmega001:
         with patch.object(monitor.db_manager, 'get_async_session') as mock_get_session, \:
             patch.object(monitor, '_check_table_freshness') as mock_check:
             mock_check.return_value = DataFreshnessResult(
-            table_name="matches[",": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BATCH_OMEGA_001_TABLE_NAME_41"),": last_update_time=datetime.now() - timedelta(hours=1),": records_count=1000,": freshness_hours=1.0,"
                 is_fresh=True,
                 threshold_hours=24.0
             )

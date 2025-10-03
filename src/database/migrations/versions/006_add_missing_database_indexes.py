@@ -1,3 +1,4 @@
+import os
 """add_missing_database_indexes
 
 
@@ -21,7 +22,7 @@ from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision: str = "006_missing_indexes"
+revision: str = os.getenv("006_ADD_MISSING_DATABASE_INDEXES_STR_24")
 down_revision: Union[str, None] = "d6d814cc1078"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

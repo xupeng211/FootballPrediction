@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from src.utils.response import APIResponseModel, APIResponse
 from unittest.mock import patch
 import pytest
+import os
 
 """
 API响应工具类测试套件
@@ -19,7 +20,7 @@ class TestAPIResponseModel:
     """APIResponseModel测试类"""
     def test_api_response_model_creation_success(self):
         """测试成功创建APIResponseModel"""
-        model = APIResponseModel(success = True, message="操作成功[", data={"]result[": "]test["), code="]SUCCESS["""""
+        model = APIResponseModel(success = True, message="操作成功[", data={"]result[": "]test["), code = os.getenv("TEST_RESPONSE_CODE_22")""""
         )
         assert model.success is True
         assert model.message =="]操作成功[" assert model.data =={"]result[" ["]test["}" assert model.code =="]SUCCESS[" def test_api_response_model_minimal("
@@ -40,12 +41,12 @@ class TestAPIResponseModel:
         "]""测试字段类型验证"""
         # 错误的success类型
         with pytest.raises(ValidationError):
-            APIResponseModel(success="true[", message="]操作成功[")""""
+            APIResponseModel(success="true[", message = os.getenv("TEST_RESPONSE_MESSAGE_43"))""""
         # 错误的message类型
         with pytest.raises(ValidationError):
             APIResponseModel(success=True, message=123)
         # 正确的data类型（可以是任何类型）
-        model = APIResponseModel(success = True, message="]操作成功[", data={"]key[": "]value[")""""
+        model = APIResponseModel(success = True, message = os.getenv("TEST_RESPONSE_MESSAGE_43"), data={"]key[": "]value[")""""
         )
         assert model.data =={"]key[" "]value["}" def test_api_response_model_various_data_types(self):"""
         "]""测试不同的数据类型"""
@@ -61,7 +62,7 @@ class TestAPIResponseModel:
             assert model.data ==data
     def test_api_response_model_serialization(self):
         "]""测试模型序列化"""
-        model = APIResponseModel(success = True, message="操作成功[", data={"]result[": "]test["), code="]SUCCESS["""""
+        model = APIResponseModel(success = True, message="操作成功[", data={"]result[": "]test["), code = os.getenv("TEST_RESPONSE_CODE_22")""""
         )
         # 转换为字典
         model_dict = model.model_dump()
@@ -90,12 +91,12 @@ class TestAPIResponse:
             "]message[: "操作成功[","]"""
             "]timestamp[": freeze_datetime.isoformat()": assert response ==expected[" def test_success_response_with_custom_message(self, freeze_datetime):""
         "]]""测试自定义消息的成功响应"""
-        response = APIResponse.success(message="自定义成功消息[")": expected = {"""
+        response = APIResponse.success(message = os.getenv("TEST_RESPONSE_MESSAGE_91"))": expected = {"""
             "]success[": True,""""
             "]message[: "自定义成功消息[","]"""
             "]timestamp[": freeze_datetime.isoformat()": assert response ==expected[" def test_success_response_with_data_and_message(self, freeze_datetime):""
         "]]""测试带数据和自定义消息的成功响应"""
-        data = {"users[": 100}": message = "]用户数据获取成功[": response = APIResponse.success(data=data, message=message)": expected = {"""
+        data = {"users[": 100}": message = os.getenv("TEST_RESPONSE_MESSAGE_96"): response = APIResponse.success(data=data, message=message)": expected = {"""
             "]success[": True,""""
             "]message[": message,""""
             "]timestamp[": freeze_datetime.isoformat()": assert response ==expected[" def test_success_response_with_none_data(self, freeze_datetime):""
@@ -109,7 +110,7 @@ class TestAPIResponse:
         assert "]]data[" not in response[""""
     def test_success_response_alias_method(self, freeze_datetime):
         "]]""测试成功响应别名方法"""
-        data = {"result[: "alias test["}"]": response = APIResponse.success_response(data=data, message="]别名方法测试[")": expected = {"""
+        data = {"result[: "alias test["}"]": response = APIResponse.success_response(data=data, message = os.getenv("TEST_RESPONSE_MESSAGE_110"))": expected = {"""
             "]success[": True,""""
             "]message[: "别名方法测试[","]"""
             "]timestamp[": freeze_datetime.isoformat()": assert response ==expected[" def test_error_response_minimal(self, freeze_datetime):""
@@ -153,7 +154,7 @@ class TestAPIResponse:
         assert "]]data[" not in response[""""
     def test_error_response_alias_method(self, freeze_datetime):
         "]]""测试错误响应别名方法"""
-        data = {"details[: "参数错误["}"]": response = APIResponse.error_response(": message="]别名方法错误[", code=422, data=data[""""
+        data = {"details[: "参数错误["}"]": response = APIResponse.error_response(": message = os.getenv("TEST_RESPONSE_MESSAGE_153"), code=422, data=data[""""
         )
         expected = {
             "]]success[": False,""""
@@ -198,13 +199,13 @@ class TestAPIResponseEdgeCases:
             "]stats[": {"]count[": 2, "]average[": 85.5, "]percentiles[: "25, 50, 75, 95["}}"]": response = APIResponse.success(data=complex_data)": assert response["]data["] ==complex_data[" def test_response_with_special_characters(self, freeze_datetime):"""
         "]]""测试特殊字符"""
         response = APIResponse.success(
-            data = {"message: 特殊字符: !@#$%^&*()_+-=[]{}|;'\",./<>? 🚀"},": message="测试特殊字符[")": assert ("""
+            data = {"message: 特殊字符: !@#$%^&*()_+-=[]{}|;'\",./<>? 🚀"},": message = os.getenv("TEST_RESPONSE_MESSAGE_198"))": assert ("""
             "]特殊字符: !@#$%^&*()_+-=[]{}|;':\",./<>? 🚀": in response["data["]"]message["""""
         )
         assert "]测试特殊字符[" in response["]message["]: def test_response_with_unicode("
     """"
         "]""测试Unicode字符"""
-        response = APIResponse.success(data = {"text[": [中文 español 日本語 한국語["]), message="]Unicode测试]""""
+        response = APIResponse.success(data = {"text[": [中文 español 日本語 한국語["]), message = os.getenv("TEST_RESPONSE_MESSAGE_202")"""
         )
         assert response["data["]"]text[" =="]中文 español 日本語 한국語[" assert response["]message["] =="]Unicode测试[" def test_response_with_very_long_message("
     """"

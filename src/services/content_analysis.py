@@ -4,6 +4,7 @@ from typing import List, Optional
 from src.models import AnalysisResult, Content
 
 from .base import BaseService
+import os
 
 """
 足球预测系统内容分析服务模块
@@ -55,7 +56,7 @@ class ContentAnalysisService(BaseService):
             }
         return AnalysisResult(
             id=f"analysis_{content.id}",
-            analysis_type="content_analysis",
+            analysis_type = os.getenv("CONTENT_ANALYSIS_ANALYSIS_TYPE_58"),
             result=analysis_data,
             confidence=0.85,
             timestamp=datetime.now(),

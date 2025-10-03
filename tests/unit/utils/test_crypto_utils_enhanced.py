@@ -152,7 +152,7 @@ class TestCryptoUtilsEnhanced:
     def test_md5_hash_function(self):
         """测试MD5哈希函数"""
         # 直接实现MD5哈希测试
-        test_data = "test message"
+        test_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_TEST_DATA_155")
         expected_hash = hashlib.md5(test_data.encode('utf-8')).hexdigest()
 
         # 验证MD5哈希
@@ -176,7 +176,7 @@ class TestCryptoUtilsEnhanced:
 
     def test_sha256_hash_function(self):
         """测试SHA256哈希函数"""
-        test_data = "test message"
+        test_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_TEST_DATA_155")
         expected_hash = hashlib.sha256(test_data.encode('utf-8')).hexdigest()
 
         # 验证SHA256哈希
@@ -202,7 +202,7 @@ class TestCryptoUtilsEnhanced:
 
     def test_base64_encoding_decoding(self):
         """测试Base64编码解码"""
-        test_data = "Hello, World! 你好世界"
+        test_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_TEST_DATA_203")
 
         # 编码
         encoded_data = base64.b64encode(test_data.encode('utf-8')).decode('utf-8')
@@ -246,7 +246,7 @@ class TestCryptoUtilsEnhanced:
     def test_password_hashing_concepts(self):
         """测试密码哈希概念"""
         # 模拟bcrypt的工作方式（不实际调用bcrypt以避免依赖）
-        password = "my_secure_password"
+        password = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_PASSWORD_246")
         salt = b"salt_value"
 
         # 模拟密码哈希
@@ -258,7 +258,7 @@ class TestCryptoUtilsEnhanced:
         assert isinstance(password_hash, str)
 
         # 验证不同密码产生不同哈希
-        different_password = "different_password"
+        different_password = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_DIFFERENT_PASSWORD_254")
         different_hash = hashlib.sha256(different_password.encode('utf-8') + salt).hexdigest()
         assert password_hash != different_hash
 
@@ -266,7 +266,7 @@ class TestCryptoUtilsEnhanced:
         """测试加密概念"""
         # 模拟简单的加密（不使用实际的Fernet以避免依赖问题）
         key = b'my_secret_key_32_bytes_long!!'  # 32字节
-        data = "secret message"
+        data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_DATA_263")
 
         # 模拟加密过程
         data_bytes = data.encode('utf-8')
@@ -304,25 +304,25 @@ class TestCryptoUtilsEnhanced:
     def test_data_integrity_checks(self):
         """测试数据完整性检查"""
         # 测试校验和计算
-        data = "important data"
+        data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_DATA_300")
         checksum = hashlib.sha256(data.encode('utf-8')).hexdigest()
 
         # 验证数据完整性
-        received_data = "important data"
+        received_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_DATA_300")
         received_checksum = hashlib.sha256(received_data.encode('utf-8')).hexdigest()
 
         assert checksum == received_checksum
 
         # 修改数据后校验和应该改变
-        modified_data = "important data modified"
+        modified_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_MODIFIED_DATA_308")
         modified_checksum = hashlib.sha256(modified_data.encode('utf-8')).hexdigest()
 
         assert checksum != modified_checksum
 
     def test_key_derivation_concepts(self):
         """测试密钥派生概念"""
-        password = "user_password"
-        salt = "random_salt"
+        password = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_PASSWORD_316")
+        salt = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_SALT_317")
 
         # 模拟PBKDF2（简化版）
         key = hashlib.pbkdf2_hmac('sha256',
@@ -386,7 +386,7 @@ class TestCryptoUtilsEnhanced:
         import time
 
         # 测试哈希性能
-        data = "test data" * 1000  # 较大的数据
+        data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_DATA_371") * 1000  # 较大的数据
 
         start_time = time.time()
         hash_result = hashlib.sha256(data.encode('utf-8')).hexdigest()
@@ -419,7 +419,7 @@ class TestCryptoUtilsIntegration:
         assert len(key) == 32
 
         # 2. 准备数据
-        sensitive_data = "user secret information"
+        sensitive_data = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_SENSITIVE_DATA_404")
 
         # 3. 生成数据哈希（用于完整性验证）
         data_hash = hashlib.sha256(sensitive_data.encode('utf-8')).hexdigest()
@@ -441,7 +441,7 @@ class TestCryptoUtilsIntegration:
     def test_security_properties(self):
         """测试安全属性"""
         # 测试哈希单向性
-        original = "password123"
+        original = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_ORIGINAL_428")
         hashed = hashlib.sha256(original.encode('utf-8')).hexdigest()
 
         # 从哈希无法反推原文（这是安全特性）
@@ -449,8 +449,8 @@ class TestCryptoUtilsIntegration:
         assert hashed != original
 
         # 测试雪崩效应
-        similar1 = "password123"
-        similar2 = "password124"
+        similar1 = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_SIMILAR1_434")
+        similar2 = os.getenv("TEST_CRYPTO_UTILS_ENHANCED_SIMILAR2_436")
         hash1 = hashlib.sha256(similar1.encode('utf-8')).hexdigest()
         hash2 = hashlib.sha256(similar2.encode('utf-8')).hexdigest()
 

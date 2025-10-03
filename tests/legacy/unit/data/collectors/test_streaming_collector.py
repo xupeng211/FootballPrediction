@@ -2,6 +2,7 @@ from src.data.collectors.base_collector import CollectionResult
 from src.data.collectors.streaming_collector import StreamingDataCollector
 from unittest.mock import AsyncMock, Mock, patch
 import pytest
+import os
 
 """
 测试流式数据采集器
@@ -29,7 +30,7 @@ class TestStreamingDataCollector:
                 mock_config.return_value = Mock()
                 mock_producer.return_value = Mock()
                 self.collector = StreamingDataCollector(
-                    data_source="]test_source[", enable_streaming=True[""""
+                    data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_32"), enable_streaming=True[""""
                 )
     def test_init_with_streaming_enabled(self):
         "]]""测试启用流式处理的初始化"""
@@ -42,7 +43,7 @@ class TestStreamingDataCollector:
                 mock_config.return_value = Mock()
                 mock_producer.return_value = Mock()
                 collector = StreamingDataCollector(
-                    data_source="]test_source[",": max_retries=5,": retry_delay=10,": timeout=60,"
+                    data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_32"),": max_retries=5,": retry_delay=10,": timeout=60,"
                     enable_streaming=True)
                 assert collector.data_source =="]test_source[" assert collector.max_retries ==5[""""
                 assert collector.retry_delay ==10
@@ -115,20 +116,20 @@ class TestStreamingDataCollector:
         "]""测试带流处理的赛程采集成功"""
         # 模拟父类方法
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]fixtures[",": status="]success[",": success_count=5,": error_count=0,": records_collected=5,"
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_117"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=5,": error_count=0,": records_collected=5,"
             collected_data = [{"]fixture[": 1}, {"]fixture[": 2}],": error_message=None)": with patch.object(:": self.collector.__class__.__bases__[0],"
             "]collect_fixtures[",": return_value=mock_result):": mock_producer = AsyncMock()": mock_producer.send_batch.return_value = {"]success[": 2, "]failed[": 0}": self.collector.kafka_producer = mock_producer[": result = await self.collector.collect_fixtures_with_streaming()": assert result.status =="]]success[" assert "]流处理[" in result.error_message[""""
     @pytest.mark.asyncio
     async def test_collect_odds_with_streaming_success(self):
         "]]""测试带流处理的赔率采集成功"""
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]odds[",": status="]success[",": success_count=3,": error_count=0,": records_collected=3,"
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_120"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=3,": error_count=0,": records_collected=3,"
             collected_data = [{"]odds[": 1}, {"]odds[": 2}],": error_message=None)": with patch.object(self.collector, "]collect_odds[", return_value = mock_result)": mock_producer = AsyncMock()": mock_producer.send_batch.return_value = {"]success[": 2, "]failed[": 0}": self.collector.kafka_producer = mock_producer[": result = await self.collector.collect_odds_with_streaming()": assert result.status =="]]success[" assert "]流处理[" in result.error_message[""""
     @pytest.mark.asyncio
     async def test_collect_live_scores_with_streaming_success(self):
         "]]""测试带流处理的实时比分采集成功"""
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]scores[",": status="]success[",": success_count=4,": error_count=0,": records_collected=4,"
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_126"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=4,": error_count=0,": records_collected=4,"
             collected_data = [{"]score[": 1}, {"]score[": 2}],": error_message=None)": with patch.object(:": self.collector, "]collect_live_scores[", return_value=mock_result[""""
         ):
             mock_producer = AsyncMock()
@@ -137,8 +138,8 @@ class TestStreamingDataCollector:
     async def test_batch_collect_and_stream_success(self):
         "]]""测试批量采集和流处理成功"""
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]batch[",": status="]success[",": success_count=2,": error_count=0,": records_collected=2,"
-            collected_data = [{"]data[" 1}],": error_message = "]流处理 - 成功[": [1, 失败 0])": with patch.object(:": self.collector, "]collect_fixtures_with_streaming[", return_value=mock_result[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_135"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=2,": error_count=0,": records_collected=2,"
+            collected_data = [{"]data[" 1}],": error_message = os.getenv("TEST_STREAMING_COLLECTOR_ERROR_MESSAGE_135"): [1, 失败 0])": with patch.object(:": self.collector, "]collect_fixtures_with_streaming[", return_value=mock_result[""""
         ):
             with patch.object(:
                 self.collector, "]]collect_odds_with_streaming[", return_value=mock_result[""""
@@ -150,8 +151,8 @@ class TestStreamingDataCollector:
     async def test_batch_collect_with_exceptions(self):
         "]]""测试批量采集中的异常处理"""
         mock_success_result = CollectionResult(
-            data_source="test_source[",": collection_type="]batch[",": status="]success[",": success_count=1,": error_count=0,": records_collected=1,"
-            collected_data = [{"]data[" 1}],": error_message = "]流处理 - 成功[": [1, 失败 0])": with patch.object(:": self.collector,""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_135"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=1,": error_count=0,": records_collected=1,"
+            collected_data = [{"]data[" 1}],": error_message = os.getenv("TEST_STREAMING_COLLECTOR_ERROR_MESSAGE_135"): [1, 失败 0])": with patch.object(:": self.collector,""
             "]collect_fixtures_with_streaming[",": return_value=mock_success_result):": with patch.object(:": self.collector,"
                 "]collect_odds_with_streaming[",": side_effect=Exception("]采集失败[")):": configs = ["""
                     {"]type[: "fixtures"", "kwargs]: {}},""""
@@ -224,7 +225,7 @@ class TestStreamingDataCollectorEdgeCases:
         "]]""测试流式处理禁用时的采集"""
         self.collector.enable_streaming = False
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]odds[",": status="]success[",": success_count=1,": error_count=0,": records_collected=1,"
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_120"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_117"),": success_count=1,": error_count=0,": records_collected=1,"
             collected_data = [{"]data[": 1}],": error_message=None)": with patch.object(self.collector, "]collect_odds[", return_value = mock_result)": result = await self.collector.collect_odds_with_streaming()": assert result.status =="]success["""""
         # 不应该有流处理信息
         assert result.error_message is None or "]流处理[" not in result.error_message[""""
@@ -232,9 +233,9 @@ class TestStreamingDataCollectorEdgeCases:
     async def test_collect_with_failed_collection(self):
         "]]""测试采集失败时的处理"""
         mock_result = CollectionResult(
-            data_source="test_source[",": collection_type="]fixtures[",": status="]failed[",": success_count=0,": error_count=1,": records_collected=0,"
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_115"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_117"),": status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_225"),": success_count=0,": error_count=1,": records_collected=0,"
             collected_data=None,
-            error_message="]采集失败[")": with patch.object(:": self.collector.__class__.__bases__[0],""
+            error_message = os.getenv("TEST_STREAMING_COLLECTOR_ERROR_MESSAGE_227"))": with patch.object(:": self.collector.__class__.__bases__[0],""
             "]collect_fixtures[",": return_value=mock_result):": result = await self.collector.collect_fixtures_with_streaming()": assert result.status =="]failed["""""
         # 失败时不应该进行流处理
         assert "]流处理[" not in (result.error_message or "]")

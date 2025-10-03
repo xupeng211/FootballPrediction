@@ -1,3 +1,4 @@
+import os
 """独立的API集成测试（不需要外部服务）"""
 
 import pytest
@@ -12,7 +13,7 @@ class TestStandaloneAPI:
     @pytest.fixture(scope="class")
     def standalone_app(self):
         """创建独立的测试应用"""
-        app = FastAPI(title="Test API")
+        app = FastAPI(title = os.getenv("TEST_STANDALONE_API_TITLE_15"))
 
         @app.get("/health")
         async def health():
@@ -47,7 +48,7 @@ class TestStandaloneAPI:
 
         @app.get("/nonexistent")
         async def nonexistent():
-            raise HTTPException(status_code=404, detail="Not found")
+            raise HTTPException(status_code=404, detail = os.getenv("TEST_STANDALONE_API_DETAIL_50"))
 
         return app
 

@@ -5,6 +5,7 @@ from src.streaming.kafka_producer import FootballKafkaProducer
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import asyncio
 import pytest
+import os
 
 """
 Kafka生产者测试 - FootballKafkaProducer
@@ -95,7 +96,7 @@ class TestFootballKafkaProducer:
         producer.producer = Mock()
         producer.producer.produce = Mock()
         producer.producer.flush = Mock()
-        match_data = {"match_id[: "match_1"", "home_team]}": custom_key = "custom_key_123[": result = await producer.send_match_data(match_data, key=custom_key)": assert result is True[" call_args = producer.producer.produce.call_args[""
+        match_data = {"match_id[: "match_1"", "home_team]}": custom_key = os.getenv("TEST_KAFKA_PRODUCER_CUSTOM_KEY_98"): result = await producer.send_match_data(match_data, key=custom_key)": assert result is True[" call_args = producer.producer.produce.call_args[""
     assert call_args[1]['key'] ==custom_key
     @pytest.mark.asyncio
     async def test_send_match_data_producer_not_initialized(self, producer):
@@ -230,7 +231,7 @@ class TestFootballKafkaProducer:
         "]]""测试消息发送成功回调"""
         mock_err = None
         mock_msg = Mock()
-        mock_msg.topic.return_value = "matches-stream[": mock_msg.key.return_value = "]match_1["""""
+        mock_msg.topic.return_value = os.getenv("TEST_KAFKA_PRODUCER_RETURN_VALUE_232"): mock_msg.key.return_value = os.getenv("TEST_KAFKA_PRODUCER_RETURN_VALUE_233")""""
         # 不应该抛出异常
         producer._delivery_callback(mock_err, mock_msg)
     @pytest.mark.asyncio

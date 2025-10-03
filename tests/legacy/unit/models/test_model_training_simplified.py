@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import numpy
 import pandas
 import pytest
+import os
 
 """
 BaselineModelTrainer 完整测试套件
@@ -79,7 +80,7 @@ class TestModelTrainingComplete:
         @pytest.mark.asyncio
         async def test_prepare_training_data_insufficient_samples(self, trainer):
             "]""测试训练数据不足"""
-            small_df = pd.DataFrame({"id[: "1[", "]]match_time[": [datetime.now())": with patch.object(trainer, "]_get_historical_matches[") as mock_get_matches:": mock_get_matches.return_value = small_df[": with pytest.raises(ValueError, match = "]]训练数据不足[")": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
+            small_df = pd.DataFrame({"id[: "1[", "]]match_time[": [datetime.now())": with patch.object(trainer, "]_get_historical_matches[") as mock_get_matches:": mock_get_matches.return_value = small_df[": with pytest.raises(ValueError, match = os.getenv("TEST_MODEL_TRAINING_SIMPLIFIED_MATCH_82"))": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
                         min_samples=100)
     class TestModelTraining:
         "]""测试模型训练"""
@@ -147,7 +148,7 @@ class TestModelTrainingComplete:
                 trainer.feature_store, "]get_historical_features["""""
             ) as mock_get_features:
                 mock_get_matches.return_value = sample_matches_df
-                mock_get_features.side_effect = Exception("]特征存储错误[")": with pytest.raises(Exception, match = "]特征存储错误[")": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
+                mock_get_features.side_effect = Exception("]特征存储错误[")": with pytest.raises(Exception, match = os.getenv("TEST_MODEL_TRAINING_SIMPLIFIED_MATCH_150"))": await trainer.prepare_training_data(": datetime.now() - timedelta(days=30),": datetime.now(),"
                         min_samples=5)
     class TestConfiguration:
         "]""测试配置"""

@@ -4,6 +4,7 @@ from src.monitoring.anomaly_detector import (
 from unittest.mock import AsyncMock, MagicMock, patch
 import pandas
 import pytest
+import os
 
 #!/usr/bin/env python3
 """
@@ -41,19 +42,19 @@ async def test_detect_anomalies_with_empty_data(anomaly_detector):
     """Test anomaly detection when the table has no data."""
     detector, mock_session = anomaly_detector
     mock_session.execute.return_value.fetchall.return_value = []
-    anomalies = await detector.detect_anomalies(table_names="matches[")": assert len(anomalies) ==0["""
+    anomalies = await detector.detect_anomalies(table_names = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAMES_44"))": assert len(anomalies) ==0["""
 @pytest.mark.asyncio
 async def test_detect_anomalies_with_normal_data(anomaly_detector):
     "]]""Test anomaly detection with normal data."""
     detector, _ = anomaly_detector
     mock_data = pd.DataFrame({"home_score[": [1, 2, 1, 0, 2]))": async def mock_get_table_data(*args, **kwargs):": return mock_data[": detector._get_table_data = mock_get_table_data"
-    anomalies = await detector.detect_anomalies(table_names="]]matches[")": assert len(anomalies) ==0["""
+    anomalies = await detector.detect_anomalies(table_names = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAMES_50"))": assert len(anomalies) ==0["""
 @pytest.mark.asyncio
 async def test_detect_anomalies_with_outliers(anomaly_detector):
     "]]""Test anomaly detection with clear outliers."""
     detector, _ = anomaly_detector
     mock_data = pd.DataFrame({"home_score[": [1, 2, 1, 0, 2, 100]))": async def mock_get_table_data(*args, **kwargs):": return mock_data[": detector._get_table_data = mock_get_table_data"
-    anomalies = await detector.detect_anomalies(table_names="]]matches[")": assert len(anomalies) > 0[" assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER[""
+    anomalies = await detector.detect_anomalies(table_names = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAMES_50"))": assert len(anomalies) > 0[" assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER[""
     assert 100 in anomalies[0].anomalous_values
 @pytest.mark.asyncio
 async def test_get_anomaly_summary(anomaly_detector):
@@ -62,7 +63,7 @@ async def test_get_anomaly_summary(anomaly_detector):
     anomalies = [
         MagicMock(
             spec=AnomalyResult,
-            severity=MagicMock(value="high["),": anomaly_type=MagicMock(value="]outlier["),": table_name="]matches["),": MagicMock(": spec=AnomalyResult,": severity=MagicMock(value="]low["),": anomaly_type=MagicMock(value="]range_check["),": table_name="]odds[")]": summary = await detector.get_anomaly_summary(anomalies)": assert summary["]total_anomalies["] ==2[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_table["]"]matches[" ==1[" class TestAnomalyType:"""
+            severity=MagicMock(value="high["),": anomaly_type=MagicMock(value = os.getenv("TEST_ANOMALY_DETECTOR_VALUE_63")),": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_64")),": MagicMock(": spec=AnomalyResult,": severity=MagicMock(value="]low["),": anomaly_type=MagicMock(value = os.getenv("TEST_ANOMALY_DETECTOR_VALUE_65")),": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_65"))]": summary = await detector.get_anomaly_summary(anomalies)": assert summary["]total_anomalies["] ==2[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_table["]"]matches[" ==1[" class TestAnomalyType:"""
     "]]""Test cases for AnomalyType enum."""
     def test_anomaly_type_values(self):
         """Test AnomalyType enum values."""
@@ -75,9 +76,9 @@ async def test_get_anomaly_summary(anomaly_detector):
     def test_anomaly_result_creation_minimal(self):
         """Test AnomalyResult creation with minimal parameters."""
         result = AnomalyResult(
-            table_name="matches[",": column_name="]home_score[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[10, 12, 15],"
+            table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_73"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_73"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.HIGH,": anomalous_values=[10, 12, 15],"
             anomaly_score=0.15,
-            detection_method="]3sigma[",": description="]Outlier values detected[")": assert result.table_name =="]matches[" assert result.column_name =="]home_score[" assert result.anomaly_type ==AnomalyType.OUTLIER[""""
+            detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_76"),": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_77"))": assert result.table_name =="]matches[" assert result.column_name =="]home_score[" assert result.anomaly_type ==AnomalyType.OUTLIER[""""
         assert result.severity ==AnomalySeverity.HIGH
         assert result.anomalous_values ==[10, 12, 15]
         assert result.anomaly_score ==0.15
@@ -86,12 +87,12 @@ async def test_get_anomaly_summary(anomaly_detector):
         "]""Test AnomalyResult creation with custom detection time."""
         custom_time = datetime(2024, 1, 1, 12, 0, 0)
         result = AnomalyResult(
-            table_name="matches[",": column_name="]away_score[",": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.MEDIUM,": anomalous_values=[-1],"
+            table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_73"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_84"),": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.MEDIUM,": anomalous_values=[-1],"
             anomaly_score=0.08,
-            detection_method="]range_check[",": description="]Negative score detected[",": detected_at=custom_time)": assert result.detected_at ==custom_time[" def test_anomaly_result_to_dict(self):"
+            detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_85"),": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_85"),": detected_at=custom_time)": assert result.detected_at ==custom_time[" def test_anomaly_result_to_dict(self):"
         "]]""Test AnomalyResult to_dict conversion."""
         result = AnomalyResult(
-            table_name="teams[",": column_name="]rating[",": anomaly_type=AnomalyType.FREQUENCY,": severity=AnomalySeverity.LOW,": anomalous_values="]unknown[",": anomaly_score=0.02,": detection_method="]frequency[",": description="]Unknown value frequency anomaly[")": result_dict = result.to_dict()": expected = {""
+            table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_89"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_89"),": anomaly_type=AnomalyType.FREQUENCY,": severity=AnomalySeverity.LOW,": anomalous_values = os.getenv("TEST_ANOMALY_DETECTOR_ANOMALOUS_VALUES_89"),": anomaly_score=0.02,": detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_90"),": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_91"))": result_dict = result.to_dict()": expected = {""
             "]table_name[": ["]teams[",""""
             "]column_name[": ["]rating[",""""
             "]anomaly_type[": ["]frequency[",""""
@@ -129,7 +130,7 @@ async def test_get_anomaly_summary(anomaly_detector):
         )
         detector = AnomalyDetector()
         anomalies = detector.detect_anomalies.__wrapped__(
-            detector, table_names="]]matches["""""
+            detector, table_names = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAMES_50")""""
         )
         assert isinstance(anomalies, list)
         mock_logger.error.assert_called_with("]检测表 matches 异常失败[": [Database error])""""
@@ -169,14 +170,14 @@ async def test_get_anomaly_summary(anomaly_detector):
     def test_detect_column_anomalies_empty_data(self):
         "]""Test _detect_column_anomalies with empty data."""
         detector = AnomalyDetector()
-        # Create DataFrame with empty column after dropna = data pd.DataFrame({"column[": ["]None[", None, None]))": table_name = "]matches[": column_name = "]test_column[": methods = "]three_sigma[": column_type = "]numeric[": anomalies = detector._detect_column_anomalies(": data, table_name, column_name, methods, column_type["""
+        # Create DataFrame with empty column after dropna = data pd.DataFrame({"column[": ["]None[", None, None]))": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_161"): methods = os.getenv("TEST_ANOMALY_DETECTOR_METHODS_162"): column_type = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_TYPE_162"): anomalies = detector._detect_column_anomalies(": data, table_name, column_name, methods, column_type["""
         )
         assert anomalies ==[]
     def test_detect_three_sigma_anomalies_success(self):
         "]]""Test _detect_three_sigma_anomalies with actual outliers."""
         detector = AnomalyDetector()
         # Create data with clear outliers = data pd.Series([1, 2, 3, 4, 5, 100])  # 100 is an outlier
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
         )
         assert len(anomalies) ==1
         assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER
@@ -186,21 +187,21 @@ async def test_get_anomaly_summary(anomaly_detector):
         detector = AnomalyDetector()
         # Create normal data without outliers
         data = pd.Series([1, 2, 3, 4, 5])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
         )
         assert len(anomalies) ==0
     def test_detect_three_sigma_anomalies_zero_std(self):
         "]]""Test _detect_three_sigma_anomalies with zero standard deviation."""
         detector = AnomalyDetector()
         # Create data with zero variance = data pd.Series([5, 5, 5, 5, 5])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
         )
         assert len(anomalies) ==0  # Should not detect anomalies in constant data
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_three_sigma_anomalies_error(self, mock_logger):"""
         "]""Test _detect_three_sigma_anomalies error handling."""
         detector = AnomalyDetector()
         # Create invalid data
-        data = pd.Series(["invalid[", "]data["])": table_name = "]matches[": column_name = "]home_score[": anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
+        data = pd.Series(["invalid[", "]data["])": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_three_sigma_anomalies(": data, table_name, column_name["""
         )
         assert len(anomalies) ==0
         mock_logger.error.assert_called()
@@ -208,23 +209,23 @@ async def test_get_anomaly_summary(anomaly_detector):
         "]]""Test _detect_iqr_anomalies with actual outliers."""
         detector = AnomalyDetector()
         # Create data with clear outliers = data pd.Series([1, 2, 3, 4, 5, 100])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER[""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER[""
         assert anomalies[0].detection_method =="]]]iqr[" assert 100 in anomalies[0].anomalous_values[""""
     def test_detect_iqr_anomalies_zero_iqr(self):
         "]]""Test _detect_iqr_anomalies with zero IQR."""
         detector = AnomalyDetector()
         # Create data with zero IQR = data pd.Series([5, 5, 5, 5, 5])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_iqr_anomalies_error(self, mock_logger):"""
         "]""Test _detect_iqr_anomalies error handling."""
         detector = AnomalyDetector()
         # Create invalid data
-        data = pd.Series(["invalid[", "]data["])": table_name = "]matches[": column_name = "]home_score[": anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
+        data = pd.Series(["invalid[", "]data["])": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_iqr_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
     def test_detect_z_score_anomalies_success(self):
         "]]""Test _detect_z_score_anomalies with actual outliers."""
         detector = AnomalyDetector()
         # Create data with clear outliers = data pd.Series([1, 2, 3, 4, 5, 100])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_z_score_anomalies(": data, table_name, column_name, threshold=2.0["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_z_score_anomalies(": data, table_name, column_name, threshold=2.0["""
         )
         assert len(anomalies) ==1
         assert anomalies[0].anomaly_type ==AnomalyType.OUTLIER
@@ -233,12 +234,12 @@ async def test_get_anomaly_summary(anomaly_detector):
         "]]""Test _detect_z_score_anomalies with zero standard deviation."""
         detector = AnomalyDetector()
         # Create data with zero variance = data pd.Series([5, 5, 5, 5, 5])
-        table_name = "matches[": column_name = "]home_score[": anomalies = detector._detect_z_score_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_z_score_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_z_score_anomalies_error(self, mock_logger):"""
         "]""Test _detect_z_score_anomalies error handling."""
         detector = AnomalyDetector()
         # Create invalid data
-        data = pd.Series(["invalid[", "]data["])": table_name = "]matches[": column_name = "]home_score[": anomalies = detector._detect_z_score_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
+        data = pd.Series(["invalid[", "]data["])": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_z_score_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
     def test_detect_range_anomalies_success(self):
         "]]""Test _detect_range_anomalies with range violations."""
         detector = AnomalyDetector()
@@ -247,7 +248,7 @@ async def test_get_anomaly_summary(anomaly_detector):
             "]min[": 0,""""
             "]max[": 10}""""
         # Create data with range violations = data pd.Series([5, 15, -2, 8])  # 15 and -2 are out of range
-        table_name = "]matches[": column_name = "]home_score[": anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.VALUE_RANGE[""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.VALUE_RANGE[""
         assert anomalies[0].detection_method =="]]]range_check[" assert 15 in anomalies[0].anomalous_values[""""
         assert -2 in anomalies[0].anomalous_values
     def test_detect_range_anomalies_no_thresholds(self):
@@ -255,11 +256,11 @@ async def test_get_anomaly_summary(anomaly_detector):
         detector = AnomalyDetector()
         # No thresholds configured
         data = pd.Series([5, 15, -2, 8])
-        table_name = "matches[": column_name = "]unknown_column[": anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_237"): anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_range_anomalies_error(self, mock_logger):"""
         "]""Test _detect_range_anomalies error handling."""
         detector = AnomalyDetector()
-        data = pd.Series(["invalid[", "]data["])": table_name = "]matches[": column_name = "]home_score[": anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
+        data = pd.Series(["invalid[", "]data["])": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_169"): anomalies = detector._detect_range_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
     def test_detect_frequency_anomalies_success(self):
         "]]""Test _detect_frequency_anomalies with frequency issues."""
         detector = AnomalyDetector()
@@ -274,7 +275,7 @@ async def test_get_anomaly_summary(anomaly_detector):
                 "]very_frequent[",""""
                 "]very_frequent["]""""
         )
-        table_name = "]matches[": column_name = "]status[": anomalies = detector._detect_frequency_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.FREQUENCY[""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_250"): anomalies = detector._detect_frequency_anomalies(data, table_name, column_name)": assert len(anomalies) ==1[" assert anomalies[0].anomaly_type ==AnomalyType.FREQUENCY[""
         assert anomalies[0].detection_method =="]]]frequency["""""
         # Should detect "]very_frequent[": as appearing too frequently[""""
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_frequency_anomalies_error(self, mock_logger):"""
@@ -282,24 +283,24 @@ async def test_get_anomaly_summary(anomaly_detector):
         detector = AnomalyDetector()
         # Create invalid data that will cause error
         data = pd.Series([])
-        table_name = "matches[": column_name = "]status[": anomalies = detector._detect_frequency_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" def test_detect_time_gap_anomalies_success(self):""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_250"): anomalies = detector._detect_frequency_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" def test_detect_time_gap_anomalies_success(self):""
         "]]""Test _detect_time_gap_anomalies with time gaps."""
         detector = AnomalyDetector()
         # Create time data with gaps = base_time datetime(2024, 1, 1)
         times = ["base_time[",": base_time + timedelta(minutes=1),": base_time + timedelta(minutes=2),": base_time + timedelta(hours=2),  # Large gap"
             base_time + timedelta(hours=2, minutes=1)]
         data = pd.Series(times)
-        table_name = "]matches[": column_name = "]match_time[": anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) >= 0  # May or may not detect depending on gap size[" def test_detect_time_gap_anomalies_insufficient_data(self):""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_262"): anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) >= 0  # May or may not detect depending on gap size[" def test_detect_time_gap_anomalies_insufficient_data(self):""
         "]]""Test _detect_time_gap_anomalies with insufficient data."""
         detector = AnomalyDetector()
         # Create time data with only one point = times [datetime(2024, 1, 1)]
         data = pd.Series(times)
-        table_name = "matches[": column_name = "]match_time[": anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
+        table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_169"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_262"): anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) ==0["""
     @patch("]]src.monitoring.anomaly_detector.logger[")": def test_detect_time_gap_anomalies_error(self, mock_logger):"""
         "]""Test _detect_time_gap_anomalies error handling."""
         detector = AnomalyDetector()
         # Create invalid time data
-        data = pd.Series(["invalid_time[", "]not_a_date["])": table_name = "]matches[": column_name = "]match_time[": anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
+        data = pd.Series(["invalid_time[", "]not_a_date["])": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_161"): column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_262"): anomalies = detector._detect_time_gap_anomalies(data, table_name, column_name)": assert len(anomalies) ==0[" mock_logger.error.assert_called()""
     def test_calculate_severity_levels(self):
         "]]""Test _calculate_severity with different score levels."""
         detector = AnomalyDetector()
@@ -329,11 +330,11 @@ async def test_get_anomaly_summary(anomaly_detector):
         detector = AnomalyDetector()
         # Create test anomalies
         anomaly1 = AnomalyResult(
-            table_name="matches[",": column_name="]home_score[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[10],"
+            table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_73"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_73"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[10],"
             anomaly_score=0.25,
-            detection_method="]3sigma[",": description="]Outlier detected[")": anomaly2 = AnomalyResult(": table_name="]odds[",": column_name="]home_odds[",": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.HIGH,": anomalous_values="]200.0[",": anomaly_score=0.15,": detection_method="]range_check[",": description="]Range violation[")": anomaly3 = AnomalyResult(": table_name="]matches[",": column_name="]away_score[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[-1],"
+            detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_76"),": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_300"))": anomaly2 = AnomalyResult(": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_65"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_302"),": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.HIGH,": anomalous_values = os.getenv("TEST_ANOMALY_DETECTOR_ANOMALOUS_VALUES_302"),": anomaly_score=0.15,": detection_method = os.getenv("TEST_ANOMALY_DETECTOR_DETECTION_METHOD_85"),": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_302"))": anomaly3 = AnomalyResult(": table_name = os.getenv("TEST_ANOMALY_DETECTOR_TABLE_NAME_64"),": column_name = os.getenv("TEST_ANOMALY_DETECTOR_COLUMN_NAME_84"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[-1],"
             anomaly_score=0.30,
-            detection_method="]iqr[",": description="]Negative score[")": summary = detector.get_anomaly_summary(["]anomaly1[", anomaly2, anomaly3])": assert summary["]total_anomalies["] ==3[" assert summary["]]by_severity["]"]critical[" ==2[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_type["]"]outlier[" ==2[" assert summary["]]by_type["]"]value_range[" ==1[" assert summary["]]by_table["]"]matches[" ==2[" assert summary["]]by_table["]"]odds[" ==1[" assert summary["]]critical_anomalies["] ==2[" assert summary["]]high_priority_anomalies["] ==3  # critical + high[" assert summary["]]most_affected_table["] =="]matches[" assert "]summary_time[" in summary[""""
+            detection_method="]iqr[",": description = os.getenv("TEST_ANOMALY_DETECTOR_DESCRIPTION_306"))": summary = detector.get_anomaly_summary(["]anomaly1[", anomaly2, anomaly3])": assert summary["]total_anomalies["] ==3[" assert summary["]]by_severity["]"]critical[" ==2[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_type["]"]outlier[" ==2[" assert summary["]]by_type["]"]value_range[" ==1[" assert summary["]]by_table["]"]matches[" ==2[" assert summary["]]by_table["]"]odds[" ==1[" assert summary["]]critical_anomalies["] ==2[" assert summary["]]high_priority_anomalies["] ==3  # critical + high[" assert summary["]]most_affected_table["] =="]matches[" assert "]summary_time[" in summary[""""
 class TestAnomalyDetectorIntegration:
     "]]""Integration tests for AnomalyDetector functionality."""
     def test_complete_detection_workflow(self):

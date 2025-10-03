@@ -1,3 +1,4 @@
+import os
 """
 模型API端点测试
 测试覆盖src/api/models.py中的所有路由
@@ -20,14 +21,14 @@ class TestActiveModels:
         """测试获取活跃模型成功"""
         # 模拟注册模型
         mock_model = MagicMock()
-        mock_model.name = "test_model"
+        mock_model.name = os.getenv("TEST_MODELS_API_NAME_23")
         mock_client.search_registered_models.return_value = [mock_model]
 
         # 模拟模型版本
         mock_version = MagicMock()
         mock_version.version = "1"
-        mock_version.run_id = "run_123"
-        mock_version.current_stage = "Production"
+        mock_version.run_id = os.getenv("TEST_MODELS_API_RUN_ID_28")
+        mock_version.current_stage = os.getenv("TEST_MODELS_API_CURRENT_STAGE_29")
         mock_client.get_latest_versions.return_value = [mock_version]
 
         from src.api.models import get_active_models
@@ -90,13 +91,13 @@ class TestModelMetrics:
         """测试获取模型指标成功"""
         # 模拟模型存在
         mock_model = MagicMock()
-        mock_model.name = "test_model"
+        mock_model.name = os.getenv("TEST_MODELS_API_NAME_23")
         mock_client.get_registered_model.return_value = mock_model
 
         # 模拟模型版本
         mock_version = MagicMock()
         mock_version.version = "1"
-        mock_version.run_id = "run_123"
+        mock_version.run_id = os.getenv("TEST_MODELS_API_RUN_ID_28")
         mock_client.get_latest_versions.return_value = [mock_version]
 
         # 模拟运行指标
@@ -133,7 +134,7 @@ class TestModelMetrics:
     async def test_get_model_metrics_no_versions(self, mock_client):
         """测试模型没有版本时"""
         mock_model = MagicMock()
-        mock_model.name = "test_model"
+        mock_model.name = os.getenv("TEST_MODELS_API_NAME_23")
         mock_client.get_registered_model.return_value = mock_model
         mock_client.get_latest_versions.return_value = []
 
@@ -154,15 +155,15 @@ class TestModelComparison:
         """测试比较模型成功"""
         # 模拟两个模型
         mock_model1 = MagicMock()
-        mock_model1.name = "model_v1"
+        mock_model1.name = os.getenv("TEST_MODELS_API_NAME_152")
         mock_model2 = MagicMock()
-        mock_model2.name = "model_v2"
+        mock_model2.name = os.getenv("TEST_MODELS_API_NAME_154")
         mock_client.get_registered_model.side_effect = [mock_model1, mock_model2]
 
         # 模拟版本和指标
         mock_version = MagicMock()
         mock_version.version = "1"
-        mock_version.run_id = "run_123"
+        mock_version.run_id = os.getenv("TEST_MODELS_API_RUN_ID_28")
         mock_client.get_latest_versions.return_value = [mock_version]
 
         mock_run = MagicMock()
@@ -210,13 +211,13 @@ class TestModelPromotion:
         """测试提升模型版本成功"""
         # 模拟模型存在
         mock_model = MagicMock()
-        mock_model.name = "test_model"
+        mock_model.name = os.getenv("TEST_MODELS_API_NAME_23")
         mock_client.get_registered_model.return_value = mock_model
 
         # 模拟版本存在
         mock_version = MagicMock()
         mock_version.version = "2"
-        mock_version.run_id = "run_456"
+        mock_version.run_id = os.getenv("TEST_MODELS_API_RUN_ID_212")
         mock_client.get_model_version.return_value = mock_version
 
         from src.api.models import promote_model
@@ -270,7 +271,7 @@ class TestModelPrediction:
 
         from src.api.models import predict_with_model
         result = await predict_with_model(
-            model_name="test_model",
+            model_name = os.getenv("TEST_MODELS_API_MODEL_NAME_265"),
             model_version="1",
             features={
                 "home_team_form": 0.8,
@@ -291,7 +292,7 @@ class TestModelPrediction:
 
         with pytest.raises(HTTPException) as exc_info:
             await predict_with_model(
-                model_name="test_model",
+                model_name = os.getenv("TEST_MODELS_API_MODEL_NAME_265"),
                 model_version="1",
                 features={}
             )
@@ -308,7 +309,7 @@ class TestModelPrediction:
 
         with pytest.raises(HTTPException) as exc_info:
             await predict_with_model(
-                model_name="test_model",
+                model_name = os.getenv("TEST_MODELS_API_MODEL_NAME_265"),
                 model_version="1",
                 features={"test": "data"}
             )
@@ -360,7 +361,7 @@ class TestExperiments:
         # 模拟实验
         mock_experiment = MagicMock()
         mock_experiment.experiment_id = "123"
-        mock_experiment.name = "test_experiment"
+        mock_experiment.name = os.getenv("TEST_MODELS_API_NAME_349")
         mock_client.list_experiments.return_value = [mock_experiment]
 
         from src.api.models import get_experiments
@@ -378,11 +379,11 @@ class TestExperiments:
         mock_client.list_experiments.return_value = [mock_experiment]
 
         from src.api.models import get_experiments
-        result = await get_experiments(view_type="ACTIVE_ONLY")
+        result = await get_experiments(view_type = os.getenv("TEST_MODELS_API_VIEW_TYPE_371"))
 
         assert result is not None
         assert result["success"] is True
-        mock_client.list_experiments.assert_called_with(view_type="ACTIVE_ONLY")
+        mock_client.list_experiments.assert_called_with(view_type = os.getenv("TEST_MODELS_API_VIEW_TYPE_371"))
 
 
 class TestRouterConfiguration:

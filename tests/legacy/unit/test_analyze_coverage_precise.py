@@ -34,7 +34,7 @@ class TestClass:
         '''方法文档字符串'''
         pass
 "]"""
-        test_file.write_text(test_content, encoding="utf-8[")": result = count_lines_of_code(str(test_file))"""
+        test_file.write_text(test_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_ENCODING_37"))": result = count_lines_of_code(str(test_file))"""
         # 文档字符串算作代码行（因为不以#开头）
         assert (
             result ==10
@@ -66,7 +66,7 @@ class DataProcessor:
 global_config = {"]]]debug[" : True}": if __name__ =="]__main__[":""""
     : print("]测试脚本[")""""
 "]"""
-        test_file.write_text(test_content, encoding="utf-8[")": result = count_lines_of_code(str(test_file))"""
+        test_file.write_text(test_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_ENCODING_37"))": result = count_lines_of_code(str(test_file))"""
         # 排除空行和注释行
         expected_lines = 23  # 所有非空非注释行
         assert result ==expected_lines
@@ -143,7 +143,7 @@ class TestAnalyzeSourceFilesPrecise:
         # 模拟不同类型的文件
         mock_files = [
             Mock(
-                name="normal.py[",": __str__=Mock(": return_value="]/home/user/projects/FootballPrediction/src/normal.py[": )),": Mock(": name="]test.py[",": __str__=Mock(": return_value="]/home/user/projects/FootballPrediction/src/test.py[": )),": Mock(": name="]__init__.py[",": __str__=Mock(": return_value="]/home/user/projects/FootballPrediction/src/__init__.py[": )),": Mock(": name="]cache.py[",": __str__=Mock(": return_value="]/home/user/projects/FootballPrediction/__pycache__/cache.py[": )),  # 应该被跳过[""""
+                name="normal.py[",": __str__=Mock(": return_value = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RETURN_VALUE_143"): )),": Mock(": name = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_NAME_146"),": __str__=Mock(": return_value = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RETURN_VALUE_146"): )),": Mock(": name = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_NAME_146"),": __str__=Mock(": return_value = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RETURN_VALUE_146"): )),": Mock(": name = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_NAME_146"),": __str__=Mock(": return_value = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RETURN_VALUE_146"): )),  # 应该被跳过[""""
         ]
         mock_src_dir.rglob.return_value = mock_files
         # 设置 relative_to 方法
@@ -189,7 +189,7 @@ class TestMainFunctionPrecise:
         mock_parse_xml.return_value = mock_coverage_data
         mock_open()
         mock_date_result = Mock()
-        mock_date_result.stdout = "]]2025-09-27 12:0000[": mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print["):": result = main()"""
+        mock_date_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_STDOUT_186"): mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print["):": result = main()"""
             # 验证结果被过滤（empty.py应该被过滤掉）
             assert len(result) ==2
             assert all(item["]total_stmts["] > 0 for item in result)""""
@@ -208,7 +208,7 @@ class TestMainFunctionPrecise:
         mock_parse_xml.return_value = mock_coverage_data
         mock_open()
         mock_date_result = Mock()
-        mock_date_result.stdout = "]]2025-09-27 12:0000[": mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print[") as mock_print:": main()"""
+        mock_date_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_STDOUT_186"): mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print[") as mock_print:": main()"""
             # 验证统计数据正确
             calls = mock_print.call_args_list
             stats_found = False
@@ -233,7 +233,7 @@ class TestMainFunctionPrecise:
         mock_parse_xml.return_value = mock_coverage_data
         mock_open()
         mock_date_result = Mock()
-        mock_date_result.stdout = "]]2025-09-27 12:0000[": mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print[") as mock_print:": main()"""
+        mock_date_result.stdout = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_STDOUT_186"): mock_subprocess.return_value = mock_date_result[": with patch("]]builtins.print[") as mock_print:": main()"""
             # 验证影响分数被计算和显示
             calls = mock_print.call_args_list
             impact_score_found = False
@@ -245,13 +245,13 @@ class TestMainFunctionPrecise:
         """测试精确分析工作流程"""
         # 创建模拟的coverage.xml文件
         coverage_xml = tmp_path / "coverage.xml[": xml_content = "]""<?xml version="1.0[" ?>""""
-<coverage version="]6.0[": line-rate="]0.75[": branch-rate="]0.65[">""""
+<coverage version="]6.0[": line-rate = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RATE_241"): branch-rate = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RATE_241")>""""
     <packages>
-        <package name="]src[" "]: "line-rate="0.75[": branch-rate="]0.65[">""""
+        <package name="]src[" "]: "line-rate="0.75[": branch-rate = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_RATE_241")>""""
             <classes>
-                <class name="]test_module," ": "filename="src/test_module.py[": line-rate="]0.8[": branch-rate="]0.7[": lines-covered="]4[" "]: "lines-valid="5[">""""
+                <class name = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_NAME_246") ": "filename = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_FILENAME_247"): line-rate="]0.8[": branch-rate="]0.7[": lines-covered="]4[" "]: "lines-valid="5[">""""
                     <methods>
-                        <method name="]test_function," ": "line-rate="1.0[": branch-rate="]1.0[">""""
+                        <method name = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_NAME_248") ": "line-rate="1.0[": branch-rate="]1.0[">""""
                             <lines>
                                 <line number="]1[" "]: "hits="1["/>""""
                                 <line number="]2," ": "hits="1["/>""""
@@ -270,7 +270,7 @@ class TestMainFunctionPrecise:
         </package>
     </packages>
 </coverage>"]"""
-        coverage_xml.write_text(xml_content, encoding="utf-8[")""""
+        coverage_xml.write_text(xml_content, encoding = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_ENCODING_37"))""""
         # 测试XML解析
         with patch("]analyze_coverage_precise.Path[", new = tmp_path)": with patch("]builtins.open[", mock_open(read_data = xml_content))": result = parse_coverage_xml()": assert "]src/test_module.py[" in result[""""
                 total_stmts, missing_stmts, coverage = result["]]src/test_module.py["]: assert total_stmts ==5[" assert missing_stmts ==1["""
@@ -313,4 +313,4 @@ class TestMainFunctionPrecise:
         mock_src_dir = Mock()
         mock_path_class.return_value = mock_src_dir
         # 模拟relative_to方法抛出异常
-        mock_file = Mock(name="test.py[")": mock_file.relative_to.side_effect = ValueError("]Path not relative[")": mock_src_dir.rglob.return_value = ["]mock_file[": # 函数没有处理ValueError异常，预期会抛出异常[": with pytest.raises(ValueError, match = "]]Path not relative[")"]": analyze_source_files()
+        mock_file = Mock(name="test.py[")": mock_file.relative_to.side_effect = ValueError("]Path not relative[")": mock_src_dir.rglob.return_value = ["]mock_file[": # 函数没有处理ValueError异常，预期会抛出异常[": with pytest.raises(ValueError, match = os.getenv("TEST_ANALYZE_COVERAGE_PRECISE_MATCH_310"))"]": analyze_source_files()

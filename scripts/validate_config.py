@@ -342,19 +342,19 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="验证生产环境配置")
+    parser = argparse.ArgumentParser(description = os.getenv("VALIDATE_CONFIG_DESCRIPTION_345"))
     parser.add_argument('--output', '-o',
-                       help="输出报告到文件")
+                       help = os.getenv("VALIDATE_CONFIG_HELP_346"))
     parser.add_argument('--quiet', '-q',
-                       action='store_true',
-                       help="静默模式，只输出结果")
+                       action = os.getenv("VALIDATE_CONFIG_ACTION_347"),
+                       help = os.getenv("VALIDATE_CONFIG_HELP_349"))
 
     args = parser.parse_args()
 
     # 配置日志
     logging.basicConfig(
         level=logging.WARNING if args.quiet else logging.INFO,
-        format='%(levelname)s: %(message)s'
+        format = os.getenv("VALIDATE_CONFIG_FORMAT_352")
     )
 
     # 执行验证

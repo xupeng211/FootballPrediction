@@ -233,7 +233,7 @@ class TestServiceCheckFunctions:
                     "response_time_ms": 5,
                     "details": {"message": "Redis连接正常"}
                 })
-                mock_breaker.state = "closed"
+                mock_breaker.state = os.getenv("TEST_HEALTH_COMPREHENSIVE_STATE_236")
 
                 result = await _check_redis()
 
@@ -298,7 +298,7 @@ class TestServiceCheckFunctions:
 
                 mock_to_thread.side_effect = mock_run_check
                 mock_breaker.call = AsyncMock(side_effect=lambda func: func())
-                mock_breaker.state = "closed"
+                mock_breaker.state = os.getenv("TEST_HEALTH_COMPREHENSIVE_STATE_236")
 
                 result = await _check_kafka()
 
@@ -345,7 +345,7 @@ class TestServiceCheckFunctions:
 
                 mock_to_thread.side_effect = mock_run_check
                 mock_breaker.call = AsyncMock(side_effect=lambda func: func())
-                mock_breaker.state = "closed"
+                mock_breaker.state = os.getenv("TEST_HEALTH_COMPREHENSIVE_STATE_236")
 
                 result = await _check_mlflow()
 

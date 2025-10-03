@@ -217,9 +217,7 @@ class TestFeaturesModuleEnhanced:
         response_patterns = [
             "APIResponse.success",
             "response_data",
-            "message=",
-            "data=",
-            "match_info",
+            "message = os.getenv("TEST_FEATURES_ENHANCED_MESSAGE_220")data = os.getenv("TEST_FEATURES_ENHANCED_DATA_220")match_info",
             "team_info",
             "features",
             "calculation_time"

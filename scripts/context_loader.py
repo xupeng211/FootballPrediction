@@ -14,11 +14,11 @@ try:
     warnings.filterwarnings(
         "ignore",
         category=marshmallow.warnings.ChangedInMarshmallow4Warning,
-        message=".*Number.*field should not be instantiated.*",
+        message = os.getenv("CONTEXT_LOADER_MESSAGE_17"),
     )
 except ImportError:
     warnings.filterwarnings(
-        "ignore", message=".*Number.*field.*should.*not.*be.*instantiated.*"
+        "ignore", message = os.getenv("CONTEXT_LOADER_MESSAGE_21")
     )
 
 import json
@@ -405,7 +405,7 @@ class ProjectContextLoader:
 
         return stats
 
-    def save_context(self, output_file: str = "logs/project_context.json") -> None:
+    def save_context(self, output_file: str = os.getenv("CONTEXT_LOADER_STR_408")) -> None:
         """
         保存上下文到文件
 
@@ -451,12 +451,12 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="项目上下文加载器")
+    parser = argparse.ArgumentParser(description = os.getenv("CONTEXT_LOADER_DESCRIPTION_454"))
     parser.add_argument("--project-root", default=".", help="项目根目录")
     parser.add_argument(
-        "--output", default="logs/project_context.json", help="输出文件"
+        "--output", default = os.getenv("CONTEXT_LOADER_DEFAULT_456"), help="输出文件"
     )
-    parser.add_argument("--summary", action="store_true", help="显示摘要")
+    parser.add_argument("--summary", action = os.getenv("CONTEXT_LOADER_ACTION_458"), help="显示摘要")
 
     args = parser.parse_args()
 

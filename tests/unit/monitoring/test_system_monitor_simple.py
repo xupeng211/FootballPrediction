@@ -1,3 +1,4 @@
+import os
 """
 系统监控简单测试
 Simple tests for system monitoring to boost coverage
@@ -124,7 +125,7 @@ class TestSystemMonitor:
         with patch('psutil.process_iter') as mock_processes:
             mock_proc = MagicMock()
             mock_proc.pid = 1234
-            mock_proc.name.return_value = "test_process"
+            mock_proc.name.return_value = os.getenv("TEST_SYSTEM_MONITOR_SIMPLE_RETURN_VALUE_127")
             mock_proc.cpu_percent.return_value = 5.0
             mock_proc.memory_percent.return_value = 2.5
             mock_processes.return_value = [mock_proc]

@@ -18,8 +18,8 @@ from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision = "004_configure_permissions"
-down_revision = "f48d412852cc"
+revision = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_REVISION_21")
+down_revision = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_DOWN_REVISION_2")
 branch_labels = None
 depends_on = None
 
@@ -53,7 +53,7 @@ def upgrade() -> None:
             """
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = 'football_reader') THEN
+            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_54")) THEN
                 CREATE USER football_reader WITH PASSWORD 'reader_password_2025';
             END IF;
         END
@@ -68,7 +68,7 @@ def upgrade() -> None:
             """
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = 'football_writer') THEN
+            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_66")) THEN
                 CREATE USER football_writer WITH PASSWORD 'writer_password_2025';
             END IF;
         END
@@ -83,7 +83,7 @@ def upgrade() -> None:
             """
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = 'football_admin') THEN
+            IF NOT EXISTS (SELECT 1 FROM pg_user WHERE usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_78")) THEN
                 CREATE USER football_admin WITH PASSWORD 'admin_password_2025';
             END IF;
         END
@@ -236,9 +236,9 @@ def upgrade() -> None:
             u.usename as username,
             d.datname as database,
             CASE
-                WHEN u.usename = 'football_reader' THEN 'READ_only'
-                WHEN u.usename = 'football_writer' THEN 'read_write'
-                WHEN u.usename = 'football_admin' THEN 'admin'
+                WHEN u.usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_54") THEN 'READ_only'
+                WHEN u.usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_66") THEN 'read_write'
+                WHEN u.usename = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_USENAME_78") THEN 'admin'
                 ELSE 'unknown'
             END as role_type,
             u.usecreatedb as can_create_db,
@@ -264,7 +264,7 @@ def upgrade() -> None:
             is_grantable
         FROM information_schema.table_privileges
         WHERE grantee IN ('football_reader', 'football_writer', 'football_admin')
-        AND table_schema = 'public'
+        AND table_schema = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_TABLE_SCHEMA_25")
         ORDER BY grantee, table_name, privilege_type;
     """
         )
@@ -290,16 +290,16 @@ def upgrade() -> None:
             RETURN QUERY
             SELECT
                 t.table_name::TEXT,
-                bool_or(tp.privilege_type = 'SELECT') as select_perm,
-                bool_or(tp.privilege_type = 'INSERT') as insert_perm,
-                bool_or(tp.privilege_type = 'UPDATE') as update_perm,
-                bool_or(tp.privilege_type = 'DELETE') as delete_perm
+                bool_or(tp.privilege_type = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_PRIVILEGE_TYPE_")) as select_perm,
+                bool_or(tp.privilege_type = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_PRIVILEGE_TYPE_")) as insert_perm,
+                bool_or(tp.privilege_type = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_PRIVILEGE_TYPE_")) as update_perm,
+                bool_or(tp.privilege_type = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_PRIVILEGE_TYPE_")) as delete_perm
             FROM information_schema.tables t
             LEFT JOIN information_schema.table_privileges tp
                 ON t.table_name = tp.table_name
                 AND tp.grantee = username
-            WHERE t.table_schema = 'public'
-            AND t.table_type = 'BASE TABLE'
+            WHERE t.table_schema = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_TABLE_SCHEMA_25")
+            AND t.table_type = os.getenv("004_CONFIGURE_DATABASE_PERMISSIONS_TABLE_TYPE_294")
             GROUP BY t.table_name
             ORDER BY t.table_name;
         END;

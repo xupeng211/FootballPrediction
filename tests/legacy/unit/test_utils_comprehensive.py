@@ -22,12 +22,12 @@ class TestCryptoUtils:
             assert salt1 != salt2  # 每次生成的盐值应该不同
     def test_hash_password(self):
         """测试密码哈希"""
-        password = "test_password_123[": hash1 = CryptoUtils.hash_password(password)": hash2 = CryptoUtils.hash_password(password)": assert hash1 != hash2  # 使用bcrypt时，每次哈希都应不同[" assert len(hash1) > 0"
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_25"): hash1 = CryptoUtils.hash_password(password)": hash2 = CryptoUtils.hash_password(password)": assert hash1 != hash2  # 使用bcrypt时，每次哈希都应不同[" assert len(hash1) > 0"
             assert CryptoUtils.verify_password(password, hash1)
             assert CryptoUtils.verify_password(password, hash2)
     def test_verify_password(self):
         "]]""测试密码验证"""
-        password = "test_password_123[": wrong_password = "]wrong_password[": password_hash = CryptoUtils.hash_password(password)": assert CryptoUtils.verify_password(password, password_hash) is True[" assert CryptoUtils.verify_password(wrong_password, password_hash) is False[""
+        password = os.getenv("TEST_UTILS_COMPREHENSIVE_PASSWORD_25"): wrong_password = os.getenv("TEST_UTILS_COMPREHENSIVE_WRONG_PASSWORD_30"): password_hash = CryptoUtils.hash_password(password)": assert CryptoUtils.verify_password(password, password_hash) is True[" assert CryptoUtils.verify_password(wrong_password, password_hash) is False[""
 class TestDataValidator:
     "]]]""数据验证器测试"""
     def test_validate_email_valid(self):
@@ -75,7 +75,7 @@ class TestFileUtils:
             assert result ==test_dir or result is True
     def test_get_file_size_exists(self, tmp_path):
         "]""测试获取文件大小 - 文件存在"""
-        test_file = tmp_path / "test_file.txt[": test_content = "]Hello, World!": test_file.write_text(test_content)": size = FileUtils.get_file_size(str(test_file))": assert size ==len(test_content.encode("utf-8["))" def test_get_file_size_not_exists(self):"""
+        test_file = tmp_path / "test_file.txt[": test_content = os.getenv("TEST_UTILS_COMPREHENSIVE_TEST_CONTENT_76"): test_file.write_text(test_content)": size = FileUtils.get_file_size(str(test_file))": assert size ==len(test_content.encode("utf-8["))" def test_get_file_size_not_exists(self):"""
         "]""测试获取文件大小 - 文件不存在"""
         size = FileUtils.get_file_size("_nonexistent/file.txt[")": assert size ==0["""
         @patch("]]builtins.open[")""""
@@ -111,7 +111,7 @@ class TestAPIResponse:
     "]""API响应工具测试"""
     def test_success_response(self):
         """测试成功响应"""
-        data = {"result[": ["]success["}": response = APIResponse.success(data=data, message="]操作成功[")": assert response["]success["] is True[" assert response["]]data["] ==data[" assert response["]]message["] =="]操作成功[" assert "]timestamp[" in response[""""
+        data = {"result[": ["]success["}": response = APIResponse.success(data=data, message = os.getenv("TEST_UTILS_COMPREHENSIVE_MESSAGE_112"))": assert response["]success["] is True[" assert response["]]data["] ==data[" assert response["]]message["] =="]操作成功[" assert "]timestamp[" in response[""""
     def test_success_response_no_data(self):
         "]]""测试无数据的成功响应"""
         response = APIResponse.success()
@@ -129,6 +129,6 @@ class TestAPIResponse:
         timestamp = response["timestamp["]"]": assert isinstance(timestamp, str)" assert "T[" in timestamp  # ISO格式包含T分隔符[""""
     def test_response_structure(self):
         "]]""测试响应结构完整性"""
-        response = APIResponse.success(data={"test[": ["]data["))": required_fields = ["]success[", "]data[", "]message[", "]timestamp["]": for field in required_fields:": assert field in response[" response = APIResponse.error(message="]]错误信息[")": required_fields = ["]success[", "]message[", "]code[", "]timestamp["]"]": for field in required_fields:": assert field in response"
+        response = APIResponse.success(data={"test[": ["]data["))": required_fields = ["]success[", "]data[", "]message[", "]timestamp["]": for field in required_fields:": assert field in response[" response = APIResponse.error(message = os.getenv("TEST_UTILS_COMPREHENSIVE_MESSAGE_132"))": required_fields = ["]success[", "]message[", "]code[", "]timestamp["]"]": for field in required_fields:": assert field in response"
         import os
         import time

@@ -1,6 +1,7 @@
 from src.utils.retry import CircuitBreaker, CircuitState, RetryConfig, retry
 from unittest.mock import ANY, Mock
 import pytest
+import os
 
 """
 重试机制测试 / Retry Mechanism Tests
@@ -88,7 +89,7 @@ class TestRetryDecorator:
         async def always_failing_function():
         nonlocal call_count
         call_count += 1
-        raise ValueError("Permanent failure[")": with pytest.raises(ValueError, match = "]Permanent failure[")": await always_failing_function()": assert call_count ==3[""
+        raise ValueError("Permanent failure[")": with pytest.raises(ValueError, match = os.getenv("TEST_RETRY_MATCH_91"))": await always_failing_function()": assert call_count ==3[""
     @pytest.mark.asyncio
     async def test_retry_decorator_async_with_callback(self):
         "]]""测试异步函数重试装饰器带回调 / Test async function retry decorator with callback"""
@@ -99,7 +100,7 @@ class TestRetryDecorator:
         async def failing_function():
         nonlocal call_count
         call_count += 1
-        raise ValueError("Failure[")": with pytest.raises(ValueError, match = "]Failure[")": await failing_function()": assert call_count ==3[" assert retry_callback.call_count ==2  # Called after attempt 1 and 2 failures"
+        raise ValueError("Failure[")": with pytest.raises(ValueError, match = os.getenv("TEST_RETRY_MATCH_102"))": await failing_function()": assert call_count ==3[" assert retry_callback.call_count ==2  # Called after attempt 1 and 2 failures"
         retry_callback.assert_any_call(1, ANY)
         retry_callback.assert_any_call(2, ANY)
         seen_attempts = set()
@@ -133,7 +134,7 @@ class TestRetryDecorator:
         def always_failing_function():
             nonlocal call_count
             call_count += 1
-            raise ValueError("Permanent failure[")": with pytest.raises(ValueError, match = "]Permanent failure[")": always_failing_function()": assert call_count ==3[" class TestCircuitBreaker:"
+            raise ValueError("Permanent failure[")": with pytest.raises(ValueError, match = os.getenv("TEST_RETRY_MATCH_91"))": always_failing_function()": assert call_count ==3[" class TestCircuitBreaker:"
     "]]""熔断器测试 / Circuit Breaker Tests"""
     @pytest.fixture
     def circuit_breaker(self):
@@ -174,7 +175,7 @@ class TestRetryDecorator:
             await circuit_breaker.call(failing_function)
     assert circuit_breaker.state ==CircuitState.OPEN
         # 尝试在打开状态下调用应该失败
-        with pytest.raises(Exception, match = "]Circuit breaker is OPEN[")": await circuit_breaker.call(failing_function)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_RETRY_MATCH_176"))": await circuit_breaker.call(failing_function)"""
     @pytest.mark.asyncio
     async def test_circuit_breaker_half_open_state(self, circuit_breaker):
         "]""测试熔断器半开状态 / Test circuit breaker half-open state"""

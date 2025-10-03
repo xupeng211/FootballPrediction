@@ -1,3 +1,4 @@
+import os
 """
 数据血缘报告器
 
@@ -33,7 +34,7 @@ class LineageReporter:
     def __init__(
         self,
         marquez_url: str = "http://localhost:5000",
-        namespace: str = "football_prediction",
+        namespace: str = os.getenv("LINEAGE_REPORTER_STR_36"),
     ):
         """
         初始化数据血缘报告器
@@ -122,7 +123,7 @@ class LineageReporter:
             job=Job(namespace=self.namespace, name=job_name, facets=job_facets),
             inputs=input_datasets,
             outputs=[],
-            producer="football_prediction_lineage_reporter",
+            producer = os.getenv("LINEAGE_REPORTER_PRODUCER_124"),
         )
 
         try:
@@ -199,13 +200,13 @@ class LineageReporter:
 
         # 发送完成事件
         event = RunEvent(
-            eventType="COMPLETE",
+            eventType = os.getenv("LINEAGE_REPORTER_EVENTTYPE_201"),
             eventTime=datetime.now(timezone.utc).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=output_datasets,
-            producer="football_prediction_lineage_reporter",
+            producer = os.getenv("LINEAGE_REPORTER_PRODUCER_124"),
         )
 
         # 清理活跃运行记录
@@ -244,7 +245,7 @@ class LineageReporter:
         # 构建错误信息
         run_facets = {
             "errorMessage": error_message_run.ErrorMessageRunFacet(
-                message=error_message, programmingLanguage="PYTHON"
+                message=error_message, programmingLanguage = os.getenv("LINEAGE_REPORTER_PROGRAMMINGLANGUAGE_246")
             )
         }
 
@@ -256,7 +257,7 @@ class LineageReporter:
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=[],
-            producer="football_prediction_lineage_reporter",
+            producer = os.getenv("LINEAGE_REPORTER_PRODUCER_124"),
         )
 
         try:
@@ -312,7 +313,7 @@ class LineageReporter:
             job_type="BATCH",
             inputs=inputs,
             description=f"Collect data from {source_name} to {target_table}",
-            source_location="src/data/collectors/",
+            source_location = os.getenv("LINEAGE_REPORTER_SOURCE_LOCATION_313"),
         )
 
         # 输出数据集（数据库表）
@@ -375,7 +376,7 @@ class LineageReporter:
             job_type="BATCH",
             inputs=inputs,
             description=f"{transformation_type} transformation to create {target_table}",
-            source_location="src/data/processing/",
+            source_location = os.getenv("LINEAGE_REPORTER_SOURCE_LOCATION_375"),
             transformation_sql=transformation_sql,
         )
 

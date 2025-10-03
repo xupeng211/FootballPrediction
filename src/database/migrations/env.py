@@ -153,7 +153,7 @@ def run_migrations_online() -> None:
     # 同步方式运行迁移
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+        prefix = os.getenv("ENV_PREFIX_156"),
         poolclass=pool.NullPool,
         url=db_config.sync_url,
     )

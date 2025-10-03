@@ -3,6 +3,7 @@ from datetime import datetime
 from src.data.collectors.odds_collector import OddsCollector
 from unittest.mock import patch
 import pytest
+import os
 
 #!/usr/bin/env python3
 """
@@ -23,7 +24,7 @@ class TestOddsCollector:
     def setup_method(self):
         """设置测试环境"""
         self.collector = OddsCollector(
-            data_source="test_odds_api[",": api_key="]test_key[",": base_url = "]https//api.test.com/v4[",": time_window_minutes=5)": def test_init_with_default_values(self):""
+            data_source = os.getenv("TEST_ODDS_COLLECTOR_DATA_SOURCE_26"),": api_key = os.getenv("TEST_ODDS_COLLECTOR_API_KEY_26"),": base_url = os.getenv("TEST_ODDS_COLLECTOR_BASE_URL_26"),": time_window_minutes=5)": def test_init_with_default_values(self):""
         "]""测试默认初始化"""
         collector = OddsCollector()
         assert collector.data_source =="odds_api[" assert collector.api_key is None[""""
@@ -33,7 +34,7 @@ class TestOddsCollector:
     def test_init_with_custom_values(self):
         "]]""测试自定义初始化"""
         collector = OddsCollector(
-            data_source="custom_odds_api[",": api_key="]custom_key[",": base_url = "]https//custom.api.com[",": time_window_minutes=10)": assert collector.data_source =="]custom_odds_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com[" assert collector.time_window_minutes ==10[""""
+            data_source = os.getenv("TEST_ODDS_COLLECTOR_DATA_SOURCE_33"),": api_key = os.getenv("TEST_ODDS_COLLECTOR_API_KEY_34"),": base_url = os.getenv("TEST_ODDS_COLLECTOR_BASE_URL_35"),": time_window_minutes=10)": assert collector.data_source =="]custom_odds_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com[" assert collector.time_window_minutes ==10[""""
     @pytest.mark.asyncio
     async def test_collect_fixtures_skipped(self):
         "]]""测试赛程采集被跳过"""

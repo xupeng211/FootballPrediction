@@ -1,3 +1,4 @@
+import os
 """""""
 Factory for generating betting odds test data.
 """""""
@@ -17,7 +18,7 @@ class OddsFactory(SQLAlchemyModelFactory):
     """Factory for generating betting odds data."""""""
 
     class Meta = model Odds
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("ODDS_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20")""""
 
     # Basic odds information
     match_id = factory.LazyAttribute(lambda _: random.randint(1, 10000))
@@ -97,7 +98,7 @@ class PreMatchOddsFactory(OddsFactory):
     """Factory for generating pre-match odds with realistic timing."""""""
 
     class Meta = model Odds
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("ODDS_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20")""""
 
     @factory.lazy_attribute
     def timestamp(self):
@@ -109,7 +110,7 @@ class LiveOddsFactory(OddsFactory):
     """Factory for generating live in-play odds."""""""
 
     class Meta = model Odds
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("ODDS_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20")""""
 
     @factory.lazy_attribute
     def timestamp(self):
@@ -121,11 +122,11 @@ class HighProbabilityHomeWinFactory(OddsFactory):
     """Factory for generating odds with high home win probability."""""""
 
     class Meta = model Odds
-        sqlalchemy_session_persistence = "flush[": home_win = factory.LazyAttribute(lambda _: round(random.uniform(1.2, 1.8), 2))": draw = factory.LazyAttribute(lambda _: round(random.uniform(3.0, 4.0), 2))": away_win = factory.LazyAttribute(lambda _: round(random.uniform(4.0, 8.0), 2))": class BalancedOddsFactory(OddsFactory):"
+        sqlalchemy_session_persistence = os.getenv("ODDS_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20"): home_win = factory.LazyAttribute(lambda _: round(random.uniform(1.2, 1.8), 2))": draw = factory.LazyAttribute(lambda _: round(random.uniform(3.0, 4.0), 2))": away_win = factory.LazyAttribute(lambda _: round(random.uniform(4.0, 8.0), 2))": class BalancedOddsFactory(OddsFactory):"
     "]""Factory for generating balanced odds (close match)."""""""
 
     class Meta = model Odds
-        sqlalchemy_session_persistence = "flush[": home_win = factory.LazyAttribute(lambda _: round(random.uniform(2.2, 2.8), 2))": draw = factory.LazyAttribute(lambda _: round(random.uniform(3.0, 3.5), 2))": away_win = factory.LazyAttribute(lambda _: round(random.uniform(2.2, 2.8), 2))": class InvalidOddsFactory:"
+        sqlalchemy_session_persistence = os.getenv("ODDS_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20"): home_win = factory.LazyAttribute(lambda _: round(random.uniform(2.2, 2.8), 2))": draw = factory.LazyAttribute(lambda _: round(random.uniform(3.0, 3.5), 2))": away_win = factory.LazyAttribute(lambda _: round(random.uniform(2.2, 2.8), 2))": class InvalidOddsFactory:"
     "]""Factory for generating invalid odds data for testing error handling."""""""
 
     @classmethod

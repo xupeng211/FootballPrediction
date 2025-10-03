@@ -1,3 +1,4 @@
+import os
 """
 Feast 特征存储集成
 
@@ -123,12 +124,12 @@ class FootballFeatureStore:
             "match": Entity(
                 name="match",
                 value_type=ValueType.INT64,
-                description="比赛实体，用于比赛级别的特征",
+                description = os.getenv("FEATURE_STORE_DESCRIPTION_126"),
             ),
             "team": Entity(
                 name="team",
                 value_type=ValueType.INT64,
-                description="球队实体，用于球队级别的特征",
+                description = os.getenv("FEATURE_STORE_DESCRIPTION_130"),
             ),
         }
 
@@ -141,7 +142,7 @@ class FootballFeatureStore:
         """
         # PostgreSQL 数据源配置
         postgres_source = PostgreSQLSource(
-            name="football_postgres",
+            name = os.getenv("FEATURE_STORE_NAME_143"),
             query="""
                 SELECT
                     team_id,
@@ -158,11 +159,11 @@ class FootballFeatureStore:
                     calculation_date as event_timestamp
                 FROM team_recent_performance_features
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEATURE_STORE_TIMESTAMP_FIELD_159"),
         )
 
         match_postgres_source = PostgreSQLSource(
-            name="football_match_postgres",
+            name = os.getenv("FEATURE_STORE_NAME_161"),
             query="""
                 SELECT
                     match_id,
@@ -177,11 +178,11 @@ class FootballFeatureStore:
                     calculation_date as event_timestamp
                 FROM historical_matchup_features
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEATURE_STORE_TIMESTAMP_FIELD_159"),
         )
 
         odds_postgres_source = PostgreSQLSource(
-            name="football_odds_postgres",
+            name = os.getenv("FEATURE_STORE_NAME_180"),
             query="""
                 SELECT
                     match_id,
@@ -196,64 +197,64 @@ class FootballFeatureStore:
                     calculation_date as event_timestamp
                 FROM odds_features
             """,
-            timestamp_field="event_timestamp",
+            timestamp_field = os.getenv("FEATURE_STORE_TIMESTAMP_FIELD_159"),
         )
 
         entities = self.get_entity_definitions()
 
         return {
             "team_recent_performance": FeatureView(
-                name="team_recent_performance",
+                name = os.getenv("FEATURE_STORE_NAME_199"),
                 entities=[entities["team"]],
                 ttl=timedelta(days=7),
                 schema=[
-                    Field(name="recent_5_wins", dtype=Int64),
-                    Field(name="recent_5_draws", dtype=Int64),
-                    Field(name="recent_5_losses", dtype=Int64),
-                    Field(name="recent_5_goals_for", dtype=Int64),
-                    Field(name="recent_5_goals_against", dtype=Int64),
-                    Field(name="recent_5_points", dtype=Int64),
-                    Field(name="recent_5_home_wins", dtype=Int64),
-                    Field(name="recent_5_away_wins", dtype=Int64),
-                    Field(name="recent_5_home_goals_for", dtype=Int64),
-                    Field(name="recent_5_away_goals_for", dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_205"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_206"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_208"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_210"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_210"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_211"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_212"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_213"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_214"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_214"), dtype=Int64),
                 ],
                 source=postgres_source,
-                description="球队近期表现特征（最近5场比赛）",
+                description = os.getenv("FEATURE_STORE_DESCRIPTION_216"),
             ),
             "historical_matchup": FeatureView(
-                name="historical_matchup",
+                name = os.getenv("FEATURE_STORE_NAME_217"),
                 entities=[entities["match"]],
                 ttl=timedelta(days=30),
                 schema=[
-                    Field(name="home_team_id", dtype=Int64),
-                    Field(name="away_team_id", dtype=Int64),
-                    Field(name="h2h_total_matches", dtype=Int64),
-                    Field(name="h2h_home_wins", dtype=Int64),
-                    Field(name="h2h_away_wins", dtype=Int64),
-                    Field(name="h2h_draws", dtype=Int64),
-                    Field(name="h2h_home_goals_total", dtype=Int64),
-                    Field(name="h2h_away_goals_total", dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_219"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_221"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_222"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_224"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_225"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_226"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_228"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_229"), dtype=Int64),
                 ],
                 source=match_postgres_source,
-                description="球队历史对战特征",
+                description = os.getenv("FEATURE_STORE_DESCRIPTION_231"),
             ),
             "odds_features": FeatureView(
-                name="odds_features",
+                name = os.getenv("FEATURE_STORE_NAME_232"),
                 entities=[entities["match"]],
                 ttl=timedelta(hours=6),
                 schema=[
-                    Field(name="home_odds_avg", dtype=Float64),
-                    Field(name="draw_odds_avg", dtype=Float64),
-                    Field(name="away_odds_avg", dtype=Float64),
-                    Field(name="home_implied_probability", dtype=Float64),
-                    Field(name="draw_implied_probability", dtype=Float64),
-                    Field(name="away_implied_probability", dtype=Float64),
-                    Field(name="bookmaker_count", dtype=Int64),
-                    Field(name="bookmaker_consensus", dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_234"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_234"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_235"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_236"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_238"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_239"), dtype=Float64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_241"), dtype=Int64),
+                    Field(name = os.getenv("FEATURE_STORE_NAME_242"), dtype=Float64),
                 ],
                 source=odds_postgres_source,
-                description="赔率衍生特征",
+                description = os.getenv("FEATURE_STORE_DESCRIPTION_245"),
             ),
         }
 
@@ -596,7 +597,7 @@ class FootballFeatureStore:
 
             # 将特征数据存入缓存
             await self.cache_manager.aset(
-                cache_key, features, cache_type="match_features"
+                cache_key, features, cache_type = os.getenv("FEATURE_STORE_CACHE_TYPE_577")
             )
 
             return features

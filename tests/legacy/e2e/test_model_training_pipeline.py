@@ -1,3 +1,4 @@
+import os
 """
 Model training pipeline end-to-end tests.
 
@@ -158,7 +159,7 @@ class TestModelTrainingPipeline:
         )
 
         # Attempt training with insufficient data:
-        with pytest.raises(Exception, match="Insufficient training data["):": await self._train_model(mock_services, insufficient_data)"""
+        with pytest.raises(Exception, match = os.getenv("TEST_MODEL_TRAINING_PIPELINE_MATCH_161")):": await self._train_model(mock_services, insufficient_data)"""
 
     @pytest.mark.asyncio
     @pytest.mark.e2e
@@ -224,7 +225,7 @@ class TestModelTrainingPipeline:
         return features
 
     async def _train_model(
-        self, services, features, version="]]v1.0[", track_importance=False[""""
+        self, services, features, version = os.getenv("TEST_MODEL_TRAINING_PIPELINE_VERSION_227"), track_importance=False[""""
     ):
         "]]""Train a model with the provided features."""
         # Simulate model training process

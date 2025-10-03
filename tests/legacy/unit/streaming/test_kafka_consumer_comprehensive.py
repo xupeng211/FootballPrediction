@@ -22,7 +22,7 @@ class TestFootballKafkaConsumerComprehensive:
     def mock_config(self):
         """创建模拟流配置"""
         config = Mock()
-        config.kafka_servers = "localhost9092[": config.kafka_topics = ["]matches[", "]odds[", "]scores["]": config.kafka_group_id = "]football_consumer_group[": config.kafka_auto_offset_reset = "]earliest[": config.kafka_enable_auto_commit = True[": return config["""
+        config.kafka_servers = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_KAFKA_SERVERS_25"): config.kafka_topics = ["]matches[", "]odds[", "]scores["]": config.kafka_group_id = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_KAFKA_GROUP_ID_2"): config.kafka_auto_offset_reset = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_KAFKA_AUTO_OFFSE"): config.kafka_enable_auto_commit = True[": return config["""
     @pytest.fixture
     def consumer(self, mock_config):
         "]]]""创建 FootballKafkaConsumer 实例"""
@@ -72,7 +72,7 @@ class TestFootballKafkaConsumerComprehensive:
     def mock_kafka_message(self):
         "]""创建模拟 Kafka 消息"""
         mock_message = Mock()
-        mock_message.topic = "matches[": mock_message.partition = 0[": mock_message.offset = 123[": mock_message.key = b["]]]match_12345["]: mock_message.value = json.dumps({""""
+        mock_message.topic = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_TOPIC_71"): mock_message.partition = 0[": mock_message.offset = 123[": mock_message.key = b["]]]match_12345["]: mock_message.value = json.dumps({""""
         "]match_id[": 12345,""""
         "]home_team[: "Team A[","]"""
         "]away_team[: "Team B[","]"""
@@ -99,7 +99,7 @@ class TestFootballKafkaConsumerComprehensive:
         from src.streaming.kafka_consumer import FootballKafkaConsumer
         with patch('src.streaming.kafka_consumer.Consumer') as mock_consumer_class = mock_consumer Mock()
             mock_consumer_class.return_value = mock_consumer
-            consumer = FootballKafkaConsumer(config=mock_config, consumer_group_id="custom_group[")""""
+            consumer = FootballKafkaConsumer(config=mock_config, consumer_group_id = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_CONSUMER_GROUP_I"))""""
             # 应该使用自定义组ID
     assert consumer is not None
     # === 消费者创建测试 ===
@@ -504,7 +504,7 @@ class TestFootballKafkaConsumerComprehensive:
     def test_consumer_group_configuration(self, mock_config):
         """测试消费者组配置"""
         from src.streaming.kafka_consumer import FootballKafkaConsumer
-        custom_group_id = "custom_consumer_group[": with patch('src.streaming.kafka_consumer.Consumer') as mock_consumer_class:": mock_consumer = Mock()": mock_consumer_class.return_value = mock_consumer[": consumer = FootballKafkaConsumer("
+        custom_group_id = os.getenv("TEST_KAFKA_CONSUMER_COMPREHENSIVE_CUSTOM_GROUP_ID_"): with patch('src.streaming.kafka_consumer.Consumer') as mock_consumer_class:": mock_consumer = Mock()": mock_consumer_class.return_value = mock_consumer[": consumer = FootballKafkaConsumer("
             config=mock_config,
             consumer_group_id=custom_group_id
             )

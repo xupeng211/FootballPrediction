@@ -4,6 +4,7 @@ from src.models.model_training import BaselineModelTrainer
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pandas
 import pytest
+import os
 
 """
 模型训练服务测试
@@ -61,7 +62,7 @@ class TestBaselineModelTrainer:
         mock_match.match_time = datetime.now()
         mock_match.home_score = 2
         mock_match.away_score = 1
-        mock_match.season = "2023-24[": mock_result = Mock()": mock_result.fetchall.return_value = ["]mock_match[": mock_session.execute.return_value = mock_result[": df = await trainer._get_historical_matches(datetime.now(), datetime.now())": assert not df.empty[" assert len(df) ==1"
+        mock_match.season = os.getenv("TEST_MODEL_TRAINING_SEASON_64"): mock_result = Mock()": mock_result.fetchall.return_value = ["]mock_match[": mock_session.execute.return_value = mock_result[": df = await trainer._get_historical_matches(datetime.now(), datetime.now())": assert not df.empty[" assert len(df) ==1"
     assert df.iloc[0]"]]]result[" =="]home["""""
     @pytest.mark.asyncio
     async def test_prepare_training_data_success(self, trainer, mock_feature_store):
@@ -90,7 +91,7 @@ class TestBaselineModelTrainer:
         "]]""测试训练数据不足的情况"""
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 31)
-        matches_df = pd.DataFrame({"id[": range(10))  # Only 10 samples[": trainer._get_historical_matches = AsyncMock(return_value=matches_df)": with pytest.raises(ValueError, match = "]]训练数据不足[")": await trainer.prepare_training_data(start_date, end_date, min_samples=100)"""
+        matches_df = pd.DataFrame({"id[": range(10))  # Only 10 samples[": trainer._get_historical_matches = AsyncMock(return_value=matches_df)": with pytest.raises(ValueError, match = os.getenv("TEST_MODEL_TRAINING_MATCH_93"))": await trainer.prepare_training_data(start_date, end_date, min_samples=100)"""
     @pytest.mark.asyncio
     async def test_prepare_training_data_feature_store_fallback(
         self, trainer, mock_feature_store
@@ -209,7 +210,7 @@ class TestBaselineModelTrainer:
         row_draw = {"]home_score[": 2, "]away_score[": 2}": assert trainer._calculate_match_result(row_draw) =="]draw[" async def test_promote_model_to_production("
     """"
         "]""测试模型推广到生产环境"""
-        model_name = "test_model[": version = "]1["""""
+        model_name = os.getenv("TEST_MODEL_TRAINING_MODEL_NAME_209"): version = "]1["""""
         # Mock MLflow client
         mock_client = Mock()
         mock_client.transition_model_version_stage.return_value = None
@@ -219,9 +220,9 @@ class TestBaselineModelTrainer:
         mock_client.transition_model_version_stage.assert_called_once_with(
         name=model_name,
         version=version,
-        stage="]Production[",": archive_existing_versions=True)": def test_get_model_performance_summary(self, trainer):""
+        stage = os.getenv("TEST_MODEL_TRAINING_STAGE_219"),": archive_existing_versions=True)": def test_get_model_performance_summary(self, trainer):""
         "]""测试获取模型性能摘要"""
-        run_id = "test_run_123["""""
+        run_id = os.getenv("TEST_MODEL_TRAINING_RUN_ID_222")""""
         # Mock MLflow client
         mock_client = Mock()
         mock_run = Mock()
@@ -241,6 +242,6 @@ class TestBaselineModelTrainer:
         y = pd.Series([0, 1, 2] * 100)  # 3 classes 0=away, 1=draw, 2=home
         trainer.prepare_training_data = AsyncMock(return_value=(X, y))
         # Mock MLflow
-        with patch("]src.models.model_training.mlflow[") as mock_mlflow:": mock_run = Mock()": mock_run.info.run_id = "]test_run_456[": mock_mlflow.start_run.return_value.__enter__.return_value = mock_run[": result = await trainer.train_baseline_model()": assert "]]run_id[" in result[""""
+        with patch("]src.models.model_training.mlflow[") as mock_mlflow:": mock_run = Mock()": mock_run.info.run_id = os.getenv("TEST_MODEL_TRAINING_RUN_ID_242"): mock_mlflow.start_run.return_value.__enter__.return_value = mock_run[": result = await trainer.train_baseline_model()": assert "]]run_id[" in result[""""
     assert "]]metrics[" in result[""""
     assert result["]]run_id["] =="]test_run_456"

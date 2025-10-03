@@ -1,3 +1,4 @@
+import os
 """
 增强的模型API测试
 专注于提升models.py的覆盖率（12% → 25%+）
@@ -59,7 +60,7 @@ class TestModelManagement:
             result = await list_models(
                 limit=10,
                 offset=0,
-                status="active",
+                status = os.getenv("TEST_MODELS_ENHANCED_STATUS_62"),
                 session=mock_async_session
             )
 
@@ -117,7 +118,7 @@ class TestModelManagement:
             from src.api.models import get_model_details
 
             result = await get_model_details(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 session=mock_async_session
             )
 
@@ -150,7 +151,7 @@ class TestModelManagement:
             from src.api.models import get_model_details
 
             result = await get_model_details(
-                model_id="nonexistent_model",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_150"),
                 session=mock_async_session
             )
 
@@ -244,7 +245,7 @@ class TestModelManagement:
             from src.api.models import update_model
 
             result = await update_model(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 update_data=update_data,
                 session=mock_async_session
             )
@@ -275,7 +276,7 @@ class TestModelManagement:
             from src.api.models import delete_model
 
             result = await delete_model(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 session=mock_async_session
             )
 
@@ -296,7 +297,7 @@ class TestModelManagement:
             from src.api.models import delete_model
 
             result = await delete_model(
-                model_id="nonexistent_model",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_150"),
                 session=mock_async_session
             )
 
@@ -344,7 +345,7 @@ class TestModelDeployment:
             }
 
             result = await deploy_model(
-                model_id="model_002",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_340"),
                 deployment_config=deployment_config,
                 session=mock_async_session
             )
@@ -385,7 +386,7 @@ class TestModelDeployment:
             from src.api.models import undeploy_model
 
             result = await undeploy_model(
-                model_id="model_002",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_340"),
                 session=mock_async_session
             )
 
@@ -421,7 +422,7 @@ class TestModelDeployment:
             from src.api.models import get_deployment_status
 
             result = await get_deployment_status(
-                model_id="model_002",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_340"),
                 session=mock_async_session
             )
 
@@ -530,7 +531,7 @@ class TestModelVersioning:
             from src.api.models import get_model_version_history
 
             result = await get_model_version_history(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 limit=10,
                 offset=0,
                 session=mock_async_session
@@ -589,7 +590,7 @@ class TestModelVersioning:
             from src.api.models import compare_model_versions
 
             result = await compare_model_versions(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 versions=["v1.0", "v1.1", "v1.2"],
                 session=mock_async_session
             )
@@ -634,7 +635,7 @@ class TestModelMonitoring:
             from src.api.models import get_model_metrics
 
             result = await get_model_metrics(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 version="v1.0",
                 start_date=datetime.now() - timedelta(days=7),
                 end_date=datetime.now(),
@@ -697,7 +698,7 @@ class TestModelMonitoring:
             from src.api.models import get_model_performance_trend
 
             result = await get_model_performance_trend(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 version="v1.0",
                 days=7,
                 session=mock_async_session
@@ -780,7 +781,7 @@ class TestModelValidation:
             from src.api.models import check_model_health
 
             result = await check_model_health(
-                model_id="model_001",
+                model_id = os.getenv("TEST_MODELS_ENHANCED_MODEL_ID_119"),
                 session=mock_async_session
             )
 

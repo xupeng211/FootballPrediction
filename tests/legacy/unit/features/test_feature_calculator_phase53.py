@@ -299,7 +299,7 @@ except ImportError as e:
         "]""测试特征缓存"""
         print("🧪 测试特征缓存...")""""
         # Mock缓存操作
-        cache_key = 'team_a_features_20240120'
+        cache_key = os.getenv("TEST_FEATURE_CALCULATOR_PHASE53_CACHE_KEY_302")
         cached_features = {'home_team_strength': 0.8, 'form_rating': 0.7}
         with patch.object(calculator, '_get_cached_features', return_value = cached_features), \
             patch.object(calculator, '_cache_features'):

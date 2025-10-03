@@ -34,7 +34,7 @@ class TestMainApplicationCoverage:
             cors_origins = os.getenv("]CORS_ORIGINS[", "]http://localhost3000[").split("],")": assert cors_origins ==["http//localhost3000[", "]https//example.com["]" def test_app_configuration_values(self):"""
         "]""测试应用配置值"""
         # 测试应用配置常量
-        expected_title = "足球预测API[": expected_description = "]基于机器学习的足球比赛结果预测系统[": expected_version = "]1.0.0[": expected_docs_url = "]_docs[": expected_redoc_url = "]/redoc[": assert expected_title =="]足球预测API[" assert expected_description =="]基于机器学习的足球比赛结果预测系统[" assert expected_version =="]1.0.0[" assert expected_docs_url =="]/docs[" assert expected_redoc_url =="]/redoc[" def test_lifespan_manager_logging("
+        expected_title = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_TITLE_37"): expected_description = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_DESCRIPTION_37"): expected_version = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_VERSION_37"): expected_docs_url = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_DOCS_URL_37"): expected_redoc_url = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_REDOC_URL_37"): assert expected_title =="]足球预测API[" assert expected_description =="]基于机器学习的足球比赛结果预测系统[" assert expected_version =="]1.0.0[" assert expected_docs_url =="]/docs[" assert expected_redoc_url =="]/redoc[" def test_lifespan_manager_logging("
     """"
         "]""测试生命周期管理器日志"""
         # 测试生命周期日志消息
@@ -90,12 +90,12 @@ class TestMainApplicationCoverage:
         ]
         for config in env_configs:
             with patch.dict(os.environ, config['env']):
-                port = int(os.getenv("API_PORT[", 8000))": assert port ==config['expected_port']" if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": assert host ==config['expected_host']" def test_logging_configuration(self):""
+                port = int(os.getenv("API_PORT[", 8000))": assert port ==config['expected_port']" if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_COVERAGE_DEFAULT_HOST_92"): else:": default_host = os.getenv("TEST_MAIN_COVERAGE_DEFAULT_HOST_92"): host = os.getenv("]API_HOST[", default_host)": assert host ==config['expected_host']" def test_logging_configuration(self):""
         "]""测试日志配置"""
         # 测试日志级别和格式
         import logging
         expected_level = logging.INFO
-        expected_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s[": assert expected_level ==logging.INFO[" assert isinstance(expected_format, str)"""
+        expected_format = os.getenv("TEST_MAIN_COVERAGE_EXPECTED_FORMAT_93"): assert expected_level ==logging.INFO[" assert isinstance(expected_format, str)"""
     assert "]]%(asctime)s[" in expected_format[""""
     assert "]]%(name)s[" in expected_format[""""
     assert "]]%(levelname)s[" in expected_format[""""
@@ -104,7 +104,7 @@ class TestMainApplicationCoverage:
         "]]""测试FastAPI应用创建（最小化）"""
         # 创建基本的FastAPI应用
         app = FastAPI(
-        title="足球预测API[",": description="]基于机器学习的足球比赛结果预测系统[",": version="]1.0.0[",": docs_url="]_docs[",": redoc_url="]/redoc[")": assert app.title =="]足球预测API[" assert app.description =="]基于机器学习的足球比赛结果预测系统[" assert app.version =="]1.0.0[" assert app.docs_url =="]/docs[" assert app.redoc_url =="]/redoc[" def test_import_validation("
+        title = os.getenv("TEST_MAIN_COVERAGE_TITLE_100"),": description = os.getenv("TEST_MAIN_COVERAGE_DESCRIPTION_101"),": version = os.getenv("TEST_MAIN_COVERAGE_VERSION_101"),": docs_url = os.getenv("TEST_MAIN_COVERAGE_DOCS_URL_102"),": redoc_url = os.getenv("TEST_MAIN_COVERAGE_REDOC_URL_102"))": assert app.title =="]足球预测API[" assert app.description =="]基于机器学习的足球比赛结果预测系统[" assert app.version =="]1.0.0[" assert app.docs_url =="]/docs[" assert app.redoc_url =="]/redoc[" def test_import_validation("
     """"
         "]""测试导入验证"""
         # 验证核心FastAPI组件可以导入

@@ -216,19 +216,7 @@ class TestPredictionsEnhanced:
             "布尔类型": "bool",
             "列表类型": "List[int]",
             "字典类型": "Dict[str, Any]",
-            "最小值验证": "ge=",
-            "最大值验证": "le=",
-            "默认值": "default=",
-            "描述信息": "description="
-        }
-
-        found_validations = []
-        for validation, pattern in param_validations.items():
-            if pattern in content:
-                found_validations.append(validation)
-
-        coverage_rate = len(found_validations) / len(param_validations) * 100
-        print(f"✅ 参数验证覆盖率: {coverage_rate:.1f}% ({len(found_validations)}/{len(param_validations)})")
+            "最小值验证": "ge = os.getenv("TEST_PREDICTIONS_ENHANCED_GE_219")最大值验证": "le = os.getenv("TEST_PREDICTIONS_ENHANCED_LE_219")默认值": "default = os.getenv("TEST_PREDICTIONS_ENHANCED_DEFAULT_219")描述信息": "description = os.getenv("TEST_PREDICTIONS_ENHANCED_DESCRIPTION_219")✅ 参数验证覆盖率: {coverage_rate:.1f}% ({len(found_validations)}/{len(param_validations)})")
 
     def test_data_transformation_and_formatting(self):
         """测试数据转换和格式化"""

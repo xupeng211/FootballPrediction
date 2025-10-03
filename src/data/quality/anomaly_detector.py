@@ -1,3 +1,4 @@
+import os
 """
 高级数据质量异常检测模块
 
@@ -82,7 +83,7 @@ class AnomalyDetectionResult:
         table_name: str,
         detection_method: str,
         anomaly_type: str,
-        severity: str = "medium",
+        severity: str = os.getenv("ANOMALY_DETECTOR_STR_85"),
     ):
         """
         初始化异常检测结果
@@ -177,8 +178,8 @@ class StatisticalAnomalyDetector:
                 # 所有值相同，没有异常值
                 result = AnomalyDetectionResult(
                     table_name=table_name,
-                    detection_method="3sigma",
-                    anomaly_type="statistical_outlier",
+                    detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_179"),
+                    anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_180"),
                     severity="low",
                 )
                 result.set_statistics(
@@ -232,9 +233,9 @@ class StatisticalAnomalyDetector:
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method="3sigma",
-                anomaly_type="statistical_outlier",
-                severity="medium" if len(outliers) < len(clean_data) * 0.05 else "high",
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_179"),
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_180"),
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_235") if len(outliers) < len(clean_data) * 0.05 else "high",
             )
 
             # 添加异常记录
@@ -278,15 +279,15 @@ class StatisticalAnomalyDetector:
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type="statistical_outlier",
-                detection_method="3sigma",
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_180"),
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_179"),
                 severity=result.severity,
             ).inc(len(outliers))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="3sigma"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_179")
             ).observe(duration)
 
             self.logger.info(
@@ -332,19 +333,19 @@ class StatisticalAnomalyDetector:
 
             # 确定严重程度
             if p_value < 0.001:
-                severity = "critical"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_323")
             elif p_value < 0.01:
                 severity = "high"
             elif p_value < 0.05:
-                severity = "medium"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_328")
             else:
                 severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method="ks_test",
-                anomaly_type="distribution_shift",
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_335"),
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_336"),
                 severity=severity if distribution_shifted else "low",
             )
 
@@ -408,15 +409,15 @@ class StatisticalAnomalyDetector:
             if distribution_shifted:
                 anomalies_detected_total.labels(
                     table_name=table_name,
-                    anomaly_type="distribution_shift",
-                    detection_method="ks_test",
+                    anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_336"),
+                    detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_335"),
                     severity=severity,
                 ).inc()
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="ks_test"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_335")
             ).observe(duration)
 
             self.logger.info(
@@ -470,8 +471,8 @@ class StatisticalAnomalyDetector:
             result = AnomalyDetectionResult(
                 table_name=table_name,
                 detection_method="iqr",
-                anomaly_type="statistical_outlier",
-                severity="medium" if len(outliers) < len(data) * 0.05 else "high",
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_180"),
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_235") if len(outliers) < len(data) * 0.05 else "high",
             )
 
             # 添加异常记录
@@ -508,7 +509,7 @@ class StatisticalAnomalyDetector:
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type="statistical_outlier",
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_180"),
                 detection_method="iqr",
                 severity=result.severity,
             ).inc(len(outliers))
@@ -586,19 +587,19 @@ class MachineLearningAnomalyDetector:
             # 确定严重程度
             anomaly_rate = len(anomalous_indices) / len(data)
             if anomaly_rate > 0.2:
-                severity = "critical"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_323")
             elif anomaly_rate > 0.1:
                 severity = "high"
             elif anomaly_rate > 0.05:
-                severity = "medium"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_328")
             else:
                 severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method="isolation_forest",
-                anomaly_type="ml_anomaly",
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_580"),
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_581"),
                 severity=severity,
             )
 
@@ -637,15 +638,15 @@ class MachineLearningAnomalyDetector:
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type="ml_anomaly",
-                detection_method="isolation_forest",
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_581"),
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_580"),
                 severity=severity,
             ).inc(len(anomalous_indices))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="isolation_forest"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_580")
             ).observe(duration)
 
             self.logger.info(
@@ -725,19 +726,19 @@ class MachineLearningAnomalyDetector:
                     if has_drift:
                         # 确定严重程度
                         if drift_score > 0.5 or p_value < 0.001:
-                            severity = "critical"
+                            severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_323")
                         elif drift_score > 0.3 or p_value < 0.01:
                             severity = "high"
                         elif drift_score > 0.1 or p_value < 0.05:
-                            severity = "medium"
+                            severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_328")
                         else:
                             severity = "low"
 
                         # 创建检测结果
                         result = AnomalyDetectionResult(
                             table_name=table_name,
-                            detection_method="data_drift",
-                            anomaly_type="feature_drift",
+                            detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_717"),
+                            anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_720"),
                             severity=severity,
                         )
 
@@ -782,8 +783,8 @@ class MachineLearningAnomalyDetector:
                         # 记录Prometheus指标
                         anomalies_detected_total.labels(
                             table_name=table_name,
-                            anomaly_type="feature_drift",
-                            detection_method="data_drift",
+                            anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_720"),
+                            detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_717"),
                             severity=severity,
                         ).inc()
 
@@ -800,7 +801,7 @@ class MachineLearningAnomalyDetector:
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="data_drift"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_717")
             ).observe(duration)
 
             self.logger.info(
@@ -855,19 +856,19 @@ class MachineLearningAnomalyDetector:
             # 确定严重程度
             anomaly_rate = len(anomalous_indices) / len(data)
             if anomaly_rate > 0.3:
-                severity = "critical"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_323")
             elif anomaly_rate > 0.2:
                 severity = "high"
             elif anomaly_rate > 0.1:
-                severity = "medium"
+                severity = os.getenv("ANOMALY_DETECTOR_SEVERITY_328")
             else:
                 severity = "low"
 
             # 创建检测结果
             result = AnomalyDetectionResult(
                 table_name=table_name,
-                detection_method="dbscan_clustering",
-                anomaly_type="clustering_outlier",
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_835"),
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_836"),
                 severity=severity,
             )
 
@@ -909,15 +910,15 @@ class MachineLearningAnomalyDetector:
             # 记录Prometheus指标
             anomalies_detected_total.labels(
                 table_name=table_name,
-                anomaly_type="clustering_outlier",
-                detection_method="dbscan_clustering",
+                anomaly_type = os.getenv("ANOMALY_DETECTOR_ANOMALY_TYPE_836"),
+                detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_835"),
                 severity=severity,
             ).inc(len(anomalous_indices))
 
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="dbscan_clustering"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_835")
             ).observe(duration)
 
             self.logger.info(
@@ -1060,7 +1061,7 @@ class AdvancedAnomalyDetector:
             # 记录执行时间
             duration = (datetime.now() - start_time).total_seconds()
             anomaly_detection_duration_seconds.labels(
-                table_name=table_name, detection_method="comprehensive"
+                table_name=table_name, detection_method = os.getenv("ANOMALY_DETECTOR_DETECTION_METHOD_1032")
             ).observe(duration)
 
             self.logger.info(

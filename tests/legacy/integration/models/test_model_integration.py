@@ -1,3 +1,4 @@
+import os
 """
 模型集成单元测试
 
@@ -49,7 +50,7 @@ def pytest_db_available():
         # 检查关键表是否存在
         with db_manager.get_session() as session = result session.execute(
                 sa.text(
-                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"""""
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = os.getenv("TEST_MODEL_INTEGRATION_TABLE_NAME_52"))"""""
                 )
             )
             matches_exists = result.scalar()
@@ -63,7 +64,7 @@ def pytest_db_available():
 
             result = session.execute(
                 sa.text(
-                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'predictions')"""""
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = os.getenv("TEST_MODEL_INTEGRATION_TABLE_NAME_66"))"""""
                 )
             )
             predictions_exists = result.scalar()
@@ -78,7 +79,7 @@ def pytest_db_available():
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(
-        not pytest_db_available(), reason="Database connection not available["""""
+        not pytest_db_available(), reason = os.getenv("TEST_MODEL_INTEGRATION_REASON_79")""""
     ),
 ]
 
@@ -96,14 +97,14 @@ class TestModelIntegration:
     async def sample_match_data(self, db_session: AsyncSession):
         "]""创建测试用的比赛数据"""
         # 创建联赛
-        league = League(league_name="Test League[", country="]Test Country[", level=1)": db_session.add(league)": await db_session.flush()""
+        league = League(league_name = os.getenv("TEST_MODEL_INTEGRATION_LEAGUE_NAME_96"), country = os.getenv("TEST_MODEL_INTEGRATION_COUNTRY_97"), level=1)": db_session.add(league)": await db_session.flush()""
 
         # 创建球队
         home_team = Team(
-            team_name="]Home Team[", league_id=league.id, country="]Test Country["""""
+            team_name = os.getenv("TEST_MODEL_INTEGRATION_TEAM_NAME_99"), league_id=league.id, country = os.getenv("TEST_MODEL_INTEGRATION_COUNTRY_97")""""
         )
         away_team = Team(
-            team_name="]Away Team[", league_id=league.id, country="]Test Country["""""
+            team_name = os.getenv("TEST_MODEL_INTEGRATION_TEAM_NAME_102"), league_id=league.id, country = os.getenv("TEST_MODEL_INTEGRATION_COUNTRY_97")""""
         )
         db_session.add_all([home_team, away_team])
         await db_session.flush()
@@ -113,7 +114,7 @@ class TestModelIntegration:
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             league_id=league.id,
-            season="]2024-25[",": match_time=datetime.now() + timedelta(days=1),": match_status="]scheduled[",""""
+            season = os.getenv("TEST_MODEL_INTEGRATION_SEASON_106"),": match_time=datetime.now() + timedelta(days=1),": match_status = os.getenv("TEST_MODEL_INTEGRATION_MATCH_STATUS_108"),""""
         )
         db_session.add(match)
         await db_session.commit()
@@ -131,13 +132,13 @@ class TestModelIntegration:
         with patch("src.models.model_training.mlflow[") as mock_mlflow:""""
             # 模拟MLflow运行
             mock_run = MagicMock()
-            mock_run.info.run_id = "]test_run_id_123[": mock_mlflow.start_run.return_value.__enter__ = MagicMock(": return_value=mock_run["""
+            mock_run.info.run_id = os.getenv("TEST_MODEL_INTEGRATION_RUN_ID_123"): mock_mlflow.start_run.return_value.__enter__ = MagicMock(": return_value=mock_run["""
             )
             mock_mlflow.start_run.return_value.__exit__ = MagicMock(return_value=None)
 
             # 模拟实验
             mock_experiment = MagicMock()
-            mock_experiment.experiment_id = "]]test_experiment_id[": mock_mlflow.get_experiment_by_name.return_value = mock_experiment[": yield mock_mlflow["""
+            mock_experiment.experiment_id = os.getenv("TEST_MODEL_INTEGRATION_EXPERIMENT_ID_132"): mock_mlflow.get_experiment_by_name.return_value = mock_experiment[": yield mock_mlflow["""
 
     @pytest.mark.asyncio
     async def test_model_training_workflow(
@@ -152,7 +153,7 @@ class TestModelIntegration:
         # 创建一些完成的比赛数据用于训练
         for i in range(10):
             completed_match = Match(
-                home_team_id=sample_match_data["]home_team["].id,": away_team_id=sample_match_data["]away_team["].id,": league_id=sample_match_data["]league["].id,": season="]2024-25[",": match_time=datetime(2024, 6, 1) + timedelta(days=i),": match_status="]completed[",": home_score=np.random.randint(0, 4),": away_score=np.random.randint(0, 4),""
+                home_team_id=sample_match_data["]home_team["].id,": away_team_id=sample_match_data["]away_team["].id,": league_id=sample_match_data["]league["].id,": season = os.getenv("TEST_MODEL_INTEGRATION_SEASON_106"),": match_time=datetime(2024, 6, 1) + timedelta(days=i),": match_status = os.getenv("TEST_MODEL_INTEGRATION_MATCH_STATUS_149"),": home_score=np.random.randint(0, 4),": away_score=np.random.randint(0, 4),""
             )
             db_session.add(completed_match)
 
@@ -216,7 +217,7 @@ class TestModelIntegration:
 
             # 模拟生产模型版本
             mock_version = MagicMock()
-            mock_version.version = "]]1[": mock_version.current_stage = "]Production[": mock_client.get_latest_versions.return_value = [mock_version]""""
+            mock_version.version = "]]1[": mock_version.current_stage = os.getenv("TEST_MODEL_INTEGRATION_CURRENT_STAGE_208"): mock_client.get_latest_versions.return_value = [mock_version]""""
 
             # 模拟模型加载
             with patch(
@@ -274,12 +275,12 @@ class TestModelIntegration:
 
         # 创建预测记录
         prediction = Predictions(
-            match_id=sample_match_data["match["].id,": model_name="]test_model[",": model_version="]1[",": predicted_result="]home_win[",": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.6["),": predicted_at=datetime.now(),"""
+            match_id=sample_match_data["match["].id,": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"),": model_version="]1[",": predicted_result = os.getenv("TEST_MODEL_INTEGRATION_PREDICTED_RESULT_265"),": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.6["),": predicted_at=datetime.now(),"""
         )
         db_session.add(prediction)
 
         # 更新比赛结果
-        match = sample_match_data["]match["]": match.match_status = "]completed[": match.home_score = 2[": match.away_score = 1[": await db_session.commit()""
+        match = sample_match_data["]match["]": match.match_status = os.getenv("TEST_MODEL_INTEGRATION_MATCH_STATUS_272"): match.home_score = 2[": match.away_score = 1[": await db_session.commit()""
 
         # 测试验证
         success = await prediction_service.verify_prediction(match.id)
@@ -298,8 +299,8 @@ class TestModelIntegration:
         # 创建测试预测结果
         result = PredictionResult(
             match_id=1,
-            model_version="v1[",": model_name="]test_model[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5,"""
+            model_version="v1[",": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"),": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
+            predicted_result = os.getenv("TEST_MODEL_INTEGRATION_PREDICTED_RESULT_285"),": confidence_score=0.5,"""
         )
 
         # 测试指标导出
@@ -307,7 +308,7 @@ class TestModelIntegration:
 
         # 验证指标计数器增加
         predictions_total = exporter.predictions_total.labels(
-            model_name="]test_model[", model_version="]v1[", predicted_result="]home["""""
+            model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"), model_version="]v1[", predicted_result = os.getenv("TEST_MODEL_INTEGRATION_PREDICTED_RESULT_285")""""
         )
 
         # 由于Prometheus Counter的_value属性在不同版本中可能不同，
@@ -331,7 +332,7 @@ class TestModelIntegration:
         match_ids = []
         for i in range(3):
             match = Match(
-                home_team_id=sample_match_data["]home_team["].id,": away_team_id=sample_match_data["]away_team["].id,": league_id=sample_match_data["]league["].id,": season="]2024-25[",": match_time=datetime.now() + timedelta(days=i + 2),": match_status="]scheduled[",""""
+                home_team_id=sample_match_data["]home_team["].id,": away_team_id=sample_match_data["]away_team["].id,": league_id=sample_match_data["]league["].id,": season = os.getenv("TEST_MODEL_INTEGRATION_SEASON_106"),": match_time=datetime.now() + timedelta(days=i + 2),": match_status = os.getenv("TEST_MODEL_INTEGRATION_MATCH_STATUS_108"),""""
             )
             db_session.add(match)
             await db_session.flush()
@@ -384,7 +385,7 @@ class TestModelIntegration:
                 correct_predictions += 1
 
             prediction = Predictions(
-                match_id=sample_match_data["match["].id,": model_name="]test_model[",": model_version="]1[",": predicted_result="]home_win[",": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.6["),": predicted_at=datetime.now(),": is_correct=is_correct,": verified_at=datetime.now() - timedelta(days=i),"
+                match_id=sample_match_data["match["].id,": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"),": model_version="]1[",": predicted_result = os.getenv("TEST_MODEL_INTEGRATION_PREDICTED_RESULT_265"),": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.6["),": predicted_at=datetime.now(),": is_correct=is_correct,": verified_at=datetime.now() - timedelta(days=i),"
             )
             db_session.add(prediction)
 
@@ -410,7 +411,7 @@ class TestModelIntegration:
         ]
 
         for version, result, confidence, is_correct in predictions_data = prediction Predictions(
-                match_id=sample_match_data["]match["].id,": model_name="]test_model[",": model_version=version,": predicted_result=result,": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal(str(confidence)),": predicted_at=datetime.now(),": is_correct=is_correct,"
+                match_id=sample_match_data["]match["].id,": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"),": model_version=version,": predicted_result=result,": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal(str(confidence)),": predicted_at=datetime.now(),": is_correct=is_correct,"
                 verified_at = datetime.now() if is_correct is not None else None,
             )
             db_session.add(prediction)
@@ -428,8 +429,8 @@ class TestModelIntegration:
         "]]""测试PredictionResult转换为字典"""
         result = PredictionResult(
             match_id=123,
-            model_version="v1[",": model_name="]test_model[",": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
-            predicted_result="]home[",": confidence_score=0.5,": features_used = {"]feature1[": 1.0, "]feature2[": 2.0},": prediction_metadata = {"]test[": "]data["},": created_at=datetime(2024, 1, 1, 12, 0, 0),"""
+            model_version="v1[",": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"),": home_win_probability=0.5,": draw_probability=0.3,": away_win_probability=0.2,"
+            predicted_result = os.getenv("TEST_MODEL_INTEGRATION_PREDICTED_RESULT_285"),": confidence_score=0.5,": features_used = {"]feature1[": 1.0, "]feature2[": 2.0},": prediction_metadata = {"]test[": "]data["},": created_at=datetime(2024, 1, 1, 12, 0, 0),"""
         )
 
         result_dict = result.to_dict()
@@ -451,7 +452,7 @@ class TestModelIntegration:
         ]
 
         for predicted, actual, is_correct in prediction_data = prediction Predictions(
-                match_id=sample_match_data["]]match["].id,": model_name="]performance_test_model[",": model_version="]1[",": predicted_result=f["]{predicted}_win["],": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.7["),": predicted_at=datetime.now(),": actual_result=f["]{actual}"],": is_correct=is_correct,": verified_at=datetime.now(),""
+                match_id=sample_match_data["]]match["].id,": model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_432"),": model_version="]1[",": predicted_result=f["]{predicted}_win["],": home_win_probability=Decimal("]0.6["),": draw_probability=Decimal("]0.3["),": away_win_probability=Decimal("]0.1["),": confidence_score=Decimal("]0.7["),": predicted_at=datetime.now(),": actual_result=f["]{actual}"],": is_correct=is_correct,": verified_at=datetime.now(),""
             )
             db_session.add(prediction)
 
@@ -510,12 +511,12 @@ class TestModelIntegration:
 
             # 测试推广到生产环境
             success = await trainer.promote_model_to_production(
-                model_name="]test_model[", version="]2["""""
+                model_name = os.getenv("TEST_MODEL_INTEGRATION_MODEL_NAME_263"), version="]2["""""
             )
 
             assert success is True
             mock_client.transition_model_version_stage.assert_called_once_with(
-                name="]test_model[",": version="]2[",": stage="]Production[",": archive_existing_versions=True,"""
+                name = os.getenv("TEST_MODEL_INTEGRATION_NAME_489"),": version="]2[",": stage = os.getenv("TEST_MODEL_INTEGRATION_STAGE_491"),": archive_existing_versions=True,"""
             )
 
     @pytest.mark.asyncio

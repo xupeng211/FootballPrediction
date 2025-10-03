@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Process orphaned documents automatically based on content analysis.
@@ -59,7 +60,7 @@ def analyze_document_value(filepath):
         print(f"Error analyzing {filepath}: {e}")
         return 'archive', 0, 0  # Default to archive if unreadable
 
-def add_to_index(filepath, category="Uncategorized"):
+def add_to_index(filepath, category = os.getenv("PROCESS_ORPHANS_CATEGORY_62")):
     """Add document to INDEX.md"""
     try:
         rel_path = filepath.relative_to(DOCS_DIR)
@@ -115,9 +116,9 @@ def process_orphan(orphan_path):
         # Determine category based on filename
         filename = orphan_path.name.lower()
         if 'security' in filename:
-            category = "Security"
+            category = os.getenv("PROCESS_ORPHANS_CATEGORY_117")
         elif 'coverage' in filename or 'testing' in filename:
-            category = "Testing"
+            category = os.getenv("PROCESS_ORPHANS_CATEGORY_119")
         elif 'ci' in filename or 'deployment' in filename:
             category = "CI/CD"
         elif 'api' in filename:
@@ -125,9 +126,9 @@ def process_orphan(orphan_path):
         elif 'database' in filename or 'data' in filename:
             category = "Data"
         elif 'performance' in filename or 'optimization' in filename:
-            category = "Performance"
+            category = os.getenv("PROCESS_ORPHANS_CATEGORY_126")
         else:
-            category = "General"
+            category = os.getenv("PROCESS_ORPHANS_CATEGORY_127")
 
         success = add_to_index(orphan_path, category)
         if success:

@@ -1,3 +1,4 @@
+import os
 """
 系统监控模块
 
@@ -438,13 +439,13 @@ class SystemMonitor:
 
                 response_time = time.time() - start_time
 
-                status = "healthy"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_441")
                 if not basic_health:
-                    status = "unhealthy"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_442")
                 elif query_time > 2.0:  # 查询超过2秒
-                    status = "warning"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_444")
                 elif response_time > 3.0:  # 总响应超过3秒
-                    status = "warning"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_444")
 
                 return {
                     "status": status,
@@ -476,7 +477,7 @@ class SystemMonitor:
             info = redis_manager.get_info()
 
             # 测试读写性能
-            test_key = "health_check_test"
+            test_key = os.getenv("SYSTEM_MONITOR_TEST_KEY_473")
             write_start = time.time()
             redis_manager.set(test_key, "test", ex=1)
             write_time = time.time() - write_start
@@ -487,13 +488,13 @@ class SystemMonitor:
 
             response_time = time.time() - start_time
 
-            status = "healthy"
+            status = os.getenv("SYSTEM_MONITOR_STATUS_441")
             if not info:
-                status = "unhealthy"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_442")
             elif write_time > 0.1 or read_time > 0.1:  # 读写超过100ms
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
             elif response_time > 0.5:  # 总响应超过500ms
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
 
             return {
                 "status": status,
@@ -525,30 +526,30 @@ class SystemMonitor:
             process_memory = process.memory_info().rss
             process_cpu = process.cpu_percent()
 
-            status = "healthy"
+            status = os.getenv("SYSTEM_MONITOR_STATUS_441")
             warnings = []
 
             if memory.percent > 90:
                 warnings.append(f"内存使用率过高: {memory.percent:.1f}%")
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
             elif memory.percent > 95:
-                status = "unhealthy"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
             if disk.percent > 90:
                 warnings.append(f"磁盘使用率过高: {disk.percent:.1f}%")
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
             elif disk.percent > 95:
-                status = "unhealthy"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
             if cpu_percent > 80:
                 warnings.append(f"CPU使用率过高: {cpu_percent:.1f}%")
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
             elif cpu_percent > 90:
-                status = "unhealthy"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
             if process_memory > 2 * 1024 * 1024 * 1024:  # 进程内存超过2GB
                 warnings.append(f"进程内存使用过高: {process_memory / 1024 / 1024:.1f}MB")
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
 
             return {
                 "status": status,
@@ -572,7 +573,7 @@ class SystemMonitor:
     async def _check_application_health(self) -> Dict[str, Any]:
         """检查应用程序健康状态"""
         try:
-            status = "healthy"
+            status = os.getenv("SYSTEM_MONITOR_STATUS_441")
             warnings = []
 
             # 检查最近的错误日志
@@ -594,9 +595,9 @@ class SystemMonitor:
 
                 if recent_errors > 100:
                     warnings.append(f"最近1小时错误过多: {recent_errors}")
-                    status = "warning"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_444")
                 elif recent_errors > 500:
-                    status = "unhealthy"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
                 # 检查任务失败率
                 result = await session.execute(
@@ -615,9 +616,9 @@ class SystemMonitor:
                     failure_rate = task_stats.failed_tasks / task_stats.total_tasks
                     if failure_rate > 0.1:  # 失败率超过10%
                         warnings.append(f"任务失败率过高: {failure_rate:.1%}")
-                        status = "warning"
+                        status = os.getenv("SYSTEM_MONITOR_STATUS_444")
                     elif failure_rate > 0.2:  # 失败率超过20%
-                        status = "unhealthy"
+                        status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
             return {
                 "status": status,
@@ -638,7 +639,7 @@ class SystemMonitor:
     async def _check_external_services(self) -> Dict[str, Any]:
         """检查外部服务健康状态"""
         try:
-            status = "healthy"
+            status = os.getenv("SYSTEM_MONITOR_STATUS_441")
             services_status = {}
 
             # 检查MLflow服务
@@ -650,7 +651,7 @@ class SystemMonitor:
                 services_status["mlflow"] = {"status": "healthy"}
             except Exception as e:
                 services_status["mlflow"] = {"status": "unhealthy", "error": str(e)}
-                status = "warning"
+                status = os.getenv("SYSTEM_MONITOR_STATUS_444")
 
             # 检查Kafka服务（如果配置）
             try:
@@ -662,7 +663,7 @@ class SystemMonitor:
                 services_status["kafka"] = {"status": "unhealthy", "error": str(e)}
                 # Kafka不是关键服务，只设置为warning
                 if status == "healthy":
-                    status = "warning"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_444")
 
             return {
                 "status": status,
@@ -681,7 +682,7 @@ class SystemMonitor:
     async def _check_data_pipeline(self) -> Dict[str, Any]:
         """检查数据管道健康状态"""
         try:
-            status = "healthy"
+            status = os.getenv("SYSTEM_MONITOR_STATUS_441")
             warnings = []
 
             from src.database.connection import get_async_session
@@ -705,9 +706,9 @@ class SystemMonitor:
 
                     if hours_diff > 48:  # 数据超过48小时未更新
                         warnings.append(f"比赛数据过旧: {hours_diff:.1f}小时未更新")
-                        status = "warning"
+                        status = os.getenv("SYSTEM_MONITOR_STATUS_444")
                     elif hours_diff > 72:  # 数据超过72小时未更新
-                        status = "unhealthy"
+                        status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
                 # 检查数据处理积压
                 result = await session.execute(
@@ -721,9 +722,9 @@ class SystemMonitor:
 
                 if backlog > 1000:
                     warnings.append(f"数据处理积压过多: {backlog}条记录")
-                    status = "warning"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_444")
                 elif backlog > 5000:
-                    status = "unhealthy"
+                    status = os.getenv("SYSTEM_MONITOR_STATUS_442")
 
             return {
                 "status": status,

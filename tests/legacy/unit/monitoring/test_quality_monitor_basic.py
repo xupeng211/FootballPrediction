@@ -3,6 +3,7 @@ from datetime import datetime
 from src.monitoring.quality_monitor import (
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 """
 quality_monitor模块的基本测试
@@ -43,7 +44,7 @@ def quality_monitor(mock_db_manager):
     async def test_check_data_freshness_basic(self, quality_monitor):
         "]""测试基本数据新鲜度检查"""
         monitor, _ = quality_monitor
-        with patch.object(monitor, "_check_table_freshness[") as mock_check_freshness:": mock_check_freshness.return_value = DataFreshnessResult(": table_name="]matches[",": last_update_time=datetime.now(),": records_count=100,": freshness_hours=12.0,"
+        with patch.object(monitor, "_check_table_freshness[") as mock_check_freshness:": mock_check_freshness.return_value = DataFreshnessResult(": table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_46"),": last_update_time=datetime.now(),": records_count=100,": freshness_hours=12.0,"
                 is_fresh=True,
                 threshold_hours=24.0)
             await monitor.check_data_freshness("]matches[")": assert "]matches[" in results[""""
@@ -64,7 +65,7 @@ def quality_monitor(mock_db_manager):
         with patch.object(:
             monitor, "_check_table_completeness["""""
         ) as mock_check_completeness:
-            mock_check_completeness.return_value = DataCompletenessResult(table_name="]matches[",": total_records=100,": missing_critical_fields = {"]home_team_id[": 0),": missing_rate=0.0,": completeness_score=100.0)": await monitor.check_data_completeness("]matches[")": assert "]matches[" in results[""""
+            mock_check_completeness.return_value = DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_46"),": total_records=100,": missing_critical_fields = {"]home_team_id[": 0),": missing_rate=0.0,": completeness_score=100.0)": await monitor.check_data_completeness("]matches[")": assert "]matches[" in results[""""
     assert isinstance(results["]]matches["], DataCompletenessResult)""""
     @pytest.mark.asyncio
     async def test_check_data_completeness_handles_error(self, quality_monitor):
@@ -144,7 +145,7 @@ class TestDataResults:
     def test_data_freshness_result_creation(self):
         """测试数据新鲜度结果创建"""
         DataFreshnessResult(
-            table_name="test_table[",": last_update_time=datetime.now(),": records_count=100,": freshness_hours=12.0,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_144"),": last_update_time=datetime.now(),": records_count=100,": freshness_hours=12.0,"
             is_fresh=True,
             threshold_hours=24.0)
     assert result.table_name =="]test_table[" def test_data_freshness_result_to_dict("
@@ -152,7 +153,7 @@ class TestDataResults:
         "]""测试数据新鲜度结果转字典"""
         now = datetime.now()
         result = DataFreshnessResult(
-            table_name="test_table[",": last_update_time=now,": records_count=100,": freshness_hours=12.0,"
+            table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_144"),": last_update_time=now,": records_count=100,": freshness_hours=12.0,"
             is_fresh=True,
             threshold_hours=24.0)
         result.to_dict()
@@ -160,9 +161,9 @@ class TestDataResults:
     assert dict_result["]table_name["] =="]test_table[" def test_data_completeness_result_creation("
     """"
         "]""测试数据完整性结果创建"""
-        DataCompletenessResult(table_name="test_table[",": total_records=100,": missing_critical_fields = {"]field1[": 5, "]field2[": 0),": missing_rate=0.025,": completeness_score=97.5)": assert result.table_name =="]test_table[" def test_data_completeness_result_to_dict("
+        DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_144"),": total_records=100,": missing_critical_fields = {"]field1[": 5, "]field2[": 0),": missing_rate=0.025,": completeness_score=97.5)": assert result.table_name =="]test_table[" def test_data_completeness_result_to_dict("
     """"
         "]""测试数据完整性结果转字典"""
-        result = DataCompletenessResult(table_name="test_table[",": total_records=100,": missing_critical_fields = {"]field1[": 5),": missing_rate=0.05,": completeness_score=95.0)": result.to_dict()"
+        result = DataCompletenessResult(table_name = os.getenv("TEST_QUALITY_MONITOR_BASIC_TABLE_NAME_144"),": total_records=100,": missing_critical_fields = {"]field1[": 5),": missing_rate=0.05,": completeness_score=95.0)": result.to_dict()"
     assert isinstance(dict_result, dict)
     assert dict_result["]table_name["] =="]test_table"

@@ -1,3 +1,4 @@
+import os
 """
 安全中间件测试
 Security Middleware Tests
@@ -24,7 +25,7 @@ class TestInMemoryRateLimiter:
     def test_rate_limiting_within_limits(self):
         """测试在限制内的请求"""
         limiter = InMemoryRateLimiter()
-        key = "test_key"
+        key = os.getenv("TEST_SECURITY_KEY_27")
 
         # 5次请求，限制10次/分钟
         for _ in range(5):
@@ -33,7 +34,7 @@ class TestInMemoryRateLimiter:
     def test_rate_limiting_exceeds_limit(self):
         """测试超过限制的请求"""
         limiter = InMemoryRateLimiter()
-        key = "test_key"
+        key = os.getenv("TEST_SECURITY_KEY_27")
 
         # 发送10次请求，限制10次/分钟
         for _ in range(10):
@@ -45,7 +46,7 @@ class TestInMemoryRateLimiter:
     def test_rate_limiting_window_reset(self):
         """测试时间窗口重置"""
         limiter = InMemoryRateLimiter()
-        key = "test_key"
+        key = os.getenv("TEST_SECURITY_KEY_27")
         current_time = time.time()
 
         # 在时间窗口内发送请求
@@ -227,12 +228,12 @@ class TestInputSanitization:
 
     def test_sanitize_input_strips_whitespace(self):
         """测试去除空白字符"""
-        input_str = "  test input  "
+        input_str = os.getenv("TEST_SECURITY_INPUT_STR_228")
         assert sanitize_input(input_str) == "test input"
 
     def test_sanitize_input_preserves_valid_chars(self):
         """测试保留有效字符"""
-        input_str = "user@example.com"
+        input_str = os.getenv("TEST_SECURITY_INPUT_STR_231")
         assert sanitize_input(input_str) == input_str
 
 

@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Comprehensive MCP Health Check Script
@@ -60,9 +61,9 @@ class MCPHealthChecker:
             conn = psycopg2.connect(
                 host="localhost",
                 port="5432",
-                user="postgres",
-                password="postgres",
-                database="postgres",
+                user = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_USER_63"),
+                password = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_PASSWORD_63"),
+                database = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_DATABASE_64"),
             )
             cursor = conn.cursor()
             cursor.execute("SELECT 1;")
@@ -119,7 +120,7 @@ class MCPHealthChecker:
                 r = redis.Redis(
                     host="localhost",
                     port=6379,
-                    password="redispass",
+                    password = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_PASSWORD_118"),
                     decode_responses=True,
                 )
                 result = r.ping()
@@ -150,7 +151,7 @@ class MCPHealthChecker:
 
             # List topics using admin client
             admin_client = KafkaAdminClient(
-                bootstrap_servers="localhost:9092", client_id="mcp-health-check"
+                bootstrap_servers = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_BOOTSTRAP_SERVERS_1"), client_id = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_CLIENT_ID_149")
             )
 
             topics = admin_client.list_topics()
@@ -226,7 +227,7 @@ class MCPHealthChecker:
             config.load_kube_config()
 
             v1 = client.CoreV1Api()
-            pods = v1.list_namespaced_pod(namespace="default")
+            pods = v1.list_namespaced_pod(namespace = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_NAMESPACE_220"))
 
             pod_names = [pod.metadata.name for pod in pods.items]
             self.add_result(
@@ -295,9 +296,7 @@ class MCPHealthChecker:
 
         try:
             # Try with Basic Authentication (admin:admin)
-            auth_headers = {"Authorization": "Basic YWRtaW46YWRtaW4="}
-            response = requests.get(
-                "http://localhost:3000/api/search", headers=auth_headers, timeout=10
+            auth_headers = {"Authorization": "Basic YWRtaW46YWRtaW4 = os.getenv("COMPREHENSIVE_MCP_HEALTH_CHECK_YWRTAW46YWRTAW4_289")http://localhost:3000/api/search", headers=auth_headers, timeout=10
             )
 
             if response.status_code == 200:

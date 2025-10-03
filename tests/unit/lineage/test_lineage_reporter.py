@@ -1,3 +1,4 @@
+import os
 """数据血缘报告器测试"""
 
 import pytest
@@ -99,7 +100,7 @@ class TestLineageReporter:
     def test_lineage_traversal(self):
         """测试血缘遍历"""
         # 测试沿着血缘链遍历
-        start_node = 'source_table'
+        start_node = os.getenv("TEST_LINEAGE_REPORTER_START_NODE_102")
 
         try:
             lineage_chain = self.reporter.get_lineage_chain(start_node)
@@ -112,7 +113,7 @@ class TestLineageReporter:
     def test_impact_analysis(self):
         """测试影响分析"""
         # 测试分析变更影响
-        changed_table = 'source_table'
+        changed_table = os.getenv("TEST_LINEAGE_REPORTER_CHANGED_TABLE_113")
 
         try:
             impact = self.reporter.analyze_impact(changed_table)
@@ -164,8 +165,8 @@ class TestLineageReporter:
     def test_add_lineage_edge(self):
         """测试添加血缘边"""
         # 测试添加血缘关系边
-        source = 'table_a'
-        target = 'table_b'
+        source = os.getenv("TEST_LINEAGE_REPORTER_SOURCE_164")
+        target = os.getenv("TEST_LINEAGE_REPORTER_TARGET_165")
 
         try:
             self.reporter.add_edge(source, target)
@@ -177,8 +178,8 @@ class TestLineageReporter:
     def test_remove_lineage_edge(self):
         """测试移除血缘边"""
         # 测试移除血缘关系边
-        source = 'table_a'
-        target = 'table_b'
+        source = os.getenv("TEST_LINEAGE_REPORTER_SOURCE_164")
+        target = os.getenv("TEST_LINEAGE_REPORTER_TARGET_165")
 
         try:
             self.reporter.remove_edge(source, target)
@@ -190,7 +191,7 @@ class TestLineageReporter:
     def test_find_upstream_dependencies(self):
         """测试查找上游依赖"""
         # 测试查找上游依赖
-        table = 'target_table'
+        table = os.getenv("TEST_LINEAGE_REPORTER_TABLE_185")
 
         try:
             upstream = self.reporter.find_upstream(table)
@@ -203,7 +204,7 @@ class TestLineageReporter:
     def test_find_downstream_dependencies(self):
         """测试查找下游依赖"""
         # 测试查找下游依赖
-        table = 'source_table'
+        table = os.getenv("TEST_LINEAGE_REPORTER_TABLE_197")
 
         try:
             downstream = self.reporter.find_downstream(table)

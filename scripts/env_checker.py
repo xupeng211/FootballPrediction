@@ -473,10 +473,10 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="开发环境检查器")
+    parser = argparse.ArgumentParser(description = os.getenv("ENV_CHECKER_DESCRIPTION_476"))
     parser.add_argument("--project-root", default=".", help="项目根目录")
-    parser.add_argument("--summary", action="store_true", help="显示检查摘要")
-    parser.add_argument("--fix-suggestions", action="store_true", help="显示修复建议")
+    parser.add_argument("--summary", action = os.getenv("ENV_CHECKER_ACTION_478"), help = os.getenv("ENV_CHECKER_HELP_478"))
+    parser.add_argument("--fix-suggestions", action = os.getenv("ENV_CHECKER_ACTION_478"), help = os.getenv("ENV_CHECKER_HELP_478"))
 
     args = parser.parse_args()
 

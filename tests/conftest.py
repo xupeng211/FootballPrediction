@@ -12,7 +12,7 @@ import pytest
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope = os.getenv("CONFTEST_SCOPE_15"))
 def event_loop():
     """Create an instance of the default event loop for each test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -64,8 +64,8 @@ def mock_mlflow_client():
     mock_client = Mock()
     mock_version_info = Mock()
     mock_version_info.version = "1"
-    mock_version_info.current_stage = "Production"
-    mock_version_info.name = "football_baseline_model"
+    mock_version_info.current_stage = os.getenv("CONFTEST_CURRENT_STAGE_66")
+    mock_version_info.name = os.getenv("CONFTEST_NAME_67")
     mock_client.get_latest_versions = Mock(return_value=[mock_version_info])
     return mock_client
 

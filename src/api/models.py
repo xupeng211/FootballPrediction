@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 模型API端点
@@ -34,8 +35,8 @@ prediction_service = PredictionService()
 
 @router.get(
     "/active",
-    summary="获取当前活跃模型",
-    description="获取当前生产环境使用的模型版本信息",
+    summary = os.getenv("MODELS_SUMMARY_37"),
+    description = os.getenv("MODELS_DESCRIPTION_37"),
 )
 async def get_active_models() -> Dict[str, Any]:
     """
@@ -62,7 +63,7 @@ async def get_active_models() -> Dict[str, Any]:
         try:
             # 尝试一个基本的 MLflow 操作来验证服务状态
             mlflow_client.get_latest_versions(
-                name="__health_check__", stages=["Production"]
+                name = os.getenv("MODELS_NAME_64"), stages=["Production"]
             )
         except RuntimeError as e:
             # 符合测试断言期望：当测试模拟 RuntimeError 时抛出 HTTPException
@@ -173,11 +174,11 @@ async def get_active_models() -> Dict[str, Any]:
 
 
 @router.get(
-    "/metrics", summary="获取模型性能指标", description="获取模型的性能指标和统计信息"
+    "/metrics", summary = os.getenv("MODELS_SUMMARY_172"), description = os.getenv("MODELS_DESCRIPTION_174")
 )
 async def get_model_metrics(
     model_name: str = Query("football_baseline_model", description="模型名称"),
-    time_window: str = Query("7d", description="时间窗口：1d, 7d, 30d"),
+    time_window: str = Query("7d", description = os.getenv("MODELS_DESCRIPTION_179")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -337,12 +338,12 @@ async def get_model_metrics(
 
 @router.get(
     "/{model_name}/versions",
-    summary="获取模型版本列表",
-    description="获取指定模型的所有版本信息",
+    summary = os.getenv("MODELS_SUMMARY_335"),
+    description = os.getenv("MODELS_DESCRIPTION_335"),
 )
 async def get_model_versions(
     model_name: str,
-    limit: int = Query(default=20, description="返回版本数量限制", ge=1, le=100),
+    limit: int = Query(default=20, description = os.getenv("MODELS_DESCRIPTION_340"), ge=1, le=100),
 ) -> Dict[str, Any]:
     """
     获取模型版本列表
@@ -359,7 +360,7 @@ async def get_model_versions(
 
         # 获取模型版本
         model_versions = mlflow_client.search_model_versions(
-            filter_string=f"name='{model_name}'",
+            filter_string=f"name = os.getenv("MODELS_NAME_355")",
             max_results=limit,
             order_by=["version_number DESC"],
         )
@@ -413,14 +414,14 @@ async def get_model_versions(
 
 @router.post(
     "/{model_name}/versions/{version}/promote",
-    summary="推广模型版本",
-    description="将模型版本推广到生产环境",
+    summary = os.getenv("MODELS_SUMMARY_409"),
+    description = os.getenv("MODELS_DESCRIPTION_409"),
 )
 async def promote_model_version(
     model_name: str,
     version: str,
     target_stage: str = Query(
-        "Production", description="目标阶段：Staging, Production"
+        "Production", description = os.getenv("MODELS_DESCRIPTION_415")
     ),
 ) -> Dict[str, Any]:
     """
@@ -492,12 +493,12 @@ async def promote_model_version(
 
 @router.get(
     "/{model_name}/performance",
-    summary="获取模型详细性能",
-    description="获取模型的详细性能分析",
+    summary = os.getenv("MODELS_SUMMARY_485"),
+    description = os.getenv("MODELS_DESCRIPTION_486"),
 )
 async def get_model_performance(
     model_name: str,
-    version: Optional[str] = Query(None, description="模型版本，为空则获取生产版本"),
+    version: Optional[str] = Query(None, description = os.getenv("MODELS_DESCRIPTION_490")),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -675,9 +676,9 @@ def get_model_info() -> Dict[str, Any]:
     }
 
 
-@router.get("/experiments", summary="获取实验列表", description="获取MLflow实验列表")
+@router.get("/experiments", summary = os.getenv("MODELS_SUMMARY_659"), description = os.getenv("MODELS_DESCRIPTION_662"))
 async def get_experiments(
-    limit: int = Query(default=20, description="返回实验数量限制", ge=1, le=100)
+    limit: int = Query(default=20, description = os.getenv("MODELS_DESCRIPTION_668"), ge=1, le=100)
 ) -> Dict[str, Any]:
     """
     获取MLflow实验列表

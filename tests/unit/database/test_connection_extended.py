@@ -1,3 +1,4 @@
+import os
 """数据库连接扩展测试"""
 
 import pytest
@@ -35,7 +36,7 @@ class TestDatabaseConnectionExtended:
     @pytest.mark.asyncio
     async def test_create_engine_with_different_url(self):
         """测试使用不同URL创建引擎"""
-        test_url = "sqlite+aiosqlite:///test.db"
+        test_url = os.getenv("TEST_CONNECTION_EXTENDED_TEST_URL_38")
         db_manager = DatabaseManager(database_url=test_url)
 
         assert db_manager.database_url == test_url

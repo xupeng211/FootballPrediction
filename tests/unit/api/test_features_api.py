@@ -1,3 +1,4 @@
+import os
 """
 特征服务API测试
 测试覆盖src/api/features.py中的所有路由
@@ -103,7 +104,7 @@ class TestTeamFeatures:
         # 模拟球队存在
         mock_team = MagicMock()
         mock_team.id = 10
-        mock_team.team_name = "Test Team"
+        mock_team.team_name = os.getenv("TEST_FEATURES_API_TEAM_NAME_106")
         mock_session.execute.return_value.scalar_one_or_none.return_value = mock_team
 
         # 模拟特征存储

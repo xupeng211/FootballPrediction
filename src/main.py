@@ -37,7 +37,7 @@ from src.database.connection import initialize_database
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format = os.getenv("MAIN_FORMAT_40")
 )
 logger = logging.getLogger(__name__)
 
@@ -140,8 +140,8 @@ async def lifespan(app: FastAPI):
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="足球预测API",
-    description="基于机器学习的足球比赛结果预测系统",
+    title = os.getenv("MAIN_TITLE_144"),
+    description = os.getenv("MAIN_DESCRIPTION_144"),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",

@@ -1,3 +1,4 @@
+import os
 """
 实时数据流任务
 
@@ -94,7 +95,7 @@ def consume_kafka_streams_task(
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="consume_kafka_streams_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_97"),
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "batch_size": batch_size},
@@ -159,7 +160,7 @@ def start_continuous_consumer_task(
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="start_continuous_consumer_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_162"),
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "consumer_group_id": consumer_group_id},
@@ -226,7 +227,7 @@ def produce_to_kafka_stream_task(
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="produce_to_kafka_stream_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_228"),
                 task_id=self.request.id,
                 error=e,
                 context={"data_type": data_type, "record_count": len(data_list)},
@@ -278,7 +279,7 @@ def stream_health_check_task(self):
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="stream_health_check_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_280"),
                 task_id=self.request.id,
                 error=e,
                 context={},
@@ -348,7 +349,7 @@ def stream_data_processing_task(
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="stream_data_processing_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_350"),
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "duration": processing_duration},
@@ -439,7 +440,7 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
             # 记录错误
             await self.error_logger.log_task_error(
-                task_name="kafka_topic_management_task",
+                task_name = os.getenv("STREAMING_TASKS_TASK_NAME_440"),
                 task_id=self.request.id,
                 error=e,
                 context={"action": action, "topic_name": topic_name},

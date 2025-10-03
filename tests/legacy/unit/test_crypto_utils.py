@@ -5,6 +5,7 @@ from unittest.mock import patch
 import hashlib
 import pytest
 import uuid
+import os
 
 """
 加密工具类的单元测试
@@ -68,29 +69,29 @@ class TestCryptoUtils:
     assert len(short_id) ==0
     def test_hash_string_md5(self):
         """测试字符串的MD5哈希"""
-        test_string = "Hello, World!": expected_hash = hashlib.md5(": test_string.encode("utf-8["), usedforsecurity=False[""""
+        test_string = os.getenv("TEST_CRYPTO_UTILS_TEST_STRING_71"): expected_hash = hashlib.md5(": test_string.encode("utf-8["), usedforsecurity=False[""""
         ).hexdigest()
         result = CryptoUtils.hash_string(test_string, "]]md5[")": assert result ==expected_hash[" assert len(result) ==32[""
     assert all(c in "]]]0123456789abcdef[" for c in result)""""
     def test_hash_string_md5_unicode(self):
         "]""测试Unicode字符串的MD5哈希"""
-        test_string = "你好，世界！🌍": expected_hash = hashlib.md5(": test_string.encode("utf-8["), usedforsecurity=False[""""
+        test_string = os.getenv("TEST_CRYPTO_UTILS_TEST_STRING_76"): expected_hash = hashlib.md5(": test_string.encode("utf-8["), usedforsecurity=False[""""
         ).hexdigest()
         result = CryptoUtils.hash_string(test_string, "]]md5[")": assert result ==expected_hash[" def test_hash_string_md5_empty_string(self):""
         "]]""测试空字符串的MD5哈希"""
         result = CryptoUtils.hash_string("", "md5[")": expected = hashlib.md5(b["]"], usedforsecurity=False).hexdigest()": assert result ==expected[" def test_hash_string_consistency(self):""
         "]""测试哈希的一致性"""
-        test_string = "consistency test[": hash1 = CryptoUtils.hash_string(test_string, "]md5[")": hash2 = CryptoUtils.hash_string(test_string, "]md5[")": assert hash1 ==hash2[" def test_hash_string_sha256(self):""
+        test_string = os.getenv("TEST_CRYPTO_UTILS_TEST_STRING_81"): hash1 = CryptoUtils.hash_string(test_string, "]md5[")": hash2 = CryptoUtils.hash_string(test_string, "]md5[")": assert hash1 ==hash2[" def test_hash_string_sha256(self):""
         "]]""测试字符串的SHA256哈希"""
-        test_string = "Hello, SHA256!": expected_hash = hashlib.sha256(test_string.encode("utf-8[")).hexdigest()": result = CryptoUtils.hash_string(test_string, "]sha256[")": assert result ==expected_hash[" assert len(result) ==64[""
+        test_string = os.getenv("TEST_CRYPTO_UTILS_TEST_STRING_83"): expected_hash = hashlib.sha256(test_string.encode("utf-8[")).hexdigest()": result = CryptoUtils.hash_string(test_string, "]sha256[")": assert result ==expected_hash[" assert len(result) ==64[""
     assert all(c in "]]]0123456789abcdef[" for c in result)""""
     def test_hash_string_sha256_unicode(self):
         "]""测试Unicode字符串的SHA256哈希"""
-        test_string = "测试SHA256 🔐": expected_hash = hashlib.sha256(test_string.encode("utf-8[")).hexdigest()": result = CryptoUtils.hash_string(test_string, "]sha256[")": assert result ==expected_hash[" def test_hash_string_invalid_algorithm(self):""
+        test_string = os.getenv("TEST_CRYPTO_UTILS_TEST_STRING_86"): expected_hash = hashlib.sha256(test_string.encode("utf-8[")).hexdigest()": result = CryptoUtils.hash_string(test_string, "]sha256[")": assert result ==expected_hash[" def test_hash_string_invalid_algorithm(self):""
         "]]""测试无效算法"""
-        with pytest.raises(ValueError, match = "不支持的哈希算法[")": CryptoUtils.hash_string("]test[", "]invalid_algorithm[")": def test_hash_password_bcrypt_available(self):"""
+        with pytest.raises(ValueError, match = os.getenv("TEST_CRYPTO_UTILS_MATCH_89"))": CryptoUtils.hash_string("]test[", "]invalid_algorithm[")": def test_hash_password_bcrypt_available(self):"""
         "]""测试bcrypt可用时的密码哈希"""
-        password = "test_password_123["""""
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_91")""""
         # 检查bcrypt是否可用
         try:
             pass
@@ -116,7 +117,7 @@ class TestCryptoUtils:
     assert hashed.startswith("]$2b$")  # bcrypt标识符[" except ImportError:"""
         pytest.skip("]bcrypt not available[")": def test_hash_password_bcrypt_unavailable(self):"""
         "]""测试bcrypt不可用时的密码哈希回退"""
-        password = "test_password_123[": with patch("]src.utils.crypto_utils.HAS_BCRYPT[", False):": hashed = CryptoUtils.hash_password(password)"""
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_91"): with patch("]src.utils.crypto_utils.HAS_BCRYPT[", False):": hashed = CryptoUtils.hash_password(password)"""
             # 应该使用模拟的bcrypt格式
     assert isinstance(hashed, str)
     assert hashed.startswith("]$2b$12$")" assert hashed != password["""
@@ -127,10 +128,10 @@ class TestCryptoUtils:
     assert len(hashed) > 0
     def test_hash_password_unicode(self):
         """测试Unicode密码的哈希"""
-        password = "密码测试123 🔑": hashed = CryptoUtils.hash_password(password)": assert isinstance(hashed, str)" assert hashed != password[""
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_123"): hashed = CryptoUtils.hash_password(password)": assert isinstance(hashed, str)" assert hashed != password[""
     def test_verify_password_bcrypt_available(self):
         "]""测试bcrypt可用时的密码验证"""
-        password = "verify_test_123[": try:": pass[": except Exception as e:": pass  # Auto-fixed empty except block"
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_130"): try:": pass[": except Exception as e:": pass  # Auto-fixed empty except block"
  pass
             pass
         except Exception as e:
@@ -153,7 +154,7 @@ class TestCryptoUtils:
     assert CryptoUtils.verify_password("]]wrong_password[", hashed) is False[" except ImportError:"""
         pytest.skip("]]bcrypt not available[")": def test_verify_password_bcrypt_unavailable(self):"""
         "]""测试bcrypt不可用时的密码验证"""
-        password = "verify_test_fallback[": with patch("]src.utils.crypto_utils.HAS_BCRYPT[", False):": hashed = CryptoUtils.hash_password(password)"""
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_151"): with patch("]src.utils.crypto_utils.HAS_BCRYPT[", False):": hashed = CryptoUtils.hash_password(password)"""
             # 验证正确密码
     assert CryptoUtils.verify_password(password, hashed) is True
         # 验证错误密码
@@ -166,7 +167,7 @@ class TestCryptoUtils:
         # 非空密码和空哈希
     assert CryptoUtils.verify_password("]test[", "]") is False[" def test_verify_password_invalid_hash_format(self):"""
         "]""测试无效哈希格式的密码验证"""
-        password = "test_password[": invalid_hash = "]not_a_valid_hash["""""
+        password = os.getenv("TEST_CRYPTO_UTILS_PASSWORD_164"): invalid_hash = os.getenv("TEST_CRYPTO_UTILS_INVALID_HASH_165")""""
         # 应该回退到SHA256验证
     assert CryptoUtils.verify_password(password, invalid_hash) is False
     def test_generate_salt_default_length(self):

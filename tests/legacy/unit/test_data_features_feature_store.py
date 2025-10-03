@@ -30,7 +30,7 @@ class TestDataFeaturesFeatureStore:
         "]""测试FootballFeatureStore默认配置初始化"""
         try:
             from src.data.features.feature_store import FootballFeatureStore
-            with patch("tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = "]/tmp/test_feast_repo[": store = FootballFeatureStore()": assert store.project_name =="]football_prediction[" assert store.postgres_config is not None[""""
+            with patch("tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_33"): store = FootballFeatureStore()": assert store.project_name =="]football_prediction[" assert store.postgres_config is not None[""""
                 assert store.redis_config is not None
                 assert store._store is None
         except ImportError:
@@ -43,7 +43,7 @@ class TestDataFeaturesFeatureStore:
                 "]port[": 5433,""""
                 "]database[": ["]custom_db[",""""
                 "]user[": ["]custom_user[",""""
-                "]password[": ["]custom_password["}": redis_config = {"]connection_string[: "redis://custom6380/2["}"]": with patch("]tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = "]/tmp/test_feast_repo[": store = FootballFeatureStore(": project_name="]custom_project[",": postgres_config=custom_config,": redis_config=redis_config)": assert store.project_name =="]custom_project[" assert store.postgres_config ==custom_config[""""
+                "]password[": ["]custom_password["}": redis_config = {"]connection_string[: "redis://custom6380/2["}"]": with patch("]tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_33"): store = FootballFeatureStore(": project_name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_PROJECT_NAME_46"),": postgres_config=custom_config,": redis_config=redis_config)": assert store.project_name =="]custom_project[" assert store.postgres_config ==custom_config[""""
                 assert store.redis_config ==redis_config
         except ImportError:
             pytest.skip("]]Feature store module not available[")""""
@@ -57,10 +57,10 @@ class TestDataFeaturesFeatureStore:
         "]""测试特征仓库初始化成功场景"""
         try:
             from src.data.features.feature_store import FootballFeatureStore
-            with patch("tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = "]/tmp/test_feast_repo[": mock_repo_instance = Mock()": mock_repo_config.return_value = mock_repo_instance[": mock_repo_instance.yaml.return_value = "]]yaml_content[": mock_store_instance = Mock()": mock_feature_store.return_value = mock_store_instance[": store = FootballFeatureStore()": store.initialize()"
+            with patch("tempfile.mkdtemp[") as mock_mktemp:": mock_mktemp.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_33"): mock_repo_instance = Mock()": mock_repo_config.return_value = mock_repo_instance[": mock_repo_instance.yaml.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_60"): mock_store_instance = Mock()": mock_feature_store.return_value = mock_store_instance[": store = FootballFeatureStore()": store.initialize()"
                 mock_repo_config.assert_called_once()
                 mock_feature_store.assert_called_once_with(
-                    repo_path="]]/tmp/test_feast_repo["""""
+                    repo_path = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_REPO_PATH_60")""""
                 )
                 assert store._store ==mock_store_instance
         except ImportError:
@@ -72,11 +72,11 @@ class TestDataFeaturesFeatureStore:
             with patch("tempfile.mkdtemp[") as mock_mktemp, patch(:""""
                 "]src.data.features.feature_store.RepoConfig["""""
             ) as mock_repo_config:
-                mock_mktemp.return_value = "]/tmp/test_feast_repo[": mock_feature_store.side_effect = Exception("]Connection failed[")""""
+                mock_mktemp.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_33"): mock_feature_store.side_effect = Exception("]Connection failed[")""""
                 # Mock the RepoConfig to have yaml method
                 mock_repo_instance = Mock()
                 mock_repo_config.return_value = mock_repo_instance
-                mock_repo_instance.yaml.return_value = "]yaml_content[": store = FootballFeatureStore()": with pytest.raises(Exception) as exc_info:": store.initialize()": assert "]Connection failed[" in str(exc_info.value)""""
+                mock_repo_instance.yaml.return_value = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_RETURN_VALUE_75"): store = FootballFeatureStore()": with pytest.raises(Exception) as exc_info:": store.initialize()": assert "]Connection failed[" in str(exc_info.value)""""
         except ImportError:
             pytest.skip("]Feature store module not available[")": def test_apply_features_success(self):"""
         "]""测试注册特征定义成功场景"""
@@ -126,7 +126,7 @@ class TestDataFeaturesFeatureStore:
                     "team_id[: "1, 2[","]"""
                     "]event_timestamp[": [datetime.now()""""
             )
-            store.write_features("]team_stats[", mock_df)": mock_store.push.assert_called_once_with(": push_source_name="]team_stats[", df=mock_df, to="]online_and_offline["""""
+            store.write_features("]team_stats[", mock_df)": mock_store.push.assert_called_once_with(": push_source_name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_PUSH_SOURCE_NAME_"), df=mock_df, to = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_TO_124")""""
             )
         except ImportError:
             pytest.skip("]Feature store module not available[")": def test_write_features_not_initialized(self):"""
@@ -244,7 +244,7 @@ class TestDataFeaturesFeatureStore:
             mock_store = Mock()
             store._store = mock_store
             mock_feature_view = Mock()
-            mock_feature_view.features = [Mock(name="feature1["), Mock(name="]feature2[")]": mock_feature_view.entities = [Mock(name="]team[")]": mock_feature_view.ttl = timedelta(days=30)": mock_feature_view.tags = {"]category[": ["]stats["}": mock_store.get_feature_view.return_value = mock_feature_view[": result = store.get_feature_statistics("]]team_stats[")": expected_keys = ["""
+            mock_feature_view.features = [Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_239")), Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_239"))]": mock_feature_view.entities = [Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_239"))]": mock_feature_view.ttl = timedelta(days=30)": mock_feature_view.tags = {"]category[": ["]stats["}": mock_store.get_feature_view.return_value = mock_feature_view[": result = store.get_feature_statistics("]]team_stats[")": expected_keys = ["""
                 "]feature_view_name[",""""
                 "]num_features[",""""
                 "]feature_names[",""""
@@ -270,7 +270,7 @@ class TestDataFeaturesFeatureStore:
             mock_store = Mock()
             store._store = mock_store
             mock_feature_view1 = Mock()
-            mock_feature_view1.name = "team_stats[": mock_feature_view1.entities = [Mock(name="]team[")]": mock_feature_view1.tags = {}": mock_feature1 = Mock()": mock_feature1.name = "]wins[": mock_feature1.dtype = Mock(name="]int64[")": mock_feature_view1.features = ["]mock_feature1[": mock_feature_view2 = Mock()": mock_feature_view2.name = "]match_stats[": mock_feature_view2.entities = [Mock(name="]match[")]": mock_feature_view2.tags = {}": mock_feature2 = Mock()": mock_feature2.name = "]goals[": mock_feature2.dtype = Mock(name="]float64[")": mock_feature_view2.features = ["]mock_feature2[": mock_store.list_feature_views.return_value = ["]mock_feature_view1[",": mock_feature_view2]": result = store.list_features()": assert len(result) ==2"
+            mock_feature_view1.name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_264"): mock_feature_view1.entities = [Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_239"))]": mock_feature_view1.tags = {}": mock_feature1 = Mock()": mock_feature1.name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_265"): mock_feature1.dtype = Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_265"))": mock_feature_view1.features = ["]mock_feature1[": mock_feature_view2 = Mock()": mock_feature_view2.name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_268"): mock_feature_view2.entities = [Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_269"))]": mock_feature_view2.tags = {}": mock_feature2 = Mock()": mock_feature2.name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_271"): mock_feature2.dtype = Mock(name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_NAME_272"))": mock_feature_view2.features = ["]mock_feature2[": mock_store.list_feature_views.return_value = ["]mock_feature_view1[",": mock_feature_view2]": result = store.list_features()": assert len(result) ==2"
             assert result[0]"]feature_view[" =="]team_stats[" assert result[0]"]feature_name[" =="]wins[" assert result[1]"]feature_view[" =="]match_stats[" assert result[1]"]feature_name[" =="]goals[" except ImportError:""""
             pytest.skip("]Feature store module not available[")": def test_list_features_empty(self):"""
         "]""测试列出所有特征为空的情况"""
@@ -331,7 +331,7 @@ class TestDataFeaturesFeatureStore:
             # Set the global store to a mock value directly
             import src.data.features.feature_store as feature_store_module
             original_store = feature_store_module._feature_store
-            feature_store_module._feature_store = "existing_store[": try:": result = get_feature_store()": assert result =="]existing_store[" finally:""""
+            feature_store_module._feature_store = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE__FEATURE_STORE_31"): try:": result = get_feature_store()": assert result =="]existing_store[" finally:""""
                 # Restore original value
                 feature_store_module._feature_store = original_store
         except ImportError:
@@ -357,7 +357,7 @@ class TestDataFeaturesFeatureStore:
             mock_store = Mock()
             mock_feature_store_class.return_value = mock_store
             result = initialize_feature_store(
-                project_name="test_project[", repo_path="]/test/path["""""
+                project_name = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_PROJECT_NAME_341"), repo_path = os.getenv("TEST_DATA_FEATURES_FEATURE_STORE_REPO_PATH_343")""""
             )
             assert result ==mock_store
             mock_store.initialize.assert_called_once()

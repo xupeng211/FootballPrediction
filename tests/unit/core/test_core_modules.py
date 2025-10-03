@@ -29,7 +29,7 @@ class TestExceptions:
     def test_football_prediction_error(self):
         """测试基础异常类"""
         # 测试消息
-        msg = "Test error message"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_32")
         error = FootballPredictionError(msg)
         assert str(error) == msg
         assert error.args == (msg,)
@@ -39,35 +39,35 @@ class TestExceptions:
 
     def test_data_validation_error(self):
         """测试数据验证异常"""
-        msg = "Validation failed"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_41")
         error = ValidationError(msg)
         assert str(error) == msg
         assert isinstance(error, FootballPredictionError)
 
     def test_prediction_error(self):
         """测试预测异常"""
-        msg = "Prediction failed"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_47")
         error = PredictionError(msg)
         assert str(error) == msg
         assert isinstance(error, FootballPredictionError)
 
     def test_database_error(self):
         """测试数据库异常"""
-        msg = "Database connection failed"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_54")
         error = DatabaseError(msg)
         assert str(error) == msg
         assert isinstance(error, FootballPredictionError)
 
     def test_configuration_error(self):
         """测试配置异常"""
-        msg = "Configuration missing"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_61")
         error = ConfigError(msg)
         assert str(error) == msg
         assert isinstance(error, FootballPredictionError)
 
     def test_exception_with_details(self):
         """测试带详情的异常"""
-        msg = "Error occurred"
+        msg = os.getenv("TEST_CORE_MODULES_MSG_66")
         details = {"field": "value", "code": 123}
 
         error = ValidationError(msg, details)

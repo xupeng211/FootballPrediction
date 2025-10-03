@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 🚀 Cursor闭环执行器
@@ -362,7 +363,7 @@ class CursorClosedLoopRunner:
         return True
 
     def save_execution_log(
-        self, output_file: str = "logs/cursor_execution.json"
+        self, output_file: str = os.getenv("CURSOR_RUNNER_STR_365")
     ) -> None:
         """保存执行日志"""
         output_path = self.project_root / output_file
@@ -392,13 +393,13 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Cursor闭环执行器")
+    parser = argparse.ArgumentParser(description = os.getenv("CURSOR_RUNNER_DESCRIPTION_395"))
     parser.add_argument("--task", default="", help="任务描述")
     parser.add_argument("--project-root", default=".", help="项目根目录")
     parser.add_argument(
-        "--output", default="logs/cursor_execution.json", help="执行日志输出文件"
+        "--output", default = os.getenv("CURSOR_RUNNER_DEFAULT_398"), help = os.getenv("CURSOR_RUNNER_HELP_399")
     )
-    parser.add_argument("--summary", action="store_true", help="显示执行摘要")
+    parser.add_argument("--summary", action = os.getenv("CURSOR_RUNNER_ACTION_399"), help = os.getenv("CURSOR_RUNNER_HELP_399"))
 
     args = parser.parse_args()
 

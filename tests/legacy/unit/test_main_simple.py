@@ -25,13 +25,13 @@ class TestMainApplicationSimple:
         """测试FastAPI应用基本创建"""
         # 创建一个模拟的FastAPI应用来测试配置逻辑
         test_app = FastAPI(
-        title="足球预测API[",": description="]基于机器学习的足球比赛结果预测系统[",": version="]1.0.0[",": docs_url="]_docs[",": redoc_url="]/redoc[")": assert test_app.title =="]足球预测API[" assert test_app.description =="]基于机器学习的足球比赛结果预测系统[" assert test_app.version =="]1.0.0[" assert test_app.docs_url =="]/docs[" assert test_app.redoc_url =="]/redoc[" def test_cors_middleware_basic("
+        title = os.getenv("TEST_MAIN_SIMPLE_TITLE_28"),": description = os.getenv("TEST_MAIN_SIMPLE_DESCRIPTION_28"),": version = os.getenv("TEST_MAIN_SIMPLE_VERSION_28"),": docs_url = os.getenv("TEST_MAIN_SIMPLE_DOCS_URL_28"),": redoc_url = os.getenv("TEST_MAIN_SIMPLE_REDOC_URL_28"))": assert test_app.title =="]足球预测API[" assert test_app.description =="]基于机器学习的足球比赛结果预测系统[" assert test_app.version =="]1.0.0[" assert test_app.docs_url =="]/docs[" assert test_app.redoc_url =="]/redoc[" def test_cors_middleware_basic("
     """"
         "]""测试CORS中间件基本配置"""
         # 创建FastAPI应用
         test_app = FastAPI()
         # 测试CORS配置逻辑
-        cors_origins = "http:_/localhost3000[": # 简化测试[": test_app.add_middleware(": CORSMiddleware,": allow_origins=cors_origins,"
+        cors_origins = os.getenv("TEST_MAIN_SIMPLE_CORS_ORIGINS_28"): # 简化测试[": test_app.add_middleware(": CORSMiddleware,": allow_origins=cors_origins,"
         allow_credentials=True,
         allow_methods=["]]GET[", "]POST[", "]PUT[", "]DELETE["],": allow_headers="]*")""""
         # 验证CORS中间件已添加
@@ -54,7 +54,7 @@ class TestMainApplicationSimple:
         mock_logger = MagicMock()
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http_/test.com/api/test[": # 创建HTTP异常[": exception = HTTPException(status_code=404, detail="]]页面未找到[")""""
+        mock_request.url = os.getenv("TEST_MAIN_SIMPLE_URL_50"): # 创建HTTP异常[": exception = HTTPException(status_code=404, detail = os.getenv("TEST_MAIN_SIMPLE_DETAIL_54"))""""
         # 创建HTTP异常处理器函数
         async def http_exception_handler(request, exc: HTTPException):
             mock_logger.error(f["]HTTP异常["]: [{exc.status_code} - {exc.detail)])": return JSONResponse(status_code=exc.status_code,": content={""
@@ -78,7 +78,7 @@ class TestMainApplicationSimple:
         mock_logger = MagicMock()
         # 创建模拟请求
         mock_request = MagicMock()
-        mock_request.url = "http_/test.com/api/test["""""
+        mock_request.url = os.getenv("TEST_MAIN_SIMPLE_URL_50")""""
         # 创建通用异常
         exception = ValueError("]测试异常[")""""
         # 创建通用异常处理器函数
@@ -157,7 +157,7 @@ class TestMainApplicationSimple:
             # 创建测试应用
             test_app = FastAPI(lifespan=test_lifespan)
             # 验证异常抛出
-            with pytest.raises(Exception, match = "]]]数据库连接失败[")": async def test_startup_failure():": async with test_lifespan(test_app):": pass"
+            with pytest.raises(Exception, match = os.getenv("TEST_MAIN_SIMPLE_MATCH_156"))": async def test_startup_failure():": async with test_lifespan(test_app):": pass"
                 asyncio.run(test_startup_failure())
                 # 验证错误日志
                 mock_logger.error.assert_called_with("]❌ 启动失败[": [数据库连接失败])": def test_environment_variable_parsing_basic(self):"""
@@ -168,11 +168,11 @@ class TestMainApplicationSimple:
             'ENVIRONMENT': 'development',
             'API_HOST': '0.0.0.0'
         )):
-            port = int(os.getenv("API_PORT[", 8000))": assert port ==9000[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": assert host =="]0.0.0.0[" # 测试生产环境配置[" with patch.dict(os.environ, {:"""
+            port = int(os.getenv("API_PORT[", 8000))": assert port ==9000[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_166"): else:": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_167"): host = os.getenv("]API_HOST[", default_host)": assert host =="]0.0.0.0[" # 测试生产环境配置[" with patch.dict(os.environ, {:"""
             'API_PORT': '8080',
             'ENVIRONMENT': 'production'
         )):
-            port = int(os.getenv("]]API_PORT[", 8000))": assert port ==8080[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": assert host =="]127.0.0.1[" def test_route_registration_basic("
+            port = int(os.getenv("]]API_PORT[", 8000))": assert port ==8080[" if os.getenv("]]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_166"): else:": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_167"): host = os.getenv("]API_HOST[", default_host)": assert host =="]127.0.0.1[" def test_route_registration_basic("
     """"
         "]""测试路由注册逻辑（简化版）"""
         # 创建一个简单的FastAPI应用来测试路由注册
@@ -185,7 +185,7 @@ class TestMainApplicationSimple:
             @health_router.get("]/health/readiness[")": async def readiness_check():": return {"]status[": ["]ready["}""""
             # 注册路由
             test_app.include_router(health_router)
-            test_app.include_router(health_router, prefix="]/api/v1[")""""
+            test_app.include_router(health_router, prefix = os.getenv("TEST_MAIN_SIMPLE_PREFIX_183"))""""
             # 验证路由已注册
             registered_routes = [route.path for route in test_app.routes if hasattr(route, 'path'"]}]": expected_routes = ["""
             "/health[",""""
@@ -245,11 +245,11 @@ class TestMainApplicationSimple:
             # 模拟日志配置
             logging.basicConfig(
             level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s[": )""""
+            format = os.getenv("TEST_MAIN_SIMPLE_FORMAT_236"): )""""
             # 验证调用
             mock_basicConfig.assert_called_with(
             level=logging.INFO,
-            format="]%(asctime)s - %(name)s - %(levelname)s - %(message)s["""""
+            format = os.getenv("TEST_MAIN_SIMPLE_FORMAT_241")""""
             )
     def test_uvicorn_configuration_logic_basic(self):
         "]""测试Uvicorn配置逻辑（简化版）"""
@@ -259,13 +259,13 @@ class TestMainApplicationSimple:
             'ENVIRONMENT': 'development',
             'API_HOST': '0.0.0.0'
         )):
-            port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development[": assert port ==9000[" assert host =="]]0.0.0.0[" assert reload is True[""""
+            port = int(os.getenv("API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_166"): else:": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_167"): host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development[": assert port ==9000[" assert host =="]]0.0.0.0[" assert reload is True[""""
         # 测试生产环境配置
         with patch.dict(os.environ, {:
             'API_PORT': '8080',
             'ENVIRONMENT': 'production'
         )):
-            port = int(os.getenv("]]API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = "]0.0.0.0[": else:": default_host = "]127.0.0.1[": host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development[": assert port ==8080[" assert host =="]]127.0.0.1[" assert reload is False["]"]" from fastapi import APIRouter"
+            port = int(os.getenv("]]API_PORT[", 8000))": if os.getenv("]ENVIRONMENT[") =="]development[":": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_166"): else:": default_host = os.getenv("TEST_MAIN_SIMPLE_DEFAULT_HOST_167"): host = os.getenv("]API_HOST[", default_host)": reload = os.getenv("]ENVIRONMENT[") =="]development[": assert port ==8080[" assert host =="]]127.0.0.1[" assert reload is False["]"]" from fastapi import APIRouter"
         from fastapi import FastAPI, HTTPException
         from fastapi.responses import JSONResponse
         from fastapi.middleware.cors import CORSMiddleware

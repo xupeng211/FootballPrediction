@@ -1,3 +1,4 @@
+import os
 """
 数据质量监控器
 
@@ -147,7 +148,7 @@ class DataQualityMonitor:
                 """
                 SELECT MAX(created_at) as last_update
                 FROM data_collection_logs
-                WHERE collection_type = 'fixtures' AND status = 'success'
+                WHERE collection_type = os.getenv("DATA_QUALITY_MONITOR_COLLECTION_TYPE_150") AND status = os.getenv("DATA_QUALITY_MONITOR_STATUS_150")
                 """
             )
             result = latest_log.fetchone()
@@ -287,7 +288,7 @@ class DataQualityMonitor:
                 FROM matches
                 WHERE (home_score > :score_max_value
                        OR away_score > :score_max_value)
-                AND match_status = 'finished'
+                AND match_status = os.getenv("DATA_QUALITY_MONITOR_MATCH_STATUS_288")
                 AND match_time > NOW() - INTERVAL '30 days'
                 """
                 ),

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from src.scheduler.task_scheduler import TaskScheduler, ScheduledTask
 from unittest.mock import Mock
 import pytest
+import os
 
 """
 TaskScheduler 基础测试套件
@@ -19,7 +20,7 @@ class TestTaskSchedulerBasic:
     def sample_task(self):
         """创建示例任务"""
         return ScheduledTask(
-            task_id="test_task[",": name="]测试任务[",": cron_expression="]0 0 * * *",  # 每天午夜[": task_function=lambda: print("]测试任务执行["))": class TestInitialization:"""
+            task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_22"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_22"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),  # 每天午夜[": task_function=lambda: print("]测试任务执行["))": class TestInitialization:"""
         "]""测试初始化"""
         def test_init_success(self):
             """测试成功初始化"""
@@ -144,7 +145,7 @@ class TestTaskSchedulerBasic:
             """测试成功更新任务调度"""
             scheduler.register_task(sample_task)
             original_next_run = sample_task.next_run_time
-            new_cron = "*/30 * * * *"  # 每30分钟[": result = scheduler.update_task_schedule(sample_task.task_id, new_cron)": assert result is True[" assert sample_task.cron_expression ==new_cron"
+            new_cron = os.getenv("TEST_TASK_SCHEDULER_BASIC_NEW_CRON_144")  # 每30分钟[": result = scheduler.update_task_schedule(sample_task.task_id, new_cron)": assert result is True[" assert sample_task.cron_expression ==new_cron"
             # 下次运行时间应该已经更新
             assert sample_task.next_run_time != original_next_run
         def test_update_task_schedule_nonexistent(self, scheduler):
@@ -154,12 +155,12 @@ class TestTaskSchedulerBasic:
         def test_task_creation(self):
             """测试任务创建"""
             task = ScheduledTask(
-                task_id="test_task[",": name="]测试任务[",": cron_expression="]0 0 * * *",": task_function=lambda: None)": assert task.task_id =="test_task[" assert task.name =="]测试任务[" assert task.cron_expression =="]0 0 * * *" assert task.last_run_time is None[""""
+                task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_22"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_22"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=lambda: None)": assert task.task_id =="test_task[" assert task.name =="]测试任务[" assert task.cron_expression =="]0 0 * * *" assert task.last_run_time is None[""""
             assert task.last_error is None
         def test_should_run_logic(self):
             "]""测试任务是否应该运行的逻辑"""
             task = ScheduledTask(
-                task_id="test_task[",": name="]测试任务[",": cron_expression="]0 0 * * *",": task_function=lambda: None)"""
+                task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_22"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_22"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=lambda: None)"""
             # 设置下次运行时间为过去
             task.next_run_time = datetime.now() - timedelta(minutes=1)
             assert task.should_run(datetime.now())
@@ -173,19 +174,19 @@ class TestTaskSchedulerBasic:
         def test_mark_completed(self):
             """测试标记任务完成"""
             task = ScheduledTask(
-                task_id="test_task[",": name="]测试任务[",": cron_expression="]0 0 * * *",": task_function=lambda: None)": task.mark_completed(success=True)": assert task.last_run_time is not None"
+                task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_22"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_22"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=lambda: None)": task.mark_completed(success=True)": assert task.last_run_time is not None"
             assert task.last_error is None
             task.mark_completed(success=False, error="任务失败[")": assert task.last_error =="]任务失败[" def test_to_dict("
     """"
             "]""测试转换为字典"""
             task = ScheduledTask(
-                task_id="test_task[",": name="]测试任务[",": cron_expression="]0 0 * * *",": task_function=lambda: None)": task_dict = task.to_dict()": assert isinstance(task_dict, dict)"
+                task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_22"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_22"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=lambda: None)": task_dict = task.to_dict()": assert isinstance(task_dict, dict)"
             assert task_dict["task_id["] ==task.task_id[" assert task_dict["]]name["] ==task.name[" class TestErrorHandling:"""
         "]]""测试错误处理"""
         def test_task_function_exception_handling(self, scheduler):
             """测试任务函数异常处理"""
             def failing_task():
-                raise Exception("任务失败[")": task = ScheduledTask(": task_id="]failing_task[",": name="]失败任务[",": cron_expression="]0 0 * * *",": task_function=failing_task)": scheduler.register_task(task)""
+                raise Exception("任务失败[")": task = ScheduledTask(": task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_181"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_182"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=failing_task)": scheduler.register_task(task)""
             # 执行任务 - scheduler handles exceptions internally
             scheduler.execute_task(task)
             # 检查任务状态
@@ -197,7 +198,7 @@ class TestTaskSchedulerBasic:
             """测试完整调度器工作流程"""
             # 创建测试任务
             task = ScheduledTask(
-                task_id="workflow_task[",": name="]工作流测试任务[",": cron_expression="]0 0 * * *",": task_function=Mock())"""
+                task_id = os.getenv("TEST_TASK_SCHEDULER_BASIC_TASK_ID_187"),": name = os.getenv("TEST_TASK_SCHEDULER_BASIC_NAME_188"),": cron_expression = os.getenv("TEST_TASK_SCHEDULER_BASIC_CRON_EXPRESSION_22"),": task_function=Mock())"""
             # 注册任务
             assert scheduler.register_task(task)
             # 检查状态

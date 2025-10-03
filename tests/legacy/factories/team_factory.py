@@ -1,3 +1,4 @@
+import os
 """""""
 Factory for generating football team test data.
 """""""
@@ -16,7 +17,7 @@ class TeamFactory(SQLAlchemyModelFactory):
     """Factory for generating football team data."""""""
 
     class Meta = model Team
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("TEAM_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_19")""""
 
     # Basic team information
     external_team_id = factory.LazyAttribute(lambda _: f["]team_{fake.uuid4().hex[:8]}"])": name = factory.LazyAttribute(lambda _: fake.company())": short_name = factory.LazyAttribute(lambda obj: obj.name[:3].upper())": country = factory.LazyAttribute(lambda _: fake.country())"

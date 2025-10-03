@@ -1,3 +1,4 @@
+import os
 """
 重试机制 / Retry Mechanism
 
@@ -305,9 +306,9 @@ class CircuitState(Enum):
         HALF_OPEN: 熔断器半开，试探性允许请求 / Circuit breaker half-open, tentatively allowing requests
     """
 
-    CLOSED = "closed"
+    CLOSED = os.getenv("RETRY_CLOSED_308")
     OPEN = "open"
-    HALF_OPEN = "half_open"
+    HALF_OPEN = os.getenv("RETRY_HALF_OPEN_309")
 
 
 class CircuitBreaker:

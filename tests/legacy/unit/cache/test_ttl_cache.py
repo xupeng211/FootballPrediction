@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from src.cache.ttl_cache import CacheEntry, TTLCache
 import asyncio
 import pytest
+import os
 
 """
 TTL缓存测试 / TTL Cache Tests
@@ -35,35 +36,35 @@ class TestCacheEntry:
     """缓存条目测试 / Cache Entry Tests"""
     def test_cache_entry_creation(self):
         """测试缓存条目创建 / Test cache entry creation"""
-        value = "test_value[": created_at = datetime.now()": ttl = timedelta(minutes=5)": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.value ==value"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now()": ttl = timedelta(minutes=5)": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.value ==value"
         assert entry.created_at ==created_at
         assert entry.ttl ==ttl
     def test_cache_entry_without_ttl(self):
         "]""测试无TTL的缓存条目 / Test cache entry without TTL"""
-        value = "test_value[": created_at = datetime.now()": entry = CacheEntry(value=value, created_at=created_at)": assert entry.value ==value[" assert entry.created_at ==created_at"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now()": entry = CacheEntry(value=value, created_at=created_at)": assert entry.value ==value[" assert entry.created_at ==created_at"
         assert entry.ttl is None
     def test_cache_entry_is_expired_with_ttl(self):
         "]]""测试带TTL的缓存条目是否过期 / Test if cache entry with TTL is expired"""
-        value = "test_value[": created_at = datetime.now() - timedelta(minutes=10)  # 10分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.is_expired() is True"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now() - timedelta(minutes=10)  # 10分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.is_expired() is True"
     def test_cache_entry_is_not_expired_with_ttl(self):
         "]]]""测试带TTL的缓存条目未过期 / Test if cache entry with TTL is not expired"""
-        value = "test_value[": created_at = datetime.now() - timedelta(minutes=2)  # 2分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.is_expired() is False"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now() - timedelta(minutes=2)  # 2分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": assert entry.is_expired() is False"
     def test_cache_entry_is_not_expired_without_ttl(self):
         "]]]""测试无TTL的缓存条目永不过期 / Test that cache entry without TTL never expires"""
-        value = "test_value[": created_at = datetime.now() - timedelta(days=365)  # 一年前创建[": entry = CacheEntry(value=value, created_at=created_at)": assert entry.is_expired() is False[" def test_cache_entry_get_remaining_ttl(self):"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now() - timedelta(days=365)  # 一年前创建[": entry = CacheEntry(value=value, created_at=created_at)": assert entry.is_expired() is False[" def test_cache_entry_get_remaining_ttl(self):"
         "]]]""测试获取缓存条目剩余TTL / Test getting remaining TTL for cache entry"""
-        value = "test_value[": created_at = datetime.now() - timedelta(minutes=2)  # 2分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": remaining_ttl = entry.get_remaining_ttl()"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now() - timedelta(minutes=2)  # 2分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": remaining_ttl = entry.get_remaining_ttl()"
         assert remaining_ttl is not None
         assert remaining_ttl.total_seconds() > 0
         assert remaining_ttl.total_seconds() < 180  # 小于3分钟
     def test_cache_entry_get_remaining_ttl_expired(self):
         "]]]""测试获取已过期缓存条目的剩余TTL / Test getting remaining TTL for expired cache entry"""
-        value = "test_value[": created_at = datetime.now() - timedelta(minutes=10)  # 10分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": remaining_ttl = entry.get_remaining_ttl()"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now() - timedelta(minutes=10)  # 10分钟前创建[": ttl = timedelta(minutes=5)  # 5分钟TTL[": entry = CacheEntry(value=value, created_at=created_at, ttl=ttl)": remaining_ttl = entry.get_remaining_ttl()"
         assert remaining_ttl is not None
         assert remaining_ttl.total_seconds() ==0
     def test_cache_entry_get_remaining_ttl_without_ttl(self):
         "]]]""测试获取无TTL缓存条目的剩余TTL / Test getting remaining TTL for cache entry without TTL"""
-        value = "test_value[": created_at = datetime.now()": entry = CacheEntry(value=value, created_at=created_at)": remaining_ttl = entry.get_remaining_ttl()": assert remaining_ttl is None"
+        value = os.getenv("TEST_TTL_CACHE_VALUE_38"): created_at = datetime.now()": entry = CacheEntry(value=value, created_at=created_at)": remaining_ttl = entry.get_remaining_ttl()": assert remaining_ttl is None"
 class TestTTLCache:
     "]""TTL缓存管理器测试 / TTL Cache Manager Tests"""
     @pytest.fixture
@@ -73,7 +74,7 @@ class TestTTLCache:
     @pytest.mark.asyncio
     async def test_ttl_cache_set_get(self, ttl_cache):
         """测试TTL缓存设置和获取 / Test TTL cache set and get"""
-        key = "test_key[": value = "]test_value["""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_71"): value = os.getenv("TEST_TTL_CACHE_VALUE_72")""""
         # 设置缓存值
         await ttl_cache.set(key, value)
         # 获取缓存值
@@ -82,14 +83,14 @@ class TestTTLCache:
     @pytest.mark.asyncio
     async def test_ttl_cache_get_nonexistent_key(self, ttl_cache):
         "]""测试获取不存在的缓存键 / Test getting non-existent cache key"""
-        key = "nonexistent_key["""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_80")""""
         # 获取不存在的键
         cached_value = await ttl_cache.get(key)
         assert cached_value is None
     @pytest.mark.asyncio
     async def test_ttl_cache_set_get_with_ttl(self, ttl_cache):
         "]""测试带TTL的缓存设置和获取 / Test TTL cache set and get with TTL"""
-        key = "test_key[": value = "]test_value[": ttl = timedelta(milliseconds=100)  # 100毫秒TTL[""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_71"): value = os.getenv("TEST_TTL_CACHE_VALUE_72"): ttl = timedelta(milliseconds=100)  # 100毫秒TTL[""""
         # 设置带TTL的缓存值
         await ttl_cache.set(key, value, ttl=ttl)
         # 立即获取缓存值
@@ -98,7 +99,7 @@ class TestTTLCache:
     @pytest.mark.asyncio
     async def test_ttl_cache_expiration(self, ttl_cache):
         "]]""测试TTL缓存过期 / Test TTL cache expiration"""
-        key = "test_key[": value = "]test_value[": ttl = timedelta(milliseconds=50)  # 50毫秒TTL[""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_71"): value = os.getenv("TEST_TTL_CACHE_VALUE_72"): ttl = timedelta(milliseconds=50)  # 50毫秒TTL[""""
         # 设置带TTL的缓存值
         await ttl_cache.set(key, value, ttl=ttl)
         # 人为调整创建时间以模拟过期，避免真实等待
@@ -110,7 +111,7 @@ class TestTTLCache:
     @pytest.mark.asyncio
     async def test_ttl_cache_delete(self, ttl_cache):
         "]""测试TTL缓存删除 / Test TTL cache deletion"""
-        key = "test_key[": value = "]test_value["""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_71"): value = os.getenv("TEST_TTL_CACHE_VALUE_72")""""
         # 设置缓存值
         await ttl_cache.set(key, value)
         # 删除缓存值
@@ -122,7 +123,7 @@ class TestTTLCache:
     @pytest.mark.asyncio
     async def test_ttl_cache_delete_nonexistent_key(self, ttl_cache):
         "]""测试删除不存在的缓存键 / Test deleting non-existent cache key"""
-        key = "nonexistent_key["""""
+        key = os.getenv("TEST_TTL_CACHE_KEY_80")""""
         # 删除不存在的键
         result = await ttl_cache.delete(key)
         assert result is False

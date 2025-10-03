@@ -1,3 +1,4 @@
+import os
 """
 Models API模块增强覆盖率测试
 目标：将 src/api/models.py 的覆盖率从12%提升到30%+
@@ -26,15 +27,15 @@ except ImportError as e:
     MODELS_AVAILABLE = False
     # 创建基础模拟模型用于测试
     class MatchStatus(str, Enum):
-        SCHEDULED = "scheduled"
+        SCHEDULED = os.getenv("TEST_MODELS_SCHEDULED_29")
         LIVE = "live"
-        FINISHED = "finished"
-        CANCELLED = "cancelled"
+        FINISHED = os.getenv("TEST_MODELS_FINISHED_30")
+        CANCELLED = os.getenv("TEST_MODELS_CANCELLED_31")
 
     class PredictionOutcome(str, Enum):
-        HOME_WIN = "home_win"
+        HOME_WIN = os.getenv("TEST_MODELS_HOME_WIN_32")
         DRAW = "draw"
-        AWAY_WIN = "away_win"
+        AWAY_WIN = os.getenv("TEST_MODELS_AWAY_WIN_34")
 
     class MatchResponse(BaseModel):
         id: int
@@ -84,7 +85,7 @@ except ImportError as e:
         components: Dict[str, Any]
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestMatchResponseModel:
     """比赛响应模型测试"""
 
@@ -206,7 +207,7 @@ class TestMatchResponseModel:
         assert match.home_score is None  # 原模型不变
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestTeamResponseModel:
     """球队响应模型测试"""
 
@@ -272,7 +273,7 @@ class TestTeamResponseModel:
             pass  # 如果有长度限制
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestPredictionModels:
     """预测模型测试"""
 
@@ -376,7 +377,7 @@ class TestPredictionModels:
                     pytest.fail(f"Expected valid response for confidence={confidence}")
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestHealthModels:
     """健康检查模型测试"""
 
@@ -429,7 +430,7 @@ class TestHealthModels:
             assert health.version == version
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestPaginationModels:
     """分页模型测试"""
 
@@ -483,7 +484,7 @@ class TestPaginationModels:
             pytest.skip("PaginatedResponse not available")
 
 
-@pytest.mark.skipif(not MODELS_AVAILABLE, reason="Models not available")
+@pytest.mark.skipif(not MODELS_AVAILABLE, reason = os.getenv("TEST_MODELS_REASON_81"))
 class TestAdvancedModelFeatures:
     """高级模型特性测试"""
 
@@ -589,7 +590,7 @@ class TestModelErrorHandling:
         # 测试字符串转整数
         with pytest.raises(ValidationError):
             MatchResponse(
-                id="invalid",  # 应该是整数
+                id = os.getenv("TEST_MODELS_ID_584"),  # 应该是整数
                 home_team_id=101,
                 away_team_id=102,
                 league_id=1,
@@ -605,7 +606,7 @@ class TestModelErrorHandling:
                 away_team_id=102,
                 league_id=1,
                 status=MatchStatus.SCHEDULED,
-                match_date="invalid_date"  # 应该是datetime
+                match_date = os.getenv("TEST_MODELS_MATCH_DATE_601")  # 应该是datetime
             )
 
     def test_missing_required_fields(self):

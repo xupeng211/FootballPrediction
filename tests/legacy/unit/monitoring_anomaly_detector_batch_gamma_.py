@@ -246,11 +246,11 @@ class TestAnomalyDetectorBatchGamma007:
         # 创建多个异常
         anomalies = [
             AnomalyResult(
-                table_name="matches[",": column_name="]home_score[",": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[100],"
+                table_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__TABLE_NAM"),": column_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__COLUMN_NA"),": anomaly_type=AnomalyType.OUTLIER,": severity=AnomalySeverity.CRITICAL,": anomalous_values=[100],"
                 anomaly_score=0.3,
-                detection_method="]3sigma[",": description="]严重异常["),": AnomalyResult(": table_name="]matches[",": column_name="]away_score[",": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.HIGH,": anomalous_values=[-10],"
+                detection_method = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DETECTION"),": description = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DESCRIPTI")),": AnomalyResult(": table_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__TABLE_NAM"),": column_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__COLUMN_NA"),": anomaly_type=AnomalyType.VALUE_RANGE,": severity=AnomalySeverity.HIGH,": anomalous_values=[-10],"
                 anomaly_score=0.15,
-                detection_method="]range[",": description="]范围异常["),": AnomalyResult(": table_name="]odds[",": column_name="]home_odds[",": anomaly_type=AnomalyType.FREQUENCY,": severity=AnomalySeverity.MEDIUM,": anomalous_values="]abnormal[",": anomaly_score=0.06,": detection_method="]frequency[",": description="]频率异常[")]": summary = await detector.get_anomaly_summary(anomalies)": assert summary["]total_anomalies["] ==3[" assert summary["]]by_severity["]"]critical[" ==1[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_severity["]"]medium[" ==1[" assert summary["]]by_type["]"]outlier[" ==1[" assert summary["]]by_type["]"]value_range[" ==1[" assert summary["]]by_type["]"]frequency[" ==1[" assert summary["]]by_table["]"]matches[" ==2[" assert summary["]]by_table["]"]odds[" ==1[" assert summary["]]critical_anomalies["] ==1[" assert summary["]]high_priority_anomalies["] ==2[" assert summary["]]most_affected_table["] =="]matches[" def test_detection_method_comprehensive_coverage("
+                detection_method = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DETECTION"),": description = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DESCRIPTI")),": AnomalyResult(": table_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__TABLE_NAM"),": column_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__COLUMN_NA"),": anomaly_type=AnomalyType.FREQUENCY,": severity=AnomalySeverity.MEDIUM,": anomalous_values = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__ANOMALOUS"),": anomaly_score=0.06,": detection_method = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DETECTION"),": description = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DESCRIPTI"))]": summary = await detector.get_anomaly_summary(anomalies)": assert summary["]total_anomalies["] ==3[" assert summary["]]by_severity["]"]critical[" ==1[" assert summary["]]by_severity["]"]high[" ==1[" assert summary["]]by_severity["]"]medium[" ==1[" assert summary["]]by_type["]"]outlier[" ==1[" assert summary["]]by_type["]"]value_range[" ==1[" assert summary["]]by_type["]"]frequency[" ==1[" assert summary["]]by_table["]"]matches[" ==2[" assert summary["]]by_table["]"]odds[" ==1[" assert summary["]]critical_anomalies["] ==1[" assert summary["]]high_priority_anomalies["] ==2[" assert summary["]]most_affected_table["] =="]matches[" def test_detection_method_comprehensive_coverage("
     """"
         "]""综合覆盖所有检测方法"""
         # 创建包含各种异常的数据
@@ -281,14 +281,14 @@ class TestAnomalyDetectorBatchGamma007:
         "]]""测试 AnomalyResult 类的全面覆盖"""
         # 测试所有异常类型
         for anomaly_type in AnomalyType = result AnomalyResult(
-                table_name="test[",": column_name="]test_column[",": anomaly_type=anomaly_type,": severity=AnomalySeverity.LOW,": anomalous_values=[1],"
+                table_name="test[",": column_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__COLUMN_NA"),": anomaly_type=anomaly_type,": severity=AnomalySeverity.LOW,": anomalous_values=[1],"
                 anomaly_score=0.1,
-                detection_method="]test[",": description="]test[")": assert result.anomaly_type ==anomaly_type[" assert result.to_dict()"]]anomaly_type[" ==anomaly_type.value[""""
+                detection_method = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DETECTION"),": description = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DESCRIPTI"))": assert result.anomaly_type ==anomaly_type[" assert result.to_dict()"]]anomaly_type[" ==anomaly_type.value[""""
         # 测试所有严重程度
         for severity in AnomalySeverity = result AnomalyResult(
-                table_name="]]test[",": column_name="]test_column[",": anomaly_type=AnomalyType.OUTLIER,": severity=severity,": anomalous_values=[1],"
+                table_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__TABLE_NAM"),": column_name = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__COLUMN_NA"),": anomaly_type=AnomalyType.OUTLIER,": severity=severity,": anomalous_values=[1],"
                 anomaly_score=0.1,
-                detection_method="]test[",": description="]test[")": assert result.severity ==severity[" assert result.to_dict()"]]severity[" ==severity.value[""""
+                detection_method = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DETECTION"),": description = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__DESCRIPTI"))": assert result.severity ==severity[" assert result.to_dict()"]]severity[" ==severity.value[""""
     @pytest.mark.asyncio
     async def test_detect_anomalies_with_specific_methods(self, detector):
         "]]""测试使用特定方法的异常检测"""
@@ -298,7 +298,7 @@ class TestAnomalyDetectorBatchGamma007:
             with patch.object(detector, "]]_detect_table_anomalies[", return_value = [])""""
                 # 测试特定方法
                 anomalies = await detector.detect_anomalies(
-                    table_names="]matches[", methods=["]three_sigma[", "]iqr["]""""
+                    table_names = os.getenv("MONITORING_ANOMALY_DETECTOR_BATCH_GAMMA__TABLE_NAM"), methods=["]three_sigma[", "]iqr["]""""
                 )
                 assert isinstance(anomalies, list)
     def test_anomaly_detection_edge_case_data(self, detector):

@@ -3,6 +3,7 @@ from datetime import datetime
 from src.lineage.lineage_reporter import LineageReporter, lineage_reporter
 from unittest.mock import Mock
 import pytest
+import os
 
 """
 Test suite for lineage reporter module
@@ -11,7 +12,7 @@ Test suite for lineage reporter module
 @pytest.fixture
 def lineage_reporter_instance():
     """Create a lineage reporter instance for testing"""
-    return LineageReporter(marquez_url = "http//test-marquez5000[")": def test_lineage_reporter_initialization():"""
+    return LineageReporter(marquez_url = os.getenv("TEST_LINEAGE_REPORTER_MARQUEZ_URL_14"))": def test_lineage_reporter_initialization():"""
     "]""Test initialization of LineageReporter"""
     reporter = LineageReporter()
     assert reporter is not None
@@ -23,7 +24,7 @@ def test_start_job_run(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     # Mock emit method
     mock_client.emit = Mock()
-    run_id = lineage_reporter_instance.start_job_run(job_name="test_job[",": job_type="]BATCH[",": inputs = [{"]name[: "input_dataset"", "namespace])],": description="Test job description[",": source_location="]test/location[",": transformation_sql="]SELECT * FROM test[")""""
+    run_id = lineage_reporter_instance.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_26"),": job_type = os.getenv("TEST_LINEAGE_REPORTER_JOB_TYPE_26"),": inputs = [{"]name[: "input_dataset"", "namespace])],": description = os.getenv("TEST_LINEAGE_REPORTER_DESCRIPTION_26"),": source_location = os.getenv("TEST_LINEAGE_REPORTER_SOURCE_LOCATION_26"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_TRANSFORMATION_SQL_26"))""""
     # Verify that run_id was returned and stored
     assert run_id is not None
     assert "]test_job[" in lineage_reporter_instance._active_runs[""""
@@ -37,7 +38,7 @@ def test_complete_job_run_with_run_id(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     # Manually add a run to active runs
-    test_run_id = "test-run-id-123[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(job_name="]]test_job[",": outputs = [{"]name[: "output_dataset"", "namespace]}],": metrics = {"records_processed[": 100),": run_id=test_run_id)"""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_34"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"),": outputs = [{"]name[: "output_dataset"", "namespace]}],": metrics = {"records_processed[": 100),": run_id=test_run_id)"""
     # Verify emit was called
     mock_client.emit.assert_called_once()
     assert result is True
@@ -50,7 +51,7 @@ def test_complete_job_run_without_run_id(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     # Manually add a run to active runs
-    test_run_id = "test-run-id-456[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(job_name="]]test_job[",": outputs = [{"]name[: "output_dataset"", "namespace]}],": metrics = {"records_processed[": 100))""""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_46"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"),": outputs = [{"]name[: "output_dataset"", "namespace]}],": metrics = {"records_processed[": 100))""""
     # Verify emit was called
     mock_client.emit.assert_called_once()
     assert result is True
@@ -58,14 +59,14 @@ def test_complete_job_run_without_run_id(lineage_reporter_instance):
     assert "]test_job[" not in lineage_reporter_instance._active_runs[""""
 def test_complete_job_run_no_active_run(lineage_reporter_instance):
     "]]""Test completing a job run when no active run exists"""
-    result = lineage_reporter_instance.complete_job_run(job_name="nonexistent_job[",": outputs = [{"]name[: "output_dataset"", "namespace])])": assert result is False[" def test_fail_job_run_with_run_id(lineage_reporter_instance):""
+    result = lineage_reporter_instance.complete_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_56"),": outputs = [{"]name[: "output_dataset"", "namespace])])": assert result is False[" def test_fail_job_run_with_run_id(lineage_reporter_instance):""
     "]""Test failing a job run with explicit run_id"""
     # Mock the OpenLineageClient
     mock_client = Mock()
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     # Manually add a run to active runs
-    test_run_id = "test-run-id-789[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name="]]test_job[", error_message="]Test error occurred[", run_id=test_run_id[""""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_61"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"), error_message = os.getenv("TEST_LINEAGE_REPORTER_ERROR_MESSAGE_62"), run_id=test_run_id[""""
     )
     # Verify emit was called
     mock_client.emit.assert_called_once()
@@ -79,7 +80,7 @@ def test_fail_job_run_without_run_id(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     # Manually add a run to active runs
-    test_run_id = "test-run-id-999[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name="]]test_job[", error_message="]Test error occurred["""""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_72"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"), error_message = os.getenv("TEST_LINEAGE_REPORTER_ERROR_MESSAGE_62")""""
     )
     # Verify emit was called
     mock_client.emit.assert_called_once()
@@ -89,7 +90,7 @@ def test_fail_job_run_without_run_id(lineage_reporter_instance):
 def test_fail_job_run_no_active_run(lineage_reporter_instance):
     "]]""Test failing a job run when no active run exists"""
     result = lineage_reporter_instance.fail_job_run(
-        job_name="nonexistent_job[", error_message="]Test error occurred["""""
+        job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_56"), error_message = os.getenv("TEST_LINEAGE_REPORTER_ERROR_MESSAGE_62")""""
     )
     assert result is False
 def test_report_data_collection(lineage_reporter_instance):
@@ -99,7 +100,7 @@ def test_report_data_collection(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     run_id = lineage_reporter_instance.report_data_collection(
-        source_name="test_source[",": target_table="]test_table[",": records_collected=100,": collection_time=datetime.now(),": source_config = {"]schema[": [{"]name[": "]id[", "]type[": "]int["}]})""""
+        source_name = os.getenv("TEST_LINEAGE_REPORTER_SOURCE_NAME_89"),": target_table = os.getenv("TEST_LINEAGE_REPORTER_TARGET_TABLE_90"),": records_collected=100,": collection_time=datetime.now(),": source_config = {"]schema[": [{"]name[": "]id[", "]type[": "]int["}]})""""
     # Verify that emit was called twice (start and complete events)
     assert mock_client.emit.call_count >= 1  # At least one emit call
     assert run_id is not None
@@ -110,7 +111,7 @@ def test_report_data_transformation(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     run_id = lineage_reporter_instance.report_data_transformation(
-        source_tables=["table1[", "]table2["],": target_table="]result_table[",": transformation_sql="]SELECT * FROM table1 JOIN table2[",": records_processed=50,": transformation_type="]JOIN[")""""
+        source_tables=["table1[", "]table2["],": target_table = os.getenv("TEST_LINEAGE_REPORTER_TARGET_TABLE_102"),": transformation_sql = os.getenv("TEST_LINEAGE_REPORTER_TRANSFORMATION_SQL_102"),": records_processed=50,": transformation_type = os.getenv("TEST_LINEAGE_REPORTER_TRANSFORMATION_TYPE_102"))""""
     # Verify that emit was called (start and complete events)
     assert mock_client.emit.call_count >= 1  # At least one emit call
     assert run_id is not None
@@ -140,7 +141,7 @@ def test_start_job_run_with_parent_run(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit = Mock()
     run_id = lineage_reporter_instance.start_job_run(
-        job_name="child_job[", parent_run_id="]parent-run-id-123["""""
+        job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_128"), parent_run_id = os.getenv("TEST_LINEAGE_REPORTER_PARENT_RUN_ID_129")""""
     )
     # Verify that run_id was returned and stored
     assert run_id is not None
@@ -150,14 +151,14 @@ def test_detect_exception_in_start_job_run(lineage_reporter_instance):
     # Mock the OpenLineageClient to raise an exception
     mock_client = Mock()
     lineage_reporter_instance.client = mock_client
-    mock_client.emit.side_effect = Exception("Client error[")": with pytest.raises(Exception, match = "]Client error[")": lineage_reporter_instance.start_job_run(job_name="]failing_job[")": def test_detect_exception_in_complete_job_run(lineage_reporter_instance):"""
+    mock_client.emit.side_effect = Exception("Client error[")": with pytest.raises(Exception, match = os.getenv("TEST_LINEAGE_REPORTER_MATCH_137"))": lineage_reporter_instance.start_job_run(job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_139"))": def test_detect_exception_in_complete_job_run(lineage_reporter_instance):"""
     "]""Test exception handling in complete_job_run"""
     # Mock the OpenLineageClient to raise an exception
     mock_client = Mock()
     lineage_reporter_instance.client = mock_client
     mock_client.emit.side_effect = Exception("Client error[")""""
     # Add a run to active runs
-    test_run_id = "]test-run-id-exception[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(": job_name="]]test_job[", run_id=test_run_id[""""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_147"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.complete_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"), run_id=test_run_id[""""
     )
     # Should return False due to exception
     assert result is False
@@ -170,7 +171,7 @@ def test_detect_exception_in_fail_job_run(lineage_reporter_instance):
     lineage_reporter_instance.client = mock_client
     mock_client.emit.side_effect = Exception("Client error[")""""
     # Add a run to active runs
-    test_run_id = "]test-run-id-exception[": lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name="]]test_job[", error_message="]Test error[", run_id=test_run_id[""""
+    test_run_id = os.getenv("TEST_LINEAGE_REPORTER_TEST_RUN_ID_147"): lineage_reporter_instance._active_runs["]test_job["] = test_run_id[": result = lineage_reporter_instance.fail_job_run(": job_name = os.getenv("TEST_LINEAGE_REPORTER_JOB_NAME_38"), error_message = os.getenv("TEST_LINEAGE_REPORTER_ERROR_MESSAGE_160"), run_id=test_run_id[""""
     )
     # Should return False due to exception
     assert result is False

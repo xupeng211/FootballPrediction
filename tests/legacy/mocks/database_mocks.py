@@ -1,3 +1,4 @@
+import os
 """""""
 Mock database objects for testing.
 """""""
@@ -186,6 +187,6 @@ class MockConnection:
     "]""Mock database configuration."""""""
 
     def __init__(self):
-        self.host = "localhost[": self.port = 5432[": self.database = "]]test_db[": self.username = "]test_user[": self.password = "]test_password[": self.pool_size = 10[": self.max_overflow = 20[": def get_connection_string(self) -> str:""
+        self.host = os.getenv("DATABASE_MOCKS_HOST_189"): self.port = 5432[": self.database = os.getenv("DATABASE_MOCKS_DATABASE_189"): self.username = os.getenv("DATABASE_MOCKS_USERNAME_189"): self.password = os.getenv("DATABASE_MOCKS_PASSWORD_189"): self.pool_size = 10[": self.max_overflow = 20[": def get_connection_string(self) -> str:""
         "]]]""Get mock connection string."""""""
         return f["postgresql://{self.username}:{self.password}@{self.host}{self.port}/{self.database}"]""""

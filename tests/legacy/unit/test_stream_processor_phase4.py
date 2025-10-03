@@ -1,6 +1,7 @@
 from src.streaming.stream_processor import StreamProcessor
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 @pytest.mark.asyncio
 async def test_send_data_stream_success_updates_stats_and_logs():
@@ -18,7 +19,7 @@ async def test_send_data_stream_records_failed_messages():
 async def test_send_data_handles_serialization_error():
     processor = StreamProcessor()
     producer = MagicMock()
-    producer.send_match_data = AsyncMock(side_effect=ValueError("]]bad payload["))": with patch.object(processor, "]_initialize_producer[", return_value = producer)": result = await processor.send_data({"]match_id[": 3), data_type="]match[")": assert result is False[" producer.send_match_data.assert_awaited_once()""
+    producer.send_match_data = AsyncMock(side_effect=ValueError("]]bad payload["))": with patch.object(processor, "]_initialize_producer[", return_value = producer)": result = await processor.send_data({"]match_id[": 3), data_type = os.getenv("TEST_STREAM_PROCESSOR_PHASE4_DATA_TYPE_21"))": assert result is False[" producer.send_match_data.assert_awaited_once()""
 def test_consume_data_handles_consumer_initialization_failure():
     processor = StreamProcessor()
     with patch.object(:

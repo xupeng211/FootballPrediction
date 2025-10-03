@@ -70,7 +70,7 @@ class CacheKeyManager:
 
         Examples:
             build_key('match', 123, 'features') -> 'match:123:features'
-            build_key('team', 1, 'stats', type='recent') -> 'team:1:stats:recent'
+            build_key('team', 1, 'stats', type = os.getenv("REDIS_MANAGER_TYPE_73")) -> 'team:1:stats:recent'
         """
         if prefix not in cls.PREFIXES:
             logger.warning(f"未知的Key前缀: {prefix}")
@@ -110,7 +110,7 @@ class CacheKeyManager:
         return CacheKeyManager.build_key("match", match_id, "features")
 
     @staticmethod
-    def team_stats_key(team_id: int, stats_type: str = "recent") -> str:
+    def team_stats_key(team_id: int, stats_type: str = os.getenv("REDIS_MANAGER_STR_113")) -> str:
         """球队统计Key: team:{id}:stats:{type}"""
         return CacheKeyManager.build_key("team", team_id, "stats", type=stats_type)
 
@@ -120,7 +120,7 @@ class CacheKeyManager:
         return CacheKeyManager.build_key("odds", match_id, bookmaker)
 
     @staticmethod
-    def prediction_key(match_id: int, model_version: str = "latest") -> str:
+    def prediction_key(match_id: int, model_version: str = os.getenv("REDIS_MANAGER_STR_122")) -> str:
         """预测结果Key: predictions:{match_id}:{model_version}"""
         return CacheKeyManager.build_key("predictions", match_id, model_version)
 

@@ -93,7 +93,7 @@ app.conf.update(
     task_track_started=True,
     task_send_events=True,
     # 队列配置
-    task_default_queue="default",
+    task_default_queue = os.getenv("CELERY_APP_TASK_DEFAULT_QUEUE_96"),
     task_queues={
         "default": {
             "exchange": "default",

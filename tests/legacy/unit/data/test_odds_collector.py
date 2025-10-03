@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import asyncio
 import pytest
 import responses
+import os
 
 """
 赔率数据采集器测试 - OddsCollector
@@ -20,7 +21,7 @@ class TestOddsCollector:
     @pytest.fixture
     def collector(self):
         """创建OddsCollector实例"""
-        with patch("src.data.collectors.base_collector.DatabaseManager["):": return OddsCollector(": api_key="]test_api_key[",": base_url = "]https//api.test-odds.com/v4[",": time_window_minutes=5["""
+        with patch("src.data.collectors.base_collector.DatabaseManager["):": return OddsCollector(": api_key = os.getenv("TEST_ODDS_COLLECTOR_API_KEY_23"),": base_url = os.getenv("TEST_ODDS_COLLECTOR_BASE_URL_23"),": time_window_minutes=5["""
             )
     def test_init(self, collector):
         "]]""测试初始化"""
@@ -254,7 +255,7 @@ class TestOddsCollector:
         "]outcomes[": [{"]name[": "]Home[", "]price[": "]2.10["}]""""
         }
         # 预先添加到最后赔率值缓存
-        odds_id = "]match_1:bet365h2h[": collector._last_odds_values["]odds_id[" = {"]Home[": Decimal("]2.10[")}": result = await collector._has_odds_changed(odds_data)": assert result is False[""
+        odds_id = os.getenv("TEST_ODDS_COLLECTOR_ODDS_ID_254"): collector._last_odds_values["]odds_id[" = {"]Home[": Decimal("]2.10[")}": result = await collector._has_odds_changed(odds_data)": assert result is False[""
     @pytest.mark.asyncio
     async def test_has_odds_changed_empty_outcomes(self, collector):
         "]]""测试空结果数据"""

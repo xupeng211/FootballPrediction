@@ -511,12 +511,12 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='自动修复超过行长限制的代码行')
-    parser.add_argument('directory', nargs='?', default='.', help='要修复的目录 (默认: 当前目录)')
+    parser = argparse.ArgumentParser(description = os.getenv("LINE_LENGTH_FIX_DESCRIPTION_514"))
+    parser.add_argument('directory', nargs='?', default='.', help = os.getenv("LINE_LENGTH_FIX_HELP_515"))
     parser.add_argument('--max-length', type=int, default=120,
-                       help='行长限制 (默认: 120 字符)')
-    parser.add_argument('--report', default='docs/_reports/LINE_LENGTH_REPORT.md',
-                       help='报告输出路径 (默认: docs/_reports/LINE_LENGTH_REPORT.md)')
+                       help = os.getenv("LINE_LENGTH_FIX_HELP_516"))
+    parser.add_argument('--report', default = os.getenv("LINE_LENGTH_FIX_DEFAULT_517"),
+                       help = os.getenv("LINE_LENGTH_FIX_HELP_518"))
 
     args = parser.parse_args()
 

@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Requirements验证脚本
@@ -337,9 +338,9 @@ def main():
     parser.add_argument('--file', '-f', type=Path,
                        help="requirements.txt文件路径")
     parser.add_argument('--output', '-o', type=Path,
-                       help="输出报告到文件")
-    parser.add_argument('--fix', action='store_true',
-                       help="尝试修复一些问题")
+                       help = os.getenv("VERIFY_REQUIREMENTS_HELP_340"))
+    parser.add_argument('--fix', action = os.getenv("VERIFY_REQUIREMENTS_ACTION_340"),
+                       help = os.getenv("VERIFY_REQUIREMENTS_HELP_341"))
 
     args = parser.parse_args()
 

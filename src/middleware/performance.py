@@ -1,3 +1,4 @@
+import os
 """
 性能优化中间件
 Performance Optimization Middleware
@@ -194,7 +195,7 @@ class BatchProcessingMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        batch_header: str = "X-Batch-Request",
+        batch_header: str = os.getenv("PERFORMANCE_STR_197"),
         max_batch_size: int = 100,
     ):
         super().__init__(app)
@@ -247,7 +248,7 @@ class BatchProcessingMiddleware(BaseHTTPMiddleware):
 
             return Response(
                 content=json.dumps(batch_response),
-                media_type="application/json",
+                media_type = os.getenv("PERFORMANCE_MEDIA_TYPE_250"),
                 headers={"X-Batch-Response": "true"}
             )
 

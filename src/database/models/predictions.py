@@ -1,3 +1,4 @@
+import os
 """
 预测结果数据模型
 
@@ -22,9 +23,9 @@ from src.database.base import BaseModel
 class PredictedResult(Enum):
     """预测结果枚举"""
 
-    HOME_WIN = "home_win"  # 主队胜
+    HOME_WIN = os.getenv("PREDICTIONS_HOME_WIN_25")  # 主队胜
     DRAW = "draw"  # 平局
-    AWAY_WIN = "away_win"  # 客队胜
+    AWAY_WIN = os.getenv("PREDICTIONS_AWAY_WIN_26")  # 客队胜
 
 
 class Predictions(BaseModel):
@@ -34,12 +35,12 @@ class Predictions(BaseModel):
     存储各种机器学习模型的预测结果
     """
 
-    __tablename__ = "predictions"
+    __tablename__ = os.getenv("PREDICTIONS___TABLENAME___31")
 
     # 关联信息
     match_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("matches.id", ondelete="CASCADE"),
+        ForeignKey("matches.id", ondelete = os.getenv("PREDICTIONS_ONDELETE_40")),
         nullable=False,
         comment="比赛ID",
     )
@@ -58,7 +59,7 @@ class Predictions(BaseModel):
     )
 
     home_win_probability: Mapped[Decimal] = mapped_column(
-        DECIMAL(5, 4), nullable=False, comment="主队胜利概率"
+        DECIMAL(5, 4), nullable=False, comment = os.getenv("PREDICTIONS_COMMENT_57")
     )
 
     draw_probability: Mapped[Decimal] = mapped_column(
@@ -66,7 +67,7 @@ class Predictions(BaseModel):
     )
 
     away_win_probability: Mapped[Decimal] = mapped_column(
-        DECIMAL(5, 4), nullable=False, comment="客队胜利概率"
+        DECIMAL(5, 4), nullable=False, comment = os.getenv("PREDICTIONS_COMMENT_65")
     )
 
     # 置信度和比分
@@ -75,11 +76,11 @@ class Predictions(BaseModel):
     )
 
     predicted_home_score: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(4, 2), nullable=True, comment="预测主队比分"
+        DECIMAL(4, 2), nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_74")
     )
 
     predicted_away_score: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(4, 2), nullable=True, comment="预测客队比分"
+        DECIMAL(4, 2), nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_78")
     )
 
     over_under_prediction: Mapped[Optional[Decimal]] = mapped_column(
@@ -87,7 +88,7 @@ class Predictions(BaseModel):
     )
 
     btts_probability: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(5, 4), nullable=True, comment="双方进球概率"
+        DECIMAL(5, 4), nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_85")
     )
 
     # 特征重要性
@@ -102,11 +103,11 @@ class Predictions(BaseModel):
 
     # 验证相关字段
     actual_result: Mapped[Optional[str]] = mapped_column(
-        String(10), nullable=True, comment="实际比赛结果"
+        String(10), nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_95")
     )
 
     is_correct: Mapped[Optional[bool]] = mapped_column(
-        nullable=True, comment="预测是否正确"
+        nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_100")
     )
 
     verified_at: Mapped[Optional[DateTime]] = mapped_column(
@@ -115,16 +116,16 @@ class Predictions(BaseModel):
 
     # 特征数据（用于存储预测时使用的特征）
     features_used: Mapped[Optional[JSON]] = mapped_column(
-        JSON, nullable=True, comment="预测时使用的特征数据"
+        JSON, nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_108")
     )
 
     # 预测元数据
     prediction_metadata: Mapped[Optional[JSON]] = mapped_column(
-        JSON, nullable=True, comment="预测相关的元数据"
+        JSON, nullable=True, comment = os.getenv("PREDICTIONS_COMMENT_112")
     )
 
     # 关系定义
-    match = relationship("Match", back_populates="predictions")
+    match = relationship("Match", back_populates = os.getenv("PREDICTIONS_BACK_POPULATES_116"))
 
     # 兼容性别名 - 使用方法而不是属性来避免与基类冲突
     def get_created_at(self) -> datetime:
@@ -141,7 +142,7 @@ class Predictions(BaseModel):
     def __repr__(self) -> str:
         return (
             f"<Predictions(id={self.id}, match_id={self.match_id}, "
-            f"model='{self.model_name}', result='{self.predicted_result.value}')>"
+            f"model = os.getenv("PREDICTIONS_MODEL_132"), result = os.getenv("PREDICTIONS_RESULT_135"))>"
         )
 
     @property

@@ -4,6 +4,7 @@ from comprehensive_mcp_health_check import MCPHealthChecker
 from unittest.mock import Mock, patch, mock_open
 import pytest
 import subprocess
+import os
 
 """
 Unit tests for comprehensive_mcp_health_check.py
@@ -132,15 +133,15 @@ class TestPostgresMCPCheck:
         "]""测试Docker命令执行成功"""
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = "container1\ncontainer2\ncontainer3\n[": mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]✅ 正常[" assert "]container1[" in result["]response["]""""
+        mock_result.stdout = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_STDOUT_135"): mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]✅ 正常[" assert "]container1[" in result["]response["]""""
     @patch("]subprocess.run[")": def test_check_docker_command_fails(self, mock_run):"""
         "]""测试Docker命令执行失败"""
         mock_result = Mock()
         mock_result.returncode = 1
-        mock_result.stderr = "Command not found[": mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]❌ 异常[" assert "]Command not found[" in result["]error["]""""
+        mock_result.stderr = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_STDERR_140"): mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]❌ 异常[" assert "]Command not found[" in result["]error["]""""
     @patch("]subprocess.run[")": def test_check_docker_timeout(self, mock_run):"""
         "]""测试Docker命令超时"""
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd="docker[", timeout=10)": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]❌ 异常[" class TestKubernetesMCPCheck:""""
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_CMD_142"), timeout=10)": checker = MCPHealthChecker()": checker.check_docker_mcp()": assert "]Docker MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Docker MCP[": assert result["]status["] =="]❌ 异常[" class TestKubernetesMCPCheck:""""
     "]""测试Kubernetes MCP检查"""
     @patch("comprehensive_mcp_health_check.client.CoreV1Api[")""""
     @patch("]comprehensive_mcp_health_check.config.load_kube_config[")": def test_check_kubernetes_success(self, mock_load_config, mock_api_class):"""
@@ -148,7 +149,7 @@ class TestPostgresMCPCheck:
         mock_api = Mock()
         mock_pods = Mock()
         mock_pod1 = Mock()
-        mock_pod1.metadata.name = "pod1[": mock_pod2 = Mock()": mock_pod2.metadata.name = "]pod2[": mock_pods.items = ["]mock_pod1[", mock_pod2]": mock_api.list_namespaced_pod.return_value = mock_pods[": mock_api_class.return_value = mock_api[": checker = MCPHealthChecker()"
+        mock_pod1.metadata.name = "pod1[": mock_pod2 = Mock()": mock_pod2.metadata.name = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_NAME_150"): mock_pods.items = ["]mock_pod1[", mock_pod2]": mock_api.list_namespaced_pod.return_value = mock_pods[": mock_api_class.return_value = mock_api[": checker = MCPHealthChecker()"
         checker.check_kubernetes_mcp()
         assert "]]]Kubernetes MCP[" in checker.results["]global_mcp["]: result = checker.results["]global_mcp["]"]Kubernetes MCP[": assert result["]status["] =="]✅ 正常[" assert "]pod1[" in result["]response["]""""
     @patch("]comprehensive_mcp_health_check.client.CoreV1Api[")""""
@@ -199,7 +200,7 @@ class TestPostgresMCPCheck:
         "]""测试MLflow连接成功"""
         mock_client = Mock()
         mock_exp1 = Mock()
-        mock_exp1.name = "Experiment 1[": mock_exp2 = Mock()": mock_exp2.name = "]Experiment 2[": mock_client.search_experiments.return_value = ["]mock_exp1[", mock_exp2]": mock_client_class.return_value = mock_client[": checker = MCPHealthChecker()": checker.check_mlflow_mcp()"
+        mock_exp1.name = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_NAME_198"): mock_exp2 = Mock()": mock_exp2.name = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_NAME_199"): mock_client.search_experiments.return_value = ["]mock_exp1[", mock_exp2]": mock_client_class.return_value = mock_client[": checker = MCPHealthChecker()": checker.check_mlflow_mcp()"
         assert "]]MLflow MCP[" in checker.results["]project_mcp["]: result = checker.results["]project_mcp["]"]MLflow MCP[": assert result["]status["] =="]✅ 正常[" assert "]Experiment 1[" in result["]response["]""""
     @patch("]comprehensive_mcp_health_check.mlflow.MlflowClient[")""""
     @patch("]comprehensive_mcp_health_check.mlflow.set_tracking_uri[")": def test_check_mlflow_connection_error(self, mock_set_uri, mock_client_class):"""
@@ -212,7 +213,7 @@ class TestPostgresMCPCheck:
         mock_exists.return_value = True
         mock_store = Mock()
         mock_fv1 = Mock()
-        mock_fv1.name = "feature_view_1[": mock_fv2 = Mock()": mock_fv2.name = "]feature_view_2[": mock_store.list_feature_views.return_value = ["]mock_fv1[", mock_fv2]": mock_store_class.return_value = mock_store[": checker = MCPHealthChecker()": checker.check_feast_mcp()"
+        mock_fv1.name = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_NAME_210"): mock_fv2 = Mock()": mock_fv2.name = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_NAME_210"): mock_store.list_feature_views.return_value = ["]mock_fv1[", mock_fv2]": mock_store_class.return_value = mock_store[": checker = MCPHealthChecker()": checker.check_feast_mcp()"
         assert "]]Feast MCP[" in checker.results["]project_mcp["]: result = checker.results["]project_mcp["]"]Feast MCP[": assert result["]status["] =="]✅ 正常[" assert "]feature_view_1[" in result["]response["]""""
     @patch("]comprehensive_mcp_health_check.Path.exists[")": def test_check_feast_no_config_file(self, mock_exists):"""
         "]""测试Feast配置文件不存在"""
@@ -228,7 +229,7 @@ class TestPostgresMCPCheck:
         # 模拟XML解析
         mock_root = Mock()
         mock_coverage = Mock()
-        mock_coverage.get.return_value = "]0.75["  # 75%覆盖率[": mock_root.find.return_value = mock_coverage[": mock_tree = Mock()": mock_tree.getroot.return_value = mock_root"
+        mock_coverage.get.return_value = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_RETURN_VALUE_2")  # 75%覆盖率[": mock_root.find.return_value = mock_coverage[": mock_tree = Mock()": mock_tree.getroot.return_value = mock_root"
         mock_parse.return_value = mock_tree
         checker = MCPHealthChecker()
         checker.check_coverage_mcp()
@@ -250,7 +251,7 @@ class TestPostgresMCPCheck:
         "]""测试Pytest执行失败"""
         mock_result = Mock()
         mock_result.returncode = 1
-        mock_result.stderr = "No tests found[": mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_pytest_mcp()": assert "]]Pytest MCP[" in checker.results["]project_mcp["]: result = checker.results["]project_mcp["]"]Pytest MCP[": assert result["]status["] =="]❌ 异常[" assert "]No tests found[" in result["]error["]: class TestGenerateReport:""""
+        mock_result.stderr = os.getenv("TEST_COMPREHENSIVE_MCP_HEALTH_CHECK_STDERR_247"): mock_run.return_value = mock_result[": checker = MCPHealthChecker()": checker.check_pytest_mcp()": assert "]]Pytest MCP[" in checker.results["]project_mcp["]: result = checker.results["]project_mcp["]"]Pytest MCP[": assert result["]status["] =="]❌ 异常[" assert "]No tests found[" in result["]error["]: class TestGenerateReport:""""
     "]""测试报告生成功能"""
     @patch("builtins.open[", new_callable=mock_open)""""
     @patch("]comprehensive_mcp_health_check.Path.mkdir[")": def test_generate_report_basic(self, mock_mkdir, mock_file):"""

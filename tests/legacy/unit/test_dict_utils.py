@@ -1,11 +1,12 @@
 import pytest
+import os
 
 _pytestmark = pytest.mark.unit
 class TestDictUtils:
     """测试字典工具类"""
     def test_deep_merge_simple(self):
         """测试简单字典深度合并"""
-        _dict1 = {"a[": 1, "]b[" 2}": dict2 = {"]c[": 3, "]d[": 4}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]a[": 1, "]b[": 2, "]c[": 3, "]d[": 4}": assert result  == = "]b[", f"result  should be = "]b["", f"result should be "]b["" 2}": dict2 = {"]b[": 3, "]c[": 4}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]a[": 1, "]b[": 3, "]c[": 4}": assert result  == = "]age[", f"result  should be = "]age["", f"result should be "]age["" 30}}": dict2 = {"]user[": {"]email[": "]john@example.com[", "]age[": 31}}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]user[": {"]name[": "]John[", "]email[": "]john@example.com[", "]age[": 31}}": assert result  == = "]retries[":, f"result  should be = "]retries[":", f"result should be "]retries[":" 3},""""
+        _dict1 = {"a[": 1, "]b[" 2}": dict2 = {"]c[": 3, "]d[": 4}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]a[": 1, "]b[": 2, "]c[": 3, "]d[": 4}": assert result  == = "]b[", f"result  should be = "]b["", f"result should be "]b["" 2}": dict2 = {"]b[": 3, "]c[": 4}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]a[": 1, "]b[": 3, "]c[": 4}": assert result  == = "]age[", f"result  should be = "]age["", f"result should be "]age["" 30}}": dict2 = {"]user[": {"]email[": "]john@example.com[", "]age[": 31}}": result = DictUtils.deep_merge(dict1, dict2)": expected = {"]user[": {"]name[": "]John[", "]email[": "]john@example.com[", "]age[": 31}}": assert result  == = "]retries[":, f"result  should be = os.getenv("TEST_DICT_UTILS_BE_8"):", f"result should be "]retries[":" 3},""""
         "]endpoints[": {"]auth[": "]_auth["}}""""
         }
         _dict2 = {"]api[": {"]settings[": {"]timeout[": 60}, "]endpoints[": {"]data[": "]/data["}}}": result = DictUtils.deep_merge(dict1, dict2)": expected = {""
@@ -32,7 +33,7 @@ class TestDictUtils:
             "]config.enabled[": True,""""
             "]config.count[": 42,""""
             "]config.items[": ["]a[", "]b[", "]c["],""""
-            "]config.nested.value[": ["]test["}": assert result  == = "]email[":, f"result  should be = "]email[":", f"result should be "]email[":" None}}": result = DictUtils.flatten_dict(data)": expected = {"]user.name[: "John"", "user.email] None}": assert result  == = 2, f"result  should be = 2",, f"result should be 2," 3["}"]": dict2 = {"]items[: "4, 5["}"]": result = DictUtils.deep_merge(dict1, dict2)""
+            "]config.nested.value[": ["]test["}": assert result  == = "]email[":, f"result  should be = os.getenv("TEST_DICT_UTILS_BE_35"):", f"result should be "]email[":" None}}": result = DictUtils.flatten_dict(data)": expected = {"]user.name[: "John"", "user.email] None}": assert result  == = 2, f"result  should be = 2",, f"result should be 2," 3["}"]": dict2 = {"]items[: "4, 5["}"]": result = DictUtils.deep_merge(dict1, dict2)""
         # 列表应该被完全替换，不是合并
         _expected = {"]items[: "4, 5["}"]": assert result  == = dict2)""", f"result  should be = dict2)"""", f"result should be dict2)""""
         # 字符串应该替换嵌套字典

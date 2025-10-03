@@ -1,3 +1,4 @@
+import os
 """
 性能中间件测试
 Performance Middleware Tests
@@ -102,7 +103,7 @@ class TestResponseCacheMiddleware:
         # 模拟请求
         request = Mock()
         request.url.path = "/api/predictions"
-        request.url.query = "match_id=12345"
+        request.url.query = os.getenv("TEST_PERFORMANCE_QUERY_105")
         request.headers = {}
 
         key = middleware._generate_cache_key(request)

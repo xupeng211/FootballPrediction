@@ -1,3 +1,4 @@
+import os
 """数据库集成测试"""
 
 import pytest
@@ -61,7 +62,7 @@ class TestDatabaseIntegration:
         """测试核心表是否存在"""
         # 检查matches表是否存在
         result = session.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name='matches'")
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name = os.getenv("TEST_DATABASE_INTEGRATION_NAME_64")")
         )
         assert result.scalar() == "matches"
 

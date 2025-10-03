@@ -3,6 +3,7 @@ import json
 from src.streaming.kafka_producer import FootballKafkaProducer
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 """
 Kafka生产者简单测试套件
@@ -48,7 +49,7 @@ class TestFootballKafkaProducer:
             mock_producer_class.assert_called_once()
     def test_producer_init_failure(self, mock_stream_config):
         "]]""测试FootballKafkaProducer初始化失败"""
-        with patch("confluent_kafka.Producer[") as mock_producer_class:": mock_producer_class.side_effect = Exception("]连接失败[")": with pytest.raises(Exception, match = "]连接失败[")": FootballKafkaProducer(mock_stream_config)": def test_serialize_message_success(self, producer):""
+        with patch("confluent_kafka.Producer[") as mock_producer_class:": mock_producer_class.side_effect = Exception("]连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_KAFKA_PRODUCER_SIMPLE_MATCH_51"))": FootballKafkaProducer(mock_stream_config)": def test_serialize_message_success(self, producer):""
         "]""测试成功序列化消息"""
         test_data = {"match_id[": 123, "]home_team[": "]Test FC[", "]away_team[": "]Away FC["}": result = producer._serialize_message(test_data)": expected = json.dumps(test_data).encode("]utf-8[")": assert result ==expected[" def test_serialize_message_with_complex_data(self, producer):""
         "]]""测试序列化复杂数据"""
@@ -62,17 +63,17 @@ class TestFootballKafkaProducer:
             producer._serialize_message(None)
     def test_produce_message_success(self, producer):
         """测试成功发送消息"""
-        topic = "test-topic[": message = {"]test[": ["]data["}": key = "]test-key[": producer.producer.produce.return_value = None[": producer.producer.flush.return_value = 1[": result = producer.produce_message(topic, message, key)": assert result is True"
+        topic = os.getenv("TEST_KAFKA_PRODUCER_SIMPLE_TOPIC_63"): message = {"]test[": ["]data["}": key = os.getenv("TEST_KAFKA_PRODUCER_SIMPLE_KEY_65"): producer.producer.produce.return_value = None[": producer.producer.flush.return_value = 1[": result = producer.produce_message(topic, message, key)": assert result is True"
         producer.producer.produce.assert_called_once()
         producer.producer.flush.assert_called_once()
     def test_produce_message_without_key(self, producer):
         "]]]""测试发送无key消息"""
-        topic = "test-topic[": message = {"]test[": ["]data["}": producer.producer.produce.return_value = None[": producer.producer.flush.return_value = 1[": result = producer.produce_message(topic, message)"
+        topic = os.getenv("TEST_KAFKA_PRODUCER_SIMPLE_TOPIC_63"): message = {"]test[": ["]data["}": producer.producer.produce.return_value = None[": producer.producer.flush.return_value = 1[": result = producer.produce_message(topic, message)"
         assert result is True
         producer.producer.produce.assert_called_once()
     def test_produce_message_failure(self, producer):
         "]]]""测试发送消息失败"""
-        topic = "test-topic[": message = {"]test[": ["]data["}": producer.producer.produce.side_effect = Exception("]发送失败[")": result = producer.produce_message(topic, message)": assert result is False[" def test_flush_success(self, producer):"
+        topic = os.getenv("TEST_KAFKA_PRODUCER_SIMPLE_TOPIC_63"): message = {"]test[": ["]data["}": producer.producer.produce.side_effect = Exception("]发送失败[")": result = producer.produce_message(topic, message)": assert result is False[" def test_flush_success(self, producer):"
         "]]""测试成功刷新缓冲区"""
         producer.producer.flush.return_value = 1
         result = producer.flush()

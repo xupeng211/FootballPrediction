@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 CI问题智能分析器 - 深度分析CI失败原因并提供精确解决方案
@@ -140,12 +141,7 @@ class PytestOutputParser(CIToolOutput):
 
         for line in output.split("\n"):
             # 检测失败测试开始
-            if "= FAILURES =" in line:
-                in_failure_section = True
-                continue
-
-            # 检测失败测试结束
-            if line.startswith("=") and "short test summary" in line:
+            if "= FAILURES = os.getenv("CI_ISSUE_ANALYZER_FAILURES_143")=") and "short test summary" in line:
                 in_failure_section = False
                 if current_test and failure_lines:
                     issues.append(self._parse_test_failure(current_test, failure_lines))
@@ -614,14 +610,14 @@ class CIAnalyzer:
 
 @click.command()
 @click.option(
-    "--tool", "-t", help="分析特定工具的输出 (ruff, mypy, pytest, bandit, coverage)"
+    "--tool", "-t", help = os.getenv("CI_ISSUE_ANALYZER_HELP_614")
 )
-@click.option("--input-file", "-i", help="输入文件路径 (工具输出或日志文件)")
-@click.option("--output", "-o", help="输出分析报告的文件路径")
-@click.option("--log-file", "-l", help="质量检查日志文件路径")
-@click.option("--summary", "-s", is_flag=True, help="显示分析摘要")
-@click.option("--recommendations", "-r", is_flag=True, help="显示解决建议")
-@click.option("--project-root", "-p", help="项目根目录路径")
+@click.option("--input-file", "-i", help = os.getenv("CI_ISSUE_ANALYZER_HELP_616"))
+@click.option("--output", "-o", help = os.getenv("CI_ISSUE_ANALYZER_HELP_617"))
+@click.option("--log-file", "-l", help = os.getenv("CI_ISSUE_ANALYZER_HELP_617"))
+@click.option("--summary", "-s", is_flag=True, help = os.getenv("CI_ISSUE_ANALYZER_HELP_618"))
+@click.option("--recommendations", "-r", is_flag=True, help = os.getenv("CI_ISSUE_ANALYZER_HELP_618"))
+@click.option("--project-root", "-p", help = os.getenv("CI_ISSUE_ANALYZER_HELP_618"))
 def main(tool, input_file, output, log_file, summary, recommendations, project_root):
     """
     🔍 CI问题智能分析器

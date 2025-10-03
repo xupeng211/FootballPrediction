@@ -1,3 +1,4 @@
+import os
 """
 监控API路由测试
 测试覆盖src/api/monitoring.py中的所有路由
@@ -167,7 +168,7 @@ class TestPrometheusMetrics:
     async def test_get_prometheus_metrics_success(self, mock_exporter):
         """测试获取Prometheus格式指标成功"""
         mock_exporter_instance = MagicMock()
-        mock_exporter_instance.render_metrics.return_value = "# HELP test_metric\n"
+        mock_exporter_instance.render_metrics.return_value = os.getenv("TEST_MONITORING_API_RETURN_VALUE_170")
         mock_exporter.return_value = mock_exporter_instance
 
         from src.api.monitoring import get_prometheus_metrics

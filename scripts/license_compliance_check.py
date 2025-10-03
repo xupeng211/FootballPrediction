@@ -22,9 +22,9 @@ sys.path.insert(0, str(project_root))
 
 class ComplianceStatus(Enum):
     """合规状态"""
-    COMPLIANT = "compliant"
-    WARNING = "warning"
-    NON_COMPLIANT = "non_compliant"
+    COMPLIANT = os.getenv("LICENSE_COMPLIANCE_CHECK_COMPLIANT_25")
+    WARNING = os.getenv("LICENSE_COMPLIANCE_CHECK_WARNING_25")
+    NON_COMPLIANT = os.getenv("LICENSE_COMPLIANCE_CHECK_NON_COMPLIANT_25")
 
 
 @dataclass
@@ -101,7 +101,7 @@ class LicenseComplianceChecker:
                 warning_packages=0,
                 non_compliant_packages=0,
                 issues=[],
-                summary="无法获取许可证数据"
+                summary = os.getenv("LICENSE_COMPLIANCE_CHECK_SUMMARY_101")
             )
 
         # 检查每个包
@@ -136,7 +136,7 @@ class LicenseComplianceChecker:
             summary = f"发现 {warning_packages} 个需要警告的包"
         else:
             status = ComplianceStatus.COMPLIANT
-            summary = "所有许可证都符合要求"
+            summary = os.getenv("LICENSE_COMPLIANCE_CHECK_SUMMARY_135")
 
         return ComplianceReport(
             status=status,
@@ -174,10 +174,10 @@ class LicenseComplianceChecker:
                 return ComplianceIssue(
                     package_name=name,
                     license_name=license_name,
-                    issue_type="forbidden_license",
-                    severity="critical",
+                    issue_type = os.getenv("LICENSE_COMPLIANCE_CHECK_ISSUE_TYPE_173"),
+                    severity = os.getenv("LICENSE_COMPLIANCE_CHECK_SEVERITY_174"),
                     description=f"包 {name} 使用了禁止的许可证: {license_name}",
-                    recommendation="请立即寻找替代包"
+                    recommendation = os.getenv("LICENSE_COMPLIANCE_CHECK_RECOMMENDATION_176")
                 )
 
         # 检查警告许可证
@@ -188,19 +188,19 @@ class LicenseComplianceChecker:
                     return ComplianceIssue(
                         package_name=name,
                         license_name=license_name,
-                        issue_type="agpl_license",
+                        issue_type = os.getenv("LICENSE_COMPLIANCE_CHECK_ISSUE_TYPE_184"),
                         severity="high",
                         description=f"包 {name} 使用了AGPL许可证",
-                        recommendation="AGPL要求网络服务也开源，请评估法律风险"
+                        recommendation = os.getenv("LICENSE_COMPLIANCE_CHECK_RECOMMENDATION_187")
                     )
                 # 其他Copyleft许可证是中等警告
                 return ComplianceIssue(
                     package_name=name,
                     license_name=license_name,
-                    issue_type="copyleft_license",
-                    severity="medium",
+                    issue_type = os.getenv("LICENSE_COMPLIANCE_CHECK_ISSUE_TYPE_192"),
+                    severity = os.getenv("LICENSE_COMPLIANCE_CHECK_SEVERITY_193"),
                     description=f"包 {name} 使用了Copyleft许可证: {license_name}",
-                    recommendation="请确认使用方式符合许可证要求"
+                    recommendation = os.getenv("LICENSE_COMPLIANCE_CHECK_RECOMMENDATION_194")
                 )
 
         # 检查未知许可证
@@ -208,10 +208,10 @@ class LicenseComplianceChecker:
             return ComplianceIssue(
                 package_name=name,
                 license_name=license_name,
-                issue_type="unknown_license",
+                issue_type = os.getenv("LICENSE_COMPLIANCE_CHECK_ISSUE_TYPE_201"),
                 severity="low",
                 description=f"包 {name} 使用了未知许可证: {license_name}",
-                recommendation="请手动验证许可证合规性"
+                recommendation = os.getenv("LICENSE_COMPLIANCE_CHECK_RECOMMENDATION_202")
             )
 
         # 检查特定包的额外要求
@@ -246,7 +246,7 @@ class LicenseComplianceChecker:
             return ComplianceIssue(
                 package_name=name,
                 license_name=license_name,
-                issue_type="special_requirement",
+                issue_type = os.getenv("LICENSE_COMPLIANCE_CHECK_ISSUE_TYPE_231"),
                 severity=pkg_info['severity'],
                 description=pkg_info['issue'],
                 recommendation=pkg_info['recommendation']
@@ -377,15 +377,15 @@ def main():
     import argparse
     from datetime import datetime
 
-    parser = argparse.ArgumentParser(description="许可证合规检查")
+    parser = argparse.ArgumentParser(description = os.getenv("LICENSE_COMPLIANCE_CHECK_DESCRIPTION_360"))
     parser.add_argument('--input', '-i', type=Path,
-                       help="输入的许可证报告文件")
+                       help = os.getenv("LICENSE_COMPLIANCE_CHECK_HELP_361"))
     parser.add_argument('--output', '-o', type=Path,
-                       help="输出的合规报告文件")
+                       help = os.getenv("LICENSE_COMPLIANCE_CHECK_HELP_364"))
     parser.add_argument('--format', choices=['text', 'json'],
                        default='text', help="输出格式")
-    parser.add_argument('--ci', action='store_true',
-                       help="CI模式，返回退出码")
+    parser.add_argument('--ci', action = os.getenv("LICENSE_COMPLIANCE_CHECK_ACTION_368"),
+                       help = os.getenv("LICENSE_COMPLIANCE_CHECK_HELP_368"))
 
     args = parser.parse_args()
 

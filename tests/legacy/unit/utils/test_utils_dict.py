@@ -1,5 +1,6 @@
 from src.utils.dict_utils import DictUtils
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 class TestDictUtils:
@@ -26,7 +27,7 @@ class TestDictUtils:
         "]""测试自定义分隔符的扁平化"""
         d = {"a[": {"]x[": 1}, "]b[": 2}": result = DictUtils.flatten_dict(d, sep="]_[")": assert result =={"]a_x[" 1, "]b[" 2}" def test_flatten_dict_with_parent_key(self):"""
         "]""测试带父键的扁平化"""
-        d = {"x[": 1, "]y[": {"]z[": 2}}": result = DictUtils.flatten_dict(d, parent_key="]parent[")": assert result =={"]parent.x[" 1, "]parent.y.z[" 2}" def test_flatten_dict_empty(self):"""
+        d = {"x[": 1, "]y[": {"]z[": 2}}": result = DictUtils.flatten_dict(d, parent_key = os.getenv("TEST_UTILS_DICT_PARENT_KEY_29"))": assert result =={"]parent.x[" 1, "]parent.y.z[" 2}" def test_flatten_dict_empty(self):"""
         "]""测试空字典扁平化"""
         result = DictUtils.flatten_dict({))
     assert result =={}

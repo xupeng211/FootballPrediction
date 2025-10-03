@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import asyncio
 import pytest
 import responses
+import os
 
 """
 足球数据采集器测试 - ScoresCollector
@@ -164,7 +165,7 @@ class TestScoresCollector:
     async def test_process_response_invalid_json(self, collector):
         "]]""测试无效JSON响应处理"""
         with patch.object(collector, '_make_request') as mock_request:
-            mock_request.return_value = "invalid json string[": try:": pass[": except Exception as e:": pass  # Auto-fixed empty except block"
+            mock_request.return_value = os.getenv("TEST_SCORES_COLLECTOR_RETURN_VALUE_167"): try:": pass[": except Exception as e:": pass  # Auto-fixed empty except block"
  pass
                 pass
             except Exception as e:

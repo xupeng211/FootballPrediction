@@ -84,7 +84,7 @@ class TestDataFeaturesExamples:
         mock_dataframe.return_value = mock_df
         example_write_team_features(mock_store)
         mock_store.write_features.assert_called_once_with(
-            _feature_view_name = "team_recent_stats[", df=mock_df[""""
+            _feature_view_name = os.getenv("TEST_DATA_FEATURES_EXAMPLES__FEATURE_VIEW_NAME_87"), df=mock_df[""""
         )
     @patch("]]src.data.features.examples.pd.DataFrame[")": def test_example_write_odds_features_success(self, mock_dataframe):"""
         "]""测试写入赔率特征成功场景"""
@@ -94,7 +94,7 @@ class TestDataFeaturesExamples:
         mock_dataframe.return_value = mock_df
         example_write_odds_features(mock_store)
         mock_store.write_features.assert_called_once_with(
-            _feature_view_name = "odds_features[", df=mock_df[""""
+            _feature_view_name = os.getenv("TEST_DATA_FEATURES_EXAMPLES__FEATURE_VIEW_NAME_96"), df=mock_df[""""
         )
     @patch("]]src.data.features.examples.pd.DataFrame[")": def test_example_get_online_features_success(self, mock_dataframe):"""
         "]""测试获取在线特征成功场景"""

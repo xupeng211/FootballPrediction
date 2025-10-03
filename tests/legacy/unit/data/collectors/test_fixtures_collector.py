@@ -3,6 +3,7 @@ from datetime import datetime
 from src.data.collectors.fixtures_collector import FixturesCollector
 from unittest.mock import patch
 import pytest
+import os
 
 #!/usr/bin/env python3
 """
@@ -22,7 +23,7 @@ class TestFixturesCollector:
     def setup_method(self):
         """设置测试环境"""
         self.collector = FixturesCollector(
-            data_source="test_api[",": api_key="]test_key[",": base_url = "]https//api.test.com/v4[")": def test_init_with_default_values(self):"""
+            data_source = os.getenv("TEST_FIXTURES_COLLECTOR_DATA_SOURCE_25"),": api_key = os.getenv("TEST_FIXTURES_COLLECTOR_API_KEY_25"),": base_url = os.getenv("TEST_FIXTURES_COLLECTOR_BASE_URL_25"))": def test_init_with_default_values(self):"""
         "]""测试默认初始化"""
         collector = FixturesCollector()
         assert collector.data_source =="football_api[" assert collector.api_key is None[""""
@@ -31,7 +32,7 @@ class TestFixturesCollector:
     def test_init_with_custom_values(self):
         "]""测试自定义初始化"""
         collector = FixturesCollector(
-            data_source="custom_api[",": api_key="]custom_key[",": base_url = "]https//custom.api.com[")": assert collector.data_source =="]custom_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com["""""
+            data_source = os.getenv("TEST_FIXTURES_COLLECTOR_DATA_SOURCE_31"),": api_key = os.getenv("TEST_FIXTURES_COLLECTOR_API_KEY_32"),": base_url = os.getenv("TEST_FIXTURES_COLLECTOR_BASE_URL_33"))": assert collector.data_source =="]custom_api[" assert collector.api_key =="]custom_key[" assert collector.base_url =="]https//custom.api.com["""""
     @pytest.mark.asyncio
     async def test_collect_fixtures_success(self):
         "]""测试成功采集赛程数据"""

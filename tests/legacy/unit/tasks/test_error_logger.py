@@ -4,6 +4,7 @@ from src.tasks.error_logger import TaskErrorLogger
 from unittest.mock import Mock, patch, AsyncMock
 import asyncio
 import pytest
+import os
 
 """
 任务错误日志记录器测试套件
@@ -66,7 +67,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_task_error_success(self, error_logger):
         "]]""测试成功记录任务错误"""
-        task_name = "test_task[": task_id = "]task-123[": error = Exception("]Test error message[")": context = {"]param1[: "value1"", "param2]}": retry_count = 2[": await error_logger.log_task_error(": task_name=task_name,"
+        task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_69"): task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_69"): error = Exception("]Test error message[")": context = {"]param1[: "value1"", "param2]}": retry_count = 2[": await error_logger.log_task_error(": task_name=task_name,"
             task_id=task_id,
             error=error,
             context=context,
@@ -80,7 +81,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_task_error_without_context(self, error_logger):
         "]]""测试记录任务错误（无上下文）"""
-        task_name = "test_task[": task_id = "]task-123[": error = Exception("]Test error[")": await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error[""
+        task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_69"): task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_69"): error = Exception("]Test error[")": await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error[""
         )
         # 验证数据库保存被调用
         error_logger._save_error_to_db.assert_called_once()
@@ -90,7 +91,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_task_error_default_retry_count(self, error_logger):
         "]""测试记录任务错误（默认重试次数）"""
-        task_name = "test_task[": task_id = "]task-123[": error = Exception("]Test error[")": await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error[""
+        task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_69"): task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_69"): error = Exception("]Test error[")": await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error[""
         )
         # 验证默认重试次数为0
         call_args = error_logger._save_error_to_db.call_args[0][0]
@@ -98,7 +99,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_task_error_db_save_failure(self, error_logger):
         "]]""测试数据库保存失败时的处理"""
-        error_logger._save_error_to_db.side_effect = Exception("DB save failed[")": task_name = "]test_task[": task_id = "]task-123[": error = Exception("]Test error[")""""
+        error_logger._save_error_to_db.side_effect = Exception("DB save failed[")": task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_99"): task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_69"): error = Exception("]Test error[")""""
         # 调用不应该抛出异常
         await error_logger.log_task_error(
             task_name=task_name, task_id=task_id, error=error
@@ -112,7 +113,7 @@ class TestLogTaskError:
             def __init__(self, message, code):
                 super().__init__(message)
                 self.code = code
-        error = CustomError("Custom error message[", 500)": task_name = "]test_task[": task_id = "]task-123[": await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error["""
+        error = CustomError("Custom error message[", 500)": task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_99"): task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_69"): await error_logger.log_task_error(": task_name=task_name, task_id=task_id, error=error["""
         )
         # 验证异常类型正确
         call_args = error_logger._save_error_to_db.call_args[0][0]
@@ -136,7 +137,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_api_failure_success(self, error_logger):
         "]]""测试成功记录API失败"""
-        task_name = "test_task[": api_endpoint = "]/api/fixtures[": http_status = 404[": error_message = "]]Not Found[": retry_count = 1[": response_data = {"]]error[: "Resource not found["}"]": await error_logger.log_api_failure(": task_name=task_name,"
+        task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_69"): api_endpoint = os.getenv("TEST_ERROR_LOGGER_API_ENDPOINT_131"): http_status = 404[": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_133"): retry_count = 1[": response_data = {"]]error[: "Resource not found["}"]": await error_logger.log_api_failure(": task_name=task_name,"
             api_endpoint=api_endpoint,
             http_status=http_status,
             error_message=error_message,
@@ -151,7 +152,7 @@ class TestLogTaskError:
     async def test_log_api_failure_minimal_params(self, error_logger):
         "]]""测试记录API失败（最小参数）"""
         await error_logger.log_api_failure(
-            task_name="test_task[",": api_endpoint="]/api/test[",": http_status=None,": error_message="]Test error[")""""
+            task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_149"),": api_endpoint = os.getenv("TEST_ERROR_LOGGER_API_ENDPOINT_149"),": http_status=None,": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_149"))""""
         # 验证数据库保存被调用
         error_logger._save_error_to_db.assert_called_once()
         call_args = error_logger._save_error_to_db.call_args[0][0]
@@ -160,7 +161,7 @@ class TestLogTaskError:
     @pytest.mark.asyncio
     async def test_log_api_failure_db_save_failure(self, error_logger):
         "]]""测试数据库保存失败"""
-        error_logger._save_error_to_db.side_effect = Exception("DB error[")": await error_logger.log_api_failure(": task_name="]test_task[",": api_endpoint="]/api/test[",": http_status=500,": error_message="]Server Error[")""""
+        error_logger._save_error_to_db.side_effect = Exception("DB error[")": await error_logger.log_api_failure(": task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_155"),": api_endpoint = os.getenv("TEST_ERROR_LOGGER_API_ENDPOINT_149"),": http_status=500,": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_156"))""""
         # 验证即使失败也尝试了保存
         error_logger._save_error_to_db.assert_called_once()
 class TestLogDataCollectionError:
@@ -200,7 +201,7 @@ class TestLogDataCollectionError:
             "]src.tasks.error_logger.CollectionStatus["""""
         ) as mock_status:
             mock_log_class.return_value = mock_log_entry
-            mock_status.FAILED.value = "]failed[": result = await error_logger.log_data_collection_error(": data_source="]api.test.com[",": collection_type="]fixtures[",": error_message="]API timeout[",": records_processed=100,": success_count=80,": error_count=20)"
+            mock_status.FAILED.value = os.getenv("TEST_ERROR_LOGGER_VALUE_190"): result = await error_logger.log_data_collection_error(": data_source = os.getenv("TEST_ERROR_LOGGER_DATA_SOURCE_191"),": collection_type = os.getenv("TEST_ERROR_LOGGER_COLLECTION_TYPE_192"),": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_193"),": records_processed=100,": success_count=80,": error_count=20)"
             # 验证返回日志ID
             assert result ==123
             # 验证DataCollectionLog被正确创建
@@ -222,7 +223,7 @@ class TestLogDataCollectionError:
             "]src.tasks.error_logger.CollectionStatus["""""
         ) as mock_status:
             mock_log_class.return_value = mock_log_entry
-            mock_status.FAILED.value = "]failed[": result = await error_logger.log_data_collection_error(": data_source="]api.test.com[",": collection_type="]fixtures[",": error_message="]Test error[")""""
+            mock_status.FAILED.value = os.getenv("TEST_ERROR_LOGGER_VALUE_190"): result = await error_logger.log_data_collection_error(": data_source = os.getenv("TEST_ERROR_LOGGER_DATA_SOURCE_191"),": collection_type = os.getenv("TEST_ERROR_LOGGER_COLLECTION_TYPE_192"),": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_149"))""""
             # 验证默认值和返回值
             assert result is None
             call_args = mock_log_class.call_args[1]
@@ -236,7 +237,7 @@ class TestLogDataCollectionError:
             "]src.tasks.error_logger.CollectionStatus["""""
         ):
             result = await error_logger.log_data_collection_error(
-                data_source="]api.test.com[",": collection_type="]fixtures[",": error_message="]Test error[")""""
+                data_source = os.getenv("TEST_ERROR_LOGGER_DATA_SOURCE_191"),": collection_type = os.getenv("TEST_ERROR_LOGGER_COLLECTION_TYPE_192"),": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_149"))""""
             # 验证异常时返回None
             assert result is None
     @pytest.mark.asyncio
@@ -246,7 +247,7 @@ class TestLogDataCollectionError:
             "Session error["""""
         )
         result = await error_logger.log_data_collection_error(
-            data_source="]api.test.com[",": collection_type="]fixtures[",": error_message="]Test error[")""""
+            data_source = os.getenv("TEST_ERROR_LOGGER_DATA_SOURCE_191"),": collection_type = os.getenv("TEST_ERROR_LOGGER_COLLECTION_TYPE_192"),": error_message = os.getenv("TEST_ERROR_LOGGER_ERROR_MESSAGE_149"))""""
         # 验证异常时返回None
         assert result is None
 class TestSaveErrorToDb:
@@ -324,7 +325,7 @@ class TestTaskErrorLoggerIntegration:
         with patch("src.tasks.error_logger.DatabaseManager[") as mock_db_class:": mock_db_manager = Mock()": mock_db_class.return_value = mock_db_manager[": logger = TaskErrorLogger()"
             logger._save_error_to_db = AsyncMock()
             # 测试完整的错误记录流程
-            error = Exception("]]Integration test error[")": await logger.log_task_error(": task_name="]integration_test[",": task_id="]integration-123[",": error=error,": context = {"]test[": ["]integration["},": retry_count=1)"""
+            error = Exception("]]Integration test error[")": await logger.log_task_error(": task_name = os.getenv("TEST_ERROR_LOGGER_TASK_NAME_308"),": task_id = os.getenv("TEST_ERROR_LOGGER_TASK_ID_309"),": error=error,": context = {"]test[": ["]integration["},": retry_count=1)"""
             # 验证保存被调用
             logger._save_error_to_db.assert_called_once()
             call_args = logger._save_error_to_db.call_args[0][0]

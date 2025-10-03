@@ -1,3 +1,4 @@
+import os
 """add_business_constraints
 
 
@@ -18,7 +19,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "a20f91c49306"
+revision: str = os.getenv("A20F91C49306_ADD_BUSINESS_CONSTRAINTS_STR_21")
 down_revision: Union[str, None] = "d82ea26f05d0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

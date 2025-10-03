@@ -135,7 +135,7 @@ class TestDataAPIMocks:
                     offset=10,
                     league_id=1,
                     team_id=101,
-                    status="finished",
+                    status = os.getenv("TEST_DATA_STATUS_138"),
                     session=mock_session
                 )
                 assert result is not None

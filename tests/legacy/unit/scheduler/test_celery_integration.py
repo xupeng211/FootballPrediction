@@ -4,6 +4,7 @@ from src.scheduler.tasks import (
 from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import pytest
+import os
 
 """
 Unit tests for Celery task integration with mocked external dependencies.:
@@ -52,7 +53,7 @@ class TestCeleryTaskIntegration:
         """Mock Celery application."""
         mock_app = MagicMock()
         mock_app.conf = MagicMock()
-        mock_app.conf.broker_url = "redis://localhost6379/0[": mock_app.conf.result_backend = "]redis://localhost6379/0[": mock_app.conf.task_always_eager = True[": mock_app.conf.task_eager_propagates = True[": return mock_app[""
+        mock_app.conf.broker_url = os.getenv("TEST_CELERY_INTEGRATION_BROKER_URL_55"): mock_app.conf.result_backend = os.getenv("TEST_CELERY_INTEGRATION_RESULT_BACKEND_55"): mock_app.conf.task_always_eager = True[": mock_app.conf.task_eager_propagates = True[": return mock_app[""
     @pytest.fixture
     def mock_database_manager(self):
         "]]]]""Mock database manager."""
@@ -107,7 +108,7 @@ class TestCeleryTaskIntegration:
             "]""Test Kafka message consumption with mocked consumer."""
             # Mock incoming message
             mock_message = MagicMock()
-            mock_message.value = b'{"match_id[": 1, "]data[": "]test["}'": mock_message.topic = "]test_topic[": mock_message.partition = 0[": mock_message.offset = 123[": mock_kafka_consumer.poll.return_value = {("]]]test_topic[", 0) ["]mock_message["}": with patch(:"""
+            mock_message.value = b'{"match_id[": 1, "]data[": "]test["}'": mock_message.topic = os.getenv("TEST_CELERY_INTEGRATION_TOPIC_110"): mock_message.partition = 0[": mock_message.offset = 123[": mock_kafka_consumer.poll.return_value = {("]]]test_topic[", 0) ["]mock_message["}": with patch(:"""
                 "]src.scheduler.celery_config.kafka_consumer[", mock_kafka_consumer[""""
             ):
                 from src.scheduler.celery_config import consume_messages
@@ -137,17 +138,17 @@ class TestCeleryTaskIntegration:
             mock_result = MagicMock()
             mock_result.fetchall.return_value = [
                 MagicMock(
-                    id=1, home_team="Team A[", away_team="]Team B[", date="]2024-01-01["""""
+                    id=1, home_team = os.getenv("TEST_CELERY_INTEGRATION_HOME_TEAM_138"), away_team = os.getenv("TEST_CELERY_INTEGRATION_AWAY_TEAM_138"), date = os.getenv("TEST_CELERY_INTEGRATION_DATE_139")""""
                 ),
                 MagicMock(
-                    id=2, home_team="]Team C[", away_team="]Team D[", date="]2024-01-02["""""
+                    id=2, home_team = os.getenv("TEST_CELERY_INTEGRATION_HOME_TEAM_140"), away_team = os.getenv("TEST_CELERY_INTEGRATION_AWAY_TEAM_140"), date = os.getenv("TEST_CELERY_INTEGRATION_DATE_140")""""
                 )]
             mock_session.execute.return_value = mock_result
             mock_database_manager.get_async_session.return_value.__aenter__.return_value = (
                 mock_session
             )
             # Execute task
-            result = await collect_fixtures(league_id=1, season="]2024[")""""
+            result = await collect_fixtures(league_id=1, season = os.getenv("TEST_CELERY_INTEGRATION_SEASON_143"))""""
             # Verify database interaction
             mock_session.execute.assert_called_once()
             assert result is not None  # Task should complete successfully
@@ -185,7 +186,7 @@ class TestCeleryTaskIntegration:
             mock_session = AsyncMock()
             mock_result = MagicMock()
             mock_result.fetchall.return_value = [
-                MagicMock(id=1, home_team="Team A[", away_team="]Team B[", status="]LIVE["),": MagicMock(id=2, home_team="]Team C[", away_team="]Team D[", status="]LIVE[")]": mock_session.execute.return_value = mock_result[": mock_database_manager.get_async_session.return_value.__aenter__.return_value = (": mock_session"
+                MagicMock(id=1, home_team = os.getenv("TEST_CELERY_INTEGRATION_HOME_TEAM_138"), away_team = os.getenv("TEST_CELERY_INTEGRATION_AWAY_TEAM_138"), status = os.getenv("TEST_CELERY_INTEGRATION_STATUS_182")),": MagicMock(id=2, home_team = os.getenv("TEST_CELERY_INTEGRATION_HOME_TEAM_140"), away_team = os.getenv("TEST_CELERY_INTEGRATION_AWAY_TEAM_140"), status = os.getenv("TEST_CELERY_INTEGRATION_STATUS_182"))]": mock_session.execute.return_value = mock_result[": mock_database_manager.get_async_session.return_value.__aenter__.return_value = (": mock_session"
             )
             # Mock API response
             with patch("]]src.scheduler.tasks.requests.get[") as mock_get:": mock_response = MagicMock()": mock_response.json.return_value = {""
@@ -307,7 +308,7 @@ class TestCeleryTaskIntegration:
             """Test handling of successful task results."""
             # Mock successful task result
             mock_result = MagicMock()
-            mock_result.status = "SUCCESS[": mock_result.result = {"]data[": ["]processed["}": mock_result.traceback = None["""
+            mock_result.status = os.getenv("TEST_CELERY_INTEGRATION_STATUS_300"): mock_result.result = {"]data[": ["]processed["}": mock_result.traceback = None["""
             # Process result
             if mock_result.status =="]]SUCCESS[": processed_data = mock_result.result[": assert processed_data["]]data["] =="]processed["""""
         @pytest.mark.asyncio
@@ -315,7 +316,7 @@ class TestCeleryTaskIntegration:
             "]""Test handling of failed task results."""
             # Mock failed task result
             mock_result = MagicMock()
-            mock_result.status = "FAILURE[": mock_result.result = None[": mock_result.traceback = "]]Traceback ... error details ..."""""
+            mock_result.status = os.getenv("TEST_CELERY_INTEGRATION_STATUS_308"): mock_result.result = None[": mock_result.traceback = os.getenv("TEST_CELERY_INTEGRATION_TRACEBACK_309")""""
             # Process result
             if mock_result.status =="FAILURE[": error_info = {""""
                     "]status[": mock_result.status,""""
@@ -340,7 +341,7 @@ class TestCeleryTaskIntegration:
             """Test task routing to appropriate queues."""
             with patch("src.scheduler.celery_config.celery_app[", mock_celery_app):": from src.scheduler.celery_config import route_task_to_queue["""
                 # Test queue routing logic
-                task_name = "]]collect_fixtures[": queue_name = route_task_to_queue(task_name)""""
+                task_name = os.getenv("TEST_CELERY_INTEGRATION_TASK_NAME_331"): queue_name = route_task_to_queue(task_name)""""
                 # Verify routing
                 assert queue_name in [
                     "]default[",""""
@@ -377,7 +378,7 @@ class TestCeleryTaskIntegration:
             "]]""Test collection of task failure metrics."""
             start_time = datetime.now()
             # Simulate failed task
-            failure_reason = "Database connection failed[": exception_type = "]ConnectionError[": end_time = datetime.now()": duration = (end_time - start_time).total_seconds()"""
+            failure_reason = os.getenv("TEST_CELERY_INTEGRATION_FAILURE_REASON_364"): exception_type = os.getenv("TEST_CELERY_INTEGRATION_EXCEPTION_TYPE_365"): end_time = datetime.now()": duration = (end_time - start_time).total_seconds()"""
             # Collect failure metrics
             metrics = {
                 "]start_time[": start_time,""""

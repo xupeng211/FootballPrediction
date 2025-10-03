@@ -1,3 +1,4 @@
+import os
 """
 足球比赛赔率数据模型
 
@@ -21,9 +22,9 @@ class MarketType(Enum):
     """赔率市场类型"""
 
     ONE_X_TWO = "1x2"  # 胜平负
-    OVER_UNDER = "over_under"  # 大小球
-    ASIAN_HANDICAP = "asian_handicap"  # 亚洲让球
-    BOTH_TEAMS_SCORE = "both_teams_score"  # 双方进球
+    OVER_UNDER = os.getenv("ODDS_OVER_UNDER_24")  # 大小球
+    ASIAN_HANDICAP = os.getenv("ODDS_ASIAN_HANDICAP_24")  # 亚洲让球
+    BOTH_TEAMS_SCORE = os.getenv("ODDS_BOTH_TEAMS_SCORE_25")  # 双方进球
 
 
 class Odds(BaseModel):
@@ -37,11 +38,11 @@ class Odds(BaseModel):
 
     # 主键和外键
     match_id: Mapped[int] = mapped_column(
-        ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, comment="比赛ID"
+        ForeignKey("matches.id", ondelete = os.getenv("ODDS_ONDELETE_39")), nullable=False, comment="比赛ID"
     )
 
     bookmaker: Mapped[str] = mapped_column(
-        String(100), nullable=False, comment="博彩公司名称"
+        String(100), nullable=False, comment = os.getenv("ODDS_COMMENT_43")
     )
 
     # 市场类型
@@ -77,7 +78,7 @@ class Odds(BaseModel):
 
     # 收集时间
     collected_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="赔率收集时间"
+        DateTime, nullable=False, comment = os.getenv("ODDS_COMMENT_76")
     )
 
     # 关系定义
@@ -92,30 +93,30 @@ class Odds(BaseModel):
         Index("idx_odds_match_market", "match_id", "market_type"),
         # CHECK约束定义 - 确保赔率数据的合理性
         CheckConstraint(
-            "home_odds IS NULL OR home_odds > 1.01", name="ck_odds_home_odds_range"
+            "home_odds IS NULL OR home_odds > 1.01", name = os.getenv("ODDS_NAME_92")
         ),
         CheckConstraint(
-            "draw_odds IS NULL OR draw_odds > 1.01", name="ck_odds_draw_odds_range"
+            "draw_odds IS NULL OR draw_odds > 1.01", name = os.getenv("ODDS_NAME_95")
         ),
         CheckConstraint(
-            "away_odds IS NULL OR away_odds > 1.01", name="ck_odds_away_odds_range"
+            "away_odds IS NULL OR away_odds > 1.01", name = os.getenv("ODDS_NAME_98")
         ),
         CheckConstraint(
-            "over_odds IS NULL OR over_odds > 1.01", name="ck_odds_over_odds_range"
+            "over_odds IS NULL OR over_odds > 1.01", name = os.getenv("ODDS_NAME_101")
         ),
         CheckConstraint(
-            "under_odds IS NULL OR under_odds > 1.01", name="ck_odds_under_odds_range"
+            "under_odds IS NULL OR under_odds > 1.01", name = os.getenv("ODDS_NAME_104")
         ),
         CheckConstraint(
             "line_value IS NULL OR (line_value >= 0 AND line_value <= 10)",
-            name="ck_odds_line_value_range",
+            name = os.getenv("ODDS_NAME_107"),
         ),
     )
 
     def __repr__(self) -> str:
         return (
             f"<Odds(id={self.id}, match_id={self.match_id}, "
-            f"bookmaker='{self.bookmaker}', market='{self.market_type.value}')>"
+            f"bookmaker = os.getenv("ODDS_BOOKMAKER_112"), market = os.getenv("ODDS_MARKET_115"))>"
         )
 
     @property

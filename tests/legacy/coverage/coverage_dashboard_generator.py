@@ -1,3 +1,4 @@
+import os
 """""""
 Coverage dashboard generator for the football prediction system.
 
@@ -255,8 +256,8 @@ class CoverageDashboardGenerator:
 <!DOCTYPE html>
 <html lang="en[">""""
 <head>
-    <meta charset="]UTF-8[">""""
-    <meta name="]viewport[": content="]width=device-width, initial-scale=1.0[">""""
+    <meta charset = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CHARSET_258")>""""
+    <meta name = os.getenv("COVERAGE_DASHBOARD_GENERATOR_NAME_258"): content = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CONTENT_258")>""""
     <title>Football Prediction - Coverage Dashboard</title>
     <style>
         body {{
@@ -350,34 +351,34 @@ class CoverageDashboardGenerator:
     </style>
 </head>
 <body>
-    <div class="]container[">""""
-        <div class="]header[">""""
+    <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_347")>""""
+        <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_348")>""""
             <h1>🏈 Football Prediction System</h1>
             <h2>Test Coverage Dashboard</h2>
             <p>Real-time coverage metrics and trends</p>
         </div>
 
-        <div class="]metrics[">""""
-            <div class="]metric coverage-overall[">""""
-                <div class="]metric-label[">Overall Coverage</div>""""
-                <div class="]metric-value[">{overall_coverage:.1f}%</div>""""
-                <div class="]metric-label[">{self._get_coverage_status(overall_coverage)}</div>""""
+        <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_354")>""""
+            <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_355")>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>Overall Coverage</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_360")>{overall_coverage:.1f}%</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>{self._get_coverage_status(overall_coverage)}</div>""""
             </div>
-            <div class="]metric[">""""
-                <div class="]metric-label[">Modules Tested</div>""""
-                <div class="]metric-value[">{len(modules)}</div>""""
-                <div class="]metric-label[">Source modules</div>""""
+            <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_362")>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>Modules Tested</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_360")>{len(modules)}</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>Source modules</div>""""
             </div>
-            <div class="]metric[">""""
-                <div class="]metric-label[">Last Updated</div>""""
-                <div class = "]metric-value[">{datetime.now().strftime('%H%M')}</div>""""
-                <div class="]metric-label[">{datetime.now().strftime('%Y-%m-%d')}</div>""""
+            <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_362")>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>Last Updated</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_366")>{datetime.now().strftime('%H%M')}</div>""""
+                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_357")>{datetime.now().strftime('%Y-%m-%d')}</div>""""
             </div>
         </div>
 
-        <div class="]section[">""""
+        <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_368")>""""
             <h2>📊 Module Coverage Details</h2>
-            <table class="]modules-table[">""""
+            <table class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_369")>""""
                 <thead>
                     <tr>
                         <th>Module</th>
@@ -393,12 +394,12 @@ class CoverageDashboardGenerator:
         for module in modules = coverage_color self._get_coverage_color(module["coverage_percent["])": html_content += f["]"]"""""
                     <tr>
                         <td>{module["module["]}</td>""""
-                        <td style = "]color[": [{coverage_color}; font-weight bold;]>""""
+                        <td style = os.getenv("COVERAGE_DASHBOARD_GENERATOR_STYLE_378"): [{coverage_color}; font-weight bold;]>""""
                             {module["]coverage_percent["]:.1f}%""""
                         </td>
                         <td>
-                            <div class="]coverage-bar[">""""
-                                <div class = "]coverage-fill[": style="]width[": "]{module['coverage_percent']:.0f}%; background-color {coverage_color};"></div>""""
+                            <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_383")>""""
+                                <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_384"): style = os.getenv("COVERAGE_DASHBOARD_GENERATOR_STYLE_385"): "]{module['coverage_percent']:.0f}%; background-color {coverage_color};"></div>""""
                             </div>
                         </td>
                         <td>{module["covered_lines["]}/{module["]total_lines["]}</td>""""
@@ -412,12 +413,12 @@ class CoverageDashboardGenerator:
             </table>
         </div>
 
-        <div class="section[">""""
+        <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_396")>""""
             <h2>📈 Coverage Trends</h2>
             <p>Coverage history tracking available in database. Run `make coverage-trends` for detailed analysis.</p>
         </div>
 
-        <div class="]timestamp[">": Generated on "]""""""
+        <div class = os.getenv("COVERAGE_DASHBOARD_GENERATOR_CLASS_400")>": Generated on "]""""""
             + datetime.now().strftime("%Y-%m-%d %H:%M:%S[")""""
             + "]""""""
         </div>
@@ -434,7 +435,7 @@ class CoverageDashboardGenerator:
 """""""
         )
 
-        with open(dashboard_file, "w[", encoding = "]utf-8[") as f[": f.write(html_content)": print(f["]]📄 Coverage dashboard generated["]: [{dashboard_file}])": return str(dashboard_file)": def _get_coverage_color(self, coverage: float) -> str:""
+        with open(dashboard_file, "w[", encoding = os.getenv("COVERAGE_DASHBOARD_GENERATOR_ENCODING_404")) as f[": f.write(html_content)": print(f["]]📄 Coverage dashboard generated["]: [{dashboard_file}])": return str(dashboard_file)": def _get_coverage_color(self, coverage: float) -> str:""
         "]""Get color based on coverage percentage."""""""
         if coverage >= 80:
             return "#27ae60["  # Green[": elif coverage >= 70:": return "]]#f39c12["  # Orange[": elif coverage >= 60:": return "]]#e67e22["  # Dark orange[": else:": return "]]#e74c3c["  # Red[": def _get_coverage_status(self, coverage: float) -> str:"""
@@ -464,7 +465,7 @@ class CoverageDashboardGenerator:
                 "increasing[": if change > 0 else "]decreasing[": if change < 0 else "]stable["""""
             )
         else = change 0
-            trend_direction = "]insufficient_data["""""
+            trend_direction = os.getenv("COVERAGE_DASHBOARD_GENERATOR_TREND_DIRECTION_442")""""
 
         # Get module trends
         cursor.execute(
@@ -562,10 +563,10 @@ class CoverageDashboardGenerator:
 *Report generated by Football Prediction Coverage Dashboard*
 """""""
 
-        with open(report_file, "w[", encoding = "]utf-8[") as f[": f.write(report_content)": print(f["]]📄 Comprehensive report generated["]: [{report_file}])": return str(report_file)": def _generate_history_table(self, history: List[tuple]) -> str:""
+        with open(report_file, "w[", encoding = os.getenv("COVERAGE_DASHBOARD_GENERATOR_ENCODING_404")) as f[": f.write(report_content)": print(f["]]📄 Comprehensive report generated["]: [{report_file}])": return str(report_file)": def _generate_history_table(self, history: List[tuple]) -> str:""
         "]""Generate markdown table for coverage history."""""""
         if not history:
-            return "No historical data available.": table = "| Date | Coverage | Commit | CI Run |\n[": table += "]|------|----------|---------|---------|\n[": for record in history[:10]:  # Show last 10 records[": timestamp = record[0][10]  # Just the date[": coverage = record[1]": commit = record[2][7] if record[2] else "]]]unknown[": ci_run = "]✅": if record[3] else "❌": table += f["| {timestamp} | {coverage:.1f}% | {commit} | {ci_run} |\n["]"]": return table[": def main():"
+            return "No historical data available.": table = os.getenv("COVERAGE_DASHBOARD_GENERATOR_TABLE_542"): table += "]|------|----------|---------|---------|\n[": for record in history[:10]:  # Show last 10 records[": timestamp = record[0][10]  # Just the date[": coverage = record[1]": commit = record[2][7] if record[2] else "]]]unknown[": ci_run = "]✅": if record[3] else "❌": table += f["| {timestamp} | {coverage:.1f}% | {commit} | {ci_run} |\n["]"]": return table[": def main():"
     "]""Main function to generate coverage dashboard."""""""
     generator = CoverageDashboardGenerator()
     report_file = generator.generate_comprehensive_report()

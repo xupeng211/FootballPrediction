@@ -1,6 +1,7 @@
 from src.lineage.metadata_manager import MetadataManager
 from unittest.mock import Mock, patch
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 class TestMetadataManager:
@@ -12,7 +13,7 @@ class TestMetadataManager:
     assert hasattr(manager, "marquez_url[")" assert manager.marquez_url =="]http_/localhost5000[" def test_metadata_manager_custom_url("
     """"
         "]""测试自定义URL的元数据管理器初始化"""
-        custom_url = "http:_/custom-marquez8080[": manager = MetadataManager(marquez_url=custom_url)": assert manager.marquez_url ==custom_url["""
+        custom_url = os.getenv("TEST_METADATA_MANAGER_BASIC_CUSTOM_URL_15"): manager = MetadataManager(marquez_url=custom_url)": assert manager.marquez_url ==custom_url["""
     @patch("]]src.lineage.metadata_manager.requests.Session.put[")": def test_create_namespace_basic(self, mock_put):"""
         "]""测试创建命名空间基本功能"""
         mock_response = Mock()
@@ -29,7 +30,7 @@ class TestMetadataManager:
         mock_response = Mock()
         mock_response.status_code = 201
         mock_response.json.return_value = {"name[": ["]test_dataset["}": mock_put.return_value = mock_response[": manager = MetadataManager()": result = manager.create_dataset("
-        namespace="]]test_namespace[", name="]test_dataset[", source_name="]test_source["""""
+        namespace = os.getenv("TEST_METADATA_MANAGER_BASIC_NAMESPACE_31"), name = os.getenv("TEST_METADATA_MANAGER_BASIC_NAME_32"), source_name = os.getenv("TEST_METADATA_MANAGER_BASIC_SOURCE_NAME_32")""""
         )
     assert result is not None
         mock_put.assert_called_once()
@@ -44,7 +45,7 @@ class TestMetadataManager:
         mock_response = Mock()
         mock_response.status_code = 201
         mock_response.json.return_value = {"name[": ["]test_job["}": mock_put.return_value = mock_response[": manager = MetadataManager()": result = manager.create_job("
-        namespace="]]test_namespace[", name="]test_job[", job_type="]batch["""""
+        namespace = os.getenv("TEST_METADATA_MANAGER_BASIC_NAMESPACE_31"), name = os.getenv("TEST_METADATA_MANAGER_BASIC_NAME_46"), job_type = os.getenv("TEST_METADATA_MANAGER_BASIC_JOB_TYPE_46")""""
         )
     assert result is not None
         mock_put.assert_called_once()
@@ -89,6 +90,6 @@ class TestMetadataManager:
         if hasattr(manager, "_build_url["):": url = manager._build_url("]_api/v1/namespaces[")": assert isinstance(url, str)" assert "]/api/v1/namespaces[" in url[""""
     @patch("]]src.lineage.metadata_manager.urljoin[")": def test_url_joining(self, mock_urljoin):"""
         "]""测试URL拼接功能"""
-        mock_urljoin.return_value = "http:_/localhost5000/api/v1/test[": manager = MetadataManager()""""
+        mock_urljoin.return_value = os.getenv("TEST_METADATA_MANAGER_BASIC_RETURN_VALUE_89"): manager = MetadataManager()""""
         # 测试URL拼接是否被调用
         if hasattr(manager, "]_build_url["):": manager._build_url("]/api/v1/test[")"]": mock_urljoin.assert_called()

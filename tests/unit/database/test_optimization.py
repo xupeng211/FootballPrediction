@@ -1,3 +1,4 @@
+import os
 """
 数据库优化模块测试
 Database Optimization Module Tests
@@ -47,7 +48,7 @@ class TestDatabaseOptimizer:
         # 模拟查询结果
         mock_result = Mock()
         mock_row = Mock()
-        mock_row.query = "SELECT * FROM predictions WHERE match_id = $1"
+        mock_row.query = os.getenv("TEST_OPTIMIZATION_QUERY_50")
         mock_row.calls = 100
         mock_row.total_exec_time = 5000.0
         mock_row.mean_exec_time = 50.0
@@ -125,8 +126,8 @@ class TestDatabaseOptimizer:
         # 模拟索引使用数据
         mock_index_result = Mock()
         mock_index_row = Mock()
-        mock_index_row.schemaname = "public"
-        mock_index_row.relname = "idx_predictions_match_model"
+        mock_index_row.schemaname = os.getenv("TEST_OPTIMIZATION_SCHEMANAME_128")
+        mock_index_row.relname = os.getenv("TEST_OPTIMIZATION_RELNAME_128")
         mock_index_row.idx_tup_read = 1000
         mock_index_row.idx_tup_fetch = 950
         mock_index_row.idx_scan = 100
@@ -136,8 +137,8 @@ class TestDatabaseOptimizer:
         # 模拟表大小数据
         mock_table_result = Mock()
         mock_table_row = Mock()
-        mock_table_row.schemaname = "public"
-        mock_table_row.relname = "predictions"
+        mock_table_row.schemaname = os.getenv("TEST_OPTIMIZATION_SCHEMANAME_128")
+        mock_table_row.relname = os.getenv("TEST_OPTIMIZATION_RELNAME_139")
         mock_table_row.n_tup_ins = 10000
         mock_table_row.n_tup_upd = 2000
         mock_table_row.n_tup_del = 500
@@ -208,7 +209,7 @@ class TestDatabaseOptimizer:
         # 模拟数据库统计查询结果
         mock_result = Mock()
         mock_row = Mock()
-        mock_row.datname = "football_prediction"
+        mock_row.datname = os.getenv("TEST_OPTIMIZATION_DATNAME_207")
         mock_row.numbackends = 10
         mock_row.xact_commit = 10000
         mock_row.xact_rollback = 100
@@ -298,7 +299,7 @@ class TestQueryOptimizer:
 
     def test_optimize_pagination_small_offset(self):
         """测试小偏移量的分页优化"""
-        query = "SELECT * FROM matches ORDER BY id"
+        query = os.getenv("TEST_OPTIMIZATION_QUERY_296")
         optimized = QueryOptimizer.optimize_pagination(query, 1, 50)
 
         assert "LIMIT 50 OFFSET 0" in optimized
@@ -306,7 +307,7 @@ class TestQueryOptimizer:
 
     def test_optimize_pagination_large_offset(self):
         """测试大偏移量的分页优化"""
-        query = "SELECT * FROM matches ORDER BY id"
+        query = os.getenv("TEST_OPTIMIZATION_QUERY_296")
         optimized = QueryOptimizer.optimize_pagination(query, 300, 50)  # offset = 14500
 
         assert "WHERE t.id >" in optimized
@@ -314,7 +315,7 @@ class TestQueryOptimizer:
 
     def test_add_query_hints(self):
         """测试添加查询提示"""
-        query = "SELECT * FROM matches WHERE date > '2023-01-01'"
+        query = os.getenv("TEST_OPTIMIZATION_QUERY_313")2023-01-01'"
         hints = ["MAX_EXECUTION_TIME(5000)", "INDEX(matches idx_date)"]
 
         optimized = QueryOptimizer.add_query_hints(query, hints)
@@ -323,14 +324,14 @@ class TestQueryOptimizer:
 
     def test_add_query_hints_empty(self):
         """测试添加空提示列表"""
-        query = "SELECT * FROM matches"
+        query = os.getenv("TEST_OPTIMIZATION_QUERY_322")
         optimized = QueryOptimizer.add_query_hints(query, [])
 
         assert optimized == query
 
     def test_batch_inserts_single_batch(self):
         """测试单批次插入"""
-        table_name = "predictions"
+        table_name = os.getenv("TEST_OPTIMIZATION_TABLE_NAME_327")
         data = [
             {"match_id": 1, "prediction": "home_win", "confidence": 0.75},
             {"match_id": 2, "prediction": "draw", "confidence": 0.60}
@@ -345,7 +346,7 @@ class TestQueryOptimizer:
 
     def test_batch_inserts_multiple_batches(self):
         """测试多批次插入"""
-        table_name = "predictions"
+        table_name = os.getenv("TEST_OPTIMIZATION_TABLE_NAME_327")
         data = [
             {"match_id": i, "prediction": "home_win", "confidence": 0.75}
             for i in range(5)
@@ -417,7 +418,7 @@ class TestDatabaseOptimizationIntegration:
         mock_session.execute = AsyncMock()
 
         # 测试缓存查询结果
-        cache_key = "db_stats:2023-10-03"
+        cache_key = os.getenv("TEST_OPTIMIZATION_CACHE_KEY_413")
 
         # Redis缓存未命中，需要查询数据库
         with patch('datetime.datetime') as mock_datetime:

@@ -1,3 +1,4 @@
+import os
 """
 数据采集任务
 
@@ -101,8 +102,8 @@ def collect_fixtures_task(
             # 记录API失败
             if hasattr(self, "error_logger"):
                 await self.error_logger.log_api_failure(
-                    task_name="collect_fixtures_task",
-                    api_endpoint="fixtures_api",
+                    task_name = os.getenv("DATA_COLLECTION_TASKS_TASK_NAME_104"),
+                    api_endpoint = os.getenv("DATA_COLLECTION_TASKS_API_ENDPOINT_104"),
                     http_status=None,
                     error_message=str(e),
                     retry_count=self.request.retries if hasattr(self, "request") else 0,
@@ -170,8 +171,8 @@ def collect_fixtures_task(
             # 异步记录到数据采集日志
             asyncio.run(
                 self.error_logger.log_data_collection_error(
-                    data_source="fixtures_api",
-                    collection_type="fixtures",
+                    data_source = os.getenv("DATA_COLLECTION_TASKS_DATA_SOURCE_172"),
+                    collection_type = os.getenv("DATA_COLLECTION_TASKS_COLLECTION_TYPE_173"),
                     error_message=str(exc),
                     error_count=1,
                 )
@@ -229,8 +230,8 @@ def collect_odds_task(
             # 记录API失败
             if hasattr(self, "error_logger"):
                 await self.error_logger.log_api_failure(
-                    task_name="collect_odds_task",
-                    api_endpoint="odds_api",
+                    task_name = os.getenv("DATA_COLLECTION_TASKS_TASK_NAME_228"),
+                    api_endpoint = os.getenv("DATA_COLLECTION_TASKS_API_ENDPOINT_230"),
                     http_status=None,
                     error_message=str(e),
                     retry_count=self.request.retries if hasattr(self, "request") else 0,
@@ -278,7 +279,7 @@ def collect_odds_task(
             # 异步记录到数据采集日志
             asyncio.run(
                 self.error_logger.log_data_collection_error(
-                    data_source="odds_api",
+                    data_source = os.getenv("DATA_COLLECTION_TASKS_DATA_SOURCE_274"),
                     collection_type="odds",
                     error_message=str(exc),
                     error_count=1,
@@ -343,8 +344,8 @@ def collect_scores_task(
             # 记录API失败
             if hasattr(self, "error_logger"):
                 await self.error_logger.log_api_failure(
-                    task_name="collect_scores_task",
-                    api_endpoint="scores_api",
+                    task_name = os.getenv("DATA_COLLECTION_TASKS_TASK_NAME_337"),
+                    api_endpoint = os.getenv("DATA_COLLECTION_TASKS_API_ENDPOINT_338"),
                     http_status=None,
                     error_message=str(e),
                     retry_count=self.request.retries if hasattr(self, "request") else 0,
@@ -405,8 +406,8 @@ def collect_scores_task(
             # 异步记录到数据采集日志
             asyncio.run(
                 self.error_logger.log_data_collection_error(
-                    data_source="scores_api",
-                    collection_type="scores",
+                    data_source = os.getenv("DATA_COLLECTION_TASKS_DATA_SOURCE_398"),
+                    collection_type = os.getenv("DATA_COLLECTION_TASKS_COLLECTION_TYPE_400"),
                     error_message=str(exc),
                     error_count=1,
                 )
@@ -546,7 +547,7 @@ def emergency_data_collection_task(
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
                 self.error_logger.log_task_error(
-                    task_name="emergency_data_collection_task",
+                    task_name = os.getenv("DATA_COLLECTION_TASKS_TASK_NAME_535"),
                     task_id=self.request.id,
                     error=exc,
                     context={

@@ -1,3 +1,4 @@
+import os
 """
 数据处理服务全面测试
 Comprehensive tests for data processing service to boost coverage
@@ -83,7 +84,7 @@ class TestDataProcessor:
         # 验证处理结果
         assert len(processed_data) > 0
         assert processed_data['home_score'].isna().sum() == 0  # 缺失值已处理
-        assert pd.to_datetime(processed_data['match_date'], errors='coerce').isna().sum() == 0
+        assert pd.to_datetime(processed_data['match_date'], errors = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_ERRORS_86")).isna().sum() == 0
 
     def test_clean_team_data(self):
         """测试清洗球队数据"""
@@ -171,7 +172,7 @@ class TestDataProcessor:
             'match_date': pd.date_range('2024-01-01', periods=5, freq='D')
         })
 
-        stats = aggregate_statistics(match_data, group_by='team_id')
+        stats = aggregate_statistics(match_data, group_by = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_GROUP_BY_172"))
 
         # 验证聚合结果
         assert len(stats) == 3  # 3个不同的队伍
@@ -220,7 +221,7 @@ class TestDataProcessor:
         assert len(transformed) > 0
         assert transformed['home_team'].isna().sum() == 0
         assert transformed['away_team'].isna().sum() == 0
-        assert pd.to_datetime(transformed['date'], errors='coerce').isna().sum() == 0
+        assert pd.to_datetime(transformed['date'], errors = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_ERRORS_86")).isna().sum() == 0
 
 
 class TestDataCleaner:
@@ -274,8 +275,8 @@ class TestDataCleaner:
         cleaned_text = self.cleaner.handle_missing_values(
             data,
             columns=['text_col'],
-            strategy='constant',
-            fill_value='UNKNOWN'
+            strategy = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_STRATEGY_271"),
+            fill_value = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_FILL_VALUE_274")
         )
         assert (cleaned_text['text_col'] == 'UNKNOWN').sum() > 0
 
@@ -290,7 +291,7 @@ class TestDataCleaner:
         assert 1000 in outliers.index
 
         # 使用Z-score方法
-        outliers_z = self.cleaner.detect_outliers(data['value'], method='zscore', threshold=3)
+        outliers_z = self.cleaner.detect_outliers(data['value'], method = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_METHOD_286"), threshold=3)
         assert len(outliers_z) >= 1
 
     def test_normalize_data(self):
@@ -302,12 +303,12 @@ class TestDataCleaner:
         })
 
         # Min-Max标准化
-        normalized_minmax = self.cleaner.normalize_data(data, method='minmax')
+        normalized_minmax = self.cleaner.normalize_data(data, method = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_METHOD_296"))
         assert normalized_minmax['feature1'].min() == 0
         assert normalized_minmax['feature1'].max() == 1
 
         # Z-score标准化
-        normalized_zscore = self.cleaner.normalize_data(data, method='zscore')
+        normalized_zscore = self.cleaner.normalize_data(data, method = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_METHOD_286"))
         assert abs(normalized_zscore['feature1'].mean()) < 0.01
         assert abs(normalized_zscore['feature1'].std() - 1) < 0.01
 
@@ -403,7 +404,7 @@ class TestDataTransformer:
         one_hot_encoded = self.transformer.encode_categorical(
             data,
             columns=['category'],
-            method='onehot'
+            method = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_METHOD_391")
         )
         assert 'category_A' in one_hot_encoded.columns
         assert 'category_B' in one_hot_encoded.columns
@@ -539,7 +540,7 @@ class TestDataTransformer:
         income_binned = self.transformer.bin_data(
             data['income'],
             bins=3,
-            method='quantile'
+            method = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_METHOD_526")
         )
         assert len(income_binned.unique()) == 3
 
@@ -709,7 +710,7 @@ class TestDataAggregator:
         pivot = self.aggregator.create_pivot_table(
             data,
             index='team',
-            columns='result',
+            columns = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_COLUMNS_696"),
             values='goals',
             aggfunc='sum',
             fill_value=0
@@ -749,7 +750,7 @@ class TestDataAggregator:
         # 按小时聚合
         hourly_agg = self.aggregator.aggregate_by_time(
             data,
-            timestamp_col='timestamp',
+            timestamp_col = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_TIMESTAMP_COL_7"),
             value_cols=['users'],
             freq='H'
         )
@@ -758,7 +759,7 @@ class TestDataAggregator:
         # 按天聚合
         daily_agg = self.aggregator.aggregate_by_time(
             data,
-            timestamp_col='timestamp',
+            timestamp_col = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_TIMESTAMP_COL_7"),
             value_cols=['users'],
             freq='D'
         )
@@ -784,7 +785,7 @@ class TestDataAggregator:
 
         result = self.aggregator.custom_aggregate(
             data,
-            group_by='category',
+            group_by = os.getenv("TEST_DATA_PROCESSING_COMPREHENSIVE_GROUP_BY_761"),
             aggregations=custom_agg
         )
 

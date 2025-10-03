@@ -4,6 +4,7 @@ from src.data.collectors.base_collector import CollectionResult, DataCollector
 from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
+import os
 
 """
 测试数据采集器基类
@@ -24,8 +25,8 @@ class TestCollectionResult:
     def test_collection_result_creation_minimal(self):
         """测试最小采集结果创建"""
         result = CollectionResult(
-            data_source="test_source[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-            status="]success[")": assert result.data_source =="]test_source[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"),": collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_27"),": records_collected=10,": success_count=8,": error_count=2,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"))": assert result.data_source =="]test_source[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
         assert result.success_count ==8
         assert result.error_count ==2
         assert result.status =="]]success[" assert result.error_message is None[""""
@@ -33,8 +34,8 @@ class TestCollectionResult:
     def test_collection_result_creation_full(self):
         "]]""测试完整采集结果创建"""
         result = CollectionResult(
-            data_source="test_source[",": collection_type="]odds[",": records_collected=15,": success_count=12,": error_count=3,"
-            status="]partial[",": error_message="]Some data failed to collect[",": collected_data = [{"]id[": 1}, {"]id[": 2}])": assert result.data_source =="]test_source[" assert result.collection_type =="]odds[" assert result.records_collected ==15[""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"),": collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_33"),": records_collected=15,": success_count=12,": error_count=3,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_36"),": error_message = os.getenv("TEST_BASE_COLLECTOR_ERROR_MESSAGE_36"),": collected_data = [{"]id[": 1}, {"]id[": 2}])": assert result.data_source =="]test_source[" assert result.collection_type =="]odds[" assert result.records_collected ==15[""""
         assert result.success_count ==12
         assert result.error_count ==3
         assert result.status =="]]partial[" assert result.error_message =="]Some data failed to collect[" assert result.collected_data ==[{"]id[" 1}, {"]id[" 2}]" class MockDataCollector(DataCollector):"""
@@ -42,19 +43,19 @@ class TestCollectionResult:
     def __init__(self, data_source: str, **kwargs):
         super().__init__(data_source, **kwargs)
         self.test_data = [{"id[": 1, "]name[" "]test["}]": async def collect_fixtures(self, **kwargs) -> CollectionResult:": return CollectionResult(": data_source=self.data_source,"
-            collection_type="]fixtures[",": records_collected=1,": success_count=1,": error_count=0,"
-            status="]success[",": collected_data=self.test_data)": async def collect_odds(self, **kwargs) -> CollectionResult:": return CollectionResult("
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_27"),": records_collected=1,": success_count=1,": error_count=0,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"),": collected_data=self.test_data)": async def collect_odds(self, **kwargs) -> CollectionResult:": return CollectionResult("
             data_source=self.data_source,
-            collection_type="]odds[",": records_collected=1,": success_count=1,": error_count=0,"
-            status="]success[",": collected_data=self.test_data)": async def collect_live_scores(self, **kwargs) -> CollectionResult:": return CollectionResult("
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_33"),": records_collected=1,": success_count=1,": error_count=0,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"),": collected_data=self.test_data)": async def collect_live_scores(self, **kwargs) -> CollectionResult:": return CollectionResult("
             data_source=self.data_source,
-            collection_type="]live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-            status="]success[",": collected_data=self.test_data)": class TestDataCollector:""
+            collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_47"),": records_collected=1,": success_count=1,": error_count=0,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"),": collected_data=self.test_data)": class TestDataCollector:""
     "]""测试数据采集器基类"""
     def test_data_collector_initialization(self):
         """测试数据采集器初始化"""
         collector = MockDataCollector(
-            data_source="test_source[", max_retries=5, retry_delay=10, timeout=60[""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"), max_retries=5, retry_delay=10, timeout=60[""""
         )
         assert collector.data_source =="]]test_source[" assert collector.max_retries ==5[""""
         assert collector.retry_delay ==10
@@ -63,13 +64,13 @@ class TestCollectionResult:
         assert collector.logger is not None
     def test_data_collector_initialization_defaults(self):
         "]]""测试数据采集器默认参数初始化"""
-        collector = MockDataCollector(data_source="test_source[")": assert collector.data_source =="]test_source[" assert collector.max_retries ==3[""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": assert collector.data_source =="]test_source[" assert collector.max_retries ==3[""""
         assert collector.retry_delay ==5
         assert collector.timeout ==30
     @pytest.mark.asyncio
     async def test_make_request_with_retry_success(self):
         "]]""测试HTTP请求成功（带重试装饰器）"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock aiohttp response
         mock_response = MagicMock()
         mock_response.status = 200
@@ -83,11 +84,11 @@ class TestCollectionResult:
                 "]https://api.test.com/data["""""
             )
         assert result =={"]data[" ["]test["}" mock_session.request.assert_called_once_with("""
-            method="]GET[",": url = "]https//api.test.com/data[",": headers=None,": params=None,": json=None)"
+            method="]GET[",": url = os.getenv("TEST_BASE_COLLECTOR_URL_77"),": headers=None,": params=None,": json=None)"
     @pytest.mark.asyncio
     async def test_make_request_with_retry_http_error(self):
         "]""测试HTTP请求失败"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock aiohttp response with error = mock_response MagicMock()
         mock_response.status = 404
         mock_response.request_info = MagicMock()
@@ -101,17 +102,17 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_make_request_success(self):
         "]""测试HTTP请求成功（带手动重试）"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock the retry method to return successful result
         with patch.object(:
             collector, "]_make_request_with_retry[", return_value = {"]data[" "]test["}""""
         ) as mock_retry = result await collector._make_request("]https//api.test.com/data[")": assert result =={"]data[" ["]test["}" mock_retry.assert_called_once_with("""
-            url = "]https//api.test.com/data[",": method="]GET[",": headers=None,": params=None,": json_data=None)"
+            url = os.getenv("TEST_BASE_COLLECTOR_URL_77"),": method="]GET[",": headers=None,": params=None,": json_data=None)"
     @pytest.mark.asyncio
     async def test_make_request_with_retries(self):
         "]""测试HTTP请求带重试机制"""
         collector = MockDataCollector(
-            data_source="test_source[", max_retries=2, retry_delay=0.1[""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"), max_retries=2, retry_delay=0.1[""""
         )
         # Mock the retry method to fail first time, succeed second time
         call_count = 0
@@ -126,19 +127,19 @@ class TestCollectionResult:
     async def test_make_request_max_retries_exceeded(self):
         "]]""测试HTTP请求超过最大重试次数"""
         collector = MockDataCollector(
-            data_source="test_source[", max_retries=2, retry_delay=0.1[""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"), max_retries=2, retry_delay=0.1[""""
         )
         # Mock the retry method to always fail
         with patch.object(:
             collector, "]]_make_request_with_retry[", side_effect=Exception("]Always fails[")""""
         ) as mock_retry:
-            with pytest.raises(Exception, match = "]Always fails[")": await collector._make_request("]https://api.test.com/data[")""""
+            with pytest.raises(Exception, match = os.getenv("TEST_BASE_COLLECTOR_MATCH_123"))": await collector._make_request("]https://api.test.com/data[")""""
             # Should have been called max_retries times
             assert mock_retry.call_count ==2
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_success(self):
         "]""测试成功保存数据到Bronze层"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session and models
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -162,15 +163,15 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_empty_data(self):
         "]""测试保存空数据到Bronze层"""
-        collector = MockDataCollector(data_source="test_source[")": with patch.object(collector.logger, "]info[") as mock_logger:": await collector._save_to_bronze_layer("]raw_match_data[", [])": mock_logger.assert_called_once_with("]No data to save to raw_match_data[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": with patch.object(collector.logger, "]info[") as mock_logger:": await collector._save_to_bronze_layer("]raw_match_data[", [])": mock_logger.assert_called_once_with("]No data to save to raw_match_data[")""""
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_invalid_table(self):
         "]""测试保存到无效表名"""
-        collector = MockDataCollector(data_source="test_source[")": with pytest.raises(ValueError, match = "]Unsupported table name[": ["]invalid_table[")": await collector._save_to_bronze_layer("]invalid_table[", [{"]data[": "]test["}])""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": with pytest.raises(ValueError, match = os.getenv("TEST_BASE_COLLECTOR_MATCH_158"): ["]invalid_table[")": await collector._save_to_bronze_layer("]invalid_table[", [{"]data[": "]test["}])""""
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_with_match_time(self):
         "]""测试保存包含match_time的数据"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -191,7 +192,7 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_save_to_bronze_layer_invalid_match_time(self):
         "]""测试保存包含无效match_time的数据"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -210,28 +211,28 @@ class TestCollectionResult:
             mock_logger.assert_called_once()
     def test_is_duplicate_record_true(self):
         "]""测试重复记录检测（重复）"""
-        collector = MockDataCollector(data_source="test_source[")": new_record = {"]id[": 1, "]name[": "]test[", "]value[" "]A["}": existing_records = ["""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": new_record = {"]id[": 1, "]name[": "]test[", "]value[" "]A["}": existing_records = ["""
             {"]id[": 1, "]name[": "]test[", "]value[": "]B["},  # Same id and name[""""
             {"]]id[": 2, "]name[": "]other[", "]value[": "]C["}]": result = collector._is_duplicate_record(": new_record, existing_records, ["]id[", "]name["]""""
         )
         assert result is True
     def test_is_duplicate_record_false(self):
         "]""测试重复记录检测（不重复）"""
-        collector = MockDataCollector(data_source="test_source[")": new_record = {"]id[": 3, "]name[": "]test[", "]value[" "]A["}": existing_records = ["""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": new_record = {"]id[": 3, "]name[": "]test[", "]value[" "]A["}": existing_records = ["""
             {"]id[": 1, "]name[": "]test[", "]value[": "]B["},""""
             {"]id[": 2, "]name[": "]other[", "]value[": "]C["}]": result = collector._is_duplicate_record(": new_record, existing_records, ["]id[", "]name["]""""
         )
         assert result is False
     def test_is_duplicate_record_missing_fields(self):
         "]""测试重复记录检测（字段缺失）"""
-        collector = MockDataCollector(data_source="test_source[")": new_record = {"]id[": 1, "]name[" "]test["}": existing_records = [{"]id[": 1, "]value[": "]A["}]  # Missing 'name' field[": result = collector._is_duplicate_record(": new_record, existing_records, ["]]id[", "]name["]""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": new_record = {"]id[": 1, "]name[" "]test["}": existing_records = [{"]id[": 1, "]value[": "]A["}]  # Missing 'name' field[": result = collector._is_duplicate_record(": new_record, existing_records, ["]]id[", "]name["]""""
         )
         # Should be duplicate because all fields present in both records match (only 'id' field)
         assert result is True
     @pytest.mark.asyncio
     async def test_create_collection_log_success(self):
         "]""测试创建采集日志成功"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session and model
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -250,7 +251,7 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_create_collection_log_failure(self):
         "]]""测试创建采集日志失败"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session to raise exception
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -262,7 +263,7 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_update_collection_log_success(self):
         "]""测试更新采集日志成功"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session and model
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -276,8 +277,8 @@ class TestCollectionResult:
             "]src.database.models.data_collection_log.CollectionStatus["""""
         ):
             result = CollectionResult(
-                data_source="]test_source[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-                status="]success[")": await collector._update_collection_log(123, result)"""
+                data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_261"),": collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_27"),": records_collected=10,": success_count=8,": error_count=2,"
+                status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"))": await collector._update_collection_log(123, result)"""
         # Should be called with DataCollectionLog class and log_id:
         mock_session.get.assert_called_once()
         mock_log_entry.mark_completed.assert_called_once()
@@ -285,14 +286,14 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_update_collection_log_invalid_log_id(self):
         "]""测试更新采集日志（无效log_id）"""
-        collector = MockDataCollector(data_source="test_source[")": result = CollectionResult(": data_source="]test_source[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-            status="]success[")": with patch.object(collector.logger, "]warning[") as mock_logger:": await collector._update_collection_log(0, result)": mock_logger.assert_called_once_with(""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))": result = CollectionResult(": data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_261"),": collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_27"),": records_collected=10,": success_count=8,": error_count=2,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"))": with patch.object(collector.logger, "]warning[") as mock_logger:": await collector._update_collection_log(0, result)": mock_logger.assert_called_once_with(""
             "]Invalid log_id (0), cannot update collection log."""""
         )
     @pytest.mark.asyncio
     async def test_update_collection_log_log_not_found(self):
         """测试更新采集日志（日志不存在）"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock database session
         mock_session = MagicMock()
         mock_session.__aenter__.return_value = mock_session
@@ -301,14 +302,14 @@ class TestCollectionResult:
         mock_session.commit = AsyncMock()
         collector.db_manager.get_async_session = MagicMock(return_value=mock_session)
         result = CollectionResult(
-            data_source="]test_source[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-            status="]success[")""""
+            data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_261"),": collection_type = os.getenv("TEST_BASE_COLLECTOR_COLLECTION_TYPE_27"),": records_collected=10,": success_count=8,": error_count=2,"
+            status = os.getenv("TEST_BASE_COLLECTOR_STATUS_27"))""""
         # Should not raise exception
         await collector._update_collection_log(999, result)
     @pytest.mark.asyncio
     async def test_collect_all_data_success(self):
         "]""测试完整数据采集流程成功"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock the log creation and update methods
         with patch.object(:
             collector, "]_create_collection_log[", return_value=1[""""
@@ -329,7 +330,7 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_collect_all_data_with_failure(self):
         "]]""测试完整数据采集流程（包含失败）"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock collect_odds to fail
         async def failing_collect_odds(**kwargs):
             raise Exception("]Odds collection failed[")": collector.collect_odds = failing_collect_odds["""
@@ -349,7 +350,7 @@ class TestCollectionResult:
     @pytest.mark.asyncio
     async def test_collect_all_data_log_creation_failure(self):
         "]]""测试完整数据采集流程（日志创建失败）"""
-        collector = MockDataCollector(data_source="test_source[")""""
+        collector = MockDataCollector(data_source = os.getenv("TEST_BASE_COLLECTOR_DATA_SOURCE_27"))""""
         # Mock log creation to fail
         with patch.object(:
             collector, "]_create_collection_log[", return_value=0[""""

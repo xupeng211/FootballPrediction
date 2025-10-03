@@ -4,6 +4,7 @@ from src.data.features.feature_store import (
 from unittest.mock import Mock, patch
 import pandas
 import pytest
+import os
 
 """
 Test suite for data features modules
@@ -16,9 +17,9 @@ Test suite for data features modules
 def feature_store():
     """Create a feature store instance for testing"""
     import tempfile
-    temp_dir = tempfile.mkdtemp(prefix="feast_repo_test_[")": store = FootballFeatureStore(project_name="]test_project[", repo_path=temp_dir)": return store[": def test_feature_store_initialization():""
+    temp_dir = tempfile.mkdtemp(prefix = os.getenv("TEST_DATA_FEATURES_PREFIX_19"))": store = FootballFeatureStore(project_name = os.getenv("TEST_DATA_FEATURES_PROJECT_NAME_19"), repo_path=temp_dir)": return store[": def test_feature_store_initialization():""
     "]]""Test initialization of FootballFeatureStore"""
-    store = FootballFeatureStore(project_name="test_project[")": assert store is not None[" assert store.project_name =="]]test_project[" assert store.repo_path is not None[""""
+    store = FootballFeatureStore(project_name = os.getenv("TEST_DATA_FEATURES_PROJECT_NAME_20"))": assert store is not None[" assert store.project_name =="]]test_project[" assert store.repo_path is not None[""""
 def test_feature_store_initialize(feature_store):
     "]]""Test feature store initialization"""
     # Mock the Feast configuration and FeatureStore
@@ -45,7 +46,7 @@ def test_feature_store_apply_features(feature_store):
     with patch.object(feature_store, "_store[") as mock_store:": feature_store.apply_features()": mock_store.apply.assert_called_once()": def test_feature_store_apply_features_not_initialized(feature_store):"
     "]""Test applying features without initialization"""
     feature_store._store = None
-    with pytest.raises(RuntimeError, match = "特征仓库未初始化[")": feature_store.apply_features()": def test_write_features(feature_store):""
+    with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_46"))": feature_store.apply_features()": def test_write_features(feature_store):""
     "]""Test writing features to the store"""
     # Create sample data
     sample_data = pd.DataFrame({
@@ -55,14 +56,14 @@ def test_feature_store_apply_features(feature_store):
     )
     with patch.object(feature_store, "]_store[") as mock_store:": feature_store.write_features("]test_feature_view[", sample_data)": mock_store.push.assert_called_once()": def test_write_features_not_initialized(feature_store):""
     "]""Test writing features without initialization"""
-    sample_data = pd.DataFrame({"match_id[: "1, 2, 3[", "]]feature_value[": [10, 20, 30]))": feature_store._store = None[": with pytest.raises(RuntimeError, match = "]]特征仓库未初始化[")": feature_store.write_features("]test_feature_view[", sample_data)": def test_get_online_features(feature_store):"""
+    sample_data = pd.DataFrame({"match_id[: "1, 2, 3[", "]]feature_value[": [10, 20, 30]))": feature_store._store = None[": with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_58"))": feature_store.write_features("]test_feature_view[", sample_data)": def test_get_online_features(feature_store):"""
     "]""Test getting online features"""
     # Create sample entity data
     entity_data = pd.DataFrame({"match_id[: "1, 2, 3[", "]]team_id[": [10, 20, 30]))": with patch.object(feature_store, "]_store[") as mock_store:": mock_feature_service = Mock()": mock_store.get_feature_service.return_value = mock_feature_service[": mock_feature_vector = Mock()"
         mock_store.get_online_features.return_value = mock_feature_vector
         mock_feature_vector.to_df.return_value = pd.DataFrame({"]]feature1[": [1, 2, 3]))": result = feature_store.get_online_features("]test_service[", entity_data)": assert isinstance(result, pd.DataFrame)" def test_get_online_features_not_initialized(feature_store):""
     "]""Test getting online features without initialization"""
-    entity_data = pd.DataFrame({"match_id[": [1, 2, 3]))": feature_store._store = None[": with pytest.raises(RuntimeError, match = "]]特征仓库未初始化[")": feature_store.get_online_features("]test_service[", entity_data)": def test_get_historical_features(feature_store):"""
+    entity_data = pd.DataFrame({"match_id[": [1, 2, 3]))": feature_store._store = None[": with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_58"))": feature_store.get_online_features("]test_service[", entity_data)": def test_get_historical_features(feature_store):"""
     "]""Test getting historical features"""
     # Create sample entity data with timestamp = entity_data pd.DataFrame({
             "match_id[: "1, 2, 3[","]"""
@@ -75,7 +76,7 @@ def test_feature_store_apply_features(feature_store):
     entity_data = pd.DataFrame({"match_id[: "1, 2, 3[", "]]event_timestamp[": [datetime.now()""""
     )
     feature_store._store = None
-    with pytest.raises(RuntimeError, match = "]特征仓库未初始化[")": feature_store.get_historical_features("]test_service[", entity_data)": def test_create_training_dataset(feature_store):"""
+    with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_74"))": feature_store.get_historical_features("]test_service[", entity_data)": def test_create_training_dataset(feature_store):"""
     "]""Test creating a training dataset"""
     start_date = datetime.now() - timedelta(days=30)
     end_date = datetime.now()
@@ -89,16 +90,16 @@ def test_feature_store_apply_features(feature_store):
         assert stats["]]num_features["] ==2[" def test_get_feature_statistics_not_initialized(feature_store):"""
     "]]""Test getting feature statistics without initialization"""
     feature_store._store = None
-    with pytest.raises(RuntimeError, match = "特征仓库未初始化[")": feature_store.get_feature_statistics("]test_view[")": def test_list_features(feature_store):"""
+    with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_46"))": feature_store.get_feature_statistics("]test_view[")": def test_list_features(feature_store):"""
     "]""Test listing all features"""
     with patch.object(feature_store, "_store[") as mock_store:""""
         # Mock feature views
         mock_feature_view1 = Mock()
-        mock_feature_view1.name = "]view1[": mock_feature_view1.features = [Mock(), Mock()]": mock_feature_view1.entities = [Mock()]": mock_feature_view1.tags = {"]team[": ["]data["}": mock_feature_view1.features[0].name = "]feature1[": mock_feature_view1.features[0].dtype.name = "]INT32[": mock_feature_view1.features[0].description = "]First feature[": mock_feature_view1.features[1].name = "]feature2[": mock_feature_view1.features[1].dtype.name = "]FLOAT[": mock_feature_view1.features[1].description = "]Second feature[": mock_store.list_feature_views.return_value = ["]mock_feature_view1[": features_list = feature_store.list_features()": assert isinstance(features_list, list)" assert len(features_list) ==2  # 2 features from 1 view[""
+        mock_feature_view1.name = os.getenv("TEST_DATA_FEATURES_NAME_92"): mock_feature_view1.features = [Mock(), Mock()]": mock_feature_view1.entities = [Mock()]": mock_feature_view1.tags = {"]team[": ["]data["}": mock_feature_view1.features[0].name = os.getenv("TEST_DATA_FEATURES_NAME_96"): mock_feature_view1.features[0].dtype.name = os.getenv("TEST_DATA_FEATURES_NAME_97"): mock_feature_view1.features[0].description = os.getenv("TEST_DATA_FEATURES_DESCRIPTION_97"): mock_feature_view1.features[1].name = os.getenv("TEST_DATA_FEATURES_NAME_97"): mock_feature_view1.features[1].dtype.name = os.getenv("TEST_DATA_FEATURES_NAME_97"): mock_feature_view1.features[1].description = os.getenv("TEST_DATA_FEATURES_DESCRIPTION_97"): mock_store.list_feature_views.return_value = ["]mock_feature_view1[": features_list = feature_store.list_features()": assert isinstance(features_list, list)" assert len(features_list) ==2  # 2 features from 1 view[""
 def test_list_features_not_initialized(feature_store):
     "]]""Test listing features without initialization"""
     feature_store._store = None
-    with pytest.raises(RuntimeError, match = "特征仓库未初始化[")": feature_store.list_features()": def test_cleanup_old_features(feature_store):""
+    with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_FEATURES_MATCH_46"))": feature_store.list_features()": def test_cleanup_old_features(feature_store):""
     "]""Test cleaning up old features"""
     # This method currently has a TODO but should not raise exceptions
     feature_store.cleanup_old_features(older_than_days=30)
@@ -119,7 +120,7 @@ def test_get_feature_store_singleton():
     assert store1 is store2
 def test_initialize_feature_store():
     """Test initialization of feature store with specific parameters"""
-    with patch("src.data.features.feature_store.FootballFeatureStore[") as mock_class:": mock_instance = Mock()": mock_class.return_value = mock_instance[": result = initialize_feature_store(project_name="]]test_project[",": postgres_config = {"]host[" "]localhost["},": redis_config = {"]connection_string[": [redis://localhost6379]))""""
+    with patch("src.data.features.feature_store.FootballFeatureStore[") as mock_class:": mock_instance = Mock()": mock_class.return_value = mock_instance[": result = initialize_feature_store(project_name = os.getenv("TEST_DATA_FEATURES_PROJECT_NAME_115"),": postgres_config = {"]host[" "]localhost["},": redis_config = {"]connection_string[": [redis://localhost6379]))""""
         # Verify the instance methods were called
         assert mock_instance.initialize.called
         assert mock_instance.apply_features.called
@@ -154,7 +155,7 @@ def test_feature_store_initialization_with_custom_config():
         "]port[": 5433,""""
         "]database[": ["]custom_db[",""""
         "]user[": ["]custom_user[",""""
-        "]password[": ["]custom_password["}": custom_redis = {"]connection_string[: "redis://custom_host6380/1["}"]": store = FootballFeatureStore(": project_name="]custom_project[","]": postgres_config=custom_postgres,": redis_config=custom_redis)"
+        "]password[": ["]custom_password["}": custom_redis = {"]connection_string[: "redis://custom_host6380/1["}"]": store = FootballFeatureStore(": project_name = os.getenv("TEST_DATA_FEATURES_PROJECT_NAME_149"),"]": postgres_config=custom_postgres,": redis_config=custom_redis)"
     assert store.postgres_config ==custom_postgres
     assert store.redis_config ==custom_redis
     import tempfile

@@ -1,3 +1,4 @@
+import os
 """
 预测API端点测试 / Tests for Prediction API Endpoints
 
@@ -30,8 +31,8 @@ class TestPredictionAPI:
         match.away_team_id = 20
         match.league_id = 1
         match.match_time = datetime.now() + timedelta(days=1)
-        match.match_status = "scheduled"
-        match.season = "2024-25"
+        match.match_status = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_MATCH_STATUS_33")
+        match.season = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_SEASON_33")
         return match
 
     @pytest.fixture
@@ -41,7 +42,7 @@ class TestPredictionAPI:
         prediction.id = 1
         prediction.match_id = 12345
         prediction.model_version = "1.0"
-        prediction.model_name = "baseline"
+        prediction.model_name = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_MODEL_NAME_42")
         prediction.home_win_probability = 0.45
         prediction.draw_probability = 0.30
         prediction.away_win_probability = 0.25
@@ -224,7 +225,7 @@ class TestPredictionAPI:
         mock_prediction = MagicMock()
         mock_prediction.id = 1
         mock_prediction.model_version = "1.0"
-        mock_prediction.model_name = "baseline"
+        mock_prediction.model_name = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_MODEL_NAME_42")
         mock_prediction.home_win_probability = 0.45
         mock_prediction.draw_probability = 0.30
         mock_prediction.away_win_probability = 0.25
@@ -262,7 +263,7 @@ class TestPredictionAPI:
         mock_pred.id = 1
         mock_pred.match_id = 12345
         mock_pred.model_version = "1.0"
-        mock_pred.model_name = "baseline"
+        mock_pred.model_name = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_MODEL_NAME_42")
         mock_pred.predicted_result = "home"
         mock_pred.confidence_score = 0.45
         mock_pred.created_at = datetime.now()
@@ -270,7 +271,7 @@ class TestPredictionAPI:
         mock_pred.home_team_id = 10
         mock_pred.away_team_id = 20
         mock_pred.match_time = datetime.now()
-        mock_pred.match_status = "finished"
+        mock_pred.match_status = os.getenv("TEST_PREDICTIONS_COMPREHENSIVE_MATCH_STATUS_267")
 
         mock_result.fetchall.return_value = [mock_pred]
         mock_session.execute.return_value = mock_result

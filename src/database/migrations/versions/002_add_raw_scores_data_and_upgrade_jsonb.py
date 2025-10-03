@@ -1,3 +1,4 @@
+import os
 """add_raw_scores_data_and_upgrade_jsonb
 
 
@@ -14,7 +15,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "002_add_raw_scores_data_and_upgrade_jsonb"
+revision: str = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_STR_17")
 down_revision: Union[str, None] = "f48d412852cc"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -42,7 +43,7 @@ def upgrade() -> None:
             "raw_data",
             postgresql.JSONB(astext_type=sa.Text()),
             nullable=False,
-            comment="原始JSONB数据",
+            comment = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_COMMENT_"),
         ),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
@@ -57,7 +58,7 @@ def upgrade() -> None:
             "external_match_id",
             sa.String(length=100),
             nullable=True,
-            comment="外部比赛ID",
+            comment = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_COMMENT_"),
         ),
         sa.Column(
             "match_status", sa.String(length=50), nullable=True, comment="比赛状态"
@@ -69,7 +70,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=False, comment="创建时间"),
         sa.Column("updated_at", sa.DateTime(), nullable=False, comment="更新时间"),
         sa.PrimaryKeyConstraint("id"),
-        comment="Bronze层原始比分数据表",
+        comment = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_COMMENT_"),
     )
 
     # 为raw_scores_data表创建索引
@@ -202,13 +203,13 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
 
     # 删除raw_scores_data表的索引
-    op.drop_index("idx_raw_scores_data_jsonb_gin", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_score", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_status", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_external_match", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_processed", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_collected_at", table_name="raw_scores_data")
-    op.drop_index("idx_raw_scores_data_source", table_name="raw_scores_data")
+    op.drop_index("idx_raw_scores_data_jsonb_gin", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_score", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_status", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_external_match", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_processed", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_collected_at", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+    op.drop_index("idx_raw_scores_data_source", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
 
     # 删除约束
     op.drop_constraint("ck_raw_scores_data_minute_range", "raw_scores_data")
@@ -219,8 +220,8 @@ def downgrade() -> None:
 
     # 删除其他表的JSONB索引（如果存在）
     try:
-        op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")
-        op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")
+        op.drop_index("idx_raw_match_data_jsonb_gin", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
+        op.drop_index("idx_raw_odds_data_jsonb_gin", table_name = os.getenv("002_ADD_RAW_SCORES_DATA_AND_UPGRADE_JSONB_TABLE_NA"))
     except Exception as e:
         # 忽略索引不存在的错误，但记录日志
         print(f"Warning: Could not drop indexes during downgrade: {e}")

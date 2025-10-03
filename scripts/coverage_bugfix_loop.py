@@ -4,6 +4,7 @@ import re
 import datetime
 import pathlib
 import json
+import os
 
 STATE_FILE = pathlib.Path("docs/_meta/last_processed_run.json")
 
@@ -64,7 +65,7 @@ while True:
                 f.write(f"- {file}: {cov}% coverage\n")
 
         # 更新 Kanban
-        kanban_file = "docs/_reports/TEST_COVERAGE_KANBAN.md"
+        kanban_file = os.getenv("COVERAGE_BUGFIX_LOOP_KANBAN_FILE_67")
         with open(kanban_file, "a", encoding="utf-8") as f:
             f.write(f"\n\n---\n### 🔄 Bugfix Task {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"- Source Run ID: {latest_run_id}\n")

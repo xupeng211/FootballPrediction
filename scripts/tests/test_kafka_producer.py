@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 KafkaProducer 功能测试 - Phase 5.2 Batch-Δ-020
@@ -39,7 +40,7 @@ def test_kafka_producer_structure():
 
         # 模拟 Kafka 消息对象
         mock_message = Mock()
-        mock_message.topic = Mock(return_value="test-topic")
+        mock_message.topic = Mock(return_value = os.getenv("TEST_KAFKA_PRODUCER_RETURN_VALUE_42"))
         mock_message.partition = Mock(return_value=0)
         mock_message.offset = Mock(return_value=123)
 
@@ -127,7 +128,7 @@ def test_kafka_producer_structure():
                 print(f"  ✅ 字典序列化: {len(serialized_dict)} 字符")
 
                 # 测试字符串序列化
-                str_data = "test message"
+                str_data = os.getenv("TEST_KAFKA_PRODUCER_STR_DATA_129")
                 serialized_str = producer._serialize_message(str_data)
                 print(f"  ✅ 字符串序列化: {len(serialized_str)} 字符")
 

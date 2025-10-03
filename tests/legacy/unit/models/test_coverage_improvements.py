@@ -4,6 +4,7 @@ from src.models.prediction_service import PredictionResult, PredictionService
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import numpy
 import pytest
+import os
 
 """
 目标性覆盖率提升测试
@@ -28,7 +29,7 @@ class TestPredictionServiceCoverage:
     """测试模型获取逻辑：从 Production -> Staging -> Latest 的回退"""
     mock_client = MagicMock()
     mock_staging_version = Mock()
-    mock_staging_version.version = "0.9.0-staging[": mock_staging_version.current_stage = "]Staging[": mock_latest_version = Mock()": mock_latest_version.version = "]0.8.0-latest[": mock_latest_version.current_stage = "]None["""""
+    mock_staging_version.version = "0.9.0-staging[": mock_staging_version.current_stage = os.getenv("TEST_COVERAGE_IMPROVEMENTS_CURRENT_STAGE_31"): mock_latest_version = Mock()": mock_latest_version.version = os.getenv("TEST_COVERAGE_IMPROVEMENTS_VERSION_31"): mock_latest_version.current_stage = os.getenv("TEST_COVERAGE_IMPROVEMENTS_CURRENT_STAGE_31")""""
         # 测试场景1：Production 无版本，Staging 有版本
         mock_client.get_latest_versions.side_effect = [[], "]mock_staging_version[": with patch(:""""
             "]src.models.prediction_service.MlflowClient[", return_value=mock_client[""""
@@ -62,7 +63,7 @@ class TestPredictionServiceCoverage:
         mock_row.away_team_id = 11
         mock_row.league_id = 1
         mock_row.match_time = datetime.now()
-        mock_row.match_status = "scheduled[": mock_row.season = "]2024[": mock_result.first.return_value = mock_row[": mock_session.execute.return_value = mock_result[": service.db_manager.get_async_session = MagicMock()": service.db_manager.get_async_session.return_value.__aenter__.return_value = ("
+        mock_row.match_status = os.getenv("TEST_COVERAGE_IMPROVEMENTS_MATCH_STATUS_62"): mock_row.season = os.getenv("TEST_COVERAGE_IMPROVEMENTS_SEASON_63"): mock_result.first.return_value = mock_row[": mock_session.execute.return_value = mock_result[": service.db_manager.get_async_session = MagicMock()": service.db_manager.get_async_session.return_value.__aenter__.return_value = ("
         mock_session
         )
         match_info = await service._get_match_info(1)

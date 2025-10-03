@@ -1,3 +1,4 @@
+import os
 """
 告警管理器
 
@@ -25,25 +26,25 @@ class AlertLevel(Enum):
     """告警级别"""
 
     INFO = "info"
-    WARNING = "warning"
+    WARNING = os.getenv("ALERT_MANAGER_WARNING_28")
     ERROR = "error"
-    CRITICAL = "critical"
+    CRITICAL = os.getenv("ALERT_MANAGER_CRITICAL_28")
 
 
 class AlertStatus(Enum):
     """告警状态"""
 
-    ACTIVE = "active"
-    RESOLVED = "resolved"
-    SILENCED = "silenced"
+    ACTIVE = os.getenv("ALERT_MANAGER_ACTIVE_30")
+    RESOLVED = os.getenv("ALERT_MANAGER_RESOLVED_33")
+    SILENCED = os.getenv("ALERT_MANAGER_SILENCED_34")
 
 
 class AlertChannel(Enum):
     """告警渠道"""
 
     LOG = "log"
-    PROMETHEUS = "prometheus"
-    WEBHOOK = "webhook"
+    PROMETHEUS = os.getenv("ALERT_MANAGER_PROMETHEUS_37")
+    WEBHOOK = os.getenv("ALERT_MANAGER_WEBHOOK_38")
     EMAIL = "email"
 
 
@@ -261,60 +262,60 @@ class AlertManager:
         default_rules = [
             # 数据新鲜度告警
             AlertRule(
-                rule_id="data_freshness_critical",
-                name="数据新鲜度严重告警",
-                condition="freshness_hours > 24",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_255"),
+                name = os.getenv("ALERT_MANAGER_NAME_259"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_260"),
                 level=AlertLevel.CRITICAL,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=1800,  # 30分钟去重
             ),
             AlertRule(
-                rule_id="data_freshness_warning",
-                name="数据新鲜度警告",
-                condition="freshness_hours > 12",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_266"),
+                name = os.getenv("ALERT_MANAGER_NAME_267"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_267"),
                 level=AlertLevel.WARNING,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=3600,  # 1小时去重
             ),
             # 数据完整性告警
             AlertRule(
-                rule_id="data_completeness_critical",
-                name="数据完整性严重告警",
-                condition="completeness_ratio < 0.8",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_273"),
+                name = os.getenv("ALERT_MANAGER_NAME_274"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_275"),
                 level=AlertLevel.CRITICAL,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=900,  # 15分钟去重
             ),
             AlertRule(
-                rule_id="data_completeness_warning",
-                name="数据完整性警告",
-                condition="completeness_ratio < 0.95",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_281"),
+                name = os.getenv("ALERT_MANAGER_NAME_282"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_282"),
                 level=AlertLevel.WARNING,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=1800,
             ),
             # 数据质量告警
             AlertRule(
-                rule_id="data_quality_critical",
-                name="数据质量严重告警",
-                condition="quality_score < 0.7",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_288"),
+                name = os.getenv("ALERT_MANAGER_NAME_289"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_290"),
                 level=AlertLevel.CRITICAL,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=900,
             ),
             # 异常检测告警
             AlertRule(
-                rule_id="anomaly_critical",
-                name="数据异常严重告警",
-                condition="anomaly_score > 0.2",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_294"),
+                name = os.getenv("ALERT_MANAGER_NAME_296"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_298"),
                 level=AlertLevel.CRITICAL,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=300,  # 5分钟去重
             ),
             AlertRule(
-                rule_id="anomaly_warning",
-                name="数据异常警告",
-                condition="anomaly_score > 0.1",
+                rule_id = os.getenv("ALERT_MANAGER_RULE_ID_302"),
+                name = os.getenv("ALERT_MANAGER_NAME_302"),
+                condition = os.getenv("ALERT_MANAGER_CONDITION_303"),
                 level=AlertLevel.WARNING,
                 channels=[AlertChannel.LOG, AlertChannel.PROMETHEUS],
                 throttle_seconds=600,
@@ -501,7 +502,7 @@ class AlertManager:
                 except Exception as e:
                     logger.error(f"告警处理器错误 {channel.value}: {e}")
                     self.metrics.monitoring_errors_total.labels(
-                        error_type="alert_handler"
+                        error_type = os.getenv("ALERT_MANAGER_ERROR_TYPE_485")
                     ).inc()
 
     def _update_alert_metrics(self, alert: Alert, rule_id: Optional[str]) -> None:
@@ -704,9 +705,9 @@ class AlertManager:
                         title=f"数据新鲜度严重告警 - {table_name}",
                         message=f"表 {table_name} 数据已经 {hours:.1f} 小时未更新",
                         level=AlertLevel.CRITICAL,
-                        source="quality_monitor",
+                        source = os.getenv("ALERT_MANAGER_SOURCE_689"),
                         labels={"table": table_name, "metric": "freshness"},
-                        rule_id="data_freshness_critical",
+                        rule_id = os.getenv("ALERT_MANAGER_RULE_ID_255"),
                     )
                     if alert:
                         fired_alerts.append(alert)
@@ -715,9 +716,9 @@ class AlertManager:
                         title=f"数据新鲜度警告 - {table_name}",
                         message=f"表 {table_name} 数据已经 {hours:.1f} 小时未更新",
                         level=AlertLevel.WARNING,
-                        source="quality_monitor",
+                        source = os.getenv("ALERT_MANAGER_SOURCE_689"),
                         labels={"table": table_name, "metric": "freshness"},
-                        rule_id="data_freshness_warning",
+                        rule_id = os.getenv("ALERT_MANAGER_RULE_ID_266"),
                     )
                     if alert:
                         fired_alerts.append(alert)
@@ -733,9 +734,9 @@ class AlertManager:
                         title=f"数据完整性严重告警 - {table_name}",
                         message=f"表 {table_name} 数据完整性仅为 {ratio:.1%}",
                         level=AlertLevel.CRITICAL,
-                        source="quality_monitor",
+                        source = os.getenv("ALERT_MANAGER_SOURCE_689"),
                         labels={"table": table_name, "metric": "completeness"},
-                        rule_id="data_completeness_critical",
+                        rule_id = os.getenv("ALERT_MANAGER_RULE_ID_273"),
                     )
                     if alert:
                         fired_alerts.append(alert)
@@ -744,9 +745,9 @@ class AlertManager:
                         title=f"数据完整性警告 - {table_name}",
                         message=f"表 {table_name} 数据完整性为 {ratio:.1%}",
                         level=AlertLevel.WARNING,
-                        source="quality_monitor",
+                        source = os.getenv("ALERT_MANAGER_SOURCE_689"),
                         labels={"table": table_name, "metric": "completeness"},
-                        rule_id="data_completeness_warning",
+                        rule_id = os.getenv("ALERT_MANAGER_RULE_ID_281"),
                     )
                     if alert:
                         fired_alerts.append(alert)
@@ -756,12 +757,12 @@ class AlertManager:
             score = quality_data["overall_score"]
             if score < 0.7:
                 alert = self.fire_alert(
-                    title="数据质量严重告警",
+                    title = os.getenv("ALERT_MANAGER_TITLE_741"),
                     message=f"整体数据质量得分为 {score:.1%}，低于阈值",
                     level=AlertLevel.CRITICAL,
-                    source="quality_monitor",
+                    source = os.getenv("ALERT_MANAGER_SOURCE_689"),
                     labels={"metric": "quality_score"},
-                    rule_id="data_quality_critical",
+                    rule_id = os.getenv("ALERT_MANAGER_RULE_ID_288"),
                 )
                 if alert:
                     fired_alerts.append(alert)
@@ -786,13 +787,13 @@ class AlertManager:
                     title=f"数据异常严重告警 - {anomaly.table_name}.{anomaly.column_name}",
                     message=f"{anomaly.description} (得分: {anomaly.anomaly_score:.3f})",
                     level=AlertLevel.CRITICAL,
-                    source="anomaly_detector",
+                    source = os.getenv("ALERT_MANAGER_SOURCE_762"),
                     labels={
                         "table": anomaly.table_name,
                         "column": anomaly.column_name,
                         "anomaly_type": anomaly.anomaly_type.value,
                     },
-                    rule_id="anomaly_critical",
+                    rule_id = os.getenv("ALERT_MANAGER_RULE_ID_294"),
                 )
                 if alert:
                     fired_alerts.append(alert)
@@ -801,13 +802,13 @@ class AlertManager:
                     title=f"数据异常警告 - {anomaly.table_name}.{anomaly.column_name}",
                     message=f"{anomaly.description} (得分: {anomaly.anomaly_score:.3f})",
                     level=AlertLevel.WARNING,
-                    source="anomaly_detector",
+                    source = os.getenv("ALERT_MANAGER_SOURCE_762"),
                     labels={
                         "table": anomaly.table_name,
                         "column": anomaly.column_name,
                         "anomaly_type": anomaly.anomaly_type.value,
                     },
-                    rule_id="anomaly_warning",
+                    rule_id = os.getenv("ALERT_MANAGER_RULE_ID_302"),
                 )
                 if alert:
                     fired_alerts.append(alert)

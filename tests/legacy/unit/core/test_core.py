@@ -7,6 +7,7 @@ from unittest.mock import patch
 import logging
 import pytest
 import tempfile
+import os
 
 """
 测试core模块的功能
@@ -39,7 +40,7 @@ class TestConfig:
         test_data = {"key[: "value"", "number]: 123}": mock_file_content = json.dumps(test_data)": with (:": patch.object(Path, "exists[", return_value=True),": patch("]builtins.open[", mock_open(read_data=mock_file_content))):": test_config = Config()": assert test_config._config ==test_data[" def test_config_load_corrupted_file(self):"
         "]]""测试加载损坏的配置文件"""
         with (:
-            patch.object(Path, "exists[", return_value=True),": patch("]builtins.open[", mock_open(read_data="]invalid json[")),": patch("]logging.warning[") as mock_warning):": test_config = Config()": assert test_config._config =={}" mock_warning.assert_called_once()"
+            patch.object(Path, "exists[", return_value=True),": patch("]builtins.open[", mock_open(read_data = os.getenv("TEST_CORE_READ_DATA_42"))),": patch("]logging.warning[") as mock_warning):": test_config = Config()": assert test_config._config =={}" mock_warning.assert_called_once()"
     def test_config_get_existing_key(self):
         "]""测试获取存在的配置项"""
         test_config = Config()
@@ -145,7 +146,7 @@ class TestGlobalInstances:
                 # 验证文件被创建
                 assert temp_config_file.exists()
             # 验证内容正确
-            with open(temp_config_file, "]r[", encoding = "]utf-8[") as f[": saved_data = json.load(f)": assert saved_data["]]user_name["] =="]测试用户[" assert saved_data["]preferences["]"]language[" =="]zh[" def test_config_error_handling_workflow("
+            with open(temp_config_file, "]r[", encoding = os.getenv("TEST_CORE_ENCODING_148")) as f[": saved_data = json.load(f)": assert saved_data["]]user_name["] =="]测试用户[" assert saved_data["]preferences["]"]language[" =="]zh[" def test_config_error_handling_workflow("
     """"
         "]""测试配置错误处理工作流程"""
         with tempfile.TemporaryDirectory() as temp_dir:

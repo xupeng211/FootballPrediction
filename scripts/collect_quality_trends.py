@@ -115,9 +115,9 @@ class QualityTrendsCollector:
 
                     # Extract error type
                     if 'error:' in line:
-                        error_type = "type_error"
+                        error_type = os.getenv("COLLECT_QUALITY_TRENDS_ERROR_TYPE_118")
                     elif 'warning:' in line:
-                        error_type = "warning"
+                        error_type = os.getenv("COLLECT_QUALITY_TRENDS_ERROR_TYPE_119")
                     else:
                         error_type = "other"
 

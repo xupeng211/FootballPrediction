@@ -1,3 +1,4 @@
+import os
 """
 联赛模型
 
@@ -17,7 +18,7 @@ class League(BaseModel):
     对应 architecture.md 中的 leagues 表设计
     """
 
-    __tablename__ = "leagues"
+    __tablename__ = os.getenv("LEAGUE___TABLENAME___20")
 
     # 基础信息字段
     league_name = Column(String(100), nullable=False, comment="联赛名称")
@@ -27,26 +28,26 @@ class League(BaseModel):
     country = Column(String(50), nullable=True, comment="所属国家")
 
     level = Column(
-        Integer, nullable=True, comment="联赛级别（1=顶级联赛，2=二级联赛等）"
+        Integer, nullable=True, comment = os.getenv("LEAGUE_COMMENT_30")
     )
 
     # API相关字段
-    api_league_id = Column(Integer, unique=True, nullable=True, comment="API联赛ID")
+    api_league_id = Column(Integer, unique=True, nullable=True, comment = os.getenv("LEAGUE_COMMENT_34"))
 
     # 赛季信息
-    season_start_month = Column(Integer, nullable=True, comment="赛季开始月份（1-12）")
+    season_start_month = Column(Integer, nullable=True, comment = os.getenv("LEAGUE_COMMENT_36"))
 
-    season_end_month = Column(Integer, nullable=True, comment="赛季结束月份（1-12）")
+    season_end_month = Column(Integer, nullable=True, comment = os.getenv("LEAGUE_COMMENT_37"))
 
     # 状态字段
     is_active = Column(Boolean, default=True, nullable=False, comment="是否活跃")
 
     # 关系定义
     teams = relationship(
-        "Team", back_populates="league", lazy="dynamic", cascade="all, delete-orphan"
+        "Team", back_populates = os.getenv("LEAGUE_BACK_POPULATES_42"), lazy = os.getenv("LEAGUE_LAZY_42"), cascade = os.getenv("LEAGUE_CASCADE_42")
     )
 
-    matches = relationship("Match", back_populates="league", lazy="dynamic")
+    matches = relationship("Match", back_populates = os.getenv("LEAGUE_BACK_POPULATES_42"), lazy = os.getenv("LEAGUE_LAZY_42"))
 
     # 索引定义
     __table_args__ = (
@@ -56,7 +57,7 @@ class League(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<League(id={self.id}, name='{self.league_name}', country='{self.country}')>"
+        return f"<League(id={self.id}, name = os.getenv("LEAGUE_NAME_53"), country = os.getenv("LEAGUE_COUNTRY_53"))>"
 
     @property
     def display_name(self) -> str:

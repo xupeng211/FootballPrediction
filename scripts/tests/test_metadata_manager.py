@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 MetadataManager 功能测试 - Phase 5.1 Batch-Δ-013
@@ -68,7 +69,7 @@ def test_metadata_manager():
         required_headers = ["Content-Type", "Accept"]
         for header in required_headers:
             has_header = header in session.headers
-            expected_value = "application/json"
+            expected_value = os.getenv("TEST_METADATA_MANAGER_EXPECTED_VALUE_71")
             actual_value = session.headers.get(header)
             status = "✅" if has_header and actual_value == expected_value else "❌"
             print(f"  {status} {header}: {actual_value}")

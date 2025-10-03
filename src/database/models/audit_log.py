@@ -1,3 +1,4 @@
+import os
 """
 权限审计日志模型
 
@@ -22,24 +23,24 @@ class AuditAction(str, Enum):
     """审计操作类型枚举"""
 
     # 数据操作
-    CREATE = "CREATE"  # 创建记录
+    CREATE = os.getenv("AUDIT_LOG_CREATE_25")  # 创建记录
     READ = "READ"  # 读取记录
-    UPDATE = "UPDATE"  # 更新记录
-    DELETE = "DELETE"  # 删除记录
+    UPDATE = os.getenv("AUDIT_LOG_UPDATE_26")  # 更新记录
+    DELETE = os.getenv("AUDIT_LOG_DELETE_27")  # 删除记录
 
     # 权限操作
     GRANT = "GRANT"  # 授予权限
-    REVOKE = "REVOKE"  # 撤销权限
+    REVOKE = os.getenv("AUDIT_LOG_REVOKE_28")  # 撤销权限
 
     # 系统操作
     LOGIN = "LOGIN"  # 用户登录
-    LOGOUT = "LOGOUT"  # 用户登出
-    BACKUP = "BACKUP"  # 数据备份
-    RESTORE = "RESTORE"  # 数据恢复
+    LOGOUT = os.getenv("AUDIT_LOG_LOGOUT_32")  # 用户登出
+    BACKUP = os.getenv("AUDIT_LOG_BACKUP_32")  # 数据备份
+    RESTORE = os.getenv("AUDIT_LOG_RESTORE_34")  # 数据恢复
 
     # 配置操作
-    CONFIG_CHANGE = "CONFIG_CHANGE"  # 配置变更
-    SCHEMA_CHANGE = "SCHEMA_CHANGE"  # 架构变更
+    CONFIG_CHANGE = os.getenv("AUDIT_LOG_CONFIG_CHANGE_36")  # 配置变更
+    SCHEMA_CHANGE = os.getenv("AUDIT_LOG_SCHEMA_CHANGE_37")  # 架构变更
 
 
 class AuditSeverity(str, Enum):
@@ -47,9 +48,9 @@ class AuditSeverity(str, Enum):
 
     INFO = "INFO"  # 信息级：一般性成功事件
     LOW = "LOW"  # 低风险：普通读操作
-    MEDIUM = "MEDIUM"  # 中风险：普通写操作
+    MEDIUM = os.getenv("AUDIT_LOG_MEDIUM_41")  # 中风险：普通写操作
     HIGH = "HIGH"  # 高风险：删除、权限变更
-    CRITICAL = "CRITICAL"  # 极高风险：系统级操作
+    CRITICAL = os.getenv("AUDIT_LOG_CRITICAL_42")  # 极高风险：系统级操作
 
 
 class AuditLog(BaseModel):
@@ -63,13 +64,13 @@ class AuditLog(BaseModel):
     - 操作时间和上下文信息
     """
 
-    __tablename__ = "audit_logs"
+    __tablename__ = os.getenv("AUDIT_LOG___TABLENAME___50")
 
     # 主键
-    id = Column(Integer, primary_key=True, autoincrement=True, comment="审计日志ID")
+    id = Column(Integer, primary_key=True, autoincrement=True, comment = os.getenv("AUDIT_LOG_COMMENT_52"))
 
     # 用户信息
-    user_id = Column(String(100), nullable=False, comment="操作用户ID")
+    user_id = Column(String(100), nullable=False, comment = os.getenv("AUDIT_LOG_COMMENT_59"))
     username = Column(String(100), nullable=True, comment="操作用户名")
     user_role = Column(String(50), nullable=True, comment="用户角色")
     session_id = Column(String(100), nullable=True, comment="会话ID")
@@ -86,14 +87,14 @@ class AuditLog(BaseModel):
     # 数据变更信息
     old_value = Column(Text, nullable=True, comment="操作前值")
     new_value = Column(Text, nullable=True, comment="操作后值")
-    old_value_hash = Column(String(64), nullable=True, comment="旧值哈希（敏感数据）")
-    new_value_hash = Column(String(64), nullable=True, comment="新值哈希（敏感数据）")
+    old_value_hash = Column(String(64), nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_82"))
+    new_value_hash = Column(String(64), nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_83"))
 
     # 上下文信息
-    ip_address = Column(String(45), nullable=True, comment="客户端IP地址")
+    ip_address = Column(String(45), nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_86"))
     user_agent = Column(Text, nullable=True, comment="用户代理")
     request_path = Column(String(500), nullable=True, comment="请求路径")
-    request_method = Column(String(10), nullable=True, comment="HTTP方法")
+    request_method = Column(String(10), nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_89"))
 
     # 操作结果
     success = Column(
@@ -101,7 +102,7 @@ class AuditLog(BaseModel):
         nullable=False,
         default=True,
         server_default="true",
-        comment="操作是否成功",
+        comment = os.getenv("AUDIT_LOG_COMMENT_93"),
     )
     error_message = Column(Text, nullable=True, comment="错误信息")
 
@@ -112,19 +113,19 @@ class AuditLog(BaseModel):
         default=func.now(),
         comment="操作时间戳",
     )
-    duration_ms = Column(Integer, nullable=True, comment="操作耗时（毫秒）")
+    duration_ms = Column(Integer, nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_96"))
 
     # 扩展信息
     extra_data = Column(SQLiteCompatibleJSONB, nullable=True, comment="扩展元数据")
-    tags = Column(String(500), nullable=True, comment="标签（逗号分隔）")
+    tags = Column(String(500), nullable=True, comment = os.getenv("AUDIT_LOG_COMMENT_104"))
 
     # 合规相关
     compliance_category = Column(String(100), nullable=True, comment="合规分类")
     retention_period_days = Column(
-        Integer, nullable=True, default=2555, comment="保留期限（天）"
+        Integer, nullable=True, default=2555, comment = os.getenv("AUDIT_LOG_COMMENT_111")
     )  # 7年
     is_sensitive = Column(
-        Boolean, nullable=False, default=False, comment="是否包含敏感数据"
+        Boolean, nullable=False, default=False, comment = os.getenv("AUDIT_LOG_COMMENT_115")
     )
 
     # 索引优化
@@ -142,9 +143,9 @@ class AuditLog(BaseModel):
     def __repr__(self) -> str:
         """字符串表示"""
         return (
-            f"<AuditLog(id={self.id}, user_id='{self.user_id}', "
-            f"action='{self.action}', table_name='{self.table_name}', "
-            f"timestamp='{self.timestamp}')>"
+            f"<AuditLog(id={self.id}, user_id = os.getenv("AUDIT_LOG_USER_ID_131"), "
+            f"action = os.getenv("AUDIT_LOG_ACTION_132"), table_name = os.getenv("AUDIT_LOG_TABLE_NAME_132"), "
+            f"timestamp = os.getenv("AUDIT_LOG_TIMESTAMP_133"))>"
         )
 
     @property

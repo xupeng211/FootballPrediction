@@ -1,3 +1,4 @@
+import os
 """
 赔率数据采集器
 
@@ -31,7 +32,7 @@ class OddsCollector(DataCollector):
 
     def __init__(
         self,
-        data_source: str = "odds_api",
+        data_source: str = os.getenv("ODDS_COLLECTOR_STR_34"),
         api_key: Optional[str] = None,
         base_url: str = "https://api.the-odds-api.com/v4",
         time_window_minutes: int = 5,
@@ -60,11 +61,11 @@ class OddsCollector(DataCollector):
         """赔率采集器不处理赛程数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="fixtures",
+            collection_type = os.getenv("ODDS_COLLECTOR_COLLECTION_TYPE_62"),
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("ODDS_COLLECTOR_STATUS_65"),
         )
 
     async def collect_odds(
@@ -165,11 +166,11 @@ class OddsCollector(DataCollector):
             # 确定最终状态
             total_collected = len(collected_data)
             if error_count == 0:
-                status = "success"
+                status = os.getenv("ODDS_COLLECTOR_STATUS_166")
             elif success_count > 0:
-                status = "partial"
+                status = os.getenv("ODDS_COLLECTOR_STATUS_167")
             else:
-                status = "failed"
+                status = os.getenv("ODDS_COLLECTOR_STATUS_168")
 
             result = CollectionResult(
                 data_source=self.data_source,
@@ -197,7 +198,7 @@ class OddsCollector(DataCollector):
                 records_collected=0,
                 success_count=0,
                 error_count=1,
-                status="failed",
+                status = os.getenv("ODDS_COLLECTOR_STATUS_195"),
                 error_message=str(e),
             )
 
@@ -205,11 +206,11 @@ class OddsCollector(DataCollector):
         """赔率采集器不处理实时比分数据"""
         return CollectionResult(
             data_source=self.data_source,
-            collection_type="live_scores",
+            collection_type = os.getenv("ODDS_COLLECTOR_COLLECTION_TYPE_201"),
             records_collected=0,
             success_count=0,
             error_count=0,
-            status="skipped",
+            status = os.getenv("ODDS_COLLECTOR_STATUS_65"),
         )
 
     async def _get_active_bookmakers(self) -> List[str]:

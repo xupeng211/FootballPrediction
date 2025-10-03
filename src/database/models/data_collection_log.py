@@ -1,3 +1,4 @@
+import os
 """
 数据采集日志模型
 
@@ -20,19 +21,19 @@ from src.database.base import BaseModel
 class CollectionStatus(Enum):
     """采集状态枚举"""
 
-    SUCCESS = "success"
-    FAILED = "failed"
-    PARTIAL = "partial"
-    RUNNING = "running"
+    SUCCESS = os.getenv("DATA_COLLECTION_LOG_SUCCESS_23")
+    FAILED = os.getenv("DATA_COLLECTION_LOG_FAILED_23")
+    PARTIAL = os.getenv("DATA_COLLECTION_LOG_PARTIAL_23")
+    RUNNING = os.getenv("DATA_COLLECTION_LOG_RUNNING_24")
 
 
 class CollectionType(Enum):
     """采集类型枚举"""
 
-    FIXTURES = "fixtures"
+    FIXTURES = os.getenv("DATA_COLLECTION_LOG_FIXTURES_25")
     ODDS = "odds"
-    SCORES = "scores"
-    LIVE_SCORES = "live_scores"
+    SCORES = os.getenv("DATA_COLLECTION_LOG_SCORES_26")
+    LIVE_SCORES = os.getenv("DATA_COLLECTION_LOG_LIVE_SCORES_26")
 
 
 class DataCollectionLog(BaseModel):
@@ -43,7 +44,7 @@ class DataCollectionLog(BaseModel):
     用于监控采集状态、调试错误、统计性能等。
     """
 
-    __tablename__ = "data_collection_logs"
+    __tablename__ = os.getenv("DATA_COLLECTION_LOG___TABLENAME___34")
 
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")

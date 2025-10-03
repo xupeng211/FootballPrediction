@@ -246,13 +246,13 @@ class AutoRetrainPipeline:
             )
 
             if recent_acc > early_acc * 1.05:
-                trend = "improving"
+                trend = os.getenv("RETRAIN_PIPELINE_TREND_249")
             elif recent_acc < early_acc * 0.95:
-                trend = "declining"
+                trend = os.getenv("RETRAIN_PIPELINE_TREND_250")
             else:
-                trend = "stable"
+                trend = os.getenv("RETRAIN_PIPELINE_TREND_251")
         else:
-            trend = "insufficient_data"
+            trend = os.getenv("RETRAIN_PIPELINE_TREND_253")
 
         return {
             "trend": trend,
@@ -382,7 +382,7 @@ class AutoRetrainPipeline:
             latest_version = self._get_latest_model_version(model_name)
             if latest_version:
                 self.mlflow_client.transition_model_version_stage(
-                    name=model_name, version=latest_version, stage="Staging"
+                    name=model_name, version=latest_version, stage = os.getenv("RETRAIN_PIPELINE_STAGE_384")
                 )
 
                 logger.info(f"新模型版本 {latest_version} 已设置为 Staging 阶段")
@@ -765,10 +765,10 @@ class AutoRetrainPipeline:
 
 @click.command()
 @click.option("--threshold", default=0.45, help="准确率阈值")
-@click.option("--min-predictions", default=50, help="最小预测数量要求")
-@click.option("--window-days", default=30, help="评估窗口天数")
-@click.option("--model-name", help="指定模型名称（可选）")
-@click.option("--dry-run", is_flag=True, help="试运行模式，不执行实际重训练")
+@click.option("--min-predictions", default=50, help = os.getenv("RETRAIN_PIPELINE_HELP_763"))
+@click.option("--window-days", default=30, help = os.getenv("RETRAIN_PIPELINE_HELP_767"))
+@click.option("--model-name", help = os.getenv("RETRAIN_PIPELINE_HELP_768"))
+@click.option("--dry-run", is_flag=True, help = os.getenv("RETRAIN_PIPELINE_HELP_768"))
 @click.option("--verbose", is_flag=True, help="详细输出")
 def main(
     threshold: float,

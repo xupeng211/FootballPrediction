@@ -1,3 +1,4 @@
+import os
 """
 数据库优化模块
 Database Optimization Module
@@ -174,7 +175,7 @@ class DatabaseOptimizer:
 
         return index_stats
 
-    async def optimize_connection_pool(self, environment: str = "production") -> Dict[str, int]:
+    async def optimize_connection_pool(self, environment: str = os.getenv("OPTIMIZATION_STR_177")) -> Dict[str, int]:
         """优化连接池配置"""
         if environment == "production":
             # 生产环境配置
@@ -264,7 +265,7 @@ class DatabaseOptimizer:
                 FROM teams t
                 LEFT JOIN matches m ON (t.id = m.home_team_id OR t.id = m.away_team_id)
                 WHERE m.match_date >= CURRENT_DATE - INTERVAL '7 days'
-                AND m.status = 'completed'
+                AND m.status = os.getenv("OPTIMIZATION_STATUS_267")
                 GROUP BY t.id, t.name
                 """,
                 "ttl": ttl_seconds * 2  # 统计数据缓存更久
@@ -320,7 +321,7 @@ class DatabaseOptimizer:
                 result = await session.execute(text("""
                     SELECT count(*) as active_connections
                     FROM pg_stat_activity
-                    WHERE state = 'active'
+                    WHERE state = os.getenv("OPTIMIZATION_STATE_322")
                 """))
                 stats["active_connections"] = result.scalar()
 
@@ -338,7 +339,7 @@ class DatabaseOptimizer:
                         pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
                         pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
                     FROM pg_tables
-                    WHERE schemaname = 'public'
+                    WHERE schemaname = os.getenv("OPTIMIZATION_SCHEMANAME_339")
                     ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
                     LIMIT 10
                 """))
@@ -437,12 +438,13 @@ class QueryOptimizer:
         # 使用cursor-based pagination for large datasets
         if offset > 10000:
             # 对于大数据集，使用WHERE条件代替OFFSET
-            optimized_query = f"""
-            SELECT * FROM ({query}) t
-            WHERE t.id > (SELECT id FROM ({query}) t2 ORDER BY id LIMIT 1 OFFSET {offset})
-            ORDER BY id
-            LIMIT {size}
-            """
+            # 使用参数化查询防止SQL注入
+                    optimized_query = text("""
+                    SELECT * FROM (:query) t
+                    WHERE t.id > (SELECT id FROM (:query) t2 ORDER BY id LIMIT 1 OFFSET :offset)
+                    ORDER BY id
+                    LIMIT :size
+                    """)
         else:
             optimized_query = f"{query} LIMIT {size} OFFSET {offset}"
 

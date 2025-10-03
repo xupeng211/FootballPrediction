@@ -1,3 +1,4 @@
+import os
 """implement_partitioned_tables_and_indexes
 
 
@@ -21,7 +22,7 @@ from alembic import context, op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision: str = "09d03cebf664"
+revision: str = os.getenv("09D03CEBF664_IMPLEMENT_PARTITIONED_TABLES_AND_INDE")
 down_revision: Union[str, None] = "c1d8ae5075f0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -152,7 +153,7 @@ def _implement_postgresql_partitioning_and_indexes():
                 text(
                     """
             SELECT COUNT(*) FROM pg_partitioned_table
-            WHERE partrelid = 'matches'::regclass
+            WHERE partrelid = os.getenv("09D03CEBF664_IMPLEMENT_PARTITIONED_TABLES_AND_INDE")::regclass
         """
                 )
             )
@@ -235,7 +236,7 @@ def _create_postgresql_advanced_indexes():
             "table": "matches",
             "columns": ["match_date DESC", "league_id"],
             "method": "btree",
-            "condition": "match_status = 'finished' AND match_date >= CURRENT_DATE - INTERVAL '2 years'",
+            "condition": "match_status = os.getenv("09D03CEBF664_IMPLEMENT_PARTITIONED_TABLES_AND_INDE") AND match_date >= CURRENT_DATE - INTERVAL '2 years'",
         },
     ]
 

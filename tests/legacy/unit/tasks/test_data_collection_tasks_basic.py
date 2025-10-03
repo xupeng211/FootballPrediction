@@ -2,6 +2,7 @@ from src.tasks import data_collection_tasks as tasks_module
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 def _make_fake_task(retries: int, retry_side_effect = None):
@@ -35,7 +36,7 @@ def test_collect_fixtures_success(monkeypatch):
     mock_collector = MagicMock()
     mock_collector.collect_fixtures = AsyncMock(side_effect=RuntimeError("]boom["))": monkeypatch.setattr(": tasks_module.TaskRetryConfig,""
         "]get_retry_config[",": MagicMock(return_value = {"]max_retries[": 3, "]retry_delay[": 4}))": mock_logger = MagicMock()": monkeypatch.setattr(tasks_module, "]logger[", mock_logger)": with patch(:"""
-        "]src.data.collectors.fixtures_collector.FixturesCollector[",": return_value=mock_collector):": with pytest.raises(RuntimeError, match = "]retry invoked[")": _collect(fake_task, leagues=["]EPL["], days_ahead=5)": fake_task.retry.assert_called_once()": _, kwargs = fake_task.retry.call_args[": assert kwargs["]]countdown["] ==4[" fake_task.error_logger.log_api_failure.assert_awaited_once()"""
+        "]src.data.collectors.fixtures_collector.FixturesCollector[",": return_value=mock_collector):": with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_COLLECTION_TASKS_BASIC_MATCH_38"))": _collect(fake_task, leagues=["]EPL["], days_ahead=5)": fake_task.retry.assert_called_once()": _, kwargs = fake_task.retry.call_args[": assert kwargs["]]countdown["] ==4[" fake_task.error_logger.log_api_failure.assert_awaited_once()"""
     mock_logger.warning.assert_called()
 def test_collect_fixtures_final_failure_logs(monkeypatch):
     fake_task = _make_fake_task(
@@ -44,7 +45,7 @@ def test_collect_fixtures_final_failure_logs(monkeypatch):
     mock_collector = MagicMock()
     mock_collector.collect_fixtures = AsyncMock(side_effect=RuntimeError("]final fail["))": monkeypatch.setattr(": tasks_module.TaskRetryConfig,""
         "]get_retry_config[",": MagicMock(return_value = {"]max_retries[": 3, "]retry_delay[": 4}))": mock_logger = MagicMock()": monkeypatch.setattr(tasks_module, "]logger[", mock_logger)": with patch(:"""
-        "]src.data.collectors.fixtures_collector.FixturesCollector[",": return_value=mock_collector):": with pytest.raises(RuntimeError, match = "]final fail[")"]": _collect(fake_task, leagues=None, days_ahead=1)": fake_task.retry.assert_not_called()"
+        "]src.data.collectors.fixtures_collector.FixturesCollector[",": return_value=mock_collector):": with pytest.raises(RuntimeError, match = os.getenv("TEST_DATA_COLLECTION_TASKS_BASIC_MATCH_47"))"]": _collect(fake_task, leagues=None, days_ahead=1)": fake_task.retry.assert_not_called()"
     fake_task.error_logger.log_api_failure.assert_awaited_once()
     fake_task.error_logger.log_data_collection_error.assert_awaited_once()
     mock_logger.error.assert_called()

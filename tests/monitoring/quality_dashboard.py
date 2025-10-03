@@ -45,7 +45,7 @@ class TestQualityDashboard:
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name = os.getenv("QUALITY_DASHBOARD_NAME_48") content = os.getenv("QUALITY_DASHBOARD_CONTENT_48")>
     <title>测试质量仪表板 - Football Prediction</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -257,36 +257,36 @@ class TestQualityDashboard:
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_257")>
         <h1>📊 测试质量仪表板</h1>
         <p>Football Prediction Project - 实时测试质量监控</p>
     </div>
 
-    <div class="container">
-        <div id="metrics-container" class="metrics-grid">
-            <div class="loading">加载测试指标...</div>
+    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_262")>
+        <div id = os.getenv("QUALITY_DASHBOARD_ID_262") class = os.getenv("QUALITY_DASHBOARD_CLASS_263")>
+            <div class = os.getenv("QUALITY_DASHBOARD_CLASS_265")>加载测试指标...</div>
         </div>
 
-        <div class="charts-container">
-            <div class="chart-card">
+        <div class = os.getenv("QUALITY_DASHBOARD_CLASS_266")>
+            <div class = os.getenv("QUALITY_DASHBOARD_CLASS_266")>
                 <h3>📈 覆盖率趋势</h3>
-                <div class="chart-container">
-                    <canvas id="coverageChart"></canvas>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_267")>
+                    <canvas id = os.getenv("QUALITY_DASHBOARD_ID_270")></canvas>
                 </div>
             </div>
 
-            <div class="chart-card">
+            <div class = os.getenv("QUALITY_DASHBOARD_CLASS_266")>
                 <h3>⚡ 执行时间趋势</h3>
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_267")>
+                    <canvas id = os.getenv("QUALITY_DASHBOARD_ID_273")></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="recommendations">
+        <div class = os.getenv("QUALITY_DASHBOARD_CLASS_275")>
             <h3>💡 改进建议</h3>
-            <div id="recommendations-list">
-                <div class="loading">加载建议...</div>
+            <div id = os.getenv("QUALITY_DASHBOARD_ID_278")>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_265")>加载建议...</div>
             </div>
         </div>
     </div>
@@ -328,49 +328,49 @@ class TestQualityDashboard:
             }[metrics.coverage_trend] || '➡️';
 
             container.innerHTML = `
-                <div class="metric-card">
-                    <div class="metric-label">总体质量评分</div>
-                    <div class="metric-value">
-                        <span class="quality-grade ${gradeClass}">${metrics.quality_grade}</span>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>总体质量评分</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>
+                        <span class = os.getenv("QUALITY_DASHBOARD_CLASS_323")>${metrics.quality_grade}</span>
                     </div>
-                    <div class="metric-value">${metrics.quality_score}/100</div>
-                    <div class="metric-trend">基于覆盖率、性能、稳定性</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.quality_score}/100</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_328")>基于覆盖率、性能、稳定性</div>
                 </div>
 
-                <div class="metric-card">
-                    <div class="metric-label">测试覆盖率</div>
-                    <div class="metric-value">${metrics.coverage}%</div>
-                    <div class="metric-trend trend-${metrics.coverage_trend}">
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>测试覆盖率</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.coverage}%</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_333")>
                         ${trendIcon} ${metrics.coverage_trend === 'improving' ? '提升中' :
                               metrics.coverage_trend === 'degrading' ? '下降中' : '稳定'}
                     </div>
                 </div>
 
-                <div class="metric-card">
-                    <div class="metric-label">执行时间</div>
-                    <div class="metric-value">${metrics.execution_time}s</div>
-                    <div class="metric-trend trend-${metrics.performance_trend}">
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>执行时间</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.execution_time}s</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_341")>
                         ${metrics.performance_trend === 'improving' ? '⚡ 更快了' :
                           metrics.performance_trend === 'degrading' ? '⚠️ 变慢了' : '➡️ 稳定'}
                     </div>
                 </div>
 
-                <div class="metric-card">
-                    <div class="metric-label">测试稳定性</div>
-                    <div class="metric-value">${metrics.stability}%</div>
-                    <div class="metric-trend">最近7天平均</div>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>测试稳定性</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.stability}%</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_328")>最近7天平均</div>
                 </div>
 
-                <div class="metric-card">
-                    <div class="metric-label">总测试数</div>
-                    <div class="metric-value">${metrics.total_tests}</div>
-                    <div class="metric-trend">单元测试</div>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>总测试数</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.total_tests}</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_328")>单元测试</div>
                 </div>
 
-                <div class="metric-card">
-                    <div class="metric-label">成功率</div>
-                    <div class="metric-value">${metrics.success_rate}%</div>
-                    <div class="metric-trend">最近运行</div>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_317")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_320")>成功率</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_321")>${metrics.success_rate}%</div>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_328")>最近运行</div>
                 </div>
             `;
         }
@@ -454,16 +454,16 @@ class TestQualityDashboard:
             const container = document.getElementById('recommendations-list');
 
             if (recommendations.length === 0) {
-                container.innerHTML = '<p>✅ 所有质量指标都良好！</p>';
+                container.innerHTML = os.getenv("QUALITY_DASHBOARD_INNERHTML_425");
                 return;
             }
 
             container.innerHTML = recommendations.map(rec => `
-                <div class="recommendation-item">
-                    <div class="recommendation-icon">${rec.icon}</div>
+                <div class = os.getenv("QUALITY_DASHBOARD_CLASS_429")>
+                    <div class = os.getenv("QUALITY_DASHBOARD_CLASS_431")>${rec.icon}</div>
                     <div>
                         <strong>${rec.title}</strong>
-                        <p style="margin-top: 5px; color: #666;">${rec.description}</p>
+                        <p style = os.getenv("QUALITY_DASHBOARD_STYLE_435")>${rec.description}</p>
                     </div>
                 </div>
             `).join('');
@@ -647,21 +647,21 @@ class TestQualityDashboard:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="测试质量仪表板")
-    parser.add_argument("--static", "-s", action="store_true",
-                       help="生成静态HTML报告")
+    parser = argparse.ArgumentParser(description = os.getenv("QUALITY_DASHBOARD_DESCRIPTION_607"))
+    parser.add_argument("--static", "-s", action = os.getenv("QUALITY_DASHBOARD_ACTION_609"),
+                       help = os.getenv("QUALITY_DASHBOARD_HELP_609"))
     parser.add_argument("--output", "-o", default="test_quality_dashboard.html",
-                       help="输出文件名（仅静态模式）")
-    parser.add_argument("--serve", action="store_true",
-                       help="运行Web服务器")
+                       help = os.getenv("QUALITY_DASHBOARD_HELP_613"))
+    parser.add_argument("--serve", action = os.getenv("QUALITY_DASHBOARD_ACTION_609"),
+                       help = os.getenv("QUALITY_DASHBOARD_HELP_617"))
     parser.add_argument("--host", default="0.0.0.0",
-                       help="服务器主机地址")
+                       help = os.getenv("QUALITY_DASHBOARD_HELP_623"))
     parser.add_argument("--port", "-p", type=int, default=8080,
                        help="服务器端口")
-    parser.add_argument("--debug", action="store_true",
+    parser.add_argument("--debug", action = os.getenv("QUALITY_DASHBOARD_ACTION_609"),
                        help="调试模式")
     parser.add_argument("--project-root", default=None,
-                       help="项目根目录路径")
+                       help = os.getenv("QUALITY_DASHBOARD_HELP_633"))
 
     args = parser.parse_args()
 

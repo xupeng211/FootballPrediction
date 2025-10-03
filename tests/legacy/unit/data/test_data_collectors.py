@@ -5,6 +5,7 @@ from src.data.collectors.scores_collector import ScoresCollector
 from unittest.mock import AsyncMock, Mock, patch
 import asyncio
 import pytest
+import os
 
 """
 数据采集器单元测试
@@ -79,8 +80,8 @@ class TestBaseCollector:
     def test_collection_result_creation(self):
         """测试采集结果数据结构创建"""
         CollectionResult(
-        data_source="test_api[",": collection_type="]fixtures[",": records_collected=10,": success_count=8,": error_count=2,"
-            status="]partial[",": error_message="]Some errors occurred[")": assert result.data_source =="]test_api[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_82"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_82"),": records_collected=10,": success_count=8,": error_count=2,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_82"),": error_message = os.getenv("TEST_DATA_COLLECTORS_ERROR_MESSAGE_82"))": assert result.data_source =="]test_api[" assert result.collection_type =="]fixtures[" assert result.records_collected ==10[""""
     assert result.success_count ==8
     assert result.error_count ==2
     assert result.status =="]]partial["""""
@@ -228,8 +229,8 @@ class TestFixturesCollector:
         )
         # 直接模拟collect_live_scores方法返回成功结果
         expected_result = CollectionResult(
-        data_source="]]scores_api[",": collection_type="]live_scores[",": records_collected=1,": success_count=1,": error_count=0,"
-            status="]success[")": with patch.object(:": collector, "]collect_live_scores[", return_value=expected_result[""""
+        data_source = os.getenv("TEST_DATA_COLLECTORS_DATA_SOURCE_226"),": collection_type = os.getenv("TEST_DATA_COLLECTORS_COLLECTION_TYPE_227"),": records_collected=1,": success_count=1,": error_count=0,"
+            status = os.getenv("TEST_DATA_COLLECTORS_STATUS_231"))": with patch.object(:": collector, "]collect_live_scores[", return_value=expected_result[""""
         ):
             await collector.collect_live_scores(use_websocket=False)
     assert result.status =="]]success[" assert result.success_count ==1[""""

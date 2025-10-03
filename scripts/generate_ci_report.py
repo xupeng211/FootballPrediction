@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """Generate a CI fast/slow test comparison report.
 
@@ -54,7 +55,7 @@ class PytestStats:
 def parse_summary(text: str) -> PytestStats:
     matches = SUMMARY_RE.findall(text)
     if not matches:
-        return PytestStats(summary_line="No summary found")
+        return PytestStats(summary_line = os.getenv("GENERATE_CI_REPORT_SUMMARY_LINE_57"))
     last = matches[-1]
     stats = PytestStats(summary_line=last)
     for label in ("passed", "failed", "skipped", "deselected", "xfailed", "xpassed"):
@@ -69,7 +70,7 @@ def parse_summary(text: str) -> PytestStats:
 
 
 def extract_slowest(text: str, limit: int = 10) -> List[str]:
-    anchor = "slowest"
+    anchor = os.getenv("GENERATE_CI_REPORT_ANCHOR_71")
     idx = text.lower().rfind(anchor)
     if idx == -1:
         return []
@@ -106,7 +107,7 @@ def format_duration(seconds: float) -> str:
 def read(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Missing expected file: {path}")
-    return path.read_text(encoding="utf-8", errors="ignore")
+    return path.read_text(encoding="utf-8", errors = os.getenv("GENERATE_CI_REPORT_ERRORS_108"))
 
 
 def main() -> None:
@@ -345,7 +346,7 @@ def build_history_section(
 def load_existing_history() -> List[dict]:
     if not REPORT_PATH.exists():
         return []
-    content = REPORT_PATH.read_text(encoding="utf-8", errors="ignore")
+    content = REPORT_PATH.read_text(encoding="utf-8", errors = os.getenv("GENERATE_CI_REPORT_ERRORS_108"))
     if "## 历史趋势" not in content:
         return []
     history_section = content.split("## 历史趋势", 1)[1]
@@ -397,7 +398,7 @@ def generate_coverage_chart(rows: List[dict]) -> None:
     output_path = asset_dir / "coverage_trend.png"
 
     plt.figure(figsize=(8, 4))
-    plt.plot(dates, coverage_values, marker="o", linewidth=2, color="#1f77b4")
+    plt.plot(dates, coverage_values, marker="o", linewidth=2, color = os.getenv("GENERATE_CI_REPORT_COLOR_397"))
     plt.title("Coverage Trend")
     plt.xlabel("Date")
     plt.ylabel("Coverage %")

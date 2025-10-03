@@ -1,3 +1,4 @@
+import os
 """数据库基础模型测试"""
 
 import pytest
@@ -27,7 +28,7 @@ class TestTimestampMixin:
         """测试时间戳混入类的列"""
         # 创建一个使用TimestampMixin的测试类
         class TestModel(Base, TimestampMixin):
-            __tablename__ = "test_timestamp_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___30")
             id = Column(Integer, primary_key=True)
 
         # 验证时间戳列存在
@@ -64,7 +65,7 @@ class TestBaseModel:
         """测试创建具体模型"""
         # 创建一个具体的测试模型
         class TestModel(BaseModel):
-            __tablename__ = "test_concrete_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___66")
             name = Column(String(50))
             value = Column(Integer)
 
@@ -80,7 +81,7 @@ class TestBaseModel:
         """测试基本字典转换"""
         # 创建一个具体的测试模型
         class TestModel(BaseModel):
-            __tablename__ = "test_to_dict_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___82")
             name = Column(String(50))
             value = Column(Integer)
 
@@ -107,14 +108,14 @@ class TestBaseModel:
     def test_to_dict_with_exclude_fields(self):
         """测试排除字段的字典转换"""
         class TestModel(BaseModel):
-            __tablename__ = "test_exclude_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___108")
             name = Column(String(50))
             secret = Column(String(100))
 
         model = TestModel(
             id=1,
             name="Test",
-            secret="hidden",
+            secret = os.getenv("TEST_BASE_SECRET_114"),
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             updated_at=datetime(2025, 1, 15, 10, 30, 0)
         )
@@ -129,7 +130,7 @@ class TestBaseModel:
     def test_to_dict_datetime_conversion(self):
         """测试datetime转换"""
         class TestModel(BaseModel):
-            __tablename__ = "test_datetime_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___129")
             name = Column(String(50))
 
         test_time = datetime(2025, 1, 15, 10, 30, 45, 123456)
@@ -149,7 +150,7 @@ class TestBaseModel:
     def test_to_dict_with_none_values(self):
         """测试处理None值"""
         class TestModel(BaseModel):
-            __tablename__ = "test_none_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___149")
             name = Column(String(50))
             optional_field = Column(String(50))
 
@@ -168,7 +169,7 @@ class TestBaseModel:
     def test_from_dict(self):
         """测试从字典创建模型"""
         class TestModel(BaseModel):
-            __tablename__ = "test_from_dict_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___166")
             name = Column(String(50))
             value = Column(Integer)
 
@@ -189,7 +190,7 @@ class TestBaseModel:
     def test_from_dict_partial_data(self):
         """测试从部分数据创建模型"""
         class TestModel(BaseModel):
-            __tablename__ = "test_partial_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___186")
             name = Column(String(50))
             value = Column(Integer)
 
@@ -203,13 +204,13 @@ class TestBaseModel:
     def test_update_from_dict(self):
         """测试从字典更新模型"""
         class TestModel(BaseModel):
-            __tablename__ = "test_update_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___200")
             name = Column(String(50))
             value = Column(Integer)
 
         model = TestModel(
             id=1,
-            name="Original",
+            name = os.getenv("TEST_BASE_NAME_206"),
             value=100,
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             updated_at=datetime(2025, 1, 15, 10, 30, 0)
@@ -226,13 +227,13 @@ class TestBaseModel:
     def test_update_from_dict_with_exclude_fields(self):
         """测试更新时排除字段"""
         class TestModel(BaseModel):
-            __tablename__ = "test_update_exclude_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___221")
             name = Column(String(50))
             value = Column(Integer)
 
         model = TestModel(
             id=1,
-            name="Original",
+            name = os.getenv("TEST_BASE_NAME_206"),
             value=100,
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             updated_at=datetime(2025, 1, 15, 10, 30, 0)
@@ -248,12 +249,12 @@ class TestBaseModel:
     def test_update_from_dict_default_excludes(self):
         """测试默认排除字段"""
         class TestModel(BaseModel):
-            __tablename__ = "test_default_exclude_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___242")
             name = Column(String(50))
 
         model = TestModel(
             id=1,
-            name="Original",
+            name = os.getenv("TEST_BASE_NAME_206"),
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             updated_at=datetime(2025, 1, 15, 10, 30, 0)
         )
@@ -268,12 +269,12 @@ class TestBaseModel:
     def test_update_from_dict_invalid_fields(self):
         """测试更新无效字段"""
         class TestModel(BaseModel):
-            __tablename__ = "test_invalid_field_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___262")
             name = Column(String(50))
 
         model = TestModel(
             id=1,
-            name="Original",
+            name = os.getenv("TEST_BASE_NAME_206"),
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             updated_at=datetime(2025, 1, 15, 10, 30, 0)
         )
@@ -289,7 +290,7 @@ class TestBaseModel:
     def test_repr(self):
         """测试字符串表示"""
         class TestModel(BaseModel):
-            __tablename__ = "test_repr_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___282")
             name = Column(String(50))
 
         model = TestModel(id=1, name="Test")
@@ -301,7 +302,7 @@ class TestBaseModel:
     def test_repr_without_id(self):
         """测试没有ID时的字符串表示"""
         class TestModel(BaseModel):
-            __tablename__ = "test_repr_no_id_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___292")
             name = Column(String(50))
 
         model = TestModel(name="Test")
@@ -317,7 +318,7 @@ class TestBaseModelEdgeCases:
     def test_to_dict_all_fields_excluded(self):
         """测试排除所有字段"""
         class TestModel(BaseModel):
-            __tablename__ = "test_all_exclude_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___305")
             name = Column(String(50))
 
         model = TestModel(
@@ -336,7 +337,7 @@ class TestBaseModelEdgeCases:
     def test_from_dict_empty_dict(self):
         """测试从空字典创建"""
         class TestModel(BaseModel):
-            __tablename__ = "test_empty_dict_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___326")
             name = Column(String(50))
 
         model = TestModel.from_dict({})
@@ -347,10 +348,10 @@ class TestBaseModelEdgeCases:
     def test_update_from_dict_empty_dict(self):
         """测试用空字典更新"""
         class TestModel(BaseModel):
-            __tablename__ = "test_empty_update_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___336")
             name = Column(String(50))
 
-        original_name = "Original"
+        original_name = os.getenv("TEST_BASE_ORIGINAL_NAME_339")
         model = TestModel(
             id=1,
             name=original_name,
@@ -366,10 +367,10 @@ class TestBaseModelEdgeCases:
     def test_to_dict_with_special_characters(self):
         """测试处理特殊字符"""
         class TestModel(BaseModel):
-            __tablename__ = "test_special_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___353")
             text = Column(String(100))
 
-        special_text = "特殊字符: 中文, ñ, é, ü, 🚀"
+        special_text = os.getenv("TEST_BASE_SPECIAL_TEXT_356")
         model = TestModel(
             id=1,
             text=special_text,
@@ -384,7 +385,7 @@ class TestBaseModelEdgeCases:
     def test_datetime_microseconds(self):
         """测试datetime微秒精度"""
         class TestModel(BaseModel):
-            __tablename__ = "test_microsec_models"
+            __tablename__ = os.getenv("TEST_BASE___TABLENAME___370")
             name = Column(String(50))
 
         precise_time = datetime(2025, 1, 15, 10, 30, 45, 123456)

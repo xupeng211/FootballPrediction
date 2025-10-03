@@ -1,3 +1,4 @@
+import os
 """
 特征API测试
 
@@ -31,7 +32,7 @@ def pytest_db_available():
         # 检查关键表是否存在
         with db_manager.get_session() as session = result session.execute(
                 sa.text(
-                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'matches')"""""
+                    "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = os.getenv("TEST_API_FEATURES_TABLE_NAME_34"))"""""
                 )
             )
             matches_exists = result.scalar()
@@ -51,7 +52,7 @@ def pytest_db_available():
 
 # 跳过需要数据库的测试，如果数据库不可用
 pytestmark = pytest.mark.skipif(
-    not pytest_db_available(), reason="Database connection not available["""""
+    not pytest_db_available(), reason = os.getenv("TEST_API_FEATURES_REASON_53")""""
 )
 
 
@@ -78,14 +79,14 @@ def mock_match():
         away_team_id=2,
         league_id=1,
         match_time=datetime(2025, 9, 15, 15, 0),
-        season="2024-25[",": match_status="]scheduled[",""""
+        season = os.getenv("TEST_API_FEATURES_SEASON_80"),": match_status = os.getenv("TEST_API_FEATURES_MATCH_STATUS_80"),""""
     )
 
 
 @pytest.fixture
 def mock_team():
     "]""模拟球队数据"""
-    return Mock(id=1, name="测试球队[", league_id=1, founded_year=2000, venue="]测试球场[")": class TestFeaturesAPI:"""
+    return Mock(id=1, name="测试球队[", league_id=1, founded_year=2000, venue = os.getenv("TEST_API_FEATURES_VENUE_85"))": class TestFeaturesAPI:"""
     "]""特征API测试类"""
 
     @pytest.fixture(autouse=True)

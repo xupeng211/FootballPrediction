@@ -3,6 +3,7 @@ from src.tasks.monitoring import TaskMonitor
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
+import os
 
 @pytest.fixture
 def monitor_with_registry() -> tuple["TaskMonitor[", CollectorRegistry]:": registry = CollectorRegistry()": monitor = TaskMonitor(registry=registry)": return monitor, registry"
@@ -13,10 +14,10 @@ async def test_calculate_error_rates_updates_metrics(monitor_with_registry):
     mock_session.execute = AsyncMock(
         return_value=[
             SimpleNamespace(
-                task_name="]collect_odds_task[", total_tasks=50, failed_tasks=5[""""
+                task_name = os.getenv("TEST_MONITORING_TASK_MONITOR_TASK_NAME_16"), total_tasks=50, failed_tasks=5[""""
             ),
             SimpleNamespace(
-                task_name="]]collect_scores_task[", total_tasks=20, failed_tasks=0[""""
+                task_name = os.getenv("TEST_MONITORING_TASK_MONITOR_TASK_NAME_18"), total_tasks=20, failed_tasks=0[""""
             )]
     )
     session_context = MagicMock()
@@ -26,7 +27,7 @@ async def test_calculate_error_rates_updates_metrics(monitor_with_registry):
     mock_db_manager.get_async_session.return_value = session_context
     with patch(:
         "]]src.tasks.monitoring.DatabaseManager[", return_value=mock_db_manager[""""
-    ), patch.object(monitor, "]]_get_db_type[", AsyncMock(return_value = "]postgresql["))": error_rates = await monitor.calculate_error_rates()": assert error_rates =={""
+    ), patch.object(monitor, "]]_get_db_type[", AsyncMock(return_value = os.getenv("TEST_MONITORING_TASK_MONITOR_RETURN_VALUE_28")))": error_rates = await monitor.calculate_error_rates()": assert error_rates =={""
         "]collect_odds_task[": pytest.approx(0.1),""""
         "]collect_scores_task[": pytest.approx(0.0)}": assert mock_session.execute.await_count ==1[" odds_rate = registry.get_sample_value(""
         "]]football_task_error_rate[", {"]task_name[": "]collect_odds_task["}""""
@@ -82,7 +83,7 @@ async def test_check_task_delays_collects_results(monitor_with_registry):
     mock_session = AsyncMock()
     mock_session.execute = AsyncMock(
         return_value=[
-            SimpleNamespace(task_name="]collect_odds_task[", avg_delay_seconds=123.4),": SimpleNamespace(task_name="]collect_scores_task[", avg_delay_seconds=45.0)]""""
+            SimpleNamespace(task_name = os.getenv("TEST_MONITORING_TASK_MONITOR_TASK_NAME_16"), avg_delay_seconds=123.4),": SimpleNamespace(task_name = os.getenv("TEST_MONITORING_TASK_MONITOR_TASK_NAME_84"), avg_delay_seconds=45.0)]""""
     )
     session_context = MagicMock()
     session_context.__aenter__ = AsyncMock(return_value=mock_session)
@@ -90,7 +91,7 @@ async def test_check_task_delays_collects_results(monitor_with_registry):
     mock_db_manager = MagicMock()
     mock_db_manager.get_async_session.return_value = session_context
     query_builder = MagicMock()
-    query_builder.build_task_delay_query.return_value = "]SELECT 1[": with patch(:""""
+    query_builder.build_task_delay_query.return_value = os.getenv("TEST_MONITORING_TASK_MONITOR_RETURN_VALUE_89"): with patch(:""""
         "]src.tasks.monitoring.DatabaseManager[", return_value=mock_db_manager[""""
     ), patch.object(
         monitor, "]]_get_query_builder[", AsyncMock(return_value=query_builder)""""
@@ -109,7 +110,7 @@ async def test_get_db_type_uses_engine_once(monitor_with_registry):
     with patch(:
         "]src.tasks.monitoring.DatabaseManager[", return_value=mock_db_manager[""""
     ), patch(
-        "]]src.tasks.monitoring.get_db_type_from_engine[", return_value="]sqlite["""""
+        "]]src.tasks.monitoring.get_db_type_from_engine[", return_value = os.getenv("TEST_MONITORING_TASK_MONITOR_RETURN_VALUE_107")""""
     ) as mock_get_type = result_first await monitor._get_db_type()
         result_second = await monitor._get_db_type()
     assert result_first =="]sqlite[" assert result_second =="]sqlite[" mock_get_type.assert_called_once()""""
@@ -127,7 +128,7 @@ async def test_get_query_builder_caches_instance(monitor_with_registry):
     with patch(:
         "]src.tasks.monitoring.CompatibleQueryBuilder[", return_value=MagicMock()""""
     ) as mock_builder, patch.object(
-        monitor, "]_get_db_type[", AsyncMock(return_value="]postgresql[")""""
+        monitor, "]_get_db_type[", AsyncMock(return_value = os.getenv("TEST_MONITORING_TASK_MONITOR_RETURN_VALUE_125"))""""
     ):
         first = await monitor._get_query_builder()
         second = await monitor._get_query_builder()
@@ -136,7 +137,7 @@ async def test_get_query_builder_caches_instance(monitor_with_registry):
         "]football_active_tasks[", {"]task_name[": "]demo_task["}""""
     )
     assert active_value ==1
-    monitor.record_task_completion("]demo_task[", "]t-1[", duration=2.5, status="]success[")": counter_value = registry.get_sample_value("""
+    monitor.record_task_completion("]demo_task[", "]t-1[", duration=2.5, status = os.getenv("TEST_MONITORING_TASK_MONITOR_STATUS_135"))": counter_value = registry.get_sample_value("""
         "]football_tasks_total[", {"]task_name[": "]demo_task[", "]status[": "]success["}""""
     )
     duration_sum = registry.get_sample_value(

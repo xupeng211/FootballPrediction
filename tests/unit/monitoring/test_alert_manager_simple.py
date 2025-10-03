@@ -1,3 +1,4 @@
+import os
 """Alert manager tests."""
 
 import pytest
@@ -25,10 +26,10 @@ class TestAlertManager:
     def test_fire_alert(self, alert_manager):
         """Test firing an alert."""
         alert = alert_manager.fire_alert(
-            title="Test Alert",
-            message="This is a test",
+            title = os.getenv("TEST_ALERT_MANAGER_SIMPLE_TITLE_28"),
+            message = os.getenv("TEST_ALERT_MANAGER_SIMPLE_MESSAGE_28"),
             level=AlertLevel.WARNING,
-            source="test_source"
+            source = os.getenv("TEST_ALERT_MANAGER_SIMPLE_SOURCE_29")
         )
 
         assert alert is not None
@@ -42,10 +43,10 @@ class TestAlertManager:
         """Test firing an alert with labels."""
         labels = {"host": "server1", "metric": "cpu"}
         alert = alert_manager.fire_alert(
-            title="CPU High",
-            message="CPU usage is high",
+            title = os.getenv("TEST_ALERT_MANAGER_SIMPLE_TITLE_42"),
+            message = os.getenv("TEST_ALERT_MANAGER_SIMPLE_MESSAGE_43"),
             level=AlertLevel.CRITICAL,
-            source="monitor",
+            source = os.getenv("TEST_ALERT_MANAGER_SIMPLE_SOURCE_45"),
             labels=labels
         )
 
@@ -80,7 +81,7 @@ class TestAlertManager:
         """Test resolving an alert."""
         # Fire an alert
         alert = alert_manager.fire_alert(
-            title="Test Alert",
+            title = os.getenv("TEST_ALERT_MANAGER_SIMPLE_TITLE_28"),
             message="Test",
             level=AlertLevel.WARNING,
             source="test"
@@ -135,9 +136,9 @@ class TestAlertManager:
 
         # Add a rule
         rule = AlertRule(
-            rule_id="test_rule",
-            name="Test Rule",
-            condition="test > 100",
+            rule_id = os.getenv("TEST_ALERT_MANAGER_SIMPLE_RULE_ID_130"),
+            name = os.getenv("TEST_ALERT_MANAGER_SIMPLE_NAME_131"),
+            condition = os.getenv("TEST_ALERT_MANAGER_SIMPLE_CONDITION_132"),
             level=AlertLevel.WARNING,
             channels=[AlertChannel.LOG]
         )
@@ -153,12 +154,12 @@ class TestAlertManager:
     def test_throttling_with_rule(self, alert_manager):
         """Test alert throttling when rule is specified."""
         # Use an existing rule that has throttling
-        rule_id = "data_freshness_warning"
+        rule_id = os.getenv("TEST_ALERT_MANAGER_SIMPLE_RULE_ID_146")
 
         # Fire first alert
         alert1 = alert_manager.fire_alert(
             title="Test",
-            message="Test message",
+            message = os.getenv("TEST_ALERT_MANAGER_SIMPLE_MESSAGE_150"),
             level=AlertLevel.WARNING,
             source="test",
             rule_id=rule_id
@@ -168,7 +169,7 @@ class TestAlertManager:
         # Fire identical alert immediately (should be throttled)
         alert2 = alert_manager.fire_alert(
             title="Test",
-            message="Test message",
+            message = os.getenv("TEST_ALERT_MANAGER_SIMPLE_MESSAGE_150"),
             level=AlertLevel.WARNING,
             source="test",
             rule_id=rule_id

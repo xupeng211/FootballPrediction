@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 物化视图查询示例
@@ -30,7 +31,7 @@ from src.database.config import get_database_config
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_FORMAT_33")
 )
 logger = logging.getLogger(__name__)
 
@@ -321,14 +322,14 @@ class MaterializedViewExamples:
             SELECT
                 t.id as team_id,
                 t.team_name,
-                COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+                COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_MATCH_STATUS_324")
                            AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_home_matches,
-                COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = 'finished'
+                COUNT(CASE WHEN m.home_team_id = t.id AND m.match_status = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_MATCH_STATUS_324")
                            AND m.home_score > m.away_score
                            AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_home_wins,
-                COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+                COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_MATCH_STATUS_324")
                            AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_away_matches,
-                COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = 'finished'
+                COUNT(CASE WHEN m.away_team_id = t.id AND m.match_status = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_MATCH_STATUS_324")
                            AND m.away_score > m.home_score
                            AND m.match_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as recent_away_wins
             FROM teams t
@@ -416,14 +417,14 @@ class MaterializedViewExamples:
 
 async def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="物化视图查询示例")
+    parser = argparse.ArgumentParser(description = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_DESCRIPTION_412"))
     parser.add_argument(
         "--demo",
         choices=["team_performance", "odds_analysis", "all"],
         default="all",
-        help="选择要运行的示例",
+        help = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_HELP_419"),
     )
-    parser.add_argument("--benchmark", action="store_true", help="运行性能基准测试")
+    parser.add_argument("--benchmark", action = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_ACTION_419"), help = os.getenv("MATERIALIZED_VIEWS_EXAMPLES_HELP_419"))
 
     args = parser.parse_args()
 

@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import asyncio
 import pandas
 import pytest
+import os
 
 """
 模型训练测试模块
@@ -17,7 +18,7 @@ class TestBaselineModelTrainer:
     @pytest.fixture
     def trainer(self):
         """创建训练器实例"""
-        with patch("src.models.model_training.mlflow["):": with patch("]src.models.model_training.DatabaseManager["):": with patch("]src.models.model_training.FootballFeatureStore["):": trainer = BaselineModelTrainer(": mlflow_tracking_uri = "]sqlite///test.db["""""
+        with patch("src.models.model_training.mlflow["):": with patch("]src.models.model_training.DatabaseManager["):": with patch("]src.models.model_training.FootballFeatureStore["):": trainer = BaselineModelTrainer(": mlflow_tracking_uri = os.getenv("TEST_MODEL_TRAINING_MLFLOW_TRACKING_URI_20")""""
                     )
                     return trainer
     def test_init_sets_parameters(self, trainer):

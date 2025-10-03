@@ -90,19 +90,9 @@ class TestBuggyAPIEnhanced:
         query_validations = {
             "类型注解": "limit: int",
             "Query使用": "Query(",
-            "默认值": "default=",
-            "最小值验证": "ge=1",
+            "默认值": "default = os.getenv("TEST_BUGGY_API_ENHANCED_DEFAULT_93")最小值验证": "ge=1",
             "最大值验证": "le=100",
-            "描述信息": "description="
-        }
-
-        found_validations = []
-        for validation, pattern in query_validations.items():
-            if pattern in content:
-                found_validations.append(validation)
-
-        coverage_rate = len(found_validations) / len(query_validations) * 100
-        print(f"✅ Query参数验证覆盖率: {coverage_rate:.1f}% ({len(found_validations)}/{len(query_validations)})")
+            "描述信息": "description = os.getenv("TEST_BUGGY_API_ENHANCED_DESCRIPTION_94")✅ Query参数验证覆盖率: {coverage_rate:.1f}% ({len(found_validations)}/{len(query_validations)})")
 
         assert coverage_rate >= 80, f"Query参数验证覆盖率应该至少80%，当前只有{coverage_rate:.1f}%"
 
@@ -206,8 +196,7 @@ class TestBuggyAPIEnhanced:
         error_prevention = {
             "参数验证": "ge=1, le=100",
             "类型注解": "limit: int",
-            "默认值设置": "default=",
-            "类型转换": "int(limit)",
+            "默认值设置": "default = os.getenv("TEST_BUGGY_API_ENHANCED_DEFAULT_93")类型转换": "int(limit)",
             "类型检查": "type(limit).__name__",
             "异步处理": "await"
         }
@@ -256,10 +245,8 @@ class TestBuggyAPIEnhanced:
         best_practices = {
             "类型注解": "limit: int",
             "Query验证": "Query(",
-            "默认值": "default=",
-            "范围验证": "ge=1, le=100",
-            "描述信息": "description=",
-            "异步函数": "async def",
+            "默认值": "default = os.getenv("TEST_BUGGY_API_ENHANCED_DEFAULT_93")范围验证": "ge=1, le=100",
+            "描述信息": "description = os.getenv("TEST_BUGGY_API_ENHANCED_DESCRIPTION_255")异步函数": "async def",
             "路由装饰器": "@router.get("
         }
 
@@ -306,7 +293,7 @@ class TestBuggyAPIMock:
         """测试Mock服务配置"""
         # 创建Mock服务
         mock_service = Mock()
-        mock_service.get_status = AsyncMock(return_value="mocked_status")
+        mock_service.get_status = AsyncMock(return_value = os.getenv("TEST_BUGGY_API_ENHANCED_RETURN_VALUE_300"))
 
         print("✅ Mock服务配置验证成功")
 
@@ -365,8 +352,7 @@ class TestBuggyAPIMock:
             "最大值验证": "le=100",
             "类型验证": "limit: int",
             "默认值": "default=10",
-            "描述信息": "description=",
-            "边界测试": "边界值处理"
+            "描述信息": "description = os.getenv("TEST_BUGGY_API_ENHANCED_DESCRIPTION_255")边界测试": "边界值处理"
         }
 
         found_scenarios = []

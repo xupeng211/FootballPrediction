@@ -1,3 +1,4 @@
+import os
 """
 足球预测系统时间处理工具模块
 
@@ -26,13 +27,13 @@ class TimeUtils:
         return dt.timestamp()
 
     @staticmethod
-    def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+    def format_datetime(dt: datetime, format_str: str = os.getenv("TIME_UTILS_STR_29")) -> str:
         """格式化日期时间"""
         return dt.strftime(format_str)
 
     @staticmethod
     def parse_datetime(
-        date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+        date_str: str, format_str: str = os.getenv("TIME_UTILS_STR_29")
     ) -> datetime:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)

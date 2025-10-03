@@ -1,3 +1,4 @@
+import os
 """
 import asyncio
 基准模型训练器
@@ -207,11 +208,11 @@ class BaselineModelTrainer:
 
         # 合并比赛结果作为目标变量
         features_df = features_df.merge(
-            matches_df[["id", "result"]], left_on="match_id", right_on="id", how="inner"
+            matches_df[["id", "result"]], left_on = os.getenv("MODEL_TRAINING_LEFT_ON_210"), right_on="id", how="inner"
         )
 
         # 分离特征和目标变量
-        target_col = "result"
+        target_col = os.getenv("MODEL_TRAINING_TARGET_COL_211")
         feature_cols = [
             col
             for col in features_df.columns
@@ -374,8 +375,8 @@ class BaselineModelTrainer:
 
     async def train_baseline_model(
         self,
-        experiment_name: str = "football_prediction_baseline",
-        model_name: str = "football_baseline_model",
+        experiment_name: str = os.getenv("MODEL_TRAINING_STR_375"),
+        model_name: str = os.getenv("MODEL_TRAINING_STR_377"),
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> str:
@@ -456,18 +457,18 @@ class BaselineModelTrainer:
                 # 计算训练集指标
                 train_accuracy = accuracy_score(y_train, y_train_pred)
                 train_precision = precision_score(
-                    y_train, y_train_pred, average="weighted"
+                    y_train, y_train_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458")
                 )
-                train_recall = recall_score(y_train, y_train_pred, average="weighted")
-                train_f1 = f1_score(y_train, y_train_pred, average="weighted")
+                train_recall = recall_score(y_train, y_train_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458"))
+                train_f1 = f1_score(y_train, y_train_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458"))
 
                 # 计算测试集指标
                 test_accuracy = accuracy_score(y_test, y_test_pred)
                 test_precision = precision_score(
-                    y_test, y_test_pred, average="weighted"
+                    y_test, y_test_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458")
                 )
-                test_recall = recall_score(y_test, y_test_pred, average="weighted")
-                test_f1 = f1_score(y_test, y_test_pred, average="weighted")
+                test_recall = recall_score(y_test, y_test_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458"))
+                test_f1 = f1_score(y_test, y_test_pred, average = os.getenv("MODEL_TRAINING_AVERAGE_458"))
 
                 # 记录指标
                 mlflow.log_metrics(
@@ -548,7 +549,7 @@ class BaselineModelTrainer:
                 raise
 
     async def promote_model_to_production(
-        self, model_name: str = "football_baseline_model", version: Optional[str] = None
+        self, model_name: str = os.getenv("MODEL_TRAINING_STR_377"), version: Optional[str] = None
     ) -> bool:
         """
         将模型推广到生产环境
@@ -580,7 +581,7 @@ class BaselineModelTrainer:
             client.transition_model_version_stage(
                 name=model_name,
                 version=version,
-                stage="Production",
+                stage = os.getenv("MODEL_TRAINING_STAGE_575"),
                 archive_existing_versions=True,  # 归档现有生产版本
             )
 

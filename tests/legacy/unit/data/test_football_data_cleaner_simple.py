@@ -5,6 +5,7 @@ from src.data.processing.football_data_cleaner import FootballDataCleaner
 from unittest.mock import AsyncMock, MagicMock, patch
 import pandas
 import pytest
+import os
 
 """
 足球数据清洗器测试 - 简化版本
@@ -99,7 +100,7 @@ class TestFootballDataCleaner:
         result = cleaner._validate_odds_value("]]2.50[")": assert result is True[" def test_clean_venue_name(self, cleaner):""
         "]]""测试场馆名称清洗"""
         # 带空格的场馆名
-        venue = ": Old Trafford  """""
+        venue = os.getenv("TEST_FOOTBALL_DATA_CLEANER_SIMPLE_VENUE_102")""""
         cleaned = cleaner._clean_venue_name(venue)
         assert cleaned =="Old Trafford["""""
         # 空场馆名
@@ -134,7 +135,7 @@ class TestFootballDataCleaner:
         cleaned = cleaner._clean_referee_name(none_referees)
     assert cleaned is None
         # 非列表输入
-        string_input = "not a list[": cleaned = cleaner._clean_referee_name(string_input)": assert cleaned is None["""
+        string_input = os.getenv("TEST_FOOTBALL_DATA_CLEANER_SIMPLE_STRING_INPUT_135"): cleaned = cleaner._clean_referee_name(string_input)": assert cleaned is None["""
     @pytest.mark.asyncio
     async def test_clean_match_data_success(self, cleaner, raw_match_data):
         "]]""测试成功清洗比赛数据"""
@@ -171,11 +172,11 @@ class TestFootballDataCleaner:
         # 测试UTC时间
         utc_time = "2024-01-15T15:0000Z[": normalized = cleaner._to_utc_time(utc_time)": assert normalized =="]2024-01-15T150000+0000["""""
         # 测试带时区的时间
-        local_time = "]2024-01-15T15:00:00+0800[": normalized = cleaner._to_utc_time(local_time)""""
+        local_time = os.getenv("TEST_FOOTBALL_DATA_CLEANER_SIMPLE_LOCAL_TIME_172"): normalized = cleaner._to_utc_time(local_time)""""
         # 应该转换为UTC
     assert normalized is not None
         # 测试无效时间格式
-        invalid_time = "]2024-01-15 15:0000[": normalized = cleaner._to_utc_time(invalid_time)""""
+        invalid_time = os.getenv("TEST_FOOTBALL_DATA_CLEANER_SIMPLE_INVALID_TIME_174"): normalized = cleaner._to_utc_time(invalid_time)""""
         # 应该尝试解析或返回默认值
     assert normalized is not None
     @pytest.mark.asyncio

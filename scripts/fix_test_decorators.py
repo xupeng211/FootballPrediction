@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 修复测试文件中的装饰器问题
@@ -17,7 +18,7 @@ def fix_test_decorators():
     content = test_file.read_text(encoding='utf-8')
 
     # 修复连续的装饰器问题
-    pattern = r'(\s+)@pytest\.mark\.skip\(reason="Function not implemented in src\.api\.data"\)\s*@pytest\.mark\.asyncio'
+    pattern = r'(\s+)@pytest\.mark\.skip\(reason = os.getenv("FIX_TEST_DECORATORS_REASON_20")\)\s*@pytest\.mark\.asyncio'
     replacement = r'\1@pytest.mark.asyncio'
     content = re.sub(pattern, replacement, content)
 

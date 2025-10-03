@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from src.utils.time_utils import TimeUtils
 import pytest
+import os
 
 pytestmark = pytest.mark.unit
 class TestTimeUtils:
@@ -46,7 +47,7 @@ class TestTimeUtils:
     assert result.second ==45
     def test_parse_datetime_custom(self):
         "]]""测试自定义格式的日期时间解析"""
-        date_str = "2025_01/01 1230[": result = TimeUtils.parse_datetime(date_str, "]%Y/%m/%d %H%M[")": assert isinstance(result, datetime)" assert result.year ==2025[""
+        date_str = os.getenv("TEST_TIME_UTILS_DATE_STR_49"): result = TimeUtils.parse_datetime(date_str, "]%Y/%m/%d %H%M[")": assert isinstance(result, datetime)" assert result.year ==2025[""
     assert result.month ==1
     assert result.day ==1
     assert result.hour ==12

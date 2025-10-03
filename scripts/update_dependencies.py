@@ -78,63 +78,63 @@ class DependencyManager:
         default_policies = {
             # 自动更新（安全补丁）
             "cryptography": UpdatePolicy(
-                package="cryptography",
-                strategy="security",
-                reason="安全库，需要及时更新"
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_81"),
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_81"),
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_82")
             ),
             "pydantic": UpdatePolicy(
-                package="pydantic",
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_83"),
                 strategy="patch",
-                reason="主要依赖，只接受补丁更新"
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_85")
             ),
             "fastapi": UpdatePolicy(
-                package="fastapi",
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_87"),
                 strategy="minor",
-                reason="核心框架，保持较新版本"
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_88")
             ),
             "uvicorn": UpdatePolicy(
-                package="uvicorn",
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_91"),
                 strategy="auto",
-                reason="ASGI服务器，通常兼容"
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_92")
             ),
 
             # 手动更新（需要测试）
             "sqlalchemy": UpdatePolicy(
-                package="sqlalchemy",
-                strategy="manual",
-                reason="ORM，重大更新可能不兼容"
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_95"),
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_96"),
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_96")
             ),
             "psycopg2-binary": UpdatePolicy(
-                package="psycopg2-binary",
-                strategy="manual",
-                reason="数据库驱动，需要验证"
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_98"),
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_96"),
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_102")
             ),
 
             # 仅安全更新
             "requests": UpdatePolicy(
-                package="requests",
-                strategy="security",
-                reason="HTTP客户端，安全优先"
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_104"),
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_81"),
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_105")
             ),
             "python-jose": UpdatePolicy(
-                package="python-jose",
-                strategy="security",
-                reason="JWT处理，安全关键"
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_107"),
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_81"),
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_108")
             ),
 
             # 开发工具（自动更新）
             "black": UpdatePolicy(
                 package="black",
                 strategy="auto",
-                reason="代码格式化工具"
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_112")
             ),
             "ruff": UpdatePolicy(
                 package="ruff",
                 strategy="auto",
-                reason="代码检查工具"
+                reason = os.getenv("UPDATE_DEPENDENCIES_REASON_116")
             ),
             "pytest": UpdatePolicy(
-                package="pytest",
+                package = os.getenv("UPDATE_DEPENDENCIES_PACKAGE_117"),
                 strategy="minor",
                 reason="测试框架"
             ),
@@ -382,7 +382,7 @@ class DependencyManager:
             if policy:
                 strategy = policy.strategy
             else:
-                strategy = "manual"
+                strategy = os.getenv("UPDATE_DEPENDENCIES_STRATEGY_360")
 
         # 获取目标版本
         if not version:
@@ -621,14 +621,14 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="依赖更新管理")
-    parser.add_argument('--check', '-c', action='store_true', help="检查更新")
+    parser = argparse.ArgumentParser(description = os.getenv("UPDATE_DEPENDENCIES_DESCRIPTION_594"))
+    parser.add_argument('--check', '-c', action = os.getenv("UPDATE_DEPENDENCIES_ACTION_596"), help="检查更新")
     parser.add_argument('--package', '-p', help="更新指定包")
     parser.add_argument('--version', '-v', help="指定版本")
-    parser.add_argument('--auto', '-a', action='store_true', help="自动更新")
-    parser.add_argument('--security', '-s', action='store_true', help="仅安全更新")
-    parser.add_argument('--report', '-r', action='store_true', help="生成报告")
-    parser.add_argument('--output', '-o', help="输出报告到文件")
+    parser.add_argument('--auto', '-a', action = os.getenv("UPDATE_DEPENDENCIES_ACTION_596"), help="自动更新")
+    parser.add_argument('--security', '-s', action = os.getenv("UPDATE_DEPENDENCIES_ACTION_596"), help="仅安全更新")
+    parser.add_argument('--report', '-r', action = os.getenv("UPDATE_DEPENDENCIES_ACTION_596"), help="生成报告")
+    parser.add_argument('--output', '-o', help = os.getenv("UPDATE_DEPENDENCIES_HELP_610"))
 
     args = parser.parse_args()
 

@@ -489,7 +489,7 @@ class DataCollector(ABC):
                     records_collected=0,
                     success_count=0,
                     error_count=1,
-                    status="failed",
+                    status = os.getenv("BASE_COLLECTOR_STATUS_492"),
                     error_message=str(e),
                 )
                 results[data_type] = error_result

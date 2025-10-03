@@ -193,10 +193,10 @@ class DependencyDiagnostic:
             installed_packages = [p for p in conflict["packages"] if p in self.packages]
             if len(installed_packages) > 1:
                 issue = DependencyIssue(
-                    type="conflict",
+                    type = os.getenv("DIAGNOSE_DEPENDENCIES_TYPE_196"),
                     package=", ".join(installed_packages),
                     description=f"{conflict['issue']}: {conflict['symptom']}",
-                    severity="critical",
+                    severity = os.getenv("DIAGNOSE_DEPENDENCIES_SEVERITY_198"),
                     solution=conflict["solution"],
                     affected_modules=[]
                 )
@@ -216,11 +216,11 @@ class DependencyDiagnostic:
         for base_name, versions in version_map.items():
             if len(versions) > 1:
                 issue = DependencyIssue(
-                    type="version_conflict",
+                    type = os.getenv("DIAGNOSE_DEPENDENCIES_TYPE_217"),
                     package=base_name,
                     description=f"发现多个版本: {list(versions.keys())}",
                     severity="high",
-                    solution="卸载多余版本，只保留一个",
+                    solution = os.getenv("DIAGNOSE_DEPENDENCIES_SOLUTION_221"),
                     affected_modules=[]
                 )
                 self.issues.append(issue)
@@ -259,11 +259,11 @@ class DependencyDiagnostic:
             if node not in visited:
                 if has_cycle(node):
                     issue = DependencyIssue(
-                        type="circular",
+                        type = os.getenv("DIAGNOSE_DEPENDENCIES_TYPE_259"),
                         package=node,
                         description=f"检测到循环依赖，涉及: {node}",
                         severity="high",
-                        solution="重构依赖结构，消除循环引用",
+                        solution = os.getenv("DIAGNOSE_DEPENDENCIES_SOLUTION_262"),
                         affected_modules=[]
                     )
                     self.issues.append(issue)
@@ -291,16 +291,16 @@ class DependencyDiagnostic:
                 print(f"  ✅ {module} - 导入成功")
             except ImportError as e:
                 if "generic_type" in str(e):
-                    severity = "critical"
+                    severity = os.getenv("DIAGNOSE_DEPENDENCIES_SEVERITY_289")
                 else:
                     severity = "high"
 
                 issue = DependencyIssue(
-                    type="import_error",
+                    type = os.getenv("DIAGNOSE_DEPENDENCIES_TYPE_293"),
                     package=module,
                     description=f"导入失败: {str(e)}",
                     severity=severity,
-                    solution="检查依赖或修复导入路径",
+                    solution = os.getenv("DIAGNOSE_DEPENDENCIES_SOLUTION_296"),
                     affected_modules=[module]
                 )
                 self.issues.append(issue)
@@ -327,10 +327,10 @@ class DependencyDiagnostic:
 
                     if current_parts < min_parts:
                         issue = DependencyIssue(
-                            type="outdated",
+                            type = os.getenv("DIAGNOSE_DEPENDENCIES_TYPE_323"),
                             package=package,
                             description=f"版本过时: {current_version} < {min_version}",
-                            severity="medium",
+                            severity = os.getenv("DIAGNOSE_DEPENDENCIES_SEVERITY_326"),
                             solution=f"升级到 {min_version} 或更高版本",
                             affected_modules=[]
                         )

@@ -1,3 +1,4 @@
+import os
 """精简版端到端预测流程测试"""
 
 from datetime import datetime, timedelta
@@ -42,8 +43,8 @@ def _build_match(match_id: int) -> MagicMock:
     match.away_team_id = 2
     match.league_id = 1
     match.match_time = datetime.now() + timedelta(days=1)
-    match.match_status = MagicMock(value="scheduled")
-    match.season = "2024-25"
+    match.match_status = MagicMock(value = os.getenv("TEST_COMPLETE_PREDICTION_FLOW_VALUE_45"))
+    match.season = os.getenv("TEST_COMPLETE_PREDICTION_FLOW_SEASON_45")
     match.home_score = None
     match.away_score = None
     return match

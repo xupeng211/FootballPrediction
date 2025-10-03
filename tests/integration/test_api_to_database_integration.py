@@ -1,3 +1,4 @@
+import os
 """
 API到数据库集成测试
 Integration tests for API to database communication
@@ -72,7 +73,7 @@ class TestAPIDatabaseIntegration:
         mock_match.away_team_id = 2
         mock_match.league_id = 1
         mock_match.match_time = datetime.now() + timedelta(days=1)
-        mock_match.match_status = "scheduled"
+        mock_match.match_status = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_MATCH_STATUS_75")
 
         # Mock预测数据
         mock_prediction = MagicMock()
@@ -119,7 +120,7 @@ class TestAPIDatabaseIntegration:
         mock_match.id = match_id
         mock_match.home_team_id = 1
         mock_match.away_team_id = 2
-        mock_match.match_status = "scheduled"
+        mock_match.match_status = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_MATCH_STATUS_75")
 
         # Mock预测服务
         with patch('src.api.predictions.prediction_service') as mock_service:
@@ -170,7 +171,7 @@ class TestAPIDatabaseIntegration:
             match.away_team_id = 2
             match.league_id = 1
             match.match_time = datetime.now() + timedelta(days=i)
-            match.match_status = "scheduled"
+            match.match_status = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_MATCH_STATUS_75")
             mock_matches.append(match)
 
         # Mock查询结果
@@ -198,7 +199,7 @@ class TestAPIDatabaseIntegration:
     @pytest.mark.asyncio
     async def test_get_teams_with_search_db_flow(self):
         """测试搜索球队的数据库流程"""
-        search_term = "United"
+        search_term = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_SEARCH_TERM_196")
 
         # Mock球队数据
         mock_teams = []
@@ -208,7 +209,7 @@ class TestAPIDatabaseIntegration:
             team.id = 100 + i
             team.name = name
             team.short_name = name.split()[0][:3]
-            team.country = "England"
+            team.country = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_COUNTRY_206")
             team.founded = 1900 + i * 10
             mock_teams.append(team)
 
@@ -245,7 +246,7 @@ class TestAPIDatabaseIntegration:
             match.id = match_id
             match.home_team_id = 1
             match.away_team_id = 2
-            match.match_status = "scheduled"
+            match.match_status = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_MATCH_STATUS_75")
             mock_matches.append(match)
 
         # Mock预测结果
@@ -355,9 +356,9 @@ class TestAPIDatabaseIntegration:
             config = DatabaseConfig(
                 host="localhost",
                 port=5432,
-                database="test_db",
+                database = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_DATABASE_350"),
                 username="user",
-                password="pass",
+                password = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_PASSWORD_360"),
             )
 
             from src.database.connection import DatabaseManager
@@ -397,7 +398,7 @@ class TestAPIDatabaseIntegration:
         mock_match.id = match_id
         mock_match.home_team_id = 1
         mock_match.away_team_id = 2
-        mock_match.match_status = "scheduled"
+        mock_match.match_status = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_MATCH_STATUS_75")
 
         mock_match_result = MagicMock()
         mock_match_result.scalar_one_or_none.return_value = mock_match
@@ -475,7 +476,7 @@ class TestAPIDatabaseIntegration:
                 match.away_team_id = 2
                 match.league_id = 1
                 match.match_time = datetime.now()
-                match.match_status = MagicMock(value="scheduled")
+                match.match_status = MagicMock(value = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_VALUE_467"))
                 matches.append(match)
 
             matches_result = MagicMock()
@@ -503,13 +504,13 @@ class TestAPIDatabaseIntegration:
         # Mock关联的球队数据
         mock_home_team = MagicMock()
         mock_home_team.id = 1
-        mock_home_team.name = "Home Team"
+        mock_home_team.name = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_NAME_489")
 
         mock_away_team = MagicMock()
         mock_away_team.id = 2
-        mock_away_team.name = "Away Team"
+        mock_away_team.name = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_NAME_493")
 
-        mock_match.match_status.value = "scheduled"
+        mock_match.match_status.value = os.getenv("TEST_API_TO_DATABASE_INTEGRATION_VALUE_495")
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_match
         self.mock_session.execute.return_value = mock_result

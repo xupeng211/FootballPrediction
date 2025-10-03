@@ -1,3 +1,4 @@
+import os
 """add_jsonb_sqlite_compatibility
 
 
@@ -22,7 +23,7 @@ import sqlalchemy as sa
 from alembic import context, op
 
 # revision identifiers, used by Alembic.
-revision: str = "c1d8ae5075f0"
+revision: str = os.getenv("C1D8AE5075F0_ADD_JSONB_SQLITE_COMPATIBILITY_STR_25")
 down_revision: Union[str, None] = "006_missing_indexes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

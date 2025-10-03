@@ -4,6 +4,7 @@ from src.models.prediction_service import PredictionService
 from unittest.mock import AsyncMock, Mock
 import numpy
 import pytest
+import os
 
 """
 PredictionService 模拟测试套件
@@ -69,7 +70,7 @@ class TestPredictionServiceMocked:
             self, prediction_service, mock_db_manager
         ):
             """测试数据库错误处理"""
-            mock_db_manager.get_match.side_effect = Exception("数据库连接失败[")": with pytest.raises(Exception, match = "]数据库连接失败[")": await prediction_service._get_match_info(12345)": class TestFeatureHandling:""
+            mock_db_manager.get_match.side_effect = Exception("数据库连接失败[")": with pytest.raises(Exception, match = os.getenv("TEST_PREDICTION_SERVICE_MOCKED_MATCH_72"))": await prediction_service._get_match_info(12345)": class TestFeatureHandling:""
         "]""测试特征处理"""
         def test_get_default_features(self, prediction_service):
             """测试获取默认特征"""

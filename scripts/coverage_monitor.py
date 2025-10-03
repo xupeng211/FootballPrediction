@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 覆盖率持续监控脚本
@@ -250,22 +251,22 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="覆盖率监控工具")
+    parser = argparse.ArgumentParser(description = os.getenv("COVERAGE_MONITOR_DESCRIPTION_253"))
     parser.add_argument(
         "--continuous",
-        action="store_true",
-        help="启用持续监控模式"
+        action = os.getenv("COVERAGE_MONITOR_ACTION_254"),
+        help = os.getenv("COVERAGE_MONITOR_HELP_255")
     )
     parser.add_argument(
         "--interval",
         type=int,
         default=60,
-        help="监控间隔（分钟），默认60分钟"
+        help = os.getenv("COVERAGE_MONITOR_HELP_258")
     )
     parser.add_argument(
         "--data-file",
         default="coverage_data.json",
-        help="历史数据文件路径"
+        help = os.getenv("COVERAGE_MONITOR_HELP_263")
     )
 
     args = parser.parse_args()

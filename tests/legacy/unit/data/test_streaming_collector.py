@@ -6,6 +6,7 @@ from src.streaming import StreamConfig
 from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import pytest
+import os
 
 """
 流式数据采集器的单元测试
@@ -33,7 +34,7 @@ class TestStreamingDataCollector:
     def mock_stream_config(self):
         "]""模拟流配置"""
         config = MagicMock(spec=StreamConfig)
-        config.kafka_bootstrap_servers = "localhost9092[": config.topic_prefix = "]football[": config.batch_size = 100[": config.flush_timeout = 5[": return config[""
+        config.kafka_bootstrap_servers = os.getenv("TEST_STREAMING_COLLECTOR_KAFKA_BOOTSTRAP_SERVERS_3"): config.topic_prefix = os.getenv("TEST_STREAMING_COLLECTOR_TOPIC_PREFIX_36"): config.batch_size = 100[": config.flush_timeout = 5[": return config[""
     @pytest.fixture
     def mock_kafka_producer(self):
         "]]]]""模拟Kafka生产者"""
@@ -70,12 +71,12 @@ class TestStreamingDataCollector:
             # Mock producer初始化成功
             mock_producer_class.return_value = MagicMock()
             collector = StreamingDataCollector(
-            data_source="]custom_source[",": enable_streaming=True,": stream_config=mock_stream_config)": assert collector.data_source =="]custom_source[" assert collector.enable_streaming is True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_71"),": enable_streaming=True,": stream_config=mock_stream_config)": assert collector.data_source =="]custom_source[" assert collector.enable_streaming is True[""""
     assert collector.stream_config ==mock_stream_config
     def test_streaming_collector_initialization_disabled(self):
         "]]""测试禁用流式处理的初始化"""
         collector = StreamingDataCollector(
-        data_source="test_source[", enable_streaming=False[""""
+        data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_75"), enable_streaming=False[""""
         )
     assert collector.enable_streaming is False
     assert collector.kafka_producer is None
@@ -89,7 +90,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 确保Kafka生产者初始化成功
     assert collector.enable_streaming is True
@@ -103,8 +104,8 @@ class TestStreamingDataCollector:
                     collector.__class__.__bases__[0], "]collect_fixtures["""""
                 ) as mock_collect:
                     mock_collect.return_value = CollectionResult(
-                    data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
-                        status="]success[",": collected_data=sample_data)"""
+                    data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
+                        status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=sample_data)"""
                     # 执行测试 - 调用带流处理的方法
                     result = await collector.collect_fixtures_with_streaming()
                     # 验证结果
@@ -117,11 +118,11 @@ class TestStreamingDataCollector:
     async def test_collect_with_streaming_disabled(self, sample_data):
         "]""测试禁用流式处理的数据采集"""
         collector = StreamingDataCollector(
-        data_source="test_source[", enable_streaming=False[""""
+        data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_75"), enable_streaming=False[""""
         )
         # Mock基础采集方法
-        with patch.object(collector, "]]collect_fixtures[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
-                status="]success[",": collected_data=sample_data)"""
+        with patch.object(collector, "]]collect_fixtures[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
+                status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=sample_data)"""
             # 执行测试
             result = await collector.collect_fixtures()
             # 验证结果 - 应该正常采集但不发送流
@@ -138,11 +139,11 @@ class TestStreamingDataCollector:
             "src.data.collectors.streaming_collector.FootballKafkaProducer["""""
         ) as mock_producer_class:
             # Mock Kafka发送失败
-            mock_kafka_producer.send.side_effect = Exception("]Kafka send failed[")": mock_producer_class.return_value = mock_kafka_producer[": collector = StreamingDataCollector(": data_source="]]test_source[", enable_streaming=True[""""
+            mock_kafka_producer.send.side_effect = Exception("]Kafka send failed[")": mock_producer_class.return_value = mock_kafka_producer[": collector = StreamingDataCollector(": data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_132"), enable_streaming=True[""""
             )
             # Mock基础采集方法
-            with patch.object(collector, "]]collect_fixtures[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
-                    status="]success[",": collected_data=sample_data)"""
+            with patch.object(collector, "]]collect_fixtures[") as mock_collect:": mock_collect.return_value = CollectionResult(": data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
+                    status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=sample_data)"""
                 # 执行测试
                 result = await collector.collect_fixtures()
                 # 验证结果 - 应该处理错误但不影响数据采集
@@ -165,7 +166,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 确保Kafka生产者初始化成功
     assert collector.enable_streaming is True
@@ -179,8 +180,8 @@ class TestStreamingDataCollector:
                     collector.__class__.__bases__[0], "]collect_fixtures["""""
                 ) as mock_collect:
                     mock_collect.return_value = CollectionResult(
-                    data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(large_data),": success_count=len(large_data),": error_count=0,"
-                        status="]success[",": collected_data=large_data)"""
+                    data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(large_data),": success_count=len(large_data),": error_count=0,"
+                        status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=large_data)"""
                     # 执行测试 - 调用带流处理的方法
                     result = await collector.collect_fixtures_with_streaming()
                     # 验证结果
@@ -197,7 +198,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 确保Kafka生产者初始化成功
     assert collector.enable_streaming is True
@@ -216,7 +217,7 @@ class TestStreamingDataCollector:
     async def test_send_to_stream_method_disabled(self, sample_data):
         "]""测试流式处理禁用时的发送方法"""
         collector = StreamingDataCollector(
-        data_source="test_source[", enable_streaming=False[""""
+        data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_75"), enable_streaming=False[""""
         )
         # 执行测试
         success = await collector.send_to_stream(sample_data)
@@ -230,7 +231,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 执行测试
             success = await collector.send_to_stream([])
@@ -248,7 +249,7 @@ class TestStreamingDataCollector:
             mock_producer_class.side_effect = Exception("]Kafka initialization failed[")""""
             # 执行测试 - 初始化应该处理异常
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 验证错误处理 - Kafka失败时应该禁用流式处理
     assert collector.enable_streaming is False  # 修正：初始化失败时应为False
@@ -262,7 +263,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]custom_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_71"), enable_streaming=True[""""
             )
             test_data = [{"]]id[": 1, "]type[": "]match["}]""""
             # 执行测试
@@ -281,7 +282,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 确保Kafka生产者初始化成功
     assert collector.enable_streaming is True
@@ -314,7 +315,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 确保Kafka生产者初始化成功
     assert collector.enable_streaming is True
@@ -348,12 +349,12 @@ class TestStreamingDataCollector:
             ]
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]]test_source[", enable_streaming=True, max_retries=2[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_132"), enable_streaming=True, max_retries=2[""""
             )
             # Mock基础采集方法 - 需要mock父类的collect_fixtures方法
             with patch(:
-                "]]src.data.collectors.base_collector.DataCollector.collect_fixtures[",": new_callable=AsyncMock) as mock_collect:": mock_collect.return_value = CollectionResult(": data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
-                    status="]success[",": collected_data=sample_data)"""
+                "]]src.data.collectors.base_collector.DataCollector.collect_fixtures[",": new_callable=AsyncMock) as mock_collect:": mock_collect.return_value = CollectionResult(": data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
+                    status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=sample_data)"""
                 # 执行测试
                 result = await collector.collect_fixtures_with_streaming()
                 # 验证数据采集成功（即使流式发送有问题）
@@ -363,7 +364,7 @@ class TestStreamingDataCollector:
         # 测试有效配置
         valid_config = StreamConfig()
         collector = StreamingDataCollector(
-        data_source="test_source[", enable_streaming=True, stream_config=valid_config[""""
+        data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_75"), enable_streaming=True, stream_config=valid_config[""""
         )
     assert collector.stream_config ==valid_config
     @pytest.mark.asyncio
@@ -374,7 +375,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]test_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"), enable_streaming=True[""""
             )
             # 执行一些操作
             await collector.send_to_stream([{"]]id[": 1}])""""
@@ -396,15 +397,15 @@ class TestStreamingDataCollector:
             "]src.data.collectors.streaming_collector.logging["""""
         ):
             # Mock连续失败
-            mock_kafka_producer.send.side_effect = Exception("]Persistent failure[")": mock_producer_class.return_value = mock_kafka_producer[": collector = StreamingDataCollector(": data_source="]]test_source[", enable_streaming=True, max_retries=1[""""
+            mock_kafka_producer.send.side_effect = Exception("]Persistent failure[")": mock_producer_class.return_value = mock_kafka_producer[": collector = StreamingDataCollector(": data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_132"), enable_streaming=True, max_retries=1[""""
             )
             # Mock父类的collect_fixtures方法
             with patch.object(:
                 collector.__class__.__bases__[0], "]]collect_fixtures["""""
             ) as mock_collect:
                 mock_collect.return_value = CollectionResult(
-                data_source="]test_source[",": collection_type="]fixtures[",": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
-                    status="]success[",": collected_data=sample_data)"""
+                data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_88"),": collection_type = os.getenv("TEST_STREAMING_COLLECTOR_COLLECTION_TYPE_103"),": records_collected=len(sample_data),": success_count=len(sample_data),": error_count=0,"
+                    status = os.getenv("TEST_STREAMING_COLLECTOR_STATUS_105"),": collected_data=sample_data)"""
                 # 执行测试
                 result = await collector.collect_fixtures_with_streaming()
                 # 验证错误恢复 - 数据采集应该继续
@@ -430,7 +431,7 @@ class TestStreamingDataCollector:
         ) as mock_producer_class:
             mock_producer_class.return_value = mock_kafka_producer
             collector = StreamingDataCollector(
-            data_source="]enriched_source[", enable_streaming=True[""""
+            data_source = os.getenv("TEST_STREAMING_COLLECTOR_DATA_SOURCE_406"), enable_streaming=True[""""
             )
             basic_data = [{"]]id[": 1, "]value[": "]test["}]""""
             # 执行测试

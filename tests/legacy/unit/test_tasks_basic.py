@@ -4,6 +4,7 @@ from src.tasks.error_logger import TaskErrorLogger
 from src.tasks.utils import calculate_next_collection_time, should_collect_live_scores
 from unittest.mock import AsyncMock, Mock, patch  # noqa: F401
 import pytest
+import os
 
 """
 任务模块基础测试
@@ -93,7 +94,7 @@ class TestTaskErrorLogger:
         mock_result1.scalar.return_value = 10  # total_errors
         mock_result2 = AsyncMock()
         mock_result2.__iter__.return_value = [
-        AsyncMock(task_name="test_task[", error_count=5)]": mock_result3 = AsyncMock()": mock_result3.__iter__.return_value = [": AsyncMock(error_type="]task_error[", error_count=3)]""""
+        AsyncMock(task_name = os.getenv("TEST_TASKS_BASIC_TASK_NAME_96"), error_count=5)]": mock_result3 = AsyncMock()": mock_result3.__iter__.return_value = [": AsyncMock(error_type = os.getenv("TEST_TASKS_BASIC_ERROR_TYPE_96"), error_count=3)]""""
         # 设置execute的多次调用返回值
         mock_session.execute.side_effect = ["]mock_result1[", mock_result2, mock_result3]""""
         # 重新初始化logger以使用mock的数据库管理器

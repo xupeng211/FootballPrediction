@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 CI质量保障守护者 - 自动监控CI问题并生成防御机制
@@ -25,15 +26,15 @@ import click
 class CIIssueType:
     """CI问题类型定义"""
 
-    CODE_STYLE = "code_style"
-    TYPE_CHECK = "type_check"
-    SYNTAX_ERROR = "syntax_error"
-    TEST_FAILURE = "test_failure"
-    IMPORT_ERROR = "import_error"
-    SECURITY_ISSUE = "security_issue"
-    COVERAGE_LOW = "coverage_low"
-    DEPENDENCY_ISSUE = "dependency_issue"
-    UNKNOWN = "unknown"
+    CODE_STYLE = os.getenv("CI_GUARDIAN_CODE_STYLE_28")
+    TYPE_CHECK = os.getenv("CI_GUARDIAN_TYPE_CHECK_28")
+    SYNTAX_ERROR = os.getenv("CI_GUARDIAN_SYNTAX_ERROR_29")
+    TEST_FAILURE = os.getenv("CI_GUARDIAN_TEST_FAILURE_29")
+    IMPORT_ERROR = os.getenv("CI_GUARDIAN_IMPORT_ERROR_30")
+    SECURITY_ISSUE = os.getenv("CI_GUARDIAN_SECURITY_ISSUE_30")
+    COVERAGE_LOW = os.getenv("CI_GUARDIAN_COVERAGE_LOW_31")
+    DEPENDENCY_ISSUE = os.getenv("CI_GUARDIAN_DEPENDENCY_ISSUE_32")
+    UNKNOWN = os.getenv("CI_GUARDIAN_UNKNOWN_32")
 
 
 class CIIssue:
@@ -47,7 +48,7 @@ class CIIssue:
         line_number: Optional[int] = None,
         error_message: str = "",
         tool_name: str = "",
-        severity: str = "medium",
+        severity: str = os.getenv("CI_GUARDIAN_STR_42"),
     ):
         self.issue_type = issue_type
         self.description = description
@@ -335,7 +336,7 @@ ignore = [
 "tests/*" = ["S101"]  # allow assert in tests
 
 [tool.ruff.format]
-quote-style = "double"
+quote-style = os.getenv("CI_GUARDIAN_STYLE_324")
 indent-style = "space"
 """
 
@@ -675,12 +676,12 @@ class CIGuardian:
 
 
 @click.command()
-@click.option("--command", "-c", help="要监控的CI命令 (例如: 'make quality')")
-@click.option("--analyze-logs", "-l", is_flag=True, help="分析现有日志文件中的问题")
-@click.option("--generate-only", "-g", is_flag=True, help="仅生成防御机制，不执行命令")
-@click.option("--validate", "-v", is_flag=True, help="验证现有防御机制")
-@click.option("--project-root", "-p", help="项目根目录路径")
-@click.option("--summary", "-s", is_flag=True, help="显示执行摘要")
+@click.option("--command", "-c", help = os.getenv("CI_GUARDIAN_HELP_669")make quality')")
+@click.option("--analyze-logs", "-l", is_flag=True, help = os.getenv("CI_GUARDIAN_HELP_670"))
+@click.option("--generate-only", "-g", is_flag=True, help = os.getenv("CI_GUARDIAN_HELP_674"))
+@click.option("--validate", "-v", is_flag=True, help = os.getenv("CI_GUARDIAN_HELP_677"))
+@click.option("--project-root", "-p", help = os.getenv("CI_GUARDIAN_HELP_678"))
+@click.option("--summary", "-s", is_flag=True, help = os.getenv("CI_GUARDIAN_HELP_679"))
 def main(command, analyze_logs, generate_only, validate, project_root, summary):
     """
     🛡️ CI质量保障守护者

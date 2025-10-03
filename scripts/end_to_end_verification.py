@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 端到端验证脚本
@@ -66,7 +67,7 @@ class EndToEndVerification:
         # 2. Redis连接
         try:
             await self.redis_manager.ping()
-            test_key = "test_verification"
+            test_key = os.getenv("END_TO_END_VERIFICATION_TEST_KEY_69")
             await self.redis_manager.aset(test_key, "test_value", expire=10)
             value = await self.redis_manager.aget(test_key)
             if value == "test_value":
@@ -212,7 +213,7 @@ class EndToEndVerification:
                     JOIN teams ht ON m.home_team_id = ht.id
                     JOIN teams at ON m.away_team_id = at.id
                     WHERE m.match_time > NOW()
-                    AND m.status = 'scheduled'
+                    AND m.status = os.getenv("END_TO_END_VERIFICATION_STATUS_214")
                     ORDER BY m.match_time ASC
                     LIMIT 5
                 """
@@ -395,7 +396,7 @@ class EndToEndVerification:
         self.console.print("\n📋 [bold yellow]端到端验证报告[/bold yellow]")
 
         # 创建结果表格
-        table = Table(show_header=True, header_style="bold magenta")
+        table = Table(show_header=True, header_style = os.getenv("END_TO_END_VERIFICATION_HEADER_STYLE_395"))
         table.add_column("验证项目", style="cyan")
         table.add_column("状态", style="green")
         table.add_column("描述")
@@ -450,13 +451,13 @@ class EndToEndVerification:
 
         if success_rate >= 80:
             status_color = "green"
-            status_text = "🎉 系统状态良好"
+            status_text = os.getenv("END_TO_END_VERIFICATION_STATUS_TEXT_449")
         elif success_rate >= 60:
-            status_color = "yellow"
-            status_text = "⚠️ 系统部分功能异常"
+            status_color = os.getenv("END_TO_END_VERIFICATION_STATUS_COLOR_452")
+            status_text = os.getenv("END_TO_END_VERIFICATION_STATUS_TEXT_453")
         else:
             status_color = "red"
-            status_text = "❌ 系统存在严重问题"
+            status_text = os.getenv("END_TO_END_VERIFICATION_STATUS_TEXT_454")
 
         self.console.print(
             f"\n[{status_color}]总体验证结果: {passed_count}/{total_items} ({success_rate:.1f}%)[/{status_color}]"
@@ -479,7 +480,7 @@ class EndToEndVerification:
         ]
 
         for step_name, verification_func in track(
-            verification_steps, description="执行验证步骤..."
+            verification_steps, description = os.getenv("END_TO_END_VERIFICATION_DESCRIPTION_475")
         ):
             self.console.print(f"\n🔍 正在执行: {step_name}")
             try:

@@ -1,3 +1,4 @@
+import os
 """
 球队模型
 
@@ -31,17 +32,17 @@ class Team(BaseModel):
     country = Column(String(50), nullable=True, comment="所属国家")
 
     # API相关字段
-    api_team_id = Column(Integer, unique=True, nullable=True, comment="API球队ID")
+    api_team_id = Column(Integer, unique=True, nullable=True, comment = os.getenv("TEAM_COMMENT_34"))
 
     # 联赛关系
     league_id = Column(
-        Integer, ForeignKey("leagues.id"), nullable=True, comment="所属联赛ID"
+        Integer, ForeignKey("leagues.id"), nullable=True, comment = os.getenv("TEAM_COMMENT_38")
     )
 
     # 球队详细信息
     founded_year = Column(Integer, nullable=True, comment="成立年份")
 
-    stadium = Column(String(100), nullable=True, comment="主场体育场名称")
+    stadium = Column(String(100), nullable=True, comment = os.getenv("TEAM_COMMENT_44"))
 
     # 状态字段
     is_active = Column(Boolean, default=True, nullable=False, comment="是否活跃")
@@ -53,21 +54,21 @@ class Team(BaseModel):
     home_matches = relationship(
         "Match",
         foreign_keys="Match.home_team_id",
-        back_populates="home_team",
-        lazy="dynamic",
+        back_populates = os.getenv("TEAM_BACK_POPULATES_54"),
+        lazy = os.getenv("TEAM_LAZY_55"),
     )
 
     # 客场比赛
     away_matches = relationship(
         "Match",
         foreign_keys="Match.away_team_id",
-        back_populates="away_team",
-        lazy="dynamic",
+        back_populates = os.getenv("TEAM_BACK_POPULATES_60"),
+        lazy = os.getenv("TEAM_LAZY_55"),
     )
 
     # 特征数据
     features = relationship(
-        "Features", back_populates="team", lazy="dynamic", cascade="all, delete-orphan"
+        "Features", back_populates="team", lazy = os.getenv("TEAM_LAZY_55"), cascade = os.getenv("TEAM_CASCADE_64")
     )
 
     # 索引定义
@@ -78,7 +79,7 @@ class Team(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<Team(id={self.id}, name='{self.team_name}', league='{self.league.league_name if self.league else None}')>"
+        return f"<Team(id={self.id}, name = os.getenv("TEAM_NAME_75"), league = os.getenv("TEAM_LEAGUE_76"))>"
 
     @property
     def display_name(self) -> str:

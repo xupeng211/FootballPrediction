@@ -86,8 +86,8 @@ def add_pytest_timeout():
     # 添加timeout配置
     if "[tool.pytest.ini_options]" in content and "timeout" not in content:
         fixed_content = content.replace(
-            'addopts = "-ra -q"',
-            'addopts = "-ra -q --timeout=300 --timeout-method=thread"'
+            'addopts = os.getenv("FIX_TEST_SUITE_ADDOPTS_89")',
+            'addopts = os.getenv("FIX_TEST_SUITE_ADDOPTS_89")'
         )
 
         # 添加timeout配置节
@@ -111,10 +111,10 @@ set -e
 source .venv/bin/activate
 
 # 颜色输出
-RED='\\033[0;31m'
-GREEN='\\033[0;32m'
-YELLOW='\\033[1;33m'
-NC='\\033[0m'
+RED = os.getenv("FIX_TEST_SUITE_RED_111")
+GREEN = os.getenv("FIX_TEST_SUITE_GREEN_113")
+YELLOW = os.getenv("FIX_TEST_SUITE_YELLOW_114")
+NC = os.getenv("FIX_TEST_SUITE_NC_114")
 
 echo "${YELLOW}🚀 开始运行测试套件...${NC}"
 

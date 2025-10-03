@@ -1,3 +1,4 @@
+import os
 """API响应工具类测试"""
 
 import pytest
@@ -15,7 +16,7 @@ class TestAPIResponseModel:
             success=True,
             message="操作成功",
             data={"id": 1},
-            code="SUCCESS"
+            code = os.getenv("TEST_RESPONSE_CODE_18")
         )
 
         assert model.success is True
@@ -74,7 +75,7 @@ class TestAPIResponse:
 
     def test_success_with_custom_message(self):
         """测试成功响应自定义消息"""
-        response = APIResponse.success(message="自定义成功消息")
+        response = APIResponse.success(message = os.getenv("TEST_RESPONSE_MESSAGE_77"))
 
         assert response["success"] is True
         assert response["message"] == "自定义成功消息"
@@ -150,7 +151,7 @@ class TestAPIResponse:
 
     def test_error_with_string_code(self):
         """测试错误响应代码为字符串"""
-        response = APIResponse.error(code="INVALID_INPUT")
+        response = APIResponse.error(code = os.getenv("TEST_RESPONSE_CODE_152"))
 
         assert response["code"] == "INVALID_INPUT"
 
@@ -249,7 +250,7 @@ class TestAPIResponse:
         response = APIResponse.success(message="操作成功")
         assert response["message"] == "操作成功"
 
-        response = APIResponse.error(message="服务器内部错误")
+        response = APIResponse.error(message = os.getenv("TEST_RESPONSE_MESSAGE_250"))
         assert response["message"] == "服务器内部错误"
 
     def test_empty_response(self):

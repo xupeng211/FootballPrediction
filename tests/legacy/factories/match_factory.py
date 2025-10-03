@@ -1,3 +1,4 @@
+import os
 """""""
 Factory for generating football match test data.
 """""""
@@ -17,7 +18,7 @@ class MatchFactory(SQLAlchemyModelFactory):
     """Factory for generating football match data."""""""
 
     class Meta = model Match
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("MATCH_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20")""""
 
     # Basic match information
     external_match_id = factory.LazyAttribute(lambda _: f["]match_{fake.uuid4().hex[:8]}"])": home_team_id = factory.LazyAttribute(lambda _: random.randint(1, 1000))": away_team_id = factory.LazyAttribute(lambda _: random.randint(1, 1000))": home_score = factory.LazyAttribute(lambda _: random.randint(0, 5))"
@@ -70,7 +71,7 @@ class MatchFactory(SQLAlchemyModelFactory):
     "]""Factory for generating historical match data with specific date ranges."""""""
 
     class Meta = model Match
-        sqlalchemy_session_persistence = "flush["""""
+        sqlalchemy_session_persistence = os.getenv("MATCH_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20")""""
 
     @factory.lazy_attribute
     def match_date(self):
@@ -82,7 +83,7 @@ class FutureMatchFactory(MatchFactory):
     """Factory for generating future match data."""""""
 
     class Meta = model Match
-        sqlalchemy_session_persistence = "flush[": status = "]scheduled[": match_date = factory.LazyAttribute(": lambda _: datetime.now() + timedelta(days=random.randint(1, 30))"""
+        sqlalchemy_session_persistence = os.getenv("MATCH_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20"): status = os.getenv("MATCH_FACTORY_STATUS_82"): match_date = factory.LazyAttribute(": lambda _: datetime.now() + timedelta(days=random.randint(1, 30))"""
     )
     home_score = None
     away_score = None
@@ -92,11 +93,11 @@ class HighScoringMatchFactory(MatchFactory):
     "]""Factory for generating high-scoring matches."""""""
 
     class Meta = model Match
-        sqlalchemy_session_persistence = "flush[": home_score = factory.LazyAttribute(lambda _: random.randint(3, 8))": away_score = factory.LazyAttribute(lambda _: random.randint(3, 8))": status = "]finished[": class LowScoringMatchFactory(MatchFactory):""""
+        sqlalchemy_session_persistence = os.getenv("MATCH_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20"): home_score = factory.LazyAttribute(lambda _: random.randint(3, 8))": away_score = factory.LazyAttribute(lambda _: random.randint(3, 8))": status = os.getenv("MATCH_FACTORY_STATUS_95"): class LowScoringMatchFactory(MatchFactory):""""
     "]""Factory for generating low-scoring matches."""""""
 
     class Meta = model Match
-        sqlalchemy_session_persistence = "flush[": home_score = factory.LazyAttribute(lambda _: random.randint(0, 1))": away_score = factory.LazyAttribute(lambda _: random.randint(0, 1))": status = "]finished[": class InvalidMatchFactory:""""
+        sqlalchemy_session_persistence = os.getenv("MATCH_FACTORY_SQLALCHEMY_SESSION_PERSISTENCE_20"): home_score = factory.LazyAttribute(lambda _: random.randint(0, 1))": away_score = factory.LazyAttribute(lambda _: random.randint(0, 1))": status = os.getenv("MATCH_FACTORY_STATUS_95"): class InvalidMatchFactory:""""
     "]""Factory for generating invalid match data for testing error handling."""""""
 
     @classmethod

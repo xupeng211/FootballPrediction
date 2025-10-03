@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 强密码生成脚本
@@ -19,8 +20,8 @@ class SecurePasswordGenerator:
         self.lowercase = string.ascii_lowercase
         self.uppercase = string.ascii_uppercase
         self.digits = string.digits
-        self.special_safe = "!@#$%^&*()_+-="  # 安全的特殊字符
-        self.special_extended = "!@#$%^&*()_+-=[]{}|;:,.<>?"  # 扩展特殊字符
+        self.special_safe = os.getenv("GENERATE_PASSWORDS_SPECIAL_SAFE_22")  # 安全的特殊字符
+        self.special_extended = os.getenv("GENERATE_PASSWORDS_SPECIAL_EXTENDED_22")  # 扩展特殊字符
 
     def generate_password(
         self,
@@ -209,15 +210,15 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:8080
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="FootballPrediction项目强密码生成器")
+    parser = argparse.ArgumentParser(description = os.getenv("GENERATE_PASSWORDS_DESCRIPTION_210"))
     parser.add_argument(
         "--format",
         choices=["env", "json", "text"],
         default="text",
-        help="输出格式 (默认: text)",
+        help = os.getenv("GENERATE_PASSWORDS_HELP_214"),
     )
     parser.add_argument("--output", type=str, help="输出文件名")
-    parser.add_argument("--length", type=int, default=32, help="密码长度 (默认: 32)")
+    parser.add_argument("--length", type=int, default=32, help = os.getenv("GENERATE_PASSWORDS_HELP_219"))
 
     args = parser.parse_args()
 

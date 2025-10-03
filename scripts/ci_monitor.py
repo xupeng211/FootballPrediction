@@ -398,7 +398,7 @@ class GitHubCIMonitor:
 def main():
     """主程序入口 - 提供命令行接口和多种使用模式"""
     parser = argparse.ArgumentParser(
-        description="GitHub Actions CI监控工具",
+        description = os.getenv("CI_MONITOR_DESCRIPTION_401"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
@@ -409,16 +409,16 @@ def main():
         """,
     )
 
-    parser.add_argument("--monitor", "-m", action="store_true", help="启动实时监控模式")
+    parser.add_argument("--monitor", "-m", action = os.getenv("CI_MONITOR_ACTION_412"), help = os.getenv("CI_MONITOR_HELP_412"))
 
-    parser.add_argument("--analyze", "-a", type=int, help="深度分析指定的工作流运行ID")
+    parser.add_argument("--analyze", "-a", type=int, help = os.getenv("CI_MONITOR_HELP_412"))
 
     parser.add_argument(
-        "--history", "-H", type=int, default=10, help="显示历史运行记录数量 (默认: 10)"
+        "--history", "-H", type=int, default=10, help = os.getenv("CI_MONITOR_HELP_414")
     )
 
     parser.add_argument(
-        "--interval", "-i", type=int, default=30, help="实时监控刷新间隔(秒) (默认: 30)"
+        "--interval", "-i", type=int, default=30, help = os.getenv("CI_MONITOR_HELP_417")
     )
 
     args = parser.parse_args()

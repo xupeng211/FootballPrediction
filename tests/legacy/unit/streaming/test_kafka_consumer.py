@@ -5,6 +5,7 @@ from src.streaming.kafka_consumer import FootballKafkaConsumer
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import asyncio
 import pytest
+import os
 
 """
 Kafka消费者测试 - FootballKafkaConsumer
@@ -56,7 +57,7 @@ class TestFootballKafkaConsumer:
         topics = ["matches-stream[", "]odds-stream[", "]scores-stream["]": consumer.subscribe_topics(topics)": consumer.consumer.subscribe.assert_called_once_with(topics)": def test_subscribe_topics_consumer_not_initialized(self, consumer):"
         "]""测试消费者未初始化时订阅主题"""
         consumer.consumer = None
-        topics = "matches-stream["""""
+        topics = os.getenv("TEST_KAFKA_CONSUMER_TOPICS_59")""""
         # 这个方法没有返回值，但会检查consumer状态
         consumer.subscribe_topics(topics)
         # 应该能处理consumer为None的情况
@@ -216,7 +217,7 @@ class TestFootballKafkaConsumer:
             def set_running_false(*args):
                 consumer.running = False
             consumer.consumer.poll.side_effect = set_running_false
-            consumer.start_consuming(topics="matches-stream[", interval=0.1)": consumer.consumer.subscribe.assert_called_once()"""
+            consumer.start_consuming(topics = os.getenv("TEST_KAFKA_CONSUMER_TOPICS_219"), interval=0.1)": consumer.consumer.subscribe.assert_called_once()"""
     @pytest.mark.asyncio
     async def test_stop_consuming(self, consumer):
         "]""测试停止消费"""
@@ -234,7 +235,7 @@ class TestFootballKafkaConsumer:
         consumer.consumer = Mock()
         consumer.consumer.subscribe = Mock()
         # 模拟重平衡场景
-        topics = "matches-stream[": result = await consumer.subscribe_topics(topics)": assert result is True["""
+        topics = os.getenv("TEST_KAFKA_CONSUMER_TOPICS_59"): result = await consumer.subscribe_topics(topics)": assert result is True["""
         # 重平衡逻辑应该被正确处理
     @pytest.mark.asyncio
     async def test_consumer_group_management(self, consumer):
@@ -242,7 +243,7 @@ class TestFootballKafkaConsumer:
         consumer.consumer = Mock()
         consumer.consumer.subscribe = Mock()
         # 使用消费者组配置
-        topics = "matches-stream[": result = await consumer.subscribe_topics(topics)": assert result is True["""
+        topics = os.getenv("TEST_KAFKA_CONSUMER_TOPICS_59"): result = await consumer.subscribe_topics(topics)": assert result is True["""
         # 消费者组应该正确配置和管理
     @pytest.mark.asyncio
     async def test_offset_commit_handling(self, consumer):
@@ -284,7 +285,7 @@ class TestFootballKafkaConsumer:
     async def test_topic_subscription_error(self, consumer):
         "]]""测试主题订阅错误"""
         consumer.consumer = Mock()
-        consumer.consumer.subscribe = Mock(side_effect=Exception("订阅失败["))": topics = "]matches-stream[": result = await consumer.subscribe_topics(topics)": assert result is False["""
+        consumer.consumer.subscribe = Mock(side_effect=Exception("订阅失败["))": topics = os.getenv("TEST_KAFKA_CONSUMER_TOPICS_286"): result = await consumer.subscribe_topics(topics)": assert result is False["""
     @pytest.mark.asyncio
     async def test_consumer_metrics_collection(self, consumer):
         "]]""测试消费者指标收集"""

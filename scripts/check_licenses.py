@@ -22,11 +22,11 @@ sys.path.insert(0, str(project_root))
 
 class LicenseType(Enum):
     """许可证类型"""
-    PERMISSIVE = "permissive"
-    COPYLEFT = "copyleft"
-    COMMERCIAL = "commercial"
-    PROPRIETARY = "proprietary"
-    UNKNOWN = "unknown"
+    PERMISSIVE = os.getenv("CHECK_LICENSES_PERMISSIVE_25")
+    COPYLEFT = os.getenv("CHECK_LICENSES_COPYLEFT_25")
+    COMMERCIAL = os.getenv("CHECK_LICENSES_COMMERCIAL_26")
+    PROPRIETARY = os.getenv("CHECK_LICENSES_PROPRIETARY_26")
+    UNKNOWN = os.getenv("CHECK_LICENSES_UNKNOWN_27")
 
 
 @dataclass
@@ -98,18 +98,18 @@ class LicenseChecker:
                 name="MIT",
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="MIT许可证，允许自由使用、修改和分发",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_97"),
                 requires_attribution=True
             ),
             "BSD": LicenseInfo(
                 name="BSD",
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="BSD许可证，宽松的开源许可证",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_102"),
                 requires_attribution=True
             ),
             "Apache-2.0": LicenseInfo(
-                name="Apache-2.0",
+                name = os.getenv("CHECK_LICENSES_NAME_107"),
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
                 description="Apache许可证2.0，专利保护",
@@ -119,26 +119,26 @@ class LicenseChecker:
                 name="ISC",
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="ISC许可证，类似MIT的简化版",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_115"),
                 requires_attribution=True
             ),
             "PSF": LicenseInfo(
                 name="PSF",
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="Python软件基金会许可证"
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_122")
             ),
             "Unlicense": LicenseInfo(
-                name="Unlicense",
+                name = os.getenv("CHECK_LICENSES_NAME_125"),
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="放弃版权的公共领域许可证"
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_128")
             ),
             "CC0-1.0": LicenseInfo(
-                name="CC0-1.0",
+                name = os.getenv("CHECK_LICENSES_NAME_129"),
                 type=LicenseType.PERMISSIVE,
                 allowed=True,
-                description="Creative Commons Zero，公共领域"
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_132")
             ),
 
             # Copyleft许可证
@@ -146,7 +146,7 @@ class LicenseChecker:
                 name="GPL",
                 type=LicenseType.COPYLEFT,
                 allowed=False,
-                description="GNU通用公共许可证，要求开源派生作品",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_138"),
                 requires_same_license=True,
                 requires_source=True,
                 issues=["GPL许可证可能要求开源您的代码"]
@@ -155,7 +155,7 @@ class LicenseChecker:
                 name="LGPL",
                 type=LicenseType.COPYLEFT,
                 allowed=False,
-                description="GNU较宽松通用公共许可证",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_147"),
                 requires_source=True,
                 issues=["LGPL许可证要求提供源代码"]
             ),
@@ -163,7 +163,7 @@ class LicenseChecker:
                 name="AGPL",
                 type=LicenseType.COPYLEFT,
                 allowed=False,
-                description="GNU Affero通用公共许可证",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_154"),
                 requires_same_license=True,
                 requires_source=True,
                 issues=["AGPL要求网络服务也开源"]
@@ -172,7 +172,7 @@ class LicenseChecker:
                 name="EPL",
                 type=LicenseType.COPYLEFT,
                 allowed=False,
-                description="Eclipse公共许可证",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_163"),
                 requires_same_license=True,
                 issues=["EPL许可证的兼容性需要检查"]
             ),
@@ -180,19 +180,19 @@ class LicenseChecker:
                 name="MPL",
                 type=LicenseType.COPYLEFT,
                 allowed=True,
-                description="Mozilla公共许可证",
+                description = os.getenv("CHECK_LICENSES_DESCRIPTION_169"),
                 requires_source=True,
                 issues=["MPL允许部分开源"]
             ),
 
             # 其他许可证
             "Apache 2.0": LicenseInfo(
-                name="Apache 2.0",
+                name = os.getenv("CHECK_LICENSES_NAME_175"),
                 type=LicenseType.PERMISSIVE,
                 allowed=True
             ),
             "UNKNOWN": LicenseInfo(
-                name="UNKNOWN",
+                name = os.getenv("CHECK_LICENSES_NAME_179"),
                 type=LicenseType.UNKNOWN,
                 allowed=False,
                 description="未知许可证",
@@ -481,11 +481,11 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="依赖许可证检查")
+    parser = argparse.ArgumentParser(description = os.getenv("CHECK_LICENSES_DESCRIPTION_465"))
     parser.add_argument('--output', '-o', type=Path,
-                       help="输出报告文件")
-    parser.add_argument('--notice', '-n', action='store_true',
-                       help="生成NOTICE文件")
+                       help = os.getenv("CHECK_LICENSES_HELP_469"))
+    parser.add_argument('--notice', '-n', action = os.getenv("CHECK_LICENSES_ACTION_469"),
+                       help = os.getenv("CHECK_LICENSES_HELP_470"))
     parser.add_argument('--format', choices=['text', 'json'],
                        default='text', help="输出格式")
 

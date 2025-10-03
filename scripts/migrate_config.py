@@ -73,7 +73,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.1.0",
-            description="添加Redis配置",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_76"),
             timestamp=datetime(2024, 1, 1),
             forward=migrate_1_0_to_1_1
         ))
@@ -102,7 +102,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.2.0",
-            description="重命名API配置变量",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_104"),
             timestamp=datetime(2024, 2, 1),
             forward=migrate_1_1_to_1_2,
             backward=revert_1_2_to_1_1,
@@ -122,7 +122,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.3.0",
-            description="添加缓存配置",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_123"),
             timestamp=datetime(2024, 3, 1),
             forward=migrate_1_2_to_1_3,
             dependencies=["1.2.0"]
@@ -139,7 +139,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.4.0",
-            description="添加监控配置",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_138"),
             timestamp=datetime(2024, 4, 1),
             forward=migrate_1_3_to_1_4,
             dependencies=["1.3.0"]
@@ -161,7 +161,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.5.0",
-            description="增强安全配置",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_159"),
             timestamp=datetime(2024, 5, 1),
             forward=migrate_1_4_to_1_5,
             dependencies=["1.4.0"]
@@ -178,7 +178,7 @@ class ConfigMigration:
 
         self.add_migration(Migration(
             version="1.6.0",
-            description="添加性能配置",
+            description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_175"),
             timestamp=datetime(2024, 6, 1),
             forward=migrate_1_5_to_1_6,
             dependencies=["1.5.0"]
@@ -480,16 +480,16 @@ class ConfigMigration:
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="配置迁移工具")
+    parser = argparse.ArgumentParser(description = os.getenv("MIGRATE_CONFIG_DESCRIPTION_475"))
     parser.add_argument('command', choices=[
         'migrate', 'rollback', 'status', 'list', 'init'
     ], help="命令")
 
     parser.add_argument('--file', '-f', type=Path,
                        default=project_root / ".env.production",
-                       help="环境文件路径")
+                       help = os.getenv("MIGRATE_CONFIG_HELP_484"))
     parser.add_argument('--to', '-t', help="目标版本")
-    parser.add_argument('--dry-run', '-n', action='store_true',
+    parser.add_argument('--dry-run', '-n', action = os.getenv("MIGRATE_CONFIG_ACTION_486"),
                        help="试运行")
     parser.add_argument('--init-version', default='1.0.0',
                        help="初始化版本")

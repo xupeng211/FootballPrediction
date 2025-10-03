@@ -4,6 +4,7 @@ from src.database.models.data_quality_log import DataQualityLog
 from unittest.mock import patch
 import asyncio
 import pytest
+import os
 
 """
 数据质量模块核心功能单元测试
@@ -105,18 +106,18 @@ class TestDataQualityExceptionHandlerCore:
         """测试模型初始化"""
         from src.database.models.data_quality_log import DataQualityLog
         log = DataQualityLog(
-            table_name="test_table[", error_type="]test_error[", severity="]high["""""
+            table_name = os.getenv("TEST_DATA_QUALITY_CORE_TABLE_NAME_108"), error_type = os.getenv("TEST_DATA_QUALITY_CORE_ERROR_TYPE_108"), severity = os.getenv("TEST_DATA_QUALITY_CORE_SEVERITY_108")""""
         )
         assert log.table_name =="]test_table[" assert log.error_type =="]test_error[" assert log.severity =="]high[" assert log.status =="]logged["  # 默认值[" assert log.requires_manual_review is False  # 默认值["""
     def test_workflow_methods(self):
         "]]]""测试工作流方法"""
-        log = DataQualityLog(table_name="test[", error_type="]test[")""""
+        log = DataQualityLog(table_name="test[", error_type = os.getenv("TEST_DATA_QUALITY_CORE_ERROR_TYPE_110"))""""
         # 测试分配处理人员
         log.assign_to_handler("]developer[")": assert log.status =="]in_progress[" assert log.handled_by =="]developer["""""
         # 测试标记为已解决
         log.mark_as_resolved("]admin[", "]问题已修复[")": assert log.status =="]resolved[" assert log.handled_by =="]admin[" assert log.resolution_notes =="]问题已修复[" assert log.handled_at is not None[""""
         # 测试标记为忽略
-        log2 = DataQualityLog(table_name="]]test2[", error_type="]test2[")": log2.mark_as_ignored("]admin[", "]非真实问题[")": assert log2.status =="]ignored[" assert "]忽略原因 非真实问题[" in log2.resolution_notes[""""
+        log2 = DataQualityLog(table_name = os.getenv("TEST_DATA_QUALITY_CORE_TABLE_NAME_117"), error_type = os.getenv("TEST_DATA_QUALITY_CORE_ERROR_TYPE_117"))": log2.mark_as_ignored("]admin[", "]非真实问题[")": assert log2.status =="]ignored[" assert "]忽略原因 非真实问题[" in log2.resolution_notes[""""
     def test_severity_mapping(self):
         "]]""测试严重程度映射"""
         test_cases = [
@@ -138,7 +139,7 @@ class TestDataQualityExceptionHandlerCore:
             "]success_rate[": 65.0}": log2 = DataQualityLog.create_from_ge_result("]test_table[", low_quality_result)": assert log2.requires_manual_review is True  # success_rate < 80[" def test_to_dict_conversion(self):""
         "]]""测试字典转换"""
         log = DataQualityLog(
-            table_name="test_table[",": error_type="]test_error[",": severity="]medium[",": error_data = {"]test[": ["]data["},": error_message="]测试错误消息[")": result_dict = log.to_dict()"""
+            table_name = os.getenv("TEST_DATA_QUALITY_CORE_TABLE_NAME_108"),": error_type = os.getenv("TEST_DATA_QUALITY_CORE_ERROR_TYPE_108"),": severity = os.getenv("TEST_DATA_QUALITY_CORE_SEVERITY_138"),": error_data = {"]test[": ["]data["},": error_message = os.getenv("TEST_DATA_QUALITY_CORE_ERROR_MESSAGE_138"))": result_dict = log.to_dict()"""
         # 验证关键字段
         assert result_dict["]table_name["] =="]test_table[" assert result_dict["]error_type["] =="]test_error[" assert result_dict["]severity["] =="]medium[" assert result_dict["]error_data["] =={"]test[" "]data["}" assert result_dict["]error_message["] =="]测试错误消息["""""
         # 验证时间字段存在
@@ -223,7 +224,7 @@ class TestDataQualityWorkflowLogic:
         # 验证结果分析逻辑
         assert validation_result["]success_rate["] ==85.5[" assert validation_result["]]total_expectations["] ==10[" assert len(validation_result["]]failed_expectations["]) ==2[""""
         # 状态判断逻辑
-        success_rate = validation_result["]]success_rate["]": expected_status = "]PASSED[": if success_rate >= 95 else "]FAILED[": assert validation_result["]status["] ==expected_status[" def test_anomaly_statistics_calculation(self):"""
+        success_rate = validation_result["]]success_rate["]": expected_status = os.getenv("TEST_DATA_QUALITY_CORE_EXPECTED_STATUS_220"): if success_rate >= 95 else "]FAILED[": assert validation_result["]status["] ==expected_status[" def test_anomaly_statistics_calculation(self):"""
         "]]""测试异常统计计算逻辑"""
         # 模拟异常数据
         anomalies = [

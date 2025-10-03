@@ -32,7 +32,7 @@ from src.database.models.match import Match, MatchStatus  # noqa: E402
 from src.database.models.team import Team  # noqa: E402
 
 logger = logging.getLogger("prepare_test_db")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, format = os.getenv("PREPARE_TEST_DB_FORMAT_35"))
 
 SEED_LEAGUE_ID = 99001
 SEED_HOME_TEAM_ID = 99011
@@ -46,9 +46,9 @@ async def seed_reference_data(session: AsyncSession) -> None:
     if not league:
         league = League(
             id=SEED_LEAGUE_ID,
-            league_name="Synthetic Premier League",
+            league_name = os.getenv("PREPARE_TEST_DB_LEAGUE_NAME_49"),
             league_code="SYN",
-            country="Synthetic",
+            country = os.getenv("PREPARE_TEST_DB_COUNTRY_50"),
             level=1,
             api_league_id=SEED_LEAGUE_ID,
         )
@@ -60,12 +60,12 @@ async def seed_reference_data(session: AsyncSession) -> None:
     if not home_team:
         home_team = Team(
             id=SEED_HOME_TEAM_ID,
-            team_name="Synthetic United",
+            team_name = os.getenv("PREPARE_TEST_DB_TEAM_NAME_61"),
             team_code="SYN-U",
-            country="Synthetic",
+            country = os.getenv("PREPARE_TEST_DB_COUNTRY_50"),
             league_id=SEED_LEAGUE_ID,
             founded_year=2000,
-            stadium="Synthetic Arena",
+            stadium = os.getenv("PREPARE_TEST_DB_STADIUM_65"),
         )
         session.add(home_team)
         logger.info("Seeded home team %s", home_team.team_name)
@@ -74,12 +74,12 @@ async def seed_reference_data(session: AsyncSession) -> None:
     if not away_team:
         away_team = Team(
             id=SEED_AWAY_TEAM_ID,
-            team_name="Synthetic City",
+            team_name = os.getenv("PREPARE_TEST_DB_TEAM_NAME_73"),
             team_code="SYN-C",
-            country="Synthetic",
+            country = os.getenv("PREPARE_TEST_DB_COUNTRY_50"),
             league_id=SEED_LEAGUE_ID,
             founded_year=2001,
-            stadium="Synthetic Dome",
+            stadium = os.getenv("PREPARE_TEST_DB_STADIUM_77"),
         )
         session.add(away_team)
         logger.info("Seeded away team %s", away_team.team_name)
@@ -91,11 +91,11 @@ async def seed_reference_data(session: AsyncSession) -> None:
             home_team_id=SEED_HOME_TEAM_ID,
             away_team_id=SEED_AWAY_TEAM_ID,
             league_id=SEED_LEAGUE_ID,
-            season="2024/2025",
+            season = os.getenv("PREPARE_TEST_DB_SEASON_87"),
             match_time=datetime.utcnow() + timedelta(days=7),
             match_status=MatchStatus.SCHEDULED,
-            venue="Synthetic Arena",
-            referee="Synthetic Ref",
+            venue = os.getenv("PREPARE_TEST_DB_VENUE_92"),
+            referee = os.getenv("PREPARE_TEST_DB_REFEREE_93"),
         )
         session.add(match)
         logger.info("Seeded synthetic match %s", match.id)

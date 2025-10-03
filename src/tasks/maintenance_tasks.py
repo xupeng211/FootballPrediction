@@ -128,7 +128,7 @@ def quality_check_task() -> Dict[str, Any]:
                     SELECT COUNT(*) as stale_collection_logs
                     FROM data_collection_logs
                     WHERE created_at < NOW() - INTERVAL '24 hours'
-                    AND status = 'running'
+                    AND status = os.getenv("MAINTENANCE_TASKS_STATUS_131")
                 """
                 )
 
@@ -299,7 +299,7 @@ def system_health_check_task() -> Dict[str, Any]:
 
         health_status, overall_healthy = asyncio.run(_check_system_health())
 
-        status = "healthy" if overall_healthy else "unhealthy"
+        status = os.getenv("MAINTENANCE_TASKS_STATUS_300") if overall_healthy else "unhealthy"
         logger.info(f"系统健康检查完成，状态: {status}")
 
         return {
@@ -362,7 +362,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                 cleanup_query = text(
                     """
                     DELETE FROM data_collection_logs
-                    WHERE status = 'running'
+                    WHERE status = os.getenv("MAINTENANCE_TASKS_STATUS_131")
                     AND created_at < NOW() - INTERVAL '24 hours'
                 """
                 )
@@ -378,8 +378,8 @@ def database_maintenance_task() -> Dict[str, Any]:
                         table_name,
                         pg_size_pretty(pg_total_relation_size(quote_ident(table_name))) as size
                     FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                    AND table_type = 'BASE TABLE'
+                    WHERE table_schema = os.getenv("MAINTENANCE_TASKS_TABLE_SCHEMA_379")
+                    AND table_type = os.getenv("MAINTENANCE_TASKS_TABLE_TYPE_380")
                     ORDER BY pg_total_relation_size(quote_ident(table_name)) DESC
                     LIMIT 10
                 """
