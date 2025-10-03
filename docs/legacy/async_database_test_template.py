@@ -1,3 +1,3 @@
 # Deprecated
 
-This file has been moved or archived.
+# This file has been moved or archived.
