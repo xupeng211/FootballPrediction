@@ -14,7 +14,6 @@ from openlineage.client import OpenLineageClient
 from openlineage.client.event_v2 import InputDataset, Job, OutputDataset, Run, RunEvent
 from openlineage.client.facet_v2 import (
     error_message_run,
-    parent_run,
     schema_dataset,
     source_code_location_job,
     sql_job,
@@ -83,8 +82,10 @@ class LineageReporter:
         if description:
             job_facets["description"] = {"description": description}
         if source_location:
-            job_facets["sourceCodeLocation"] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="git", url=source_location
+            job_facets["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="git", url=source_location
+                )
             )
         if transformation_sql:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
@@ -205,7 +206,7 @@ class LineageReporter:
             inputs=[],
             outputs=output_datasets,
             producer="football_prediction_lineage_reporter",
-                    )
+        )
 
         # 清理活跃运行记录
         if job_name in self._active_runs:
@@ -256,7 +257,7 @@ class LineageReporter:
             inputs=[],
             outputs=[],
             producer="football_prediction_lineage_reporter",
-                    )
+        )
 
         try:
             self.client.emit(event)

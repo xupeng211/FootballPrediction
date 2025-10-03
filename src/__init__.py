@@ -9,6 +9,8 @@ __version__ = "0.1.0"
 __author__ = "FootballPrediction Team"
 __email__ = "football@prediction.com"
 
+import os
+
 # 🔧 设置警告过滤器 - 确保测试日志清洁，不再充满第三方库警告
 try:
     from .utils.warning_filters import setup_warning_filters
@@ -19,11 +21,14 @@ except ImportError:
     pass
 
 # 导入核心模块
-from . import core, models, services, utils
+if os.getenv("MINIMAL_API_MODE", "false").lower() == "true":
+    __all__ = []
+else:
+    from . import core, models, services, utils  # noqa: WPS433 - runtime import for minimal mode
 
-__all__ = [
-    "core",
-    "models",
-    "services",
-    "utils",
-]
+    __all__ = [
+        "core",
+        "models",
+        "services",
+        "utils",
+    ]

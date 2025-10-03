@@ -7,6 +7,7 @@
 
 import asyncio
 import logging
+import os
 import signal
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -14,6 +15,8 @@ from typing import Any, Dict, Optional
 from .metrics_exporter import get_metrics_exporter
 
 logger = logging.getLogger(__name__)
+
+ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
 
 
 class MetricsCollector:
@@ -322,6 +325,10 @@ async def start_metrics_collection() -> None:
     """
     启动监控指标收集
     """
+    if not ENABLE_METRICS:
+        logger.info("ENABLE_METRICS=false，跳过指标收集器启动")
+        return
+
     collector = get_metrics_collector()
     await collector.start()
 

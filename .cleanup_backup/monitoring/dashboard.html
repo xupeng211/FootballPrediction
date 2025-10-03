@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>足球预测系统监控面板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .status-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-card.healthy {
+            border-left: 5px solid #27ae60;
+        }
+
+        .status-card.warning {
+            border-left: 5px solid #f39c12;
+        }
+
+        .status-card.unhealthy {
+            border-left: 5px solid #e74c3c;
+        }
+
+        .status-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .status-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-time {
+            font-size: 0.8em;
+            color: #95a5a6;
+            margin-top: 10px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .metrics-table {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+
+        .metrics-table h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-overview {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏈 足球预测系统监控面板</h1>
+            <p style="text-align: center; color: #7f8c8d;">实时系统状态与性能监控</p>
+        </div>
+
+        <div id="alerts-container"></div>
+
+        <div class="status-overview" id="status-overview">
+            <div class="loading">正在加载系统状态...</div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">系统资源使用率</div>
+                <canvas id="resourceChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">HTTP请求率</div>
+                <canvas id="requestChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">数据库性能</div>
+                <canvas id="databaseChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">业务指标</div>
+                <canvas id="businessChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="metrics-table">
+            <h3>详细系统信息</h3>
+            <table id="metricsTable">
+                <thead>
+                    <tr>
+                        <th>指标</th>
+                        <th>当前值</th>
+                        <th>状态</th>
+                        <th>最后更新</th>
+                    </tr>
+                </thead>
+                <tbody id="metricsTableBody">
+                    <tr>
+                        <td colspan="4" class="loading">正在加载指标数据...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="refreshDashboard()">🔄 刷新数据</button>
+
+    <script>
+        let charts = {};
+        let dashboardData = null;
+
+        // 初始化图表
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            };
+
+            // 系统资源图表
+            charts.resource = new Chart(document.getElementById('resourceChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'CPU使用率 (%)',
+                        data: [],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '内存使用率 (%)',
+                        data: [],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '磁盘使用率 (%)',
+                        data: [],
+                        borderColor: '#f39c12',
+                        backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // HTTP请求图表
+            charts.request = new Chart(document.getElementById('requestChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '请求率 (req/min)',
+                        data: [],
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 数据库性能图表
+            charts.database = new Chart(document.getElementById('databaseChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '活跃连接数',
+                        data: [],
+                        borderColor: '#9b59b6',
+                        backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '查询延迟 (ms)',
+                        data: [],
+                        borderColor: '#e67e22',
+                        backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 业务指标图表
+            charts.business = new Chart(document.getElementById('businessChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '预测准确率 (%)',
+                        data: [],
+                        borderColor: '#16a085',
+                        backgroundColor: 'rgba(22, 160, 133, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '数据质量评分',
+                        data: [],
+                        borderColor: '#8e44ad',
+                        backgroundColor: 'rgba(142, 68, 173, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // 模拟数据生成（实际应用中应该从API获取）
+        function generateMockData() {
+            const now = new Date();
+            const labels = [];
+            for (let i = 9; i >= 0; i--) {
+                labels.push(new Date(now - i * 30000).toLocaleTimeString());
+            }
+
+            return {
+                status: {
+                    overall: 'healthy',
+                    components: {
+                        database: { status: 'healthy', response_time: Math.random() * 100 + 50 },
+                        redis: { status: 'healthy', response_time: Math.random() * 50 + 10 },
+                        system_resources: {
+                            status: 'healthy',
+                            cpu: Math.random() * 60 + 20,
+                            memory: Math.random() * 70 + 30,
+                            disk: Math.random() * 50 + 30
+                        },
+                        application: { status: 'healthy', recent_errors: Math.floor(Math.random() * 50) },
+                        data_pipeline: { status: 'healthy', backlog: Math.floor(Math.random() * 100) }
+                    },
+                    uptime: Math.floor(Math.random() * 86400000),
+                    timestamp: now.toISOString()
+                },
+                metrics: {
+                    resource: {
+                        labels: labels,
+                        cpu: labels.map(() => Math.random() * 60 + 20),
+                        memory: labels.map(() => Math.random() * 70 + 30),
+                        disk: labels.map(() => Math.random() * 50 + 30)
+                    },
+                    requests: {
+                        labels: labels,
+                        rate: labels.map(() => Math.random() * 100 + 20)
+                    },
+                    database: {
+                        labels: labels,
+                        connections: labels.map(() => Math.random() * 20 + 5),
+                        latency: labels.map(() => Math.random() * 200 + 50)
+                    },
+                    business: {
+                        labels: labels,
+                        accuracy: labels.map(() => Math.random() * 20 + 70),
+                        quality: labels.map(() => Math.random() * 15 + 75)
+                    }
+                }
+            };
+        }
+
+        // 更新状态概览
+        function updateStatusOverview(data) {
+            const container = document.getElementById('status-overview');
+            const status = data.status;
+
+            const statusCards = [
+                {
+                    label: '系统状态',
+                    value: status.overview.toUpperCase(),
+                    class: status.overview,
+                    icon: '🖥️'
+                },
+                {
+                    label: '运行时间',
+                    value: formatUptime(status.uptime),
+                    class: 'healthy',
+                    icon: '⏱️'
+                },
+                {
+                    label: '数据库',
+                    value: status.components.database.status.toUpperCase(),
+                    class: status.components.database.status,
+                    icon: '🗄️'
+                },
+                {
+                    label: 'Redis',
+                    value: status.components.redis.status.toUpperCase(),
+                    class: status.components.redis.status,
+                    icon: '🔴'
+                },
+                {
+                    label: '系统资源',
+                    value: status.components.system_resources.status.toUpperCase(),
+                    class: status.components.system_resources.status,
+                    icon: '💻'
+                },
+                {
+                    label: '应用状态',
+                    value: status.components.application.status.toUpperCase(),
+                    class: status.components.application.status,
+                    icon: '📱'
+                }
+            ];
+
+            container.innerHTML = statusCards.map(card => `
+                <div class="status-card ${card.class}">
+                    <div class="status-label">${card.icon} ${card.label}</div>
+                    <div class="status-value">${card.value}</div>
+                    <div class="status-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // 更新图表
+        function updateCharts(data) {
+            // 更新资源图表
+            charts.resource.data.labels = data.metrics.resource.labels;
+            charts.resource.data.datasets[0].data = data.metrics.resource.cpu;
+            charts.resource.data.datasets[1].data = data.metrics.resource.memory;
+            charts.resource.data.datasets[2].data = data.metrics.resource.disk;
+            charts.resource.update();
+
+            // 更新请求图表
+            charts.request.data.labels = data.metrics.requests.labels;
+            charts.request.data.datasets[0].data = data.metrics.requests.rate;
+            charts.request.update();
+
+            // 更新数据库图表
+            charts.database.data.labels = data.metrics.database.labels;
+            charts.database.data.datasets[0].data = data.metrics.database.connections;
+            charts.database.data.datasets[1].data = data.metrics.database.latency;
+            charts.database.update();
+
+            // 更新业务图表
+            charts.business.data.labels = data.metrics.business.labels;
+            charts.business.data.datasets[0].data = data.metrics.business.accuracy;
+            charts.business.data.datasets[1].data = data.metrics.business.quality;
+            charts.business.update();
+        }
+
+        // 更新指标表格
+        function updateMetricsTable(data) {
+            const tbody = document.getElementById('metricsTableBody');
+            const metrics = [
+                { name: 'CPU使用率', value: data.status.components.system_resources.cpu.toFixed(1) + '%', status: 'healthy' },
+                { name: '内存使用率', value: data.status.components.system_resources.memory.toFixed(1) + '%', status: 'healthy' },
+                { name: '磁盘使用率', value: data.status.components.system_resources.disk.toFixed(1) + '%', status: 'healthy' },
+                { name: '数据库响应时间', value: data.status.components.database.response_time.toFixed(1) + 'ms', status: 'healthy' },
+                { name: 'Redis响应时间', value: data.status.components.redis.response_time.toFixed(1) + 'ms', status: 'healthy' },
+                { name: '最近错误数', value: data.status.components.application.recent_errors, status: 'healthy' },
+                { name: '数据积压', value: data.status.components.data_pipeline.backlog, status: 'healthy' }
+            ];
+
+            tbody.innerHTML = metrics.map(metric => `
+                <tr>
+                    <td>${metric.name}</td>
+                    <td>${metric.value}</td>
+                    <td><span class="status-badge ${metric.status}">${metric.status}</span></td>
+                    <td>${new Date().toLocaleTimeString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 格式化运行时间
+        function formatUptime(milliseconds) {
+            const seconds = Math.floor(milliseconds / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (days > 0) {
+                return `${days}天 ${hours % 24}小时`;
+            } else if (hours > 0) {
+                return `${hours}小时 ${minutes % 60}分钟`;
+            } else {
+                return `${minutes}分钟`;
+            }
+        }
+
+        // 显示告警
+        function showAlerts(data) {
+            const container = document.getElementById('alerts-container');
+            const alerts = [];
+
+            if (data.status.overview === 'unhealthy') {
+                alerts.push({ type: 'error', message: '系统存在严重问题，请立即检查！' });
+            } else if (data.status.overview === 'degraded') {
+                alerts.push({ type: 'error', message: '系统性能下降，部分组件存在问题' });
+            } else {
+                alerts.push({ type: 'success', message: '系统运行正常' });
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="${alert.type}">${alert.message}</div>
+            `).join('');
+        }
+
+        // 刷新仪表板
+        async function refreshDashboard() {
+            try {
+                // 模拟API调用
+                dashboardData = generateMockData();
+
+                // 更新各个组件
+                showAlerts(dashboardData);
+                updateStatusOverview(dashboardData);
+                updateCharts(dashboardData);
+                updateMetricsTable(dashboardData);
+
+            } catch (error) {
+                console.error('刷新仪表板失败:', error);
+                document.getElementById('alerts-container').innerHTML =
+                    '<div class="error">刷新数据失败，请检查网络连接</div>';
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            refreshDashboard();
+
+            // 自动刷新
+            setInterval(refreshDashboard, 30000); // 每30秒刷新一次
+        });
+    </script>
+</body>
+</html>

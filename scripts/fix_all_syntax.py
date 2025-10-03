@@ -49,7 +49,7 @@ def main():
         if process_file(test_file):
             fixed_files.append(test_file)
 
-    print(f"\n📊 Fix Summary:")
+    print("\n📊 Fix Summary:")
     print(f"✅ Fixed files: {len(fixed_files)}")
 
 if __name__ == "__main__":

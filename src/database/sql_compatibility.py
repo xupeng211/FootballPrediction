@@ -5,7 +5,7 @@ SQL兼容性工具模块
 """
 
 import logging
-from typing import Union
+from typing import Union, Tuple, Dict, Any
 
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -202,100 +202,100 @@ class SQLCompatibilityHelper:
 
 
 class CompatibleQueryBuilder:
-    """兼容性查询构建器"""
+    """兼容性查询构建器 - 使用参数化查询防止SQL注入"""
 
     def __init__(self, db_type: str):
         self.db_type = db_type
         self.helper = SQLCompatibilityHelper()
 
-    def build_error_statistics_query(self, hours: int = 24) -> str:
-        """构建错误统计查询"""
-        time_filter = self.helper.get_interval_sql(
-            self.db_type,
-            base_time="created_at" if self.db_type == "sqlite" else "NOW()",
-            interval_value=hours,
-            interval_unit="hour",
-        )
-
+    def get_error_statistics_query(self, hours: int = 24) -> Tuple[str, dict]:
+        """获取错误统计查询和参数"""
         if self.db_type == "sqlite":
-            # SQLite版本：需要修改比较逻辑
-            return f"""
+            # SQLite版本：使用参数化查询
+            query = """
                 SELECT COUNT(*) as total_errors
                 FROM error_logs
-                WHERE created_at >= datetime('now', '-{hours} hours')
+                WHERE created_at >= datetime('now', :hours_param || ' hours')
             """
+            params = {"hours_param": f"-{hours}"}
         else:
-            # PostgreSQL版本
-            return f"""
+            # PostgreSQL版本：使用参数化查询
+            query = """
                 SELECT COUNT(*) as total_errors
                 FROM error_logs
-                WHERE created_at >= {time_filter}
+                WHERE created_at >= NOW() - INTERVAL :hours_interval
             """
+            params = {"hours_interval": f"{hours} hours"}
 
-    def build_task_errors_query(self, hours: int = 24) -> str:
-        """构建任务错误统计查询"""
+        return query.strip(), params
+
+    def get_task_errors_query(self, hours: int = 24) -> Tuple[str, dict]:
+        """获取任务错误统计查询和参数"""
         if self.db_type == "sqlite":
-            return f"""
+            query = """
                 SELECT task_name, COUNT(*) as error_count
                 FROM error_logs
-                WHERE created_at >= datetime('now', '-{hours} hours')
+                WHERE created_at >= datetime('now', :hours_param || ' hours')
                 GROUP BY task_name
                 ORDER BY error_count DESC
             """
+            params = {"hours_param": f"-{hours}"}
         else:
-            time_filter = self.helper.get_interval_sql(
-                self.db_type, interval_value=hours, interval_unit="hour"
-            )
-            return f"""
+            query = """
                 SELECT task_name, COUNT(*) as error_count
                 FROM error_logs
-                WHERE created_at >= {time_filter}
+                WHERE created_at >= NOW() - INTERVAL :hours_interval
                 GROUP BY task_name
                 ORDER BY error_count DESC
             """
+            params = {"hours_interval": f"{hours} hours"}
 
-    def build_type_errors_query(self, hours: int = 24) -> str:
-        """构建错误类型统计查询"""
+        return query.strip(), params
+
+    def get_type_errors_query(self, hours: int = 24) -> Tuple[str, dict]:
+        """获取错误类型统计查询和参数"""
         if self.db_type == "sqlite":
-            return f"""
+            query = """
                 SELECT error_type, COUNT(*) as error_count
                 FROM error_logs
-                WHERE created_at >= datetime('now', '-{hours} hours')
+                WHERE created_at >= datetime('now', :hours_param || ' hours')
                 GROUP BY error_type
                 ORDER BY error_count DESC
             """
+            params = {"hours_param": f"-{hours}"}
         else:
-            time_filter = self.helper.get_interval_sql(
-                self.db_type, interval_value=hours, interval_unit="hour"
-            )
-            return f"""
+            query = """
                 SELECT error_type, COUNT(*) as error_count
                 FROM error_logs
-                WHERE created_at >= {time_filter}
+                WHERE created_at >= NOW() - INTERVAL :hours_interval
                 GROUP BY error_type
                 ORDER BY error_count DESC
             """
+            params = {"hours_interval": f"{hours} hours"}
 
-    def build_cleanup_old_logs_query(self, days: int = 7) -> str:
-        """构建清理旧日志查询"""
+        return query.strip(), params
+
+    def get_cleanup_old_logs_query(self, days: int = 7) -> Tuple[str, dict]:
+        """获取清理旧日志查询和参数"""
         if self.db_type == "sqlite":
-            return f"""
+            query = """
                 DELETE FROM error_logs
-                WHERE created_at < datetime('now', '-{days} days')
+                WHERE created_at < datetime('now', :days_param || ' days')
             """
+            params = {"days_param": f"-{days}"}
         else:
-            time_filter = self.helper.get_interval_sql(
-                self.db_type, interval_value=days, interval_unit="day"
-            )
-            return f"""
+            query = """
                 DELETE FROM error_logs
-                WHERE created_at < {time_filter}
+                WHERE created_at < NOW() - INTERVAL :days_interval
             """
+            params = {"days_interval": f"{days} days"}
 
-    def build_task_delay_query(self) -> str:
-        """构建任务延迟查询"""
+        return query.strip(), params
+
+    def get_task_delay_query(self) -> Tuple[str, dict]:
+        """获取任务延迟查询和参数"""
         if self.db_type == "sqlite":
-            return """
+            query = """
                 SELECT
                     task_name,
                     AVG((julianday('now') - julianday(created_at)) * 86400) as avg_delay_seconds
@@ -304,8 +304,9 @@ class CompatibleQueryBuilder:
                 AND task_name IS NOT NULL
                 GROUP BY task_name
             """
+            params: Dict[str, Any] = {}
         else:
-            return """
+            query = """
                 SELECT
                     task_name,
                     AVG(EXTRACT(EPOCH FROM (NOW() - created_at))) as avg_delay_seconds
@@ -314,6 +315,40 @@ class CompatibleQueryBuilder:
                 AND task_name IS NOT NULL
                 GROUP BY task_name
             """
+            params = {}
+
+        return query.strip(), params
+
+    # 兼容性方法 - 保持向后兼容，但不推荐使用
+    def build_error_statistics_query(self, hours: int = 24) -> str:
+        """构建错误统计查询（已弃用，使用get_error_statistics_query）"""
+        logger.warning("build_error_statistics_query is deprecated, use get_error_statistics_query instead")
+        query, _ = self.get_error_statistics_query(hours)
+        return query
+
+    def build_task_errors_query(self, hours: int = 24) -> str:
+        """构建任务错误统计查询（已弃用，使用get_task_errors_query）"""
+        logger.warning("build_task_errors_query is deprecated, use get_task_errors_query instead")
+        query, _ = self.get_task_errors_query(hours)
+        return query
+
+    def build_type_errors_query(self, hours: int = 24) -> str:
+        """构建错误类型统计查询（已弃用，使用get_type_errors_query）"""
+        logger.warning("build_type_errors_query is deprecated, use get_type_errors_query instead")
+        query, _ = self.get_type_errors_query(hours)
+        return query
+
+    def build_cleanup_old_logs_query(self, days: int = 7) -> str:
+        """构建清理旧日志查询（已弃用，使用get_cleanup_old_logs_query）"""
+        logger.warning("build_cleanup_old_logs_query is deprecated, use get_cleanup_old_logs_query instead")
+        query, _ = self.get_cleanup_old_logs_query(days)
+        return query
+
+    def build_task_delay_query(self) -> str:
+        """构建任务延迟查询（已弃用，使用get_task_delay_query）"""
+        logger.warning("build_task_delay_query is deprecated, use get_task_delay_query instead")
+        query, _ = self.get_task_delay_query()
+        return query
 
 
 def get_db_type_from_engine(engine) -> str:

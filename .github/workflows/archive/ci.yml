@@ -1,0 +1,41 @@
+name: CI Stabilization
+
+on:
+  push:
+    branches: [ main, develop, hotfix/** ]
+  pull_request:
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-minimal.txt
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Ruff critical rules
+        run: |
+          ruff check src tests/unit --select E9,F821,F401,F841 --statistics
+
+      - name: Mypy core modules
+        run: |
+          mypy src/api/health.py src/main.py tests/unit/api/test_health_smoke.py
+
+      - name: Smoke test
+        env:
+          MINIMAL_HEALTH_MODE: "true"
+          FAST_FAIL: "false"
+          ENABLE_METRICS: "false"
+        run: |
+          pytest tests/unit/api/test_health_smoke.py -q --maxfail=1 --cov=src --cov-report=term-missing

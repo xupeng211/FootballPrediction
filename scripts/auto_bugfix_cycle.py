@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Integrated Bugfix Cycle Automation with TODO Board Updates."""
-import subprocess, pathlib, datetime, re, time
-from pathlib import Path
+import subprocess
+import pathlib
+import datetime
+import re
+import time
 
 TODO_FILE = pathlib.Path("docs/_reports/BUGFIX_TODO.md")
 REPORTS_DIR = pathlib.Path("docs/_reports")
@@ -47,10 +50,10 @@ def update_todo(report_path, failures):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open(TODO_FILE, "w", encoding="utf-8") as f:
-        f.write(f"# 🐞 AI Bugfix TODO Board\n\n")
+        f.write("# 🐞 AI Bugfix TODO Board\n\n")
         f.write(f"自动更新于: {timestamp}\n\n")
         f.write(f"## 📊 来源报告\n- Bugfix Report: {report_path}\n- Failure Log: pytest_failures.log\n\n")
-        f.write(f"## 🚧 当前待修复任务\n\n")
+        f.write("## 🚧 当前待修复任务\n\n")
         if failures.strip() and "No explicit failures found" not in failures:
             for line in failures.splitlines():
                 f.write(f"- [ ] {line.strip()}\n")

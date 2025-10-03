@@ -12,7 +12,6 @@ Checks:
 4. Required files presence
 """
 
-import os
 import re
 import sys
 from pathlib import Path
@@ -98,7 +97,7 @@ def check_dead_links():
         return issues
 
     all_files = list(DOCS_DIR.rglob("*.md"))
-    all_paths = {f.resolve() for f in all_files}
+    {f.resolve() for f in all_files}
 
     for source_file in all_files:
         links = extract_links(source_file)

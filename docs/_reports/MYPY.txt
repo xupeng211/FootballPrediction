@@ -1,0 +1,2 @@
+docs/legacy/async_database_test_template.py:3: error: invalid syntax  [syntax]
+Found 1 error in 1 file (errors prevented further checking)

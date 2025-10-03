@@ -1,3 +1,9 @@
+from .base import BaseService
+from .content_analysis import ContentAnalysisService
+from .data_processing import DataProcessingService
+from .manager import ServiceManager, service_manager
+from .user_profile import UserProfileService
+
 """
 足球预测系统业务服务模块
 
@@ -7,12 +13,6 @@
 - 数据处理服务
 - 服务管理器
 """
-
-from .base import BaseService
-from .content_analysis import ContentAnalysisService
-from .data_processing import DataProcessingService
-from .manager import ServiceManager, service_manager
-from .user_profile import UserProfileService
 
 __all__ = [
     # 基础服务

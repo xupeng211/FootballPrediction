@@ -1,4 +1,7 @@
-import subprocess, time, datetime, argparse
+import subprocess
+import time
+import datetime
+import argparse
 
 def run(cmd, check=True):
     print(f"⚙️ Running: {cmd}")
@@ -49,7 +52,7 @@ def loop_until_target(target=40.0):
             print(f"✅ Target reached: {cov}% >= {target}%")
             break
         execute_once()
-        print(f"⏳ Waiting before next iteration...")
+        print("⏳ Waiting before next iteration...")
         time.sleep(60)
         round_num += 1
 

@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-09-29T10:00:00",
+  "metrics": {
+    "single_prediction_mean_ms": 25.5,
+    "single_prediction_std_ms": 3.2,
+    "batch_prediction_mean_ms": 120.8,
+    "batch_predictions_per_second": 82.7,
+    "cache_read_mean_ms": 0.8,
+    "database_query_mean_ms": 5.2,
+    "memory_usage_per_100_predictions_mb": 12.3,
+    "concurrent_predictions_pps": 18.5,
+    "feature_generation_10_samples_ms": 45.6
+  },
+  "system_info": {
+    "cpu_count": 4,
+    "memory_total_gb": 8,
+    "python_version": "3.11.9",
+    "platform": "Linux"
+  },
+  "test_configuration": {
+    "benchmark_rounds": 50,
+    "warmup_rounds": 5,
+    "timeout_seconds": 30
+  }
+}
