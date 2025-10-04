@@ -4,11 +4,10 @@
 echo "🔍 执行安全检查..."
 
 echo "1. 扫描依赖漏洞..."
-pip-audit -r requirements.txt --severity="high,critical"
+pip-audit -r requirements.txt
 
-echo -e "
-2. 扫描代码安全问题..."
-bandit -r src/ -f text
+echo -e "\n2. 扫描代码安全问题..."
+bandit -r src/ -f txt
 
 echo -e "
 3. 检查敏感文件..."
