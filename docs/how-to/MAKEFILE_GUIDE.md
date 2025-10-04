@@ -27,6 +27,7 @@ make prepush
 ### 🌐 环境管理
 
 #### `make venv`
+
 创建Python虚拟环境
 
 ```bash
@@ -34,11 +35,13 @@ make venv
 ```
 
 **功能：**
+
 - 在项目根目录创建`venv`虚拟环境
 - 自动使用python3
 - 幂等操作，重复执行安全
 
 #### `make install`
+
 安装项目依赖
 
 ```bash
@@ -46,12 +49,14 @@ make install
 ```
 
 **功能：**
+
 - 自动创建虚拟环境（如果不存在）
 - 升级pip、setuptools、wheel到最新版本
 - 安装requirements.txt中的所有依赖
 - 适合首次设置和依赖更新
 
 #### `make init`
+
 初始化项目（首次使用）
 
 ```bash
@@ -59,11 +64,13 @@ make init
 ```
 
 **功能：**
+
 - 执行`make install`
 - 运行`scripts/setup_project.py`创建基础文件结构
 - 适合全新项目的初始化
 
 #### `make clean`
+
 清理环境和缓存
 
 ```bash
@@ -71,14 +78,16 @@ make clean
 ```
 
 **功能：**
+
 - 删除虚拟环境
-- 清理所有Python缓存（__pycache__、*.pyc）
+- 清理所有Python缓存（**pycache**、*.pyc）
 - 删除测试和工具缓存（.pytest_cache、.mypy_cache等）
 - 清理构建产物
 
 ### 🔍 环境检查
 
 #### `make env-check`
+
 开发环境检查
 
 ```bash
@@ -86,6 +95,7 @@ make env-check
 ```
 
 **功能：**
+
 - 检查虚拟环境状态
 - 验证依赖完整性
 - 检查Git分支和同步状态
@@ -94,6 +104,7 @@ make env-check
 - 提供详细的修复建议
 
 #### `make context`
+
 加载项目上下文
 
 ```bash
@@ -101,12 +112,14 @@ make context
 ```
 
 **功能：**
+
 - 扫描项目结构
 - 分析Git历史
 - 识别已有模块和测试
 - 生成上下文快照到`logs/project_context.json`
 
 #### `make status`
+
 查看项目状态
 
 ```bash
@@ -114,6 +127,7 @@ make status
 ```
 
 **输出信息：**
+
 - 项目基本信息（名称、Python版本）
 - 代码统计（文件数、行数）
 - Git状态（分支、最近提交、未提交文件）
@@ -122,6 +136,7 @@ make status
 ### 🔧 代码质量
 
 #### `make format`
+
 代码格式化
 
 ```bash
@@ -129,11 +144,13 @@ make format
 ```
 
 **功能：**
+
 - 使用black格式化Python代码（line-length=88）
 - 使用isort整理导入语句
 - 自动修复格式问题
 
 #### `make lint`
+
 代码风格检查
 
 ```bash
@@ -141,11 +158,13 @@ make lint
 ```
 
 **功能：**
+
 - 使用flake8检查代码风格
 - 最大行长度88字符
 - 忽略E203、W503规则（与black兼容）
 
 #### `make typecheck`
+
 类型检查
 
 ```bash
@@ -153,11 +172,13 @@ make typecheck
 ```
 
 **功能：**
+
 - 使用mypy进行静态类型检查
 - 忽略缺失的类型注解导入
 - 如果mypy未安装则跳过
 
 #### `make security`
+
 安全检查
 
 ```bash
@@ -165,11 +186,13 @@ make security
 ```
 
 **功能：**
+
 - 使用bandit扫描安全漏洞
 - 输出JSON格式报告
 - 如果bandit未安装则跳过
 
 #### `make complexity`
+
 复杂度检查
 
 ```bash
@@ -177,6 +200,7 @@ make complexity
 ```
 
 **功能：**
+
 - 使用radon分析代码复杂度
 - 显示每个函数的复杂度评分
 - 如果radon未安装则跳过
@@ -184,6 +208,7 @@ make complexity
 ### 🧪 测试
 
 #### `make test`
+
 运行单元测试
 
 ```bash
@@ -191,12 +216,14 @@ make test
 ```
 
 **功能：**
+
 - 使用pytest运行tests/目录下的所有测试
 - 详细输出模式（-v）
 - 简短回溯信息（--tb=short）
 - 如果无测试文件则跳过
 
 #### `make coverage`
+
 运行覆盖率测试
 
 ```bash
@@ -204,12 +231,14 @@ make coverage
 ```
 
 **功能：**
+
 - 使用coverage + pytest运行测试
 - 生成覆盖率报告
 - 显示缺失覆盖的行号
 - 如果coverage未安装则运行普通测试
 
 #### `make test-watch`
+
 监控模式运行测试
 
 ```bash
@@ -217,6 +246,7 @@ make test-watch
 ```
 
 **功能：**
+
 - 使用pytest-watch监控文件变化
 - 自动重新运行测试
 - 适合开发时持续测试
@@ -224,6 +254,7 @@ make test-watch
 ### ✅ 完整流程
 
 #### `make quality`
+
 完整质量检查
 
 ```bash
@@ -231,6 +262,7 @@ make quality
 ```
 
 **执行顺序：**
+
 1. 代码格式化（format）
 2. 代码风格检查（lint）
 3. 类型检查（typecheck）
@@ -239,6 +271,7 @@ make quality
 6. 运行质量检查器脚本
 
 #### `make ci`
+
 本地CI模拟
 
 ```bash
@@ -246,6 +279,7 @@ make ci
 ```
 
 **执行顺序：**
+
 1. 环境检查（env-check）
 2. 加载项目上下文（context）
 3. 完整质量检查（quality）
@@ -253,6 +287,7 @@ make ci
 5. 运行覆盖率测试（coverage）
 
 #### `make prepush`
+
 提交前完整检查、推送和Issue同步
 
 ```bash
@@ -260,6 +295,7 @@ make prepush
 ```
 
 **执行顺序：**
+
 1. 运行完整CI检查（ci）
 2. 检查Git工作区状态
 3. 如果有更改：
@@ -270,6 +306,7 @@ make prepush
 5. 显示完成状态
 
 #### `make prepush-with-message`
+
 使用自定义消息的提交前检查
 
 ```bash
@@ -277,6 +314,7 @@ make prepush-with-message
 ```
 
 **功能：**
+
 - 与prepush相同，但允许输入自定义提交消息
 - 交互式输入提交信息
 - 完成后自动同步Issues
@@ -284,6 +322,7 @@ make prepush-with-message
 ### 🎯 快捷方式
 
 #### `make dev`
+
 开发环境快速准备
 
 ```bash
@@ -291,11 +330,13 @@ make dev
 ```
 
 **功能：**
+
 - 安装依赖（install）
 - 环境检查（env-check）
 - 适合每日开发开始时使用
 
 #### `make fix`
+
 快速修复代码问题
 
 ```bash
@@ -303,11 +344,13 @@ make fix
 ```
 
 **功能：**
+
 - 代码格式化（format）
 - 代码风格检查（lint）
 - 快速修复常见问题
 
 #### `make check`
+
 快速质量检查
 
 ```bash
@@ -315,6 +358,7 @@ make check
 ```
 
 **功能：**
+
 - 完整质量检查（quality）
 - 运行测试（test）
 - 适合提交前快速验证
@@ -322,6 +366,7 @@ make check
 ### 🚀 高级用法
 
 #### `make cursor-run`
+
 运行Cursor闭环系统
 
 ```bash
@@ -329,11 +374,13 @@ make cursor-run
 ```
 
 **功能：**
+
 - 交互式输入任务描述
 - 运行完整的Cursor闭环流程
 - 生成执行报告
 
 #### `make sync`
+
 同步ISSUES.md到远程仓库
 
 ```bash
@@ -341,6 +388,7 @@ make sync
 ```
 
 **功能：**
+
 - 读取项目根目录的ISSUES.md文件
 - 根据GIT_PLATFORM环境变量选择平台（github/gitee）
 - 使用对应的CLI工具（gh/tea）创建Issues
@@ -348,6 +396,7 @@ make sync
 - 提供详细的执行反馈
 
 **前置要求：**
+
 ```bash
 # GitHub平台
 export GIT_PLATFORM=github
@@ -361,6 +410,7 @@ tea login add
 ```
 
 **ISSUES.md格式：**
+
 ```markdown
 实现用户认证功能
 添加数据导出功能
@@ -371,6 +421,7 @@ tea login add
 ```
 
 #### `make sync-config`
+
 配置Issue同步环境
 
 ```bash
@@ -378,6 +429,7 @@ make sync-config
 ```
 
 **功能：**
+
 - 显示详细的配置向导
 - 提供平台选择指导
 - 说明CLI工具安装方法
@@ -385,6 +437,7 @@ make sync-config
 - 提供ISSUES.md格式示例
 
 #### `make clean-logs`
+
 清理日志文件
 
 ```bash
@@ -392,6 +445,7 @@ make clean-logs
 ```
 
 **功能：**
+
 - 清理logs/目录下的所有日志文件
 - 包括*.log和*.json文件
 
@@ -494,6 +548,7 @@ PROJECT_NAME := MyProject
 ### 常见问题
 
 1. **虚拟环境激活失败**
+
    ```bash
    # 检查shell类型
    echo $SHELL
@@ -503,6 +558,7 @@ PROJECT_NAME := MyProject
    ```
 
 2. **依赖安装失败**
+
    ```bash
    # 清理缓存重试
    make clean
@@ -510,6 +566,7 @@ PROJECT_NAME := MyProject
    ```
 
 3. **测试失败**
+
    ```bash
    # 查看详细错误
    make test
@@ -574,6 +631,7 @@ Issues同步 (sync)
 ```
 
 **关键特性：**
+
 - ✅ **零容忍半成品**：任何检查失败都会阻止推送
 - ✅ **智能错误提示**：每种失败都有具体的修复建议
 - ✅ **防护远程仓库**：确保推送的代码都是高质量的
@@ -582,6 +640,7 @@ Issues同步 (sync)
 ### 失败检测点
 
 #### 1. 环境检查失败
+
 ```bash
 make env-check
 # 如果失败：
@@ -590,12 +649,14 @@ make env-check
 ```
 
 **常见问题：**
+
 - 虚拟环境未激活
 - 依赖包缺失
 - 在错误的Git分支（如main/master）
 - Git仓库未初始化
 
 #### 2. 代码质量检查失败
+
 ```bash
 make quality
 # 如果失败：
@@ -604,6 +665,7 @@ make quality
 ```
 
 **常见问题：**
+
 - 代码格式不规范
 - Lint规则违反
 - 类型检查错误
@@ -611,6 +673,7 @@ make quality
 - 代码复杂度过高
 
 #### 3. 测试失败
+
 ```bash
 make test
 # 如果失败：
@@ -619,6 +682,7 @@ make test
 ```
 
 **常见问题：**
+
 - 测试用例失败
 - 测试覆盖率不足
 - 测试环境问题

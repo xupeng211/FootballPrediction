@@ -14,6 +14,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    - Estimate migration time and resources required
 
 2. **Create Migration Plan**
+
    ```markdown
    # Migration Plan Template
 
@@ -35,6 +36,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 3. **Backup Current System**
+
    ```bash
    # Perform full backup before migration
    ./scripts/backup.sh --type full --database football_prediction
@@ -46,6 +48,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 2.2 Environment Preparation
 
 1. **Prepare Migration Environment**
+
    ```bash
    # Create migration branch
    git checkout -b migration-v[version]
@@ -58,6 +61,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Test Migration on Staging**
+
    ```bash
    # Deploy to staging environment
    docker-compose -f docker-compose.staging.yml up -d
@@ -76,6 +80,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.1.1 Alembic Migration
 
 1. **Generate Migration Script**
+
    ```bash
    # Generate new migration script
    alembic revision --autogenerate -m "Add new prediction metrics columns"
@@ -85,6 +90,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Customize Migration Script**
+
    ```python
    # alembic/versions/[timestamp]_add_new_prediction_metrics_columns.py
    from alembic import op
@@ -115,6 +121,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 3. **Test Migration Script**
+
    ```bash
    # Test upgrade
    alembic upgrade +1
@@ -131,12 +138,14 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.1.2 Manual Schema Changes
 
 1. **Apply Schema Changes**
+
    ```bash
    # Apply changes directly (for complex migrations)
    psql -h localhost -p 5432 -U football_user -d football_prediction -f migrations/schema_changes.sql
    ```
 
 2. **Verify Schema Changes**
+
    ```sql
    -- migrations/verify_schema.sql
    -- Check table structure
@@ -158,6 +167,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.2.1 Batch Data Migration
 
 1. **Create Data Migration Script**
+
    ```python
    # scripts/migrate_prediction_data.py
    import asyncio
@@ -225,6 +235,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Run Data Migration**
+
    ```bash
    # Run migration script
    python scripts/migrate_prediction_data.py --batch-size 500
@@ -236,6 +247,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.2.2 Incremental Data Migration
 
 1. **Set Up Incremental Migration**
+
    ```python
    # scripts/incremental_migration.py
    import asyncio
@@ -292,6 +304,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.3.1 Configuration Migration
 
 1. **Update Configuration Files**
+
    ```bash
    # Update environment variables
    cp .env.production .env.production.backup
@@ -302,6 +315,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Deploy New Configuration**
+
    ```bash
    # Deploy to staging
    docker-compose -f docker-compose.staging.yml up -d
@@ -316,6 +330,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 #### 3.3.2 Code Migration
 
 1. **Deploy New Code**
+
    ```bash
    # Pull latest code
    git pull origin main
@@ -340,6 +355,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 4.1 Data Validation
 
 1. **Verify Data Integrity**
+
    ```python
    # scripts/validate_migration.py
    import asyncio
@@ -389,6 +405,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Run Validation Script**
+
    ```bash
    # Run validation
    python scripts/validate_migration.py
@@ -400,6 +417,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 4.2 Functional Validation
 
 1. **Test Core Functionality**
+
    ```bash
    # Test API endpoints
    pytest tests/api/test_predictions.py
@@ -412,6 +430,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Performance Testing**
+
    ```bash
    # Run performance tests
    pytest tests/performance/test_prediction_performance.py
@@ -425,6 +444,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 5.1 Database Rollback
 
 1. **Rollback Schema Changes**
+
    ```bash
    # Rollback to previous version
    alembic downgrade -1
@@ -434,6 +454,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Restore from Backup**
+
    ```bash
    # Stop application
    docker-compose down
@@ -448,6 +469,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 5.2 Application Rollback
 
 1. **Rollback to Previous Version**
+
    ```bash
    # Rollback code
    git checkout [previous_commit]
@@ -458,6 +480,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Restore Configuration**
+
    ```bash
    # Restore previous configuration
    cp .env.production.backup .env.production
@@ -471,6 +494,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 6.1 Migration Monitoring
 
 1. **Real-time Monitoring**
+
    ```python
    # scripts/monitor_migration.py
    import time
@@ -513,6 +537,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Dashboard Monitoring**
+
    ```bash
    # Open Grafana dashboard
    xdg-open http://localhost:3000/d/migration-dashboard/migration-monitoring
@@ -526,6 +551,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 7.1 Migration Documentation
 
 1. **Update Documentation**
+
    ```bash
    # Update API documentation
    make docs
@@ -538,6 +564,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Create Migration Report**
+
    ```markdown
    # Migration Report - v[version]
 
@@ -565,6 +592,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
 ### 7.2 Stakeholder Communication
 
 1. **Notify Stakeholders**
+
    ```bash
    # Send completion notification
    python scripts/notify_stakeholders.py --migration-complete --version [version]
@@ -574,6 +602,7 @@ This runbook provides procedures for migrating data in the Football Prediction S
    ```
 
 2. **Schedule Post-Mortem**
+
    ```bash
    # Create calendar event
    echo "Schedule post-migration review meeting" | mail -s "Migration Review Meeting" team@footballprediction.com

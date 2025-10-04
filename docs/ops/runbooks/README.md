@@ -14,6 +14,7 @@ Each runbook contains step-by-step procedures for specific operational tasks. Fo
 ## Contributing
 
 To add a new runbook:
+
 1. Create a new markdown file with a descriptive name
 2. Follow the template structure used in existing runbooks
 3. Include prerequisites, procedures, validation steps, and rollback procedures
@@ -21,4 +22,4 @@ To add a new runbook:
 
 ## Contact
 
-For questions or issues with these runbooks, contact the operations team at ops@footballprediction.com.
+For questions or issues with these runbooks, contact the operations team at <ops@footballprediction.com>.

@@ -66,6 +66,7 @@ python scripts/sync_issues.py pull
 ```
 
 **执行效果：**
+
 - 获取 GitHub 仓库中的所有 Issues (包括 open 和 closed)
 - 覆盖本地 `issues.yaml` 文件
 - 保持与远程完全一致
@@ -77,6 +78,7 @@ python scripts/sync_issues.py push
 ```
 
 **执行效果：**
+
 - 本地新增 Issues (id 为 null) → 在 GitHub 创建新 Issue
 - 本地已有 Issues → 检查差异并更新 GitHub
 - 更新本地文件，为新创建的 Issues 添加 ID
@@ -88,6 +90,7 @@ python scripts/sync_issues.py sync
 ```
 
 **执行效果：**
+
 1. 先执行 Pull 操作，获取最新的远程数据
 2. 再执行 Push 操作，推送本地修改
 3. 确保本地和远程完全同步
@@ -95,6 +98,7 @@ python scripts/sync_issues.py sync
 ## 💡 实际使用场景
 
 ### 场景1：团队协作管理
+
 ```bash
 # 1. 从 GitHub 拉取最新 Issues
 python scripts/sync_issues.py pull
@@ -106,6 +110,7 @@ python scripts/sync_issues.py push
 ```
 
 ### 场景2：批量管理 Issues
+
 ```bash
 # 使用编辑器批量修改 issues.yaml
 vim issues.yaml
@@ -115,6 +120,7 @@ python scripts/sync_issues.py sync
 ```
 
 ### 场景3：备份和迁移
+
 ```bash
 # 备份当前仓库的所有 Issues
 python scripts/sync_issues.py pull
@@ -136,6 +142,7 @@ make sync-issues
 ```
 
 等价于：
+
 ```bash
 python scripts/sync_issues.py sync
 ```
@@ -151,27 +158,35 @@ python scripts/sync_issues.py sync
 ## 🐛 故障排除
 
 ### 问题1：环境变量未设置
+
 ```
 ❌ 缺少环境变量: GITHUB_TOKEN
 ```
+
 **解决方案**: 检查并设置正确的环境变量
 
 ### 问题2：仓库路径格式错误
+
 ```
 ❌ 仓库路径格式错误: invalid-format
 ```
+
 **解决方案**: 使用正确格式 `owner/repo`
 
 ### 问题3：权限不足
+
 ```
 ❌ 403 Forbidden
 ```
+
 **解决方案**: 检查 GitHub Token 权限，确保包含 `repo` 权限
 
 ### 问题4：网络连接问题
+
 ```
 ❌ 获取远程 Issues 失败: Connection timeout
 ```
+
 **解决方案**: 检查网络连接，必要时使用代理
 
 ## 📊 输出示例

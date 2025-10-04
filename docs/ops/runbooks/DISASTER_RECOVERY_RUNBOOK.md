@@ -11,6 +11,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 #### 2.1.1 Full Database Recovery from Backup
 
 **Prerequisites:**
+
 - Access to backup files
 - Database administrator privileges
 - Backup restoration scripts
@@ -18,6 +19,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 **Procedure:**
 
 1. **Identify Latest Backup**
+
    ```bash
    # List available backups
    ls -la /backup/football_db/full/
@@ -28,6 +30,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Stop Application Services**
+
    ```bash
    # Stop all application services
    docker-compose stop
@@ -37,6 +40,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 3. **Restore Database**
+
    ```bash
    # Run database restoration script
    ./scripts/restore.sh --backup-file $LATEST_BACKUP --database football_prediction
@@ -46,12 +50,14 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 4. **Verify Restoration**
+
    ```bash
    # Connect to database and verify data
    psql -h localhost -p 5432 -U football_user -d football_prediction -c "SELECT COUNT(*) FROM matches;"
    ```
 
 5. **Restart Services**
+
    ```bash
    # Start database service
    docker-compose up -d db
@@ -63,6 +69,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 #### 2.1.2 Point-in-Time Recovery (PITR)
 
 **Prerequisites:**
+
 - WAL archives available
 - Base backup
 - Target recovery time
@@ -70,11 +77,13 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 **Procedure:**
 
 1. **Stop Database Service**
+
    ```bash
    docker-compose stop db
    ```
 
 2. **Prepare Recovery Configuration**
+
    ```bash
    # Create recovery.conf file
    cat > /backup/football_db/recovery.conf << EOF
@@ -84,18 +93,21 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 3. **Restore Base Backup**
+
    ```bash
    # Restore latest base backup
    ./scripts/restore.sh --type base --backup-dir /backup/football_db/base/latest
    ```
 
 4. **Start Database in Recovery Mode**
+
    ```bash
    # Start database (it will automatically enter recovery mode)
    docker-compose up -d db
    ```
 
 5. **Monitor Recovery Process**
+
    ```bash
    # Monitor recovery progress
    docker-compose logs -f db
@@ -105,6 +117,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 6. **Complete Recovery**
+
    ```bash
    # Promote database to primary
    psql -h localhost -p 5432 -U football_user -d football_prediction -c "SELECT pg_promote();"
@@ -115,6 +128,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 #### 2.2.1 Complete Application Recovery
 
 **Prerequisites:**
+
 - Access to application servers
 - Docker/Docker Compose installed
 - Application configuration files
@@ -122,6 +136,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 **Procedure:**
 
 1. **Check System Status**
+
    ```bash
    # Check Docker status
    systemctl status docker
@@ -134,6 +149,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Clean Up Failed Containers**
+
    ```bash
    # Stop all containers
    docker-compose down
@@ -146,6 +162,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 3. **Rebuild Application**
+
    ```bash
    # Pull latest images
    docker-compose pull
@@ -158,6 +175,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 4. **Verify Application Health**
+
    ```bash
    # Check service status
    docker-compose ps
@@ -174,12 +192,14 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 #### 2.3.1 Restart Failed Data Pipeline
 
 **Prerequisites:**
+
 - Access to task queue (Redis/Celery)
 - Pipeline monitoring tools
 
 **Procedure:**
 
 1. **Identify Failed Tasks**
+
    ```bash
    # Check Celery task status
    celery -A src.tasks.celery_app inspect active
@@ -191,6 +211,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Restart Failed Tasks**
+
    ```bash
    # Restart specific task
    python -c "
@@ -203,6 +224,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 3. **Clear Task Queue if Needed**
+
    ```bash
    # Clear specific queue
    celery -A src.tasks.celery_app purge -Q data_collection
@@ -212,6 +234,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 4. **Restart Pipeline Services**
+
    ```bash
    # Restart task workers
    docker-compose restart celery-worker
@@ -225,6 +248,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 ### 3.1 Post-Recovery Validation
 
 1. **Database Validation**
+
    ```bash
    # Check database connectivity
    python -c "
@@ -240,6 +264,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Application Validation**
+
    ```bash
    # Test API endpoints
    curl -f http://localhost:8000/api/v1/health
@@ -250,6 +275,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 3. **Pipeline Validation**
+
    ```bash
    # Check task processing
    python scripts/monitor_task_queue.py --check-active
@@ -261,6 +287,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 ### 3.2 Performance Monitoring
 
 1. **System Resources**
+
    ```bash
    # Monitor system resources
    top -b -n 1 | head -20
@@ -268,12 +295,14 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Database Performance**
+
    ```bash
    # Check database performance
    python scripts/monitor_database_performance.py
    ```
 
 3. **Application Performance**
+
    ```bash
    # Monitor API response times
    python scripts/monitor_api_performance.py
@@ -284,6 +313,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
 ### 4.1 Incident Reporting
 
 1. **Create Incident Report**
+
    ```bash
    # Generate incident report template
    cat > incident_reports/incident_$(date +%Y%m%d_%H%M%S).md << EOF
@@ -306,6 +336,7 @@ This runbook provides step-by-step procedures for disaster recovery of the Footb
    ```
 
 2. **Notify Stakeholders**
+
    ```bash
    # Send notification to team
    python scripts/notify_stakeholders.py --incident --severity high
