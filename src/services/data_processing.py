@@ -21,6 +21,7 @@ from .base import BaseService
 基于 DATA_DESIGN.md 第4节设计。
 """
 
+
 class DataProcessingService(BaseService):
     """
     数据处理服务
@@ -30,6 +31,7 @@ class DataProcessingService(BaseService):
     - 数据质量验证
     - 特征数据准备
     """
+
     def __init__(self):
         super().__init__("DataProcessingService")
         self.data_cleaner: Optional[FootballDataCleaner] = None
@@ -37,6 +39,7 @@ class DataProcessingService(BaseService):
         self.data_lake: Optional[DataLakeStorage] = None
         self.db_manager: Optional[DatabaseManager] = None
         self.cache_manager: Optional[RedisManager] = None
+
     async def initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
@@ -57,6 +60,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"初始化数据处理服务失败: {str(e)}")
             return False
+
     async def shutdown(self) -> None:
         """关闭服务"""
         self.logger.info(f"正在关闭 {self.name}")
@@ -84,6 +88,7 @@ class DataProcessingService(BaseService):
         if db_manager:
             await db_manager.close()
             self.db_manager = None
+
     async def process_raw_match_data(
         self, raw_data: Union[Dict[str, Any], List[Dict[str, Any]]]
     ) -> Optional[Union[Dict[str, Any], pd.DataFrame]]:
@@ -116,6 +121,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理比赛数据失败: {str(e)}")
             return None
+
     async def _process_single_match_data(
         self, raw_data: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
@@ -170,6 +176,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理单个比赛数据失败: {str(e)}")
             return None
+
     async def process_raw_odds_data(
         self, raw_odds: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -195,6 +202,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理赔率数据失败: {str(e)}")
             return []
+
     async def process_features_data(
         self, match_id: int, features_df: pd.DataFrame
     ) -> pd.DataFrame:
@@ -219,6 +227,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理特征数据失败: {str(e)}")
             return features_df
+
     async def process_batch_matches(
         self, raw_matches: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -242,6 +251,7 @@ class DataProcessingService(BaseService):
             f"批量处理完成: {len(processed_matches)}/{len(raw_matches)} 条记录成功"
         )
         return processed_matches
+
     async def validate_data_quality(
         self, data: Dict[str, Any], data_type: str
     ) -> Dict[str, Any]:
@@ -305,6 +315,7 @@ class DataProcessingService(BaseService):
             quality_report["issues"].append(f"Validation error: {str(e)}")
             quality_report["is_valid"] = False
             return quality_report
+
     # 保留原有方法以保持向后兼容
     async def process_text(self, text: str) -> Dict[str, Any]:
         """处理文本数据（向后兼容）"""
@@ -313,6 +324,7 @@ class DataProcessingService(BaseService):
             "word_count": len(text.split()),
             "character_count": len(text),
         }
+
     async def process_batch(self, data_list: List[Any]) -> List[Dict[str, Any]]:
         """批量处理数据（向后兼容）"""
         results: List[Dict[str, Any]] = []
@@ -329,6 +341,7 @@ class DataProcessingService(BaseService):
                 # 其他类型数据的默认处理
                 results.append({"original_data": data, "processed": True})
         return results
+
     async def process_bronze_to_silver(self, batch_size: int = 100) -> Dict[str, int]:
         """
         将Bronze层数据处理到Silver层
@@ -370,6 +383,7 @@ class DataProcessingService(BaseService):
             self.logger.error(f"Bronze到Silver层处理失败: {str(e)}")
             results["errors"] += 1
             return results
+
     async def _process_raw_matches_bronze_to_silver(self, batch_size: int) -> int:
         """处理原始比赛数据：从Bronze到Silver层"""
         processed_count = 0
@@ -439,6 +453,7 @@ class DataProcessingService(BaseService):
             if "session" in locals():
                 session.rollback()
         return processed_count
+
     async def _process_raw_odds_bronze_to_silver(self, batch_size: int) -> int:
         """处理原始赔率数据：从Bronze到Silver层"""
         processed_count = 0
@@ -508,6 +523,7 @@ class DataProcessingService(BaseService):
             if "session" in locals():
                 session.rollback()
         return processed_count
+
     async def _process_raw_scores_bronze_to_silver(self, batch_size: int) -> int:
         """处理原始比分数据：从Bronze到Silver层"""
         processed_count = 0
@@ -582,6 +598,7 @@ class DataProcessingService(BaseService):
             if "session" in locals():
                 session.rollback()
         return processed_count
+
     async def get_bronze_layer_status(self) -> Dict[str, Any]:
         """
         获取Bronze层数据状态
@@ -635,6 +652,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"获取Bronze层状态失败: {str(e)}")
             return {"error": str(e)}
+
     async def handle_missing_scores(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
         """
         处理分数缺失值
@@ -658,6 +676,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理分数缺失值失败: {str(e)}")
             return None
+
     async def handle_missing_team_data(
         self, team_data: pd.DataFrame
     ) -> Optional[pd.DataFrame]:
@@ -683,6 +702,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"处理球队数据缺失值失败: {str(e)}")
             return None
+
     async def detect_anomalies(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
         """
         检测数据异常
@@ -706,6 +726,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"异常检测失败: {str(e)}")
             return []
+
     async def store_processed_data(
         self, data: pd.DataFrame, table_name: str, cache_results: bool = False
     ) -> bool:
@@ -757,6 +778,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"存储处理后数据失败: {str(e)}")
             return False
+
     async def cache_processing_results(
         self, cache_key: str, data: Dict[str, Any], ttl: int = 3600
     ) -> bool:
@@ -784,6 +806,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"缓存处理结果失败: {str(e)}")
             return False
+
     async def get_cached_results(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """
         获取缓存的处理结果
@@ -807,6 +830,7 @@ class DataProcessingService(BaseService):
         except Exception as e:
             self.logger.error(f"获取缓存结果失败: {str(e)}")
             return None
+
     async def batch_process_datasets(
         self, datasets: Dict[str, List[Dict[str, Any]]]
     ) -> Dict[str, Any]:
@@ -837,6 +861,7 @@ class DataProcessingService(BaseService):
                 self.logger.error(f"处理数据集 '{data_type}' 失败: {e}")
                 results["errors"][data_type] = str(e)
         return results
+
     async def process_with_retry(
         self, func, data, max_retries: int = 3, delay: float = 0.1
     ) -> Any:
@@ -865,6 +890,7 @@ class DataProcessingService(BaseService):
         func_name = getattr(func, "__name__", str(func))
         self.logger.error(f"函数 {func_name} 在 {max_retries} 次尝试后持续失败")
         raise RuntimeError("处理持续失败") from last_exception
+
     async def _process_in_batches(self, dataset: List[Any], batch_size: int = 50):
         """
         分批处理大型数据集的内部辅助函数
@@ -874,6 +900,7 @@ class DataProcessingService(BaseService):
             # 在实际应用中，这里会调用具体的处理函数
             # 为了测试，我们只模拟处理并返回批次
             yield batch
+
     async def collect_performance_metrics(
         self, processing_function, *args, **kwargs
     ) -> Dict[str, Any]:
@@ -886,6 +913,7 @@ class DataProcessingService(BaseService):
             Dict[str, Any]: 性能指标字典
         """
         import time
+
         start_time = time.time()
         result = await processing_function(*args, **kwargs)
         end_time = time.time()
@@ -899,6 +927,7 @@ class DataProcessingService(BaseService):
             "items_processed": items_processed,
             "items_per_second": items_per_second,
         }
+
     async def process_large_dataset(
         self, dataset: List[Any], batch_size: int = 50
     ) -> List[Any]:
@@ -916,6 +945,7 @@ class DataProcessingService(BaseService):
             processed_batch = await self.process_batch(batch)
             results.extend(processed_batch)
         return results
+
     async def cleanup(self) -> bool:
         """
         清理数据处理服务资源
