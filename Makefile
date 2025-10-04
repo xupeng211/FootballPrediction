@@ -83,6 +83,29 @@ install: venv ## Environment: Install dependencies from requirements.txt
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
 
+install-locked: venv ## Environment: Install from locked dependencies (reproducible)
+	@if [ ! -f requirements.lock.txt ]; then \
+		echo "$(RED)❌ requirements.lock.txt not found. Run 'make lock-deps' first.$(RESET)"; \
+		exit 1; \
+	fi
+	@$(ACTIVATE) && \
+	echo "$(BLUE)📦 Installing locked dependencies (reproducible)...$(RESET)" && \
+	pip install --upgrade pip && \
+	pip install -r requirements.lock.txt && \
+	echo "$(GREEN)✅ Dependencies installed from lock file$(RESET)"
+
+lock-deps: venv ## Environment: Lock current dependencies for reproducible builds
+	@$(ACTIVATE) && \
+	echo "$(BLUE)🔒 Locking dependencies...$(RESET)" && \
+	python scripts/lock_dependencies.py freeze && \
+	echo "$(GREEN)✅ Dependencies locked to requirements.lock.txt$(RESET)" && \
+	echo "$(YELLOW)💡 Commit requirements.lock.txt for reproducible builds$(RESET)"
+
+verify-deps: venv ## Environment: Verify dependencies match lock file
+	@$(ACTIVATE) && \
+	echo "$(BLUE)🔍 Verifying dependencies...$(RESET)" && \
+	python scripts/lock_dependencies.py verify
+
 check-deps: ## Environment: Verify required Python dependencies are installed
 	@$(ACTIVATE) && python scripts/check_dependencies.py
 
@@ -160,6 +183,11 @@ test: ## Test: Run pytest unit tests
 	echo "$(YELLOW)Running tests...$(RESET)" && \
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
+
+test-full: ## Test: Run full unit test suite with coverage
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running full unit test suite with coverage...$(RESET)" && \
+	python scripts/run_full_coverage.py
 
 coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	@$(ACTIVATE) && \
@@ -714,3 +742,67 @@ setup-hooks: ## Git: Setup pre-commit hooks permissions
 	else \
 		echo "$(YELLOW)⚠️ 未找到 .git/hooks/pre-commit$(RESET)"; \
 	fi
+
+
+# 测试命令
+test:
+	@echo "运行所有测试"
+	pytest tests/ -v
+
+test-unit:
+	@echo "运行单元测试"
+	pytest tests/unit/ -v -m "unit"
+
+test-integration:
+	@echo "运行集成测试"
+	pytest tests/integration/ -v -m "integration"
+
+test-e2e:
+	@echo "运行端到端测试"
+	pytest tests/e2e/ -v -m "e2e"
+
+test-smoke:
+	@echo "运行冒烟测试"
+	pytest tests/ -v -m "smoke"
+
+test-coverage:
+	@echo "运行测试并生成覆盖率报告"
+	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+
+test-watch:
+	@echo "监视文件变化并运行测试"
+	pytest-watch tests/
+
+test-parallel:
+	@echo "并行运行测试"
+	pytest tests/ -n auto
+
+test-failed:
+	@echo "只运行失败的测试"
+	pytest tests/ --lf
+
+test-debug:
+	@echo "调试模式运行测试"
+	pytest tests/ -v -s --tb=long
+
+test-performance:
+	@echo "运行性能测试"
+	pytest tests/e2e/performance/ -v -m "performance"
+
+test-security:
+	@echo "运行安全测试"
+	pytest tests/ -v -m "security"
+
+# 清理测试数据
+clean-test:
+	@echo "清理测试数据"
+	rm -rf .pytest_cache/
+	rm -rf htmlcov/
+	rm -rf .coverage
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+
+# 生成测试报告
+test-report:
+	@echo "生成测试报告"
+	pytest tests/ --html=test-report.html --self-contained-html
