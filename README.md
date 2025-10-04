@@ -3,7 +3,6 @@
 [![Kanban Check](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml/badge.svg)](https://github.com/xupeng211/FootballPrediction/actions/workflows/kanban-check.yml)
 
 # ⚽ FootballPrediction - 足球预测系统
-![Coverage](https://img.shields.io/badge/coverage-11%25-red)
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
 [![Code Coverage](https://img.shields.io/badge/Coverage-96.35%25-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
