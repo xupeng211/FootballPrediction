@@ -4,16 +4,15 @@
 """
 
 import ast
-import os
-import sys
 from pathlib import Path
+
 
 def analyze_file_coverage(file_path, test_functions):
     """分析单个文件的覆盖率"""
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         try:
             tree = ast.parse(f.read())
-        except:
+        except Exception:
             return {"functions": [], "covered": [], "coverage": 0}
 
     functions = []
@@ -24,39 +23,41 @@ def analyze_file_coverage(file_path, test_functions):
     covered = [f for f in functions if f in test_functions]
     coverage = len(covered) / len(functions) * 100 if functions else 0
 
-    return {
-        "functions": functions,
-        "covered": covered,
-        "coverage": coverage
-    }
+    return {"functions": functions, "covered": covered, "coverage": coverage}
+
 
 def main():
-    print("="*60)
+    print("=" * 60)
     print("📊 测试覆盖率分析")
-    print("="*60)
+    print("=" * 60)
 
     # 工具模块和对应的测试函数
     modules = {
         "src/utils/string_utils.py": {
             "functions": [
-                "truncate", "slugify", "camel_to_snake",
-                "snake_to_camel", "clean_text", "extract_numbers"
+                "truncate",
+                "slugify",
+                "camel_to_snake",
+                "snake_to_camel",
+                "clean_text",
+                "extract_numbers",
             ],
-            "class_name": "StringUtils"
+            "class_name": "StringUtils",
         },
         "src/utils/dict_utils.py": {
-            "functions": [
-                "deep_merge", "flatten_dict", "filter_none_values"
-            ],
-            "class_name": "DictUtils"
+            "functions": ["deep_merge", "flatten_dict", "filter_none_values"],
+            "class_name": "DictUtils",
         },
         "src/utils/time_utils.py": {
             "functions": [
-                "now_utc", "timestamp_to_datetime", "datetime_to_timestamp",
-                "format_datetime", "parse_datetime"
+                "now_utc",
+                "timestamp_to_datetime",
+                "datetime_to_timestamp",
+                "format_datetime",
+                "parse_datetime",
             ],
-            "class_name": "TimeUtils"
-        }
+            "class_name": "TimeUtils",
+        },
     }
 
     total_functions = 0
@@ -77,23 +78,25 @@ def main():
         print(f"   测试文件: {'✅ 存在' if has_tests else '❌ 不存在'}")
 
         if has_tests:
-            print(f"   已测试函数:")
-            for func in info['functions']:
+            print("   已测试函数:")
+            for func in info["functions"]:
                 print(f"     ✅ {func}")
-            total_covered += len(info['functions'])
+            total_covered += len(info["functions"])
         else:
-            print(f"   未测试函数:")
-            for func in info['functions']:
+            print("   未测试函数:")
+            for func in info["functions"]:
                 print(f"     ❌ {func}")
 
-        total_functions += len(info['functions'])
+        total_functions += len(info["functions"])
 
     # 计算总覆盖率
-    overall_coverage = total_covered / total_functions * 100 if total_functions > 0 else 0
+    overall_coverage = (
+        total_covered / total_functions * 100 if total_functions > 0 else 0
+    )
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📈 覆盖率总结")
-    print("="*60)
+    print("=" * 60)
     print(f"✅ 已覆盖函数: {total_covered}")
     print(f"📝 总函数数: {total_functions}")
     print(f"📊 覆盖率: {overall_coverage:.1f}%")
@@ -106,7 +109,7 @@ def main():
     # 更新覆盖率徽章
     readme_path = Path("README.md")
     if readme_path.exists():
-        with open(readme_path, 'r', encoding='utf-8') as f:
+        with open(readme_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 更新或添加覆盖率徽章
@@ -114,19 +117,21 @@ def main():
 
         if "![Coverage]" in content:
             import re
-            content = re.sub(r'!\[Coverage\].*$', badge, content, flags=re.MULTILINE)
+
+            content = re.sub(r"!\[Coverage\].*$", badge, content, flags=re.MULTILINE)
         else:
-            lines = content.split('\n')
+            lines = content.split("\n")
             for i, line in enumerate(lines):
-                if line.startswith('# '):
+                if line.startswith("# "):
                     lines.insert(i + 1, badge)
                     break
-            content = '\n'.join(lines)
+            content = "\n".join(lines)
 
-        with open(readme_path, 'w', encoding='utf-8') as f:
+        with open(readme_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        print(f"\n✅ 已更新README.md中的覆盖率徽章")
+        print("\n✅ 已更新README.md中的覆盖率徽章")
+
 
 if __name__ == "__main__":
     main()

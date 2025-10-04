@@ -476,7 +476,7 @@ class DatabaseManager:
             db_manager = DatabaseManager()
             db_manager.initialize()
 
-            success = await db_manager.update_match(12345, {"match_status": "completed"})
+            success = await db_manager.update_match(12345, {"match_status": "finished"})
             if success:
                 print("比赛信息更新成功")
             ```

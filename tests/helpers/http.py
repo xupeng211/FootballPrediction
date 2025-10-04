@@ -1,5 +1,6 @@
 """HTTP 客户端测试桩"""
 
+import asyncio
 from typing import Any, Dict, Tuple
 
 import httpx
@@ -20,6 +21,9 @@ class MockHTTPResponse:
         return self._json_data
 
 
+_LOCAL_PREFIXES = ("http://testserver", "https://testserver")
+
+
 def apply_http_mocks(
     monkeypatch: MonkeyPatch,
     responses: Dict[Tuple[str, str], MockHTTPResponse],
@@ -32,21 +36,51 @@ def apply_http_mocks(
         responses: {(method, url): MockHTTPResponse}
     """
 
-    def mock_request(method: str, url: str, **kwargs: Any) -> MockHTTPResponse:
-        key = (method.upper(), url)
+    def mock_request(method: str, url: Any, **kwargs: Any) -> MockHTTPResponse:
+        url_str = str(url)
+        key = (method.upper(), url_str)
         return responses.get(key, MockHTTPResponse(status_code=404))
 
     # Mock common HTTP client methods
     for method in ["get", "post", "put", "delete", "patch"]:
         for client_class in [httpx.Client, httpx.AsyncClient]:
-            if hasattr(client_class, method):
-                monkeypatch.setattr(
-                    client_class,
-                    method,
-                    lambda self, url, method=method, **kwargs: mock_request(
-                        method, url, **kwargs
-                    ),
-                )
+            if not hasattr(client_class, method):
+                continue
+
+            original = getattr(client_class, method)
+
+            if asyncio.iscoroutinefunction(original):
+
+                async def async_wrapper(
+                    self,
+                    url,
+                    *args,
+                    _method=method,
+                    _original=original,
+                    **kwargs,
+                ):
+                    url_str = str(url)
+                    if url_str.startswith(_LOCAL_PREFIXES) or url_str.startswith("/"):
+                        return await _original(self, url, *args, **kwargs)
+                    return mock_request(_method, url, **kwargs)
+
+                monkeypatch.setattr(client_class, method, async_wrapper)
+            else:
+
+                def sync_wrapper(
+                    self,
+                    url,
+                    *args,
+                    _method=method,
+                    _original=original,
+                    **kwargs,
+                ):
+                    url_str = str(url)
+                    if url_str.startswith(_LOCAL_PREFIXES) or url_str.startswith("/"):
+                        return _original(self, url, *args, **kwargs)
+                    return mock_request(_method, url, **kwargs)
+
+                monkeypatch.setattr(client_class, method, sync_wrapper)
 
 
 __all__ = [

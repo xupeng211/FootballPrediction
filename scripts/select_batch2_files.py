@@ -4,6 +4,7 @@
 import subprocess
 from pathlib import Path
 
+
 def get_file_errors(file_path):
     """Get number of Ruff errors for a specific file."""
     try:
@@ -11,23 +12,23 @@ def get_file_errors(file_path):
             ["ruff", "check", file_path, "--statistics"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
         if result.returncode == 0:
             # Extract error count from last line
-            lines = result.stdout.strip().split('\n')
+            lines = result.stdout.strip().split("\n")
             for line in lines:
                 if "Found" in line and "errors" in line:
                     error_count = int(line.split()[1])
                     return error_count
         return 0
-    except:
+    except Exception:
         return 0
+
 
 def main():
     """Main function to analyze test files."""
     test_dir = Path("tests/unit")
-    target_files = []
 
     print("Analyzing test files for batch 2 selection...")
 
@@ -40,7 +41,7 @@ def main():
         "test_main_simple.py",
         "test_kafka_producer_comprehensive.py",
         "test_data_lake_storage_phase4.py",
-        "test_extract_coverage.py"
+        "test_extract_coverage.py",
     }
 
     file_errors = []
@@ -59,7 +60,9 @@ def main():
     # Select medium density files (100-300 errors)
     medium_density_files = []
     for file_name, error_count in file_errors:
-        if 50 <= error_count <= 300:  # Adjusted range based on actual error distribution
+        if (
+            50 <= error_count <= 300
+        ):  # Adjusted range based on actual error distribution
             medium_density_files.append((file_name, error_count))
 
     # Take first 20 files
@@ -86,7 +89,9 @@ def main():
     for i, (file_name, error_count) in enumerate(batch2_files, 1):
         density = "中等" if 100 <= error_count <= 300 else "较低"
         priority = "高" if error_count > 200 else "中"
-        report_content += f"| {i} | {file_name} | {error_count} | {density} | {priority} |\n"
+        report_content += (
+            f"| {i} | {file_name} | {error_count} | {density} | {priority} |\n"
+        )
 
     total_errors = sum(error_count for _, error_count in batch2_files)
     avg_errors = total_errors // len(batch2_files) if batch2_files else 0
@@ -136,6 +141,7 @@ def main():
     print("\nSelected files for batch 2:")
     for file_name, error_count in batch2_files:
         print(f"  - {file_name}: {error_count} errors")
+
 
 if __name__ == "__main__":
     main()
