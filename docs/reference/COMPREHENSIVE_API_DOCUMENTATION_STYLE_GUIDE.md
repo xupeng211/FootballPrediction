@@ -430,9 +430,9 @@ napoleon_include_private_with_doc = False
 # Makefile
 .PHONY: docs
 docs:
-	sphinx-apidoc -o docs/api src/
-	cd docs && make html
-	@echo "Documentation generated in docs/_build/html/"
+ sphinx-apidoc -o docs/api src/
+ cd docs && make html
+ @echo "Documentation generated in docs/_build/html/"
 ```
 
 ## 6. Documentation Review Process
