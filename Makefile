@@ -160,6 +160,22 @@ clean-env: ## Environment: Clean virtual environment and old dependency files
 	@rm -rf pipdeptree.egg-info/
 	@echo "$(GREEN)✅ Environment cleaned$(RESET)"
 
+audit: ## Security: Run dependency security audit
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🔍 Running security audit...$(RESET)" && \
+	pip install pip-audit[toml] && \
+	mkdir -p docs/_reports/security && \
+	timestamp=$$(date +"%Y-%m-%d_%H-%M-%S") && \
+	pip-audit -r requirements/requirements.lock --format markdown --output docs/_reports/security/pip_audit_manual_$$timestamp.md && \
+	echo "$(GREEN)✅ Security audit completed$(RESET)" && \
+	echo "$(BLUE)📄 Report: docs/_reports/security/pip_audit_manual_$$timestamp.md$(RESET)"
+
+audit-check: ## Security: Check for vulnerabilities only
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🔍 Checking for vulnerabilities...$(RESET)" && \
+	pip install pip-audit && \
+	pip-audit -r requirements/requirements.lock
+
 # ============================================================================
 # 🎨 Code Quality
 # ============================================================================

@@ -2,9 +2,8 @@ name: Dependency Security Audit
 
 on:
   schedule:
-    # 每周一 09:00 UTC 自动运行（北京时间 17:00）
-    - cron: "0 9 * * 1"
-  workflow_dispatch:  # 允许手动触发
+    - cron: "0 9 * * 1"  # 每周一 17:00 (北京时间)
+  workflow_dispatch:      # 手动触发
   pull_request:
     paths:
       - "requirements/**"
@@ -23,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取完整历史，用于生成更好的报告
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -141,16 +140,57 @@ jobs:
 
           # 创建或更新摘要文件
           cat > "$summary_file" << EOF
-          # 🔒 依赖安全审计报告汇总
+          # 🔒 依赖安全审计报告索引 (Dependency Security Audit Reports)
 
-          > **最后更新**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          > **扫描周期**: 每周一 09:00 UTC (北京时间 17:00)
-          > **扫描工具**: [pip-audit](https://github.com/pypa/pip-audit)
+          本目录用于存放项目的 **pip-audit 自动化安全扫描结果**，由 CI 工作流
+          [.github/workflows/DEPENDENCY_AUDIT_AUTOMATION.yml](../../../.github/workflows/DEPENDENCY_AUDIT_AUTOMATION.yml)
+          自动生成。
+
+          ---
+
+          ## 📅 审计任务说明
+
+          | 项目 | 说明 |
+          |------|------|
+          | **执行频率** | 每周一 17:00 (北京时间) 自动执行 |
+          | **触发条件** | 1) 定时任务 <br> 2) 手动触发 <br> 3) 修改 \`requirements/**\` |
+          | **审计工具** | [pip-audit](https://github.com/pypa/pip-audit) |
+          | **报告格式** | Markdown (可读性高，便于归档与审阅) |
+          | **报告命名规则** | \`pip_audit_YYYY-MM-DD_HH-MM-SS.md\` |
+          | **报告存放路径** | \`docs/_reports/security/\` |
+
+          ## 🧩 报告示例
+          \`\`\`
+          docs/_reports/security/
+          ├── pip_audit_2025-01-06_09-00-00.md
+          ├── pip_audit_2025-01-05_09-00-00.md
+          └── README.md
+          \`\`\`
+
+          ## ⚠️ 漏洞级别分类
+
+          | 等级 | 说明 | 行动建议 |
+          |------|------|-----------|
+          | 🟥 **CRITICAL** | 高危漏洞，影响系统安全 | 立即修复并创建紧急 Issue |
+          | 🟧 **HIGH** | 严重漏洞，可能导致依赖失效或数据风险 | 优先修复 |
+          | 🟨 **MEDIUM** | 中等风险，存在兼容性问题 | 评估影响后修复 |
+          | 🟩 **LOW** | 低风险或信息性提醒 | 可延后处理 |
+
+          ## 🚨 发现高危漏洞时的响应流程
+
+          1. 检查最新报告（文件名时间戳最大者）；
+          2. 若包含 "CRITICAL" 关键字，系统会自动创建 Issue；
+          3. 维护者需：
+             - 确认漏洞包；
+             - 在 \`requirements/*.in\` 中升级依赖；
+             - 执行 \`make lock-deps && make verify-deps\`；
+             - 提交修复 PR；
+          4. 审核通过后关闭 Issue。
 
           ## 📊 最近扫描结果
 
-          | 日期 | 总漏洞数 | 严重 | 高危 | 中危 | 低危 | 报告链接 |
-          |------|----------|------|------|------|------|----------|
+          | 日期 | 总漏洞数 | 严重 | 高危 | 中危 | 低危 | 状态 |
+          |------|----------|------|------|------|------|------|
           EOF
 
           # 收集最近10次扫描结果
@@ -158,22 +198,51 @@ jobs:
             report_date=$(echo "$report" | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}')
             if [ -f "$report" ]; then
               if grep -q "No known vulnerabilities found" "$report"; then
-                echo "| $report_date | ✅ 0 | - | - | - | - | [查看报告]($report) |" >> "$summary_file"
+                echo "| $report_date | ✅ 0 | - | - | - | - | 🟢 安全 |" >> "$summary_file"
               else
                 total=$(grep -c "CVE-" "$report" 2>/dev/null || echo "0")
                 critical=$(grep -c "CRITICAL" "$report" 2>/dev/null || echo "0")
                 high=$(grep -c "HIGH" "$report" 2>/dev/null || echo "0")
                 medium=$(grep -c "MEDIUM" "$report" 2>/dev/null || echo "0")
                 low=$(grep -c "LOW" "$report" 2>/dev/null || echo "0")
-                echo "| $report_date | $total | $critical | $high | $medium | $low | [查看报告]($report) |" >> "$summary_file"
+
+                # 根据漏洞数量确定状态
+                if [ "$critical" -gt 0 ]; then
+                  status="🟥 严重"
+                elif [ "$high" -gt 0 ]; then
+                  status="🟧 高危"
+                elif [ "$medium" -gt 0 ]; then
+                  status="🟨 中危"
+                else
+                  status="🟩 低危"
+                fi
+
+                echo "| $report_date | $total | $critical | $high | $medium | $low | $status |" >> "$summary_file"
               fi
             fi
           done
 
           echo "" >> "$summary_file"
-          echo "## 📁 历史报告归档" >> "$summary_file"
+          echo "## 📊 历史报告管理" >> "$summary_file"
           echo "" >> "$summary_file"
-          echo "所有历史报告保存在 [archives/](./archives/) 目录中，以 JSON 格式存储。" >> "$summary_file"
+          echo "- 保留最近 12 份报告；" >> "$summary_file"
+          echo "- 较旧报告可移动至 \`docs/_archive/security/\`；" >> "$summary_file"
+          echo "- 审计汇总信息可在 \`docs/_reports/SECURITY_SUMMARY.md\` 维护。" >> "$summary_file"
+
+          echo "" >> "$summary_file"
+          echo "## 🧠 参考命令" >> "$summary_file"
+          echo "" >> "$summary_file"
+          echo '```bash' >> "$summary_file"
+          echo "# 手动运行安全扫描" >> "$summary_file"
+          echo "pip install pip-audit" >> "$summary_file"
+          echo "pip-audit -r requirements/requirements.lock -f markdown -o docs/_reports/security/pip_audit_manual.md" >> "$summary_file"
+          echo '```' >> "$summary_file"
+
+          echo "" >> "$summary_file"
+          echo "---" >> "$summary_file"
+          echo "" >> "$summary_file"
+          echo "📌 **维护提示**：" >> "$summary_file"
+          echo "请勿手动修改历史报告内容；CI 会自动生成并覆盖。" >> "$summary_file"
 
           # 更新索引
           if [ ! -f docs/_reports/README.md ]; then
@@ -183,14 +252,24 @@ jobs:
 
           本目录包含项目的各类自动化报告：
 
-          - 🔒 [安全审计报告](./security/) - 依赖安全扫描结果
-          - 📈 [性能报告](./performance/) - 性能测试结果（待实现）
-          - 📋 [代码质量报告](./quality/) - 代码质量分析（待实现）
+          - 🔒 **[安全审计报告](./security/)** - 依赖安全扫描结果
+          - 📈 **[性能报告](./performance/)** - 性能测试结果（待实现）
+          - 📋 **[代码质量报告](./quality/)** - 代码质量分析（待实现）
 
           ## 🔗 相关链接
 
           - [依赖维护指南](../maintenance/DEPENDENCY_GUARDIAN_MAINTENANCE_GUIDE.md)
+          - [安全审计手册](../maintenance/SECURITY_AUDIT_GUIDE.md)
           - [CI/CD 工作流](../../.github/workflows/)
+          - [项目首页](../../README.md)
+
+          ## 📝 报告历史
+
+          所有历史报告自动归档，保留最近 90 天的详细数据。
+
+          ---
+
+          > 📌 **说明**: 本目录结构由自动化工作流维护，如需修改请更新相应的工作流配置文件。
           EOF
           fi
 
@@ -204,7 +283,7 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      - name: Check for critical vulnerabilities
+      - name: Detect critical vulnerabilities
         run: |
           report_file="${{ steps.audit.outputs.report_file }}"
           critical_count="${{ steps.audit.outputs.critical_count }}"
@@ -275,54 +354,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Security Badge
-        if: always()
-        run: |
-          vulnerability_count="${{ steps.audit.outputs.vulnerability_count }}"
-          critical_count="${{ steps.audit.outputs.critical_count }}"
-
-          # 更新徽章状态
-          if [ "$vulnerability_count" = "0" ]; then
-            badge_color="brightgreen"
-            badge_status="secure"
-            badge_message="0%20vulnerabilities"
-          elif [ "$critical_count" -gt 0 ]; then
-            badge_color="critical"
-            badge_status="critical"
-            badge_message="$vulnerability_count%20vulns"
-          else
-            badge_color="yellow"
-            badge_status="warning"
-            badge_message="$vulnerability_count%20vulns"
-          fi
-
-          # 创建或更新徽章文件
-          badge_file="docs/_reports/security/security-badge.svg"
-
-          cat > "$badge_file" << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20" role="img">
-            <title>Security: $badge_message</title>
-            <linearGradient id="s" x2="0" y2="100%">
-              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-              <stop offset="1" stop-opacity=".1"/>
-            </linearGradient>
-            <mask id="m">
-              <rect width="120" height="20" rx="3" fill="#fff"/>
-            </mask>
-            <g mask="url(#m)">
-              <rect width="60" height="20" fill="#555"/>
-              <rect width="60" height="20" fill="#$badge_color"/>
-              <rect width="120" height="20" fill="url(#s)"/>
-            </g>
-            <g aria-hidden="true" fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-              <text aria-hidden="true" x="30" y="150" fill="#010101" transform="rotate(360 30 115)" textLength="30" lengthAdjust="spacing">security</text>
-              <text x="90" y="150" transform="rotate(360 90 115)" textLength="50" lengthAdjust="spacing">$badge_message</text>
-            </g>
-          </svg>
-          EOF
-
-          echo "📈 Security badge updated: $badge_status"
-
       - name: Commit reports
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
@@ -355,8 +386,3 @@ jobs:
         run: |
           echo "❌ Security audit failed!"
           echo "Please check the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-          # 可选：发送通知到 Slack 或其他渠道
-          # curl -X POST -H 'Content-type: application/json' \
-          #   --data '{"text":"🚨 Dependency security audit failed! Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-          #   ${{ secrets.SLACK_WEBHOOK_URL }} || true
