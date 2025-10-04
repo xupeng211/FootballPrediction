@@ -5,7 +5,7 @@ SQL兼容性工具模块
 """
 
 import logging
-from typing import Union, Tuple, Dict, Any
+from typing import Any, Dict, Tuple, Union
 
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine

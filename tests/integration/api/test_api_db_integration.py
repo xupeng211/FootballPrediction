@@ -1,7 +1,7 @@
 """集成测试模板"""
 
 import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 
@@ -13,13 +13,11 @@ class TestAPIIntegration:
     async def test_db(self):
         """测试数据库连接"""
 
-        engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:",
-            echo=False
-        )
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
 
         # 创建表
         from src.database.models import Base
+
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
@@ -42,7 +40,7 @@ class TestAPIIntegration:
         user_data = {
             "email": "integration@test.com",
             "username": "integration_user",
-            "password": "TestPass123!"
+            "password": "TestPass123!",
         }
 
         response = await async_client.post("/api/users", json=user_data)
@@ -50,10 +48,7 @@ class TestAPIIntegration:
         user_id = response.json()["id"]
 
         # 2. 用户登录
-        login_data = {
-            "username": "integration_user",
-            "password": "TestPass123!"
-        }
+        login_data = {"username": "integration_user", "password": "TestPass123!"}
 
         response = await async_client.post("/api/auth/login", json=login_data)
         assert response.status_code == 200
@@ -66,27 +61,25 @@ class TestAPIIntegration:
             "home_team": "Integration Team A",
             "away_team": "Integration Team B",
             "predicted_home_score": 2,
-            "predicted_away_score": 1
+            "predicted_away_score": 1,
         }
 
         response = await async_client.post(
-            "/api/predictions",
-            json=prediction_data,
-            headers=headers
+            "/api/predictions", json=prediction_data, headers=headers
         )
         assert response.status_code == 201
         prediction_id = response.json()["id"]
 
         # 4. 获取预测
         response = await async_client.get(
-            f"/api/predictions/{prediction_id}",
-            headers=headers
+            f"/api/predictions/{prediction_id}", headers=headers
         )
         assert response.status_code == 200
         assert response.json()["id"] == prediction_id
 
         # 5. 验证数据库中的数据
-        from src.database.models import User, Prediction
+        from src.database.models import Prediction, User
+
         result = await db_session.get(User, user_id)
         assert result is not None
         assert result.email == "integration@test.com"
@@ -113,7 +106,7 @@ class TestCacheIntegration:
             "home_team": "Cache Test A",
             "away_team": "Cache Test B",
             "predicted_home_score": 3,
-            "predicted_away_score": 1
+            "predicted_away_score": 1,
         }
 
         response = await async_client.post("/api/predictions", json=prediction_data)

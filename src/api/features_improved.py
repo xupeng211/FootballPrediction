@@ -8,13 +8,13 @@ import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import Match
-from src.database.connection import get_async_session
 from src.data.features.feature_store import FootballFeatureStore
+from src.database.connection import get_async_session
+from src.database.models import Match
 
 logger = logging.getLogger(__name__)
 

@@ -29,11 +29,11 @@ except ImportError:
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from src.middleware.i18n import I18nMiddleware
 
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
+from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import (
     start_metrics_collection,
     stop_metrics_collection,
@@ -107,9 +107,7 @@ app.include_router(health_router, prefix="/api/health")
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
-    from src.api.data import (
-        router as data_router,
-    )  # runtime import for minimal mode
+    from src.api.data import router as data_router  # runtime import for minimal mode
     from src.api.features import router as features_router
     from src.api.monitoring import router as monitoring_router
     from src.api.predictions import router as predictions_router

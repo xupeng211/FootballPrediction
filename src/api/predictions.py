@@ -184,19 +184,27 @@ async def get_match_prediction(
                         "id": prediction.id,
                         "model_version": prediction.model_version,
                         "model_name": prediction.model_name,
-                        "home_win_probability": float(prediction.home_win_probability)
-                        if prediction.home_win_probability is not None
-                        else 0.0,
-                        "draw_probability": float(prediction.draw_probability)
-                        if prediction.draw_probability is not None
-                        else 0.0,
-                        "away_win_probability": float(prediction.away_win_probability)
-                        if prediction.away_win_probability is not None
-                        else 0.0,
+                        "home_win_probability": (
+                            float(prediction.home_win_probability)
+                            if prediction.home_win_probability is not None
+                            else 0.0
+                        ),
+                        "draw_probability": (
+                            float(prediction.draw_probability)
+                            if prediction.draw_probability is not None
+                            else 0.0
+                        ),
+                        "away_win_probability": (
+                            float(prediction.away_win_probability)
+                            if prediction.away_win_probability is not None
+                            else 0.0
+                        ),
                         "predicted_result": prediction.predicted_result,
-                        "confidence_score": float(prediction.confidence_score)
-                        if prediction.confidence_score is not None
-                        else 0.0,
+                        "confidence_score": (
+                            float(prediction.confidence_score)
+                            if prediction.confidence_score is not None
+                            else 0.0
+                        ),
                         "created_at": prediction.created_at.isoformat(),
                         "is_correct": prediction.is_correct,
                         "actual_result": prediction.actual_result,
@@ -383,19 +391,27 @@ async def get_match_prediction_history(
                     "id": prediction.id,
                     "model_version": prediction.model_version,
                     "model_name": prediction.model_name,
-                    "home_win_probability": float(prediction.home_win_probability)
-                    if prediction.home_win_probability is not None
-                    else 0.0,
-                    "draw_probability": float(prediction.draw_probability)
-                    if prediction.draw_probability is not None
-                    else 0.0,
-                    "away_win_probability": float(prediction.away_win_probability)
-                    if prediction.away_win_probability is not None
-                    else 0.0,
+                    "home_win_probability": (
+                        float(prediction.home_win_probability)
+                        if prediction.home_win_probability is not None
+                        else 0.0
+                    ),
+                    "draw_probability": (
+                        float(prediction.draw_probability)
+                        if prediction.draw_probability is not None
+                        else 0.0
+                    ),
+                    "away_win_probability": (
+                        float(prediction.away_win_probability)
+                        if prediction.away_win_probability is not None
+                        else 0.0
+                    ),
                     "predicted_result": prediction.predicted_result,
-                    "confidence_score": float(prediction.confidence_score)
-                    if prediction.confidence_score is not None
-                    else 0.0,
+                    "confidence_score": (
+                        float(prediction.confidence_score)
+                        if prediction.confidence_score is not None
+                        else 0.0
+                    ),
                     "created_at": prediction.created_at.isoformat(),
                     "is_correct": prediction.is_correct,
                     "actual_result": prediction.actual_result,
@@ -403,9 +419,7 @@ async def get_match_prediction_history(
                         prediction.verified_at.isoformat()
                         if prediction.verified_at
                         and hasattr(prediction.verified_at, "isoformat")
-                        else None
-                        if prediction.verified_at
-                        else None
+                        else None if prediction.verified_at else None
                     ),
                 }
             )
@@ -482,9 +496,11 @@ async def get_recent_predictions(
                     "model_version": pred.model_version,
                     "model_name": pred.model_name,
                     "predicted_result": pred.predicted_result,
-                    "confidence_score": float(pred.confidence_score)
-                    if pred.confidence_score is not None
-                    else 0.0,
+                    "confidence_score": (
+                        float(pred.confidence_score)
+                        if pred.confidence_score is not None
+                        else 0.0
+                    ),
                     "created_at": pred.created_at.isoformat(),
                     "is_correct": pred.is_correct,
                     "match_info": {

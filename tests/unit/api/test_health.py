@@ -1,8 +1,9 @@
 """API测试模板"""
 
+from unittest.mock import patch
+
 import pytest
 from fastapi import status
-from unittest.mock import patch
 
 
 class TestHealthAPI:

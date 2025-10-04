@@ -42,6 +42,7 @@ class BaseDataTask(Task):
         """发送告警通知"""
         try:
             import asyncio
+
             from src.monitoring.alert_manager import AlertManager
 
             async def _send_alert():
@@ -267,9 +268,11 @@ def calculate_features_batch(self, hours_ahead: int = 2):
         logger.info(f"开始执行特征计算任务，计算未来{hours_ahead}小时内的比赛特征")
 
         import asyncio
+
         from sqlalchemy import text
-        from src.database.connection import get_async_session
+
         from src.data.features.feature_store import FeatureStore
+        from src.database.connection import get_async_session
 
         async def _calculate_features():
             """异步计算特征"""
@@ -597,8 +600,9 @@ def run_quality_checks():
         logger.info("开始执行数据质量检查任务")
 
         import asyncio
-        from src.database.connection import get_async_session
+
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+        from src.database.connection import get_async_session
 
         async def _run_checks():
             """异步运行质量检查"""
@@ -728,12 +732,13 @@ def backup_database():
         logger.info("开始执行数据库备份任务")
 
         import asyncio
-        import os
         import gzip
+        import os
         import shutil
         from datetime import datetime
-        from src.database.connection import get_async_session
+
         from src.data.storage.data_lake_storage import S3DataLakeStorage
+        from src.database.connection import get_async_session
 
         async def _backup_database():
             """异步备份数据库"""
@@ -932,7 +937,9 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
         logger.info("开始执行预测生成任务")
 
         import asyncio
+
         from sqlalchemy import text
+
         from src.database.connection import get_async_session
         from src.models.prediction_service import PredictionService
 
@@ -1044,10 +1051,12 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
         logger.info("开始执行Bronze到Silver数据处理任务")
 
         import asyncio
+
         from sqlalchemy import text
-        from src.database.connection import get_async_session
+
         from src.data.processing.football_data_cleaner import FootballDataCleaner
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+        from src.database.connection import get_async_session
 
         async def _process_data():
             """异步处理数据"""

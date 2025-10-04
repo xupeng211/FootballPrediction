@@ -13,8 +13,9 @@ import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .metrics_exporter import get_metrics_exporter
 from src.core.config import get_settings
+
+from .metrics_exporter import get_metrics_exporter
 
 logger = logging.getLogger(__name__)
 _settings = get_settings()
