@@ -696,7 +696,9 @@ def get_model_info() -> Dict[str, Any]:
     }
 
 
-@router.get("/experiments", summary="获取实验列表", description="获取MLflow实验列表")
+@router.get(
+    str("/experiments"), summary="获取实验列表", description="获取MLflow实验列表"
+)
 async def get_experiments(
     limit: int = Query(default=20, description="返回实验数量限制", ge=1, le=100),
 ) -> Dict[str, Any]:

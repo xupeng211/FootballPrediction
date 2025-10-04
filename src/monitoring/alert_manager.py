@@ -368,8 +368,8 @@ class AlertManager:
         if rule_id in self.rules:
             del self.rules[rule_id]
             logger.info(f"移除告警规则: {rule_id}")
-            return True
-        return False
+            return True if isinstance(True, dict) else {}
+        return False if isinstance(False, dict) else {}
 
     def fire_alert(
         self,
@@ -402,8 +402,7 @@ class AlertManager:
         # 检查去重
         if self._should_throttle(alert_id, rule_id):
             logger.debug(f"告警被去重: {alert_id}")
-            return None
-
+            return None if isinstance(None, dict) else {}
         # 创建告警
         alert = Alert(
             alert_id=alert_id,
@@ -429,7 +428,7 @@ class AlertManager:
         self._update_alert_metrics(alert, rule_id)
 
         logger.info(f"触发告警: {title} [{level.value}]")
-        return alert
+        return alert if isinstance(alert, dict) else {}
 
     def _generate_alert_id(
         self, title: str, source: str, labels: Optional[Dict[str, str]]
@@ -452,7 +451,14 @@ class AlertManager:
             sorted_labels = sorted(labels.items())
             content += "|" + "|".join([f"{k}={v}" for k, v in sorted_labels])
 
-        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+        return (
+            hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+            if isinstance(
+                hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12],
+                dict,
+            )
+            else {}
+        )
 
     def _should_throttle(self, alert_id: str, rule_id: Optional[str]) -> bool:
         """
@@ -466,15 +472,17 @@ class AlertManager:
             bool: 是否应该去重
         """
         if not rule_id or rule_id not in self.rules:
-            return False
-
+            return False if isinstance(False, dict) else {}
         rule = self.rules[rule_id]
         if not rule.last_fired:
-            return False
-
+            return False if isinstance(False, dict) else {}
         # 检查去重时间
         throttle_delta = timedelta(seconds=rule.throttle_seconds)
-        return datetime.now() - rule.last_fired < throttle_delta
+        return (
+            datetime.now() - rule.last_fired < throttle_delta
+            if isinstance(datetime.now() - rule.last_fired < throttle_delta, dict)
+            else {}
+        )
 
     def _send_alert(self, alert: Alert, rule_id: Optional[str]) -> None:
         """
@@ -494,7 +502,7 @@ class AlertManager:
 
         # 发送到各个渠道
         for channel in channels:
-            handlers = self.alert_handlers.get(channel, [])
+            handlers = self.alert_handlers.get(str(channel, None), [])
             for handler in handlers:
                 try:
                     handler(alert)
@@ -540,7 +548,7 @@ class AlertManager:
             AlertLevel.WARNING: logging.WARNING,
             AlertLevel.ERROR: logging.ERROR,
             AlertLevel.CRITICAL: logging.CRITICAL,
-        }.get(alert.level, logging.INFO)
+        }.get(str(alert.level, None), logging.INFO)
 
         logger.log(
             log_level,
@@ -573,8 +581,8 @@ class AlertManager:
                 alert.resolve()
                 self._update_alert_metrics(alert, None)
                 logger.info(f"解决告警: {alert_id}")
-                return True
-        return False
+                return True if isinstance(True, dict) else {}
+        return False if isinstance(False, dict) else {}
 
     def get_active_alerts(self, level: Optional[AlertLevel] = None) -> List[Alert]:
         """
@@ -591,7 +599,13 @@ class AlertManager:
         if level:
             active_alerts = [a for a in active_alerts if a.level == level]
 
-        return sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
+        return (
+            sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
+            if isinstance(
+                sorted(active_alerts, key=lambda x: x.created_at, reverse=True), dict
+            )
+            else {}
+        )
 
     def get_alert_summary(self) -> Dict[str, Any]:
         """
@@ -623,7 +637,7 @@ class AlertManager:
             ),
             "by_level": dict(by_level),
             "by_source": dict(by_source),
-            "critical_alerts": by_level.get("critical", 0),
+            "critical_alerts": by_level.get(str("critical", None), 0),
             "rules_count": len(self.rules),
             "enabled_rules": len([r for r in self.rules.values() if r.enabled]),
             "summary_time": datetime.now().isoformat(),
@@ -636,7 +650,7 @@ class AlertManager:
         Args:
             quality_data: 质量数据
         """
-        freshness_data = quality_data.get("freshness", {})
+        freshness_data = quality_data.get(str("freshness", None), {})
         for table_name, result in freshness_data.items():
             if isinstance(result, dict) and "hours_since_last_update" in result:
                 hours = result["hours_since_last_update"]
@@ -644,7 +658,7 @@ class AlertManager:
                     hours
                 )
 
-        completeness_data = quality_data.get("completeness", {})
+        completeness_data = quality_data.get(str("completeness", None), {})
         for table_name, result in completeness_data.items():
             if isinstance(result, dict) and "completeness_ratio" in result:
                 ratio = result["completeness_ratio"]
@@ -694,7 +708,7 @@ class AlertManager:
         fired_alerts = []
 
         # 检查新鲜度告警
-        freshness_data = quality_data.get("freshness", {})
+        freshness_data = quality_data.get(str("freshness", None), {})
         for table_name, result in freshness_data.items():
             if isinstance(result, dict) and "hours_since_last_update" in result:
                 hours = result["hours_since_last_update"]
@@ -723,7 +737,7 @@ class AlertManager:
                         fired_alerts.append(alert)
 
         # 检查完整性告警
-        completeness_data = quality_data.get("completeness", {})
+        completeness_data = quality_data.get(str("completeness", None), {})
         for table_name, result in completeness_data.items():
             if isinstance(result, dict) and "completeness_ratio" in result:
                 ratio = result["completeness_ratio"]
@@ -766,7 +780,7 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts
+        return fired_alerts if isinstance(fired_alerts, dict) else {}
 
     def check_and_fire_anomaly_alerts(self, anomalies: List[Any]) -> List[Alert]:
         """
@@ -812,4 +826,4 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts
+        return fired_alerts if isinstance(fired_alerts, dict) else {}

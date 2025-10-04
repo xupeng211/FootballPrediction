@@ -39,7 +39,7 @@ class TestHealthAPI:
 class TestPredictionAPI:
     """预测API测试"""
 
-    @pytest.mark.skip(reason="需要实现auth_headers和sample_prediction_data fixtures")
+    @pytest.mark.skip(reason="需要MINIMAL_API_MODE=false加载预测路由")
     def test_create_prediction_success(
         self, api_client, auth_headers, sample_prediction_data
     ):
@@ -52,7 +52,7 @@ class TestPredictionAPI:
             }
 
             response = api_client.post(
-                "/api/predictions", json=sample_prediction_data, headers=auth_headers
+                "/api/v1/predictions", json=sample_prediction_data, headers=auth_headers
             )
 
             assert response.status_code == status.HTTP_201_CREATED
@@ -60,25 +60,25 @@ class TestPredictionAPI:
             assert data["id"] == 1
             assert data["status"] == "pending"
 
-    @pytest.mark.skip(reason="需要实现sample_prediction_data fixture")
+    @pytest.mark.skip(reason="需要MINIMAL_API_MODE=false加载预测路由")
     def test_create_prediction_unauthorized(self, api_client, sample_prediction_data):
         """测试未授权创建预测"""
-        response = api_client.post("/api/predictions", json=sample_prediction_data)
+        response = api_client.post("/api/v1/predictions", json=sample_prediction_data)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
+    @pytest.mark.skip(reason="需要MINIMAL_API_MODE=false加载预测路由")
     def test_create_prediction_invalid_data(self, api_client, auth_headers):
         """测试无效数据创建预测"""
         invalid_data = {"match_id": "invalid"}
 
         response = api_client.post(
-            "/api/predictions", json=invalid_data, headers=auth_headers
+            "/api/v1/predictions", json=invalid_data, headers=auth_headers
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
+    @pytest.mark.skip(reason="需要MINIMAL_API_MODE=false加载预测路由")
     def test_get_prediction_success(self, api_client, auth_headers):
         """测试获取预测成功"""
         with patch("src.api.predictions.PredictionService") as mock_service:
@@ -88,18 +88,18 @@ class TestPredictionAPI:
                 "confidence": 0.75,
             }
 
-            response = api_client.get("/api/predictions/1", headers=auth_headers)
+            response = api_client.get("/api/v1/predictions/1", headers=auth_headers)
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["id"] == 1
 
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
+    @pytest.mark.skip(reason="需要MINIMAL_API_MODE=false加载预测路由")
     def test_get_prediction_not_found(self, api_client, auth_headers):
         """测试获取不存在的预测"""
         with patch("src.api.predictions.PredictionService") as mock_service:
             mock_service.get_prediction.return_value = None
 
-            response = api_client.get("/api/predictions/999", headers=auth_headers)
+            response = api_client.get("/api/v1/predictions/999", headers=auth_headers)
 
             assert response.status_code == status.HTTP_404_NOT_FOUND

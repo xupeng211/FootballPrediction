@@ -120,7 +120,7 @@ else:
     app.include_router(predictions_router, prefix="/api/v1")
 
 
-@app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
+@app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
 async def root():
     """
     API服务根路径

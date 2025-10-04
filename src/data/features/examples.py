@@ -317,10 +317,10 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
         try:
             stats = feature_store.get_feature_statistics(fv_name)
             print(f"\n🔍 特征视图: {fv_name}")
-            print(f"  📈 特征数量: {stats.get('num_features', 'N/A')}")
-            print(f"  🏷️  实体: {', '.join(stats.get('entities', []))}")
-            print(f"  ⏰ TTL: {stats.get('ttl_days', 'N/A')} 天")
-            print(f"  🏷️  标签: {stats.get('tags', {})}")
+            print(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
+            print(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
+            print(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
+            print(f"  🏷️  标签: {stats.get(str('tags'), {})}")
         except Exception as e:
             print(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
 

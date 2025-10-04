@@ -275,7 +275,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     }
 
 
-@router.get("/metrics/prometheus", response_class=PlainTextResponse)
+@router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)
 async def prometheus_metrics():
     """Prometheus 指标端点（文本）。"""
     try:
