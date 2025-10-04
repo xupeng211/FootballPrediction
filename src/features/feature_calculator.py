@@ -13,7 +13,7 @@ import asyncio
 import statistics
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -156,6 +156,24 @@ class FeatureCalculator:
         features.recent_5_away_goals_for = away_goals_for
 
         return features
+
+    @staticmethod
+    def _calculate_form(matches: List[Dict[str, Any]]) -> float:
+        """根据比赛结果计算球队状态评分，范围 0-1。"""
+
+        if not matches:
+            return 0.0
+
+        points = 0
+        for match in matches:
+            result = (match or {}).get("result")
+            if result == "win":
+                points += 3
+            elif result == "draw":
+                points += 1
+
+        max_points = len(matches) * 3
+        return round(points / max_points, 4) if max_points else 0.0
 
     async def calculate_historical_matchup_features(
         self,

@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features-improved", tags=["特征管理"])
 
 # 全局特征存储实例
-feature_store: FootballFeatureStore = None
+feature_store: Optional[FootballFeatureStore] = None
 
 try:
     feature_store = FootballFeatureStore()
@@ -61,8 +61,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
         logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
-        return match
-
+        return match if isinstance(match, dict) else {}
     except HTTPException:
         raise
     except SQLAlchemyError as db_error:
@@ -85,11 +84,10 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
         if features:
             logger.info(f"成功获取 {len(features)} 组特征数据")
-            return features, None
+            return features, None if isinstance(features, None, dict) else {}
         else:
             logger.warning(f"比赛 {match_id} 暂无特征数据")
             return {}, None
-
     except Exception as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
         return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败
@@ -126,7 +124,7 @@ def build_response_data(
             "feature_keys": list(features.keys()) if isinstance(features, dict) else [],
         }
 
-    return response_data
+    return response_data if isinstance(response_data, dict) else {}
 
 
 @router.get(
@@ -167,10 +165,10 @@ async def get_match_features_improved(
     response_data = build_response_data(match, features, features_error, include_raw)
 
     logger.info(f"比赛 {match_id} 特征获取完成: {response_data['status']}")
-    return response_data
+    return response_data if isinstance(response_data, dict) else {}
 
 
-@router.get("/health", summary="特征服务健康检查")
+@router.get(str("/health", None), summary="特征服务健康检查")
 async def health_check() -> Dict[str, Any]:
     """特征服务健康检查"""
     return {

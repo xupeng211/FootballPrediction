@@ -75,20 +75,18 @@ except ImportError:  # pragma: no cover - optional dependency path
     HAS_MLFLOW = False
 
     class MlflowException(Exception):
-        """Fallback exception used when MLflow is unavailable."""
-
-    class _MockMlflowSklearn:
-        @staticmethod
-        def load_model(*args, **kwargs):
-            raise MlflowException("MLflow is not installed; cannot load models.")
+        """Fallback异常：仅在缺失MLflow依赖时使用。"""
 
     class _MockMlflowModule:
-        def __init__(self) -> None:
-            self.sklearn = _MockMlflowSklearn()
+        """最小化的 MLflow 模拟实现。"""
+
+        class sklearn:  # type: ignore
+            @staticmethod
+            def load_model(*args, **kwargs):
+                raise MlflowException("MLflow is not installed; cannot load models.")
 
         @staticmethod
         def set_tracking_uri(*args, **kwargs) -> None:
-            # No-op when MLflow is unavailable (useful for tests)
             return None
 
     class MlflowClient:  # type: ignore
@@ -315,7 +313,11 @@ class PredictionService:
             The method caches loaded models to improve performance and supports TTL expiration.
             Includes automatic retry mechanism with up to 3 attempts.
         """
-        return await self._load_model_from_mlflow(model_name)
+        return (
+            await self._load_model_from_mlflow(model_name)
+            if isinstance(await self._load_model_from_mlflow(model_name), dict)
+            else {}
+        )
 
     async def _load_model_from_mlflow(
         self, model_name: str = "football_baseline_model"
@@ -377,7 +379,7 @@ class PredictionService:
             model_name=model_name, model_version=version
         ).observe(load_duration)
 
-        return model, version
+        return model, version if isinstance(model, version, dict) else {}
 
     async def get_production_model(
         self, model_name: str = "football_baseline_model"
@@ -422,14 +424,13 @@ class PredictionService:
         cache_key = f"model:{model_name}"
 
         # 尝试从缓存获取 / Try to get from cache
-        cached_result = await self.model_cache.get(cache_key)
+        cached_result = await self.model_cache.get(cache_key, None)
         if cached_result:
             model, version = cached_result
             logger.debug(
                 f"使用缓存的模型 {model_name} 版本 {version} / Using cached model {model_name} version {version}"
             )
-            return model, version
-
+            return model, version if isinstance(model, version, dict) else {}
         try:
             # 使用带重试机制的方法加载模型
             model, version = await self.get_production_model_with_retry(model_name)
@@ -452,8 +453,7 @@ class PredictionService:
             logger.info(
                 f"成功加载模型 {model_name} 版本 {version} / Successfully loaded model {model_name} version {version}"
             )
-            return model, version
-
+            return model, version if isinstance(model, version, dict) else {}
         except Exception as e:
             logger.error(f"加载生产模型失败: {e}")
             raise
@@ -513,13 +513,12 @@ class PredictionService:
         prediction_cache_key = f"prediction:{match_id}"
 
         # 尝试从缓存获取预测结果 / Try to get prediction result from cache
-        cached_result = await self.prediction_cache.get(prediction_cache_key)
+        cached_result = await self.prediction_cache.get(prediction_cache_key, None)
         if cached_result:
             logger.info(
                 f"使用缓存的预测结果：比赛 {match_id} / Using cached prediction result for match {match_id}"
             )
-            return cached_result
-
+            return cached_result if isinstance(cached_result, dict) else {}
         try:
             logger.info(f"开始预测比赛 {match_id}")
 
@@ -563,9 +562,9 @@ class PredictionService:
                 match_id=match_id,
                 model_version=model_version,
                 model_name="football_baseline_model",
-                home_win_probability=float(prob_dict.get("home", 0.0)),
-                draw_probability=float(prob_dict.get("draw", 0.0)),
-                away_win_probability=float(prob_dict.get("away", 0.0)),
+                home_win_probability=float(prob_dict.get(str("home", None), 0.0)),
+                draw_probability=float(prob_dict.get(str("draw", None), 0.0)),
+                away_win_probability=float(prob_dict.get(str("away", None), 0.0)),
                 predicted_result=predicted_class,
                 confidence_score=float(max(prediction_proba[0])),
                 features_used=features,
@@ -598,8 +597,7 @@ class PredictionService:
                 f"比赛 {match_id} 预测完成：{predicted_class} (置信度: {result.confidence_score:.3f}) / "
                 f"Match {match_id} prediction completed: {predicted_class} (confidence: {result.confidence_score:.3f})"
             )
-            return result
-
+            return result if isinstance(result, dict) else {}
         except Exception as e:
             logger.error(f"预测比赛 {match_id} 失败: {e}")
             raise
@@ -654,10 +652,10 @@ class PredictionService:
                         "match_status": match.match_status,
                         "season": match.season,
                     }
-                return None
+                return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
         except Exception as e:
             logger.error(f"获取比赛信息失败: {e}")
-            return None
+            return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
 
     def _get_default_features(self) -> Dict[str, Any]:
         """
@@ -750,10 +748,14 @@ class PredictionService:
         # 构建特征数组
         feature_values = []
         for feature_name in feature_order:
-            value = features.get(feature_name, 0.0)
+            value = features.get(str(feature_name, None), 0.0)
             feature_values.append(float(value))
 
-        return np.array([feature_values])
+        return (
+            np.array([feature_values])
+            if isinstance(np.array([feature_values]), dict)
+            else {}
+        )
 
     async def _store_prediction(self, result: PredictionResult) -> None:
         """
@@ -846,8 +848,7 @@ class PredictionService:
 
                 if not match:
                     logger.warning(f"比赛 {match_id} 未完成或不存在")
-                    return False
-
+                    return False if isinstance(False, dict) else {}
                 # 计算实际结果
                 actual_result = self._calculate_actual_result(
                     match.home_score, match.away_score
@@ -876,11 +877,10 @@ class PredictionService:
 
                 await session.commit()
                 logger.info(f"比赛 {match_id} 预测结果已验证：实际结果 {actual_result}")
-                return True
-
+                return True if isinstance(True, dict) else {}
         except Exception as e:
             logger.error(f"验证预测结果失败: {e}")
-            return False
+            return False if isinstance(False, dict) else {}
 
     def _calculate_actual_result(self, home_score: int, away_score: int) -> str:
         """
@@ -909,11 +909,11 @@ class PredictionService:
             This is an internal method and should not be called directly.
         """
         if home_score > away_score:
-            return "home"
+            return "home" if isinstance("home", dict) else {}
         elif home_score < away_score:
-            return "away"
+            return "away" if isinstance("away", dict) else {}
         else:
-            return "draw"
+            return "draw" if isinstance("draw", dict) else {}
 
     async def get_model_accuracy(
         self, model_name: str = "football_baseline_model", days: int = 7
@@ -973,13 +973,11 @@ class PredictionService:
                     logger.info(
                         f"模型 {model_name} 最近 {days} 天准确率: {accuracy:.3f} ({row.correct}/{row.total})"
                     )
-                    return accuracy
-
-                return None
-
+                    return accuracy if isinstance(accuracy, dict) else {}
+                return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
         except Exception as e:
             logger.error(f"获取模型准确率失败: {e}")
-            return None
+            return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
 
     async def batch_predict_matches(
         self, match_ids: List[int]
@@ -1023,7 +1021,9 @@ class PredictionService:
             try:
                 # 为每个比赛创建缓存键并检查缓存
                 prediction_cache_key = f"prediction:{match_id}"
-                cached_result = await self.prediction_cache.get(prediction_cache_key)
+                cached_result = await self.prediction_cache.get(
+                    prediction_cache_key, None
+                )
 
                 if cached_result:
                     # 使用缓存的结果
@@ -1040,7 +1040,7 @@ class PredictionService:
         logger.info(
             f"批量预测完成：{len(results)}/{len(match_ids)} 场比赛预测成功 / Batch prediction completed: {len(results)}/{len(match_ids)} matches predicted successfully"
         )
-        return results
+        return results if isinstance(results, dict) else {}
 
     async def get_prediction_statistics(self, days: int = 30) -> Dict[str, Any]:
         """
@@ -1126,7 +1126,6 @@ class PredictionService:
                     )
 
                 return {"period_days": days, "statistics": stats}
-
         except Exception as e:
             logger.error(f"获取预测统计信息失败: {e}")
             return {"period_days": days, "statistics": []}

@@ -1205,7 +1205,7 @@ class AdvancedAnomalyDetector:
         """运行数据漂移检测"""
         try:
             # 获取基准数据
-            baseline_days = config.get("drift_baseline_days", 30)
+            baseline_days = config.get(str("drift_baseline_days"), 30)
             baseline_data = await self._get_baseline_data(table_name, baseline_days)
 
             if baseline_data.empty:
@@ -1227,7 +1227,7 @@ class AdvancedAnomalyDetector:
         results = []
         try:
             # 获取基准数据
-            baseline_days = config.get("drift_baseline_days", 30)
+            baseline_days = config.get(str("drift_baseline_days"), 30)
             baseline_data = await self._get_baseline_data(table_name, baseline_days)
 
             if baseline_data.empty:

@@ -103,16 +103,16 @@ class FootballKafkaConsumer:
         """
         try:
             # 提取实际的比赛数据
-            match_data = message_data.get("data", {})
-            data_source = message_data.get("source", "kafka_stream")
+            match_data = message_data.get(str("data"), {})
+            data_source = message_data.get(str("source"), "kafka_stream")
 
             # 创建RawMatchData对象
             raw_match = RawMatchData(
                 data_source=data_source,
                 raw_data=match_data,
                 collected_at=datetime.now(),
-                external_match_id=str(match_data.get("match_id", "")),
-                external_league_id=str(match_data.get("league_id", "")),
+                external_match_id=str(match_data.get(str("match_id"), "")),
+                external_league_id=str(match_data.get(str("league_id"), "")),
                 match_time=(
                     datetime.fromisoformat(match_data["match_time"])
                     if match_data.get("match_time")
@@ -146,15 +146,15 @@ class FootballKafkaConsumer:
         """
         try:
             # 提取实际的赔率数据
-            odds_data = message_data.get("data", {})
-            data_source = message_data.get("source", "kafka_stream")
+            odds_data = message_data.get(str("data"), {})
+            data_source = message_data.get(str("source"), "kafka_stream")
 
             # 创建RawOddsData对象
             raw_odds = RawOddsData(
                 data_source=data_source,
                 raw_data=odds_data,
                 collected_at=datetime.now(),
-                external_match_id=str(odds_data.get("match_id", "")),
+                external_match_id=str(odds_data.get(str("match_id"), "")),
                 bookmaker=odds_data.get("bookmaker"),
                 market_type=odds_data.get("market_type"),
             )
@@ -186,15 +186,15 @@ class FootballKafkaConsumer:
         """
         try:
             # 提取实际的比分数据
-            scores_data = message_data.get("data", {})
-            data_source = message_data.get("source", "kafka_stream")
+            scores_data = message_data.get(str("data"), {})
+            data_source = message_data.get(str("source"), "kafka_stream")
 
             # 创建RawScoresData对象
             raw_scores = RawScoresData(
                 data_source=data_source,
                 raw_data=scores_data,
                 collected_at=datetime.now(),
-                external_match_id=str(scores_data.get("match_id", "")),
+                external_match_id=str(scores_data.get(str("match_id"), "")),
                 match_status=scores_data.get("match_status"),
                 home_score=scores_data.get("home_score"),
                 away_score=scores_data.get("away_score"),
@@ -480,8 +480,8 @@ class FootballKafkaConsumer:
             处理是否成功
         """
         try:
-            topic = message_data.get("topic", "")
-            data = message_data.get("data", {})
+            topic = message_data.get(str("topic"), "")
+            data = message_data.get(str("data"), {})
 
             if "matches" in topic:
                 return await self._process_match_message(data)

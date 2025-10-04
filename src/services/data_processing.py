@@ -297,7 +297,7 @@ class DataProcessingService(BaseService):
                         )
             elif data_type == "odds":
                 # 检查赔率数据
-                outcomes = data.get("outcomes", [])
+                outcomes = data.get(str("outcomes"), [])
                 if not outcomes:
                     quality_report["issues"].append("No odds outcomes found")
                     quality_report["is_valid"] = False
@@ -566,7 +566,7 @@ class DataProcessingService(BaseService):
                                 score_info.get("status")
                             ),
                             "match_minute": score_info.get("minute"),
-                            "events": score_info.get("events", []),
+                            "events": score_info.get(str("events"), []),
                             "is_live": raw_scores.is_live,
                             "is_finished": raw_scores.is_finished,
                             # 元数据

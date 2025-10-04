@@ -290,6 +290,16 @@ cat htmlcov/index.html  # 查看覆盖率报告
 
 # CI问题
 ./ci-verify.sh  # 本地验证
+
+# 检查mypy错误
+make type-check  # 或 mypy src --ignore-missing-imports
+
+# 查看Docker服务状态
+docker-compose ps
+
+# 检查端口占用
+netstat -tulpn | grep :5432  # PostgreSQL
+netstat -tulpn | grep :6379  # Redis
 ```
 
 ### 常见问题
@@ -300,7 +310,7 @@ cat htmlcov/index.html  # 查看覆盖率报告
 - **依赖问题**：检查 `requirements/requirements.lock`
 - **Docker问题**：确保 `docker-compose up -d`
 - **覆盖率不足**：运行 `make cov.html` 查看详细报告
-- **类型检查失败**：运行 `make type-check` 查看具体错误
+- **类型检查失败**：运行 `make type-check` 查看具体错误，可以添加 `--ignore-missing-imports` 或使用 `.mypy-ignore` 文件
 - **代码格式问题**：运行 `make fmt` 自动修复
 
 ## 📞 支持

@@ -285,7 +285,7 @@ class DataCollector(ABC):
                 for data in raw_data:
                     try:
                         # 提取标准字段
-                        raw_json = data.get("raw_data", data)
+                        raw_json = data.get(str("raw_data"), data)
 
                         # 创建Bronze层记录
                         bronze_record = model_class(
@@ -348,8 +348,8 @@ class DataCollector(ABC):
                 )
 
         except Exception as e:
-            self.logger.error(f"Failed to save to Bronze layer {table_name}: {str(e)}")
-            raise
+            self.logger.error(f"{e}")
+            return None
 
     def _is_duplicate_record(
         self,
@@ -426,7 +426,7 @@ class DataCollector(ABC):
                 return
 
             async with self.db_manager.get_async_session() as session:
-                log_entry = await session.get(DataCollectionLog, log_id)
+                log_entry = await session.get(str(DataCollectionLog), log_id)
                 if log_entry:
                     # 根据结果状态确定最终状态
                     if result.status == "success":

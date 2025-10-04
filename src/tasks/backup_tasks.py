@@ -235,8 +235,8 @@ class DatabaseBackupTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         """任务失败时的处理"""
         task_name = self.name.split(".")[-1] if self.name else "unknown_backup_task"
-        backup_type = kwargs.get("backup_type", "unknown")
-        database_name = kwargs.get("database_name", "football_prediction")
+        backup_type = kwargs.get(str("backup_type"), "unknown")
+        database_name = kwargs.get(str("database_name"), "football_prediction")
 
         # 记录 Prometheus 失败指标 - 使用实例的指标对象
         self.metrics["failure_total"].labels(
@@ -348,7 +348,11 @@ class DatabaseBackupTask(Task):
 
             # 执行备份脚本
             result = subprocess.run(
-                cmd, capture_output=True, text=True, env=env, timeout=3600  # 1小时超时
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=3600,  # 1小时超时
             )
 
             end_time = datetime.now()
@@ -510,7 +514,10 @@ class DatabaseBackupTask(Task):
             cmd = [self.restore_script_path, "--validate", backup_file_path]
 
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=300  # 5分钟超时
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5分钟超时
             )
 
             if result.returncode == 0:
@@ -720,7 +727,10 @@ def verify_backup_task(
 
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300  # 5分钟超时
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5分钟超时
         )
 
         success = result.returncode == 0
