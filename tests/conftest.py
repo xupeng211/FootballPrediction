@@ -80,6 +80,15 @@ def _setup_redis_mocks():
             def __init__(self, *args, **kwargs):
                 pass
 
+        # 添加 exceptions 模块
+        class exceptions:
+            class ConnectionError(Exception):
+                pass
+            class RedisError(Exception):
+                pass
+            class TimeoutError(Exception):
+                pass
+
     class RedisAsyncioModule:
         VERSION = (5, 2, 1)
         __version__ = "5.2.1"
@@ -114,9 +123,13 @@ def _setup_redis_mocks():
             def __init__(self, *args, **kwargs):
                 pass
 
+    # 创建Redis模块实例
+    redis_module = RedisModule()
+    redis_asyncio_module = RedisAsyncioModule()
+
     # 设置所有需要的Redis模块
     redis_modules = {
-        'redis': RedisModule(),
+        'redis': redis_module,
         'redis.cluster': type('RedisClusterModule', (), {
             'RedisCluster': RedisModule.RedisCluster,
             'ClusterNode': type('ClusterNode', (), {})
@@ -124,7 +137,7 @@ def _setup_redis_mocks():
         'redis.connection': type('RedisConnectionModule', (), {
             'ConnectionPool': RedisModule.ConnectionPool
         })(),
-        'redis.asyncio': RedisAsyncioModule(),
+        'redis.asyncio': redis_asyncio_module,
         'redis.asyncio.cluster': type('RedisAsyncioClusterModule', (), {
             'RedisCluster': RedisAsyncioModule.RedisCluster
         })(),
@@ -135,6 +148,9 @@ def _setup_redis_mocks():
             'Sentinel': RedisAsyncioModule.Sentinel
         })(),
     }
+
+    # 将asyncio模块添加到redis模块的属性中
+    redis_module.asyncio = redis_asyncio_module
 
     # 添加到sys.modules
     for name, module in redis_modules.items():

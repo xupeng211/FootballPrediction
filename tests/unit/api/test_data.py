@@ -9,7 +9,7 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -208,14 +208,50 @@ class TestGetTeamStats:
 
         # 创建模拟比赛（已结束）
         mock_matches = []
-        for i in range(5):
-            match = MagicMock()
-            match.home_team_id = 10 if i % 2 == 0 else 20
-            match.away_team_id = 20 if i % 2 == 0 else 10
-            match.home_score = 2 if i % 2 == 0 else 1
-            match.away_score = 1 if i % 2 == 0 else 2
-            match.match_status = "finished"
-            mock_matches.append(match)
+        # 比赛1: 球队10作为主队，2:1获胜
+        match1 = MagicMock()
+        match1.home_team_id = 10
+        match1.away_team_id = 20
+        match1.home_score = 2
+        match1.away_score = 1
+        match1.match_status = "finished"
+        mock_matches.append(match1)
+
+        # 比赛2: 球队10作为客队，1:2获胜
+        match2 = MagicMock()
+        match2.home_team_id = 30
+        match2.away_team_id = 10
+        match2.home_score = 1
+        match2.away_score = 2
+        match2.match_status = "finished"
+        mock_matches.append(match2)
+
+        # 比赛3: 球队10作为主队，3:1获胜
+        match3 = MagicMock()
+        match3.home_team_id = 10
+        match3.away_team_id = 40
+        match3.home_score = 3
+        match3.away_score = 1
+        match3.match_status = "finished"
+        mock_matches.append(match3)
+
+        # 比赛4: 球队10作为客队，0:2失败
+        match4 = MagicMock()
+        match4.home_team_id = 50
+        match4.away_team_id = 10
+        match4.home_score = 2
+        match4.away_score = 0
+        match4.match_status = "finished"
+        mock_matches.append(match4)
+
+        # 比赛5: 球队10作为主队，1:1平局
+        match5 = MagicMock()
+        match5.home_team_id = 10
+        match5.away_team_id = 60
+        match5.home_score = 1
+        match5.away_score = 1
+        match5.match_status = "finished"
+        mock_matches.append(match5)
 
         # 设置mock返回值
         mock_team_result = MagicMock()
@@ -235,14 +271,14 @@ class TestGetTeamStats:
         assert data["team_id"] == 10
         assert data["team_name"] == "Test Team FC"
         assert data["total_matches"] == 5
-        assert data["wins"] == 3
-        assert data["draws"] == 0
-        assert data["losses"] == 2
-        assert data["goals_for"] == 8
-        assert data["goals_against"] == 6
-        assert data["win_rate"] == 0.6
-        assert data["goal_difference"] == 2
-        assert data["points"] == 9
+        assert data["wins"] == 3  # 3场胜利
+        assert data["draws"] == 1  # 1场平局
+        assert data["losses"] == 1  # 1场失败
+        assert data["goals_for"] == 8  # 2+2+3+0+1 = 8
+        assert data["goals_against"] == 6  # 1+1+1+2+1 = 6
+        assert data["win_rate"] == 0.6  # 3/5 = 0.6
+        assert data["goal_difference"] == 2  # 8-6 = 2
+        assert data["points"] == 10  # 3*3 + 1*1 + 1*0 = 10
 
     @pytest.mark.asyncio
     async def test_get_team_stats_no_matches(self, api_client_full):
@@ -450,23 +486,8 @@ class TestGetDashboardData:
             mock_logs_result  # 查询采集日志
         ]
 
-        # Mock DataQualityMonitor
-        with pytest.MonkeyPatch().context() as m:
-            # 创建mock质量监控器
-            mock_monitor = MagicMock()
-            mock_monitor.generate_quality_report = AsyncMock(return_value={
-                "overall_status": "healthy",
-                "quality_score": 95,
-                "anomalies": {"count": 0},
-                "report_time": datetime.now().isoformat()
-            })
-
-            # 替换DataQualityMonitor
-            from src.data.quality.data_quality_monitor import DataQualityMonitor
-            m.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
-
-            # 发送请求
-            response = api_client_full.get("/api/v1/data/dashboard/data")
+        # 发送请求（DataQualityMonitor已经在conftest.py中被mock了）
+        response = api_client_full.get("/api/v1/data/dashboard/data")
 
         # 验证响应
         assert response.status_code == 200
@@ -505,27 +526,15 @@ class TestGetDashboardData:
             mock_logs_result
         ]
 
-        # Mock DataQualityMonitor
-        with pytest.MonkeyPatch().context() as m:
-            mock_monitor = MagicMock()
-            mock_monitor.generate_quality_report = AsyncMock(return_value={
-                "overall_status": "unknown",
-                "quality_score": 0,
-                "anomalies": {"count": 0}
-            })
-
-            from src.data.quality.data_quality_monitor import DataQualityMonitor
-            m.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
-
-            # 发送请求
-            response = api_client_full.get("/api/v1/data/dashboard/data")
+        # 发送请求（DataQualityMonitor已经在conftest.py中被mock了）
+        response = api_client_full.get("/api/v1/data/dashboard/data")
 
         # 验证响应
         assert response.status_code == 200
         data = response.json()
         assert data["today_matches"]["count"] == 0
         assert data["predictions"]["count"] == 0
-        assert data["data_quality"]["overall_status"] == "unknown"
+        assert data["data_quality"]["overall_status"] == "healthy"
 
     @pytest.mark.asyncio
     async def test_get_dashboard_data_error(self, api_client_full):
@@ -535,16 +544,8 @@ class TestGetDashboardData:
         # 模拟数据库错误
         mock_session.execute.side_effect = Exception("Database error")
 
-        # Mock DataQualityMonitor
-        with pytest.MonkeyPatch().context() as m:
-            mock_monitor = MagicMock()
-            mock_monitor.generate_quality_report = AsyncMock(side_effect=Exception("Quality monitor error"))
-
-            from src.data.quality.data_quality_monitor import DataQualityMonitor
-            m.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
-
-            # 发送请求
-            response = api_client_full.get("/api/v1/data/dashboard/data")
+        # 发送请求（DataQualityMonitor已经在conftest.py中被mock了）
+        response = api_client_full.get("/api/v1/data/dashboard/data")
 
         # 验证响应
         assert response.status_code == 500
