@@ -17,6 +17,7 @@ tests/legacy/
 运行这些测试前，需要启动以下服务：
 
 ### 1. 使用 Docker Compose
+
 ```bash
 # 启动所有服务
 docker-compose -f tests/legacy/docker-compose.yml up -d
@@ -26,6 +27,7 @@ docker-compose -f tests/legacy/docker-compose.yml ps
 ```
 
 ### 2. 单独启动服务
+
 ```bash
 # PostgreSQL
 docker run -d --name test-postgres \
@@ -49,6 +51,7 @@ docker-compose -f tests/legacy/docker-compose.yml up kafka -d
 ## 🧪 运行测试
 
 ### 环境变量设置
+
 ```bash
 export DATABASE_URL=postgresql://postgres:testpass@localhost:5432/football_test
 export REDIS_URL=redis://localhost:6379
@@ -57,6 +60,7 @@ export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 ```
 
 ### 运行命令
+
 ```bash
 # 运行所有 legacy 测试
 pytest tests/legacy/ -v
@@ -98,6 +102,7 @@ pytest tests/legacy/ -v -s
 ## 🚨 故障排除
 
 ### PostgreSQL 连接失败
+
 ```bash
 # 检查服务是否运行
 docker ps | grep postgres
@@ -107,18 +112,21 @@ docker logs test-postgres
 ```
 
 ### Redis 连接失败
+
 ```bash
 # 测试连接
 redis-cli -h localhost -p 6379 ping
 ```
 
 ### MLflow 不可用
+
 ```bash
 # 检查服务
 curl http://localhost:5000/health
 ```
 
 ### Kafka 连接问题
+
 ```bash
 # 查看 Kafka 日志
 docker logs test-kafka
