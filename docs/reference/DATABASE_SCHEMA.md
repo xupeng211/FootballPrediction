@@ -1,3 +1,0 @@
-# DATABASE_SCHEMA
-
-本文档正在建设中...
