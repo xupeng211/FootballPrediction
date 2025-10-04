@@ -143,10 +143,10 @@ class Settings(SettingsClass):
         # Pydantic v2 configuration
         try:
             model_config = {
-                'env_file': '.env',
-                'env_file_encoding': 'utf-8',
-                'case_sensitive': False,
-                'extra': 'allow'  # Allow extra fields from environment
+                "env_file": ".env",
+                "env_file_encoding": "utf-8",
+                "case_sensitive": False,
+                "extra": "allow",  # Allow extra fields from environment
             }
         except Exception:
             # Fallback for older versions
