@@ -403,9 +403,11 @@ class FootballFeatureStore:
                     features_list.append(
                         {
                             "feature_view": fv.name,
-                            "feature_name": str(feature.name)
-                            if hasattr(feature, "name")
-                            else str(feature),
+                            "feature_name": (
+                                str(feature.name)
+                                if hasattr(feature, "name")
+                                else str(feature)
+                            ),
                             "feature_type": str(feature.dtype),
                             "description": feature.description or "",
                             "entities": [e.name for e in fv.entities],

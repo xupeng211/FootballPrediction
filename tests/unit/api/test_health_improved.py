@@ -2,9 +2,9 @@
 测试健康检查API端点（改进版）
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
 from sqlalchemy.orm import Session
 
 from src.api.health import (

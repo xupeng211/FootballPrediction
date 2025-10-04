@@ -2,8 +2,8 @@
 国际化工具函数
 """
 
-import os
 import gettext
+import os
 from pathlib import Path
 from typing import Optional
 
