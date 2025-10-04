@@ -1,0 +1,283 @@
+name: 安全健康度跟踪
+
+on:
+  schedule:
+    # 每天UTC 09:00运行（北京时间17:00）
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'requirements.txt'
+      - 'src/**'
+      - '.env*'
+      - 'requirements*.txt'
+
+jobs:
+  security-health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout 代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 缓存 pip
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-security-health-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-security-health-
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit bandit safety
+        pip install -r requirements.txt
+
+    - name: 运行安全健康度检查
+      id: health-check
+      run: |
+        python scripts/security/security_health_tracker.py
+
+        # 读取最新评分
+        if [ -f "docs/_reports/security/trend_analysis.json" ]; then
+          SCORE=$(python -c "import json; print(json.load(open('docs/_reports/security/trend_analysis.json'))['current']['score'])")
+          GRADE=$(python -c "import json; print(json.load(open('docs/_reports/security/trend_analysis.json'))['current']['grade'])")
+          TREND=$(python -c "import json; print(json.load(open('docs/_reports/security/trend_analysis.json'))['trend']['direction'])")
+
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "grade=$GRADE" >> $GITHUB_OUTPUT
+          echo "trend=$TREND" >> $GITHUB_OUTPUT
+
+          echo "✅ 安全健康度: $SCORE/100 ($GRADE) $TREND"
+        fi
+
+    - name: 更新安全徽章
+      if: success()
+      run: |
+        # 创建或更新徽章
+        SCORE="${{ steps.health-check.outputs.score }}"
+        GRADE="${{ steps.health-check.outputs.grade }}"
+
+        # 确定颜色
+        if [ "$GRADE" = "A" ]; then COLOR="brightgreen"
+        elif [ "$GRADE" = "B" ]; then COLOR="green"
+        elif [ "$GRADE" = "C" ]; then COLOR="yellow"
+        elif [ "$GRADE" = "D" ]; then COLOR="orange"
+        else COLOR="red"
+        fi
+
+        # 创建徽章JSON
+        mkdir -p .github/badges
+        cat > .github/badges/security-health.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "Security Health",
+          "message": "$SCORE/100 ($GRADE)",
+          "color": "$COLOR"
+        }
+        EOF
+
+    - name: 生成健康度趋势图
+      if: success()
+      run: |
+        python3 << 'EOF'
+        import json
+        import sys
+        from datetime import datetime, timedelta
+
+        try:
+            # 读取历史数据
+            with open('docs/_reports/security/health_history.json', 'r') as f:
+                history = json.load(f)
+
+            if len(history) >= 2:
+                # 生成Markdown表格
+                print("## 📈 安全健康度趋势（最近30天）\n")
+                print("| 日期 | 评分 | 等级 | 趋势 |")
+                print("|------|------|------|------|")
+
+                recent = history[-30:]
+                for i, entry in enumerate(recent):
+                    date = datetime.fromisoformat(entry['date']).strftime('%m-%d')
+                    score = entry['health_score']
+                    grade = entry.get('grade', 'N/A')
+
+                    # 计算趋势
+                    if i == 0:
+                        trend = "—"
+                    elif score > recent[i-1]['health_score']:
+                        trend = "↗"
+                    elif score < recent[i-1]['health_score']:
+                        trend = "↘"
+                    else:
+                        trend = "→"
+
+                    print(f"| {date} | {score} | {grade} | {trend} |")
+
+                # 生成简单ASCII图
+                print("\n### 趋势图\n")
+                print("```\n")
+
+                scores = [e['health_score'] for e in recent[-14:]]  # 最近14天
+                max_score = max(scores) if scores else 100
+                min_score = min(scores) if scores else 0
+                range_score = max_score - min_score if max_score != min_score else 1
+
+                height = 10
+                for h in range(height, 0, -1):
+                    line = ""
+                    for score in scores:
+                        normalized = int((score - min_score) / range_score * (height - 1))
+                        if normalized >= h:
+                            line += "█"
+                        else:
+                            line += " "
+                    print(f"{h*10:3d} |{line}")
+
+                print("    +" + "-" * len(scores))
+                print("     " + "".join([str(i%10) for i in range(len(scores))]))
+                print("```\n")
+
+        except Exception as e:
+            print(f"生成趋势图失败: {e}")
+        EOF
+
+    - name: 创建或更新安全问题（如果健康度下降）
+      if: failure() || contains(steps.health-check.outputs.trend, '↘')
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const score = '${{ steps.health-check.outputs.score }}';
+          const grade = '${{ steps.health-check.outputs.grade }}';
+          const trend = '${{ steps.health-check.outputs.trend }}';
+
+          // 如果健康度低于70分或下降趋势，创建Issue
+          if (parseInt(score) < 70 || trend === '↘') {
+            const title = `安全健康度需要关注 - 当前评分: ${score}/100 (${grade})`;
+
+            const body = `
+            ## 安全健康度警报
+
+            **当前评分**: ${score}/100 (${grade})
+            **趋势**: ${trend}
+            **检查时间**: ${new Date().toISOString()}
+
+            ### 建议措施
+
+            ${parseInt(score) < 60 ? `
+            - 🚨 **紧急**: 健康度过低，需要立即采取行动
+            - 优先修复所有严重和高危漏洞
+            - 进行全面的安全审计
+            ` : ''}
+
+            ${trend === '↘' ? `
+            - 📉 **下降趋势**: 安全状况正在恶化
+            - 查看最近的安全报告
+            - 分析问题根源
+            ` : ''}
+
+            ### 快速操作
+
+            1. 运行本地安全检查:
+               \`\`\`bash
+               ./scripts/security-check.sh
+               \`\`\`
+
+            2. 查看详细报告:
+               - [安全健康度报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+               - [历史趋势](https://github.com/${{ github.repository }}/blob/main/docs/_reports/security/health_report.md)
+
+            3. 修复后重新评估:
+               \`\`\`bash
+               python scripts/security/security_health_tracker.py
+               \`\`\`
+
+            ---
+            此Issue由自动化安全健康度检查创建。
+            `;
+
+            // 检查是否已有相似的开放Issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security', 'health']
+            });
+
+            const hasSimilarIssue = existingIssues.data.some(issue =>
+              issue.title.includes('安全健康度需要关注')
+            );
+
+            if (!hasSimilarIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'health']
+              });
+            }
+          }
+
+    - name: 更新项目看板
+      if: always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const score = parseInt('${{ steps.health-check.outputs.score || "0" }}');
+
+          // 根据健康度评分更新项目状态
+          let projectStatus = 'on-track';
+          let healthStatus = 'healthy';
+
+          if (score >= 90) {
+            healthStatus = 'excellent';
+          } else if (score >= 80) {
+            healthStatus = 'good';
+          } else if (score >= 70) {
+            healthStatus = 'fair';
+            projectStatus = 'at-risk';
+          } else if (score >= 60) {
+            healthStatus = 'poor';
+            projectStatus = 'off-track';
+          } else {
+            healthStatus = 'critical';
+            projectStatus = 'critical';
+          }
+
+          // 这里可以集成GitHub Project API来更新项目看板
+          console.log(`Project status: ${projectStatus}`);
+          console.log(`Health status: ${healthStatus}`);
+
+    - name: 上传报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-health-report
+        path: |
+          docs/_reports/security/health_report.md
+          docs/_reports/security/health_history.json
+          docs/_reports/security/trend_analysis.json
+          .github/badges/
+
+    - name: 发送通知（仅低健康度）
+      if: failure() || (steps.health-check.outputs.score && '${{ steps.health-check.outputs.score }}' < '70')
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: |
+          🚨 安全健康度警报
+
+          当前评分: ${{ steps.health-check.outputs.score }}/100 (${{ steps.health-check.outputs.grade }})
+          趋势: ${{ steps.health-check.outputs.trend }}
+
+          请立即查看并处理安全问题。
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SECURITY_SLACK_WEBHOOK }}
