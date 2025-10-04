@@ -116,7 +116,7 @@ class FootballFeatureStore:
             # 写入配置文件
             config_path = self.repo_path / "feature_store.yaml"
             with open(config_path, "w") as f:
-                f.write(config.yaml())
+                f.write(config.to_yaml())
 
             # 初始化FeatureStore实例
             self._store = FeatureStore(repo_path=str(self.repo_path))
@@ -181,7 +181,7 @@ class FootballFeatureStore:
 
             # 写入特征数据
             self._store.push(
-                push_source_name=feature_view_name, df=df, to="online_and_offline"
+                push_source_name=feature_view_name, df=df, to="online"
             )
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
@@ -367,8 +367,8 @@ class FootballFeatureStore:
                     features_list.append(
                         {
                             "feature_view": fv.name,
-                            "feature_name": feature.name,
-                            "feature_type": feature.dtype.name,
+                            "feature_name": str(feature.name) if hasattr(feature, "name") else str(feature),
+                            "feature_type": str(feature.dtype),
                             "description": feature.description or "",
                             "entities": [e.name for e in fv.entities],
                             "tags": fv.tags,
