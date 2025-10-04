@@ -49,10 +49,13 @@ def service() -> DataProcessingService:
     svc.data_cleaner = cleaner
 
     missing_handler = MagicMock()
-    missing_handler.handle_missing_match_data.side_effect = (
-        lambda data: {**data, "processed": True}
+    missing_handler.handle_missing_match_data.side_effect = lambda data: {
+        **data,
+        "processed": True,
+    }
+    missing_handler.handle_missing_features = AsyncMock(
+        side_effect=lambda *_: pd.DataFrame()
     )
-    missing_handler.handle_missing_features = AsyncMock(side_effect=lambda *_: pd.DataFrame())
     svc.missing_handler = missing_handler
 
     svc.cache_manager = DummyCache()
@@ -74,7 +77,8 @@ async def test_process_raw_match_data_dict(service: DataProcessingService):
     assert processed is not None
     assert processed["processed"] is True
     assert any(
-        call[0].startswith("match:match-500") for call in service.cache_manager.aset_calls
+        call[0].startswith("match:match-500")
+        for call in service.cache_manager.aset_calls
     )
 
 

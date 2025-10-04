@@ -22,9 +22,11 @@ try:
     import great_expectations as gx
     from great_expectations.core.yaml_handler import YAMLHandler
     from great_expectations.exceptions import DataContextError
+
     HAS_GREAT_EXPECTATIONS = True
 except ImportError:
     HAS_GREAT_EXPECTATIONS = False
+
     # Create placeholder objects to prevent undefined errors
     class MockGX:
         def get_context(self, **kwargs):

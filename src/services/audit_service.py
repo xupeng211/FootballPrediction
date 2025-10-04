@@ -5,7 +5,12 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar
 from contextvars import ContextVar
 from fastapi import Request
 from src.database.connection import DatabaseManager
-from src.database.models.audit_log import AuditAction, AuditLog, AuditSeverity, AuditLogSummary
+from src.database.models.audit_log import (
+    AuditAction,
+    AuditLog,
+    AuditSeverity,
+    AuditLogSummary,
+)
 from sqlalchemy import and_, desc
 import asyncio
 import hashlib
@@ -27,8 +32,11 @@ F = TypeVar("F", bound=Callable[..., Any])
 # 上下文变量，用于在请求处理过程中传递审计信息
 audit_context: ContextVar[Dict[str, Any]] = ContextVar("audit_context", default={})
 logger = logging.getLogger(__name__)
+
+
 class AuditContext:
     """审计上下文管理器"""
+
     def __init__(
         self,
         user_id: str,
@@ -54,6 +62,7 @@ class AuditContext:
         self.session_id = session_id
         self.ip_address = ip_address
         self.user_agent = user_agent
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -64,8 +73,11 @@ class AuditContext:
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
         }
+
+
 class AuditService:
     """权限审计服务"""
+
     def __init__(self):
         """初始化审计服务"""
         self.db_manager = DatabaseManager()
@@ -102,14 +114,17 @@ class AuditService:
             AuditAction.RESTORE,
             AuditAction.SCHEMA_CHANGE,
         }
+
     def _hash_sensitive_value(self, value: str) -> str:
         """对敏感数据进行哈希处理"""
         if not value:
             return ""
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
     def _hash_sensitive_data(self, data: str) -> str:
         """对敏感数据进行哈希处理 - 别名方法用于测试兼容性"""
         return self._hash_sensitive_value(data)
+
     def _sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """清理数据中的敏感信息"""
         if not isinstance(data, dict):
@@ -136,6 +151,7 @@ class AuditService:
             else:
                 sanitized[key] = value
         return sanitized
+
     def _create_audit_log_entry(
         self,
         context: AuditContext,
@@ -150,6 +166,7 @@ class AuditService:
     ) -> AuditLog:
         """创建审计日志条目对象 - 用于测试"""
         from src.database.models.audit_log import AuditLog, AuditSeverity
+
         # 如果传入severity则使用之，否则默认INFO
         final_severity = severity if severity is not None else AuditSeverity.INFO
         return AuditLog(
@@ -163,17 +180,20 @@ class AuditService:
             severity=final_severity,
             timestamp=datetime.now(),
         )
+
     def _is_sensitive_table(self, table_name: Any) -> bool:
         """判断是否为敏感表 - 用于测试"""
         if isinstance(table_name, str):
             return table_name.lower() in self.sensitive_tables
         return False
+
     def _contains_pii(self, data: Dict[str, Any]) -> bool:
         """检查数据是否包含个人身份信息 - 用于测试"""
         if not isinstance(data, dict):
             return False
         pii_fields = {"email", "phone", "ssn", "credit_card", "bank_account"}
         return any(key.lower() in pii_fields for key in data.keys())
+
     def _is_sensitive_data(
         self, table_name: Optional[str], column_name: Optional[str]
     ) -> bool:
@@ -185,6 +205,7 @@ class AuditService:
                 sensitive in column_name.lower() for sensitive in self.sensitive_columns
             )
         return False
+
     def _determine_severity(
         self,
         action: str,
@@ -203,6 +224,7 @@ class AuditService:
         if action == AuditAction.READ:
             return AuditSeverity.LOW
         return AuditSeverity.MEDIUM
+
     def _determine_compliance_category(
         self, action: str, table_name: Optional[str], is_sensitive: bool
     ) -> str:
@@ -217,6 +239,7 @@ class AuditService:
             return "FINANCIAL"
         else:
             return "GENERAL"
+
     async def log_operation(
         self,
         action: str,
@@ -336,12 +359,15 @@ class AuditService:
                 pass
             self.logger.error(f"记录审计日志失败: {e}")
             return None
+
     def set_audit_context(self, context: AuditContext) -> None:
         """设置审计上下文"""
         audit_context.set(context.to_dict())
+
     def get_audit_context(self) -> Dict[str, Any]:
         """获取审计上下文"""
         return audit_context.get({})
+
     async def get_user_audit_summary(
         self, user_id: str, days: int = 30
     ) -> Dict[str, Any]:
@@ -349,6 +375,7 @@ class AuditService:
         async with self.db_manager.get_async_session() as session:
             summary = AuditLogSummary(session)
             return summary.get_user_activity_summary(user_id, days)
+
     async def get_high_risk_operations(
         self, hours: int = 24, limit: int = 100
     ) -> List[Dict[str, Any]]:
@@ -369,6 +396,7 @@ class AuditService:
                 .limit(limit)
             )
             return [log.to_dict() for log in high_risk_logs.scalars()]
+
     def log_action(self, action: str, user_id: str, metadata: dict = None) -> dict:
         """记录操作日志 - 同步版本用于测试"""
         log_entry = {
@@ -383,11 +411,13 @@ class AuditService:
             self._logs = []
         self._logs.append(log_entry)
         return log_entry
+
     def get_user_audit_logs(self, user_id: str) -> list:
         """获取用户审计日志"""
         if not hasattr(self, "_logs"):
             return []
         return [log for log in self._logs if log.get("user_id") == user_id]
+
     def get_audit_summary(self) -> dict:
         """获取审计摘要"""
         if not hasattr(self, "_logs"):
@@ -398,11 +428,13 @@ class AuditService:
             "users": list(users),
             "actions": list(set(log.get("action") for log in self._logs)),
         }
+
     async def async_log_action(
         self, action: str, user_id: str, metadata: dict = None
     ) -> dict:
         """异步记录操作日志"""
         return self.log_action(action, user_id, metadata)
+
     def batch_log_actions(self, actions: list) -> list:
         """批量记录操作日志"""
         results = []
@@ -414,6 +446,7 @@ class AuditService:
             )
             results.append(result)
         return results
+
     def audit_operation(
         self,
         action: str,
@@ -429,6 +462,7 @@ class AuditService:
             extract_changes: 是否尝试提取数据变更
             ignore_read: 是否忽略读操作
         """
+
         def decorator(func: F) -> F:
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -499,6 +533,7 @@ class AuditService:
                         },
                     )
                     raise
+
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
                 start_time = time.time()
@@ -542,11 +577,14 @@ class AuditService:
                     if inspect.isawaitable(call):
                         asyncio.run(call)
                     raise
+
             if inspect.iscoroutinefunction(func):
                 return async_wrapper  # type: ignore
             else:
                 return sync_wrapper  # type: ignore
+
         return decorator
+
     def _extract_record_id(self, result: Any) -> str:
         """从结果中提取记录ID - 用于测试，不存在则返回"unknown"""
         try:
@@ -562,8 +600,12 @@ class AuditService:
         except Exception:
             pass
         return "unknown"
+
+
 # 全局审计服务实例
 audit_service = AuditService()
+
+
 def extract_request_context(request: Request) -> AuditContext:
     """从请求中提取审计上下文"""
     # 从请求头或认证信息中提取用户信息
@@ -588,6 +630,8 @@ def extract_request_context(request: Request) -> AuditContext:
         ip_address=ip_address,
         user_agent=user_agent,
     )
+
+
 def audit_operation(
     action: str,
     table_name: Optional[str] = None,
@@ -612,6 +656,7 @@ def audit_operation(
             # 更新用户逻辑
             pass
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -692,10 +737,12 @@ def audit_operation(
                 )
                 # 重新抛出异常
                 raise
+
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             # 同步版本的包装器（如果需要）
             return asyncio.run(async_wrapper(*args, **kwargs))
+
         # 根据原函数是否为异步决定返回哪个包装器
         if inspect.iscoroutinefunction(func):
             return async_wrapper  # type: ignore
@@ -726,8 +773,12 @@ def audit_operation(
                     # 记录错误但不影响原函数执行
                     logger.error(f"审计日志记录失败: {e}")
                 return result
+
             return sync_wrapper_fixed  # type: ignore
+
     return decorator
+
+
 def audit_database_operation(
     action: str, table_name: str, extract_record_id: bool = True
 ):
@@ -738,6 +789,7 @@ def audit_database_operation(
         table_name: 目标表名
         extract_record_id: 是否提取记录ID
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -785,6 +837,7 @@ def audit_database_operation(
                 )
                 # 重新抛出异常
                 raise
+
         # 根据原函数是否为异步决定返回哪个包装器
         if inspect.iscoroutinefunction(func):
             return async_wrapper  # type: ignore[return-value]
@@ -793,21 +846,33 @@ def audit_database_operation(
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
                 return asyncio.run(async_wrapper(*args, **kwargs))
+
             return sync_wrapper  # type: ignore
+
     return decorator
+
+
 # 便捷的装饰器别名
 def audit_create(table_name):
     """创建操作审计装饰器"""
     return audit_operation(AuditAction.CREATE, table_name)
+
+
 def audit_read(table_name):
     """读取操作审计装饰器"""
     return audit_operation(AuditAction.READ, table_name, ignore_read=False)
+
+
 def audit_update(table_name):
     """更新操作审计装饰器"""
     return audit_operation(AuditAction.UPDATE, table_name, extract_changes=True)
+
+
 def audit_delete(table_name):
     """删除操作审计装饰器"""
     return audit_operation(AuditAction.DELETE, table_name)
+
+
 # 导出主要组件
 __all__ = [
     "AuditService",

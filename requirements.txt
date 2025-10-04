@@ -1,0 +1,55 @@
+# =============================================================================
+# Football Prediction System - Production Dependencies
+# =============================================================================
+# 核心框架
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+
+# 数据库
+sqlalchemy==2.0.36
+alembic==1.16.5
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+
+# 缓存
+redis==5.2.1
+aioredis==2.0.1
+
+# 认证和安全
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.18
+
+# 数据处理
+pandas==2.2.3
+numpy==1.26.4
+pydantic==2.10.5
+pydantic-settings==2.7.1
+
+# HTTP客户端
+httpx==0.28.1
+requests==2.32.3
+
+# 任务队列
+celery==5.4.0
+kombu==5.4.2
+
+# 监控和日志
+prometheus-client==0.21.1
+structlog==25.1.0
+
+# 工具库
+python-dateutil==2.9.0.post0
+pytz==2024.2
+click==8.1.8
+
+# 机器学习（生产必需）
+mlflow==2.18.0
+scikit-learn==1.6.0
+joblib==1.4.2
+
+# 其他依赖
+typer==0.15.1
+rich==13.9.4
+email-validator==2.2.0

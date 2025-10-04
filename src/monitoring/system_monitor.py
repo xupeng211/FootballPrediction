@@ -75,12 +75,14 @@ class SystemMonitor:
             "app_uptime_seconds", "Application uptime in seconds"
         )
         self.app_requests_total = self._create_counter(
-            "app_requests_total", "Total number of HTTP requests",
-            ["method", "endpoint", "status_code"]
+            "app_requests_total",
+            "Total number of HTTP requests",
+            ["method", "endpoint", "status_code"],
         )
         self.app_request_duration_seconds = self._create_histogram(
-            "app_request_duration_seconds", "HTTP request duration in seconds",
-            ["method", "endpoint"]
+            "app_request_duration_seconds",
+            "HTTP request duration in seconds",
+            ["method", "endpoint"],
         )
 
         # 数据库指标
@@ -91,18 +93,21 @@ class SystemMonitor:
             "db_connections_total", "Total number of database connections"
         )
         self.db_query_duration_seconds = self._create_histogram(
-            "db_query_duration_seconds", "Database query duration in seconds",
-            ["operation", "table"]
+            "db_query_duration_seconds",
+            "Database query duration in seconds",
+            ["operation", "table"],
         )
         self.db_slow_queries_total = self._create_counter(
-            "db_slow_queries_total", "Total number of slow database queries",
-            ["operation", "table"]
+            "db_slow_queries_total",
+            "Total number of slow database queries",
+            ["operation", "table"],
         )
 
         # 缓存指标
         self.cache_operations_total = self._create_counter(
-            "cache_operations_total", "Total number of cache operations",
-            ["operation", "cache_type", "result"]
+            "cache_operations_total",
+            "Total number of cache operations",
+            ["operation", "cache_type", "result"],
         )
         self.cache_hit_ratio = self._create_gauge(
             "cache_hit_ratio", "Cache hit ratio", ["cache_type"]
@@ -113,49 +118,61 @@ class SystemMonitor:
 
         # 业务指标
         self.business_predictions_total = self._create_counter(
-            "business_predictions_total", "Total number of predictions made",
-            ["model_version", "league"]
+            "business_predictions_total",
+            "Total number of predictions made",
+            ["model_version", "league"],
         )
         self.business_prediction_accuracy = self._create_gauge(
-            "business_prediction_accuracy", "Prediction accuracy rate",
-            ["model_version", "time_period"]
+            "business_prediction_accuracy",
+            "Prediction accuracy rate",
+            ["model_version", "time_period"],
         )
         self.business_data_collection_jobs_total = self._create_counter(
-            "business_data_collection_jobs_total", "Total number of data collection jobs",
-            ["data_source", "status"]
+            "business_data_collection_jobs_total",
+            "Total number of data collection jobs",
+            ["data_source", "status"],
         )
 
         # ML模型指标
         self.ml_model_inference_duration_seconds = self._create_histogram(
-            "ml_model_inference_duration_seconds", "ML model inference duration in seconds",
-            ["model_name", "model_version"]
+            "ml_model_inference_duration_seconds",
+            "ML model inference duration in seconds",
+            ["model_name", "model_version"],
         )
         self.ml_model_training_duration_seconds = self._create_histogram(
-            "ml_model_training_duration_seconds", "ML model training duration in seconds",
-            ["model_name", "model_version"]
+            "ml_model_training_duration_seconds",
+            "ML model training duration in seconds",
+            ["model_name", "model_version"],
         )
         self.ml_model_accuracy = self._create_gauge(
-            "ml_model_accuracy", "ML model accuracy score",
-            ["model_name", "model_version", "metric_type"]
+            "ml_model_accuracy",
+            "ML model accuracy score",
+            ["model_name", "model_version", "metric_type"],
         )
 
-    def _create_counter(self, name: str, description: str, labels: List[str] = None) -> Counter:
+    def _create_counter(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Counter:
         """创建Counter指标"""
         try:
             return Counter(name, description, labels or [], registry=self.registry)
         except ValueError:
             from unittest.mock import Mock
+
             mock = Mock()
             mock.inc = Mock()
             mock.labels = Mock(return_value=mock)
             return mock
 
-    def _create_gauge(self, name: str, description: str, labels: List[str] = None) -> Gauge:
+    def _create_gauge(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Gauge:
         """创建Gauge指标"""
         try:
             return Gauge(name, description, labels or [], registry=self.registry)
         except ValueError:
             from unittest.mock import Mock
+
             mock = Mock()
             mock.set = Mock()
             mock.inc = Mock()
@@ -163,12 +180,15 @@ class SystemMonitor:
             mock.labels = Mock(return_value=mock)
             return mock
 
-    def _create_histogram(self, name: str, description: str, labels: List[str] = None) -> Histogram:
+    def _create_histogram(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Histogram:
         """创建Histogram指标"""
         try:
             return Histogram(name, description, labels or [], registry=self.registry)
         except ValueError:
             from unittest.mock import Mock
+
             mock = Mock()
             mock.observe = Mock()
             mock.labels = Mock(return_value=mock)
@@ -233,7 +253,7 @@ class SystemMonitor:
             self.system_memory_percent.set(memory.percent)
 
             # 磁盘使用率
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             self.system_disk_percent.set(disk.percent)
 
             # 进程资源使用
@@ -287,13 +307,15 @@ class SystemMonitor:
                 info = redis_manager.get_info()
                 if info:
                     # Redis连接数
-                    if 'connected_clients' in info:
+                    if "connected_clients" in info:
                         # 这里可以添加Redis连接数监控
                         pass
 
                     # Redis内存使用
-                    if 'used_memory' in info:
-                        self.cache_size_bytes.labels(cache_type='redis').set(info['used_memory'])
+                    if "used_memory" in info:
+                        self.cache_size_bytes.labels(cache_type="redis").set(
+                            info["used_memory"]
+                        )
 
             except Exception:
                 # Redis连接失败，记录异常但不中断监控
@@ -313,7 +335,9 @@ class SystemMonitor:
             logger.error(f"收集应用指标失败: {e}")
 
     # 便捷方法
-    def record_request(self, method: str, endpoint: str, status_code: int, duration: float):
+    def record_request(
+        self, method: str, endpoint: str, status_code: int, duration: float
+    ):
         """记录HTTP请求"""
         self.app_requests_total.labels(
             method=method, endpoint=endpoint, status_code=status_code
@@ -322,16 +346,16 @@ class SystemMonitor:
             method=method, endpoint=endpoint
         ).observe(duration)
 
-    def record_database_query(self, operation: str, table: str, duration: float, is_slow: bool = False):
+    def record_database_query(
+        self, operation: str, table: str, duration: float, is_slow: bool = False
+    ):
         """记录数据库查询"""
-        self.db_query_duration_seconds.labels(
-            operation=operation, table=table
-        ).observe(duration)
+        self.db_query_duration_seconds.labels(operation=operation, table=table).observe(
+            duration
+        )
 
         if is_slow:
-            self.db_slow_queries_total.labels(
-                operation=operation, table=table
-            ).inc()
+            self.db_slow_queries_total.labels(operation=operation, table=table).inc()
 
     def record_cache_operation(self, operation: str, cache_type: str, result: str):
         """记录缓存操作"""
@@ -345,7 +369,9 @@ class SystemMonitor:
             model_version=model_version, league=league
         ).inc()
 
-    def record_model_inference(self, model_name: str, model_version: str, duration: float):
+    def record_model_inference(
+        self, model_name: str, model_version: str, duration: float
+    ):
         """记录模型推理"""
         self.ml_model_inference_duration_seconds.labels(
             model_name=model_name, model_version=model_version
@@ -360,7 +386,7 @@ class SystemMonitor:
             "version": "1.0.0",
             "components": {},
             "metrics": {},
-            "checks": {}
+            "checks": {},
         }
 
         # 执行所有健康检查
@@ -370,7 +396,7 @@ class SystemMonitor:
             self._check_system_resources(),
             self._check_application_health(),
             self._check_external_services(),
-            self._check_data_pipeline()
+            self._check_data_pipeline(),
         ]
 
         results = await asyncio.gather(*checks, return_exceptions=True)
@@ -379,10 +405,20 @@ class SystemMonitor:
         warning_count = 0
 
         for i, result in enumerate(results):
-            check_name = ["database", "redis", "system_resources", "application", "external_services", "data_pipeline"][i]
+            check_name = [
+                "database",
+                "redis",
+                "system_resources",
+                "application",
+                "external_services",
+                "data_pipeline",
+            ][i]
 
             if isinstance(result, Exception):
-                health_status["components"][check_name] = {"status": "error", "error": str(result)}
+                health_status["components"][check_name] = {
+                    "status": "error",
+                    "error": str(result),
+                }
                 unhealthy_count += 1
             else:
                 health_status["components"][check_name] = result
@@ -404,7 +440,7 @@ class SystemMonitor:
             "total_components": len(checks),
             "unhealthy_components": unhealthy_count,
             "warning_components": warning_count,
-            "healthy_components": len(checks) - unhealthy_count - warning_count
+            "healthy_components": len(checks) - unhealthy_count - warning_count,
         }
 
         return health_status
@@ -420,7 +456,9 @@ class SystemMonitor:
 
                 # 查询性能测试
                 perf_start = time.time()
-                await session.execute(text("SELECT COUNT(*) FROM information_schema.tables"))
+                await session.execute(
+                    text("SELECT COUNT(*) FROM information_schema.tables")
+                )
                 query_time = time.time() - perf_start
 
                 # 连接池状态
@@ -433,7 +471,7 @@ class SystemMonitor:
                         "checked_in": pool.checkedin(),
                         "checked_out": pool.checkedout(),
                         "overflow": pool.overflow(),
-                        "invalidated": pool.invalidated()
+                        "invalidated": pool.invalidated(),
                     }
 
                 response_time = time.time() - start_time
@@ -452,7 +490,7 @@ class SystemMonitor:
                     "query_time": query_time,
                     "basic_health": basic_health,
                     "pool_status": pool_status,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         except Exception as e:
@@ -460,7 +498,7 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def _check_redis(self) -> Dict[str, Any]:
@@ -502,7 +540,7 @@ class SystemMonitor:
                 "read_time": read_time,
                 "connected_clients": info.get("connected_clients", 0) if info else 0,
                 "used_memory": info.get("used_memory", 0) if info else 0,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -510,14 +548,14 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def _check_system_resources(self) -> Dict[str, Any]:
         """检查系统资源健康状态"""
         try:
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             cpu_percent = psutil.cpu_percent(interval=1)
 
             # 检查进程状态
@@ -547,7 +585,9 @@ class SystemMonitor:
                 status = "unhealthy"
 
             if process_memory > 2 * 1024 * 1024 * 1024:  # 进程内存超过2GB
-                warnings.append(f"进程内存使用过高: {process_memory / 1024 / 1024:.1f}MB")
+                warnings.append(
+                    f"进程内存使用过高: {process_memory / 1024 / 1024:.1f}MB"
+                )
                 status = "warning"
 
             return {
@@ -558,7 +598,7 @@ class SystemMonitor:
                 "process_memory_mb": process_memory / 1024 / 1024,
                 "process_cpu_percent": process_cpu,
                 "warnings": warnings,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -566,7 +606,7 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def _check_application_health(self) -> Dict[str, Any]:
@@ -583,12 +623,14 @@ class SystemMonitor:
                 # 检查最近1小时的错误数量
                 one_hour_ago = datetime.now() - timedelta(hours=1)
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                     SELECT COUNT(*) as error_count
                     FROM error_logs
                     WHERE created_at >= :time_limit
-                    """),
-                    {"time_limit": one_hour_ago}
+                    """
+                    ),
+                    {"time_limit": one_hour_ago},
                 )
                 recent_errors = result.scalar()
 
@@ -600,14 +642,16 @@ class SystemMonitor:
 
                 # 检查任务失败率
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                     SELECT
                         COUNT(*) as total_tasks,
                         COUNT(CASE WHEN error_message IS NOT NULL THEN 1 END) as failed_tasks
                     FROM error_logs
                     WHERE created_at >= :time_limit
-                    """),
-                    {"time_limit": one_hour_ago}
+                    """
+                    ),
+                    {"time_limit": one_hour_ago},
                 )
                 task_stats = result.fetchone()
 
@@ -624,7 +668,7 @@ class SystemMonitor:
                 "recent_errors": recent_errors,
                 "failure_rate": failure_rate if task_stats else 0,
                 "warnings": warnings,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -632,7 +676,7 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def _check_external_services(self) -> Dict[str, Any]:
@@ -644,6 +688,7 @@ class SystemMonitor:
             # 检查MLflow服务
             try:
                 import mlflow
+
                 # 尝试连接MLflow tracking server
                 mlflow_client = mlflow.tracking.MlflowClient()
                 mlflow_client.search_experiments(max_results=1)
@@ -655,6 +700,7 @@ class SystemMonitor:
             # 检查Kafka服务（如果配置）
             try:
                 from src.streaming.kafka_producer import get_kafka_producer
+
                 get_kafka_producer()
                 # 简单的健康检查
                 services_status["kafka"] = {"status": "healthy"}
@@ -667,7 +713,7 @@ class SystemMonitor:
             return {
                 "status": status,
                 "services": services_status,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -675,7 +721,7 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     async def _check_data_pipeline(self) -> Dict[str, Any]:
@@ -690,12 +736,14 @@ class SystemMonitor:
             async with get_async_session() as session:
                 # 检查数据新鲜度
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                     SELECT
                         MAX(created_at) as latest_data_time,
                         COUNT(*) as total_records
                     FROM matches
-                    """)
+                    """
+                    )
                 )
                 match_stats = result.fetchone()
 
@@ -711,11 +759,13 @@ class SystemMonitor:
 
                 # 检查数据处理积压
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                     SELECT COUNT(*) as backlog_count
                     FROM raw_matches
                     WHERE processed = false
-                    """)
+                    """
+                    )
                 )
                 backlog = result.scalar()
 
@@ -727,11 +777,15 @@ class SystemMonitor:
 
             return {
                 "status": status,
-                "latest_data_time": match_stats.latest_data_time.isoformat() if match_stats and match_stats.latest_data_time else None,
+                "latest_data_time": (
+                    match_stats.latest_data_time.isoformat()
+                    if match_stats and match_stats.latest_data_time
+                    else None
+                ),
                 "total_records": match_stats.total_records if match_stats else 0,
                 "backlog_count": backlog,
                 "warnings": warnings,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -739,7 +793,7 @@ class SystemMonitor:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
 

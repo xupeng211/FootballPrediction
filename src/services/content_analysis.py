@@ -11,11 +11,14 @@ from .base import BaseService
 提供内容分析和处理功能。
 """
 
+
 class ContentAnalysisService(BaseService):
     """内容分析服务"""
+
     def __init__(self):
         super().__init__("ContentAnalysisService")
         self._initialized = False
+
     async def initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
@@ -23,10 +26,12 @@ class ContentAnalysisService(BaseService):
         # 在实际生产环境中，这里会加载ML模型和建立外部连接
         self._initialized = True
         return True
+
     async def shutdown(self) -> None:
         """关闭服务"""
         self.logger.info(f"正在关闭 {self.name}")
         self._initialized = False
+
     async def analyze_content(self, content: Content) -> Optional[AnalysisResult]:
         """分析内容"""
         if not self._initialized:
@@ -61,6 +66,7 @@ class ContentAnalysisService(BaseService):
             timestamp=datetime.now(),
             content_id=content.id,
         )
+
     async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
         """批量分析内容"""
         results: List[AnalysisResult] = []
@@ -69,9 +75,19 @@ class ContentAnalysisService(BaseService):
             if result:
                 results.append(result)
         return results
+
     def _categorize_content(self, text: str) -> str:
         """内容分类"""
-        football_keywords = ["足球", "比赛", "进球", "球队", "联赛", "英超", "西甲", "欧冠"]
+        football_keywords = [
+            "足球",
+            "比赛",
+            "进球",
+            "球队",
+            "联赛",
+            "英超",
+            "西甲",
+            "欧冠",
+        ]
         prediction_keywords = ["预测", "分析", "赔率", "投注", "胜平负"]
         text_lower = text.lower()
         if any(keyword in text_lower for keyword in football_keywords):
@@ -79,6 +95,7 @@ class ContentAnalysisService(BaseService):
                 return "足球预测"
             return "足球新闻"
         return "一般内容"
+
     def _calculate_quality_score(self, content: Content) -> float:
         """计算内容质量分数"""
         if content.content_type == "text":
@@ -92,6 +109,7 @@ class ContentAnalysisService(BaseService):
             length_bonus = min(word_count / 500 * 0.2, 0.2)
             return min(base_score + keyword_bonus + length_bonus, 1.0)
         return 0.5
+
     def analyze_text(self, text: str) -> dict:
         """分析文本内容 - 同步版本用于测试"""
         if not text:

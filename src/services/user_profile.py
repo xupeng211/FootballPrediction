@@ -11,11 +11,14 @@ from .base import BaseService
 提供用户画像生成和管理功能。
 """
 
+
 class UserProfileService(BaseService):
     """用户画像服务"""
+
     def __init__(self) -> None:
         super().__init__("UserProfileService")
         self._user_profiles: Dict[str, UserProfile] = {}
+
     async def initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
@@ -23,10 +26,12 @@ class UserProfileService(BaseService):
         # 在实际生产环境中，这里会从数据库加载用户数据
         self._initialized = True
         return True
+
     async def shutdown(self) -> None:
         """关闭服务"""
         self.logger.info(f"正在关闭 {self.name}")
         self._user_profiles.clear()
+
     async def generate_profile(self, user: User) -> UserProfile:
         """生成用户画像"""
         self.logger.info(f"正在生成用户画像: {user.id}")
@@ -37,8 +42,10 @@ class UserProfileService(BaseService):
         content_preferences = self._analyze_content_preferences(user)
         profile = UserProfile(
             user_id=user.id,
-            display_name=getattr(user, 'display_name', user.username),
-            email=getattr(user.profile, 'email', '') if hasattr(user, 'profile') else '',
+            display_name=getattr(user, "display_name", user.username),
+            email=(
+                getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
+            ),
             preferences={
                 "interests": interests,
                 "content_type": content_preferences.get("preferred_type", "text"),
@@ -50,9 +57,11 @@ class UserProfileService(BaseService):
         )
         self._user_profiles[user.id] = profile
         return profile
+
     async def get_profile(self, user_id: str) -> Optional[UserProfile]:
         """获取用户画像"""
         return self._user_profiles.get(user_id)
+
     async def update_profile(
         self, user_id: str, updates: Dict[str, Any]
     ) -> Optional[UserProfile]:
@@ -68,16 +77,18 @@ class UserProfileService(BaseService):
                 # Assume other keys are part of preferences
                 profile.preferences[key] = value
         return profile
+
     def _analyze_user_interests(self, user: User) -> List[str]:
         """分析用户兴趣"""
         # 在实际系统中，这里会基于用户行为分析兴趣
         # 现在提供默认的兴趣列表
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
-        if hasattr(user, 'profile') and hasattr(user.profile, 'favorite_teams'):
+        if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
             if user.profile.favorite_teams:
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
+
     def _analyze_behavior_patterns(self, user: User) -> Dict[str, Any]:
         """分析用户行为模式"""
         # 在实际系统中，这里会基于用户日志分析行为模式
@@ -87,6 +98,7 @@ class UserProfileService(BaseService):
             "content_consumption_rate": "medium",
             "prediction_activity": "regular",
         }
+
     def _analyze_content_preferences(self, user: User) -> Dict[str, Any]:
         """分析内容偏好"""
         return {
@@ -95,6 +107,7 @@ class UserProfileService(BaseService):
             "content_length": "medium",
             "preferred_leagues": ["PL", "PD", "SA"],  # 英超、西甲、意甲
         }
+
     def _get_notification_settings(self, user: User) -> Dict[str, Any]:
         """获取通知设置"""
         return {
@@ -103,11 +116,13 @@ class UserProfileService(BaseService):
             "match_reminders": True,
             "prediction_updates": True,
         }
+
     def create_profile(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """创建用户画像 - 同步版本用于测试"""
         if not user_data or not user_data.get("user_id"):
             return {"status": "error", "message": "Empty or invalid user data"}
         from src.models import UserProfile
+
         user_id = user_data["user_id"]
         interests = user_data.get("interests", ["足球", "体育"])
         preferences = {
@@ -125,12 +140,14 @@ class UserProfileService(BaseService):
         )
         self._user_profiles[user_id] = profile
         return {"status": "created", "profile": profile.to_dict()}
+
     def delete_profile(self, user_id: str) -> Dict[str, Any]:
         """删除用户画像"""
         if user_id in self._user_profiles:
             del self._user_profiles[user_id]
             return {"status": "deleted"}
         return {"status": "not_found"}
+
     @property
     def _profiles(self) -> Dict[str, Any]:
         """兼容测试代码的属性"""

@@ -45,7 +45,7 @@ class TestModelMetricsExporter:
             confidence_score=0.5,
             features_used={"feature1": 1.0},
             prediction_metadata={"test": "metadata"},
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
 

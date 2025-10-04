@@ -20,10 +20,7 @@ def init_i18n(language: str = "zh_CN") -> None:
 
     try:
         _translator = gettext.translation(
-            "messages",
-            localedir=LOCALE_DIR,
-            languages=[language],
-            fallback=True
+            "messages", localedir=LOCALE_DIR, languages=[language], fallback=True
         )
         _translator.install()
     except Exception:

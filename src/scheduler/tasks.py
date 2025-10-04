@@ -35,7 +35,7 @@ class BaseDataTask(Task):
             error=str(exc),
             task_id=task_id,
             args=args,
-            kwargs=kwargs
+            kwargs=kwargs,
         )
 
     def _send_alert_notification(self, task_name, error, task_id, args, kwargs):
@@ -276,14 +276,16 @@ def calculate_features_batch(self, hours_ahead: int = 2):
             async with get_async_session() as session:
                 # 1. 查询未来N小时内的比赛
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                     SELECT id, home_team, away_team, match_date, league_id
                     FROM matches
                     WHERE match_date BETWEEN NOW() AND NOW() + INTERVAL :hours_ahead hours
                     AND status = 'scheduled'
                     ORDER BY match_date ASC
-                    """),
-                    {"hours_ahead": hours_ahead}
+                    """
+                    ),
+                    {"hours_ahead": hours_ahead},
                 )
 
                 matches = result.fetchall()
@@ -306,7 +308,9 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                         match_date = match.match_date
                         league_id = match.league_id
 
-                        logger.info(f"为比赛 {match_id} ({home_team} vs {away_team}) 计算特征")
+                        logger.info(
+                            f"为比赛 {match_id} ({home_team} vs {away_team}) 计算特征"
+                        )
 
                         # 计算比赛特征
                         feature_result = await feature_store.calculate_match_features(
@@ -314,15 +318,21 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                             home_team=home_team,
                             away_team=away_team,
                             match_date=match_date,
-                            league_id=league_id
+                            league_id=league_id,
                         )
 
                         if feature_result.get("status") == "success":
                             matches_processed += 1
-                            features_calculated += feature_result.get("features_count", 0)
-                            logger.info(f"比赛 {match_id} 特征计算成功，生成了 {feature_result.get('features_count', 0)} 个特征")
+                            features_calculated += feature_result.get(
+                                "features_count", 0
+                            )
+                            logger.info(
+                                f"比赛 {match_id} 特征计算成功，生成了 {feature_result.get('features_count', 0)} 个特征"
+                            )
                         else:
-                            logger.warning(f"比赛 {match_id} 特征计算失败: {feature_result.get('error', 'Unknown error')}")
+                            logger.warning(
+                                f"比赛 {match_id} 特征计算失败: {feature_result.get('error', 'Unknown error')}"
+                            )
 
                     except Exception as e:
                         logger.error(f"为比赛 {match.id} 计算特征时出错: {str(e)}")
@@ -333,7 +343,9 @@ def calculate_features_batch(self, hours_ahead: int = 2):
         # 运行异步特征计算
         matches_processed, features_calculated = asyncio.run(_calculate_features())
 
-        logger.info(f"特征计算任务完成: 处理了 {matches_processed} 场比赛，计算了 {features_calculated} 个特征")
+        logger.info(
+            f"特征计算任务完成: 处理了 {matches_processed} 场比赛，计算了 {features_calculated} 个特征"
+        )
 
         return {
             "status": "success",
@@ -613,7 +625,9 @@ def run_quality_checks():
                         checks_performed += 1
                         if not result.get("passed", True):
                             issues_found += result.get("issues_count", 1)
-                            logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
+                            logger.warning(
+                                f"{description} 发现问题: {result.get('issues', [])}"
+                            )
                         else:
                             logger.info(f"{description} 通过")
                     except Exception as e:
@@ -630,11 +644,15 @@ def run_quality_checks():
 
                 for check_name, description in consistency_checks:
                     try:
-                        result = await monitor.check_data_consistency(session, check_name)
+                        result = await monitor.check_data_consistency(
+                            session, check_name
+                        )
                         checks_performed += 1
                         if not result.get("passed", True):
                             issues_found += result.get("issues_count", 1)
-                            logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
+                            logger.warning(
+                                f"{description} 发现问题: {result.get('issues', [])}"
+                            )
                         else:
                             logger.info(f"{description} 通过")
                     except Exception as e:
@@ -651,11 +669,15 @@ def run_quality_checks():
 
                 for table_name, description, hours_threshold in freshness_checks:
                     try:
-                        result = await monitor.check_data_freshness(session, table_name, hours_threshold)
+                        result = await monitor.check_data_freshness(
+                            session, table_name, hours_threshold
+                        )
                         checks_performed += 1
                         if not result.get("passed", True):
                             issues_found += result.get("issues_count", 1)
-                            logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
+                            logger.warning(
+                                f"{description} 发现问题: {result.get('issues', [])}"
+                            )
                         else:
                             logger.info(f"{description} 通过")
                     except Exception as e:
@@ -670,7 +692,9 @@ def run_quality_checks():
                         logger.info("数据质量报告生成成功")
                         checks_performed += 1
                     else:
-                        logger.error(f"数据质量报告生成失败: {report_result.get('error', 'Unknown error')}")
+                        logger.error(
+                            f"数据质量报告生成失败: {report_result.get('error', 'Unknown error')}"
+                        )
                         issues_found += 1
                 except Exception as e:
                     logger.error(f"生成数据质量报告时出错: {str(e)}")
@@ -681,7 +705,9 @@ def run_quality_checks():
         # 运行异步质量检查
         checks_performed, issues_found = asyncio.run(_run_checks())
 
-        logger.info(f"数据质量检查任务完成: 执行了 {checks_performed} 项检查，发现 {issues_found} 个问题")
+        logger.info(
+            f"数据质量检查任务完成: 执行了 {checks_performed} 项检查，发现 {issues_found} 个问题"
+        )
 
         return {
             "status": "success",
@@ -747,15 +773,17 @@ def backup_database():
                     env["PGPASSWORD"] = db_password
 
                     logger.info("开始创建数据库备份...")
-                    result = subprocess.run(pg_dump_cmd, env=env, capture_output=True, text=True)
+                    result = subprocess.run(
+                        pg_dump_cmd, env=env, capture_output=True, text=True
+                    )
 
                     if result.returncode != 0:
                         raise Exception(f"pg_dump失败: {result.stderr}")
 
                     # 压缩备份文件
                     logger.info("压缩备份文件...")
-                    with open(backup_path, 'rb') as f_in:
-                        with gzip.open(compressed_path, 'wb') as f_out:
+                    with open(backup_path, "rb") as f_in:
+                        with gzip.open(compressed_path, "wb") as f_out:
                             shutil.copyfileobj(f_in, f_out)
 
                     # 获取备份文件大小
@@ -766,15 +794,23 @@ def backup_database():
                     try:
                         # 尝试使用S3存储
                         storage = S3DataLakeStorage(
-                            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
-                            access_key=os.getenv("MINIO_ACCESS_KEY", os.getenv("MINIO_ROOT_USER")),
-                            secret_key=os.getenv("MINIO_SECRET_KEY", os.getenv("MINIO_ROOT_PASSWORD")),
+                            endpoint_url=os.getenv(
+                                "MINIO_ENDPOINT", "http://localhost:9000"
+                            ),
+                            access_key=os.getenv(
+                                "MINIO_ACCESS_KEY", os.getenv("MINIO_ROOT_USER")
+                            ),
+                            secret_key=os.getenv(
+                                "MINIO_SECRET_KEY", os.getenv("MINIO_ROOT_PASSWORD")
+                            ),
                             use_ssl=False,
                         )
 
                         # 上传到备份桶
                         backup_key = f"backups/{backup_filename}.gz"
-                        upload_result = await storage.upload_file(compressed_path, backup_key)
+                        upload_result = await storage.upload_file(
+                            compressed_path, backup_key
+                        )
 
                         if upload_result.get("status") == "success":
                             backup_location = f"s3://{backup_key}"
@@ -787,7 +823,9 @@ def backup_database():
                         # 使用本地存储
                         local_backup_dir = os.path.join(os.getcwd(), "backups")
                         os.makedirs(local_backup_dir, exist_ok=True)
-                        local_backup_path = os.path.join(local_backup_dir, f"{backup_filename}.gz")
+                        local_backup_path = os.path.join(
+                            local_backup_dir, f"{backup_filename}.gz"
+                        )
                         shutil.move(compressed_path, local_backup_path)
                         backup_location = local_backup_path
                         logger.info(f"备份文件已保存到本地: {backup_location}")
@@ -795,7 +833,14 @@ def backup_database():
                     # 3. 清理旧备份文件（保留最近7天）
                     logger.info("清理旧备份文件...")
                     try:
-                        cleanup_result = await _cleanup_old_backups(storage if 'storage' in locals() else None, local_backup_dir if 'local_backup_dir' in locals() else None)
+                        cleanup_result = await _cleanup_old_backups(
+                            storage if "storage" in locals() else None,
+                            (
+                                local_backup_dir
+                                if "local_backup_dir" in locals()
+                                else None
+                            ),
+                        )
                         logger.info(f"清理了 {cleanup_result} 个旧备份文件")
                     except Exception as e:
                         logger.warning(f"清理旧备份文件时出错: {str(e)}")
@@ -803,7 +848,10 @@ def backup_database():
                     # 清理临时文件
                     if os.path.exists(backup_path):
                         os.remove(backup_path)
-                    if os.path.exists(compressed_path) and os.path.dirname(compressed_path) == "/tmp":
+                    if (
+                        os.path.exists(compressed_path)
+                        and os.path.dirname(compressed_path) == "/tmp"
+                    ):
                         os.remove(compressed_path)
 
                     return backup_size_mb, backup_location
@@ -821,13 +869,13 @@ def backup_database():
             cleaned_count = 0
             cutoff_date = datetime.now().timestamp() - (7 * 24 * 60 * 60)  # 7天前
 
-            if storage and hasattr(storage, 'list_objects'):
+            if storage and hasattr(storage, "list_objects"):
                 # 清理S3中的旧备份
                 try:
                     objects = await storage.list_objects("backups/")
                     for obj in objects:
-                        if obj.get('last_modified', 0) < cutoff_date:
-                            await storage.delete_object(obj['key'])
+                        if obj.get("last_modified", 0) < cutoff_date:
+                            await storage.delete_object(obj["key"])
                             cleaned_count += 1
                 except Exception as e:
                     logger.warning(f"清理S3旧备份失败: {str(e)}")
@@ -837,7 +885,7 @@ def backup_database():
                 try:
                     for filename in os.listdir(local_backup_dir):
                         filepath = os.path.join(local_backup_dir, filename)
-                        if os.path.isfile(filepath) and filename.endswith('.gz'):
+                        if os.path.isfile(filepath) and filename.endswith(".gz"):
                             file_time = os.path.getmtime(filepath)
                             if file_time < cutoff_date:
                                 os.remove(filepath)
@@ -850,7 +898,9 @@ def backup_database():
         # 运行异步备份
         backup_size_mb, backup_location = asyncio.run(_backup_database())
 
-        logger.info(f"数据库备份任务完成: 备份大小 {backup_size_mb:.2f} MB，保存位置 {backup_location}")
+        logger.info(
+            f"数据库备份任务完成: 备份大小 {backup_size_mb:.2f} MB，保存位置 {backup_location}"
+        )
 
         return {
             "status": "success",
@@ -893,25 +943,29 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                 if match_ids:
                     # 指定比赛ID
                     result = await session.execute(
-                        text("""
+                        text(
+                            """
                         SELECT id, home_team, away_team, match_date, league_id
                         FROM matches
                         WHERE id = ANY(:match_ids)
                         AND match_date > NOW()
                         AND status = 'scheduled'
-                        """),
-                        {"match_ids": match_ids}
+                        """
+                        ),
+                        {"match_ids": match_ids},
                     )
                 else:
                     # 获取未来24小时内待预测的比赛
                     result = await session.execute(
-                        text("""
+                        text(
+                            """
                         SELECT id, home_team, away_team, match_date, league_id
                         FROM matches
                         WHERE match_date BETWEEN NOW() AND NOW() + INTERVAL '24 hours'
                         AND status = 'scheduled'
                         ORDER BY match_date ASC
-                        """)
+                        """
+                        )
                     )
 
                 matches = result.fetchall()
@@ -933,22 +987,28 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                         match_date = match.match_date
                         league_id = match.league_id
 
-                        logger.info(f"为比赛 {match_id} ({home_team} vs {away_team}) 生成预测")
+                        logger.info(
+                            f"为比赛 {match_id} ({home_team} vs {away_team}) 生成预测"
+                        )
 
                         # 生成预测
-                        prediction_result = await prediction_service.generate_match_prediction(
-                            match_id=match_id,
-                            home_team=home_team,
-                            away_team=away_team,
-                            match_date=match_date,
-                            league_id=league_id
+                        prediction_result = (
+                            await prediction_service.generate_match_prediction(
+                                match_id=match_id,
+                                home_team=home_team,
+                                away_team=away_team,
+                                match_date=match_date,
+                                league_id=league_id,
+                            )
                         )
 
                         if prediction_result.get("status") == "success":
                             predictions_generated += 1
                             logger.info(f"比赛 {match_id} 预测生成成功")
                         else:
-                            logger.warning(f"比赛 {match_id} 预测生成失败: {prediction_result.get('error', 'Unknown error')}")
+                            logger.warning(
+                                f"比赛 {match_id} 预测生成失败: {prediction_result.get('error', 'Unknown error')}"
+                            )
 
                     except Exception as e:
                         logger.error(f"为比赛 {match.id} 生成预测时出错: {str(e)}")
@@ -1013,7 +1073,11 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
 
                         # 获取未处理的Bronze层数据
                         # 使用参数化查询防止SQL注入
-                        valid_tables = ["raw_matches", "raw_odds", "raw_scores"]  # 预定义的合法表名
+                        valid_tables = [
+                            "raw_matches",
+                            "raw_odds",
+                            "raw_scores",
+                        ]  # 预定义的合法表名
                         if table_name not in valid_tables:
                             logger.error(f"非法表名: {table_name}")
                             continue
@@ -1046,7 +1110,9 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                         else:
                             logger.error(f"不支持的表名: {table_name}")
                             continue
-                        result = await session.execute(text(query), {"batch_size": batch_size})
+                        result = await session.execute(
+                            text(query), {"batch_size": batch_size}
+                        )
 
                         bronze_records = result.fetchall()
                         if not bronze_records:
@@ -1063,12 +1129,17 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
 
                                 # 数据清洗
                                 cleaned_data = await data_cleaner.clean_football_data(
-                                    raw_data, data_type=table_name.replace("raw_", ""), source=source
+                                    raw_data,
+                                    data_type=table_name.replace("raw_", ""),
+                                    source=source,
                                 )
 
                                 # 数据质量验证
-                                quality_result = await quality_monitor.validate_data_quality(
-                                    cleaned_data, data_type=table_name.replace("raw_", "")
+                                quality_result = (
+                                    await quality_monitor.validate_data_quality(
+                                        cleaned_data,
+                                        data_type=table_name.replace("raw_", ""),
+                                    )
                                 )
 
                                 if quality_result.get("passed", False):
@@ -1078,51 +1149,71 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                                     )
 
                                     # 4. 保存到Silver层
-                                    await _save_to_silver_layer(session, silver_data, table_name)
+                                    await _save_to_silver_layer(
+                                        session, silver_data, table_name
+                                    )
 
                                     # 标记Bronze记录为已处理 - 使用参数化查询防止SQL注入
-                                    if table_name not in ["raw_match_data", "raw_odds_data", "raw_scores_data"]:
+                                    if table_name not in [
+                                        "raw_match_data",
+                                        "raw_odds_data",
+                                        "raw_scores_data",
+                                    ]:
                                         logger.error(f"不支持的表名: {table_name}")
                                         continue
 
                                     # 使用预定义查询防止SQL注入
                                     if table_name == "raw_match_data":
-                                        update_query = text("""
+                                        update_query = text(
+                                            """
                                             UPDATE raw_match_data
                                             SET processed = true, processed_at = NOW()
                                             WHERE id = :record_id
-                                        """)
+                                        """
+                                        )
                                     elif table_name == "raw_odds_data":
-                                        update_query = text("""
+                                        update_query = text(
+                                            """
                                             UPDATE raw_odds_data
                                             SET processed = true, processed_at = NOW()
                                             WHERE id = :record_id
-                                        """)
+                                        """
+                                        )
                                     elif table_name == "raw_scores_data":
-                                        update_query = text("""
+                                        update_query = text(
+                                            """
                                             UPDATE raw_scores_data
                                             SET processed = true, processed_at = NOW()
                                             WHERE id = :record_id
-                                        """)
+                                        """
+                                        )
                                     else:
                                         logger.error(f"不支持的表名: {table_name}")
                                         continue
-                                    await session.execute(update_query, {"record_id": record_id})
+                                    await session.execute(
+                                        update_query, {"record_id": record_id}
+                                    )
 
                                     records_processed += 1
 
                                     if records_processed % 100 == 0:
-                                        logger.info(f"已处理 {records_processed} 条记录...")
+                                        logger.info(
+                                            f"已处理 {records_processed} 条记录..."
+                                        )
 
                                 else:
-                                    logger.warning(f"数据质量验证失败: {quality_result.get('issues', [])}")
+                                    logger.warning(
+                                        f"数据质量验证失败: {quality_result.get('issues', [])}"
+                                    )
 
                             except Exception as e:
                                 logger.error(f"处理记录 {record.id} 时出错: {str(e)}")
                                 continue
 
                         batches_processed += 1
-                        logger.info(f"完成 {table_name} 表的批次处理，处理了 {len(bronze_records)} 条记录")
+                        logger.info(
+                            f"完成 {table_name} 表的批次处理，处理了 {len(bronze_records)} 条记录"
+                        )
 
                         # 提交事务
                         await session.commit()
@@ -1205,7 +1296,8 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
             # 构建插入SQL - 使用预定义的表防止SQL注入
             if bronze_table == "raw_match_data":
                 if silver_table == "silver_matches":
-                    insert_query = text("""
+                    insert_query = text(
+                        """
                         INSERT INTO silver_matches
                         (match_id, home_team, away_team, match_date, league_id, venue, status, source, processed_at, data_quality_score)
                         VALUES (:match_id, :home_team, :away_team, :match_date, :league_id, :venue, :status, :source, :processed_at, :data_quality_score)
@@ -1219,9 +1311,12 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                         source = EXCLUDED.source,
                         processed_at = EXCLUDED.processed_at,
                         data_quality_score = EXCLUDED.data_quality_score
-                    """)
+                    """
+                    )
                 else:
-                    raise ValueError(f"不匹配的表名组合: {bronze_table} -> {silver_table}")
+                    raise ValueError(
+                        f"不匹配的表名组合: {bronze_table} -> {silver_table}"
+                    )
 
                 await session.execute(text(insert_query), silver_data)
 
@@ -1233,7 +1328,9 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                         VALUES (:match_id, :bookmaker, :home_win_odds, :draw_odds, :away_win_odds, :timestamp, :source, :processed_at, :data_quality_score)
                     """
                 else:
-                    raise ValueError(f"不匹配的表名组合: {bronze_table} -> {silver_table}")
+                    raise ValueError(
+                        f"不匹配的表名组合: {bronze_table} -> {silver_table}"
+                    )
 
                 await session.execute(text(insert_query), silver_data)
 
@@ -1252,14 +1349,18 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                         data_quality_score = EXCLUDED.data_quality_score
                     """
                 else:
-                    raise ValueError(f"不匹配的表名组合: {bronze_table} -> {silver_table}")
+                    raise ValueError(
+                        f"不匹配的表名组合: {bronze_table} -> {silver_table}"
+                    )
 
                 await session.execute(text(insert_query), silver_data)
 
         # 运行异步数据处理
         records_processed, batches_processed = asyncio.run(_process_data())
 
-        logger.info(f"Bronze到Silver数据处理任务完成: 处理了 {records_processed} 条记录，{batches_processed} 个批次")
+        logger.info(
+            f"Bronze到Silver数据处理任务完成: 处理了 {records_processed} 条记录，{batches_processed} 个批次"
+        )
 
         return {
             "status": "success",

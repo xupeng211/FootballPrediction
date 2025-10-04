@@ -278,7 +278,9 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    result = await session.execute(stats_query, {"hours_param": f"-{hours}"})
+                    result = await session.execute(
+                        stats_query, {"hours_param": f"-{hours}"}
+                    )
                 else:
                     stats_query = text(
                         """

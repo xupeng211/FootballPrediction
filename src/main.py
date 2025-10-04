@@ -107,7 +107,9 @@ app.include_router(health_router)
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
-    from src.api.data import router as data_router  # noqa: WPS433 - runtime import for minimal mode
+    from src.api.data import (
+        router as data_router,
+    )  # noqa: WPS433 - runtime import for minimal mode
     from src.api.features import router as features_router  # noqa: WPS433
     from src.api.monitoring import router as monitoring_router  # noqa: WPS433
     from src.api.predictions import router as predictions_router  # noqa: WPS433

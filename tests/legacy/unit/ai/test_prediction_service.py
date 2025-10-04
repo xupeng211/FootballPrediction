@@ -32,9 +32,7 @@ class TestPredictionService:
         """Test basic prediction generation."""
         # Basic test placeholder
         result = prediction_service.generate_prediction(
-            home_team_id=101,
-            away_team_id=102,
-            league_id=1
+            home_team_id=101, away_team_id=102, league_id=1
         )
         assert result is not None
 
@@ -48,7 +46,5 @@ class TestPredictionService:
         # Basic test placeholder
         with pytest.raises(Exception):
             prediction_service.generate_prediction(
-                home_team_id=None,
-                away_team_id=None,
-                league_id=None
+                home_team_id=None, away_team_id=None, league_id=None
             )
