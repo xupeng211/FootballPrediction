@@ -12,9 +12,7 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import status
 
-from src.database.models import MatchStatus, PredictedResult
 
 
 class TestGetMatchFeatures:

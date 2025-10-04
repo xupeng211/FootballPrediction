@@ -101,6 +101,7 @@ def api_client_full(monkeypatch):
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
+    monkeypatch.setenv("ENABLE_FEAST", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "false")  # 加载所有路由
 
     # 创建mock session - 必须在这里创建，确保是同一个实例
@@ -135,7 +136,7 @@ def api_client_full(monkeypatch):
             from src.main import app
 
             app.dependency_overrides.clear()
-        except:
+        except Exception:
             pass
         stack.close()
 

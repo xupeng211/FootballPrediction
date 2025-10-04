@@ -11,7 +11,7 @@ try:
     if not ENABLE_FEAST:
         raise ImportError("Feast explicitly disabled via ENABLE_FEAST=false")
 
-    from feast import Entity, FeatureStore, FeatureView, Field
+    from feast import Entity, FeatureStore, FeatureView, Field, ValueType
     from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
         PostgreSQLSource,
     )
@@ -101,13 +101,13 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
     ValueType = MockValueType
 
 
-import pandas as pd
+import pandas as pd  # noqa: E402
 
-from src.cache import CacheKeyManager, RedisManager
-from src.database.connection import DatabaseManager
+from src.cache import CacheKeyManager, RedisManager  # noqa: E402
+from src.database.connection import DatabaseManager  # noqa: E402
 
-from .entities import MatchEntity
-from .feature_calculator import FeatureCalculator
+from .entities import MatchEntity  # noqa: E402
+from .feature_calculator import FeatureCalculator  # noqa: E402
 
 
 class FootballFeatureStore:
@@ -152,8 +152,6 @@ class FootballFeatureStore:
         Returns:
             Dict[str, Entity]: 实体名称到实体对象的映射
         """
-        from feast import ValueType
-
         return {
             "match": Entity(
                 name="match",
