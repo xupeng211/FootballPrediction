@@ -5,32 +5,11 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 # import httpx
 import pytest
 from fastapi.testclient import TestClient
-
-# 预先加载测试环境配置
-try:
-    from tests.test_env_config import mock_redis_cluster
-    mock_redis_cluster()  # 立即应用Redis mock
-except ImportError:
-    # 如果配置文件不存在，使用专门的mock模块
-    try:
-        from tests.mocks.redis_mocks import install_redis_mocks
-        install_redis_mocks()
-    except ImportError:
-        # 回退到基本mock
-        from unittest.mock import MagicMock
-
-        class RedisClusterStub:
-            def __init__(self, *args, **kwargs):
-                pass
-
-        redis_cluster_mock = MagicMock()
-        redis_cluster_mock.RedisCluster = RedisClusterStub
-        sys.modules['redis.cluster'] = redis_cluster_mock
 
 try:
     from pytest import MonkeyPatch
@@ -55,28 +34,165 @@ os.environ.setdefault("MINIMAL_API_MODE", "true")
 os.environ.setdefault("FAST_FAIL", "false")
 os.environ.setdefault("ENABLE_METRICS", "false")
 os.environ.setdefault("METRICS_ENABLED", "false")
+os.environ.setdefault("ENABLE_FEAST", "false")
 os.environ.setdefault("ENABLED_SERVICES", "[]")
+os.environ.setdefault("TESTING", "true")
 
 
-def _apply_feast_mocks(monkeypatch: MonkeyPatch) -> None:
+def _setup_redis_mocks():
     """
-    应用Feast相关的Mock，解决Redis版本兼容性问题
+    设置Redis相关的所有Mock，必须在导入任何其他模块之前调用
+    """
+    import sys
 
-    这将阻止Feast导入时尝试使用Redis特定功能，避免版本冲突
+    # 创建Redis模块的完整Mock
+    class RedisModule:
+        VERSION = (5, 2, 1)
+        __version__ = "5.2.1"
+
+        class Redis:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def ping(self):
+                return True
+
+            def get(self, key):
+                return None
+
+            def set(self, key, value, ex=None):
+                return True
+
+            def exists(self, key):
+                return False
+
+            def delete(self, key):
+                return 0
+
+            def close(self):
+                pass
+
+        class ConnectionPool:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class RedisCluster(Redis):
+            def __init__(self, *args, **kwargs):
+                pass
+
+    class RedisAsyncioModule:
+        VERSION = (5, 2, 1)
+        __version__ = "5.2.1"
+
+        class Redis:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def ping(self):
+                return True
+
+            async def get(self, key):
+                return None
+
+            async def set(self, key, value, ex=None):
+                return True
+
+            async def exists(self, key):
+                return False
+
+            async def delete(self, key):
+                return 0
+
+            async def close(self):
+                pass
+
+        class RedisCluster(Redis):
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class Sentinel:
+            def __init__(self, *args, **kwargs):
+                pass
+
+    # 设置所有需要的Redis模块
+    redis_modules = {
+        'redis': RedisModule(),
+        'redis.cluster': type('RedisClusterModule', (), {
+            'RedisCluster': RedisModule.RedisCluster,
+            'ClusterNode': type('ClusterNode', (), {})
+        })(),
+        'redis.connection': type('RedisConnectionModule', (), {
+            'ConnectionPool': RedisModule.ConnectionPool
+        })(),
+        'redis.asyncio': RedisAsyncioModule(),
+        'redis.asyncio.cluster': type('RedisAsyncioClusterModule', (), {
+            'RedisCluster': RedisAsyncioModule.RedisCluster
+        })(),
+        'redis.sentinel': type('RedisSentinelModule', (), {
+            'Sentinel': type('Sentinel', (), {})
+        })(),
+        'redis.asyncio.sentinel': type('RedisAsyncioSentinelModule', (), {
+            'Sentinel': RedisAsyncioModule.Sentinel
+        })(),
+    }
+
+    # 添加到sys.modules
+    for name, module in redis_modules.items():
+        if name not in sys.modules:
+            sys.modules[name] = module
+
+
+def _setup_feast_mocks():
+    """
+    设置Feast相关的Mock
     """
     import sys
     from unittest.mock import MagicMock
 
-    # 在导入前设置环境变量，禁用Redis相关功能
-    monkeypatch.setenv("FEAST_DISABLE_REDIS", "true")
-
-    # 完全Mock掉Feast模块，避免Redis依赖问题
-    class MockFeastModule:
-        """Feast模块的完整Mock"""
+    # 创建Feast的Mock
+    class FeastModule:
         def __getattr__(self, name):
             return MagicMock()
 
-    # 创建feast及其子模块的mock
+        class Entity:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class FeatureStore:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class FeatureView:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class Field:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class types:
+            class Float64:
+                pass
+
+            class Int64:
+                pass
+
+        class infra:
+            class online_stores:
+                class redis:
+                    class RedisOnlineStore:
+                        def __init__(self, *args, **kwargs):
+                            pass
+
+            class offline_stores:
+                class contrib:
+                    class postgres_offline_store:
+                        class postgres_source:
+                            class PostgreSQLSource:
+                                def __init__(self, *args, **kwargs):
+                                    pass
+
+    # 添加Feast模块
     feast_modules = [
         'feast',
         'feast.infra',
@@ -90,40 +206,21 @@ def _apply_feast_mocks(monkeypatch: MonkeyPatch) -> None:
 
     for module_name in feast_modules:
         if module_name not in sys.modules:
-            sys.modules[module_name] = MockFeastModule()
-
-    # Mock所有Redis相关模块
-    class RedisStub:
-        def __init__(self, *args, **kwargs):
-            pass
-        def ping(self):
-            return True
-
-    class RedisClusterStub(RedisStub):
-        pass
-
-    class SentinelStub:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    redis_modules = {
-        'redis.cluster': MagicMock(RedisCluster=RedisClusterStub),
-        'redis.asyncio.cluster': MagicMock(RedisCluster=RedisClusterStub),
-        'redis.sentinel': MagicMock(Sentinel=SentinelStub),
-        'redis.asyncio.sentinel': MagicMock(Sentinel=SentinelStub),
-    }
-
-    for module_name, module_mock in redis_modules.items():
-        sys.modules[module_name] = module_mock
+            sys.modules[module_name] = FeastModule()
 
 
-def _apply_data_quality_mocks(monkeypatch: MonkeyPatch) -> None:
-    """
-    Mock数据质量监控器，避免数据库依赖
-    """
-    from unittest.mock import AsyncMock, MagicMock
+# 在导入任何其他模块之前设置Mock
+_setup_redis_mocks()
+_setup_feast_mocks()
 
-    # 创建Mock的数据质量监控器
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_external_services() -> None:
+    """在测试阶段统一Mock外部依赖"""
+
+    monkeypatch = MonkeyPatch()
+
+    # Mock数据质量监控器
     mock_monitor = MagicMock()
     mock_monitor.generate_quality_report = AsyncMock(return_value={
         "overall_status": "healthy",
@@ -136,29 +233,15 @@ def _apply_data_quality_mocks(monkeypatch: MonkeyPatch) -> None:
             "data_consistency": {"status": "pass", "score": 90},
         }
     })
+    try:
+        from src.data.quality.data_quality_monitor import DataQualityMonitor
+        monkeypatch.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
+    except ImportError:
+        pass
 
-    # Mock DataQualityMonitor类
-    from src.data.quality.data_quality_monitor import DataQualityMonitor
-    monkeypatch.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def mock_external_services() -> None:
-    """在测试阶段统一Mock外部依赖"""
-
-    monkeypatch = MonkeyPatch()
-
-    # 修复Redis/Feast兼容性问题 - 必须在其他导入之前
-    _apply_feast_mocks(monkeypatch)
-
-    # 应用Redis mock（必须在Feast导入后）
-    apply_redis_mocks(monkeypatch)
     apply_mlflow_mocks(monkeypatch)
     apply_kafka_mocks(monkeypatch)
     apply_http_mocks(monkeypatch, responses={})
-
-    # Mock数据质量监控器
-    _apply_data_quality_mocks(monkeypatch)
 
     yield
     monkeypatch.undo()
