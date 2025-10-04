@@ -398,9 +398,8 @@ async def _check_mlflow() -> Dict[str, Any]:
 
     async def _probe() -> Dict[str, Any]:
         try:
-            from mlflow.tracking import MlflowClient
-
             import mlflow
+            from mlflow.tracking import MlflowClient
         except Exception as exc:  # pragma: no cover - 在未安装MLflow时触发
             raise ServiceCheckError(
                 "MLflow依赖不可用",

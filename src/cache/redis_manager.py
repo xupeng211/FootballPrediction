@@ -975,9 +975,10 @@ class CacheWarmupManager:
             bool: 预热是否成功
         """
         try:
+            from sqlalchemy import select
+
             from src.database.connection import get_async_session
             from src.database.models import Match
-            from sqlalchemy import select
 
             async with get_async_session() as session:
                 # 获取比赛基本信息
@@ -1030,9 +1031,10 @@ class CacheWarmupManager:
             bool: 预热是否成功
         """
         try:
+            from sqlalchemy import select
+
             from src.database.connection import get_async_session
             from src.database.models import Team
-            from sqlalchemy import select
 
             async with get_async_session() as session:
                 # 获取球队基本信息
@@ -1081,9 +1083,10 @@ class CacheWarmupManager:
             int: 成功预热的比赛数量
         """
         try:
+            from sqlalchemy import select
+
             from src.database.connection import get_async_session
             from src.database.models import Match
-            from sqlalchemy import select
 
             async with get_async_session() as session:
                 # 查询未来N小时内的比赛

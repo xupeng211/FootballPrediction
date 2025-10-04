@@ -20,20 +20,15 @@ API_RESPONSES = {
         "timestamp": "2025-10-04T10:00:00Z",
         "version": "1.0.0",
         "database": "connected",
-        "cache": "connected"
+        "cache": "connected",
     },
     "error_response": {
         "detail": "Validation error",
-        "errors": [
-            {
-                "field": "email",
-                "message": "Invalid email format"
-            }
-        ]
+        "errors": [{"field": "email", "message": "Invalid email format"}],
     },
     "prediction_created": {
         "id": 1,
         "status": "pending",
-        "created_at": "2025-10-04T10:00:00Z"
-    }
+        "created_at": "2025-10-04T10:00:00Z",
+    },
 }

@@ -37,9 +37,8 @@ except ImportError:
 
 # 处理可选依赖
 try:
-    import mlflow.sklearn
-
     import mlflow
+    import mlflow.sklearn
     from mlflow import MlflowClient
 
     HAS_MLFLOW = True

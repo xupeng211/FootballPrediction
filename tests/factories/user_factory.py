@@ -1,6 +1,7 @@
 """用户工厂"""
 
 import factory
+
 from .base import BaseFactory
 
 

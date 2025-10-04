@@ -82,10 +82,10 @@ class LineageReporter:
         if description:
             job_facets["description"] = {"description": description}
         if source_location:
-            job_facets[
-                "sourceCodeLocation"
-            ] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="git", url=source_location
+            job_facets["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="git", url=source_location
+                )
             )
         if transformation_sql:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)

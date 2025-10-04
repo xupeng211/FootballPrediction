@@ -304,9 +304,9 @@ class AuditLog(BaseModel):
             elif action in [AuditAction.BACKUP, AuditAction.RESTORE]:
                 kwargs["compliance_category"] = "DATA_PROTECTION"
             elif kwargs.get("is_sensitive"):
-                kwargs[
-                    "compliance_category"
-                ] = "PII"  # Personally Identifiable Information
+                kwargs["compliance_category"] = (
+                    "PII"  # Personally Identifiable Information
+                )
             else:
                 kwargs["compliance_category"] = "GENERAL"
 

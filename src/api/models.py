@@ -13,10 +13,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from mlflow import MlflowClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mlflow import MlflowClient
 from src.database.connection import get_async_session
 from src.models.prediction_service import PredictionService
 from src.utils.response import APIResponse

@@ -1,8 +1,10 @@
 """预测工厂"""
 
+from datetime import datetime, timedelta
+
 import factory
 from factory import fuzzy
-from datetime import datetime, timedelta
+
 from .base import BaseFactory
 
 

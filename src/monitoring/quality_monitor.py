@@ -380,7 +380,9 @@ class QualityMonitor:
             # 使用quoted_name确保表名安全，防止SQL注入
             safe_table_name = quoted_name(table_name, quote=True)
             count_result = await session.execute(
-                text(f"SELECT COUNT(*) as count FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
+                text(
+                    f"SELECT COUNT(*) as count FROM {safe_table_name}"
+                )  # nosec B608 - using quoted_name for safety
             )
             count_row = count_result.first()
             try:
@@ -519,7 +521,9 @@ class QualityMonitor:
 
         safe_table_name = quoted_name(table_name, quote=True)
         total_result = await session.execute(
-            text(f"SELECT COUNT(*) as total FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
+            text(
+                f"SELECT COUNT(*) as total FROM {safe_table_name}"
+            )  # nosec B608 - using quoted_name for safety
         )
         total_row = total_result.first()
         try:
@@ -593,19 +597,19 @@ class QualityMonitor:
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
-            consistency_results[
-                "foreign_key_consistency"
-            ] = await self._check_foreign_key_consistency(session)
+            consistency_results["foreign_key_consistency"] = (
+                await self._check_foreign_key_consistency(session)
+            )
 
             # 检查赔率数据一致性
-            consistency_results[
-                "odds_consistency"
-            ] = await self._check_odds_consistency(session)
+            consistency_results["odds_consistency"] = (
+                await self._check_odds_consistency(session)
+            )
 
             # 检查比赛状态一致性
-            consistency_results[
-                "match_status_consistency"
-            ] = await self._check_match_status_consistency(session)
+            consistency_results["match_status_consistency"] = (
+                await self._check_match_status_consistency(session)
+            )
 
         logger.info("数据一致性检查完成")
         return consistency_results
