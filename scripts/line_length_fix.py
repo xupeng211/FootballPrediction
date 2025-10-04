@@ -10,12 +10,10 @@
 
 import os
 import re
-import ast
 import sys
 from pathlib import Path
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Dict
 from datetime import datetime
-import subprocess
 
 
 class LineLengthFixer:
@@ -537,7 +535,7 @@ def main():
     fixer.generate_report(args.report)
 
     # 输出总结
-    print(f"\n✅ 修复完成！")
+    print("\n✅ 修复完成！")
     print(f"📊 处理文件: {stats['total_files']} 个")
     print(f"🔧 修复文件: {stats['fixed_files']} 个")
     print(f"📏 发现长行: {stats['long_lines_found']} 行")

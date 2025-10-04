@@ -12,10 +12,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件
-COPY requirements.txt requirements-dev.txt ./
+COPY requirements/ ./requirements/
 
 # 安装Python依赖
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements/requirements.lock
 
 # 生产阶段
 FROM python:3.11-slim as production

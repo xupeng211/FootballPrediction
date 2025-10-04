@@ -1,0 +1,233 @@
+# API相关依赖 - API网关、认证、文档等
+# 继承自core.txt
+
+-r core.txt
+
+# API文档
+fastapi==0.115.6  # 已包含
+starlette==0.41.3  # 已包含
+pydantic==2.10.4  # 已包含
+pydantic-settings==2.6.1
+
+# OpenAPI/Swagger
+fastapi-users==13.0.0
+fastapi-users[sqlalchemy]==13.0.0
+fastapi-users[oauth]==13.0.0
+fastapi-limiter==0.1.6
+fastapi-pagination==0.12.27
+fastapi-cache==0.2.3
+
+# API版本控制
+fastapi-versioning==0.10.0
+
+# API认证
+fastapi-security==1.2.0
+fastapi-sso==0.14.2
+authlib==1.4.1
+python-multipart==0.0.17  # 已包含
+python-jose[cryptography]==3.3.0  # 已包含
+passlib[bcrypt]==1.7.4  # 已包含
+
+# OAuth2
+requests-oauthlib==2.0.0
+oauthlib==3.2.2
+
+# OpenID Connect
+pyoidc==1.7.0
+python-jose==3.3.0  # 已包含
+
+# JWT处理
+fastapi-jwt-auth==0.6.1
+django-rest-framework-simplejwt==5.4.0
+
+# API密钥管理
+api-key==0.1.0
+fastapi-keycloak==2.12.0
+
+# 速率限制
+slowapi==0.1.9  # 已包含
+aioredis==2.0.1
+limits==4.0.1  # 已包含
+
+# CORS处理
+fastapi-cors==0.0.6
+django-cors-headers==4.5.0
+
+# 请求验证
+fastapi-validators==0.3.0
+pydantic[typing]==2.10.4
+email-validator==2.2.0  # 已包含
+
+# 响应处理
+fastapi-responses==0.1.1
+fastapi-async-sqlalchemy==0.6.0
+
+# API测试
+httpx==0.28.1  # 已包含
+pytest-asyncio==0.24.0
+asynctest==0.13.0
+
+# API文档生成
+fastapi==0.115.6  # 已包含
+fastapi-code-generator==0.5.0
+openapi-generator==7.9.0
+
+# 交互式文档
+swagger-ui-bundle==0.0.9
+redoc==2.1.3
+fastapi-users==13.0.0  # 已包含
+
+# GraphQL
+strawberry-graphql[fastapi]==0.254.0
+ariadne[fastapi]==0.25.0
+graphene==3.3
+
+# WebSocket增强
+fastapi-websocket-pub==0.5.0
+fastapi-websocket-rpc==0.6.0
+python-socketio==5.12.0  # 已包含
+
+# 服务器发送事件
+fastapi-sse==0.2.1
+sse-starlette==2.2.0
+
+# 文件上传
+fastapi-upload==0.1.0
+aiofiles==24.1.0  # 已包含
+python-multipart==0.0.17  # 已包含
+
+# 批量操作
+fastapi-batch==0.1.0
+fastapi-bulk==0.1.1
+
+# 后台任务
+fastapi-background==0.1.0
+celery==5.4.0  # 已包含
+
+# 缓存集成
+fastapi-cache2==0.2.3
+aiocache==0.12.3
+
+# 数据库集成
+fastapi-sqlalchemy==0.2.0
+sqlmodel==0.0.22
+databases[postgresql]==0.9.0
+
+# 搜索集成
+fastapi-search==0.1.0
+elasticsearch[async]==8.17.1
+opensearch-py==2.8.0
+
+# 消息队列集成
+fastapi-rpc==0.1.0
+kombu==5.4.2  # 已包含
+
+# 监控集成
+fastapi-opentracing==0.1.0
+fastapi-prometheus==0.2.0
+
+# 日志集成
+fastapi-logger==0.3.0
+structlog==24.5.0  # 已包含
+
+# 错误处理
+fastapi-errors==0.2.0
+fastapi-exception-handling==0.1.0
+
+# 国际化
+fastapi-i18n==0.3.0
+babel==2.16.0
+
+# 本地化
+fastapi-locale==0.1.0
+
+# 主题和样式
+jinja2==3.1.5  # 已包含
+fastapi-themes==0.1.0
+
+# API网关
+fastapi-gateway==0.1.0
+kong==0.14.1
+
+# 服务发现
+fastapi-consul==0.1.0
+consul==1.2.0
+
+# 负载均衡
+fastapi-loadbalancer==0.1.0
+
+# API代理
+fastapi-proxy==0.1.0
+aiohttp==3.11.11  # 已包含
+
+# 请求转发
+fastapi-forward==0.1.0
+
+# API转换
+fastapi-transform==0.1.0
+
+# 协议转换
+fastapi-protocol==0.1.0
+
+# 版本管理
+fastapi-version-manager==0.1.0
+
+# API治理
+fastapi-governance==0.1.0
+
+# 策略执行
+fastapi-policy==0.1.0
+
+# API安全
+fastapi-secure==0.1.0
+bandit==1.7.10
+safety==3.2.11
+
+# API测试自动化
+fastapi-test==0.1.0
+httpx==0.28.1  # 已包含
+
+# 性能测试
+fastapi-perf==0.1.0
+locust==2.33.0
+
+# 压力测试
+fastapi-stress==0.1.0
+k6==0.55.0
+
+# API监控
+fastapi-monitor==0.1.0
+prometheus-client==0.21.0  # 已包含
+
+# 告警
+fastapi-alert==0.1.0
+alerta==8.2.0
+
+# SLA监控
+fastapi-sla==0.1.0
+
+# API分析
+fastapi-analytics==0.1.0
+google-analytics==0.1.0
+
+# 使用统计
+fastapi-stats==0.1.0
+
+# API文档门户
+fastapi-docs==0.1.0
+mkdocs==1.6.1
+
+# API市场
+fastapi-marketplace==0.1.0
+
+# API货币化
+fastapi-billing==0.1.0
+
+# API访问控制
+fastapi-access==0.1.0
+casbin==1.38.0
+oslo-policy==4.5.0
+
+# API审计
+fastapi-audit==0.1.0
+auditlog==0.2.1
