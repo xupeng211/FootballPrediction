@@ -235,9 +235,7 @@ class TestPredictionService:
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(
-            mock_service, "_store_prediction"
-        ) as mock_store:
+        ) as mock_features, patch.object(mock_service, "_store_prediction"):
             # 设置mock返回值
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
@@ -286,9 +284,7 @@ class TestPredictionService:
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(
-            mock_service, "_store_prediction"
-        ) as mock_store:
+        ) as mock_features, patch.object(mock_service, "_store_prediction"):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,
@@ -529,9 +525,7 @@ class TestPredictionService:
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(
-            mock_service, "_store_prediction"
-        ) as mock_store:
+        ) as mock_features, patch.object(mock_service, "_store_prediction"):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,
