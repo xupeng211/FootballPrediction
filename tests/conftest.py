@@ -1,6 +1,7 @@
 """pytest配置及全局测试Mock定义"""
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -26,6 +27,13 @@ from tests.helpers import (
 
 # 添加src目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+# 默认启用最小化模式，避免导入重量级依赖
+os.environ.setdefault("MINIMAL_API_MODE", "true")
+os.environ.setdefault("FAST_FAIL", "false")
+os.environ.setdefault("ENABLE_METRICS", "false")
+os.environ.setdefault("METRICS_ENABLED", "false")
+os.environ.setdefault("ENABLED_SERVICES", "[]")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -143,6 +151,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: 标记测试为慢速测试")
     config.addinivalue_line("markers", "integration: 标记为集成测试")
     config.addinivalue_line("markers", "e2e: 标记为端到端测试")
+    config.addinivalue_line("markers", "smoke: 标记为冒烟测试")
     config.addinivalue_line("markers", "legacy: 标记为遗留测试（依赖真实服务）")
     config.addinivalue_line("markers", "unit: 标记为单元测试")
 

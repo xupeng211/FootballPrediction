@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Pydantic compatibility logic
 try:
@@ -53,7 +53,7 @@ class Config:
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项 - 支持默认值，确保程序健壮性"""
-        return self._config.get(key, default)
+        return self._config.get(str(key), default)
 
     def set(self, key: str, value: Any) -> None:
         """设置配置项 - 仅更新内存中的配置，需调用save()持久化"""
@@ -139,6 +139,69 @@ class Settings(SettingsClass):
         else "https://api-football-v1.p.rapidapi.com/v3"
     )
 
+    metrics_enabled: bool = (
+        Field(default=True, description="是否启用监控指标收集")
+        if HAS_PYDANTIC
+        else True
+    )
+    metrics_tables: List[str] = (
+        Field(
+            default_factory=lambda: [
+                "matches",
+                "teams",
+                "leagues",
+                "odds",
+                "features",
+                "raw_match_data",
+                "raw_odds_data",
+                "raw_scores_data",
+                "data_collection_logs",
+            ],
+            description="需要统计行数的数据库表",
+        )
+        if HAS_PYDANTIC
+        else [
+            "matches",
+            "teams",
+            "leagues",
+            "odds",
+            "features",
+            "raw_match_data",
+            "raw_odds_data",
+            "raw_scores_data",
+            "data_collection_logs",
+        ]
+    )
+    metrics_collection_interval: int = (
+        Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
+    )
+    missing_data_defaults_path: Optional[str] = (
+        Field(default=None, description="缺失值默认配置文件路径")
+        if HAS_PYDANTIC
+        else None
+    )
+    missing_data_defaults_json: Optional[str] = (
+        Field(default=None, description="缺失值默认配置JSON字符串")
+        if HAS_PYDANTIC
+        else None
+    )
+    enabled_services: List[str] = (
+        Field(
+            default_factory=lambda: [
+                "ContentAnalysisService",
+                "UserProfileService",
+                "DataProcessingService",
+            ],
+            description="默认启用的服务列表",
+        )
+        if HAS_PYDANTIC
+        else [
+            "ContentAnalysisService",
+            "UserProfileService",
+            "DataProcessingService",
+        ]
+    )
+
     if HAS_PYDANTIC:
         # Pydantic v2 configuration
         try:
@@ -170,6 +233,26 @@ class Settings(SettingsClass):
             self.mlflow_tracking_uri = "file:///tmp/mlflow"
             self.api_football_key = None
             self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
+            self.metrics_enabled = True
+            self.metrics_tables = [
+                "matches",
+                "teams",
+                "leagues",
+                "odds",
+                "features",
+                "raw_match_data",
+                "raw_odds_data",
+                "raw_scores_data",
+                "data_collection_logs",
+            ]
+            self.metrics_collection_interval = 30
+            self.missing_data_defaults_path = None
+            self.missing_data_defaults_json = None
+            self.enabled_services = [
+                "ContentAnalysisService",
+                "UserProfileService",
+                "DataProcessingService",
+            ]
 
             # 从环境变量或kwargs更新配置
             for key, value in kwargs.items():
@@ -191,18 +274,44 @@ class Settings(SettingsClass):
                 "MLFLOW_TRACKING_URI": "mlflow_tracking_uri",
                 "API_FOOTBALL_KEY": "api_football_key",
                 "API_FOOTBALL_URL": "api_football_url",
+                "METRICS_ENABLED": "metrics_enabled",
+                "METRICS_TABLES": "metrics_tables",
+                "METRICS_COLLECTION_INTERVAL": "metrics_collection_interval",
+                "MISSING_DATA_DEFAULTS_PATH": "missing_data_defaults_path",
+                "MISSING_DATA_DEFAULTS_JSON": "missing_data_defaults_json",
+                "ENABLED_SERVICES": "enabled_services",
             }
 
             for env_key, attr_name in env_mapping.items():
                 env_value = os.getenv(env_key)
-                if env_value is not None:
-                    # 处理特殊类型
-                    if attr_name == "api_port":
-                        try:
-                            env_value = int(env_value)
-                        except ValueError:
-                            continue
-                    setattr(self, attr_name, env_value)
+                if env_value is None:
+                    continue
+
+                if attr_name in {"api_port", "metrics_collection_interval"}:
+                    try:
+                        env_value = int(env_value)
+                    except ValueError:
+                        continue
+                elif attr_name in {"metrics_enabled"}:
+                    env_value = str(env_value).lower() == "true"
+                elif attr_name in {"metrics_tables", "enabled_services"}:
+                    env_value = self._parse_list_env(env_value)
+
+                setattr(self, attr_name, env_value)
+
+        def _parse_list_env(self, value: str) -> List[str]:
+            value = value.strip()
+            if not value:
+                return []
+
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if str(item).strip()]
+            except json.JSONDecodeError:
+                pass
+
+            return [item.strip() for item in value.split(",") if item.strip()]
 
 
 # 全局配置实例

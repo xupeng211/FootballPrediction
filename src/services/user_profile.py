@@ -48,8 +48,8 @@ class UserProfileService(BaseService):
             ),
             preferences={
                 "interests": interests,
-                "content_type": content_preferences.get("preferred_type", "text"),
-                "language": content_preferences.get("language", "zh"),
+                "content_type": content_preferences.get(str("preferred_type"), "text"),
+                "language": content_preferences.get(str("language"), "zh"),
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
             },
@@ -124,17 +124,17 @@ class UserProfileService(BaseService):
         from src.models import UserProfile
 
         user_id = user_data["user_id"]
-        interests = user_data.get("interests", ["足球", "体育"])
+        interests = user_data.get(str("interests"), ["足球", "体育"])
         preferences = {
             "interests": interests,
-            "language": user_data.get("language", "zh"),
-            "content_type": user_data.get("content_type", "text"),
+            "language": user_data.get(str("language"), "zh"),
+            "content_type": user_data.get(str("content_type"), "text"),
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
         profile = UserProfile(
             user_id=user_id,
-            display_name=user_data.get("name", "Anonymous"),
-            email=user_data.get("email", ""),
+            display_name=user_data.get(str("name"), "Anonymous"),
+            email=user_data.get(str("email"), ""),
             preferences=preferences,
             created_at=datetime.now(),
         )

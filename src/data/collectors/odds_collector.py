@@ -288,13 +288,13 @@ class OddsCollector(DataCollector):
 
                 # 处理响应数据
                 for event in response:
-                    for bookmaker in event.get("bookmakers", []):
-                        for market_data in bookmaker.get("markets", []):
+                    for bookmaker in event.get(str("bookmakers"), []):
+                        for market_data in bookmaker.get(str("markets"), []):
                             odds_data = {
                                 "match_id": match_id,
                                 "bookmaker": bookmaker.get("key"),
                                 "market_type": market_data.get("key"),
-                                "outcomes": market_data.get("outcomes", []),
+                                "outcomes": market_data.get(str("outcomes"), []),
                                 "last_update": market_data.get("last_update"),
                                 "event_data": event,
                             }
@@ -325,9 +325,9 @@ class OddsCollector(DataCollector):
         )
 
         key_components = [
-            str(odds_data.get("match_id", "")),
-            str(odds_data.get("bookmaker", "")),
-            str(odds_data.get("market_type", "")),
+            str(odds_data.get(str("match_id"), "")),
+            str(odds_data.get(str("bookmaker"), "")),
+            str(odds_data.get(str("market_type"), "")),
             time_window.isoformat(),
         ]
 
@@ -349,9 +349,9 @@ class OddsCollector(DataCollector):
 
             # 提取当前赔率值
             current_odds = {}
-            for outcome in odds_data.get("outcomes", []):
-                current_odds[outcome.get("name", "")] = Decimal(
-                    str(outcome.get("price", 0))
+            for outcome in odds_data.get(str("outcomes"), []):
+                current_odds[outcome.get(str("name"), "")] = Decimal(
+                    str(outcome.get(str("price"), 0))
                 )
 
             # 与上次记录的值比较
@@ -394,7 +394,7 @@ class OddsCollector(DataCollector):
 
             # 赔率值验证和标准化
             cleaned_outcomes = []
-            for outcome in raw_odds.get("outcomes", []):
+            for outcome in raw_odds.get(str("outcomes"), []):
                 price = outcome.get("price")
                 if price and float(price) > 1.0:  # 赔率必须大于1
                     cleaned_outcomes.append(

@@ -13,8 +13,10 @@
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
+import atexit
 import logging
 import os
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -74,12 +76,17 @@ class FootballFeatureStore:
             redis_config: Redis配置（在线存储）
         """
         self.project_name = project_name
-        # Use tempfile.mkdtemp for secure temporary directory creation
-        import tempfile
+        self._temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
+        self._temp_dir_cleaned = False
 
-        self.repo_path = Path(
-            repo_path or tempfile.mkdtemp(prefix=f"feast_repo_{project_name}_")
-        )
+        if repo_path:
+            self.repo_path = Path(repo_path)
+        else:
+            self._temp_dir = tempfile.TemporaryDirectory(
+                prefix=f"feast_repo_{project_name}_"
+            )
+            self.repo_path = Path(self._temp_dir.name)
+            atexit.register(self._cleanup_temp_dir)
         self.logger = logging.getLogger(f"feature_store.{self.__class__.__name__}")
 
         # 默认配置
@@ -99,14 +106,14 @@ class FootballFeatureStore:
 
     def initialize(self) -> None:
         """初始化特征仓库"""
-        if not HAS_FEAST:
-            self.logger.warning(
-                "Feast 未安装，跳过特征仓库初始化。请安装 feast 以启用完整功能。"
-            )
-            self._store = None
-            return
-
         try:
+            if not HAS_FEAST:
+                self.logger.warning(
+                    "Feast 未安装，跳过特征仓库初始化。请安装 feast 以启用完整功能。"
+                )
+                self._store = None
+                return
+
             # 创建仓库目录
             self.repo_path.mkdir(parents=True, exist_ok=True)
 
@@ -143,6 +150,15 @@ class FootballFeatureStore:
         except Exception as e:
             self.logger.error(f"特征仓库初始化失败: {str(e)}")
             raise
+
+    def close(self) -> None:
+        """释放临时资源，供显式调用。"""
+        self._cleanup_temp_dir()
+
+    def _cleanup_temp_dir(self) -> None:
+        if self._temp_dir and not self._temp_dir_cleaned:
+            self._temp_dir.cleanup()
+            self._temp_dir_cleaned = True
 
     def apply_features(self) -> None:
         """注册特征定义到特征仓库"""
@@ -197,7 +213,12 @@ class FootballFeatureStore:
             df[timestamp_column] = pd.to_datetime(df[timestamp_column])
 
             # 写入特征数据
-            self._store.push(push_source_name=feature_view_name, df=df, to="online")
+            self._store.push(
+                df,
+                feature_view_name,
+                feature_view_name,
+                timestamp_column=timestamp_column,
+            )  # type: ignore
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
 
@@ -230,8 +251,11 @@ class FootballFeatureStore:
                 features=feature_service, entity_rows=entity_df.to_dict("records")
             )
 
-            return feature_vector.to_df()
-
+            return (
+                feature_vector.to_df()
+                if isinstance(feature_vector.to_df(), dict)
+                else {}
+            )
         except Exception as e:
             self.logger.error(f"获取在线特征失败: {str(e)}")
             raise
@@ -267,8 +291,7 @@ class FootballFeatureStore:
                 full_feature_names=full_feature_names,
             )
 
-            return training_df.to_df()
-
+            return training_df.to_df() if isinstance(training_df.to_df(), dict) else {}
         except Exception as e:
             self.logger.error(f"获取历史特征失败: {str(e)}")
             raise
@@ -323,8 +346,7 @@ class FootballFeatureStore:
             )
 
             self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
-            return training_df
-
+            return training_df if isinstance(training_df, dict) else {}
         except Exception as e:
             self.logger.error(f"创建训练数据集失败: {str(e)}")
             raise
@@ -356,8 +378,7 @@ class FootballFeatureStore:
                 "tags": feature_view.tags,
             }
 
-            return stats
-
+            return stats if isinstance(stats, dict) else {}
         except Exception as e:
             self.logger.error(f"获取特征统计失败: {str(e)}")
             return {"error": str(e)}
@@ -392,11 +413,10 @@ class FootballFeatureStore:
                         }
                     )
 
-            return features_list
-
+            return features_list if isinstance(features_list, dict) else {}
         except Exception as e:
             self.logger.error(f"列出特征失败: {str(e)}")
-            return []
+            return [] if isinstance([], dict) else {}
 
     def cleanup_old_features(self, older_than_days: int = 30) -> None:
         """
@@ -420,16 +440,6 @@ class FootballFeatureStore:
             self.logger.error(f"清理过期特征失败: {str(e)}")
             raise
 
-    def close(self) -> None:
-        """关闭特征仓库连接"""
-        try:
-            if self._store:
-                # Feast没有显式的关闭方法，但我们可以清理一些资源
-                self._store = None
-                self.logger.info("特征仓库连接已关闭")
-        except Exception as e:
-            self.logger.error(f"关闭特征仓库连接失败: {str(e)}")
-
 
 # 全局特征仓库实例
 _feature_store: Optional[FootballFeatureStore] = None
@@ -441,7 +451,7 @@ def get_feature_store() -> FootballFeatureStore:
     if _feature_store is None:
         _feature_store = FootballFeatureStore()
         _feature_store.initialize()
-    return _feature_store
+    return _feature_store if isinstance(_feature_store, dict) else {}
 
 
 def initialize_feature_store(
@@ -471,4 +481,4 @@ def initialize_feature_store(
     )
     _feature_store.initialize()
     _feature_store.apply_features()
-    return _feature_store
+    return _feature_store if isinstance(_feature_store, dict) else {}

@@ -5,6 +5,7 @@
 import os
 import gettext
 from pathlib import Path
+from typing import Optional
 
 # 翻译目录
 LOCALE_DIR = Path(__file__).parent.parent / "locales"
@@ -38,7 +39,7 @@ def _(message: str) -> str:
     return message
 
 
-def get_language_from_request(accept_language: str = None) -> str:
+def get_language_from_request(accept_language: Optional[str] = None) -> str:
     """从请求头获取语言设置"""
     if not accept_language:
         accept_language = os.getenv("HTTP_ACCEPT_LANGUAGE", "zh-CN")

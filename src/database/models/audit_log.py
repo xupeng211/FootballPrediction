@@ -172,7 +172,7 @@ class AuditLog(BaseModel):
             AuditSeverity.MEDIUM: 30,
             AuditSeverity.HIGH: 70,
             AuditSeverity.CRITICAL: 90,
-        }.get(self.severity, 30)
+        }.get(str(self.severity), 30)
 
         # 根据操作类型调整分数
         if self.action == AuditAction.DELETE:
@@ -192,7 +192,7 @@ class AuditLog(BaseModel):
 
         return min(base_score, 100)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: Optional[set[Any]] = None) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,
@@ -304,9 +304,9 @@ class AuditLog(BaseModel):
             elif action in [AuditAction.BACKUP, AuditAction.RESTORE]:
                 kwargs["compliance_category"] = "DATA_PROTECTION"
             elif kwargs.get("is_sensitive"):
-                kwargs["compliance_category"] = (
-                    "PII"  # Personally Identifiable Information
-                )
+                kwargs[
+                    "compliance_category"
+                ] = "PII"  # Personally Identifiable Information
             else:
                 kwargs["compliance_category"] = "GENERAL"
 

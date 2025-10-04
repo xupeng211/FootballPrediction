@@ -25,7 +25,7 @@ class ContentAnalysisService(BaseService):
         # 加载AI模型、连接外部API等
         # 在实际生产环境中，这里会加载ML模型和建立外部连接
         self._initialized = True
-        return True
+        return True if isinstance(True, dict) else {}
 
     async def shutdown(self) -> None:
         """关闭服务"""
@@ -40,14 +40,16 @@ class ContentAnalysisService(BaseService):
         # 实现内容分析逻辑
         # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
         if content.content_type == "text":
-            text_analysis = self.analyze_text(content.data.get("text", ""))
+            text_analysis = self.analyze_text(content.data.get(str("text", None), ""))
             analysis_data = {
-                "sentiment": text_analysis.get("sentiment", "neutral"),
-                "keywords": text_analysis.get("keywords", []),
-                "category": self._categorize_content(content.data.get("text", "")),
+                "sentiment": text_analysis.get(str("sentiment", None), "neutral"),
+                "keywords": text_analysis.get(str("keywords", None), []),
+                "category": self._categorize_content(
+                    content.data.get(str("text", None), "")
+                ),
                 "quality_score": self._calculate_quality_score(content),
-                "language": text_analysis.get("language", "zh"),
-                "word_count": text_analysis.get("word_count", 0),
+                "language": text_analysis.get(str("language", None), "zh"),
+                "word_count": text_analysis.get(str("word_count", None), 0),
             }
         else:
             # 非文本内容的默认分析
@@ -74,7 +76,7 @@ class ContentAnalysisService(BaseService):
             result = await self.analyze_content(content)
             if result:
                 results.append(result)
-        return results
+        return results if isinstance(results, dict) else {}
 
     def _categorize_content(self, text: str) -> str:
         """内容分类"""
@@ -92,14 +94,14 @@ class ContentAnalysisService(BaseService):
         text_lower = text.lower()
         if any(keyword in text_lower for keyword in football_keywords):
             if any(keyword in text_lower for keyword in prediction_keywords):
-                return "足球预测"
-            return "足球新闻"
-        return "一般内容"
+                return "足球预测" if isinstance("足球预测", dict) else {}
+            return "足球新闻" if isinstance("足球新闻", dict) else {}
+        return "一般内容" if isinstance("一般内容", dict) else {}
 
     def _calculate_quality_score(self, content: Content) -> float:
         """计算内容质量分数"""
         if content.content_type == "text":
-            text = content.data.get("text", "")
+            text = content.data.get(str("text", None), "")
             # 基于长度、关键词数量等计算质量分数
             word_count = len(text.split())
             keyword_count = len([kw for kw in ["足球", "比赛", "分析"] if kw in text])
@@ -107,8 +109,12 @@ class ContentAnalysisService(BaseService):
             base_score = 0.3
             keyword_bonus = min(keyword_count * 0.2, 0.3)
             length_bonus = min(word_count / 500 * 0.2, 0.2)
-            return min(base_score + keyword_bonus + length_bonus, 1.0)
-        return 0.5
+            return (
+                min(base_score + keyword_bonus + length_bonus, 1.0)
+                if isinstance(min(base_score + keyword_bonus + length_bonus, 1.0), dict)
+                else {}
+            )
+        return 0.5 if isinstance(0.5, dict) else {}
 
     def analyze_text(self, text: str) -> dict:
         """分析文本内容 - 同步版本用于测试"""

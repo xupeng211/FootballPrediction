@@ -9,14 +9,34 @@ import asyncio
 import logging
 import os
 import signal
+import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .metrics_exporter import get_metrics_exporter
+from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+_settings = get_settings()
+ENABLE_METRICS = bool(_settings.metrics_enabled)
+if ENABLE_METRICS and ("PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules):
+    ENABLE_METRICS = False
 
-ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+DEFAULT_TABLES: List[str] = (
+    list(_settings.metrics_tables)
+    if getattr(_settings, "metrics_tables", None)
+    else [
+        "matches",
+        "teams",
+        "leagues",
+        "odds",
+        "features",
+        "raw_match_data",
+        "raw_odds_data",
+        "raw_scores_data",
+        "data_collection_logs",
+    ]
+)
 
 
 class MetricsCollector:
@@ -26,18 +46,26 @@ class MetricsCollector:
     定期收集和更新监控指标，运行在后台任务中
     """
 
-    def __init__(self, collection_interval: int = 30):
+    def __init__(
+        self,
+        collection_interval: Optional[int] = None,
+        tables_to_monitor: Optional[List[str]] = None,
+    ):
         """
         初始化指标收集器
 
         Args:
             collection_interval: 收集间隔（秒），默认30秒
         """
-        self.collection_interval = collection_interval
+        default_interval = getattr(_settings, "metrics_collection_interval", 30) or 30
+        self.collection_interval = collection_interval or default_interval
         self.metrics_exporter = get_metrics_exporter()
         self.running = False
         self.enabled = True  # 添加enabled属性
         self._task: Optional[asyncio.Task] = None
+        self.tables_to_monitor = list(tables_to_monitor or DEFAULT_TABLES)
+        if hasattr(self.metrics_exporter, "set_tables_to_monitor"):
+            self.metrics_exporter.set_tables_to_monitor(self.tables_to_monitor)
 
     async def start(self) -> None:
         """
