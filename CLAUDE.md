@@ -8,7 +8,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [快速开始](#快速开始)
 - [核心命令](#核心命令)
 - [开发原则](#开发原则)
-- [工作流系统](#工作流系统)
 - [项目架构](#项目架构)
 - [重要文档](#重要文档)
 - [故障排除](#故障排除)
@@ -167,49 +166,6 @@ scripts/          # 辅助脚本
 - [数据库架构](docs/reference/DATABASE_SCHEMA.md)
 - [开发指南](docs/reference/DEVELOPMENT_GUIDE.md)
 
-## 🔄 工作流系统
-
-### ⚠️ 重要：理解工作流
-
-这个项目有6个自动化工作流，请务必阅读：
-
-- **[Claude工作流指南](docs/ai/CLAUDE_WORKFLOW_GUIDE.md)** - 必读！
-- **[工作流文档](.github/workflows/README.md)** - 完整说明
-
-### 核心工作流（中文命名）
-
-1. **CI流水线.yml** - 代码质量检查（push/PR触发）
-2. **部署流水线.yml** - 自动部署到staging/production
-3. **MLOps机器学习流水线.yml** - 模型自动管理（每日8:00）
-4. **问题跟踪流水线.yml** - 问题自动跟踪（CI失败触发）
-5. **项目同步流水线.yml** - 看板状态同步（PR关闭触发）
-6. **项目维护流水线.yml** - 项目维护（每周一触发）
-
-### 必须遵守的规则
-
-```bash
-# 提交前必须运行
-make prepush
-# 或
-./ci-verify.sh
-```
-
-### Docker服务
-
-```bash
-# 启动所需服务
-docker-compose up -d
-
-# 检查服务状态
-docker-compose ps
-```
-
-### CI失败处理
-
-- Issue Tracker会自动创建Issue
-- Issue包含详细错误信息
-- 修复后自动关闭Issue
-
 ## 🔧 开发工作流
 
 ### 新功能开发
@@ -306,6 +262,30 @@ docker-compose --profile celery up   # 启动Celery任务队列
   - `make install-locked` - 安装锁定版本（可重现构建）
   - `make verify-deps` - 验证依赖一致性
   - `make check-deps` - 检查必需依赖是否安装
+
+## 🔄 CI/CD系统
+
+### 必须遵守的规则
+
+```bash
+# 提交前必须运行
+make prepush
+# 或
+./ci-verify.sh
+```
+
+### Docker CI验证
+
+- **推送前必须**：执行 `./ci-verify.sh` 验证CI兼容性
+- **环境一致性**：与GitHub Actions CI环境完全一致
+- **依赖验证**：确保 `requirements.lock` 在CI环境中正常工作
+- **服务测试**：在PostgreSQL和Redis服务下运行完整测试
+
+### CI失败处理
+
+- Issue Tracker会自动创建Issue
+- Issue包含详细错误信息
+- 修复后自动关闭Issue
 
 ## 🆘 故障排除
 

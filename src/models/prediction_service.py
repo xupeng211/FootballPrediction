@@ -313,11 +313,7 @@ class PredictionService:
             The method caches loaded models to improve performance and supports TTL expiration.
             Includes automatic retry mechanism with up to 3 attempts.
         """
-        return (
-            await self._load_model_from_mlflow(model_name)
-            if isinstance(await self._load_model_from_mlflow(model_name), dict)
-            else {}
-        )
+        return await self._load_model_from_mlflow(model_name)
 
     async def _load_model_from_mlflow(
         self, model_name: str = "football_baseline_model"
@@ -379,7 +375,7 @@ class PredictionService:
             model_name=model_name, model_version=version
         ).observe(load_duration)
 
-        return model, version if isinstance(model, version, dict) else {}
+        return model, version
 
     async def get_production_model(
         self, model_name: str = "football_baseline_model"
@@ -430,7 +426,7 @@ class PredictionService:
             logger.debug(
                 f"使用缓存的模型 {model_name} 版本 {version} / Using cached model {model_name} version {version}"
             )
-            return model, version if isinstance(model, version, dict) else {}
+            return model, version
         try:
             # 使用带重试机制的方法加载模型
             model, version = await self.get_production_model_with_retry(model_name)
@@ -453,7 +449,7 @@ class PredictionService:
             logger.info(
                 f"成功加载模型 {model_name} 版本 {version} / Successfully loaded model {model_name} version {version}"
             )
-            return model, version if isinstance(model, version, dict) else {}
+            return model, version
         except Exception as e:
             logger.error(f"加载生产模型失败: {e}")
             raise
@@ -518,7 +514,7 @@ class PredictionService:
             logger.info(
                 f"使用缓存的预测结果：比赛 {match_id} / Using cached prediction result for match {match_id}"
             )
-            return cached_result if isinstance(cached_result, dict) else {}
+            return cached_result
         try:
             logger.info(f"开始预测比赛 {match_id}")
 
