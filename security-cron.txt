@@ -1,0 +1,5 @@
+# 每周一早上8点运行安全检查
+0 8 * * 1 cd /home/user/projects/FootballPrediction && ./scripts/security-check.sh >> logs/security-check.log 2>&1
+
+# 每月1号凌晨2点更新依赖
+0 2 1 * * cd /home/user/projects/FootballPrediction && pip-audit -r requirements.txt >> logs/dependency-update.log 2>&1

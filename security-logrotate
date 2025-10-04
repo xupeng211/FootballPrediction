@@ -1,0 +1,20 @@
+# 安全检查日志轮转配置
+/home/user/projects/FootballPrediction/logs/security-check.log {
+    weekly
+    rotate 12
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 user user
+}
+
+/home/user/projects/FootballPrediction/logs/dependency-update.log {
+    monthly
+    rotate 6
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 user user
+}
