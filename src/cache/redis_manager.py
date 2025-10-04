@@ -14,7 +14,25 @@ from typing import Any, Dict, List, Optional, Union
 
 import redis
 import redis.asyncio as redis_async
-from redis.exceptions import ConnectionError, RedisError, TimeoutError
+
+# 兼容性处理：支持不同版本的redis包
+try:
+    from redis.exceptions import ConnectionError, RedisError, TimeoutError
+except ImportError:
+    # 如果redis.exceptions不可用，从redis模块直接导入
+    try:
+        from redis import ConnectionError, RedisError, TimeoutError
+    except ImportError:
+        # 如果还是没有，创建基本异常类
+        class RedisError(Exception):
+            pass
+
+        class ConnectionError(RedisError):
+            pass
+
+        class TimeoutError(RedisError):
+            pass
+
 
 logger = logging.getLogger(__name__)
 

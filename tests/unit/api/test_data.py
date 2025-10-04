@@ -14,7 +14,6 @@ from unittest.mock import MagicMock
 import pytest
 
 
-
 class TestGetMatchFeatures:
     """获取比赛特征数据API测试"""
 
@@ -44,7 +43,7 @@ class TestGetMatchFeatures:
             mock_match_result,  # 第一次查询：match
             mock_features_result,  # 第二次查询：features
             mock_prediction_result,  # 第三次查询：prediction
-            mock_odds_result  # 第四次查询：odds
+            mock_odds_result,  # 第四次查询：odds
         ]
 
         # 发送请求
@@ -133,7 +132,7 @@ class TestGetMatchFeatures:
             mock_match_result,
             mock_features_result,
             mock_prediction_result,
-            mock_odds_result
+            mock_odds_result,
         ]
 
         # 发送请求
@@ -180,7 +179,7 @@ class TestGetMatchFeatures:
         # 第一次查询成功，后续查询失败
         mock_session.execute.side_effect = [
             MagicMock(scalar_one_or_none=MagicMock(return_value=sample_match)),
-            Exception("Database connection failed")
+            Exception("Database connection failed"),
         ]
 
         # 发送请求
@@ -471,7 +470,9 @@ class TestGetDashboardData:
         mock_matches_result.scalars.return_value.all.return_value = [mock_match]
 
         mock_predictions_result = MagicMock()
-        mock_predictions_result.scalars.return_value.all.return_value = [mock_prediction]
+        mock_predictions_result.scalars.return_value.all.return_value = [
+            mock_prediction
+        ]
 
         mock_db_result = MagicMock()
         mock_db_result.scalar.return_value = 1
@@ -483,7 +484,7 @@ class TestGetDashboardData:
             mock_matches_result,  # 查询今日比赛
             mock_predictions_result,  # 查询最新预测
             mock_db_result,  # 系统健康检查
-            mock_logs_result  # 查询采集日志
+            mock_logs_result,  # 查询采集日志
         ]
 
         # 发送请求（DataQualityMonitor已经在conftest.py中被mock了）
@@ -523,7 +524,7 @@ class TestGetDashboardData:
             mock_matches_result,
             mock_predictions_result,
             mock_db_result,
-            mock_logs_result
+            mock_logs_result,
         ]
 
         # 发送请求（DataQualityMonitor已经在conftest.py中被mock了）
@@ -578,6 +579,7 @@ class TestSystemHealth:
 
         # 直接调用函数
         from src.api.data import get_system_health
+
         health = await get_system_health(mock_session)
 
         # 验证结果
@@ -596,6 +598,7 @@ class TestSystemHealth:
 
         # 直接调用函数
         from src.api.data import get_system_health
+
         health = await get_system_health(mock_session)
 
         # 验证结果
@@ -621,12 +624,16 @@ class TestSystemHealth:
         failed_log.created_at = datetime.now()
 
         mock_logs_result = MagicMock()
-        mock_logs_result.scalars.return_value.all.return_value = [success_log, failed_log]
+        mock_logs_result.scalars.return_value.all.return_value = [
+            success_log,
+            failed_log,
+        ]
 
         mock_session.execute.side_effect = [mock_db_result, mock_logs_result]
 
         # 直接调用函数
         from src.api.data import get_system_health
+
         health = await get_system_health(mock_session)
 
         # 验证结果

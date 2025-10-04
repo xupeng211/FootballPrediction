@@ -47,8 +47,8 @@ def _setup_redis_mocks():
 
     # 创建Redis模块的完整Mock
     class RedisModule:
-        VERSION = (5, 2, 1)
-        __version__ = "5.2.1"
+        VERSION = (5, 0, 1)
+        __version__ = "5.0.1"
 
         class Redis:
             def __init__(self, *args, **kwargs):
@@ -84,14 +84,40 @@ def _setup_redis_mocks():
         class exceptions:
             class ConnectionError(Exception):
                 pass
+
             class RedisError(Exception):
                 pass
+
             class TimeoutError(Exception):
                 pass
 
+            class ResponseError(Exception):
+                pass
+
+            class DataError(Exception):
+                pass
+
+            class InvalidResponse(Exception):
+                pass
+
+            class AuthenticationError(Exception):
+                pass
+
+            class AuthorizationError(Exception):
+                pass
+
+            class ReadOnlyError(Exception):
+                pass
+
+            class BusyLoadingError(Exception):
+                pass
+
+            class OutOfMemoryError(Exception):
+                pass
+
     class RedisAsyncioModule:
-        VERSION = (5, 2, 1)
-        __version__ = "5.2.1"
+        VERSION = (5, 0, 1)
+        __version__ = "5.0.1"
 
         class Redis:
             def __init__(self, *args, **kwargs):
@@ -129,24 +155,30 @@ def _setup_redis_mocks():
 
     # 设置所有需要的Redis模块
     redis_modules = {
-        'redis': redis_module,
-        'redis.cluster': type('RedisClusterModule', (), {
-            'RedisCluster': RedisModule.RedisCluster,
-            'ClusterNode': type('ClusterNode', (), {})
-        })(),
-        'redis.connection': type('RedisConnectionModule', (), {
-            'ConnectionPool': RedisModule.ConnectionPool
-        })(),
-        'redis.asyncio': redis_asyncio_module,
-        'redis.asyncio.cluster': type('RedisAsyncioClusterModule', (), {
-            'RedisCluster': RedisAsyncioModule.RedisCluster
-        })(),
-        'redis.sentinel': type('RedisSentinelModule', (), {
-            'Sentinel': type('Sentinel', (), {})
-        })(),
-        'redis.asyncio.sentinel': type('RedisAsyncioSentinelModule', (), {
-            'Sentinel': RedisAsyncioModule.Sentinel
-        })(),
+        "redis": redis_module,
+        "redis.cluster": type(
+            "RedisClusterModule",
+            (),
+            {
+                "RedisCluster": RedisModule.RedisCluster,
+                "ClusterNode": type("ClusterNode", (), {}),
+            },
+        )(),
+        "redis.connection": type(
+            "RedisConnectionModule", (), {"ConnectionPool": RedisModule.ConnectionPool}
+        )(),
+        "redis.asyncio": redis_asyncio_module,
+        "redis.asyncio.cluster": type(
+            "RedisAsyncioClusterModule",
+            (),
+            {"RedisCluster": RedisAsyncioModule.RedisCluster},
+        )(),
+        "redis.sentinel": type(
+            "RedisSentinelModule", (), {"Sentinel": type("Sentinel", (), {})}
+        )(),
+        "redis.asyncio.sentinel": type(
+            "RedisAsyncioSentinelModule", (), {"Sentinel": RedisAsyncioModule.Sentinel}
+        )(),
     }
 
     # 将asyncio模块添加到redis模块的属性中
@@ -210,14 +242,14 @@ def _setup_feast_mocks():
 
     # 添加Feast模块
     feast_modules = [
-        'feast',
-        'feast.infra',
-        'feast.infra.online_stores',
-        'feast.infra.online_stores.redis',
-        'feast.infra.offline_stores',
-        'feast.infra.offline_stores.contrib',
-        'feast.infra.offline_stores.contrib.postgres_offline_store',
-        'feast.types',
+        "feast",
+        "feast.infra",
+        "feast.infra.online_stores",
+        "feast.infra.online_stores.redis",
+        "feast.infra.offline_stores",
+        "feast.infra.offline_stores.contrib",
+        "feast.infra.offline_stores.contrib.postgres_offline_store",
+        "feast.types",
     ]
 
     for module_name in feast_modules:
@@ -238,20 +270,25 @@ def mock_external_services() -> None:
 
     # Mock数据质量监控器
     mock_monitor = MagicMock()
-    mock_monitor.generate_quality_report = AsyncMock(return_value={
-        "overall_status": "healthy",
-        "quality_score": 95.0,
-        "anomalies": {"count": 0, "items": []},
-        "report_time": datetime.now().isoformat(),
-        "checks": {
-            "data_freshness": {"status": "pass", "score": 100},
-            "data_completeness": {"status": "pass", "score": 95},
-            "data_consistency": {"status": "pass", "score": 90},
+    mock_monitor.generate_quality_report = AsyncMock(
+        return_value={
+            "overall_status": "healthy",
+            "quality_score": 95.0,
+            "anomalies": {"count": 0, "items": []},
+            "report_time": datetime.now().isoformat(),
+            "checks": {
+                "data_freshness": {"status": "pass", "score": 100},
+                "data_completeness": {"status": "pass", "score": 95},
+                "data_consistency": {"status": "pass", "score": 90},
+            },
         }
-    })
+    )
     try:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
-        monkeypatch.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
+
+        monkeypatch.setattr(
+            DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor
+        )
     except ImportError:
         pass
 
