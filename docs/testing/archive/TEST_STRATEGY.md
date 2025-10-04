@@ -3,15 +3,18 @@
 ## 📖 文档信息
 
 ### 文档目的
+
 本文档定义了足球预测系统的完整测试策略，确保数据采集、清洗、存储、特征工程、模型预测全链路的正确性和可靠性。通过分层测试架构和自动化CI/CD流程，保障系统的可维护性、可扩展性和稳定性。
 
 ### 适用范围
+
 - **项目名称**: FootballPrediction - 足球预测系统
 - **技术栈**: FastAPI + PostgreSQL + Redis + MLflow + Prometheus + Grafana
 - **架构模式**: Bronze→Silver→Gold数据分层 + 特征仓库 + ML预测服务
 - **部署方式**: Docker容器化 + GitHub Actions CI/CD
 
 ### 版本信息
+
 - **文档版本**: v1.0
 - **创建日期**: 2025-09-11
 - **最后更新**: 2025-09-11
@@ -23,12 +26,14 @@
 ## 🎯 测试总体目标
 
 ### 核心质量目标
+
 1. **数据完整性保障**: 确保数据采集、清洗、存储、预测全链路的正确性
 2. **系统稳定性确保**: 保证系统的可维护性、可扩展性和7x24小时稳定运行
 3. **CI/CD质量提升**: 提高CI/CD流程中的代码质量和发布可靠性
 4. **性能指标达成**: 确保系统满足预期的性能和响应时间要求
 
 ### 测试质量指标
+
 | 质量维度 | 目标指标 | 监控方法 | 责任人 |
 |---------|---------|---------|--------|
 | **代码覆盖率** | ≥80% | pytest-cov + CI检查 | 开发团队 |
@@ -53,7 +58,6 @@ pytest tests/unit
 # 单独运行慢测试（包括 Redis 健康检查等）
 pytest tests/slow
 ```
-
 
 ```bash
 
@@ -106,9 +110,11 @@ pytest tests/integration -m "integration"
 ### 1️⃣ 单元测试（Unit Test）- 基础保障层
 
 #### 测试目标
+
 验证个别模块和函数的逻辑正确性，确保每个组件独立工作正常。
 
 #### 重点覆盖模块
+
 - **数据采集器** (`src/data/collectors/`)
   - `DataCollector.collect_fixtures()` - 赛程数据采集
   - `DataCollector.collect_odds()` - 赔率数据采集
@@ -134,6 +140,7 @@ pytest tests/integration -m "integration"
   - MLflow集成验证
 
 #### 测试工具与框架
+
 - **主框架**: pytest + pytest-asyncio
 - **Mock工具**: pytest-mock + unittest.mock
 - **数据工厂**: factory_boy + Faker
@@ -141,12 +148,14 @@ pytest tests/integration -m "integration"
 - **数据库测试**: pytest-postgresql + SQLAlchemy
 
 #### 覆盖率目标
+
 - **总体覆盖率**: ≥80%
 - **核心业务逻辑**: ≥95%
 - **API端点**: ≥90%
 - **数据处理模块**: ≥85%
 
 #### 单元测试示例
+
 ```python
 # tests/unit/test_data_collectors.py
 import pytest
@@ -196,12 +205,15 @@ class TestDataCollector:
 ### 2️⃣ 集成测试（Integration Test）- 系统协同层
 
 #### 测试目标
+
 验证跨模块协同逻辑和关键数据流，确保各组件之间正确协作。
 
 #### 重点覆盖场景
 
 ##### 数据流集成测试
+
 - **Bronze→Silver→Gold数据流**
+
   ```python
   # tests/integration/test_data_pipeline.py
   @pytest.mark.asyncio
@@ -224,7 +236,9 @@ class TestDataCollector:
   ```
 
 ##### 任务调度集成测试
+
 - **Celery任务编排验证**
+
   ```python
   # tests/integration/test_scheduler.py
   @pytest.mark.asyncio
@@ -242,7 +256,9 @@ class TestDataCollector:
   ```
 
 ##### 缓存一致性测试
+
 - **Redis↔PostgreSQL数据一致性**
+
   ```python
   # tests/integration/test_cache_consistency.py
   @pytest.mark.asyncio
@@ -259,6 +275,7 @@ class TestDataCollector:
   ```
 
 #### 测试工具与环境
+
 - **框架**: pytest + docker-compose
 - **数据库**: 专用测试PostgreSQL实例
 - **缓存**: 专用测试Redis实例
@@ -266,6 +283,7 @@ class TestDataCollector:
 - **容器编排**: docker-compose.test.yml
 
 #### 集成测试策略
+
 - **数据隔离**: 每个测试使用独立数据库schema
 - **服务隔离**: Docker容器化确保环境一致性
 - **状态清理**: 测试前后自动清理数据和状态
@@ -276,11 +294,13 @@ class TestDataCollector:
 ### 3️⃣ 端到端测试（E2E Test）- 业务场景层
 
 #### 测试目标
+
 模拟真实用户场景，验证完整业务流程的端到端正确性。
 
 #### 核心测试场景
 
 ##### API功能测试
+
 ```python
 # tests/e2e/test_prediction_api.py
 @pytest.mark.asyncio
@@ -310,6 +330,7 @@ async def test_match_prediction_workflow():
 ```
 
 ##### 数据血缘测试
+
 ```python
 # tests/e2e/test_data_lineage.py
 @pytest.mark.asyncio
@@ -334,6 +355,7 @@ async def test_data_lineage_tracking():
 ```
 
 ##### 回测验证测试
+
 ```python
 # tests/e2e/test_backtesting.py
 @pytest.mark.asyncio
@@ -364,6 +386,7 @@ async def test_prediction_backtesting():
 ```
 
 #### 测试工具与框架
+
 - **框架**: pytest + requests + pytest-asyncio
 - **API测试**: httpx + FastAPI TestClient
 - **数据验证**: pandas + numpy用于结果分析
@@ -376,6 +399,7 @@ async def test_prediction_backtesting():
 ### 功能覆盖率
 
 #### 核心业务模块 (95%+ 覆盖要求)
+
 - **数据采集**: 外部API调用、数据解析、存储入库
 - **数据清洗**: 质量检查、格式标准化、异常处理
 - **特征工程**: 特征计算、特征存储、特征检索
@@ -383,6 +407,7 @@ async def test_prediction_backtesting():
 - **监控告警**: 指标收集、异常检测、告警触发
 
 #### 支撑功能模块 (80%+ 覆盖要求)
+
 - **数据库操作**: CRUD操作、连接管理、事务处理
 - **缓存管理**: Redis操作、缓存策略、过期处理
 - **API接口**: 请求处理、响应格式、错误处理
@@ -391,6 +416,7 @@ async def test_prediction_backtesting():
 ### 代码覆盖率
 
 #### 按文件类型分类
+
 | 文件类型 | 覆盖率目标 | 检查工具 | 备注 |
 |---------|-----------|---------|------|
 | **API模块** | ≥90% | pytest-cov | 所有端点必须测试 |
@@ -400,6 +426,7 @@ async def test_prediction_backtesting():
 | **配置文件** | ≥70% | pytest-cov | 配置加载和验证 |
 
 #### 覆盖率监控策略
+
 ```bash
 # 生成覆盖率报告
 make coverage
@@ -414,6 +441,7 @@ pytest --cov=src --cov-report=html
 ### 业务场景覆盖率
 
 #### 数据处理场景
+
 - ✅ 正常数据采集和处理流程
 - ✅ 网络异常和API错误处理
 - ✅ 数据格式异常和清洗逻辑
@@ -422,6 +450,7 @@ pytest --cov=src --cov-report=html
 - ✅ 断点续传和增量采集
 
 #### 预测服务场景
+
 - ✅ 标准比赛预测流程
 - ✅ 缺失特征数据处理
 - ✅ 模型版本更新切换
@@ -430,6 +459,7 @@ pytest --cov=src --cov-report=html
 - ✅ 异常比赛数据处理
 
 #### 系统运维场景
+
 - ✅ 服务启动和关闭
 - ✅ 数据库连接异常恢复
 - ✅ Redis连接中断处理
@@ -444,6 +474,7 @@ pytest --cov=src --cov-report=html
 ### CI/CD流程中的测试
 
 #### GitHub Actions工作流
+
 ```yaml
 # .github/workflows/test.yml (简化版)
 name: Test Pipeline
@@ -505,6 +536,7 @@ jobs:
 ```
 
 #### 本地Docker CI模拟
+
 ```bash
 # ci-verify.sh - 本地CI环境完整模拟
 #!/bin/bash
@@ -531,17 +563,20 @@ echo "✅ 所有测试通过！代码可以推送。"
 ### 自动化测试调度
 
 #### 每次提交必须执行
+
 - **单元测试**: 快速验证基础功能 (~2分钟)
 - **集成测试**: 验证模块协同 (~5分钟)
 - **代码质量检查**: 风格、类型、安全检查 (~1分钟)
 - **覆盖率检查**: 确保覆盖率达标 (~30秒)
 
 #### 每日定时执行
+
 - **完整E2E测试**: 端到端业务流程验证 (~15分钟)
 - **性能回归测试**: 关键API性能基准检查 (~10分钟)
 - **数据一致性检查**: 验证各层数据一致性 (~5分钟)
 
 #### 每周定时执行
+
 ```python
 # scripts/weekly_test_suite.py
 async def run_weekly_comprehensive_tests():
@@ -566,6 +601,7 @@ async def run_weekly_comprehensive_tests():
 ### 测试环境管理
 
 #### 环境隔离策略
+
 | 环境类型 | 数据库 | 缓存 | 用途 | 数据策略 |
 |---------|-------|------|------|---------|
 | **单元测试** | SQLite内存 | FakeRedis | 快速验证 | Mock数据 |
@@ -574,6 +610,7 @@ async def run_weekly_comprehensive_tests():
 | **性能测试** | PostgreSQL性能库 | Redis集群 | 负载验证 | 大量数据 |
 
 #### 测试数据管理
+
 ```python
 # tests/fixtures/data_factory.py
 import factory
@@ -608,9 +645,11 @@ class OddsFactory(factory.Factory):
 ### 短期改进 (1-2个月)
 
 #### 1. 补齐单元测试缺口
+
 **目标**: 将当前覆盖率从约60%提升到80%+
 
 **具体任务**:
+
 - ✅ 完善数据采集器测试 (`tests/unit/test_collectors.py`)
 - ✅ 补充数据清洗器测试 (`tests/unit/test_data_cleaning.py`)
 - ✅ 增加特征计算器测试 (`tests/unit/test_feature_calculator.py`)
@@ -618,6 +657,7 @@ class OddsFactory(factory.Factory):
 - ⏳ 增加异常处理测试用例
 
 **执行计划**:
+
 ```bash
 # 第1周: 数据层测试
 Week 1: 完成Bronze/Silver/Gold层核心逻辑测试
@@ -633,9 +673,11 @@ Week 4: 集成测试优化，达到80%覆盖率目标
 ```
 
 #### 2. 索引优化相关测试
+
 **目标**: 确保数据库性能优化正确性
 
 **测试内容**:
+
 - 分区表查询性能验证
 - 索引使用效果测试
 - 大数据量场景压力测试
@@ -665,9 +707,11 @@ async def test_partitioned_table_query_performance():
 ### 中期改进 (3-6个月)
 
 #### 1. 完善调度系统测试
+
 **目标**: 确保Celery任务编排和调度系统稳定可靠
 
 **测试策略**:
+
 - **任务依赖测试**: 验证任务执行顺序和依赖关系
 - **失败重试测试**: 模拟各种失败场景和重试机制
 - **并发执行测试**: 验证多任务并发执行的正确性
@@ -696,9 +740,11 @@ async def test_task_dependency_chain():
 ```
 
 #### 2. 数据质量监控测试
+
 **目标**: 确保Great Expectations数据质量监控准确可靠
 
 **测试范围**:
+
 - **断言规则验证**: 确保数据质量规则正确定义
 - **异常检测测试**: 验证异常数据能被正确识别
 - **告警机制测试**: 确保质量问题能及时告警
@@ -732,9 +778,11 @@ async def test_odds_data_quality_expectations():
 ### 长期改进 (6-12个月)
 
 #### 1. 增加性能测试
+
 **目标**: 建立完整的性能基准和回归测试体系
 
 **测试策略**:
+
 - **API响应时间基准**: 建立各API端点的性能基准
 - **数据库查询性能**: 监控关键查询的执行时间
 - **并发负载测试**: 验证系统在高负载下的表现
@@ -776,9 +824,11 @@ class TestAPIPerformance:
 ```
 
 #### 2. 增加压力测试
+
 **目标**: 验证系统极限性能和故障恢复能力
 
 **测试场景**:
+
 - **数据库连接池耗尽**: 模拟连接池耗尽和恢复
 - **Redis内存不足**: 测试缓存服务异常处理
 - **磁盘空间不足**: 验证存储空间耗尽的处理
@@ -818,6 +868,7 @@ class TestSystemLimits:
 ## 📋 测试执行检查清单
 
 ### 每日检查项目 ✅
+
 - [ ] 单元测试执行通过率 ≥ 98%
 - [ ] 集成测试全部通过
 - [ ] 代码覆盖率 ≥ 80%
@@ -826,6 +877,7 @@ class TestSystemLimits:
 - [ ] CI/CD管道运行正常
 
 ### 每周检查项目 ✅
+
 - [ ] E2E测试全部通过
 - [ ] 性能基准测试无回归
 - [ ] 数据血缘验证完整
@@ -834,6 +886,7 @@ class TestSystemLimits:
 - [ ] 测试用例覆盖率审查
 
 ### 发布前检查项目 ✅
+
 - [ ] 完整测试套件执行通过
 - [ ] 代码覆盖率达到要求
 - [ ] 性能测试通过基准
@@ -844,6 +897,7 @@ class TestSystemLimits:
 ### 测试质量监控 📊
 
 #### Prometheus监控指标
+
 ```python
 # 测试执行监控指标
 football_test_execution_total{test_type, status}
@@ -857,6 +911,7 @@ football_test_data_freshness_hours{dataset}
 ```
 
 #### Grafana监控看板
+
 - **测试执行概览**: 测试通过率、执行时间趋势
 - **覆盖率监控**: 模块覆盖率、趋势分析
 - **性能基准**: API响应时间、数据库查询性能

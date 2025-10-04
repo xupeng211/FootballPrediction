@@ -60,6 +60,7 @@ make ci-guardian          # 运行完整CI守护检查
 **功能**：CI问题监控和防御机制生成的核心控制器
 
 **主要命令**：
+
 ```bash
 # 监控CI命令并生成防御机制
 python scripts/ci_guardian.py -c "make test" -s
@@ -78,6 +79,7 @@ python scripts/ci_guardian.py -c "make quality" --summary
 ```
 
 **使用场景**：
+
 - 新项目初始化CI防御
 - 发现新的CI问题时
 - 定期检查CI质量状态
@@ -88,6 +90,7 @@ python scripts/ci_guardian.py -c "make quality" --summary
 **功能**：深度分析CI工具输出，提供精确的问题分类和解决方案
 
 **主要命令**：
+
 ```bash
 # 分析质量检查日志
 python scripts/ci_issue_analyzer.py -l logs/quality_check.json -s
@@ -100,6 +103,7 @@ python scripts/ci_issue_analyzer.py -s -r -o analysis_report.json
 ```
 
 **支持的工具**：
+
 - **Ruff**: 代码风格和错误检查
 - **MyPy**: 静态类型检查
 - **Pytest**: 单元测试框架
@@ -111,6 +115,7 @@ python scripts/ci_issue_analyzer.py -s -r -o analysis_report.json
 **功能**：根据CI问题自动生成针对性的防御措施
 
 **主要命令**：
+
 ```bash
 # 生成所有类型的防御机制
 python scripts/defense_generator.py -i logs/ci_issues.json
@@ -126,6 +131,7 @@ python scripts/defense_generator.py -i logs/ci_issues.json --generate-precommit
 ```
 
 **生成的防御机制**：
+
 - **验证测试**: 防止特定问题再次发生的测试用例
 - **Lint配置**: 增强的代码检查规则
 - **Pre-commit钩子**: 提交前自动检查
@@ -136,6 +142,7 @@ python scripts/defense_generator.py -i logs/ci_issues.json --generate-precommit
 **功能**：将防御机制自动集成到项目配置中
 
 **主要命令**：
+
 ```bash
 # 完整集成防御机制
 python scripts/auto_ci_updater.py -d logs/defenses_generated.json
@@ -151,6 +158,7 @@ python scripts/auto_ci_updater.py -v
 ```
 
 **更新的文件**：
+
 - `Makefile`: 添加防御验证目标
 - `.github/workflows/`: 增强CI检查步骤
 - `requirements-dev.txt`: 添加必要依赖
@@ -163,6 +171,7 @@ python scripts/auto_ci_updater.py -v
 **功能**：验证生成的防御机制是否有效工作
 
 **主要命令**：
+
 ```bash
 # 完整验证所有防御机制
 python scripts/defense_validator.py -d logs/defenses_generated.json -s
@@ -178,6 +187,7 @@ python scripts/defense_validator.py -d logs/defenses_generated.json -dt
 ```
 
 **验证内容**：
+
 - 测试文件是否能正确运行
 - Lint配置是否有效
 - Pre-commit钩子是否工作
@@ -191,6 +201,7 @@ python scripts/defense_validator.py -d logs/defenses_generated.json -dt
 **检测工具**: Ruff, Black, Flake8
 **常见问题**: 行长度超限、import排序、空格问题
 **防御策略**:
+
 - 生成代码风格验证测试
 - 更新Ruff配置增加严格规则
 - 添加pre-commit格式化钩子
@@ -206,6 +217,7 @@ ruff check --fix src/ tests/
 **检测工具**: MyPy
 **常见问题**: 缺少类型注解、类型不匹配
 **防御策略**:
+
 - 生成类型验证测试
 - 严格化MyPy配置
 - 添加类型检查钩子
@@ -221,6 +233,7 @@ mypy src/
 **检测工具**: Pytest
 **常见问题**: 断言失败、导入错误、逻辑错误
 **防御策略**:
+
 - 生成增强断言测试
 - 创建边界条件测试
 - 添加测试覆盖率强制检查
@@ -236,6 +249,7 @@ pytest tests/test_*_validation.py -v
 **检测工具**: Python解释器, Pytest
 **常见问题**: 模块不存在、循环导入、路径错误
 **防御策略**:
+
 - 生成导入验证测试
 - 检查模块依赖关系
 - 验证包结构完整性
@@ -251,6 +265,7 @@ python scripts/ci_guardian.py -c "python -c 'import src'"
 **检测工具**: Bandit
 **常见问题**: 硬编码密码、不安全函数使用
 **防御策略**:
+
 - 生成安全验证测试
 - 严格化Bandit配置
 - 添加安全扫描钩子
@@ -266,6 +281,7 @@ bandit -r src/
 **检测工具**: Coverage.py
 **常见问题**: 测试覆盖率低于阈值
 **防御策略**:
+
 - 为低覆盖率文件生成测试
 - 强制覆盖率阈值检查
 - 添加覆盖率报告
@@ -447,22 +463,26 @@ def _validate_custom_defense(self, config_path: Path) -> Dict[str, Any]:
 ### 常见问题
 
 1. **工具未安装**
+
    ```bash
    pip install ruff mypy bandit pre-commit
    ```
 
 2. **权限问题**
+
    ```bash
    chmod +x scripts/*.py
    ```
 
 3. **虚拟环境问题**
+
    ```bash
    source venv/bin/activate
    which python  # 确认使用项目环境
    ```
 
 4. **依赖冲突**
+
    ```bash
    pip install -r requirements-dev.txt --upgrade
    ```
@@ -556,6 +576,7 @@ CI Guardian系统提供了完整的CI质量保障解决方案：
 ✅ **效果验证**: 确保防御机制有效
 
 通过使用CI Guardian，您可以：
+
 - 减少90%的重复性CI问题
 - 自动化质量检查流程
 - 提高代码质量和稳定性
@@ -566,6 +587,7 @@ CI Guardian系统提供了完整的CI质量保障解决方案：
 ---
 
 **🔗 相关文档**:
+
 - [防御机制详细说明](../legacy/ci_defense_mechanisms.md)
 - [项目开发规范](../legacy/rules.md)
 - [Cursor闭环开发提示](../legacy/Cursor_ClosedLoop_Prompt.md)

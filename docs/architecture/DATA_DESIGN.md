@@ -7,6 +7,7 @@
 ## 🎯 当前项目数据架构分析
 
 ### ✅ 现有架构优势
+
 - **成熟的ORM框架**: 使用SQLAlchemy 2.0，支持现代Python类型注解
 - **双模式支持**: 同时支持同步(psycopg2)和异步(asyncpg)操作
 - **完善的连接管理**: 单例模式的DatabaseManager，支持连接池
@@ -14,6 +15,7 @@
 - **数据库迁移**: 集成Alembic进行版本控制
 
 ### ⚠️ 需要改进的方面
+
 - **缺乏数据采集模块**: 当前没有完整的数据抓取和采集系统
 - **数据清洗功能薄弱**: DataProcessingService功能过于简单
 - **缺乏数据质量监控**: 没有数据质量检查和异常检测机制
@@ -105,6 +107,7 @@ class DataCollectionLog(BaseModel):
 ```
 
 **✅ 测试覆盖**：
+
 - 单元测试覆盖所有采集器类
 - 模拟API响应和数据库操作
 - 验证防重复和防丢失机制
@@ -164,6 +167,7 @@ CREATE TABLE raw_scores_data (
 ```
 
 **✅ Bronze层实现特性：**
+
 - ✅ 使用PostgreSQL JSONB字段存储原始数据
 - ✅ 支持跨数据库兼容（测试时自动使用JSON）
 - ✅ 包含数据源标识和处理状态跟踪
@@ -173,16 +177,19 @@ CREATE TABLE raw_scores_data (
 - ✅ 支持按月分区（原始设计）
 
 **✅ 已实现的模型类：**
+
 - `RawMatchData`: 原始比赛数据模型
 - `RawOddsData`: 原始赔率数据模型
 - `RawScoresData`: 原始比分数据模型
 
 **✅ 测试覆盖率：100%**
+
 - 单元测试: `tests/test_database_models_bronze_layer.py`
 - 覆盖所有业务逻辑、数据验证、JSONB操作
 - 包含集成测试和工作流测试
 
 #### 🥈 Silver层（清洗数据）
+
 当前项目已实现的核心表：
 
 ```sql
@@ -215,6 +222,7 @@ CREATE TABLE odds (
 ```
 
 #### 🥇 Gold层（分析特征）
+
 ```sql
 -- features表（已实现，需扩展）
 CREATE TABLE features (
@@ -242,9 +250,11 @@ CREATE TABLE features (
 ### 2.2 数据库选择与配置
 
 **主数据库**: PostgreSQL 14+
+
 - **优势**: JSON支持、分区表、并发性能、扩展性
 - **配置**: 当前项目已配置连接池(10+20)、异步支持
 - **索引策略**:
+
   ```sql
   -- 查询优化索引
   CREATE INDEX idx_matches_time_status ON matches(match_time, match_status);
@@ -253,6 +263,7 @@ CREATE TABLE features (
   ```
 
 **对象存储**: 建议引入Parquet文件存储 **✅ 已实现**
+
 ```python
 # 历史数据存储到Parquet
 import pandas as pd
@@ -296,6 +307,7 @@ class DataLakeStorage:
 ### 3.2 建议调度工具
 
 **方案一**: Airflow (推荐)
+
 ```python
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -321,6 +333,7 @@ fixtures_task = PythonOperator(
 ```
 
 **方案二**: Celery + Redis (轻量级)
+
 ```python
 # 当前项目可直接扩展
 from celery import Celery
@@ -935,6 +948,7 @@ curl http://localhost:8000/metrics | grep football_data_anomalies
 **故障排查步骤**：
 
 1. **检测服务异常**
+
    ```bash
    # 检查日志
    kubectl logs -f deployment/anomaly-detector
@@ -944,6 +958,7 @@ curl http://localhost:8000/metrics | grep football_data_anomalies
    ```
 
 2. **误报率过高**
+
    ```python
    # 调整检测阈值
    await update_detection_config('odds', {
@@ -952,6 +967,7 @@ curl http://localhost:8000/metrics | grep football_data_anomalies
    ```
 
 3. **检测延迟过高**
+
    ```python
    # 启用增量检测模式
    await enable_incremental_detection('matches')
@@ -1083,6 +1099,7 @@ async def get_dashboard_data():
 ## 🚀 实施建议与优先级
 
 ### 高优先级（立即实施）
+
 1. **完善数据采集模块**
    - 扩展当前的数据处理服务
    - 实现防重复和防丢失机制
@@ -1094,6 +1111,7 @@ async def get_dashboard_data():
    - 添加告警通知机制
 
 ### 中优先级（近期完善）
+
 1. **引入调度系统**
    - 选择Airflow或Celery
    - 实现任务依赖管理
@@ -1105,6 +1123,7 @@ async def get_dashboard_data():
    - 优化存储策略
 
 ### 低优先级（长期规划）
+
 1. **引入数据湖存储**
    - 集成对象存储（S3/MinIO）
    - 实现冷热数据分离
@@ -1122,12 +1141,14 @@ async def get_dashboard_data():
 当前项目的数据层架构基础扎实，PostgreSQL + SQLAlchemy的技术选型合理。主要需要在数据采集、清洗和调度方面进行完善。通过分层存储、质量监控和接口标准化，可以构建一个稳定、高效、可扩展的足球预测数据平台。
 
 **关键优势**：
+
 - ✅ 成熟稳定的技术栈
 - ✅ 完整的数据模型设计
 - ✅ 支持同步异步操作
 - ✅ 规范的开发流程
 
 **改进方向**：
+
 - 🎯 完善数据采集自动化
 - 🎯 建立数据质量保障体系
 - 🎯 实现智能化调度管理
@@ -1142,6 +1163,7 @@ async def get_dashboard_data():
 ### 阶段一（中优先级）实现状态 ✅ 已完成
 
 #### 1. 集成数据湖存储 ✅ 完成
+
 - **实现文件**:
   - `src/data/storage/data_lake_storage.py` - DataLakeStorage类
   - `src/data/storage/data_lake_storage.py` - S3DataLakeStorage类（支持MinIO）
@@ -1164,6 +1186,7 @@ async def get_dashboard_data():
 - **测试状态**: 需要添加单元测试
 
 #### 2. 数据库权限分离 ✅ 完成
+
 - **数据库迁移**:
   - ✅ `src/database/migrations/versions/004_configure_database_permissions.py` - 完整的权限配置迁移
 - **核心功能**:
@@ -1182,6 +1205,7 @@ async def get_dashboard_data():
 - **测试状态**: 需要添加单元测试
 
 #### 3. 引入特征仓库 ✅ 完成
+
 - **特征定义**:
   - ✅ `src/data/features/feature_definitions.py` - 完整的Feast特征定义
   - ✅ 实体定义：match_entity, team_entity, league_entity
@@ -1207,6 +1231,7 @@ async def get_dashboard_data():
 - **测试状态**: 需要添加单元测试
 
 ### 阶段一总结 ✅ 全部完成
+
 - **实施时间**: 2025-09-10（1天完成）
 - **完成度**: 100%
 - **主要成果**:
@@ -1220,6 +1245,7 @@ async def get_dashboard_data():
 ### 阶段二（低优先级）规划状态 ⏳ 待实施
 
 #### 1. 数据血缘 & 元数据管理 ⏳ 待开始
+
 - **目标**: 集成Marquez + OpenLineage
 - **工作项**:
   - 在Airflow DAG中自动上报血缘
@@ -1227,6 +1253,7 @@ async def get_dashboard_data():
 - **预估时间**: 1-2周
 
 #### 2. 数据治理 & 合规 ⏳ 待开始
+
 - **目标**: 实现数据合约和质量监控
 - **工作项**:
   - 在`src/data/quality/`下实现数据合约规则
@@ -1235,6 +1262,7 @@ async def get_dashboard_data():
 - **预估时间**: 2-3周
 
 #### 3. 实时数据处理能力增强 ⏳ 待开始
+
 - **目标**: 集成流式数据处理
 - **工作项**:
   - 在`docker-compose.yml`集成Kafka/Redpanda
@@ -1291,16 +1319,19 @@ class MetadataManager:
 ### 数据血缘层级设计
 
 #### 🥉 Bronze层血缘
+
 - **数据源**: 外部API（api_football, odds_api）
 - **目标**: raw_match_data, raw_odds_data, raw_scores_data
 - **血缘信息**: 采集时间、数据源、记录数量
 
 #### 🥈 Silver层血缘
+
 - **数据源**: Bronze层原始表
 - **目标**: matches, teams, leagues, odds
 - **血缘信息**: 清洗规则、数据质量指标、转换逻辑
 
 #### 🥇 Gold层血缘
+
 - **数据源**: Silver层清洗表
 - **目标**: features, predictions, statistics
 - **血缘信息**: 特征工程、ML模型、聚合规则
@@ -1308,6 +1339,7 @@ class MetadataManager:
 ### Marquez集成配置 **✅ 已完成**
 
 **✅ Docker服务配置**：
+
 ```yaml
 # docker-compose.yml 中已添加
 marquez:
@@ -1320,12 +1352,14 @@ marquez-db:
 ```
 
 **✅ 服务端口分配**：
-- Marquez Web UI: http://localhost:5000
-- Marquez Admin: http://localhost:5001
-- Marquez API: http://localhost:5000/api/v1/
+
+- Marquez Web UI: <http://localhost:5000>
+- Marquez Admin: <http://localhost:5001>
+- Marquez API: <http://localhost:5000/api/v1/>
 - Marquez DB: localhost:5433
 
 **✅ 预配置数据集**：
+
 | 命名空间 | 数据集 | 描述 | 标签 |
 |---------|-------|------|------|
 | `football_db.bronze` | raw_match_data | 原始比赛数据 | [bronze, raw, matches] |
@@ -1335,6 +1369,7 @@ marquez-db:
 ### 血缘可视化功能
 
 **✅ 数据血缘图谱**：
+
 ```
 External APIs → Bronze Layer → Silver Layer → Gold Layer
     ↓              ↓              ↓             ↓
@@ -1344,6 +1379,7 @@ scores_api → raw_scores_data → statistics
 ```
 
 **✅ 列级血缘跟踪**：
+
 - 自动记录字段级转换关系
 - 支持复杂SQL转换的血缘解析
 - 跟踪计算字段的来源
@@ -1351,16 +1387,19 @@ scores_api → raw_scores_data → statistics
 ### 数据治理策略
 
 **✅ 元数据标准化**：
+
 - 统一的数据集命名规范
 - 标准化的Schema定义
 - 一致的标签分类体系
 
 **✅ 数据质量监控**：
+
 - 集成数据质量指标到血缘信息
 - 自动记录数据异常和质量问题
 - 支持数据质量评分和趋势分析
 
 **✅ 数据访问治理**：
+
 - 基于血缘的影响分析
 - 数据变更影响评估
 - 自动化的数据依赖检查
@@ -1372,6 +1411,7 @@ scores_api → raw_scores_data → statistics
 ### 高优先级任务 ✅ 全部完成（1周内）
 
 #### 1. 监控与告警体系集成 ✅ 完成
+
 - **Docker服务**: Prometheus + Grafana + AlertManager 完整集成
 - **监控指标**: 数据采集/清洗成功率、调度延迟、数据表行数统计
 - **告警规则**: 采集失败率>5%、调度延迟>10分钟自动告警
@@ -1380,6 +1420,7 @@ scores_api → raw_scores_data → statistics
 - **API集成**: FastAPI应用集成/monitoring/metrics端点
 
 #### 2. 指标导出系统 ✅ 完成
+
 - **核心模块**: `src/monitoring/metrics_exporter.py` 完整实现
 - **指标收集**: `src/monitoring/metrics_collector.py` 自动化收集
 - **Prometheus格式**: 标准Prometheus指标格式输出
@@ -1389,6 +1430,7 @@ scores_api → raw_scores_data → statistics
 ### 中优先级任务 ✅ 全部完成（2周内）
 
 #### 1. 数据血缘管理系统 ✅ 完成
+
 - **血缘报告**: `src/lineage/lineage_reporter.py` - OpenLineage集成
 - **元数据管理**: `src/lineage/metadata_manager.py` - Marquez API集成
 - **Docker服务**: Marquez + 独立PostgreSQL数据库
@@ -1397,6 +1439,7 @@ scores_api → raw_scores_data → statistics
 - **元数据治理**: 预配置命名空间、数据集、标签体系
 
 #### 2. 数据治理基础设施 ✅ 完成
+
 - **标准化**: 统一的数据集命名和Schema定义
 - **质量监控**: 集成数据质量指标到血缘系统
 - **影响分析**: 基于血缘的数据变更影响评估
@@ -1438,6 +1481,7 @@ scores_api → raw_scores_data → statistics
 | Marquez DB | 5433 | 血缘数据库 | ✅ |
 
 ### 下一步行动计划
+
 1. **立即执行**: 为所有新模块添加单元测试（监控、血缘模块）
 2. **短期目标**: 启动长期优化任务（数据库性能优化、分区索引）
 3. **持续改进**: 监控系统运行状况，优化血缘收集性能
@@ -1457,6 +1501,7 @@ scores_api → raw_scores_data → statistics
 **目标**: 验证数据采集失败时的监控告警机制
 
 **实施步骤**:
+
 1. **制造失败场景**:
    - 模拟API连接超时 (`connection_timeout`)
    - 模拟API返回错误 (`api_error`)
@@ -1465,6 +1510,7 @@ scores_api → raw_scores_data → statistics
    - 模拟连接拒绝 (`connection_refused`)
 
 2. **指标变化验证**:
+
    ```bash
    # 验证采集总数增加
    football_data_collection_total{data_source="api_football",collection_type="fixtures"} 5
@@ -1474,6 +1520,7 @@ scores_api → raw_scores_data → statistics
    ```
 
 3. **告警触发条件**:
+
    ```yaml
    # Prometheus告警规则
    - alert: DataCollectionFailureRateHigh
@@ -1485,6 +1532,7 @@ scores_api → raw_scores_data → statistics
    ```
 
 **验证结果**: ✅ 成功
+
 - 失败率达到60%，超过5%阈值
 - 成功触发 `DataCollectionFailureRateHigh` 告警
 - 告警详情包含具体失败率和数据源信息
@@ -1494,7 +1542,9 @@ scores_api → raw_scores_data → statistics
 **目标**: 验证调度任务延迟超过阈值时的告警机制
 
 **实施步骤**:
+
 1. **制造延迟场景**:
+
    ```python
    delayed_tasks = [
        ("fixtures_collection", 650),    # 超过600秒阈值
@@ -1505,6 +1555,7 @@ scores_api → raw_scores_data → statistics
    ```
 
 2. **指标变化验证**:
+
    ```bash
    # 验证延迟指标设置正确
    football_scheduler_task_delay_seconds{task_name="fixtures_collection"} 650
@@ -1514,6 +1565,7 @@ scores_api → raw_scores_data → statistics
    ```
 
 3. **告警触发条件**:
+
    ```yaml
    # Prometheus告警规则
    - alert: SchedulerDelayHigh
@@ -1525,6 +1577,7 @@ scores_api → raw_scores_data → statistics
    ```
 
 **验证结果**: ✅ 成功
+
 - 4个任务延迟均超过600秒阈值
 - 成功触发4个 `SchedulerDelayHigh` 告警实例
 - 每个告警包含具体任务名称和延迟时间
@@ -1585,6 +1638,7 @@ route:
 #### 通知渠道验证 ✅
 
 **邮件通知示例**:
+
 ```
 主题: 🚨 Football Platform Alert: DataCollectionFailureRateHigh
 
@@ -1609,6 +1663,7 @@ route:
 ```
 
 **Slack通知示例**:
+
 ```
 🚨 *Football Platform Critical Alert*
 
@@ -1636,10 +1691,12 @@ route:
 #### 告警验证脚本 ✅
 
 **主要脚本**:
+
 - `scripts/alert_verification_mock.py` - 模拟告警验证器
 - `tests/test_alert_verification.py` - 单元测试套件
 
 **执行方式**:
+
 ```bash
 # 运行完整告警验证
 python scripts/alert_verification_mock.py
@@ -1649,6 +1706,7 @@ python -m pytest tests/test_alert_verification.py -v
 ```
 
 **验证输出**:
+
 ```bash
 🎯 告警策略验证总结（模拟）:
 ============================================================
@@ -1663,6 +1721,7 @@ alertmanager_alerts: ✅ 成功
 #### 单元测试覆盖 ✅
 
 **测试覆盖范围**:
+
 - ✅ 数据采集失败场景模拟 (`test_data_collection_failure_verification`)
 - ✅ 调度延迟场景模拟 (`test_scheduler_delay_verification`)
 - ✅ Prometheus指标验证 (`test_prometheus_metrics_verification`)
@@ -1672,6 +1731,7 @@ alertmanager_alerts: ✅ 成功
 - ✅ 集成测试 (`test_complete_alert_verification_workflow`)
 
 **测试结果**:
+
 ```bash
 ========== 9 passed, 1 fixed in 15.74s ==========
 测试覆盖率: 95%+
@@ -1682,6 +1742,7 @@ alertmanager_alerts: ✅ 成功
 #### Grafana仪表盘设计 ✅
 
 **核心面板**:
+
 1. **数据采集监控**:
    - 采集成功率趋势图
    - 错误类型分布饼图
@@ -1747,12 +1808,14 @@ python scripts/alert_verification_mock.py
 #### 监控运维要点
 
 **日常检查项**:
+
 - [ ] 每日检查告警处理时效性
 - [ ] 每周审查告警阈值合理性
 - [ ] 每月优化监控仪表盘布局
 - [ ] 每季度进行告警验证演练
 
 **性能调优**:
+
 - Prometheus数据保留期: 30天（可调整）
 - AlertManager分组间隔: 30秒（可优化）
 - Grafana查询超时: 30秒（可配置）
@@ -2079,6 +2142,7 @@ python scripts/materialized_views_examples.py --benchmark
 #### 1. 脚本组件
 
 **✅ scripts/backup.sh**：PostgreSQL 备份脚本
+
 - 支持全量备份（pg_dump + gzip压缩）
 - 支持增量备份（pg_basebackup）
 - 支持WAL归档（pg_switch_wal）
@@ -2087,6 +2151,7 @@ python scripts/materialized_views_examples.py --benchmark
 - 完整错误处理
 
 **✅ scripts/restore.sh**：数据库恢复脚本
+
 - 支持从备份文件恢复
 - 临时数据库验证机制
 - 生产数据库安全替换
@@ -2096,6 +2161,7 @@ python scripts/materialized_views_examples.py --benchmark
 #### 2. Celery定时任务
 
 **✅ src/tasks/backup_tasks.py**：自动化备份任务
+
 ```python
 # 主要任务类型
 - daily_full_backup_task()      # 每日全量备份
@@ -2179,18 +2245,21 @@ groups:
 #### 1. 恢复模式
 
 **验证模式**：
+
 ```bash
 # 仅验证备份文件有效性
 ./scripts/restore.sh --validate /backup/football_db/full/full_backup_20250910.sql.gz
 ```
 
 **测试恢复**：
+
 ```bash
 # 恢复到临时数据库，不影响生产
 ./scripts/restore.sh --test-only backup_file.sql.gz
 ```
 
 **生产恢复**：
+
 ```bash
 # 完整生产环境恢复
 ./scripts/restore.sh --force backup_file.sql.gz
@@ -2221,6 +2290,7 @@ groups:
 #### 3. 紧急恢复预案
 
 **完全数据丢失**：
+
 1. 停止所有应用服务
 2. 从最新全量备份恢复
 3. 应用增量备份（如有）
@@ -2228,6 +2298,7 @@ groups:
 5. 验证数据完整性
 
 **部分数据损坏**：
+
 1. 识别损坏范围
 2. 导出未损坏数据
 3. 从备份恢复损坏部分
@@ -2257,6 +2328,7 @@ groups:
 #### 手动操作命令
 
 **手动触发备份**：
+
 ```bash
 # 触发全量备份
 celery -A src.tasks.celery_app call tasks.backup_tasks.manual_backup_task --kwargs='{"backup_type": "full"}'
@@ -2266,6 +2338,7 @@ celery -A src.tasks.celery_app call tasks.backup_tasks.manual_backup_task --kwar
 ```
 
 **备份状态查询**：
+
 ```bash
 # 查看备份状态
 celery -A src.tasks.celery_app call tasks.backup_tasks.get_backup_status
@@ -2275,6 +2348,7 @@ http://localhost:5555/tasks
 ```
 
 **紧急恢复操作**：
+
 ```bash
 # 列出可用备份
 ./scripts/restore.sh --list
@@ -2291,12 +2365,14 @@ http://localhost:5555/tasks
 #### 备份性能调优
 
 **并行压缩**：
+
 ```bash
 # pg_dump 使用多个CPU核心
 pg_dump --jobs=4 --format=directory --compress=9
 ```
 
 **I/O优化**：
+
 - 使用SSD存储备份文件
 - 网络备份使用带宽限制
 - 备份时间错峰安排
@@ -2304,6 +2380,7 @@ pg_dump --jobs=4 --format=directory --compress=9
 #### 恢复性能优化
 
 **快速恢复策略**：
+
 - 增量备份 + WAL回放
 - 并行恢复多个表
 - 使用`pg_restore --jobs`
@@ -2313,11 +2390,13 @@ pg_dump --jobs=4 --format=directory --compress=9
 #### 备份安全
 
 **访问控制**：
+
 - 备份文件权限限制（600）
 - 备份目录访问控制
 - 网络传输加密
 
 **数据脱敏**：
+
 ```bash
 # 生产数据脱敏备份（用于开发环境）
 pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
@@ -2326,6 +2405,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 #### 恢复安全
 
 **操作审计**：
+
 - 所有恢复操作记录
 - 操作人员身份验证
 - 重要恢复需要双人确认
@@ -2343,6 +2423,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 #### 测试计划
 
 **定期恢复演练**：
+
 - 每月执行完整恢复测试
 - 每季度执行跨环境恢复
 - 年度灾难恢复演练
@@ -2352,6 +2433,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 #### Grafana仪表盘
 
 **核心监控面板**：
+
 1. **备份成功率趋势**：过去7天备份成功率
 2. **备份执行时间**：各类型备份耗时分布
 3. **备份文件大小**：存储空间使用趋势
@@ -2361,11 +2443,13 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 #### 告警通知
 
 **告警级别**：
+
 - **Critical**：备份连续失败、存储空间不足
 - **Warning**：备份延迟、文件大小异常
 - **Info**：备份完成通知、清理操作记录
 
 **通知渠道**：
+
 - 邮件：运维团队和DBA
 - Slack：开发团队频道
 - 短信：紧急情况通知
@@ -2375,6 +2459,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 通过完整的数据库备份与恢复系统，足球预测平台实现了：
 
 **✅ 核心能力**：
+
 - **自动化备份**：无人值守的定时备份
 - **多层次保护**：全量、增量、WAL三重保障
 - **快速恢复**：标准化恢复流程，最小化停机时间
@@ -2382,12 +2467,14 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 - **运维友好**：完整的操作手册和工具
 
 **🎯 业务价值**：
+
 - **数据安全**：最大程度防止数据丢失
 - **业务连续性**：快速恢复业务运行
 - **合规要求**：满足数据保护法规要求
 - **成本控制**：自动化降低运维成本
 
 **🔄 持续改进**：
+
 - 根据业务增长调整备份策略
 - 优化备份和恢复性能
 - 完善监控和告警机制
@@ -2422,6 +2509,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 基于阶段三要求，实现了完整的数据质量断言规则：
 
 #### 比赛数据断言（matches表）
+
 ```python
 "matches": {
     "name": "足球比赛数据质量检查",
@@ -2458,6 +2546,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 ```
 
 #### 赔率数据断言（odds表）
+
 ```python
 "odds": {
     "name": "赔率数据质量检查",
@@ -2480,6 +2569,7 @@ pg_dump --exclude-table=sensitive_data | gzip > masked_backup.sql.gz
 ### GE 配置架构
 
 **✅ 数据上下文配置**：
+
 ```python
 context_config = {
     "config_version": 3.0,
@@ -2501,6 +2591,7 @@ context_config = {
 ```
 
 **✅ 验证执行流程**：
+
 1. 创建期望套件（Expectation Suites）
 2. 定义运行时批次请求（RuntimeBatchRequest）
 3. 执行数据验证
@@ -2516,6 +2607,7 @@ context_config = {
 实现了 7 个关键数据质量监控指标：
 
 #### 数据质量检查指标
+
 ```python
 # 数据质量检查通过率 (%)
 football_data_quality_check_success_rate{table_name, suite_name}
@@ -2531,18 +2623,21 @@ football_data_quality_score{table_name}
 ```
 
 #### 数据新鲜度指标
+
 ```python
 # 数据新鲜度 (小时)
 football_data_freshness_hours{table_name, data_type}
 ```
 
 #### 异常检测指标
+
 ```python
 # 异常记录数量
 football_data_quality_anomaly_records{table_name, anomaly_type, severity}
 ```
 
 #### 性能指标
+
 ```python
 # 数据质量检查执行时间
 football_data_quality_check_duration_seconds{table_name}
@@ -2551,6 +2646,7 @@ football_data_quality_check_duration_seconds{table_name}
 ### 指标导出流程
 
 **✅ 自动化导出流程**：
+
 ```python
 async def run_full_quality_check_and_export(self) -> Dict[str, Any]:
     """运行完整的数据质量检查并导出指标"""
@@ -2578,6 +2674,7 @@ async def run_full_quality_check_and_export(self) -> Dict[str, Any]:
 实现了基于阶段三要求的三类异常处理策略：
 
 #### 1. 缺失值处理 → 历史平均填充
+
 ```python
 async def handle_missing_values(self, table_name: str, records: List[Dict[str, Any]]):
     """
@@ -2600,6 +2697,7 @@ async def handle_missing_values(self, table_name: str, records: List[Dict[str, A
 ```
 
 #### 2. 异常赔率处理 → 标记为 suspicious_odds = true
+
 ```python
 async def handle_suspicious_odds(self, odds_records: List[Dict[str, Any]]):
     """
@@ -2618,6 +2716,7 @@ async def handle_suspicious_odds(self, odds_records: List[Dict[str, Any]]):
 ```
 
 #### 3. 错误数据处理 → 写入 data_quality_logs 表
+
 ```python
 async def handle_invalid_data(self, table_name: str, invalid_records: List[Dict[str, Any]],
                             error_type: str):
@@ -2641,6 +2740,7 @@ async def handle_invalid_data(self, table_name: str, invalid_records: List[Dict[
 ### 数据质量日志表结构
 
 **✅ data_quality_logs 表设计**：
+
 ```sql
 CREATE TABLE data_quality_logs (
     id SERIAL PRIMARY KEY,
@@ -2670,6 +2770,7 @@ CREATE TABLE data_quality_logs (
 **✅ 数据质量监控看板** (`monitoring/grafana/dashboards/data_quality_dashboard.json`)：
 
 #### 核心监控面板
+
 1. **数据质量总体评分** - 总体质量健康度指示器
 2. **数据质量检查通过率** - 各表质量检查成功率趋势
 3. **断言失败数量** - 具体失败断言类型统计
@@ -2680,6 +2781,7 @@ CREATE TABLE data_quality_logs (
 8. **异常记录详细统计** - 详细数据表格
 
 #### 告警阈值配置
+
 ```json
 "thresholds": {
     "mode": "absolute",
@@ -2708,6 +2810,7 @@ CREATE TABLE data_quality_logs (
 ### 日常运维任务
 
 #### 数据质量检查执行
+
 ```python
 # 手动执行完整数据质量检查
 from src.data.quality.ge_prometheus_exporter import GEPrometheusExporter
@@ -2722,6 +2825,7 @@ print(f"总体成功率: {result['validation_results']['overall_statistics']['ov
 ```
 
 #### 异常处理操作
+
 ```python
 # 处理缺失值
 from src.data.quality.exception_handler import DataQualityExceptionHandler
@@ -2739,6 +2843,7 @@ stats = await handler.get_handling_statistics()
 ```
 
 #### 质量日志查询
+
 ```sql
 -- 查询最近24小时的质量问题
 SELECT error_type, table_name, COUNT(*) as count
@@ -2757,6 +2862,7 @@ ORDER BY detected_at DESC;
 ### 监控告警配置
 
 #### Prometheus 告警规则
+
 ```yaml
 groups:
   - name: data_quality_alerts
@@ -2783,16 +2889,19 @@ groups:
 ### 性能优化建议
 
 #### 1. 批量处理优化
+
 - GE 验证：限制检查行数（默认 1000 行）
 - 异常处理：批量处理记录，减少数据库连接
 - 指标导出：合并相似指标，减少网络开销
 
 #### 2. 缓存策略
+
 - 历史平均值缓存：减少重复查询
 - GE 验证结果缓存：避免频繁验证
 - Prometheus 指标缓存：降低查询压力
 
 #### 3. 调度优化
+
 - 错峰执行：避免与数据采集冲突
 - 增量验证：只检查新增/更新数据
 - 分层验证：关键表高频，非关键表低频
@@ -2889,6 +2998,7 @@ groups:
 实现了足球预测系统的核心实体：
 
 #### MatchEntity（比赛实体）
+
 ```python
 @dataclass
 class MatchEntity:
@@ -2913,6 +3023,7 @@ class MatchEntity:
 ```
 
 #### TeamEntity（球队实体）
+
 ```python
 @dataclass
 class TeamEntity:
@@ -2935,6 +3046,7 @@ class TeamEntity:
 ### 核心特征定义
 
 #### 近期战绩特征（RecentPerformanceFeatures）
+
 计算球队近期（最近5场比赛）的表现指标：
 
 ```python
@@ -2966,6 +3078,7 @@ class RecentPerformanceFeatures:
 ```
 
 #### 历史对战特征（HistoricalMatchupFeatures）
+
 计算两支球队的历史对战记录：
 
 ```python
@@ -2997,6 +3110,7 @@ class HistoricalMatchupFeatures:
 ```
 
 #### 赔率特征（OddsFeatures）
+
 从博彩赔率中计算隐含概率和市场共识：
 
 ```python
@@ -3039,6 +3153,7 @@ class OddsFeatures:
 ### 架构设计
 
 基于 Feast 实现的特征存储，支持：
+
 - **在线特征查询**（Redis）：毫秒级响应，用于实时预测
 - **离线特征查询**（PostgreSQL）：批量查询，用于模型训练
 - **特征注册和版本管理**：支持特征演进和版本控制
@@ -3068,6 +3183,7 @@ class FootballFeatureStore:
 ### 特征视图定义
 
 #### team_recent_performance 特征视图
+
 ```python
 FeatureView(
     name="team_recent_performance",
@@ -3089,6 +3205,7 @@ FeatureView(
 ```
 
 #### historical_matchup 特征视图
+
 ```python
 FeatureView(
     name="historical_matchup",
@@ -3108,6 +3225,7 @@ FeatureView(
 ```
 
 #### odds_features 特征视图
+
 ```python
 FeatureView(
     name="odds_features",
@@ -3208,6 +3326,7 @@ async def get_historical_features(
 ### 核心端点设计
 
 #### GET /api/v1/features/{match_id}
+
 获取指定比赛的所有特征：
 
 ```python
@@ -3243,6 +3362,7 @@ async def get_match_features(
 ```
 
 **响应示例**：
+
 ```json
 {
     "success": true,
@@ -3294,6 +3414,7 @@ async def get_match_features(
 ```
 
 #### GET /api/v1/features/teams/{team_id}
+
 获取指定球队的特征：
 
 ```python
@@ -3328,6 +3449,7 @@ async def get_team_features(
 ```
 
 #### POST /api/v1/features/calculate/{match_id}
+
 实时计算比赛特征：
 
 ```python
@@ -3361,6 +3483,7 @@ async def calculate_match_features(
 ```
 
 #### POST /api/v1/features/batch/calculate
+
 批量计算特征：
 
 ```python
@@ -3411,6 +3534,7 @@ class FeatureCalculator:
 ### 核心计算方法
 
 #### 近期战绩特征计算
+
 ```python
 async def calculate_recent_performance_features(
     self,
@@ -3439,6 +3563,7 @@ async def calculate_recent_performance_features(
 ```
 
 #### 历史对战特征计算
+
 ```python
 async def calculate_historical_matchup_features(
     self,
@@ -3468,6 +3593,7 @@ async def calculate_historical_matchup_features(
 ```
 
 #### 赔率特征计算
+
 ```python
 async def calculate_odds_features(
     self,
@@ -3493,6 +3619,7 @@ async def calculate_odds_features(
 ```
 
 #### 并行特征计算
+
 ```python
 async def calculate_all_match_features(
     self,
@@ -3602,16 +3729,19 @@ print(f"存储了 {stats['features_stored']} 个特征记录")
 ## 4.6 性能优化策略
 
 ### 缓存策略
+
 - **Redis 在线存储**：热点特征缓存 6-24 小时
 - **PostgreSQL 离线存储**：完整历史特征数据
 - **内存缓存**：频繁访问的球队特征缓存 1 小时
 
 ### 并行计算
+
 - **异步特征计算**：使用 `asyncio.gather()` 并行计算多个特征
 - **数据库连接池**：复用数据库连接，减少连接开销
 - **批量特征推送**：批量推送特征到在线存储
 
 ### 增量更新
+
 - **仅计算新增数据**：避免重复计算已有特征
 - **时间窗口优化**：按比赛时间窗口分批处理
 - **特征版本控制**：支持特征定义演进
@@ -3711,6 +3841,7 @@ print(f"存储了 {stats['features_stored']} 个特征记录")
 基于Docker容器的MLflow部署，集成PostgreSQL和MinIO存储：
 
 #### MLflow服务配置
+
 ```yaml
 # MLflow Tracking Server
 mlflow:
@@ -3725,6 +3856,7 @@ mlflow:
 ```
 
 #### 存储策略
+
 - **PostgreSQL后端存储**：实验元数据、模型注册信息
 - **MinIO对象存储**：模型文件、训练artifacts
 - **独立数据库实例**：MLflow专用PostgreSQL (端口5434)
@@ -3754,7 +3886,7 @@ mlflow:
 
 | 服务 | 端口 | 用途 | 访问地址 |
 |-----|------|------|---------|
-| **MLflow UI** | 5002 | 模型管理界面 | http://localhost:5002 |
+| **MLflow UI** | 5002 | 模型管理界面 | <http://localhost:5002> |
 | **MLflow DB** | 5434 | PostgreSQL数据库 | localhost:5434 |
 | **MinIO Models** | 9000 | 模型存储 | s3://football-models |
 
@@ -3787,6 +3919,7 @@ class BaselineModelTrainer:
 ### 训练流程设计
 
 #### 1. 数据获取与特征工程
+
 ```python
 async def prepare_training_data(
     self,
@@ -3814,6 +3947,7 @@ async def prepare_training_data(
 ```
 
 #### 2. 模型训练与验证
+
 ```python
 async def train_baseline_model(
     self,
@@ -3855,11 +3989,13 @@ async def train_baseline_model(
 ### 模型注册策略
 
 #### 版本管理
+
 - **Stage**: Staging → Production → Archived
 - **版本号**: 自动递增 (v1, v2, v3...)
 - **标签**: 模型类型、训练日期、性能指标
 
 #### 模型元数据
+
 ```python
 model_metadata = {
     "model_type": "XGBoost",
@@ -3900,6 +4036,7 @@ class PredictionService:
 ### 预测流程
 
 #### 1. 模型加载与缓存
+
 ```python
 async def get_production_model(self) -> Tuple[Any, str]:
     """获取生产环境模型"""
@@ -3921,6 +4058,7 @@ async def get_production_model(self) -> Tuple[Any, str]:
 ```
 
 #### 2. 实时预测
+
 ```python
 async def predict_match(self, match_id: int) -> PredictionResult:
     """预测比赛结果"""
@@ -4025,6 +4163,7 @@ class ModelMetricsExporter:
 ### 监控指标定义
 
 #### 预测量化指标
+
 ```python
 # 预测总数
 football_predictions_total{model_name, model_version, predicted_result}
@@ -4040,6 +4179,7 @@ football_model_prediction_duration_seconds{model_name, model_version}
 ```
 
 #### 模型性能指标
+
 ```python
 # 模型覆盖率（预测的比赛比例）
 football_model_coverage_rate{model_name, model_version}
@@ -4058,6 +4198,7 @@ football_model_load_duration_seconds{model_name, model_version}
 ### 新增API端点
 
 #### 1. GET /api/v1/predictions/{match_id}
+
 获取比赛预测结果：
 
 ```python
@@ -4095,6 +4236,7 @@ async def get_match_prediction(
 ```
 
 #### 2. GET /api/v1/models/active
+
 获取当前使用的模型版本：
 
 ```python
@@ -4130,6 +4272,7 @@ async def get_active_models() -> APIResponse:
 ```
 
 #### 3. GET /api/v1/models/metrics
+
 获取模型性能指标：
 
 ```python
@@ -4197,6 +4340,7 @@ async def get_model_metrics(
 实现了完整的模型集成测试：
 
 #### 测试覆盖范围
+
 - ✅ 模型训练流程测试
 - ✅ MLflow集成测试
 - ✅ 预测服务测试
@@ -4205,6 +4349,7 @@ async def get_model_metrics(
 - ✅ API端点测试
 
 #### 主要测试用例
+
 ```python
 class TestModelIntegration:
     """模型集成测试套件"""
@@ -4270,16 +4415,19 @@ class TestModelIntegration:
 ## 5.7 性能优化策略
 
 ### 模型缓存优化
+
 - **内存缓存**：常用模型保持在内存中
 - **模型版本管理**：自动清理过期模型缓存
 - **异步加载**：后台预加载新模型版本
 
 ### 预测性能优化
+
 - **批量预测**：支持批量比赛预测
 - **特征缓存**：缓存频繁使用的特征
 - **并行处理**：多个预测请求并行处理
 
 ### 存储优化
+
 - **分区表**：按月分区predictions表
 - **索引优化**：为查询场景优化索引
 - **数据归档**：定期归档历史预测数据
@@ -4394,6 +4542,7 @@ class TestModelIntegration:
 **✅ 完整实现**: `src/tasks/celery_app.py`
 
 ##### 关键配置项
+
 ```python
 # 任务路由配置 - 多队列支持
 task_routes={
@@ -4412,6 +4561,7 @@ TASK_RETRY_CONFIGS = {
 ```
 
 ##### 定时任务调度表
+
 | 任务名称 | 执行频率 | 队列 | 用途 |
 |---------|---------|------|------|
 | **collect-daily-fixtures** | 每日 02:00 | fixtures | 采集未来30天赛程数据 |
@@ -4427,6 +4577,7 @@ TASK_RETRY_CONFIGS = {
 ##### 核心任务列表
 
 ###### collect_fixtures_task (赛程数据采集)
+
 ```python
 @app.task(base=DataCollectionTask, bind=True)
 def collect_fixtures_task(self, leagues=None, days_ahead=30):
@@ -4440,6 +4591,7 @@ def collect_fixtures_task(self, leagues=None, days_ahead=30):
 ```
 
 ###### collect_odds_task (赔率数据采集)
+
 ```python
 @app.task(base=DataCollectionTask, bind=True)
 def collect_odds_task(self, match_ids=None, bookmakers=None):
@@ -4453,6 +4605,7 @@ def collect_odds_task(self, match_ids=None, bookmakers=None):
 ```
 
 ###### collect_scores_task (比分数据采集)
+
 ```python
 @app.task(base=DataCollectionTask, bind=True)
 def collect_scores_task(self, match_ids=None, live_only=False):
@@ -4470,6 +4623,7 @@ def collect_scores_task(self, match_ids=None, live_only=False):
 **✅ 完整实现**: 符合用户要求的"API失败时自动重试3次"
 
 ##### 重试策略设计
+
 ```python
 class TaskRetryConfig:
     """任务重试配置 - 统一管理重试参数"""
@@ -4495,6 +4649,7 @@ class TaskRetryConfig:
 ```
 
 ##### 错误处理流程
+
 ```
 API调用失败 → 记录错误日志 → 检查重试次数 →
     ├─ 未达上限 → 等待延迟时间 → 重新执行任务
@@ -4506,6 +4661,7 @@ API调用失败 → 记录错误日志 → 检查重试次数 →
 **✅ 完整实现**: `src/tasks/error_logger.py` - 符合用户要求"失败记录写入error_logs"
 
 ##### TaskErrorLogger 核心功能
+
 ```python
 class TaskErrorLogger:
     """任务错误日志记录器 - 完整的错误追踪体系"""
@@ -4521,6 +4677,7 @@ class TaskErrorLogger:
 ```
 
 ##### error_logs 表结构
+
 ```sql
 CREATE TABLE IF NOT EXISTS error_logs (
     id SERIAL PRIMARY KEY,
@@ -4540,6 +4697,7 @@ CREATE TABLE IF NOT EXISTS error_logs (
 **✅ 完整实现**: `src/tasks/maintenance_tasks.py`
 
 ##### 系统维护任务列表
+
 | 任务名称 | 功能描述 | 执行频率 |
 |---------|---------|---------|
 | **quality_check_task** | 数据质量检查<br/>- 检查数据完整性<br/>- 发现重复记录<br/>- 异常值检测 | 每小时 |
@@ -4552,6 +4710,7 @@ CREATE TABLE IF NOT EXISTS error_logs (
 **✅ 完整实现**: `src/tasks/monitoring.py`
 
 ##### Prometheus 监控指标
+
 ```python
 # 任务执行计数器
 football_tasks_total{task_name, status}
@@ -4573,6 +4732,7 @@ football_task_retries_total{task_name, retry_count}
 ```
 
 ##### 健康检查机制
+
 ```python
 async def check_task_health(self) -> Dict[str, Any]:
     """完整的任务系统健康检查"""
@@ -4588,6 +4748,7 @@ async def check_task_health(self) -> Dict[str, Any]:
 **✅ 完整实现**: 已在 `docker-compose.yml` 中配置完整的 Celery 服务栈
 
 #### 服务列表
+
 ```yaml
 services:
   # Celery Worker - 任务执行服务
@@ -4608,18 +4769,20 @@ services:
 ```
 
 #### 端口分配总览
+
 | 服务 | 端口 | 用途 | 访问地址 |
 |-----|------|------|---------|
-| **Celery Flower** | 5555 | 任务监控界面 | http://localhost:5555 |
-| **主应用API** | 8000 | 任务管理API | http://localhost:8000/tasks/* |
-| **Prometheus** | 9090 | 指标收集 | http://localhost:9090 |
-| **Grafana** | 3000 | 指标可视化 | http://localhost:3000 |
+| **Celery Flower** | 5555 | 任务监控界面 | <http://localhost:5555> |
+| **主应用API** | 8000 | 任务管理API | <http://localhost:8000/tasks/>* |
+| **Prometheus** | 9090 | 指标收集 | <http://localhost:9090> |
+| **Grafana** | 3000 | 指标可视化 | <http://localhost:3000> |
 
 ### 错误恢复策略
 
 #### 1. 自动恢复机制
 
 ##### API失败恢复
+
 ```python
 # 三级重试策略
 Level 1: 立即重试 (30秒后)
@@ -4632,6 +4795,7 @@ Level 3: 最终重试 (指数退避)
 ```
 
 ##### 系统故障恢复
+
 ```python
 # Redis连接失败
 → 使用本地内存队列临时存储
@@ -4650,6 +4814,7 @@ Level 3: 最终重试 (指数退避)
 #### 2. 手动恢复操作
 
 ##### 任务管理命令
+
 ```bash
 # 查看任务状态
 celery -A src.tasks.celery_app inspect active
@@ -4665,6 +4830,7 @@ celery -A src.tasks.celery_app purge -f
 ```
 
 ##### 紧急恢复流程
+
 1. **确认故障范围**: 检查错误日志和监控指标
 2. **停止问题任务**: 避免错误累积
 3. **修复根本原因**: 数据库、API、网络等
@@ -4675,6 +4841,7 @@ celery -A src.tasks.celery_app purge -f
 #### 3. 数据一致性保障
 
 ##### 幂等性设计
+
 ```python
 # 所有采集任务支持重复执行
 @app.task(bind=True)
@@ -4685,6 +4852,7 @@ def collect_fixtures_task(self, leagues=None, days_ahead=30):
 ```
 
 ##### 事务保护
+
 ```python
 # 数据库操作使用事务
 async with session.begin():
@@ -4697,6 +4865,7 @@ async with session.begin():
 #### 1. 日常运维任务
 
 ##### 系统监控检查项
+
 ```bash
 # 每日检查清单
 □ 查看 Flower 监控界面任务执行情况
@@ -4707,6 +4876,7 @@ async with session.begin():
 ```
 
 ##### 定期维护操作
+
 ```bash
 # 每周维护
 □ 清理超过7天的错误日志
@@ -4726,6 +4896,7 @@ async with session.begin():
 ##### 常见问题排查
 
 ###### 任务执行失败率过高
+
 ```bash
 # 1. 查看详细错误信息
 SELECT task_name, error_type, COUNT(*)
@@ -4744,6 +4915,7 @@ redis-cli -h localhost -p 6379 INFO replication
 ```
 
 ###### 队列积压严重
+
 ```bash
 # 1. 查看队列长度
 celery -A src.tasks.celery_app inspect active_queues
@@ -4759,6 +4931,7 @@ celery -A src.tasks.celery_app purge -f
 ```
 
 ###### Beat调度异常
+
 ```bash
 # 1. 检查Beat进程状态
 docker-compose logs celery-beat
@@ -4774,6 +4947,7 @@ docker-compose restart celery-beat
 #### 3. 性能优化建议
 
 ##### Worker配置调优
+
 ```python
 # 根据服务器资源调整
 WORKER_CONCURRENCY = min(cpu_cores * 2, 8)
@@ -4783,6 +4957,7 @@ WORKER_SOFT_TIME_LIMIT = 300
 ```
 
 ##### 队列配置优化
+
 ```python
 # 按任务优先级分配队列
 HIGH_PRIORITY_QUEUES = ['scores']      # 实时数据
@@ -4792,6 +4967,7 @@ MAINTENANCE_QUEUES = ['maintenance']   # 维护任务
 ```
 
 ##### Redis配置优化
+
 ```redis
 # redis.conf 优化项
 maxmemory 2gb
@@ -4806,6 +4982,7 @@ tcp-keepalive 300
 #### 1. 任务执行安全
 
 ##### 访问控制
+
 ```python
 # Flower监控界面访问控制
 FLOWER_BASIC_AUTH = "admin:secure_password_2025"
@@ -4817,6 +4994,7 @@ WORKER_GROUP = "celery_workers"
 ```
 
 ##### 敏感数据保护
+
 ```python
 # 环境变量管理
 API_KEYS = {
@@ -4833,6 +5011,7 @@ def sanitize_log_data(data):
 #### 2. 网络安全
 
 ##### Docker网络隔离
+
 ```yaml
 # 内部服务网络
 networks:
@@ -4917,6 +5096,7 @@ services:
 #### 基础服务配置
 
 **✅ Docker Compose集成**:
+
 ```yaml
 zookeeper:
   image: confluentinc/cp-zookeeper:7.4.0
@@ -4953,6 +5133,7 @@ kafka:
 **✅ 完整实现**: `src/streaming/kafka_producer.py`
 
 ##### 核心功能
+
 ```python
 class FootballKafkaProducer:
     """足球数据Kafka生产者"""
@@ -4971,6 +5152,7 @@ class FootballKafkaProducer:
 ```
 
 ##### 生产者配置
+
 ```python
 PRODUCER_CONFIG = {
     'bootstrap.servers': 'localhost:9092',
@@ -4990,6 +5172,7 @@ PRODUCER_CONFIG = {
 **✅ 完整实现**: `src/streaming/kafka_consumer.py`
 
 ##### 核心功能
+
 ```python
 class FootballKafkaConsumer:
     """足球数据Kafka消费者"""
@@ -5011,6 +5194,7 @@ class FootballKafkaConsumer:
 ```
 
 ##### 消费者配置
+
 ```python
 CONSUMER_CONFIG = {
     'bootstrap.servers': 'localhost:9092',
@@ -5030,6 +5214,7 @@ CONSUMER_CONFIG = {
 **✅ 完整实现**: `src/streaming/stream_processor.py`
 
 ##### 核心功能
+
 ```python
 class StreamProcessor:
     """流数据处理器，协调生产者和消费者"""
@@ -5054,6 +5239,7 @@ class StreamProcessor:
 **✅ 完整实现**: `src/data/collectors/streaming_collector.py`
 
 ##### 双写模式
+
 继承自基础采集器，添加Kafka流式处理能力：
 
 ```python
@@ -5079,6 +5265,7 @@ class StreamingDataCollector(DataCollector):
 **✅ 完整实现**: `src/tasks/streaming_tasks.py`
 
 ##### 定时任务配置
+
 ```python
 # Celery Beat调度配置
 'consume-kafka-streams': {
@@ -5101,6 +5288,7 @@ class StreamingDataCollector(DataCollector):
 ```
 
 ##### 核心任务
+
 | 任务名称 | 功能 | 执行频率 | 队列 |
 |---------|------|---------|------|
 | **consume_kafka_streams_task** | 批量消费Kafka流数据 | 每分钟 | streaming |
@@ -5112,6 +5300,7 @@ class StreamingDataCollector(DataCollector):
 ### 数据流示例
 
 #### 比赛数据流
+
 ```json
 {
   "timestamp": "2025-09-11T23:45:00Z",
@@ -5132,6 +5321,7 @@ class StreamingDataCollector(DataCollector):
 ```
 
 #### 赔率数据流
+
 ```json
 {
   "timestamp": "2025-09-11T23:45:30Z",
@@ -5152,6 +5342,7 @@ class StreamingDataCollector(DataCollector):
 ```
 
 #### 比分数据流
+
 ```json
 {
   "timestamp": "2025-09-15T15:47:15Z",
@@ -5174,18 +5365,21 @@ class StreamingDataCollector(DataCollector):
 ### 性能优化
 
 #### 吞吐量优化
+
 - **批量处理**: 支持批量发送和消费，减少网络开销
 - **压缩**: 使用gzip压缩减少传输数据量
 - **分区策略**: 基于match_id分区，保证相关数据的有序处理
 - **连接池**: 复用Kafka连接，减少连接开销
 
 #### 可靠性保障
+
 - **消息确认**: 生产者等待所有副本确认 (acks=all)
 - **自动重试**: 失败消息自动重试3次
 - **偏移量管理**: 消费者手动提交偏移量，确保消息不丢失
 - **幂等性**: 消费者处理具备幂等性，支持重复消费
 
 #### 监控和告警
+
 ```python
 # Prometheus指标
 kafka_messages_produced_total{topic, data_type}
@@ -5198,6 +5392,7 @@ stream_processing_duration_seconds{operation_type}
 ### 运维操作
 
 #### 启动流处理服务
+
 ```bash
 # 启动完整流处理栈
 docker-compose up -d zookeeper kafka celery-worker
@@ -5210,6 +5405,7 @@ kafka-consumer-groups --bootstrap-server localhost:9092 --group football-predict
 ```
 
 #### 监控流处理状态
+
 ```bash
 # 检查Topic分区和消息数量
 kafka-topics --bootstrap-server localhost:9092 --describe --topic matches-stream
@@ -5222,6 +5418,7 @@ celery -A src.tasks.celery_app inspect active_queues
 ```
 
 #### 故障恢复
+
 ```bash
 # 重启消费者（从上次提交的偏移量开始）
 docker-compose restart celery-worker
@@ -5236,16 +5433,19 @@ kafka-topics --bootstrap-server localhost:9092 --alter --topic odds-stream --con
 ### 最佳实践
 
 #### 消息设计
+
 - **统一格式**: 所有消息包含timestamp、data_type、source字段
 - **版本兼容**: 支持消息格式的向后兼容性
 - **元数据丰富**: 包含足够的上下文信息便于调试
 
 #### 错误处理
+
 - **重试策略**: 失败消息自动重试，超过重试次数写入死信队列
 - **监控告警**: 消费者延迟、处理失败率超过阈值时告警
 - **容错设计**: 单个消息处理失败不影响整体流处理
 
 #### 扩展性考虑
+
 - **水平扩展**: 通过增加分区数和消费者实例实现扩展
 - **负载均衡**: 消费者组自动负载均衡
 - **资源隔离**: 不同类型的消息使用不同的Topic和队列
@@ -5255,12 +5455,14 @@ kafka-topics --bootstrap-server localhost:9092 --alter --topic odds-stream --con
 通过流式数据处理的引入，足球预测系统实现了：
 
 #### ✅ 技术提升
+
 - **实时性**: 数据采集到可用的延迟从分钟级降到秒级
 - **吞吐量**: 支持每秒处理数千条赔率更新
 - **可靠性**: 消息不丢失，支持故障恢复
 - **扩展性**: 水平扩展支持业务增长
 
 #### ✅ 业务价值
+
 - **实时预测**: 支持基于最新数据的实时预测
 - **数据质量**: 流式数据验证提高数据质量
 - **运营效率**: 自动化流处理减少人工干预
@@ -5277,12 +5479,14 @@ kafka-topics --bootstrap-server localhost:9092 --alter --topic odds-stream --con
 ### 约束设计原则
 
 #### 数据有效性保证
+
 - **范围约束**: 确保数值字段在合理范围内
 - **引用完整性**: 保证外键关系的一致性
 - **业务规则**: 实施核心业务逻辑约束
 - **时间有效性**: 确保时间数据的合理性
 
 #### 约束层次结构
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   CHECK约束     │    │   触发器约束     │    │   外键约束       │
@@ -5307,6 +5511,7 @@ kafka-topics --bootstrap-server localhost:9092 --alter --topic odds-stream --con
 | **ck_matches_away_ht_score_range** | matches | away_ht_score | `>=0 AND <=99` OR NULL | 客队半场比分有效范围 |
 
 ##### 实现代码
+
 ```sql
 -- 主队比分约束
 ALTER TABLE matches ADD CONSTRAINT ck_matches_home_score_range
@@ -5337,6 +5542,7 @@ CHECK (away_ht_score IS NULL OR (away_ht_score >= 0 AND away_ht_score <= 99));
 | **ck_odds_under_odds_range** | odds | under_odds | `>1.01` OR NULL | 小球赔率最小值 |
 
 ##### 实现代码
+
 ```sql
 -- 1x2赔率约束
 ALTER TABLE odds ADD CONSTRAINT ck_odds_home_odds_range
@@ -5365,6 +5571,7 @@ CHECK (under_odds IS NULL OR under_odds > 1.01);
 | **ck_matches_match_time_range** | matches | match_time | `>'2000-01-01'` | 比赛时间合理性检查 |
 
 ##### 实现代码
+
 ```sql
 -- 比赛时间约束
 ALTER TABLE matches ADD CONSTRAINT ck_matches_match_time_range
@@ -5378,11 +5585,13 @@ CHECK (match_time > '2000-01-01'::date);
 **✅ 已实现**: `check_match_teams_consistency()`
 
 ##### 功能说明
+
 - **主客队检查**: 确保主队和客队不能相同
 - **球队存在性**: 验证主队和客队都存在于teams表中
 - **联赛存在性**: 验证联赛ID存在于leagues表中
 
 ##### 实现代码
+
 ```sql
 CREATE OR REPLACE FUNCTION check_match_teams_consistency()
 RETURNS TRIGGER AS $$
@@ -5422,9 +5631,11 @@ EXECUTE FUNCTION check_match_teams_consistency();
 **✅ 已实现**: `check_odds_consistency()`
 
 ##### 功能说明
+
 - **比赛存在性**: 验证赔率记录关联的比赛存在
 
 ##### 实现代码
+
 ```sql
 CREATE OR REPLACE FUNCTION check_odds_consistency()
 RETURNS TRIGGER AS $$
@@ -5460,6 +5671,7 @@ EXECUTE FUNCTION check_odds_consistency();
 | **集成约束测试** | 3个 | 多约束违反、更新操作约束 | ✅ 完成 |
 
 ##### 核心测试方法
+
 ```python
 class TestMatchConstraints:
     """测试比赛表的约束条件"""
@@ -5499,6 +5711,7 @@ class TestOddsConstraints:
 **✅ 完整实现**: `migrations/versions/a20f91c49306_add_business_constraints.py`
 
 ##### 迁移结构
+
 ```python
 def upgrade() -> None:
     """添加业务逻辑约束和触发器"""
@@ -5530,11 +5743,13 @@ def downgrade() -> None:
 #### 性能优化策略
 
 ##### 约束检查优化
+
 - **索引支持**: 为触发器中的查询条件创建适当索引
 - **批量操作**: 在大量数据操作时考虑暂时禁用约束
 - **选择性检查**: 触发器中使用EXISTS而非COUNT提高性能
 
 ##### 监控指标
+
 ```sql
 -- 约束违反监控查询
 SELECT schemaname, tablename, checkname, checkvalue
@@ -5554,6 +5769,7 @@ WHERE schemaname = 'public';
 #### 约束违反处理
 
 ##### 应用层处理
+
 ```python
 try:
     # 数据库操作
@@ -5573,6 +5789,7 @@ except IntegrityError as e:
 ```
 
 ##### 日志记录
+
 - **约束违反日志**: 记录所有约束违反事件
 - **性能监控**: 监控约束检查的执行时间
 - **统计报告**: 定期生成约束违反统计报告
@@ -5580,6 +5797,7 @@ except IntegrityError as e:
 ### 部署和维护
 
 #### 部署步骤
+
 ```bash
 # 1. 应用迁移
 alembic upgrade head
@@ -5597,6 +5815,7 @@ psql -d football_prediction -c "
 ```
 
 #### 维护建议
+
 - **定期测试**: 每次架构变更后运行约束测试
 - **性能监控**: 监控约束检查对系统性能的影响
 - **文档更新**: 及时更新约束文档和测试用例
@@ -5606,16 +5825,19 @@ psql -d football_prediction -c "
 通过业务逻辑约束的实施，系统实现了：
 
 #### ✅ 数据质量保证
+
 - **有效性验证**: 确保所有数据符合业务规则
 - **一致性保护**: 维护跨表数据的引用完整性
 - **范围控制**: 防止异常数据污染数据库
 
 #### ✅ 业务逻辑保护
+
 - **规则实施**: 在数据库层面强制执行业务规则
 - **错误防范**: 提前发现和阻止数据错误
 - **合规性**: 确保数据符合业务和法规要求
 
 #### ✅ 系统健壮性
+
 - **数据完整性**: 保证数据库数据的完整性和一致性
 - **错误处理**: 优雅的错误处理和用户反馈
 - **可维护性**: 清晰的约束管理和测试覆盖
@@ -5658,6 +5880,7 @@ psql -d football_prediction -c "
 **✅ 完整实现**：`src/cache/redis_manager.py`
 
 ##### 核心功能
+
 - **连接池管理**：支持同步和异步两种模式
 - **基础操作**：get/set/delete/exists/ttl
 - **批量操作**：mget/mset，提升批量查询性能
@@ -5665,6 +5888,7 @@ psql -d football_prediction -c "
 - **健康检查**：ping检测，连接状态监控
 
 ##### 连接配置
+
 ```python
 # Redis连接配置
 REDIS_CONFIG = {
@@ -5678,6 +5902,7 @@ REDIS_CONFIG = {
 ```
 
 ##### 使用示例
+
 ```python
 # 同步操作
 redis_manager = RedisManager()
@@ -5775,6 +6000,7 @@ class DataProcessingService(BaseService):
 ```
 
 ##### 集成效果
+
 - **缓存命中率**: 85%+（处理相同比赛数据时）
 - **处理时间优化**: 从1.2秒降至50ms（94%提升）
 - **数据库压力减少**: 减少85%的重复数据处理查询
@@ -5819,6 +6045,7 @@ class FootballFeatureStore:
 ```
 
 ##### 集成效果
+
 - **特征查询优化**: 从800ms降至15ms（98%提升）
 - **Feast存储压力**: 减少90%的重复特征查询
 - **预测响应时间**: 实时预测响应时间 < 100ms
@@ -5876,12 +6103,14 @@ async def _check_redis() -> Dict[str, Any]:
 #### 1. TTL（Time-To-Live）策略
 
 **自动过期机制**：
+
 - **比赛数据**: 根据比赛时间动态调整TTL
 - **实时数据**: 短TTL（5-15分钟），保证时效性
 - **历史数据**: 长TTL（1-4小时），减少计算压力
 - **特征数据**: 中等TTL（30分钟-1小时），平衡性能和准确性
 
 **动态TTL调整**：
+
 ```python
 def calculate_dynamic_ttl(data_type: str, match_time: datetime) -> int:
     """根据比赛时间动态计算TTL"""
@@ -5898,6 +6127,7 @@ def calculate_dynamic_ttl(data_type: str, match_time: datetime) -> int:
 #### 2. 主动失效策略
 
 **数据更新时主动清理缓存**：
+
 ```python
 async def invalidate_match_cache(match_id: int):
     """比赛数据更新时清理相关缓存"""
@@ -5913,6 +6143,7 @@ async def invalidate_match_cache(match_id: int):
 #### 3. 批量清理策略
 
 **定期清理过期和无用缓存**：
+
 ```python
 async def cleanup_expired_cache():
     """清理过期缓存（定时任务）"""
@@ -5931,6 +6162,7 @@ async def cleanup_expired_cache():
 #### 1. 实时预测场景
 
 **流程**：
+
 ```
 用户请求预测 → 检查预测缓存 → 缓存命中返回结果
                 ↓ 缓存未命中
@@ -5940,6 +6172,7 @@ async def cleanup_expired_cache():
 ```
 
 **性能收益**：
+
 - **完全缓存命中**: 响应时间 < 10ms
 - **特征缓存命中**: 响应时间 < 100ms
 - **缓存完全未命中**: 响应时间 < 500ms（仍比无缓存快60%）
@@ -5947,6 +6180,7 @@ async def cleanup_expired_cache():
 #### 2. 批量数据处理场景
 
 **使用批量操作优化**：
+
 ```python
 async def process_batch_matches(match_ids: List[int]) -> Dict[int, Any]:
     """批量处理比赛数据"""
@@ -5985,6 +6219,7 @@ async def process_batch_matches(match_ids: List[int]) -> Dict[int, Any]:
 #### 3. 热点数据预热场景
 
 **比赛前预热关键数据**：
+
 ```python
 async def warm_up_match_cache(match_id: int, home_team_id: int, away_team_id: int):
     """预热比赛相关缓存"""
@@ -6072,16 +6307,19 @@ print(f"清理了 {deleted} 个比赛特征缓存")
 #### 2. 缓存性能优化
 
 **连接池优化**：
+
 - **连接数**: 根据并发请求量调整max_connections
 - **超时设置**: 合理设置socket_timeout避免阻塞
 - **重试策略**: 启用retry_on_timeout提高可靠性
 
 **内存优化**：
+
 - **数据压缩**: 大数据使用JSON压缩存储
 - **Key设计**: 简短但有意义的Key命名
 - **TTL设置**: 避免无限制的Key堆积
 
 **网络优化**：
+
 - **批量操作**: 使用mget/mset减少网络往返
 - **Pipeline**: 对于复杂操作使用Redis Pipeline
 - **持久连接**: 使用连接池复用TCP连接
@@ -6089,6 +6327,7 @@ print(f"清理了 {deleted} 个比赛特征缓存")
 #### 3. 故障恢复策略
 
 **Redis不可用时的降级方案**：
+
 ```python
 async def get_with_fallback(key: str, fallback_func, *args, **kwargs):
     """带降级的缓存获取"""
@@ -6155,21 +6394,25 @@ REDIS_HEALTH_CHECK_INTERVAL=30
 通过Redis缓存层的实施，足球预测系统实现了：
 
 ✅ **性能提升**：
+
 - 数据获取速度提升80-95%
 - API响应时间降至毫秒级
 - 数据库查询压力减少85%
 
 ✅ **系统可靠性**：
+
 - 连接池管理，支持高并发
 - 健康检查和故障降级
 - 优雅的错误处理机制
 
 ✅ **运维友好**：
+
 - 统一的缓存管理接口
 - 完整的监控指标体系
 - 灵活的TTL配置策略
 
 ✅ **扩展性**：
+
 - 支持同步和异步操作
 - 模块化的Key管理
 - 易于集成新的业务场景

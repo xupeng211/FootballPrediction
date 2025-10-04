@@ -7,6 +7,7 @@
 ## 1. 如何找到任务
 
 AI 需要从以下文件中读取任务：
+
 - **看板**: `docs/_reports/TEST_COVERAGE_KANBAN.md`
   - 查看 `🚧 进行中` 的任务
   - 找到当前阶段的目标（如：覆盖率提升、Bug 修复）
@@ -31,8 +32,10 @@ AI 需要从以下文件中读取任务：
 ## 3. 如何修复 bug
 
 修复步骤：
+
 1. 修改对应源代码或测试文件
 2. 本地运行测试：
+
    ```bash
    pytest --maxfail=5 --disable-warnings -q --cov=. --cov-report=term-missing
    ```
@@ -48,11 +51,13 @@ AI 需要从以下文件中读取任务：
 AI 修复完成后，必须遵循以下流程：
 
 1. 创建分支：
+
    ```bash
    git checkout -b fix/bug-<timestamp>
    ```
 
 2. 提交修改：
+
    ```bash
    git add src/ tests/
    git commit -m "fix: auto bugfix from BUGFIX_REPORT_xxx"
@@ -60,6 +65,7 @@ AI 修复完成后，必须遵循以下流程：
    ```
 
 3. 创建 PR：
+
    ```bash
    gh pr create --base main --head fix/bug-<timestamp> \
      --title "fix: auto bugfix from BUGFIX_REPORT_xxx" \

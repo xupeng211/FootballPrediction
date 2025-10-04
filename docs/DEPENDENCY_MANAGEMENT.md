@@ -102,6 +102,7 @@ make verify-deps
    - 避免意外的版本更新
 
 2. **添加依赖后立即锁定**
+
    ```bash
    pip install some-package
    make lock-deps
@@ -109,6 +110,7 @@ make verify-deps
    ```
 
 3. **定期验证依赖**
+
    ```bash
    make verify-deps
    ```

@@ -18,32 +18,32 @@
 ```mermaid
 graph TB
     subgraph "数据源层"
-        A1[API-Football] 
+        A1[API-Football]
         A2[OddsPortal API]
         A3[官方赛事数据]
         A4[第三方体育数据]
     end
-    
+
     subgraph "数据采集层"
         B1[Scrapy爬虫引擎]
         B2[API数据采集器]
         B3[实时数据同步]
         B4[数据采集调度器]
     end
-    
+
     subgraph "数据处理层"
         C1[数据清洗模块]
-        C2[数据验证模块] 
+        C2[数据验证模块]
         C3[特征工程引擎]
         C4[数据存储管理]
     end
-    
+
     subgraph "存储层"
         D1[(MySQL/PostgreSQL<br/>主数据库)]
         D2[(Redis<br/>缓存层)]
         D3[(文件存储<br/>模型&日志)]
     end
-    
+
     subgraph "机器学习层"
         E1[XGBoost模型]
         E2[LightGBM模型]
@@ -51,28 +51,28 @@ graph TB
         E4[模型评估系统]
         E5[预测服务引擎]
     end
-    
+
     subgraph "服务层"
         F1[FastAPI服务]
         F2[RESTful API接口]
         F3[认证授权模块]
         F4[监控告警系统]
     end
-    
+
     subgraph "前端展示层"
         G1[Vue.js/React前端]
         G2[ECharts可视化]
         G3[响应式UI组件]
         G4[实时数据展示]
     end
-    
+
     subgraph "部署层"
         H1[Docker容器]
         H2[Kubernetes编排]
         H3[负载均衡器]
         H4[CI/CD流水线]
     end
-    
+
     A1 & A2 & A3 & A4 --> B1 & B2 & B3
     B1 & B2 & B3 --> B4
     B4 --> C1 & C2
@@ -97,20 +97,24 @@ graph TB
 系统采用经典的数据流水线架构，数据从采集到预测展示的完整链路如下：
 
 #### 输入阶段
+
 - **多源数据采集**：通过API和爬虫从多个数据源（API-Football、OddsPortal等）采集比赛数据、球队信息、历史战绩、实时赔率等
 - **数据标准化**：将不同格式的数据统一转换为标准格式
 
-#### 处理阶段  
+#### 处理阶段
+
 - **数据清洗**：去重、补缺失值、异常值检测和处理
 - **特征工程**：提取球队实力指标、主客场优势、历史交锋记录、伤病情况等特征
 - **数据存储**：结构化数据存入关系数据库，缓存热点数据到Redis
 
 #### 建模阶段
+
 - **模型训练**：使用XGBoost/LightGBM对历史数据进行训练
 - **模型评估**：通过交叉验证、回测等方式评估模型性能
 - **预测生成**：对即将进行的比赛生成预测结果和置信度
 
 #### 输出阶段
+
 - **API服务**：通过FastAPI提供RESTful接口
 - **前端展示**：使用Vue.js/React构建用户界面，通过ECharts展示预测结果和统计分析
 - **实时更新**：支持实时数据更新和预测结果刷新
@@ -122,16 +126,19 @@ graph TB
 ### 2.1 数据采集模块
 
 #### 职责
+
 - 从多个数据源采集足球比赛相关数据
 - 实现增量采集和全量同步机制
 - 处理API限流和反爬虫策略
 - 保证数据采集的稳定性和实时性
 
 #### 输入/输出
+
 - **输入**：API端点配置、爬虫目标网站、采集任务调度配置
 - **输出**：标准化的比赛数据、球队数据、赔率数据、球员数据
 
 #### 核心组件
+
 ```
 src/data_collection/
 ├── collectors/
@@ -147,27 +154,32 @@ src/data_collection/
 ```
 
 #### 依赖关系
+
 - 依赖：外部数据API、代理服务、任务调度框架
 - 被依赖：数据存储模块、数据清洗模块
 
 #### 扩展方向
+
 - 支持更多数据源接入
 - 实现分布式采集架构
 - 增加实时流数据采集能力
 
 ### 2.2 数据存储与清洗模块
 
-#### 职责  
+#### 职责
+
 - 数据质量检查和清洗处理
 - 建立统一的数据存储规范
 - 实现数据备份和恢复机制
 - 提供数据访问接口
 
 #### 输入/输出
+
 - **输入**：原始采集数据、数据质量规则、清洗配置参数
 - **输出**：清洗后的结构化数据、数据质量报告、异常数据记录
 
 #### 核心组件
+
 ```
 src/data_processing/
 ├── cleaners/
@@ -176,7 +188,7 @@ src/data_processing/
 │   └── missing_handler.py    # 缺失值处理
 ├── storage/
 │   ├── database_manager.py   # 数据库管理
-│   ├── cache_manager.py      # 缓存管理  
+│   ├── cache_manager.py      # 缓存管理
 │   └── backup_manager.py     # 备份管理
 └── transformers/
     ├── data_normalizer.py    # 数据标准化
@@ -184,10 +196,12 @@ src/data_processing/
 ```
 
 #### 依赖关系
+
 - 依赖：数据采集模块、数据库系统、缓存系统
 - 被依赖：特征工程模块、模型训练模块
 
 #### 扩展方向
+
 - 实现流式数据处理
 - 增加数据血缘跟踪功能
 - 支持多种数据格式转换
@@ -195,16 +209,19 @@ src/data_processing/
 ### 2.3 特征工程与模型训练模块
 
 #### 职责
+
 - 设计和提取预测相关的特征
 - 训练和优化机器学习模型
 - 实现模型版本管理和A/B测试
 - 提供模型性能监控
 
-#### 输入/输出  
+#### 输入/输出
+
 - **输入**：清洗后的比赛数据、球队数据、历史统计数据
 - **输出**：训练好的预测模型、特征重要性分析、模型评估报告
 
 #### 核心组件
+
 ```
 src/ml/
 ├── features/
@@ -225,10 +242,12 @@ src/ml/
 ```
 
 #### 依赖关系
+
 - 依赖：数据处理模块、机器学习库（XGBoost、LightGBM）
 - 被依赖：预测服务模块
 
 #### 扩展方向
+
 - 引入深度学习模型
 - 实现在线学习能力
 - 增加特征自动发现功能
@@ -236,16 +255,19 @@ src/ml/
 ### 2.4 预测服务模块
 
 #### 职责
+
 - 基于训练模型提供预测服务
 - 实现实时预测API接口
 - 管理预测结果缓存和历史记录
 - 提供预测置信度和解释性信息
 
 #### 输入/输出
+
 - **输入**：预测请求、比赛信息、实时数据更新
 - **输出**：预测结果、置信度评分、预测解释信息
 
 #### 核心组件
+
 ```
 src/prediction/
 ├── services/
@@ -262,10 +284,12 @@ src/prediction/
 ```
 
 #### 依赖关系
+
 - 依赖：机器学习模块、缓存系统、数据库系统
 - 被依赖：API服务层、前端展示模块
 
 #### 扩展方向
+
 - 支持多模型融合预测
 - 实现预测结果的实时校准
 - 增加用户个性化预测功能
@@ -273,16 +297,19 @@ src/prediction/
 ### 2.5 前端展示模块
 
 #### 职责
+
 - 提供用户友好的Web界面
 - 展示预测结果和数据可视化
 - 实现响应式设计支持多设备访问
 - 提供实时数据更新和交互功能
 
 #### 输入/输出
+
 - **输入**：API数据、用户交互事件、实时数据推送
 - **输出**：可视化图表、用户界面、交互反馈
 
 #### 核心组件
+
 ```
 frontend/
 ├── src/
@@ -303,10 +330,12 @@ frontend/
 ```
 
 #### 依赖关系
+
 - 依赖：Vue.js/React框架、ECharts/Plotly、API服务
 - 被依赖：最终用户
 
 #### 扩展方向
+
 - 支持移动端APP开发
 - 实现个性化用户界面
 - 增加社交分享功能
@@ -314,16 +343,19 @@ frontend/
 ### 2.6 容器化与部署模块
 
 #### 职责
+
 - 实现应用的容器化部署
 - 管理服务编排和负载均衡
 - 提供CI/CD流水线支持
 - 监控系统运行状态和性能指标
 
 #### 输入/输出
+
 - **输入**：应用代码、部署配置、环境变量
 - **输出**：运行中的服务实例、监控数据、部署日志
 
 #### 核心组件
+
 ```
 deployment/
 ├── docker/
@@ -343,10 +375,12 @@ deployment/
 ```
 
 #### 依赖关系
+
 - 依赖：Docker、Kubernetes、CI/CD平台
 - 被依赖：所有其他模块（提供运行环境）
 
 #### 扩展方向
+
 - 实现多云部署支持
 - 增加自动扩缩容功能
 - 提供蓝绿部署能力
@@ -358,6 +392,7 @@ deployment/
 ### 3.1 核心表结构
 
 #### 3.1.1 球队表 (teams)
+
 ```sql
 CREATE TABLE teams (
     team_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -369,13 +404,14 @@ CREATE TABLE teams (
     stadium VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     INDEX idx_league (league_id),
     INDEX idx_country (country)
 );
 ```
 
 #### 3.1.2 比赛表 (matches)
+
 ```sql
 CREATE TABLE matches (
     match_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -395,7 +431,7 @@ CREATE TABLE matches (
     weather_condition VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (home_team_id) REFERENCES teams(team_id),
     FOREIGN KEY (away_team_id) REFERENCES teams(team_id),
     INDEX idx_date (match_date),
@@ -406,6 +442,7 @@ CREATE TABLE matches (
 ```
 
 #### 3.1.3 赔率表 (odds)
+
 ```sql
 CREATE TABLE odds (
     odds_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -420,7 +457,7 @@ CREATE TABLE odds (
     line_value DECIMAL(4,2), -- 盘口值
     collected_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (match_id) REFERENCES matches(match_id),
     INDEX idx_match_bookmaker (match_id, bookmaker),
     INDEX idx_collected_at (collected_at),
@@ -429,20 +466,21 @@ CREATE TABLE odds (
 ```
 
 #### 3.1.4 特征表 (features)
+
 ```sql
 CREATE TABLE features (
     feature_id INT PRIMARY KEY AUTO_INCREMENT,
     match_id INT NOT NULL,
     team_id INT NOT NULL,
     team_type ENUM('home', 'away') NOT NULL,
-    
+
     -- 基础统计特征
     recent_5_wins INT DEFAULT 0,
     recent_5_draws INT DEFAULT 0,
     recent_5_losses INT DEFAULT 0,
     recent_5_goals_for INT DEFAULT 0,
     recent_5_goals_against INT DEFAULT 0,
-    
+
     -- 主客场特征
     home_wins INT DEFAULT 0,
     home_draws INT DEFAULT 0,
@@ -450,27 +488,27 @@ CREATE TABLE features (
     away_wins INT DEFAULT 0,
     away_draws INT DEFAULT 0,
     away_losses INT DEFAULT 0,
-    
+
     -- 对战历史特征
     h2h_wins INT DEFAULT 0,
     h2h_draws INT DEFAULT 0,
     h2h_losses INT DEFAULT 0,
     h2h_goals_for INT DEFAULT 0,
     h2h_goals_against INT DEFAULT 0,
-    
+
     -- 联赛排名特征
     league_position INT,
     points INT,
     goal_difference INT,
-    
+
     -- 其他特征
     days_since_last_match INT,
     is_derby BOOLEAN DEFAULT FALSE,
     avg_possession DECIMAL(5,2),
     avg_shots_per_game DECIMAL(5,2),
-    
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (match_id) REFERENCES matches(match_id),
     FOREIGN KEY (team_id) REFERENCES teams(team_id),
     INDEX idx_match (match_id),
@@ -479,33 +517,34 @@ CREATE TABLE features (
 ```
 
 #### 3.1.5 预测表 (predictions)
+
 ```sql
 CREATE TABLE predictions (
     prediction_id INT PRIMARY KEY AUTO_INCREMENT,
     match_id INT NOT NULL,
     model_name VARCHAR(50) NOT NULL,
     model_version VARCHAR(20) NOT NULL,
-    
+
     -- 预测结果
     predicted_result ENUM('home_win', 'draw', 'away_win') NOT NULL,
     home_win_probability DECIMAL(5,4) NOT NULL,
     draw_probability DECIMAL(5,4) NOT NULL,
     away_win_probability DECIMAL(5,4) NOT NULL,
-    
+
     -- 比分预测
     predicted_home_score DECIMAL(3,2),
     predicted_away_score DECIMAL(3,2),
-    
+
     -- 其他预测
     over_2_5_probability DECIMAL(5,4),
     both_teams_score_probability DECIMAL(5,4),
-    
+
     -- 置信度和特征重要性
     confidence_score DECIMAL(5,4),
     feature_importance JSON, -- 存储特征重要性数据
-    
+
     predicted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (match_id) REFERENCES matches(match_id),
     INDEX idx_match_model (match_id, model_name),
     INDEX idx_predicted_at (predicted_at)
@@ -513,6 +552,7 @@ CREATE TABLE predictions (
 ```
 
 #### 3.1.6 联赛表 (leagues)
+
 ```sql
 CREATE TABLE leagues (
     league_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -524,7 +564,7 @@ CREATE TABLE leagues (
     season_end_month INT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     INDEX idx_country (country),
     INDEX idx_active (is_active)
 );
@@ -533,29 +573,32 @@ CREATE TABLE leagues (
 ### 3.2 数据一致性约束
 
 #### 3.2.1 数据完整性约束
+
 - 所有比赛必须有有效的主客场球队
 - 已完成的比赛必须有比分
 - 预测必须基于未完成的比赛
 - 赔率数据必须在比赛开始前收集
 
 #### 3.2.2 业务逻辑约束
+
 ```sql
 -- 确保比赛日期不在过去（对于新建比赛）
-ALTER TABLE matches ADD CONSTRAINT check_future_date 
+ALTER TABLE matches ADD CONSTRAINT check_future_date
 CHECK (match_date > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY));
 
 -- 确保概率之和等于1
-ALTER TABLE predictions ADD CONSTRAINT check_probability_sum 
+ALTER TABLE predictions ADD CONSTRAINT check_probability_sum
 CHECK (ABS((home_win_probability + draw_probability + away_win_probability) - 1.0) < 0.001);
 
 -- 确保赔率为正数
-ALTER TABLE odds ADD CONSTRAINT check_positive_odds 
+ALTER TABLE odds ADD CONSTRAINT check_positive_odds
 CHECK (home_odds > 0 AND draw_odds > 0 AND away_odds > 0);
 ```
 
 ### 3.3 索引优化策略
 
 #### 3.3.1 查询优化索引
+
 ```sql
 -- 最近比赛查询优化
 CREATE INDEX idx_recent_matches ON matches(match_date DESC, league_id);
@@ -574,6 +617,7 @@ CREATE INDEX idx_features_away_date ON matches(away_team_id, match_date);
 ### 3.4 数据分区策略
 
 #### 3.4.1 按时间分区
+
 ```sql
 -- 比赛表按年份分区
 ALTER TABLE matches PARTITION BY RANGE (YEAR(match_date)) (
@@ -597,16 +641,19 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
 ### 3.5 扩展性考虑
 
 #### 3.5.1 读写分离
+
 - 主库处理写操作和实时查询
 - 从库处理历史数据分析和报表查询
 - 预测服务优先使用从库减少主库压力
 
 #### 3.5.2 缓存策略
+
 - Redis缓存热点查询数据（近期比赛、实时预测结果）
 - 缓存球队基础信息和联赛信息
 - 缓存预测模型输出结果（1小时有效期）
 
 #### 3.5.3 归档策略
+
 - 历史比赛数据（3年以上）归档到单独的归档库
 - 历史预测数据保留用于模型效果回测
 - 赔率历史数据定期清理，保留代表性样本
@@ -620,6 +667,7 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
 #### 时间规划：4-6周
 
 #### 主要任务
+
 1. **开发环境搭建**（1周）
    - 搭建Python开发环境和依赖管理
    - 配置数据库（MySQL/PostgreSQL）和Redis
@@ -640,17 +688,20 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
    - 实现数据备份和恢复机制
 
 #### 交付物
+
 - 完整的数据采集系统，能够稳定获取主要联赛数据
 - 数据库schema和数据清洗流水线
 - 数据质量报告和监控仪表板
 - 技术文档和操作手册
 
 #### 里程碑检查
+
 - 能够采集至少3个主要联赛的历史数据（最近2个赛季）
 - 数据质量达标（完整性>95%，准确性>98%）
 - 系统稳定运行72小时无中断
 
 #### 测试重点
+
 - 数据采集的稳定性和准确性测试
 - 数据清洗逻辑的正确性验证
 - 异常情况处理（网络中断、API限流等）
@@ -660,6 +711,7 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
 #### 时间规划：6-8周
 
 #### 主要任务
+
 1. **特征工程开发**（3-4周）
    - 设计和实现基础统计特征（胜负记录、进球数等）
    - 开发高级特征（主客场优势、对战历史、球队实力等）
@@ -680,17 +732,20 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
    - 建立模型性能监控系统
 
 #### 交付物
+
 - 完整的特征工程系统，包含100+个预测特征
 - 训练好的预测模型，预测准确率>55%
 - 模型评估报告和性能基准
 - 特征重要性分析和模型解释文档
 
 #### 里程碑检查
+
 - 特征工程系统能够为所有比赛生成完整特征向量
 - 模型在测试集上达到预期性能指标
 - 能够为未来比赛生成可信的预测结果
 
 #### 测试重点
+
 - 特征计算的正确性和一致性
 - 模型预测的准确性和稳定性
 - 不同联赛和时间段的泛化能力测试
@@ -700,6 +755,7 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
 #### 时间规划：6-8周
 
 #### 主要任务
+
 1. **预测服务开发**（3-4周）
    - 使用FastAPI构建RESTful API服务
    - 实现实时预测和批量预测接口
@@ -720,17 +776,20 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
    - 全链路功能测试
 
 #### 交付物
+
 - 完整的预测API服务，支持多种预测类型
 - 用户友好的Web前端应用
 - API文档和用户使用指南
 - 系统性能测试报告
 
 #### 里程碑检查
+
 - API服务能够稳定提供预测结果，响应时间<500ms
 - 前端应用功能完整，用户体验良好
 - 系统能够同时支持100个并发用户
 
 #### 测试重点
+
 - API接口的功能性和性能测试
 - 前端界面的兼容性和易用性测试
 - 系统负载和压力测试
@@ -740,6 +799,7 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
 #### 时间规划：4-6周
 
 #### 主要任务
+
 1. **容器化改造**（2-3周）
    - 编写Dockerfile构建应用镜像
    - 配置Docker Compose本地部署
@@ -759,17 +819,20 @@ ALTER TABLE predictions PARTITION BY RANGE (YEAR(predicted_at) * 100 + MONTH(pre
    - 建立发布流程和版本管理
 
 #### 交付物
+
 - 完整的Docker化应用，支持一键部署
 - 生产环境部署方案和运维文档
 - CI/CD自动化流水线
 - 监控和告警系统
 
 #### 里程碑检查
+
 - 应用能够在云端稳定运行，可用性>99%
 - CI/CD流水线运行正常，部署时间<10分钟
 - 监控系统能够及时发现和报告问题
 
 #### 测试重点
+
 - 容器化应用的稳定性和性能测试
 - 部署流程的可靠性验证
 - 生产环境的压力和灾备测试
@@ -801,6 +864,7 @@ gantt
 ### 4.6 风险控制和应对策略
 
 #### 主要风险点
+
 1. **数据采集风险**
    - 风险：API限流、反爬虫、数据源变更
    - 应对：多数据源备份、代理IP池、渐进式采集策略
@@ -818,6 +882,7 @@ gantt
    - 应对：灰度部署、安全审计、成本监控
 
 #### 质量保证措施
+
 - 每个阶段设置质量关口，不达标不进入下一阶段
 - 建立代码评审和自动化测试机制
 - 定期进行架构评审和性能分析
@@ -832,21 +897,21 @@ gantt
 ```mermaid
 graph TB
     subgraph "用户层"
-        U1[Web用户] 
+        U1[Web用户]
         U2[移动用户]
         U3[API用户]
     end
-    
+
     subgraph "CDN & 负载均衡层"
         CDN[CloudFlare CDN]
         ALB[Application Load Balancer]
     end
-    
+
     subgraph "容器编排层"
         K8S[Kubernetes集群]
         subgraph "应用服务Pod"
             API1[FastAPI实例1]
-            API2[FastAPI实例2] 
+            API2[FastAPI实例2]
             API3[FastAPI实例3]
         end
         subgraph "前端服务Pod"
@@ -859,7 +924,7 @@ graph TB
             SCHEDULER[任务调度器]
         end
     end
-    
+
     subgraph "数据层"
         subgraph "数据库集群"
             DB_MASTER[(MySQL主库)]
@@ -874,29 +939,29 @@ graph TB
             S3[对象存储<br/>模型文件&日志]
         end
     end
-    
+
     subgraph "监控层"
         PROMETHEUS[Prometheus]
         GRAFANA[Grafana]
         ALERTMANAGER[AlertManager]
         ELK[ELK Stack]
     end
-    
+
     U1 & U2 & U3 --> CDN
     CDN --> ALB
     ALB --> K8S
     K8S --> API1 & API2 & API3
     K8S --> WEB1 & WEB2
     K8S --> WORKER1 & WORKER2 & SCHEDULER
-    
+
     API1 & API2 & API3 --> DB_SLAVE1 & DB_SLAVE2
     API1 & API2 & API3 --> REDIS_M
     WORKER1 & WORKER2 --> DB_MASTER
     SCHEDULER --> REDIS_M
-    
+
     DB_MASTER --> DB_SLAVE1 & DB_SLAVE2
     REDIS_M --> REDIS_S
-    
+
     K8S --> S3
     K8S --> PROMETHEUS
     PROMETHEUS --> GRAFANA
@@ -907,6 +972,7 @@ graph TB
 ### 5.2 Docker镜像设计
 
 #### 5.2.1 API服务容器
+
 ```dockerfile
 # Dockerfile.api
 FROM python:3.11-slim
@@ -948,6 +1014,7 @@ CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 #### 5.2.2 数据采集容器
+
 ```dockerfile
 # Dockerfile.worker
 FROM python:3.11-slim
@@ -984,6 +1051,7 @@ CMD ["python", "src/workers/data_collector.py"]
 ```
 
 #### 5.2.3 前端应用容器
+
 ```dockerfile
 # Dockerfile.frontend
 # 构建阶段
@@ -1018,6 +1086,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ### 5.3 Kubernetes部署配置
 
 #### 5.3.1 API服务部署
+
 ```yaml
 # k8s/api-deployment.yaml
 apiVersion: apps/v1
@@ -1088,6 +1157,7 @@ spec:
 ```
 
 #### 5.3.2 数据库配置
+
 ```yaml
 # k8s/database-config.yaml
 apiVersion: v1
@@ -1103,7 +1173,7 @@ data:
     query_cache_size = 128M
     slow_query_log = 1
     long_query_time = 2
-    
+
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -1160,6 +1230,7 @@ spec:
 ```
 
 #### 5.3.3 负载均衡配置
+
 ```yaml
 # k8s/ingress.yaml
 apiVersion: networking.k8s.io/v1
@@ -1205,28 +1276,32 @@ spec:
 #### 5.4.1 本地部署方案
 
 **优势：**
+
 - 完全可控的环境和数据
 - 无需担心云服务商限制和费用
 - 适合开发测试和小规模使用
 
 **劣势：**
+
 - 需要自己维护硬件和网络
 - 扩展性有限
 - 需要更多运维工作
 
 **适用场景：**
+
 - 开发测试环境
 - 预算有限的个人项目
 - 对数据安全要求极高的场景
 
 **部署配置：**
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
 
 services:
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.api
     ports:
@@ -1283,17 +1358,20 @@ volumes:
 #### 5.4.2 云端部署方案
 
 **优势：**
+
 - 高可用性和自动扩展
 - 专业的运维和安全保障
 - 全球CDN加速
 - 丰富的云服务生态
 
 **劣势：**
+
 - 持续的运营成本
 - 可能的厂商锁定
 - 数据传输和存储限制
 
 **适用场景：**
+
 - 生产环境部署
 - 需要高可用性的应用
 - 全球用户访问的服务
@@ -1323,6 +1401,7 @@ volumes:
 ### 5.5 Kubernetes扩展配置
 
 #### 5.5.1 自动伸缩配置
+
 ```yaml
 # k8s/hpa.yaml
 apiVersion: autoscaling/v2
@@ -1365,6 +1444,7 @@ spec:
 ```
 
 #### 5.5.2 资源配额管理
+
 ```yaml
 # k8s/resource-quota.yaml
 apiVersion: v1
@@ -1401,6 +1481,7 @@ spec:
 ### 5.6 监控和告警系统
 
 #### 5.6.1 Prometheus监控配置
+
 ```yaml
 # monitoring/prometheus-config.yaml
 apiVersion: v1
@@ -1412,16 +1493,16 @@ data:
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
-    
+
     rule_files:
       - "/etc/prometheus/rules/*.yml"
-    
+
     alerting:
       alertmanagers:
       - static_configs:
         - targets:
           - alertmanager:9093
-    
+
     scrape_configs:
     - job_name: 'kubernetes-pods'
       kubernetes_sd_configs:
@@ -1434,7 +1515,7 @@ data:
         action: replace
         target_label: __metrics_path__
         regex: (.+)
-    
+
     - job_name: 'football-prediction-api'
       static_configs:
       - targets: ['football-prediction-api-service:80']
@@ -1443,6 +1524,7 @@ data:
 ```
 
 #### 5.6.2 告警规则配置
+
 ```yaml
 # monitoring/alert-rules.yaml
 apiVersion: v1
@@ -1462,7 +1544,7 @@ data:
         annotations:
           summary: "High error rate detected"
           description: "Error rate is {{ $value }} for {{ $labels.instance }}"
-      
+
       - alert: HighResponseTime
         expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
         for: 2m
@@ -1471,7 +1553,7 @@ data:
         annotations:
           summary: "High response time detected"
           description: "95th percentile response time is {{ $value }}s"
-      
+
       - alert: DatabaseConnectionFailure
         expr: mysql_up == 0
         for: 1m
@@ -1480,7 +1562,7 @@ data:
         annotations:
           summary: "Database connection failure"
           description: "MySQL database is down"
-      
+
       - alert: PredictionServiceDown
         expr: up{job="football-prediction-api"} == 0
         for: 2m
@@ -1492,6 +1574,7 @@ data:
 ```
 
 #### 5.6.3 Grafana仪表板配置
+
 ```json
 {
   "dashboard": {
@@ -1509,7 +1592,7 @@ data:
       },
       {
         "title": "响应时间分布",
-        "type": "graph", 
+        "type": "graph",
         "targets": [
           {
             "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
@@ -1549,6 +1632,7 @@ data:
 ### 5.7 安全配置
 
 #### 5.7.1 网络安全策略
+
 ```yaml
 # k8s/network-policy.yaml
 apiVersion: networking.k8s.io/v1
@@ -1588,6 +1672,7 @@ spec:
 ```
 
 #### 5.7.2 密钥管理
+
 ```yaml
 # k8s/secrets.yaml
 apiVersion: v1
@@ -1620,6 +1705,7 @@ stringData:
 #### 6.1.1 自动重训练流水线
 
 **设计目标：**
+
 - 实现模型性能的持续监控和自动优化
 - 基于新数据和反馈建立自适应学习系统
 - 确保预测质量随时间推移不断提升
@@ -1646,6 +1732,7 @@ graph TD
 **实现方案：**
 
 1. **数据质量监控**
+
 ```python
 # src/ml/monitoring/data_monitor.py
 class DataQualityMonitor:
@@ -1656,7 +1743,7 @@ class DataQualityMonitor:
             'consistency': 0.99,
             'freshness': 24 * 3600  # 24小时
         }
-    
+
     def check_retrain_conditions(self):
         """检查是否需要重新训练"""
         conditions = {
@@ -1666,7 +1753,7 @@ class DataQualityMonitor:
             'scheduled': self._check_schedule()
         }
         return any(conditions.values()), conditions
-    
+
     def _detect_concept_drift(self):
         """检测概念漂移"""
         recent_accuracy = self._calculate_recent_accuracy(days=7)
@@ -1675,56 +1762,58 @@ class DataQualityMonitor:
 ```
 
 2. **自动训练调度器**
+
 ```python
 # src/ml/training/auto_trainer.py
 class AutoTrainer:
     def __init__(self):
         self.model_registry = ModelRegistry()
         self.training_pipeline = TrainingPipeline()
-        
+
     async def execute_retrain_pipeline(self):
         """执行自动重训练流水线"""
         try:
             # 1. 数据准备
             training_data = await self._prepare_training_data()
-            
+
             # 2. 特征工程
             features = await self._update_features(training_data)
-            
+
             # 3. 模型训练
             new_model = await self._train_model(features)
-            
+
             # 4. 模型验证
             validation_results = await self._validate_model(new_model)
-            
+
             # 5. 性能比较
             if self._is_model_better(validation_results):
                 await self._deploy_model(new_model)
                 await self._start_ab_test(new_model)
             else:
                 logger.warning("新模型性能不如现有模型，跳过部署")
-                
+
         except Exception as e:
             logger.error(f"自动重训练失败: {e}")
             await self._notify_failure(e)
 ```
 
 3. **模型版本管理**
+
 ```python
 # src/ml/registry/model_registry.py
 class ModelRegistry:
     def __init__(self):
         self.storage_backend = S3Backend()
         self.metadata_store = PostgreSQLStore()
-    
+
     def register_model(self, model, metadata):
         """注册新模型版本"""
         version = self._generate_version()
         model_path = f"models/football_prediction/v{version}"
-        
+
         # 保存模型文件
         self.storage_backend.save(model, model_path)
-        
+
         # 保存元数据
         self.metadata_store.save({
             'version': version,
@@ -1733,9 +1822,9 @@ class ModelRegistry:
             'features': metadata['features'],
             'training_data_hash': metadata['data_hash']
         })
-        
+
         return version
-    
+
     def rollback_model(self, target_version):
         """回滚到指定版本"""
         model = self.storage_backend.load(f"models/football_prediction/v{target_version}")
@@ -1753,7 +1842,7 @@ class ABTestManager:
     def __init__(self):
         self.experiments = {}
         self.traffic_splitter = TrafficSplitter()
-    
+
     def create_experiment(self, name, control_model, treatment_model, traffic_split=0.1):
         """创建A/B测试实验"""
         experiment = {
@@ -1766,25 +1855,25 @@ class ABTestManager:
         }
         self.experiments[name] = experiment
         return experiment
-    
+
     async def route_prediction_request(self, request):
         """根据A/B测试策略路由预测请求"""
         active_experiment = self._get_active_experiment()
-        
+
         if active_experiment and self._should_use_treatment(request):
             model = active_experiment['treatment_model']
             variant = 'treatment'
         else:
             model = active_experiment['control_model'] if active_experiment else self.default_model
             variant = 'control'
-        
+
         # 执行预测
         prediction = await model.predict(request)
-        
+
         # 记录实验数据
         if active_experiment:
             await self._log_experiment_data(active_experiment['name'], variant, request, prediction)
-        
+
         return prediction
 ```
 
@@ -1793,6 +1882,7 @@ class ABTestManager:
 #### 6.2.1 实时数据流处理架构
 
 **技术选型：**
+
 - Apache Kafka作为消息队列
 - Apache Flink/Spark Streaming进行流处理
 - WebSocket连接获取实时赔率变化
@@ -1807,26 +1897,26 @@ graph LR
         A3[社交媒体监控]
         A4[新闻爬虫]
     end
-    
+
     subgraph "消息队列"
         B[Apache Kafka]
     end
-    
+
     subgraph "流处理"
         C1[Flink - 赔率处理]
-        C2[Flink - 新闻分析] 
+        C2[Flink - 新闻分析]
         C3[Flink - 社媒情感]
     end
-    
+
     subgraph "实时存储"
         D1[(Redis Stream)]
         D2[(InfluxDB)]
     end
-    
+
     subgraph "预测服务"
         E[实时预测引擎]
     end
-    
+
     A1 & A2 & A3 & A4 --> B
     B --> C1 & C2 & C3
     C1 & C2 & C3 --> D1 & D2
@@ -1836,71 +1926,74 @@ graph LR
 **实现方案：**
 
 1. **实时赔率采集器**
+
 ```python
 # src/real_time/collectors/odds_stream.py
 class RealTimeOddsCollector:
     def __init__(self):
         self.kafka_producer = KafkaProducer()
         self.websocket_connections = {}
-    
+
     async def start_odds_stream(self, bookmakers):
         """启动实时赔率流采集"""
         for bookmaker in bookmakers:
             connection = await self._create_websocket_connection(bookmaker)
             self.websocket_connections[bookmaker] = connection
             asyncio.create_task(self._handle_odds_stream(bookmaker, connection))
-    
+
     async def _handle_odds_stream(self, bookmaker, connection):
         """处理赔率流数据"""
         async for message in connection:
             odds_data = self._parse_odds_message(message, bookmaker)
-            
+
             # 发送到Kafka
             await self.kafka_producer.send('odds_stream', {
                 'bookmaker': bookmaker,
                 'timestamp': datetime.now().isoformat(),
                 'data': odds_data
             })
-            
+
             # 检测显著变化
             if self._detect_significant_change(odds_data):
                 await self._trigger_prediction_update(odds_data)
 ```
 
 2. **流处理引擎**
+
 ```python
 # src/real_time/processors/odds_processor.py
 class OddsStreamProcessor:
     def __init__(self):
         self.flink_env = StreamExecutionEnvironment.get_execution_environment()
-        
+
     def create_processing_pipeline(self):
         """创建赔率流处理管道"""
         # 从Kafka读取赔率流
         odds_stream = self.flink_env.add_source(
             FlinkKafkaConsumer('odds_stream', SimpleStringSchema(), kafka_props)
         )
-        
+
         # 数据清洗和标准化
         cleaned_stream = odds_stream.map(self._clean_odds_data)
-        
+
         # 计算移动平均和趋势
         windowed_stream = cleaned_stream.key_by('match_id').time_window(Time.minutes(5))
         trend_stream = windowed_stream.apply(OddsTrendCalculator())
-        
+
         # 检测异常波动
         anomaly_stream = trend_stream.filter(AnomalyDetector())
-        
+
         # 输出到存储系统
         trend_stream.add_sink(RedisSink('odds_trends'))
         anomaly_stream.add_sink(AlertingSink('odds_anomalies'))
-        
+
         return self.flink_env.execute("OddsProcessingJob")
 ```
 
 #### 6.2.2 球队动态信息采集
 
 **信息源整合：**
+
 - 官方球队网站和社交媒体
 - 体育新闻网站
 - 球员伤病报告
@@ -1915,22 +2008,22 @@ class TeamNewsCollector:
         self.news_sources = NewsSourceRegistry()
         self.nlp_processor = NLPProcessor()
         self.kafka_producer = KafkaProducer()
-    
+
     async def collect_team_news(self, teams):
         """采集球队动态新闻"""
         for team in teams:
             news_items = await self._fetch_team_news(team)
-            
+
             for news in news_items:
                 # NLP分析新闻内容
                 analysis = await self.nlp_processor.analyze_news(news)
-                
+
                 # 提取关键信息
                 extracted_info = self._extract_key_info(analysis)
-                
+
                 if extracted_info['importance'] > 0.7:  # 高重要性新闻
                     await self._send_to_processing(team, extracted_info)
-    
+
     def _extract_key_info(self, analysis):
         """提取关键信息"""
         return {
@@ -1973,36 +2066,36 @@ class MultiLevelCache:
         self.l1_cache = LocalLRUCache(maxsize=1000)  # 本地缓存
         self.l2_cache = RedisCache(host='redis-cluster')  # 分布式缓存
         self.l3_cache = DatabaseQueryCache()  # 查询结果缓存
-    
+
     async def get_prediction(self, match_id):
         """多级缓存获取预测结果"""
         # L1 缓存 - 本地内存
         result = self.l1_cache.get(f"prediction:{match_id}")
         if result:
             return result
-        
+
         # L2 缓存 - Redis
         result = await self.l2_cache.get(f"prediction:{match_id}")
         if result:
             self.l1_cache.set(f"prediction:{match_id}", result, ttl=300)
             return result
-        
+
         # L3 缓存 - 数据库查询缓存
         result = await self.l3_cache.get_or_compute(
             f"prediction:{match_id}",
             lambda: self._compute_prediction(match_id)
         )
-        
+
         # 更新上层缓存
         await self.l2_cache.set(f"prediction:{match_id}", result, ttl=1800)
         self.l1_cache.set(f"prediction:{match_id}", result, ttl=300)
-        
+
         return result
-    
+
     async def invalidate_prediction(self, match_id):
         """预测结果失效处理"""
         keys = [f"prediction:{match_id}", f"features:{match_id}"]
-        
+
         # 删除所有层级的缓存
         for key in keys:
             self.l1_cache.delete(key)
@@ -2020,23 +2113,23 @@ class TaskQueueManager:
     def __init__(self):
         self.celery_app = Celery('football_prediction')
         self.kafka_producer = KafkaProducer()
-    
+
     @celery_app.task(bind=True, max_retries=3)
     def process_prediction_request(self, match_data):
         """异步处理预测请求"""
         try:
             # 特征计算
             features = self._calculate_features(match_data)
-            
+
             # 模型预测
             prediction = self._run_prediction(features)
-            
+
             # 缓存结果
             self._cache_prediction_result(match_data['match_id'], prediction)
-            
+
             # 发送结果通知
             self._notify_prediction_ready(match_data['match_id'], prediction)
-            
+
         except Exception as exc:
             if self.request.retries < self.max_retries:
                 raise self.retry(countdown=60 * (self.request.retries + 1))
@@ -2055,7 +2148,7 @@ class DatabaseClusterManager:
         self.write_db = self._create_master_connection()
         self.read_dbs = self._create_read_replicas()
         self.shard_router = ShardRouter()
-    
+
     def get_read_connection(self, query_type='general'):
         """获取读连接"""
         if query_type == 'analytics':
@@ -2064,19 +2157,19 @@ class DatabaseClusterManager:
             return self.read_dbs['realtime_replica']
         else:
             return random.choice(list(self.read_dbs.values()))
-    
+
     def get_write_connection(self, table_name, shard_key=None):
         """获取写连接"""
         if shard_key:
             shard = self.shard_router.route(table_name, shard_key)
             return self.write_db[f'shard_{shard}']
         return self.write_db['master']
-    
+
     async def execute_read_query(self, query, params=None):
         """执行读查询"""
         connection = self.get_read_connection()
         return await connection.fetch(query, params)
-    
+
     async def execute_write_query(self, query, params=None, table_name=None, shard_key=None):
         """执行写查询"""
         connection = self.get_write_connection(table_name, shard_key)
@@ -2096,18 +2189,18 @@ class UserProfiler:
         self.behavior_tracker = BehaviorTracker()
         self.preference_engine = PreferenceEngine()
         self.ml_model = UserClusteringModel()
-    
+
     def build_user_profile(self, user_id):
         """构建用户画像"""
         # 收集用户行为数据
         behaviors = self.behavior_tracker.get_user_behaviors(user_id)
-        
+
         # 分析用户偏好
         preferences = self._analyze_preferences(behaviors)
-        
+
         # 用户聚类
         cluster = self.ml_model.predict_cluster(preferences)
-        
+
         profile = {
             'user_id': user_id,
             'favorite_teams': preferences.get('teams', []),
@@ -2118,25 +2211,25 @@ class UserProfiler:
             'cluster': cluster,
             'created_at': datetime.now()
         }
-        
+
         return profile
-    
+
     def _analyze_preferences(self, behaviors):
         """分析用户偏好"""
         team_interactions = defaultdict(int)
         league_interactions = defaultdict(int)
-        
+
         for behavior in behaviors:
             if behavior['type'] == 'view_prediction':
                 match_info = behavior['match_info']
                 team_interactions[match_info['home_team']] += 1
                 team_interactions[match_info['away_team']] += 1
                 league_interactions[match_info['league']] += 1
-        
+
         return {
-            'teams': sorted(team_interactions.keys(), 
+            'teams': sorted(team_interactions.keys(),
                           key=team_interactions.get, reverse=True)[:5],
-            'leagues': sorted(league_interactions.keys(), 
+            'leagues': sorted(league_interactions.keys(),
                             key=league_interactions.get, reverse=True)[:3],
             'accuracy_focus': self._calculate_accuracy_focus(behaviors),
             'risk_tolerance': self._calculate_risk_tolerance(behaviors)
@@ -2154,21 +2247,21 @@ class PersonalizedRecommendationEngine:
         self.collaborative_filter = CollaborativeFiltering()
         self.content_filter = ContentBasedFiltering()
         self.hybrid_model = HybridRecommendationModel()
-    
+
     async def get_personalized_matches(self, user_id, limit=10):
         """获取个性化比赛推荐"""
         user_profile = await self._get_user_profile(user_id)
-        
+
         # 基于内容的过滤
         content_recommendations = await self.content_filter.recommend(
             user_profile, limit=limit*2
         )
-        
+
         # 协同过滤
         collaborative_recommendations = await self.collaborative_filter.recommend(
             user_id, limit=limit*2
         )
-        
+
         # 混合推荐
         final_recommendations = self.hybrid_model.combine_recommendations(
             content_recommendations,
@@ -2176,14 +2269,14 @@ class PersonalizedRecommendationEngine:
             user_profile,
             limit=limit
         )
-        
+
         return final_recommendations
-    
+
     async def get_personalized_insights(self, user_id, match_id):
         """获取个性化预测见解"""
         user_profile = await self._get_user_profile(user_id)
         base_prediction = await self._get_base_prediction(match_id)
-        
+
         # 根据用户偏好调整展示内容
         insights = {
             'prediction': base_prediction,
@@ -2197,7 +2290,7 @@ class PersonalizedRecommendationEngine:
                 match_id, user_profile
             )
         }
-        
+
         return insights
 ```
 
@@ -2211,7 +2304,7 @@ class RecommendationEvaluator:
     def __init__(self):
         self.metrics_calculator = MetricsCalculator()
         self.ab_tester = ABTester()
-    
+
     async def evaluate_recommendation_quality(self, recommendations, user_interactions):
         """评估推荐质量"""
         metrics = {
@@ -2222,16 +2315,16 @@ class RecommendationEvaluator:
             'novelty': self._calculate_novelty(recommendations, user_interactions),
             'coverage': self._calculate_coverage(recommendations)
         }
-        
+
         return metrics
-    
+
     async def run_recommendation_ab_test(self, control_algorithm, treatment_algorithm):
         """运行推荐算法A/B测试"""
         test_users = await self._select_test_users()
-        
+
         # 分配用户到对照组和实验组
         control_group, treatment_group = self._split_users(test_users)
-        
+
         # 运行测试
         control_results = await self._run_recommendation_test(
             control_group, control_algorithm
@@ -2239,12 +2332,12 @@ class RecommendationEvaluator:
         treatment_results = await self._run_recommendation_test(
             treatment_group, treatment_algorithm
         )
-        
+
         # 统计分析
         significance_test = self._perform_significance_test(
             control_results, treatment_results
         )
-        
+
         return {
             'control_metrics': control_results['metrics'],
             'treatment_metrics': treatment_results['metrics'],
@@ -2258,16 +2351,19 @@ class RecommendationEvaluator:
 #### 6.5.1 扩展优先级排序
 
 **第一优先级（6个月内）：**
+
 1. 模型自动更新机制 - 保证预测质量持续优化
 2. 实时赔率采集 - 提供更及时的市场信息
 3. 多层缓存架构 - 支撑高并发访问需求
 
 **第二优先级（12个月内）：**
+
 1. 用户画像系统 - 提升用户体验和粘性
 2. 消息队列优化 - 提高系统响应性和可靠性
 3. 数据库集群化 - 支撑更大规模数据处理
 
 **第三优先级（18个月内）：**
+
 1. 个性化推荐引擎 - 增强产品竞争力
 2. 高级分析功能 - 提供更深入的数据见解
 3. 多语言和多地区支持 - 扩大用户覆盖面
@@ -2275,16 +2371,19 @@ class RecommendationEvaluator:
 #### 6.5.2 技术债务管理
 
 **代码重构计划：**
+
 - 建立代码质量监控和自动重构工具
 - 定期进行架构评审和技术债务清理
 - 实施微服务拆分，提高系统模块化程度
 
 **性能优化路线图：**
+
 - 建立性能基准测试和持续监控
 - 实施渐进式性能优化策略
 - 定期进行容量规划和扩容预案
 
 **安全加固措施：**
+
 - 实施零信任安全架构
 - 建立安全漏洞扫描和修复流程
 - 加强数据加密和隐私保护措施
@@ -2302,10 +2401,11 @@ class RecommendationEvaluator:
 ## 📞 联系信息
 
 如有任何问题或建议，请联系开发团队：
-- **邮箱**：dev-team@football-prediction.com
-- **技术文档**：https://docs.football-prediction.com
-- **项目仓库**：https://github.com/your-org/football-prediction-system
+
+- **邮箱**：<dev-team@football-prediction.com>
+- **技术文档**：<https://docs.football-prediction.com>
+- **项目仓库**：<https://github.com/your-org/football-prediction-system>
 
 ---
 
-**本文档为足球比赛结果预测系统的正式技术架构设计文档，所有开发活动应严格按照本文档执行。** 
+**本文档为足球比赛结果预测系统的正式技术架构设计文档，所有开发活动应严格按照本文档执行。**
