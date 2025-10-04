@@ -41,6 +41,40 @@ except Exception as e:
     feature_calculator: Optional[FeatureCalculator] = None
 
 
+# 健康检查端点（必须在 /{match_id} 之前定义）
+@router.get("/health", summary="特征服务健康检查")
+async def features_health_check():
+    """
+    特征服务健康检查
+
+    检查各个组件的可用性
+    """
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "components": {
+            "feature_store": feature_store is not None,
+            "feature_calculator": feature_calculator is not None,
+        },
+    }
+
+    # 检查特征存储连接
+    if feature_store:
+        try:
+            # 这里可以添加特征存储的连接测试
+            health_status["components"]["feature_store_connection"] = True
+        except Exception as e:
+            logger.warning(f"特征存储连接检查失败: {e}")
+            health_status["components"]["feature_store_connection"] = False
+            health_status["status"] = "degraded"
+
+    if not all(health_status["components"].values()):
+        health_status["status"] = "unhealthy"
+        return health_status
+
+    return health_status
+
+
 @router.get(
     "/{match_id}",
     summary="获取比赛特征",
@@ -151,9 +185,9 @@ async def get_match_features(
 
         # 添加特征获取状态
         if features_error:
-            response_data["features_warning"] = (
-                f"特征数据获取部分失败: {features_error}"
-            )
+            response_data[
+                "features_warning"
+            ] = f"特征数据获取部分失败: {features_error}"
 
         # 7. 处理原始特征请求（可选）
         if include_raw and feature_calculator:
@@ -467,37 +501,3 @@ async def get_historical_features(
         },
         message="成功获取历史特征数据",
     )
-
-
-# 健康检查端点
-@router.get("/health", summary="特征服务健康检查")
-async def features_health_check() -> Dict[str, Any]:
-    """
-    特征服务健康检查
-
-    检查各个组件的可用性
-    """
-    health_status = {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "components": {
-            "feature_store": feature_store is not None,
-            "feature_calculator": feature_calculator is not None,
-        },
-    }
-
-    # 检查特征存储连接
-    if feature_store:
-        try:
-            # 这里可以添加特征存储的连接测试
-            health_status["components"]["feature_store_connection"] = True
-        except Exception as e:
-            logger.warning(f"特征存储连接检查失败: {e}")
-            health_status["components"]["feature_store_connection"] = False
-            health_status["status"] = "degraded"
-
-    if not all(health_status["components"].values()):
-        health_status["status"] = "unhealthy"
-        return {"status": "unhealthy", **health_status}
-
-    return {"status": "healthy", **health_status}

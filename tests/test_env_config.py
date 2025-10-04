@@ -54,6 +54,7 @@ def mock_redis_cluster() -> None:
 
     class RedisClusterStub:
         """Redis集群的轻量级Mock实现"""
+
         def __init__(self, *args, **kwargs):
             pass
 
@@ -77,6 +78,7 @@ def mock_redis_cluster() -> None:
 
     class ClusterNodeStub:
         """集群节点的轻量级Mock实现"""
+
         def __init__(self, *args, **kwargs):
             pass
 
@@ -86,12 +88,12 @@ def mock_redis_cluster() -> None:
     redis_cluster_mock.ClusterNode = ClusterNodeStub
 
     # 添加到sys.modules，防止导入错误
-    sys.modules['redis.cluster'] = redis_cluster_mock
+    sys.modules["redis.cluster"] = redis_cluster_mock
 
     # 也Mock相关的redis.asyncio模块
     redis_asyncio_mock = MagicMock()
     redis_asyncio_mock.RedisCluster = RedisClusterStub
-    sys.modules['redis.asyncio.cluster'] = redis_asyncio_mock
+    sys.modules["redis.asyncio.cluster"] = redis_asyncio_mock
 
 
 def initialize_test_mocks() -> Dict[str, Any]:
@@ -105,25 +107,28 @@ def initialize_test_mocks() -> Dict[str, Any]:
 
     # Mock数据质量监控器
     from unittest.mock import AsyncMock
+
     mock_dqm = MagicMock()
-    mock_dqm.generate_quality_report = AsyncMock(return_value={
-        "overall_status": "healthy",
-        "quality_score": 95.0,
-        "anomalies": {"count": 0, "items": []},
-        "report_time": "2025-10-04T10:00:00",
-        "checks": {
-            "data_freshness": {"status": "pass", "score": 100},
-            "data_completeness": {"status": "pass", "score": 95},
-            "data_consistency": {"status": "pass", "score": 90},
+    mock_dqm.generate_quality_report = AsyncMock(
+        return_value={
+            "overall_status": "healthy",
+            "quality_score": 95.0,
+            "anomalies": {"count": 0, "items": []},
+            "report_time": "2025-10-04T10:00:00",
+            "checks": {
+                "data_freshness": {"status": "pass", "score": 100},
+                "data_completeness": {"status": "pass", "score": 95},
+                "data_consistency": {"status": "pass", "score": 90},
+            },
         }
-    })
-    mocks['data_quality_monitor'] = mock_dqm
+    )
+    mocks["data_quality_monitor"] = mock_dqm
 
     # Mock特征存储
     mock_feature_store = MagicMock()
     mock_feature_store.get_online_features = AsyncMock(return_value=None)
     mock_feature_store.get_historical_features = AsyncMock(return_value=None)
-    mocks['feature_store'] = mock_feature_store
+    mocks["feature_store"] = mock_feature_store
 
     return mocks
 

@@ -7,9 +7,11 @@ Redis Mocks for Testing
 import sys
 from unittest.mock import MagicMock
 
+
 # 创建所有必要的Redis mock类
 class RedisStub:
     """Redis基础类的Mock"""
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -31,20 +33,27 @@ class RedisStub:
     def close(self):
         pass
 
+
 class RedisClusterStub(RedisStub):
     """Redis集群的Mock"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
 class SentinelStub:
     """Redis哨兵的Mock"""
+
     def __init__(self, *args, **kwargs):
         pass
 
+
 class ConnectionPoolStub:
     """连接池的Mock"""
+
     def __init__(self, *args, **kwargs):
         pass
+
 
 def install_redis_mocks():
     """
@@ -55,7 +64,7 @@ def install_redis_mocks():
     # 创建所有需要的mock模块
     redis_cluster_mock = MagicMock()
     redis_cluster_mock.RedisCluster = RedisClusterStub
-    redis_cluster_mock.ClusterNode = type('ClusterNode', (), {})
+    redis_cluster_mock.ClusterNode = type("ClusterNode", (), {})
 
     redis_asyncio_cluster_mock = MagicMock()
     redis_asyncio_cluster_mock.RedisCluster = RedisClusterStub
@@ -71,11 +80,11 @@ def install_redis_mocks():
 
     # 添加到sys.modules
     modules_to_mock = {
-        'redis.cluster': redis_cluster_mock,
-        'redis.asyncio.cluster': redis_asyncio_cluster_mock,
-        'redis.sentinel': redis_sentinel_mock,
-        'redis.asyncio.sentinel': redis_asyncio_sentinel_mock,
-        'redis.connection_pool': redis_connection_pool_mock,
+        "redis.cluster": redis_cluster_mock,
+        "redis.asyncio.cluster": redis_asyncio_cluster_mock,
+        "redis.sentinel": redis_sentinel_mock,
+        "redis.asyncio.sentinel": redis_asyncio_sentinel_mock,
+        "redis.connection_pool": redis_connection_pool_mock,
     }
 
     for module_name, module_mock in modules_to_mock.items():
@@ -84,13 +93,15 @@ def install_redis_mocks():
     # 修补已经存在的redis.asyncio模块
     try:
         import redis.asyncio
-        if not hasattr(redis.asyncio, 'RedisCluster'):
+
+        if not hasattr(redis.asyncio, "RedisCluster"):
             redis.asyncio.RedisCluster = RedisClusterStub
-        if not hasattr(redis.asyncio, 'Sentinel'):
+        if not hasattr(redis.asyncio, "Sentinel"):
             redis.asyncio.Sentinel = SentinelStub
     except ImportError:
         pass
 
+
 # 自动安装
-if 'pytest' in sys.modules or 'unittest' in sys.modules:
+if "pytest" in sys.modules or "unittest" in sys.modules:
     install_redis_mocks()
