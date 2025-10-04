@@ -7,6 +7,7 @@ This document describes the caching implementation for the Football Prediction S
 ## Current State
 
 The prediction service currently has a basic model caching mechanism:
+
 - Models are cached in `self.model_cache` dictionary
 - Model metadata is cached in `self.model_metadata_cache` dictionary
 - No TTL mechanism - cached items never expire
@@ -221,6 +222,7 @@ class PredictionService:
 ## Configuration
 
 Environment variables for cache configuration:
+
 - `MODEL_CACHE_TTL_HOURS`: Model cache TTL in hours (default: 1)
 - `PREDICTION_CACHE_TTL_MINUTES`: Prediction cache TTL in minutes (default: 30)
 - `MODEL_CACHE_MAX_SIZE`: Maximum number of models in cache (default: 10)
