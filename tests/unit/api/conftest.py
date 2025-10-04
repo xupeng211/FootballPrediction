@@ -16,17 +16,21 @@ def _install_health_stubs(stack: ExitStack) -> None:
     session_cm.__exit__.return_value = False
     mock_db_manager.get_session.return_value = session_cm
 
-    stack.enter_context(patch("src.api.health.get_database_manager", return_value=mock_db_manager))
+    stack.enter_context(
+        patch("src.api.health.get_database_manager", return_value=mock_db_manager)
+    )
 
     # 创建符合schema的完整响应
     health_check_response = {
         "healthy": True,
         "status": "healthy",
         "response_time_ms": 0.1,
-        "details": {"message": "Service is healthy"}
+        "details": {"message": "Service is healthy"},
     }
     async_success = AsyncMock(return_value=health_check_response)
-    stack.enter_context(patch("src.api.health._collect_database_health", new=async_success))
+    stack.enter_context(
+        patch("src.api.health._collect_database_health", new=async_success)
+    )
     stack.enter_context(patch("src.api.health._check_mlflow", new=async_success))
     stack.enter_context(patch("src.api.health._check_redis", new=async_success))
     stack.enter_context(patch("src.api.health._check_kafka", new=async_success))

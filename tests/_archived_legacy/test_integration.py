@@ -7,7 +7,6 @@ from kafka import KafkaProducer, KafkaConsumer
 import mlflow
 import mlflow.pytorch
 import time
-from datetime import datetime
 
 
 class TestRealDatabaseIntegration:

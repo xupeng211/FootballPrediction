@@ -7,20 +7,25 @@
 ## 基本原则
 
 ### 1. 描述性断言
+
 **❌ 差的实践:**
+
 ```python
 assert result == True
 assert len(data) > 0
 ```
 
 **✅ 好的实践:**
+
 ```python
 assert result is True, f"Expected prediction to be successful, got {result}"
 assert len(data) > 0, f"Expected non-empty data list, got {len(data)} items"
 ```
 
 ### 2. 使用专门的断言方法
+
 **❌ 差的实践:**
+
 ```python
 assert a == b
 assert a in b
@@ -28,6 +33,7 @@ assert isinstance(a, type)
 ```
 
 **✅ 好的实践:**
+
 ```python
 # 使用pytest提供的专门断言
 assert a == b  # 对于简单相等比较仍然可以
@@ -39,12 +45,15 @@ assert actual_value == expected_value, f"Expected {expected_value}, got {actual_
 ```
 
 ### 3. 浮点数比较
+
 **❌ 差的实践:**
+
 ```python
 assert result == 0.3333333333
 ```
 
 **✅ 好的实践:**
+
 ```python
 import math
 assert math.isclose(result, 1/3, rel_tol=1e-9)
@@ -52,12 +61,15 @@ assert abs(result - expected) < tolerance, f"Value {result} not close to {expect
 ```
 
 ### 4. 集合比较
+
 **❌ 差的实践:**
+
 ```python
 assert set(a) == set(b)
 ```
 
 **✅ 好的实践:**
+
 ```python
 assert set(a) == set(b), f"Sets differ. Missing: {set(b) - set(a)}, Extra: {set(a) - set(b)}"
 ```
@@ -65,6 +77,7 @@ assert set(a) == set(b), f"Sets differ. Missing: {set(b) - set(a)}, Extra: {set(
 ## 数据验证断言
 
 ### API响应验证
+
 ```python
 def test_api_response_validation(response):
     # 基础响应检查
@@ -87,6 +100,7 @@ def test_api_response_validation(response):
 ```
 
 ### 数据库记录验证
+
 ```python
 def test_database_record_validation(record):
     # 记录存在性
@@ -108,6 +122,7 @@ def test_database_record_validation(record):
 ## 错误处理断言
 
 ### 异常验证
+
 ```python
 def test_error_handling():
     # 预期异常
@@ -123,6 +138,7 @@ def test_error_handling():
 ```
 
 ### 超时验证
+
 ```python
 def test_timeout_handling():
     start_time = time.time()
@@ -137,6 +153,7 @@ def test_timeout_handling():
 ## 性能断言
 
 ### 响应时间验证
+
 ```python
 def test_response_time_performance():
     start_time = time.time()
@@ -161,6 +178,7 @@ def test_response_time_performance():
 ```
 
 ### 内存使用验证
+
 ```python
 def test_memory_usage():
     import psutil
@@ -181,6 +199,7 @@ def test_memory_usage():
 ## 数据一致性断言
 
 ### 概率分布验证
+
 ```python
 def test_probability_distribution(probabilities):
     # 概率总和检查
@@ -198,6 +217,7 @@ def test_probability_distribution(probabilities):
 ```
 
 ### 时间序列数据验证
+
 ```python
 def test_time_series_data(time_series):
     # 数据排序验证
@@ -222,6 +242,7 @@ def test_time_series_data(time_series):
 ## Mock对象验证
 
 ### Mock调用验证
+
 ```python
 def test_mock_interaction(mock_service):
     # 操作执行
@@ -243,6 +264,7 @@ def test_mock_interaction(mock_service):
 ## 边界条件断言
 
 ### 数值边界验证
+
 ```python
 def test_boundary_conditions():
     # 测试边界值
@@ -259,6 +281,7 @@ def test_boundary_conditions():
 ```
 
 ### 空值和None处理
+
 ```python
 def test_none_handling():
     # None输入处理
@@ -275,6 +298,7 @@ def test_none_handling():
 ## 自定义断言函数
 
 ### 创建可重用的断言函数
+
 ```python
 def assert_valid_prediction_response(response_data):
     """验证预测响应数据的有效性"""
@@ -320,6 +344,7 @@ def assert_probabilities_valid(probabilities):
 ## 调试友好的断言
 
 ### 提供详细的错误信息
+
 ```python
 def test_with_detailed_assertions():
     # 提供上下文信息的断言
@@ -340,6 +365,7 @@ def test_with_detailed_assertions():
 ## 使用示例
 
 ### 完整的测试示例
+
 ```python
 def test_prediction_api_endpoint(client, valid_match_data):
     """测试预测API端点的完整功能"""

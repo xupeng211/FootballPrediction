@@ -8,8 +8,6 @@ Tests the prediction service including:
 - Error handling
 """
 
-from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 
