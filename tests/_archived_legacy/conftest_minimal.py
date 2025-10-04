@@ -5,7 +5,6 @@ pytest配置文件 - 最小化版本
 import asyncio
 import os
 import sys
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, Mock
 import pytest
 

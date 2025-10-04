@@ -40,19 +40,19 @@ class TestPredictionAPI:
     """预测API测试"""
 
     @pytest.mark.skip(reason="需要实现auth_headers和sample_prediction_data fixtures")
-    def test_create_prediction_success(self, api_client, auth_headers, sample_prediction_data):
+    def test_create_prediction_success(
+        self, api_client, auth_headers, sample_prediction_data
+    ):
         """测试创建预测成功"""
         with patch("src.api.predictions.PredictionService") as mock_service:
             mock_service.create_prediction.return_value = {
                 "id": 1,
                 **sample_prediction_data,
-                "status": "pending"
+                "status": "pending",
             }
 
             response = api_client.post(
-                "/api/predictions",
-                json=sample_prediction_data,
-                headers=auth_headers
+                "/api/predictions", json=sample_prediction_data, headers=auth_headers
             )
 
             assert response.status_code == status.HTTP_201_CREATED
@@ -73,9 +73,7 @@ class TestPredictionAPI:
         invalid_data = {"match_id": "invalid"}
 
         response = api_client.post(
-            "/api/predictions",
-            json=invalid_data,
-            headers=auth_headers
+            "/api/predictions", json=invalid_data, headers=auth_headers
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -87,7 +85,7 @@ class TestPredictionAPI:
             mock_service.get_prediction.return_value = {
                 "id": 1,
                 "result": "2-1",
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
             response = api_client.get("/api/predictions/1", headers=auth_headers)

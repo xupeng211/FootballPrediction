@@ -2,20 +2,15 @@
 测试健康检查API端点（改进版）
 """
 
-import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from src.api.health import (
-    ServiceCheckError,
-    liveness_check,
     _check_database,
     _optional_check_skipped,
     get_system_health,
-    check_database_health,
 )
 
 
@@ -58,9 +53,9 @@ class TestDatabaseHealthCheck:
     async def test_check_database_success(self, mock_db_session):
         """测试数据库健康检查成功"""
         mock_db_session.execute.return_value = MagicMock()
-        
+
         result = await _check_database(mock_db_session)
-        
+
         assert result["healthy"] is True
         assert result["status"] == "healthy"
         assert "response_time_ms" in result
@@ -71,16 +66,19 @@ class TestDatabaseHealthCheck:
 @pytest.mark.skip(reason="需要重构Redis集成测试")
 class TestRedisHealthCheck:
     """测试Redis健康检查"""
+
     pass
 
 
 @pytest.mark.skip(reason="需要重构文件系统集成测试")
 class TestFilesystemHealthCheck:
     """测试文件系统健康检查"""
+
     pass
 
 
 @pytest.mark.skip(reason="需要重构健康端点集成测试")
 class TestHealthEndpoints:
     """测试健康检查端点"""
+
     pass

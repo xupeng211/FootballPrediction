@@ -18,30 +18,33 @@ class MockHTTPResponse:
         return self._json_data
 
 
-def apply_http_mocks(monkeypatch: MonkeyPatch) -> None:
-    """部分拦截 httpx.AsyncClient 的外部调用"""
+def apply_http_mocks(
+    monkeypatch: MonkeyPatch,
+    responses: Dict[Tuple[str, str], MockHTTPResponse],
+) -> None:
+    """
+    应用多个 HTTP mock
 
-    original_async_client = httpx.AsyncClient
+    Args:
+        monkeypatch: pytest monkeypatch fixture
+        responses: {(method, url): MockHTTPResponse}
+    """
+    def mock_request(method: str, url: str, **kwargs: Any) -> MockHTTPResponse:
+        key = (method.upper(), url)
+        return responses.get(key, MockHTTPResponse(status_code=404))
 
-    class MockingAsyncClient(original_async_client):
-        """拦截外部请求但保留应用内调用"""
-
-        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=super-init-not-called
-            self._mock_responses: Dict[Tuple[str, str], MockHTTPResponse] = kwargs.pop("mock_responses", {})
-            super().__init__(*args, **kwargs)
-
-        async def request(self, method: str, url: Any, *args: Any, **kwargs: Any) -> httpx.Response:  # type: ignore[override]
-            request_url = httpx.URL(url)
-            target_host = request_url.host or ""
-            if target_host and target_host not in {"testserver", "localhost", "127.0.0.1"}:
-                key = (method.upper(), str(request_url))
-                if key in self._mock_responses:
-                    payload = self._mock_responses[key]
-                    return httpx.Response(status_code=payload.status_code, json=payload.json())
-                return httpx.Response(status_code=200, json={"mock": True, "url": str(request_url)})
-            return await super().request(method, url, *args, **kwargs)
-
-    monkeypatch.setattr(httpx, "AsyncClient", MockingAsyncClient, raising=False)
+    # Mock common HTTP client methods
+    for method in ["get", "post", "put", "delete", "patch"]:
+        for client_class in [httpx.Client, httpx.AsyncClient]:
+            if hasattr(client_class, method):
+                monkeypatch.setattr(
+                    client_class,
+                    method,
+                    lambda self, url, method=method, **kwargs: mock_request(method, url, **kwargs),
+                )
 
 
-__all__ = ["MockHTTPResponse", "apply_http_mocks"]
+__all__ = [
+    "MockHTTPResponse",
+    "apply_http_mocks",
+]

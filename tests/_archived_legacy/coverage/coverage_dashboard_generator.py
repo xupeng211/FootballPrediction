@@ -1,4 +1,4 @@
-"""""""
+"""
 Coverage dashboard generator for the football prediction system.
 
 This script generates comprehensive coverage reports with visualizations,
