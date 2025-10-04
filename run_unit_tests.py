@@ -4,11 +4,11 @@
 """
 
 import sys
-import os
 from pathlib import Path
 
 # 添加src目录到sys.path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 
 # 直接导入模块进行测试
 def test_time_utils():
@@ -16,7 +16,7 @@ def test_time_utils():
     print("🧪 测试TimeUtils模块...")
 
     from utils.time_utils import TimeUtils
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timezone
 
     tests_passed = 0
     tests_total = 0
@@ -208,9 +208,9 @@ def test_string_utils():
 
 def main():
     """运行所有测试"""
-    print("="*60)
+    print("=" * 60)
     print("🚀 独立测试运行器")
-    print("="*60)
+    print("=" * 60)
 
     total_passed = 0
     total_tests = 0
@@ -229,9 +229,9 @@ def main():
     total_tests += tests
 
     # 打印总结
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 测试总结")
-    print("="*60)
+    print("=" * 60)
     print(f"✅ 总测试通过数: {total_passed}")
     print(f"📝 总测试数: {total_tests}")
     print(f"📈 通过率: {total_passed/total_tests*100:.1f}%")

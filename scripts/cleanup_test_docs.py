@@ -95,7 +95,7 @@ def main():
     # 删除文件
     if files_to_delete:
         print("\n🗑️  删除无用文档...")
-        deleted = delete_files(files_to_delete)
+        delete_files(files_to_delete)
 
     # 统计
     print("\n" + "=" * 60)

@@ -61,7 +61,7 @@ class LayeredDependencyManager:
             "api": "api.txt",
             "ml": "ml.txt",
             "production": "production.txt",
-            "development": "development.txt"
+            "development": "development.txt",
         }
 
         if env_type not in mapping:
@@ -83,7 +83,7 @@ class LayeredDependencyManager:
                 [self.python_executable, "-m", "pip", "freeze"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             with open(backup_dir / "requirements.txt", "w") as f:
@@ -100,12 +100,31 @@ class LayeredDependencyManager:
 
         # 需要移除的开发工具
         dev_packages = [
-            "semgrep", "rich-toolkit", "pipdeptree", "pyproject-api",
-            "checkov", "fastmcp", "mypy", "black", "flake8",
-            "pytest", "coverage", "tox", "pre-commit",
-            "isort", "autoflake", "autopep8", "pyupgrade",
-            "bandit", "safety", "pip-audit", "mypy",
-            "pylint", "pycodestyle", "pydocstyle", "pyflakes"
+            "semgrep",
+            "rich-toolkit",
+            "pipdeptree",
+            "pyproject-api",
+            "checkov",
+            "fastmcp",
+            "mypy",
+            "black",
+            "flake8",
+            "pytest",
+            "coverage",
+            "tox",
+            "pre-commit",
+            "isort",
+            "autoflake",
+            "autopep8",
+            "pyupgrade",
+            "bandit",
+            "safety",
+            "pip-audit",
+            "mypy",
+            "pylint",
+            "pycodestyle",
+            "pydocstyle",
+            "pyflakes",
         ]
 
         success = True
@@ -114,11 +133,11 @@ class LayeredDependencyManager:
                 result = subprocess.run(
                     [self.python_executable, "-m", "pip", "uninstall", pkg, "-y"],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 if result.returncode == 0:
                     print(f"    ✓ 移除 {pkg}")
-            except:
+            except Exception:
                 pass  # 忽略不存在的包
 
         return success
@@ -132,15 +151,16 @@ class LayeredDependencyManager:
             subprocess.run(
                 [self.python_executable, "-m", "pip", "install", "--upgrade", "pip"],
                 capture_output=True,
-                check=True
+                check=True,
             )
 
             # 安装依赖
-            result = subprocess.run(
-                [self.python_executable, "-m", "pip", "install", "-r", str(req_file)] + self.pip_options,
+            subprocess.run(
+                [self.python_executable, "-m", "pip", "install", "-r", str(req_file)]
+                + self.pip_options,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             print(f"    ✓ 成功安装 {req_file.name}")
@@ -159,7 +179,7 @@ class LayeredDependencyManager:
         result = subprocess.run(
             [self.python_executable, "-m", "pip", "check"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         if result.returncode != 0:
@@ -219,7 +239,7 @@ class LayeredDependencyManager:
             docker_files = [
                 "Dockerfile",
                 "docker-compose.yml",
-                "config/docker/docker-compose.production.yml"
+                "config/docker/docker-compose.production.yml",
             ]
 
             for docker_file in docker_files:
@@ -231,8 +251,11 @@ class LayeredDependencyManager:
 
             # 检查是否能启动FastAPI
             try:
-                import fastapi
-                print("    ✓ FastAPI 可导入")
+                import importlib.util
+
+                spec = importlib.util.find_spec("fastapi")
+                if spec:
+                    print("    ✓ FastAPI 可导入")
             except ImportError:
                 print("    ❌ FastAPI 不可导入")
 
@@ -245,8 +268,7 @@ class LayeredDependencyManager:
         if not venv_path.exists():
             print(f"  - 创建虚拟环境 {venv_path}...")
             subprocess.run(
-                [self.python_executable, "-m", "venv", str(venv_path)],
-                check=True
+                [self.python_executable, "-m", "venv", str(venv_path)], check=True
             )
 
         # 激活虚拟环境并安装依赖
@@ -260,8 +282,7 @@ class LayeredDependencyManager:
             req_file = self._get_requirements_file(target_env)
             if req_file and req_file.exists():
                 subprocess.run(
-                    [str(pip_executable), "install", "-r", str(req_file)],
-                    check=True
+                    [str(pip_executable), "install", "-r", str(req_file)], check=True
                 )
                 print(f"✅ {target_env} 环境准备完成")
                 print(f"  激活命令: source {venv_path}/bin/activate")
@@ -275,17 +296,15 @@ class LayeredDependencyManager:
 
         report = {
             "timestamp": subprocess.run(
-                ["date", "-Iseconds"],
-                capture_output=True,
-                text=True
+                ["date", "-Iseconds"], capture_output=True, text=True
             ).stdout.strip(),
             "python_version": sys.version,
             "pip_version": subprocess.run(
                 [self.python_executable, "-m", "pip", "--version"],
                 capture_output=True,
-                text=True
+                text=True,
             ).stdout.strip(),
-            "environments": {}
+            "environments": {},
         }
 
         # 检查各种环境
@@ -297,16 +316,18 @@ class LayeredDependencyManager:
                 report["environments"][env_type] = {
                     "requirements_file": str(req_file),
                     "exists": True,
-                    "package_count": self._count_packages(req_file)
+                    "package_count": self._count_packages(req_file),
                 }
             else:
                 report["environments"][env_type] = {
                     "requirements_file": None,
-                    "exists": False
+                    "exists": False,
                 }
 
         # 保存报告
-        report_file = self.project_root / "docs/_reports" / "DEPENDENCY_ENVIRONMENTS_REPORT.json"
+        report_file = (
+            self.project_root / "docs/_reports" / "DEPENDENCY_ENVIRONMENTS_REPORT.json"
+        )
         report_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(report_file, "w") as f:
@@ -332,15 +353,15 @@ class LayeredDependencyManager:
         # 生产环境需要移除的包
         conflict_packages = [
             "rich-toolkit",  # 版本冲突
-            "semgrep",       # 开发工具
-            "fastmcp",       # 开发工具
-            "pipdeptree",    # 开发工具
-            "checkov",       # 开发工具
-            "mypy",          # 开发工具
-            "black",         # 开发工具
-            "flake8",        # 开发工具
-            "pytest",        # 测试工具
-            "coverage",      # 测试工具
+            "semgrep",  # 开发工具
+            "fastmcp",  # 开发工具
+            "pipdeptree",  # 开发工具
+            "checkov",  # 开发工具
+            "mypy",  # 开发工具
+            "black",  # 开发工具
+            "flake8",  # 开发工具
+            "pytest",  # 测试工具
+            "coverage",  # 测试工具
         ]
 
         success = True
@@ -348,7 +369,7 @@ class LayeredDependencyManager:
             result = subprocess.run(
                 [self.python_executable, "-m", "pip", "uninstall", pkg, "-y"],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0:
                 print(f"  ✓ 移除冲突包: {pkg}")
@@ -366,7 +387,7 @@ class LayeredDependencyManager:
             result = subprocess.run(
                 [self.python_executable, "-m", "pip", "install", f"{pkg}=={version}"],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0:
                 print(f"  ✓ 安装兼容版本: {pkg}=={version}")
@@ -383,13 +404,13 @@ def main():
         "--env",
         choices=["minimum", "core", "api", "ml", "production", "development"],
         default="production",
-        help="环境类型"
+        help="环境类型",
     )
     parser.add_argument(
         "--action",
         choices=["setup", "switch", "report", "fix"],
         default="setup",
-        help="操作类型"
+        help="操作类型",
     )
 
     args = parser.parse_args()
@@ -419,7 +440,9 @@ def main():
         print("\n📊 环境报告:")
         for env, info in report["environments"].items():
             status = "✅" if info["exists"] else "❌"
-            pkg_count = f" ({info['package_count']} 包)" if info["package_count"] else ""
+            pkg_count = (
+                f" ({info['package_count']} 包)" if info["package_count"] else ""
+            )
             print(f"  {status} {env}: {info['requirements_file']}{pkg_count}")
 
     elif args.action == "fix":

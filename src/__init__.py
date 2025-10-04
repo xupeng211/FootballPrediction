@@ -29,7 +29,7 @@ else:
         models,
         services,
         utils,
-    )  # noqa: WPS433 - runtime import for minimal mode
+    )  # runtime import for minimal mode
 
     __all__ = [
         "core",

@@ -61,16 +61,48 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import mlflow.sklearn
 import numpy as np
-from mlflow.exceptions import MlflowException
 from sqlalchemy import select, text
 
-import mlflow
-from mlflow import MlflowClient
+try:
+    import mlflow
+    import mlflow.sklearn
+    from mlflow import MlflowClient
+    from mlflow.exceptions import MlflowException
+
+    HAS_MLFLOW = True
+except ImportError:  # pragma: no cover - optional dependency path
+    HAS_MLFLOW = False
+
+    class MlflowException(Exception):
+        """Fallback exception used when MLflow is unavailable."""
+
+    class _MockMlflowSklearn:
+        @staticmethod
+        def load_model(*args, **kwargs):
+            raise MlflowException("MLflow is not installed; cannot load models.")
+
+    class _MockMlflowModule:
+        def __init__(self) -> None:
+            self.sklearn = _MockMlflowSklearn()
+
+        @staticmethod
+        def set_tracking_uri(*args, **kwargs) -> None:
+            # No-op when MLflow is unavailable (useful for tests)
+            return None
+
+    class MlflowClient:  # type: ignore
+        def __init__(self, *args, **kwargs) -> None:
+            raise MlflowException("MLflow is not installed; client unavailable.")
+
+        def get_latest_versions(self, *args, **kwargs):  # pragma: no cover - fallback
+            return []
+
+    mlflow = _MockMlflowModule()  # type: ignore
+
 from src.cache.ttl_cache import TTLCache
 from src.database.connection import DatabaseManager
-from src.database.models import Match, Prediction
+from src.database.models import Match, MatchStatus, Prediction
 from src.features.feature_store import FootballFeatureStore
 from src.utils.retry import RetryConfig, retry
 
@@ -797,15 +829,17 @@ class PredictionService:
             ```
 
         Note:
-            该方法应在比赛状态变为"completed"后调用。
-            This method should be called after match status becomes "completed".
+            该方法应在比赛状态变为"finished"后调用。
+            This method should be called after match status becomes "finished".
         """
         try:
             async with self.db_manager.get_async_session() as session:
                 # 获取比赛实际结果
                 match_query = select(
                     Match.id, Match.home_score, Match.away_score, Match.match_status
-                ).where(Match.id == match_id, Match.match_status == "completed")
+                ).where(
+                    Match.id == match_id, Match.match_status == MatchStatus.FINISHED
+                )
 
                 match_result = await session.execute(match_query)
                 match = match_result.first()

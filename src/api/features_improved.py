@@ -14,7 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.database.models import Match
 from src.database.connection import get_async_session
-from src.data.features.feature_store import FootballFeatureStore, MatchEntity
+from src.data.features.feature_store import FootballFeatureStore
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +60,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
             logger.warning(f"比赛 {match_id} 不存在")
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
-        logger.debug(
-            f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}"
-        )
+        logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
         return match
 
     except HTTPException:
@@ -73,24 +71,6 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     except Exception as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(status_code=500, detail="查询比赛信息失败")
-
-
-def create_match_entity(match: Match) -> MatchEntity:
-    """构造比赛实体"""
-    try:
-        match_entity = MatchEntity(
-            match_id=int(match.id),
-            home_team_id=int(match.home_team_id),
-            away_team_id=int(match.away_team_id),
-            league_id=int(match.league_id),
-            match_time=match.match_time,
-            season=match.season or "2024-25",  # 默认赛季
-        )
-        logger.debug("比赛实体构造成功")
-        return match_entity
-    except Exception as entity_error:
-        logger.error(f"构造比赛实体失败: {entity_error}")
-        raise HTTPException(status_code=500, detail="处理比赛数据时发生错误")
 
 
 async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any], str]:

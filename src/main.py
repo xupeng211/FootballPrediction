@@ -103,7 +103,7 @@ app.add_middleware(
 )
 
 # 注册路由
-app.include_router(health_router, prefix="/health")
+app.include_router(health_router, prefix="/api/health")
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
@@ -133,7 +133,7 @@ async def root():
         "version": "1.0.0",
         "status": "运行中",
         "docs_url": "/docs",
-        "health_check": "/health",
+        "health_check": "/api/health",
     }
 
 

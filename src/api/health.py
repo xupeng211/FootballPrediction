@@ -67,12 +67,31 @@ def _optional_check_skipped(service: str) -> Dict[str, Any]:
 
 async def _collect_database_health() -> Dict[str, Any]:
     """获取数据库健康状态（内部使用）"""
-    with get_database_manager().get_session() as session:
-        return await _check_database(session)
+    db_manager = get_database_manager()
+    try:
+        session_ctx = db_manager.get_session()
+    except RuntimeError as exc:
+        logger.warning("数据库管理器未初始化，跳过数据库健康检查: %s", exc)
+        return _optional_check_skipped("database") | {
+            "details": {
+                "message": "Database manager not initialised; health check skipped",
+            }
+        }
+
+    try:
+        with session_ctx as session:
+            return await _check_database(session)
+    except RuntimeError as exc:
+        logger.warning("数据库会话不可用，跳过数据库健康检查: %s", exc)
+        return _optional_check_skipped("database") | {
+            "details": {
+                "message": "Database session unavailable; health check skipped",
+            }
+        }
 
 
 @router.get(
-    "/health",
+    "",
     summary="系统健康检查",
     description="检查API、数据库、缓存等服务状态",
     response_model=HealthCheckResponse,
@@ -155,7 +174,7 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get(
-    "/health/liveness",
+    "liveness",
     summary="存活性检查",
     description="简单的存活性检查，仅返回基本状态",
 )
@@ -168,7 +187,7 @@ async def liveness_check() -> Dict[str, Any]:
 
 
 @router.get(
-    "/health/readiness",
+    "readiness",
     summary="就绪性检查",
     description="检查服务是否就绪，包括依赖服务检查",
 )

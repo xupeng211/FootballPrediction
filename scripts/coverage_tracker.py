@@ -24,25 +24,25 @@ class CoverageTracker:
     def load_trend(self) -> List[Dict]:
         """加载覆盖率趋势数据"""
         if self.trend_file.exists():
-            with open(self.trend_file, 'r') as f:
+            with open(self.trend_file, "r") as f:
                 return json.load(f)
         return []
 
     def save_trend(self, trend_data: List[Dict]):
         """保存覆盖率趋势数据"""
-        with open(self.trend_file, 'w') as f:
+        with open(self.trend_file, "w") as f:
             json.dump(trend_data, f, indent=2, ensure_ascii=False)
 
     def load_history(self) -> Dict:
         """加载历史数据"""
         if self.history_file.exists():
-            with open(self.history_file, 'r') as f:
+            with open(self.history_file, "r") as f:
                 return json.load(f)
         return {}
 
     def save_history(self, history_data: Dict):
         """保存历史数据"""
-        with open(self.history_file, 'w') as f:
+        with open(self.history_file, "w") as f:
             json.dump(history_data, f, indent=2, ensure_ascii=False)
 
     def run_coverage(self) -> Optional[Dict]:
@@ -50,20 +50,17 @@ class CoverageTracker:
         try:
             # 使用pytest-cov生成覆盖率报告
             cmd = [
-                sys.executable, "-m", "pytest",
+                sys.executable,
+                "-m",
+                "pytest",
                 "tests/unit",
                 "--cov=src",
                 "--cov-report=json:coverage.json",
                 "--cov-report=term-missing",
-                "-q"
+                "-q",
             ]
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=Path.cwd()
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path.cwd())
 
             if result.returncode != 0:
                 print(f"❌ 测试运行失败: {result.stderr}")
@@ -71,7 +68,7 @@ class CoverageTracker:
 
             # 读取覆盖率报告
             if Path("coverage.json").exists():
-                with open("coverage.json", 'r') as f:
+                with open("coverage.json", "r") as f:
                     coverage_data = json.load(f)
                 Path("coverage.json").unlink()  # 清理临时文件
                 return coverage_data
@@ -86,11 +83,15 @@ class CoverageTracker:
         """提取各模块的覆盖率"""
         module_coverage = {}
 
-        if 'files' in coverage_data:
-            for file_path, file_data in coverage_data['files'].items():
+        if "files" in coverage_data:
+            for file_path, file_data in coverage_data["files"].items():
                 # 将文件路径转换为模块名
-                module_name = str(Path(file_path).relative_to('src')).replace('/', '.').replace('.py', '')
-                module_coverage[module_name] = file_data['summary']['percent_covered']
+                module_name = (
+                    str(Path(file_path).relative_to("src"))
+                    .replace("/", ".")
+                    .replace(".py", "")
+                )
+                module_coverage[module_name] = file_data["summary"]["percent_covered"]
 
         return module_coverage
 
@@ -102,11 +103,11 @@ class CoverageTracker:
         record = {
             "timestamp": datetime.now().isoformat(),
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "total_coverage": coverage_data.get('totals', {}).get('percent_covered', 0),
-            "covered_lines": coverage_data.get('totals', {}).get('covered_lines', 0),
-            "num_statements": coverage_data.get('totals', {}).get('num_statements', 0),
-            "missing_lines": coverage_data.get('totals', {}).get('missing_lines', 0),
-            "modules": self.extract_module_coverage(coverage_data)
+            "total_coverage": coverage_data.get("totals", {}).get("percent_covered", 0),
+            "covered_lines": coverage_data.get("totals", {}).get("covered_lines", 0),
+            "num_statements": coverage_data.get("totals", {}).get("num_statements", 0),
+            "missing_lines": coverage_data.get("totals", {}).get("missing_lines", 0),
+            "modules": self.extract_module_coverage(coverage_data),
         }
 
         # 添加新记录
@@ -128,14 +129,16 @@ class CoverageTracker:
                 "current_phase": "Phase 4A",
                 "current_target": 50,
                 "next_target": 60,
-                "final_target": 80
+                "final_target": 80,
             },
-            "module_status": self.analyze_module_status(latest_record.get('modules', {}))
+            "module_status": self.analyze_module_status(
+                latest_record.get("modules", {})
+            ),
         }
 
         # 保存报告
         report_file = self.report_dir / "COVERAGE_TRACKING_REPORT.json"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         return report
@@ -156,14 +159,16 @@ class CoverageTracker:
             "medium_coverage": len(medium_coverage),
             "low_coverage": len(low_coverage),
             "average_coverage": sum(modules.values()) / len(modules) if modules else 0,
-            "modules_needing_attention": list(low_coverage.keys())[:10]  # 需要关注的前10个模块
+            "modules_needing_attention": list(low_coverage.keys())[
+                :10
+            ],  # 需要关注的前10个模块
         }
 
     def print_summary(self, record: Dict, report: Dict):
         """打印摘要信息"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 测试覆盖率追踪报告")
-        print("="*60)
+        print("=" * 60)
 
         print(f"\n📅 时间: {record['date']}")
         print(f"🎯 总覆盖率: {record['total_coverage']:.1f}%")
@@ -171,47 +176,47 @@ class CoverageTracker:
         print(f"❌ 未覆盖行数: {record['missing_lines']}")
 
         # 目标进度
-        current = record['total_coverage']
-        targets = report['targets']
+        current = record["total_coverage"]
+        targets = report["targets"]
 
-        print(f"\n🎯 目标进度:")
+        print("\n🎯 目标进度:")
         print(f"  当前阶段: {targets['current_phase']}")
         print(f"  当前目标: {targets['current_target']}%")
         print(f"  下一个目标: {targets['next_target']}%")
         print(f"  最终目标: {targets['final_target']}%")
 
         # 进度条
-        progress = min(current / targets['current_target'] * 100, 100)
+        progress = min(current / targets["current_target"] * 100, 100)
         bar_length = 50
         filled = int(bar_length * progress / 100)
-        bar = '█' * filled + '░' * (bar_length - filled)
+        bar = "█" * filled + "░" * (bar_length - filled)
         print(f"\n📈 当前阶段进度: [{bar}] {progress:.1f}%")
 
         # 模块状态
-        module_status = report['module_status']
+        module_status = report["module_status"]
         if module_status:
-            print(f"\n📦 模块状态:")
+            print("\n📦 模块状态:")
             print(f"  总模块数: {module_status['total_modules']}")
             print(f"  高覆盖率(≥80%): {module_status['high_coverage']}")
             print(f"  中等覆盖率(50-80%): {module_status['medium_coverage']}")
             print(f"  低覆盖率(<50%): {module_status['low_coverage']}")
             print(f"  平均覆盖率: {module_status['average_coverage']:.1f}%")
 
-            if module_status['modules_needing_attention']:
-                print(f"\n⚠️  需要关注的模块:")
-                for module in module_status['modules_needing_attention'][:5]:
-                    coverage = modules.get(module, 0)
+            if module_status["modules_needing_attention"]:
+                print("\n⚠️  需要关注的模块:")
+                for module in module_status["modules_needing_attention"][:5]:
+                    coverage = report.get("module_coverage", {}).get(module, 0)
                     print(f"  - {module}: {coverage:.1f}%")
 
         # 趋势
-        trend = report['trend']
+        trend = report["trend"]
         if len(trend) >= 2:
             previous = trend[-2]
-            change = current - previous['total_coverage']
+            change = current - previous["total_coverage"]
             change_str = f"+{change:.1f}%" if change > 0 else f"{change:.1f}%"
             print(f"\n📊 趋势: {change_str} (相比上次)")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
     def track(self):
         """执行追踪"""

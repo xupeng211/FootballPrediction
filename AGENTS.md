@@ -1,19 +1,32 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Primary code lives in `src/`: `api` exposes FastAPI routers, `models` defines SQLAlchemy entities, `services` and `tasks` host domain logic and schedulers, `utils` shares helpers, and `config` stores defaults. Tests mirror this layout under `tests/unit`, `tests/integration`, and `tests/e2e`. Documentation and playbooks reside in `docs/`, while automation scripts stay in `scripts/`. Containerization assets include the root `Dockerfile`, `docker-compose.yml`, and environment templates in `config/`.
+- `src/` hosts domain code: `api` for FastAPI routers, `models` for SQLAlchemy entities, `services` and `tasks` for business logic and schedulers, `utils` for shared helpers, and `config` for defaults.
+- Tests mirror the source tree in `tests/unit`, `tests/integration`, and `tests/e2e`; add fixtures under the matching directory to keep scope clear.
+- Operational assets live in `docs/` for playbooks, `scripts/` for automation, and `config/` for environment templates. Container files (`Dockerfile`, `docker-compose.yml`) stay at the repository root.
 
 ## Build, Test, and Development Commands
-`make venv` provisions the Python 3.11 virtualenv and `make install` syncs dependencies. Run `make context` whenever AI tooling or metadata updates are needed. `make lint` runs Black, isort, Ruff, and mypy; keep the tree clean before committing. `make test` executes pytest, while `make ci` or `./ci-verify.sh` reproduces the full GitHub Actions pipeline. Use `make coverage` for an HTML report, and `docker-compose up --build` to validate the full service stack locally.
+- `make venv` and `make install` bootstrap the Python 3.11 environment and sync dependencies.
+- `make lint` runs Black, isort, Ruff, and mypy; resolve findings instead of suppressing them.
+- `make test` executes pytest suites; use `make coverage` for an HTML report, and `make ci` or `./ci-verify.sh` to mirror the full pipeline.
+- `docker-compose up --build` spins up the service stack for end-to-end validation.
 
 ## Coding Style & Naming Conventions
-Adhere to PEP 8 with four-space indents and an 88-character limit. Let Black and isort format code automatically; do not hand-tune their output. Modules and functions use `lower_snake_case`, classes use `PascalCase`, and async tasks should read as `verb_noun`. Keep functions and endpoints fully type-annotated and resolve lint warnings instead of suppressing them.
+- Follow PEP 8 with four-space indents and an 88-character limit; allow Black and isort to handle formatting.
+- Use `lower_snake_case` for modules and functions, `PascalCase` for classes, and verb-first names for async tasks (e.g., `fetch_fixtures`).
+- Keep files ASCII unless existing code requires otherwise; document nonobvious logic with concise comments.
 
 ## Testing Guidelines
-Pytest discovers `test_*.py` and `*_test.py`; mirror source packages for clarity. Use markers declared in `pytest.ini` (`unit`, `integration`, `e2e`, `smoke`, etc.) to scope targeted runs. Maintain ≥80% coverage (CI enforces via `--cov=src --cov-fail-under`); regenerate reports with `pytest --cov=src --cov-report=term-missing`. Inspect `--durations=10` output to catch slow tests before merging.
+- Pytest auto-discovers `test_*.py`/`*_test.py`; mirror source packages to maintain traceability.
+- Enforce ≥80% coverage (`pytest --cov=src --cov-report=term-missing`); inspect `--durations=10` output for hotspots.
+- Apply markers from `pytest.ini` (`unit`, `integration`, `e2e`, `smoke`) to target suites during local runs.
 
 ## Commit & Pull Request Guidelines
-Follow commit subjects patterned after Conventional Commits (`feat:`, `fix:`, `docs:`) observed in history and keep the imperative mood under 72 characters. Squash noisy WIP commits before review. PRs should state the problem, summarize the solution, list validation commands, and link issues or Kanban tickets. Include screenshots or API samples when user-facing behavior changes, request at least one reviewer, and wait for green CI before merging.
+- Use Conventional Commit subjects (`feat:`, `fix:`, `docs:`) in imperative mood under 72 characters.
+- PRs should describe the problem, solution, and validation commands; link issues or Kanban tickets and attach screenshots or API samples for user-facing changes.
+- Wait for green CI before merge and request at least one reviewer.
 
-## Environment & Tooling Checklist
-Run `make env-check` on new machines and keep secrets in ignored `.env` files. Inspect app logs in `logs/` and ML artifacts under `mlruns/` when debugging. Clean stale Docker volumes (`docker volume prune`) if migrations drift, and avoid committing generated coverage or context artifacts.
+## Security & Configuration Tips
+- Keep secrets in ignored `.env` files and refresh context artifacts with `make context` when tooling changes.
+- Run `make env-check` on new machines; clean stale Docker volumes with `docker volume prune` if migrations drift.
+- Inspect runtime logs under `logs/` and ML artifacts in `mlruns/` when troubleshooting.

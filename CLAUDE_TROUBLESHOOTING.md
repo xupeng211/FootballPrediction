@@ -5,12 +5,15 @@
 ## 🔧 环境问题
 
 ### 问题：虚拟环境激活失败
+
 **症状**：
+
 ```
 make: venv: No such file or directory
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 删除旧环境
 rm -rf .venv
@@ -26,12 +29,15 @@ make env-check
 ```
 
 ### 问题：依赖冲突
+
 **症状**：
+
 ```
 ERROR: pip's dependency resolver does not currently take into account...
 ```
 
 **解决方案**：
+
 ```bash
 # 方法1：清理并重装
 pip uninstall -y -r requirements.txt
@@ -47,12 +53,15 @@ make clean && make install
 ```
 
 ### 问题：Python版本不匹配
+
 **症状**：
+
 ```
 Python 3.8+ required but 3.7.9 is installed
 ```
 
 **解决方案**：
+
 ```bash
 # 检查版本
 python3 --version
@@ -67,12 +76,15 @@ alias python=python3.11
 ## 🧪 测试问题
 
 ### 问题：测试数据库连接失败
+
 **症状**：
+
 ```
 sqlalchemy.exc.OperationalError: could not connect to server
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 检查Docker服务
 docker-compose ps
@@ -88,12 +100,15 @@ make test
 ```
 
 ### 问题：测试覆盖率不足
+
 **症状**：
+
 ```
 FAILED: Coverage 75% < 80%
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 查看覆盖率报告
 make coverage-unit
@@ -109,12 +124,15 @@ make coverage-fast
 ```
 
 ### 问题：导入错误
+
 **症状**：
+
 ```
 ModuleNotFoundError: No module named 'src'
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 设置PYTHONPATH
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
@@ -127,12 +145,15 @@ echo 'export PYTHONPATH="$(pwd):${PYTHONPATH}"' >> ~/.bashrc
 ```
 
 ### 问题：异步测试失败
+
 **症状**：
+
 ```
 RuntimeError: asyncio.run() cannot be called from a running event loop
 ```
 
 **解决方案**：
+
 ```bash
 # 使用pytest-asyncio
 pytest tests/unit/test_async.py -v
@@ -144,12 +165,15 @@ pytest -m asyncio tests/unit/
 ## 🐳 Docker问题
 
 ### 问题：端口冲突
+
 **症状**：
+
 ```
 Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 查找占用端口的进程
 lsof -i :5432
@@ -163,12 +187,15 @@ docker-compose -f docker-compose.override.yml up -d
 ```
 
 ### 问题：Docker构建失败
+
 **症状**：
+
 ```
 failed to solve: process "/bin/sh -c pip install" didn't complete
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 清理Docker缓存
 docker system prune -a
@@ -183,12 +210,15 @@ cat Dockerfile
 ## 🏗️ 代码质量问题
 
 ### 问题：类型检查失败
+
 **症状**：
+
 ```
 error: Incompatible types in assignment
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 查看具体错误
 make type-check 2>&1 | grep -A 5 error
@@ -204,12 +234,15 @@ variable = value  # type: ignore
 ```
 
 ### 问题：代码格式化失败
+
 **症状**：
+
 ```
 would reformat src/file.py
 ```
 
 **解决方案**：
+
 ```bash
 # 自动格式化
 make fmt
@@ -225,10 +258,12 @@ black --diff src/problematic_file.py
 ## 🚀 性能问题
 
 ### 问题：测试运行缓慢
+
 **症状**：
 单个测试运行时间 > 10秒
 
 **解决方案**：
+
 ```bash
 # 1. 找到慢测试
 pytest --durations=10
@@ -251,12 +286,15 @@ pytest -m "not slow"
 ```
 
 ### 问题：内存不足
+
 **症状**：
+
 ```
 MemoryError: Unable to allocate array
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 使用生成器
 def large_generator():
@@ -275,12 +313,15 @@ make profile-memory
 ## 🔐 权限问题
 
 ### 问题：.env文件权限
+
 **症状**：
+
 ```
 PermissionError: [Errno 13] Permission denied: '.env'
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 检查权限
 ls -la .env
@@ -295,12 +336,15 @@ cp .env.example .env
 ## 📝 IDE问题
 
 ### 问题：VSCode无法识别模块
+
 **症状**：
+
 ```
 Import "src.utils" could not be resolved
 ```
 
 **解决方案**：
+
 ```bash
 # 1. 创建.vscode/settings.json
 mkdir -p .vscode
@@ -318,6 +362,7 @@ EOF
 ## 🆘 紧急恢复
 
 ### 完全重置环境
+
 ```bash
 # 1. 备份当前更改
 git stash
@@ -334,6 +379,7 @@ make test
 ```
 
 ### 快速健康检查
+
 ```bash
 # 一键诊断
 make env-check && \
@@ -345,6 +391,7 @@ echo "✅ 系统正常"
 ## 📞 获取帮助
 
 ### 查看日志
+
 ```bash
 # 应用日志
 docker-compose logs -f app
@@ -357,6 +404,7 @@ pytest tests/ -v --tb=short
 ```
 
 ### 有用的命令
+
 ```bash
 # 查看项目状态
 make context

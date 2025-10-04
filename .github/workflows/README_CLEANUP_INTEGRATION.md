@@ -39,7 +39,7 @@
 
 ### 2. **项目维护流水线** (`项目维护流水线.yml`)
 
-**触发时机**: 
+**触发时机**:
 - 定时任务: 每周一凌晨 2:00 (UTC)
 - 手动触发: 通过 GitHub Actions 界面
 
@@ -50,11 +50,11 @@
   run: |
     # Use Makefile clean-temp command
     make clean-temp || true
-    
+
     # Additional cleanup for CI-specific files
     find . -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
     find logs/ -type f -mtime +90 -delete 2>/dev/null || true
-    
+
     echo "📊 Cleanup Summary:"
     echo "- Removed temporary report files"
     echo "- Cleaned Python cache files"
@@ -81,7 +81,7 @@
 
 清理任务会在以下情况自动执行：
 
-1. **每次 CI 运行**: 
+1. **每次 CI 运行**:
    - 推送代码到 `main` 或 `develop` 分支
    - 创建或更新 Pull Request
 
@@ -283,6 +283,5 @@ rm -f ... 2>/dev/null || true   # 文件不存在不报错
 
 ---
 
-**最后更新**: 2025-10-04  
+**最后更新**: 2025-10-04
 **维护者**: DevOps Team
-

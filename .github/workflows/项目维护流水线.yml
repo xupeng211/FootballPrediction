@@ -98,11 +98,11 @@ jobs:
         run: |
           # Use Makefile clean-temp command
           make clean-temp || true
-          
+
           # Additional cleanup for CI-specific files
           find . -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
           find logs/ -type f -mtime +90 -delete 2>/dev/null || true
-          
+
           echo "📊 Cleanup Summary:"
           echo "- Removed temporary report files"
           echo "- Cleaned Python cache files"

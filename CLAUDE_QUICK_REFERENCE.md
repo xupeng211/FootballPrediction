@@ -15,6 +15,7 @@ make env-check && make test-quick && make ci
 ## 📋 常用命令速查
 
 ### 环境管理
+
 | 命令 | 说明 | 使用场景 |
 |------|------|----------|
 | `make help` | 显示所有命令 | 不确定用什么命令时 |
@@ -23,6 +24,7 @@ make env-check && make test-quick && make ci
 | `make clean` | 清理环境 | 遇到依赖冲突时 |
 
 ### 代码质量
+
 | 命令 | 说明 | 使用场景 |
 |------|------|----------|
 | `make fmt` | 格式化代码 | 提交前 |
@@ -31,6 +33,7 @@ make env-check && make test-quick && make ci
 | `make quality` | 完整质量检查 | 重要提交前 |
 
 ### 测试相关
+
 | 命令 | 说明 | 使用场景 |
 |------|------|----------|
 | `make test` | 运行所有测试 | 开发完成后 |
@@ -39,6 +42,7 @@ make env-check && make test-quick && make ci
 | `make coverage-fast` | 快速覆盖率 | 日常开发 |
 
 ### CI/CD
+
 | 命令 | 说明 | 使用场景 |
 |------|------|----------|
 | `make ci` | 模拟CI流程 | 推送前验证 |
@@ -48,6 +52,7 @@ make env-check && make test-quick && make ci
 ## 🎯 开发工作流
 
 ### 新功能开发
+
 1. `make context` - 了解项目状态
 2. `make env-check` - 验证环境
 3. 开发功能（记得更新文档）
@@ -57,12 +62,14 @@ make env-check && make test-quick && make ci
 7. `make prepush` - 完整检查
 
 ### Bug修复
+
 1. `make test-quick` - 复现问题
 2. 修复代码
 3. `make test` - 验证修复
 4. 创建 bugfix 报告
 
 ### 紧急修复
+
 ```bash
 # 最小化检查流程
 make fmt && make test-quick && git commit -m "fix:紧急修复"
@@ -71,6 +78,7 @@ make fmt && make test-quick && git commit -m "fix:紧急修复"
 ## 🔍 常见问题快速解决
 
 ### 测试失败
+
 ```bash
 # 查看详细错误
 pytest -v tests/unit/test_specific.py -s
@@ -80,6 +88,7 @@ pytest tests/unit/test_module.py::TestClass::test_method
 ```
 
 ### 环境问题
+
 ```bash
 # 重建环境
 make clean && rm -rf .venv && make install
@@ -89,6 +98,7 @@ pip list | grep fastapi
 ```
 
 ### Docker问题
+
 ```bash
 # 重启服务
 docker-compose down && docker-compose up -d
@@ -113,12 +123,14 @@ make flamegraph
 ## 🏃‍♂️ 效率技巧
 
 ### 1. 并行执行
+
 ```bash
 # 同时运行格式化和检查
 make fmt & make lint
 ```
 
 ### 2. 选择性测试
+
 ```bash
 # 只运行单元测试
 pytest tests/unit/
@@ -128,6 +140,7 @@ pytest -m "not slow"
 ```
 
 ### 3. 快速迭代
+
 ```bash
 # 监视文件变化自动测试
 ptw --runner "python -m pytest" tests/
@@ -157,6 +170,7 @@ ptw --runner "python -m pytest" tests/
 ## 🚨 紧急联系
 
 遇到无法解决的问题：
+
 1. 检查 `make env-check` 输出
 2. 查看测试日志
 3. 参考故障排除指南 `CLAUDE_TROUBLESHOOTING.md`
