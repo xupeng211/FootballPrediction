@@ -1,3 +1,0 @@
-# MONITORING_GUIDE
-
-本文档正在建设中...
