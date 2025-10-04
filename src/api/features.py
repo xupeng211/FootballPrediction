@@ -155,9 +155,9 @@ async def get_match_features(
 
         # 添加特征获取状态
         if features_error:
-            response_data["features_warning"] = (
-                f"特征数据获取部分失败: {features_error}"
-            )
+            response_data[
+                "features_warning"
+            ] = f"特征数据获取部分失败: {features_error}"
 
         # 7. 处理原始特征请求（可选）
         if include_raw and feature_calculator:

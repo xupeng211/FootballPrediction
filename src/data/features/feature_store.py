@@ -20,12 +20,22 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-from feast import FeatureStore
-from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
-    PostgreSQLOfflineStoreConfig,
-)
-from feast.infra.online_stores.redis import RedisOnlineStoreConfig
-from feast.repo_config import RepoConfig
+
+try:
+    from feast import FeatureStore
+    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
+        PostgreSQLOfflineStoreConfig,
+    )
+    from feast.infra.online_stores.redis import RedisOnlineStoreConfig
+    from feast.repo_config import RepoConfig
+
+    HAS_FEAST = True
+except ImportError:  # pragma: no cover - optional dependency path
+    FeatureStore = None  # type: ignore[assignment]
+    PostgreSQLOfflineStoreConfig = None  # type: ignore[assignment]
+    RedisOnlineStoreConfig = None  # type: ignore[assignment]
+    RepoConfig = None  # type: ignore[assignment]
+    HAS_FEAST = False
 
 from .feature_definitions import (
     head_to_head_features_view,
@@ -89,6 +99,13 @@ class FootballFeatureStore:
 
     def initialize(self) -> None:
         """初始化特征仓库"""
+        if not HAS_FEAST:
+            self.logger.warning(
+                "Feast 未安装，跳过特征仓库初始化。请安装 feast 以启用完整功能。"
+            )
+            self._store = None
+            return
+
         try:
             # 创建仓库目录
             self.repo_path.mkdir(parents=True, exist_ok=True)
@@ -180,9 +197,7 @@ class FootballFeatureStore:
             df[timestamp_column] = pd.to_datetime(df[timestamp_column])
 
             # 写入特征数据
-            self._store.push(
-                push_source_name=feature_view_name, df=df, to="online"
-            )
+            self._store.push(push_source_name=feature_view_name, df=df, to="online")
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
 
@@ -367,7 +382,9 @@ class FootballFeatureStore:
                     features_list.append(
                         {
                             "feature_view": fv.name,
-                            "feature_name": str(feature.name) if hasattr(feature, "name") else str(feature),
+                            "feature_name": str(feature.name)
+                            if hasattr(feature, "name")
+                            else str(feature),
                             "feature_type": str(feature.dtype),
                             "description": feature.description or "",
                             "entities": [e.name for e in fv.entities],

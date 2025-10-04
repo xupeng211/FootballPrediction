@@ -31,13 +31,13 @@ def parse_coverage_from_xml(xml_file):
         root = tree.getroot()
 
         # 获取总体覆盖率
-        line_rate = float(root.get('line-rate', 0)) * 100
-        branch_rate = float(root.get('branch-rate', 0)) * 100
+        line_rate = float(root.get("line-rate", 0)) * 100
+        branch_rate = float(root.get("branch-rate", 0)) * 100
 
         return {
-            'line_coverage': line_rate,
-            'branch_coverage': branch_rate,
-            'total_coverage': (line_rate + branch_rate) / 2
+            "line_coverage": line_rate,
+            "branch_coverage": branch_rate,
+            "total_coverage": (line_rate + branch_rate) / 2,
         }
     except Exception as e:
         print(f"❌ 解析覆盖率 XML 失败: {e}")
@@ -47,16 +47,16 @@ def parse_coverage_from_xml(xml_file):
 def parse_coverage_from_json(json_file):
     """从 JSON 文件解析覆盖率"""
     try:
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             data = json.load(f)
 
-        totals = data.get('totals', {})
-        line_cov = totals.get('percent_covered', 0)
+        totals = data.get("totals", {})
+        line_cov = totals.get("percent_covered", 0)
 
         return {
-            'line_coverage': line_cov,
-            'branch_coverage': 0,  # JSON 报告可能不包含分支覆盖率
-            'total_coverage': line_cov
+            "line_coverage": line_cov,
+            "branch_coverage": 0,  # JSON 报告可能不包含分支覆盖率
+            "total_coverage": line_cov,
         }
     except Exception as e:
         print(f"❌ 解析覆盖率 JSON 失败: {e}")
@@ -66,16 +66,17 @@ def parse_coverage_from_json(json_file):
 def generate_coverage_report(coverage_data, output_file):
     """生成覆盖率报告"""
     report = {
-        'timestamp': subprocess.check_output(['date', '-u', '+%Y-%m-%dT%H:%M:%SZ']).decode().strip(),
-        'coverage': coverage_data,
-        'threshold': {
-            'current': 40,
-            'target': 80
-        },
-        'status': 'PASS' if coverage_data and coverage_data['line_coverage'] >= 40 else 'FAIL'
+        "timestamp": subprocess.check_output(["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"])
+        .decode()
+        .strip(),
+        "coverage": coverage_data,
+        "threshold": {"current": 40, "target": 80},
+        "status": "PASS"
+        if coverage_data and coverage_data["line_coverage"] >= 40
+        else "FAIL",
     }
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(report, f, indent=2)
 
     return report
@@ -89,15 +90,17 @@ def main():
 
     # 运行测试
     cmd = [
-        sys.executable, '-m', 'pytest',
-        'tests/unit',
-        '--cov=src',
-        '--cov-report=xml:coverage-full.xml',
-        '--cov-report=json:coverage-full.json',
-        '--cov-report=term-missing',
-        '--cov-report=html:htmlcov',
-        '-v',
-        '--tb=short'
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/unit",
+        "--cov=src",
+        "--cov-report=xml:coverage-full.xml",
+        "--cov-report=json:coverage-full.json",
+        "--cov-report=term-missing",
+        "--cov-report=html:htmlcov",
+        "-v",
+        "--tb=short",
     ]
 
     result = run_command(cmd)
@@ -107,8 +110,8 @@ def main():
         sys.exit(1)
 
     # 解析覆盖率
-    coverage_xml = Path('coverage-full.xml')
-    coverage_json = Path('coverage-full.json')
+    coverage_xml = Path("coverage-full.xml")
+    coverage_json = Path("coverage-full.json")
 
     coverage_data = None
 
@@ -126,13 +129,13 @@ def main():
     print("📊 覆盖率报告")
     print("=" * 60)
     print(f"行覆盖率: {coverage_data['line_coverage']:.2f}%")
-    if coverage_data['branch_coverage'] > 0:
+    if coverage_data["branch_coverage"] > 0:
         print(f"分支覆盖率: {coverage_data['branch_coverage']:.2f}%")
     print(f"总体覆盖率: {coverage_data['total_coverage']:.2f}%")
 
     # 检查阈值
     threshold = 40
-    passed = coverage_data['line_coverage'] >= threshold
+    passed = coverage_data["line_coverage"] >= threshold
 
     print("\n" + "-" * 60)
     if passed:
@@ -142,9 +145,9 @@ def main():
         print(f"   需要至少 {threshold}% 覆盖率")
 
     # 生成报告文件
-    report_file = Path('docs/_reports/COVERAGE_REPORT.json')
+    report_file = Path("docs/_reports/COVERAGE_REPORT.json")
     report_file.parent.mkdir(exist_ok=True, parents=True)
-    report = generate_coverage_report(coverage_data, report_file)
+    generate_coverage_report(coverage_data, report_file)
 
     print(f"\n📄 覆盖率报告已保存到: {report_file}")
 
@@ -160,30 +163,32 @@ def main():
         print("\n📈 模块覆盖率详情:")
         print("-" * 60)
 
-        with open(coverage_json, 'r') as f:
+        with open(coverage_json, "r") as f:
             data = json.load(f)
 
-        files = data.get('files', [])
+        files = data.get("files", [])
         modules = {}
 
         for file_info in files:
-            file_path = Path(file_info['relative_filename'])
-            if 'src/' in str(file_path):
+            file_path = Path(file_info["relative_filename"])
+            if "src/" in str(file_path):
                 # 提取模块名
                 parts = file_path.parts
-                if len(parts) > 1 and parts[0] == 'src':
+                if len(parts) > 1 and parts[0] == "src":
                     module = parts[1]
                     if module not in modules:
                         modules[module] = []
                     modules[module].append(file_info)
 
         for module, module_files in sorted(modules.items()):
-            total_lines = sum(f['summary']['num_statements'] for f in module_files)
-            total_missing = sum(f['summary']['missing_lines'] for f in module_files)
+            total_lines = sum(f["summary"]["num_statements"] for f in module_files)
+            total_missing = sum(f["summary"]["missing_lines"] for f in module_files)
             total_covered = total_lines - total_missing
             module_cov = (total_covered / total_lines * 100) if total_lines > 0 else 0
 
-            print(f"{module:15} {module_cov:6.2f}% ({total_covered:4}/{total_lines:4} 行)")
+            print(
+                f"{module:15} {module_cov:6.2f}% ({total_covered:4}/{total_lines:4} 行)"
+            )
 
     print("\n" + "=" * 60)
 
@@ -191,5 +196,5 @@ def main():
     sys.exit(0 if passed else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

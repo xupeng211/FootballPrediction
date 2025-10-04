@@ -26,12 +26,12 @@ class LineLengthFixer:
         self.errors = []
         self.long_lines_found = []
         self.stats = {
-            'total_files': 0,
-            'fixed_files': 0,
-            'long_lines_found': 0,
-            'lines_split': 0,
-            'manual_review_required': 0,
-            'errors': 0
+            "total_files": 0,
+            "fixed_files": 0,
+            "long_lines_found": 0,
+            "lines_split": 0,
+            "manual_review_required": 0,
+            "errors": 0,
         }
 
     def get_python_files(self, directory: str) -> List[Path]:
@@ -46,33 +46,37 @@ class LineLengthFixer:
     def get_long_lines(self, file_path: Path) -> List[Dict]:
         """检测超过行长限制的行"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             long_lines = []
             for i, line in enumerate(lines, 1):
                 # 忽略注释行和空行
                 stripped = line.strip()
-                if not stripped or stripped.startswith('#'):
+                if not stripped or stripped.startswith("#"):
                     continue
 
                 # 检查行长
-                if len(line.rstrip('\n\r')) > self.max_length:
-                    long_lines.append({
-                        'file': str(file_path),
-                        'line': i,
-                        'content': line.rstrip('\n\r'),
-                        'length': len(line.rstrip('\n\r')),
-                        'context': self.get_line_context(lines, i-1),
-                        'can_auto_fix': self.can_auto_fix_line(line)
-                    })
+                if len(line.rstrip("\n\r")) > self.max_length:
+                    long_lines.append(
+                        {
+                            "file": str(file_path),
+                            "line": i,
+                            "content": line.rstrip("\n\r"),
+                            "length": len(line.rstrip("\n\r")),
+                            "context": self.get_line_context(lines, i - 1),
+                            "can_auto_fix": self.can_auto_fix_line(line),
+                        }
+                    )
 
             return long_lines
         except Exception as e:
             print(f"⚠️ 警告：无法检查 {file_path}: {e}")
             return []
 
-    def get_line_context(self, lines: List[str], line_index: int, context_lines: int = 2) -> List[str]:
+    def get_line_context(
+        self, lines: List[str], line_index: int, context_lines: int = 2
+    ) -> List[str]:
         """获取行上下文"""
         start = max(0, line_index - context_lines)
         end = min(len(lines), line_index + context_lines + 1)
@@ -80,7 +84,7 @@ class LineLengthFixer:
         context = []
         for i in range(start, end):
             prefix = ">>> " if i == line_index else "    "
-            content = lines[i].rstrip('\n\r')
+            content = lines[i].rstrip("\n\r")
             context.append(f"{prefix}{i+1:3d}: {content}")
 
         return context
@@ -93,13 +97,13 @@ class LineLengthFixer:
         cannot_fix_patterns = [
             # 字符串字面量
             r'""".*"""',
-            r'''.*''''',
+            r""".*""" "",
             # 正则表达式
             r'r["\'].*["\']',
             # 复杂的表达式
-            r'^\s*@\w+',
+            r"^\s*@\w+",
             # 装饰器
-            r'^\s*def\s+\w+\([^)]*\)\s*->\s*\w+:',
+            r"^\s*def\s+\w+\([^)]*\)\s*->\s*\w+:",
         ]
 
         for pattern in cannot_fix_patterns:
@@ -111,13 +115,13 @@ class LineLengthFixer:
             # 长字符串拼接
             r'[\w\[\]"\']\s*\+\s*[\w\[\]"\']',
             # 函数调用参数过多
-            r'\w+\([^)]{100,}',
+            r"\w+\([^)]{100,}",
             # 数组/字典字面量
-            r'[\[\{].*[\]\}].*,.*',
+            r"[\[\{].*[\]\}].*,.*",
             # 长的条件表达式
-            r'\s+and\s+|\s+or\s+',
+            r"\s+and\s+|\s+or\s+",
             # import 语句
-            r'^\s*(from\s+\w+\s+)?import\s+.*,',
+            r"^\s*(from\s+\w+\s+)?import\s+.*,",
         ]
 
         for pattern in can_fix_patterns:
@@ -128,27 +132,26 @@ class LineLengthFixer:
 
     def split_long_line(self, line: str, line_num: int, file_path: str) -> List[str]:
         """拆分长行"""
-        line = line.rstrip('\n\r')
-        original_line = line
+        line = line.rstrip("\n\r")
 
         # 策略1: 字符串拼接
-        if '+' in line and not line.strip().startswith(('"""', "'''")):
+        if "+" in line and not line.strip().startswith(('"""', "'''")):
             return self.split_string_concatenation(line)
 
         # 策略2: 函数调用参数
-        if '(' in line and line.count('(') == line.count(')'):
+        if "(" in line and line.count("(") == line.count(")"):
             return self.split_function_call(line)
 
         # 策略3: 数组/字典字面量
-        if '[' in line or '{' in line:
+        if "[" in line or "{" in line:
             return self.split_collection_literal(line)
 
         # 策略4: 条件表达式
-        if ' and ' in line or ' or ' in line:
+        if " and " in line or " or " in line:
             return self.split_logical_expression(line)
 
         # 策略5: import 语句
-        if line.strip().startswith(('import ', 'from ')):
+        if line.strip().startswith(("import ", "from ")):
             return self.split_import_statement(line)
 
         # 策略6: 通用拆分
@@ -163,13 +166,13 @@ class LineLengthFixer:
         for i, char in enumerate(line):
             current_part += char
 
-            if char in '([{':
+            if char in "([{":
                 bracket_level += 1
-            elif char in ')]}':
+            elif char in ")]}":
                 bracket_level -= 1
 
             # 在括号外部的 + 号处拆分
-            if char == '+' and bracket_level == 0 and i < len(line) - 1:
+            if char == "+" and bracket_level == 0 and i < len(line) - 1:
                 parts.append(current_part)
                 current_part = "    "  # 缩进
 
@@ -181,16 +184,16 @@ class LineLengthFixer:
     def split_function_call(self, line: str) -> List[str]:
         """拆分函数调用"""
         # 找到函数调用的开始和结束
-        start_paren = line.find('(')
+        start_paren = line.find("(")
         if start_paren == -1:
             return [line]
 
         # 分离函数名部分
-        func_name = line[:start_paren + 1]
-        args_part = line[start_paren + 1:]
+        func_name = line[: start_paren + 1]
+        args_part = line[start_paren + 1 :]
 
         # 移除最后的括号
-        if args_part.endswith(')'):
+        if args_part.endswith(")"):
             args_part = args_part[:-1]
 
         # 按逗号分割参数，但要考虑嵌套结构
@@ -201,13 +204,13 @@ class LineLengthFixer:
         for char in args_part:
             current_arg += char
 
-            if char in '([{':
+            if char in "([{":
                 bracket_level += 1
-            elif char in ')]}':
+            elif char in ")]}":
                 bracket_level -= 1
 
             # 在括号外部的逗号处拆分
-            if char == ',' and bracket_level == 0:
+            if char == "," and bracket_level == 0:
                 args.append(current_arg)
                 current_arg = ""
 
@@ -229,23 +232,20 @@ class LineLengthFixer:
         # 找到开括号
         open_bracket = None
         close_bracket = None
-        bracket_type = None
 
-        if '[' in line:
-            open_bracket = line.find('[')
-            close_bracket = line.rfind(']')
-            bracket_type = ']'
-        elif '{' in line:
-            open_bracket = line.find('{')
-            close_bracket = line.rfind('}')
-            bracket_type = '}'
+        if "[" in line:
+            open_bracket = line.find("[")
+            close_bracket = line.rfind("]")
+        elif "{" in line:
+            open_bracket = line.find("{")
+            close_bracket = line.rfind("}")
 
         if open_bracket is None or close_bracket is None:
             return [line]
 
         # 分离前缀和内容
-        prefix = line[:open_bracket + 1]
-        content = line[open_bracket + 1:close_bracket]
+        prefix = line[: open_bracket + 1]
+        content = line[open_bracket + 1 : close_bracket]
         suffix = line[close_bracket:]
 
         # 按逗号分割内容
@@ -256,12 +256,12 @@ class LineLengthFixer:
         for char in content:
             current_item += char
 
-            if char in '([{':
+            if char in "([{":
                 bracket_level += 1
-            elif char in ')]}':
+            elif char in ")]}":
                 bracket_level -= 1
 
-            if char == ',' and bracket_level == 0:
+            if char == "," and bracket_level == 0:
                 items.append(current_item)
                 current_item = ""
 
@@ -281,8 +281,8 @@ class LineLengthFixer:
     def split_logical_expression(self, line: str) -> List[str]:
         """拆分逻辑表达式"""
         # 在 and/or 处拆分
-        and_positions = [m.start() for m in re.finditer(r'\s+and\s+', line)]
-        or_positions = [m.start() for m in re.finditer(r'\s+or\s+', line)]
+        and_positions = [m.start() for m in re.finditer(r"\s+and\s+", line)]
+        or_positions = [m.start() for m in re.finditer(r"\s+or\s+", line)]
 
         all_positions = sorted(and_positions + or_positions)
 
@@ -299,13 +299,13 @@ class LineLengthFixer:
 
     def split_import_statement(self, line: str) -> List[str]:
         """拆分 import 语句"""
-        if 'from ' in line:
+        if "from " in line:
             # from module import item1, item2, item3
-            match = re.match(r'(\s*from\s+\w+\s+import\s+)(.+)', line)
+            match = re.match(r"(\s*from\s+\w+\s+import\s+)(.+)", line)
             if match:
                 prefix = match.group(1)
                 items = match.group(2)
-                item_list = [item.strip() for item in items.split(',')]
+                item_list = [item.strip() for item in items.split(",")]
 
                 result = [prefix + item_list[0]]
                 for item in item_list[1:]:
@@ -314,11 +314,11 @@ class LineLengthFixer:
                 return result
         else:
             # import module1, module2, module3
-            match = re.match(r'(\s*import\s+)(.+)', line)
+            match = re.match(r"(\s*import\s+)(.+)", line)
             if match:
                 prefix = match.group(1)
                 items = match.group(2)
-                item_list = [item.strip() for item in items.split(',')]
+                item_list = [item.strip() for item in items.split(",")]
 
                 result = [prefix + item_list[0]]
                 for item in item_list[1:]:
@@ -338,15 +338,15 @@ class LineLengthFixer:
         # 找到合适的拆分点
         split_point = len(words) // 2
 
-        part1 = ' '.join(words[:split_point])
-        part2 = '    ' + ' '.join(words[split_point:])
+        part1 = " ".join(words[:split_point])
+        part2 = "    " + " ".join(words[split_point:])
 
         return [part1, part2]
 
     def fix_file(self, file_path: Path) -> bool:
         """修复单个文件的行长问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             long_lines = self.get_long_lines(file_path)
@@ -354,46 +354,48 @@ class LineLengthFixer:
                 return False
 
             # 需要从后往前处理，避免行号变化
-            long_lines.sort(key=lambda x: x['line'], reverse=True)
+            long_lines.sort(key=lambda x: x["line"], reverse=True)
 
             fixed_any = False
             for line_info in long_lines:
-                self.stats['long_lines_found'] += 1
+                self.stats["long_lines_found"] += 1
 
-                if line_info['can_auto_fix']:
+                if line_info["can_auto_fix"]:
                     # 自动拆分
-                    new_lines = self.split_long_line(line_info['content'], line_info['line'], str(file_path))
+                    new_lines = self.split_long_line(
+                        line_info["content"], line_info["line"], str(file_path)
+                    )
 
                     if len(new_lines) > 1:
                         # 替换原行
-                        lines[line_info['line'] - 1] = '\n'.join(new_lines) + '\n'
-                        self.stats['lines_split'] += len(new_lines) - 1
+                        lines[line_info["line"] - 1] = "\n".join(new_lines) + "\n"
+                        self.stats["lines_split"] += len(new_lines) - 1
                         fixed_any = True
                 else:
                     # 标记需要手动审查
                     self.long_lines_found.append(line_info)
-                    self.stats['manual_review_required'] += 1
+                    self.stats["manual_review_required"] += 1
 
             if fixed_any:
                 # 写回文件
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.writelines(lines)
 
                 self.fixed_files.append(str(file_path))
-                self.stats['fixed_files'] += 1
+                self.stats["fixed_files"] += 1
                 return True
 
             return False
 
         except Exception as e:
             self.errors.append(f"处理 {file_path} 时出错: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     def process_directory(self, directory: str) -> Dict:
         """处理目录中的所有 Python 文件"""
         python_files = self.get_python_files(directory)
-        self.stats['total_files'] = len(python_files)
+        self.stats["total_files"] = len(python_files)
 
         print(f"🔍 开始检查 {len(python_files)} 个 Python 文件的行长问题...")
 
@@ -442,7 +444,7 @@ class LineLengthFixer:
             report += "以下长行需要手动处理:\n\n"
 
             for line_info in self.long_lines_found:
-                context_lines = '\\n'.join(line_info['context'])
+                context_lines = "\\n".join(line_info["context"])
                 report += f"""
 ### `{line_info['file']}`:{line_info['line']}
 - **长度**: {line_info['length']} 字符 (限制: {self.max_length})
@@ -501,7 +503,7 @@ python scripts/line_length_fix.py --help
         # 确保报告目录存在
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"📄 报告已生成: {output_file}")
@@ -511,12 +513,18 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='自动修复超过行长限制的代码行')
-    parser.add_argument('directory', nargs='?', default='.', help='要修复的目录 (默认: 当前目录)')
-    parser.add_argument('--max-length', type=int, default=120,
-                       help='行长限制 (默认: 120 字符)')
-    parser.add_argument('--report', default='docs/_reports/LINE_LENGTH_REPORT.md',
-                       help='报告输出路径 (默认: docs/_reports/LINE_LENGTH_REPORT.md)')
+    parser = argparse.ArgumentParser(description="自动修复超过行长限制的代码行")
+    parser.add_argument(
+        "directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)"
+    )
+    parser.add_argument(
+        "--max-length", type=int, default=120, help="行长限制 (默认: 120 字符)"
+    )
+    parser.add_argument(
+        "--report",
+        default="docs/_reports/LINE_LENGTH_REPORT.md",
+        help="报告输出路径 (默认: docs/_reports/LINE_LENGTH_REPORT.md)",
+    )
 
     args = parser.parse_args()
 
@@ -543,7 +551,7 @@ def main():
     print(f"👀 需要手动审查: {stats['manual_review_required']} 处")
     print(f"❌ 错误: {stats['errors']} 个")
 
-    if stats['manual_review_required'] > 0:
+    if stats["manual_review_required"] > 0:
         print(f"\n📋 请查看报告获取需要手动处理的长行: {args.report}")
 
 

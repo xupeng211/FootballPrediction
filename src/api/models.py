@@ -216,11 +216,21 @@ async def get_model_metrics(
                 COUNT(*) as total_predictions,
                 AVG(confidence_score) as avg_confidence,
                 SUM(CASE WHEN is_correct = true THEN 1 ELSE 0 END)::float /
-                NULLIF(SUM(CASE WHEN is_correct IS NOT NULL THEN 1 ELSE 0 END), 0) as accuracy,
-                COUNT(CASE WHEN predicted_result = 'home' THEN 1 END) as home_predictions,
-                COUNT(CASE WHEN predicted_result = 'draw' THEN 1 END) as draw_predictions,
-                COUNT(CASE WHEN predicted_result = 'away' THEN 1 END) as away_predictions,
-                COUNT(CASE WHEN is_correct IS NOT NULL THEN 1 END) as verified_predictions,
+                NULLIF(
+                    SUM(CASE WHEN is_correct IS NOT NULL THEN 1 ELSE 0 END), 0
+                ) as accuracy,
+                COUNT(
+                    CASE WHEN predicted_result = 'home' THEN 1 END
+                ) as home_predictions,
+                COUNT(
+                    CASE WHEN predicted_result = 'draw' THEN 1 END
+                ) as draw_predictions,
+                COUNT(
+                    CASE WHEN predicted_result = 'away' THEN 1 END
+                ) as away_predictions,
+                COUNT(
+                    CASE WHEN is_correct IS NOT NULL THEN 1 END
+                ) as verified_predictions,
                 COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
                 MIN(created_at) as first_prediction,
                 MAX(created_at) as last_prediction
@@ -384,7 +394,9 @@ async def get_model_versions(
             version_info = {
                 "version": version.version,
                 "creation_timestamp": version.creation_timestamp,
-                "created_at": version.creation_timestamp,  # Add created_at field for compatibility
+                "created_at": (
+                    version.creation_timestamp
+                ),  # Add created_at field for compatibility
                 "last_updated_timestamp": version.last_updated_timestamp,
                 "description": version.description,
                 "user_id": version.user_id,
@@ -568,9 +580,18 @@ async def get_model_performance(
                     COUNT(CASE WHEN is_correct IS NOT NULL THEN 1 END) as verified_predictions,
                     COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
                     AVG(confidence_score) as avg_confidence,
-                    COUNT(CASE WHEN predicted_result = 'home' AND is_correct = true THEN 1 END) as home_correct,
-                    COUNT(CASE WHEN predicted_result = 'draw' AND is_correct = true THEN 1 END) as draw_correct,
-                    COUNT(CASE WHEN predicted_result = 'away' AND is_correct = true THEN 1 END) as away_correct,
+                    COUNT(
+                        CASE WHEN predicted_result = 'home' AND is_correct = true
+                        THEN 1 END
+                    ) as home_correct,
+                    COUNT(
+                        CASE WHEN predicted_result = 'draw' AND is_correct = true
+                        THEN 1 END
+                    ) as draw_correct,
+                    COUNT(
+                        CASE WHEN predicted_result = 'away' AND is_correct = true
+                        THEN 1 END
+                    ) as away_correct,
                     COUNT(CASE WHEN predicted_result = 'home' THEN 1 END) as home_total,
                     COUNT(CASE WHEN predicted_result = 'draw' THEN 1 END) as draw_total,
                     COUNT(CASE WHEN predicted_result = 'away' THEN 1 END) as away_total
@@ -677,7 +698,7 @@ def get_model_info() -> Dict[str, Any]:
 
 @router.get("/experiments", summary="获取实验列表", description="获取MLflow实验列表")
 async def get_experiments(
-    limit: int = Query(default=20, description="返回实验数量限制", ge=1, le=100)
+    limit: int = Query(default=20, description="返回实验数量限制", ge=1, le=100),
 ) -> Dict[str, Any]:
     """
     获取MLflow实验列表
