@@ -3,12 +3,34 @@
 import asyncio
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock
 
 # import httpx
 import pytest
 from fastapi.testclient import TestClient
+
+# 预先加载测试环境配置
+try:
+    from tests.test_env_config import mock_redis_cluster
+    mock_redis_cluster()  # 立即应用Redis mock
+except ImportError:
+    # 如果配置文件不存在，使用专门的mock模块
+    try:
+        from tests.mocks.redis_mocks import install_redis_mocks
+        install_redis_mocks()
+    except ImportError:
+        # 回退到基本mock
+        from unittest.mock import MagicMock
+
+        class RedisClusterStub:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        redis_cluster_mock = MagicMock()
+        redis_cluster_mock.RedisCluster = RedisClusterStub
+        sys.modules['redis.cluster'] = redis_cluster_mock
 
 try:
     from pytest import MonkeyPatch
@@ -36,15 +58,108 @@ os.environ.setdefault("METRICS_ENABLED", "false")
 os.environ.setdefault("ENABLED_SERVICES", "[]")
 
 
+def _apply_feast_mocks(monkeypatch: MonkeyPatch) -> None:
+    """
+    应用Feast相关的Mock，解决Redis版本兼容性问题
+
+    这将阻止Feast导入时尝试使用Redis特定功能，避免版本冲突
+    """
+    import sys
+    from unittest.mock import MagicMock
+
+    # 在导入前设置环境变量，禁用Redis相关功能
+    monkeypatch.setenv("FEAST_DISABLE_REDIS", "true")
+
+    # 完全Mock掉Feast模块，避免Redis依赖问题
+    class MockFeastModule:
+        """Feast模块的完整Mock"""
+        def __getattr__(self, name):
+            return MagicMock()
+
+    # 创建feast及其子模块的mock
+    feast_modules = [
+        'feast',
+        'feast.infra',
+        'feast.infra.online_stores',
+        'feast.infra.online_stores.redis',
+        'feast.infra.offline_stores',
+        'feast.infra.offline_stores.contrib',
+        'feast.infra.offline_stores.contrib.postgres_offline_store',
+        'feast.types',
+    ]
+
+    for module_name in feast_modules:
+        if module_name not in sys.modules:
+            sys.modules[module_name] = MockFeastModule()
+
+    # Mock所有Redis相关模块
+    class RedisStub:
+        def __init__(self, *args, **kwargs):
+            pass
+        def ping(self):
+            return True
+
+    class RedisClusterStub(RedisStub):
+        pass
+
+    class SentinelStub:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    redis_modules = {
+        'redis.cluster': MagicMock(RedisCluster=RedisClusterStub),
+        'redis.asyncio.cluster': MagicMock(RedisCluster=RedisClusterStub),
+        'redis.sentinel': MagicMock(Sentinel=SentinelStub),
+        'redis.asyncio.sentinel': MagicMock(Sentinel=SentinelStub),
+    }
+
+    for module_name, module_mock in redis_modules.items():
+        sys.modules[module_name] = module_mock
+
+
+def _apply_data_quality_mocks(monkeypatch: MonkeyPatch) -> None:
+    """
+    Mock数据质量监控器，避免数据库依赖
+    """
+    from unittest.mock import AsyncMock, MagicMock
+
+    # 创建Mock的数据质量监控器
+    mock_monitor = MagicMock()
+    mock_monitor.generate_quality_report = AsyncMock(return_value={
+        "overall_status": "healthy",
+        "quality_score": 95.0,
+        "anomalies": {"count": 0, "items": []},
+        "report_time": datetime.now().isoformat(),
+        "checks": {
+            "data_freshness": {"status": "pass", "score": 100},
+            "data_completeness": {"status": "pass", "score": 95},
+            "data_consistency": {"status": "pass", "score": 90},
+        }
+    })
+
+    # Mock DataQualityMonitor类
+    from src.data.quality.data_quality_monitor import DataQualityMonitor
+    monkeypatch.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def mock_external_services() -> None:
     """在测试阶段统一Mock外部依赖"""
 
     monkeypatch = MonkeyPatch()
-    apply_mlflow_mocks(monkeypatch)
+
+    # 修复Redis/Feast兼容性问题 - 必须在其他导入之前
+    _apply_feast_mocks(monkeypatch)
+
+    # 应用Redis mock（必须在Feast导入后）
     apply_redis_mocks(monkeypatch)
+    apply_mlflow_mocks(monkeypatch)
     apply_kafka_mocks(monkeypatch)
     apply_http_mocks(monkeypatch, responses={})
+
+    # Mock数据质量监控器
+    _apply_data_quality_mocks(monkeypatch)
+
     yield
     monkeypatch.undo()
 

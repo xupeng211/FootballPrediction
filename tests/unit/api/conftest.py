@@ -41,6 +41,19 @@ def _install_health_stubs(stack: ExitStack) -> None:
     stack.enter_context(patch("src.api.health._check_kafka", new=async_success))
     stack.enter_context(patch("src.api.health._check_filesystem", new=async_success))
 
+    # Mock数据质量监控器
+    mock_dqm = MagicMock()
+    mock_dqm.generate_quality_report = AsyncMock(return_value={
+        "overall_status": "healthy",
+        "quality_score": 95.0,
+        "anomalies": {"count": 0, "items": []},
+        "report_time": datetime.now().isoformat(),
+    })
+    stack.enter_context(
+        patch("src.data.quality.data_quality_monitor.DataQualityMonitor",
+              return_value=mock_dqm)
+    )
+
 
 @pytest.fixture
 def api_client(monkeypatch):
