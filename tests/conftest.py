@@ -111,7 +111,7 @@ def sample_user_data():
         "email": "test@example.com",
         "username": "testuser",
         "password": "TestPassword123!",
-        "full_name": "Test User"
+        "full_name": "Test User",
     }
 
 
@@ -124,7 +124,7 @@ def sample_prediction_data():
         "away_team": "Team B",
         "predicted_home_score": 2,
         "predicted_away_score": 1,
-        "confidence": 0.75
+        "confidence": 0.75,
     }
 
 
@@ -133,28 +133,18 @@ def auth_headers():
     """认证头"""
     return {
         "Authorization": "Bearer test_token_here",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
 
 # 测试标记
 def pytest_configure(config):
     """配置pytest标记"""
-    config.addinivalue_line(
-        "markers", "slow: 标记测试为慢速测试"
-    )
-    config.addinivalue_line(
-        "markers", "integration: 标记为集成测试"
-    )
-    config.addinivalue_line(
-        "markers", "e2e: 标记为端到端测试"
-    )
-    config.addinivalue_line(
-        "markers", "legacy: 标记为遗留测试（依赖真实服务）"
-    )
-    config.addinivalue_line(
-        "markers", "unit: 标记为单元测试"
-    )
+    config.addinivalue_line("markers", "slow: 标记测试为慢速测试")
+    config.addinivalue_line("markers", "integration: 标记为集成测试")
+    config.addinivalue_line("markers", "e2e: 标记为端到端测试")
+    config.addinivalue_line("markers", "legacy: 标记为遗留测试（依赖真实服务）")
+    config.addinivalue_line("markers", "unit: 标记为单元测试")
 
 
 # 测试收集钩子
