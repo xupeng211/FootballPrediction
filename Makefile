@@ -743,9 +743,9 @@ setup-hooks: ## Git: Setup pre-commit hooks permissions
 	fi
 
 
-# 测试命令
-test:
-	@echo "运行所有测试"
+# 额外的测试命令（使用不同的名称以避免冲突）
+test-all-verbose:
+	@echo "运行所有测试（详细模式）"
 	pytest tests/ -v
 
 test-unit:

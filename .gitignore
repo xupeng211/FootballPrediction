@@ -13,16 +13,18 @@ ruff*.json
 
 # 测试临时文件
 .coverage
+.coverage.*
 htmlcov/
 .pytest_cache/
 .mypy_cache/
-coverage.json
+coverage.xml
 
 # AI生成临时文件
 TEMP_*.md
 CLAUDE_*.md.bak
 *_ANALYSIS.md
 *_SUMMARY.md
+docs/_reports/
 
 # 分发/打包
 .Python
@@ -46,19 +48,6 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
-
-# 单元测试 / 覆盖率报告
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
 
 # 环境变量文件
 .env
@@ -85,8 +74,7 @@ ehthumbs.db
 Thumbs.db
 
 # 项目特定文件
-logs/*.log
-logs/*.json
+logs/
 !logs/.gitkeep
 
 # 临时文件
@@ -108,14 +96,10 @@ config/production.yml
 secrets/
 
 # 缓存和构建文件
-.mypy_cache/
-.dmypy.json
-dmypy.json
 .ruff_cache/
-.pytest_cache/
-.coverage
-htmlcov/
 .tox/
+.nox/
+.cache
 
 # 静态分析报告
 security-report.json
@@ -147,16 +131,8 @@ reports/
 backup/
 backup_before_fix/
 *.backup
-# 备份目录
-backup/
-backup_before_fix/
-*.backup
-# 日志和缓存
-logs/
-=*
 
 # 无关文件配置
 clash_dns_fix.yaml
 clash_rules_patch.yaml
 tests/sedony8lS
-ting workflow documentation
