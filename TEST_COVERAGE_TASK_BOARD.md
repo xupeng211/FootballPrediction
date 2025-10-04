@@ -23,14 +23,14 @@
 
 | 任务 | 文件/模块 | 代码行数 | 状态 | 负责人 | 预计完成 |
 | ✅ 1.1 | `src/api/predictions.py` | 123行 | 🟢 已完成 | 2025-10-04 | |
-| ✅ 1.2 | `src/api/data.py` | 181行 | ⚪ 待开始 | | |
+| ✅ 1.2 | `src/api/data.py` | 181行 | 🟢 已完成 | 2025-10-04 | |
 | ✅ 1.3 | `src/api/features.py` | 154行 | ⚪ 待开始 | | |
 | ✅ 1.4 | `src/models/prediction_service.py` | 233行 | ⚪ 待开始 | | |
 | ✅ 1.5 | 修复集成测试 | - | ⚪ 待开始 | | |
 
 **Phase 1 产出：**
 - [x] `tests/unit/api/test_predictions.py`
-- [ ] `tests/unit/api/test_data.py`
+- [x] `tests/unit/api/test_data.py`
 - [ ] `tests/unit/api/test_features.py`
 - [ ] `tests/unit/models/test_prediction_service.py`
 - [ ] 修复 `test_create_user_and_prediction_flow`
