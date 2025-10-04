@@ -15,6 +15,7 @@
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
@@ -38,13 +39,13 @@ def example_initialize_feature_store() -> FootballFeatureStore:
     """
     print("🚀 初始化特征仓库...")
 
-    # 配置PostgreSQL离线存储
+    # 配置PostgreSQL离线存储 - 使用环境变量
     postgres_config = {
-        "host": "localhost",
-        "port": 5432,
-        "database": "football_prediction_dev",
-        "user": "football_reader",
-        "password": "reader_password_2025",
+        "host": os.getenv("DB_HOST", "localhost"),
+        "port": int(os.getenv("DB_PORT", "5432")),
+        "database": os.getenv("DB_NAME", "football_prediction_dev"),
+        "user": os.getenv("DB_READER_USER", "football_reader"),
+        "password": os.getenv("DB_READER_PASSWORD", ""),
     }
 
     # 配置Redis在线存储
