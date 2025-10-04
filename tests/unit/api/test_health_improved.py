@@ -7,11 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from sqlalchemy.orm import Session
 
-from src.api.health import (
-    _check_database,
-    _optional_check_skipped,
-    get_system_health,
-)
+from src.api.health import _check_database, _optional_check_skipped, get_system_health
 
 
 class TestHealthCheckUtils:

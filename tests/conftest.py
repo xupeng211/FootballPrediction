@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock
 
-import httpx
+# import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -106,9 +106,11 @@ def test_client():
 @pytest.fixture
 async def async_client():
     """异步测试客户端"""
+    from httpx import AsyncClient
+
     from src.main import app
 
-    async with httpx.AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
 

@@ -51,6 +51,10 @@ MANIFEST
 
 # 环境变量文件
 .env
+.env.*
+.env.local
+.env.production
+.env.staging
 .venv
 env/
 venv/

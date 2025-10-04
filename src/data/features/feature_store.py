@@ -95,7 +95,7 @@ class FootballFeatureStore:
             "port": int(os.getenv("DB_PORT", 5432)),
             "database": os.getenv("DB_NAME", "football_prediction_dev"),
             "user": os.getenv("DB_READER_USER", "football_reader"),
-            "password": os.getenv("DB_READER_PASSWORD", "reader_password_2025"),
+            "password": os.getenv("DB_READER_PASSWORD", ""),
         }
 
         self.redis_config = redis_config or {

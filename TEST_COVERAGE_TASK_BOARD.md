@@ -29,7 +29,7 @@
 | ✅ 1.5 | 修复集成测试 | - | ⚪ 待开始 | | |
 
 **Phase 1 产出：**
-- [ ] `tests/unit/api/test_predictions.py`
+- [x] `tests/unit/api/test_predictions.py`
 - [ ] `tests/unit/api/test_data.py`
 - [ ] `tests/unit/api/test_features.py`
 - [ ] `tests/unit/models/test_prediction_service.py`

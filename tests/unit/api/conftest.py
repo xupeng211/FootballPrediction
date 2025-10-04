@@ -1,7 +1,8 @@
 """API测试配置"""
 
-from contextlib import ExitStack, asynccontextmanager
+from contextlib import ExitStack
 from datetime import datetime
+from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -65,67 +66,74 @@ def api_client(monkeypatch):
 
 
 @pytest.fixture
+def mock_async_session():
+    """创建一个可配置的mock数据库会话"""
+    mock_session = MagicMock(spec=AsyncSession)
+    mock_session.execute = AsyncMock()
+    mock_session.commit = AsyncMock()
+    mock_session.rollback = AsyncMock()
+    mock_session.close = AsyncMock()
+    return mock_session
+
+
+@pytest.fixture
 def api_client_full(monkeypatch):
-    """API测试客户端，加载所有路由（用于测试非健康检查端点）"""
+    """API测试客户端，加载所有路由（用于测试非健康检查端点）
+
+    使用dependency_overrides来注入mock dependencies，这是FastAPI推荐的测试方式。
+    返回一个包含client和mock_session的命名空间对象，以便测试可以配置mock行为。
+    """
     # 设置环境变量在导入前
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "false")  # 加载所有路由
 
+    # 创建mock session - 必须在这里创建，确保是同一个实例
+    mock_session = MagicMock(spec=AsyncSession)
+    mock_session.execute = AsyncMock()
+    mock_session.commit = AsyncMock()
+    mock_session.rollback = AsyncMock()
+    mock_session.close = AsyncMock()
+
     stack = ExitStack()
     try:
         _install_health_stubs(stack)
 
-        # 额外的mock以避免导入重量级依赖
-        mock_prediction_service = MagicMock()
-        mock_prediction_service.predict_match = AsyncMock()
-        mock_prediction_service.batch_predict_matches = AsyncMock()
-        mock_prediction_service.verify_prediction = AsyncMock()
-
-        stack.enter_context(
-            patch("src.api.predictions.prediction_service", mock_prediction_service)
-        )
-
-        # Mock get_async_session dependency
-        @asynccontextmanager
-        async def mock_get_async_session():
-            mock_session = MagicMock(spec=AsyncSession)
-            mock_session.execute = AsyncMock()
-            mock_session.commit = AsyncMock()
-            mock_session.rollback = AsyncMock()
-            mock_session.close = AsyncMock()
-            yield mock_session
-
-        stack.enter_context(
-            patch("src.api.predictions.get_async_session", mock_get_async_session)
-        )
-
         # 延迟导入，在设置好环境变量和 mock 后
+        from src.database.connection import get_async_session
         from src.main import app
 
-        app.dependency_overrides = {}
+        # 创建返回mock session的异步生成器
+        async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
+            yield mock_session
+
+        # 使用FastAPI的dependency_overrides机制
+        app.dependency_overrides[get_async_session] = override_get_async_session
+
         with TestClient(app, raise_server_exceptions=False) as client:
+            # 为了向后兼容，返回client本身，但添加mock_session属性
+            client.mock_session = mock_session
             yield client
     finally:
+        # 清理dependency overrides - 在测试结束后清理
+        try:
+            from src.main import app
+
+            app.dependency_overrides.clear()
+        except:
+            pass
         stack.close()
 
 
 @pytest.fixture
-def mock_auth_service():
-    """模拟认证服务"""
-    with patch("src.api.auth.AuthService") as mock:
-        mock.verify_token.return_value = {"user_id": 1, "email": "test@example.com"}
-        yield mock
-
-
-@pytest.fixture
-def mock_prediction_service():
-    """模拟预测服务"""
-    with patch("src.api.predictions.PredictionService") as mock:
-        mock.create_prediction.return_value = {"id": 1, "status": "success"}
-        mock.get_prediction.return_value = {"id": 1, "result": "2-1"}
-        yield mock
+def mock_prediction_service_instance():
+    """创建一个可配置的mock预测服务实例"""
+    mock_service = MagicMock()
+    mock_service.predict_match = AsyncMock()
+    mock_service.batch_predict_matches = AsyncMock()
+    mock_service.verify_prediction = AsyncMock()
+    return mock_service
 
 
 @pytest.fixture

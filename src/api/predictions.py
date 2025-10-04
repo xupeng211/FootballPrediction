@@ -42,12 +42,35 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# 可选的速率限制
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+
+    limiter = Limiter(key_func=get_remote_address)
+    RATE_LIMIT_AVAILABLE = True
+except ImportError:
+    RATE_LIMIT_AVAILABLE = False
+    # 创建空的装饰器函数
+    def limiter_decorator(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    class _LimiterStub:
+        def limit(self, *args, **kwargs):
+            return limiter_decorator
+
+    limiter = _LimiterStub()
+
 from src.database.connection import get_async_session
-from src.database.models import Match, MatchStatus, Prediction
+from src.database.models import Match, MatchStatus
+from src.database.models import Predictions as Prediction
 from src.models.prediction_service import PredictionService
 from src.utils.response import APIResponse
 
@@ -60,7 +83,7 @@ prediction_service = PredictionService()
 
 
 @router.get(
-    "/{match_id}",
+    "/{match_id:int}",
     summary="获取比赛预测结果 / Get Match Prediction",
     description=(
         "获取指定比赛的预测结果，如果不存在则实时生成 / "
@@ -101,9 +124,14 @@ prediction_service = PredictionService()
         500: {"description": "服务器内部错误 / Internal server error"},
     },
 )
+@limiter.limit("20/minute")  # 每分钟最多20次请求
 async def get_match_prediction(
+    request: Request,
     match_id: int = Path(
-        ..., description="比赛唯一标识符 / Unique match identifier", ge=1, example=12345
+        ...,
+        description="比赛唯一标识符 / Unique match identifier",
+        ge=1,
+        examples=[12345],
     ),
     force_predict: bool = Query(
         default=False, description="是否强制重新预测 / Whether to force re-prediction"
@@ -250,7 +278,7 @@ async def get_match_prediction(
 
 
 @router.post(
-    "/{match_id}/predict",
+    "/{match_id:int}/predict",
     summary="实时预测比赛结果",
     description="对指定比赛进行实时预测",
 )
@@ -293,8 +321,11 @@ async def predict_match(
 
 
 @router.post("/batch", summary="批量预测比赛", description="对多场比赛进行批量预测")
+@limiter.limit("5/minute")  # 批量预测：每分钟最多5次（更耗费资源）
 async def batch_predict_matches(
-    match_ids: List[int], session: AsyncSession = Depends(get_async_session)
+    request: Request,
+    match_ids: List[int],
+    session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
     批量预测多场比赛
@@ -342,7 +373,7 @@ async def batch_predict_matches(
 
 
 @router.get(
-    "/history/{match_id}",
+    "/history/{match_id:int}",
     summary="获取比赛历史预测",
     description="获取指定比赛的所有历史预测记录",
 )
@@ -419,7 +450,9 @@ async def get_match_prediction_history(
                         prediction.verified_at.isoformat()
                         if prediction.verified_at
                         and hasattr(prediction.verified_at, "isoformat")
-                        else None if prediction.verified_at else None
+                        else None
+                        if prediction.verified_at
+                        else None
                     ),
                 }
             )
@@ -526,7 +559,7 @@ async def get_recent_predictions(
 
 
 @router.post(
-    "/{match_id}/verify",
+    "/{match_id:int}/verify",
     summary="验证预测结果",
     description="验证指定比赛的预测结果（比赛结束后调用）",
 )
