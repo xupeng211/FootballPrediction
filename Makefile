@@ -83,27 +83,30 @@ install: venv ## Environment: Install dependencies from lock file
 	fi
 
 install-locked: venv ## Environment: Install from locked dependencies (reproducible)
-	@if [ ! -f requirements.lock.txt ]; then \
-		echo "$(RED)❌ requirements.lock.txt not found. Run 'make lock-deps' first.$(RESET)"; \
+	@if [ ! -f requirements/requirements.lock ]; then \
+		echo "$(RED)❌ requirements/requirements.lock not found. Run 'make lock-deps' first.$(RESET)"; \
 		exit 1; \
 	fi
 	@$(ACTIVATE) && \
 	echo "$(BLUE)📦 Installing locked dependencies (reproducible)...$(RESET)" && \
 	pip install --upgrade pip && \
-	pip install -r requirements.lock.txt && \
+	pip install -r requirements/requirements.lock && \
 	echo "$(GREEN)✅ Dependencies installed from lock file$(RESET)"
 
 lock-deps: venv ## Environment: Lock current dependencies for reproducible builds
 	@$(ACTIVATE) && \
 	echo "$(BLUE)🔒 Locking dependencies...$(RESET)" && \
-	python scripts/lock_dependencies.py freeze && \
-	echo "$(GREEN)✅ Dependencies locked to requirements.lock.txt$(RESET)" && \
-	echo "$(YELLOW)💡 Commit requirements.lock.txt for reproducible builds$(RESET)"
+	pip install pip-tools && \
+	pip-compile requirements/base.in --upgrade --output-file=requirements/base.lock && \
+	pip-compile requirements/dev.in --upgrade --output-file=requirements/dev.lock && \
+	pip-compile requirements/full.in --upgrade --output-file=requirements/requirements.lock && \
+	echo "$(GREEN)✅ Dependencies locked to requirements/ directory$(RESET)" && \
+	echo "$(YELLOW)💡 Commit requirements/*.lock files for reproducible builds$(RESET)"
 
 verify-deps: venv ## Environment: Verify dependencies match lock file
 	@$(ACTIVATE) && \
 	echo "$(BLUE)🔍 Verifying dependencies...$(RESET)" && \
-	python scripts/lock_dependencies.py verify
+	bash scripts/verify_deps.sh
 
 check-deps: ## Environment: Verify required Python dependencies are installed
 	@$(ACTIVATE) && python scripts/check_dependencies.py
@@ -148,6 +151,14 @@ create-env: ## Environment: Create environment file from example
 	@echo "$(GREEN)✅ Created $(ENV_FILE) from $(ENV_EXAMPLE)$(RESET)"
 	@echo "$(BLUE)💡 Please edit $(ENV_FILE) with your configuration$(RESET)"
 
+clean-env: ## Environment: Clean virtual environment and old dependency files
+	@echo "$(YELLOW)🧹 Cleaning virtual environment and old files...$(RESET)"
+	@rm -rf .venv
+	@rm -rf __pycache__ .pytest_cache .coverage htmlcov/ .mypy_cache/
+	@rm -f requirements.lock.txt
+	@rm -f requirements/base.lock requirements/dev.lock requirements/requirements.lock
+	@rm -rf pipdeptree.egg-info/
+	@echo "$(GREEN)✅ Environment cleaned$(RESET)"
 
 # ============================================================================
 # 🎨 Code Quality
