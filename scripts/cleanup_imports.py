@@ -12,7 +12,7 @@ import re
 import ast
 import sys
 from pathlib import Path
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 from datetime import datetime
 import subprocess
 
@@ -78,7 +78,7 @@ class ImportCleaner:
                     from_imports.append(node)
 
             return imports, from_imports
-        except SyntaxError as e:
+        except SyntaxError:
             return [], []
 
     def remove_unused_imports(self, content: str, unused_imports: List[str]) -> str:
@@ -320,7 +320,7 @@ def main():
     cleaner.generate_report(args.report)
 
     # 输出总结
-    print(f"\n✅ 清理完成！")
+    print("\n✅ 清理完成！")
     print(f"📊 处理文件: {stats['total_files']} 个")
     print(f"🔧 修复文件: {stats['fixed_files']} 个")
     print(f"🗑️ 移除未使用 import: {stats['unused_imports_removed']} 个")

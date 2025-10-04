@@ -3,7 +3,6 @@
 生成脚手架评估仪表板
 """
 
-import json
 from pathlib import Path
 from datetime import datetime
 

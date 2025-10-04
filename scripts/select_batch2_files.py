@@ -2,7 +2,6 @@
 """Script to analyze Ruff error density in test files for batch 2 selection."""
 
 import subprocess
-import os
 from pathlib import Path
 
 def get_file_errors(file_path):
@@ -129,7 +128,7 @@ def main():
     with open("docs/_reports/UNIT_BATCH2_FILES.md", "w", encoding="utf-8") as f:
         f.write(report_content)
 
-    print(f"Batch 2 file analysis complete!")
+    print("Batch 2 file analysis complete!")
     print(f"Selected {len(batch2_files)} files with total {total_errors} errors")
     print(f"Error range: {batch2_files[0][1]} - {batch2_files[-1][1]} errors per file")
 

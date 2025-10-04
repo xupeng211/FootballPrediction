@@ -3,7 +3,6 @@
 Fix syntax errors created by batch_syntax_fixer.py
 """
 
-import os
 import re
 from pathlib import Path
 from typing import List, Tuple
@@ -104,7 +103,7 @@ class BatchSyntaxErrorFixer:
             if fix_count > 0:
                 print(f"  ✅ Fixed {fix_count} issues: {', '.join(fixes)}")
 
-        print(f"\n🎯 Summary:")
+        print("\n🎯 Summary:")
         print(f"📊 Files processed: {len(python_files)}")
         print(f"🔧 Files fixed: {len(self.fixed_files)}")
         print(f"✨ Total fixes: {self.total_fixes}")
