@@ -12,12 +12,14 @@ import pytest
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for each test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
 
 @pytest.fixture
 def mock_db_session():
@@ -29,6 +31,7 @@ def mock_db_session():
     session.close = Mock()
     return session
 
+
 @pytest.fixture
 def mock_redis():
     """模拟Redis连接"""
@@ -39,12 +42,15 @@ def mock_redis():
     redis_mock.delete = AsyncMock(return_value=1)
     return redis_mock
 
+
 @pytest.fixture
 def clean_metrics_registry():
     """提供干净的Prometheus注册表用于测试"""
     from unittest.mock import Mock
+
     mock_registry = Mock()
     return mock_registry
+
 
 @pytest.fixture
 def mock_prometheus_client():
@@ -58,6 +64,7 @@ def mock_prometheus_client():
     mock_client.Histogram = MagicMock(return_value=mock_counter)
     return mock_client
 
+
 @pytest.fixture
 def mock_mlflow_client():
     """模拟MLflow客户端"""
@@ -68,6 +75,7 @@ def mock_mlflow_client():
     mock_version_info.name = "football_baseline_model"
     mock_client.get_latest_versions = Mock(return_value=[mock_version_info])
     return mock_client
+
 
 @pytest.fixture
 def mock_redis_manager():
@@ -82,14 +90,17 @@ def mock_redis_manager():
     mock_manager.delete = AsyncMock(return_value=1)
     return mock_manager
 
+
 # Configure pytest
 def pytest_configure(config):
     """配置pytest"""
     config.addinivalue_line("markers", "asyncio: mark test to run with asyncio")
 
+
 @pytest.fixture(autouse=True)
 def suppress_warnings():
     """抑制测试中的警告"""
     import warnings
+
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=UserWarning)

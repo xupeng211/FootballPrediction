@@ -29,32 +29,34 @@ class TestModelTrainer:
     @pytest.fixture
     def sample_training_data(self):
         """Sample training data for testing."""
-        return pd.DataFrame([
-            {
-                "id": 1,
-                "home_team_id": 101,
-                "away_team_id": 102,
-                "league_id": 1,
-                "match_time": datetime(2024, 1, 1),
-                "home_score": 2,
-                "away_score": 1,
-                "home_odds": 1.8,
-                "draw_odds": 3.2,
-                "away_odds": 4.1,
-            },
-            {
-                "id": 2,
-                "home_team_id": 103,
-                "away_team_id": 104,
-                "league_id": 1,
-                "match_time": datetime(2024, 1, 2),
-                "home_score": 1,
-                "away_score": 1,
-                "home_odds": 2.1,
-                "draw_odds": 3.0,
-                "away_odds": 3.8,
-            }
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "id": 1,
+                    "home_team_id": 101,
+                    "away_team_id": 102,
+                    "league_id": 1,
+                    "match_time": datetime(2024, 1, 1),
+                    "home_score": 2,
+                    "away_score": 1,
+                    "home_odds": 1.8,
+                    "draw_odds": 3.2,
+                    "away_odds": 4.1,
+                },
+                {
+                    "id": 2,
+                    "home_team_id": 103,
+                    "away_team_id": 104,
+                    "league_id": 1,
+                    "match_time": datetime(2024, 1, 2),
+                    "home_score": 1,
+                    "away_score": 1,
+                    "home_odds": 2.1,
+                    "draw_odds": 3.0,
+                    "away_odds": 3.8,
+                },
+            ]
+        )
 
     def test_initialization(self, trainer):
         """Test trainer initialization."""

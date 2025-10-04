@@ -41,7 +41,9 @@ def sample_user() -> User:
 
 
 @pytest.mark.asyncio
-async def test_generate_profile_persists_result(service: UserProfileService, sample_user: User):
+async def test_generate_profile_persists_result(
+    service: UserProfileService, sample_user: User
+):
     profile = await service.generate_profile(sample_user)
 
     assert profile.user_id == sample_user.id
