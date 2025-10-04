@@ -93,6 +93,7 @@ make lint         # 代码检查
 make test         # 运行测试
 make ci           # 本地CI检查
 make sync-issues  # GitHub Issues 同步 🔄
+./scripts/run_tests_in_docker.sh  # 在容器中执行测试，隔离本地依赖
 ```
 
 ### 🛠️ 完整工具文档
