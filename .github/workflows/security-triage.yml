@@ -1,0 +1,351 @@
+name: 安全问题分派和跟踪
+
+on:
+  issues:
+    types: [opened, labeled]
+  schedule:
+    # 每天检查一次未解决的安全问题
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  triage-security-issues:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'security') || github.event_name == 'schedule'
+
+    steps:
+    - name: Checkout 代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 分派新安全问题
+      if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'security')
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const labels = issue.labels.map(l => l.name);
+
+          // 根据严重性确定优先级和负责人
+          let priority = 'medium';
+          let assignee = 'security-team';
+          let slaHours = 72; // 默认3天
+
+          if (labels.includes('critical')) {
+            priority = 'critical';
+            slaHours = 4; // 4小时内响应
+            assignee = 'cto';
+          } else if (labels.includes('high-priority')) {
+            priority = 'high';
+            slaHours = 24; // 1天内响应
+            assignee = 'lead-developer';
+          } else if (labels.includes('medium')) {
+            priority = 'medium';
+            slaHours = 72; // 3天内响应
+            assignee = 'developer';
+          } else if (labels.includes('low')) {
+            priority = 'low';
+            slaHours = 168; // 1周内响应
+            assignee = 'junior-developer';
+          }
+
+          // 添加优先级标签
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            labels: [`priority: ${priority}`]
+          });
+
+          // 分派给相应人员
+          await github.rest.issues.addAssignees({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            assignees: [assignee]
+          });
+
+          // 添加SLA截止时间评论
+          const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
+          const slaComment = `
+          ## 🎯 SLA 信息
+
+          - **优先级**: ${priority}
+          - **负责人**: @${assignee}
+          - **响应截止时间**: ${slaDeadline.toISOString()}
+          - **SLA**: ${slaHours}小时内响应
+
+          ---
+          此评论由自动化系统生成。
+          `;
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            body: slaComment
+          });
+
+    - name: 检查过期未解决的安全问题
+      if: github.event_name == 'schedule'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // 获取所有开放的、带有security标签的issues
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: 'security',
+            state: 'open',
+            sort: 'created',
+            direction: 'asc'
+          });
+
+          const now = new Date();
+
+          for (const issue of issues.data) {
+            const createdAt = new Date(issue.created_at);
+            const labels = issue.labels.map(l => l.name);
+
+            // 确定SLA时间
+            let slaHours = 72;
+            if (labels.includes('priority: critical')) slaHours = 4;
+            else if (labels.includes('priority: high')) slaHours = 24;
+            else if (labels.includes('priority: medium')) slaHours = 72;
+            else if (labels.includes('priority: low')) slaHours = 168;
+
+            const slaDeadline = new Date(createdAt.getTime() + slaHours * 60 * 60 * 1000);
+
+            // 检查是否过期
+            if (now > slaDeadline) {
+              // 计算过期时间
+              const overdueHours = Math.floor((now - slaDeadline) / (1000 * 60 * 60));
+
+              // 添加过期标签
+              if (!labels.includes('overdue')) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: ['overdue']
+                });
+              }
+
+              // 升级问题
+              let escalationComment = '';
+              if (overdueHours > 168) { // 超过一周
+                // 升级给管理层
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees: ['cto', 'engineering-manager']
+                });
+
+                escalationComment = `
+                ## 🚨 紧急升级 - 问题已严重过期
+
+                此安全问题已过期 ${overdueHours} 小时，远超SLA时间！
+
+                - **原定SLA**: ${slaHours}小时
+                - **过期时间**: ${overdueHours}小时
+                - **创建时间**: ${createdAt.toISOString()}
+                - **SLA截止时间**: ${slaDeadline.toISOString()}
+
+                **已升级给**: @cto @engineering-manager
+
+                请立即采取行动！
+                `;
+              } else if (overdueHours > 24) { // 超过1天
+                // 升级给团队负责人
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees: ['lead-developer']
+                });
+
+                escalationComment = `
+                ## ⚠️ 问题已过期 - 需要关注
+
+                此安全问题已过期 ${overdueHours} 小时。
+
+                - **SLA时间**: ${slaHours}小时
+                - **过期时间**: ${overdueHours}小时
+
+                **已分派给**: @lead-developer
+
+                请尽快处理。
+                `;
+              }
+
+              if (escalationComment) {
+                // 检查最近是否已有升级评论
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  per_page: 10
+                });
+
+                const hasRecentEscalation = comments.data.some(comment =>
+                  comment.body.includes('升级') &&
+                  (now - new Date(comment.created_at)) < 24 * 60 * 60 * 1000
+                );
+
+                if (!hasRecentEscalation) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    body: escalationComment
+                  });
+                }
+              }
+            }
+          }
+
+    - name: 生成每日安全报告
+      if: github.event_name == 'schedule'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // 获取所有安全问题
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: 'security',
+            state: 'open',
+            sort: 'priority',
+            direction: 'desc'
+          });
+
+          // 统计数据
+          const stats = {
+            critical: 0,
+            high: 0,
+            medium: 0,
+            low: 0,
+            overdue: 0,
+            total: issues.data.length
+          };
+
+          let report = '# 每日安全报告\n\n';
+          report += `**生成时间**: ${new Date().toISOString()}\n\n`;
+
+          // 分类统计
+          issues.data.forEach(issue => {
+            const labels = issue.labels.map(l => l.name);
+            if (labels.includes('priority: critical')) stats.critical++;
+            else if (labels.includes('priority: high')) stats.high++;
+            else if (labels.includes('priority: medium')) stats.medium++;
+            else if (labels.includes('priority: low')) stats.low++;
+            if (labels.includes('overdue')) stats.overdue++;
+          });
+
+          report += '## 📊 统计概览\n\n';
+          report += `- **总问题数**: ${stats.total}\n`;
+          report += `- **严重**: ${stats.critical}\n`;
+          report += `- **高危**: ${stats.high}\n`;
+          report += `- **中危**: ${stats.medium}\n`;
+          report += `- **低危**: ${stats.low}\n`;
+          report += `- **过期**: ${stats.overdue}\n\n`;
+
+          // 问题列表
+          if (stats.total > 0) {
+            report += '## 🚨 待处理问题\n\n';
+
+            issues.data.forEach(issue => {
+              const labels = issue.labels.map(l => l.name);
+              const priority = labels.find(l => l.startsWith('priority:')) || 'priority: medium';
+              const emoji = priority.includes('critical') ? '🔴' :
+                          priority.includes('high') ? '🟠' :
+                          priority.includes('medium') ? '🟡' : '🟢';
+
+              report += `${emoji} **[${issue.title}](${issue.html_url})**\n`;
+              report += `   - 优先级: ${priority}\n`;
+              report += `   - 负责人: ${issue.assignees.map(a => '@' + a.login).join(', ') || '未分配'}\n`;
+              report += `   - 创建时间: ${new Date(issue.created_at).toLocaleDateString()}\n`;
+              if (labels.includes('overdue')) {
+                report += `   - ⚠️ **已过期**\n`;
+              }
+              report += '\n';
+            });
+          }
+
+          // 保存报告
+          fs.writeFileSync('daily-security-report.md', report);
+
+          // 如果有严重或过期问题，创建摘要
+          if (stats.critical > 0 || stats.overdue > 0) {
+            const summary = `
+            **每日安全提醒** 🛡️
+
+            今日有 ${stats.critical} 个严重问题和 ${stats.overdue} 个过期问题需要关注。
+
+            [查看完整报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            console.log('::set-output name=summary::' + summary);
+          }
+
+    - name: 更新安全看板
+      if: github.event_name == 'schedule'
+      run: |
+        # 生成Markdown格式的看板数据
+        cat > security-board-data.md << EOF
+        # 安全看板数据
+
+        更新时间: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+        ## 待办 (To Do)
+        - [ ] 所有新发现的安全问题初始状态
+
+        ## 进行中 (In Progress)
+        - [ ] 正在修复的问题
+
+        ## 待审核 (Review)
+        - [ ] 修复完成待代码审查
+
+        ## 已完成 (Done)
+        - [ ] 已关闭的安全问题
+        EOF
+
+    - name: 发送每日安全摘要（可选）
+      if: github.event_name == 'schedule' && steps.security-triage.outputs.summary
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            text: "${{ steps.security-triage.outputs.summary }}",
+            attachments: [{
+              color: "${{ stats.critical > 0 || stats.overdue > 0 && 'danger' || 'good' }}",
+              fields: [{
+                title: "严重问题",
+                value: "${{ stats.critical }}",
+                short: true
+              }, {
+                title: "过期问题",
+                value: "${{ stats.overdue }}",
+                short: true
+              }]
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SECURITY_SLACK_WEBHOOK }}
+
+    - name: 上传报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: daily-security-report
+        path: |
+          daily-security-report.md
+          security-board-data.md
