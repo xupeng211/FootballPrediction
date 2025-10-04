@@ -11,13 +11,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 def test_imports():
     """测试核心包导入"""
     try:
-        import fastapi
-        import sqlalchemy
-        import pydantic
-        import redis
-        import celery
-        import numpy
-        import pandas
+        import fastapi  # noqa: F401
+        import sqlalchemy  # noqa: F401
+        import pydantic  # noqa: F401
+        import redis  # noqa: F401
+        import celery  # noqa: F401
+        import numpy  # noqa: F401
+        import pandas  # noqa: F401
+
         assert True
     except ImportError as e:
         pytest.fail(f"导入失败: {e}")

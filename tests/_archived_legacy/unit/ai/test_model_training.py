@@ -10,7 +10,6 @@ Tests the model training pipeline including:
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 import pandas as pd

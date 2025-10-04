@@ -36,7 +36,7 @@ def mock_external_services() -> None:
     apply_mlflow_mocks(monkeypatch)
     apply_redis_mocks(monkeypatch)
     apply_kafka_mocks(monkeypatch)
-    apply_http_mocks(monkeypatch)
+    apply_http_mocks(monkeypatch, responses={})
     yield
     monkeypatch.undo()
 

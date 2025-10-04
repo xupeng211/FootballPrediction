@@ -9,7 +9,6 @@ Tests the ModelMetricsExporter class and related evaluation functions including:
 """
 
 from datetime import datetime
-from unittest.mock import patch
 
 import pytest
 from prometheus_client import CollectorRegistry
