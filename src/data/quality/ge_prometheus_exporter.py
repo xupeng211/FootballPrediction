@@ -127,7 +127,7 @@ class GEPrometheusExporter:
                     await self._export_table_validation_result(table_result)
 
                 # 导出总体统计
-                overall_stats = validation_results.get("overall_statistics", {})
+                overall_stats = validation_results.get(str("overall_statistics"), {})
                 self._export_overall_statistics(overall_stats)
 
             else:
@@ -147,12 +147,12 @@ class GEPrometheusExporter:
         self, table_result: Dict[str, Any]
     ) -> None:
         """导出单表验证结果"""
-        table_name = table_result.get("table_name", "unknown")
-        suite_name = table_result.get("suite_name", "unknown")
+        table_name = table_result.get(str("table_name"), "unknown")
+        suite_name = table_result.get(str("suite_name"), "unknown")
 
         # 基础指标
-        success_rate = table_result.get("success_rate", 0)
-        total_expectations = table_result.get("total_expectations", 0)
+        success_rate = table_result.get(str("success_rate"), 0)
+        total_expectations = table_result.get(str("total_expectations"), 0)
 
         # 设置Prometheus指标
         self.data_quality_success_rate.labels(
@@ -164,9 +164,9 @@ class GEPrometheusExporter:
         ).set(total_expectations)
 
         # 处理失败的断言
-        failed_expectations = table_result.get("failed_expectations", [])
+        failed_expectations = table_result.get(str("failed_expectations"), [])
         for failed_exp in failed_expectations:
-            expectation_type = failed_exp.get("expectation_type", "unknown")
+            expectation_type = failed_exp.get(str("expectation_type"), "unknown")
             self.expectations_failed.labels(
                 table_name=table_name,
                 suite_name=suite_name,
@@ -180,10 +180,12 @@ class GEPrometheusExporter:
         # 更新验证信息
         validation_info = {
             "table_name": table_name,
-            "last_validation_time": table_result.get("validation_time", "unknown"),
-            "status": table_result.get("status", "unknown"),
-            "rows_checked": str(table_result.get("rows_checked", 0)),
-            "ge_validation_id": table_result.get("ge_validation_result_id", "unknown"),
+            "last_validation_time": table_result.get(str("validation_time"), "unknown"),
+            "status": table_result.get(str("status"), "unknown"),
+            "rows_checked": str(table_result.get(str("rows_checked"), 0)),
+            "ge_validation_id": table_result.get(
+                str("ge_validation_result_id"), "unknown"
+            ),
         }
         self.validation_info.info(validation_info)
 
@@ -194,11 +196,11 @@ class GEPrometheusExporter:
     def _export_overall_statistics(self, overall_stats: Dict[str, Any]) -> None:
         """导出总体统计信息"""
         try:
-            total_tables = overall_stats.get("total_tables", 0)
-            passed_tables = overall_stats.get("passed_tables", 0)
-            failed_tables = overall_stats.get("failed_tables", 0)
-            error_tables = overall_stats.get("error_tables", 0)
-            overall_success_rate = overall_stats.get("overall_success_rate", 0)
+            total_tables = overall_stats.get(str("total_tables"), 0)
+            passed_tables = overall_stats.get(str("passed_tables"), 0)
+            failed_tables = overall_stats.get(str("failed_tables"), 0)
+            error_tables = overall_stats.get(str("error_tables"), 0)
+            overall_success_rate = overall_stats.get(str("overall_success_rate"), 0)
 
             # 设置总体质量评分
             self.quality_score.labels(table_name="overall").set(overall_success_rate)
@@ -223,7 +225,7 @@ class GEPrometheusExporter:
             freshness_data: 数据新鲜度检查结果
         """
         try:
-            details = freshness_data.get("details", {})
+            details = freshness_data.get(str("details"), {})
 
             # 导出赛程数据新鲜度
             if "fixtures" in details:
@@ -238,7 +240,9 @@ class GEPrometheusExporter:
             # 导出赔率数据新鲜度
             if "odds" in details:
                 odds_data = details["odds"]
-                hours_since_update = odds_data.get("hours_since_update", float("inf"))
+                hours_since_update = odds_data.get(
+                    str("hours_since_update"), float("inf")
+                )
                 self.data_freshness_hours.labels(
                     table_name="odds", data_type="odds"
                 ).set(hours_since_update if hours_since_update != float("inf") else 999)
@@ -262,8 +266,8 @@ class GEPrometheusExporter:
             # 按类型和严重性统计异常
             anomaly_stats: Dict[str, Any] = {}
             for anomaly in anomalies:
-                anomaly_type = anomaly.get("type", "unknown")
-                severity = anomaly.get("severity", "unknown")
+                anomaly_type = anomaly.get(str("type"), "unknown")
+                severity = anomaly.get(str("severity"), "unknown")
                 table_name = "unknown"
 
                 # 根据异常类型确定表名
@@ -273,7 +277,7 @@ class GEPrometheusExporter:
                     table_name = "matches"
 
                 key = (table_name, anomaly_type, severity)
-                anomaly_stats[key] = anomaly_stats.get(key, 0) + 1
+                anomaly_stats[key] = anomaly_stats.get(str(key), 0) + 1
 
             # 设置异常指标
             for (table_name, anomaly_type, severity), count in anomaly_stats.items():

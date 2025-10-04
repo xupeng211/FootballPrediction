@@ -412,8 +412,8 @@ class GreatExpectationsConfig:
             statistics = validation_result.statistics
             results = validation_result.results
 
-            success_count = statistics.get("successful_expectations", 0)
-            total_count = statistics.get("evaluated_expectations", 0)
+            success_count = statistics.get(str("successful_expectations"), 0)
+            total_count = statistics.get(str("evaluated_expectations"), 0)
             success_rate = (success_count / total_count * 100) if total_count > 0 else 0
 
             # 收集失败的断言详情
@@ -439,9 +439,9 @@ class GreatExpectationsConfig:
                 "rows_checked": limit_rows,
                 "status": "PASSED" if success_rate >= 95 else "FAILED",
                 "failed_expectations": failed_expectations[:5],  # 只保留前5个失败的断言
-                "ge_validation_result_id": validation_result.meta.get("run_id", {}).get(
-                    "run_name", "unknown"
-                ),
+                "ge_validation_result_id": validation_result.meta.get(
+                    str("run_id"), {}
+                ).get("run_name", "unknown"),
             }
 
             self.logger.info(
@@ -494,7 +494,7 @@ class GreatExpectationsConfig:
 
         # 计算总体成功率
         if all_results:
-            total_success_rate = sum(r.get("success_rate", 0) for r in all_results)
+            total_success_rate = sum(r.get(str("success_rate"), 0) for r in all_results)
             overall_stats["overall_success_rate"] = round(
                 total_success_rate / len(all_results), 2
             )

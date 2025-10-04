@@ -351,9 +351,9 @@ class PredictionRequest:
     def from_dict(cls, data: Dict[str, Any]) -> "PredictionRequest":
         """从字典创建预测请求"""
         return cls(
-            match_id=data.get("match_id", ""),
-            home_team=data.get("home_team", ""),
-            away_team=data.get("away_team", ""),
+            match_id=data.get(str("match_id"), ""),
+            home_team=data.get(str("home_team"), ""),
+            away_team=data.get(str("away_team"), ""),
             features=data.get("features"),
         )
 

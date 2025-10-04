@@ -40,17 +40,24 @@ def _install_health_stubs(stack: ExitStack) -> None:
 @pytest.fixture
 def api_client(monkeypatch):
     """API测试客户端，默认启用最小化健康检查模式"""
-    from src.main import app
-
+    # 设置环境变量在导入前
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
+    monkeypatch.setenv("MINIMAL_API_MODE", "true")  # 只加载健康检查路由
 
-    with ExitStack() as stack:
+    stack = ExitStack()
+    try:
         _install_health_stubs(stack)
+
+        # 延迟导入，在设置好环境变量和 mock 后
+        from src.main import app
+
         app.dependency_overrides = {}
-        with TestClient(app) as client:
+        with TestClient(app, raise_server_exceptions=False) as client:
             yield client
+    finally:
+        stack.close()
 
 
 @pytest.fixture

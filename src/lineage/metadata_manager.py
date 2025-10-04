@@ -67,8 +67,7 @@ class MetadataManager:
 
             result = response.json()
             logger.info(f"创建命名空间成功: {name}")
-            return result
-
+            return result if isinstance(result, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"创建命名空间失败 {name}: {e}")
             raise
@@ -129,8 +128,7 @@ class MetadataManager:
 
             result = response.json()
             logger.info(f"创建数据集成功: {namespace}.{name}")
-            return result
-
+            return result if isinstance(result, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"创建数据集失败 {namespace}.{name}: {e}")
             raise
@@ -197,8 +195,7 @@ class MetadataManager:
 
             result = response.json()
             logger.info(f"创建作业成功: {namespace}.{name}")
-            return result
-
+            return result if isinstance(result, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"创建作业失败 {namespace}.{name}: {e}")
             raise
@@ -226,8 +223,7 @@ class MetadataManager:
 
             result = response.json()
             logger.info(f"获取数据集血缘成功: {namespace}.{name}")
-            return result
-
+            return result if isinstance(result, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"获取数据集血缘失败 {namespace}.{name}: {e}")
             raise
@@ -252,14 +248,15 @@ class MetadataManager:
             params["namespace"] = namespace
 
         try:
-            response = self.session.get(urljoin(self.api_url, "search"), params=params)
+            response = self.session.get(
+                str(urljoin(self.api_url, None), "search"), params=params
+            )
             response.raise_for_status()
 
             result = response.json()
-            datasets = result.get("results", [])
+            datasets = result.get(str("results", None), [])
             logger.info(f"搜索数据集成功，找到 {len(datasets)} 个结果")
-            return datasets
-
+            return datasets if isinstance(datasets, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"搜索数据集失败: {e}")
             raise
@@ -284,12 +281,11 @@ class MetadataManager:
             response.raise_for_status()
 
             result = response.json()
-            versions = result.get("versions", [])
+            versions = result.get(str("versions", None), [])
             logger.info(
                 f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本"
             )
-            return versions
-
+            return versions if isinstance(versions, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"获取数据集版本失败 {namespace}.{name}: {e}")
             raise
@@ -316,12 +312,11 @@ class MetadataManager:
             response.raise_for_status()
 
             result = response.json()
-            runs = result.get("runs", [])
+            runs = result.get(str("runs", None), [])
             logger.info(
                 f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录"
             )
-            return runs
-
+            return runs if isinstance(runs, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"获取作业运行历史失败 {namespace}.{job_name}: {e}")
             raise
@@ -348,8 +343,7 @@ class MetadataManager:
 
             result = response.json()
             logger.info(f"添加数据集标签成功: {namespace}.{name} -> {tag}")
-            return result
-
+            return result if isinstance(result, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"添加数据集标签失败 {namespace}.{name} -> {tag}: {e}")
             raise
@@ -515,4 +509,4 @@ def get_metadata_manager() -> MetadataManager:
     global _metadata_manager
     if _metadata_manager is None:
         _metadata_manager = MetadataManager()
-    return _metadata_manager
+    return _metadata_manager if isinstance(_metadata_manager, dict) else {}

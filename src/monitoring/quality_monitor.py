@@ -268,7 +268,9 @@ class QualityMonitor:
                         records_count=0,
                         freshness_hours=999999,
                         is_fresh=False,
-                        threshold_hours=self.freshness_thresholds.get(table_name, 24),
+                        threshold_hours=self.freshness_thresholds.get(
+                            str(table_name), 24
+                        ),
                     )
 
         logger.info(f"数据新鲜度检查完成，检查了 {len(results)} 张表")
@@ -287,7 +289,7 @@ class QualityMonitor:
         Returns:
             DataFreshnessResult: 新鲜度检查结果
         """
-        threshold_hours = self.freshness_thresholds.get(table_name, 24)
+        threshold_hours = self.freshness_thresholds.get(str(table_name), 24)
 
         # 根据表名选择相应的模型和时间字段
         if table_name == "matches":
@@ -378,9 +380,7 @@ class QualityMonitor:
             # 使用quoted_name确保表名安全，防止SQL注入
             safe_table_name = quoted_name(table_name, quote=True)
             count_result = await session.execute(
-                text(
-                    f"SELECT COUNT(*) as count FROM {safe_table_name}"
-                )  # nosec B608 - using quoted_name for safety
+                text(f"SELECT COUNT(*) as count FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
             )
             count_row = count_result.first()
             try:
@@ -497,7 +497,7 @@ class QualityMonitor:
         Returns:
             DataCompletenessResult: 完整性检查结果
         """
-        critical_fields = self.critical_fields.get(table_name, [])
+        critical_fields = self.critical_fields.get(str(table_name), [])
 
         if not critical_fields:
             logger.warning(f"表 {table_name} 未定义关键字段")
@@ -519,9 +519,7 @@ class QualityMonitor:
 
         safe_table_name = quoted_name(table_name, quote=True)
         total_result = await session.execute(
-            text(
-                f"SELECT COUNT(*) as total FROM {safe_table_name}"
-            )  # nosec B608 - using quoted_name for safety
+            text(f"SELECT COUNT(*) as total FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
         )
         total_row = total_result.first()
         try:
@@ -549,7 +547,7 @@ class QualityMonitor:
         for field in critical_fields:
             try:
                 # Validate field name to prevent SQL injection
-                if field not in self.critical_fields.get(table_name, []):
+                if field not in self.critical_fields.get(str(table_name), []):
                     continue
                 missing_result = await session.execute(
                     text(
@@ -595,19 +593,19 @@ class QualityMonitor:
 
         async with self.db_manager.get_async_session() as session:
             # 检查外键一致性
-            consistency_results["foreign_key_consistency"] = (
-                await self._check_foreign_key_consistency(session)
-            )
+            consistency_results[
+                "foreign_key_consistency"
+            ] = await self._check_foreign_key_consistency(session)
 
             # 检查赔率数据一致性
-            consistency_results["odds_consistency"] = (
-                await self._check_odds_consistency(session)
-            )
+            consistency_results[
+                "odds_consistency"
+            ] = await self._check_odds_consistency(session)
 
             # 检查比赛状态一致性
-            consistency_results["match_status_consistency"] = (
-                await self._check_match_status_consistency(session)
-            )
+            consistency_results[
+                "match_status_consistency"
+            ] = await self._check_match_status_consistency(session)
 
         logger.info("数据一致性检查完成")
         return consistency_results
@@ -631,13 +629,6 @@ class QualityMonitor:
                 )
             )
             home_teams_row = orphaned_home_teams.first()
-            try:
-                import inspect
-
-                if inspect.isawaitable(home_teams_row):
-                    home_teams_row = await home_teams_row
-            except Exception:
-                pass
             results["orphaned_home_teams"] = (
                 int(home_teams_row[0]) if home_teams_row else 0
             )
@@ -709,13 +700,6 @@ class QualityMonitor:
                 )
             )
             invalid_odds_row = invalid_odds.first()
-            try:
-                import inspect
-
-                if inspect.isawaitable(invalid_odds_row):
-                    invalid_odds_row = await invalid_odds_row
-            except Exception:
-                pass
             results["invalid_odds_range"] = (
                 int(invalid_odds_row[0])
                 if invalid_odds_row and invalid_odds_row[0] is not None
@@ -770,13 +754,6 @@ class QualityMonitor:
                 )
             )
             finished_result = finished_without_score.first()
-            try:
-                import inspect
-
-                if inspect.isawaitable(finished_result):
-                    finished_result = await finished_result
-            except Exception:
-                pass
             results["finished_matches_without_score"] = (
                 int(finished_result[0])
                 if finished_result and finished_result[0] is not None
@@ -845,9 +822,11 @@ class QualityMonitor:
 
             # 计算一致性得分（基于错误数量）
             consistency_errors = 0
-            fk_consistency = consistency_results.get("foreign_key_consistency", {})
-            odds_consistency = consistency_results.get("odds_consistency", {})
-            match_consistency = consistency_results.get("match_status_consistency", {})
+            fk_consistency = consistency_results.get(str("foreign_key_consistency"), {})
+            odds_consistency = consistency_results.get(str("odds_consistency"), {})
+            match_consistency = consistency_results.get(
+                str("match_status_consistency"), {}
+            )
 
             consistency_errors += sum(
                 v for v in fk_consistency.values() if isinstance(v, int)
@@ -954,18 +933,18 @@ class QualityMonitor:
         recommendations = []
 
         # 基于各项评分给出建议
-        if quality_data.get("freshness_score", 0) < 80:
+        if quality_data.get(str("freshness_score"), 0) < 80:
             recommendations.append(
                 "数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性"
             )
 
-        if quality_data.get("completeness_score", 0) < 85:
+        if quality_data.get(str("completeness_score"), 0) < 85:
             recommendations.append("数据完整性有待提升，建议检查关键字段的数据录入流程")
 
-        if quality_data.get("consistency_score", 0) < 90:
+        if quality_data.get(str("consistency_score"), 0) < 90:
             recommendations.append("数据一致性存在问题，建议检查外键约束和数据验证规则")
 
-        if quality_data.get("overall_score", 0) < 70:
+        if quality_data.get(str("overall_score"), 0) < 70:
             recommendations.append("整体数据质量需要重点关注，建议制定数据治理改进计划")
 
         return recommendations

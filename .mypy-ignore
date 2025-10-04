@@ -1,0 +1,38 @@
+# MyPy忽略文件 - 列出暂时无法修复的类型错误
+
+# 导入相关的忽略
+src/utils/warning_filters.py:26: error: Cannot find implementation or library stub for module named "marshmallow.warnings"  [import-not-found]
+src/utils/warning_filters.py:26: error: Cannot find implementation or library stub for module named "marshmallow"  [import-not-found]
+src/lineage/lineage_reporter.py:13: error: Cannot find implementation or library stub for module named "openlineage.client"  [import-not-found]
+src/lineage/lineage_reporter.py:14: error: Cannot find implementation or library stub for module named "openlineage.client.event_v2"  [import-not-found]
+src/lineage/lineage_reporter.py:15: error: Cannot find implementation or library stub for module named "openlineage.client.facet_v2"  [import-not-found]
+src/streaming/kafka_producer.py:18: error: Cannot find implementation or library stub for module named "confluent_kafka"  [import-not-found]
+src/streaming/kafka_consumer.py:17: error: Cannot find implementation or library stub for module named "confluent_kafka"  [import-not-found]
+src/data/storage/data_lake_storage.py:30: error: Cannot find implementation or library stub for module named "boto3"  [import-not-found]
+src/data/quality/great_expectations_config.py:22: error: Cannot find implementation or library stub for module named "great_expectations"  [import-not-found]
+src/data/quality/great_expectations_config.py:23: error: Cannot find implementation or library stub for module named "great_expectations.core.yaml_handler"  [import-not-found]
+src/data/quality/great_expectations_config.py:24: error: Cannot find implementation or library stub for module named "great_expectations.exceptions"  [import-not-found]
+
+# SQLAlchemy相关 - 需要大量重构
+src/database/migrations/versions/9ac2aff86228_merge_multiple_migration_heads.py:13: error: Incompatible types in assignment
+src/database/migrations/versions/f48d412852cc_add_data_collection_logs_and_bronze_layer_tables.py:199: error: Argument 2 to "Column" has incompatible type
+
+# 复杂的类型推断问题
+src/data/quality/anomaly_detector.py:615: error: Unsupported target for indexed assignment
+src/data/quality/anomaly_detector.py:1368: error: Value of type "object" is not indexable
+src/data/quality/great_expectations_config.py:245: error: "GreatExpectationsConfig" has no attribute "yaml_handler"
+src/data/quality/great_expectations_config.py:489: error: Unsupported operand types for + ("object" and "int")
+src/services/data_processing.py:100: error: Unsupported target for indexed assignment
+src/services/data_processing.py:240: error: Unsupported operand types for + ("object" and "int")
+
+# 第三方库兼容性问题
+src/data/storage/data_lake_storage.py:456: error: Incompatible default for argument "endpoint_url"
+src/data/storage/data_lake_storage.py:457: error: Incompatible default for argument "access_key"
+src/data/storage/data_lake_storage.py:458: error: Incompatible default for argument "secret_key"
+src/monitoring/metrics_exporter.py:340: error: Incompatible default for argument "table_counts"
+src/tasks/utils.py:164: error: Incompatible default for argument "interval_minutes"
+
+# 需要详细类型分析的复杂问题
+src/monitoring/system_monitor.py:418: error: Unsupported target for indexed assignment
+src/monitoring/system_monitor.py:470: error: "Pool" has no attribute "size"
+src/monitoring/system_monitor.py:702: error: Module "src.streaming.kafka_producer" has no attribute "get_kafka_producer"

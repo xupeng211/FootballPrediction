@@ -8,7 +8,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -23,6 +23,7 @@ from prometheus_client import (
 from sqlalchemy import text
 
 from ..database.connection import get_async_session
+from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,11 @@ class MetricsExporter:
     - 系统健康状态
     """
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(
+        self,
+        registry: Optional[CollectorRegistry] = None,
+        tables_to_monitor: Optional[List[str]] = None,
+    ):
         """
         初始化指标导出器
 
@@ -52,6 +57,19 @@ class MetricsExporter:
                      这是 Prometheus 测试的最佳实践。
         """
         self.registry = registry or REGISTRY
+        settings = get_settings()
+        default_tables = list(getattr(settings, "metrics_tables", []) or []) or [
+            "matches",
+            "teams",
+            "leagues",
+            "odds",
+            "features",
+            "raw_match_data",
+            "raw_odds_data",
+            "raw_scores_data",
+            "data_collection_logs",
+        ]
+        self._tables_to_monitor: List[str] = list(tables_to_monitor or default_tables)
 
         # 数据采集指标
         self.data_collection_total = self._get_or_create_counter(
@@ -162,6 +180,11 @@ class MetricsExporter:
                 "environment": "production",
             }
         )
+
+    def set_tables_to_monitor(self, tables: List[str]) -> None:
+        """设置需要统计行数的表列表。"""
+
+        self._tables_to_monitor = list(tables)
 
     def record_data_collection(
         self,
@@ -337,7 +360,7 @@ class MetricsExporter:
                 task_name=task_name, failure_reason="test_failure"
             ).inc()
 
-    def update_table_row_counts(self, table_counts: dict = None) -> None:
+    def update_table_row_counts(self, table_counts: Optional[dict] = None) -> None:
         """
         更新数据表行数统计 - 兼容测试接口
 
@@ -363,20 +386,11 @@ class MetricsExporter:
         """
         try:
             async with get_async_session() as session:
-                # 获取各表行数
-                tables_to_monitor = [
-                    "matches",
-                    "teams",
-                    "leagues",
-                    "odds",
-                    "features",
-                    "raw_match_data",
-                    "raw_odds_data",
-                    "raw_scores_data",
-                    "data_collection_logs",
-                ]
+                if not self._tables_to_monitor:
+                    logger.debug("未配置数据库表监控列表，跳过行数统计")
+                    return
 
-                for table_name in tables_to_monitor:
+                for table_name in self._tables_to_monitor:
                     try:
                         # 使用参数化查询避免SQL注入风险
                         # 注意：表名不能参数化，所以需要验证表名的安全性
@@ -391,9 +405,7 @@ class MetricsExporter:
 
                         safe_table_name = quoted_name(table_name, quote=True)
                         result = await session.execute(
-                            text(
-                                f"SELECT COUNT(*) FROM {safe_table_name}"
-                            )  # nosec B608 - using quoted_name for safety
+                            text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
                         )
                         row_count = result.scalar()
                         self.table_row_count.labels(table_name=table_name).set(

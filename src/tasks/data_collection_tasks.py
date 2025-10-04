@@ -114,20 +114,22 @@ def collect_fixtures_task(
         result = asyncio.run(_collect_fixtures())
 
         if isinstance(result, dict) and result.get("status") == "failed":
-            raise Exception(f"赛程采集失败: {result.get('error_message', '未知错误')}")
+            raise Exception(
+                f"赛程采集失败: {result.get(str('error_message'), '未知错误')}"
+            )
 
         success_count = (
-            result.get("success_count", 0)
+            result.get(str("success_count"), 0)
             if isinstance(result, dict)
             else getattr(result, "success_count", 0)
         )
         error_count = (
-            result.get("error_count", 0)
+            result.get(str("error_count"), 0)
             if isinstance(result, dict)
             else getattr(result, "error_count", 0)
         )
         records_collected = (
-            result.get("records_collected", 0)
+            result.get(str("records_collected"), 0)
             if isinstance(result, dict)
             else getattr(result, "records_collected", 0)
         )
@@ -137,7 +139,7 @@ def collect_fixtures_task(
         )
 
         status = (
-            result.get("status", "success")
+            result.get(str("status"), "success")
             if isinstance(result, dict)
             else getattr(result, "status", "success")
         )
@@ -496,7 +498,8 @@ def emergency_data_collection_task(
 
             # 高优先级收集该比赛的所有相关数据
             fixtures_task = collect_fixtures_task.apply_async(
-                kwargs={"days_ahead": 1}, priority=9  # 最高优先级
+                kwargs={"days_ahead": 1},
+                priority=9,  # 最高优先级
             )
             odds_task = collect_odds_task.apply_async(priority=9)
             scores_task = collect_scores_task.apply_async(

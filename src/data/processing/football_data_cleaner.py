@@ -62,20 +62,20 @@ class FootballDataCleaner:
             if not self._validate_match_data(raw_data):
                 return None
 
-            league_id = await self._map_league_id(raw_data.get("competition", {}))
+            league_id = await self._map_league_id(raw_data.get(str("competition"), {}))
 
             home_team_id = await self._map_team_id(
-                raw_data.get("homeTeam", {}), league_id=league_id
+                raw_data.get(str("homeTeam"), {}), league_id=league_id
             )
             away_team_id = await self._map_team_id(
-                raw_data.get("awayTeam", {}), league_id=league_id
+                raw_data.get(str("awayTeam"), {}), league_id=league_id
             )
 
             cleaned_data = {
                 # 基础信息
-                "external_match_id": str(raw_data.get("id", "")),
+                "external_match_id": str(raw_data.get(str("id"), "")),
                 "external_league_id": str(
-                    raw_data.get("competition", {}).get("id", "")
+                    raw_data.get(str("competition"), {}).get(str("id"), "")
                 ),
                 # 时间统一 - 转换为UTC
                 "match_time": self._to_utc_time(raw_data.get("utcDate")),
@@ -88,19 +88,19 @@ class FootballDataCleaner:
                 "match_status": self._standardize_match_status(raw_data.get("status")),
                 # 比分验证 - 范围检查
                 "home_score": self._validate_score(
-                    raw_data.get("score", {}).get("fullTime", {}).get("home")
+                    raw_data.get(str("score"), {}).get(str("fullTime"), {}).get("home")
                 ),
                 "away_score": self._validate_score(
-                    raw_data.get("score", {}).get("fullTime", {}).get("away")
+                    raw_data.get(str("score"), {}).get(str("fullTime"), {}).get("away")
                 ),
                 "home_ht_score": self._validate_score(
-                    raw_data.get("score", {}).get("halfTime", {}).get("home")
+                    raw_data.get(str("score"), {}).get(str("halfTime"), {}).get("home")
                 ),
                 "away_ht_score": self._validate_score(
-                    raw_data.get("score", {}).get("halfTime", {}).get("away")
+                    raw_data.get(str("score"), {}).get(str("halfTime"), {}).get("away")
                 ),
                 # 其他信息
-                "season": self._extract_season(raw_data.get("season", {})),
+                "season": self._extract_season(raw_data.get(str("season"), {})),
                 "matchday": raw_data.get("matchday"),
                 "venue": self._clean_venue_name(raw_data.get("venue")),
                 "referee": self._clean_referee_name(raw_data.get("referees")),
@@ -136,7 +136,7 @@ class FootballDataCleaner:
                     continue
 
                 # 提取和验证赔率值
-                outcomes = odds.get("outcomes", [])
+                outcomes = odds.get(str("outcomes"), [])
                 cleaned_outcomes = []
 
                 for outcome in outcomes:
@@ -162,7 +162,7 @@ class FootballDataCleaner:
                     continue
 
                 cleaned_data = {
-                    "external_match_id": str(odds.get("match_id", "")),
+                    "external_match_id": str(odds.get(str("match_id"), "")),
                     "bookmaker": self._standardize_bookmaker_name(
                         odds.get("bookmaker")
                     ),
@@ -425,7 +425,7 @@ class FootballDataCleaner:
             "SUSPENDED": "suspended",
         }
 
-        return status_mapping.get(status.upper(), "unknown")
+        return status_mapping.get(str(status.upper()), "unknown")
 
     def _validate_score(self, score: Any) -> Optional[int]:
         """
@@ -527,7 +527,7 @@ class FootballDataCleaner:
             "Under": "under",
         }
 
-        return name_mapping.get(str(name).strip(), str(name).lower())
+        return name_mapping.get(str(str(name).strip()), str(name).lower())
 
     def _standardize_bookmaker_name(self, bookmaker: Optional[str]) -> str:
         """标准化博彩公司名称"""
@@ -549,7 +549,9 @@ class FootballDataCleaner:
             "btts": "both_teams_score",
         }
 
-        return market_mapping.get(str(market_type).lower(), str(market_type).lower())
+        return market_mapping.get(
+            str(str(market_type).lower()), str(market_type).lower()
+        )
 
     def _validate_odds_consistency(self, outcomes: List[Dict[str, Any]]) -> bool:
         """

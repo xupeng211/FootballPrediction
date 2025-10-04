@@ -137,7 +137,7 @@ class DataQualityLog(BaseModel):
             "data_corruption": "critical",
         }
 
-        return severity_mapping.get(error_type, "medium")
+        return severity_mapping.get(str(error_type), "medium")
 
     @classmethod
     def create_from_ge_result(
@@ -151,11 +151,13 @@ class DataQualityLog(BaseModel):
             severity="medium",
             error_data={
                 "validation_result": validation_result,
-                "failed_expectations": validation_result.get("failed_expectations", []),
-                "success_rate": validation_result.get("success_rate", 0),
+                "failed_expectations": validation_result.get(
+                    str("failed_expectations"), []
+                ),
+                "success_rate": validation_result.get(str("success_rate"), 0),
             },
-            error_message=f"GE数据质量验证失败，成功率: {validation_result.get('success_rate', 0)}%",
+            error_message=f"GE数据质量验证失败，成功率: {validation_result.get(str('success_rate'), 0)}%",
             status="logged",
-            requires_manual_review=validation_result.get("success_rate", 0) < 80,
+            requires_manual_review=validation_result.get(str("success_rate"), 0) < 80,
             detected_at=datetime.now(),
         )

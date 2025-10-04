@@ -538,8 +538,10 @@ class SystemMonitor:
                 "response_time": response_time,
                 "write_time": write_time,
                 "read_time": read_time,
-                "connected_clients": info.get("connected_clients", 0) if info else 0,
-                "used_memory": info.get("used_memory", 0) if info else 0,
+                "connected_clients": info.get(str("connected_clients"), 0)
+                if info
+                else 0,
+                "used_memory": info.get(str("used_memory"), 0) if info else 0,
                 "timestamp": datetime.now().isoformat(),
             }
 

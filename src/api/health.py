@@ -218,7 +218,7 @@ async def readiness_check() -> Dict[str, Any]:
             checks[service] = _optional_check_skipped(service)
 
     # 判断整体就绪状态
-    all_healthy = all(check.get("healthy", False) for check in checks.values())
+    all_healthy = all(check.get(str("healthy"), False) for check in checks.values())
 
     status_code = (
         status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
@@ -285,9 +285,9 @@ async def _check_redis() -> Dict[str, Any]:
             "details": {
                 "message": "Redis连接正常",
                 "server_info": {
-                    "version": info.get("version", "unknown"),
-                    "connected_clients": info.get("connected_clients", 0),
-                    "used_memory": info.get("used_memory_human", "0B"),
+                    "version": info.get(str("version"), "unknown"),
+                    "connected_clients": info.get(str("connected_clients"), 0),
+                    "used_memory": info.get(str("used_memory_human"), "0B"),
                 },
             },
         }

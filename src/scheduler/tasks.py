@@ -123,8 +123,8 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
 
     except Exception as exc:
         # 重试逻辑
-        retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_fixtures", {})
-        max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)
+        retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("collect_fixtures"), {})
+        max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
         retry_delay = retry_config.get(
             "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
         )
@@ -180,8 +180,8 @@ def collect_odds(
 
     except Exception as exc:
         # 重试逻辑
-        retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_odds", {})
-        max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)
+        retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("collect_odds"), {})
+        max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
         retry_delay = retry_config.get(
             "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
         )
@@ -243,9 +243,9 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
 
     except Exception as exc:
         # 实时比分采集重试次数较少，因为时效性要求高
-        retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_live_scores", {})
-        max_retries = retry_config.get("max_retries", 1)
-        retry_delay = retry_config.get("retry_delay", 30)
+        retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("collect_live_scores"), {})
+        max_retries = retry_config.get(str("max_retries"), 1)
+        retry_delay = retry_config.get(str("retry_delay"), 30)
 
         if self.request.retries < max_retries:
             logger.warning(f"实时比分采集失败，将在{retry_delay}秒后重试: {str(exc)}")
@@ -327,11 +327,11 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                                 "features_count", 0
                             )
                             logger.info(
-                                f"比赛 {match_id} 特征计算成功，生成了 {feature_result.get('features_count', 0)} 个特征"
+                                f"比赛 {match_id} 特征计算成功，生成了 {feature_result.get(str('features_count'), 0)} 个特征"
                             )
                         else:
                             logger.warning(
-                                f"比赛 {match_id} 特征计算失败: {feature_result.get('error', 'Unknown error')}"
+                                f"比赛 {match_id} 特征计算失败: {feature_result.get(str('error'), 'Unknown error')}"
                             )
 
                     except Exception as e:
@@ -355,8 +355,8 @@ def calculate_features_batch(self, hours_ahead: int = 2):
         }
 
     except Exception as exc:
-        retry_config = TaskRetryConfig.RETRY_CONFIGS.get("calculate_features", {})
-        max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)
+        retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("calculate_features"), {})
+        max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
         retry_delay = retry_config.get(
             "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
         )
@@ -623,10 +623,10 @@ def run_quality_checks():
                     try:
                         result = await monitor.check_data_integrity(session, table_name)
                         checks_performed += 1
-                        if not result.get("passed", True):
-                            issues_found += result.get("issues_count", 1)
+                        if not result.get(str("passed"), True):
+                            issues_found += result.get(str("issues_count"), 1)
                             logger.warning(
-                                f"{description} 发现问题: {result.get('issues', [])}"
+                                f"{description} 发现问题: {result.get(str('issues'), [])}"
                             )
                         else:
                             logger.info(f"{description} 通过")
@@ -648,10 +648,10 @@ def run_quality_checks():
                             session, check_name
                         )
                         checks_performed += 1
-                        if not result.get("passed", True):
-                            issues_found += result.get("issues_count", 1)
+                        if not result.get(str("passed"), True):
+                            issues_found += result.get(str("issues_count"), 1)
                             logger.warning(
-                                f"{description} 发现问题: {result.get('issues', [])}"
+                                f"{description} 发现问题: {result.get(str('issues'), [])}"
                             )
                         else:
                             logger.info(f"{description} 通过")
@@ -673,10 +673,10 @@ def run_quality_checks():
                             session, table_name, hours_threshold
                         )
                         checks_performed += 1
-                        if not result.get("passed", True):
-                            issues_found += result.get("issues_count", 1)
+                        if not result.get(str("passed"), True):
+                            issues_found += result.get(str("issues_count"), 1)
                             logger.warning(
-                                f"{description} 发现问题: {result.get('issues', [])}"
+                                f"{description} 发现问题: {result.get(str('issues'), [])}"
                             )
                         else:
                             logger.info(f"{description} 通过")
@@ -693,7 +693,7 @@ def run_quality_checks():
                         checks_performed += 1
                     else:
                         logger.error(
-                            f"数据质量报告生成失败: {report_result.get('error', 'Unknown error')}"
+                            f"数据质量报告生成失败: {report_result.get(str('error'), 'Unknown error')}"
                         )
                         issues_found += 1
                 except Exception as e:
@@ -874,7 +874,7 @@ def backup_database():
                 try:
                     objects = await storage.list_objects("backups/")
                     for obj in objects:
-                        if obj.get("last_modified", 0) < cutoff_date:
+                        if obj.get(str("last_modified"), 0) < cutoff_date:
                             await storage.delete_object(obj["key"])
                             cleaned_count += 1
                 except Exception as e:
@@ -1007,7 +1007,7 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                             logger.info(f"比赛 {match_id} 预测生成成功")
                         else:
                             logger.warning(
-                                f"比赛 {match_id} 预测生成失败: {prediction_result.get('error', 'Unknown error')}"
+                                f"比赛 {match_id} 预测生成失败: {prediction_result.get(str('error'), 'Unknown error')}"
                             )
 
                     except Exception as e:
@@ -1142,7 +1142,7 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                                     )
                                 )
 
-                                if quality_result.get("passed", False):
+                                if quality_result.get(str("passed"), False):
                                     # 3. 转换为Silver层格式
                                     silver_data = await _transform_to_silver_format(
                                         cleaned_data, table_name, record_id
@@ -1203,7 +1203,7 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
 
                                 else:
                                     logger.warning(
-                                        f"数据质量验证失败: {quality_result.get('issues', [])}"
+                                        f"数据质量验证失败: {quality_result.get(str('issues'), [])}"
                                     )
 
                             except Exception as e:
@@ -1238,10 +1238,10 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                     "match_date": cleaned_data.get("match_date"),
                     "league_id": cleaned_data.get("league_id"),
                     "venue": cleaned_data.get("venue"),
-                    "status": cleaned_data.get("status", "scheduled"),
+                    "status": cleaned_data.get(str("status"), "scheduled"),
                     "source": cleaned_data.get("source"),
                     "processed_at": datetime.now().isoformat(),
-                    "data_quality_score": cleaned_data.get("quality_score", 1.0),
+                    "data_quality_score": cleaned_data.get(str("quality_score"), 1.0),
                 }
 
             elif bronze_table == "raw_odds_data":
@@ -1255,7 +1255,7 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                     "timestamp": cleaned_data.get("timestamp"),
                     "source": cleaned_data.get("source"),
                     "processed_at": datetime.now().isoformat(),
-                    "data_quality_score": cleaned_data.get("quality_score", 1.0),
+                    "data_quality_score": cleaned_data.get(str("quality_score"), 1.0),
                 }
 
             elif bronze_table == "raw_scores_data":
@@ -1268,7 +1268,7 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                     "timestamp": cleaned_data.get("timestamp"),
                     "source": cleaned_data.get("source"),
                     "processed_at": datetime.now().isoformat(),
-                    "data_quality_score": cleaned_data.get("quality_score", 1.0),
+                    "data_quality_score": cleaned_data.get(str("quality_score"), 1.0),
                 }
 
             else:

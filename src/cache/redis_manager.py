@@ -76,7 +76,7 @@ class CacheKeyManager:
             logger.warning(f"未知的Key前缀: {prefix}")
 
         # 构建基础Key
-        key_parts = [cls.PREFIXES.get(prefix, prefix)]
+        key_parts = [cls.PREFIXES.get(str(prefix), prefix)]
         # 过滤掉None和空字符串，但保留数字0
         key_parts.extend(
             str(arg)
@@ -101,7 +101,7 @@ class CacheKeyManager:
         Returns:
             int: TTL秒数
         """
-        return cls.TTL_CONFIG.get(cache_type, cls.TTL_CONFIG["default"])
+        return cls.TTL_CONFIG.get(str(cache_type), cls.TTL_CONFIG["default"])
 
     # 常用Key模式定义
     @staticmethod
@@ -806,13 +806,15 @@ class RedisManager:
         try:
             info = self._sync_client.info()  # type: ignore[union-attr]
             return {
-                "version": info.get("redis_version", "unknown"),  # type: ignore[union-attr]
-                "mode": info.get("redis_mode", "standalone"),  # type: ignore[union-attr]
-                "connected_clients": info.get("connected_clients", 0),  # type: ignore[union-attr]
-                "used_memory_human": info.get("used_memory_human", "0B"),  # type: ignore[union-attr]
-                "keyspace_hits": info.get("keyspace_hits", 0),  # type: ignore[union-attr]
-                "keyspace_misses": info.get("keyspace_misses", 0),  # type: ignore[union-attr]
-                "total_commands_processed": info.get("total_commands_processed", 0),  # type: ignore[union-attr]
+                "version": info.get(str("redis_version"), "unknown"),  # type: ignore[union-attr]
+                "mode": info.get(str("redis_mode"), "standalone"),  # type: ignore[union-attr]
+                "connected_clients": info.get(str("connected_clients"), 0),  # type: ignore[union-attr]
+                "used_memory_human": info.get(str("used_memory_human"), "0B"),  # type: ignore[union-attr]
+                "keyspace_hits": info.get(str("keyspace_hits"), 0),  # type: ignore[union-attr]
+                "keyspace_misses": info.get(str("keyspace_misses"), 0),  # type: ignore[union-attr]
+                "total_commands_processed": info.get(
+                    str("total_commands_processed"), 0
+                ),  # type: ignore[union-attr]
             }
         except Exception as e:
             logger.error(f"获取Redis信息失败: {e}")
@@ -919,7 +921,7 @@ def get_redis_manager() -> RedisManager:
 # 便捷函数，直接使用全局实例
 def get_cache(key: str, default: Any = None) -> Any:
     """便捷函数：获取缓存"""
-    return get_redis_manager().get(key, default)
+    return get_redis_manager().get(str(key), default)
 
 
 def set_cache(

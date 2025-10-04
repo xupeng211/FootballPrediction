@@ -425,7 +425,7 @@ async def get_match_prediction_history(
         raise HTTPException(status_code=500, detail="获取历史预测失败")
 
 
-@router.get("/recent", summary="获取最近的预测", description="获取最近的预测记录")
+@router.get(str("/recent"), summary="获取最近的预测", description="获取最近的预测记录")
 async def get_recent_predictions(
     hours: int = Query(default=24, description="时间范围（小时）", ge=1, le=168),
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),

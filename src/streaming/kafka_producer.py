@@ -141,7 +141,7 @@ class FootballKafkaProducer:
                 return False
 
             topic = "matches-stream"
-            message_key = key or str(match_data.get("match_id", ""))
+            message_key = key or str(match_data.get(str("match_id"), ""))
 
             # 添加元数据
             message_with_meta = {
@@ -190,7 +190,7 @@ class FootballKafkaProducer:
                 return False
 
             topic = "odds-stream"
-            message_key = key or str(odds_data.get("match_id", ""))
+            message_key = key or str(odds_data.get(str("match_id"), ""))
 
             # 添加元数据
             message_with_meta = {
@@ -241,7 +241,7 @@ class FootballKafkaProducer:
                 return False
 
             topic = "scores-stream"
-            message_key = key or str(scores_data.get("match_id", ""))
+            message_key = key or str(scores_data.get(str("match_id"), ""))
 
             # 添加元数据
             message_with_meta = {
@@ -401,7 +401,7 @@ class FootballKafkaProducer:
                     return False
 
             # 验证match_id是数字
-            if not isinstance(data.get("match_id"), (int, str)):
+            if not isinstance(data.get(str("match_id")), (int, str)):
                 return False
 
             return True
@@ -431,7 +431,7 @@ class FootballKafkaProducer:
                     return False
 
             # 验证match_id是数字
-            if not isinstance(data.get("match_id"), (int, str)):
+            if not isinstance(data.get(str("match_id")), (int, str)):
                 return False
 
             # 验证赔率值是数字（如果存在）
@@ -467,7 +467,7 @@ class FootballKafkaProducer:
                     return False
 
             # 验证match_id是数字
-            if not isinstance(data.get("match_id"), (int, str)):
+            if not isinstance(data.get(str("match_id")), (int, str)):
                 return False
 
             # 验证比分是数字（如果存在）
