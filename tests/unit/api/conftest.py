@@ -62,6 +62,7 @@ def api_client(monkeypatch):
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
+    monkeypatch.setenv("ENABLE_FEAST", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "true")  # 只加载健康检查路由
 
     stack = ExitStack()

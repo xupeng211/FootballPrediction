@@ -23,7 +23,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
+
 try:
+    if not ENABLE_FEAST:
+        raise ImportError("Feast explicitly disabled via ENABLE_FEAST=false")
+
     from feast import FeatureStore
     from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
         PostgreSQLOfflineStoreConfig,
