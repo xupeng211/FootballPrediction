@@ -484,6 +484,14 @@ clean-cache: ## Clean: Remove only cache files (keep venv)
 	find . -type f -name "*.pyc" -delete && \
 	echo "$(GREEN)✅ Cache cleanup completed$(RESET)"
 
+clean-temp: ## Clean: Remove temporary reports and generated files
+	@echo "$(YELLOW)Cleaning temporary files...$(RESET)" && \
+	rm -rf htmlcov/ htmlcov_60_plus/ coverage.xml coverage.json && \
+	rm -f *_SUMMARY.md *_REPORT*.md bandit_report.json && \
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+	find . -type f -name "*.pyc" -delete && \
+	echo "$(GREEN)✅ Temporary files cleanup completed$(RESET)"
+
 dev-setup: ## Quick development setup (install + env-check + context)
 	@echo "$(BLUE)🚀 Quick development setup...$(RESET)"
 	@$(MAKE) install
@@ -709,7 +717,7 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 .PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
-        feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
+        feedback-test mlops-pipeline mlops-status clean-cache clean-temp dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \
         docs-api docs-code docs-architecture docs-stats docs-all serve-docs \
         db-init db-migrate db-seed db-backup db-restore db-reset db-shell \
