@@ -91,6 +91,15 @@ jobs:
       run: |
         python -m pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=html
 
+    - name: Clean temporary files before upload
+      if: always()
+      run: |
+        # Keep only necessary artifacts, clean temporary files
+        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find . -type f -name "*.pyc" -delete
+        rm -f *_SUMMARY.md *_REPORT*.md 2>/dev/null || true
+        echo "✅ Temporary files cleaned, keeping test artifacts"
+
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'
       uses: codecov/codecov-action@v3
