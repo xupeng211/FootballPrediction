@@ -389,4 +389,4 @@ class PredictionResponse:
             "draw": self.draw_prob,
             "away_win": self.away_win_prob,
         }
-        return max(probabilities, key=probabilities.get)
+        return max(probabilities.items(), key=lambda x: x[1])[0]

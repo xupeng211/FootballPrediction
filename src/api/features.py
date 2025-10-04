@@ -38,8 +38,8 @@ try:
     logger.info("特征存储和计算器初始化成功")
 except Exception as e:
     logger.error(f"特征存储初始化失败: {e}")
-    feature_store = None
-    feature_calculator = None
+    feature_store: Optional[FootballFeatureStore] = None
+    feature_calculator: Optional[FeatureCalculator] = None
 
 
 @router.get(
@@ -101,10 +101,10 @@ async def get_match_features(
         # 4. 构造比赛实体（防御性编程）
         try:
             match_entity = MatchEntity(
-                match_id=match.id,
-                home_team_id=match.home_team_id,
-                away_team_id=match.away_team_id,
-                league_id=match.league_id,
+                match_id=int(int(match.id)),
+                home_team_id=int(match.home_team_id),
+                away_team_id=int(match.away_team_id),
+                league_id=int(match.league_id),
                 match_time=match.match_time,
                 season=match.season or "2024-25",
             )
@@ -121,8 +121,8 @@ async def get_match_features(
             logger.debug(f"从特征存储获取特征 (match_id={match_id})")
             features = await feature_store.get_match_features_for_prediction(
                 match_id=match_id,
-                home_team_id=match.home_team_id,
-                away_team_id=match.away_team_id,
+                home_team_id=int(match.home_team_id),
+                away_team_id=int(match.away_team_id),
             )
 
             if features:
@@ -140,7 +140,7 @@ async def get_match_features(
         # 6. 构造响应数据
         response_data = {
             "match_info": {
-                "match_id": match.id,
+                "match_id": int(match.id),
                 "home_team_id": match.home_team_id,
                 "away_team_id": match.away_team_id,
                 "league_id": match.league_id,
@@ -170,7 +170,7 @@ async def get_match_features(
                 logger.debug("原始特征计算完成")
             except Exception as raw_error:
                 logger.error(f"计算原始特征失败: {raw_error}")
-                response_data["raw_features_error"] = str(raw_error)
+                response_data["raw_features_error"] = {"error": str(raw_error)}
 
         # 8. 成功响应
         message = f"成功获取比赛 {match_id} 的特征"
@@ -249,9 +249,9 @@ async def get_team_features(
             "team_info": {
                 "team_id": team.id,
                 "team_name": team.name,
-                "league_id": team.league_id,
+                "league_id": int(team.league_id),
                 "founded_year": team.founded_year,
-                "venue": team.venue,
+                "venue": getattr(team, "venue", None),
             },
             "calculation_date": calculation_date.isoformat(),
             "features": (
@@ -263,10 +263,10 @@ async def get_team_features(
         if include_raw:
             try:
                 team_entity = TeamEntity(
-                    team_id=team.id,
+                    team_id=int(team.id),
                     team_name=team.name,
-                    league_id=team.league_id,
-                    home_venue=team.venue,
+                    league_id=int(team.league_id),
+                    home_venue=getattr(team, "venue", None),
                 )
 
                 all_features = await feature_calculator.calculate_all_team_features(
@@ -274,7 +274,7 @@ async def get_team_features(
                 )
                 response_data["raw_features"] = all_features.to_dict()
             except Exception as e:
-                response_data["raw_features_error"] = str(e)
+                response_data["raw_features_error"] = {"error": str(e)}
 
         return APIResponse.success(
             data=response_data, message=f"成功获取球队 {team.name} 的特征"
@@ -318,10 +318,10 @@ async def calculate_match_features(
 
         # 创建比赛实体
         match_entity = MatchEntity(
-            match_id=match.id,
-            home_team_id=match.home_team_id,
-            away_team_id=match.away_team_id,
-            league_id=match.league_id,
+            match_id=int(match.id),
+            home_team_id=int(match.home_team_id),
+            away_team_id=int(match.away_team_id),
+            league_id=int(match.league_id),
             match_time=match.match_time,
             season=match.season or "2024-25",
         )

@@ -100,10 +100,10 @@ async def get_match_features_improved(
         # 4. 构造比赛实体（防御性编程）
         try:
             match_entity = MatchEntity(
-                match_id=match.id,
-                home_team_id=match.home_team_id,
-                away_team_id=match.away_team_id,
-                league_id=match.league_id,
+                match_id=int(match.id),
+                home_team_id=int(match.home_team_id),
+                away_team_id=int(match.away_team_id),
+                league_id=int(match.league_id),
                 match_time=match.match_time,
                 season=match.season or "2024-25",  # 默认赛季
             )
@@ -120,8 +120,8 @@ async def get_match_features_improved(
             logger.debug(f"从特征存储获取特征 (match_id={match_id})")
             features = await feature_store.get_match_features_for_prediction(
                 match_id=match_id,
-                home_team_id=match.home_team_id,
-                away_team_id=match.away_team_id,
+                home_team_id=int(match.home_team_id),
+                away_team_id=int(match.away_team_id),
             )
 
             if features:
@@ -153,9 +153,9 @@ async def get_match_features_improved(
 
         # 添加特征获取状态
         if features_error:
-            response_data["features_warning"] = (
-                f"特征数据获取部分失败: {features_error}"
-            )
+            response_data["features_warning"] = {
+                "message": f"特征数据获取部分失败: {features_error}"
+            }
 
         # 7. 处理原始特征请求（可选）
         if include_raw and feature_calculator:
@@ -168,7 +168,7 @@ async def get_match_features_improved(
                 logger.debug("原始特征计算完成")
             except Exception as raw_error:
                 logger.error(f"计算原始特征失败: {raw_error}")
-                response_data["raw_features_error"] = str(raw_error)
+                response_data["raw_features_error"] = {"error": str(raw_error)}
 
         # 8. 成功响应
         message = f"成功获取比赛 {match_id} 的特征"
