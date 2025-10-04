@@ -126,7 +126,7 @@ S3_SECRET_KEY={keys['S3_SECRET_KEY']}
         f.write(env_content)
     
     print(f"✅ 新密钥已保存到: {output_file}")
-    print(f"⚠️  请勿将此文件提交到Git！")
+    print("⚠️  请勿将此文件提交到Git！")
     print()
     print("📋 后续步骤：")
     print("   1. 备份当前生产环境配置")
