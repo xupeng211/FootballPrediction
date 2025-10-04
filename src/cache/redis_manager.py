@@ -38,19 +38,19 @@ class CacheKeyManager:
 
     # TTL配置 (秒) - 优化后的配置
     TTL_CONFIG = {
-        "match_info": 3600,        # 比赛信息: 1小时 (提升缓存时间)
-        "match_features": 7200,    # 比赛特征: 2小时 (提升缓存时间)
-        "team_stats": 14400,       # 球队统计: 4小时 (提升缓存时间)
-        "team_features": 7200,     # 球队特征: 2小时 (提升缓存时间)
-        "odds_data": 900,          # 赔率数据: 15分钟 (提升缓存时间)
-        "predictions": 7200,       # 预测结果: 2小时 (提升缓存时间)
-        "historical_stats": 28800, # 历史统计: 8小时 (大幅提升缓存时间)
+        "match_info": 3600,  # 比赛信息: 1小时 (提升缓存时间)
+        "match_features": 7200,  # 比赛特征: 2小时 (提升缓存时间)
+        "team_stats": 14400,  # 球队统计: 4小时 (提升缓存时间)
+        "team_features": 7200,  # 球队特征: 2小时 (提升缓存时间)
+        "odds_data": 900,  # 赔率数据: 15分钟 (提升缓存时间)
+        "predictions": 7200,  # 预测结果: 2小时 (提升缓存时间)
+        "historical_stats": 28800,  # 历史统计: 8小时 (大幅提升缓存时间)
         "upcoming_matches": 1800,  # 即将开始的比赛: 30分钟
-        "league_table": 3600,     # 联赛积分榜: 1小时
-        "team_form": 7200,        # 球队近期状态: 2小时
-        "head_to_head": 14400,    # 历史交锋: 4小时
-        "model_metrics": 3600,    # 模型指标: 1小时
-        "default": 3600,          # 默认: 1小时 (提升默认缓存时间)
+        "league_table": 3600,  # 联赛积分榜: 1小时
+        "team_form": 7200,  # 球队近期状态: 2小时
+        "head_to_head": 14400,  # 历史交锋: 4小时
+        "model_metrics": 3600,  # 模型指标: 1小时
+        "default": 3600,  # 默认: 1小时 (提升默认缓存时间)
     }
 
     @classmethod
@@ -988,28 +988,26 @@ class CacheWarmupManager:
                     return False
 
                 # 缓存比赛信息
-                match_info_key = self.key_manager.build_key('match', match_id, 'info')
+                match_info_key = self.key_manager.build_key("match", match_id, "info")
                 match_data = {
-                    'id': match.id,
-                    'home_team': match.home_team,
-                    'away_team': match.away_team,
-                    'match_time': match.match_time.isoformat(),
-                    'league_id': match.league_id,
-                    'status': match.match_status.value,
-                    'venue': match.venue
+                    "id": match.id,
+                    "home_team": match.home_team,
+                    "away_team": match.away_team,
+                    "match_time": match.match_time.isoformat(),
+                    "league_id": match.league_id,
+                    "status": match.match_status.value,
+                    "venue": match.venue,
                 }
                 await self.redis_manager.aset(
-                    match_info_key,
-                    match_data,
-                    self.key_manager.get_ttl('match_info')
+                    match_info_key, match_data, self.key_manager.get_ttl("match_info")
                 )
 
                 # 缓存比赛特征
-                features_key = self.key_manager.build_key('match', match_id, 'features')
+                features_key = self.key_manager.build_key("match", match_id, "features")
                 await self.redis_manager.aset(
                     features_key,
-                    {'match_id': match_id, 'features_ready': True},
-                    self.key_manager.get_ttl('match_features')
+                    {"match_id": match_id, "features_ready": True},
+                    self.key_manager.get_ttl("match_features"),
                 )
 
                 logger.info(f"预热比赛缓存成功: match_id={match_id}")
@@ -1036,35 +1034,31 @@ class CacheWarmupManager:
 
             async with get_async_session() as session:
                 # 获取球队基本信息
-                result = await session.execute(
-                    select(Team).where(Team.id == team_id)
-                )
+                result = await session.execute(select(Team).where(Team.id == team_id))
                 team = result.scalar_one_or_none()
 
                 if not team:
                     return False
 
                 # 缓存球队信息
-                team_info_key = self.key_manager.build_key('team', team_id, 'info')
+                team_info_key = self.key_manager.build_key("team", team_id, "info")
                 team_data = {
-                    'id': team.id,
-                    'name': team.team_name,
-                    'country': team.country,
-                    'founded': team.founded_year,
-                    'stadium': team.stadium
+                    "id": team.id,
+                    "name": team.team_name,
+                    "country": team.country,
+                    "founded": team.founded_year,
+                    "stadium": team.stadium,
                 }
                 await self.redis_manager.aset(
-                    team_info_key,
-                    team_data,
-                    self.key_manager.get_ttl('team_stats')
+                    team_info_key, team_data, self.key_manager.get_ttl("team_stats")
                 )
 
                 # 缓存球队特征
-                features_key = self.key_manager.build_key('team', team_id, 'features')
+                features_key = self.key_manager.build_key("team", team_id, "features")
                 await self.redis_manager.aset(
                     features_key,
-                    {'team_id': team_id, 'features_ready': True},
-                    self.key_manager.get_ttl('team_features')
+                    {"team_id": team_id, "features_ready": True},
+                    self.key_manager.get_ttl("team_features"),
                 )
 
                 logger.info(f"预热球队缓存成功: team_id={team_id}")
@@ -1096,7 +1090,7 @@ class CacheWarmupManager:
                     select(Match).where(
                         Match.match_time <= cutoff_time,
                         Match.match_time >= datetime.now(),
-                        Match.match_status == 'scheduled'
+                        Match.match_status == "scheduled",
                     )
                 )
                 matches = result.scalars().all()
@@ -1127,19 +1121,17 @@ class CacheWarmupManager:
             bool: 预热是否成功
         """
         try:
-            stats_key = self.key_manager.build_key('stats', 'historical', 'summary')
+            stats_key = self.key_manager.build_key("stats", "historical", "summary")
             stats_data = {
-                'period_days': days,
-                'total_matches': 0,  # 这里可以填充实际统计数据
-                'avg_goals': 0.0,
-                'prediction_accuracy': 0.0,
-                'last_updated': datetime.now().isoformat()
+                "period_days": days,
+                "total_matches": 0,  # 这里可以填充实际统计数据
+                "avg_goals": 0.0,
+                "prediction_accuracy": 0.0,
+                "last_updated": datetime.now().isoformat(),
             }
 
             await self.redis_manager.aset(
-                stats_key,
-                stats_data,
-                self.key_manager.get_ttl('historical_stats')
+                stats_key, stats_data, self.key_manager.get_ttl("historical_stats")
             )
 
             logger.info(f"预热历史统计缓存成功: days={days}")
@@ -1158,22 +1150,18 @@ class CacheWarmupManager:
         """
         logger.info("开始执行完整缓存预热...")
 
-        results = {
-            'upcoming_matches': 0,
-            'historical_stats': 0,
-            'total': 0
-        }
+        results = {"upcoming_matches": 0, "historical_stats": 0, "total": 0}
 
         try:
             # 预热即将开始的比赛
             matches_count = await self.warmup_upcoming_matches()
-            results['upcoming_matches'] = matches_count
+            results["upcoming_matches"] = matches_count
 
             # 预热历史统计
             stats_success = await self.warmup_historical_stats()
-            results['historical_stats'] = 1 if stats_success else 0
+            results["historical_stats"] = 1 if stats_success else 0
 
-            results['total'] = results['upcoming_matches'] + results['historical_stats']
+            results["total"] = results["upcoming_matches"] + results["historical_stats"]
 
             logger.info(f"缓存预热完成: {results}")
             return results

@@ -322,31 +322,41 @@ class CompatibleQueryBuilder:
     # 兼容性方法 - 保持向后兼容，但不推荐使用
     def build_error_statistics_query(self, hours: int = 24) -> str:
         """构建错误统计查询（已弃用，使用get_error_statistics_query）"""
-        logger.warning("build_error_statistics_query is deprecated, use get_error_statistics_query instead")
+        logger.warning(
+            "build_error_statistics_query is deprecated, use get_error_statistics_query instead"
+        )
         query, _ = self.get_error_statistics_query(hours)
         return query
 
     def build_task_errors_query(self, hours: int = 24) -> str:
         """构建任务错误统计查询（已弃用，使用get_task_errors_query）"""
-        logger.warning("build_task_errors_query is deprecated, use get_task_errors_query instead")
+        logger.warning(
+            "build_task_errors_query is deprecated, use get_task_errors_query instead"
+        )
         query, _ = self.get_task_errors_query(hours)
         return query
 
     def build_type_errors_query(self, hours: int = 24) -> str:
         """构建错误类型统计查询（已弃用，使用get_type_errors_query）"""
-        logger.warning("build_type_errors_query is deprecated, use get_type_errors_query instead")
+        logger.warning(
+            "build_type_errors_query is deprecated, use get_type_errors_query instead"
+        )
         query, _ = self.get_type_errors_query(hours)
         return query
 
     def build_cleanup_old_logs_query(self, days: int = 7) -> str:
         """构建清理旧日志查询（已弃用，使用get_cleanup_old_logs_query）"""
-        logger.warning("build_cleanup_old_logs_query is deprecated, use get_cleanup_old_logs_query instead")
+        logger.warning(
+            "build_cleanup_old_logs_query is deprecated, use get_cleanup_old_logs_query instead"
+        )
         query, _ = self.get_cleanup_old_logs_query(days)
         return query
 
     def build_task_delay_query(self) -> str:
         """构建任务延迟查询（已弃用，使用get_task_delay_query）"""
-        logger.warning("build_task_delay_query is deprecated, use get_task_delay_query instead")
+        logger.warning(
+            "build_task_delay_query is deprecated, use get_task_delay_query instead"
+        )
         query, _ = self.get_task_delay_query()
         return query
 

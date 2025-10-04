@@ -21,14 +21,14 @@ class DatabaseConfig:
     password: str
 
     # 连接池配置 - 优化后的配置
-    pool_size: int = 20         # 基础连接池大小 (提升)
-    max_overflow: int = 30       # 最大溢出连接数 (提升)
-    pool_timeout: int = 15      # 连接池获取超时时间 (减少)
-    pool_recycle: int = 1800     # 连接回收时间 (减少到30分钟)
+    pool_size: int = 20  # 基础连接池大小 (提升)
+    max_overflow: int = 30  # 最大溢出连接数 (提升)
+    pool_timeout: int = 15  # 连接池获取超时时间 (减少)
+    pool_recycle: int = 1800  # 连接回收时间 (减少到30分钟)
 
     # 异步连接配置 - 优化后的配置
-    async_pool_size: int = 30    # 异步连接池大小 (提升)
-    async_max_overflow: int = 40 # 异步最大溢出连接数 (提升)
+    async_pool_size: int = 30  # 异步连接池大小 (提升)
+    async_max_overflow: int = 40  # 异步最大溢出连接数 (提升)
 
     # 其他配置
     echo: bool = False
