@@ -96,7 +96,14 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
     port = _parse_int(f"{prefix}DB_PORT", 5432)
     database = os.getenv(f"{prefix}DB_NAME", default_db)
     username = os.getenv(f"{prefix}DB_USER", "football_user")
-    password = os.getenv(f"{prefix}DB_PASSWORD", "your_password_here")
+
+    # 数据库密码必须通过环境变量提供（测试环境除外）
+    password = os.getenv(f"{prefix}DB_PASSWORD")
+    if password is None and env != "test":
+        raise ValueError(
+            f"数据库密码未配置！请设置环境变量: {prefix}DB_PASSWORD\n"
+            f"Database password not configured! Please set environment variable: {prefix}DB_PASSWORD"
+        )
 
     pool_size = _parse_int(f"{prefix}DB_POOL_SIZE", 10)
     max_overflow = _parse_int(f"{prefix}DB_MAX_OVERFLOW", 20)

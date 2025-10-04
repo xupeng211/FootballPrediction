@@ -30,6 +30,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+# 可选的速率限制功能
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
+
+    RATE_LIMIT_AVAILABLE = True
+except ImportError:
+    RATE_LIMIT_AVAILABLE = False
+    Limiter = None
+    _rate_limit_exceeded_handler = None
+    RateLimitExceeded = None
+
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
@@ -46,6 +59,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MINIMAL_API_MODE = os.getenv("MINIMAL_API_MODE", "false").lower() == "true"
+
+# 配置API速率限制（如果可用）
+if RATE_LIMIT_AVAILABLE:
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=[
+            "100/minute",
+            "1000/hour",
+        ],  # 默认限制：每分钟100次，每小时1000次
+        storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储，回退到内存
+        headers_enabled=True,  # 在响应头中返回速率限制信息
+    )
+else:
+    limiter = None
+    logger.warning(
+        "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
+    )
 
 
 @asynccontextmanager
@@ -88,6 +118,12 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# 配置速率限制（如果可用）
+if RATE_LIMIT_AVAILABLE and limiter:
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    logger.info("✅ API速率限制已启用")
 
 # 添加国际化中间件
 app.add_middleware(I18nMiddleware)

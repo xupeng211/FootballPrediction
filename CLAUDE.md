@@ -59,6 +59,11 @@ make prepush      # 提交前检查
 | `make fmt` | 代码格式化 | 提交前 |
 | `make lint` | 代码质量检查 | 提交前 |
 | `make type-check` | 类型检查 | 提交前 |
+| `make lock-deps` | 锁定依赖版本 | 依赖更新后 |
+| `make verify-deps` | 验证依赖一致性 | 环境检查 |
+| `make env-check` | 检查开发环境 | 环境问题排查 |
+| `make coverage-local` | 本地覆盖率检查（60%阈值） | 日常开发 |
+| `make coverage-ci` | CI覆盖率检查（80%阈值） | 提交前验证 |
 
 ### 快速参考
 
@@ -100,12 +105,24 @@ make prepush      # 提交前检查
 
 ```
 src/
-├── api/           # API端点（health等）
-├── config/        # 配置管理（fastapi_config等）
-├── database/      # 数据库相关（models、connections）
-├── utils/         # 工具函数（i18n等）
-├── middleware/    # 中间件（i18n、auth等）
-└── monitoring/    # 监控组件
+├── api/           # FastAPI路由和端点
+├── cache/         # Redis缓存管理
+├── config/        # 配置管理（环境变量、设置）
+├── core/          # 核心业务逻辑
+├── data/          # 数据处理和ETL
+├── database/      # SQLAlchemy模型和数据库连接
+├── features/      # 特征工程
+├── lineage/       # 数据血缘追踪
+├── locales/       # 国际化支持
+├── middleware/    # FastAPI中间件（认证、CORS等）
+├── models/        # 预测模型
+├── monitoring/    # 监控和指标
+├── scheduler/     # 任务调度
+├── services/      # 业务服务层
+├── streaming/     # 实时数据流
+├── stubs/         # 类型存根
+├── tasks/         # 异步任务
+└── utils/         # 通用工具函数
 
 tests/ (96.35%覆盖率)
 ├── unit/          # 单元测试 ⭐主要使用
@@ -113,8 +130,11 @@ tests/ (96.35%覆盖率)
 │   ├── database/  # 数据库测试
 │   ├── services/  # 服务测试
 │   └── utils/     # 工具测试
-├── integration/   # 集成测试（待重建）
+├── integration/   # 集成测试
 ├── e2e/          # 端到端测试
+├── factories/    # 测试数据工厂
+├── fixtures/     # 测试夹具
+├── helpers/      # 测试辅助函数
 └── legacy/       # 遗留测试（默认排除）
 
 scripts/          # 辅助脚本
@@ -199,7 +219,7 @@ docker-compose ps
 3. 编写代码
 4. `make test-quick` - 测试
 5. `make fmt && make lint` - 代码规范
-6. `make coverage` - 覆盖率检查
+6. `make coverage-local` - 本地覆盖率检查
 7. `make prepush` - 提交前检查（触发CI）
 
 ### 运行单个测试
@@ -222,6 +242,10 @@ pytest --lf
 
 # 并行运行测试（需要pytest-xdist）
 pytest tests/ -n auto
+
+# 生成HTML覆盖率报告
+make cov.html
+# 查看报告：open htmlcov/index.html
 ```
 
 ### Bug修复
@@ -257,22 +281,31 @@ pytest tests/ -n auto
 ### 数据库操作
 
 ```bash
-# 数据库迁移（如果使用Alembic）
-make db-upgrade    # 升级数据库
-make db-downgrade  # 降级数据库
-make db-revision   # 创建新迁移
-
 # 启动数据库服务
 docker-compose up -d postgres redis
+
+# 检查服务状态
+docker-compose ps
+
+# 查看服务日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+
+# 使用profiles启动额外服务
+docker-compose --profile mlflow up   # 启动MLflow
+docker-compose --profile celery up   # 启动Celery任务队列
 ```
 
 ### 依赖管理
 
-- **锁定文件**：`requirements/requirements.lock`
+- **锁定文件**：`requirements.lock.txt`
 - **命令**：
-  - `make lock-deps` - 锁定依赖
-  - `make install-locked` - 安装锁定版本
+  - `make lock-deps` - 锁定当前依赖
+  - `make install-locked` - 安装锁定版本（可重现构建）
   - `make verify-deps` - 验证依赖一致性
+  - `make check-deps` - 检查必需依赖是否安装
 
 ## 🆘 故障排除
 
@@ -300,6 +333,7 @@ docker-compose ps
 # 检查端口占用
 netstat -tulpn | grep :5432  # PostgreSQL
 netstat -tulpn | grep :6379  # Redis
+netstat -tulpn | grep :8000  # FastAPI应用
 ```
 
 ### 常见问题
@@ -307,11 +341,13 @@ netstat -tulpn | grep :6379  # Redis
 - **测试失败**：查看 [故障排除指南](CLAUDE_TROUBLESHOOTING.md)
 - **命令不工作**：运行 `make help`
 - **环境问题**：运行 `make env-check`
-- **依赖问题**：检查 `requirements/requirements.lock`
+- **依赖问题**：检查 `requirements.lock.txt` 或运行 `make verify-deps`
 - **Docker问题**：确保 `docker-compose up -d`
 - **覆盖率不足**：运行 `make cov.html` 查看详细报告
-- **类型检查失败**：运行 `make type-check` 查看具体错误，可以添加 `--ignore-missing-imports` 或使用 `.mypy-ignore` 文件
+- **类型检查失败**：运行 `make type-check` 查看具体错误
 - **代码格式问题**：运行 `make fmt` 自动修复
+- **CI失败**：查看GitHub Actions日志，本地运行 `./ci-verify.sh`
+- **端口冲突**：修改 `.env` 文件中的端口配置
 
 ## 📞 支持
 
