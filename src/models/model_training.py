@@ -284,7 +284,7 @@ class BaselineModelTrainer:
         home_score = row["home_score"]
         away_score = row["away_score"]
 
-        if home_score > away_score:
+        if home_score is not None and away_score is not None and home_score > away_score:
             return "home"
         elif home_score < away_score:
             return "away"

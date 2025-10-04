@@ -81,6 +81,11 @@ class Team(BaseModel):
         return f"<Team(id={self.id}, name='{self.team_name}', league='{self.league.league_name if self.league else None}')>"
 
     @property
+    def name(self) -> str:
+        """球队名称的别名属性，为了兼容性"""
+        return self.team_name
+
+    @property
     def display_name(self) -> str:
         """返回用于显示的球队名称。
 
