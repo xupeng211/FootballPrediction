@@ -44,7 +44,7 @@ except ImportError:  # pragma: no cover - optional dependency path
     RepoConfig = None  # type: ignore[assignment]
     HAS_FEAST = False
 
-from .feature_definitions import (
+from .feature_definitions import (  # noqa: E402
     head_to_head_features_view,
     match_entity,
     match_features_view,

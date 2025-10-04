@@ -21,7 +21,6 @@ from tests.helpers import (
     apply_http_mocks,
     apply_kafka_mocks,
     apply_mlflow_mocks,
-    apply_redis_mocks,
     create_sqlite_memory_engine,
     create_sqlite_sessionmaker,
 )
@@ -35,6 +34,7 @@ os.environ.setdefault("FAST_FAIL", "false")
 os.environ.setdefault("ENABLE_METRICS", "false")
 os.environ.setdefault("METRICS_ENABLED", "false")
 os.environ.setdefault("ENABLE_FEAST", "false")
+os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("ENABLED_SERVICES", "[]")
 os.environ.setdefault("TESTING", "true")
 
