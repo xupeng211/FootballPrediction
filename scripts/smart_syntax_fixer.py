@@ -5,7 +5,7 @@
 
 import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 class SmartSyntaxFixer:
     def __init__(self, file_path: Path):
@@ -119,7 +119,7 @@ def fix_files_in_batch(directory: str, max_files: int = 10) -> List[str]:
             fixed_files.append(str(file_path.relative_to(dir_path)))
             print(f"  ✅ 修复成功: {', '.join(fixer.fixes_applied)}")
         else:
-            print(f"  ⏭️  无需修复或修复失败")
+            print("  ⏭️  无需修复或修复失败")
 
     return fixed_files
 

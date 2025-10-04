@@ -13,11 +13,9 @@ python scripts/fix_syntax_ast.py [directory] [--max-files N] [--report FILE]
 """
 
 import ast
-import os
 import re
-import sys
 from pathlib import Path
-from typing import List, Tuple, Set, Dict, Any
+from typing import List, Tuple, Dict, Any
 import argparse
 import json
 from datetime import datetime
@@ -279,7 +277,7 @@ class ASTSyntaxFixer:
                     'status': 'fixed',
                     'fixes': fixes
                 })
-                print(f"  ✅ 修复成功")
+                print("  ✅ 修复成功")
             else:
                 batch_results['unfixed_files'] += 1
                 batch_results['batch_details'].append({
@@ -294,7 +292,7 @@ class ASTSyntaxFixer:
     def generate_unfixed_report(self, report_file: str):
         """生成无法修复文件的报告"""
         with open(report_file, 'w', encoding='utf-8') as f:
-            f.write(f"# 🚫 无法修复的文件报告\n\n")
+            f.write("# 🚫 无法修复的文件报告\n\n")
             f.write(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"**处理目录**: {self.directory}\n")
             f.write(f"**无法修复文件数**: {len(self.unfixed_files)}\n\n")
@@ -304,7 +302,7 @@ class ASTSyntaxFixer:
                 for file_path in sorted(self.unfixed_files):
                     f.write(f"- `{file_path}`\n")
 
-            f.write(f"\n## 📊 修复统计\n\n")
+            f.write("\n## 📊 修复统计\n\n")
             f.write(f"- **总修复次数**: {sum(self.repair_stats.values())}\n")
             for fix_type, count in self.repair_stats.items():
                 f.write(f"- **{fix_type}**: {count} 次\n")
@@ -325,12 +323,12 @@ def main():
 
     batch_results = fixer.process_batch()
 
-    print(f"\n🎯 批次修复结果:")
+    print("\n🎯 批次修复结果:")
     print(f"📊 处理文件: {batch_results['processed_files']}")
     print(f"✅ 修复成功: {batch_results['fixed_files']}")
     print(f"❌ 修复失败: {batch_results['unfixed_files']}")
 
-    print(f"\n🔧 修复统计:")
+    print("\n🔧 修复统计:")
     for fix_type, count in batch_results['repair_stats'].items():
         print(f"- {fix_type}: {count}")
 

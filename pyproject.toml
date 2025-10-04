@@ -9,18 +9,8 @@ extend-exclude = [
     "tests/legacy",
 ]
 
-[tool.pytest.ini_options]
-# Python runtime target: 3.11
-addopts = "-ra -q"
-testpaths = [
-    "tests/unit",
-    "tests/integration",
-    "tests/e2e",
-]
-norecursedirs = [
-    "docs/legacy",
-    "examples",
-    "notebooks",
-    "playground",
-    "tests/legacy",
-]
+# Pytest配置已迁移到pytest.ini以避免配置冲突
+# pytest-asyncio特定配置
+[tool.pytest_asyncio]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

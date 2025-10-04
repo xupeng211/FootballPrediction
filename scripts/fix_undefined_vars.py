@@ -10,10 +10,9 @@
 
 import os
 import re
-import ast
 import sys
 from pathlib import Path
-from typing import List, Set, Dict, Tuple, Optional
+from typing import List, Dict
 from datetime import datetime
 import subprocess
 
@@ -141,7 +140,7 @@ class UndefinedVariableFixer:
             suggestions.extend([
                 f"定义变量: `{var_name} = ...`",
                 f"添加参数: 在函数签名中添加 `{var_name}`",
-                f"检查拼写: 确认变量名拼写正确"
+                "检查拼写: 确认变量名拼写正确"
             ])
 
         return " | ".join(suggestions[:3])  # 返回前3个建议
@@ -392,7 +391,7 @@ def main():
     fixer.generate_report(args.report)
 
     # 输出总结
-    print(f"\n✅ 检测完成！")
+    print("\n✅ 检测完成！")
     print(f"📊 处理文件: {stats['total_files']} 个")
     print(f"🔧 修复文件: {stats['fixed_files']} 个")
     print(f"🔍 发现未定义变量: {stats['undefined_vars_found']} 个")

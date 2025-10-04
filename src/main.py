@@ -103,7 +103,7 @@ app.add_middleware(
 )
 
 # 注册路由
-app.include_router(health_router)
+app.include_router(health_router, prefix="/api")
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:

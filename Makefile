@@ -71,15 +71,14 @@ venv: ## Environment: Create and activate virtual environment
 		echo "$(BLUE)ℹ️  Virtual environment already exists$(RESET)"; \
 	fi
 
-install: venv ## Environment: Install dependencies from requirements.txt
+install: venv ## Environment: Install dependencies from lock file
 	@$(ACTIVATE) && \
-	if pip list | grep -F "$(shell head -n1 requirements.txt | cut -d'=' -f1)" > /dev/null 2>&1; then \
+	if pip list | grep -F "fastapi" > /dev/null 2>&1; then \
 		echo "$(BLUE)ℹ️  Dependencies appear to be installed$(RESET)"; \
 	else \
 		echo "$(YELLOW)Installing dependencies...$(RESET)"; \
 		pip install --upgrade pip && \
-		pip install -r requirements.txt && \
-		pip install -r requirements-dev.txt; \
+		pip install -r requirements/requirements.lock; \
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
 

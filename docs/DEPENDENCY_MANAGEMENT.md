@@ -1,119 +1,192 @@
-# 依赖管理文档
+# 依赖管理指南
 
 ## 概述
 
-本文档描述了FootballPrediction系统的依赖管理策略和最佳实践。
+本项目使用**依赖锁定**系统确保开发和生产环境的一致性。
 
-## 依赖文件说明
+## 文件说明
 
-### requirements.txt
-生产环境依赖，包含运行系统所需的核心包：
-- FastAPI Web框架
-- SQLAlchemy ORM
-- PostgreSQL和Redis客户端
-- 认证和安全库
-- 数据处理库（pandas, numpy）
-- MLflow机器学习平台
+| 文件 | 用途 | 是否提交到版本控制 |
+|------|------|-------------------|
+| `requirements.txt` | 核心依赖（无版本锁定） | ✅ 是 |
+| `requirements-dev.txt` | 开发依赖 | ✅ 是 |
+| `requirements-test.txt` | 测试依赖 | ✅ 是 |
+| `requirements.lock.txt` | **完整依赖锁定** | ✅ 是 |
 
-### requirements-dev.txt
-开发环境依赖，包含生产依赖和开发工具：
-- 测试框架（pytest）
-- 代码质量工具（black, flake8, mypy）
-- 文档生成工具
-- 调试和分析工具
+## 命令参考
 
-## 安装依赖
+### 安装依赖
 
-### 生产环境
 ```bash
-pip install -r requirements.txt
+# 常规安装（可能获得不同版本）
+make install
+
+# 可重现安装（推荐用于生产）
+make install-locked
 ```
 
-### 开发环境
+### 管理依赖
+
 ```bash
-pip install -r requirements-dev.txt
+# 添加新依赖
+pip install <package-name>
+make lock-deps  # 立即锁定！
+
+# 更新依赖
+pip install --upgrade <package-name>
+make lock-deps  # 重新锁定
 ```
 
-## 依赖更新策略
+### 验证依赖
 
-### 定期更新
-- 每月检查一次依赖更新
-- 优先更新安全补丁
-- 次要更新每季度进行
-
-### 安全更新
-- 使用 `pip-audit` 扫描漏洞
-- 紧急安全修复立即应用
-- 记录所有安全更新
-
-## 锁定依赖
-
-项目使用以下方式锁定依赖版本：
-- `requirements.txt` - 精确版本控制
-- `requirements.lock` - 完整依赖树（计划中）
-
-## 虚拟环境
-
-推荐使用Python虚拟环境：
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# 或
-.venv\Scripts\activate  # Windows
+# 检查当前环境是否与锁文件一致
+make verify-deps
+```
+
+## 工作流程
+
+### 1. 开发新功能
+
+```bash
+# 1. 安装依赖
+make install-locked
+
+# 2. 添加新依赖（如果需要）
+pip install new-package
+
+# 3. 开发完成后，锁定依赖
+make lock-deps
+
+# 4. 提交更改
+git add requirements.lock.txt
+git commit -m "feat: add new-package dependency"
+```
+
+### 2. 部署到生产
+
+```bash
+# 1. 克隆代码
+git clone <repository>
+
+# 2. 安装锁定版本
+make install-locked
+
+# 3. 验证环境
+make verify-deps
+```
+
+### 3. CI/CD 流程
+
+```yaml
+# .github/workflows/ci.yml 示例
+- name: Setup Python
+  uses: actions/setup-python@v4
+
+- name: Install dependencies
+  run: make install-locked
+
+- name: Verify dependencies
+  run: make verify-deps
+
+- name: Run tests
+  run: make test
 ```
 
 ## 最佳实践
 
-1. **定期清理**
+### ✅ 做什么
+
+1. **始终使用 `make install-locked`**
+   - 确保环境一致性
+   - 避免意外的版本更新
+
+2. **添加依赖后立即锁定**
    ```bash
-   pip list --outdated
-   pip-autoremove
+   pip install some-package
+   make lock-deps
+   git add requirements.lock.txt
    ```
 
-2. **安全扫描**
+3. **定期验证依赖**
    ```bash
-   pip-audit
-   bandit -r src/
+   make verify-deps
    ```
 
-3. **依赖检查**
-   ```bash
-   pip check
-   ```
+4. **团队协作时共享锁文件**
+   - 确保所有人使用相同版本
 
-4. **使用预提交钩子**
-   ```bash
-   pre-commit install
-   pre-commit run --all-files
-   ```
+### ❌ 避免什么
 
-## 常见问题
+1. **不要手动编辑 `requirements.lock.txt`**
+   - 它是自动生成的
 
-### Q: 如何添加新依赖？
-A:
-1. 开发依赖添加到 `requirements-dev.txt`
-2. 生产依赖添加到 `requirements.txt`
-3. 运行 `pip install -r requirements.txt` 测试
-4. 更新文档
+2. **不要直接 `pip install` 后不锁定**
+   - 会导致环境不一致
 
-### Q: 如何处理依赖冲突？
-A:
-1. 使用 `pip-tools` 生成锁定文件
-2. 检查 `pip check` 输出
-3. 考虑使用虚拟环境隔离
+3. **不要提交 `requirements_frozen.txt`**
+   - 这是临时文件
 
-### Q: 如何减少依赖大小？
-A:
-1. 移除未使用的依赖
-2. 使用可选依赖 (`extras_require`)
-3. 考虑轻量级替代品
+## 故障排除
 
-## 更新日志
+### 依赖冲突
 
-### 2025-10-04
-- 创建标准化的requirements.txt和requirements-dev.txt
-- 添加依赖管理文档
-- 实施定期安全扫描
+```bash
+# 检查冲突
+make verify-deps
+
+# 解决方案：重新创建环境
+rm -rf .venv
+make install-locked
+```
+
+### 锁文件过时
+
+```bash
+# 更新所有依赖
+pip install --upgrade -r requirements.txt
+make lock-deps
+```
+
+### 特定包版本问题
+
+```bash
+# 安装特定版本
+pip install package==1.2.3
+
+# 验证并锁定
+make verify-deps
+make lock-deps
+```
+
+## 背后的原理
+
+### 为什么需要依赖锁定？
+
+1. **可重现性** - 确保任何时间、任何环境都能获得相同的依赖版本
+2. **安全性** - 避免意外安装包含漏洞的新版本
+3. **稳定性** - 防止依赖更新导致的破坏性变更
+
+### 锁文件包含什么？
+
+- 所有直接和间接依赖
+- 精确的版本号
+- 总计177个包（包括传递依赖）
+
+### 与其他工具的比较
+
+| 工具 | 锁文件 | 优点 | 缺点 |
+|------|--------|------|------|
+| pip + requirements.lock.txt | ✅ | 简单，无需额外工具 | 需要手动管理 |
+| Pipenv | Pipfile.lock | 集成虚拟环境 | 学习成本高 |
+| Poetry | poetry.lock | 现代化，功能丰富 | 改变工作流 |
+| PDM | pdm.lock | 快速，PEP 582 | 较新，生态不成熟 |
+
+## 相关资源
+
+- [Python 依赖管理最佳实践](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
+- [pip 文档](https://pip.pypa.io/en/stable/)
+- [requirements.txt 格式规范](https://pip.pypa.io/en/stable/reference/requirements-file-format/)
 
 ---
 最后更新: 2025-10-04

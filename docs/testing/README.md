@@ -1,46 +1,79 @@
-# 测试附录索引
+# 🧪 测试指南
 
-本目录包含完整的测试附录文档，提供详细的示例、配置与扩展说明，主文档在 [docs/TESTING_STRATEGY.md](../TESTING_STRATEGY.md)。
+本目录包含项目的测试相关文档。
 
-## 📚 附录文档索引
+## 📚 核心文档
 
-### [examples.md](./examples.md) — 完整测试用例示例
-- 单元测试（Unit Tests）：数据库模型、API控制器、业务逻辑测试
-- 集成测试（Integration Tests）：数据库连接、外部服务集成、API集成测试
-- 端到端测试（E2E Tests）：完整业务流程测试、数据管道测试
-- 异步测试：AsyncMock使用、异步函数测试、上下文管理器测试
-- 性能测试：Locust负载测试、API基准测试、数据库性能测试
+### 🌟 [TEST_GUIDE.md](./TEST_GUIDE.md) - **主要测试指南** ⭐
 
-### [ci_config.md](./ci_config.md) — CI/CD 配置文件与本地模拟脚本
-- GitHub Actions工作流配置：测试、覆盖率、质量检查自动化
-- 覆盖率监控：Codecov集成、覆盖率报告生成、趋势监控
-- 多环境部署：开发、测试、生产环境配置管理
-- 安全扫描：bandit安全检查、依赖漏洞扫描、许可证检查
-- 本地CI模拟：ci-verify.sh脚本、Docker环境测试
-- 通知系统：Slack通知、邮件告警、状态报告
+全新的测试体系文档，包含：
+- 三层测试架构说明
+- Mock 架构使用方法
+- 详细的运行命令
+- 故障排除指南
+- 测试最佳实践
 
-### [performance_tests.md](./performance_tests.md) — 性能与压力测试的完整代码与说明
-- Locust性能测试：用户模拟、负载测试、压力测试场景
-- API性能测试：响应时间、吞吐量、并发连接测试
-- 数据库性能：查询优化、连接池、索引性能测试
-- 性能监控：Prometheus指标、Grafana仪表板、性能分析
-- 负载测试策略：逐步加压、峰值测试、长时间稳定性测试
-- 性能优化：缓存策略、异步处理、数据库调优
+**这是您最需要的文档！**
 
-### [fixtures_factories.md](./fixtures_factories.md) — 测试数据工厂与 fixtures 定义
-- Factory Boy实现：复杂数据模型工厂、关系数据生成、批量数据创建
-- 外部服务Mock：Redis模拟、MLflow模拟、Kafka模拟、API模拟
-- 测试数据管理：数据隔离、清理机制、状态管理
-- 异步Fixtures：异步数据库连接、外部服务连接、事件循环管理
-- 测试工具：统一Mock配置、测试辅助函数、断言扩展
+## 📋 其他文档
 
-## 📁 目录结构
+### [examples.md](./examples.md) - 测试示例
+- 单元测试示例
+- 集成测试示例
+- 性能测试示例
 
-```plaintext
-docs/testing/
-├── README.md
-├── examples.md
-├── ci_config.md
-├── performance_tests.md
-└── fixtures_factories.md
+### [ci_config.md](./ci_config.md) - CI/CD 配置
+- GitHub Actions 配置
+- 覆盖率报告
+- 自动化流水线
+
+### [performance_tests.md](./performance_tests.md) - 性能测试
+- 基准测试
+- 负载测试
+- 性能监控
+
+### [fixtures_factories.md](./fixtures_factories.md) - 测试工具
+- 测试数据工厂
+- Mock 配置
+- Fixtures 使用
+
+### [CI_GUARDIAN_GUIDE.md](./CI_GUARDIAN_GUIDE.md) - CI 问题排查
+- CI 失败排查
+- 常见问题解决
+
+## 🚀 快速开始
+
+### 运行测试
+```bash
+# 快速测试（推荐日常使用）
+make test-quick
+
+# 完整测试 + 覆盖率
+make test-full
+
+# 只运行单元测试
+pytest tests/unit -v
 ```
+
+### 测试架构
+```
+tests/
+├── unit/      # Mock 测试（快速）
+├── legacy/    # 真实服务测试（慢）
+└── e2e/       # 端到端测试
+```
+
+## 📁 文档归档
+
+过时的测试文档已归档至：
+`[archive/](./archive/)`
+
+## 🔗 相关链接
+
+- [主文档目录](../INDEX.md)
+- [API 参考](../reference/API_REFERENCE.md)
+- [开发指南](../reference/DEVELOPMENT_GUIDE.md)
+
+---
+
+*最后更新：2025-01-04*

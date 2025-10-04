@@ -8,11 +8,10 @@ Fixes common syntax errors automatically:
 4. Simple statement separation: missing colons and commas
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 class GlobalSyntaxFixer:
     def __init__(self):
@@ -105,13 +104,13 @@ class GlobalSyntaxFixer:
 
         fixed_count, total_fixes = self.fix_directory(tests_path)
 
-        print(f"\n=== Global Syntax Fix Summary ===")
+        print("\n=== Global Syntax Fix Summary ===")
         print(f"Files fixed: {fixed_count}")
         print(f"Total fixes: {total_fixes}")
         print(f"Files processed: {len(self.fixed_files) + len(self.errors_files)}")
 
         if self.fixed_files:
-            print(f"\nFixed files:")
+            print("\nFixed files:")
             for file_path in self.fixed_files[:10]:  # 只显示前10个
                 print(f"  - {file_path}")
             if len(self.fixed_files) > 10:
@@ -132,7 +131,7 @@ def main():
         print(f"\n✅ Successfully fixed syntax errors in {fixed_count} files with {total_fixes} total fixes!")
         return 0
     else:
-        print(f"\n⚠️ No syntax errors were fixed.")
+        print("\n⚠️ No syntax errors were fixed.")
         return 1
 
 if __name__ == "__main__":

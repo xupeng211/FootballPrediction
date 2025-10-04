@@ -1,0 +1,88 @@
+# 最小运行环境依赖
+# 仅包含运行应用所需的绝对最小化包集
+
+# Python版本要求
+# python >= 3.9, < 3.13
+
+# Web框架核心
+fastapi==0.115.6
+starlette==0.41.3
+uvicorn==0.33.0
+
+# 数据库核心
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# 数据验证
+pydantic==2.10.4
+pydantic-core==2.23.0
+
+# HTTP客户端
+httpx==0.28.1
+requests==2.32.3
+
+# 缓存
+redis==5.2.1
+
+# 配置
+python-dotenv==1.0.1
+pyyaml==6.0.2
+
+# 基础工具
+click==8.1.7
+rich==13.9.4
+
+# 数据处理
+numpy==1.26.4
+pandas==2.2.3
+
+# 加密
+cryptography==44.0.0
+
+# 日志
+structlog==24.5.0
+
+# 异步支持
+anyio==4.7.0
+aiofiles==24.1.0
+
+# 时间处理
+python-dateutil==2.9.0.post0
+pytz==2024.2
+
+# JSON处理
+orjson==3.10.14
+
+# WebSocket
+websockets==14.1
+
+# 任务队列最小化
+celery==5.4.0
+kombu==5.4.2
+
+# 监控最小化
+prometheus-client==0.21.0
+
+# 认证最小化
+python-jose==3.3.0
+passlib==1.7.4
+
+# 文件处理
+python-multipart==0.0.17
+
+# 邮件
+aiosmtplib==3.0.2
+email-validator==2.2.0
+
+# 压缩
+zstandard==0.23.0
+
+# 健康检查
+healthcheck==0.4.0
+
+# 错误追踪最小化
+sentry-sdk==2.20.0
+
+# 跨度追踪最小化
+opentelemetry-api==1.29.0

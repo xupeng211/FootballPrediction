@@ -4,11 +4,9 @@ Batch syntax fixer for tests/unit module
 Target: Fix common syntax errors automatically
 """
 
-import os
 import re
-import ast
 from pathlib import Path
-from typing import List, Tuple, Set
+from typing import List, Tuple
 
 class SyntaxFixer:
     def __init__(self, directory: str):
@@ -108,7 +106,7 @@ class SyntaxFixer:
             if fix_count > 0:
                 print(f"  ✅ Fixed {fix_count} issues: {', '.join(fixes)}")
 
-        print(f"\n🎯 Summary:")
+        print("\n🎯 Summary:")
         print(f"📊 Files processed: {len(python_files)}")
         print(f"🔧 Files fixed: {len(self.fixed_files)}")
         print(f"✨ Total fixes: {self.total_fixes}")
