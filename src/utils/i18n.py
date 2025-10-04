@@ -5,7 +5,6 @@
 import os
 import gettext
 from pathlib import Path
-from typing import Any, Dict
 
 # 翻译目录
 LOCALE_DIR = Path(__file__).parent.parent / "locales"
