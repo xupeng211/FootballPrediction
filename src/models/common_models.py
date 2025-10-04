@@ -193,7 +193,11 @@ class DataValidationResult:
 
     def get_summary(self) -> str:
         """获取验证结果摘要"""
-        return f"验证结果: {'有效' if self.is_valid else '无效'}, 错误: {len(self.errors)}, 警告: {len(self.warnings)}"
+        return (
+            f"验证结果: {'有效' if self.is_valid else '无效'}, "
+            f"错误: {len(self.errors)}, "
+            f"警告: {len(self.warnings)}"
+        )
 
 
 @dataclass

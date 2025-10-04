@@ -20,14 +20,13 @@ class CoverageImprover:
         self.reports_dir = self.project_root / "docs" / "_reports"
         self.reports_dir.mkdir(exist_ok=True, parents=True)
 
-    def run_command(self, cmd: List[str], capture_output: bool = True) -> subprocess.CompletedProcess:
+    def run_command(
+        self, cmd: List[str], capture_output: bool = True
+    ) -> subprocess.CompletedProcess:
         """运行命令"""
         print(f"🚀 运行命令: {' '.join(cmd)}")
         result = subprocess.run(
-            cmd,
-            capture_output=capture_output,
-            text=True,
-            cwd=self.project_root
+            cmd, capture_output=capture_output, text=True, cwd=self.project_root
         )
 
         if not capture_output and result.returncode != 0:
@@ -46,10 +45,7 @@ class CoverageImprover:
             return False
 
         # 激活虚拟环境并安装测试依赖
-        requirements_files = [
-            "requirements-test.txt",
-            "requirements.txt"
-        ]
+        requirements_files = ["requirements-test.txt", "requirements.txt"]
 
         for req_file in requirements_files:
             req_path = self.project_root / req_file
@@ -89,13 +85,14 @@ class CoverageImprover:
         # 运行pytest生成覆盖率
         cmd = [
             f"{self.project_root}/.venv/bin/python",
-            "-m", "pytest",
+            "-m",
+            "pytest",
             "tests/unit",
             "--cov=src",
             "--cov-report=json:coverage.json",
             "--cov-report=term-missing",
             "--cov-report=html:htmlcov",
-            "-v"
+            "-v",
         ]
 
         result = self.run_command(cmd, capture_output=True)
@@ -108,14 +105,17 @@ class CoverageImprover:
         # 读取覆盖率数据
         coverage_file = self.project_root / "coverage.json"
         if coverage_file.exists():
-            with open(coverage_file, 'r') as f:
+            with open(coverage_file, "r") as f:
                 coverage_data = json.load(f)
 
-            total_coverage = coverage_data.get('totals', {}).get('percent_covered', 0)
+            total_coverage = coverage_data.get("totals", {}).get("percent_covered", 0)
             print(f"✅ 当前覆盖率: {total_coverage:.1f}%")
 
             # 移动覆盖率报告到reports目录
-            report_file = self.reports_dir / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            report_file = (
+                self.reports_dir
+                / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
             coverage_file.rename(report_file)
 
             return total_coverage
@@ -129,20 +129,17 @@ class CoverageImprover:
         # 使用coverage工具分析
         cmd = [
             f"{self.project_root}/.venv/bin/python",
-            "-m", "coverage",
+            "-m",
+            "coverage",
             "report",
             "--show-missing",
-            "--format=json"
+            "--format=json",
         ]
 
-        result = self.run_command(cmd)
+        self.run_command(cmd)
 
         # 简化的分析结果
-        analysis = {
-            "uncovered_files": [],
-            "uncovered_lines": {},
-            "suggestions": []
-        }
+        analysis = {"uncovered_files": [], "uncovered_lines": {}, "suggestions": []}
 
         # 生成改进建议
         coverage = self.run_tests_with_coverage()
@@ -166,7 +163,7 @@ class CoverageImprover:
             "current_coverage": current_coverage,
             "target_coverage": 50,
             "phase": "4A",
-            "tasks": []
+            "tasks": [],
         }
 
         # 根据当前覆盖率生成任务
@@ -176,20 +173,20 @@ class CoverageImprover:
                     "module": "utils",
                     "priority": "high",
                     "description": "为字符串、字典、时间等工具模块编写测试",
-                    "expected_coverage": 10
+                    "expected_coverage": 10,
                 },
                 {
                     "module": "api/health",
                     "priority": "high",
                     "description": "完善健康检查API的测试",
-                    "expected_coverage": 5
+                    "expected_coverage": 5,
                 },
                 {
                     "module": "api/schemas",
                     "priority": "medium",
                     "description": "测试API数据模型",
-                    "expected_coverage": 5
-                }
+                    "expected_coverage": 5,
+                },
             ]
         elif current_coverage < 50:
             plan["target_coverage"] = 60
@@ -199,14 +196,14 @@ class CoverageImprover:
                     "module": "database",
                     "priority": "high",
                     "description": "测试数据库模型和连接",
-                    "expected_coverage": 5
+                    "expected_coverage": 5,
                 },
                 {
                     "module": "services",
                     "priority": "high",
                     "description": "测试核心业务服务",
-                    "expected_coverage": 5
-                }
+                    "expected_coverage": 5,
+                },
             ]
 
         return plan
@@ -219,41 +216,47 @@ class CoverageImprover:
 
         readme_path = self.project_root / "README.md"
         if readme_path.exists():
-            with open(readme_path, 'r', encoding='utf-8') as f:
+            with open(readme_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 更新或添加徽章
             if "![Coverage]" in content:
                 import re
-                content = re.sub(r'!\[Coverage\].*$', badge, content, flags=re.MULTILINE)
+
+                content = re.sub(
+                    r"!\[Coverage\].*$", badge, content, flags=re.MULTILINE
+                )
             else:
                 # 在标题后添加徽章
-                lines = content.split('\n')
+                lines = content.split("\n")
                 for i, line in enumerate(lines):
-                    if line.startswith('# '):
+                    if line.startswith("# "):
                         lines.insert(i + 1, badge)
                         break
-                content = '\n'.join(lines)
+                content = "\n".join(lines)
 
-            with open(readme_path, 'w', encoding='utf-8') as f:
+            with open(readme_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"✅ 更新README.md中的覆盖率徽章: {coverage:.1f}%")
 
     def save_report(self, report: Dict):
         """保存改进报告"""
-        report_file = self.reports_dir / f"coverage_improvement_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            self.reports_dir
+            / f"coverage_improvement_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📄 报告已保存到: {report_file}")
 
     def run(self):
         """执行覆盖率提升流程"""
-        print("="*60)
+        print("=" * 60)
         print("🚀 测试覆盖率提升自动化工具")
-        print("="*60)
+        print("=" * 60)
 
         # 1. 安装依赖
         if not self.install_dependencies():
@@ -288,16 +291,16 @@ class CoverageImprover:
                 "2. 完善 TODO 部分的测试逻辑",
                 "3. 运行 pytest tests/unit -v 验证测试",
                 "4. 查看htmlcov/index.html了解详细覆盖率",
-                "5. 重复执行此脚本追踪进度"
-            ]
+                "5. 重复执行此脚本追踪进度",
+            ],
         }
 
         self.save_report(report)
 
         # 打印摘要
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 覆盖率提升摘要")
-        print("="*60)
+        print("=" * 60)
         print(f"✅ 当前覆盖率: {current_coverage:.1f}%")
         print(f"🎯 目标覆盖率: {plan['target_coverage']}%")
         print(f"📋 当前阶段: {plan['phase']}")
@@ -312,9 +315,9 @@ class CoverageImprover:
         for step in report["next_steps"]:
             print(f"  {step}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("✨ 覆盖率提升流程完成！")
-        print("="*60)
+        print("=" * 60)
 
 
 def main():

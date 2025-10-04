@@ -20,18 +20,14 @@ class TestTemplateGenerator:
 
     def analyze_source_file(self, file_path: Path) -> Dict:
         """分析源代码文件"""
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             try:
                 tree = ast.parse(f.read())
             except SyntaxError as e:
                 print(f"⚠️  无法解析 {file_path}: {e}")
                 return {}
 
-        analysis = {
-            "classes": [],
-            "functions": [],
-            "imports": []
-        }
+        analysis = {"classes": [], "functions": [], "imports": []}
 
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -39,10 +35,7 @@ class TestTemplateGenerator:
                 for item in node.body:
                     if isinstance(item, ast.FunctionDef):
                         methods.append(item.name)
-                analysis["classes"].append({
-                    "name": node.name,
-                    "methods": methods
-                })
+                analysis["classes"].append({"name": node.name, "methods": methods})
             elif isinstance(node, ast.FunctionDef):
                 # 检查是否是模块级函数（不在类内）
                 for parent in ast.walk(tree):
@@ -56,7 +49,9 @@ class TestTemplateGenerator:
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""
                 for alias in node.names:
-                    analysis["imports"].append(f"{module}.{alias.name}" if module else alias.name)
+                    analysis["imports"].append(
+                        f"{module}.{alias.name}" if module else alias.name
+                    )
 
         return analysis
 
@@ -84,7 +79,7 @@ class Test{class_name}:
 
         # 为每个方法生成测试模板
         for method_name in methods:
-            if not method_name.startswith('_'):  # 跳过私有方法
+            if not method_name.startswith("_"):  # 跳过私有方法
                 template += f"""    def test_{method_name}(self, sample_{class_name.lower()}):
         \"\"\"测试{method_name}方法\"\"\"
         # Given - 准备测试数据
@@ -125,7 +120,7 @@ def test_{function_name}():
     def get_module_path(self, file_path: Path) -> str:
         """获取模块导入路径"""
         relative_path = file_path.relative_to(self.src_dir)
-        module_path = str(relative_path.with_suffix('')).replace(os.sep, '.')
+        module_path = str(relative_path.with_suffix("")).replace(os.sep, ".")
         return module_path
 
     def generate_test_file(self, src_file: Path) -> Tuple[str, Path]:
@@ -137,7 +132,9 @@ def test_{function_name}():
 
         # 计算测试文件路径
         relative_path = src_file.relative_to(self.src_dir)
-        test_file_path = self.test_dir / relative_path.with_name(f"test_{relative_path.name}")
+        test_file_path = self.test_dir / relative_path.with_name(
+            f"test_{relative_path.name}"
+        )
 
         # 生成测试文件内容
         module_name = self.get_module_path(src_file)
@@ -183,10 +180,10 @@ import pytest
         python_files = []
         for root, dirs, files in os.walk(self.src_dir):
             # 跳过__pycache__目录
-            dirs[:] = [d for d in dirs if d != '__pycache__']
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
 
             for file in files:
-                if file.endswith('.py') and not file.startswith('__'):
+                if file.endswith(".py") and not file.startswith("__"):
                     python_files.append(Path(root) / file)
 
         return sorted(python_files)
@@ -199,7 +196,9 @@ import pytest
         for src_file in source_files:
             # 计算对应的测试文件路径
             relative_path = src_file.relative_to(self.src_dir)
-            test_file = self.test_dir / relative_path.with_name(f"test_{relative_path.name}")
+            test_file = self.test_dir / relative_path.with_name(
+                f"test_{relative_path.name}"
+            )
 
             if not test_file.exists():
                 missing_tests.append(src_file)
@@ -230,7 +229,7 @@ import pytest
                     continue
 
                 # 写入测试文件
-                with open(test_file_path, 'w', encoding='utf-8') as f:
+                with open(test_file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print(f"✅ 生成测试文件: {test_file_path}")
@@ -247,16 +246,16 @@ import pytest
         tested_files = total_files - len(missing_tests)
         coverage_percent = (tested_files / total_files * 100) if total_files > 0 else 0
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 测试文件覆盖报告")
-        print("="*60)
+        print("=" * 60)
         print(f"📁 源代码文件总数: {total_files}")
         print(f"✅ 已测试文件数: {tested_files}")
         print(f"❌ 未测试文件数: {len(missing_tests)}")
         print(f"📈 文件覆盖率: {coverage_percent:.1f}%")
 
         if missing_tests:
-            print(f"\n❌ 缺少测试的文件:")
+            print("\n❌ 缺少测试的文件:")
             for src_file in missing_tests[:10]:  # 只显示前10个
                 relative_path = src_file.relative_to(self.src_dir)
                 print(f"  - {relative_path}")
@@ -264,13 +263,13 @@ import pytest
             if len(missing_tests) > 10:
                 print(f"  ... 还有 {len(missing_tests) - 10} 个文件")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
         return {
             "total_files": total_files,
             "tested_files": tested_files,
             "missing_tests": len(missing_tests),
-            "coverage_percent": coverage_percent
+            "coverage_percent": coverage_percent,
         }
 
 
@@ -289,7 +288,7 @@ def main():
     generator = TestTemplateGenerator(args.src_dir, args.test_dir)
 
     # 生成报告
-    status = generator.report_coverage_status()
+    generator.report_coverage_status()
 
     if not args.report_only:
         print("\n🚀 开始生成测试模板...")

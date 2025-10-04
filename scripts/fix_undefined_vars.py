@@ -26,13 +26,13 @@ class UndefinedVariableFixer:
         self.errors = []
         self.suggestions = []
         self.stats = {
-            'total_files': 0,
-            'fixed_files': 0,
-            'undefined_vars_found': 0,
-            'placeholders_added': 0,
-            'auto_fixed': 0,
-            'manual_review_required': 0,
-            'errors': 0
+            "total_files": 0,
+            "fixed_files": 0,
+            "undefined_vars_found": 0,
+            "placeholders_added": 0,
+            "auto_fixed": 0,
+            "manual_review_required": 0,
+            "errors": 0,
         }
 
     def get_python_files(self, directory: str) -> List[Path]:
@@ -51,45 +51,51 @@ class UndefinedVariableFixer:
                 ["ruff", "check", str(file_path), "--select=F821", "--no-fix"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             undefined_vars = []
-            for line in result.stdout.split('\n'):
-                if 'F821' in line and '`' in line:
+            for line in result.stdout.split("\n"):
+                if "F821" in line and "`" in line:
                     # 解析错误信息，例如: tests/example.py:10:5: F821 Undefined name `undefined_var`
-                    parts = line.split(':')
+                    parts = line.split(":")
                     if len(parts) >= 3:
-                        file_path_match = parts[0]
+                        parts[0]
                         line_num = int(parts[1])
                         col_num = int(parts[2])
 
                         # 提取变量名
-                        match = re.search(r'Undefined name `([^`]+)`', line)
+                        match = re.search(r"Undefined name `([^`]+)`", line)
                         if match:
                             var_name = match.group(1)
 
                             # 获取代码上下文
                             code_context = self.get_code_context(file_path, line_num)
 
-                            undefined_vars.append({
-                                'file': str(file_path),
-                                'line': line_num,
-                                'column': col_num,
-                                'variable': var_name,
-                                'context': code_context,
-                                'suggestion': self.generate_suggestion(var_name, code_context)
-                            })
+                            undefined_vars.append(
+                                {
+                                    "file": str(file_path),
+                                    "line": line_num,
+                                    "column": col_num,
+                                    "variable": var_name,
+                                    "context": code_context,
+                                    "suggestion": self.generate_suggestion(
+                                        var_name, code_context
+                                    ),
+                                }
+                            )
 
             return undefined_vars
         except Exception as e:
             print(f"⚠️ 警告：无法检查 {file_path}: {e}")
             return []
 
-    def get_code_context(self, file_path: str, line_num: int, context_lines: int = 3) -> List[str]:
+    def get_code_context(
+        self, file_path: str, line_num: int, context_lines: int = 3
+    ) -> List[str]:
         """获取代码上下文"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             start = max(0, line_num - context_lines - 1)
@@ -112,19 +118,35 @@ class UndefinedVariableFixer:
         var_lower = var_name.lower()
 
         # 1. 检查是否可能是模块导入
-        common_modules = ['os', 'sys', 'json', 'datetime', 'pathlib', 're', 'ast',
-                          'typing', 'collections', 'itertools', 'functools', 'enum',
-                          'pandas', 'numpy', 'requests', 'pytest', 'unittest']
+        common_modules = [
+            "os",
+            "sys",
+            "json",
+            "datetime",
+            "pathlib",
+            "re",
+            "ast",
+            "typing",
+            "collections",
+            "itertools",
+            "functools",
+            "enum",
+            "pandas",
+            "numpy",
+            "requests",
+            "pytest",
+            "unittest",
+        ]
 
         if var_lower in common_modules:
             suggestions.append(f"添加导入: `import {var_name}`")
 
         # 2. 检查是否可能是函数参数
-        if any('def ' in line for line in context):
+        if any("def " in line for line in context):
             suggestions.append(f"在函数参数中添加: `{var_name}`")
 
         # 3. 检查是否可能是类属性
-        if any('class ' in line or 'self.' in line for line in context):
+        if any("class " in line or "self." in line for line in context):
             suggestions.append(f"在类中定义属性: `self.{var_name} = ...`")
 
         # 4. 检查是否可能是常量
@@ -137,18 +159,22 @@ class UndefinedVariableFixer:
 
         # 6. 通用建议
         if not suggestions:
-            suggestions.extend([
-                f"定义变量: `{var_name} = ...`",
-                f"添加参数: 在函数签名中添加 `{var_name}`",
-                "检查拼写: 确认变量名拼写正确"
-            ])
+            suggestions.extend(
+                [
+                    f"定义变量: `{var_name} = ...`",
+                    f"添加参数: 在函数签名中添加 `{var_name}`",
+                    "检查拼写: 确认变量名拼写正确",
+                ]
+            )
 
         return " | ".join(suggestions[:3])  # 返回前3个建议
 
-    def add_placeholder_definition(self, file_path: Path, var_name: str, line_num: int) -> bool:
+    def add_placeholder_definition(
+        self, file_path: Path, var_name: str, line_num: int
+    ) -> bool:
         """在适当位置添加占位符定义"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             # 查找合适的位置插入定义
@@ -158,10 +184,10 @@ class UndefinedVariableFixer:
             placeholder = self.generate_placeholder(var_name, lines, line_num)
 
             if insert_line >= 0:
-                lines.insert(insert_line, placeholder + '\n')
+                lines.insert(insert_line, placeholder + "\n")
 
                 # 写回文件
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.writelines(lines)
 
                 return True
@@ -178,36 +204,38 @@ class UndefinedVariableFixer:
             line = lines[i].strip()
 
             # 跳过注释和空行
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # 在 import 语句之后
-            if line.startswith(('import ', 'from ')):
+            if line.startswith(("import ", "from ")):
                 continue
 
             # 在函数或类定义之前
-            if line.startswith(('def ', 'class ')):
+            if line.startswith(("def ", "class ")):
                 return i
 
             # 在变量赋值之后
-            if '=' in line and not line.startswith(('def ', 'class ')):
+            if "=" in line and not line.startswith(("def ", "class ")):
                 return i + 1
 
         # 如果没找到合适位置，在错误行前插入
         return max(0, error_line - 1)
 
-    def generate_placeholder(self, var_name: str, lines: List[str], line_num: int) -> str:
+    def generate_placeholder(
+        self, var_name: str, lines: List[str], line_num: int
+    ) -> str:
         """生成占位符定义"""
         # 检查上下文以确定合适的占位符类型
-        context_lines = lines[max(0, line_num-5):line_num+5]
-        context_text = ''.join(context_lines)
+        context_lines = lines[max(0, line_num - 5) : line_num + 5]
+        context_text = "".join(context_lines)
 
         # 1. 如果是类型注解相关
-        if var_name[0].isupper() and ': ' in context_text:
+        if var_name[0].isupper() and ": " in context_text:
             return f"# TODO: Define type or import: {var_name}"
 
         # 2. 如果是模块名
-        if var_name.islower() and any('import' in line for line in context_lines):
+        if var_name.islower() and any("import" in line for line in context_lines):
             return f"# TODO: Import module: {var_name}"
 
         # 3. 如果是常量
@@ -215,7 +243,7 @@ class UndefinedVariableFixer:
             return f"{var_name} = None  # TODO: Define constant"
 
         # 4. 如果可能是函数参数
-        if any('def ' in line for line in context_lines):
+        if any("def " in line for line in context_lines):
             return f"# TODO: Add parameter or define: {var_name}"
 
         # 5. 默认占位符
@@ -231,38 +259,42 @@ class UndefinedVariableFixer:
 
             fixed_any = False
             for var_info in undefined_vars:
-                self.stats['undefined_vars_found'] += 1
+                self.stats["undefined_vars_found"] += 1
 
                 # 尝试自动添加占位符
-                if self.add_placeholder_definition(file_path, var_info['variable'], var_info['line']):
-                    self.stats['placeholders_added'] += 1
-                    self.stats['auto_fixed'] += 1
+                if self.add_placeholder_definition(
+                    file_path, var_info["variable"], var_info["line"]
+                ):
+                    self.stats["placeholders_added"] += 1
+                    self.stats["auto_fixed"] += 1
                     fixed_any = True
                 else:
-                    self.stats['manual_review_required'] += 1
-                    self.suggestions.append({
-                        'file': str(file_path),
-                        'variable': var_info['variable'],
-                        'line': var_info['line'],
-                        'suggestion': var_info['suggestion']
-                    })
+                    self.stats["manual_review_required"] += 1
+                    self.suggestions.append(
+                        {
+                            "file": str(file_path),
+                            "variable": var_info["variable"],
+                            "line": var_info["line"],
+                            "suggestion": var_info["suggestion"],
+                        }
+                    )
 
             if fixed_any:
                 self.fixed_files.append(str(file_path))
-                self.stats['fixed_files'] += 1
+                self.stats["fixed_files"] += 1
                 return True
 
             return False
 
         except Exception as e:
             self.errors.append(f"处理 {file_path} 时出错: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     def process_directory(self, directory: str) -> Dict:
         """处理目录中的所有 Python 文件"""
         python_files = self.get_python_files(directory)
-        self.stats['total_files'] = len(python_files)
+        self.stats["total_files"] = len(python_files)
 
         print(f"🔍 开始检查 {len(python_files)} 个 Python 文件中的未定义变量...")
 
@@ -359,7 +391,7 @@ python scripts/fix_undefined_vars.py --help
         # 确保报告目录存在
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"📄 报告已生成: {output_file}")
@@ -369,10 +401,15 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='检测和修复未定义变量 (F821)')
-    parser.add_argument('directory', nargs='?', default='.', help='要修复的目录 (默认: 当前目录)')
-    parser.add_argument('--report', default='docs/_reports/UNDEFINED_VARS_REPORT.md',
-                       help='报告输出路径 (默认: docs/_reports/UNDEFINED_VARS_REPORT.md)')
+    parser = argparse.ArgumentParser(description="检测和修复未定义变量 (F821)")
+    parser.add_argument(
+        "directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)"
+    )
+    parser.add_argument(
+        "--report",
+        default="docs/_reports/UNDEFINED_VARS_REPORT.md",
+        help="报告输出路径 (默认: docs/_reports/UNDEFINED_VARS_REPORT.md)",
+    )
 
     args = parser.parse_args()
 
@@ -399,7 +436,7 @@ def main():
     print(f"💡 需要手动审查: {stats['manual_review_required']} 个")
     print(f"❌ 错误: {stats['errors']} 个")
 
-    if stats['manual_review_required'] > 0:
+    if stats["manual_review_required"] > 0:
         print(f"\n💡 请查看报告获取手动修复建议: {args.report}")
 
 

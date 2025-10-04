@@ -13,11 +13,15 @@
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
+
 from src.database.connection import DatabaseManager
+from src.database.models.features import Features
 
 
 class MissingDataHandler:
@@ -39,6 +43,7 @@ class MissingDataHandler:
         """初始化缺失数据处理器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"handler.{self.__class__.__name__}")
+        self._feature_average_cache: Dict[str, float] = {}
 
     async def handle_missing_match_data(
         self, match_data: Dict[str, Any]
@@ -56,13 +61,15 @@ class MissingDataHandler:
         if match_data.get("home_score") is None:
             match_data["home_score"] = 0
             self.logger.debug(
-                f"Filled missing home_score for match {match_data.get('id')}"
+                "Filled missing home_score for match %s",
+                match_data.get("external_match_id") or match_data.get("id"),
             )
 
         if match_data.get("away_score") is None:
             match_data["away_score"] = 0
             self.logger.debug(
-                f"Filled missing away_score for match {match_data.get('id')}"
+                "Filled missing away_score for match %s",
+                match_data.get("external_match_id") or match_data.get("id"),
             )
 
         # 示例：填充缺失的场地和裁判
@@ -95,7 +102,6 @@ class MissingDataHandler:
 
                     if fill_strategy == "historical_average":
                         # 使用历史平均值填充
-                        # TODO: 实现从数据库获取历史平均值的逻辑
                         historical_avg = await self._get_historical_average(col)
                         features_df[col].fillna(historical_avg, inplace=True)
                         self.logger.info(
@@ -130,23 +136,48 @@ class MissingDataHandler:
         Returns:
             float: 历史平均值
         """
-        try:
-            # TODO: 实现从数据库查询历史平均值的逻辑
-            # 这里返回一个固定的默认值作为占位符
-            default_averages = {
-                "avg_possession": 50.0,
-                "avg_shots_per_game": 12.5,
-                "avg_goals_per_game": 1.5,
-                "league_position": 10.0,
-            }
+        if feature_name in self._feature_average_cache:
+            return self._feature_average_cache[feature_name]
 
-            return default_averages.get(feature_name, 0.0)
-
-        except Exception as e:
-            self.logger.error(
-                f"Failed to get historical average for {feature_name}: {str(e)}"
+        column = getattr(Features, feature_name, None)
+        if column is None:
+            self.logger.warning(
+                "Feature column %s does not exist on Features model; using default fallback.",
+                feature_name,
             )
-            return 0.0
+            return self._fallback_average(feature_name)
+
+        try:
+            async with self.db_manager.get_async_session() as session:
+                stmt = select(func.avg(column))
+                result = await session.execute(stmt)
+                avg_value: Optional[float] = result.scalar()
+
+                if avg_value is None:
+                    avg_value = self._fallback_average(feature_name)
+                else:
+                    avg_value = float(avg_value)
+
+                self._feature_average_cache[feature_name] = avg_value
+                return avg_value
+
+        except (RuntimeError, SQLAlchemyError) as exc:
+            self.logger.warning(
+                "Unable to query historical average for %s, fallback will be used. Error: %s",
+                feature_name,
+                exc,
+            )
+            return self._fallback_average(feature_name)
+
+    def _fallback_average(self, feature_name: str) -> float:
+        """提供默认平均值作为数据库不可用时的回退策略"""
+        default_averages = {
+            "avg_possession": 50.0,
+            "avg_shots_per_game": 12.5,
+            "avg_goals_per_game": 1.5,
+            "league_position": 10.0,
+        }
+        return default_averages.get(feature_name, 0.0)
 
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:
         """

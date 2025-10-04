@@ -19,7 +19,7 @@ from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database.connection import DatabaseManager
-from ..database.models.match import Match
+from ..database.models.match import Match, MatchStatus
 from ..database.models.odds import Odds
 from .entities import MatchEntity, TeamEntity
 from .feature_definitions import (
@@ -86,7 +86,7 @@ class FeatureCalculator:
                 and_(
                     or_(Match.home_team_id == team_id, Match.away_team_id == team_id),
                     Match.match_time < calculation_date,
-                    Match.match_status == "completed",
+                    Match.match_status == MatchStatus.FINISHED,
                 )
             )
             .order_by(desc(Match.match_time))
@@ -211,7 +211,7 @@ class FeatureCalculator:
                         ),
                     ),
                     Match.match_time < calculation_date,
-                    Match.match_status == "completed",
+                    Match.match_status == MatchStatus.FINISHED,
                 )
             )
             .order_by(desc(Match.match_time))
