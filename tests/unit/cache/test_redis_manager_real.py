@@ -468,7 +468,7 @@ class TestRedisManager:
 
     def test_init_sync_pool(self, redis_manager):
         """测试初始化同步连接池"""
-        with patch("redis.ConnectionPool.from_url") as mock_pool:
+        with patch("redis.ConnectionPool.from_url") as _mock_pool:
             with patch("redis.Redis") as mock_redis:
                 mock_redis_instance = MagicMock()
                 mock_redis.return_value = mock_redis_instance
@@ -495,7 +495,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_init_async_pool(self, redis_manager):
         """测试初始化异步连接池"""
-        with patch("redis.asyncio.ConnectionPool.from_url") as mock_pool:
+        with patch("redis.asyncio.ConnectionPool.from_url") as _mock_pool:
             with patch("redis.asyncio.Redis") as mock_redis:
                 mock_redis_instance = MagicMock()
                 mock_redis.return_value = mock_redis_instance

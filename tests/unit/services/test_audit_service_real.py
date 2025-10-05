@@ -252,7 +252,6 @@ class TestAuditServiceReal:
 
     async def test_get_user_audit_summary(self, service):
         """测试获取用户审计摘要"""
-        mock_session = MagicMock()
         # Mock AuditLogSummary
         mock_summary_result = {
             "user_id": "user123",
