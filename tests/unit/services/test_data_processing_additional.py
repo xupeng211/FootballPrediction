@@ -4,8 +4,9 @@
 补充更多的测试用例以提高覆盖率
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.services.data_processing import DataProcessingService
 
@@ -84,12 +85,8 @@ class TestDataProcessingServiceAdditional:
         await service.initialize()
 
         # Mock具体的方法
-        service.process_batch_matches = AsyncMock(
-            return_value=[{"id": 1, "processed": True}]
-        )
-        service.process_raw_odds_data = AsyncMock(
-            return_value=[{"id": 2, "processed": True}]
-        )
+        service.process_batch_matches = AsyncMock(return_value=[{"id": 1, "processed": True}])
+        service.process_raw_odds_data = AsyncMock(return_value=[{"id": 2, "processed": True}])
 
         datasets = {"matches": [{"id": 1}], "odds": [{"id": 2}]}
 
@@ -106,9 +103,7 @@ class TestDataProcessingServiceAdditional:
         async def process_func(data):
             return {"processed": True, "data": data}
 
-        result = await service.process_with_retry(
-            process_func, {"test": "data"}, max_retries=3
-        )
+        result = await service.process_with_retry(process_func, {"test": "data"}, max_retries=3)
 
         assert result["processed"] is True
 
@@ -119,9 +114,7 @@ class TestDataProcessingServiceAdditional:
             raise ValueError("Processing failed")
 
         with pytest.raises(RuntimeError):
-            await service.process_with_retry(
-                failing_process_func, {"test": "data"}, max_retries=2
-            )
+            await service.process_with_retry(failing_process_func, {"test": "data"}, max_retries=2)
 
     async def test_process_text(self, service):
         """测试文本处理"""
@@ -143,9 +136,7 @@ class TestDataProcessingServiceAdditional:
         async def test_function(data):
             return {"processed": True, "data": data}
 
-        metrics = await service.collect_performance_metrics(
-            test_function, {"test": "data"}
-        )
+        metrics = await service.collect_performance_metrics(test_function, {"test": "data"})
 
         assert "total_time" in metrics
         assert "items_processed" in metrics

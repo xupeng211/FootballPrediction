@@ -41,9 +41,7 @@ class RawMatchData(BaseModel):
     match_time = Column(DateTime, nullable=True, comment="比赛时间")
 
     # 元数据字段
-    created_at = Column(
-        DateTime, nullable=False, default=func.now(), comment="创建时间"
-    )
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
 
     @validates("data_source")
     def validate_data_source(self, key: str, data_source: str) -> str:
@@ -123,9 +121,7 @@ class RawOddsData(BaseModel):
     market_type = Column(String(50), nullable=True, comment="市场类型")
 
     # 元数据字段
-    created_at = Column(
-        DateTime, nullable=False, default=func.now(), comment="创建时间"
-    )
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
 
     @validates("data_source")
     def validate_data_source(self, key: str, data_source: str) -> str:
@@ -207,9 +203,7 @@ class RawScoresData(BaseModel):
     match_minute = Column(Integer, nullable=True, comment="比赛分钟")
 
     # 元数据字段
-    created_at = Column(
-        DateTime, nullable=False, default=func.now(), comment="创建时间"
-    )
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
 
     @validates("data_source")
     def validate_data_source(self, key: str, data_source: str) -> str:
@@ -256,12 +250,9 @@ class RawScoresData(BaseModel):
 
         try:
             return {
-                "home_score": self.home_score
-                or self.raw_data.get(str("home_score"), 0),
-                "away_score": self.away_score
-                or self.raw_data.get(str("away_score"), 0),
-                "status": self.match_status
-                or self.raw_data.get(str("status"), "unknown"),
+                "home_score": self.home_score or self.raw_data.get(str("home_score"), 0),
+                "away_score": self.away_score or self.raw_data.get(str("away_score"), 0),
+                "status": self.match_status or self.raw_data.get(str("status"), "unknown"),
                 "minute": self.match_minute or self.raw_data.get("minute"),
                 "half_time_home": self.raw_data.get("half_time_home"),
                 "half_time_away": self.raw_data.get("half_time_away"),

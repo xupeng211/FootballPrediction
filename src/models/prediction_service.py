@@ -55,11 +55,11 @@ Provides real-time match prediction functionality, including:
     - src.utils.retry: 重试机制 / Retry mechanism
 """
 
+import inspect
 import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import inspect
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -248,9 +248,7 @@ class PredictionService:
         model_cache_ttl_hours = int(os.getenv("MODEL_CACHE_TTL_HOURS", "1"))
         self.model_cache_ttl = timedelta(hours=model_cache_ttl_hours)
 
-        prediction_cache_ttl_minutes = int(
-            os.getenv("PREDICTION_CACHE_TTL_MINUTES", "30")
-        )
+        prediction_cache_ttl_minutes = int(os.getenv("PREDICTION_CACHE_TTL_MINUTES", "30"))
         self.prediction_cache_ttl = timedelta(minutes=prediction_cache_ttl_minutes)
 
         # 模型元数据缓存 / Model metadata cache
@@ -335,29 +333,21 @@ class PredictionService:
         client = MlflowClient(tracking_uri=self.mlflow_tracking_uri)
 
         # 获取生产阶段的最新模型
-        production_versions = client.get_latest_versions(
-            name=model_name, stages=["Production"]
-        )
+        production_versions = client.get_latest_versions(name=model_name, stages=["Production"])
 
         if not production_versions:
             # 如果没有生产版本，尝试获取Staging版本
-            staging_versions = client.get_latest_versions(
-                name=model_name, stages=["Staging"]
-            )
+            staging_versions = client.get_latest_versions(name=model_name, stages=["Staging"])
             if not staging_versions:
                 # 如果也没有Staging版本，获取最新版本
                 all_versions = client.get_latest_versions(name=model_name)
                 if not all_versions:
                     raise ValueError(f"模型 {model_name} 没有可用版本")
                 model_version_info = all_versions[0]
-                logger.warning(
-                    f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境"
-                )
+                logger.warning(f"使用最新版本 {model_version_info.version}，建议推广模型到生产环境")
             else:
                 model_version_info = staging_versions[0]
-                logger.warning(
-                    f"使用Staging版本 {model_version_info.version}，建议推广到生产环境"
-                )
+                logger.warning(f"使用Staging版本 {model_version_info.version}，建议推广到生产环境")
         else:
             model_version_info = production_versions[0]
             logger.info(f"使用生产版本 {model_version_info.version}")
@@ -437,9 +427,7 @@ class PredictionService:
             model_uri = f"models:/{model_name}/{version}"
 
             # 缓存模型（带TTL） / Cache model with TTL
-            await self.model_cache.set(
-                cache_key, (model, version), ttl=self.model_cache_ttl
-            )
+            await self.model_cache.set(cache_key, (model, version), ttl=self.model_cache_ttl)
 
             self.model_metadata_cache[model_uri] = {
                 "name": model_name,
@@ -535,11 +523,7 @@ class PredictionService:
                     home_team_id=match_info["home_team_id"],
                     away_team_id=match_info["away_team_id"],
                 )
-                features = (
-                    await raw_features
-                    if inspect.isawaitable(raw_features)
-                    else raw_features
-                )
+                features = await raw_features if inspect.isawaitable(raw_features) else raw_features
             except Exception as e:
                 logger.warning(f"获取比赛 {match_id} 的特征失败: {e}，使用默认特征")
                 features = self._get_default_features()
@@ -826,9 +810,7 @@ class PredictionService:
                 # 获取比赛实际结果
                 match_query = select(
                     Match.id, Match.home_score, Match.away_score, Match.match_status
-                ).where(
-                    Match.id == match_id, Match.match_status == MatchStatus.FINISHED
-                )
+                ).where(Match.id == match_id, Match.match_status == MatchStatus.FINISHED)
 
                 match_result = await session.execute(match_query)
                 match = match_result.first()
@@ -837,9 +819,7 @@ class PredictionService:
                     logger.warning(f"比赛 {match_id} 未完成或不存在")
                     return False
                 # 计算实际结果
-                actual_result = self._calculate_actual_result(
-                    match.home_score, match.away_score
-                )
+                actual_result = self._calculate_actual_result(match.home_score, match.away_score)
 
                 # 更新预测记录
                 update_query = text(
@@ -950,9 +930,7 @@ class PredictionService:
                 """
                 )
 
-                result = await session.execute(
-                    query, {"model_name": model_name, "days": days}
-                )
+                result = await session.execute(query, {"model_name": model_name, "days": days})
 
                 row = result.first()
                 if row and row.total > 0:
@@ -966,9 +944,7 @@ class PredictionService:
             logger.error(f"获取模型准确率失败: {e}")
             return None
 
-    async def batch_predict_matches(
-        self, match_ids: List[int]
-    ) -> List[PredictionResult]:
+    async def batch_predict_matches(self, match_ids: List[int]) -> List[PredictionResult]:
         """
         批量预测比赛结果 / Batch Predict Match Results
 

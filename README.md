@@ -46,6 +46,10 @@
 
 ## 🚀 快速开始
 
+### 📋 新开发者必读（5分钟上手）
+
+> ⚠️ **重要提醒**：请务必阅读 [测试运行指南](TEST_RUN_GUIDE.md) 了解正确的测试方法！
+
 ### 1. 克隆项目
 
 ```bash
@@ -61,6 +65,19 @@ make context      # 加载项目上下文 (⭐ 最重要)
 make test         # 运行测试 (385个测试用例)
 make coverage     # 查看96.35%覆盖率报告
 ```
+
+### 3. 验证测试环境 🧪
+
+```bash
+# Phase 1 核心功能测试（最重要）
+make test-phase1
+
+# 查看实际覆盖率
+open htmlcov/index.html  # macOS 或
+xdg-open htmlcov/index.html  # Linux
+```
+
+> 📌 **提示**：运行测试时**请使用 Makefile 命令**，不要直接运行 pytest 单个文件！详见 [测试运行指南](TEST_RUN_GUIDE.md)
 
 ### 3. 验证部署就绪
 

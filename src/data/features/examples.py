@@ -291,9 +291,7 @@ def example_create_training_dataset(
     end_date = datetime(2025, 9, 1)
 
     # 创建训练数据集
-    training_df = feature_store.create_training_dataset(
-        start_date=start_date, end_date=end_date
-    )
+    training_df = feature_store.create_training_dataset(start_date=start_date, end_date=end_date)
 
     print("✅ 训练数据集创建成功！")
     print(f"📊 数据集包含 {len(training_df)} 条记录")

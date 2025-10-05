@@ -6,9 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-def create_sqlite_memory_engine(
-    *, echo: bool = False, future: bool = True, **kwargs: Any
-):
+def create_sqlite_memory_engine(*, echo: bool = False, future: bool = True, **kwargs: Any):
     """生成内存 SQLite Engine"""
 
     url = "sqlite+pysqlite:///:memory:"
@@ -19,9 +17,7 @@ def create_sqlite_sessionmaker(*, engine=None, **kwargs: Any):
     """基于内存 Engine 输出 Session 工厂"""
 
     engine = engine or create_sqlite_memory_engine()
-    return sessionmaker(
-        bind=engine, autoflush=False, autocommit=False, future=True, **kwargs
-    )
+    return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True, **kwargs)
 
 
 __all__ = [

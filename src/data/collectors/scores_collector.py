@@ -153,9 +153,7 @@ class ScoresCollector(DataCollector):
                     status="success",
                 )
 
-            self.logger.info(
-                f"Starting live scores collection for {len(match_ids)} matches"
-            )
+            self.logger.info(f"Starting live scores collection for {len(match_ids)} matches")
             self._active_matches.update(match_ids)
 
             # 选择采集模式
@@ -226,9 +224,7 @@ class ScoresCollector(DataCollector):
                 error_message=str(e),
             )
 
-    async def _collect_websocket_scores(
-        self, match_ids: List[str]
-    ) -> List[Dict[str, Any]]:
+    async def _collect_websocket_scores(self, match_ids: List[str]) -> List[Dict[str, Any]]:
         """
         通过WebSocket采集实时比分数据
 
@@ -342,9 +338,7 @@ class ScoresCollector(DataCollector):
                             collected_data.append(cleaned_data)
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Failed to collect live data for match {match_id}: {str(e)}"
-                    )
+                    self.logger.error(f"Failed to collect live data for match {match_id}: {str(e)}")
 
         except Exception as e:
             self.logger.error(f"Polling collection failed: {str(e)}")
@@ -373,9 +367,7 @@ class ScoresCollector(DataCollector):
             self.logger.error(f"Failed to get live data for match {match_id}: {str(e)}")
             return None
 
-    async def _clean_live_data(
-        self, raw_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    async def _clean_live_data(self, raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         清洗和标准化实时比分数据
 

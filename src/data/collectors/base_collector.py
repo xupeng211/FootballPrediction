@@ -235,17 +235,13 @@ class DataCollector(ABC):
                     json_data=json_data,
                 )
             except Exception as e:
-                self.logger.error(
-                    f"Request failed for {url}, attempt {attempt + 1}: {str(e)}"
-                )
+                self.logger.error(f"Request failed for {url}, attempt {attempt + 1}: {str(e)}")
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay)
                 else:
                     raise e
 
-    async def _save_to_bronze_layer(
-        self, table_name: str, raw_data: List[Dict[str, Any]]
-    ) -> None:
+    async def _save_to_bronze_layer(self, table_name: str, raw_data: List[Dict[str, Any]]) -> None:
         """
         保存原始数据到Bronze层
 
@@ -297,37 +293,25 @@ class DataCollector(ABC):
 
                         # 根据表类型设置特定字段
                         if table_name == "raw_match_data":
-                            bronze_record.external_match_id = data.get(
-                                "external_match_id"
-                            )
-                            bronze_record.external_league_id = data.get(
-                                "external_league_id"
-                            )
+                            bronze_record.external_match_id = data.get("external_match_id")
+                            bronze_record.external_league_id = data.get("external_league_id")
                             if "match_time" in data:
                                 try:
                                     match_time_str = data["match_time"]
                                     if isinstance(match_time_str, str):
-                                        bronze_record.match_time = (
-                                            datetime.fromisoformat(
-                                                match_time_str.replace("Z", "+00:00")
-                                            )
+                                        bronze_record.match_time = datetime.fromisoformat(
+                                            match_time_str.replace("Z", "+00:00")
                                         )
                                 except (ValueError, TypeError) as e:
-                                    self.logger.warning(
-                                        f"Invalid match_time format: {e}"
-                                    )
+                                    self.logger.warning(f"Invalid match_time format: {e}")
 
                         elif table_name == "raw_odds_data":
-                            bronze_record.external_match_id = data.get(
-                                "external_match_id"
-                            )
+                            bronze_record.external_match_id = data.get("external_match_id")
                             bronze_record.bookmaker = data.get("bookmaker")
                             bronze_record.market_type = data.get("market_type")
 
                         elif table_name == "raw_scores_data":
-                            bronze_record.external_match_id = data.get(
-                                "external_match_id"
-                            )
+                            bronze_record.external_match_id = data.get("external_match_id")
                             bronze_record.match_status = data.get("match_status")
                             bronze_record.home_score = data.get("home_score")
                             bronze_record.away_score = data.get("away_score")
@@ -405,9 +389,7 @@ class DataCollector(ABC):
             self.logger.error(f"Failed to create collection log: {str(e)}")
             return 0
 
-    async def _update_collection_log(
-        self, log_id: int, result: CollectionResult
-    ) -> None:
+    async def _update_collection_log(self, log_id: int, result: CollectionResult) -> None:
         """
         更新采集日志记录（结束时调用）
 

@@ -87,9 +87,7 @@ class FootballFeatureStore:
         if repo_path:
             self.repo_path = Path(repo_path)
         else:
-            self._temp_dir = tempfile.TemporaryDirectory(
-                prefix=f"feast_repo_{project_name}_"
-            )
+            self._temp_dir = tempfile.TemporaryDirectory(prefix=f"feast_repo_{project_name}_")
             self.repo_path = Path(self._temp_dir.name)
             atexit.register(self._cleanup_temp_dir)
         self.logger = logging.getLogger(f"feature_store.{self.__class__.__name__}")
@@ -256,11 +254,7 @@ class FootballFeatureStore:
                 features=feature_service, entity_rows=entity_df.to_dict("records")
             )
 
-            return (
-                feature_vector.to_df()
-                if isinstance(feature_vector.to_df(), dict)
-                else {}
-            )
+            return feature_vector.to_df() if isinstance(feature_vector.to_df(), dict) else {}
         except Exception as e:
             self.logger.error(f"获取在线特征失败: {str(e)}")
             raise
@@ -409,9 +403,7 @@ class FootballFeatureStore:
                         {
                             "feature_view": fv.name,
                             "feature_name": (
-                                str(feature.name)
-                                if hasattr(feature, "name")
-                                else str(feature)
+                                str(feature.name) if hasattr(feature, "name") else str(feature)
                             ),
                             "feature_type": str(feature.dtype),
                             "description": feature.description or "",

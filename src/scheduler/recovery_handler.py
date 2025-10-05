@@ -378,14 +378,10 @@ class RecoveryHandler:
 
         except Exception as e:
             logger.error(f"执行恢复策略失败: {task.task_id} - {e}")
-            failure.add_recovery_attempt(
-                strategy, False, datetime.now(), f"策略执行异常: {str(e)}"
-            )
+            failure.add_recovery_attempt(strategy, False, datetime.now(), f"策略执行异常: {str(e)}")
             return False
 
-    def _immediate_retry(
-        self, task: Any, failure: TaskFailure, config: Dict[str, Any]
-    ) -> bool:
+    def _immediate_retry(self, task: Any, failure: TaskFailure, config: Dict[str, Any]) -> bool:
         """
         立即重试
 
@@ -464,9 +460,7 @@ class RecoveryHandler:
         logger.info(f"安排指数退避重试: {task.task_id}, 延迟: {delay}秒")
         return True
 
-    def _fixed_delay_retry(
-        self, task: Any, failure: TaskFailure, config: Dict[str, Any]
-    ) -> bool:
+    def _fixed_delay_retry(self, task: Any, failure: TaskFailure, config: Dict[str, Any]) -> bool:
         """
         固定延迟重试
 
@@ -543,9 +537,7 @@ class RecoveryHandler:
         logger.warning(f"请求人工干预: {task.task_id}")
         return True
 
-    def _skip_and_continue(
-        self, task: Any, failure: TaskFailure, config: Dict[str, Any]
-    ) -> bool:
+    def _skip_and_continue(self, task: Any, failure: TaskFailure, config: Dict[str, Any]) -> bool:
         """
         跳过并继续
 
@@ -675,9 +667,7 @@ class RecoveryHandler:
         failure_by_type: Dict[str, int] = {}
         for failure in self.failure_history:
             failure_type = failure.failure_type.value
-            failure_by_type[failure_type] = (
-                failure_by_type.get(str(failure_type), 0) + 1
-            )
+            failure_by_type[failure_type] = failure_by_type.get(str(failure_type), 0) + 1
 
         # 按任务统计
         failure_by_task: Dict[str, int] = {}
@@ -718,9 +708,9 @@ class RecoveryHandler:
         Returns:
             List[Dict[str, Any]]: 最近的失败记录
         """
-        recent_failures = sorted(
-            self.failure_history, key=lambda f: f.failure_time, reverse=True
-        )[:limit]
+        recent_failures = sorted(self.failure_history, key=lambda f: f.failure_time, reverse=True)[
+            :limit
+        ]
 
         return [failure.to_dict() for failure in recent_failures]
 
@@ -737,9 +727,7 @@ class RecoveryHandler:
         cutoff_time = datetime.now() - timedelta(days=days_to_keep)
         old_count = len(self.failure_history)
 
-        self.failure_history = [
-            f for f in self.failure_history if f.failure_time > cutoff_time
-        ]
+        self.failure_history = [f for f in self.failure_history if f.failure_time > cutoff_time]
 
         cleared_count = old_count - len(self.failure_history)
         logger.info(f"清理了 {cleared_count} 条旧失败记录")

@@ -56,9 +56,7 @@ def upgrade() -> None:
         sa.and_(
             sa.or_(
                 sa.column("home_ht_score").is_(None),
-                sa.and_(
-                    sa.column("home_ht_score") >= 0, sa.column("home_ht_score") <= 99
-                ),
+                sa.and_(sa.column("home_ht_score") >= 0, sa.column("home_ht_score") <= 99),
             )
         ),
     )
@@ -69,9 +67,7 @@ def upgrade() -> None:
         sa.and_(
             sa.or_(
                 sa.column("away_ht_score").is_(None),
-                sa.and_(
-                    sa.column("away_ht_score") >= 0, sa.column("away_ht_score") <= 99
-                ),
+                sa.and_(sa.column("away_ht_score") >= 0, sa.column("away_ht_score") <= 99),
             )
         ),
     )

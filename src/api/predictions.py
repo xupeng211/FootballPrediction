@@ -55,6 +55,7 @@ try:
     RATE_LIMIT_AVAILABLE = True
 except ImportError:
     RATE_LIMIT_AVAILABLE = False
+
     # 创建空的装饰器函数
     def limiter_decorator(*args, **kwargs):
         def decorator(func):
@@ -247,9 +248,7 @@ async def get_match_prediction(
             # 检查比赛状态，如果已结束则不允许实时预测
             if match.match_status == MatchStatus.FINISHED:
                 logger.warning(f"尝试为已结束的比赛 {match_id} 生成预测")
-                raise HTTPException(
-                    status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测"
-                )
+                raise HTTPException(status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测")
 
             prediction_result_data = await prediction_service.predict_match(match_id)
 
@@ -448,11 +447,8 @@ async def get_match_prediction_history(
                     "actual_result": prediction.actual_result,
                     "verified_at": (
                         prediction.verified_at.isoformat()
-                        if prediction.verified_at
-                        and hasattr(prediction.verified_at, "isoformat")
-                        else None
-                        if prediction.verified_at
-                        else None
+                        if prediction.verified_at and hasattr(prediction.verified_at, "isoformat")
+                        else None if prediction.verified_at else None
                     ),
                 }
             )
@@ -530,9 +526,7 @@ async def get_recent_predictions(
                     "model_name": pred.model_name,
                     "predicted_result": pred.predicted_result,
                     "confidence_score": (
-                        float(pred.confidence_score)
-                        if pred.confidence_score is not None
-                        else 0.0
+                        float(pred.confidence_score) if pred.confidence_score is not None else 0.0
                     ),
                     "created_at": pred.created_at.isoformat(),
                     "is_correct": pred.is_correct,

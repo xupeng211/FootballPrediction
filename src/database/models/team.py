@@ -34,9 +34,7 @@ class Team(BaseModel):
     api_team_id = Column(Integer, unique=True, nullable=True, comment="API球队ID")
 
     # 联赛关系
-    league_id = Column(
-        Integer, ForeignKey("leagues.id"), nullable=True, comment="所属联赛ID"
-    )
+    league_id = Column(Integer, ForeignKey("leagues.id"), nullable=True, comment="所属联赛ID")
 
     # 球队详细信息
     founded_year = Column(Integer, nullable=True, comment="成立年份")
@@ -123,9 +121,7 @@ class Team(BaseModel):
         return (
             session.query(Match)
             .filter(
-                or_(  # type: ignore
-                    Match.home_team_id == self.id, Match.away_team_id == self.id
-                )
+                or_(Match.home_team_id == self.id, Match.away_team_id == self.id)  # type: ignore
             )
             .order_by(desc(Match.match_time))
             .limit(limit)
@@ -213,9 +209,7 @@ class Team(BaseModel):
         matches = (
             session.query(Match)
             .filter(
-                or_(  # type: ignore
-                    Match.home_team_id == self.id, Match.away_team_id == self.id
-                ),
+                or_(Match.home_team_id == self.id, Match.away_team_id == self.id),  # type: ignore
                 Match.season == season,
                 Match.match_status == "finished",
             )

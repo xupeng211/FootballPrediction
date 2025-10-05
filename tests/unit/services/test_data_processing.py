@@ -11,9 +11,10 @@
 - 异常检测
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pandas as pd
+import pytest
 
 from src.services.data_processing import DataProcessingService
 
@@ -144,9 +145,7 @@ class TestDataProcessingService:
 
     # === 数据处理核心功能测试 ===
 
-    async def test_process_raw_match_data_success(
-        self, mock_service, sample_raw_match_data
-    ):
+    async def test_process_raw_match_data_success(self, mock_service, sample_raw_match_data):
         """测试成功处理原始比赛数据"""
         # 重新创建实例并初始化
         service = DataProcessingService()
@@ -154,9 +153,7 @@ class TestDataProcessingService:
         await service.initialize()
 
         # Mock相关方法
-        service.data_cleaner.clean_match_data = MagicMock(
-            return_value=sample_raw_match_data
-        )
+        service.data_cleaner.clean_match_data = MagicMock(return_value=sample_raw_match_data)
         service.missing_handler.handle_missing_values = MagicMock(
             return_value=sample_raw_match_data
         )
@@ -222,9 +219,7 @@ class TestDataProcessingService:
         await service.initialize()
 
         # 设置mock返回值
-        service.data_cleaner.clean_odds_data = MagicMock(
-            return_value=sample_raw_odds_data
-        )
+        service.data_cleaner.clean_odds_data = MagicMock(return_value=sample_raw_odds_data)
         service.data_lake.store = MagicMock(return_value=True)
 
         result = await service.process_raw_odds_data(sample_raw_odds_data)
@@ -251,9 +246,7 @@ class TestDataProcessingService:
         )
 
         # Mock处理方法
-        service.missing_handler.handle_missing_features = AsyncMock(
-            return_value=features_df
-        )
+        service.missing_handler.handle_missing_features = AsyncMock(return_value=features_df)
 
         result = await service.process_features_data(123, features_df)
 
@@ -266,9 +259,7 @@ class TestDataProcessingService:
         """测试批量处理比赛数据"""
         # 设置mock返回值
         mock_service.data_cleaner.clean_dataframe.return_value = sample_dataframe
-        mock_service.missing_handler.fill_missing_dataframe.return_value = (
-            sample_dataframe
-        )
+        mock_service.missing_handler.fill_missing_dataframe.return_value = sample_dataframe
         mock_service.data_lake.store_batch.return_value = True
 
         result = await mock_service.process_batch_matches(sample_dataframe)
@@ -364,7 +355,9 @@ class TestDataProcessingService:
 
         mock_session.execute.side_effect = [mock_result1, mock_result2, mock_result3]
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         status = await mock_service.get_bronze_layer_status()
@@ -416,17 +409,13 @@ class TestDataProcessingService:
         )
 
         # 设置mock返回值
-        mock_service.missing_handler.handle_missing_teams = AsyncMock(
-            return_value=team_data
-        )
+        mock_service.missing_handler.handle_missing_teams = AsyncMock(return_value=team_data)
 
         result = await mock_service.handle_missing_team_data(team_data)
 
         assert result is not None
         assert isinstance(result, pd.DataFrame)
-        mock_service.missing_handler.handle_missing_teams.assert_called_once_with(
-            team_data
-        )
+        mock_service.missing_handler.handle_missing_teams.assert_called_once_with(team_data)
 
     # === 异常检测测试 ===
 
@@ -549,15 +538,11 @@ class TestDataProcessingService:
 
     # === 错误处理测试 ===
 
-    async def test_process_raw_match_data_database_error(
-        self, mock_service, sample_raw_match_data
-    ):
+    async def test_process_raw_match_data_database_error(self, mock_service, sample_raw_match_data):
         """测试处理数据时数据库错误"""
         # 设置mock返回值
         mock_service.data_cleaner.clean_match_data.return_value = sample_raw_match_data
-        mock_service.missing_handler.handle_missing_values.return_value = (
-            sample_raw_match_data
-        )
+        mock_service.missing_handler.handle_missing_values.return_value = sample_raw_match_data
 
         # Mock数据库错误
         mock_service.db_manager.get_async_session.side_effect = Exception(
@@ -630,6 +615,5 @@ class TestDataProcessingService:
         assert health["status"] == "healthy"
         assert "components" in health
         assert all(
-            component["status"] == "connected"
-            for component in health["components"].values()
+            component["status"] == "connected" for component in health["components"].values()
         )

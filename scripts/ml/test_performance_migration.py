@@ -22,7 +22,8 @@ def test_performance_optimization_migration():
 
     # 获取数据库配置
     config = get_database_config()
-    db_manager = DatabaseManager(config)
+    db_manager = DatabaseManager()
+    db_manager.initialize(config)
 
     try:
         # 检查是否已经应用了性能优化迁移

@@ -17,14 +17,13 @@ except ImportError:
     # 如果警告过滤器模块不可用，手动设置基本过滤器
     import warnings
 
-    try:
-        import marshmallow.warnings
-
-        warnings.filterwarnings(
-            "ignore", category=marshmallow.warnings.ChangedInMarshmallow4Warning
-        )
-    except ImportError:
-        pass
+    # Marshmallow 4.x 已经移除了 warnings 模块
+    # 使用通用的消息过滤器
+    warnings.filterwarnings(
+        "ignore",
+        message=r".*Number.*field.*should.*not.*be.*instantiated.*",
+        category=DeprecationWarning
+    )
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,9 +72,7 @@ if RATE_LIMIT_AVAILABLE:
     )
 else:
     limiter = None
-    logger.warning(
-        "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
-    )
+    logger.warning("⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi")
 
 
 @asynccontextmanager

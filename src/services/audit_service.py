@@ -146,8 +146,7 @@ class AuditService:
             elif isinstance(value, list):
                 # 处理列表中的字典
                 sanitized[key] = [
-                    self._sanitize_data(item) if isinstance(item, dict) else item
-                    for item in value
+                    self._sanitize_data(item) if isinstance(item, dict) else item for item in value
                 ]
             else:
                 sanitized[key] = value
@@ -195,16 +194,12 @@ class AuditService:
         pii_fields = {"email", "phone", "ssn", "credit_card", "bank_account"}
         return any(key.lower() in pii_fields for key in data.keys())
 
-    def _is_sensitive_data(
-        self, table_name: Optional[str], column_name: Optional[str]
-    ) -> bool:
+    def _is_sensitive_data(self, table_name: Optional[str], column_name: Optional[str]) -> bool:
         """判断是否为敏感数据"""
         if table_name and table_name.lower() in self.sensitive_tables:
             return True
         if column_name:
-            return any(
-                sensitive in column_name.lower() for sensitive in self.sensitive_columns
-            )
+            return any(sensitive in column_name.lower() for sensitive in self.sensitive_columns)
         return False
 
     def _determine_severity(
@@ -219,9 +214,7 @@ class AuditService:
         if table_name and self._is_sensitive_table(table_name):
             return AuditSeverity.HIGH
         if data and self._contains_pii(data):
-            return (
-                AuditSeverity.MEDIUM
-            )  # 修正：包含PII的操作应该是MEDIUM级别，而不是HIGH
+            return AuditSeverity.MEDIUM  # 修正：包含PII的操作应该是MEDIUM级别，而不是HIGH
         if action == AuditAction.READ:
             return AuditSeverity.LOW
         return AuditSeverity.MEDIUM
@@ -369,9 +362,7 @@ class AuditService:
         """获取审计上下文"""
         return audit_context.get({})
 
-    async def get_user_audit_summary(
-        self, user_id: str, days: int = 30
-    ) -> Dict[str, Any]:
+    async def get_user_audit_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
         """获取用户审计摘要"""
         async with self.db_manager.get_async_session() as session:
             summary = AuditLogSummary(session)
@@ -388,9 +379,7 @@ class AuditService:
                 .filter(
                     and_(
                         AuditLog.timestamp >= cutoff_time,
-                        AuditLog.severity.in_(
-                            [AuditSeverity.HIGH, AuditSeverity.CRITICAL]
-                        ),
+                        AuditLog.severity.in_([AuditSeverity.HIGH, AuditSeverity.CRITICAL]),
                     )
                 )
                 .order_by(desc(AuditLog.timestamp))
@@ -398,9 +387,7 @@ class AuditService:
             )
             return [log.to_dict() for log in high_risk_logs.scalars()]
 
-    def log_action(
-        self, action: str, user_id: str, metadata: Optional[dict] = None
-    ) -> dict:
+    def log_action(self, action: str, user_id: str, metadata: Optional[dict] = None) -> dict:
         """记录操作日志 - 同步版本用于测试"""
         log_entry = {
             "action": action,
@@ -432,9 +419,7 @@ class AuditService:
             "actions": list(set(log.get("action") for log in self._logs)),
         }
 
-    async def async_log_action(
-        self, action: str, user_id: str, metadata: dict = None
-    ) -> dict:
+    async def async_log_action(self, action: str, user_id: str, metadata: dict = None) -> dict:
         """异步记录操作日志"""
         return self.log_action(action, user_id, metadata)
 
@@ -782,9 +767,7 @@ def audit_operation(
     return decorator
 
 
-def audit_database_operation(
-    action: str, table_name: str, extract_record_id: bool = True
-):
+def audit_database_operation(action: str, table_name: str, extract_record_id: bool = True):
     """
     数据库操作审计装饰器（适用于数据库服务方法）
     Args:

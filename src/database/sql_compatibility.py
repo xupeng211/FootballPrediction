@@ -330,17 +330,13 @@ class CompatibleQueryBuilder:
 
     def build_task_errors_query(self, hours: int = 24) -> str:
         """构建任务错误统计查询（已弃用，使用get_task_errors_query）"""
-        logger.warning(
-            "build_task_errors_query is deprecated, use get_task_errors_query instead"
-        )
+        logger.warning("build_task_errors_query is deprecated, use get_task_errors_query instead")
         query, _ = self.get_task_errors_query(hours)
         return query
 
     def build_type_errors_query(self, hours: int = 24) -> str:
         """构建错误类型统计查询（已弃用，使用get_type_errors_query）"""
-        logger.warning(
-            "build_type_errors_query is deprecated, use get_type_errors_query instead"
-        )
+        logger.warning("build_type_errors_query is deprecated, use get_type_errors_query instead")
         query, _ = self.get_type_errors_query(hours)
         return query
 
@@ -354,9 +350,7 @@ class CompatibleQueryBuilder:
 
     def build_task_delay_query(self) -> str:
         """构建任务延迟查询（已弃用，使用get_task_delay_query）"""
-        logger.warning(
-            "build_task_delay_query is deprecated, use get_task_delay_query instead"
-        )
+        logger.warning("build_task_delay_query is deprecated, use get_task_delay_query instead")
         query, _ = self.get_task_delay_query()
         return query
 

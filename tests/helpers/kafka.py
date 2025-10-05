@@ -74,7 +74,6 @@ class MockKafkaConsumer:
 
     def close(self) -> None:
         """关闭消费者"""
-        pass
 
 
 def apply_kafka_mocks(monkeypatch: MonkeyPatch) -> None:

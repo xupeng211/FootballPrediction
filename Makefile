@@ -81,6 +81,8 @@ install: venv ## Environment: Install dependencies from lock file
 		pip install -r requirements/requirements.lock; \
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
+	@echo "$(YELLOW)Running welcome script...$(RESET)" && \
+	bash scripts/welcome.sh
 
 install-locked: venv ## Environment: Install from locked dependencies (reproducible)
 	@if [ ! -f requirements/requirements.lock ]; then \
@@ -110,6 +112,16 @@ verify-deps: venv ## Environment: Verify dependencies match lock file
 
 check-deps: ## Environment: Verify required Python dependencies are installed
 	@$(ACTIVATE) && python scripts/dependency/check.py
+
+smart-deps: ## Environment: Smart dependency check with AI guidance
+	@echo "$(BLUE)🔍 Running smart dependency check...$(RESET)"
+	@bash scripts/dependency/smart_deps.sh
+
+ai-deps-reminder: ## Environment: Show AI dependency management reminder
+	@echo "$(YELLOW)📖 Displaying AI dependency management guide...$(RESET)"
+	@cat .ai-reminder.md
+	@echo ""
+	@echo "$(BLUE)💡 Run 'make smart-deps' to check for dependency changes$(RESET)"
 
 check-env: ## Environment: Check required environment variables
 	@echo "$(YELLOW)Checking environment variables...$(RESET)"
@@ -209,6 +221,24 @@ test: ## Test: Run pytest unit tests
 	echo "$(YELLOW)Running tests...$(RESET)" && \
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
+
+test-quick: ## Test: Quick test run (unit tests only, no coverage)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running quick tests...$(RESET)" && \
+	pytest -m "unit" --maxfail=10 --disable-warnings && \
+	echo "$(GREEN)✅ Quick tests passed$(RESET)"
+
+test-phase1: ## Test: Run Phase 1 core API tests (data, features, predictions)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running Phase 1 core tests...$(RESET)" && \
+	pytest tests/unit/api/test_data.py tests/unit/api/test_features.py tests/unit/api/test_predictions.py -v --cov=src --cov-report=term-missing && \
+	echo "$(GREEN)✅ Phase 1 tests passed$(RESET)"
+
+test-api: ## Test: Run all API tests
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running API tests...$(RESET)" && \
+	pytest -m "api" -v && \
+	echo "$(GREEN)✅ API tests passed$(RESET)"
 
 test-full: ## Test: Run full unit test suite with coverage
 	@$(ACTIVATE) && \

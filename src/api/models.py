@@ -61,15 +61,11 @@ async def get_active_models() -> Dict[str, Any]:
         # 这确保了当 get_latest_versions 被模拟为抛出异常时，我们能捕获到错误
         try:
             # 尝试一个基本的 MLflow 操作来验证服务状态
-            mlflow_client.get_latest_versions(
-                name="__health_check__", stages=["Production"]
-            )
+            mlflow_client.get_latest_versions(name="__health_check__", stages=["Production"])
         except RuntimeError as e:
             # 符合测试断言期望：当测试模拟 RuntimeError 时抛出 HTTPException
             logger.error(f"MLflow服务不可用: {e}")
-            raise HTTPException(
-                status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"}
-            )
+            raise HTTPException(status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"})
         except Exception:
             # 其他异常（如模型不存在）是正常的，忽略
             pass
@@ -91,18 +87,14 @@ async def get_active_models() -> Dict[str, Any]:
                     )
                     if staging_versions:
                         production_versions = staging_versions
-                        logger.warning(
-                            f"模型 {model_name} 没有生产版本，使用Staging版本"
-                        )
+                        logger.warning(f"模型 {model_name} 没有生产版本，使用Staging版本")
 
                 # 如果还是没有，获取最新版本
                 if not production_versions:
                     all_versions = mlflow_client.get_latest_versions(name=model_name)
                     if all_versions:
                         production_versions = all_versions
-                        logger.warning(
-                            f"模型 {model_name} 没有指定阶段版本，使用最新版本"
-                        )
+                        logger.warning(f"模型 {model_name} 没有指定阶段版本，使用最新版本")
 
                 for version in production_versions:
                     # 获取模型详细信息
@@ -125,9 +117,7 @@ async def get_active_models() -> Dict[str, Any]:
                                 "params": run.data.params,
                             }
                         except Exception as e:
-                            logger.warning(
-                                f"无法获取运行信息 {model_details.run_id}: {e}"
-                            )
+                            logger.warning(f"无法获取运行信息 {model_details.run_id}: {e}")
 
                     model_info = {
                         "name": model_name,
@@ -147,9 +137,7 @@ async def get_active_models() -> Dict[str, Any]:
             except RuntimeError as e:
                 # 符合测试断言期望：MLflow RuntimeError应该向上传播为HTTPException
                 logger.error(f"MLflow服务错误: {e}")
-                raise HTTPException(
-                    status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"}
-                )
+                raise HTTPException(status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"})
             except Exception as e:
                 logger.error(f"获取模型 {model_name} 版本信息失败: {e}")
                 continue
@@ -172,9 +160,7 @@ async def get_active_models() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail={"error": "获取活跃模型失败"})
 
 
-@router.get(
-    "/metrics", summary="获取模型性能指标", description="获取模型的性能指标和统计信息"
-)
+@router.get("/metrics", summary="获取模型性能指标", description="获取模型的性能指标和统计信息")
 async def get_model_metrics(
     model_name: str = Query("football_baseline_model", description="模型名称"),
     time_window: str = Query("7d", description="时间窗口：1d, 7d, 30d"),
@@ -257,9 +243,7 @@ async def get_model_metrics(
             metric_data = {
                 "model_version": row.model_version,
                 "total_predictions": row.total_predictions,
-                "avg_confidence": (
-                    float(row.avg_confidence) if row.avg_confidence else 0.0
-                ),
+                "avg_confidence": (float(row.avg_confidence) if row.avg_confidence else 0.0),
                 "accuracy": float(row.accuracy) if row.accuracy else None,
                 "predictions_by_result": {
                     "home": row.home_predictions,
@@ -283,9 +267,7 @@ async def get_model_metrics(
             total_verified += row.verified_predictions or 0
 
         # 计算总体准确率
-        overall_accuracy = (
-            (total_correct / total_verified) if total_verified > 0 else None
-        )
+        overall_accuracy = (total_correct / total_verified) if total_verified > 0 else None
 
         # 查询最近预测趋势
         trend_query = text(
@@ -431,9 +413,7 @@ async def get_model_versions(
 async def promote_model_version(
     model_name: str,
     version: str,
-    target_stage: str = Query(
-        "Production", description="目标阶段：Staging, Production"
-    ),
+    target_stage: str = Query("Production", description="目标阶段：Staging, Production"),
 ) -> Dict[str, Any]:
     """
     推广模型版本到指定阶段
@@ -458,9 +438,7 @@ async def promote_model_version(
 
         # 验证版本存在
         try:
-            model_version = mlflow_client.get_model_version(
-                name=model_name, version=version
-            )
+            model_version = mlflow_client.get_model_version(name=model_name, version=version)
         except Exception:
             # 符合测试断言期望：统一返回JSON格式错误信息
             raise HTTPException(
@@ -473,15 +451,11 @@ async def promote_model_version(
             name=model_name,
             version=version,
             stage=target_stage,
-            archive_existing_versions=(
-                target_stage == "Production"
-            ),  # 生产环境时归档现有版本
+            archive_existing_versions=(target_stage == "Production"),  # 生产环境时归档现有版本
         )
 
         # 获取更新后的版本信息
-        updated_version = mlflow_client.get_model_version(
-            name=model_name, version=version
-        )
+        updated_version = mlflow_client.get_model_version(name=model_name, version=version)
 
         return APIResponse.success(
             data={
@@ -536,20 +510,14 @@ async def get_model_performance(
                     version = production_versions[0].version
                 else:
                     # 符合测试断言期望：统一返回JSON格式错误信息
-                    raise HTTPException(
-                        status_code=404, detail={"error": "模型没有生产版本"}
-                    )
+                    raise HTTPException(status_code=404, detail={"error": "模型没有生产版本"})
             except Exception:
                 # 符合测试断言期望：统一返回JSON格式错误信息
-                raise HTTPException(
-                    status_code=404, detail={"error": "无法获取模型生产版本"}
-                )
+                raise HTTPException(status_code=404, detail={"error": "无法获取模型生产版本"})
 
         # 获取模型版本信息
         try:
-            model_version = mlflow_client.get_model_version(
-                name=model_name, version=version
-            )
+            model_version = mlflow_client.get_model_version(name=model_name, version=version)
         except Exception as e:
             if "RESOURCE_DOES_NOT_EXIST" in str(e):
                 # 符合测试断言期望：统一返回JSON格式错误信息
@@ -636,31 +604,15 @@ async def get_model_performance(
                 "verified_predictions": stats.verified_predictions if stats else 0,
                 "correct_predictions": stats.correct_predictions if stats else 0,
                 "overall_accuracy": (
-                    float(stats.overall_accuracy)
-                    if stats and stats.overall_accuracy
-                    else None
+                    float(stats.overall_accuracy) if stats and stats.overall_accuracy else None
                 ),
                 "average_confidence": (
-                    float(stats.avg_confidence)
-                    if stats and stats.avg_confidence
-                    else None
+                    float(stats.avg_confidence) if stats and stats.avg_confidence else None
                 ),
                 "accuracy_by_result": {
-                    "home": (
-                        float(stats.home_accuracy)
-                        if stats and stats.home_accuracy
-                        else None
-                    ),
-                    "draw": (
-                        float(stats.draw_accuracy)
-                        if stats and stats.draw_accuracy
-                        else None
-                    ),
-                    "away": (
-                        float(stats.away_accuracy)
-                        if stats and stats.away_accuracy
-                        else None
-                    ),
+                    "home": (float(stats.home_accuracy) if stats and stats.home_accuracy else None),
+                    "draw": (float(stats.draw_accuracy) if stats and stats.draw_accuracy else None),
+                    "away": (float(stats.away_accuracy) if stats and stats.away_accuracy else None),
                 },
                 "predictions_by_result": {
                     "home": stats.home_total if stats else 0,
@@ -696,9 +648,7 @@ def get_model_info() -> Dict[str, Any]:
     }
 
 
-@router.get(
-    str("/experiments"), summary="获取实验列表", description="获取MLflow实验列表"
-)
+@router.get(str("/experiments"), summary="获取实验列表", description="获取MLflow实验列表")
 async def get_experiments(
     limit: int = Query(default=20, description="返回实验数量限制", ge=1, le=100),
 ) -> Dict[str, Any]:

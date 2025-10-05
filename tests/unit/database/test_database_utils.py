@@ -7,4 +7,3 @@ import pytest
 class TestDatabaseUtils:
     """数据库工具测试 - 使用内存 SQLite"""
 
-    pass
