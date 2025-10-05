@@ -160,7 +160,7 @@ clean-env: ## Environment: Clean virtual environment and old dependency files
 	@rm -rf pipdeptree.egg-info/
 	@echo "$(GREEN)✅ Environment cleaned$(RESET)"
 
-audit: ## Security: Run dependency security audit
+audit-vulnerabilities: ## Security: Run dependency vulnerability audit
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)🔍 Running security audit...$(RESET)" && \
 	pip install pip-audit[toml] && \

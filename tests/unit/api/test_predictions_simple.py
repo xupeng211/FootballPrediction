@@ -18,9 +18,19 @@ Tests prediction-related API endpoints, including:
 - Verify prediction results
 """
 
-import pytest
+import os
+import sys
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+# 禁用 slowapi 限流
+os.environ["RATE_LIMIT_AVAILABLE"] = "False"
+
+# 重新导入模块以确保限流被禁用
+if "src.api.predictions" in sys.modules:
+    del sys.modules["src.api.predictions"]
 
 from src.database.models import (
     Match,

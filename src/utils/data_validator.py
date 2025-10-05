@@ -102,6 +102,4 @@ class DataValidator:
     @staticmethod
     def validate_date_range(start_date: datetime, end_date: datetime) -> bool:
         """验证日期范围 - 开始日期应早于结束日期"""
-        if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
-            return False
         return start_date <= end_date
