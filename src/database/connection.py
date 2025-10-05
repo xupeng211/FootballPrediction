@@ -928,7 +928,7 @@ class MultiUserDatabaseManager:
             },
         }
 
-        return permissions_map.get(str(role), {})
+        return permissions_map.get(role, {})
 
 
 # 全局数据库管理器实例
