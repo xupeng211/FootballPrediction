@@ -368,8 +368,8 @@ class AlertManager:
         if rule_id in self.rules:
             del self.rules[rule_id]
             logger.info(f"移除告警规则: {rule_id}")
-            return True if isinstance(True, dict) else {}
-        return False if isinstance(False, dict) else {}
+            return True
+        return False
 
     def fire_alert(
         self,
@@ -402,7 +402,7 @@ class AlertManager:
         # 检查去重
         if self._should_throttle(alert_id, rule_id):
             logger.debug(f"告警被去重: {alert_id}")
-            return None if isinstance(None, dict) else {}
+            return None
         # 创建告警
         alert = Alert(
             alert_id=alert_id,
