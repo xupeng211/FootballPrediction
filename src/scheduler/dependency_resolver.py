@@ -457,7 +457,7 @@ class DependencyResolver:
             return False
 
         time_diff = datetime.now() - self.cache_updated_at[cache_key]
-        return time_diff <= self.cache_ttl
+        return bool(time_diff <= self.cache_ttl)
 
     def validate_dependencies(self) -> Tuple[bool, List[str]]:
         """

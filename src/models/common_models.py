@@ -152,10 +152,8 @@ class User:
             return permission in ["read", "write"]
 
         # 访客只有读权限
-        if self.role == UserRole.GUEST:
-            return permission == "read"
-
-        return False
+        # 对于 GUEST 或任何其他未知角色，只给予读权限
+        return permission == "read"
 
 
 @dataclass
