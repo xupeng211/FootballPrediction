@@ -59,6 +59,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import inspect
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -257,15 +258,16 @@ class PredictionService:
 
         # 定义模型预期的特征顺序 / Define expected feature order for model
         self.feature_order: List[str] = [
-            "home_team_form",
-            "away_team_form",
-            "head_to_head_ratio",
-            "home_goals_avg",
-            "away_goals_avg",
-            "home_defense_rating",
-            "away_defense_rating",
-            "recent_performance_home",
-            "recent_performance_away",
+            "home_recent_wins",
+            "home_recent_goals_for",
+            "home_recent_goals_against",
+            "away_recent_wins",
+            "away_recent_goals_for",
+            "away_recent_goals_against",
+            "h2h_home_advantage",
+            "home_implied_probability",
+            "draw_implied_probability",
+            "away_implied_probability",
         ]
 
     @retry(MLFLOW_RETRY_CONFIG)
@@ -420,7 +422,7 @@ class PredictionService:
         cache_key = f"model:{model_name}"
 
         # 尝试从缓存获取 / Try to get from cache
-        cached_result = await self.model_cache.get(cache_key, None)
+        cached_result = await self.model_cache.get(cache_key)
         if cached_result:
             model, version = cached_result
             logger.debug(
@@ -509,7 +511,7 @@ class PredictionService:
         prediction_cache_key = f"prediction:{match_id}"
 
         # 尝试从缓存获取预测结果 / Try to get prediction result from cache
-        cached_result = await self.prediction_cache.get(prediction_cache_key, None)
+        cached_result = await self.prediction_cache.get(prediction_cache_key)
         if cached_result:
             logger.info(
                 f"使用缓存的预测结果：比赛 {match_id} / Using cached prediction result for match {match_id}"
@@ -528,10 +530,15 @@ class PredictionService:
 
             # 从特征存储获取实时特征
             try:
-                features = await self.feature_store.get_match_features_for_prediction(
+                raw_features = self.feature_store.get_match_features_for_prediction(
                     match_id=match_id,
                     home_team_id=match_info["home_team_id"],
                     away_team_id=match_info["away_team_id"],
+                )
+                features = (
+                    await raw_features
+                    if inspect.isawaitable(raw_features)
+                    else raw_features
                 )
             except Exception as e:
                 logger.warning(f"获取比赛 {match_id} 的特征失败: {e}，使用默认特征")
@@ -558,9 +565,9 @@ class PredictionService:
                 match_id=match_id,
                 model_version=model_version,
                 model_name="football_baseline_model",
-                home_win_probability=float(prob_dict.get(str("home", None), 0.0)),
-                draw_probability=float(prob_dict.get(str("draw", None), 0.0)),
-                away_win_probability=float(prob_dict.get(str("away", None), 0.0)),
+                home_win_probability=float(prob_dict.get("home", 0.0)),
+                draw_probability=float(prob_dict.get("draw", 0.0)),
+                away_win_probability=float(prob_dict.get("away", 0.0)),
                 predicted_result=predicted_class,
                 confidence_score=float(max(prediction_proba[0])),
                 features_used=features,
@@ -593,7 +600,7 @@ class PredictionService:
                 f"比赛 {match_id} 预测完成：{predicted_class} (置信度: {result.confidence_score:.3f}) / "
                 f"Match {match_id} prediction completed: {predicted_class} (confidence: {result.confidence_score:.3f})"
             )
-            return result if isinstance(result, dict) else {}
+            return result
         except Exception as e:
             logger.error(f"预测比赛 {match_id} 失败: {e}")
             raise
@@ -648,10 +655,10 @@ class PredictionService:
                         "match_status": match.match_status,
                         "season": match.season,
                     }
-                return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
+                return None
         except Exception as e:
             logger.error(f"获取比赛信息失败: {e}")
-            return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
+            return None
 
     def _get_default_features(self) -> Dict[str, Any]:
         """
@@ -727,31 +734,13 @@ class PredictionService:
             特征顺序必须与模型训练时保持一致。
             Feature order must be consistent with model training.
         """
-        # 定义特征顺序（应该与训练时保持一致）
-        feature_order = [
-            "home_recent_wins",
-            "home_recent_goals_for",
-            "home_recent_goals_against",
-            "away_recent_wins",
-            "away_recent_goals_for",
-            "away_recent_goals_against",
-            "h2h_home_advantage",
-            "home_implied_probability",
-            "draw_implied_probability",
-            "away_implied_probability",
-        ]
-
-        # 构建特征数组
+        # 使用类中定义的特征顺序，保持一致性
         feature_values = []
-        for feature_name in feature_order:
-            value = features.get(str(feature_name, None), 0.0)
+        for feature_name in self.feature_order:
+            value = features.get(str(feature_name), 0.0)
             feature_values.append(float(value))
 
-        return (
-            np.array([feature_values])
-            if isinstance(np.array([feature_values]), dict)
-            else {}
-        )
+        return np.array([feature_values])
 
     async def _store_prediction(self, result: PredictionResult) -> None:
         """
@@ -794,7 +783,9 @@ class PredictionService:
                     created_at=result.created_at or datetime.now(),
                 )
 
-                session.add(prediction)
+                add_result = session.add(prediction)
+                if inspect.isawaitable(add_result):
+                    await add_result
                 await session.commit()
                 logger.debug(f"预测结果已存储到数据库：比赛 {result.match_id}")
 
@@ -844,7 +835,7 @@ class PredictionService:
 
                 if not match:
                     logger.warning(f"比赛 {match_id} 未完成或不存在")
-                    return False if isinstance(False, dict) else {}
+                    return False
                 # 计算实际结果
                 actual_result = self._calculate_actual_result(
                     match.home_score, match.away_score
@@ -873,10 +864,10 @@ class PredictionService:
 
                 await session.commit()
                 logger.info(f"比赛 {match_id} 预测结果已验证：实际结果 {actual_result}")
-                return True if isinstance(True, dict) else {}
+                return True
         except Exception as e:
             logger.error(f"验证预测结果失败: {e}")
-            return False if isinstance(False, dict) else {}
+            return False
 
     def _calculate_actual_result(self, home_score: int, away_score: int) -> str:
         """
@@ -905,11 +896,11 @@ class PredictionService:
             This is an internal method and should not be called directly.
         """
         if home_score > away_score:
-            return "home" if isinstance("home", dict) else {}
+            return "home"
         elif home_score < away_score:
-            return "away" if isinstance("away", dict) else {}
+            return "away"
         else:
-            return "draw" if isinstance("draw", dict) else {}
+            return "draw"
 
     async def get_model_accuracy(
         self, model_name: str = "football_baseline_model", days: int = 7
@@ -969,11 +960,11 @@ class PredictionService:
                     logger.info(
                         f"模型 {model_name} 最近 {days} 天准确率: {accuracy:.3f} ({row.correct}/{row.total})"
                     )
-                    return accuracy if isinstance(accuracy, dict) else {}
-                return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
+                    return float(accuracy)
+                return None
         except Exception as e:
             logger.error(f"获取模型准确率失败: {e}")
-            return None  # type: ignore  # type: ignore if isinstance(None  # type: ignore  # type: ignore, dict) else {}
+            return None
 
     async def batch_predict_matches(
         self, match_ids: List[int]
@@ -1017,9 +1008,7 @@ class PredictionService:
             try:
                 # 为每个比赛创建缓存键并检查缓存
                 prediction_cache_key = f"prediction:{match_id}"
-                cached_result = await self.prediction_cache.get(
-                    prediction_cache_key, None
-                )
+                cached_result = await self.prediction_cache.get(prediction_cache_key)
 
                 if cached_result:
                     # 使用缓存的结果
@@ -1036,7 +1025,7 @@ class PredictionService:
         logger.info(
             f"批量预测完成：{len(results)}/{len(match_ids)} 场比赛预测成功 / Batch prediction completed: {len(results)}/{len(match_ids)} matches predicted successfully"
         )
-        return results if isinstance(results, dict) else {}
+        return results
 
     async def get_prediction_statistics(self, days: int = 30) -> Dict[str, Any]:
         """

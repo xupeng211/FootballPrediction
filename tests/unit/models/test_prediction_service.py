@@ -100,9 +100,9 @@ class TestPredictionService:
         feature_array = mock_service._prepare_features_for_prediction(features)
 
         assert isinstance(feature_array, np.ndarray)
-        assert feature_array.shape == (1, 11)  # 11个特征
+        assert feature_array.shape == (1, 10)  # 10个特征
         assert feature_array[0][0] == 3.0  # home_recent_wins
-        assert feature_array[0][1] == 6.0  # home_recent_goals_for (默认值)
+        assert feature_array[0][1] == 0.0  # home_recent_goals_for (默认值)
 
     @pytest.mark.asyncio
     async def test_prepare_features_with_missing_values(self, mock_service):
@@ -112,7 +112,7 @@ class TestPredictionService:
         feature_array = mock_service._prepare_features_for_prediction(features)
 
         assert isinstance(feature_array, np.ndarray)
-        assert feature_array.shape == (1, 11)
+        assert feature_array.shape == (1, 10)
         # 缺失的特征应该使用默认值0.0
         assert feature_array[0][1] == 0.0  # home_recent_goals_for缺失
 
@@ -134,7 +134,9 @@ class TestPredictionService:
         mock_result.first.return_value = mock_match
         mock_session.execute.return_value = mock_result
 
+        # 正确mock异步上下文管理器
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 调用方法
         result = await mock_service._get_match_info(12345)
@@ -153,7 +155,9 @@ class TestPredictionService:
         mock_result.first.return_value = None
         mock_session.execute.return_value = mock_result
 
+        # 正确mock异步上下文管理器
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         result = await mock_service._get_match_info(99999)
 
