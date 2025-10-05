@@ -12,6 +12,9 @@ pytest-cov==6.0.0
 pytest-mock==3.14.0
 pytest-xdist==3.6.1
 
+# API rate limiting for testing
+slowapi==0.1.9
+
 # Testing tools
 factory-boy==3.3.1
 faker==30.8.1

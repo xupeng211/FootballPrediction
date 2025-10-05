@@ -106,26 +106,15 @@ jobs:
               labels: ['kanban', 'maintenance']
             })
 
-  # Issues同步（简化版）
+  # Issues同步（简化版）- 已移至上面的 issues-sync job
+  # 清理任务（移到maintenance工作流）
 
+  cleanup-old-resources:
+    name: Cleanup Old Resources
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'cleanup'
     permissions:
-      issues: write
-
-    steps:
-      - name: Sync issues
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # 使用 GitHub CLI 同步 issues
-          gh issue list --repo ${{ github.repository }} --state all --limit 100 > issues_list.json
-
-          # 检查过期的 issues
-          python scripts/sync_issues.py \
-            --repo ${{ github.repository }} \
-            --days-stale 30 \
-            --auto-close
-
-  # 删除清理任务（移到maintenance工作流）
+      contents: write
 
     steps:
       - name: Checkout
@@ -163,25 +152,4 @@ jobs:
               }
             }
 
-  # 删除文档更新（移到maintenance工作流）
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Update API docs
-        run: |
-          pip install -r requirements.txt
-          python scripts/generate_api_docs.py
-
-      - name: Update README stats
-        run: |
-          python scripts/update_readme_stats.py
-
-      - name: Commit docs update
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add docs/ README.md
-          git commit -m "chore: auto-update documentation [skip ci]" || exit 0
-          git push
+  # 文档更新（已移到maintenance工作流）

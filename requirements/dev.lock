@@ -4,7 +4,15 @@
 #
 #    pip-compile --output-file=requirements/dev.lock requirements/dev.in
 #
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.12.15
+    # via -r /home/user/projects/FootballPrediction/requirements/base.in
 aioredis==2.0.1
+    # via -r /home/user/projects/FootballPrediction/requirements/base.in
+aiosignal==1.4.0
+    # via aiohttp
+aiosqlite==0.21.0
     # via -r /home/user/projects/FootballPrediction/requirements/base.in
 alembic==1.16.5
     # via
@@ -36,6 +44,7 @@ asyncpg==0.30.0
     # via -r /home/user/projects/FootballPrediction/requirements/base.in
 attrs==25.3.0
     # via
+    #   aiohttp
     #   hypothesis
     #   jsonschema
     #   referencing
@@ -141,6 +150,8 @@ decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via nbconvert
+deprecated==1.2.18
+    # via limits
 dill==0.3.9
     # via feast
 distlib==0.4.0
@@ -197,6 +208,10 @@ fqdn==1.5.1
     # via jsonschema
 freezegun==1.5.1
     # via -r requirements/dev.in
+frozenlist==1.7.0
+    # via
+    #   aiohttp
+    #   aiosignal
 fsspec==2025.9.0
     # via dask
 gevent==25.9.1
@@ -255,6 +270,7 @@ idna==3.10
     #   httpx
     #   jsonschema
     #   requests
+    #   yarl
 importlib-metadata==8.7.0
     # via
     #   dask
@@ -364,6 +380,8 @@ kombu==5.4.2
     #   celery
 lark==1.3.0
     # via rfc3987-syntax
+limits==5.6.0
+    # via slowapi
 locket==1.0.0
     # via partd
 locust==2.29.0
@@ -426,6 +444,10 @@ mmh3==5.2.0
     # via feast
 msgpack==1.1.1
     # via locust
+multidict==6.6.4
+    # via
+    #   aiohttp
+    #   yarl
 mypy==1.14.1
     # via
     #   -r requirements/dev.in
@@ -491,6 +513,7 @@ packaging==24.2
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
+    #   limits
     #   matplotlib
     #   mkdocs
     #   mlflow-skinny
@@ -542,6 +565,10 @@ prompt-toolkit==3.0.52
     #   click-repl
     #   ipython
     #   jupyter-console
+propcache==0.4.0
+    # via
+    #   aiohttp
+    #   yarl
 protobuf==5.29.5
     # via
     #   feast
@@ -753,6 +780,8 @@ six==1.17.0
     #   ecdsa
     #   python-dateutil
     #   rfc3339-validator
+slowapi==0.1.9
+    # via -r requirements/dev.in
 smmap==5.0.2
     # via gitdb
 sniffio==1.3.1
@@ -843,6 +872,8 @@ types-setuptools==80.9.0.20250822
 typing-extensions==4.15.0
     # via
     #   aioredis
+    #   aiosignal
+    #   aiosqlite
     #   alembic
     #   anyio
     #   beautifulsoup4
@@ -850,6 +881,7 @@ typing-extensions==4.15.0
     #   fastapi
     #   graphene
     #   ipython
+    #   limits
     #   mypy
     #   opentelemetry-api
     #   opentelemetry-sdk
@@ -919,6 +951,10 @@ werkzeug==3.1.3
     #   locust
 widgetsnbextension==4.0.14
     # via ipywidgets
+wrapt==1.17.3
+    # via deprecated
+yarl==1.20.1
+    # via aiohttp
 zipp==3.23.0
     # via importlib-metadata
 zope-event==6.0

@@ -2,9 +2,9 @@ name: CI 持续集成流水线
 
 on:
   push:
-    branches: [ main, develop, hotfix/** ]
+    branches: [main, develop, hotfix/**]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 env:
   PYTHONPATH: ${{ github.workspace }}
@@ -50,7 +50,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v3
@@ -100,7 +100,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v3
@@ -125,7 +125,7 @@ jobs:
 
       - name: Run full unit test suite
         run: |
-          python scripts/run_full_coverage.py
+          python scripts/testing/run_full_coverage.py
 
   test-and-coverage:
     name: Test & Coverage
@@ -160,7 +160,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v3
@@ -284,13 +284,13 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ needs.build.outputs.image-tag }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: "sarif"
+          output: "trivy-results.sarif"
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
   # 阶段6: 通知
   notify:

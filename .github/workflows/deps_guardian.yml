@@ -25,7 +25,7 @@ jobs:
         run: pip install pip-tools
 
       - name: Verify dependencies
-        run: bash scripts/verify_deps.sh
+        run: bash scripts/dependency/verify_deps.sh
 
       - name: Check lock files
         run: |
