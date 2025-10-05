@@ -4,9 +4,11 @@
 基于实际源码测试审计服务功能
 """
 
+import asyncio
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.services.audit_service import AuditService, AuditContext, audit_context
 
@@ -225,7 +227,7 @@ class TestAuditService:
             return f"result: {param1}-{param2}"
 
         # Mock上下文
-        with patch.object(service, "log_action", new_callable=AsyncMock) as mock_log:
+        with patch.object(service, "log_action", new_callable=AsyncMock) as _mock_log:
             # 设置审计上下文
             audit_context.set({"user_id": "test_user", "username": "testuser"})
 
