@@ -11,14 +11,15 @@ from pathlib import Path
 
 # 定义依赖类别
 CATEGORIES = {
-    'core': 'requirements/core.in',
-    'api': 'requirements/api.in',
-    'ml': 'requirements/ml.in',
-    'dev': 'requirements/dev.in',
-    'base': 'requirements/base.in',
+    "core": "requirements/core.in",
+    "api": "requirements/api.in",
+    "ml": "requirements/ml.in",
+    "dev": "requirements/dev.in",
+    "base": "requirements/base.in",
 }
 
-def add_dependency(package: str, category: str = 'api', version: str = None):
+
+def add_dependency(package: str, category: str = "api", version: str = None):
     """安全地添加依赖"""
     if category not in CATEGORIES:
         print(f"❌ 无效的类别: {category}")
@@ -41,17 +42,16 @@ def add_dependency(package: str, category: str = 'api', version: str = None):
         return False
 
     # 添加依赖
-    with open(file_path, 'a') as f:
+    with open(file_path, "a") as f:
         f.write(f"\n{package_str}\n")
     print(f"✅ 已添加 {package_str} 到 {file_path}")
 
     # 运行 make lock-deps
     print("🔒 正在锁定依赖...")
     try:
-        result = subprocess.run(['make', 'lock-deps'],
-                              capture_output=True,
-                              text=True,
-                              cwd=Path.cwd())
+        result = subprocess.run(
+            ["make", "lock-deps"], capture_output=True, text=True, cwd=Path.cwd()
+        )
         if result.returncode == 0:
             print("✅ 依赖已成功锁定")
             return True
@@ -62,15 +62,18 @@ def add_dependency(package: str, category: str = 'api', version: str = None):
         print(f"❌ 运行make lock-deps失败: {e}")
         return False
 
+
 def main():
-    parser = argparse.ArgumentParser(description='安全添加依赖')
-    parser.add_argument('package', help='包名')
-    parser.add_argument('-c', '--category',
-                       choices=CATEGORIES.keys(),
-                       default='api',
-                       help='依赖类别 (默认: api)')
-    parser.add_argument('-v', '--version',
-                       help='版本号 (例如: ==1.0.0)')
+    parser = argparse.ArgumentParser(description="安全添加依赖")
+    parser.add_argument("package", help="包名")
+    parser.add_argument(
+        "-c",
+        "--category",
+        choices=CATEGORIES.keys(),
+        default="api",
+        help="依赖类别 (默认: api)",
+    )
+    parser.add_argument("-v", "--version", help="版本号 (例如: ==1.0.0)")
 
     args = parser.parse_args()
 
@@ -89,5 +92,6 @@ def main():
         print("\n❌ 添加失败")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

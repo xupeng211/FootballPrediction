@@ -23,7 +23,9 @@ class TestHealthAPI:
 
     def test_health_check_with_database(self, api_client):
         """测试带数据库检查的健康检查"""
-        with patch("src.api.health._collect_database_health", new=AsyncMock()) as mock_check:
+        with patch(
+            "src.api.health._collect_database_health", new=AsyncMock()
+        ) as mock_check:
             mock_check.return_value = {
                 "healthy": True,
                 "status": "healthy",
@@ -77,7 +79,9 @@ class TestPredictionAPI:
         with patch.object(
             predictions_module.prediction_service, "predict_match", new=async_mock
         ):
-            response = api_client_full.get("/api/v1/predictions/12345?force_predict=true")
+            response = api_client_full.get(
+                "/api/v1/predictions/12345?force_predict=true"
+            )
 
         data = response.json()
         assert response.status_code == status.HTTP_200_OK, data

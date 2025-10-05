@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings(
     "ignore",
     message=".*Number.*field.*should.*not.*be.*instantiated.*",
-    category=DeprecationWarning
+    category=DeprecationWarning,
 )
 
 import json

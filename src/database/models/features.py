@@ -46,15 +46,25 @@ class Features(BaseModel):
     )
 
     # 近期表现（最近5场）
-    recent_5_wins: Mapped[int] = mapped_column(Integer, default=0, comment="近5场胜利数")
+    recent_5_wins: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场胜利数"
+    )
 
-    recent_5_draws: Mapped[int] = mapped_column(Integer, default=0, comment="近5场平局数")
+    recent_5_draws: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场平局数"
+    )
 
-    recent_5_losses: Mapped[int] = mapped_column(Integer, default=0, comment="近5场失败数")
+    recent_5_losses: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场失败数"
+    )
 
-    recent_5_goals_for: Mapped[int] = mapped_column(Integer, default=0, comment="近5场进球数")
+    recent_5_goals_for: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场进球数"
+    )
 
-    recent_5_goals_against: Mapped[int] = mapped_column(Integer, default=0, comment="近5场失球数")
+    recent_5_goals_against: Mapped[int] = mapped_column(
+        Integer, default=0, comment="近5场失球数"
+    )
 
     # 主客场记录
     home_wins: Mapped[int] = mapped_column(Integer, default=0, comment="主场胜利数")
@@ -88,7 +98,9 @@ class Features(BaseModel):
     goal_difference = mapped_column(Integer, nullable=True, comment="净胜球")
 
     # 其他特征
-    days_since_last_match = mapped_column(Integer, nullable=True, comment="距离上场比赛天数")
+    days_since_last_match = mapped_column(
+        Integer, nullable=True, comment="距离上场比赛天数"
+    )
 
     is_derby = mapped_column(Boolean, nullable=True, comment="是否为德比战")
 
@@ -234,9 +246,13 @@ class Features(BaseModel):
     def _get_league_features(self) -> Dict[str, float]:
         """获取联赛状况特征"""
         return {
-            "league_position": (float(self.league_position) if self.league_position else 0.0),
+            "league_position": (
+                float(self.league_position) if self.league_position else 0.0
+            ),
             "points": float(self.points) if self.points else 0.0,
-            "goal_difference": (float(self.goal_difference) if self.goal_difference else 0.0),
+            "goal_difference": (
+                float(self.goal_difference) if self.goal_difference else 0.0
+            ),
         }
 
     def _get_extended_features(self) -> Dict[str, float]:
@@ -246,7 +262,9 @@ class Features(BaseModel):
                 float(self.days_since_last_match) if self.days_since_last_match else 0.0
             ),
             "is_derby": float(int(self.is_derby)) if self.is_derby is not None else 0.0,
-            "avg_possession": (float(self.avg_possession) if self.avg_possession else 0.0),
+            "avg_possession": (
+                float(self.avg_possession) if self.avg_possession else 0.0
+            ),
             "avg_shots_per_game": (
                 float(self.avg_shots_per_game) if self.avg_shots_per_game else 0.0
             ),
@@ -297,7 +315,8 @@ class Features(BaseModel):
 
         # 最近状态 (30%)
         recent_score = (
-            self.recent_5_win_rate() * 0.6 + (self.recent_5_goal_difference + 10) / 20 * 0.4
+            self.recent_5_win_rate() * 0.6
+            + (self.recent_5_goal_difference + 10) / 20 * 0.4
         )
         score += recent_score * 0.3
 

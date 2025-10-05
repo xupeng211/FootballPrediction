@@ -55,7 +55,9 @@ class CryptoUtils:
         """密码哈希"""
         if HAS_BCRYPT:
             # 使用bcrypt进行密码哈希
-            password_bytes = password.encode("utf-8") if isinstance(password, str) else password
+            password_bytes = (
+                password.encode("utf-8") if isinstance(password, str) else password
+            )
             return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
         else:
             # 简单实现，仅用于测试 - 模拟bcrypt格式
@@ -73,9 +75,15 @@ class CryptoUtils:
         if password == "" and hashed_password == "":
             return True
 
-        if HAS_BCRYPT and hashed_password.startswith("$2b$") and not hashed_password.count("$") > 3:
+        if (
+            HAS_BCRYPT
+            and hashed_password.startswith("$2b$")
+            and not hashed_password.count("$") > 3
+        ):
             # 真正的bcrypt密码验证
-            password_bytes = password.encode("utf-8") if isinstance(password, str) else password
+            password_bytes = (
+                password.encode("utf-8") if isinstance(password, str) else password
+            )
             hashed_bytes = (
                 hashed_password.encode("utf-8")
                 if isinstance(hashed_password, str)
@@ -90,7 +98,9 @@ class CryptoUtils:
                     salt = parts[3]
                     expected_hash = parts[4]
                     salted_password = f"{password}{salt}"
-                    actual_hash = hashlib.sha256(salted_password.encode("utf-8")).hexdigest()
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
                     return actual_hash == expected_hash
             except (IndexError, ValueError):
                 pass

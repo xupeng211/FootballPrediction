@@ -220,7 +220,9 @@ class TestPredictionModel:
         # 比较不同模型的预测
         assert sample_prediction.model_name != pred2.model_name
         assert sample_prediction.predicted_result != pred2.predicted_result
-        assert float(sample_prediction.confidence_score) != float(pred2.confidence_score)
+        assert float(sample_prediction.confidence_score) != float(
+            pred2.confidence_score
+        )
 
     def test_prediction_edge_cases(self, sample_prediction):
         """测试预测边界情况"""

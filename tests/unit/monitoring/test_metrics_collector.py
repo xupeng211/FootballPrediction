@@ -91,7 +91,9 @@ class TestMetricsCollector:
 
     def test_gauge_increment_decrement(self, collector):
         """测试仪表递增和递减"""
-        collector.create_gauge(name="queue_size", description="Size of processing queue")
+        collector.create_gauge(
+            name="queue_size", description="Size of processing queue"
+        )
 
         # 设置初始值
         collector.set_gauge("queue_size", 10)
@@ -401,7 +403,9 @@ class TestStatsdExporter:
 
     def test_export_counter(self, exporter):
         """测试导出计数器到StatsD"""
-        exporter.export_counter(name="requests", value=1, tags={"method": "GET", "status": "200"})
+        exporter.export_counter(
+            name="requests", value=1, tags={"method": "GET", "status": "200"}
+        )
 
         exporter.client.incr.assert_called_once()
         call_args = exporter.client.incr.call_args[0]
@@ -506,9 +510,15 @@ class TestMetricsAggregator:
         current_time = time.time()
 
         # 添加计数器指标
-        aggregator.add_metric({"name": "requests", "value": 100, "timestamp": current_time - 60})
-        aggregator.add_metric({"name": "requests", "value": 200, "timestamp": current_time - 30})
-        aggregator.add_metric({"name": "requests", "value": 250, "timestamp": current_time})
+        aggregator.add_metric(
+            {"name": "requests", "value": 100, "timestamp": current_time - 60}
+        )
+        aggregator.add_metric(
+            {"name": "requests", "value": 200, "timestamp": current_time - 30}
+        )
+        aggregator.add_metric(
+            {"name": "requests", "value": 250, "timestamp": current_time}
+        )
 
         rate = aggregator.calculate_rate("requests")
 
@@ -543,7 +553,9 @@ class TestMetricsAggregator:
 
         # 验证旧指标被移除
         assert len(aggregator.metrics["cpu_usage"]) == 5
-        assert all(m["timestamp"] > time.time() - 60 for m in aggregator.metrics["cpu_usage"])
+        assert all(
+            m["timestamp"] > time.time() - 60 for m in aggregator.metrics["cpu_usage"]
+        )
 
     def test_get_aggregated_summary(self, aggregator, sample_metrics):
         """测试获取聚合摘要"""

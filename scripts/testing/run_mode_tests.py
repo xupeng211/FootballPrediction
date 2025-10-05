@@ -22,10 +22,7 @@ def run_command(cmd: List[str], env: Optional[dict] = None) -> int:
     print("-" * 50)
 
     result = subprocess.run(
-        cmd,
-        env=env or os.environ,
-        cwd=project_root,
-        capture_output=False
+        cmd, env=env or os.environ, cwd=project_root, capture_output=False
     )
 
     print("-" * 50)
@@ -42,11 +39,13 @@ def run_minimal_tests():
     env["DOTENV"] = ".env.test"
 
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit/api/test_health.py::TestHealthAPI",
         "-v",
         "--tb=short",
-        "-x"
+        "-x",
     ]
 
     return run_command(cmd, env)
@@ -62,10 +61,12 @@ def run_full_tests():
 
     # 先运行健康检查
     health_cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit/api/test_health.py",
         "-v",
-        "--tb=short"
+        "--tb=short",
     ]
 
     if run_command(health_cmd, env) != 0:
@@ -74,10 +75,12 @@ def run_full_tests():
 
     # 运行预测API测试
     prediction_cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit/api/test_predictions.py",
         "-v",
-        "--tb=short"
+        "--tb=short",
     ]
 
     if run_command(prediction_cmd, env) != 0:
@@ -93,12 +96,14 @@ def run_unit_tests():
     print("\n🧪 Running All Unit Tests...")
 
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit/",
         "-v",
         "--tb=short",
         "--durations=10",
-        "-x"
+        "-x",
     ]
 
     return run_command(cmd)
@@ -109,13 +114,15 @@ def run_coverage_tests():
     print("\n📊 Running Coverage Tests...")
 
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit/",
         "--cov=src",
         "--cov-report=term-missing",
         "--cov-report=html",
         "--cov-fail-under=60",  # 本地测试60%即可
-        "-v"
+        "-v",
     ]
 
     return run_command(cmd)
@@ -125,12 +132,7 @@ def run_integration_tests():
     """运行集成测试"""
     print("\n🔗 Running Integration Tests...")
 
-    cmd = [
-        "python", "-m", "pytest",
-        "tests/integration/",
-        "-v",
-        "--tb=short"
-    ]
+    cmd = ["python", "-m", "pytest", "tests/integration/", "-v", "--tb=short"]
 
     return run_command(cmd)
 
@@ -139,12 +141,7 @@ def run_e2e_tests():
     """运行端到端测试"""
     print("\n🎯 Running E2E Tests...")
 
-    cmd = [
-        "python", "-m", "pytest",
-        "tests/e2e/",
-        "-v",
-        "--tb=short"
-    ]
+    cmd = ["python", "-m", "pytest", "tests/e2e/", "-v", "--tb=short"]
 
     return run_command(cmd)
 
@@ -154,12 +151,12 @@ def main():
     parser.add_argument(
         "mode",
         choices=["minimal", "full", "unit", "coverage", "integration", "e2e", "all"],
-        help="Test mode to run"
+        help="Test mode to run",
     )
     parser.add_argument(
         "--continue-on-error",
         action="store_true",
-        help="Continue running tests even if some fail"
+        help="Continue running tests even if some fail",
     )
 
     args = parser.parse_args()
@@ -184,13 +181,13 @@ def main():
             ("Minimal", run_minimal_tests),
             ("Unit", run_unit_tests),
             ("Integration", run_integration_tests),
-            ("E2E", run_e2e_tests)
+            ("E2E", run_e2e_tests),
         ]
 
         for name, test_func in tests:
             print(f"\n{'='*60}")
             print(f"Running {name} Tests")
-            print('='*60)
+            print("=" * 60)
 
             code = test_func()
             if code != 0 and not args.continue_on_error:

@@ -34,7 +34,9 @@ class TestBackupTasks:
     def mock_db_manager(self):
         """Mock数据库管理器"""
         manager = MagicMock()
-        manager.create_backup = AsyncMock(return_value="/backups/db_backup_20251005.sql")
+        manager.create_backup = AsyncMock(
+            return_value="/backups/db_backup_20251005.sql"
+        )
         manager.verify_backup = AsyncMock(return_value=True)
         return manager
 
@@ -42,7 +44,9 @@ class TestBackupTasks:
     def mock_redis_manager(self):
         """Mock Redis管理器"""
         manager = MagicMock()
-        manager.save_backup = AsyncMock(return_value="/backups/redis_backup_20251005.rdb")
+        manager.save_backup = AsyncMock(
+            return_value="/backups/redis_backup_20251005.rdb"
+        )
         return manager
 
     @pytest.fixture
@@ -64,7 +68,6 @@ class TestBackupTasks:
         with patch(
             "src.tasks.backup_tasks.get_database_manager", return_value=mock_db_manager
         ), patch("src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir):
-
             result = backup_database_task.apply(
                 kwargs={"compress": True, "include_schema": True}
             ).get()
@@ -77,12 +80,13 @@ class TestBackupTasks:
 
     def test_backup_database_task_with_error(self, mock_db_manager, temp_backup_dir):
         """测试数据库备份错误"""
-        mock_db_manager.create_backup = AsyncMock(side_effect=Exception("Backup failed"))
+        mock_db_manager.create_backup = AsyncMock(
+            side_effect=Exception("Backup failed")
+        )
 
         with patch(
             "src.tasks.backup_tasks.get_database_manager", return_value=mock_db_manager
         ), patch("src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir):
-
             result = backup_database_task.apply().get()
 
             assert result["status"] == "error"
@@ -94,7 +98,6 @@ class TestBackupTasks:
         with patch(
             "src.tasks.backup_tasks.get_redis_manager", return_value=mock_redis_manager
         ), patch("src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir):
-
             result = backup_redis_task.apply(
                 kwargs={"save_type": "rdb", "include_aof": False}
             ).get()
@@ -117,8 +120,9 @@ class TestBackupTasks:
         with patch("src.tasks.backup_tasks.LOG_DIR", log_dir), patch(
             "src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir
         ):
-
-            result = backup_logs_task.apply(kwargs={"rotate_logs": True, "days_to_keep": 7}).get()
+            result = backup_logs_task.apply(
+                kwargs={"rotate_logs": True, "days_to_keep": 7}
+            ).get()
 
             assert result["status"] == "success"
             assert result["logs_backuped"] == 3
@@ -139,7 +143,6 @@ class TestBackupTasks:
             "src.tasks.backup_tasks.get_storage_client",
             return_value=mock_storage_client,
         ), patch("src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir):
-
             result = cleanup_old_backups_task.apply(
                 kwargs={"keep_days": 5, "include_cloud": True}
             ).get()
@@ -160,7 +163,6 @@ class TestBackupTasks:
             "src.tasks.backup_tasks.get_storage_client",
             return_value=mock_storage_client,
         ), patch("src.tasks.backup_tasks.BACKUP_DIR", temp_backup_dir):
-
             result = verify_backup_integrity_task.apply(args=["test_backup.sql"]).get()
 
             assert result["status"] == "success"

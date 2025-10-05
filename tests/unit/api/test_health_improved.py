@@ -64,14 +64,11 @@ class TestRedisHealthCheck:
     """测试Redis健康检查"""
 
 
-
 @pytest.mark.skip(reason="需要重构文件系统集成测试")
 class TestFilesystemHealthCheck:
     """测试文件系统健康检查"""
 
 
-
 @pytest.mark.skip(reason="需要重构健康端点集成测试")
 class TestHealthEndpoints:
     """测试健康检查端点"""
-

@@ -6,9 +6,9 @@
 import pytest
 import asyncio
 import os
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from sqlalchemy.exc import DatabaseError
 
 from src.api.health import (
     router,
@@ -19,7 +19,7 @@ from src.api.health import (
     ServiceCheckError,
     _redis_circuit_breaker,
     _kafka_circuit_breaker,
-    _mlflow_circuit_breaker
+    _mlflow_circuit_breaker,
 )
 
 
@@ -74,7 +74,7 @@ class TestHealthCheckEnhanced:
     @pytest.mark.asyncio
     async def test_collect_database_health_not_initialized(self):
         """测试数据库管理器未初始化"""
-        with patch('src.api.health.get_database_manager') as mock_get_manager:
+        with patch("src.api.health.get_database_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.get_session.side_effect = RuntimeError("Not initialized")
             mock_get_manager.return_value = mock_manager
@@ -88,7 +88,7 @@ class TestHealthCheckEnhanced:
     @pytest.mark.asyncio
     async def test_collect_database_health_session_unavailable(self):
         """测试数据库会话不可用"""
-        with patch('src.api.health.get_database_manager') as mock_get_manager:
+        with patch("src.api.health.get_database_manager") as mock_get_manager:
             mock_manager = Mock()
             session_mock = Mock()
             session_mock.__enter__.side_effect = RuntimeError("Session unavailable")
@@ -114,7 +114,7 @@ class TestHealthCheckEnhanced:
 
     def test_health_check_with_db_param_true(self, client):
         """测试显式要求数据库检查"""
-        with patch('src.api.health._collect_database_health') as mock_collect:
+        with patch("src.api.health._collect_database_health") as mock_collect:
             mock_collect.return_value = {"healthy": True, "status": "ok"}
 
             response = client.get("/?check_db=true")
@@ -140,7 +140,9 @@ class TestHealthCheckEnhanced:
         from src.utils.retry import CircuitBreaker
 
         # 创建一个测试用的熔断器
-        breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=1.0, retry_timeout=0.5)
+        breaker = CircuitBreaker(
+            failure_threshold=2, recovery_timeout=1.0, retry_timeout=0.5
+        )
 
         call_count = 0
 
@@ -165,36 +167,40 @@ class TestHealthCheckEnhanced:
     @pytest.mark.asyncio
     async def test_health_check_all_dependencies_healthy(self):
         """测试所有依赖健康的情况"""
-        with patch('src.api.health._collect_database_health') as mock_db:
+        with patch("src.api.health._collect_database_health") as mock_db:
             mock_db.return_value = {
                 "healthy": True,
                 "status": "healthy",
                 "response_time_ms": 10.0,
-                "details": {"message": "Database connection successful"}
+                "details": {"message": "Database connection successful"},
             }
 
             # 模拟Redis健康检查
-            with patch('src.api.health._redis_circuit_breaker') as mock_redis_breaker:
+            with patch("src.api.health._redis_circuit_breaker") as mock_redis_breaker:
                 mock_redis_breaker.call_async.return_value = {
                     "healthy": True,
                     "status": "healthy",
-                    "response_time_ms": 5.0
+                    "response_time_ms": 5.0,
                 }
 
                 # 模拟Kafka健康检查
-                with patch('src.api.health._kafka_circuit_breaker') as mock_kafka_breaker:
+                with patch(
+                    "src.api.health._kafka_circuit_breaker"
+                ) as mock_kafka_breaker:
                     mock_kafka_breaker.call_async.return_value = {
                         "healthy": True,
                         "status": "healthy",
-                        "response_time_ms": 15.0
+                        "response_time_ms": 15.0,
                     }
 
                     # 模拟MLflow健康检查
-                    with patch('src.api.health._mlflow_circuit_breaker') as mock_mlflow_breaker:
+                    with patch(
+                        "src.api.health._mlflow_circuit_breaker"
+                    ) as mock_mlflow_breaker:
                         mock_mlflow_breaker.call_async.return_value = {
                             "healthy": True,
                             "status": "healthy",
-                            "response_time_ms": 20.0
+                            "response_time_ms": 20.0,
                         }
 
                         # 执行健康检查
@@ -207,12 +213,12 @@ class TestHealthCheckEnhanced:
     @pytest.mark.asyncio
     async def test_health_check_database_unhealthy(self):
         """测试数据库不健康的情况"""
-        with patch('src.api.health._collect_database_health') as mock_db:
+        with patch("src.api.health._collect_database_health") as mock_db:
             mock_db.return_value = {
                 "healthy": False,
                 "status": "unhealthy",
                 "response_time_ms": 5000.0,
-                "details": {"error": "Connection timeout"}
+                "details": {"error": "Connection timeout"},
             }
 
             result = await health_check(check_db=True)
@@ -226,7 +232,7 @@ class TestHealthCheckEnhanced:
         os.environ["FAST_FAIL"] = "true"
         os.environ["MINIMAL_HEALTH_MODE"] = "false"
 
-        with patch.object(_redis_circuit_breaker, 'call_async') as mock_redis:
+        with patch.object(_redis_circuit_breaker, "call_async") as mock_redis:
             mock_redis.side_effect = Exception("Redis connection failed")
 
             # 应该捕获Redis错误但不影响整体健康检查
@@ -241,7 +247,7 @@ class TestHealthCheckEnhanced:
         os.environ["FAST_FAIL"] = "true"
         os.environ["MINIMAL_HEALTH_MODE"] = "false"
 
-        with patch.object(_kafka_circuit_breaker, 'call_async') as mock_kafka:
+        with patch.object(_kafka_circuit_breaker, "call_async") as mock_kafka:
             mock_kafka.side_effect = Exception("Kafka broker unavailable")
 
             result = await health_check(check_db=False)
@@ -255,7 +261,7 @@ class TestHealthCheckEnhanced:
         os.environ["FAST_FAIL"] = "true"
         os.environ["MINIMAL_HEALTH_MODE"] = "false"
 
-        with patch.object(_mlflow_circuit_breaker, 'call_async') as mock_mlflow:
+        with patch.object(_mlflow_circuit_breaker, "call_async") as mock_mlflow:
             mock_mlflow.side_effect = Exception("MLflow server unreachable")
 
             result = await health_check(check_db=False)
@@ -266,6 +272,7 @@ class TestHealthCheckEnhanced:
     @pytest.mark.asyncio
     async def test_health_check_concurrent_requests(self):
         """测试并发健康检查请求"""
+
         async def make_health_check():
             return await health_check(check_db=False)
 
@@ -321,7 +328,7 @@ class TestHealthCheckEnhanced:
     async def test_health_check_with_custom_endpoints(self):
         """测试自定义端点健康检查"""
         # 测试predictions端点可用性
-        with patch('src.api.health.PREDICTIONS_ENABLED', True):
+        with patch("src.api.health.PREDICTIONS_ENABLED", True):
             result = await health_check(check_db=False)
             # 应该显示predictions服务可用
 
@@ -344,7 +351,7 @@ class TestHealthCheckEnhanced:
     async def test_health_check_error_propagation(self):
         """测试健康检查错误传播"""
         # 模拟数据库抛出异常
-        with patch('src.api.health._collect_database_health') as mock_db:
+        with patch("src.api.health._collect_database_health") as mock_db:
             mock_db.side_effect = DatabaseError("Database error")
 
             # 应该优雅地处理错误

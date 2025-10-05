@@ -165,7 +165,9 @@ class TestOddsCollector:
 
     def test_filter_odds_by_bookmaker(self, collector, mock_odds_data):
         """测试按庄家过滤赔率"""
-        filtered = collector._filter_odds_by_bookmaker(mock_odds_data, bookmakers=["Bet365"])
+        filtered = collector._filter_odds_by_bookmaker(
+            mock_odds_data, bookmakers=["Bet365"]
+        )
 
         assert len(filtered["bookmakers"]) == 1
         assert filtered["bookmakers"][0]["name"] == "Bet365"

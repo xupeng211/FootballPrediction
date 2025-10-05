@@ -82,7 +82,9 @@ class MockMlflow:
         if active_run:
             self.logged_params[active_run.run_id].append({"key": key, "value": value})
 
-    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+    def log_artifact(
+        self, local_path: str, artifact_path: Optional[str] = None
+    ) -> None:
         """记录文件"""
         active_run = self.active_run()
         if active_run:
@@ -108,7 +110,9 @@ class MockMlflowClient:
         """列出所有实验"""
         return list(self._mlflow.experiments.values())
 
-    def create_experiment(self, name: str, tags: Optional[Dict[str, str]] = None) -> str:
+    def create_experiment(
+        self, name: str, tags: Optional[Dict[str, str]] = None
+    ) -> str:
         """创建实验"""
         exp_id = f"exp-{len(self._mlflow.experiments)}"
         self._mlflow.experiments[name] = SimpleNamespace(
