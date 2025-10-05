@@ -123,7 +123,9 @@ class OddsCollector:
             tasks = []
 
             for match in matches:
-                task = self._collect_match_odds_with_semaphore(semaphore, match.id, bookmakers)
+                task = self._collect_match_odds_with_semaphore(
+                    semaphore, match.id, bookmakers
+                )
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -137,7 +139,9 @@ class OddsCollector:
                     if result:
                         stats["total_odds_collected"] += len(result) - 1  # 减去average
 
-            logger.info(f"收集完成，成功 {stats['successful_collects']}/{stats['total_matches']}")
+            logger.info(
+                f"收集完成，成功 {stats['successful_collects']}/{stats['total_matches']}"
+            )
             return stats
 
         except Exception as e:
@@ -153,7 +157,8 @@ class OddsCollector:
             live_odds = {}
             for match in live_matches:
                 odds = await self.collect_match_odds(
-                    match.id, force_refresh=True  # 实时赔率总是强制刷新
+                    match.id,
+                    force_refresh=True,  # 实时赔率总是强制刷新
                 )
                 if odds:
                     live_odds[match.id] = odds
@@ -168,7 +173,9 @@ class OddsCollector:
             logger.error(f"收集实时赔率失败: {e}")
             return {"error": str(e)}
 
-    async def analyze_odds_movement(self, match_id: int, hours_back: int = 24) -> Dict[str, Any]:
+    async def analyze_odds_movement(
+        self, match_id: int, hours_back: int = 24
+    ) -> Dict[str, Any]:
         """
         分析赔率走势
 
@@ -209,10 +216,14 @@ class OddsCollector:
 
     async def _get_match_by_id(self, match_id: int) -> Optional[Match]:
         """根据ID获取比赛"""
-        result = await self.db_session.execute(select(Match).where(Match.id == match_id))
+        result = await self.db_session.execute(
+            select(Match).where(Match.id == match_id)
+        )
         return result.scalar_one_or_none()
 
-    async def _get_upcoming_matches(self, start_time: datetime, end_time: datetime) -> List[Match]:
+    async def _get_upcoming_matches(
+        self, start_time: datetime, end_time: datetime
+    ) -> List[Match]:
         """获取指定时间范围内的比赛"""
         result = await self.db_session.execute(
             select(Match)
@@ -229,7 +240,9 @@ class OddsCollector:
 
     async def _get_live_matches(self) -> List[Match]:
         """获取正在进行的比赛"""
-        result = await self.db_session.execute(select(Match).where(Match.match_status == "live"))
+        result = await self.db_session.execute(
+            select(Match).where(Match.match_status == "live")
+        )
         return result.scalars().all()
 
     async def _fetch_odds_from_bookmaker(
@@ -266,7 +279,9 @@ class OddsCollector:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def _calculate_average_odds(self, all_odds: Dict[str, Dict[str, float]]) -> Dict[str, float]:
+    def _calculate_average_odds(
+        self, all_odds: Dict[str, Dict[str, float]]
+    ) -> Dict[str, float]:
         """计算平均赔率"""
         if not all_odds:
             return {}
@@ -310,7 +325,9 @@ class OddsCollector:
 
                 # 检查是否已存在
                 existing = await self.db_session.execute(
-                    select(Odds).where(and_(Odds.match_id == match_id, Odds.bookmaker == "average"))
+                    select(Odds).where(
+                        and_(Odds.match_id == match_id, Odds.bookmaker == "average")
+                    )
                 ).scalar_one_or_none()
 
                 if existing:

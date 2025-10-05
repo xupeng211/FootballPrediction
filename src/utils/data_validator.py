@@ -33,7 +33,9 @@ class DataValidator:
         return bool(re.match(pattern, url, re.IGNORECASE))
 
     @staticmethod
-    def validate_required_fields(data: Dict[str, Any], required_fields: List[str]) -> List[str]:
+    def validate_required_fields(
+        data: Dict[str, Any], required_fields: List[str]
+    ) -> List[str]:
         """验证必需字段 - 检查数据完整性，返回缺失字段列表用于错误提示"""
         missing_fields = []
         for field in required_fields:
@@ -43,14 +45,17 @@ class DataValidator:
         return missing_fields
 
     @staticmethod
-    def validate_data_types(data: Dict[str, Any], type_specs: Dict[str, type]) -> List[str]:
+    def validate_data_types(
+        data: Dict[str, Any], type_specs: Dict[str, type]
+    ) -> List[str]:
         """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
         invalid_fields = []
         for field, expected_type in type_specs.items():
             if field in data and not isinstance(data[field], expected_type):
                 # 提供详细的类型不匹配信息，便于调试
                 invalid_fields.append(
-                    f"{field}: 期望 {expected_type.__name__}, " f"实际 {type(data[field]).__name__}"
+                    f"{field}: 期望 {expected_type.__name__}, "
+                    f"实际 {type(data[field]).__name__}"
                 )
         return invalid_fields
 

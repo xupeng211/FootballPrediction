@@ -109,7 +109,9 @@ class ScoresCollector:
                 current_score = await self._get_match_score(match_id)
 
             # 获取比赛历史数据
-            teams_history = await self._get_teams_history(match.home_team_id, match.away_team_id)
+            teams_history = await self._get_teams_history(
+                match.home_team_id, match.away_team_id
+            )
 
             # 基于历史数据和当前比分进行预测
             prediction = await self._generate_final_score_prediction(
@@ -118,7 +120,9 @@ class ScoresCollector:
 
             # 缓存预测结果
             cache_key = f"prediction:final_score:{match_id}"
-            await self.redis_client.set_cache_value(cache_key, prediction, expire=300)  # 5分钟缓存
+            await self.redis_client.set_cache_value(
+                cache_key, prediction, expire=300
+            )  # 5分钟缓存
 
             return prediction
 
@@ -274,7 +278,9 @@ class ScoresCollector:
 
     async def _get_match_by_id(self, match_id: int) -> Optional[Match]:
         """根据ID获取比赛"""
-        result = await self.db_session.execute(select(Match).where(Match.id == match_id))
+        result = await self.db_session.execute(
+            select(Match).where(Match.id == match_id)
+        )
         return result.scalar_one_or_none()
 
     async def _get_match_score(self, match_id: int) -> Dict[str, int]:
@@ -286,7 +292,9 @@ class ScoresCollector:
 
         # 从score表获取
         result = await self.db_session.execute(
-            select(Score).where(Score.match_id == match_id).order_by(Score.timestamp.desc())
+            select(Score)
+            .where(Score.match_id == match_id)
+            .order_by(Score.timestamp.desc())
         ).first()
 
         if result:
@@ -330,7 +338,9 @@ class ScoresCollector:
 
         return event_list
 
-    async def _get_teams_history(self, home_team_id: int, away_team_id: int) -> Dict[str, Any]:
+    async def _get_teams_history(
+        self, home_team_id: int, away_team_id: int
+    ) -> Dict[str, Any]:
         """获取两队历史交锋数据"""
         # 获取过去5次交锋
         result = await self.db_session.execute(
@@ -403,9 +413,9 @@ class ScoresCollector:
         expected_remaining_goals = (avg_goals * remaining_minutes) / 90
 
         # 根据历史优势调整
-        home_advantage = (history.get("home_wins", 0) - history.get("away_wins", 0)) / max(
-            history.get("matches_played", 1), 1
-        )
+        home_advantage = (
+            history.get("home_wins", 0) - history.get("away_wins", 0)
+        ) / max(history.get("matches_played", 1), 1)
 
         # 预测最终比分
         predicted_home_goals = current_home + (

@@ -115,7 +115,9 @@ def _verify_postgresql_jsonb_config():
             # 检查表是否存在
             if table_name in inspector.get_table_names():
                 columns = inspector.get_columns(table_name)
-                jsonb_col = next((col for col in columns if col["name"] == jsonb_column), None)
+                jsonb_col = next(
+                    (col for col in columns if col["name"] == jsonb_column), None
+                )
 
                 if jsonb_col:
                     print(f"  ✓ 表 {table_name} 的 {jsonb_column} 字段配置正确")
@@ -126,7 +128,8 @@ def _verify_postgresql_jsonb_config():
                         (
                             idx
                             for idx in indexes
-                            if jsonb_column in idx["column_names"] and idx.get("type") == "gin"
+                            if jsonb_column in idx["column_names"]
+                            and idx.get("type") == "gin"
                         ),
                         None,
                     )
@@ -134,7 +137,9 @@ def _verify_postgresql_jsonb_config():
                     if gin_index:
                         print(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响")
+                        print(
+                            f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响"
+                        )
                 else:
                     print(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:

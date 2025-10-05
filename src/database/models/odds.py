@@ -40,7 +40,9 @@ class Odds(BaseModel):
         ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, comment="比赛ID"
     )
 
-    bookmaker: Mapped[str] = mapped_column(String(100), nullable=False, comment="博彩公司名称")
+    bookmaker: Mapped[str] = mapped_column(
+        String(100), nullable=False, comment="博彩公司名称"
+    )
 
     # 市场类型
     market_type: Mapped[MarketType] = mapped_column(
@@ -74,7 +76,9 @@ class Odds(BaseModel):
     )
 
     # 收集时间
-    collected_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="赔率收集时间")
+    collected_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, comment="赔率收集时间"
+    )
 
     # 关系定义
     match = relationship("Match", back_populates="odds")
@@ -87,11 +91,21 @@ class Odds(BaseModel):
         Index("idx_odds_market_type", "market_type"),
         Index("idx_odds_match_market", "match_id", "market_type"),
         # CHECK约束定义 - 确保赔率数据的合理性
-        CheckConstraint("home_odds IS NULL OR home_odds > 1.01", name="ck_odds_home_odds_range"),
-        CheckConstraint("draw_odds IS NULL OR draw_odds > 1.01", name="ck_odds_draw_odds_range"),
-        CheckConstraint("away_odds IS NULL OR away_odds > 1.01", name="ck_odds_away_odds_range"),
-        CheckConstraint("over_odds IS NULL OR over_odds > 1.01", name="ck_odds_over_odds_range"),
-        CheckConstraint("under_odds IS NULL OR under_odds > 1.01", name="ck_odds_under_odds_range"),
+        CheckConstraint(
+            "home_odds IS NULL OR home_odds > 1.01", name="ck_odds_home_odds_range"
+        ),
+        CheckConstraint(
+            "draw_odds IS NULL OR draw_odds > 1.01", name="ck_odds_draw_odds_range"
+        ),
+        CheckConstraint(
+            "away_odds IS NULL OR away_odds > 1.01", name="ck_odds_away_odds_range"
+        ),
+        CheckConstraint(
+            "over_odds IS NULL OR over_odds > 1.01", name="ck_odds_over_odds_range"
+        ),
+        CheckConstraint(
+            "under_odds IS NULL OR under_odds > 1.01", name="ck_odds_under_odds_range"
+        ),
         CheckConstraint(
             "line_value IS NULL OR (line_value >= 0 AND line_value <= 10)",
             name="ck_odds_line_value_range",
@@ -197,7 +211,9 @@ class Odds(BaseModel):
 
         return None
 
-    def _calculate_percentage_change(self, current: Decimal, previous: Decimal) -> float:
+    def _calculate_percentage_change(
+        self, current: Decimal, previous: Decimal
+    ) -> float:
         """计算百分比变化"""
         if not current or not previous:
             return 0.0
@@ -222,7 +238,9 @@ class Odds(BaseModel):
                     return True
         return False
 
-    def _check_over_under_movement(self, previous_odds: "Odds", threshold: float) -> bool:
+    def _check_over_under_movement(
+        self, previous_odds: "Odds", threshold: float
+    ) -> bool:
         """检查大小球市场赔率变化"""
         if self.over_odds and previous_odds.over_odds:
             over_change = self._calculate_percentage_change(
@@ -240,7 +258,9 @@ class Odds(BaseModel):
 
         return False
 
-    def is_odds_movement_significant(self, previous_odds: "Odds", threshold: float = 0.1) -> bool:
+    def is_odds_movement_significant(
+        self, previous_odds: "Odds", threshold: float = 0.1
+    ) -> bool:
         """
         检查赔率变化是否显著
 

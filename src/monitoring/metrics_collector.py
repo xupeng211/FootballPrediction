@@ -201,7 +201,9 @@ class MetricsCollector:
                 # 收集所有指标
                 await self.metrics_exporter.collect_all_metrics()
 
-                collection_duration = (datetime.now() - collection_start).total_seconds()
+                collection_duration = (
+                    datetime.now() - collection_start
+                ).total_seconds()
                 logger.debug(f"指标收集完成，耗时: {collection_duration:.2f}秒")
 
                 # 等待下一次收集
@@ -258,7 +260,9 @@ class MetricsCollector:
         return {
             "running": self.running,
             "collection_interval": self.collection_interval,
-            "task_status": ("running" if self._task and not self._task.done() else "stopped"),
+            "task_status": (
+                "running" if self._task and not self._task.done() else "stopped"
+            ),
         }
 
     def collect_system_metrics(self) -> Dict[str, Any]:

@@ -106,7 +106,9 @@ async def get_match_features(
     # 2. 服务可用性检查
     if feature_store is None:
         logger.error("特征存储服务不可用")
-        raise HTTPException(status_code=503, detail="特征存储服务暂时不可用，请稍后重试")
+        raise HTTPException(
+            status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
+        )
 
     try:
         # 3. 数据库查询（增强错误处理）
@@ -121,7 +123,9 @@ async def get_match_features(
                 logger.warning(f"比赛 {match_id} 不存在")
                 raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
-            logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
+            logger.debug(
+                f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}"
+            )
 
         except SQLAlchemyError as db_error:
             logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
@@ -170,7 +174,9 @@ async def get_match_features(
                 "home_team_id": match.home_team_id,
                 "away_team_id": match.away_team_id,
                 "league_id": match.league_id,
-                "match_time": (match.match_time.isoformat() if match.match_time else None),
+                "match_time": (
+                    match.match_time.isoformat() if match.match_time else None
+                ),
                 "season": match.season,
                 "match_status": match.match_status,
             },
@@ -179,13 +185,17 @@ async def get_match_features(
 
         # 添加特征获取状态
         if features_error:
-            response_data["features_warning"] = f"特征数据获取部分失败: {features_error}"
+            response_data[
+                "features_warning"
+            ] = f"特征数据获取部分失败: {features_error}"
 
         # 7. 处理原始特征请求（可选）
         if include_raw and feature_calculator:
             try:
                 logger.debug("计算原始特征数据")
-                all_features = await feature_calculator.calculate_all_match_features(match_entity)
+                all_features = await feature_calculator.calculate_all_match_features(
+                    match_entity
+                )
                 response_data["raw_features"] = all_features.to_dict()
                 logger.debug("原始特征计算完成")
             except Exception as raw_error:
@@ -204,8 +214,12 @@ async def get_match_features(
         raise
     except Exception as unexpected_error:
         # 捕获所有未预期的错误
-        logger.exception(f"获取比赛特征时发生未预期错误 (match_id={match_id}): {unexpected_error}")
-        raise HTTPException(status_code=500, detail=f"获取比赛特征失败: {str(unexpected_error)}")
+        logger.exception(
+            f"获取比赛特征时发生未预期错误 (match_id={match_id}): {unexpected_error}"
+        )
+        raise HTTPException(
+            status_code=500, detail=f"获取比赛特征失败: {str(unexpected_error)}"
+        )
 
 
 @router.get(
@@ -215,7 +229,9 @@ async def get_match_features(
 )
 async def get_team_features(
     team_id: int,
-    calculation_date: Optional[datetime] = Query(None, description="特征计算日期，默认为当前时间"),
+    calculation_date: Optional[datetime] = Query(
+        None, description="特征计算日期，默认为当前时间"
+    ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -264,10 +280,14 @@ async def get_team_features(
             "venue": getattr(team, "venue", None),
         },
         "calculation_date": calculation_date.isoformat(),
-        "features": (team_features.to_dict("records")[0] if not team_features.empty else {}),
+        "features": (
+            team_features.to_dict("records")[0] if not team_features.empty else {}
+        ),
     }
 
-    return APIResponse.success(data=response_data, message=f"成功获取球队 {team.name} 的特征")
+    return APIResponse.success(
+        data=response_data, message=f"成功获取球队 {team.name} 的特征"
+    )
 
 
 @router.post(
@@ -339,7 +359,9 @@ async def calculate_match_features(
 )
 async def calculate_team_features(
     team_id: int,
-    calculation_date: Optional[datetime] = Query(default=None, description="特征计算日期"),
+    calculation_date: Optional[datetime] = Query(
+        default=None, description="特征计算日期"
+    ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -365,7 +387,9 @@ async def calculate_team_features(
         calculation_date = datetime.now()
 
     # 计算并存储特征
-    success = await feature_store.calculate_and_store_team_features(team_id, calculation_date)
+    success = await feature_store.calculate_and_store_team_features(
+        team_id, calculation_date
+    )
 
     return APIResponse.success(
         data={

@@ -368,7 +368,9 @@ class TestExceptionHandler:
 
         assert isinstance(learned_patterns, dict)
         assert "ValueError:Null in column" in learned_patterns
-        assert learned_patterns["ValueError:Null in column"]["resolution"] == "fill_nulls"
+        assert (
+            learned_patterns["ValueError:Null in column"]["resolution"] == "fill_nulls"
+        )
 
     def test_exception_handler_config(self, handler):
         """测试异常处理器配置"""

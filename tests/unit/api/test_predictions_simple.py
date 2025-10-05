@@ -134,7 +134,9 @@ class TestPredictionAPI:
             mock_service.predict_match = AsyncMock(return_value=mock_prediction_result)
 
             # 发送请求 - 强制重新预测
-            response = api_client_full.get("/api/v1/predictions/12345?force_predict=true")
+            response = api_client_full.get(
+                "/api/v1/predictions/12345?force_predict=true"
+            )
 
             # 验证响应
             assert response.status_code == 200
@@ -342,7 +344,9 @@ class TestPredictionAPI:
         mock_row_2.id = 12346
 
         valid_matches_result = MagicMock()
-        valid_matches_result.__iter__ = MagicMock(return_value=iter([mock_row_1, mock_row_2]))
+        valid_matches_result.__iter__ = MagicMock(
+            return_value=iter([mock_row_1, mock_row_2])
+        )
         mock_session.execute.return_value = valid_matches_result
 
         # 创建mock预测结果
@@ -640,7 +644,9 @@ class TestPredictionAPI:
         mock_session.execute.side_effect = Exception("批量预测服务错误")
 
         # 发送请求
-        response = api_client_full.post("/api/v1/predictions/batch", json=[12345, 12346])
+        response = api_client_full.post(
+            "/api/v1/predictions/batch", json=[12345, 12346]
+        )
 
         # 验证响应
         assert response.status_code == 500
@@ -692,7 +698,9 @@ class TestPredictionAPI:
         """测试验证预测结果 - 服务器错误"""
         # Mock预测服务抛出异常
         with patch("src.api.predictions.prediction_service") as mock_service:
-            mock_service.verify_prediction = AsyncMock(side_effect=Exception("验证服务错误"))
+            mock_service.verify_prediction = AsyncMock(
+                side_effect=Exception("验证服务错误")
+            )
 
             # 发送请求
             response = api_client_full.post("/api/v1/predictions/12345/verify")

@@ -47,8 +47,12 @@ class TestAPIIntegrationEnhanced:
                 }
             ),
             "teams": {
-                100: MockDataGenerator.create_team_data({"id": 100, "team_name": "Home Team FC"}),
-                200: MockDataGenerator.create_team_data({"id": 200, "team_name": "Away Team FC"}),
+                100: MockDataGenerator.create_team_data(
+                    {"id": 100, "team_name": "Home Team FC"}
+                ),
+                200: MockDataGenerator.create_team_data(
+                    {"id": 200, "team_name": "Away Team FC"}
+                ),
             },
             "odds": MockDataGenerator.create_odds_data(
                 {"match_id": 999, "home_win": 1.8, "draw": 3.6, "away_win": 4.2}
@@ -118,7 +122,9 @@ class TestAPIIntegrationEnhanced:
             mock_service.get_live_match_data.return_value = live_data
 
             # 获取实时数据
-            response = api_client.get(f"/api/v1/matches/{sample_workflow_data['match']['id']}/live")
+            response = api_client.get(
+                f"/api/v1/matches/{sample_workflow_data['match']['id']}/live"
+            )
 
             assert response.status_code == 200
             live = response.json()
@@ -277,8 +283,8 @@ class TestAPIIntegrationEnhanced:
         # 创建多个并发请求
         async def make_request(match_id):
             with patch("src.api.data.DataService") as mock_service:
-                mock_service.get_match_data.return_value = MockDataGenerator.create_match_data(
-                    {"id": match_id}
+                mock_service.get_match_data.return_value = (
+                    MockDataGenerator.create_match_data({"id": match_id})
                 )
 
                 response = api_client.get(f"/api/v1/matches/{match_id}")

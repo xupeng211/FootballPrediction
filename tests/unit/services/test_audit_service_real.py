@@ -160,8 +160,13 @@ class TestAuditServiceReal:
         """测试确定合规类别"""
         # 敏感数据总是返回PII
         assert service._determine_compliance_category("READ", "users", True) == "PII"
-        assert service._determine_compliance_category("UPDATE", "permissions", True) == "PII"
-        assert service._determine_compliance_category("CREATE", "payments", True) == "PII"
+        assert (
+            service._determine_compliance_category("UPDATE", "permissions", True)
+            == "PII"
+        )
+        assert (
+            service._determine_compliance_category("CREATE", "payments", True) == "PII"
+        )
 
         # 非敏感数据的特定操作
         assert (
@@ -172,11 +177,18 @@ class TestAuditServiceReal:
             service._determine_compliance_category("REVOKE", "permissions", False)
             == "ACCESS_CONTROL"
         )
-        assert service._determine_compliance_category("BACKUP", "data", False) == "DATA_PROTECTION"
         assert (
-            service._determine_compliance_category("READ", "financial_table", False) == "FINANCIAL"
+            service._determine_compliance_category("BACKUP", "data", False)
+            == "DATA_PROTECTION"
         )
-        assert service._determine_compliance_category("READ", "matches", False) == "GENERAL"
+        assert (
+            service._determine_compliance_category("READ", "financial_table", False)
+            == "FINANCIAL"
+        )
+        assert (
+            service._determine_compliance_category("READ", "matches", False)
+            == "GENERAL"
+        )
 
     async def test_log_operation_success(self, service):
         """测试记录操作成功"""
@@ -184,11 +196,15 @@ class TestAuditServiceReal:
         mock_session = MagicMock()
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 设置审计上下文
-        context = AuditContext(user_id="user123", username="testuser", ip_address="192.168.1.1")
+        context = AuditContext(
+            user_id="user123", username="testuser", ip_address="192.168.1.1"
+        )
         service.set_audit_context(context)
 
         # 记录操作
@@ -210,7 +226,9 @@ class TestAuditServiceReal:
         mock_session = MagicMock()
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         context = AuditContext(user_id="user123")
@@ -251,7 +269,9 @@ class TestAuditServiceReal:
         # Patch AuditLogSummary directly
         with patch("src.services.audit_service.AuditLogSummary") as mock_summary_class:
             mock_summary_instance = MagicMock()
-            mock_summary_instance.get_user_activity_summary.return_value = mock_summary_result
+            mock_summary_instance.get_user_activity_summary.return_value = (
+                mock_summary_result
+            )
             mock_summary_class.return_value = mock_summary_instance
 
             summary = await service.get_user_audit_summary("user123", days=30)
@@ -288,7 +308,9 @@ class TestAuditServiceReal:
 
     def test_set_and_get_audit_context(self, service):
         """测试设置和获取审计上下文"""
-        context = AuditContext(user_id="user123", username="testuser", user_role="analyst")
+        context = AuditContext(
+            user_id="user123", username="testuser", user_role="analyst"
+        )
 
         # 设置上下文
         service.set_audit_context(context)
@@ -317,7 +339,9 @@ class TestAuditServiceReal:
 
     def test_log_action_sync(self, service):
         """测试同步日志记录"""
-        context = AuditContext(user_id="user123", username="testuser", user_role="analyst")
+        context = AuditContext(
+            user_id="user123", username="testuser", user_role="analyst"
+        )
         service.set_audit_context(context)
 
         # 简化测试 - 只验证方法存在

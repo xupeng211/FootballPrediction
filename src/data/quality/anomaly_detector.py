@@ -261,7 +261,9 @@ class StatisticalAnomalyDetector:
                     log_upper_bound = log_mean + self.sigma_threshold * log_std
 
                     # 检测对数变换后的异常值
-                    outliers_mask = (log_data < log_lower_bound) | (log_data > log_upper_bound)
+                    outliers_mask = (log_data < log_lower_bound) | (
+                        log_data > log_upper_bound
+                    )
                     outliers = clean_data[outliers_mask]
                 else:
                     outliers = pd.Series(dtype=clean_data.dtype)
@@ -300,7 +302,9 @@ class StatisticalAnomalyDetector:
                         "column": column_name,
                         "value": float(value),
                         "z_score": z_score,
-                        "threshold_exceeded": ("lower" if value < lower_bound else "upper"),
+                        "threshold_exceeded": (
+                            "lower" if value < lower_bound else "upper"
+                        ),
                     }
                 )
 
@@ -421,8 +425,12 @@ class StatisticalAnomalyDetector:
                     "current_size": len(current_data),
                     "baseline_stats": baseline_stats,
                     "current_stats": current_stats,
-                    "mean_difference": float(current_stats["mean"] - baseline_stats["mean"]),
-                    "std_difference": float(current_stats["std"] - baseline_stats["std"]),
+                    "mean_difference": float(
+                        current_stats["mean"] - baseline_stats["mean"]
+                    ),
+                    "std_difference": float(
+                        current_stats["std"] - baseline_stats["std"]
+                    ),
                 }
             )
 
@@ -441,9 +449,9 @@ class StatisticalAnomalyDetector:
 
             # 记录数据漂移评分
             drift_score = min(1.0, ks_statistic * 2)  # 归一化到0-1
-            data_drift_score.labels(table_name=table_name, feature_name=column_name).set(
-                drift_score
-            )
+            data_drift_score.labels(
+                table_name=table_name, feature_name=column_name
+            ).set(drift_score)
 
             # 记录Prometheus指标
             if distribution_shifted:
@@ -522,8 +530,12 @@ class StatisticalAnomalyDetector:
                         "index": int(idx),
                         "column": column_name,
                         "value": float(value),
-                        "iqr_distance": float(max(lower_bound - value, value - upper_bound) / IQR),
-                        "threshold_exceeded": ("lower" if value < lower_bound else "upper"),
+                        "iqr_distance": float(
+                            max(lower_bound - value, value - upper_bound) / IQR
+                        ),
+                        "threshold_exceeded": (
+                            "lower" if value < lower_bound else "upper"
+                        ),
                     }
                 )
 
@@ -557,7 +569,8 @@ class StatisticalAnomalyDetector:
             ).observe(duration)
 
             self.logger.info(
-                f"IQR异常检测完成: {table_name}.{column_name}, " f"发现 {len(outliers)} 个异常值"
+                f"IQR异常检测完成: {table_name}.{column_name}, "
+                f"发现 {len(outliers)} 个异常值"
             )
 
             return result
@@ -742,8 +755,12 @@ class MachineLearningAnomalyDetector:
                     current_std = current_col.std()
 
                     # 计算漂移评分
-                    mean_drift = abs(current_mean - baseline_mean) / max(abs(baseline_mean), 1e-8)
-                    std_drift = abs(current_std - baseline_std) / max(baseline_std, 1e-8)
+                    mean_drift = abs(current_mean - baseline_mean) / max(
+                        abs(baseline_mean), 1e-8
+                    )
+                    std_drift = abs(current_std - baseline_std) / max(
+                        baseline_std, 1e-8
+                    )
 
                     # 综合漂移评分
                     drift_score = (mean_drift + std_drift) / 2
@@ -807,9 +824,9 @@ class MachineLearningAnomalyDetector:
                         results.append(result)
 
                         # 记录数据漂移评分
-                        data_drift_score.labels(table_name=table_name, feature_name=column).set(
-                            drift_score
-                        )
+                        data_drift_score.labels(
+                            table_name=table_name, feature_name=column
+                        ).set(drift_score)
 
                         # 记录Prometheus指标
                         anomalies_detected_total.labels(
@@ -821,9 +838,9 @@ class MachineLearningAnomalyDetector:
 
                     else:
                         # 记录正常的漂移评分
-                        data_drift_score.labels(table_name=table_name, feature_name=column).set(
-                            drift_score
-                        )
+                        data_drift_score.labels(
+                            table_name=table_name, feature_name=column
+                        ).set(drift_score)
 
                 except Exception as col_error:
                     self.logger.warning(f"列 {column} 的漂移检测失败: {col_error}")
@@ -1047,12 +1064,16 @@ class AdvancedAnomalyDetector:
                 try:
                     if method == "3sigma":
                         results.extend(
-                            await self._run_3sigma_detection(table_name, current_data, config)
+                            await self._run_3sigma_detection(
+                                table_name, current_data, config
+                            )
                         )
 
                     elif method == "iqr":
                         results.extend(
-                            await self._run_iqr_detection(table_name, current_data, config)
+                            await self._run_iqr_detection(
+                                table_name, current_data, config
+                            )
                         )
 
                     elif method == "isolation_forest":
@@ -1104,7 +1125,9 @@ class AdvancedAnomalyDetector:
             self.logger.error(f"综合异常检测失败: {e}")
             raise
 
-    async def _get_table_data(self, table_name: str, time_window_hours: int) -> pd.DataFrame:
+    async def _get_table_data(
+        self, table_name: str, time_window_hours: int
+    ) -> pd.DataFrame:
         """获取表数据"""
         try:
             # 检查数据库管理器是否已初始化
@@ -1238,7 +1261,9 @@ class AdvancedAnomalyDetector:
                 self.logger.warning(f"表 {table_name} 没有足够的基准数据进行漂移检测")
                 return []
 
-            return self.ml_detector.detect_data_drift(baseline_data, current_data, table_name)
+            return self.ml_detector.detect_data_drift(
+                baseline_data, current_data, table_name
+            )
 
         except Exception as e:
             self.logger.error(f"数据漂移检测失败: {e}")
@@ -1262,15 +1287,15 @@ class AdvancedAnomalyDetector:
                     if current_data[column].dtype in [
                         "int64",
                         "float64",
-                    ] and baseline_data[
-                        column
-                    ].dtype in ["int64", "float64"]:
+                    ] and baseline_data[column].dtype in ["int64", "float64"]:
                         try:
-                            result = self.statistical_detector.detect_distribution_shift(
-                                baseline_data[column].dropna(),
-                                current_data[column].dropna(),
-                                table_name,
-                                column,
+                            result = (
+                                self.statistical_detector.detect_distribution_shift(
+                                    baseline_data[column].dropna(),
+                                    current_data[column].dropna(),
+                                    table_name,
+                                    column,
+                                )
                             )
                             results.append(result)
                         except Exception as e:
@@ -1282,7 +1307,9 @@ class AdvancedAnomalyDetector:
             self.logger.error(f"分布偏移检测失败: {e}")
             return []
 
-    async def _get_baseline_data(self, table_name: str, baseline_days: int) -> pd.DataFrame:
+    async def _get_baseline_data(
+        self, table_name: str, baseline_days: int
+    ) -> pd.DataFrame:
         """获取基准数据"""
         try:
             start_time = datetime.now() - timedelta(days=baseline_days + 7)
@@ -1356,7 +1383,9 @@ class AdvancedAnomalyDetector:
                     "end_time": datetime.now().isoformat(),
                 },
                 "tables_analyzed": list(self.detection_config.keys()),
-                "total_anomalies": sum(len(results) for results in all_results.values()),
+                "total_anomalies": sum(
+                    len(results) for results in all_results.values()
+                ),
                 "anomalies_by_table": {},
                 "anomalies_by_severity": {
                     "low": 0,

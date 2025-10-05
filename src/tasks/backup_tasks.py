@@ -397,7 +397,9 @@ class DatabaseBackupTask(Task):
             else:
                 # 备份失败
                 error_msg = f"{backup_type} 备份执行失败，退出码: {result.returncode}"
-                logger.error(f"{error_msg}\n标准输出: {result.stdout}\n错误输出: {result.stderr}")
+                logger.error(
+                    f"{error_msg}\n标准输出: {result.stdout}\n错误输出: {result.stderr}"
+                )
 
                 # 记录失败指标
                 self.metrics["failure_total"].labels(
@@ -451,7 +453,9 @@ class DatabaseBackupTask(Task):
                 find_result = subprocess.run(cmd, capture_output=True, text=True)
                 if find_result.returncode == 0 and find_result.stdout.strip():
                     sizes = [
-                        int(size) for size in find_result.stdout.strip().split("\n") if size.strip()
+                        int(size)
+                        for size in find_result.stdout.strip().split("\n")
+                        if size.strip()
                     ]
                     if sizes:
                         return max(sizes)
@@ -476,7 +480,9 @@ class DatabaseBackupTask(Task):
                         # 获取最新目录的大小
                         latest_dir = max(dirs)
                         du_cmd = ["du", "-sb", latest_dir]
-                        du_result = subprocess.run(du_cmd, capture_output=True, text=True)
+                        du_result = subprocess.run(
+                            du_cmd, capture_output=True, text=True
+                        )
                         if du_result.returncode == 0 and du_result.stdout.strip():
                             return int(du_result.stdout.split()[0])
                 return None
@@ -518,7 +524,9 @@ class DatabaseBackupTask(Task):
                 logger.info(f"备份文件验证成功: {backup_file_path}")
                 return True
             else:
-                logger.error(f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}")
+                logger.error(
+                    f"备份文件验证失败: {backup_file_path}, 错误: {result.stderr}"
+                )
                 return False
 
         except subprocess.TimeoutExpired:
@@ -572,7 +580,9 @@ def daily_full_backup_task(self, database_name: str = "football_prediction"):
     """
     logger.info("开始执行每日全量备份任务")
 
-    success, output, stats = self.run_backup_script(backup_type="full", database_name=database_name)
+    success, output, stats = self.run_backup_script(
+        backup_type="full", database_name=database_name
+    )
 
     result = {
         "task_type": "daily_full_backup",
@@ -639,7 +649,9 @@ def weekly_wal_archive_task(self, database_name: str = "football_prediction"):
     """
     logger.info("开始执行每周WAL归档任务")
 
-    success, output, stats = self.run_backup_script(backup_type="wal", database_name=database_name)
+    success, output, stats = self.run_backup_script(
+        backup_type="wal", database_name=database_name
+    )
 
     result = {
         "task_type": "weekly_wal_archive",
@@ -695,7 +707,9 @@ def cleanup_old_backups_task(self, database_name: str = "football_prediction"):
 
 
 @app.task(base=DatabaseBackupTask, bind=True)
-def verify_backup_task(self, backup_file_path: str, database_name: str = "football_prediction"):
+def verify_backup_task(
+    self, backup_file_path: str, database_name: str = "football_prediction"
+):
     """
     验证备份文件任务
 
@@ -798,7 +812,9 @@ def backup_database_task(
             - stats: 备份统计信息
             - timestamp: 执行时间戳
     """
-    logger.info(f"开始执行数据库备份任务: compress={compress}, include_schema={include_schema}")
+    logger.info(
+        f"开始执行数据库备份任务: compress={compress}, include_schema={include_schema}"
+    )
 
     start_time = datetime.now()
 
@@ -957,7 +973,9 @@ def backup_redis_task(
 
         # 获取Redis数据目录
         info_cmd = cmd + ["CONFIG", "GET", "dir"]
-        dir_result = subprocess.run(info_cmd, capture_output=True, text=True, timeout=30)
+        dir_result = subprocess.run(
+            info_cmd, capture_output=True, text=True, timeout=30
+        )
 
         if dir_result.returncode == 0 and dir_result.stdout:
             lines = dir_result.stdout.strip().split("\n")
@@ -1027,7 +1045,9 @@ def backup_logs_task(
     Returns:
         Dict[str, Any]: 备份执行结果
     """
-    logger.info(f"开始执行日志备份任务: days_to_keep={days_to_keep}, compress={compress}")
+    logger.info(
+        f"开始执行日志备份任务: days_to_keep={days_to_keep}, compress={compress}"
+    )
 
     start_time = datetime.now()
 
@@ -1067,7 +1087,9 @@ def backup_logs_task(
                         for file in files:
                             file_path = os.path.join(root, file)
                             if os.path.isfile(file_path):
-                                file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                                file_mtime = datetime.fromtimestamp(
+                                    os.path.getmtime(file_path)
+                                )
                                 if file_mtime >= cutoff_date:
                                     tar.add(
                                         file_path,
@@ -1187,7 +1209,9 @@ def verify_backup_integrity_task(
                     "SELECT",
                     "COMMIT",
                 ]
-                found_keywords = [kw for kw in sql_keywords if kw.upper() in content.upper()]
+                found_keywords = [
+                    kw for kw in sql_keywords if kw.upper() in content.upper()
+                ]
 
                 return {
                     "status": "success",
@@ -1196,7 +1220,9 @@ def verify_backup_integrity_task(
                     "sql_keywords_found": found_keywords,
                     "estimated_tables": content.upper().count("CREATE TABLE"),
                     "estimated_records": content.upper().count("INSERT INTO"),
-                    "execution_time_seconds": (datetime.now() - start_time).total_seconds(),
+                    "execution_time_seconds": (
+                        datetime.now() - start_time
+                    ).total_seconds(),
                     "timestamp": datetime.now().isoformat(),
                 }
 
@@ -1310,7 +1336,9 @@ def get_backup_status():
 
 
 @app.task
-def manual_backup_task(backup_type: str = "full", database_name: str = "football_prediction"):
+def manual_backup_task(
+    backup_type: str = "full", database_name: str = "football_prediction"
+):
     """
     手动触发备份任务
 

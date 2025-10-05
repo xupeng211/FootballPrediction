@@ -283,7 +283,11 @@ class BaselineModelTrainer:
         home_score = row["home_score"]
         away_score = row["away_score"]
 
-        if home_score is not None and away_score is not None and home_score > away_score:
+        if (
+            home_score is not None
+            and away_score is not None
+            and home_score > away_score
+        ):
             return "home"
         elif home_score < away_score:
             return "away"
@@ -442,7 +446,9 @@ class BaselineModelTrainer:
                 # 训练XGBoost模型
                 logger.info("开始训练XGBoost模型...")
                 if not HAS_XGB:
-                    raise ImportError("XGBoost not available, install with: pip install xgboost")
+                    raise ImportError(
+                        "XGBoost not available, install with: pip install xgboost"
+                    )
                 model = xgb.XGBClassifier(**self.model_params)
                 model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
 
@@ -452,13 +458,17 @@ class BaselineModelTrainer:
 
                 # 计算训练集指标
                 train_accuracy = accuracy_score(y_train, y_train_pred)
-                train_precision = precision_score(y_train, y_train_pred, average="weighted")
+                train_precision = precision_score(
+                    y_train, y_train_pred, average="weighted"
+                )
                 train_recall = recall_score(y_train, y_train_pred, average="weighted")
                 train_f1 = f1_score(y_train, y_train_pred, average="weighted")
 
                 # 计算测试集指标
                 test_accuracy = accuracy_score(y_test, y_test_pred)
-                test_precision = precision_score(y_test, y_test_pred, average="weighted")
+                test_precision = precision_score(
+                    y_test, y_test_pred, average="weighted"
+                )
                 test_recall = recall_score(y_test, y_test_pred, average="weighted")
                 test_f1 = f1_score(y_test, y_test_pred, average="weighted")
 
@@ -478,7 +488,9 @@ class BaselineModelTrainer:
                 )
 
                 # 记录分类报告
-                classification_rep = classification_report(y_test, y_test_pred, output_dict=True)
+                classification_rep = classification_report(
+                    y_test, y_test_pred, output_dict=True
+                )
                 for class_name, metrics in classification_rep.items():
                     if isinstance(metrics, dict):
                         for metric_name, value in metrics.items():
@@ -486,13 +498,17 @@ class BaselineModelTrainer:
 
                 # 记录特征重要性
                 if hasattr(model, "feature_importances_"):
-                    feature_importance = dict(zip(X.columns, model.feature_importances_))
+                    feature_importance = dict(
+                        zip(X.columns, model.feature_importances_)
+                    )
                     # 记录前10个最重要的特征
                     top_features = sorted(
                         feature_importance.items(), key=lambda x: x[1], reverse=True
                     )[:10]
                     for i, (feature, importance) in enumerate(top_features):
-                        mlflow.log_metric(f"feature_importance_{i+1}_{feature}", importance)
+                        mlflow.log_metric(
+                            f"feature_importance_{i+1}_{feature}", importance
+                        )
 
                 # 注册模型到MLflow
                 logger.info(f"注册模型：{model_name}")
@@ -555,7 +571,9 @@ class BaselineModelTrainer:
 
             if version is None:
                 # 获取最新版本
-                latest_versions = client.get_latest_versions(name=model_name, stages=["Staging"])
+                latest_versions = client.get_latest_versions(
+                    name=model_name, stages=["Staging"]
+                )
                 if not latest_versions:
                     logger.error(f"模型 {model_name} 在Staging阶段没有版本")
                     return False

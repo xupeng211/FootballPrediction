@@ -130,7 +130,9 @@ class StreamProcessor:
 
         return stats
 
-    async def start_continuous_processing(self, topics: Optional[List[str]] = None) -> None:
+    async def start_continuous_processing(
+        self, topics: Optional[List[str]] = None
+    ) -> None:
         """
         启动持续流处理
 
@@ -292,12 +294,16 @@ class StreamProcessor:
         except Exception:
             return False
 
-    def consume_data(self, timeout: float = 5.0, max_messages: int = 10) -> Dict[str, int]:
+    def consume_data(
+        self, timeout: float = 5.0, max_messages: int = 10
+    ) -> Dict[str, int]:
         """消费数据 - 同步版本用于测试"""
         try:
             consumer = self._initialize_consumer()
             consumer.subscribe_all_topics()
-            return asyncio.run(consumer.consume_batch(batch_size=max_messages, timeout=timeout))
+            return asyncio.run(
+                consumer.consume_batch(batch_size=max_messages, timeout=timeout)
+            )
         except Exception:
             return {"processed": 0, "failed": 1}
 
@@ -417,9 +423,15 @@ class StreamProcessorManager:
             stats = processor.get_processing_stats()
             aggregate_stats["processor_stats"].append({"processor_id": i, **stats})
 
-            aggregate_stats["total_messages_produced"] += stats.get("messages_produced", 0)
-            aggregate_stats["total_messages_consumed"] += stats.get("messages_consumed", 0)
-            aggregate_stats["total_processing_errors"] += stats.get("processing_errors", 0)
+            aggregate_stats["total_messages_produced"] += stats.get(
+                "messages_produced", 0
+            )
+            aggregate_stats["total_messages_consumed"] += stats.get(
+                "messages_consumed", 0
+            )
+            aggregate_stats["total_processing_errors"] += stats.get(
+                "processing_errors", 0
+            )
 
         return aggregate_stats
 

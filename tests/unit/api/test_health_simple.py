@@ -119,7 +119,9 @@ class TestHealthAPI:
             }
 
             # 设置环境变量以启用Redis检查
-            with patch.dict("os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}):
+            with patch.dict(
+                "os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}
+            ):
                 response = api_client.get("/api/health?check_db=true")
 
             # 只检查Redis是否被调用（如果环境配置正确）
@@ -139,7 +141,9 @@ class TestHealthAPI:
             }
 
             # 设置环境变量以启用文件系统检查
-            with patch.dict("os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}):
+            with patch.dict(
+                "os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}
+            ):
                 response = api_client.get("/api/health?check_db=true")
 
             # 只检查文件系统是否被调用（如果环境配置正确）

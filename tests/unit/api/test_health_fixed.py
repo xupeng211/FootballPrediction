@@ -73,7 +73,9 @@ class TestHealthAPI:
             }
 
             # 设置环境变量以启用Redis检查
-            with patch.dict("os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}):
+            with patch.dict(
+                "os.environ", {"MINIMAL_HEALTH_MODE": "false", "FAST_FAIL": "true"}
+            ):
                 response = api_client.get("/api/health?check_db=true")
 
             # 检查响应
@@ -127,10 +129,14 @@ class TestHealthAPI:
         # 验证检查项结构
         for check_name, check_data in data["checks"].items():
             assert "status" in check_data, f"检查项 {check_name} 缺少status字段"
-            assert "response_time_ms" in check_data, f"检查项 {check_name} 缺少response_time_ms字段"
+            assert (
+                "response_time_ms" in check_data
+            ), f"检查项 {check_name} 缺少response_time_ms字段"
             # 在某些情况下（如数据库未初始化），可能没有healthy字段
             if "healthy" not in check_data:
-                assert check_data["status"] in ["skipped"], "只有跳过的检查项可以缺少healthy字段"
+                assert check_data["status"] in [
+                    "skipped"
+                ], "只有跳过的检查项可以缺少healthy字段"
 
     def test_health_check_with_invalid_query_param(self, api_client):
         """测试无效查询参数"""

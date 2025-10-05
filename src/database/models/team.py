@@ -34,7 +34,9 @@ class Team(BaseModel):
     api_team_id = Column(Integer, unique=True, nullable=True, comment="API球队ID")
 
     # 联赛关系
-    league_id = Column(Integer, ForeignKey("leagues.id"), nullable=True, comment="所属联赛ID")
+    league_id = Column(
+        Integer, ForeignKey("leagues.id"), nullable=True, comment="所属联赛ID"
+    )
 
     # 球队详细信息
     founded_year = Column(Integer, nullable=True, comment="成立年份")

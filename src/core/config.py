@@ -101,15 +101,23 @@ class Settings(SettingsClass):
 
     # API配置
     api_host: str = (
-        Field(default="localhost", description="API服务器主机") if HAS_PYDANTIC else "localhost"
+        Field(default="localhost", description="API服务器主机")
+        if HAS_PYDANTIC
+        else "localhost"
     )
-    api_port: int = Field(default=8000, description="API服务器端口") if HAS_PYDANTIC else 8000
+    api_port: int = (
+        Field(default=8000, description="API服务器端口") if HAS_PYDANTIC else 8000
+    )
 
     # 环境配置
     environment: str = (
-        Field(default="development", description="运行环境") if HAS_PYDANTIC else "development"
+        Field(default="development", description="运行环境")
+        if HAS_PYDANTIC
+        else "development"
     )
-    log_level: str = Field(default="INFO", description="日志级别") if HAS_PYDANTIC else "INFO"
+    log_level: str = (
+        Field(default="INFO", description="日志级别") if HAS_PYDANTIC else "INFO"
+    )
 
     # MLflow配置
     mlflow_tracking_uri: str = (
@@ -132,7 +140,9 @@ class Settings(SettingsClass):
     )
 
     metrics_enabled: bool = (
-        Field(default=True, description="是否启用监控指标收集") if HAS_PYDANTIC else True
+        Field(default=True, description="是否启用监控指标收集")
+        if HAS_PYDANTIC
+        else True
     )
     metrics_tables: List[str] = (
         Field(
@@ -166,10 +176,14 @@ class Settings(SettingsClass):
         Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
     )
     missing_data_defaults_path: Optional[str] = (
-        Field(default=None, description="缺失值默认配置文件路径") if HAS_PYDANTIC else None
+        Field(default=None, description="缺失值默认配置文件路径")
+        if HAS_PYDANTIC
+        else None
     )
     missing_data_defaults_json: Optional[str] = (
-        Field(default=None, description="缺失值默认配置JSON字符串") if HAS_PYDANTIC else None
+        Field(default=None, description="缺失值默认配置JSON字符串")
+        if HAS_PYDANTIC
+        else None
     )
     enabled_services: List[str] = (
         Field(
@@ -210,9 +224,7 @@ class Settings(SettingsClass):
         def __init__(self, **kwargs):
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url = (
-                "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
-            )
+            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
             self.redis_url = "redis://redis:6379/0"
             self.api_host = "localhost"
             self.api_port = 8000

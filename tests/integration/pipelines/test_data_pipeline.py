@@ -9,11 +9,9 @@ from unittest.mock import Mock, AsyncMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.connection import DatabaseManager
 from src.services.data_processing import DataProcessingService
 from src.data.collectors.base_collector import DataCollector
 from src.data.processing.football_data_cleaner import FootballDataCleaner
-from src.database.models.match import Match
 from src.database.models.team import Team
 
 
@@ -27,6 +25,7 @@ class TestDataPipeline:
         Session = sessionmaker(bind=engine)
         # 创建表结构
         from src.database.base import Base
+
         Base.metadata.create_all(engine)
         session = Session()
         yield session
@@ -44,7 +43,7 @@ class TestDataPipeline:
                 "home_score": 2,
                 "away_score": 1,
                 "date": "2025-01-01",
-                "league": "Premier League"
+                "league": "Premier League",
             }
         ]
         return collector
@@ -92,10 +91,13 @@ class TestDataPipeline:
     @pytest.mark.asyncio
     async def test_pipeline_with_cache(self, mock_redis_client):
         """测试带缓存的数据管道"""
-        with patch('src.cache.redis_manager.RedisManager.get_client') as mock_get_client:
+        with patch(
+            "src.cache.redis_manager.RedisManager.get_client"
+        ) as mock_get_client:
             mock_get_client.return_value = mock_redis_client
 
             from src.cache.redis_manager import RedisManager
+
             cache_manager = RedisManager()
 
             # 测试缓存未命中
@@ -143,7 +145,7 @@ class TestDataPipeline:
             "away_team": "Team B",
             "home_score": 2,
             "away_score": 1,
-            "date": "2025-01-01"
+            "date": "2025-01-01",
         }
 
         assert validator.validate_match_data(valid_data) is True
@@ -154,7 +156,7 @@ class TestDataPipeline:
             "home_team": "",
             "away_team": "Team B",
             "home_score": -1,
-            "away_score": "invalid"
+            "away_score": "invalid",
         }
 
         assert validator.validate_match_data(invalid_data) is False
@@ -163,6 +165,7 @@ class TestDataPipeline:
     @pytest.mark.asyncio
     async def test_pipeline_concurrent_processing(self):
         """测试管道并发处理能力"""
+
         async def process_batch(batch_id):
             """模拟批量处理"""
             await asyncio.sleep(0.1)  # 模拟处理时间
@@ -206,11 +209,12 @@ class TestDataPipeline:
     async def test_pipeline_streaming_flow(self):
         """测试流式数据管道"""
         # 模拟Kafka生产者
-        with patch('src.streaming.kafka_producer.KafkaProducer') as MockProducer:
+        with patch("src.streaming.kafka_producer.KafkaProducer") as MockProducer:
             mock_producer = AsyncMock()
             MockProducer.return_value = mock_producer
 
             from src.streaming.kafka_producer import KafkaProducer
+
             producer = KafkaProducer()
 
             # 发送消息
@@ -218,12 +222,13 @@ class TestDataPipeline:
             mock_producer.produce.assert_called_once()
 
             # 模拟消费者
-            with patch('src.streaming.kafka_consumer.KafkaConsumer') as MockConsumer:
+            with patch("src.streaming.kafka_consumer.KafkaConsumer") as MockConsumer:
                 mock_consumer = AsyncMock()
                 mock_consumer.consume.return_value = [{"test": "message"}]
                 MockConsumer.return_value = mock_consumer
 
                 from src.streaming.kafka_consumer import KafkaConsumer
+
                 consumer = KafkaConsumer()
 
                 # 消费消息
@@ -243,7 +248,7 @@ class TestDataPipeline:
             source="raw_data_collector",
             transformation="data_cleaning",
             target="processed_matches",
-            metadata={"batch_id": "batch_001"}
+            metadata={"batch_id": "batch_001"},
         )
 
         assert lineage_info is not None

@@ -317,7 +317,9 @@ def stream_data_processing_task(
             processor = StreamProcessor()
 
             # 启动定时流处理
-            processing_task = asyncio.create_task(processor.start_continuous_processing(topics))
+            processing_task = asyncio.create_task(
+                processor.start_continuous_processing(topics)
+            )
 
             # 等待指定时间后停止
             await asyncio.sleep(processing_duration)

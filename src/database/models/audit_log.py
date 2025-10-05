@@ -76,7 +76,9 @@ class AuditLog(BaseModel):
 
     # 操作信息
     action = Column(String(50), nullable=False, comment="操作类型")
-    severity = Column(String(20), nullable=False, default=AuditSeverity.MEDIUM, comment="严重级别")
+    severity = Column(
+        String(20), nullable=False, default=AuditSeverity.MEDIUM, comment="严重级别"
+    )
     table_name = Column(String(100), nullable=True, comment="目标表名")
     column_name = Column(String(100), nullable=True, comment="目标列名")
     record_id = Column(String(100), nullable=True, comment="记录ID")
@@ -121,7 +123,9 @@ class AuditLog(BaseModel):
     retention_period_days = Column(
         Integer, nullable=True, default=2555, comment="保留期限（天）"
     )  # 7年
-    is_sensitive = Column(Boolean, nullable=False, default=False, comment="是否包含敏感数据")
+    is_sensitive = Column(
+        Boolean, nullable=False, default=False, comment="是否包含敏感数据"
+    )
 
     # 索引优化
     __table_args__ = (
@@ -300,7 +304,9 @@ class AuditLog(BaseModel):
             elif action in [AuditAction.BACKUP, AuditAction.RESTORE]:
                 kwargs["compliance_category"] = "DATA_PROTECTION"
             elif kwargs.get("is_sensitive"):
-                kwargs["compliance_category"] = "PII"  # Personally Identifiable Information
+                kwargs[
+                    "compliance_category"
+                ] = "PII"  # Personally Identifiable Information
             else:
                 kwargs["compliance_category"] = "GENERAL"
 
@@ -331,22 +337,30 @@ class AuditLogSummary:
         # 基础统计
         total_actions = (
             self.session.query(AuditLog)
-            .filter(and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date))
+            .filter(
+                and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date)
+            )
             .count()
         )
 
         # 按操作类型统计
         action_stats = (
             self.session.query(AuditLog.action, func.count(AuditLog.id).label("count"))
-            .filter(and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date))
+            .filter(
+                and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date)
+            )
             .group_by(AuditLog.action)
             .all()
         )
 
         # 按严重级别统计
         severity_stats = (
-            self.session.query(AuditLog.severity, func.count(AuditLog.id).label("count"))
-            .filter(and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date))
+            self.session.query(
+                AuditLog.severity, func.count(AuditLog.id).label("count")
+            )
+            .filter(
+                and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date)
+            )
             .group_by(AuditLog.severity)
             .all()
         )
@@ -382,14 +396,18 @@ class AuditLogSummary:
             "period_days": days,
             "total_actions": total_actions,
             "action_breakdown": {action: count for action, count in action_stats},
-            "severity_breakdown": {severity: count for severity, count in severity_stats},
+            "severity_breakdown": {
+                severity: count for severity, count in severity_stats
+            },
             "high_risk_actions": high_risk_count,
             "failed_actions": failed_count,
             "risk_ratio": high_risk_count / max(total_actions, 1),
             "failure_ratio": failed_count / max(total_actions, 1),
         }
 
-    def get_table_activity_summary(self, table_name: str, days: int = 7) -> Dict[str, Any]:
+    def get_table_activity_summary(
+        self, table_name: str, days: int = 7
+    ) -> Dict[str, Any]:
         """获取表操作活动摘要"""
         from sqlalchemy import and_, func
 
@@ -398,14 +416,22 @@ class AuditLogSummary:
         # 基础统计
         total_operations = (
             self.session.query(AuditLog)
-            .filter(and_(AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date))
+            .filter(
+                and_(
+                    AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
+                )
+            )
             .count()
         )
 
         # 按操作类型统计
         operation_stats = (
             self.session.query(AuditLog.action, func.count(AuditLog.id).label("count"))
-            .filter(and_(AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date))
+            .filter(
+                and_(
+                    AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
+                )
+            )
             .group_by(AuditLog.action)
             .all()
         )
@@ -413,7 +439,11 @@ class AuditLogSummary:
         # 按用户统计
         user_stats = (
             self.session.query(AuditLog.user_id, func.count(AuditLog.id).label("count"))
-            .filter(and_(AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date))
+            .filter(
+                and_(
+                    AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
+                )
+            )
             .group_by(AuditLog.user_id)
             .all()
         )

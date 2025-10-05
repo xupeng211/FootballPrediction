@@ -4,13 +4,12 @@
 分析和优化测试执行性能
 """
 
-import os
 import sys
 import time
 import json
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict
 from collections import defaultdict
 import re
 
@@ -30,13 +29,15 @@ class TestPerformanceAnalyzer:
     def run_tests_with_timing(self, test_path: str, pattern: str = None) -> Dict:
         """运行测试并记录时间"""
         cmd = [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             test_path,
             "--durations=0",
             "--tb=no",
             "-q",
             "--json-report",
-            "--json-report-file=/tmp/test_results.json"
+            "--json-report-file=/tmp/test_results.json",
         ]
 
         if pattern:
@@ -59,7 +60,7 @@ class TestPerformanceAnalyzer:
             "duration": duration,
             "exit_code": result.returncode,
             "summary": json_data.get("summary", {}),
-            "tests": json_data.get("tests", [])
+            "tests": json_data.get("tests", []),
         }
 
     def analyze_slow_tests(self, test_dir: str = "tests/unit") -> List[Dict]:
@@ -67,19 +68,13 @@ class TestPerformanceAnalyzer:
         print("🔍 Analyzing slow tests...")
 
         # 运行测试并获取耗时
-        cmd = [
-            "python", "-m", "pytest",
-            test_dir,
-            "--durations=20",
-            "--tb=no",
-            "-v"
-        ]
+        cmd = ["python", "-m", "pytest", test_dir, "--durations=20", "--tb=no", "-v"]
 
         result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True)
 
         # 解析耗时信息
         slow_tests = []
-        lines = result.stdout.split('\n')
+        lines = result.stdout.split("\n")
 
         # 查找耗时列表
         in_duration_list = False
@@ -90,15 +85,17 @@ class TestPerformanceAnalyzer:
 
             if in_duration_list:
                 # 匹配格式: duration (seconds) test_path::test_function
-                match = re.match(r'\s*([\d.]+)\s+(.+?)\s+\[.*?\]', line)
+                match = re.match(r"\s*([\d.]+)\s+(.+?)\s+\[.*?\]", line)
                 if match:
                     duration = float(match.group(1))
                     test_path = match.group(2)
-                    slow_tests.append({
-                        "duration": duration,
-                        "path": test_path,
-                        "category": self.categorize_test(test_path)
-                    })
+                    slow_tests.append(
+                        {
+                            "duration": duration,
+                            "path": test_path,
+                            "category": self.categorize_test(test_path),
+                        }
+                    )
                 elif line.strip() == "" and len(slow_tests) > 0:
                     break
 
@@ -133,7 +130,7 @@ class TestPerformanceAnalyzer:
         report = {
             "slow_tests": self.slow_tests[:10],  # 前10个最慢的测试
             "categories": defaultdict(list),
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 按类别分组
@@ -144,30 +141,36 @@ class TestPerformanceAnalyzer:
         total_slow_time = sum(t["duration"] for t in self.slow_tests)
 
         if total_slow_time > 60:
-            report["recommendations"].append({
-                "priority": "high",
-                "issue": "Total slow test time exceeds 60 seconds",
-                "suggestion": "Consider parallel test execution with pytest-xdist"
-            })
+            report["recommendations"].append(
+                {
+                    "priority": "high",
+                    "issue": "Total slow test time exceeds 60 seconds",
+                    "suggestion": "Consider parallel test execution with pytest-xdist",
+                }
+            )
 
         # 检查特定类别的慢测试
         for category, tests in report["categories"].items():
             category_time = sum(t["duration"] for t in tests)
             if category_time > 30:
-                report["recommendations"].append({
-                    "priority": "medium",
-                    "issue": f"{category.title()} tests are slow (total: {category_time:.1f}s)",
-                    "suggestion": f"Review {category} tests for optimization opportunities"
-                })
+                report["recommendations"].append(
+                    {
+                        "priority": "medium",
+                        "issue": f"{category.title()} tests are slow (total: {category_time:.1f}s)",
+                        "suggestion": f"Review {category} tests for optimization opportunities",
+                    }
+                )
 
         # 检查是否有特别慢的单个测试
         very_slow = [t for t in self.slow_tests if t["duration"] > 5]
         if very_slow:
-            report["recommendations"].append({
-                "priority": "high",
-                "issue": f"{len(very_slow)} tests take more than 5 seconds",
-                "suggestion": "Consider mocking expensive operations or using fixtures"
-            })
+            report["recommendations"].append(
+                {
+                    "priority": "high",
+                    "issue": f"{len(very_slow)} tests take more than 5 seconds",
+                    "suggestion": "Consider mocking expensive operations or using fixtures",
+                }
+            )
 
         return report
 
@@ -201,8 +204,8 @@ class TestPerformanceAnalyzer:
             "cmd": f"pytest -n {max_workers} --dist=loadfile",
             "env_vars": {
                 "PYTEST_XDIST_AUTO_NUM_WORKERS": str(max_workers),
-                "PYTEST_XDIST_WORKER_COUNT": str(max_workers)
-            }
+                "PYTEST_XDIST_WORKER_COUNT": str(max_workers),
+            },
         }
 
     def identify_test_dependencies(self) -> Dict[str, List[str]]:
@@ -218,7 +221,7 @@ class TestPerformanceAnalyzer:
 
             # 读取文件内容查找import
             try:
-                with open(test_file, 'r') as f:
+                with open(test_file, "r") as f:
                     content = f.read()
 
                 # 查找从其他测试模块导入
@@ -246,7 +249,7 @@ class TestPerformanceAnalyzer:
 
         for test_file in test_files:
             try:
-                with open(test_file, 'r') as f:
+                with open(test_file, "r") as f:
                     content = f.read()
 
                 # 查找常见的Mock模式
@@ -263,12 +266,14 @@ class TestPerformanceAnalyzer:
         # 生成建议
         for pattern, count in mock_patterns.items():
             if count > 10:
-                suggestions.append({
-                    "type": "fixture",
-                    "pattern": pattern,
-                    "usage_count": count,
-                    "suggestion": f"Create a shared fixture for {pattern} to reduce duplication"
-                })
+                suggestions.append(
+                    {
+                        "type": "fixture",
+                        "pattern": pattern,
+                        "usage_count": count,
+                        "suggestion": f"Create a shared fixture for {pattern} to reduce duplication",
+                    }
+                )
 
         return suggestions
 
@@ -313,7 +318,7 @@ class TestOptimizer:
 
         # 4. 创建并行配置
         parallel_config = self.analyzer.create_parallel_config()
-        print(f"\n⚡ Parallel Configuration:")
+        print("\n⚡ Parallel Configuration:")
         print(f"  • Max workers: {parallel_config['max_workers']}")
         print(f"  • Command: {parallel_config['cmd']}")
 
@@ -330,24 +335,28 @@ class TestOptimizer:
             "slow_tests": report["slow_tests"],
             "recommendations": report["recommendations"],
             "parallel_config": parallel_config,
-            "optimization_applied": False
+            "optimization_applied": False,
         }
 
-        config_path = project_root / "scripts" / "testing" / "test_optimization_config.json"
+        config_path = (
+            project_root / "scripts" / "testing" / "test_optimization_config.json"
+        )
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
 
     def apply_optimizations(self):
         """应用优化建议"""
-        config_path = project_root / "scripts" / "testing" / "test_optimization_config.json"
+        config_path = (
+            project_root / "scripts" / "testing" / "test_optimization_config.json"
+        )
 
         if not config_path.exists():
             print("❌ No optimization configuration found. Run analysis first.")
             return
 
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
 
         if config["optimization_applied"]:
@@ -358,8 +367,9 @@ class TestOptimizer:
 
         # 创建优化的pytest配置
         pytest_ini_path = project_root / "pytest.optimized.ini"
-        with open(pytest_ini_path, 'w') as f:
-            f.write("""[tool:pytest]
+        with open(pytest_ini_path, "w") as f:
+            f.write(
+                """[tool:pytest]
 # Optimized pytest configuration
 addopts =
     --strict-markers
@@ -400,12 +410,14 @@ filterwarnings =
     ignore::UserWarning
     ignore::DeprecationWarning
     ignore::PendingDeprecationWarning
-""")
+"""
+            )
 
         # 创建运行脚本
         run_script = project_root / "scripts" / "testing" / "run_optimized_tests.py"
-        with open(run_script, 'w') as f:
-            f.write(f'''#!/usr/bin/env python3
+        with open(run_script, "w") as f:
+            f.write(
+                f'''#!/usr/bin/env python3
 """Optimized test runner"""
 
 import subprocess
@@ -429,13 +441,14 @@ def run_tests():
 
 if __name__ == "__main__":
     sys.exit(run_tests())
-''')
+'''
+            )
 
         run_script.chmod(0o755)
 
         # 标记优化已应用
         config["optimization_applied"] = True
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
 
         print("✅ Optimizations applied successfully!")
@@ -448,14 +461,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="Test Performance Optimizer")
     parser.add_argument(
-        "action",
-        choices=["analyze", "apply", "run"],
-        help="Action to perform"
+        "action", choices=["analyze", "apply", "run"], help="Action to perform"
     )
     parser.add_argument(
-        "--test-dir",
-        default="tests/unit",
-        help="Test directory to analyze"
+        "--test-dir", default="tests/unit", help="Test directory to analyze"
     )
 
     args = parser.parse_args()

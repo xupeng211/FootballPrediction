@@ -114,7 +114,9 @@ class DatabaseRole(str, Enum):
 
     READER = "reader"  # 只读用户（分析、前端） / Read-only user (analytics, frontend)
     WRITER = "writer"  # 读写用户（数据采集） / Read-write user (data collection)
-    ADMIN = "admin"  # 管理员用户（运维、迁移） / Administrator user (operations, migration)
+    ADMIN = (
+        "admin"  # 管理员用户（运维、迁移） / Administrator user (operations, migration)
+    )
 
 
 class DatabaseManager:
@@ -533,7 +535,10 @@ class DatabaseManager:
             )
             prediction = result.scalar_one_or_none()
             if prediction:
-                return {c.name: getattr(prediction, c.name) for c in prediction.__table__.columns}
+                return {
+                    c.name: getattr(prediction, c.name)
+                    for c in prediction.__table__.columns
+                }
             return None
 
     async def close(self) -> None:
@@ -783,7 +788,9 @@ class MultiUserDatabaseManager:
 
             self._managers[role] = manager
 
-            logger.info(f"初始化 {role.value} 用户数据库连接: {credentials['username']}")
+            logger.info(
+                f"初始化 {role.value} 用户数据库连接: {credentials['username']}"
+            )
 
         logger.info("多用户数据库连接管理器初始化完成")
 
@@ -801,7 +808,9 @@ class MultiUserDatabaseManager:
             RuntimeError: 如果管理器未初始化或角色不存在
         """
         if role not in self._managers:
-            raise RuntimeError(f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()")
+            raise RuntimeError(
+                f"数据库角色 {role.value} 的管理器未初始化，请先调用 initialize()"
+            )
         return self._managers[role]
 
     @contextmanager
@@ -822,7 +831,9 @@ class MultiUserDatabaseManager:
             yield session
 
     @asynccontextmanager
-    async def get_async_session(self, role: DatabaseRole) -> AsyncGenerator[AsyncSession, None]:
+    async def get_async_session(
+        self, role: DatabaseRole
+    ) -> AsyncGenerator[AsyncSession, None]:
         """
         获取指定角色的异步数据库会话
 
@@ -858,7 +869,9 @@ class MultiUserDatabaseManager:
 
         return health_status
 
-    async def async_health_check(self, role: Optional[DatabaseRole] = None) -> Dict[str, bool]:
+    async def async_health_check(
+        self, role: Optional[DatabaseRole] = None
+    ) -> Dict[str, bool]:
         """
         异步检查数据库连接健康状态
 

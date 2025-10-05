@@ -189,7 +189,9 @@ class TestFixturesCollector:
     async def test_collect_league_fixtures(self, collector, mock_http_client):
         """测试收集联赛比赛"""
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_league_fixtures(league_id=1, season="2024-25")
+            result = await collector.collect_league_fixtures(
+                league_id=1, season="2024-25"
+            )
 
             assert result is not None
             # 验证调用参数
@@ -262,7 +264,9 @@ class TestFixturesCollector:
         ]
 
         # 只获取未开始的比赛
-        result = collector._filter_fixtures_by_status(fixtures, include_status=["SCHEDULED"])
+        result = collector._filter_fixtures_by_status(
+            fixtures, include_status=["SCHEDULED"]
+        )
         assert len(result) == 2
         assert all(f["status"] == "SCHEDULED" for f in result)
 

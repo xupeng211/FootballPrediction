@@ -137,13 +137,17 @@ class DataLakeStorage:
             # 构建文件路径
             table_path = self.tables[table_name]
             partition_path = (
-                table_path / f"year={partition_date.year}" / f"month={partition_date.month:02d}"
+                table_path
+                / f"year={partition_date.year}"
+                / f"month={partition_date.month:02d}"
             )
             partition_path.mkdir(parents=True, exist_ok=True)
 
             # 生成文件名
             timestamp = datetime.now().strftime("%H%M%S")
-            file_name = f"{table_name}_{partition_date.strftime('%Y%m%d')}_{timestamp}.parquet"
+            file_name = (
+                f"{table_name}_{partition_date.strftime('%Y%m%d')}_{timestamp}.parquet"
+            )
             file_path = partition_path / file_name
 
             # 转换为PyArrow表
@@ -166,7 +170,9 @@ class DataLakeStorage:
             return str(file_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to save historical data for {table_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to save historical data for {table_name}: {str(e)}"
+            )
             raise
 
     async def load_historical_data(
@@ -224,7 +230,9 @@ class DataLakeStorage:
 
             # 移除分区列（如果不需要）
             partition_cols_to_drop = ["year", "month", "day"]
-            df = df.drop(columns=[col for col in partition_cols_to_drop if col in df.columns])
+            df = df.drop(
+                columns=[col for col in partition_cols_to_drop if col in df.columns]
+            )
 
             self.logger.info(
                 f"Loaded {len(df)} records from {table_name}, "
@@ -234,7 +242,9 @@ class DataLakeStorage:
             return df
 
         except Exception as e:
-            self.logger.error(f"Failed to load historical data for {table_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to load historical data for {table_name}: {str(e)}"
+            )
             return pd.DataFrame()
 
     async def archive_old_data(
@@ -285,13 +295,19 @@ class DataLakeStorage:
                     partition_date = datetime(year, month, 1)
                     if partition_date < archive_before:
                         # 移动整个月份目录到归档位置
-                        archive_month_path = archive_path_obj / year_dir.name / month_dir.name
+                        archive_month_path = (
+                            archive_path_obj / year_dir.name / month_dir.name
+                        )
                         archive_month_path.parent.mkdir(parents=True, exist_ok=True)
 
                         month_dir.rename(archive_month_path)
-                        archived_count += len(list(archive_month_path.glob("*.parquet")))
+                        archived_count += len(
+                            list(archive_month_path.glob("*.parquet"))
+                        )
 
-                        self.logger.info(f"Archived {month_dir} to {archive_month_path}")
+                        self.logger.info(
+                            f"Archived {month_dir} to {archive_month_path}"
+                        )
 
             self.logger.info(
                 f"Archived {archived_count} files for {table_name} "
@@ -355,7 +371,9 @@ class DataLakeStorage:
                             date_ranges.append(datetime(year, month, 1))
 
                 except Exception as e:
-                    self.logger.warning(f"Failed to read metadata from {parquet_file}: {str(e)}")
+                    self.logger.warning(
+                        f"Failed to read metadata from {parquet_file}: {str(e)}"
+                    )
 
             # 计算日期范围
             date_range = None
@@ -418,7 +436,9 @@ class DataLakeStorage:
             return cleaned_count
 
         except Exception as e:
-            self.logger.error(f"Failed to cleanup partitions for {table_name}: {str(e)}")
+            self.logger.error(
+                f"Failed to cleanup partitions for {table_name}: {str(e)}"
+            )
             return 0
 
 
@@ -453,11 +473,15 @@ class S3DataLakeStorage:
             use_ssl: 是否使用SSL
         """
         if not S3_AVAILABLE:
-            raise ImportError("boto3 is required for S3 storage. Install with: pip install boto3")
+            raise ImportError(
+                "boto3 is required for S3 storage. Install with: pip install boto3"
+            )
 
         # Load credentials from environment variables if not provided
         bucket_name = bucket_name or os.getenv("S3_BUCKET_NAME", "football-lake")
-        endpoint_url = endpoint_url or os.getenv("S3_ENDPOINT_URL", "http://localhost:9000")
+        endpoint_url = endpoint_url or os.getenv(
+            "S3_ENDPOINT_URL", "http://localhost:9000"
+        )
         access_key = access_key or os.getenv("S3_ACCESS_KEY", "football_admin")
         secret_key = secret_key or os.getenv("S3_SECRET_KEY", "football_minio_2025")
 
@@ -651,7 +675,9 @@ class S3DataLakeStorage:
             dataframes = []
             for obj in objects:
                 try:
-                    response = self.s3_client.get_object(Bucket=bucket_name, Key=obj["Key"])
+                    response = self.s3_client.get_object(
+                        Bucket=bucket_name, Key=obj["Key"]
+                    )
 
                     # 读取Parquet数据
                     buffer = io.BytesIO(response["Body"].read())
@@ -661,7 +687,9 @@ class S3DataLakeStorage:
                     # 移除分区列
                     partition_cols_to_drop = ["year", "month", "day"]
                     df = df.drop(
-                        columns=[col for col in partition_cols_to_drop if col in df.columns]
+                        columns=[
+                            col for col in partition_cols_to_drop if col in df.columns
+                        ]
                     )
 
                     dataframes.append(df)
@@ -731,7 +759,9 @@ class S3DataLakeStorage:
                 return True
 
         except Exception as e:
-            self.logger.warning(f"Failed to parse date from object key {object_key}: {str(e)}")
+            self.logger.warning(
+                f"Failed to parse date from object key {object_key}: {str(e)}"
+            )
 
         return True
 
@@ -758,7 +788,9 @@ class S3DataLakeStorage:
             date_ranges = []
 
             paginator = self.s3_client.get_paginator("list_objects_v2")
-            for page in paginator.paginate(Bucket=bucket_name, Prefix=f"{object_path}/"):
+            for page in paginator.paginate(
+                Bucket=bucket_name, Prefix=f"{object_path}/"
+            ):
                 if "Contents" in page:
                     for obj in page["Contents"]:
                         total_objects += 1
@@ -777,7 +809,9 @@ class S3DataLakeStorage:
                                     day_part = int(part.split("=")[1])
 
                             if year_part and month_part and day_part:
-                                date_ranges.append(datetime(year_part, month_part, day_part))
+                                date_ranges.append(
+                                    datetime(year_part, month_part, day_part)
+                                )
                         except (ValueError, IndexError):
                             pass
 

@@ -110,7 +110,9 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
         if result.status == "failed":
             raise Exception(f"赛程采集失败: {result.error_message}")
 
-        logger.info(f"赛程采集完成: 成功={result.success_count}, 错误={result.error_count}")
+        logger.info(
+            f"赛程采集完成: 成功={result.success_count}, 错误={result.error_count}"
+        )
 
         return {
             "status": result.status,
@@ -124,7 +126,9 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
         # 重试逻辑
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("collect_fixtures"), {})
         max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
-        retry_delay = retry_config.get("retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY)
+        retry_delay = retry_config.get(
+            "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
+        )
 
         if self.request.retries < max_retries:
             logger.warning(f"赛程采集失败，将在{retry_delay}秒后重试: {str(exc)}")
@@ -151,7 +155,9 @@ def collect_odds(
         collector = OddsCollector()
 
         # 执行采集
-        result = await collector.collect_odds(match_ids=match_ids, bookmakers=bookmakers)
+        result = await collector.collect_odds(
+            match_ids=match_ids, bookmakers=bookmakers
+        )
         return result
 
     try:
@@ -161,7 +167,9 @@ def collect_odds(
         if result.status == "failed":
             raise Exception(f"赔率采集失败: {result.error_message}")
 
-        logger.info(f"赔率采集完成: 成功={result.success_count}, 错误={result.error_count}")
+        logger.info(
+            f"赔率采集完成: 成功={result.success_count}, 错误={result.error_count}"
+        )
 
         return {
             "status": result.status,
@@ -175,7 +183,9 @@ def collect_odds(
         # 重试逻辑
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("collect_odds"), {})
         max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
-        retry_delay = retry_config.get("retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY)
+        retry_delay = retry_config.get(
+            "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
+        )
 
         if self.request.retries < max_retries:
             logger.warning(f"赔率采集失败，将在{retry_delay}秒后重试: {str(exc)}")
@@ -199,7 +209,9 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
         collector = ScoresCollector()
 
         # 执行采集
-        result = await collector.collect_live_scores(match_ids=match_ids, use_websocket=True)
+        result = await collector.collect_live_scores(
+            match_ids=match_ids, use_websocket=True
+        )
         return result
 
     try:
@@ -218,7 +230,9 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
         if result.status == "failed":
             raise Exception(f"实时比分采集失败: {result.error_message}")
 
-        logger.info(f"实时比分采集完成: 成功={result.success_count}, 错误={result.error_count}")
+        logger.info(
+            f"实时比分采集完成: 成功={result.success_count}, 错误={result.error_count}"
+        )
 
         return {
             "status": result.status,
@@ -297,7 +311,9 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                         match_date = match.match_date
                         league_id = match.league_id
 
-                        logger.info(f"为比赛 {match_id} ({home_team} vs {away_team}) 计算特征")
+                        logger.info(
+                            f"为比赛 {match_id} ({home_team} vs {away_team}) 计算特征"
+                        )
 
                         # 计算比赛特征
                         feature_result = await feature_store.calculate_match_features(
@@ -310,7 +326,9 @@ def calculate_features_batch(self, hours_ahead: int = 2):
 
                         if feature_result.get("status") == "success":
                             matches_processed += 1
-                            features_calculated += feature_result.get("features_count", 0)
+                            features_calculated += feature_result.get(
+                                "features_count", 0
+                            )
                             logger.info(
                                 f"比赛 {match_id} 特征计算成功，生成了 {feature_result.get(str('features_count'), 0)} 个特征"
                             )
@@ -342,7 +360,9 @@ def calculate_features_batch(self, hours_ahead: int = 2):
     except Exception as exc:
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get(str("calculate_features"), {})
         max_retries = retry_config.get(str("max_retries"), TaskRetryConfig.MAX_RETRIES)
-        retry_delay = retry_config.get("retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY)
+        retry_delay = retry_config.get(
+            "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
+        )
 
         if self.request.retries < max_retries:
             logger.warning(f"特征计算失败，将在{retry_delay}秒后重试: {str(exc)}")
@@ -404,7 +424,6 @@ async def _archive_data_to_lake(storage, archive_before):
 
 async def _cleanup_expired_database_data(archive_before):
     """清理过期的数据库数据"""
-    import os
     from sqlalchemy import text
     from src.database.connection import get_async_session
 
@@ -413,10 +432,12 @@ async def _cleanup_expired_database_data(archive_before):
         try:
             # 清理过期的原始比赛数据
             result = await session.execute(
-                text("""
+                text(
+                    """
                     DELETE FROM raw_match_data
                     WHERE created_at < :archive_date AND processed = true
-                """),
+                """
+                ),
                 {"archive_date": archive_before},
             )
             match_deleted = result.rowcount
@@ -425,10 +446,12 @@ async def _cleanup_expired_database_data(archive_before):
 
             # 清理过期的原始赔率数据
             result = await session.execute(
-                text("""
+                text(
+                    """
                     DELETE FROM raw_odds_data
                     WHERE created_at < :archive_date AND processed = true
-                """),
+                """
+                ),
                 {"archive_date": archive_before},
             )
             odds_deleted = result.rowcount
@@ -437,10 +460,12 @@ async def _cleanup_expired_database_data(archive_before):
 
             # 清理过期的原始比分数据
             result = await session.execute(
-                text("""
+                text(
+                    """
                     DELETE FROM raw_scores_data
                     WHERE created_at < :archive_date AND processed = true
-                """),
+                """
+                ),
                 {"archive_date": archive_before},
             )
             scores_deleted = result.rowcount
@@ -449,10 +474,12 @@ async def _cleanup_expired_database_data(archive_before):
 
             # 清理过期的数据采集日志
             result = await session.execute(
-                text("""
+                text(
+                    """
                     DELETE FROM data_collection_logs
                     WHERE created_at < :archive_date
-                """),
+                """
+                ),
                 {"archive_date": archive_before},
             )
             log_deleted = result.rowcount
@@ -572,9 +599,9 @@ def cleanup_data(days_to_keep: int = 30):
             "cleaned_records": cleaned_records,
             "archived_records": archived_records,
             "execution_time": datetime.now().isoformat(),
-            "archive_before_date": (datetime.now() - timedelta(days=days_to_keep)).strftime(
-                "%Y-%m-%d"
-            ),
+            "archive_before_date": (
+                datetime.now() - timedelta(days=days_to_keep)
+            ).strftime("%Y-%m-%d"),
         }
 
     except Exception as exc:
@@ -608,9 +635,7 @@ async def _check_data_integrity(session, monitor):
             checks_performed += 1
             if not result.get("passed", True):
                 issues_found += result.get("issues_count", 1)
-                logger.warning(
-                    f"{description} 发现问题: {result.get('issues', [])}"
-                )
+                logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
             else:
                 logger.info(f"{description} 通过")
         except Exception as e:
@@ -638,9 +663,7 @@ async def _check_data_consistency(session, monitor):
             checks_performed += 1
             if not result.get("passed", True):
                 issues_found += result.get("issues_count", 1)
-                logger.warning(
-                    f"{description} 发现问题: {result.get('issues', [])}"
-                )
+                logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
             else:
                 logger.info(f"{description} 通过")
         except Exception as e:
@@ -670,9 +693,7 @@ async def _check_data_freshness(session, monitor):
             checks_performed += 1
             if not result.get("passed", True):
                 issues_found += result.get("issues_count", 1)
-                logger.warning(
-                    f"{description} 发现问题: {result.get('issues', [])}"
-                )
+                logger.warning(f"{description} 发现问题: {result.get('issues', [])}")
             else:
                 logger.info(f"{description} 通过")
         except Exception as e:
@@ -724,19 +745,37 @@ def run_quality_checks():
                 monitor = DataQualityMonitor()
 
                 # 1. 检查数据完整性
-                integrity_checks, integrity_issues = await _check_data_integrity(session, monitor)
+                integrity_checks, integrity_issues = await _check_data_integrity(
+                    session, monitor
+                )
 
                 # 2. 检查数据一致性
-                consistency_checks, consistency_issues = await _check_data_consistency(session, monitor)
+                consistency_checks, consistency_issues = await _check_data_consistency(
+                    session, monitor
+                )
 
                 # 3. 检查数据新鲜度
-                freshness_checks, freshness_issues = await _check_data_freshness(session, monitor)
+                freshness_checks, freshness_issues = await _check_data_freshness(
+                    session, monitor
+                )
 
                 # 4. 生成质量报告
-                report_checks, report_issues = await _generate_quality_report(session, monitor)
+                report_checks, report_issues = await _generate_quality_report(
+                    session, monitor
+                )
 
-                total_checks = integrity_checks + consistency_checks + freshness_checks + report_checks
-                total_issues = integrity_issues + consistency_issues + freshness_issues + report_issues
+                total_checks = (
+                    integrity_checks
+                    + consistency_checks
+                    + freshness_checks
+                    + report_checks
+                )
+                total_issues = (
+                    integrity_issues
+                    + consistency_issues
+                    + freshness_issues
+                    + report_issues
+                )
 
                 return total_checks, total_issues
 
@@ -765,7 +804,6 @@ async def _create_database_backup(timestamp: str) -> tuple:
     import subprocess
     import gzip
     import shutil
-    from datetime import datetime
 
     backup_filename = f"football_prediction_backup_{timestamp}.sql"
     backup_path = f"/tmp/{backup_filename}"
@@ -823,7 +861,9 @@ async def _create_database_backup(timestamp: str) -> tuple:
         raise
 
 
-async def _upload_backup_to_storage(compressed_path: str, backup_filename: str) -> tuple:
+async def _upload_backup_to_storage(
+    compressed_path: str, backup_filename: str
+) -> tuple:
     """上传备份文件到存储"""
     import os
     import shutil
@@ -879,6 +919,7 @@ async def _cleanup_s3_backups(storage, cutoff_date: float) -> int:
 async def _cleanup_local_backups(local_backup_dir: str, cutoff_date: float) -> int:
     """清理本地旧备份"""
     import os
+
     cleaned_count = 0
     try:
         for filename in os.listdir(local_backup_dir):
@@ -914,6 +955,7 @@ async def _cleanup_old_backups(storage=None, local_backup_dir=None):
 async def _cleanup_temp_files(backup_path: str, compressed_path: str):
     """清理临时文件"""
     import os
+
     if os.path.exists(backup_path):
         os.remove(backup_path)
     if os.path.exists(compressed_path) and os.path.dirname(compressed_path) == "/tmp":
@@ -934,12 +976,19 @@ def backup_database():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
             # 1. 创建数据库备份
-            backup_size_mb, backup_path, compressed_path, backup_filename = await _create_database_backup(timestamp)
+            (
+                backup_size_mb,
+                backup_path,
+                compressed_path,
+                backup_filename,
+            ) = await _create_database_backup(timestamp)
 
             # 2. 上传到备份存储
-            backup_location, storage, local_backup_dir = await _upload_backup_to_storage(
-                compressed_path, backup_filename
-            )
+            (
+                backup_location,
+                storage,
+                local_backup_dir,
+            ) = await _upload_backup_to_storage(compressed_path, backup_filename)
 
             # 3. 清理旧备份文件（保留最近7天）
             try:
@@ -1048,15 +1097,19 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                         match_date = match.match_date
                         league_id = match.league_id
 
-                        logger.info(f"为比赛 {match_id} ({home_team} vs {away_team}) 生成预测")
+                        logger.info(
+                            f"为比赛 {match_id} ({home_team} vs {away_team}) 生成预测"
+                        )
 
                         # 生成预测
-                        prediction_result = await prediction_service.generate_match_prediction(
-                            match_id=match_id,
-                            home_team=home_team,
-                            away_team=away_team,
-                            match_date=match_date,
-                            league_id=league_id,
+                        prediction_result = (
+                            await prediction_service.generate_match_prediction(
+                                match_id=match_id,
+                                home_team=home_team,
+                                away_team=away_team,
+                                match_date=match_date,
+                                league_id=league_id,
+                            )
                         )
 
                         if prediction_result.get("status") == "success":
@@ -1112,7 +1165,7 @@ def _get_bronze_table_query(table_name: str) -> str:
             WHERE processed = false
             ORDER BY created_at ASC
             LIMIT :batch_size
-        """
+        """,
     }
     return queries.get(table_name)
 
@@ -1122,21 +1175,27 @@ def _get_update_query(table_name: str):
     from sqlalchemy import text
 
     queries = {
-        "raw_matches": text("""
+        "raw_matches": text(
+            """
             UPDATE raw_matches
             SET processed = true, processed_at = NOW()
             WHERE id = :record_id
-        """),
-        "raw_odds": text("""
+        """
+        ),
+        "raw_odds": text(
+            """
             UPDATE raw_odds
             SET processed = true, processed_at = NOW()
             WHERE id = :record_id
-        """),
-        "raw_scores": text("""
+        """
+        ),
+        "raw_scores": text(
+            """
             UPDATE raw_scores
             SET processed = true, processed_at = NOW()
             WHERE id = :record_id
-        """)
+        """
+        ),
     }
     return queries.get(table_name)
 
@@ -1212,7 +1271,8 @@ async def _save_to_silver_layer(session, silver_data, bronze_table):
 
     # 构建插入SQL
     if bronze_table == "raw_matches":
-        insert_query = text("""
+        insert_query = text(
+            """
             INSERT INTO silver_matches
             (match_id, home_team, away_team, match_date, league_id, venue, status, source, processed_at, data_quality_score)
             VALUES (:match_id, :home_team, :away_team, :match_date, :league_id, :venue, :status, :source, :processed_at, :data_quality_score)
@@ -1226,11 +1286,13 @@ async def _save_to_silver_layer(session, silver_data, bronze_table):
             source = EXCLUDED.source,
             processed_at = EXCLUDED.processed_at,
             data_quality_score = EXCLUDED.data_quality_score
-        """)
+        """
+        )
         await session.execute(insert_query, silver_data)
 
     elif bronze_table == "raw_odds":
-        insert_query = text("""
+        insert_query = text(
+            """
             INSERT INTO silver_odds
             (match_id, bookmaker, home_win_odds, draw_odds, away_win_odds, timestamp, source, processed_at, data_quality_score)
             VALUES (:match_id, :bookmaker, :home_win_odds, :draw_odds, :away_win_odds, :timestamp, :source, :processed_at, :data_quality_score)
@@ -1241,11 +1303,13 @@ async def _save_to_silver_layer(session, silver_data, bronze_table):
             source = EXCLUDED.source,
             processed_at = EXCLUDED.processed_at,
             data_quality_score = EXCLUDED.data_quality_score
-        """)
+        """
+        )
         await session.execute(insert_query, silver_data)
 
     elif bronze_table == "raw_scores":
-        insert_query = text("""
+        insert_query = text(
+            """
             INSERT INTO silver_scores
             (match_id, home_score, away_score, match_status, timestamp, source, processed_at, data_quality_score)
             VALUES (:match_id, :home_score, :away_score, :match_status, :timestamp, :source, :processed_at, :data_quality_score)
@@ -1256,11 +1320,14 @@ async def _save_to_silver_layer(session, silver_data, bronze_table):
             source = EXCLUDED.source,
             processed_at = EXCLUDED.processed_at,
             data_quality_score = EXCLUDED.data_quality_score
-        """)
+        """
+        )
         await session.execute(insert_query, silver_data)
 
 
-async def _process_bronze_record(session, record, table_name: str, data_cleaner, quality_monitor):
+async def _process_bronze_record(
+    session, record, table_name: str, data_cleaner, quality_monitor
+):
     """处理单个Bronze记录"""
     try:
         raw_data = record.data
@@ -1296,16 +1363,16 @@ async def _process_bronze_record(session, record, table_name: str, data_cleaner,
 
             return True
         else:
-            logger.warning(
-                f"数据质量验证失败: {quality_result.get('issues', [])}"
-            )
+            logger.warning(f"数据质量验证失败: {quality_result.get('issues', [])}")
             return False
     except Exception as e:
         logger.error(f"处理记录 {record.id} 时出错: {str(e)}")
         return False
 
 
-async def _process_bronze_table(session, table_name: str, batch_size: int, data_cleaner, quality_monitor):
+async def _process_bronze_table(
+    session, table_name: str, batch_size: int, data_cleaner, quality_monitor
+):
     """处理单个Bronze表"""
     logger.info(f"处理 {table_name} 表的数据...")
 
@@ -1317,6 +1384,7 @@ async def _process_bronze_table(session, table_name: str, batch_size: int, data_
 
     # 获取查询语句
     from sqlalchemy import text
+
     query = _get_bronze_table_query(table_name)
     if not query:
         logger.error(f"不支持的表名: {table_name}")
@@ -1335,7 +1403,9 @@ async def _process_bronze_table(session, table_name: str, batch_size: int, data_
     records_processed = 0
 
     for record in bronze_records:
-        if await _process_bronze_record(session, record, table_name, data_cleaner, quality_monitor):
+        if await _process_bronze_record(
+            session, record, table_name, data_cleaner, quality_monitor
+        ):
             records_processed += 1
 
         if records_processed % 100 == 0:
@@ -1357,8 +1427,6 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
         logger.info("开始执行Bronze到Silver数据处理任务")
 
         import asyncio
-
-        from sqlalchemy import text
 
         from src.data.processing.football_data_cleaner import FootballDataCleaner
         from src.data.quality.data_quality_monitor import DataQualityMonitor
@@ -1385,7 +1453,11 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                 for table_name in bronze_tables:
                     try:
                         table_records = await _process_bronze_table(
-                            session, table_name, batch_size, data_cleaner, quality_monitor
+                            session,
+                            table_name,
+                            batch_size,
+                            data_cleaner,
+                            quality_monitor,
                         )
                         records_processed += table_records
                         batches_processed += 1

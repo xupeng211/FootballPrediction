@@ -31,12 +31,16 @@ class DataQualityLog(BaseModel):
 
     # 基础信息
     id = Column(Integer, primary_key=True, index=True, comment="日志记录唯一标识")
-    table_name = Column(String(100), nullable=False, index=True, comment="出现问题的表名")
+    table_name = Column(
+        String(100), nullable=False, index=True, comment="出现问题的表名"
+    )
     record_id = Column(Integer, nullable=True, index=True, comment="出现问题的记录ID")
 
     # 问题分类
     error_type = Column(String(100), nullable=False, index=True, comment="错误类型")
-    severity = Column(String(20), default="medium", comment="严重程度: low/medium/high/critical")
+    severity = Column(
+        String(20), default="medium", comment="严重程度: low/medium/high/critical"
+    )
 
     # 错误详情
     error_data = Column(JSON, nullable=True, comment="错误数据和上下文信息")
@@ -49,7 +53,9 @@ class DataQualityLog(BaseModel):
         index=True,
         comment="处理状态: logged/in_progress/resolved/ignored",
     )
-    requires_manual_review = Column(Boolean, default=False, index=True, comment="是否需要人工审核")
+    requires_manual_review = Column(
+        Boolean, default=False, index=True, comment="是否需要人工审核"
+    )
 
     # 处理信息
     handled_by = Column(String(100), nullable=True, comment="处理人员")
@@ -145,7 +151,9 @@ class DataQualityLog(BaseModel):
             severity="medium",
             error_data={
                 "validation_result": validation_result,
-                "failed_expectations": validation_result.get(str("failed_expectations"), []),
+                "failed_expectations": validation_result.get(
+                    str("failed_expectations"), []
+                ),
                 "success_rate": validation_result.get(str("success_rate"), 0),
             },
             error_message=f"GE数据质量验证失败，成功率: {validation_result.get(str('success_rate'), 0)}%",

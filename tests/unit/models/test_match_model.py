@@ -153,7 +153,9 @@ class TestMatchModel:
         sample_match.match_time = future_time
         sample_match.match_status = MatchStatus.SCHEDULED
 
-        assert sample_match.is_upcoming() if hasattr(sample_match, "is_upcoming") else True
+        assert (
+            sample_match.is_upcoming() if hasattr(sample_match, "is_upcoming") else True
+        )
 
     def test_match_score_update(self, sample_match):
         """测试比分更新"""

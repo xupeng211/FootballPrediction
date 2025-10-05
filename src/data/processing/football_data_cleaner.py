@@ -46,7 +46,9 @@ class FootballDataCleaner:
         # 联赛ID映射缓存
         self._league_id_cache: Dict[str, int] = {}
 
-    async def clean_match_data(self, raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def clean_match_data(
+        self, raw_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         清洗比赛数据
 
@@ -72,7 +74,9 @@ class FootballDataCleaner:
             cleaned_data = {
                 # 基础信息
                 "external_match_id": str(raw_data.get(str("id"), "")),
-                "external_league_id": str(raw_data.get(str("competition"), {}).get(str("id"), "")),
+                "external_league_id": str(
+                    raw_data.get(str("competition"), {}).get(str("id"), "")
+                ),
                 # 时间统一 - 转换为UTC
                 "match_time": self._to_utc_time(raw_data.get("utcDate")),
                 # 球队ID统一 - 映射到标准ID
@@ -111,7 +115,9 @@ class FootballDataCleaner:
             self.logger.error(f"Failed to clean match data: {str(e)}")
             return None
 
-    async def clean_odds_data(self, raw_odds: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def clean_odds_data(
+        self, raw_odds: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         清洗赔率数据
 
@@ -138,7 +144,9 @@ class FootballDataCleaner:
                     if price and self._validate_odds_value(price):
                         cleaned_outcomes.append(
                             {
-                                "name": self._standardize_outcome_name(outcome.get("name")),
+                                "name": self._standardize_outcome_name(
+                                    outcome.get("name")
+                                ),
                                 "price": round(float(price), 3),  # 保留3位小数
                             }
                         )
@@ -148,13 +156,19 @@ class FootballDataCleaner:
 
                 # 赔率合理性检查
                 if not self._validate_odds_consistency(cleaned_outcomes):
-                    self.logger.warning(f"Inconsistent odds detected: {cleaned_outcomes}")
+                    self.logger.warning(
+                        f"Inconsistent odds detected: {cleaned_outcomes}"
+                    )
                     continue
 
                 cleaned_data = {
                     "external_match_id": str(odds.get(str("match_id"), "")),
-                    "bookmaker": self._standardize_bookmaker_name(odds.get("bookmaker")),
-                    "market_type": self._standardize_market_type(odds.get("market_type")),
+                    "bookmaker": self._standardize_bookmaker_name(
+                        odds.get("bookmaker")
+                    ),
+                    "market_type": self._standardize_market_type(
+                        odds.get("market_type")
+                    ),
                     "outcomes": cleaned_outcomes,
                     "last_update": self._to_utc_time(odds.get("last_update")),
                     "implied_probabilities": self._calculate_implied_probabilities(
@@ -268,7 +282,9 @@ class FootballDataCleaner:
                         await session.rollback()
                         lookup_stmt = select(Team.id)
                         if api_team_id is not None:
-                            lookup_stmt = lookup_stmt.where(Team.api_team_id == api_team_id)
+                            lookup_stmt = lookup_stmt.where(
+                                Team.api_team_id == api_team_id
+                            )
                         elif team_code:
                             lookup_stmt = lookup_stmt.where(Team.team_code == team_code)
                         else:
@@ -341,7 +357,9 @@ class FootballDataCleaner:
 
                 if league_id is None:
                     league_record = League(
-                        league_name=league_name or league_code or f"League-{external_id}",
+                        league_name=league_name
+                        or league_code
+                        or f"League-{external_id}",
                         league_code=league_code,
                         api_league_id=api_league_id,
                         country=country,
@@ -353,11 +371,17 @@ class FootballDataCleaner:
                         await session.rollback()
                         lookup_stmt = select(League.id)
                         if api_league_id is not None:
-                            lookup_stmt = lookup_stmt.where(League.api_league_id == api_league_id)
+                            lookup_stmt = lookup_stmt.where(
+                                League.api_league_id == api_league_id
+                            )
                         elif league_code:
-                            lookup_stmt = lookup_stmt.where(League.league_code == league_code)
+                            lookup_stmt = lookup_stmt.where(
+                                League.league_code == league_code
+                            )
                         else:
-                            lookup_stmt = lookup_stmt.where(League.league_name == league_name)
+                            lookup_stmt = lookup_stmt.where(
+                                League.league_name == league_name
+                            )
                         result = await session.execute(lookup_stmt)
                         league_id = result.scalar_one_or_none()
                     else:
@@ -443,7 +467,9 @@ class FootballDataCleaner:
         end_date = season_data.get("endDate")
         if start_date and end_date:
             try:
-                start_year = datetime.fromisoformat(start_date.replace("Z", "+00:00")).year
+                start_year = datetime.fromisoformat(
+                    start_date.replace("Z", "+00:00")
+                ).year
                 end_year = datetime.fromisoformat(end_date.replace("Z", "+00:00")).year
                 return f"{start_year}-{end_year}"
             except ValueError:
@@ -460,7 +486,9 @@ class FootballDataCleaner:
         cleaned = re.sub(r"\s+", " ", str(venue).strip())
         return cleaned if cleaned else None
 
-    def _clean_referee_name(self, referees: Optional[List[Dict[str, Any]]]) -> Optional[str]:
+    def _clean_referee_name(
+        self, referees: Optional[List[Dict[str, Any]]]
+    ) -> Optional[str]:
         """清洗裁判姓名"""
         if not referees or not isinstance(referees, list):
             return None
@@ -521,7 +549,9 @@ class FootballDataCleaner:
             "btts": "both_teams_score",
         }
 
-        return market_mapping.get(str(str(market_type).lower()), str(market_type).lower())
+        return market_mapping.get(
+            str(str(market_type).lower()), str(market_type).lower()
+        )
 
     def _validate_odds_consistency(self, outcomes: List[Dict[str, Any]]) -> bool:
         """
@@ -546,7 +576,9 @@ class FootballDataCleaner:
         except (KeyError, ZeroDivisionError, TypeError):
             return False
 
-    def _calculate_implied_probabilities(self, outcomes: List[Dict[str, Any]]) -> Dict[str, float]:
+    def _calculate_implied_probabilities(
+        self, outcomes: List[Dict[str, Any]]
+    ) -> Dict[str, float]:
         """
         计算隐含概率
 

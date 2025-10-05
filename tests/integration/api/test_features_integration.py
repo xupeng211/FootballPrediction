@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
-
 @pytest.mark.integration
 class TestFeaturesIntegration:
     """Features模块集成测试"""
@@ -41,7 +40,9 @@ class TestFeaturesIntegration:
         return repo
 
     @pytest.mark.asyncio
-    async def test_get_features_cache_integration(self, api_client_full, mock_cache_manager):
+    async def test_get_features_cache_integration(
+        self, api_client_full, mock_cache_manager
+    ):
         """测试获取特征的缓存集成"""
         # 设置缓存响应
         mock_cache_manager.get.return_value = {
@@ -55,7 +56,9 @@ class TestFeaturesIntegration:
         }
 
         # 模拟特征服务使用缓存
-        with patch("src.api.features.get_cache_manager", return_value=mock_cache_manager):
+        with patch(
+            "src.api.features.get_cache_manager", return_value=mock_cache_manager
+        ):
             response = api_client_full.get(
                 "/api/v1/features/12345", headers={"X-API-Key": "test-api-key"}
             )
@@ -67,7 +70,9 @@ class TestFeaturesIntegration:
                 assert data["match_id"] == 12345
 
     @pytest.mark.asyncio
-    async def test_get_features_database_integration(self, api_client_full, mock_async_session):
+    async def test_get_features_database_integration(
+        self, api_client_full, mock_async_session
+    ):
         """测试获取特征的数据库集成"""
         # Mock数据库查询
         mock_match = MagicMock()
@@ -108,7 +113,9 @@ class TestFeaturesIntegration:
                 assert "statistics" in data["features"]
 
     @pytest.mark.asyncio
-    async def test_batch_features_integration(self, api_client_full, mock_cache_manager):
+    async def test_batch_features_integration(
+        self, api_client_full, mock_cache_manager
+    ):
         """测试批量特征集成"""
         # 模拟多个比赛的特征计算
         match_ids = [12345, 12346, 12347]

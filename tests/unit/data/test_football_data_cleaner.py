@@ -313,7 +313,10 @@ class TestFootballDataCleaner:
         """测试标准化市场类型"""
         assert cleaner._standardize_market_type("match_winner") == "match_winner"
         assert cleaner._standardize_market_type("over_under_2.5") == "over_under_2.5"
-        assert cleaner._standardize_market_type("both_teams_to_score") == "both_teams_to_score"
+        assert (
+            cleaner._standardize_market_type("both_teams_to_score")
+            == "both_teams_to_score"
+        )
         assert cleaner._standardize_market_type("Unknown") == "unknown"
 
     def test_extract_season(self, cleaner):

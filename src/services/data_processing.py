@@ -114,7 +114,9 @@ class DataProcessingService(BaseService):
                     processed_item = await self._process_single_match_data(item)
                     if processed_item:
                         processed_items.append(processed_item)
-                return pd.DataFrame(processed_items) if processed_items else pd.DataFrame()
+                return (
+                    pd.DataFrame(processed_items) if processed_items else pd.DataFrame()
+                )
             # 处理单个字典输入
             return await self._process_single_match_data(raw_data)
         except Exception as e:
@@ -147,12 +149,16 @@ class DataProcessingService(BaseService):
                 cleaned_data = await clean_result
             else:
                 cleaned_data = clean_result
-            if cleaned_data is None or (hasattr(cleaned_data, "empty") and cleaned_data.empty):
+            if cleaned_data is None or (
+                hasattr(cleaned_data, "empty") and cleaned_data.empty
+            ):
                 self.logger.warning("比赛数据清洗失败")
                 return None
             # 第二步：处理缺失值
             if self.missing_handler:
-                handle_result = self.missing_handler.handle_missing_match_data(cleaned_data)
+                handle_result = self.missing_handler.handle_missing_match_data(
+                    cleaned_data
+                )
                 if asyncio.iscoroutine(handle_result):
                     processed_data = await handle_result
                 else:
@@ -161,14 +167,20 @@ class DataProcessingService(BaseService):
                 processed_data = cleaned_data
             # 将处理后的数据存入缓存
             if match_id and self.cache_manager and processed_data:
-                await self.cache_manager.aset(cache_key, processed_data, cache_type="match_info")
-            self.logger.debug(f"成功处理比赛数据: {processed_data.get('external_match_id')}")
+                await self.cache_manager.aset(
+                    cache_key, processed_data, cache_type="match_info"
+                )
+            self.logger.debug(
+                f"成功处理比赛数据: {processed_data.get('external_match_id')}"
+            )
             return processed_data
         except Exception as e:
             self.logger.error(f"处理单个比赛数据失败: {str(e)}")
             return None
 
-    async def process_raw_odds_data(self, raw_odds: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def process_raw_odds_data(
+        self, raw_odds: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         处理原始赔率数据
         Args:
@@ -192,7 +204,9 @@ class DataProcessingService(BaseService):
             self.logger.error(f"处理赔率数据失败: {str(e)}")
             return []
 
-    async def process_features_data(self, match_id: int, features_df: pd.DataFrame) -> pd.DataFrame:
+    async def process_features_data(
+        self, match_id: int, features_df: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         处理特征数据
         Args:
@@ -234,10 +248,14 @@ class DataProcessingService(BaseService):
             except Exception as e:
                 self.logger.error(f"批量处理比赛数据时出错: {str(e)}")
                 continue
-        self.logger.info(f"批量处理完成: {len(processed_matches)}/{len(raw_matches)} 条记录成功")
+        self.logger.info(
+            f"批量处理完成: {len(processed_matches)}/{len(raw_matches)} 条记录成功"
+        )
         return processed_matches
 
-    async def validate_data_quality(self, data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
+    async def validate_data_quality(
+        self, data: Dict[str, Any], data_type: str
+    ) -> Dict[str, Any]:
         """
         验证数据质量
         Args:
@@ -263,7 +281,9 @@ class DataProcessingService(BaseService):
                 ]
                 for field in required_fields:
                     if not data.get(field):
-                        quality_report["issues"].append(f"Missing required field: {field}")
+                        quality_report["issues"].append(
+                            f"Missing required field: {field}"
+                        )
                         quality_report["is_valid"] = False
                 # 检查比分合理性
                 home_score = data.get("home_score")
@@ -273,7 +293,9 @@ class DataProcessingService(BaseService):
                         quality_report["issues"].append("Negative scores detected")
                         quality_report["is_valid"] = False
                     elif home_score > 20 or away_score > 20:
-                        quality_report["warnings"].append("Unusually high scores detected")
+                        quality_report["warnings"].append(
+                            "Unusually high scores detected"
+                        )
             elif data_type == "odds":
                 # 检查赔率数据
                 outcomes = data.get(str("outcomes"), [])
@@ -284,7 +306,9 @@ class DataProcessingService(BaseService):
                     for outcome in outcomes:
                         price = outcome.get("price")
                         if not price or price < 1.01:
-                            quality_report["issues"].append(f"Invalid odds price: {price}")
+                            quality_report["issues"].append(
+                                f"Invalid odds price: {price}"
+                            )
                             quality_report["is_valid"] = False
             return quality_report
         except Exception as e:
@@ -329,7 +353,9 @@ class DataProcessingService(BaseService):
         Returns:
             Dict[str, int]: 处理结果统计
         """
-        if not all([self.data_cleaner, self.missing_handler, self.data_lake, self.db_manager]):
+        if not all(
+            [self.data_cleaner, self.missing_handler, self.data_lake, self.db_manager]
+        ):
             self.logger.error("数据处理服务未完全初始化")
             return {"error": 1}
         results = {
@@ -340,13 +366,17 @@ class DataProcessingService(BaseService):
         }
         try:
             # 处理比赛数据
-            matches_processed = await self._process_raw_matches_bronze_to_silver(batch_size)
+            matches_processed = await self._process_raw_matches_bronze_to_silver(
+                batch_size
+            )
             results["processed_matches"] = matches_processed
             # 处理赔率数据
             odds_processed = await self._process_raw_odds_bronze_to_silver(batch_size)
             results["processed_odds"] = odds_processed
             # 处理比分数据
-            scores_processed = await self._process_raw_scores_bronze_to_silver(batch_size)
+            scores_processed = await self._process_raw_scores_bronze_to_silver(
+                batch_size
+            )
             results["processed_scores"] = scores_processed
             self.logger.info(f"Bronze到Silver层处理完成: {results}")
             return results
@@ -378,15 +408,19 @@ class DataProcessingService(BaseService):
                         # 清洗比赛数据
                         if self.data_cleaner is None:
                             raise RuntimeError("Data cleaner not initialized")
-                        cleaned_data = await self.data_cleaner.clean_match_data(raw_match.raw_data)
+                        cleaned_data = await self.data_cleaner.clean_match_data(
+                            raw_match.raw_data
+                        )
                         if not cleaned_data:
                             self.logger.warning(f"比赛数据清洗失败: {raw_match.id}")
                             continue
                         # 处理缺失值
                         if self.missing_handler is None:
                             raise RuntimeError("Missing data handler not initialized")
-                        final_data = await self.missing_handler.handle_missing_match_data(
-                            cleaned_data
+                        final_data = (
+                            await self.missing_handler.handle_missing_match_data(
+                                cleaned_data
+                            )
                         )
                         # 添加元数据
                         final_data.update(
@@ -401,7 +435,9 @@ class DataProcessingService(BaseService):
                         raw_match.mark_processed()
                         processed_count += 1
                     except Exception as e:
-                        self.logger.error(f"处理比赛数据失败 (ID: {raw_match.id}): {str(e)}")
+                        self.logger.error(
+                            f"处理比赛数据失败 (ID: {raw_match.id}): {str(e)}"
+                        )
                         continue
                 if processed_matches:
                     # 保存到Silver层
@@ -449,7 +485,9 @@ class DataProcessingService(BaseService):
                         # 准备批量赔率数据
                         odds_data_list = [odds.raw_data for odds in match_odds]
                         # 清洗赔率数据
-                        cleaned_odds = await self.data_cleaner.clean_odds_data(odds_data_list)
+                        cleaned_odds = await self.data_cleaner.clean_odds_data(
+                            odds_data_list
+                        )
                         if not cleaned_odds:
                             self.logger.warning(f"比赛 {match_id} 的赔率数据清洗失败")
                             continue
@@ -469,7 +507,9 @@ class DataProcessingService(BaseService):
                             raw_odds.mark_processed()
                             processed_count += 1
                     except Exception as e:
-                        self.logger.error(f"处理比赛 {match_id} 的赔率数据失败: {str(e)}")
+                        self.logger.error(
+                            f"处理比赛 {match_id} 的赔率数据失败: {str(e)}"
+                        )
                         continue
                 if all_processed_odds:
                     # 保存到Silver层
@@ -541,7 +581,9 @@ class DataProcessingService(BaseService):
                         raw_scores.mark_processed()
                         processed_count += 1
                     except Exception as e:
-                        self.logger.error(f"处理比分数据失败 (ID: {raw_scores.id}): {str(e)}")
+                        self.logger.error(
+                            f"处理比分数据失败 (ID: {raw_scores.id}): {str(e)}"
+                        )
                         continue
                 if processed_scores:
                     # 保存到Silver层（可以考虑单独建一个processed_scores表）
@@ -571,17 +613,23 @@ class DataProcessingService(BaseService):
                 # 统计各表的处理状态
                 match_total = session.query(RawMatchData).count()
                 match_processed = (
-                    session.query(RawMatchData).filter(RawMatchData.processed.is_(True)).count()
+                    session.query(RawMatchData)
+                    .filter(RawMatchData.processed.is_(True))
+                    .count()
                 )
                 match_pending = match_total - match_processed
                 odds_total = session.query(RawOddsData).count()
                 odds_processed = (
-                    session.query(RawOddsData).filter(RawOddsData.processed.is_(True)).count()
+                    session.query(RawOddsData)
+                    .filter(RawOddsData.processed.is_(True))
+                    .count()
                 )
                 odds_pending = odds_total - odds_processed
                 scores_total = session.query(RawScoresData).count()
                 scores_processed = (
-                    session.query(RawScoresData).filter(RawScoresData.processed.is_(True)).count()
+                    session.query(RawScoresData)
+                    .filter(RawScoresData.processed.is_(True))
+                    .count()
                 )
                 scores_pending = scores_total - scores_processed
                 return {
@@ -630,7 +678,9 @@ class DataProcessingService(BaseService):
             self.logger.error(f"处理分数缺失值失败: {str(e)}")
             return None
 
-    async def handle_missing_team_data(self, team_data: pd.DataFrame) -> Optional[pd.DataFrame]:
+    async def handle_missing_team_data(
+        self, team_data: pd.DataFrame
+    ) -> Optional[pd.DataFrame]:
         """
         处理球队数据缺失值
         Args:
@@ -704,7 +754,9 @@ class DataProcessingService(BaseService):
             # 存储到数据库
             if self.db_manager and hasattr(self.db_manager, "bulk_insert"):
                 try:
-                    insert_result = self.db_manager.bulk_insert(table_name, data.to_dict("records"))
+                    insert_result = self.db_manager.bulk_insert(
+                        table_name, data.to_dict("records")
+                    )
                     if asyncio.iscoroutine(insert_result):
                         await insert_result
                 except Exception as e:
@@ -715,7 +767,9 @@ class DataProcessingService(BaseService):
                 try:
                     cache_key = f"processed_data:{table_name}:{hash(str(data.values.tobytes()))}"
                     if hasattr(self.cache_manager, "set_json"):
-                        cache_result = self.cache_manager.set_json(cache_key, data.to_dict())
+                        cache_result = self.cache_manager.set_json(
+                            cache_key, data.to_dict()
+                        )
                         if asyncio.iscoroutine(cache_result):
                             await cache_result
                 except Exception as e:
@@ -809,7 +863,9 @@ class DataProcessingService(BaseService):
                 results["errors"][data_type] = str(e)
         return results
 
-    async def process_with_retry(self, func, data, max_retries: int = 3, delay: float = 0.1) -> Any:
+    async def process_with_retry(
+        self, func, data, max_retries: int = 3, delay: float = 0.1
+    ) -> Any:
         """
         带重试逻辑的执行一个处理函数
         Args:
@@ -864,14 +920,18 @@ class DataProcessingService(BaseService):
         end_time = time.time()
         total_time = end_time - start_time
         items_processed = len(result) if isinstance(result, list) else 1
-        items_per_second = items_processed / total_time if total_time > 0 else float("inf")
+        items_per_second = (
+            items_processed / total_time if total_time > 0 else float("inf")
+        )
         return {
             "total_time": total_time,
             "items_processed": items_processed,
             "items_per_second": items_per_second,
         }
 
-    async def process_large_dataset(self, dataset: List[Any], batch_size: int = 50) -> List[Any]:
+    async def process_large_dataset(
+        self, dataset: List[Any], batch_size: int = 50
+    ) -> List[Any]:
         """
         处理大型数据集，分批处理以避免内存问题
         Args:

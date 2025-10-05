@@ -108,7 +108,9 @@ class GEPrometheusExporter:
             registry=self.registry,
         )
 
-    async def export_ge_validation_results(self, validation_results: Dict[str, Any]) -> None:
+    async def export_ge_validation_results(
+        self, validation_results: Dict[str, Any]
+    ) -> None:
         """
         导出GE验证结果到Prometheus指标
 
@@ -141,7 +143,9 @@ class GEPrometheusExporter:
             # 设置错误指标
             self._set_error_metrics(str(e))
 
-    async def _export_table_validation_result(self, table_result: Dict[str, Any]) -> None:
+    async def _export_table_validation_result(
+        self, table_result: Dict[str, Any]
+    ) -> None:
         """导出单表验证结果"""
         table_name = table_result.get(str("table_name"), "unknown")
         suite_name = table_result.get(str("suite_name"), "unknown")
@@ -151,13 +155,13 @@ class GEPrometheusExporter:
         total_expectations = table_result.get(str("total_expectations"), 0)
 
         # 设置Prometheus指标
-        self.data_quality_success_rate.labels(table_name=table_name, suite_name=suite_name).set(
-            success_rate
-        )
+        self.data_quality_success_rate.labels(
+            table_name=table_name, suite_name=suite_name
+        ).set(success_rate)
 
-        self.expectations_total.labels(table_name=table_name, suite_name=suite_name).set(
-            total_expectations
-        )
+        self.expectations_total.labels(
+            table_name=table_name, suite_name=suite_name
+        ).set(total_expectations)
 
         # 处理失败的断言
         failed_expectations = table_result.get(str("failed_expectations"), [])
@@ -179,11 +183,15 @@ class GEPrometheusExporter:
             "last_validation_time": table_result.get(str("validation_time"), "unknown"),
             "status": table_result.get(str("status"), "unknown"),
             "rows_checked": str(table_result.get(str("rows_checked"), 0)),
-            "ge_validation_id": table_result.get(str("ge_validation_result_id"), "unknown"),
+            "ge_validation_id": table_result.get(
+                str("ge_validation_result_id"), "unknown"
+            ),
         }
         self.validation_info.info(validation_info)
 
-        self.logger.debug(f"已导出表 {table_name} 的验证结果: 成功率 {success_rate:.1f}%")
+        self.logger.debug(
+            f"已导出表 {table_name} 的验证结果: 成功率 {success_rate:.1f}%"
+        )
 
     def _export_overall_statistics(self, overall_stats: Dict[str, Any]) -> None:
         """导出总体统计信息"""
@@ -207,7 +215,9 @@ class GEPrometheusExporter:
         except Exception as e:
             self.logger.error(f"导出总体统计失败: {str(e)}")
 
-    async def export_data_freshness_metrics(self, freshness_data: Dict[str, Any]) -> None:
+    async def export_data_freshness_metrics(
+        self, freshness_data: Dict[str, Any]
+    ) -> None:
         """
         导出数据新鲜度指标
 
@@ -220,18 +230,22 @@ class GEPrometheusExporter:
             # 导出赛程数据新鲜度
             if "fixtures" in details:
                 fixtures_data = details["fixtures"]
-                hours_since_update = fixtures_data.get("hours_since_update", float("inf"))
-                self.data_freshness_hours.labels(table_name="matches", data_type="fixtures").set(
-                    hours_since_update if hours_since_update != float("inf") else 999
+                hours_since_update = fixtures_data.get(
+                    "hours_since_update", float("inf")
                 )
+                self.data_freshness_hours.labels(
+                    table_name="matches", data_type="fixtures"
+                ).set(hours_since_update if hours_since_update != float("inf") else 999)
 
             # 导出赔率数据新鲜度
             if "odds" in details:
                 odds_data = details["odds"]
-                hours_since_update = odds_data.get(str("hours_since_update"), float("inf"))
-                self.data_freshness_hours.labels(table_name="odds", data_type="odds").set(
-                    hours_since_update if hours_since_update != float("inf") else 999
+                hours_since_update = odds_data.get(
+                    str("hours_since_update"), float("inf")
                 )
+                self.data_freshness_hours.labels(
+                    table_name="odds", data_type="odds"
+                ).set(hours_since_update if hours_since_update != float("inf") else 999)
 
             self.logger.debug("数据新鲜度指标导出完成")
 

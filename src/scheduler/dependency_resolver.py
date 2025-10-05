@@ -207,7 +207,9 @@ class DependencyResolver:
 
         return True
 
-    def _is_dependency_satisfied(self, dep_task_id: str, task_states: Dict[str, Any]) -> bool:
+    def _is_dependency_satisfied(
+        self, dep_task_id: str, task_states: Dict[str, Any]
+    ) -> bool:
         """
         检查单个依赖是否已满足
 
@@ -383,7 +385,9 @@ class DependencyResolver:
 
         return list(self.nodes[task_id].dependents)
 
-    def update_task_status(self, task_id: str, is_running: bool, success: bool = False) -> None:
+    def update_task_status(
+        self, task_id: str, is_running: bool, success: bool = False
+    ) -> None:
         """
         更新任务执行状态
 
@@ -402,7 +406,9 @@ class DependencyResolver:
         if success and not is_running:
             node.last_success_time = datetime.now()
 
-        logger.debug(f"任务状态已更新: {task_id}, running={is_running}, success={success}")
+        logger.debug(
+            f"任务状态已更新: {task_id}, running={is_running}, success={success}"
+        )
 
     def get_dependency_graph(self) -> Dict[str, Any]:
         """
@@ -414,7 +420,9 @@ class DependencyResolver:
         return {
             "nodes": {task_id: node.to_dict() for task_id, node in self.nodes.items()},
             "total_tasks": len(self.nodes),
-            "dependency_count": sum(len(node.dependencies) for node in self.nodes.values()),
+            "dependency_count": sum(
+                len(node.dependencies) for node in self.nodes.values()
+            ),
             "execution_order": self.get_execution_order(),
         }
 

@@ -23,7 +23,9 @@ class TestKafkaProducer:
     @pytest.fixture
     def producer(self):
         """创建生产者实例"""
-        producer = FootballKafkaProducer(bootstrap_servers="localhost:9092", client_id="test_producer")
+        producer = FootballKafkaProducer(
+            bootstrap_servers="localhost:9092", client_id="test_producer"
+        )
         producer.producer = MagicMock()
         producer.logger = MagicMock()
         return producer
@@ -64,9 +66,13 @@ class TestKafkaProducer:
     async def test_send_message_with_error(self, producer, sample_message):
         """测试发送消息错误"""
         # Mock发送失败
-        producer.producer.send_and_wait = AsyncMock(side_effect=Exception("Kafka error"))
+        producer.producer.send_and_wait = AsyncMock(
+            side_effect=Exception("Kafka error")
+        )
 
-        result = await producer.send_message(topic="match_events", message=sample_message)
+        result = await producer.send_message(
+            topic="match_events", message=sample_message
+        )
 
         assert result is False
         producer.logger.error.assert_called()
@@ -148,7 +154,9 @@ class TestKafkaConsumer:
     async def test_consume_messages(self, consumer, sample_record):
         """测试消费消息"""
         # Mock消费记录
-        consumer.consumer.getmany = AsyncMock(return_value={("test_topic", 0): [sample_record]})
+        consumer.consumer.getmany = AsyncMock(
+            return_value={("test_topic", 0): [sample_record]}
+        )
 
         messages = []
         async for message in consumer.consume(timeout_ms=1000):
@@ -164,7 +172,9 @@ class TestKafkaConsumer:
         deserializer = KafkaDeserializer()
         consumer.deserializer = deserializer
 
-        consumer.consumer.getmany = AsyncMock(return_value={("test_topic", 0): [sample_record]})
+        consumer.consumer.getmany = AsyncMock(
+            return_value={("test_topic", 0): [sample_record]}
+        )
 
         messages = []
         async for message in consumer.consume(timeout_ms=1000):
@@ -221,7 +231,9 @@ class TestKafkaAdmin:
         """测试创建主题"""
         admin.admin_client.create_topics = AsyncMock(return_value={"test_topic": "OK"})
 
-        result = await admin.create_topic(name="test_topic", num_partitions=3, replication_factor=1)
+        result = await admin.create_topic(
+            name="test_topic", num_partitions=3, replication_factor=1
+        )
 
         assert result is True
         admin.admin_client.create_topics.assert_called_once()
@@ -426,7 +438,9 @@ class TestStreamProcessor:
     @pytest.mark.asyncio
     async def test_process_batch(self, processor):
         """测试批量处理"""
-        messages = [{"id": i, "event": "goal" if i % 2 == 0 else "card"} for i in range(10)]
+        messages = [
+            {"id": i, "event": "goal" if i % 2 == 0 else "card"} for i in range(10)
+        ]
 
         processor.producer.send_batch = AsyncMock(return_value=True)
 
@@ -486,7 +500,9 @@ class TestStreamProcessor:
         ]
 
         # 只保留进球事件
-        filtered = processor.filter_messages(messages, lambda m: m.get("event") == "goal")
+        filtered = processor.filter_messages(
+            messages, lambda m: m.get("event") == "goal"
+        )
 
         assert len(filtered) == 2
         assert all(m.get("event") == "goal" for m in filtered)
@@ -666,7 +682,9 @@ class TestKafkaDeserializer:
         """测试二进制反序列化"""
         data = b"binary_data"
 
-        result = deserializer.deserialize("test_topic", data, serialization_type="binary")
+        result = deserializer.deserialize(
+            "test_topic", data, serialization_type="binary"
+        )
 
         assert result == data
 
