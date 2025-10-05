@@ -15,11 +15,7 @@ class DictUtils:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 # 如果两边都是字典，则递归合并，保持嵌套结构
                 result[key] = DictUtils.deep_merge(result[key], value)
             else:
@@ -28,9 +24,7 @@ class DictUtils:
         return result
 
     @staticmethod
-    def flatten_dict(
-        d: Dict[str, Any], parent_key: str = "", sep: str = "."
-    ) -> Dict[str, Any]:
+    def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
         items: List[tuple] = []
         for k, v in d.items():

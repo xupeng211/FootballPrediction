@@ -24,12 +24,8 @@ except ImportError:
 if os.getenv("MINIMAL_API_MODE", "false").lower() == "true":
     __all__ = []
 else:
-    from . import (
-        core,
-        models,
-        services,  # runtime import for minimal mode
-        utils,
-    )
+    from . import services  # runtime import for minimal mode
+    from . import core, models, utils
 
     __all__ = [
         "core",

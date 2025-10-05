@@ -16,12 +16,13 @@ Tests core functionality of prediction service, including:
 - Statistics retrieval
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
-import numpy as np
 
-from src.models.prediction_service import PredictionService, PredictionResult
+import numpy as np
+import pytest
+
+from src.models.prediction_service import PredictionResult, PredictionService
 
 
 class TestPredictionService:
@@ -135,7 +136,9 @@ class TestPredictionService:
         mock_session.execute.return_value = mock_result
 
         # 正确mock异步上下文管理器
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 调用方法
@@ -156,7 +159,9 @@ class TestPredictionService:
         mock_session.execute.return_value = mock_result
 
         # 正确mock异步上下文管理器
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         result = await mock_service._get_match_info(99999)
@@ -201,9 +206,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_production_model_load_new(self, mock_service, mock_model):
         """测试加载新的生产模型"""
-        with patch.object(
-            mock_service, "get_production_model_with_retry"
-        ) as mock_retry:
+        with patch.object(mock_service, "get_production_model_with_retry") as mock_retry:
             mock_retry.return_value = (mock_model, "2.0")
 
             model, version = await mock_service.get_production_model("test_model")
@@ -215,9 +218,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_production_model_cache_miss(self, mock_service, mock_model):
         """测试缓存未命中时加载模型"""
-        with patch.object(
-            mock_service, "get_production_model_with_retry"
-        ) as mock_retry:
+        with patch.object(mock_service, "get_production_model_with_retry") as mock_retry:
             mock_retry.return_value = (mock_model, "2.0")
 
             # 第一次调用会加载模型
@@ -233,13 +234,13 @@ class TestPredictionService:
     async def test_predict_match_success(self, mock_service, mock_model):
         """测试预测比赛结果 - 成功"""
         # Mock依赖
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        ) as mock_features, patch.object(
+            mock_service, "_store_prediction"
+        ):
             # 设置mock返回值
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
@@ -282,13 +283,13 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match_using_default_features(self, mock_service, mock_model):
         """测试特征获取失败时使用默认特征"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        ) as mock_features, patch.object(
+            mock_service, "_store_prediction"
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,
@@ -307,9 +308,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match_match_not_found(self, mock_service, mock_model):
         """测试预测不存在的比赛"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "_get_match_info"
         ) as mock_match_info:
             mock_get_model.return_value = (mock_model, "1.0")
@@ -321,9 +320,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_batch_predict_matches_success(self, mock_service, mock_model):
         """测试批量预测 - 成功"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "predict_match"
         ) as mock_predict:
             mock_get_model.return_value = (mock_model, "1.0")
@@ -350,9 +347,7 @@ class TestPredictionService:
         cached_result = PredictionResult(match_id=12345, model_version="1.0")
         await mock_service.prediction_cache.set("prediction:12345", cached_result)
 
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "predict_match"
         ) as mock_predict:
             mock_get_model.return_value = (mock_model, "1.0")
@@ -371,9 +366,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_batch_predict_partial_failure(self, mock_service, mock_model):
         """测试批量预测部分失败"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "predict_match"
         ) as mock_predict:
             mock_get_model.return_value = (mock_model, "1.0")
@@ -400,7 +393,9 @@ class TestPredictionService:
         mock_result.first.return_value = mock_match
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         # 执行验证
         success = await mock_service.verify_prediction(12345)
@@ -418,7 +413,9 @@ class TestPredictionService:
         mock_result.first.return_value = None  # 比赛未结束或不存在
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         success = await mock_service.verify_prediction(12345)
 
@@ -436,7 +433,9 @@ class TestPredictionService:
         mock_result.first.return_value = mock_row
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         accuracy = await mock_service.get_model_accuracy("test_model", 7)
 
@@ -450,7 +449,9 @@ class TestPredictionService:
         mock_result.first.return_value = None
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         accuracy = await mock_service.get_model_accuracy("test_model", 7)
 
@@ -474,7 +475,9 @@ class TestPredictionService:
         mock_result.__iter__ = MagicMock(return_value=iter([mock_row1]))
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         stats = await mock_service.get_prediction_statistics(30)
 
@@ -489,7 +492,9 @@ class TestPredictionService:
     async def test_store_prediction(self, mock_service, sample_prediction_result):
         """测试存储预测结果"""
         mock_session = AsyncMock()
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         await mock_service._store_prediction(sample_prediction_result)
 
@@ -498,13 +503,13 @@ class TestPredictionService:
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_store_prediction_failure(
-        self, mock_service, sample_prediction_result
-    ):
+    async def test_store_prediction_failure(self, mock_service, sample_prediction_result):
         """测试存储预测结果失败"""
         mock_session = AsyncMock()
         mock_session.add.side_effect = Exception("Database error")
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         with pytest.raises(Exception, match="Database error"):
             await mock_service._store_prediction(sample_prediction_result)
@@ -523,13 +528,13 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_prediction_result_metadata(self, mock_service, mock_model):
         """测试预测结果元数据"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
+        with patch.object(mock_service, "get_production_model") as mock_get_model, patch.object(
             mock_service, "_get_match_info"
         ) as mock_match_info, patch.object(
             mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        ) as mock_features, patch.object(
+            mock_service, "_store_prediction"
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,
@@ -545,7 +550,4 @@ class TestPredictionService:
             assert "model_uri" in result.prediction_metadata
             assert "prediction_time" in result.prediction_metadata
             assert "feature_count" in result.prediction_metadata
-            assert (
-                result.prediction_metadata["model_uri"]
-                == "models:/football_baseline_model/1.0"
-            )
+            assert result.prediction_metadata["model_uri"] == "models:/football_baseline_model/1.0"

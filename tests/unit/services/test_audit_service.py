@@ -7,9 +7,10 @@
 - 日志查询
 """
 
-import pytest
-from unittest.mock import MagicMock
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock
+
+import pytest
 
 from src.services.audit_service import AuditService
 
@@ -71,7 +72,9 @@ class TestAuditService:
 
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.fetchall.return_value = mock_logs
 
         logs = await mock_service.get_audit_logs_by_user(user_id, limit=10)
@@ -84,7 +87,9 @@ class TestAuditService:
         action = "data_processing"
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.fetchall.return_value = [
             {"id": 1, "action": action},
             {"id": 2, "action": action},
@@ -105,10 +110,10 @@ class TestAuditService:
 
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
-        mock_session.execute.return_value.fetchall.return_value = [
-            {"id": 1, "user_id": "user123"}
-        ]
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
+        mock_session.execute.return_value.fetchall.return_value = [{"id": 1, "user_id": "user123"}]
 
         results = await mock_service.search_audit_logs(search_params)
 
@@ -119,7 +124,9 @@ class TestAuditService:
         """测试获取审计统计信息"""
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.first.return_value = MagicMock(
             total_events=1000,
             unique_users=50,
@@ -138,7 +145,9 @@ class TestAuditService:
         retention_days = 90
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.rowcount = 500
 
         deleted_count = await mock_service.retention_cleanup(retention_days)
@@ -158,7 +167,9 @@ class TestAuditService:
 
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.fetchall.return_value = mock_logs
 
         result = await mock_service.export_audit_logs(
@@ -215,7 +226,9 @@ class TestAuditService:
 
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = MagicMock()
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
-        mock_session = mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        mock_session = (
+            mock_service.db_manager.get_async_session.return_value.__aenter__.return_value
+        )
         mock_session.execute.return_value.first.return_value = MagicMock(
             total_actions=25,
             unique_resources=5,

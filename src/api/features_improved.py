@@ -42,9 +42,7 @@ def check_feature_store_availability() -> None:
     """检查特征存储服务可用性"""
     if feature_store is None:
         logger.error("特征存储服务不可用")
-        raise HTTPException(
-            status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
-        )
+        raise HTTPException(status_code=503, detail="特征存储服务暂时不可用，请稍后重试")
 
 
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:

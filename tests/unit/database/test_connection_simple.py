@@ -3,21 +3,22 @@
 测试DatabaseManager和MultiUserDatabaseManager的核心功能
 """
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from src.database.config import DatabaseConfig
 from src.database.connection import (
-    DatabaseManager,
-    MultiUserDatabaseManager,
-    DatabaseRole,
     DATABASE_RETRY_CONFIG,
+    DatabaseManager,
+    DatabaseRole,
+    MultiUserDatabaseManager,
     get_database_manager,
     get_multi_user_database_manager,
     initialize_database,
     initialize_multi_user_database,
     initialize_test_database,
 )
-from src.database.config import DatabaseConfig
 
 
 @pytest.mark.unit
@@ -78,9 +79,7 @@ class TestDatabaseManager:
             mock_engine = MagicMock()
             mock_create_engine.return_value = mock_engine
 
-            with patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_create_async_engine:
+            with patch("src.database.connection.create_async_engine") as mock_create_async_engine:
                 mock_async_engine = MagicMock()
                 mock_create_async_engine.return_value = mock_async_engine
 
@@ -421,9 +420,7 @@ class TestDatabaseManager:
     async def test_health_check_with_retry_unhealthy(self, db_manager):
         """测试带重试的健康检查 - 不健康"""
         # 模拟 create_async_session 抛出异常
-        db_manager.create_async_session = MagicMock(
-            side_effect=Exception("Database error")
-        )
+        db_manager.create_async_session = MagicMock(side_effect=Exception("Database error"))
 
         result = await db_manager.health_check_with_retry()
 
@@ -558,9 +555,7 @@ class TestMultiUserDatabaseManager:
         """测试获取异步会话"""
         mock_manager = MagicMock()
         mock_session = MagicMock()
-        mock_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         multi_db_manager._managers[DatabaseRole.READER] = mock_manager
 
         async with multi_db_manager.get_async_session(DatabaseRole.READER) as session:
@@ -694,9 +689,7 @@ class TestModuleFunctions:
                             echo_pool=mock_config.echo_pool,
                         )
                         mock_sessionmaker.assert_called_once()
-                        mock_base.metadata.create_all.assert_called_once_with(
-                            bind=mock_engine
-                        )
+                        mock_base.metadata.create_all.assert_called_once_with(bind=mock_engine)
 
 
 @pytest.mark.unit

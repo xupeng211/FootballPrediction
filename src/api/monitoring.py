@@ -69,9 +69,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         teams = db.execute(text("SELECT COUNT(*) FROM teams"))
         matches = db.execute(text("SELECT COUNT(*) FROM matches"))
         predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))
-        active = db.execute(
-            text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
-        )
+        active = db.execute(text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'"))
 
         def _val(res: Any) -> int:
             try:

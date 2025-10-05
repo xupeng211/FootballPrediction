@@ -44,9 +44,7 @@ class ContentAnalysisService(BaseService):
             analysis_data = {
                 "sentiment": text_analysis.get(str("sentiment", None), "neutral"),
                 "keywords": text_analysis.get(str("keywords", None), []),
-                "category": self._categorize_content(
-                    content.data.get(str("text", None), "")
-                ),
+                "category": self._categorize_content(content.data.get(str("text", None), "")),
                 "quality_score": self._calculate_quality_score(content),
                 "language": text_analysis.get(str("language", None), "zh"),
                 "word_count": text_analysis.get(str("word_count", None), 0),

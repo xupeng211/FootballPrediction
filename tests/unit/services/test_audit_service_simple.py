@@ -5,12 +5,12 @@
 """
 
 import asyncio
-
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.services.audit_service import AuditService, AuditContext, audit_context
+import pytest
+
+from src.services.audit_service import AuditContext, AuditService, audit_context
 
 
 @pytest.mark.asyncio
@@ -110,9 +110,7 @@ class TestAuditService:
 
         # Mock数据库操作
         mock_session = MagicMock()
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 测试记录操作
@@ -133,9 +131,7 @@ class TestAuditService:
         audit_context.set(audit_context_data)
 
         mock_session = MagicMock()
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         actions = [
@@ -172,9 +168,7 @@ class TestAuditService:
         ]
         mock_session.execute.return_value = mock_result
 
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         logs = await service.get_audit_logs(user_id="user1", action="CREATE", limit=10)
@@ -193,9 +187,7 @@ class TestAuditService:
         )
         mock_session.execute.return_value = mock_result
 
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         stats = await service.get_audit_statistics(days=30)
@@ -209,9 +201,7 @@ class TestAuditService:
         mock_session = MagicMock()
         mock_session.execute.return_value = MagicMock(rowcount=50)
 
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         deleted_count = await service.cleanup_old_logs(days=90)
@@ -276,9 +266,7 @@ class TestAuditService:
         mock_result.fetchall.return_value = mock_logs
         mock_session.execute.return_value = mock_result
 
-        service.db_manager.get_async_session.return_value.__aenter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         exported = await service.export_audit_logs(

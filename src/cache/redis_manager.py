@@ -97,9 +97,7 @@ class CacheKeyManager:
         key_parts = [cls.PREFIXES.get(str(prefix), prefix)]
         # 过滤掉None和空字符串，但保留数字0
         key_parts.extend(
-            str(arg)
-            for arg in args
-            if arg is not None and (str(arg).strip() or str(arg) == "0")
+            str(arg) for arg in args if arg is not None and (str(arg).strip() or str(arg) == "0")
         )
 
         # 添加额外信息
@@ -182,9 +180,7 @@ class RedisManager:
         import sys
 
         is_test_env = (
-            os.getenv("ENVIRONMENT") == "test"
-            or "pytest" in sys.modules
-            or "pytest" in sys.argv[0]
+            os.getenv("ENVIRONMENT") == "test" or "pytest" in sys.modules or "pytest" in sys.argv[0]
         )
 
         default_redis_host = "redis" if is_test_env else "localhost"
@@ -209,7 +205,8 @@ class RedisManager:
 
         redis_password = os.getenv("REDIS_PASSWORD")
         if redis_password and not is_test_env:
-            # Use regex to insert password into the URL if it doesn't already contain a password
+            # Use regex to insert password into the URL if it doesn't already contain
+            # a password
             import re
 
             # Check if the URL already contains a password
@@ -629,9 +626,7 @@ class RedisManager:
                     try:
                         result.append(json.loads(value))
                     except json.JSONDecodeError:
-                        result.append(
-                            value.decode("utf-8") if isinstance(value, bytes) else value
-                        )
+                        result.append(value.decode("utf-8") if isinstance(value, bytes) else value)
 
             return result
 
@@ -658,14 +653,10 @@ class RedisManager:
 
         try:
             # 序列化所有值
-            serialized_mapping: Dict[
-                Union[str, bytes], Union[str, bytes, int, float]
-            ] = {}
+            serialized_mapping: Dict[Union[str, bytes], Union[str, bytes, int, float]] = {}
             for key, value in mapping.items():
                 if isinstance(value, (dict, list)):
-                    serialized_mapping[key] = json.dumps(
-                        value, ensure_ascii=False, default=str
-                    )
+                    serialized_mapping[key] = json.dumps(value, ensure_ascii=False, default=str)
                 else:
                     serialized_mapping[key] = str(value)
 
@@ -714,9 +705,7 @@ class RedisManager:
                     try:
                         result.append(json.loads(value))
                     except json.JSONDecodeError:
-                        result.append(
-                            value.decode("utf-8") if isinstance(value, bytes) else value
-                        )
+                        result.append(value.decode("utf-8") if isinstance(value, bytes) else value)
 
             return result
 
@@ -744,14 +733,10 @@ class RedisManager:
 
         try:
             # 序列化所有值
-            serialized_mapping: Dict[
-                Union[str, bytes], Union[str, bytes, int, float]
-            ] = {}
+            serialized_mapping: Dict[Union[str, bytes], Union[str, bytes, int, float]] = {}
             for key, value in mapping.items():
                 if isinstance(value, (dict, list)):
-                    serialized_mapping[key] = json.dumps(
-                        value, ensure_ascii=False, default=str
-                    )
+                    serialized_mapping[key] = json.dumps(value, ensure_ascii=False, default=str)
                 else:
                     serialized_mapping[key] = str(value)
 
@@ -824,12 +809,18 @@ class RedisManager:
         try:
             info = self._sync_client.info()  # type: ignore[union-attr]
             return {
-                "version": info.get(str("redis_version"), "unknown"),  # type: ignore[union-attr]
-                "mode": info.get(str("redis_mode"), "standalone"),  # type: ignore[union-attr]
-                "connected_clients": info.get(str("connected_clients"), 0),  # type: ignore[union-attr]
-                "used_memory_human": info.get(str("used_memory_human"), "0B"),  # type: ignore[union-attr]
-                "keyspace_hits": info.get(str("keyspace_hits"), 0),  # type: ignore[union-attr]
-                "keyspace_misses": info.get(str("keyspace_misses"), 0),  # type: ignore[union-attr]
+                # type: ignore[union-attr]
+                "version": info.get(str("redis_version"), "unknown"),
+                # type: ignore[union-attr]
+                "mode": info.get(str("redis_mode"), "standalone"),
+                # type: ignore[union-attr]
+                "connected_clients": info.get(str("connected_clients"), 0),
+                # type: ignore[union-attr]
+                "used_memory_human": info.get(str("used_memory_human"), "0B"),
+                # type: ignore[union-attr]
+                "keyspace_hits": info.get(str("keyspace_hits"), 0),
+                # type: ignore[union-attr]
+                "keyspace_misses": info.get(str("keyspace_misses"), 0),
                 "total_commands_processed": info.get(
                     str("total_commands_processed"), 0
                 ),  # type: ignore[union-attr]
@@ -1000,9 +991,7 @@ class CacheWarmupManager:
 
             async with get_async_session() as session:
                 # 获取比赛基本信息
-                result = await session.execute(
-                    select(Match).where(Match.id == match_id)
-                )
+                result = await session.execute(select(Match).where(Match.id == match_id))
                 match = result.scalar_one_or_none()
 
                 if not match:

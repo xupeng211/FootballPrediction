@@ -3,14 +3,15 @@
 测试Match、Team、Prediction等核心模型的功能
 """
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from src.database.models.match import Match, MatchStatus
-from src.database.models.team import Team
+import pytest
+
 from src.database.models.league import League
-from src.database.models.predictions import Predictions, PredictedResult
+from src.database.models.match import Match, MatchStatus
+from src.database.models.predictions import PredictedResult, Predictions
+from src.database.models.team import Team
 
 
 @pytest.mark.unit
@@ -205,9 +206,7 @@ class TestLeagueModel:
 
     def test_league_creation(self):
         """测试联赛创建"""
-        league = League(
-            league_name="Premier League", country="England", level=1, is_active=True
-        )
+        league = League(league_name="Premier League", country="England", level=1, is_active=True)
         assert league.league_name == "Premier League"
         assert league.country == "England"
         assert league.level == 1

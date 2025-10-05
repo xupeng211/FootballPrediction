@@ -178,9 +178,7 @@ class GreatExpectationsConfig:
             os.makedirs(self.ge_root_dir, exist_ok=True)
             os.makedirs(f"{self.ge_root_dir}/expectations", exist_ok=True)
             os.makedirs(f"{self.ge_root_dir}/checkpoints", exist_ok=True)
-            os.makedirs(
-                f"{self.ge_root_dir}/great_expectations/expectations", exist_ok=True
-            )
+            os.makedirs(f"{self.ge_root_dir}/great_expectations/expectations", exist_ok=True)
 
             # 创建数据上下文配置
             context_config = {
@@ -290,9 +288,7 @@ class GreatExpectationsConfig:
 
                     # 添加断言规则
                     for expectation_config in suite_config["expectations"]:
-                        suite.add_expectation(
-                            expectation_configuration=expectation_config
-                        )
+                        suite.add_expectation(expectation_configuration=expectation_config)
 
                     # 保存套件
                     self.context.save_expectation_suite(suite)
@@ -320,9 +316,7 @@ class GreatExpectationsConfig:
             results["errors"].append(str(e))
             return results
 
-    def _get_safe_query_parameters(
-        self, table_name: str, limit_rows: int
-    ) -> Dict[str, str]:
+    def _get_safe_query_parameters(self, table_name: str, limit_rows: int) -> Dict[str, str]:
         """
         获取安全的查询参数，防止SQL注入
 
@@ -372,9 +366,7 @@ class GreatExpectationsConfig:
         query, params = safe_queries[table_name]
         return {"query": query, "params": params}
 
-    async def run_validation(
-        self, table_name: str, limit_rows: int = 1000
-    ) -> Dict[str, Any]:
+    async def run_validation(self, table_name: str, limit_rows: int = 1000) -> Dict[str, Any]:
         """
         运行数据验证
 
@@ -396,9 +388,7 @@ class GreatExpectationsConfig:
                 data_connector_name="default_runtime_data_connector",
                 data_asset_name=table_name,
                 batch_identifiers={"default_identifier_name": f"{table_name}_batch"},
-                runtime_parameters=self._get_safe_query_parameters(
-                    table_name, limit_rows
-                ),
+                runtime_parameters=self._get_safe_query_parameters(table_name, limit_rows),
             )
 
             # 创建验证器
@@ -440,9 +430,9 @@ class GreatExpectationsConfig:
                 "rows_checked": limit_rows,
                 "status": "PASSED" if success_rate >= 95 else "FAILED",
                 "failed_expectations": failed_expectations[:5],  # 只保留前5个失败的断言
-                "ge_validation_result_id": validation_result.meta.get(
-                    str("run_id"), {}
-                ).get("run_name", "unknown"),
+                "ge_validation_result_id": validation_result.meta.get(str("run_id"), {}).get(
+                    "run_name", "unknown"
+                ),
             }
 
             self.logger.info(
@@ -496,9 +486,7 @@ class GreatExpectationsConfig:
         # 计算总体成功率
         if all_results:
             total_success_rate = sum(r.get(str("success_rate"), 0) for r in all_results)
-            overall_stats["overall_success_rate"] = round(
-                total_success_rate / len(all_results), 2
-            )
+            overall_stats["overall_success_rate"] = round(total_success_rate / len(all_results), 2)
 
         return {"overall_statistics": overall_stats, "table_results": all_results}
 

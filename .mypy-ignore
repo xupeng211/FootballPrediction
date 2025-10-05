@@ -1,8 +1,7 @@
 # MyPy忽略文件 - 列出暂时无法修复的类型错误
 
 # 导入相关的忽略
-src/utils/warning_filters.py:26: error: Cannot find implementation or library stub for module named "marshmallow.warnings"  [import-not-found]
-src/utils/warning_filters.py:26: error: Cannot find implementation or library stub for module named "marshmallow"  [import-not-found]
+# Marshmallow warnings 已修复，移除相关忽略
 src/lineage/lineage_reporter.py:13: error: Cannot find implementation or library stub for module named "openlineage.client"  [import-not-found]
 src/lineage/lineage_reporter.py:14: error: Cannot find implementation or library stub for module named "openlineage.client.event_v2"  [import-not-found]
 src/lineage/lineage_reporter.py:15: error: Cannot find implementation or library stub for module named "openlineage.client.facet_v2"  [import-not-found]

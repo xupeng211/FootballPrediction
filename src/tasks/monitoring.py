@@ -152,15 +152,11 @@ class TaskMonitor:
         self.task_duration.labels(task_name=task_name).observe(duration)
         self.active_tasks.labels(task_name=task_name).dec()
 
-        logger.info(
-            f"任务完成: {task_name} (ID: {task_id}), 状态: {status}, 耗时: {duration:.2f}s"
-        )
+        logger.info(f"任务完成: {task_name} (ID: {task_id}), 状态: {status}, 耗时: {duration:.2f}s")
 
     def record_task_retry(self, task_name: str, retry_count: int) -> None:
         """记录任务重试"""
-        self.retry_counter.labels(
-            task_name=task_name, retry_count=str(retry_count)
-        ).inc()
+        self.retry_counter.labels(task_name=task_name, retry_count=str(retry_count)).inc()
         logger.warning(f"任务重试: {task_name}, 第 {retry_count} 次重试")
 
     def update_queue_size(self, queue_name: str, size: int) -> None:
@@ -278,9 +274,7 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    result = await session.execute(
-                        stats_query, {"hours_param": f"-{hours}"}
-                    )
+                    result = await session.execute(stats_query, {"hours_param": f"-{hours}"})
                 else:
                     stats_query = text(
                         """
@@ -339,9 +333,7 @@ class TaskMonitor:
             # 1. 检查错误率
             error_rates = await self.calculate_error_rates()
             high_error_tasks = [
-                task
-                for task, rate in error_rates.items()
-                if rate > 0.1  # 10% 错误率阈值
+                task for task, rate in error_rates.items() if rate > 0.1  # 10% 错误率阈值
             ]
 
             if high_error_tasks:
@@ -359,9 +351,7 @@ class TaskMonitor:
             # 2. 检查队列积压
             queue_sizes = await self._get_queue_sizes()
             large_queues = [
-                queue
-                for queue, size in queue_sizes.items()
-                if size > 100  # 100个任务积压阈值
+                queue for queue, size in queue_sizes.items() if size > 100  # 100个任务积压阈值
             ]
 
             if large_queues:
@@ -379,9 +369,7 @@ class TaskMonitor:
             # 3. 检查任务延迟
             task_delays = await self._check_task_delays()
             delayed_tasks = [
-                task
-                for task, delay in task_delays.items()
-                if delay > 600  # 10分钟延迟阈值
+                task for task, delay in task_delays.items() if delay > 600  # 10分钟延迟阈值
             ]
 
             if delayed_tasks:
@@ -413,9 +401,7 @@ class TaskMonitor:
 
             import redis
 
-            redis_client = redis.from_url(
-                os.getenv("REDIS_URL", "redis://localhost:6379 / 0")
-            )
+            redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379 / 0"))
 
             queue_names = ["fixtures", "odds", "scores", "maintenance", "default"]
             queue_sizes = {}

@@ -99,9 +99,7 @@ def _ensure_default_services() -> None:
     for service_name in enabled_services:
         factory = _SERVICE_FACTORIES.get(service_name)
         if not factory:
-            service_manager.logger.warning(
-                "未识别的服务名称，跳过注册: %s", service_name
-            )
+            service_manager.logger.warning("未识别的服务名称，跳过注册: %s", service_name)
             continue
 
         if service_name not in service_manager.services:
