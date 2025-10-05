@@ -632,7 +632,9 @@ def downgrade() -> None:
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过性能优化回滚")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database performance optimization rollback")
+        op.execute(
+            "-- offline mode: skipped database performance optimization rollback"
+        )
         op.execute("-- offline mode: skipped materialized views removal")
         op.execute("-- offline mode: skipped foreign key constraints removal")
         op.execute("-- offline mode: skipped trigger functions removal")
@@ -643,7 +645,9 @@ def downgrade() -> None:
     print("开始回滚数据库性能优化...")
 
     # 删除物化视图
-    conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS mv_team_recent_performance CASCADE;"))
+    conn.execute(
+        text("DROP MATERIALIZED VIEW IF EXISTS mv_team_recent_performance CASCADE;")
+    )
     conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS mv_odds_trends CASCADE;"))
 
     # 删除索引（PostgreSQL会在删除表时自动删除）

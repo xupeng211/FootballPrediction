@@ -97,7 +97,7 @@ async def _collect_database_health() -> Dict[str, Any]:
     response_model=HealthCheckResponse,
 )
 async def health_check(
-    check_db: Optional[bool] = Query(None, description="是否执行数据库健康检查")
+    check_db: Optional[bool] = Query(None, description="是否执行数据库健康检查"),
 ) -> Dict[str, Any]:
     """
     系统健康检查端点
@@ -114,7 +114,9 @@ async def health_check(
     force_db_check = check_db is not None
     if force_db_check:
         minimal_mode = not check_db
-        logger.info("健康检查请求: minimal_mode=%s (check_db=%s)", minimal_mode, check_db)
+        logger.info(
+            "健康检查请求: minimal_mode=%s (check_db=%s)", minimal_mode, check_db
+        )
     else:
         minimal_mode = MINIMAL_HEALTH_MODE
         logger.info("健康检查请求: minimal_mode=%s", minimal_mode)
@@ -182,7 +184,9 @@ async def health_check(
         health_status["status"] = "unhealthy"
         health_status["error"] = str(e)
 
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_status)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_status
+        )
 
 
 @router.get(
@@ -232,7 +236,9 @@ async def readiness_check() -> Dict[str, Any]:
     # 判断整体就绪状态
     all_healthy = all(check.get(str("healthy"), False) for check in checks.values())
 
-    status_code = status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    status_code = (
+        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
 
     result = {
         "ready": all_healthy,
@@ -364,7 +370,9 @@ async def _check_kafka() -> Dict[str, Any]:
                     "status": "healthy",
                     "details": {
                         "message": "Kafka连接正常",
-                        "bootstrap_servers": config_snapshot.get("bootstrap.servers", "unknown"),
+                        "bootstrap_servers": config_snapshot.get(
+                            "bootstrap.servers", "unknown"
+                        ),
                         "topics": topics,
                     },
                 }

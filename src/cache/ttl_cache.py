@@ -213,7 +213,9 @@ class TTLCache:
                 if len(self._cache) >= self._max_size:
                     await self._evict_lru()
 
-            self._cache[key] = CacheEntry(value=value, created_at=datetime.now(), ttl=ttl)
+            self._cache[key] = CacheEntry(
+                value=value, created_at=datetime.now(), ttl=ttl
+            )
             logger.debug(f"缓存设置: {key} TTL: {ttl}")
 
     async def delete(self, key: str) -> bool:
@@ -281,7 +283,9 @@ class TTLCache:
         """Evict least recently used entry"""
         if self._cache:
             # Find oldest entry
-            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].created_at)
+            oldest_key = min(
+                self._cache.keys(), key=lambda k: self._cache[k].created_at
+            )
             del self._cache[oldest_key]
             logger.debug(f"清除最近最少使用的条目: {oldest_key}")
 
@@ -311,7 +315,9 @@ class TTLCache:
         """
         async with self._lock:
             total_entries = len(self._cache)
-            expired_entries = sum(1 for entry in self._cache.values() if entry.is_expired())
+            expired_entries = sum(
+                1 for entry in self._cache.values() if entry.is_expired()
+            )
             active_entries = total_entries - expired_entries
 
             return {

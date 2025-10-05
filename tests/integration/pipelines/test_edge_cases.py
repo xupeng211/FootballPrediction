@@ -5,8 +5,8 @@
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, MagicMock
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from unittest.mock import Mock, patch
+from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException
 import time
 
@@ -18,12 +18,13 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_database_connection_failure(self):
         """测试数据库连接失败的处理"""
-        with patch('src.database.connection.DatabaseManager') as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             mock_manager = Mock()
             mock_manager.get_session.side_effect = DatabaseError("Connection failed")
             MockDBManager.return_value = mock_manager
 
             from src.services.data_processing import DataProcessingService
+
             service = DataProcessingService()
 
             # 应该优雅地处理数据库错误
@@ -34,12 +35,13 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_redis_connection_timeout(self):
         """测试Redis连接超时处理"""
-        with patch('src.cache.redis_manager.RedisManager') as MockRedis:
+        with patch("src.cache.redis_manager.RedisManager") as MockRedis:
             mock_redis = AsyncMock()
             mock_redis.get.side_effect = asyncio.TimeoutError("Redis timeout")
             MockRedis.return_value = mock_redis
 
             from src.cache.redis_manager import RedisManager
+
             redis_manager = RedisManager()
 
             # 应该处理超时异常
@@ -50,12 +52,13 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_kafka_producer_failure(self):
         """测试Kafka生产者失败处理"""
-        with patch('src.streaming.kafka_producer.KafkaProducer') as MockProducer:
+        with patch("src.streaming.kafka_producer.KafkaProducer") as MockProducer:
             mock_producer = AsyncMock()
             mock_producer.produce.side_effect = Exception("Kafka broker unavailable")
             MockProducer.return_value = mock_producer
 
             from src.streaming.kafka_producer import KafkaProducer
+
             producer = KafkaProducer()
 
             # 应该处理Kafka错误
@@ -174,18 +177,19 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_network_partition_simulation(self):
         """测试网络分区模拟"""
-        with patch('src.database.connection.DatabaseManager') as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             # 模拟网络分区导致的连接错误
             mock_manager = Mock()
             mock_manager.get_session.side_effect = [
                 DatabaseError("Network partition"),
                 DatabaseError("Network partition"),
                 DatabaseError("Network partition"),
-                None  # 第四次尝试成功
+                None,  # 第四次尝试成功
             ]
             MockDBManager.return_value = mock_manager
 
             from src.database.connection import DatabaseManager
+
             db_manager = DatabaseManager()
 
             # 应该有重试机制
@@ -224,11 +228,12 @@ class TestEdgeCases:
         try:
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 # 写入1MB数据
-                tmp_file.write(b'x' * (1024 * 1024))
+                tmp_file.write(b"x" * (1024 * 1024))
                 tmp_file_path = tmp_file.name
 
             # 清理
             import os
+
             os.unlink(tmp_file_path)
 
         except OSError as e:
@@ -258,7 +263,7 @@ class TestEdgeCases:
         response = client.post(
             "/health",
             headers={"Content-Type": "application/xml"},
-            data="<invalid>xml</invalid>"
+            data="<invalid>xml</invalid>",
         )
         # 应该被拒绝或忽略
 
@@ -274,7 +279,7 @@ class TestEdgeCases:
             "'; DROP TABLE matches; --",
             "1' OR '1'='1",
             "'; UPDATE users SET password='hacked' WHERE '1'='1' --",
-            "1'; INSERT INTO matches VALUES ('hacked'); --"
+            "1'; INSERT INTO matches VALUES ('hacked'); --",
         ]
 
         for malicious_input in malicious_inputs:
@@ -285,8 +290,7 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_rate_limiting(self):
         """测试速率限制"""
-        from fastapi import FastAPI, Request
-        from fastapi.testclient import TestClient
+        from fastapi import Request
         import time
 
         # 模拟速率限制中间件
@@ -305,6 +309,7 @@ class TestEdgeCases:
 
         # 模拟快速请求
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_call_next = Mock(return_value=Mock(status_code=200))
 

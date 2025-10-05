@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
-
 @pytest.mark.e2e
 class TestPredictionWorkflow:
     """预测工作流端到端测试"""
@@ -72,7 +71,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-
             from src.services.prediction_workflow import PredictionWorkflow
 
             workflow = PredictionWorkflow()
@@ -115,7 +113,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-
             from src.services.prediction_workflow import PredictionWorkflow
 
             workflow = PredictionWorkflow()
@@ -173,7 +170,9 @@ class TestPredictionWorkflow:
             assert "Feature calculation failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_prediction_workflow_with_db_persistence(self, api_client_full, mock_services):
+    async def test_prediction_workflow_with_db_persistence(
+        self, api_client_full, mock_services
+    ):
         """测试带数据库持久化的预测工作流"""
         # Mock数据库操作
         mock_services["db_session"].execute = AsyncMock()
@@ -245,7 +244,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-
             from src.services.prediction_workflow import PredictionWorkflow
 
             workflow = PredictionWorkflow()
@@ -255,13 +253,19 @@ class TestPredictionWorkflow:
             assert result["updated_prediction"] == "draw"
 
     @pytest.mark.asyncio
-    async def test_prediction_workflow_performance(self, api_client_full, mock_services):
+    async def test_prediction_workflow_performance(
+        self, api_client_full, mock_services
+    ):
         """测试预测工作流性能"""
         import time
 
         # Mock快速响应
-        mock_services["feature_service"].calculate_features.return_value = {"features": [1, 0, 1]}
-        mock_services["prediction_service"].predict_match.return_value = {"prediction": "home_win"}
+        mock_services["feature_service"].calculate_features.return_value = {
+            "features": [1, 0, 1]
+        }
+        mock_services["prediction_service"].predict_match.return_value = {
+            "prediction": "home_win"
+        }
 
         with patch(
             "src.services.prediction_workflow.FeatureService",
@@ -270,7 +274,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-
             from src.services.prediction_workflow import PredictionWorkflow
 
             workflow = PredictionWorkflow()
@@ -300,7 +303,9 @@ class TestPredictionWorkflow:
             "db_operations": 2,
         }
 
-        with patch("src.services.prediction_workflow.collect_metrics", return_value=metrics):
+        with patch(
+            "src.services.prediction_workflow.collect_metrics", return_value=metrics
+        ):
             from src.services.prediction_workflow import PredictionWorkflow
 
             workflow = PredictionWorkflow()
@@ -316,7 +321,9 @@ class TestPredictionWorkflow:
             assert monitoring_data["workflow_duration"] == 0.5
 
     @pytest.mark.asyncio
-    async def test_prediction_workflow_with_model_ensemble(self, api_client_full, mock_services):
+    async def test_prediction_workflow_with_model_ensemble(
+        self, api_client_full, mock_services
+    ):
         """测试使用模型集成的预测工作流"""
         # Mock多个模型的预测结果
         model_predictions = [

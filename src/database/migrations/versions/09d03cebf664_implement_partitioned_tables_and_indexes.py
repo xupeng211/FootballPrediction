@@ -398,7 +398,9 @@ def _downgrade_postgresql_features():
 
     # 删除分区管理函数
     op.execute(text("DROP FUNCTION IF EXISTS create_match_partition(INTEGER)"))
-    op.execute(text("DROP FUNCTION IF EXISTS create_prediction_partition(INTEGER, INTEGER)"))
+    op.execute(
+        text("DROP FUNCTION IF EXISTS create_prediction_partition(INTEGER, INTEGER)")
+    )
 
     # 删除创建的索引
     indexes_to_drop = [

@@ -14,12 +14,7 @@ from pathlib import Path
 def run_command(cmd, cwd=None, capture_output=True):
     """运行命令并返回结果"""
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(
-        cmd,
-        cwd=cwd,
-        capture_output=capture_output,
-        text=True
-    )
+    result = subprocess.run(cmd, cwd=cwd, capture_output=capture_output, text=True)
     return result
 
 
@@ -58,10 +53,9 @@ def test_clean_install():
 
         # 安装基础依赖
         print("\n📦 Installing base dependencies...")
-        result = run_command([
-            str(pip_exe), "install",
-            "-r", str(requirements_dir / "base.lock")
-        ])
+        result = run_command(
+            [str(pip_exe), "install", "-r", str(requirements_dir / "base.lock")]
+        )
         if result.returncode != 0:
             print(f"❌ Failed to install base dependencies: {result.stderr}")
             return False
@@ -108,15 +102,14 @@ except ImportError as e:
 
         result = run_command([str(python_exe), "-c", test_script])
         if result.returncode != 0:
-            print(f"❌ Core import test failed")
+            print("❌ Core import test failed")
             return False
 
         # 安装streaming依赖
         print("\n📦 Installing streaming dependencies...")
-        result = run_command([
-            str(pip_exe), "install",
-            "-r", str(requirements_dir / "streaming.lock")
-        ])
+        result = run_command(
+            [str(pip_exe), "install", "-r", str(requirements_dir / "streaming.lock")]
+        )
         if result.returncode != 0:
             print(f"❌ Failed to install streaming dependencies: {result.stderr}")
             return False
@@ -152,7 +145,7 @@ print("\n✅ All streaming dependencies installed successfully!")
 
         result = run_command([str(python_exe), "-c", kafka_test_script])
         if result.returncode != 0:
-            print(f"❌ Kafka import test failed")
+            print("❌ Kafka import test failed")
             return False
 
         # 验证版本一致性

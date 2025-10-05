@@ -470,7 +470,9 @@ class TestGetDashboardData:
         mock_matches_result.scalars.return_value.all.return_value = [mock_match]
 
         mock_predictions_result = MagicMock()
-        mock_predictions_result.scalars.return_value.all.return_value = [mock_prediction]
+        mock_predictions_result.scalars.return_value.all.return_value = [
+            mock_prediction
+        ]
 
         mock_db_result = MagicMock()
         mock_db_result.scalar.return_value = 1

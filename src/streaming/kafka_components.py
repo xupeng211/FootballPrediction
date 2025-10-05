@@ -114,7 +114,9 @@ class StreamConfig:
         self.bootstrap_servers = bootstrap_servers or getattr(
             _settings, "kafka_bootstrap_servers", "localhost:9092"
         )
-        self.group_id = group_id or getattr(_settings, "kafka_group_id", "football-prediction")
+        self.group_id = group_id or getattr(
+            _settings, "kafka_group_id", "football-prediction"
+        )
         self.auto_offset_reset = auto_offset_reset
         self.enable_auto_commit = enable_auto_commit
         self.session_timeout_ms = session_timeout_ms
@@ -330,7 +332,9 @@ class FootballKafkaConsumer:
             logger.error(f"Kafka消费者初始化失败: {e}")
             raise
 
-    async def start_consuming(self, batch_size: int = 100, timeout: float = 1.0) -> None:
+    async def start_consuming(
+        self, batch_size: int = 100, timeout: float = 1.0
+    ) -> None:
         """
         开始消费消息
 
@@ -441,7 +445,9 @@ class KafkaTopicManager:
         self.admin_client = None
 
         try:
-            self.admin_client = AdminClient({"bootstrap.servers": self.config.bootstrap_servers})
+            self.admin_client = AdminClient(
+                {"bootstrap.servers": self.config.bootstrap_servers}
+            )
             logger.info(f"Kafka管理器初始化成功: {self.config.bootstrap_servers}")
         except Exception as e:
             logger.error(f"Kafka管理器初始化失败: {e}")
@@ -583,7 +589,9 @@ class StreamProcessor:
             processor_func: 处理函数
             config: 流配置
         """
-        self.input_topics = [input_topics] if isinstance(input_topics, str) else input_topics
+        self.input_topics = (
+            [input_topics] if isinstance(input_topics, str) else input_topics
+        )
         self.output_topic = output_topic
         self.processor_func = processor_func
         self.config = config or StreamConfig()
@@ -622,7 +630,9 @@ class StreamProcessor:
         """开始处理流"""
         if not self._running:
             self._running = True
-            logger.info(f"启动流处理器，输入: {self.input_topics}, 输出: {self.output_topic}")
+            logger.info(
+                f"启动流处理器，输入: {self.input_topics}, 输出: {self.output_topic}"
+            )
             await self.consumer.start_consuming()
 
     def stop(self) -> None:

@@ -114,7 +114,9 @@ def collect_fixtures_task(
         result = asyncio.run(_collect_fixtures())
 
         if isinstance(result, dict) and result.get("status") == "failed":
-            raise Exception(f"赛程采集失败: {result.get(str('error_message'), '未知错误')}")
+            raise Exception(
+                f"赛程采集失败: {result.get(str('error_message'), '未知错误')}"
+            )
 
         success_count = (
             result.get(str("success_count"), 0)
@@ -132,7 +134,8 @@ def collect_fixtures_task(
             else getattr(result, "records_collected", 0)
         )
         logger.info(
-            f"赛程采集完成: 成功={success_count}, " f"错误={error_count}, 总数={records_collected}"
+            f"赛程采集完成: 成功={success_count}, "
+            f"错误={error_count}, 总数={records_collected}"
         )
 
         status = (
@@ -218,7 +221,9 @@ def collect_odds_task(
             logger.info(f"开始采集赔率数据: 比赛={match_ids}, 博彩商={bookmakers}")
 
             # 执行采集
-            result = await collector.collect_odds(match_ids=match_ids, bookmakers=bookmakers)
+            result = await collector.collect_odds(
+                match_ids=match_ids, bookmakers=bookmakers
+            )
 
             return result
 
@@ -463,7 +468,9 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
 
 @app.task(base=DataCollectionTask, bind=True)
-def emergency_data_collection_task(self, match_id: Optional[int] = None) -> Dict[str, Any]:
+def emergency_data_collection_task(
+    self, match_id: Optional[int] = None
+) -> Dict[str, Any]:
     """
     紧急数据收集任务
 
@@ -495,7 +502,9 @@ def emergency_data_collection_task(self, match_id: Optional[int] = None) -> Dict
                 priority=9,  # 最高优先级
             )
             odds_task = collect_odds_task.apply_async(priority=9)
-            scores_task = collect_scores_task.apply_async(kwargs={"live_only": True}, priority=9)
+            scores_task = collect_scores_task.apply_async(
+                kwargs={"live_only": True}, priority=9
+            )
 
             # 等待任务完成（较短超时时间）
             results["fixtures"] = fixtures_task.get(timeout=120)
@@ -507,7 +516,9 @@ def emergency_data_collection_task(self, match_id: Optional[int] = None) -> Dict
             logger.info("进行全量紧急数据收集")
 
             # 并行执行所有收集任务，使用高优先级
-            fixtures_task = collect_fixtures_task.apply_async(kwargs={"days_ahead": 7}, priority=8)
+            fixtures_task = collect_fixtures_task.apply_async(
+                kwargs={"days_ahead": 7}, priority=8
+            )
             odds_task = collect_odds_task.apply_async(priority=8)
             scores_task = collect_scores_task.apply_async(priority=8)
 
@@ -668,7 +679,9 @@ def collect_historical_data_task(
         result = asyncio.run(_collect_historical_data())
 
         if isinstance(result, dict) and result.get("status") == "failed":
-            raise Exception(f"历史数据收集失败: {result.get('error_message', '未知错误')}")
+            raise Exception(
+                f"历史数据收集失败: {result.get('error_message', '未知错误')}"
+            )
 
         # 处理结果
         if isinstance(result, list):

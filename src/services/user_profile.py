@@ -43,7 +43,9 @@ class UserProfileService(BaseService):
         profile = UserProfile(
             user_id=user.id,
             display_name=getattr(user, "display_name", user.username),
-            email=(getattr(user.profile, "email", "") if hasattr(user, "profile") else ""),
+            email=(
+                getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
+            ),
             preferences={
                 "interests": interests,
                 "content_type": content_preferences.get(str("preferred_type"), "text"),
@@ -60,7 +62,9 @@ class UserProfileService(BaseService):
         """获取用户画像"""
         return self._user_profiles.get(user_id)
 
-    async def update_profile(self, user_id: str, updates: Dict[str, Any]) -> Optional[UserProfile]:
+    async def update_profile(
+        self, user_id: str, updates: Dict[str, Any]
+    ) -> Optional[UserProfile]:
         """更新用户画像"""
         profile = await self.get_profile(user_id)
         if not profile:

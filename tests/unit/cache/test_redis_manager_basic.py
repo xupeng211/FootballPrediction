@@ -173,7 +173,9 @@ class TestRedisManager:
         result = redis_manager.set("test_key", "test_value", ttl=60)
 
         assert result is True
-        redis_manager._sync_client.setex.assert_called_once_with("test_key", 60, "test_value")
+        redis_manager._sync_client.setex.assert_called_once_with(
+            "test_key", 60, "test_value"
+        )
 
     @pytest.mark.asyncio
     async def test_set_with_ttl_async(self, redis_manager):

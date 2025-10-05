@@ -249,7 +249,9 @@ class AnomalyDetector:
 
         return anomalies
 
-    async def _get_table_data(self, session: AsyncSession, table_name: str) -> pd.DataFrame:
+    async def _get_table_data(
+        self, session: AsyncSession, table_name: str
+    ) -> pd.DataFrame:
         """
         获取表数据
 
@@ -315,11 +317,15 @@ class AnomalyDetector:
         if column_type == "numeric":
             if "three_sigma" in methods:
                 anomalies.extend(
-                    self._detect_three_sigma_anomalies(column_data, table_name, column_name)
+                    self._detect_three_sigma_anomalies(
+                        column_data, table_name, column_name
+                    )
                 )
 
             if "iqr" in methods:
-                anomalies.extend(self._detect_iqr_anomalies(column_data, table_name, column_name))
+                anomalies.extend(
+                    self._detect_iqr_anomalies(column_data, table_name, column_name)
+                )
 
             if "z_score" in methods:
                 anomalies.extend(
@@ -327,18 +333,24 @@ class AnomalyDetector:
                 )
 
             if "range_check" in methods:
-                anomalies.extend(self._detect_range_anomalies(column_data, table_name, column_name))
+                anomalies.extend(
+                    self._detect_range_anomalies(column_data, table_name, column_name)
+                )
 
         elif column_type == "categorical":
             if "frequency" in methods:
                 anomalies.extend(
-                    self._detect_frequency_anomalies(column_data, table_name, column_name)
+                    self._detect_frequency_anomalies(
+                        column_data, table_name, column_name
+                    )
                 )
 
         elif column_type == "time":
             if "time_gap" in methods:
                 anomalies.extend(
-                    self._detect_time_gap_anomalies(column_data, table_name, column_name)
+                    self._detect_time_gap_anomalies(
+                        column_data, table_name, column_name
+                    )
                 )
 
         return anomalies
@@ -642,7 +654,9 @@ class AnomalyDetector:
             upper_bound = Q3 + 1.5 * IQR
 
             # 检测异常时间间隔
-            anomalous_gaps = time_diffs[(time_diffs < lower_bound) | (time_diffs > upper_bound)]
+            anomalous_gaps = time_diffs[
+                (time_diffs < lower_bound) | (time_diffs > upper_bound)
+            ]
 
             if len(anomalous_gaps) > 0:
                 anomaly_score = len(anomalous_gaps) / len(time_diffs)
@@ -686,7 +700,9 @@ class AnomalyDetector:
         else:
             return AnomalySeverity.LOW
 
-    async def get_anomaly_summary(self, anomalies: List[AnomalyResult]) -> Dict[str, Any]:
+    async def get_anomaly_summary(
+        self, anomalies: List[AnomalyResult]
+    ) -> Dict[str, Any]:
         """
         获取异常摘要
 

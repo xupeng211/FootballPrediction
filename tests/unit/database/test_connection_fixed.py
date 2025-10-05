@@ -89,7 +89,9 @@ class TestDatabaseManager:
             mock_engine = MagicMock()
             mock_create_engine.return_value = mock_engine
 
-            with patch("src.database.connection.create_async_engine") as mock_create_async_engine:
+            with patch(
+                "src.database.connection.create_async_engine"
+            ) as mock_create_async_engine:
                 mock_async_engine = MagicMock()
                 mock_create_async_engine.return_value = mock_async_engine
 
@@ -224,7 +226,9 @@ class TestDatabaseManager:
         db_manager._async_session_factory = mock_session_factory
 
         # 使用patch来模拟async_sessionmaker
-        with patch("src.database.connection.async_sessionmaker") as mock_async_sessionmaker_class:
+        with patch(
+            "src.database.connection.async_sessionmaker"
+        ) as mock_async_sessionmaker_class:
             mock_async_sessionmaker_class.return_value = mock_session_factory
 
             async with db_manager.get_async_session() as session:
@@ -448,7 +452,9 @@ class TestMultiUserDatabaseManager:
             mock_get_config.return_value = mock_base_config
 
             # Mock每个角色的配置
-            with patch.object(multi_db_manager, "_create_config_for_role") as mock_create_config:
+            with patch.object(
+                multi_db_manager, "_create_config_for_role"
+            ) as mock_create_config:
                 mock_reader_config = MagicMock()
                 mock_writer_config = MagicMock()
                 mock_admin_config = MagicMock()
@@ -459,7 +465,9 @@ class TestMultiUserDatabaseManager:
                 ]
 
                 # Mock每个角色的管理器
-                with patch("src.database.connection.DatabaseManager") as mock_manager_class:
+                with patch(
+                    "src.database.connection.DatabaseManager"
+                ) as mock_manager_class:
                     mock_manager = MagicMock()
                     mock_manager_class.return_value = mock_manager
 
@@ -499,7 +507,9 @@ class TestMultiUserDatabaseManager:
         """测试获取异步会话"""
         mock_manager = MagicMock()
         mock_session = MagicMock()
-        mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         multi_db_manager._managers[DatabaseRole.READER] = mock_manager
 
         async with multi_db_manager.get_async_session(DatabaseRole.READER) as session:
@@ -596,7 +606,9 @@ class TestModuleFunctions:
 
     def test_initialize_multi_user_database(self):
         """测试初始化多用户数据库"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
 
@@ -620,7 +632,9 @@ class TestModuleFunctions:
         with patch("src.database.connection.get_database_manager") as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
-            mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_manager.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_get_manager.return_value = mock_manager
 
             async with get_async_db_session() as session:
@@ -628,7 +642,9 @@ class TestModuleFunctions:
 
     def test_get_reader_session(self):
         """测试获取读者会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
             mock_manager.get_session.return_value.__enter__.return_value = mock_session
@@ -639,7 +655,9 @@ class TestModuleFunctions:
 
     def test_get_writer_session(self):
         """测试获取写者会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
             mock_manager.get_session.return_value.__enter__.return_value = mock_session
@@ -650,7 +668,9 @@ class TestModuleFunctions:
 
     def test_get_admin_session(self):
         """测试获取管理员会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
             mock_manager.get_session.return_value.__enter__.return_value = mock_session
@@ -662,10 +682,14 @@ class TestModuleFunctions:
     @pytest.mark.asyncio
     async def test_get_async_reader_session(self):
         """测试获取异步读者会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
-            mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_manager.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_get_manager.return_value = mock_manager
 
             async with get_async_reader_session() as session:
@@ -674,10 +698,14 @@ class TestModuleFunctions:
     @pytest.mark.asyncio
     async def test_get_async_writer_session(self):
         """测试获取异步写者会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
-            mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_manager.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_get_manager.return_value = mock_manager
 
             async with get_async_writer_session() as session:
@@ -686,10 +714,14 @@ class TestModuleFunctions:
     @pytest.mark.asyncio
     async def test_get_async_admin_session(self):
         """测试获取异步管理员会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
-            mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_manager.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_get_manager.return_value = mock_manager
 
             async with get_async_admin_session() as session:
@@ -697,7 +729,9 @@ class TestModuleFunctions:
 
     def test_get_session_with_role(self):
         """测试获取指定角色的会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
             mock_manager.get_session.return_value.__enter__.return_value = mock_session
@@ -709,10 +743,14 @@ class TestModuleFunctions:
     @pytest.mark.asyncio
     async def test_get_async_session_with_role(self):
         """测试获取指定角色的异步会话"""
-        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
+        with patch(
+            "src.database.connection.get_multi_user_database_manager"
+        ) as mock_get_manager:
             mock_manager = MagicMock()
             mock_session = MagicMock()
-            mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_manager.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_get_manager.return_value = mock_manager
 
             async with get_async_session(role=DatabaseRole.READER) as session:

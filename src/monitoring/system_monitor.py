@@ -150,7 +150,9 @@ class SystemMonitor:
             ["model_name", "model_version", "metric_type"],
         )
 
-    def _create_counter(self, name: str, description: str, labels: List[str] = None) -> Counter:
+    def _create_counter(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Counter:
         """创建Counter指标"""
         try:
             return Counter(name, description, labels or [], registry=self.registry)
@@ -162,7 +164,9 @@ class SystemMonitor:
             mock.labels = Mock(return_value=mock)
             return mock
 
-    def _create_gauge(self, name: str, description: str, labels: List[str] = None) -> Gauge:
+    def _create_gauge(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Gauge:
         """创建Gauge指标"""
         try:
             return Gauge(name, description, labels or [], registry=self.registry)
@@ -176,7 +180,9 @@ class SystemMonitor:
             mock.labels = Mock(return_value=mock)
             return mock
 
-    def _create_histogram(self, name: str, description: str, labels: List[str] = None) -> Histogram:
+    def _create_histogram(
+        self, name: str, description: str, labels: List[str] = None
+    ) -> Histogram:
         """创建Histogram指标"""
         try:
             return Histogram(name, description, labels or [], registry=self.registry)
@@ -307,7 +313,9 @@ class SystemMonitor:
 
                     # Redis内存使用
                     if "used_memory" in info:
-                        self.cache_size_bytes.labels(cache_type="redis").set(info["used_memory"])
+                        self.cache_size_bytes.labels(cache_type="redis").set(
+                            info["used_memory"]
+                        )
 
             except Exception:
                 # Redis连接失败，记录异常但不中断监控
@@ -327,18 +335,24 @@ class SystemMonitor:
             logger.error(f"收集应用指标失败: {e}")
 
     # 便捷方法
-    def record_request(self, method: str, endpoint: str, status_code: int, duration: float):
+    def record_request(
+        self, method: str, endpoint: str, status_code: int, duration: float
+    ):
         """记录HTTP请求"""
         self.app_requests_total.labels(
             method=method, endpoint=endpoint, status_code=status_code
         ).inc()
-        self.app_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)
+        self.app_request_duration_seconds.labels(
+            method=method, endpoint=endpoint
+        ).observe(duration)
 
     def record_database_query(
         self, operation: str, table: str, duration: float, is_slow: bool = False
     ):
         """记录数据库查询"""
-        self.db_query_duration_seconds.labels(operation=operation, table=table).observe(duration)
+        self.db_query_duration_seconds.labels(operation=operation, table=table).observe(
+            duration
+        )
 
         if is_slow:
             self.db_slow_queries_total.labels(operation=operation, table=table).inc()
@@ -351,9 +365,13 @@ class SystemMonitor:
 
     def record_prediction(self, model_version: str, league: str):
         """记录预测操作"""
-        self.business_predictions_total.labels(model_version=model_version, league=league).inc()
+        self.business_predictions_total.labels(
+            model_version=model_version, league=league
+        ).inc()
 
-    def record_model_inference(self, model_name: str, model_version: str, duration: float):
+    def record_model_inference(
+        self, model_name: str, model_version: str, duration: float
+    ):
         """记录模型推理"""
         self.ml_model_inference_duration_seconds.labels(
             model_name=model_name, model_version=model_version
@@ -438,7 +456,9 @@ class SystemMonitor:
 
                 # 查询性能测试
                 perf_start = time.time()
-                await session.execute(text("SELECT COUNT(*) FROM information_schema.tables"))
+                await session.execute(
+                    text("SELECT COUNT(*) FROM information_schema.tables")
+                )
                 query_time = time.time() - perf_start
 
                 # 连接池状态
@@ -518,7 +538,9 @@ class SystemMonitor:
                 "response_time": response_time,
                 "write_time": write_time,
                 "read_time": read_time,
-                "connected_clients": (info.get(str("connected_clients"), 0) if info else 0),
+                "connected_clients": (
+                    info.get(str("connected_clients"), 0) if info else 0
+                ),
                 "used_memory": info.get(str("used_memory"), 0) if info else 0,
                 "timestamp": datetime.now().isoformat(),
             }
@@ -565,7 +587,9 @@ class SystemMonitor:
                 status = "unhealthy"
 
             if process_memory > 2 * 1024 * 1024 * 1024:  # 进程内存超过2GB
-                warnings.append(f"进程内存使用过高: {process_memory / 1024 / 1024:.1f}MB")
+                warnings.append(
+                    f"进程内存使用过高: {process_memory / 1024 / 1024:.1f}MB"
+                )
                 status = "warning"
 
             return {

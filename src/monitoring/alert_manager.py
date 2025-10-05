@@ -378,7 +378,9 @@ class AlertManager:
         # 注册Prometheus处理器
         self.register_handler(AlertChannel.PROMETHEUS, self._prometheus_handler)
 
-    def register_handler(self, channel: AlertChannel, handler: Callable[[Alert], None]) -> None:
+    def register_handler(
+        self, channel: AlertChannel, handler: Callable[[Alert], None]
+    ) -> None:
         """
         注册告警处理器
 
@@ -474,7 +476,9 @@ class AlertManager:
         logger.info(f"触发告警: {title} [{level.value}]")
         return alert if isinstance(alert, dict) else {}
 
-    def _generate_alert_id(self, title: str, source: str, labels: Optional[Dict[str, str]]) -> str:
+    def _generate_alert_id(
+        self, title: str, source: str, labels: Optional[Dict[str, str]]
+    ) -> str:
         """
         生成告警ID
 
@@ -550,7 +554,9 @@ class AlertManager:
                     handler(alert)
                 except Exception as e:
                     logger.error(f"告警处理器错误 {channel.value}: {e}")
-                    self.metrics.monitoring_errors_total.labels(error_type="alert_handler").inc()
+                    self.metrics.monitoring_errors_total.labels(
+                        error_type="alert_handler"
+                    ).inc()
 
     def _update_alert_metrics(self, alert: Alert, rule_id: Optional[str]) -> None:
         """
@@ -641,7 +647,9 @@ class AlertManager:
 
         return (
             sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
-            if isinstance(sorted(active_alerts, key=lambda x: x.created_at, reverse=True), dict)
+            if isinstance(
+                sorted(active_alerts, key=lambda x: x.created_at, reverse=True), dict
+            )
             else {}
         )
 
@@ -670,7 +678,9 @@ class AlertManager:
         return {
             "total_alerts": total_alerts,
             "active_alerts": active_alerts,
-            "resolved_alerts": len([a for a in self.alerts if a.status == AlertStatus.RESOLVED]),
+            "resolved_alerts": len(
+                [a for a in self.alerts if a.status == AlertStatus.RESOLVED]
+            ),
             "by_level": dict(by_level),
             "by_source": dict(by_source),
             "critical_alerts": by_level.get(str("critical", None), 0),
@@ -776,13 +786,17 @@ class AlertManager:
         for table_name, result in freshness_data.items():
             if isinstance(result, dict) and "hours_since_last_update" in result:
                 hours = result["hours_since_last_update"]
-                self.metrics.data_freshness_hours.labels(table_name=table_name).set(hours)
+                self.metrics.data_freshness_hours.labels(table_name=table_name).set(
+                    hours
+                )
 
         completeness_data = quality_data.get(str("completeness", None), {})
         for table_name, result in completeness_data.items():
             if isinstance(result, dict) and "completeness_ratio" in result:
                 ratio = result["completeness_ratio"]
-                self.metrics.data_completeness_ratio.labels(table_name=table_name).set(ratio)
+                self.metrics.data_completeness_ratio.labels(table_name=table_name).set(
+                    ratio
+                )
 
         if "overall_score" in quality_data:
             score = quality_data["overall_score"]
@@ -811,7 +825,9 @@ class AlertManager:
                 table_name=anomaly.table_name, column_name=anomaly.column_name
             ).set(anomaly.anomaly_score)
 
-    def check_and_fire_quality_alerts(self, quality_data: Dict[str, Any]) -> List[Alert]:
+    def check_and_fire_quality_alerts(
+        self, quality_data: Dict[str, Any]
+    ) -> List[Alert]:
         """
         检查数据质量并触发告警
 

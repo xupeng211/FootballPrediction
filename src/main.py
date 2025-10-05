@@ -22,7 +22,7 @@ except ImportError:
     warnings.filterwarnings(
         "ignore",
         message=r".*Number.*field.*should.*not.*be.*instantiated.*",
-        category=DeprecationWarning
+        category=DeprecationWarning,
     )
 
 from fastapi import FastAPI, HTTPException
@@ -72,7 +72,9 @@ if RATE_LIMIT_AVAILABLE:
     )
 else:
     limiter = None
-    logger.warning("⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi")
+    logger.warning(
+        "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
+    )
 
 
 @asynccontextmanager

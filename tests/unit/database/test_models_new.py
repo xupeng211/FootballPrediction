@@ -206,7 +206,9 @@ class TestLeagueModel:
 
     def test_league_creation(self):
         """测试联赛创建"""
-        league = League(league_name="Premier League", country="England", level=1, is_active=True)
+        league = League(
+            league_name="Premier League", country="England", level=1, is_active=True
+        )
         assert league.league_name == "Premier League"
         assert league.country == "England"
         assert league.level == 1

@@ -258,7 +258,9 @@ class TaskErrorLogger:
         """确保 error_logs 表存在"""
         try:
             db_type = await self._get_db_type()
-            create_table_sql = text(SQLCompatibilityHelper.create_error_logs_table_sql(db_type))
+            create_table_sql = text(
+                SQLCompatibilityHelper.create_error_logs_table_sql(db_type)
+            )
 
             await session.execute(create_table_sql)
             await session.commit()
@@ -281,7 +283,9 @@ class TaskErrorLogger:
 
             async with self.db_manager.get_async_session() as session:
                 # 获取错误总数
-                error_count_sql = text(query_builder.build_error_statistics_query(hours))
+                error_count_sql = text(
+                    query_builder.build_error_statistics_query(hours)
+                )
                 result = await session.execute(error_count_sql)
                 total_errors = result.scalar() or 0
 
@@ -289,14 +293,16 @@ class TaskErrorLogger:
                 task_errors_sql = text(query_builder.build_task_errors_query(hours))
                 result = await session.execute(task_errors_sql)
                 task_errors = [
-                    {"task_name": row.task_name, "error_count": row.error_count} for row in result
+                    {"task_name": row.task_name, "error_count": row.error_count}
+                    for row in result
                 ]
 
                 # 按错误类型统计
                 type_errors_sql = text(query_builder.build_type_errors_query(hours))
                 result = await session.execute(type_errors_sql)
                 type_errors = [
-                    {"error_type": row.error_type, "error_count": row.error_count} for row in result
+                    {"error_type": row.error_type, "error_count": row.error_count}
+                    for row in result
                 ]
 
                 return {
@@ -330,7 +336,9 @@ class TaskErrorLogger:
             query_builder = await self._get_query_builder()
 
             async with self.db_manager.get_async_session() as session:
-                cleanup_sql = text(query_builder.build_cleanup_old_logs_query(days_to_keep))
+                cleanup_sql = text(
+                    query_builder.build_cleanup_old_logs_query(days_to_keep)
+                )
                 result = await session.execute(cleanup_sql)
                 await session.commit()
 

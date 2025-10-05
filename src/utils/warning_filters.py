@@ -42,17 +42,14 @@ def _setup_marshmallow_warning_filters() -> None:
     warnings.filterwarnings(
         "ignore",
         message=r".*Number.*field.*should.*not.*be.*instantiated.*",
-        category=DeprecationWarning
+        category=DeprecationWarning,
     )
     warnings.filterwarnings(
-        "ignore",
-        message=r".*Number.*field.*should.*not.*be.*instantiated.*"
+        "ignore", message=r".*Number.*field.*should.*not.*be.*instantiated.*"
     )
     # 也抑制其他可能的 Marshmallow 迁移警告
     warnings.filterwarnings(
-        "ignore",
-        message=r".*ChangedInMarshmallow.*",
-        category=DeprecationWarning
+        "ignore", message=r".*ChangedInMarshmallow.*", category=DeprecationWarning
     )
     print("✅ Marshmallow 4.x 兼容性警告已抑制")
 
@@ -66,7 +63,9 @@ def _setup_third_party_warning_filters() -> None:
     )
 
     # SQLAlchemy 相关警告（如果需要）
-    warnings.filterwarnings("ignore", message=r".*sqlalchemy.*", category=DeprecationWarning)
+    warnings.filterwarnings(
+        "ignore", message=r".*sqlalchemy.*", category=DeprecationWarning
+    )
 
 
 def setup_test_warning_filters() -> None:

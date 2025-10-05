@@ -35,7 +35,9 @@ class TestDataCollectionTasks:
             return_value=[{"id": 1, "home": "Team A", "away": "Team B"}]
         )
         collector.collect_odds = AsyncMock(
-            return_value=[{"match_id": 1, "home_win": 2.1, "draw": 3.4, "away_win": 3.2}]
+            return_value=[
+                {"match_id": 1, "home_win": 2.1, "draw": 3.4, "away_win": 3.2}
+            ]
         )
         collector.collect_scores = AsyncMock(
             return_value=[{"match_id": 1, "home_score": 2, "away_score": 1}]
@@ -119,7 +121,9 @@ class TestDataCollectionTasks:
             assert result["match_type"] == "live"
             assert result["matches_updated"] == 1
 
-    def test_collect_scores_task_finished_matches(self, mock_celery_app, mock_collector):
+    def test_collect_scores_task_finished_matches(
+        self, mock_celery_app, mock_collector
+    ):
         """测试收集完场比分"""
         with patch(
             "src.tasks.data_collection_tasks.get_scores_collector",
@@ -192,12 +196,13 @@ class TestDataCollectionTasks:
         fixtures_data = [{"match_id": 1}]
         odds_data = [{"match_id": 1, "home_win": 2.0}]
 
-        with patch("src.tasks.data_collection_tasks.collect_fixtures_task") as mock_fixtures, patch(
+        with patch(
+            "src.tasks.data_collection_tasks.collect_fixtures_task"
+        ) as mock_fixtures, patch(
             "src.tasks.data_collection_tasks.collect_odds_task"
         ) as mock_odds, patch(
             "src.tasks.data_collection_tasks.validate_collected_data"
         ) as mock_validate:
-
             mock_fixtures.apply.return_value.get.return_value = {
                 "status": "success",
                 "data": fixtures_data,
@@ -234,7 +239,6 @@ class TestDataCollectionTasks:
 
         # 注册带重试的任务
 
-
         @mock_celery_app.task(
             bind=True,
             autoretry_for=(Exception,),
@@ -267,7 +271,9 @@ class TestDataCollectionTasks:
         def progress_task(self, total_items):
             for i in range(total_items):
                 # 更新进度
-                self.update_state(state="PROGRESS", meta={"current": i + 1, "total": total_items})
+                self.update_state(
+                    state="PROGRESS", meta={"current": i + 1, "total": total_items}
+                )
                 # 模拟工作
             return {"status": "COMPLETE", "total": total_items}
 
@@ -334,7 +340,9 @@ class TestDataCollectionTasks:
 
         # 配置优先级队列
         mock_celery_app.conf.task_routes = {
-            "src.tasks.data_collection_tasks.collect_odds_task": {"queue": "high_priority"}
+            "src.tasks.data_collection_tasks.collect_odds_task": {
+                "queue": "high_priority"
+            }
         }
 
         @mock_celery_app.task
