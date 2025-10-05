@@ -106,10 +106,10 @@ lock-deps: venv ## Environment: Lock current dependencies for reproducible build
 verify-deps: venv ## Environment: Verify dependencies match lock file
 	@$(ACTIVATE) && \
 	echo "$(BLUE)🔍 Verifying dependencies...$(RESET)" && \
-	bash scripts/verify_deps.sh
+	bash scripts/dependency/verify_deps.sh
 
 check-deps: ## Environment: Verify required Python dependencies are installed
-	@$(ACTIVATE) && python scripts/check_dependencies.py
+	@$(ACTIVATE) && python scripts/dependency/check.py
 
 check-env: ## Environment: Check required environment variables
 	@echo "$(YELLOW)Checking environment variables...$(RESET)"
@@ -213,7 +213,7 @@ test: ## Test: Run pytest unit tests
 test-full: ## Test: Run full unit test suite with coverage
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running full unit test suite with coverage...$(RESET)" && \
-	python scripts/run_full_coverage.py
+	python scripts/testing/run_full_coverage.py
 
 coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	@$(ACTIVATE) && \
@@ -434,14 +434,14 @@ rollback: ## CI/Container: Rollback to a previous image tag (use TAG=<sha>)
 sync-issues: ## GitHub: Sync issues between local and GitHub
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Synchronizing GitHub issues...$(RESET)" && \
-	$(PYTHON) scripts/sync_issues.py sync && \
+	$(PYTHON) scripts/analysis/sync_issues.py sync && \
 	echo "$(GREEN)✅ Issues synchronized$(RESET)"
 
 context: ## Load project context for AI development
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Loading project context...$(RESET)" && \
 	PYTHONWARNINGS="ignore:.*Number.*field should not be instantiated.*" \
-	$(PYTHON) scripts/context_loader.py --summary && \
+	$(PYTHON) scripts/quality/context_loader.py --summary && \
 	echo "$(GREEN)✅ Context loaded$(RESET)"
 
 # ============================================================================
@@ -450,12 +450,12 @@ context: ## Load project context for AI development
 
 feedback-update: venv ## Update prediction results with actual outcomes
 	@echo "$(YELLOW)Updating prediction results...$(RESET)" && \
-	$(PYTHON) scripts/update_predictions_results.py --update --report --verbose && \
+	$(PYTHON) scripts/ml/update_predictions.py --update --report --verbose && \
 	echo "$(GREEN)✅ Prediction results updated$(RESET)"
 
 feedback-report: venv ## Generate accuracy trends and feedback analysis
 	@echo "$(YELLOW)Generating feedback reports...$(RESET)" && \
-	$(PYTHON) scripts/update_predictions_results.py --report --trends --days 30 --verbose && \
+	$(PYTHON) scripts/ml/update_predictions.py --report --trends --days 30 --verbose && \
 	echo "$(GREEN)✅ Feedback reports generated$(RESET)"
 
 performance-report: venv ## Generate model performance reports with charts
@@ -465,12 +465,12 @@ performance-report: venv ## Generate model performance reports with charts
 
 retrain-check: venv ## Check models and trigger retraining if needed
 	@echo "$(YELLOW)Checking models for retraining...$(RESET)" && \
-	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days 30 --verbose && \
+	$(PYTHON) scripts/ml/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days 30 --verbose && \
 	echo "$(GREEN)✅ Retrain check completed$(RESET)"
 
 retrain-dry: venv ## Dry run retrain check (evaluation only)
 	@echo "$(YELLOW)Running retrain dry run...$(RESET)" && \
-	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --dry-run --verbose && \
+	$(PYTHON) scripts/ml/retrain_pipeline.py --threshold 0.45 --dry-run --verbose && \
 	echo "$(GREEN)✅ Dry run completed$(RESET)"
 
 model-monitor: venv ## Run enhanced model monitoring cycle
@@ -754,12 +754,12 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 .PHONY: docs.check
 ## 运行文档质量检查（坏链/孤儿/目录规范）
 docs.check:
-	@python3 scripts/docs_guard.py
+	@python3 scripts/quality/docs_guard.py
 
 .PHONY: docs.fix
 ## 自动化修复文档问题（如孤儿批次处理）
 docs.fix:
-	@python3 scripts/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
+	@python3 scripts/archive/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
 
 # ============================================================================
 # 🪝 Git Hooks Setup

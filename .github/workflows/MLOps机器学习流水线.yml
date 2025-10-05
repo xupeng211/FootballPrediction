@@ -99,13 +99,13 @@ jobs:
 
       - name: Update prediction results
         run: |
-          python scripts/update_predictions_results.py \
+          python scripts/ml/update_predictions.py \
             --days ${{ github.event.inputs.days_back || 30 }} \
             --verbose
 
       - name: Update accuracy trends
         run: |
-          python scripts/update_predictions_results.py \
+          python scripts/ml/update_predictions.py \
             --report \
             --trends \
             --days ${{ github.event.inputs.days_back || 30 }} \
@@ -248,7 +248,7 @@ jobs:
         id: check
         run: |
           # 运行重训练检查脚本
-          python scripts/retrain_pipeline.py \
+          python scripts/ml/retrain_pipeline.py \
             --threshold 0.45 \
             --min-predictions 50 \
             --window-days 30 \
@@ -268,7 +268,7 @@ jobs:
       - name: Dry run retrain (if needed)
         if: steps.check.outputs.should-retrain == 'true' || github.event.inputs.force_retrain == 'true'
         run: |
-          python scripts/retrain_pipeline.py \
+          python scripts/ml/retrain_pipeline.py \
             --threshold 0.45 \
             --dry-run \
             --verbose
@@ -291,7 +291,7 @@ jobs:
               ### Retrain Commands:
               \`\`\`bash
               # Run full retrain
-              python scripts/retrain_pipeline.py --threshold 0.45 --verbose
+              python scripts/ml/retrain_pipeline.py --threshold 0.45 --verbose
 
               # Validate new model
               python scripts/validate_model.py --model-path models/new_model.pkl
@@ -484,7 +484,7 @@ jobs:
 
       - name: Execute model retraining
         run: |
-          python scripts/retrain_pipeline.py \
+          python scripts/ml/retrain_pipeline.py \
             --threshold 0.45 \
             --min-predictions 50 \
             --window-days 30 \
