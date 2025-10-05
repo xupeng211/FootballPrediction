@@ -35,9 +35,7 @@ def upgrade() -> None:
     op.create_table(
         "raw_scores_data",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
-        sa.Column(
-            "data_source", sa.String(length=100), nullable=False, comment="数据源标识"
-        ),
+        sa.Column("data_source", sa.String(length=100), nullable=False, comment="数据源标识"),
         sa.Column(
             "raw_data",
             postgresql.JSONB(astext_type=sa.Text()),
@@ -59,9 +57,7 @@ def upgrade() -> None:
             nullable=True,
             comment="外部比赛ID",
         ),
-        sa.Column(
-            "match_status", sa.String(length=50), nullable=True, comment="比赛状态"
-        ),
+        sa.Column("match_status", sa.String(length=50), nullable=True, comment="比赛状态"),
         sa.Column("home_score", sa.Integer(), nullable=True, comment="主队比分"),
         sa.Column("away_score", sa.Integer(), nullable=True, comment="客队比分"),
         sa.Column("match_minute", sa.Integer(), nullable=True, comment="比赛分钟"),
@@ -74,17 +70,11 @@ def upgrade() -> None:
 
     # 为raw_scores_data表创建索引
     op.create_index("idx_raw_scores_data_source", "raw_scores_data", ["data_source"])
-    op.create_index(
-        "idx_raw_scores_data_collected_at", "raw_scores_data", ["collected_at"]
-    )
+    op.create_index("idx_raw_scores_data_collected_at", "raw_scores_data", ["collected_at"])
     op.create_index("idx_raw_scores_data_processed", "raw_scores_data", ["processed"])
-    op.create_index(
-        "idx_raw_scores_data_external_match", "raw_scores_data", ["external_match_id"]
-    )
+    op.create_index("idx_raw_scores_data_external_match", "raw_scores_data", ["external_match_id"])
     op.create_index("idx_raw_scores_data_status", "raw_scores_data", ["match_status"])
-    op.create_index(
-        "idx_raw_scores_data_score", "raw_scores_data", ["home_score", "away_score"]
-    )
+    op.create_index("idx_raw_scores_data_score", "raw_scores_data", ["home_score", "away_score"])
 
     # 为JSONB字段创建GIN索引，支持高效的JSON查询
     op.create_index(
@@ -195,9 +185,7 @@ def downgrade() -> None:
     """
 
     # 删除触发器和函数
-    op.execute(
-        "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
-    )
+    op.execute("DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data")
     op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
     op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
 

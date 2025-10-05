@@ -173,9 +173,7 @@ def _setup_redis_mocks():
             (),
             {"RedisCluster": RedisAsyncioModule.RedisCluster},
         )(),
-        "redis.sentinel": type(
-            "RedisSentinelModule", (), {"Sentinel": type("Sentinel", (), {})}
-        )(),
+        "redis.sentinel": type("RedisSentinelModule", (), {"Sentinel": type("Sentinel", (), {})})(),
         "redis.asyncio.sentinel": type(
             "RedisAsyncioSentinelModule", (), {"Sentinel": RedisAsyncioModule.Sentinel}
         )(),
@@ -286,9 +284,7 @@ def mock_external_services() -> None:
     try:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
 
-        monkeypatch.setattr(
-            DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor
-        )
+        monkeypatch.setattr(DataQualityMonitor, "__new__", lambda *args, **kwargs: mock_monitor)
     except ImportError:
         pass
 

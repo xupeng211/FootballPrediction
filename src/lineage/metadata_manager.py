@@ -60,9 +60,7 @@ class MetadataManager:
             payload["ownerName"] = owner_name
 
         try:
-            response = self.session.put(
-                urljoin(self.api_url, f"namespaces/{name}"), json=payload
-            )
+            response = self.session.put(urljoin(self.api_url, f"namespaces/{name}"), json=payload)
             response.raise_for_status()
 
             result = response.json()
@@ -168,18 +166,14 @@ class MetadataManager:
         if input_datasets:
             inputs_list: List[Dict[str, str]] = []
             for dataset in input_datasets:
-                inputs_list.append(
-                    {"namespace": dataset["namespace"], "name": dataset["name"]}
-                )
+                inputs_list.append({"namespace": dataset["namespace"], "name": dataset["name"]})
             payload["inputs"] = inputs_list
 
         # 添加输出数据集
         if output_datasets:
             outputs_list: List[Dict[str, str]] = []
             for dataset in output_datasets:
-                outputs_list.append(
-                    {"namespace": dataset["namespace"], "name": dataset["name"]}
-                )
+                outputs_list.append({"namespace": dataset["namespace"], "name": dataset["name"]})
             payload["outputs"] = outputs_list
 
         # 添加代码位置
@@ -200,9 +194,7 @@ class MetadataManager:
             logger.error(f"创建作业失败 {namespace}.{name}: {e}")
             raise
 
-    def get_dataset_lineage(
-        self, namespace: str, name: str, depth: int = 3
-    ) -> Dict[str, Any]:
+    def get_dataset_lineage(self, namespace: str, name: str, depth: int = 3) -> Dict[str, Any]:
         """
         获取数据集血缘关系
 
@@ -248,9 +240,7 @@ class MetadataManager:
             params["namespace"] = namespace
 
         try:
-            response = self.session.get(
-                str(urljoin(self.api_url, None), "search"), params=params
-            )
+            response = self.session.get(str(urljoin(self.api_url, None), "search"), params=params)
             response.raise_for_status()
 
             result = response.json()
@@ -274,25 +264,19 @@ class MetadataManager:
         """
         try:
             response = self.session.get(
-                urljoin(
-                    self.api_url, f"namespaces/{namespace}/datasets/{name}/versions"
-                )
+                urljoin(self.api_url, f"namespaces/{namespace}/datasets/{name}/versions")
             )
             response.raise_for_status()
 
             result = response.json()
             versions = result.get(str("versions", None), [])
-            logger.info(
-                f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本"
-            )
+            logger.info(f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本")
             return versions if isinstance(versions, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"获取数据集版本失败 {namespace}.{name}: {e}")
             raise
 
-    def get_job_runs(
-        self, namespace: str, job_name: str, limit: int = 20
-    ) -> List[Dict[str, Any]]:
+    def get_job_runs(self, namespace: str, job_name: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
         获取作业运行历史
 
@@ -313,9 +297,7 @@ class MetadataManager:
 
             result = response.json()
             runs = result.get(str("runs", None), [])
-            logger.info(
-                f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录"
-            )
+            logger.info(f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录")
             return runs if isinstance(runs, dict) else {}
         except requests.exceptions.RequestException as e:
             logger.error(f"获取作业运行历史失败 {namespace}.{job_name}: {e}")
@@ -335,9 +317,7 @@ class MetadataManager:
         """
         try:
             response = self.session.post(
-                urljoin(
-                    self.api_url, f"namespaces/{namespace}/datasets/{name}/tags/{tag}"
-                )
+                urljoin(self.api_url, f"namespaces/{namespace}/datasets/{name}/tags/{tag}")
             )
             response.raise_for_status()
 
@@ -472,7 +452,8 @@ class MetadataManager:
                     # Type annotations to help mypy understand the correct types
                     namespace_str: str = dataset["namespace"]  # type: ignore
                     name_str: str = dataset["name"]  # type: ignore
-                    description_str: Optional[str] = dataset["description"]  # type: ignore
+                    # type: ignore
+                    description_str: Optional[str] = dataset["description"]
                     schema_list: Optional[List[Dict[str, str]]] = dataset["schema"]  # type: ignore
                     tags_list: Optional[List[str]] = dataset["tags"]  # type: ignore
 

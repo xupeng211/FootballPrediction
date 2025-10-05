@@ -50,9 +50,7 @@ class Match(BaseModel):
     season: Mapped[str] = mapped_column(String(20), nullable=False, comment="赛季")
 
     # 比赛时间
-    match_time: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, comment="比赛时间"
-    )
+    match_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="比赛时间")
 
     match_status: Mapped[MatchStatus] = mapped_column(
         SQLEnum(MatchStatus),
@@ -62,13 +60,9 @@ class Match(BaseModel):
     )
 
     # 比分信息
-    home_score: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True, comment="主队比分"
-    )
+    home_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, comment="主队比分")
 
-    away_score: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True, comment="客队比分"
-    )
+    away_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, comment="客队比分")
 
     home_ht_score: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="主队半场比分"
@@ -83,17 +77,11 @@ class Match(BaseModel):
     )
 
     # 比赛详情
-    venue: Mapped[Optional[str]] = mapped_column(
-        String(200), nullable=True, comment="比赛场地"
-    )
+    venue: Mapped[Optional[str]] = mapped_column(String(200), nullable=True, comment="比赛场地")
 
-    referee: Mapped[Optional[str]] = mapped_column(
-        String(100), nullable=True, comment="主裁判"
-    )
+    referee: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="主裁判")
 
-    weather: Mapped[Optional[str]] = mapped_column(
-        String(100), nullable=True, comment="天气情况"
-    )
+    weather: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="天气情况")
 
     # 关系定义
     home_team = relationship(
@@ -134,12 +122,8 @@ class Match(BaseModel):
         Index("idx_matches_home_team_date", "home_team_id", "match_time"),
         Index("idx_matches_away_team_date", "away_team_id", "match_time"),
         # CHECK约束定义 - 确保数据完整性
-        CheckConstraint(
-            "home_score >= 0 AND home_score <= 99", name="ck_matches_home_score_range"
-        ),
-        CheckConstraint(
-            "away_score >= 0 AND away_score <= 99", name="ck_matches_away_score_range"
-        ),
+        CheckConstraint("home_score >= 0 AND home_score <= 99", name="ck_matches_home_score_range"),
+        CheckConstraint("away_score >= 0 AND away_score <= 99", name="ck_matches_away_score_range"),
         CheckConstraint(
             "home_ht_score >= 0 AND home_ht_score <= 99",
             name="ck_matches_home_ht_score_range",
@@ -148,15 +132,9 @@ class Match(BaseModel):
             "away_ht_score >= 0 AND away_ht_score <= 99",
             name="ck_matches_away_ht_score_range",
         ),
-        CheckConstraint(
-            "match_time > '2000-01-01'", name="ck_matches_match_time_range"
-        ),
-        CheckConstraint(
-            "home_team_id != away_team_id", name="ck_matches_different_teams"
-        ),
-        CheckConstraint(
-            "minute >= 0 AND minute <= 120", name="ck_matches_minute_range"
-        ),
+        CheckConstraint("match_time > '2000-01-01'", name="ck_matches_match_time_range"),
+        CheckConstraint("home_team_id != away_team_id", name="ck_matches_different_teams"),
+        CheckConstraint("minute >= 0 AND minute <= 120", name="ck_matches_minute_range"),
     )
 
     def __repr__(self) -> str:
@@ -182,10 +160,7 @@ class Match(BaseModel):
     @property
     def is_upcoming(self) -> bool:
         """判断比赛是否未来进行"""
-        return (
-            self.match_status == MatchStatus.SCHEDULED
-            and self.match_time > datetime.utcnow()
-        )
+        return self.match_status == MatchStatus.SCHEDULED and self.match_time > datetime.utcnow()
 
     @property
     def final_score(self) -> Optional[str]:

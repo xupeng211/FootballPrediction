@@ -129,9 +129,7 @@ class RetryConfig:
         self.retryable_exceptions = retryable_exceptions
 
 
-def retry(
-    config: RetryConfig, on_retry: Optional[Callable[[int, Exception], None]] = None
-):
+def retry(config: RetryConfig, on_retry: Optional[Callable[[int, Exception], None]] = None):
     """
     重试装饰器 / Retry Decorator
 
@@ -451,8 +449,6 @@ class CircuitBreaker:
 
         time_since_failure = time.time() - self.last_failure_time
         timeout = (
-            self.retry_timeout
-            if self.state == CircuitState.HALF_OPEN
-            else self.recovery_timeout
+            self.retry_timeout if self.state == CircuitState.HALF_OPEN else self.recovery_timeout
         )
         return time_since_failure >= timeout

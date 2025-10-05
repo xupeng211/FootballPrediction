@@ -66,13 +66,9 @@ class FeatureCalculator:
         """
         if session is None:
             async with self.db_manager.get_async_session() as session:
-                return await self._calculate_recent_performance(
-                    session, team_id, calculation_date
-                )
+                return await self._calculate_recent_performance(session, team_id, calculation_date)
         else:
-            return await self._calculate_recent_performance(
-                session, team_id, calculation_date
-            )
+            return await self._calculate_recent_performance(session, team_id, calculation_date)
 
     async def _calculate_recent_performance(
         self, session: AsyncSession, team_id: int, calculation_date: datetime
@@ -97,9 +93,7 @@ class FeatureCalculator:
         recent_matches = result.scalars().all()
 
         # 初始化特征
-        features = RecentPerformanceFeatures(
-            team_id=team_id, calculation_date=calculation_date
-        )
+        features = RecentPerformanceFeatures(team_id=team_id, calculation_date=calculation_date)
 
         wins = draws = losses = 0
         goals_for = goals_against = points = 0
@@ -312,13 +306,9 @@ class FeatureCalculator:
         """
         if session is None:
             async with self.db_manager.get_async_session() as session:
-                return await self._calculate_odds_features(
-                    session, match_id, calculation_date
-                )
+                return await self._calculate_odds_features(session, match_id, calculation_date)
         else:
-            return await self._calculate_odds_features(
-                session, match_id, calculation_date
-            )
+            return await self._calculate_odds_features(session, match_id, calculation_date)
 
     async def _calculate_odds_features(
         self, session: AsyncSession, match_id: int, calculation_date: datetime
@@ -363,25 +353,19 @@ class FeatureCalculator:
             features.min_home_odds = Decimal(str(min(home_odds_values)))
             features.odds_range_home = max(home_odds_values) - min(home_odds_values)
             features.odds_variance_home = (
-                statistics.variance(home_odds_values)
-                if len(home_odds_values) > 1
-                else 0.0
+                statistics.variance(home_odds_values) if len(home_odds_values) > 1 else 0.0
             )
 
         if draw_odds_values:
             features.draw_odds_avg = Decimal(str(statistics.mean(draw_odds_values)))
             features.odds_variance_draw = (
-                statistics.variance(draw_odds_values)
-                if len(draw_odds_values) > 1
-                else 0.0
+                statistics.variance(draw_odds_values) if len(draw_odds_values) > 1 else 0.0
             )
 
         if away_odds_values:
             features.away_odds_avg = Decimal(str(statistics.mean(away_odds_values)))
             features.odds_variance_away = (
-                statistics.variance(away_odds_values)
-                if len(away_odds_values) > 1
-                else 0.0
+                statistics.variance(away_odds_values) if len(away_odds_values) > 1 else 0.0
             )
 
         # 计算隐含概率
@@ -428,9 +412,7 @@ class FeatureCalculator:
                     match_entity.away_team_id,
                     calculation_date,
                 ),
-                self._calculate_odds_features(
-                    session, match_entity.match_id, calculation_date
-                ),
+                self._calculate_odds_features(session, match_entity.match_id, calculation_date),
             ]
 
             results = await asyncio.gather(*tasks)
@@ -466,9 +448,7 @@ class FeatureCalculator:
             team_entity.team_id, calculation_date
         )
 
-        return AllTeamFeatures(
-            team_entity=team_entity, recent_performance=recent_performance
-        )
+        return AllTeamFeatures(team_entity=team_entity, recent_performance=recent_performance)
 
     async def batch_calculate_team_features(
         self, team_ids: List[int], calculation_date: Optional[datetime] = None

@@ -8,18 +8,12 @@
 # 🔧 首先设置警告过滤器，确保日志输出清洁
 import warnings
 
-try:
-    import marshmallow.warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        category=marshmallow.warnings.ChangedInMarshmallow4Warning,
-        message=".*Number.*field should not be instantiated.*",
-    )
-except ImportError:
-    warnings.filterwarnings(
-        "ignore", message=".*Number.*field.*should.*not.*be.*instantiated.*"
-    )
+# Marshmallow 4.x 已经移除了 warnings 模块
+warnings.filterwarnings(
+    "ignore",
+    message=".*Number.*field.*should.*not.*be.*instantiated.*",
+    category=DeprecationWarning
+)
 
 import json
 import os

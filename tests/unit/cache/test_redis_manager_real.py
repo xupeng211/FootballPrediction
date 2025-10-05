@@ -3,10 +3,11 @@ Redis管理器真实实现测试
 基于实际的RedisManager实现创建测试
 """
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.cache.redis_manager import RedisManager, CacheKeyManager
+import pytest
+
+from src.cache.redis_manager import CacheKeyManager, RedisManager
 
 
 @pytest.mark.unit
@@ -414,9 +415,7 @@ class TestRedisManager:
         """测试同步获取值错误处理"""
         import redis
 
-        redis_manager._sync_client.get.side_effect = redis.ConnectionError(
-            "Connection lost"
-        )
+        redis_manager._sync_client.get.side_effect = redis.ConnectionError("Connection lost")
 
         result = redis_manager.get("test_key", default="default")
 
@@ -427,9 +426,7 @@ class TestRedisManager:
         """测试同步设置值错误处理"""
         import redis
 
-        redis_manager._sync_client.setex.side_effect = redis.ConnectionError(
-            "Connection lost"
-        )
+        redis_manager._sync_client.setex.side_effect = redis.ConnectionError("Connection lost")
 
         result = redis_manager.set("test_key", "test_value")
 
@@ -441,9 +438,7 @@ class TestRedisManager:
         """测试异步获取值错误处理"""
         import redis
 
-        redis_manager._async_client.get.side_effect = redis.ConnectionError(
-            "Connection lost"
-        )
+        redis_manager._async_client.get.side_effect = redis.ConnectionError("Connection lost")
 
         result = await redis_manager.aget("test_key", default="default")
 
@@ -455,9 +450,7 @@ class TestRedisManager:
         """测试异步设置值错误处理"""
         import redis
 
-        redis_manager._async_client.setex.side_effect = redis.ConnectionError(
-            "Connection lost"
-        )
+        redis_manager._async_client.setex.side_effect = redis.ConnectionError("Connection lost")
 
         result = await redis_manager.aset("test_key", "test_value")
 
@@ -477,9 +470,7 @@ class TestRedisManager:
 
                 assert redis_manager._sync_pool is not None
                 assert redis_manager._sync_client is mock_redis_instance
-                redis_manager.logger.info.assert_called_with(
-                    "同步Redis连接池初始化成功"
-                )
+                redis_manager.logger.info.assert_called_with("同步Redis连接池初始化成功")
 
     def test_init_sync_pool_error(self, redis_manager):
         """测试初始化同步连接池错误"""
@@ -504,9 +495,7 @@ class TestRedisManager:
 
                 assert redis_manager._async_pool is not None
                 assert redis_manager._async_client is mock_redis_instance
-                redis_manager.logger.info.assert_called_with(
-                    "异步Redis连接池初始化成功"
-                )
+                redis_manager.logger.info.assert_called_with("异步Redis连接池初始化成功")
 
     @pytest.mark.asyncio
     async def test_init_async_pool_error(self, redis_manager):

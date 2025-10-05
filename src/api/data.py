@@ -30,9 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/matches/{match_id}/features")
-async def get_match_features(
-    match_id: int, session: AsyncSession = Depends(get_async_session)
-):
+async def get_match_features(match_id: int, session: AsyncSession = Depends(get_async_session)):
     """
     获取比赛特征数据
 
@@ -94,9 +92,7 @@ async def get_match_features(
 
         # 处理特征数据
         for feature in features_list:
-            team_type = (
-                "home_team" if feature.team_type.value == "home" else "away_team"
-            )
+            team_type = "home_team" if feature.team_type.value == "home" else "away_team"
             response_data["features"][team_type] = {
                 "team_id": feature.team_id,
                 "recent_form": {
@@ -371,9 +367,7 @@ async def get_team_recent_stats(
             stats["matches"].append(
                 {
                     "match_id": match.id,
-                    "opponent_team_id": (
-                        match.away_team_id if is_home else match.home_team_id
-                    ),
+                    "opponent_team_id": (match.away_team_id if is_home else match.home_team_id),
                     "is_home": is_home,
                     "match_time": match.match_time.isoformat(),
                     "score": f"{team_score}-{opponent_score}",
@@ -464,9 +458,7 @@ async def get_dashboard_data(session: AsyncSession = Depends(get_async_session))
                         "model_name": pred.model_name,
                         "predicted_result": pred.predicted_result.value,
                         "confidence": (
-                            float(pred.confidence_score)
-                            if pred.confidence_score
-                            else None
+                            float(pred.confidence_score) if pred.confidence_score else None
                         ),
                         "predicted_at": (
                             pred.predicted_at.isoformat()
@@ -480,9 +472,7 @@ async def get_dashboard_data(session: AsyncSession = Depends(get_async_session))
             "data_quality": {
                 "overall_status": quality_report.get(str("overall_status"), "unknown"),
                 "quality_score": quality_report.get(str("quality_score"), 0),
-                "anomalies_count": quality_report.get(str("anomalies"), {}).get(
-                    str("count"), 0
-                ),
+                "anomalies_count": quality_report.get(str("anomalies"), {}).get(str("count"), 0),
                 "last_check": quality_report.get("report_time"),
             },
             "system_health": system_health,
@@ -536,12 +526,8 @@ async def get_system_health(session: AsyncSession) -> Dict[str, Any]:
         return {
             "database": db_health,
             "data_collection": collection_health,
-            "last_collection": (
-                recent_logs[0].created_at.isoformat() if recent_logs else None
-            ),
-            "recent_failures": len(
-                [log for log in recent_logs if log.status == "failed"]
-            ),
+            "last_collection": (recent_logs[0].created_at.isoformat() if recent_logs else None),
+            "recent_failures": len([log for log in recent_logs if log.status == "failed"]),
         }
 
     except Exception as e:

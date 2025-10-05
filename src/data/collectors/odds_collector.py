@@ -115,9 +115,7 @@ class OddsCollector(DataCollector):
             # 按比赛采集赔率数据
             for match_id in match_ids:
                 try:
-                    match_odds = await self._collect_match_odds(
-                        match_id, bookmakers, markets
-                    )
+                    match_odds = await self._collect_match_odds(match_id, bookmakers, markets)
 
                     # 处理每个赔率数据
                     for odds_data in match_odds:
@@ -125,9 +123,7 @@ class OddsCollector(DataCollector):
                             # 时间窗口去重检查
                             odds_key = self._generate_odds_key(odds_data)
                             if odds_key in self._recent_odds_keys:
-                                self.logger.debug(
-                                    f"Skipping duplicate odds: {odds_key}"
-                                )
+                                self.logger.debug(f"Skipping duplicate odds: {odds_key}")
                                 continue
 
                             # 赔率变化检测
@@ -140,9 +136,7 @@ class OddsCollector(DataCollector):
                                     success_count += 1
                                 else:
                                     error_count += 1
-                                    error_messages.append(
-                                        f"Invalid odds data: {odds_data}"
-                                    )
+                                    error_messages.append(f"Invalid odds data: {odds_data}")
                             else:
                                 self.logger.debug(f"No odds change for: {odds_key}")
 
@@ -153,9 +147,7 @@ class OddsCollector(DataCollector):
 
                 except Exception as e:
                     error_count += 1
-                    error_messages.append(
-                        f"Error collecting match {match_id}: {str(e)}"
-                    )
+                    error_messages.append(f"Error collecting match {match_id}: {str(e)}")
                     self.logger.error(f"Error collecting match {match_id}: {str(e)}")
 
             # 保存到Bronze层原始数据表
@@ -318,8 +310,7 @@ class OddsCollector(DataCollector):
         # 基于比赛、博彩公司、市场类型、时间窗口生成键
         timestamp = datetime.now()
         time_window = timestamp.replace(
-            minute=(timestamp.minute // self.time_window_minutes)
-            * self.time_window_minutes,
+            minute=(timestamp.minute // self.time_window_minutes) * self.time_window_minutes,
             second=0,
             microsecond=0,
         )
@@ -359,9 +350,7 @@ class OddsCollector(DataCollector):
                 last_odds = self._last_odds_values[odds_id]
                 # 检查是否有任何赔率发生变化
                 for name, value in current_odds.items():
-                    if name not in last_odds or abs(last_odds[name] - value) > Decimal(
-                        "0.01"
-                    ):
+                    if name not in last_odds or abs(last_odds[name] - value) > Decimal("0.01"):
                         self._last_odds_values[odds_id] = current_odds
                         return True
                 return False
@@ -374,9 +363,7 @@ class OddsCollector(DataCollector):
             self.logger.error(f"Failed to check odds change: {str(e)}")
             return True  # 出错时默认认为有变化
 
-    async def _clean_odds_data(
-        self, raw_odds: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    async def _clean_odds_data(self, raw_odds: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         清洗和标准化赔率数据
 

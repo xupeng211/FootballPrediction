@@ -5,7 +5,7 @@
 # Aligned with Black formatter and project standards
 
 # Maximum line length (aligned with Black and pyproject.toml)
-max-line-length = 88
+max-line-length = 100
 
 # Exclude directories
 exclude =

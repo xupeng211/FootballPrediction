@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -96,15 +96,29 @@ async def _collect_database_health() -> Dict[str, Any]:
     description="检查API、数据库、缓存等服务状态",
     response_model=HealthCheckResponse,
 )
-async def health_check() -> Dict[str, Any]:
+async def health_check(
+    check_db: Optional[bool] = Query(None, description="是否执行数据库健康检查")
+) -> Dict[str, Any]:
     """
     系统健康检查端点
+
+    Args:
+        check_db: 是否执行数据库健康检查（覆盖MINIMAL_HEALTH_MODE设置）
 
     Returns:
         Dict[str, Any]: 系统健康状态信息
     """
     start_time = time.time()
-    logger.info("健康检查请求: minimal_mode=%s", MINIMAL_HEALTH_MODE)
+
+    # 处理check_db参数
+    force_db_check = check_db is not None
+    if force_db_check:
+        minimal_mode = not check_db
+        logger.info("健康检查请求: minimal_mode=%s (check_db=%s)", minimal_mode, check_db)
+    else:
+        minimal_mode = MINIMAL_HEALTH_MODE
+        logger.info("健康检查请求: minimal_mode=%s", minimal_mode)
+
     health_status: Dict[str, Any] = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -119,7 +133,7 @@ async def health_check() -> Dict[str, Any]:
         health_status["mode"] = "full" if optional_checks_enabled else "minimal"
 
         # 检查数据库连接
-        if MINIMAL_HEALTH_MODE:
+        if minimal_mode:
             health_status["checks"]["database"] = _optional_check_skipped("database")
         else:
             health_status["checks"]["database"] = await _collect_database_health()
@@ -168,9 +182,7 @@ async def health_check() -> Dict[str, Any]:
         health_status["status"] = "unhealthy"
         health_status["error"] = str(e)
 
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_status
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_status)
 
 
 @router.get(
@@ -220,9 +232,7 @@ async def readiness_check() -> Dict[str, Any]:
     # 判断整体就绪状态
     all_healthy = all(check.get(str("healthy"), False) for check in checks.values())
 
-    status_code = (
-        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
-    )
+    status_code = status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
 
     result = {
         "ready": all_healthy,
@@ -354,9 +364,7 @@ async def _check_kafka() -> Dict[str, Any]:
                     "status": "healthy",
                     "details": {
                         "message": "Kafka连接正常",
-                        "bootstrap_servers": config_snapshot.get(
-                            "bootstrap.servers", "unknown"
-                        ),
+                        "bootstrap_servers": config_snapshot.get("bootstrap.servers", "unknown"),
                         "topics": topics,
                     },
                 }

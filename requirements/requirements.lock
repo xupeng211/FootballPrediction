@@ -78,7 +78,7 @@ cachetools==5.5.2
     #   mlflow-skinny
 celery==5.4.0
     # via -r /home/user/projects/FootballPrediction/requirements/base.in
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   geventhttpclient
     #   httpcore

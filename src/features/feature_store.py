@@ -337,9 +337,7 @@ class FootballFeatureStore:
 
         try:
             # 获取在线特征
-            result = self.store.get_online_features(
-                features=feature_refs, entity_rows=entity_rows
-            )
+            result = self.store.get_online_features(features=feature_refs, entity_rows=entity_rows)
 
             return result.to_df()
 
@@ -381,9 +379,7 @@ class FootballFeatureStore:
             print(f"获取历史特征失败: {e}")
             return pd.DataFrame()
 
-    async def push_features_to_online_store(
-        self, feature_view_name: str, df: pd.DataFrame
-    ) -> bool:
+    async def push_features_to_online_store(self, feature_view_name: str, df: pd.DataFrame) -> bool:
         """
         推送特征到在线存储
 
@@ -458,9 +454,7 @@ class FootballFeatureStore:
             )
 
             # 推送到在线存储
-            return await self.push_features_to_online_store(
-                "team_recent_performance", df
-            )
+            return await self.push_features_to_online_store("team_recent_performance", df)
 
         except Exception as e:
             print(f"计算并存储球队特征失败: {e}")
@@ -542,12 +536,8 @@ class FootballFeatureStore:
             )
 
             # 推送到在线存储
-            h2h_success = await self.push_features_to_online_store(
-                "historical_matchup", h2h_df
-            )
-            odds_success = await self.push_features_to_online_store(
-                "odds_features", odds_df
-            )
+            h2h_success = await self.push_features_to_online_store("historical_matchup", h2h_df)
+            odds_success = await self.push_features_to_online_store("odds_features", odds_df)
 
             return h2h_success and odds_success
 
@@ -621,16 +611,12 @@ class FootballFeatureStore:
                     h2h_features.to_dict("records")[0] if not h2h_features.empty else {}
                 ),
                 "odds_features": (
-                    odds_features.to_dict("records")[0]
-                    if not odds_features.empty
-                    else {}
+                    odds_features.to_dict("records")[0] if not odds_features.empty else {}
                 ),
             }
 
             # 将特征数据存入缓存
-            await self.cache_manager.aset(
-                cache_key, features, cache_type="match_features"
-            )
+            await self.cache_manager.aset(cache_key, features, cache_type="match_features")
 
             return features
 
@@ -665,9 +651,7 @@ class FootballFeatureStore:
 
                 from ..database.models.match import Match
 
-                matches_query = select(Match).where(
-                    Match.match_time.between(start_date, end_date)
-                )
+                matches_query = select(Match).where(Match.match_time.between(start_date, end_date))
                 result = await session.execute(matches_query)
                 matches = result.scalars().all()
 
@@ -683,9 +667,7 @@ class FootballFeatureStore:
                         )
 
                         # 计算并存储比赛特征
-                        success = await self.calculate_and_store_match_features(
-                            match_entity
-                        )
+                        success = await self.calculate_and_store_match_features(match_entity)
                         if success:
                             stats["features_stored"] += 1
 

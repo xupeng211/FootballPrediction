@@ -4,10 +4,11 @@
 测试数据处理服务的核心功能，使用简化的测试方法
 """
 
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pandas as pd
+import pytest
 
 from src.services.data_processing import DataProcessingService
 
@@ -86,12 +87,8 @@ class TestDataProcessingServiceSimple:
         await service.initialize()
 
         # Mock相关方法
-        service.data_cleaner.clean_match_data = MagicMock(
-            return_value=sample_match_data
-        )
-        service.missing_handler.handle_missing_values = MagicMock(
-            return_value=sample_match_data
-        )
+        service.data_cleaner.clean_match_data = MagicMock(return_value=sample_match_data)
+        service.missing_handler.handle_missing_values = MagicMock(return_value=sample_match_data)
         service.data_lake.store = MagicMock(return_value=True)
 
         result = await service.process_raw_match_data(sample_match_data)
@@ -114,9 +111,7 @@ class TestDataProcessingServiceSimple:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 2
 
-    async def test_process_raw_match_data_uninitialized(
-        self, service, sample_match_data
-    ):
+    async def test_process_raw_match_data_uninitialized(self, service, sample_match_data):
         """测试未初始化时处理数据"""
         service.data_cleaner = None
 
@@ -155,9 +150,7 @@ class TestDataProcessingServiceSimple:
         )
 
         # Mock处理方法
-        service.missing_handler.handle_missing_features = AsyncMock(
-            return_value=features_df
-        )
+        service.missing_handler.handle_missing_features = AsyncMock(return_value=features_df)
 
         result = await service.process_features_data(123, features_df)
 
@@ -271,9 +264,7 @@ class TestDataProcessingServiceSimple:
 
         mock_session.query = mock_query_func
         service.db_manager.get_session = MagicMock()
-        service.db_manager.get_session.return_value.__enter__.return_value = (
-            mock_session
-        )
+        service.db_manager.get_session.return_value.__enter__.return_value = mock_session
         service.db_manager.get_session.return_value.__exit__.return_value = None
 
         status = await service.get_bronze_layer_status()
@@ -370,9 +361,7 @@ class TestDataProcessingServiceSimple:
         result = await service.cache_processing_results(cache_key, result_data)
 
         assert result is True
-        service.cache_manager.set_json.assert_called_once_with(
-            cache_key, result_data, ttl=3600
-        )
+        service.cache_manager.set_json.assert_called_once_with(cache_key, result_data, ttl=3600)
 
     async def test_get_cached_results(self, service):
         """测试获取缓存结果"""
@@ -398,9 +387,7 @@ class TestDataProcessingServiceSimple:
         data_list = [{"id": 1}, {"id": 2}, {"id": 3}, "text_data", 123]
 
         # Mock处理文本方法
-        service.process_text = AsyncMock(
-            return_value={"text": "text_data", "processed": True}
-        )
+        service.process_text = AsyncMock(return_value={"text": "text_data", "processed": True})
 
         results = await service.process_batch(data_list)
 
@@ -446,9 +433,7 @@ class TestDataProcessingServiceSimple:
         async def process_func(data):
             return {"processed": True, "data": data}
 
-        result = await service.process_with_retry(
-            process_func, {"test": "data"}, max_retries=3
-        )
+        result = await service.process_with_retry(process_func, {"test": "data"}, max_retries=3)
 
         assert result["processed"] is True
 
@@ -459,9 +444,7 @@ class TestDataProcessingServiceSimple:
             raise ValueError("Processing failed")
 
         with pytest.raises(RuntimeError):
-            await service.process_with_retry(
-                failing_process_func, {"test": "data"}, max_retries=2
-            )
+            await service.process_with_retry(failing_process_func, {"test": "data"}, max_retries=2)
 
     # === 文本处理测试 ===
 
@@ -529,9 +512,7 @@ class TestDataProcessingServiceSimple:
         table_name = "processed_matches"
 
         # Mock存储失败，但mock其他存储方式成功
-        service.data_lake.store_dataframe = MagicMock(
-            side_effect=Exception("Storage failed")
-        )
+        service.data_lake.store_dataframe = MagicMock(side_effect=Exception("Storage failed"))
         # Mock bulk_insert也失败，但data_lake.store_dataframe会尝试
         service.db_manager.bulk_insert = MagicMock(side_effect=Exception("DB failed"))
 

@@ -118,12 +118,8 @@ class ScheduledTask:
             "max_retries": self.max_retries,
             "timeout": self.timeout,
             "description": self.description,
-            "last_run_time": (
-                self.last_run_time.isoformat() if self.last_run_time else None
-            ),
-            "next_run_time": (
-                self.next_run_time.isoformat() if self.next_run_time else None
-            ),
+            "last_run_time": (self.last_run_time.isoformat() if self.last_run_time else None),
+            "next_run_time": (self.next_run_time.isoformat() if self.next_run_time else None),
             "is_running": self.is_running,
             "retry_count": self.retry_count,
             "last_error": self.last_error,
@@ -376,9 +372,7 @@ class TaskScheduler:
                     logger.info(f"发现 {len(ready_tasks)} 个待执行任务")
 
                     # 控制并发数量
-                    running_count = sum(
-                        1 for task in self.tasks.values() if task.is_running
-                    )
+                    running_count = sum(1 for task in self.tasks.values() if task.is_running)
                     available_slots = self.max_concurrent_tasks - running_count
 
                     # 执行任务（限制并发数）
@@ -492,15 +486,11 @@ class TaskScheduler:
                 "scheduler_status": {
                     "is_running": self.is_running,
                     "total_tasks": len(self.tasks),
-                    "running_tasks": sum(
-                        1 for task in self.tasks.values() if task.is_running
-                    ),
+                    "running_tasks": sum(1 for task in self.tasks.values() if task.is_running),
                     "check_interval": self.check_interval,
                     "max_concurrent_tasks": self.max_concurrent_tasks,
                 },
-                "tasks": {
-                    task_id: task.to_dict() for task_id, task in self.tasks.items()
-                },
+                "tasks": {task_id: task.to_dict() for task_id, task in self.tasks.items()},
             }
 
     def update_task_schedule(self, task_id: str, new_cron_expression: str) -> bool:

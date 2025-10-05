@@ -44,13 +44,9 @@ class Predictions(BaseModel):
         comment="比赛ID",
     )
 
-    model_name: Mapped[str] = mapped_column(
-        String(100), nullable=False, comment="模型名称"
-    )
+    model_name: Mapped[str] = mapped_column(String(100), nullable=False, comment="模型名称")
 
-    model_version: Mapped[str] = mapped_column(
-        String(50), nullable=False, comment="模型版本"
-    )
+    model_version: Mapped[str] = mapped_column(String(50), nullable=False, comment="模型版本")
 
     # 预测结果
     predicted_result: Mapped[PredictedResult] = mapped_column(
@@ -96,18 +92,14 @@ class Predictions(BaseModel):
     )
 
     # 预测时间
-    predicted_at: Mapped[DateTime] = mapped_column(
-        DateTime, nullable=False, comment="预测时间"
-    )
+    predicted_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False, comment="预测时间")
 
     # 验证相关字段
     actual_result: Mapped[Optional[str]] = mapped_column(
         String(10), nullable=True, comment="实际比赛结果"
     )
 
-    is_correct: Mapped[Optional[bool]] = mapped_column(
-        nullable=True, comment="预测是否正确"
-    )
+    is_correct: Mapped[Optional[bool]] = mapped_column(nullable=True, comment="预测是否正确")
 
     verified_at: Mapped[Optional[DateTime]] = mapped_column(
         DateTime, nullable=True, comment="验证时间"
@@ -189,10 +181,7 @@ class Predictions(BaseModel):
 
     def get_predicted_score(self) -> Optional[str]:
         """获取预测比分"""
-        if (
-            self.predicted_home_score is not None
-            and self.predicted_away_score is not None
-        ):
+        if self.predicted_home_score is not None and self.predicted_away_score is not None:
             return f"{self.predicted_home_score:.1f}-{self.predicted_away_score:.1f}"
         return None
 
@@ -202,11 +191,7 @@ class Predictions(BaseModel):
             if isinstance(self.feature_importance, str):
                 return json.loads(self.feature_importance)
             # 如果是JSON类型，直接返回
-            return (
-                self.feature_importance
-                if isinstance(self.feature_importance, dict)
-                else None
-            )
+            return self.feature_importance if isinstance(self.feature_importance, dict) else None
         return None
 
     def get_top_features(self, top_n: int = 5) -> List[Dict[str, Any]]:
@@ -224,9 +209,7 @@ class Predictions(BaseModel):
             return []
 
         # 按重要性排序
-        sorted_features = sorted(
-            feature_importance.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
 
         return [
             {
@@ -273,9 +256,7 @@ class Predictions(BaseModel):
             "confidence_level": self.prediction_confidence_level,
         }
 
-    def get_betting_recommendations(
-        self, odds_data: Dict[str, float]
-    ) -> List[Dict[str, Any]]:
+    def get_betting_recommendations(self, odds_data: Dict[str, float]) -> List[Dict[str, Any]]:
         """
         基于预测概率和赔率给出投注建议
 
@@ -340,9 +321,7 @@ class Predictions(BaseModel):
             "key_factors": top_features,
             "additional_predictions": {
                 "over_2_5_goals": (
-                    float(self.over_under_prediction)
-                    if self.over_under_prediction
-                    else None
+                    float(self.over_under_prediction) if self.over_under_prediction else None
                 ),
                 "both_teams_score": (
                     float(self.btts_probability) if self.btts_probability else None

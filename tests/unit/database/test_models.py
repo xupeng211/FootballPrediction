@@ -7,4 +7,3 @@ import pytest
 class TestDatabaseModels:
     """数据库模型测试"""
 
-    pass

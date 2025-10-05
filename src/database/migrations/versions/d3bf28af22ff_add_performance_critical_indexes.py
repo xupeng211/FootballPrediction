@@ -27,24 +27,8 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def upgrade() -> None:
-    """添加性能关键索引"""
-
-    # 检查是否在离线模式
-    if context.is_offline_mode():
-        print("⚠️  离线模式：跳过性能索引创建")
-        op.execute("-- offline mode: skipped performance indexes creation")
-        return
-
-    # 获取数据库连接以执行原生SQL
-    conn = op.get_bind()
-
-    print("开始添加性能关键索引...")
-
-    # ========================================
-    # 1. 预测表索引优化
-    # ========================================
-
+def _create_predictions_indexes(conn) -> None:
+    """创建预测表索引"""
     print("1. 创建预测表性能索引...")
 
     # 创建时间降序索引（用于最近预测查询）
@@ -75,10 +59,34 @@ def upgrade() -> None:
     except Exception as e:
         print(f"   ✗ idx_predictions_match_created 创建失败: {e}")
 
+
+def upgrade() -> None:
+    """添加性能关键索引"""
+
+    # 检查是否在离线模式
+    if context.is_offline_mode():
+        print("⚠️  离线模式：跳过性能索引创建")
+        op.execute("-- offline mode: skipped performance indexes creation")
+        return
+
+    # 获取数据库连接以执行原生SQL
+    conn = op.get_bind()
+
+    print("开始添加性能关键索引...")
+
+    # ========================================
+    # 1. 预测表索引优化
+    # ========================================
+    _create_predictions_indexes(conn)
+
     # ========================================
     # 2. 比赛表复合索引优化
     # ========================================
+    _create_matches_indexes(conn)
 
+
+def _create_matches_indexes(conn) -> None:
+    """创建比赛表索引"""
     print("2. 创建比赛表复合索引...")
 
     # 状态和时间复合索引（优化查询即将开始的比赛）
@@ -123,10 +131,9 @@ def upgrade() -> None:
     except Exception as e:
         print(f"   ✗ idx_matches_home_time 创建失败: {e}")
 
-    # ========================================
-    # 3. 特征表索引优化
-    # ========================================
 
+def _create_features_indexes(conn) -> None:
+    """创建特征表索引"""
     print("3. 创建特征表性能索引...")
 
     # 匹配ID和创建时间复合索引
@@ -157,10 +164,9 @@ def upgrade() -> None:
     except Exception as e:
         print(f"   ✗ idx_features_type 创建失败: {e}")
 
-    # ========================================
-    # 4. 数据质量监控索引
-    # ========================================
 
+def _create_data_quality_indexes(conn) -> None:
+    """创建数据质量监控索引"""
     print("4. 创建数据质量监控索引...")
 
     # 数据质量日志时间索引
@@ -191,10 +197,9 @@ def upgrade() -> None:
     except Exception as e:
         print(f"   ✗ idx_data_quality_status 创建失败: {e}")
 
-    # ========================================
-    # 5. 审计日志索引
-    # ========================================
 
+def _create_audit_logs_indexes(conn) -> None:
+    """创建审计日志索引"""
     print("5. 创建审计日志索引...")
 
     # 审计日志时间索引
@@ -224,6 +229,21 @@ def upgrade() -> None:
         print("   ✓ idx_audit_logs_user 创建成功")
     except Exception as e:
         print(f"   ✗ idx_audit_logs_user 创建失败: {e}")
+
+    # ========================================
+    # 3. 特征表索引优化
+    # ========================================
+    _create_features_indexes(conn)
+
+    # ========================================
+    # 4. 数据质量监控索引
+    # ========================================
+    _create_data_quality_indexes(conn)
+
+    # ========================================
+    # 5. 审计日志索引
+    # ========================================
+    _create_audit_logs_indexes(conn)
 
     # 审计日志操作类型索引
     try:

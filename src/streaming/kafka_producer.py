@@ -121,9 +121,7 @@ class FootballKafkaProducer:
                 f"Partition: {msg.partition()}, Offset: {msg.offset()}"
             )
 
-    async def send_match_data(
-        self, match_data: Dict[str, Any], key: Optional[str] = None
-    ) -> bool:
+    async def send_match_data(self, match_data: Dict[str, Any], key: Optional[str] = None) -> bool:
         """
         发送比赛数据到Kafka流
 
@@ -161,18 +159,14 @@ class FootballKafkaProducer:
             # 异步刷新（不阻塞）
             self.producer.poll(0)
 
-            self.logger.info(
-                f"比赛数据已发送到Kafka - Match ID: {match_data.get('match_id')}"
-            )
+            self.logger.info(f"比赛数据已发送到Kafka - Match ID: {match_data.get('match_id')}")
             return True
 
         except Exception as e:
             self.logger.error(f"发送比赛数据失败: {e}")
             return False
 
-    async def send_odds_data(
-        self, odds_data: Dict[str, Any], key: Optional[str] = None
-    ) -> bool:
+    async def send_odds_data(self, odds_data: Dict[str, Any], key: Optional[str] = None) -> bool:
         """
         发送赔率数据到Kafka流
 
@@ -272,9 +266,7 @@ class FootballKafkaProducer:
             self.logger.error(f"发送比分数据失败: {e}")
             return False
 
-    async def send_batch(
-        self, data_list: List[Dict[str, Any]], data_type: str
-    ) -> Dict[str, int]:
+    async def send_batch(self, data_list: List[Dict[str, Any]], data_type: str) -> Dict[str, int]:
         """
         批量发送数据
 
@@ -478,11 +470,7 @@ class FootballKafkaProducer:
                 "ht_away_score",
             ]
             for field in score_fields:
-                if (
-                    field in data
-                    and data[field] is not None
-                    and not isinstance(data[field], int)
-                ):
+                if field in data and data[field] is not None and not isinstance(data[field], int):
                     return False
 
             return True

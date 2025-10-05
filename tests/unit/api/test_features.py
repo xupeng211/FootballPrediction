@@ -11,10 +11,11 @@
 - GET /features/health - 特征服务健康检查
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pandas as pd
+import pytest
 
 
 class TestGetMatchFeatures:
@@ -65,9 +66,7 @@ class TestGetMatchFeatures:
                 )
 
                 # 发送请求
-                response = api_client_full.get(
-                    "/api/v1/features/12345?include_raw=true"
-                )
+                response = api_client_full.get("/api/v1/features/12345?include_raw=true")
 
         # 验证响应
         assert response.status_code == 200
@@ -619,9 +618,7 @@ class TestGetHistoricalFeatures:
         data = response.json()
         assert data["success"] is True
         assert data["data"]["feature_refs"] == ["feature1", "feature2"]
-        assert (
-            data["data"]["feature_count"] == 4
-        )  # match_id, team_id, feature1, feature2
+        assert data["data"]["feature_count"] == 4  # match_id, team_id, feature1, feature2
         assert data["data"]["record_count"] == 2
         assert len(data["data"]["features"]) == 2
         assert data["message"] == "成功获取历史特征数据"
@@ -679,9 +676,7 @@ class TestGetHistoricalFeatures:
         mock_session.execute.return_value = mock_match_result
 
         # 发送请求
-        response = api_client_full.get(
-            "/api/v1/features/historical/99999?feature_refs=feature1"
-        )
+        response = api_client_full.get("/api/v1/features/historical/99999?feature_refs=feature1")
 
         # 验证响应
         assert response.status_code == 404

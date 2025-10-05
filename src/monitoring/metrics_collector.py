@@ -11,14 +11,72 @@ import os
 import signal
 import sys
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from src.core.config import get_settings
 
-from .metrics_exporter import get_metrics_exporter
+from .metrics_exporter import MetricsExporter, get_metrics_exporter
 
 logger = logging.getLogger(__name__)
+
+# 向后兼容的别名
+PrometheusExporter = MetricsExporter
 _settings = get_settings()
+
+
+class StatsdExporter:
+    """StatsD导出器（模拟实现）"""
+
+    def __init__(self, host: str = "localhost", port: int = 8125):
+        self.host = host
+        self.port = port
+
+    def send(self, metric: str, value: float, metric_type: str = "g"):
+        """发送指标到StatsD（模拟实现）"""
+        logger.debug(f"StatsD: {metric}={value}|{metric_type}")
+
+
+class MetricsAggregator:
+    """指标聚合器"""
+
+    def __init__(self):
+        self.metrics = {}
+
+    def add(self, name: str, value: float, tags: Optional[Dict[str, str]] = None):
+        """添加指标"""
+        key = f"{name}:{hash(str(tags))}"
+        if key not in self.metrics:
+            self.metrics[key] = []
+        self.metrics[key].append(value)
+
+    def get_average(self, name: str, tags: Optional[Dict[str, str]] = None) -> float:
+        """获取平均值"""
+        key = f"{name}:{hash(str(tags))}"
+        values = self.metrics.get(key, [])
+        return sum(values) / len(values) if values else 0.0
+
+
+class MetricType(Enum):
+    """指标类型"""
+
+    COUNTER = "counter"
+    GAUGE = "gauge"
+    HISTOGRAM = "histogram"
+    SUMMARY = "summary"
+
+
+class MetricUnit(Enum):
+    """指标单位"""
+
+    COUNT = "count"
+    PERCENT = "percent"
+    MILLISECONDS = "milliseconds"
+    SECONDS = "seconds"
+    BYTES = "bytes"
+    REQUESTS_PER_SECOND = "requests_per_second"
+
+
 ENABLE_METRICS = bool(_settings.metrics_enabled)
 if ENABLE_METRICS and ("PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules):
     ENABLE_METRICS = False
@@ -143,9 +201,7 @@ class MetricsCollector:
                 # 收集所有指标
                 await self.metrics_exporter.collect_all_metrics()
 
-                collection_duration = (
-                    datetime.now() - collection_start
-                ).total_seconds()
+                collection_duration = (datetime.now() - collection_start).total_seconds()
                 logger.debug(f"指标收集完成，耗时: {collection_duration:.2f}秒")
 
                 # 等待下一次收集
@@ -202,9 +258,7 @@ class MetricsCollector:
         return {
             "running": self.running,
             "collection_interval": self.collection_interval,
-            "task_status": (
-                "running" if self._task and not self._task.done() else "stopped"
-            ),
+            "task_status": ("running" if self._task and not self._task.done() else "stopped"),
         }
 
     def collect_system_metrics(self) -> Dict[str, Any]:
