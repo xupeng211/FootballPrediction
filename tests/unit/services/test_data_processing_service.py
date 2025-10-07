@@ -8,14 +8,15 @@ import pytest
 from unittest.mock import Mock, patch
 
 # Mock外部依赖
-sys.modules['pandas'] = Mock()
-sys.modules['numpy'] = Mock()
-sys.modules['sklearn'] = Mock()
-sys.modules['sklearn.preprocessing'] = Mock()
-sys.modules['sklearn.impute'] = Mock()
+sys.modules["pandas"] = Mock()
+sys.modules["numpy"] = Mock()
+sys.modules["sklearn"] = Mock()
+sys.modules["sklearn.preprocessing"] = Mock()
+sys.modules["sklearn.impute"] = Mock()
 
 # 设置测试环境
 import os
+
 os.environ["TESTING"] = "true"
 
 from src.services.data_processing import DataProcessingService
@@ -35,24 +36,24 @@ class TestDataProcessingService:
         return {
             "teams": [
                 {"id": 1, "name": "Team A", "short_name": "TA"},
-                {"id": 2, "name": "Team B", "short_name": "TB"}
+                {"id": 2, "name": "Team B", "short_name": "TB"},
             ],
             "matches": [
                 {"id": 1, "home_team_id": 1, "away_team_id": 2, "date": "2024-01-01"},
-                {"id": 2, "home_team_id": 2, "away_team_id": 1, "date": "2024-01-02"}
+                {"id": 2, "home_team_id": 2, "away_team_id": 1, "date": "2024-01-02"},
             ],
             "predictions": [
                 {"id": 1, "match_id": 1, "predicted_outcome": "home_win"},
-                {"id": 2, "match_id": 2, "predicted_outcome": "draw"}
-            ]
+                {"id": 2, "match_id": 2, "predicted_outcome": "draw"},
+            ],
         }
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
         assert service is not None
-        assert hasattr(service, 'process_data')
-        assert hasattr(service, 'validate_data')
-        assert hasattr(service, 'transform_data')
+        assert hasattr(service, "process_data")
+        assert hasattr(service, "validate_data")
+        assert hasattr(service, "transform_data")
 
     def test_process_data_success(self, service, mock_data):
         """测试数据处理成功"""
@@ -111,7 +112,7 @@ class TestDataProcessingService:
         mock_df = Mock()
         mock_df.to_dict.return_value = mock_data
 
-        with patch('src.services.data_processing.pd.DataFrame', return_value=mock_df):
+        with patch("src.services.data_processing.pd.DataFrame", return_value=mock_df):
             result = service.transform_data(mock_data)
 
         # 验证转换结果
@@ -123,7 +124,9 @@ class TestDataProcessingService:
     def test_transform_data_with_features(self, service, mock_data):
         """测试数据转换 - 生成特征"""
         # Mock特征生成
-        service.generate_features = Mock(return_value={"feature1": 1.0, "feature2": 2.0})
+        service.generate_features = Mock(
+            return_value={"feature1": 1.0, "feature2": 2.0}
+        )
 
         service.transform_data(mock_data)
 
@@ -257,7 +260,7 @@ class TestDataProcessingService:
         batches = [
             {"id": 1, "data": mock_data},
             {"id": 2, "data": mock_data},
-            {"id": 3, "data": mock_data}
+            {"id": 3, "data": mock_data},
         ]
 
         # 并发处理
@@ -305,6 +308,7 @@ class TestDataProcessingService:
         """测试重试机制"""
         # Mock处理函数前两次失败，第三次成功
         call_count = 0
+
         def mock_process():
             nonlocal call_count
             call_count += 1

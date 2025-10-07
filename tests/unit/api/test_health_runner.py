@@ -9,10 +9,11 @@ import asyncio
 from unittest.mock import MagicMock
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入模块
 import importlib.util
+
 spec = importlib.util.spec_from_file_location("health", "src/api/health.py")
 health = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(health)
@@ -21,9 +22,9 @@ spec.loader.exec_module(health)
 def test_constants():
     """测试常量定义"""
     print("Testing constants...")
-    assert hasattr(health, '_app_start_time')
-    assert hasattr(health, 'router')
-    assert hasattr(health, 'ServiceCheckError')
+    assert hasattr(health, "_app_start_time")
+    assert hasattr(health, "router")
+    assert hasattr(health, "ServiceCheckError")
     assert isinstance(health._app_start_time, float)
     assert health._app_start_time > 0
     print("✓ Constants test passed")
@@ -61,8 +62,8 @@ def test_optional_checks_enabled():
     """测试_optional_checks_enabled函数"""
     print("Testing _optional_checks_enabled...")
     # 保存原始值
-    original_fast_fail = getattr(health, 'FAST_FAIL', True)
-    original_minimal = getattr(health, 'MINIMAL_HEALTH_MODE', False)
+    original_fast_fail = getattr(health, "FAST_FAIL", True)
+    original_minimal = getattr(health, "MINIMAL_HEALTH_MODE", False)
 
     # 测试不同组合
     test_cases = [
@@ -98,6 +99,7 @@ async def test_check_database():
 
     # 测试失败
     from sqlalchemy.exc import SQLAlchemyError
+
     mock_session.execute.side_effect = SQLAlchemyError("Connection failed")
     result = await health._check_database(mock_session)
     assert result["healthy"] is False
@@ -129,9 +131,9 @@ async def test_collect_database_health():
 def test_circuit_breakers():
     """测试熔断器定义"""
     print("Testing circuit breakers...")
-    assert hasattr(health, '_redis_circuit_breaker')
-    assert hasattr(health, '_kafka_circuit_breaker')
-    assert hasattr(health, '_mlflow_circuit_breaker')
+    assert hasattr(health, "_redis_circuit_breaker")
+    assert hasattr(health, "_kafka_circuit_breaker")
+    assert hasattr(health, "_mlflow_circuit_breaker")
 
     # 验证熔断器属性
     assert health._redis_circuit_breaker.failure_threshold == 3
@@ -150,7 +152,7 @@ def test_router_configuration():
     assert len(routes) > 0
 
     paths = [route.path for route in routes]
-    assert any(path in ['', '/'] for path in paths)
+    assert any(path in ["", "/"] for path in paths)
     print("✓ Router configuration test passed")
 
 
@@ -163,8 +165,8 @@ def test_error_details():
             "service": "Redis",
             "host": "localhost",
             "port": 6379,
-            "error_code": "ECONNREFUSED"
-        }
+            "error_code": "ECONNREFUSED",
+        },
     )
 
     assert error.details["service"] == "Redis"

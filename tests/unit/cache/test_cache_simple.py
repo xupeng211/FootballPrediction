@@ -9,7 +9,7 @@ import os
 import time
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestCacheSimple:
         """测试TTL缓存导入"""
         try:
             from src.cache.ttl_cache import TTLCache, CacheItem
+
             cache = TTLCache(max_size=100, ttl=60)
             assert cache is not None
             assert CacheItem is not None
@@ -30,6 +31,7 @@ class TestCacheSimple:
         """测试Redis管理器导入"""
         try:
             from src.cache.redis_manager import RedisManager, CacheKeyManager
+
             manager = RedisManager()
             key_manager = CacheKeyManager()
             assert manager is not None
@@ -46,11 +48,11 @@ class TestCacheSimple:
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试基本属性
-            assert hasattr(cache, 'get')
-            assert hasattr(cache, 'set')
-            assert hasattr(cache, 'delete')
-            assert hasattr(cache, 'clear')
-            assert hasattr(cache, 'size')
+            assert hasattr(cache, "get")
+            assert hasattr(cache, "set")
+            assert hasattr(cache, "delete")
+            assert hasattr(cache, "clear")
+            assert hasattr(cache, "size")
 
             # 测试基本操作
             cache.set("test_key", "test_value")
@@ -156,19 +158,19 @@ class TestCacheSimple:
             manager = RedisManager()
 
             # 验证方法存在
-            assert hasattr(manager, 'get')
-            assert hasattr(manager, 'set')
-            assert hasattr(manager, 'delete')
-            assert hasattr(manager, 'exists')
-            assert hasattr(manager, 'ping')
-            assert hasattr(manager, 'get_info')
+            assert hasattr(manager, "get")
+            assert hasattr(manager, "set")
+            assert hasattr(manager, "delete")
+            assert hasattr(manager, "exists")
+            assert hasattr(manager, "ping")
+            assert hasattr(manager, "get_info")
 
             # 验证异步方法存在
-            assert hasattr(manager, 'aget')
-            assert hasattr(manager, 'aset')
-            assert hasattr(manager, 'adelete')
-            assert hasattr(manager, 'aexists')
-            assert hasattr(manager, 'aping')
+            assert hasattr(manager, "aget")
+            assert hasattr(manager, "aset")
+            assert hasattr(manager, "adelete")
+            assert hasattr(manager, "aexists")
+            assert hasattr(manager, "aping")
 
         except Exception as e:
             pytest.skip(f"Cannot test RedisManager methods: {e}")
@@ -181,9 +183,9 @@ class TestCacheSimple:
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试统计属性
-            assert hasattr(cache, 'hits')
-            assert hasattr(cache, 'misses')
-            assert hasattr(cache, 'evictions')
+            assert hasattr(cache, "hits")
+            assert hasattr(cache, "misses")
+            assert hasattr(cache, "evictions")
 
             # 初始值应该为0
             assert cache.hits == 0
@@ -239,7 +241,7 @@ class TestCacheSimple:
                 "id": 123,
                 "name": "Test Match",
                 "teams": ["Team A", "Team B"],
-                "scores": {"home": 2, "away": 1}
+                "scores": {"home": 2, "away": 1},
             }
 
             # 存储复杂对象
@@ -271,8 +273,8 @@ class TestCacheSimple:
                 cache.set("persist_key", "persist_value")
 
                 # 测试保存方法存在
-                assert hasattr(cache, 'save_to_file')
-                assert hasattr(cache, 'load_from_file')
+                assert hasattr(cache, "save_to_file")
+                assert hasattr(cache, "load_from_file")
 
                 # 注意：不实际执行文件操作，只验证方法存在
 
@@ -293,7 +295,7 @@ class TestCacheSimple:
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试锁属性存在
-            assert hasattr(cache, '_lock')
+            assert hasattr(cache, "_lock")
 
             # 验证基本操作是线程安全的（仅测试属性）
             assert isinstance(cache._lock, type(threading.Lock()))

@@ -10,7 +10,7 @@ import sys
 # 设置测试环境
 os.environ["TESTING"] = "true"
 os.environ["ENVIRONMENT"] = "test"
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 
 @pytest.mark.unit
@@ -27,13 +27,13 @@ class TestSimpleFunctional:
             assert settings is not None
 
             # 测试环境变量
-            assert hasattr(settings, 'environment')
-            assert settings.environment == 'test'
+            assert hasattr(settings, "environment")
+            assert settings.environment == "test"
 
             # 测试配置转换为字典
-            if hasattr(settings, 'dict'):
+            if hasattr(settings, "dict"):
                 config_dict = settings.dict()
-            elif hasattr(settings, 'model_dump'):
+            elif hasattr(settings, "model_dump"):
                 config_dict = settings.model_dump()
             else:
                 config_dict = {}
@@ -49,7 +49,7 @@ class TestSimpleFunctional:
             from utils.time_utils import (
                 format_datetime,
                 parse_datetime,
-                get_current_time
+                get_current_time,
             )
 
             # 测试当前时间
@@ -72,11 +72,7 @@ class TestSimpleFunctional:
     def test_utils_dict_utils(self):
         """测试字典工具"""
         try:
-            from utils.dict_utils import (
-                deep_merge,
-                flatten_dict,
-                get_nested_value
-            )
+            from utils.dict_utils import deep_merge, flatten_dict, get_nested_value
 
             test_dict = {"a": {"b": {"c": 1}}}
 
@@ -106,7 +102,7 @@ class TestSimpleFunctional:
                 slugify,
                 camel_to_snake,
                 snake_to_camel,
-                truncate_string
+                truncate_string,
             )
 
             # 测试slugify
@@ -139,7 +135,7 @@ class TestSimpleFunctional:
                 validate_email,
                 validate_phone,
                 validate_url,
-                is_valid_json
+                is_valid_json,
             )
 
             # 测试邮箱验证
@@ -218,9 +214,9 @@ class TestSimpleFunctional:
             redis_manager = RedisManager()
 
             # 测试基本操作
-            assert hasattr(redis_manager, 'get')
-            assert hasattr(redis_manager, 'set')
-            assert hasattr(redis_manager, 'delete')
+            assert hasattr(redis_manager, "get")
+            assert hasattr(redis_manager, "set")
+            assert hasattr(redis_manager, "delete")
 
         except ImportError as e:
             pytest.skip(f"Redis cache not available: {e}")
@@ -234,11 +230,11 @@ class TestSimpleFunctional:
             service = BaseService()
 
             # 测试基本方法
-            if hasattr(service, 'get_service_name'):
+            if hasattr(service, "get_service_name"):
                 name = service.get_service_name()
                 assert isinstance(name, str)
 
-            if hasattr(service, 'is_healthy'):
+            if hasattr(service, "is_healthy"):
                 healthy = service.is_healthy()
                 assert isinstance(healthy, bool)
 
@@ -252,7 +248,7 @@ class TestSimpleFunctional:
                 hash_password,
                 verify_password,
                 generate_token,
-                encrypt_data
+                encrypt_data,
             )
 
             # 测试密码哈希
@@ -284,11 +280,7 @@ class TestSimpleFunctional:
     def test_utils_response(self):
         """测试响应工具"""
         try:
-            from utils.response import (
-                success_response,
-                error_response,
-                create_response
-            )
+            from utils.response import success_response, error_response, create_response
 
             # 测试成功响应
             if callable(success_response):
@@ -318,17 +310,17 @@ class TestSimpleFunctional:
 
             # 测试指标收集器
             collector = MetricsCollector()
-            if hasattr(collector, 'collect_metrics'):
+            if hasattr(collector, "collect_metrics"):
                 metrics = collector.collect_metrics()
                 assert isinstance(metrics, dict)
 
             # 测试系统监控
             monitor = SystemMonitor()
-            if hasattr(monitor, 'get_cpu_usage'):
+            if hasattr(monitor, "get_cpu_usage"):
                 cpu = monitor.get_cpu_usage()
                 assert isinstance(cpu, (int, float))
 
-            if hasattr(monitor, 'get_memory_usage'):
+            if hasattr(monitor, "get_memory_usage"):
                 memory = monitor.get_memory_usage()
                 assert isinstance(memory, (int, float))
 
@@ -346,10 +338,7 @@ class TestSimpleFunctional:
 
             # 测试任务创建
             if callable(Task):
-                task = Task(
-                    name="test_task",
-                    func=lambda: "test_result"
-                )
+                task = Task(name="test_task", func=lambda: "test_result")
                 assert task.name == "test_task"
 
         except ImportError as e:
@@ -363,13 +352,13 @@ class TestSimpleFunctional:
 
             # 测试Kafka消费者
             consumer = KafkaConsumer({"bootstrap.servers": "localhost"})
-            assert hasattr(consumer, 'consume')
-            assert hasattr(consumer, 'close')
+            assert hasattr(consumer, "consume")
+            assert hasattr(consumer, "close")
 
             # 测试Kafka生产者
             producer = KafkaProducer({"bootstrap.servers": "localhost"})
-            assert hasattr(producer, 'produce')
-            assert hasattr(producer, 'flush')
+            assert hasattr(producer, "produce")
+            assert hasattr(producer, "flush")
 
         except ImportError as e:
             pytest.skip(f"Streaming not available: {e}")
@@ -382,12 +371,12 @@ class TestSimpleFunctional:
 
             # 测试血缘报告器
             reporter = LineageReporter()
-            if hasattr(reporter, 'track_data_flow'):
+            if hasattr(reporter, "track_data_flow"):
                 reporter.track_data_flow("source", "target")
 
             # 测试元数据管理器
             manager = MetadataManager()
-            if hasattr(manager, 'store_metadata'):
+            if hasattr(manager, "store_metadata"):
                 manager.store_metadata("test", {"key": "value"})
 
         except ImportError as e:
@@ -401,13 +390,13 @@ class TestSimpleFunctional:
 
             # 测试特征计算器
             calculator = FeatureCalculator()
-            if hasattr(calculator, 'calculate_features'):
+            if hasattr(calculator, "calculate_features"):
                 features = calculator.calculate_features({"data": [1, 2, 3]})
                 assert isinstance(features, dict)
 
             # 测试特征存储
             store = FeatureStore()
-            if hasattr(store, 'get_features'):
+            if hasattr(store, "get_features"):
                 features = store.get_features("entity_id")
                 assert isinstance(features, dict)
 
@@ -422,13 +411,13 @@ class TestSimpleFunctional:
 
             # 测试数据质量监控器
             monitor = DataQualityMonitor()
-            if hasattr(monitor, 'check_quality'):
+            if hasattr(monitor, "check_quality"):
                 quality = monitor.check_quality({"test": "data"})
                 assert isinstance(quality, dict)
 
             # 测试异常检测器
             detector = AnomalyDetector()
-            if hasattr(detector, 'detect_anomalies'):
+            if hasattr(detector, "detect_anomalies"):
                 anomalies = detector.detect_anomalies([1, 2, 3, 100])
                 assert isinstance(anomalies, list)
 

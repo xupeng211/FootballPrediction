@@ -8,6 +8,7 @@ import datetime
 
 # 设置测试环境
 import os
+
 os.environ["TESTING"] = "true"
 
 
@@ -131,8 +132,8 @@ class TestTimeUtilsFunctional:
 
             # 测试周末判断
             saturday = datetime.date(2025, 10, 4)  # 周六
-            sunday = datetime.date(2025, 10, 5)    # 周日
-            monday = datetime.date(2025, 10, 6)    # 周一
+            sunday = datetime.date(2025, 10, 5)  # 周日
+            monday = datetime.date(2025, 10, 6)  # 周一
 
             assert is_weekend(saturday) is True
             assert is_weekend(sunday) is True
@@ -140,7 +141,7 @@ class TestTimeUtilsFunctional:
 
             # 测试工作日计算
             start = datetime.date(2025, 10, 1)  # 周三
-            end = datetime.date(2025, 10, 7)    # 周二
+            end = datetime.date(2025, 10, 7)  # 周二
             working_days = get_working_days(start, end)
             assert working_days == 5  # 周三到周二有5个工作日
 
@@ -154,7 +155,10 @@ class TestTimeUtilsFunctional:
         test_timestamp = int(time.time())
 
         try:
-            from src.utils.time_utils import timestamp_to_datetime, datetime_to_timestamp
+            from src.utils.time_utils import (
+                timestamp_to_datetime,
+                datetime_to_timestamp,
+            )
 
             # 时间戳转datetime
             dt = timestamp_to_datetime(test_timestamp)
@@ -293,7 +297,7 @@ class TestTimeUtilsFunctional:
             from src.utils.time_utils import (
                 parse_iso_datetime,
                 format_datetime,
-                time_ago
+                time_ago,
             )
 
             # 极端日期

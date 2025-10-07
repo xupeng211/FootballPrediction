@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import json
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -23,16 +23,16 @@ class TestMetricsCollectorFixed:
         try:
             from src.monitoring.metrics_collector import MetricsCollector
 
-            with patch('src.monitoring.metrics_collector.logger') as mock_logger:
+            with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
                 collector.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(collector, 'metrics')
-                assert hasattr(collector, 'collect_metric')
+                assert hasattr(collector, "metrics")
+                assert hasattr(collector, "collect_metric")
 
                 # 测试收集指标（不实际存储）
-                collector.collect_metric('test_metric', 1.0, {'tag': 'test'})
+                collector.collect_metric("test_metric", 1.0, {"tag": "test"})
                 # 验证日志被调用
                 mock_logger.debug.assert_called()
 
@@ -52,22 +52,24 @@ class TestMetricsCollectorFixed:
                     """添加指标"""
                     if timestamp is None:
                         timestamp = datetime.now()
-                    self.metrics.append({
-                        'name': metric_name,
-                        'value': value,
-                        'timestamp': timestamp
-                    })
+                    self.metrics.append(
+                        {"name": metric_name, "value": value, "timestamp": timestamp}
+                    )
 
                 def calculate_average(self, metric_name):
                     """计算平均值"""
-                    values = [m['value'] for m in self.metrics if m['name'] == metric_name]
+                    values = [
+                        m["value"] for m in self.metrics if m["name"] == metric_name
+                    ]
                     if not values:
                         return 0
                     return sum(values) / len(values)
 
                 def calculate_percentiles(self, metric_name, percentiles=[50, 95, 99]):
                     """计算百分位数"""
-                    values = sorted([m['value'] for m in self.metrics if m['name'] == metric_name])
+                    values = sorted(
+                        [m["value"] for m in self.metrics if m["name"] == metric_name]
+                    )
                     if not values:
                         return {}
                     result = {}
@@ -81,8 +83,9 @@ class TestMetricsCollectorFixed:
                     now = datetime.now()
                     window_start = now - timedelta(seconds=time_window)
                     recent_metrics = [
-                        m for m in self.metrics
-                        if m['name'] == metric_name and m['timestamp'] >= window_start
+                        m
+                        for m in self.metrics
+                        if m["name"] == metric_name and m["timestamp"] >= window_start
                     ]
                     return len(recent_metrics) / time_window
 
@@ -92,7 +95,9 @@ class TestMetricsCollectorFixed:
                         return {}
 
                     # 获取时间范围
-                    timestamps = [m['timestamp'] for m in self.metrics if m['name'] == metric_name]
+                    timestamps = [
+                        m["timestamp"] for m in self.metrics if m["name"] == metric_name
+                    ]
                     if not timestamps:
                         return {}
 
@@ -106,16 +111,18 @@ class TestMetricsCollectorFixed:
                     while current_time <= max_time:
                         window_end = current_time + timedelta(seconds=window_size)
                         window_metrics = [
-                            m for m in self.metrics
-                            if m['name'] == metric_name and
-                               current_time <= m['timestamp'] < window_end
+                            m
+                            for m in self.metrics
+                            if m["name"] == metric_name
+                            and current_time <= m["timestamp"] < window_end
                         ]
 
                         if window_metrics:
                             windows[current_time.isoformat()] = {
-                                'count': len(window_metrics),
-                                'sum': sum(m['value'] for m in window_metrics),
-                                'avg': sum(m['value'] for m in window_metrics) / len(window_metrics)
+                                "count": len(window_metrics),
+                                "sum": sum(m["value"] for m in window_metrics),
+                                "avg": sum(m["value"] for m in window_metrics)
+                                / len(window_metrics),
                             }
 
                         current_time = window_end
@@ -127,32 +134,34 @@ class TestMetricsCollectorFixed:
 
             # 添加测试数据
             test_data = [
-                ('cpu_usage', 45.2),
-                ('cpu_usage', 50.1),
-                ('cpu_usage', 38.9),
-                ('memory_usage', 67.8),
-                ('cpu_usage', 42.3),
-                ('memory_usage', 71.2)
+                ("cpu_usage", 45.2),
+                ("cpu_usage", 50.1),
+                ("cpu_usage", 38.9),
+                ("memory_usage", 67.8),
+                ("cpu_usage", 42.3),
+                ("memory_usage", 71.2),
             ]
 
             for name, value in test_data:
                 aggregator.add_metrics(name, value, datetime.now())
 
             # 测试平均值计算
-            cpu_avg = aggregator.calculate_average('cpu_usage')
+            cpu_avg = aggregator.calculate_average("cpu_usage")
             assert cpu_avg == (45.2 + 50.1 + 38.9 + 42.3) / 4
 
             # 测试百分位数计算
-            percentiles = aggregator.calculate_percentiles('cpu_usage', [50, 95])
+            percentiles = aggregator.calculate_percentiles("cpu_usage", [50, 95])
             assert 50 in percentiles
             assert percentiles[50] in [38.9, 42.3, 45.2, 50.1]
 
             # 测试速率计算
-            rate = aggregator.calculate_rate('cpu_usage', time_window=60)
+            rate = aggregator.calculate_rate("cpu_usage", time_window=60)
             assert rate == 4 / 60  # 4个指标在60秒窗口内
 
             # 测试时间窗口聚合
-            time_windows = aggregator.aggregate_by_time_window('cpu_usage', window_size=300)
+            time_windows = aggregator.aggregate_by_time_window(
+                "cpu_usage", window_size=300
+            )
             assert isinstance(time_windows, dict)
 
         except Exception:
@@ -169,16 +178,22 @@ class TestMetricsCollectorFixed:
                     self.alert_history = []
                     self.alert_counts = {}
 
-                def add_alert_rule(self, rule_name, metric_name, threshold,
-                                 comparison='greater', severity='warning'):
+                def add_alert_rule(
+                    self,
+                    rule_name,
+                    metric_name,
+                    threshold,
+                    comparison="greater",
+                    severity="warning",
+                ):
                     """添加告警规则"""
                     rule = {
-                        'name': rule_name,
-                        'metric': metric_name,
-                        'threshold': threshold,
-                        'comparison': comparison,
-                        'severity': severity,
-                        'created_at': datetime.now()
+                        "name": rule_name,
+                        "metric": metric_name,
+                        "threshold": threshold,
+                        "comparison": comparison,
+                        "severity": severity,
+                        "created_at": datetime.now(),
                     }
                     self.alert_rules.append(rule)
                     return len(self.alert_rules) - 1
@@ -187,25 +202,30 @@ class TestMetricsCollectorFixed:
                     """评估指标是否触发告警"""
                     triggered_alerts = []
                     for rule in self.alert_rules:
-                        if rule['metric'] != metric_name:
+                        if rule["metric"] != metric_name:
                             continue
 
                         triggered = False
-                        if rule['comparison'] == 'greater' and value > rule['threshold']:
+                        if (
+                            rule["comparison"] == "greater"
+                            and value > rule["threshold"]
+                        ):
                             triggered = True
-                        elif rule['comparison'] == 'less' and value < rule['threshold']:
+                        elif rule["comparison"] == "less" and value < rule["threshold"]:
                             triggered = True
-                        elif rule['comparison'] == 'equal' and value == rule['threshold']:
+                        elif (
+                            rule["comparison"] == "equal" and value == rule["threshold"]
+                        ):
                             triggered = True
 
                         if triggered:
                             alert = {
-                                'rule': rule['name'],
-                                'metric': metric_name,
-                                'value': value,
-                                'threshold': rule['threshold'],
-                                'severity': rule['severity'],
-                                'timestamp': datetime.now()
+                                "rule": rule["name"],
+                                "metric": metric_name,
+                                "value": value,
+                                "threshold": rule["threshold"],
+                                "severity": rule["severity"],
+                                "timestamp": datetime.now(),
                             }
                             triggered_alerts.append(alert)
                             self.active_alerts.append(alert)
@@ -219,10 +239,12 @@ class TestMetricsCollectorFixed:
 
                 def check_alert_duration_requirement(self, alert, min_duration=60):
                     """检查告警持续时间要求"""
-                    if 'start_time' not in alert:
-                        alert['start_time'] = alert['timestamp']
+                    if "start_time" not in alert:
+                        alert["start_time"] = alert["timestamp"]
 
-                    duration = (alert['timestamp'] - alert['start_time']).total_seconds()
+                    duration = (
+                        alert["timestamp"] - alert["start_time"]
+                    ).total_seconds()
                     return duration >= min_duration
 
                 def check_alert_recovery(self, metric_name, value):
@@ -230,20 +252,33 @@ class TestMetricsCollectorFixed:
                     # 查找相关的活跃告警
                     recovered_alerts = []
                     for alert in self.active_alerts[:]:
-                        if alert['metric'] == metric_name:
+                        if alert["metric"] == metric_name:
                             # 检查值是否恢复正常
-                            rule = next((r for r in self.alert_rules if r['name'] == alert['rule']), None)
+                            rule = next(
+                                (
+                                    r
+                                    for r in self.alert_rules
+                                    if r["name"] == alert["rule"]
+                                ),
+                                None,
+                            )
                             if rule:
                                 should_alert = False
-                                if rule['comparison'] == 'greater' and value > rule['threshold']:
+                                if (
+                                    rule["comparison"] == "greater"
+                                    and value > rule["threshold"]
+                                ):
                                     should_alert = True
-                                elif rule['comparison'] == 'less' and value < rule['threshold']:
+                                elif (
+                                    rule["comparison"] == "less"
+                                    and value < rule["threshold"]
+                                ):
                                     should_alert = True
 
                                 if not should_alert:
                                     recovered_alerts.append(alert)
                                     self.active_alerts.remove(alert)
-                                    alert['recovered_at'] = datetime.now()
+                                    alert["recovered_at"] = datetime.now()
                                     self.alert_history.append(alert)
 
                     return recovered_alerts
@@ -251,8 +286,8 @@ class TestMetricsCollectorFixed:
                 def send_alert_notification(self, alert):
                     """发送告警通知"""
                     # 记录告警
-                    alert['notified'] = True
-                    alert['notified_at'] = datetime.now()
+                    alert["notified"] = True
+                    alert["notified_at"] = datetime.now()
 
                     # 更新计数
                     key = f"{alert['rule']}_{alert['metric']}"
@@ -269,17 +304,17 @@ class TestMetricsCollectorFixed:
                 def get_alert_statistics(self):
                     """获取告警统计"""
                     return {
-                        'total_rules': len(self.alert_rules),
-                        'active_alerts': len(self.active_alerts),
-                        'history_count': len(self.alert_history),
-                        'alert_counts': self.alert_counts.copy()
+                        "total_rules": len(self.alert_rules),
+                        "active_alerts": len(self.active_alerts),
+                        "history_count": len(self.alert_history),
+                        "alert_counts": self.alert_counts.copy(),
                     }
 
-                def export_alerts_to_json(self, alert_type='active'):
+                def export_alerts_to_json(self, alert_type="active"):
                     """导出告警到JSON"""
-                    if alert_type == 'active':
+                    if alert_type == "active":
                         alerts = self.active_alerts
-                    elif alert_type == 'history':
+                    elif alert_type == "history":
                         alerts = self.alert_history
                     else:
                         alerts = []
@@ -300,42 +335,44 @@ class TestMetricsCollectorFixed:
 
             # 添加告警规则
             rule_id = manager.add_alert_rule(
-                rule_name='high_cpu',
-                metric_name='cpu_usage',
+                rule_name="high_cpu",
+                metric_name="cpu_usage",
                 threshold=80.0,
-                comparison='greater',
-                severity='warning'
+                comparison="greater",
+                severity="warning",
             )
 
             assert rule_id == 0
             assert len(manager.alert_rules) == 1
 
             # 测试规则评估 - 不触发告警
-            no_alert = manager.no_alert_when_threshold_not_met('cpu_usage', 70.0)
+            no_alert = manager.no_alert_when_threshold_not_met("cpu_usage", 70.0)
             assert no_alert is True
 
             # 测试规则评估 - 触发告警
-            triggered = manager.evaluate_metric_against_rules('cpu_usage', 85.0)
+            triggered = manager.evaluate_metric_against_rules("cpu_usage", 85.0)
             assert len(triggered) == 1
-            assert triggered[0]['severity'] == 'warning'
-            assert triggered[0]['value'] == 85.0
+            assert triggered[0]["severity"] == "warning"
+            assert triggered[0]["value"] == 85.0
 
             # 测试告警持续时间
             alert = triggered[0]
-            alert['start_time'] = datetime.now() - timedelta(seconds=120)
-            duration_ok = manager.check_alert_duration_requirement(alert, min_duration=60)
+            alert["start_time"] = datetime.now() - timedelta(seconds=120)
+            duration_ok = manager.check_alert_duration_requirement(
+                alert, min_duration=60
+            )
             assert duration_ok is True
 
             # 测试告警恢复
-            recovered = manager.check_alert_recovery('cpu_usage', 60.0)
+            recovered = manager.check_alert_recovery("cpu_usage", 60.0)
             assert len(recovered) == 1
             assert manager.active_alerts == []
 
             # 测试告警通知
-            new_alert = manager.evaluate_metric_against_rules('cpu_usage', 90.0)[0]
+            new_alert = manager.evaluate_metric_against_rules("cpu_usage", 90.0)[0]
             notified = manager.send_alert_notification(new_alert)
             assert notified is True
-            assert new_alert['notified'] is True
+            assert new_alert["notified"] is True
 
             # 测试频率限制
             rate_limited = manager.check_alert_rate_limiting(new_alert, max_per_hour=1)
@@ -345,13 +382,13 @@ class TestMetricsCollectorFixed:
 
             # 测试统计信息
             stats = manager.get_alert_statistics()
-            assert stats['total_rules'] == 1
-            assert 'alert_counts' in stats
+            assert stats["total_rules"] == 1
+            assert "alert_counts" in stats
 
             # 测试JSON导出
-            json_export = manager.export_alerts_to_json('history')
+            json_export = manager.export_alerts_to_json("history")
             assert isinstance(json_export, str)
-            assert 'recovered_at' in json_export
+            assert "recovered_at" in json_export
 
         except Exception as e:
             pytest.skip(f"Alert manager test failed: {e}")
@@ -365,11 +402,9 @@ class TestMetricsCollectorFixed:
                     self.metrics = []
 
                 def add_metric(self, name, value, timestamp):
-                    self.metrics.append({
-                        'name': name,
-                        'value': value,
-                        'timestamp': timestamp
-                    })
+                    self.metrics.append(
+                        {"name": name, "value": value, "timestamp": timestamp}
+                    )
 
                 def remove_old_metrics(self, older_than_hours=24):
                     """删除超过指定时间的旧指标"""
@@ -377,8 +412,7 @@ class TestMetricsCollectorFixed:
                     initial_count = len(self.metrics)
 
                     self.metrics = [
-                        m for m in self.metrics
-                        if m['timestamp'] > cutoff_time
+                        m for m in self.metrics if m["timestamp"] > cutoff_time
                     ]
 
                     removed_count = initial_count - len(self.metrics)
@@ -392,9 +426,9 @@ class TestMetricsCollectorFixed:
             old_time = now - timedelta(hours=25)
             recent_time = now - timedelta(hours=1)
 
-            store.add_metric('test1', 10, old_time)
-            store.add_metric('test2', 20, recent_time)
-            store.add_metric('test3', 30, now)
+            store.add_metric("test1", 10, old_time)
+            store.add_metric("test2", 20, recent_time)
+            store.add_metric("test3", 30, now)
 
             assert len(store.metrics) == 3
 
@@ -402,7 +436,9 @@ class TestMetricsCollectorFixed:
             removed = store.remove_old_metrics(older_than_hours=24)
             assert removed == 1
             assert len(store.metrics) == 2
-            assert all(m['timestamp'] > now - timedelta(hours=24) for m in store.metrics)
+            assert all(
+                m["timestamp"] > now - timedelta(hours=24) for m in store.metrics
+            )
 
         except Exception:
             pytest.skip("Remove old metrics test not available")
@@ -418,13 +454,15 @@ class TestMetricsCollectorFixed:
                 def add_metric(self, name, value, timestamp=None):
                     if timestamp is None:
                         timestamp = datetime.now()
-                    self.metrics.append({'name': name, 'value': value, 'timestamp': timestamp})
+                    self.metrics.append(
+                        {"name": name, "value": value, "timestamp": timestamp}
+                    )
 
                 def get_aggregated_summary(self, time_window_hours=1):
                     """获取聚合摘要"""
                     cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
                     recent_metrics = [
-                        m for m in self.metrics if m['timestamp'] > cutoff_time
+                        m for m in self.metrics if m["timestamp"] > cutoff_time
                     ]
 
                     if not recent_metrics:
@@ -433,20 +471,20 @@ class TestMetricsCollectorFixed:
                     # 按指标名称分组
                     grouped = {}
                     for metric in recent_metrics:
-                        name = metric['name']
+                        name = metric["name"]
                         if name not in grouped:
                             grouped[name] = []
-                        grouped[name].append(metric['value'])
+                        grouped[name].append(metric["value"])
 
                     # 计算统计信息
                     summary = {}
                     for name, values in grouped.items():
                         summary[name] = {
-                            'count': len(values),
-                            'min': min(values),
-                            'max': max(values),
-                            'avg': sum(values) / len(values),
-                            'sum': sum(values)
+                            "count": len(values),
+                            "min": min(values),
+                            "max": max(values),
+                            "avg": sum(values) / len(values),
+                            "sum": sum(values),
                         }
 
                     return summary
@@ -457,18 +495,18 @@ class TestMetricsCollectorFixed:
             # 添加测试数据
             now = datetime.now()
             for i in range(10):
-                aggregator.add_metric('cpu', 40 + i, now)
-                aggregator.add_metric('memory', 60 + i * 2, now)
+                aggregator.add_metric("cpu", 40 + i, now)
+                aggregator.add_metric("memory", 60 + i * 2, now)
 
             # 获取摘要
             summary = aggregator.get_aggregated_summary()
 
-            assert 'cpu' in summary
-            assert 'memory' in summary
-            assert summary['cpu']['count'] == 10
-            assert summary['cpu']['min'] == 40
-            assert summary['cpu']['max'] == 49
-            assert summary['memory']['avg'] == 69
+            assert "cpu" in summary
+            assert "memory" in summary
+            assert summary["cpu"]["count"] == 10
+            assert summary["cpu"]["min"] == 40
+            assert summary["cpu"]["max"] == 49
+            assert summary["memory"]["avg"] == 69
 
         except Exception:
             pytest.skip("Aggregated summary test not available")

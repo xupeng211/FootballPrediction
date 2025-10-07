@@ -9,7 +9,7 @@ import os
 from fastapi import FastAPI
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -19,13 +19,18 @@ class TestAPIComprehensive:
     def test_all_api_endpoints_import(self):
         """测试所有 API 端点导入"""
         endpoints = [
-            'health', 'predictions', 'data', 'features',
-            'models', 'monitoring', 'buggy_api'
+            "health",
+            "predictions",
+            "data",
+            "features",
+            "models",
+            "monitoring",
+            "buggy_api",
         ]
 
         for endpoint in endpoints:
             try:
-                module = f'src.api.{endpoint}'
+                module = f"src.api.{endpoint}"
                 __import__(module)
                 assert True  # 导入成功
             except ImportError as e:
@@ -35,8 +40,9 @@ class TestAPIComprehensive:
         """测试健康检查 API 综合功能"""
         try:
             from src.api.health import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
             assert len(router.routes) > 0
         except ImportError as e:
             pytest.skip(f"Cannot import health API: {e}")
@@ -45,8 +51,9 @@ class TestAPIComprehensive:
         """测试预测 API 综合功能"""
         try:
             from src.api.predictions import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import predictions API: {e}")
 
@@ -54,8 +61,9 @@ class TestAPIComprehensive:
         """测试数据 API 综合功能"""
         try:
             from src.api.data import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import data API: {e}")
 
@@ -63,8 +71,9 @@ class TestAPIComprehensive:
         """测试特征 API 综合功能"""
         try:
             from src.api.features import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import features API: {e}")
 
@@ -72,8 +81,9 @@ class TestAPIComprehensive:
         """测试模型 API 综合功能"""
         try:
             from src.api.models import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import models API: {e}")
 
@@ -81,8 +91,9 @@ class TestAPIComprehensive:
         """测试监控 API 综合功能"""
         try:
             from src.api.monitoring import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import monitoring API: {e}")
 
@@ -90,8 +101,9 @@ class TestAPIComprehensive:
         """测试调试 API 综合功能"""
         try:
             from src.api.buggy_api import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError as e:
             pytest.skip(f"Cannot import buggy API: {e}")
 
@@ -102,8 +114,9 @@ class TestAPIComprehensive:
                 PredictionResponse,
                 HealthResponse,
                 ErrorResponse,
-                SuccessResponse
+                SuccessResponse,
             )
+
             assert PredictionResponse is not None
             assert HealthResponse is not None
             assert ErrorResponse is not None
@@ -118,8 +131,9 @@ class TestAPIComprehensive:
                 get_current_user,
                 get_database_session,
                 get_redis_client,
-                verify_api_key
+                verify_api_key,
             )
+
             assert get_current_user is not None
             assert get_database_session is not None
             assert get_redis_client is not None
@@ -155,8 +169,9 @@ class TestAPIComprehensive:
                 APIException,
                 ValidationError,
                 NotFoundError,
-                AuthenticationError
+                AuthenticationError,
             )
+
             assert APIException is not None
             assert ValidationError is not None
             assert NotFoundError is not None
@@ -174,6 +189,7 @@ class TestAPIComprehensive:
         """测试 API 分页"""
         try:
             from src.api.utils import paginate, PaginationParams
+
             assert paginate is not None
             assert PaginationParams is not None
 
@@ -192,8 +208,9 @@ class TestAPIComprehensive:
             from src.api.schemas import (
                 MatchPredictionRequest,
                 TeamStatsResponse,
-                FeatureRequest
+                FeatureRequest,
             )
+
             assert MatchPredictionRequest is not None
             assert TeamStatsResponse is not None
             assert FeatureRequest is not None
@@ -212,7 +229,7 @@ class TestAPIComprehensive:
 
             assert middleware.max_requests == 100
             assert middleware.window == 60
-            assert hasattr(middleware, 'dispatch')
+            assert hasattr(middleware, "dispatch")
 
         except ImportError as e:
             pytest.skip(f"Cannot test API rate limiting: {e}")
@@ -227,7 +244,7 @@ class TestAPIComprehensive:
             app = FastAPI(
                 title="Football Prediction API",
                 description="API for football match predictions",
-                version="1.0.0"
+                version="1.0.0",
             )
 
             # 验证文档配置
@@ -244,8 +261,9 @@ class TestAPIComprehensive:
             from src.api.security import (
                 verify_token,
                 hash_password,
-                create_access_token
+                create_access_token,
             )
+
             assert verify_token is not None
             assert hash_password is not None
             assert create_access_token is not None
@@ -285,10 +303,10 @@ class TestAPIComprehensive:
             handler = AsyncAPIHandler()
 
             # 测试异步方法存在
-            assert hasattr(handler, 'async_get')
-            assert hasattr(handler, 'async_post')
-            assert hasattr(handler, 'async_put')
-            assert hasattr(handler, 'async_delete')
+            assert hasattr(handler, "async_get")
+            assert hasattr(handler, "async_post")
+            assert hasattr(handler, "async_put")
+            assert hasattr(handler, "async_delete")
 
         except ImportError as e:
             pytest.skip(f"Cannot test API async handlers: {e}")
@@ -297,11 +315,8 @@ class TestAPIComprehensive:
         """测试 API 后台任务"""
         try:
             from fastapi import BackgroundTasks
-            from src.api.tasks import (
-                send_email_task,
-                cleanup_task,
-                log_request_task
-            )
+            from src.api.tasks import send_email_task, cleanup_task, log_request_task
+
             assert send_email_task is not None
             assert cleanup_task is not None
             assert log_request_task is not None

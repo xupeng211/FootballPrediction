@@ -3,10 +3,7 @@
 import pytest
 from unittest.mock import Mock, AsyncMock
 
-from src.services.manager import (
-    ServiceManager,
-    ServiceStatus
-)
+from src.services.manager import ServiceManager, ServiceStatus
 
 
 class TestServiceManagerExtended:
@@ -20,8 +17,8 @@ class TestServiceManagerExtended:
     def test_manager_initialization(self, manager):
         """测试管理器初始化"""
         assert manager is not None
-        assert hasattr(manager, 'services')
-        assert hasattr(manager, 'status')
+        assert hasattr(manager, "services")
+        assert hasattr(manager, "status")
 
     def test_service_registration(self, manager):
         """测试服务注册"""
@@ -76,7 +73,7 @@ class TestServiceManagerExtended:
         assert manager.get_service_status(service_id) == ServiceStatus.REGISTERED
 
         # 启动服务
-        if hasattr(manager, 'start_service'):
+        if hasattr(manager, "start_service"):
             manager.start_service(service_id)
             assert manager.get_service_status(service_id) == ServiceStatus.RUNNING
 
@@ -96,10 +93,10 @@ class TestServiceManagerExtended:
     def test_health_check(self, manager):
         """测试健康检查"""
         # 执行健康检查
-        if hasattr(manager, 'health_check'):
+        if hasattr(manager, "health_check"):
             health_status = manager.health_check()
             assert isinstance(health_status, dict)
-            assert 'status' in health_status
+            assert "status" in health_status
 
     def test_service_dependencies(self, manager):
         """测试服务依赖管理"""
@@ -107,11 +104,9 @@ class TestServiceManagerExtended:
         service_b = Mock()
 
         # 注册有依赖的服务
-        if hasattr(manager, 'register_service_with_dependencies'):
+        if hasattr(manager, "register_service_with_dependencies"):
             manager.register_service_with_dependencies(
-                "service_b",
-                service_b,
-                dependencies=["service_a"]
+                "service_b", service_b, dependencies=["service_a"]
             )
             manager.register_service("service_a", service_a)
 
@@ -123,7 +118,7 @@ class TestServiceManagerExtended:
         """测试服务配置"""
         config = {"key": "value", "timeout": 30}
 
-        if hasattr(manager, 'configure_service'):
+        if hasattr(manager, "configure_service"):
             manager.configure_service("test_service", config)
             retrieved_config = manager.get_service_config("test_service")
             assert retrieved_config == config
@@ -135,7 +130,7 @@ class TestServiceManagerExtended:
             manager.register_service(None, None)
 
         # 测试注销不存在的服务
-        if hasattr(manager, 'deregister_service'):
+        if hasattr(manager, "deregister_service"):
             # 应该不抛出异常
             manager.deregister_service("nonexistent")
 
@@ -152,10 +147,7 @@ class TestServiceManagerExtended:
         # 创建多个线程同时注册服务
         threads = []
         for i in range(5):
-            t = threading.Thread(
-                target=register_service,
-                args=(f"service_{i}",)
-            )
+            t = threading.Thread(target=register_service, args=(f"service_{i}",))
             threads.append(t)
             t.start()
 
@@ -168,7 +160,7 @@ class TestServiceManagerExtended:
 
     def test_service_metrics(self, manager):
         """测试服务指标收集"""
-        if hasattr(manager, 'get_service_metrics'):
+        if hasattr(manager, "get_service_metrics"):
             metrics = manager.get_service_metrics()
             assert isinstance(metrics, dict)
 
@@ -184,24 +176,20 @@ class TestServiceManagerExtended:
 
         manager.register_service(service_id, mock_service)
 
-        if hasattr(manager, 'restart_service'):
+        if hasattr(manager, "restart_service"):
             # 重启服务
             manager.restart_service(service_id)
 
             # 验证mock被调用（如果有相关方法）
-            if hasattr(mock_service, 'restart'):
+            if hasattr(mock_service, "restart"):
                 mock_service.restart.assert_called_once()
 
     def test_batch_operations(self, manager):
         """测试批量操作"""
-        services = {
-            "service1": Mock(),
-            "service2": Mock(),
-            "service3": Mock()
-        }
+        services = {"service1": Mock(), "service2": Mock(), "service3": Mock()}
 
         # 批量注册
-        if hasattr(manager, 'register_services'):
+        if hasattr(manager, "register_services"):
             manager.register_services(services)
 
             # 验证所有服务都已注册
@@ -210,9 +198,10 @@ class TestServiceManagerExtended:
 
     def test_async_operations(self, manager):
         """测试异步操作"""
+
         async def async_test():
             # 异步服务注册
-            if hasattr(manager, 'register_service_async'):
+            if hasattr(manager, "register_service_async"):
                 mock_service = AsyncMock()
                 await manager.register_service_async("async_service", mock_service)
 
@@ -221,33 +210,30 @@ class TestServiceManagerExtended:
 
         # 运行异步测试
         import asyncio
+
         asyncio.run(async_test())
 
     def test_cleanup_on_shutdown(self, manager):
         """测试关闭时的清理"""
         mock_service = Mock()
-        if hasattr(mock_service, 'cleanup'):
+        if hasattr(mock_service, "cleanup"):
             manager.register_service("test_service", mock_service)
 
             # 模拟关闭
-            if hasattr(manager, 'shutdown'):
+            if hasattr(manager, "shutdown"):
                 manager.shutdown()
                 mock_service.cleanup.assert_called_once()
 
     def test_service_discovery(self, manager):
         """测试服务发现"""
         # 注册不同类型的服务
-        services = {
-            "database": Mock(),
-            "cache": Mock(),
-            "messaging": Mock()
-        }
+        services = {"database": Mock(), "cache": Mock(), "messaging": Mock()}
 
         for service_id, service in services.items():
             manager.register_service(service_id, service)
 
         # 按类型查找服务
-        if hasattr(manager, 'find_services_by_type'):
+        if hasattr(manager, "find_services_by_type"):
             db_services = manager.find_services_by_type("database")
             assert len(db_services) >= 0
 
@@ -257,7 +243,7 @@ class TestServiceManagerExtended:
         service_v2 = Mock()
 
         # 注册不同版本
-        if hasattr(manager, 'register_service_version'):
+        if hasattr(manager, "register_service_version"):
             manager.register_service_version("test_service", service_v1, "1.0.0")
             manager.register_service_version("test_service", service_v2, "2.0.0")
 

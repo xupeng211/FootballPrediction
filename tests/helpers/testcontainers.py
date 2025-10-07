@@ -23,7 +23,7 @@ class TestPostgresContainer(PostgresContainer):
             dbname="football_prediction_test",
             username="test_user",
             password="test_password",
-            port=5432
+            port=5432,
         )
 
     def start(self) -> "TestPostgresContainer":
@@ -32,9 +32,7 @@ class TestPostgresContainer(PostgresContainer):
 
         # 等待数据库完全启动
         wait_for_logs(
-            self,
-            "database system is ready to accept connections",
-            timeout=30
+            self, "database system is ready to accept connections", timeout=30
         )
 
         return self
@@ -53,11 +51,7 @@ class TestRedisContainer(RedisContainer):
         super().start()
 
         # 等待Redis完全启动
-        wait_for_logs(
-            self,
-            "Ready to accept connections",
-            timeout=30
-        )
+        wait_for_logs(self, "Ready to accept connections", timeout=30)
 
         return self
 

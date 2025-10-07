@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestModelsComprehensive:
         """测试预测服务导入"""
         try:
             from src.models.prediction_service import PredictionService
+
             service = PredictionService()
             assert service is not None
         except ImportError as e:
@@ -29,6 +30,7 @@ class TestModelsComprehensive:
         """测试模型训练导入"""
         try:
             from src.models.model_training import ModelTrainer
+
             trainer = ModelTrainer()
             assert trainer is not None
         except ImportError as e:
@@ -41,8 +43,9 @@ class TestModelsComprehensive:
                 BaseModel,
                 PredictionModel,
                 ModelMetrics,
-                ModelConfig
+                ModelConfig,
             )
+
             assert BaseModel is not None
             assert PredictionModel is not None
             assert ModelMetrics is not None
@@ -54,6 +57,7 @@ class TestModelsComprehensive:
         """测试指标导出器导入"""
         try:
             from src.models.metrics_exporter import MetricsExporter
+
             exporter = MetricsExporter()
             assert exporter is not None
         except ImportError as e:
@@ -64,15 +68,15 @@ class TestModelsComprehensive:
         try:
             from src.models.prediction_service import PredictionService
 
-            with patch('src.models.prediction_service.logger') as mock_logger:
+            with patch("src.models.prediction_service.logger") as mock_logger:
                 service = PredictionService()
                 service.logger = mock_logger
 
                 # 测试核心方法存在
-                assert hasattr(service, 'predict')
-                assert hasattr(service, 'predict_batch')
-                assert hasattr(service, 'get_model_info')
-                assert hasattr(service, 'validate_input')
+                assert hasattr(service, "predict")
+                assert hasattr(service, "predict_batch")
+                assert hasattr(service, "get_model_info")
+                assert hasattr(service, "validate_input")
 
         except ImportError as e:
             pytest.skip(f"Cannot test PredictionService methods: {e}")
@@ -82,15 +86,15 @@ class TestModelsComprehensive:
         try:
             from src.models.model_training import ModelTrainer
 
-            with patch('src.models.model_training.logger') as mock_logger:
+            with patch("src.models.model_training.logger") as mock_logger:
                 trainer = ModelTrainer()
                 trainer.logger = mock_logger
 
                 # 测试训练方法存在
-                assert hasattr(trainer, 'train')
-                assert hasattr(trainer, 'evaluate')
-                assert hasattr(trainer, 'cross_validate')
-                assert hasattr(trainer, 'optimize_hyperparameters')
+                assert hasattr(trainer, "train")
+                assert hasattr(trainer, "evaluate")
+                assert hasattr(trainer, "cross_validate")
+                assert hasattr(trainer, "optimize_hyperparameters")
 
         except ImportError as e:
             pytest.skip(f"Cannot test ModelTrainer methods: {e}")
@@ -102,9 +106,7 @@ class TestModelsComprehensive:
 
             # 创建基础模型
             model = BaseModel(
-                model_id="test_base_model",
-                model_type="base",
-                version="1.0.0"
+                model_id="test_base_model", model_type="base", version="1.0.0"
             )
 
             assert model.model_id == "test_base_model"
@@ -112,9 +114,9 @@ class TestModelsComprehensive:
             assert model.version == "1.0.0"
 
             # 测试基础方法
-            assert hasattr(model, 'save')
-            assert hasattr(model, 'load')
-            assert hasattr(model, 'get_metadata')
+            assert hasattr(model, "save")
+            assert hasattr(model, "load")
+            assert hasattr(model, "get_metadata")
 
         except ImportError as e:
             pytest.skip(f"Cannot test BaseModel: {e}")
@@ -128,16 +130,16 @@ class TestModelsComprehensive:
             model = PredictionModel(
                 model_id="test_prediction_model",
                 model_type="classifier",
-                version="1.0.0"
+                version="1.0.0",
             )
 
             assert model.model_id == "test_prediction_model"
             assert model.model_type == "classifier"
 
             # 测试预测方法
-            assert hasattr(model, 'predict')
-            assert hasattr(model, 'predict_proba')
-            assert hasattr(model, 'predict_batch')
+            assert hasattr(model, "predict")
+            assert hasattr(model, "predict_proba")
+            assert hasattr(model, "predict_batch")
 
         except ImportError as e:
             pytest.skip(f"Cannot test PredictionModel: {e}")
@@ -149,11 +151,7 @@ class TestModelsComprehensive:
 
             # 创建指标
             metrics = ModelMetrics(
-                accuracy=0.85,
-                precision=0.82,
-                recall=0.88,
-                f1_score=0.85,
-                auc_roc=0.91
+                accuracy=0.85, precision=0.82, recall=0.88, f1_score=0.85, auc_roc=0.91
             )
 
             assert metrics.accuracy == 0.85
@@ -163,7 +161,7 @@ class TestModelsComprehensive:
             assert metrics.auc_roc == 0.91
 
             # 测试方法
-            if hasattr(metrics, 'to_dict'):
+            if hasattr(metrics, "to_dict"):
                 metrics_dict = metrics.to_dict()
                 assert isinstance(metrics_dict, dict)
 
@@ -180,7 +178,7 @@ class TestModelsComprehensive:
                 model_type="random_forest",
                 n_estimators=100,
                 max_depth=10,
-                random_state=42
+                random_state=42,
             )
 
             assert config.model_type == "random_forest"
@@ -196,15 +194,15 @@ class TestModelsComprehensive:
         try:
             from src.models.metrics_exporter import MetricsExporter
 
-            with patch('src.models.metrics_exporter.logger') as mock_logger:
+            with patch("src.models.metrics_exporter.logger") as mock_logger:
                 exporter = MetricsExporter()
                 exporter.logger = mock_logger
 
                 # 测试导出方法
-                assert hasattr(exporter, 'export_metrics')
-                assert hasattr(exporter, 'export_to_mlflow')
-                assert hasattr(exporter, 'export_to_csv')
-                assert hasattr(exporter, 'export_to_json')
+                assert hasattr(exporter, "export_metrics")
+                assert hasattr(exporter, "export_to_mlflow")
+                assert hasattr(exporter, "export_to_csv")
+                assert hasattr(exporter, "export_to_json")
 
         except ImportError as e:
             pytest.skip(f"Cannot test MetricsExporter: {e}")
@@ -217,10 +215,10 @@ class TestModelsComprehensive:
             engineer = FeatureEngineer()
 
             # 测试特征工程方法
-            assert hasattr(engineer, 'extract_features')
-            assert hasattr(engineer, 'select_features')
-            assert hasattr(engineer, 'scale_features')
-            assert hasattr(engineer, 'encode_features')
+            assert hasattr(engineer, "extract_features")
+            assert hasattr(engineer, "select_features")
+            assert hasattr(engineer, "scale_features")
+            assert hasattr(engineer, "encode_features")
 
         except ImportError:
             pytest.skip("FeatureEngineer not available")
@@ -232,17 +230,16 @@ class TestModelsComprehensive:
 
             # 创建集成模型
             ensemble = ModelEnsemble(
-                ensemble_type="voting",
-                models=["model1", "model2", "model3"]
+                ensemble_type="voting", models=["model1", "model2", "model3"]
             )
 
             assert ensemble.ensemble_type == "voting"
             assert len(ensemble.models) == 3
 
             # 测试集成方法
-            assert hasattr(ensemble, 'fit')
-            assert hasattr(ensemble, 'predict')
-            assert hasattr(ensemble, 'get_feature_importance')
+            assert hasattr(ensemble, "fit")
+            assert hasattr(ensemble, "predict")
+            assert hasattr(ensemble, "get_feature_importance")
 
         except ImportError:
             pytest.skip("ModelEnsemble not available")
@@ -255,10 +252,10 @@ class TestModelsComprehensive:
             validator = ModelValidator()
 
             # 测试验证方法
-            assert hasattr(validator, 'validate_model')
-            assert hasattr(validator, 'check_overfitting')
-            assert hasattr(validator, 'validate_assumptions')
-            assert hasattr(validator, 'cross_validate')
+            assert hasattr(validator, "validate_model")
+            assert hasattr(validator, "check_overfitting")
+            assert hasattr(validator, "validate_assumptions")
+            assert hasattr(validator, "cross_validate")
 
         except ImportError:
             pytest.skip("ModelValidator not available")
@@ -271,10 +268,10 @@ class TestModelsComprehensive:
             persistence = ModelPersistence()
 
             # 测试持久化方法
-            assert hasattr(persistence, 'save_model')
-            assert hasattr(persistence, 'load_model')
-            assert hasattr(persistence, 'list_models')
-            assert hasattr(persistence, 'delete_model')
+            assert hasattr(persistence, "save_model")
+            assert hasattr(persistence, "load_model")
+            assert hasattr(persistence, "list_models")
+            assert hasattr(persistence, "delete_model")
 
         except ImportError:
             pytest.skip("ModelPersistence not available")
@@ -285,14 +282,14 @@ class TestModelsComprehensive:
         try:
             from src.models.prediction_service import PredictionService
 
-            with patch('src.models.prediction_service.logger') as mock_logger:
+            with patch("src.models.prediction_service.logger") as mock_logger:
                 service = PredictionService()
                 service.logger = mock_logger
 
                 # 测试异步方法
-                assert hasattr(service, 'async_predict')
-                assert hasattr(service, 'async_predict_batch')
-                assert hasattr(service, 'async_get_model_info')
+                assert hasattr(service, "async_predict")
+                assert hasattr(service, "async_predict_batch")
+                assert hasattr(service, "async_get_model_info")
 
         except ImportError as e:
             pytest.skip(f"Cannot test async prediction: {e}")
@@ -305,10 +302,10 @@ class TestModelsComprehensive:
             monitor = ModelMonitor()
 
             # 测试监控方法
-            assert hasattr(monitor, 'track_performance')
-            assert hasattr(monitor, 'detect_drift')
-            assert hasattr(monitor, 'get_performance_report')
-            assert hasattr(monitor, 'set_alert_threshold')
+            assert hasattr(monitor, "track_performance")
+            assert hasattr(monitor, "detect_drift")
+            assert hasattr(monitor, "get_performance_report")
+            assert hasattr(monitor, "set_alert_threshold")
 
         except ImportError:
             pytest.skip("ModelMonitor not available")
@@ -321,10 +318,10 @@ class TestModelsComprehensive:
             explainer = ModelExplainer()
 
             # 测试解释方法
-            assert hasattr(explainer, 'explain_prediction')
-            assert hasattr(explainer, 'get_feature_importance')
-            assert hasattr(explainer, 'generate_shap_values')
-            assert hasattr(explainer, 'create_partial_plot')
+            assert hasattr(explainer, "explain_prediction")
+            assert hasattr(explainer, "get_feature_importance")
+            assert hasattr(explainer, "generate_shap_values")
+            assert hasattr(explainer, "create_partial_plot")
 
         except ImportError:
             pytest.skip("ModelExplainer not available")
@@ -337,10 +334,10 @@ class TestModelsComprehensive:
             tuner = HyperparameterTuner()
 
             # 测试调优方法
-            assert hasattr(tuner, 'grid_search')
-            assert hasattr(tuner, 'random_search')
-            assert hasattr(tuner, 'bayesian_optimization')
-            assert hasattr(tuner, 'get_best_params')
+            assert hasattr(tuner, "grid_search")
+            assert hasattr(tuner, "random_search")
+            assert hasattr(tuner, "bayesian_optimization")
+            assert hasattr(tuner, "get_best_params")
 
         except ImportError:
             pytest.skip("HyperparameterTuner not available")
@@ -353,10 +350,10 @@ class TestModelsComprehensive:
             versioning = ModelVersioning()
 
             # 测试版本控制方法
-            assert hasattr(versioning, 'create_version')
-            assert hasattr(versioning, 'get_version')
-            assert hasattr(versioning, 'list_versions')
-            assert hasattr(versioning, 'rollback_to_version')
+            assert hasattr(versioning, "create_version")
+            assert hasattr(versioning, "get_version")
+            assert hasattr(versioning, "list_versions")
+            assert hasattr(versioning, "rollback_to_version")
 
         except ImportError:
             pytest.skip("ModelVersioning not available")
@@ -369,10 +366,10 @@ class TestModelsComprehensive:
             server = ModelServer()
 
             # 测试服务方法
-            assert hasattr(server, 'load_model_for_serving')
-            assert hasattr(server, 'start_server')
-            assert hasattr(server, 'stop_server')
-            assert hasattr(server, 'health_check')
+            assert hasattr(server, "load_model_for_serving")
+            assert hasattr(server, "start_server")
+            assert hasattr(server, "stop_server")
+            assert hasattr(server, "health_check")
 
         except ImportError:
             pytest.skip("ModelServer not available")

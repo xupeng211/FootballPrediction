@@ -11,6 +11,7 @@ class TestOddsCollectorBasic:
         """测试导入和初始化"""
         try:
             from src.collectors.odds_collector import OddsCollector
+
             collector = OddsCollector()
             assert collector is not None
         except ImportError as e:
@@ -20,14 +21,15 @@ class TestOddsCollectorBasic:
         """测试方法存在"""
         try:
             from src.collectors.odds_collector import OddsCollector
+
             collector = OddsCollector()
 
             methods = [
-                'collect',
-                'initialize',
-                'shutdown',
-                'process_odds_data',
-                'validate_odds'
+                "collect",
+                "initialize",
+                "shutdown",
+                "process_odds_data",
+                "validate_odds",
             ]
 
             for method in methods:
@@ -40,6 +42,7 @@ class TestOddsCollectorBasic:
         """测试异步初始化"""
         try:
             from src.collectors.odds_collector import OddsCollector
+
             collector = OddsCollector()
 
             # Mock依赖
@@ -56,18 +59,24 @@ class TestOddsCollectorBasic:
         """测试基础的赔率收集功能"""
         try:
             from src.collectors.odds_collector import OddsCollector
+
             collector = OddsCollector()
 
             # Mock API响应
             collector.api_client = Mock()
             collector.api_client.get_odds.return_value = {
                 "matches": [
-                    {"id": 1, "home_team": "曼联", "away_team": "利物浦", "odds": {"home": 2.5, "draw": 3.2, "away": 2.8}}
+                    {
+                        "id": 1,
+                        "home_team": "曼联",
+                        "away_team": "利物浦",
+                        "odds": {"home": 2.5, "draw": 3.2, "away": 2.8},
+                    }
                 ]
             }
 
             # 测试收集（根据实际实现调整）
-            if hasattr(collector, 'collect_match_odds'):
+            if hasattr(collector, "collect_match_odds"):
                 result = collector.collect_match_odds(match_id=1)
                 assert result is not None or result == []
         except ImportError:
@@ -84,6 +93,7 @@ class TestScoresCollectorBasic:
         """测试导入和初始化"""
         try:
             from src.collectors.scores_collector import ScoresCollector
+
             collector = ScoresCollector()
             assert collector is not None
         except ImportError as e:
@@ -93,14 +103,15 @@ class TestScoresCollectorBasic:
         """测试方法存在"""
         try:
             from src.collectors.scores_collector import ScoresCollector
+
             collector = ScoresCollector()
 
             methods = [
-                'collect',
-                'initialize',
-                'shutdown',
-                'process_scores',
-                'update_match_score'
+                "collect",
+                "initialize",
+                "shutdown",
+                "process_scores",
+                "update_match_score",
             ]
 
             for method in methods:
@@ -115,13 +126,12 @@ class TestAuditServiceFixed:
     def test_log_action_correct_signature(self):
         """测试log_action的正确调用"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
         # 使用正确的参数顺序
         result = service.log_action(
-            action="test_action",
-            user_id="test_user_123",
-            metadata={"key": "value"}
+            action="test_action", user_id="test_user_123", metadata={"key": "value"}
         )
 
         assert isinstance(result, dict)
@@ -133,12 +143,10 @@ class TestAuditServiceFixed:
     def test_log_action_without_metadata(self):
         """测试不带metadata的log_action"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
-        result = service.log_action(
-            action="simple_action",
-            user_id="user_456"
-        )
+        result = service.log_action(action="simple_action", user_id="user_456")
 
         assert isinstance(result, dict)
         assert result["metadata"] == {}  # 默认为空字典
@@ -146,6 +154,7 @@ class TestAuditServiceFixed:
     def test_get_audit_logs_from_memory(self):
         """测试从内存获取审计日志"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
         # 记录几个动作
@@ -219,10 +228,11 @@ class TestDataProcessingUtils:
         """测试数据清洗工具"""
         try:
             from src.data.processing.football_data_cleaner import FootballDataCleaner
+
             cleaner = FootballDataCleaner()
 
             # 测试清洗方法
-            if hasattr(cleaner, 'clean_team_name'):
+            if hasattr(cleaner, "clean_team_name"):
                 result = cleaner.clean_team_name("  Manchester United  ")
                 assert result == "Manchester United" or result is not None
         except ImportError:
@@ -232,10 +242,11 @@ class TestDataProcessingUtils:
         """测试数据验证工具"""
         try:
             from src.utils.data_validator import DataValidator
+
             validator = DataValidator()
 
             # 测试验证方法
-            if hasattr(validator, 'validate_score'):
+            if hasattr(validator, "validate_score"):
                 result = validator.validate_score({"home": 2, "away": 1})
                 assert result is True or result is not None
         except ImportError:

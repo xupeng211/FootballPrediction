@@ -8,7 +8,10 @@
 import pytest
 
 # 暂时跳过整个streaming测试模块，因为需要大量修复
-pytest.skip("Streaming tests require extensive fixes - temporarily disabled", allow_module_level=True)
+pytest.skip(
+    "Streaming tests require extensive fixes - temporarily disabled",
+    allow_module_level=True,
+)
 
 
 @pytest.mark.unit
@@ -18,9 +21,7 @@ class TestKafkaProducer:
     @pytest.fixture
     def producer(self):
         """创建生产者实例"""
-        config = StreamConfig(
-            bootstrap_servers="localhost:9092"
-        )
+        config = StreamConfig(bootstrap_servers="localhost:9092")
         producer = FootballKafkaProducer(config=config)
         producer.producer = MagicMock()
         producer.logger = MagicMock()

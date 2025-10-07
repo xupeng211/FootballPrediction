@@ -453,14 +453,17 @@ class TestMultiUserDatabaseManager:
             mock_get_config.return_value = mock_base_config
 
             # Mock环境变量
-            with patch.dict("os.environ", {
-                "DB_READER_USER": "test_reader",
-                "DB_READER_PASSWORD": "test_reader_pass",
-                "DB_WRITER_USER": "test_writer",
-                "DB_WRITER_PASSWORD": "test_writer_pass",
-                "DB_ADMIN_USER": "test_admin",
-                "DB_ADMIN_PASSWORD": "test_admin_pass",
-            }):
+            with patch.dict(
+                "os.environ",
+                {
+                    "DB_READER_USER": "test_reader",
+                    "DB_READER_PASSWORD": "test_reader_pass",
+                    "DB_WRITER_USER": "test_writer",
+                    "DB_WRITER_PASSWORD": "test_writer_pass",
+                    "DB_ADMIN_USER": "test_admin",
+                    "DB_ADMIN_PASSWORD": "test_admin_pass",
+                },
+            ):
                 multi_db_manager.initialize()
 
                 # 验证管理器已创建
@@ -578,7 +581,9 @@ class TestMultiUserDatabaseManager:
         assert "schema" in permissions
 
 
-@pytest.mark.skip("Module functions require complex database setup - temporarily disabled")
+@pytest.mark.skip(
+    "Module functions require complex database setup - temporarily disabled"
+)
 @pytest.mark.unit
 class TestModuleFunctions:
     """模块函数测试"""
@@ -638,7 +643,9 @@ class TestModuleFunctions:
 
             # get_async_db_session是生成器函数，不能直接用async with
             # 正确用法是在FastAPI依赖注入中使用，不是直接调用
-            pytest.skip("get_async_db_session is a generator function for FastAPI dependency injection")
+            pytest.skip(
+                "get_async_db_session is a generator function for FastAPI dependency injection"
+            )
 
     def test_get_reader_session(self):
         """测试获取读者会话"""

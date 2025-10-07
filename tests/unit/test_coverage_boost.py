@@ -10,7 +10,7 @@ import sys
 # 设置测试环境
 os.environ["TESTING"] = "true"
 os.environ["ENVIRONMENT"] = "test"
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 
 @pytest.mark.unit
@@ -219,6 +219,7 @@ class TestCoverageBoost:
             from database.models.match import Match
             from database.models.odds import Odds
             from database.models.predictions import Prediction
+
             assert True  # 导入成功
         except ImportError:
             pytest.skip("Database models not available")
@@ -227,6 +228,7 @@ class TestCoverageBoost:
         """测试主模块导入"""
         try:
             from main import app
+
             assert app is not None
         except ImportError:
             pytest.skip("Main module not available")

@@ -78,7 +78,14 @@ class ChineseTeamFactory(TeamFactory):
 
     team_name = factory.Faker(
         "random_element",
-        elements=["北京国安", "上海海港", "广州队", "山东泰山", "大连人", "河南嵩山龙门"],
+        elements=[
+            "北京国安",
+            "上海海港",
+            "广州队",
+            "山东泰山",
+            "大连人",
+            "河南嵩山龙门",
+        ],
     )
     country = "China"
 

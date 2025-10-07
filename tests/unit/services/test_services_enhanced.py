@@ -11,6 +11,7 @@ sys.path.insert(0, str(project_root))
 
 # 设置环境
 import os
+
 os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
@@ -20,10 +21,21 @@ def setup_mocks():
     """设置全局Mock"""
     # Mock外部库
     external_modules = [
-        'pandas', 'numpy', 'sklearn', 'sklearn.preprocessing',
-        'sklearn.impute', 'sklearn.ensemble', 'sklearn.metrics',
-        'nltk', 'spacy', 'tensorflow', 'torch', 'scipy', 'statsmodels',
-        'psutil', 'redis'
+        "pandas",
+        "numpy",
+        "sklearn",
+        "sklearn.preprocessing",
+        "sklearn.impute",
+        "sklearn.ensemble",
+        "sklearn.metrics",
+        "nltk",
+        "spacy",
+        "tensorflow",
+        "torch",
+        "scipy",
+        "statsmodels",
+        "psutil",
+        "redis",
     ]
 
     for module in external_modules:
@@ -31,27 +43,27 @@ def setup_mocks():
 
     # Mock内部模块
     internal_modules = [
-        'src.database.models',
-        'src.database.models.raw_data',
-        'src.database.models.match',
-        'src.database.models.team',
-        'src.database.models.league',
-        'src.database.models.odds',
-        'src.database.models.predictions',
-        'src.database.models.features',
-        'src.database.models.audit_log',
-        'src.database.manager',
-        'src.cache.redis_manager',
-        'src.models.model_training',
-        'src.features.feature_store',
-        'src.monitoring.metrics_collector',
-        'src.lineage.metadata_manager',
-        'src.data.processing.football_data_cleaner',
-        'src.data.processing.missing_data_handler',
-        'src.data.storage.data_lake_storage',
-        'src.database.connection',
-        'src.core.config',
-        'src.core.logger'
+        "src.database.models",
+        "src.database.models.raw_data",
+        "src.database.models.match",
+        "src.database.models.team",
+        "src.database.models.league",
+        "src.database.models.odds",
+        "src.database.models.predictions",
+        "src.database.models.features",
+        "src.database.models.audit_log",
+        "src.database.manager",
+        "src.cache.redis_manager",
+        "src.models.model_training",
+        "src.features.feature_store",
+        "src.monitoring.metrics_collector",
+        "src.lineage.metadata_manager",
+        "src.data.processing.football_data_cleaner",
+        "src.data.processing.missing_data_handler",
+        "src.data.storage.data_lake_storage",
+        "src.database.connection",
+        "src.core.config",
+        "src.core.logger",
     ]
 
     for module in internal_modules:
@@ -61,7 +73,7 @@ def setup_mocks():
 
     # 清理
     for module in list(sys.modules.keys()):
-        if module.startswith('src.'):
+        if module.startswith("src."):
             del sys.modules[module]
 
 
@@ -71,13 +83,14 @@ class TestAuditServiceEnhanced:
     def test_log_action(self):
         """测试日志记录"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
         # 测试记录日志
         result = service.log_action(
             action="test_action",
             user_id="1",
-            metadata={"resource": "test_resource", "key": "value"}
+            metadata={"resource": "test_resource", "key": "value"},
         )
 
         # 验证返回的日志条目
@@ -96,6 +109,7 @@ class TestAuditServiceEnhanced:
     def test_set_and_get_audit_context(self):
         """测试设置和获取审计上下文"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
         # 创建Mock的AuditContext对象
@@ -103,7 +117,7 @@ class TestAuditServiceEnhanced:
         mock_context.to_dict.return_value = {
             "user_id": 123,
             "session_id": "session123",
-            "ip_address": "192.168.1.1"
+            "ip_address": "192.168.1.1",
         }
 
         # 设置上下文
@@ -118,6 +132,7 @@ class TestAuditServiceEnhanced:
     def test_get_user_audit_logs(self):
         """测试获取用户审计日志"""
         from src.services.audit_service import AuditService
+
         service = AuditService()
 
         # 先添加一些日志
@@ -148,14 +163,11 @@ class TestContentAnalysisServiceEnhanced:
     def test_analyze_text_detailed(self):
         """测试详细的文本分析"""
         from src.services.content_analysis import ContentAnalysisService
+
         service = ContentAnalysisService()
 
         # 测试多种文本（非空）
-        test_cases = [
-            "曼联3:0战胜利物浦",
-            "C罗打入精彩进球",
-            "这是一段普通的文本"
-        ]
+        test_cases = ["曼联3:0战胜利物浦", "C罗打入精彩进球", "这是一段普通的文本"]
 
         for text in test_cases:
             result = service.analyze_text(text)
@@ -175,6 +187,7 @@ class TestContentAnalysisServiceEnhanced:
     def test_sentiment_analysis_edge_cases(self):
         """测试情感分析边缘情况"""
         from src.services.content_analysis import ContentAnalysisService
+
         service = ContentAnalysisService()
 
         # 测试不同情感
@@ -184,7 +197,7 @@ class TestContentAnalysisServiceEnhanced:
             ("比赛结果一般", "neutral"),
             ("", "neutral"),
             ("精彩出色完美激动", "positive"),
-            ("失败糟糕失望痛苦", "negative")
+            ("失败糟糕失望痛苦", "negative"),
         ]
 
         for text, expected_sentiment in test_cases:
@@ -196,13 +209,14 @@ class TestContentAnalysisServiceEnhanced:
     def test_entity_extraction_various_teams(self):
         """测试各种球队实体提取"""
         from src.services.content_analysis import ContentAnalysisService
+
         service = ContentAnalysisService()
 
         test_texts = [
             "曼联对阵利物浦",
             "巴塞罗那战胜了皇家马德里",
             "阿森纳和切尔西的比赛",
-            "曼城击败了热刺"
+            "曼城击败了热刺",
         ]
 
         for text in test_texts:
@@ -217,6 +231,7 @@ class TestContentAnalysisServiceEnhanced:
     def test_content_classification(self):
         """测试内容分类"""
         from src.services.content_analysis import ContentAnalysisService
+
         service = ContentAnalysisService()
 
         test_cases = [
@@ -224,7 +239,7 @@ class TestContentAnalysisServiceEnhanced:
             ("球员转会消息：签下新球员", "transfer_news"),
             ("预测：曼联胜率60%", "prediction"),
             ("教练采访：我们打得很好", "interview"),
-            ("球员因伤缺席", "injury_news")
+            ("球员因伤缺席", "injury_news"),
         ]
 
         for text, expected_category in test_cases:
@@ -237,6 +252,7 @@ class TestContentAnalysisServiceEnhanced:
     def test_summary_generation_different_lengths(self):
         """测试不同长度文本的摘要生成"""
         from src.services.content_analysis import ContentAnalysisService
+
         service = ContentAnalysisService()
 
         # 短文本
@@ -265,7 +281,7 @@ class TestContentAnalysisServiceEnhanced:
             title="比赛新闻",
             content_type=ContentType.TEXT,
             data={"text": "曼联在英超比赛中取得了胜利"},
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         # 分析内容 - 使用同步方法因为服务有同步版本
@@ -283,13 +299,14 @@ class TestUserProfileServiceEnhanced:
     def test_profile_crud_operations(self):
         """测试用户配置文件CRUD操作"""
         from src.services.user_profile import UserProfileService
+
         service = UserProfileService()
 
         # 创建配置文件 - 使用正确的参数格式
         user_data = {
             "user_id": 123,
             "username": "test_user",
-            "preferences": {"theme": "dark"}
+            "preferences": {"theme": "dark"},
         }
         result = service.create_profile(user_data)
         assert result is not None
@@ -367,6 +384,7 @@ class TestServiceManagerEnhanced:
 
         # 并发初始化
         import asyncio
+
         results = await asyncio.gather(
             *[service.initialize() for service in manager.services.values()]
         )

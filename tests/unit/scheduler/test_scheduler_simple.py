@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestSchedulerSimple:
         """测试任务调度器导入"""
         try:
             from src.scheduler.task_scheduler import TaskScheduler
+
             scheduler = TaskScheduler()
             assert scheduler is not None
         except ImportError as e:
@@ -29,6 +30,7 @@ class TestSchedulerSimple:
         """测试作业管理器导入"""
         try:
             from src.scheduler.job_manager import JobManager
+
             manager = JobManager()
             assert manager is not None
         except ImportError as e:
@@ -38,6 +40,7 @@ class TestSchedulerSimple:
         """测试依赖解析器导入"""
         try:
             from src.scheduler.dependency_resolver import DependencyResolver
+
             resolver = DependencyResolver()
             assert resolver is not None
         except ImportError as e:
@@ -47,6 +50,7 @@ class TestSchedulerSimple:
         """测试恢复处理器导入"""
         try:
             from src.scheduler.recovery_handler import RecoveryHandler
+
             handler = RecoveryHandler()
             assert handler is not None
         except ImportError as e:
@@ -59,8 +63,9 @@ class TestSchedulerSimple:
                 BaseTask,
                 DataCollectionTask,
                 ModelTrainingTask,
-                PredictionTask
+                PredictionTask,
             )
+
             assert BaseTask is not None
             assert DataCollectionTask is not None
             assert ModelTrainingTask is not None
@@ -73,15 +78,15 @@ class TestSchedulerSimple:
         try:
             from src.scheduler.task_scheduler import TaskScheduler
 
-            with patch('src.scheduler.task_scheduler.logger') as mock_logger:
+            with patch("src.scheduler.task_scheduler.logger") as mock_logger:
                 scheduler = TaskScheduler()
                 scheduler.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(scheduler, 'schedule_task')
-                assert hasattr(scheduler, 'run_task')
-                assert hasattr(scheduler, 'cancel_task')
-                assert hasattr(scheduler, 'get_task_status')
+                assert hasattr(scheduler, "schedule_task")
+                assert hasattr(scheduler, "run_task")
+                assert hasattr(scheduler, "cancel_task")
+                assert hasattr(scheduler, "get_task_status")
 
         except Exception as e:
             pytest.skip(f"Cannot test TaskScheduler basic functionality: {e}")
@@ -91,15 +96,15 @@ class TestSchedulerSimple:
         try:
             from src.scheduler.job_manager import JobManager
 
-            with patch('src.scheduler.job_manager.logger') as mock_logger:
+            with patch("src.scheduler.job_manager.logger") as mock_logger:
                 manager = JobManager()
                 manager.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(manager, 'add_job')
-                assert hasattr(manager, 'remove_job')
-                assert hasattr(manager, 'list_jobs')
-                assert hasattr(manager, 'get_job_info')
+                assert hasattr(manager, "add_job")
+                assert hasattr(manager, "remove_job")
+                assert hasattr(manager, "list_jobs")
+                assert hasattr(manager, "get_job_info")
 
         except Exception as e:
             pytest.skip(f"Cannot test JobManager basic functionality: {e}")
@@ -109,14 +114,14 @@ class TestSchedulerSimple:
         try:
             from src.scheduler.dependency_resolver import DependencyResolver
 
-            with patch('src.scheduler.dependency_resolver.logger') as mock_logger:
+            with patch("src.scheduler.dependency_resolver.logger") as mock_logger:
                 resolver = DependencyResolver()
                 resolver.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(resolver, 'resolve_dependencies')
-                assert hasattr(resolver, 'check_circular_dependency')
-                assert hasattr(resolver, 'get_execution_order')
+                assert hasattr(resolver, "resolve_dependencies")
+                assert hasattr(resolver, "check_circular_dependency")
+                assert hasattr(resolver, "get_execution_order")
 
         except Exception as e:
             pytest.skip(f"Cannot test DependencyResolver basic functionality: {e}")
@@ -126,14 +131,14 @@ class TestSchedulerSimple:
         try:
             from src.scheduler.recovery_handler import RecoveryHandler
 
-            with patch('src.scheduler.recovery_handler.logger') as mock_logger:
+            with patch("src.scheduler.recovery_handler.logger") as mock_logger:
                 handler = RecoveryHandler()
                 handler.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(handler, 'handle_failure')
-                assert hasattr(handler, 'retry_task')
-                assert hasattr(handler, 'escalate_failure')
+                assert hasattr(handler, "handle_failure")
+                assert hasattr(handler, "retry_task")
+                assert hasattr(handler, "escalate_failure")
 
         except Exception as e:
             pytest.skip(f"Cannot test RecoveryHandler basic functionality: {e}")
@@ -145,9 +150,7 @@ class TestSchedulerSimple:
 
             # 创建测试任务
             task = BaseTask(
-                task_id="test_task",
-                task_name="Test Task",
-                description="A test task"
+                task_id="test_task", task_name="Test Task", description="A test task"
             )
 
             assert task.task_id == "test_task"
@@ -166,7 +169,7 @@ class TestSchedulerSimple:
             task = DataCollectionTask(
                 task_id="data_collection_task",
                 source="test_source",
-                data_type="matches"
+                data_type="matches",
             )
 
             assert task.task_id == "data_collection_task"
@@ -185,7 +188,7 @@ class TestSchedulerSimple:
             task = ModelTrainingTask(
                 task_id="model_training_task",
                 model_type="test_model",
-                training_data_path="/test/path"
+                training_data_path="/test/path",
             )
 
             assert task.task_id == "model_training_task"
@@ -204,7 +207,7 @@ class TestSchedulerSimple:
             task = PredictionTask(
                 task_id="prediction_task",
                 model_id="test_model",
-                input_data={"match_id": 123}
+                input_data={"match_id": 123},
             )
 
             assert task.task_id == "prediction_task"
@@ -221,15 +224,12 @@ class TestSchedulerSimple:
             from src.scheduler.tasks import BaseTask
 
             # 创建模拟任务
-            task = BaseTask(
-                task_id="test_task",
-                task_name="Test Task"
-            )
+            task = BaseTask(task_id="test_task", task_name="Test Task")
 
             # 测试任务方法存在
-            assert hasattr(task, 'execute')
-            assert hasattr(task, 'validate')
-            assert hasattr(task, 'cleanup')
+            assert hasattr(task, "execute")
+            assert hasattr(task, "validate")
+            assert hasattr(task, "cleanup")
 
         except Exception as e:
             pytest.skip(f"Cannot test task execution flow: {e}")

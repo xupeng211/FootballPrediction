@@ -125,7 +125,7 @@ class ContentAnalysisService(BaseService):
             "keywords": words[:5] if words else [],
             "language": "auto-detected",
             "entities": self.extract_entities(text),
-            "summary": self.generate_summary(text)
+            "summary": self.generate_summary(text),
         }
 
     def extract_entities(self, text: str) -> list:
@@ -160,7 +160,7 @@ class ContentAnalysisService(BaseService):
             "injury_news": ["伤病", "受伤", "伤停", "恢复"],
             "prediction": ["预测", "分析", "赔率", "胜平负"],
             "interview": ["采访", "表示", "说道", "认为"],
-            "general": ["其他"]
+            "general": ["其他"],
         }
 
         # 计算每个类别的匹配度
@@ -176,7 +176,7 @@ class ContentAnalysisService(BaseService):
             return {
                 "category": best_category,
                 "confidence": confidence,
-                "all_scores": scores
+                "all_scores": scores,
             }
 
         return {"category": "general", "confidence": 0.5}
@@ -211,7 +211,7 @@ class ContentAnalysisService(BaseService):
             "sentiment": sentiment,
             "score": score,
             "positive_count": pos_count,
-            "negative_count": neg_count
+            "negative_count": neg_count,
         }
 
     def generate_summary(self, text: str, max_length: int = 100) -> str:
@@ -220,16 +220,16 @@ class ContentAnalysisService(BaseService):
             return text or ""
 
         # 简单的摘要生成：取前面部分加上省略号
-        sentences = text.split('。')
+        sentences = text.split("。")
         summary = ""
 
         for sentence in sentences:
             if len(summary + sentence) <= max_length:
-                summary += sentence + '。'
+                summary += sentence + "。"
             else:
                 break
 
         if not summary:
-            summary = text[:max_length-3] + '...'
+            summary = text[: max_length - 3] + "..."
 
         return summary.strip()

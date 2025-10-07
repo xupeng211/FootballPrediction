@@ -10,6 +10,7 @@ class TestBadExample:
         """测试模块导入"""
         try:
             from src.bad_example import badly_formatted_function
+
             assert badly_formatted_function is not None
         except ImportError as e:
             pytest.skip(f"无法导入bad_example模块: {e}")
@@ -53,6 +54,7 @@ class TestBadExample:
         """测试长行变量"""
         try:
             from src.bad_example import very_long_line
+
             assert isinstance(very_long_line, str)
             assert len(very_long_line) > 40  # 实际长度是46
             assert "flake8" in very_long_line
@@ -63,7 +65,8 @@ class TestBadExample:
         """测试模块导入"""
         # 测试模块是否可以导入（即使有未使用的导入）
         import src.bad_example
+
         assert src.bad_example is not None
 
         # 检查是否有必要的函数
-        assert hasattr(src.bad_example, 'badly_formatted_function')
+        assert hasattr(src.bad_example, "badly_formatted_function")

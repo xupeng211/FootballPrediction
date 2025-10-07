@@ -8,7 +8,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -19,8 +19,9 @@ class TestSimpleModulesCoverage:
         """测试main模块"""
         try:
             from src.main import app
+
             assert app is not None
-            assert hasattr(app, 'routes')
+            assert hasattr(app, "routes")
         except ImportError:
             pytest.skip("Main module not available")
 
@@ -28,6 +29,7 @@ class TestSimpleModulesCoverage:
         """测试bad_example模块"""
         try:
             from src.bad_example import bad_function
+
             result = bad_function()
             assert result == "This is a bad example"
         except ImportError:
@@ -52,15 +54,15 @@ class TestSimpleModulesCoverage:
     def test_utils_modules_direct(self):
         """直接测试工具模块"""
         modules_to_test = [
-            'src.utils.crypto_utils',
-            'src.utils.data_validator',
-            'src.utils.dict_utils',
-            'src.utils.file_utils',
-            'src.utils.response',
-            'src.utils.retry',
-            'src.utils.string_utils',
-            'src.utils.time_utils',
-            'src.utils.warning_filters'
+            "src.utils.crypto_utils",
+            "src.utils.data_validator",
+            "src.utils.dict_utils",
+            "src.utils.file_utils",
+            "src.utils.response",
+            "src.utils.retry",
+            "src.utils.string_utils",
+            "src.utils.time_utils",
+            "src.utils.warning_filters",
         ]
 
         for module_name in modules_to_test:
@@ -75,6 +77,7 @@ class TestSimpleModulesCoverage:
         """测试中间件模块"""
         try:
             from src.middleware.i18n import i18n_middleware
+
             assert callable(i18n_middleware)
         except ImportError:
             pytest.skip("Middleware modules not available")
@@ -83,6 +86,7 @@ class TestSimpleModulesCoverage:
         """测试国际化模块"""
         try:
             from src.locales import get_text
+
             # 尝试获取文本
             text = get_text("test.key", default="Test")
             assert isinstance(text, str)
@@ -92,11 +96,11 @@ class TestSimpleModulesCoverage:
     def test_streaming_modules_import(self):
         """测试流处理模块导入"""
         modules_to_test = [
-            'src.streaming.kafka_components',
-            'src.streaming.kafka_consumer',
-            'src.streaming.kafka_producer',
-            'src.streaming.stream_config',
-            'src.streaming.stream_processor'
+            "src.streaming.kafka_components",
+            "src.streaming.kafka_consumer",
+            "src.streaming.kafka_producer",
+            "src.streaming.stream_config",
+            "src.streaming.stream_processor",
         ]
 
         for module_name in modules_to_test:
@@ -110,14 +114,14 @@ class TestSimpleModulesCoverage:
     def test_tasks_modules_import(self):
         """测试任务模块导入"""
         modules_to_test = [
-            'src.tasks.backup_tasks',
-            'src.tasks.celery_app',
-            'src.tasks.data_collection_tasks',
-            'src.tasks.error_logger',
-            'src.tasks.maintenance_tasks',
-            'src.tasks.monitoring',
-            'src.tasks.streaming_tasks',
-            'src.tasks.utils'
+            "src.tasks.backup_tasks",
+            "src.tasks.celery_app",
+            "src.tasks.data_collection_tasks",
+            "src.tasks.error_logger",
+            "src.tasks.maintenance_tasks",
+            "src.tasks.monitoring",
+            "src.tasks.streaming_tasks",
+            "src.tasks.utils",
         ]
 
         for module_name in modules_to_test:
@@ -148,6 +152,7 @@ class TestSimpleModulesCoverage:
             # 这些是类型提示文件，检查是否存在
             import src.stubs.confluent_kafka
             import src.stubs.feast
+
             assert True
         except ImportError:
             pytest.skip("Stub modules not available")
@@ -236,14 +241,15 @@ class TestSimpleModulesCoverage:
         try:
             # 尝试导入API模型
             from src.api import models
+
             assert models is not None
 
             # 检查是否有模型类
-            if hasattr(models, 'MatchResponse'):
+            if hasattr(models, "MatchResponse"):
                 assert True
-            if hasattr(models, 'PredictionRequest'):
+            if hasattr(models, "PredictionRequest"):
                 assert True
-            if hasattr(models, 'ErrorResponse'):
+            if hasattr(models, "ErrorResponse"):
                 assert True
 
         except ImportError:
@@ -253,8 +259,9 @@ class TestSimpleModulesCoverage:
         """测试buggy_api模块"""
         try:
             from src.api.buggy_api import router
+
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         except ImportError:
             pytest.skip("Buggy API module not available")
 
@@ -262,6 +269,7 @@ class TestSimpleModulesCoverage:
         """测试features_improved模块导入"""
         try:
             from src.api.features_improved import router
+
             assert router is not None
         except ImportError:
             pytest.skip("Features improved module not available")

@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestQualityFixed:
         """测试异常检测器导入"""
         try:
             from src.data.quality.anomaly_detector import AnomalyDetector
+
             detector = AnomalyDetector()
             assert detector is not None
         except ImportError as e:
@@ -31,12 +32,12 @@ class TestQualityFixed:
             # 尝试不同的导入路径
             DataQualityMonitor = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor',
-                'src.data.quality.monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
+                "src.data.quality.monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['DataQualityMonitor'])
+                    module = __import__(module_path, fromlist=["DataQualityMonitor"])
                     DataQualityMonitor = module.DataQualityMonitor
                     break
                 except ImportError:
@@ -54,6 +55,7 @@ class TestQualityFixed:
         """测试异常处理器导入"""
         try:
             from src.data.quality.exception_handler import ExceptionHandler
+
             handler = ExceptionHandler()
             assert handler is not None
         except ImportError as e:
@@ -63,6 +65,7 @@ class TestQualityFixed:
         """测试 Prometheus 导出器导入"""
         try:
             from src.data.quality.ge_prometheus_exporter import PrometheusExporter
+
             exporter = PrometheusExporter()
             assert exporter is not None
         except ImportError as e:
@@ -72,6 +75,7 @@ class TestQualityFixed:
         """测试 Great Expectations 配置导入"""
         try:
             from src.data.quality.great_expectations_config import GEConfig
+
             config = GEConfig()
             assert config is not None
         except ImportError as e:
@@ -82,14 +86,14 @@ class TestQualityFixed:
         try:
             from src.data.quality.anomaly_detector import AnomalyDetector
 
-            with patch('src.data.quality.anomaly_detector.logger') as mock_logger:
+            with patch("src.data.quality.anomaly_detector.logger") as mock_logger:
                 detector = AnomalyDetector()
                 detector.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(detector, 'detect_anomalies')
-                assert hasattr(detector, 'is_anomaly')
-                assert hasattr(detector, 'get_anomaly_score')
+                assert hasattr(detector, "detect_anomalies")
+                assert hasattr(detector, "is_anomaly")
+                assert hasattr(detector, "get_anomaly_score")
 
         except Exception as e:
             pytest.skip(f"Cannot test AnomalyDetector: {e}")
@@ -100,11 +104,11 @@ class TestQualityFixed:
             # 尝试多种导入路径
             DataQualityMonitor = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['DataQualityMonitor'])
+                    module = __import__(module_path, fromlist=["DataQualityMonitor"])
                     DataQualityMonitor = module.DataQualityMonitor
                     break
                 except ImportError:
@@ -113,14 +117,18 @@ class TestQualityFixed:
             if DataQualityMonitor is None:
                 pytest.skip("DataQualityMonitor not found")
 
-            with patch('src.data.quality.data_quality_monitor.logger') as mock_logger:
+            with patch("src.data.quality.data_quality_monitor.logger") as mock_logger:
                 monitor = DataQualityMonitor()
                 monitor.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(monitor, 'check_completeness') or hasattr(monitor, 'check_data_quality')
-                assert hasattr(monitor, 'check_validity') or hasattr(monitor, 'validate_data')
-                assert hasattr(monitor, 'generate_report')
+                assert hasattr(monitor, "check_completeness") or hasattr(
+                    monitor, "check_data_quality"
+                )
+                assert hasattr(monitor, "check_validity") or hasattr(
+                    monitor, "validate_data"
+                )
+                assert hasattr(monitor, "generate_report")
 
         except Exception as e:
             pytest.skip(f"Cannot test DataQualityMonitor: {e}")
@@ -130,14 +138,14 @@ class TestQualityFixed:
         try:
             from src.data.quality.exception_handler import ExceptionHandler
 
-            with patch('src.data.quality.exception_handler.logger') as mock_logger:
+            with patch("src.data.quality.exception_handler.logger") as mock_logger:
                 handler = ExceptionHandler()
                 handler.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(handler, 'handle_exception')
-                assert hasattr(handler, 'log_exception')
-                assert hasattr(handler, 'get_exception_stats')
+                assert hasattr(handler, "handle_exception")
+                assert hasattr(handler, "log_exception")
+                assert hasattr(handler, "get_exception_stats")
 
         except Exception as e:
             pytest.skip(f"Cannot test ExceptionHandler: {e}")
@@ -148,11 +156,11 @@ class TestQualityFixed:
             # 尝试导入 QualityMetrics
             QualityMetrics = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['QualityMetrics'])
+                    module = __import__(module_path, fromlist=["QualityMetrics"])
                     QualityMetrics = module.QualityMetrics
                     break
                 except (ImportError, AttributeError):
@@ -164,10 +172,7 @@ class TestQualityFixed:
 
             # 创建测试指标
             metrics = QualityMetrics(
-                completeness=0.95,
-                validity=0.98,
-                uniqueness=1.0,
-                accuracy=0.92
+                completeness=0.95, validity=0.98, uniqueness=1.0, accuracy=0.92
             )
 
             assert metrics.completeness == 0.95
@@ -182,11 +187,11 @@ class TestQualityFixed:
             # 尝试导入 QualityRule
             QualityRule = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['QualityRule'])
+                    module = __import__(module_path, fromlist=["QualityRule"])
                     QualityRule = module.QualityRule
                     break
                 except (ImportError, AttributeError):
@@ -201,7 +206,7 @@ class TestQualityFixed:
                 description="Scores should be positive",
                 column="score",
                 rule_type="range",
-                parameters={"min": 0, "max": 100}
+                parameters={"min": 0, "max": 100},
             )
 
             assert rule.name == "positive_scores"
@@ -217,11 +222,11 @@ class TestQualityFixed:
             # 尝试多种导入路径
             DataQualityMonitor = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['DataQualityMonitor'])
+                    module = __import__(module_path, fromlist=["DataQualityMonitor"])
                     DataQualityMonitor = module.DataQualityMonitor
                     break
                 except ImportError:
@@ -230,12 +235,12 @@ class TestQualityFixed:
             if DataQualityMonitor is None:
                 pytest.skip("DataQualityMonitor not found")
 
-            with patch('src.data.quality.data_quality_monitor.logger') as mock_logger:
+            with patch("src.data.quality.data_quality_monitor.logger") as mock_logger:
                 monitor = DataQualityMonitor()
                 monitor.logger = mock_logger
 
                 # 测试异步方法（如果存在）
-                if hasattr(monitor, 'async_check_quality'):
+                if hasattr(monitor, "async_check_quality"):
                     await monitor.async_check_quality("test_dataset")
                     assert True
                 else:
@@ -250,11 +255,11 @@ class TestQualityFixed:
             # 尝试导入 QualityAlert
             QualityAlert = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['QualityAlert'])
+                    module = __import__(module_path, fromlist=["QualityAlert"])
                     QualityAlert = module.QualityAlert
                     break
                 except (ImportError, AttributeError):
@@ -269,7 +274,7 @@ class TestQualityFixed:
                 message="Data quality threshold breached",
                 metric="completeness",
                 value=0.85,
-                threshold=0.90
+                threshold=0.90,
             )
 
             assert alert.severity == "warning"
@@ -286,11 +291,11 @@ class TestQualityFixed:
             # 尝试导入 QualityThresholds
             QualityThresholds = None
             for module_path in [
-                'src.data.quality.data_quality_monitor',
-                'src.monitoring.quality_monitor'
+                "src.data.quality.data_quality_monitor",
+                "src.monitoring.quality_monitor",
             ]:
                 try:
-                    module = __import__(module_path, fromlist=['QualityThresholds'])
+                    module = __import__(module_path, fromlist=["QualityThresholds"])
                     QualityThresholds = module.QualityThresholds
                     break
                 except (ImportError, AttributeError):
@@ -304,7 +309,7 @@ class TestQualityFixed:
                 completeness_min=0.90,
                 validity_min=0.95,
                 uniqueness_min=0.98,
-                accuracy_min=0.85
+                accuracy_min=0.85,
             )
 
             assert thresholds.completeness_min == 0.90

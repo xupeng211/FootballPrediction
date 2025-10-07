@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestCoreSimple:
         """测试配置模块导入"""
         try:
             from src.core.config import Config, Settings
+
             config = Config()
             settings = Settings()
             assert config is not None
@@ -31,6 +32,7 @@ class TestCoreSimple:
         """测试日志模块导入"""
         try:
             from src.core.logger import get_logger, setup_logging
+
             logger = get_logger("test")
             assert logger is not None
             assert setup_logging is not None
@@ -44,8 +46,9 @@ class TestCoreSimple:
                 FootballPredictionError,
                 ValidationError,
                 DatabaseError,
-                CacheError
+                CacheError,
             )
+
             assert FootballPredictionError is not None
             assert ValidationError is not None
             assert DatabaseError is not None
@@ -60,8 +63,9 @@ class TestCoreSimple:
                 ENVIRONMENT,
                 LOG_LEVEL,
                 CACHE_TTL,
-                MAX_RETRIES
+                MAX_RETRIES,
             )
+
             assert ENVIRONMENT is not None
             assert LOG_LEVEL is not None
             assert CACHE_TTL is not None
@@ -76,15 +80,15 @@ class TestCoreSimple:
 
             # 测试配置创建
             config = Config()
-            assert hasattr(config, 'get')
-            assert hasattr(config, 'set')
-            assert hasattr(config, 'get_all')
+            assert hasattr(config, "get")
+            assert hasattr(config, "set")
+            assert hasattr(config, "get_all")
 
             # 测试设置
             settings = Settings()
-            assert hasattr(settings, 'database_url')
-            assert hasattr(settings, 'redis_url')
-            assert hasattr(settings, 'log_level')
+            assert hasattr(settings, "database_url")
+            assert hasattr(settings, "redis_url")
+            assert hasattr(settings, "log_level")
 
         except Exception as e:
             pytest.skip(f"Cannot test config basic functionality: {e}")
@@ -94,7 +98,7 @@ class TestCoreSimple:
         try:
             from src.core.logger import get_logger, setup_logging
 
-            with patch('src.core.logger.logging') as mock_logging:
+            with patch("src.core.logger.logging") as mock_logging:
                 # 模拟日志设置
                 setup_logging()
                 mock_logging.basicConfig.assert_called()
@@ -113,7 +117,7 @@ class TestCoreSimple:
                 FootballPredictionError,
                 ValidationError,
                 DatabaseError,
-                CacheError
+                CacheError,
             )
 
             # 测试基础异常
@@ -142,7 +146,7 @@ class TestCoreSimple:
                 ENVIRONMENT,
                 LOG_LEVEL,
                 CACHE_TTL,
-                MAX_RETRIES
+                MAX_RETRIES,
             )
 
             # 验证常量存在且有合理值
@@ -166,17 +170,20 @@ class TestCoreSimple:
             from src.core.config import Config
 
             # 模拟环境变量
-            with patch.dict('os.environ', {
-                'DATABASE_URL': 'sqlite:///test.db',
-                'REDIS_URL': 'redis://localhost:6379/0',
-                'LOG_LEVEL': 'DEBUG'
-            }):
+            with patch.dict(
+                "os.environ",
+                {
+                    "DATABASE_URL": "sqlite:///test.db",
+                    "REDIS_URL": "redis://localhost:6379/0",
+                    "LOG_LEVEL": "DEBUG",
+                },
+            ):
                 config = Config()
 
                 # 验证配置读取
-                db_url = config.get('database_url')
-                redis_url = config.get('redis_url')
-                log_level = config.get('log_level')
+                db_url = config.get("database_url")
+                redis_url = config.get("redis_url")
+                log_level = config.get("log_level")
 
                 # 断言存在即可，具体值可能因实现而异
                 assert db_url is not None or db_url is None
@@ -194,8 +201,8 @@ class TestCoreSimple:
             config = Config()
 
             # 测试配置验证方法存在
-            assert hasattr(config, 'validate')
-            assert hasattr(config, 'is_valid')
+            assert hasattr(config, "validate")
+            assert hasattr(config, "is_valid")
 
         except Exception as e:
             pytest.skip(f"Cannot test config validation: {e}")
@@ -224,7 +231,7 @@ class TestCoreSimple:
                 FootballPredictionError,
                 ValidationError,
                 DatabaseError,
-                CacheError
+                CacheError,
             )
 
             # 测试异常继承

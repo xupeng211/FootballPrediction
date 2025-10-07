@@ -8,16 +8,17 @@ import pytest
 from unittest.mock import Mock, patch, AsyncMock
 
 # Mock外部依赖
-sys.modules['pandas'] = Mock()
-sys.modules['numpy'] = Mock()
-sys.modules['sklearn'] = Mock()
-sys.modules['sklearn.preprocessing'] = Mock()
-sys.modules['sklearn.impute'] = Mock()
-sys.modules['nltk'] = Mock()
-sys.modules['spacy'] = Mock()
+sys.modules["pandas"] = Mock()
+sys.modules["numpy"] = Mock()
+sys.modules["sklearn"] = Mock()
+sys.modules["sklearn.preprocessing"] = Mock()
+sys.modules["sklearn.impute"] = Mock()
+sys.modules["nltk"] = Mock()
+sys.modules["spacy"] = Mock()
 
 # 设置测试环境
 import os
+
 os.environ["TESTING"] = "true"
 
 # 导入服务
@@ -49,7 +50,7 @@ class TestDataProcessingServiceReal:
                 "home_score": 2,
                 "away_score": 1,
                 "competition": "Premier League",
-                "season": "2023-24"
+                "season": "2023-24",
             }
         ]
 
@@ -63,23 +64,23 @@ class TestDataProcessingServiceReal:
                 "draw": 3.20,
                 "away_win": 2.80,
                 "bookmaker": "Bet365",
-                "timestamp": "2024-01-01T10:00:00Z"
+                "timestamp": "2024-01-01T10:00:00Z",
             }
         ]
 
     def test_service_initialization(self, service):
         """测试服务初始化"""
         assert service is not None
-        assert hasattr(service, 'initialize')
-        assert hasattr(service, 'shutdown')
-        assert hasattr(service, 'process_raw_match_data')
+        assert hasattr(service, "initialize")
+        assert hasattr(service, "shutdown")
+        assert hasattr(service, "process_raw_match_data")
 
     @pytest.mark.asyncio
     async def test_initialize(self, service):
         """测试服务初始化"""
         # Mock数据库连接
-        with patch.object(service, '_setup_database_connections', return_value=True):
-            with patch.object(service, '_load_models', return_value=True):
+        with patch.object(service, "_setup_database_connections", return_value=True):
+            with patch.object(service, "_load_models", return_value=True):
                 result = await service.initialize()
                 assert result is True
 
@@ -87,12 +88,14 @@ class TestDataProcessingServiceReal:
     async def test_shutdown(self, service):
         """测试服务关闭"""
         # Mock清理操作
-        with patch.object(service, '_cleanup_resources'):
+        with patch.object(service, "_cleanup_resources"):
             await service.shutdown()
             # Should not raise exception
 
     @pytest.mark.asyncio
-    async def test_process_raw_match_data(self, service, mock_session, sample_match_data):
+    async def test_process_raw_match_data(
+        self, service, mock_session, sample_match_data
+    ):
         """测试处理原始比赛数据"""
         # Mock数据处理方法
         service._validate_match_data = Mock(return_value=True)
@@ -131,8 +134,8 @@ class TestDataProcessingServiceReal:
                 "features": {
                     "home_form": [1, 0, 1],
                     "away_form": [0, 1, 0],
-                    "head_to_head": [1, 0, 0]
-                }
+                    "head_to_head": [1, 0, 0],
+                },
             }
         ]
 
@@ -171,7 +174,7 @@ class TestDataProcessingServiceReal:
         text = "Team A played well against Team B"
 
         # Mock文本处理
-        with patch('src.services.data_processing.nltk') as mock_nltk:
+        with patch("src.services.data_processing.nltk") as mock_nltk:
             mock_nltk.word_tokenize.return_value = ["Team", "A", "played", "well"]
             mock_nltk.pos_tag.return_value = [("Team", "NN"), ("A", "DT")]
 
@@ -188,7 +191,7 @@ class TestDataProcessingServiceReal:
         data_list = [
             {"id": 1, "data": "test1"},
             {"id": 2, "data": "test2"},
-            {"id": 3, "data": "test3"}
+            {"id": 3, "data": "test3"},
         ]
 
         # Mock单个处理
@@ -282,7 +285,7 @@ class TestDataProcessingServiceReal:
         """测试存储处理后的数据"""
         processed_data = {
             "matches": [{"id": 1, "processed": True}],
-            "features": [{"match_id": 1, "features": [1, 2, 3]}]
+            "features": [{"match_id": 1, "features": [1, 2, 3]}],
         }
 
         # Mock存储操作

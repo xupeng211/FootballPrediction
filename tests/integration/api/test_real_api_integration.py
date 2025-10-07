@@ -10,7 +10,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.integration
@@ -23,6 +23,7 @@ class TestRealAPIIntegration:
         # 尝试导入并创建FastAPI应用
         try:
             from src.main import app
+
             return TestClient(app)
         except ImportError:
             pytest.skip("FastAPI app not available")
@@ -40,11 +41,13 @@ class TestRealAPIIntegration:
     def mock_feature_store(self):
         """创建模拟的特征存储"""
         store = MagicMock()
-        store.get_match_features_for_prediction = AsyncMock(return_value={
-            "team_form": {"home": 0.8, "away": 0.6},
-            "head_to_head": {"home_wins": 3, "draws": 2, "away_wins": 1},
-            "recent_performance": {"home_goals": 10, "away_goals": 6}
-        })
+        store.get_match_features_for_prediction = AsyncMock(
+            return_value={
+                "team_form": {"home": 0.8, "away": 0.6},
+                "head_to_head": {"home_wins": 3, "draws": 2, "away_wins": 1},
+                "recent_performance": {"home_goals": 10, "away_goals": 6},
+            }
+        )
         return store
 
     def test_health_endpoint_integration(self, client):
@@ -67,7 +70,7 @@ class TestRealAPIIntegration:
         assert "version" in data
         assert "endpoints" in data
 
-    @patch('src.database.connection.get_async_session')
+    @patch("src.database.connection.get_async_session")
     def test_data_endpoint_integration(self, mock_get_session, mock_db_session, client):
         """测试数据端点的真实集成"""
         # 设置数据库mock
@@ -77,7 +80,7 @@ class TestRealAPIIntegration:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [
             {"id": 1, "name": "Match 1", "status": "completed"},
-            {"id": 2, "name": "Match 2", "status": "scheduled"}
+            {"id": 2, "name": "Match 2", "status": "scheduled"},
         ]
         mock_db_session.execute.return_value = mock_result
 
@@ -88,8 +91,10 @@ class TestRealAPIIntegration:
         assert isinstance(data, list)
         assert len(data) >= 0  # 可能为空列表
 
-    @patch('src.database.connection.get_async_session')
-    def test_features_endpoint_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_features_endpoint_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试特征端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -99,7 +104,9 @@ class TestRealAPIIntegration:
         mock_match.id = 1
         mock_match.home_team_id = 100
         mock_match.away_team_id = 200
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = mock_match
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
+            mock_match
+        )
 
         response = client.get("/api/features/1")
         # 可能是404（特征不存在）或其他状态码
@@ -112,15 +119,20 @@ class TestRealAPIIntegration:
         assert response.status_code == 422  # Validation error
 
         # 测试无效参数
-        response = client.post("/api/predictions", json={
-            "match_id": -1,  # 无效的match_id
-            "prediction_type": "invalid_type"
-        })
+        response = client.post(
+            "/api/predictions",
+            json={
+                "match_id": -1,  # 无效的match_id
+                "prediction_type": "invalid_type",
+            },
+        )
         assert response.status_code == 422
 
-    @patch('src.database.connection.get_async_session')
-    @patch('src.services.prediction_service.PredictionService')
-    def test_predictions_endpoint_integration(self, mock_prediction_service, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    @patch("src.services.prediction_service.PredictionService")
+    def test_predictions_endpoint_integration(
+        self, mock_prediction_service, mock_get_session, mock_db_session, client
+    ):
         """测试预测端点的真实集成"""
         # 设置mock
         mock_get_session.return_value = mock_db_session
@@ -128,16 +140,19 @@ class TestRealAPIIntegration:
         mock_service.predict.return_value = {
             "prediction": "HOME_WIN",
             "confidence": 0.75,
-            "probabilities": {"home_win": 0.75, "draw": 0.15, "away_win": 0.10}
+            "probabilities": {"home_win": 0.75, "draw": 0.15, "away_win": 0.10},
         }
         mock_prediction_service.return_value = mock_service
 
-        response = client.post("/api/predictions", json={
-            "match_id": 1,
-            "prediction_type": "winner",
-            "home_team_id": 100,
-            "away_team_id": 200
-        })
+        response = client.post(
+            "/api/predictions",
+            json={
+                "match_id": 1,
+                "prediction_type": "winner",
+                "home_team_id": 100,
+                "away_team_id": 200,
+            },
+        )
 
         assert response.status_code == 200
 
@@ -145,8 +160,10 @@ class TestRealAPIIntegration:
         assert "prediction" in data
         assert "confidence" in data
 
-    @patch('src.database.connection.get_async_session')
-    def test_models_endpoint_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_models_endpoint_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试模型端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -155,7 +172,7 @@ class TestRealAPIIntegration:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [
             {"id": "model_v1", "name": "Model v1", "accuracy": 0.85},
-            {"id": "model_v2", "name": "Model v2", "accuracy": 0.88}
+            {"id": "model_v2", "name": "Model v2", "accuracy": 0.88},
         ]
         mock_db_session.execute.return_value = mock_result
 
@@ -165,8 +182,10 @@ class TestRealAPIIntegration:
         data = response.json()
         assert isinstance(data, list)
 
-    @patch('src.database.connection.get_async_session')
-    def test_monitoring_endpoint_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_monitoring_endpoint_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试监控端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -175,7 +194,11 @@ class TestRealAPIIntegration:
         mock_result = MagicMock()
         mock_result.fetchall.return_value = [
             {"metric": "cpu_usage", "value": 45.2, "timestamp": "2024-01-01T00:00:00"},
-            {"metric": "memory_usage", "value": 67.8, "timestamp": "2024-01-01T00:00:00"}
+            {
+                "metric": "memory_usage",
+                "value": 67.8,
+                "timestamp": "2024-01-01T00:00:00",
+            },
         ]
         mock_db_session.execute.return_value = mock_result
 
@@ -202,8 +225,10 @@ class TestRealAPIIntegration:
         # 检查CORS头
         assert "access-control-allow-origin" in response.headers.lower()
 
-    @patch('src.database.connection.get_async_session')
-    def test_query_parameters_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_query_parameters_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试查询参数的集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -222,7 +247,7 @@ class TestRealAPIIntegration:
         data = response.json()
         assert isinstance(data, list)
 
-    @patch('src.database.connection.get_async_session')
+    @patch("src.database.connection.get_async_session")
     def test_filtering_integration(self, mock_get_session, mock_db_session, client):
         """测试过滤功能的集成"""
         # 设置数据库mock
@@ -245,8 +270,10 @@ class TestRealAPIIntegration:
             if "status" in match:
                 assert match["status"] == "completed"
 
-    @patch('src.database.connection.get_async_session')
-    def test_authentication_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_authentication_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试认证的集成"""
         # 测试需要认证的端点（如果有）
         response = client.get("/api/admin/users")
@@ -264,8 +291,10 @@ class TestRealAPIIntegration:
         # 所有请求都应该成功（除非有严格的速率限制）
         assert all(r.status_code == 200 for r in responses)
 
-    @patch('src.database.connection.get_async_session')
-    def test_batch_operations_integration(self, mock_get_session, mock_db_session, client):
+    @patch("src.database.connection.get_async_session")
+    def test_batch_operations_integration(
+        self, mock_get_session, mock_db_session, client
+    ):
         """测试批量操作的集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -279,12 +308,7 @@ class TestRealAPIIntegration:
 
     def test_response_format_consistency(self, client):
         """测试响应格式的一致性"""
-        endpoints = [
-            "/health",
-            "/",
-            "/api/data/matches",
-            "/api/models"
-        ]
+        endpoints = ["/health", "/", "/api/data/matches", "/api/models"]
 
         for endpoint in endpoints:
             response = client.get(endpoint)

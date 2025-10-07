@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -21,6 +21,7 @@ class TestLineageSimple:
         """测试血缘报告器导入"""
         try:
             from src.lineage.lineage_reporter import LineageReporter
+
             reporter = LineageReporter()
             assert reporter is not None
         except ImportError as e:
@@ -30,6 +31,7 @@ class TestLineageSimple:
         """测试元数据管理器导入"""
         try:
             from src.lineage.metadata_manager import MetadataManager
+
             manager = MetadataManager()
             assert manager is not None
         except ImportError as e:
@@ -39,6 +41,7 @@ class TestLineageSimple:
         """测试血缘节点导入"""
         try:
             from src.lineage.models import LineageNode, LineageEdge
+
             assert LineageNode is not None
             assert LineageEdge is not None
         except ImportError as e:
@@ -49,14 +52,14 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(reporter, 'track_data_flow')
-                assert hasattr(reporter, 'generate_report')
-                assert hasattr(reporter, 'get_lineage_graph')
+                assert hasattr(reporter, "track_data_flow")
+                assert hasattr(reporter, "generate_report")
+                assert hasattr(reporter, "get_lineage_graph")
 
         except Exception as e:
             pytest.skip(f"Cannot test LineageReporter basic functionality: {e}")
@@ -66,15 +69,15 @@ class TestLineageSimple:
         try:
             from src.lineage.metadata_manager import MetadataManager
 
-            with patch('src.lineage.metadata_manager.logger') as mock_logger:
+            with patch("src.lineage.metadata_manager.logger") as mock_logger:
                 manager = MetadataManager()
                 manager.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(manager, 'add_metadata')
-                assert hasattr(manager, 'get_metadata')
-                assert hasattr(manager, 'update_metadata')
-                assert hasattr(manager, 'delete_metadata')
+                assert hasattr(manager, "add_metadata")
+                assert hasattr(manager, "get_metadata")
+                assert hasattr(manager, "update_metadata")
+                assert hasattr(manager, "delete_metadata")
 
         except Exception as e:
             pytest.skip(f"Cannot test MetadataManager basic functionality: {e}")
@@ -89,7 +92,7 @@ class TestLineageSimple:
                 node_id="test_node",
                 node_type="data_source",
                 name="Test Data Source",
-                description="A test data source"
+                description="A test data source",
             )
 
             assert node.node_id == "test_node"
@@ -110,7 +113,7 @@ class TestLineageSimple:
                 edge_id="test_edge",
                 source_node="source_node",
                 target_node="target_node",
-                edge_type="transforms"
+                edge_type="transforms",
             )
 
             assert edge.edge_id == "test_edge"
@@ -126,16 +129,16 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 模拟数据流跟踪
 
                 # 测试跟踪方法存在
-                assert hasattr(reporter, 'track_transformation')
-                assert hasattr(reporter, 'track_dependency')
-                assert hasattr(reporter, 'track_dataset')
+                assert hasattr(reporter, "track_transformation")
+                assert hasattr(reporter, "track_dependency")
+                assert hasattr(reporter, "track_dataset")
 
         except Exception as e:
             pytest.skip(f"Cannot test lineage tracking: {e}")
@@ -145,7 +148,7 @@ class TestLineageSimple:
         try:
             from src.lineage.metadata_manager import MetadataManager
 
-            with patch('src.lineage.metadata_manager.logger') as mock_logger:
+            with patch("src.lineage.metadata_manager.logger") as mock_logger:
                 manager = MetadataManager()
                 manager.logger = mock_logger
 
@@ -154,13 +157,13 @@ class TestLineageSimple:
                     "dataset_name": "matches",
                     "schema_version": "1.0",
                     "last_updated": datetime.now().isoformat(),
-                    "columns": ["id", "home_team", "away_team", "score"]
+                    "columns": ["id", "home_team", "away_team", "score"],
                 }
 
                 # 测试元数据操作
-                assert hasattr(manager, 'store_dataset_metadata')
-                assert hasattr(manager, 'get_dataset_metadata')
-                assert hasattr(manager, 'list_datasets')
+                assert hasattr(manager, "store_dataset_metadata")
+                assert hasattr(manager, "get_dataset_metadata")
+                assert hasattr(manager, "list_datasets")
 
         except Exception as e:
             pytest.skip(f"Cannot test metadata storage: {e}")
@@ -171,13 +174,13 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 测试异步方法存在
-                assert hasattr(reporter, 'async_track_data_flow')
-                assert hasattr(reporter, 'async_generate_report')
+                assert hasattr(reporter, "async_track_data_flow")
+                assert hasattr(reporter, "async_generate_report")
 
         except Exception as e:
             pytest.skip(f"Cannot test async lineage operations: {e}")
@@ -187,15 +190,15 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 测试图操作
-                assert hasattr(reporter, 'build_graph')
-                assert hasattr(reporter, 'get_upstream')
-                assert hasattr(reporter, 'get_downstream')
-                assert hasattr(reporter, 'find_path')
+                assert hasattr(reporter, "build_graph")
+                assert hasattr(reporter, "get_upstream")
+                assert hasattr(reporter, "get_downstream")
+                assert hasattr(reporter, "find_path")
 
         except Exception as e:
             pytest.skip(f"Cannot test lineage graph: {e}")
@@ -205,14 +208,14 @@ class TestLineageSimple:
         try:
             from src.lineage.metadata_manager import MetadataManager
 
-            with patch('src.lineage.metadata_manager.logger') as mock_logger:
+            with patch("src.lineage.metadata_manager.logger") as mock_logger:
                 manager = MetadataManager()
                 manager.logger = mock_logger
 
                 # 测试验证方法
-                assert hasattr(manager, 'validate_metadata')
-                assert hasattr(manager, 'validate_schema')
-                assert hasattr(manager, 'check_completeness')
+                assert hasattr(manager, "validate_metadata")
+                assert hasattr(manager, "validate_schema")
+                assert hasattr(manager, "check_completeness")
 
         except Exception as e:
             pytest.skip(f"Cannot test metadata validation: {e}")
@@ -222,14 +225,14 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 测试导出方法
-                assert hasattr(reporter, 'export_to_json')
-                assert hasattr(reporter, 'export_to_csv')
-                assert hasattr(reporter, 'export_to_graphml')
+                assert hasattr(reporter, "export_to_json")
+                assert hasattr(reporter, "export_to_csv")
+                assert hasattr(reporter, "export_to_graphml")
 
         except Exception as e:
             pytest.skip(f"Cannot test lineage export: {e}")
@@ -239,14 +242,14 @@ class TestLineageSimple:
         try:
             from src.lineage.lineage_reporter import LineageReporter
 
-            with patch('src.lineage.lineage_reporter.logger') as mock_logger:
+            with patch("src.lineage.lineage_reporter.logger") as mock_logger:
                 reporter = LineageReporter()
                 reporter.logger = mock_logger
 
                 # 测试搜索方法
-                assert hasattr(reporter, 'search_nodes')
-                assert hasattr(reporter, 'search_edges')
-                assert hasattr(reporter, 'find_impact')
+                assert hasattr(reporter, "search_nodes")
+                assert hasattr(reporter, "search_edges")
+                assert hasattr(reporter, "find_impact")
 
         except Exception as e:
             pytest.skip(f"Cannot test lineage search: {e}")
