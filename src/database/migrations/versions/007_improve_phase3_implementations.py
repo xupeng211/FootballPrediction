@@ -8,7 +8,6 @@ Create Date: 2024-01-10 10:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '007_improve_phase3_implementations'
@@ -250,7 +249,7 @@ def upgrade():
                     FOR EACH ROW
                 EXECUTE FUNCTION update_updated_at_column();
             """)
-        except Exception as e:
+        except Exception:
             # 触发器可能已存在，忽略错误
             pass
 

@@ -22,15 +22,14 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import websockets
-from sqlalchemy import select, update, and_, or_
+from sqlalchemy import select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager, CacheKeyManager
-from src.core.exceptions import DataCollectionError
 from src.database.models import Match, MatchStatus, RawScoresData
 from src.utils.retry import RetryConfig, retry
 from src.utils.time_utils import utc_now, parse_datetime

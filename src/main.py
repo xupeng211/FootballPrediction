@@ -127,7 +127,6 @@ from src.config.openapi_config import setup_openapi
 setup_openapi(app)
 
 # 配置CORS（如果需要）
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
