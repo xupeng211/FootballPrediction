@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
-from src.database.base import DatabaseSession
+from src.database.connection import DatabaseManager
 from src.models.common_models import Match, Team
 from src.utils.logger import get_logger
 
@@ -299,6 +299,6 @@ class FixturesCollectorFactory:
     @staticmethod
     def create() -> FixturesCollector:
         """创建赛程收集器实例"""
-        db_session = DatabaseSession()
+        db_session = DatabaseManager()
         redis_client = RedisManager()
         return FixturesCollector(db_session, redis_client)
