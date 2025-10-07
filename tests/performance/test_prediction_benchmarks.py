@@ -9,8 +9,7 @@ Test performance metrics of prediction engine.
 import asyncio
 import time
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from src.core.prediction_engine import PredictionEngine
 from src.models.prediction_service import PredictionResult
@@ -47,7 +46,7 @@ class TestPredictionBenchmarks:
         p95_latency = sorted(latencies)[94]  # 95th percentile
         p99_latency = sorted(latencies)[98]  # 99th percentile
 
-        print(f"\n单次预测延迟统计:")
+        print("\n单次预测延迟统计:")
         print(f"  平均: {avg_latency:.2f}ms")
         print(f"  P95: {p95_latency:.2f}ms")
         print(f"  P99: {p99_latency:.2f}ms")
@@ -170,7 +169,7 @@ class TestPredictionBenchmarks:
         # 计算缓存效果
         speedup = cache_miss_time / cache_hit_time if cache_hit_time > 0 else float('inf')
 
-        print(f"\n缓存性能:")
+        print("\n缓存性能:")
         print(f"  缓存未命中: {cache_miss_time:.2f}ms")
         print(f"  缓存命中: {cache_hit_time:.2f}ms")
         print(f"  加速比: {speedup:.2f}x")
@@ -211,7 +210,7 @@ class TestPredictionBenchmarks:
         final_memory = process.memory_info().rss / 1024 / 1024
         total_increase = final_memory - initial_memory
 
-        print(f"\n内存使用总结:")
+        print("\n内存使用总结:")
         print(f"  初始内存: {initial_memory:.1f}MB")
         print(f"  最终内存: {final_memory:.1f}MB")
         print(f"  总增长: {total_increase:.1f}MB")
@@ -256,7 +255,7 @@ class TestPredictionBenchmarks:
         success_rate = len(results) / len(match_ids)
         avg_confidence = sum(r.get("confidence", 0) for r in results) / len(results) if results else 0
 
-        print(f"\n负载测试结果:")
+        print("\n负载测试结果:")
         print(f"  成功率: {success_rate:.2%}")
         print(f"  平均置信度: {avg_confidence:.3f}")
         print(f"  成功预测数: {len(results)}")

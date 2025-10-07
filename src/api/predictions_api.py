@@ -430,9 +430,9 @@ async def get_prediction_overview(
 @router.post("/verify/{match_id}")
 async def verify_match_prediction(
     match_id: int = Path(..., description="比赛ID", gt=0),
-    background_tasks: BackgroundTasks,
     engine: PredictionEngine = Depends(get_prediction_engine),
     current_user: Dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     """
     验证比赛预测结果

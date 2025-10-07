@@ -17,12 +17,11 @@ Provides complete data management API endpoints, including:
 - Data statistics and analysis
 """
 
-import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.api.dependencies import get_current_user
 from src.database.connection import get_async_session
@@ -556,13 +555,13 @@ async def get_data_statistics(
             from src.database.models import Team
             total_teams = await session.scalar(select(func.count(Team.id)))
             active_teams = await session.scalar(
-                select(func.count(Team.id)).where(Team.is_active == True)
+                select(func.count(Team.id)).where(Team.is_active.is_(True))
             )
 
             # 统计联赛数量
             total_leagues = await session.scalar(select(func.count(League.id)))
             active_leagues = await session.scalar(
-                select(func.count(League.id)).where(League.is_active == True)
+                select(func.count(League.id)).where(League.is_active.is_(True))
             )
 
             # 统计赔率数量
@@ -630,6 +629,7 @@ async def search_data(
         async with get_async_session() as session:
             # 搜索比赛
             if type is None or type == "matches":
+                from src.database.models import Team
                 match_query = select(Match).options(
                     selectinload(Match.home_team),
                     selectinload(Match.away_team),
