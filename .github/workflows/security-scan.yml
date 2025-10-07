@@ -1,0 +1,115 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop, hotfix/**]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每天凌晨2点运行
+    - cron: '0 2 * * *'
+
+jobs:
+  security-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史以便更好地检测
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Run secret scanner
+        run: |
+          echo "🔍 Running security scan for hardcoded secrets..."
+          python scripts/security/check_hardcoded_secrets.py
+
+          # 如果脚本返回非0，CI会失败
+
+      - name: Run bandit security linter
+        run: |
+          echo "🔍 Running bandit security linter..."
+          pip install bandit[toml]
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/
+
+      - name: Run safety check for dependencies
+        run: |
+          echo "🔍 Checking for known vulnerabilities in dependencies..."
+          pip install safety
+          safety check --json --output safety-report.json || true
+          safety check
+
+      - name: Run truffleHog (if needed)
+        run: |
+          echo "🔍 Running truffleHog for deep secrets scanning..."
+          # 安装 trufflehog
+          if command -v trufflehog &> /dev/null; then
+            trufflehog filesystem . --json --output=trufflehog-report.json || true
+          else
+            echo "⚠️  truffleHog not installed, skipping deep scan"
+          fi
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            trufflehog-report.json
+        continue-on-error: true
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            // 读取报告
+            let comment = '## 🔒 Security Scan Results\n\n';
+
+            // 检查是否有硬编码密钥
+            try {
+              const { execSync } = require('child_process');
+              const result = execSync('python scripts/security/check_hardcoded_secrets.py', { encoding: 'utf-8' });
+              comment += '✅ No hardcoded secrets found\n';
+            } catch (error) {
+              comment += '⚠️ Potential hardcoded secrets detected!\n';
+            }
+
+            // Bandit 结果
+            if (fs.existsSync('bandit-report.json')) {
+              const bandit = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+              if (bandit.results.length > 0) {
+                comment += `⚠️ Bandit found ${bandit.results.length} security issues\n`;
+              } else {
+                comment += '✅ Bandit passed\n';
+              }
+            }
+
+            // Safety 结果
+            if (fs.existsSync('safety-report.json')) {
+              const safety = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+              if (safety.vulnerabilities.length > 0) {
+                comment += `⚠️ Safety found ${safety.vulnerabilities.length} vulnerable dependencies\n`;
+              } else {
+                comment += '✅ No vulnerable dependencies found\n';
+              }
+            }
+
+            // 创建评论
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
