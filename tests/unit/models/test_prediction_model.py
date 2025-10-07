@@ -155,7 +155,6 @@ class TestPredictionModel:
 
     def test_prediction_repr(self, sample_prediction):
         """测试预测的字符串表示"""
-        expected = f"Prediction(id={sample_prediction.id}, match_id={sample_prediction.match_id})"
         actual = repr(sample_prediction)
 
         # 如果没有自定义__repr__，测试默认行为

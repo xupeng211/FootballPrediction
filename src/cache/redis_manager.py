@@ -202,10 +202,10 @@ class RedisManager:
         self.health_check_interval = health_check_interval
 
         # 初始化连接池和客户端属性
-        self._sync_pool = None
-        self._async_pool = None
-        self._sync_client = None
-        self._async_client = None
+        self._sync_pool: Optional[redis.ConnectionPool] = None
+        self._async_pool: Optional[redis_async.ConnectionPool] = None
+        self._sync_client: Optional[redis.Redis] = None
+        self._async_client: Optional[redis_async.Redis] = None
 
         redis_password = os.getenv("REDIS_PASSWORD")
         if redis_password and not is_test_env:
@@ -216,6 +216,15 @@ class RedisManager:
             # Check if the URL already contains a password
             if "@" not in self.redis_url.split("://", 1)[-1].split("/", 1)[0]:
                 self.redis_url = re.sub(r"://", f"://{redis_password}@", self.redis_url)
+
+        # 初始化同步连接池，保证基础操作可用
+        self._init_sync_pool()
+
+    def _ensure_sync_client(self) -> Optional[redis.Redis]:
+        """确保同步客户端可用"""
+        if self._sync_client is None:
+            self._init_sync_pool()
+        return self._sync_client
 
     def _mask_password(self, url: str) -> str:
         """隐藏Redis URL中的密码"""
@@ -284,21 +293,17 @@ class RedisManager:
         Returns:
             Any: 缓存数据，如果不存在或出错则返回default
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             logger.warning("同步Redis客户端未初始化")
             return default
 
         try:
-            value = self._sync_client.get(key)
+            value = client.get(key)
             if value is None:
                 return default
 
-            # 尝试JSON反序列化
-            try:
-                return json.loads(value)  # type: ignore[arg-type]
-            except json.JSONDecodeError:
-                # 如果不是JSON，返回原始字符串
-                return value.decode("utf-8") if isinstance(value, bytes) else value
+            return value.decode("utf-8") if isinstance(value, bytes) else value
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis GET操作失败 (key={key}): {e}")
@@ -326,7 +331,8 @@ class RedisManager:
         Returns:
             bool: 是否设置成功
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             logger.warning("同步Redis客户端未初始化")
             return False
 
@@ -342,12 +348,12 @@ class RedisManager:
                 serialized_value = str(value)
 
             # 设置缓存
-            result = self._sync_client.setex(key, ttl, serialized_value)
+            result = client.set(name=key, value=serialized_value, ex=ttl)
 
             if result:
                 logger.debug(f"Redis SET成功 (key={key}, ttl={ttl})")
 
-            return bool(result)  # type: ignore[return-value]
+            return result  # type: ignore[return-value]
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis SET操作失败 (key={key}): {e}")
@@ -366,7 +372,8 @@ class RedisManager:
         Returns:
             int: 成功删除的Key数量
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             logger.warning("同步Redis客户端未初始化")
             return 0
 
@@ -374,7 +381,7 @@ class RedisManager:
             return 0
 
         try:
-            result = self._sync_client.delete(*keys)
+            result = client.delete(*keys)
             logger.debug(f"Redis DELETE成功，删除了 {result} 个Key")
             return int(result)  # type: ignore[arg-type]
 
@@ -384,6 +391,21 @@ class RedisManager:
         except Exception as e:
             logger.error(f"Redis DELETE操作异常 (keys={keys}): {e}")
             return 0
+
+    def keys(self, pattern: str = "*") -> List[Any]:
+        """获取匹配的键列表"""
+        client = self._ensure_sync_client()
+        if not client:
+            return []
+
+        try:
+            return list(client.keys(pattern))
+        except (RedisError, ConnectionError, TimeoutError) as e:
+            logger.error(f"Redis KEYS操作失败 (pattern={pattern}): {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Redis KEYS操作异常 (pattern={pattern}): {e}")
+            return []
 
     def exists(self, *keys: str) -> int:
         """
@@ -395,7 +417,8 @@ class RedisManager:
         Returns:
             int: 存在的Key数量
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             logger.warning("同步Redis客户端未初始化")
             return 0
 
@@ -403,7 +426,7 @@ class RedisManager:
             return 0
 
         try:
-            return int(self._sync_client.exists(*keys))  # type: ignore[arg-type]
+            return int(client.exists(*keys))  # type: ignore[arg-type]
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis EXISTS操作失败 (keys={keys}): {e}")
             return 0
@@ -421,12 +444,13 @@ class RedisManager:
         Returns:
             int: 剩余TTL秒数，-1表示没有过期时间，-2表示Key不存在
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             logger.warning("同步Redis客户端未初始化")
             return -2
 
         try:
-            result = self._sync_client.ttl(key)
+            result = client.ttl(key)
             return int(result)  # type: ignore[arg-type]
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"Redis TTL操作失败 (key={key}): {e}")
@@ -434,6 +458,19 @@ class RedisManager:
         except Exception as e:
             logger.error(f"Redis TTL操作异常 (key={key}): {e}")
             return -2
+
+    def clear_all(self) -> Any:
+        """清空当前数据库"""
+        client = self._ensure_sync_client()
+        if not client:
+            logger.warning("同步Redis客户端未初始化，无法清理缓存")
+            return None
+
+        try:
+            return client.flushdb()
+        except Exception as e:
+            logger.error(f"Redis FLUSHDB失败: {e}")
+            raise
 
     # ================== 异步操作方法 ==================
 
@@ -458,12 +495,7 @@ class RedisManager:
             if value is None:
                 return default
 
-            # 尝试JSON反序列化
-            try:
-                return json.loads(value)
-            except json.JSONDecodeError:
-                # 如果不是JSON，返回原始字符串
-                return value.decode("utf-8") if isinstance(value, bytes) else value
+            return value.decode("utf-8") if isinstance(value, bytes) else value
 
         except (RedisError, ConnectionError, TimeoutError) as e:
             logger.error(f"异步Redis GET操作失败 (key={key}): {e}")
@@ -616,11 +648,12 @@ class RedisManager:
         Returns:
             List[Any]: 缓存数据列表，与keys顺序对应
         """
-        if not self._sync_client or not keys:
+        client = self._ensure_sync_client()
+        if not client or not keys:
             return [default] * len(keys)
 
         try:
-            values = self._sync_client.mget(keys)
+            values = client.mget(keys)
             result = []
 
             for value in values:  # type: ignore[union-attr]
@@ -654,7 +687,8 @@ class RedisManager:
         Returns:
             bool: 是否全部设置成功
         """
-        if not self._sync_client or not mapping:
+        client = self._ensure_sync_client()
+        if not client or not mapping:
             return False
 
         try:
@@ -671,11 +705,11 @@ class RedisManager:
                     serialized_mapping[key] = str(value)
 
             # 批量设置
-            result = self._sync_client.mset(serialized_mapping)  # type: ignore[type-var]
+            result = client.mset(serialized_mapping)  # type: ignore[type-var]
 
             # 如果指定了TTL，需要逐个设置过期时间
             if result and ttl:
-                pipe = self._sync_client.pipeline()
+                pipe = client.pipeline()
                 for key in mapping.keys():
                     pipe.expire(key, ttl)
                 pipe.execute()
@@ -784,15 +818,14 @@ class RedisManager:
         Returns:
             bool: 连接是否健康
         """
-        if not self._sync_client:
-            return False
+        client = self._ensure_sync_client()
+        if not client:
+            raise ConnectionError("Redis客户端未初始化")
 
-        try:
-            response = self._sync_client.ping()
-            return response is True
-        except Exception as e:
-            logger.error(f"Redis PING失败: {e}")
-            return False
+        response = client.ping()
+        if response is not True:
+            raise RedisError("Redis PING返回异常")
+        return True
 
     async def aping(self) -> bool:
         """
@@ -803,13 +836,19 @@ class RedisManager:
         """
         client = await self.get_async_client()
         if not client:
-            return False
+            raise ConnectionError("异步Redis客户端未初始化")
 
+        response = await client.ping()
+        if response is not True:
+            raise RedisError("异步Redis PING返回异常")
+        return True
+
+    def health_check(self) -> bool:
+        """对外的健康检查接口"""
         try:
-            response = await client.ping()
-            return response is True
-        except Exception as e:
-            logger.error(f"异步Redis PING失败: {e}")
+            return self.ping()
+        except Exception as exc:
+            logger.error("Redis健康检查失败: %s", exc)
             return False
 
     def get_info(self) -> Dict[str, Any]:
@@ -819,31 +858,20 @@ class RedisManager:
         Returns:
             Dict[str, Any]: Redis服务器信息
         """
-        if not self._sync_client:
+        client = self._ensure_sync_client()
+        if not client:
             return {}
 
         try:
-            info = self._sync_client.info()  # type: ignore[union-attr]
-            return {
-                # type: ignore[union-attr]
-                "version": info.get(str("redis_version"), "unknown"),
-                # type: ignore[union-attr]
-                "mode": info.get(str("redis_mode"), "standalone"),
-                # type: ignore[union-attr]
-                "connected_clients": info.get(str("connected_clients"), 0),
-                # type: ignore[union-attr]
-                "used_memory_human": info.get(str("used_memory_human"), "0B"),
-                # type: ignore[union-attr]
-                "keyspace_hits": info.get(str("keyspace_hits"), 0),
-                # type: ignore[union-attr]
-                "keyspace_misses": info.get(str("keyspace_misses"), 0),
-                "total_commands_processed": info.get(
-                    str("total_commands_processed"), 0
-                ),  # type: ignore[union-attr]
-            }
+            return client.info()  # type: ignore[union-attr]
         except Exception as e:
             logger.error(f"获取Redis信息失败: {e}")
             return {}
+
+    @property
+    def client(self) -> Optional[redis.Redis]:
+        """暴露底层同步客户端"""
+        return self._ensure_sync_client()
 
     def close(self):
         """关闭同步连接池"""

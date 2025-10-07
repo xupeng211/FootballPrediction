@@ -155,14 +155,18 @@ print_status "success" "数据库已就绪"
 echo "激活虚拟环境并执行测试套件..."
 source .venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
+
+# Use coverage threshold from environment or default to 80%
+COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:-80}
+
 pytest \
     --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
-    --cov-fail-under=50 --maxfail=5 --disable-warnings \
+    --cov-fail-under=${COVERAGE_THRESHOLD} --maxfail=5 --disable-warnings \
     --cov-report=xml \
     --cov-report=html \
-    -v || handle_error "测试执行或覆盖率不足"
+    -v || handle_error "测试执行或覆盖率不足 (要求 >=${COVERAGE_THRESHOLD}%)"
 
-print_status "success" "测试执行完成，覆盖率达标"
+print_status "success" "测试执行完成，覆盖率达标 (>=${COVERAGE_THRESHOLD}%)"
 
 # 最终成功信息
 echo ""
@@ -174,7 +178,7 @@ echo -e "  ✅ 虚拟环境: 重建成功"
 echo -e "  ✅ Docker 环境: 启动正常"
 echo -e "  ✅ 代码风格检查: 通过"
 echo -e "  ✅ 类型检查: 通过"
-echo -e "  ✅ 测试覆盖率: >= 50%"
+echo -e "  ✅ 测试覆盖率: >= ${COVERAGE_THRESHOLD}%"
 echo -e "  ✅ 所有测试: 通过"
 echo ""
 echo -e "${GREEN}🚀 可以安全推送到远程仓库！${NC}"

@@ -283,9 +283,9 @@ def mock_mlflow_tracking():
     def decorator(func):
         def wrapper(*args, **kwargs):
             with patch("mlflow.start_run") as start_run:
-                with patch("mlflow.log_metric") as log_metric:
-                    with patch("mlflow.log_param") as log_param:
-                        with patch("mlflow.set_tag") as set_tag:
+                with patch("mlflow.log_metric"):
+                    with patch("mlflow.log_param"):
+                        with patch("mlflow.set_tag"):
                             start_run.return_value.__enter__.return_value = MagicMock()
                             return func(*args, **kwargs)
 

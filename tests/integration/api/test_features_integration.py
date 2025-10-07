@@ -310,7 +310,7 @@ class TestFeaturesIntegration:
     async def test_features_logging(self, api_client_full, caplog):
         """测试特征日志记录"""
         with patch("src.api.features.logger") as mock_logger:
-            response = api_client_full.get(
+            api_client_full.get(
                 "/api/v1/features/12345", headers={"X-API-Key": "test-api-key"}
             )
 

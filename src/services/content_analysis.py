@@ -25,7 +25,7 @@ class ContentAnalysisService(BaseService):
         # 加载AI模型、连接外部API等
         # 在实际生产环境中，这里会加载ML模型和建立外部连接
         self._initialized = True
-        return True if isinstance(True, dict) else {}
+        return True
 
     async def shutdown(self) -> None:
         """关闭服务"""
@@ -76,7 +76,7 @@ class ContentAnalysisService(BaseService):
             result = await self.analyze_content(content)
             if result:
                 results.append(result)
-        return results if isinstance(results, dict) else {}
+        return results
 
     def _categorize_content(self, text: str) -> str:
         """内容分类"""
@@ -94,9 +94,9 @@ class ContentAnalysisService(BaseService):
         text_lower = text.lower()
         if any(keyword in text_lower for keyword in football_keywords):
             if any(keyword in text_lower for keyword in prediction_keywords):
-                return "足球预测" if isinstance("足球预测", dict) else {}
-            return "足球新闻" if isinstance("足球新闻", dict) else {}
-        return "一般内容" if isinstance("一般内容", dict) else {}
+                return "足球预测"
+            return "足球新闻"
+        return "一般内容"
 
     def _calculate_quality_score(self, content: Content) -> float:
         """计算内容质量分数"""
@@ -109,12 +109,8 @@ class ContentAnalysisService(BaseService):
             base_score = 0.3
             keyword_bonus = min(keyword_count * 0.2, 0.3)
             length_bonus = min(word_count / 500 * 0.2, 0.2)
-            return (
-                min(base_score + keyword_bonus + length_bonus, 1.0)
-                if isinstance(min(base_score + keyword_bonus + length_bonus, 1.0), dict)
-                else {}
-            )
-        return 0.5 if isinstance(0.5, dict) else {}
+            return min(base_score + keyword_bonus + length_bonus, 1.0)
+        return 0.5
 
     def analyze_text(self, text: str) -> dict:
         """分析文本内容 - 同步版本用于测试"""
@@ -125,7 +121,115 @@ class ContentAnalysisService(BaseService):
         return {
             "word_count": len(words),
             "character_count": len(text),
-            "sentiment": "neutral",
+            "sentiment": self.analyze_sentiment(text),
             "keywords": words[:5] if words else [],
             "language": "auto-detected",
+            "entities": self.extract_entities(text),
+            "summary": self.generate_summary(text)
         }
+
+    def extract_entities(self, text: str) -> list:
+        """提取实体"""
+        # 简单的实体提取逻辑
+        entities = []
+        # 提取球队名称
+        teams = ["曼联", "切尔西", "阿森纳", "利物浦", "曼城", "巴塞罗那", "皇家马德里"]
+        for team in teams:
+            if team in text:
+                entities.append({"text": team, "type": "TEAM", "confidence": 0.9})
+
+        # 提取球员名称（简化版）
+        words = text.split()
+        for word in words:
+            if len(word) >= 2 and word.istitle():
+                entities.append({"text": word, "type": "PERSON", "confidence": 0.5})
+
+        return entities[:10]  # 限制返回数量
+
+    def classify_content(self, content: str) -> dict:
+        """内容分类"""
+        if not content:
+            return {"category": "unknown", "confidence": 0.0}
+
+        content_lower = content.lower()
+
+        # 定义分类规则
+        categories = {
+            "match_report": ["比赛", "战报", "终场", "比分", "进球"],
+            "transfer_news": ["转会", "签约", "租借", "交易"],
+            "injury_news": ["伤病", "受伤", "伤停", "恢复"],
+            "prediction": ["预测", "分析", "赔率", "胜平负"],
+            "interview": ["采访", "表示", "说道", "认为"],
+            "general": ["其他"]
+        }
+
+        # 计算每个类别的匹配度
+        scores = {}
+        for category, keywords in categories.items():
+            score = sum(1 for keyword in keywords if keyword in content_lower)
+            if score > 0:
+                scores[category] = score
+
+        if scores:
+            best_category = max(scores, key=scores.get)
+            confidence = min(scores[best_category] / 5, 1.0)  # 归一化到0-1
+            return {
+                "category": best_category,
+                "confidence": confidence,
+                "all_scores": scores
+            }
+
+        return {"category": "general", "confidence": 0.5}
+
+    def analyze_sentiment(self, text: str) -> dict:
+        """情感分析"""
+        if not text:
+            return {"sentiment": "neutral", "score": 0.0}
+
+        # 简单的情感词典
+        positive_words = ["胜利", "精彩", "出色", "优秀", "完美", "激动", "兴奋"]
+        negative_words = ["失败", "糟糕", "失望", "糟糕", "痛苦", "遗憾", "失误"]
+
+        text_lower = text.lower()
+        pos_count = sum(1 for word in positive_words if word in text_lower)
+        neg_count = sum(1 for word in negative_words if word in text_lower)
+
+        total = pos_count + neg_count
+        if total == 0:
+            return {"sentiment": "neutral", "score": 0.0}
+
+        score = (pos_count - neg_count) / total
+
+        if score > 0.2:
+            sentiment = "positive"
+        elif score < -0.2:
+            sentiment = "negative"
+        else:
+            sentiment = "neutral"
+
+        return {
+            "sentiment": sentiment,
+            "score": score,
+            "positive_count": pos_count,
+            "negative_count": neg_count
+        }
+
+    def generate_summary(self, text: str, max_length: int = 100) -> str:
+        """生成摘要"""
+        if not text or len(text) <= max_length:
+            return text or ""
+
+        # 简单的摘要生成：取前面部分加上省略号
+        sentences = text.split('。')
+        summary = ""
+
+        for sentence in sentences:
+            if len(summary + sentence) <= max_length:
+                summary += sentence + '。'
+            else:
+                break
+
+        if not summary:
+            summary = text[:max_length-3] + '...'
+
+        return summary.strip()

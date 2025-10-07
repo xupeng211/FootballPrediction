@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, relationship
 
 from src.database.base import BaseModel
 
-from .match import Match
+# Match model imported locally to avoid circular imports
 
 
 class Team(BaseModel):
@@ -108,7 +108,7 @@ class Team(BaseModel):
         # 这需要在调用时传入session
         return None  # 实际使用时需要session参数
 
-    def get_recent_matches(self, session: Session, limit: int = 5) -> List[Match]:
+    def get_recent_matches(self, session: Session, limit: int = 5) -> List:
         """获取最近的比赛。
 
         Args:
@@ -118,6 +118,7 @@ class Team(BaseModel):
         Returns:
             List[Match]: 按时间倒序排列的最近比赛列表。
         """
+        from .match import Match
         from sqlalchemy import desc, or_
 
         return (
@@ -143,6 +144,7 @@ class Team(BaseModel):
                 - losses: 负场数
                 - total: 总场次
         """
+        from .match import Match
 
         home_matches = session.query(Match).filter(
             Match.home_team_id == self.id, Match.match_status == "finished"
@@ -172,6 +174,7 @@ class Team(BaseModel):
                 - losses: 负场数
                 - total: 总场次
         """
+        from .match import Match
 
         away_matches = session.query(Match).filter(
             Match.away_team_id == self.id, Match.match_status == "finished"
@@ -206,6 +209,7 @@ class Team(BaseModel):
                 - points: 积分
                 - goal_difference: 净胜球
         """
+        from .match import Match
         from sqlalchemy import or_
 
         matches = (
@@ -238,7 +242,7 @@ class Team(BaseModel):
 
         return stats
 
-    def _process_home_match(self, match: Match, stats: Dict[str, int]) -> None:
+    def _process_home_match(self, match, stats: Dict[str, int]) -> None:
         """处理主场比赛统计。
 
         Args:
@@ -255,7 +259,7 @@ class Team(BaseModel):
         else:
             stats["losses"] += 1
 
-    def _process_away_match(self, match: Match, stats: Dict[str, int]) -> None:
+    def _process_away_match(self, match, stats: Dict[str, int]) -> None:
         """处理客场比赛统计。
 
         Args:

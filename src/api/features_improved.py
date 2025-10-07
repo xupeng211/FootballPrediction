@@ -20,15 +20,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/features-improved", tags=["特征管理"])
 
-# 全局特征存储实例
+# 全局特征存储实例（惰性初始化，避免导入时报错）
 feature_store: Optional[FootballFeatureStore] = None
 
-try:
-    feature_store = FootballFeatureStore()
-    logger.info("特征存储初始化成功")
-except Exception as e:
-    logger.error(f"特征存储初始化失败: {e}")
-    feature_store = None
+
+def get_feature_store() -> Optional[FootballFeatureStore]:
+    """获取（或初始化）特征存储实例。"""
+    global feature_store
+    if feature_store is not None:
+        return feature_store
+
+    try:
+        feature_store = FootballFeatureStore()
+        logger.info("特征存储初始化成功")
+    except Exception as exc:  # pragma: no cover - 初始化失败只记录日志
+        logger.error("特征存储初始化失败: %s", exc)
+        feature_store = None
+    return feature_store
 
 
 def validate_match_id(match_id: int) -> None:
@@ -40,7 +48,7 @@ def validate_match_id(match_id: int) -> None:
 
 def check_feature_store_availability() -> None:
     """检查特征存储服务可用性"""
-    if feature_store is None:
+    if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
             status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
@@ -61,7 +69,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
         logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
-        return match if isinstance(match, dict) else {}
+        return match
     except HTTPException:
         raise
     except SQLAlchemyError as db_error:
@@ -74,20 +82,24 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
 
 async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any], str]:
     """获取特征数据（支持优雅降级）"""
+    store = get_feature_store()
+    if store is None:
+        return {}, "feature store unavailable"
+
     try:
         logger.debug(f"从特征存储获取特征 (match_id={match_id})")
-        features = await feature_store.get_match_features_for_prediction(
+        features = await store.get_match_features_for_prediction(
             match_id=match_id,
             home_team_id=int(match.home_team_id),
             away_team_id=int(match.away_team_id),
         )
 
         if features:
-            logger.info(f"成功获取 {len(features)} 组特征数据")
-            return features, None if isinstance(features, None, dict) else {}
-        else:
-            logger.warning(f"比赛 {match_id} 暂无特征数据")
-            return {}, None
+            logger.info("成功获取 %s 组特征数据", len(features))
+            return features, None
+
+        logger.warning(f"比赛 {match_id} 暂无特征数据")
+        return {}, None
     except Exception as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
         return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败
@@ -124,7 +136,7 @@ def build_response_data(
             "feature_keys": list(features.keys()) if isinstance(features, dict) else [],
         }
 
-    return response_data if isinstance(response_data, dict) else {}
+    return response_data
 
 
 @router.get(
@@ -164,15 +176,15 @@ async def get_match_features_improved(
     # 5. 构造响应数据
     response_data = build_response_data(match, features, features_error, include_raw)
 
-    logger.info(f"比赛 {match_id} 特征获取完成: {response_data['status']}")
-    return response_data if isinstance(response_data, dict) else {}
+    logger.info("比赛 %s 特征获取完成: %s", match_id, response_data["status"])
+    return response_data
 
 
-@router.get(str("/health", None), summary="特征服务健康检查")
+@router.get("/health", summary="特征服务健康检查")
 async def health_check() -> Dict[str, Any]:
     """特征服务健康检查"""
     return {
         "service": "特征获取服务",
-        "status": "healthy" if feature_store else "unhealthy",
-        "feature_store": "available" if feature_store else "unavailable",
+        "status": "healthy" if get_feature_store() else "unhealthy",
+        "feature_store": "available" if get_feature_store() else "unavailable",
     }

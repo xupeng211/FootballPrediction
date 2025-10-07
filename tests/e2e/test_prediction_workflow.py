@@ -326,15 +326,6 @@ class TestPredictionWorkflow:
     ):
         """测试使用模型集成的预测工作流"""
         # Mock多个模型的预测结果
-        model_predictions = [
-            {
-                "model": "logistic_regression",
-                "prediction": "home_win",
-                "confidence": 0.7,
-            },
-            {"model": "random_forest", "prediction": "home_win", "confidence": 0.8},
-            {"model": "neural_network", "prediction": "draw", "confidence": 0.6},
-        ]
 
         # Mock集成预测
         mock_services["prediction_service"].ensemble_predict.return_value = {

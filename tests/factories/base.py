@@ -1,14 +1,12 @@
 """测试工厂基类"""
 
-import factory
-import faker
-
-fake = faker.Faker()
+from factory.alchemy import SQLAlchemyModelFactory
 
 
-class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):
-    """基础工厂类"""
+class BaseFactory(SQLAlchemyModelFactory):
+    """所有SQLAlchemy工厂的基础类，统一会话配置。"""
 
     class Meta:
         abstract = True
+        sqlalchemy_session = None  # 由测试fixture在运行期注入
         sqlalchemy_session_persistence = "flush"
