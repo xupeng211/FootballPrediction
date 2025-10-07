@@ -108,13 +108,11 @@ async def lifespan(app: FastAPI):
     await stop_metrics_collection()
 
 
-# 创建FastAPI应用
+# 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
 app = FastAPI(
-    title="足球预测API",
-    description="基于机器学习的足球比赛结果预测系统",
-    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
 )
 
@@ -123,6 +121,21 @@ if RATE_LIMIT_AVAILABLE and limiter:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     logger.info("✅ API速率限制已启用")
+
+# 配置 OpenAPI 文档
+from src.config.openapi_config import setup_openapi
+setup_openapi(app)
+
+# 配置CORS（如果需要）
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 生产环境应该限制具体域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 添加国际化中间件
 app.add_middleware(I18nMiddleware)

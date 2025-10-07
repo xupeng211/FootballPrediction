@@ -434,3 +434,102 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.integration)
         elif "e2e" in str(item.fspath):
             item.add_marker(pytest.mark.e2e)
+
+
+# Phase 3 专用测试夹具
+@pytest.fixture
+def sample_match_data():
+    """示例比赛数据"""
+    return {
+        "id": 12345,
+        "home_team_id": 100,
+        "away_team_id": 200,
+        "league_id": 1,
+        "match_time": "2024-01-01T15:00:00",
+        "match_status": "scheduled",
+        "venue": "Test Stadium",
+        "home_score": None,
+        "away_score": None,
+        "home_half_score": None,
+        "away_half_score": None,
+    }
+
+
+@pytest.fixture
+def sample_team_data():
+    """示例球队数据"""
+    return {
+        "id": 100,
+        "team_name": "Team A",
+        "team_name_short": "TA",
+        "country": "Country",
+        "founded_year": 1900,
+        "stadium": "Stadium A",
+        "logo_url": "http://example.com/logo.png",
+        "is_active": True,
+    }
+
+
+@pytest.fixture
+def sample_league_data():
+    """示例联赛数据"""
+    return {
+        "id": 1,
+        "league_name": "Test League",
+        "country": "Country",
+        "season": "2023-2024",
+        "start_date": "2023-08-01",
+        "end_date": "2024-05-31",
+        "is_active": True,
+    }
+
+
+@pytest.fixture
+def sample_prediction_data():
+    """示例预测数据"""
+    return {
+        "match_id": 12345,
+        "model_version": "1.0.0",
+        "model_name": "football_baseline_model",
+        "home_win_probability": 0.5,
+        "draw_probability": 0.3,
+        "away_win_probability": 0.2,
+        "predicted_result": "home",
+        "confidence_score": 0.65,
+        "features_used": {
+            "home_recent_wins": 3,
+            "away_recent_wins": 2,
+            "h2h_home_advantage": 0.5,
+        },
+        "prediction_metadata": {
+            "feature_count": 10,
+            "prediction_time": "2024-01-01T14:00:00Z",
+        },
+    }
+
+
+@pytest.fixture
+async def mock_prediction_engine():
+    """模拟预测引擎"""
+    from unittest.mock import AsyncMock, MagicMock
+    from src.core.prediction_engine import PredictionEngine
+
+    engine = MagicMock(spec=PredictionEngine)
+    engine.predict_match = AsyncMock(return_value={
+        "match_id": 12345,
+        "prediction": "home",
+        "probabilities": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
+        "confidence": 0.65,
+        "model_version": "1.0.0",
+    })
+    engine.batch_predict = AsyncMock(return_value=[
+        {"match_id": 12345, "prediction": "home"},
+        {"match_id": 12346, "prediction": "draw"},
+    ])
+    engine.get_performance_stats = MagicMock(return_value={
+        "total_predictions": 100,
+        "cache_hit_rate": 0.7,
+        "error_rate": 0.05,
+    })
+
+    return engine
