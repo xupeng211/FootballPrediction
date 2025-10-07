@@ -1,375 +1,359 @@
 """
-健康检查API增强测试
-提高health.py的测试覆盖率
+增强的健康检查API测试
+提高health.py模块的测试覆盖率
 """
 
+import time
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 import pytest
-import asyncio
-import os
-from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
-from sqlalchemy.exc import DatabaseError
+from fastapi import status
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.health import (
-    router,
-    health_check,
-    _collect_database_health,
-    _optional_checks_enabled,
-    _optional_check_skipped,
     ServiceCheckError,
-    _redis_circuit_breaker,
-    _kafka_circuit_breaker,
-    _mlflow_circuit_breaker,
+    _check_database,
+    _collect_database_health,
+    _optional_check_skipped,
+    _optional_checks_enabled,
+    health_check,
+    liveness_check,
+    readiness_check,
 )
 
 
-class TestHealthCheckEnhanced:
-    """健康检查增强测试"""
-
-    @pytest.fixture
-    def client(self):
-        """测试客户端"""
-        return TestClient(router)
-
-    @pytest.fixture(autouse=True)
-    def setup_env(self):
-        """设置测试环境变量"""
-        original_fast_fail = os.getenv("FAST_FAIL")
-        original_minimal_mode = os.getenv("MINIMAL_HEALTH_MODE")
-        yield
-        if original_fast_fail is not None:
-            os.environ["FAST_FAIL"] = original_fast_fail
-        else:
-            os.environ.pop("FAST_FAIL", None)
-        if original_minimal_mode is not None:
-            os.environ["MINIMAL_HEALTH_MODE"] = original_minimal_mode
-        else:
-            os.environ.pop("MINIMAL_HEALTH_MODE", None)
-
-    def test_optional_checks_enabled_true(self):
-        """测试可选检查启用 - true"""
-        os.environ["FAST_FAIL"] = "true"
-        os.environ["MINIMAL_HEALTH_MODE"] = "false"
-        assert _optional_checks_enabled() is True
-
-    def test_optional_checks_enabled_false(self):
-        """测试可选检查禁用"""
-        os.environ["FAST_FAIL"] = "false"
-        assert _optional_checks_enabled() is False
-
-        os.environ["MINIMAL_HEALTH_MODE"] = "true"
-        assert _optional_checks_enabled() is False
-
-    def test_optional_check_skipped_format(self):
-        """测试可选检查跳过响应格式"""
-        result = _optional_check_skipped("test_service")
-        expected = {
-            "healthy": True,
-            "status": "skipped",
-            "response_time_ms": 0.0,
-            "details": {"message": "test_service check skipped in minimal mode"},
-        }
-        assert result == expected
+class TestHealthCheckBasics:
+    """基础健康检查测试"""
 
     @pytest.mark.asyncio
-    async def test_collect_database_health_not_initialized(self):
-        """测试数据库管理器未初始化"""
+    async def test_health_check_basic_response(self):
+        """测试基础健康检查响应结构"""
+        # 模拟minimal模式
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+            with patch("src.api.health._collect_database_health") as mock_db:
+                mock_db.return_value = _optional_check_skipped("database")
+
+                result = await health_check(check_db=False)
+
+                assert result["status"] == "healthy"
+                assert result["service"] == "football-prediction-api"
+                assert result["version"] == "1.0.0"
+                assert "timestamp" in result
+                assert "uptime" in result
+                assert "checks" in result
+                assert result["mode"] == "minimal"
+
+    @pytest.mark.asyncio
+    async def test_health_check_with_db_true(self):
+        """测试check_db=True时的行为"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+            with patch("src.api.health._collect_database_health") as mock_db:
+                mock_db.return_value = {
+                    "healthy": True,
+                    "status": "healthy",
+                    "response_time_ms": 10,
+                    "details": {"message": "数据库连接正常"},
+                }
+
+                result = await health_check(check_db=True)
+
+                assert result["mode"] == "full"
+                assert result["checks"]["database"]["status"] == "healthy"
+                mock_db.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_health_check_with_db_false(self):
+        """测试check_db=False时的行为"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", False):
+            with patch("src.api.health._collect_database_health") as mock_db:
+                mock_db.return_value = _optional_check_skipped("database")
+
+                result = await health_check(check_db=False)
+
+                assert result["mode"] == "minimal"
+                assert result["checks"]["database"]["status"] == "skipped"
+                mock_db.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_health_check_full_mode(self):
+        """测试完整模式的健康检查"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", False):
+            with patch("src.api.health.FAST_FAIL", True):
+                with patch("src.api.health._collect_database_health") as mock_db:
+                    with patch("src.api.health._check_redis") as mock_redis:
+                        with patch("src.api.health._check_kafka") as mock_kafka:
+                            with patch("src.api.health._check_mlflow") as mock_mlflow:
+                                with patch("src.api.health._check_filesystem") as mock_fs:
+                                    # 设置所有检查通过
+                                    mock_db.return_value = {
+                                        "healthy": True,
+                                        "status": "healthy",
+                                        "response_time_ms": 5,
+                                    }
+                                    mock_redis.return_value = {
+                                        "healthy": True,
+                                        "status": "healthy",
+                                        "response_time_ms": 3,
+                                    }
+                                    mock_kafka.return_value = {
+                                        "healthy": True,
+                                        "status": "healthy",
+                                        "response_time_ms": 10,
+                                    }
+                                    mock_mlflow.return_value = {
+                                        "healthy": True,
+                                        "status": "healthy",
+                                        "response_time_ms": 15,
+                                    }
+                                    mock_fs.return_value = {
+                                        "healthy": True,
+                                        "status": "healthy",
+                                        "response_time_ms": 1,
+                                    }
+
+                                    result = await health_check()
+
+                                    assert result["status"] == "healthy"
+                                    assert result["mode"] == "full"
+                                    assert all(check["status"] == "healthy"
+                                             for check in result["checks"].values())
+
+    @pytest.mark.asyncio
+    async def test_health_check_unhealthy_raises_exception(self):
+        """测试不健康状态抛出HTTP异常"""
+        with patch("src.api.health._collect_database_health") as mock_db:
+            mock_db.return_value = {
+                "healthy": False,
+                "status": "unhealthy",
+                "response_time_ms": 0,
+                "details": {"error": "Connection failed"},
+            }
+
+            with pytest.raises(Exception) as exc_info:
+                await health_check(check_db=True)
+
+            assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+            detail = exc_info.value.detail
+            assert detail["status"] == "unhealthy"
+            assert "database" in detail["failed_checks"]
+
+    @pytest.mark.asyncio
+    async def test_health_check_response_time_calculation(self):
+        """测试响应时间计算"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+            with patch("src.api.health._collect_database_health"):
+                start = time.time()
+                result = await health_check(check_db=False)
+                elapsed = (time.time() - start) * 1000
+
+                assert "response_time_ms" in result
+                assert result["response_time_ms"] >= 0
+                # 允许一定的误差
+                assert abs(result["response_time_ms"] - elapsed) < 50
+
+
+class TestLivenessCheck:
+    """存活性检查测试"""
+
+    @pytest.mark.asyncio
+    async def test_liveness_check_basic(self):
+        """测试基础存活性检查"""
+        result = await liveness_check()
+
+        assert result["status"] == "alive"
+        assert "timestamp" in result
+        assert datetime.fromisoformat(result["timestamp"]) is not None
+
+
+class TestReadinessCheck:
+    """就绪性检查测试"""
+
+    @pytest.mark.asyncio
+    async def test_readiness_check_all_healthy(self):
+        """测试所有服务健康时的就绪性检查"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+            with patch("src.api.health._collect_database_health") as mock_db:
+                mock_db.return_value = _optional_check_skipped("database")
+
+                result = await readiness_check()
+
+                assert result["ready"] is True
+                assert "timestamp" in result
+                assert "checks" in result
+
+    @pytest.mark.asyncio
+    async def test_readiness_check_unhealthy_raises_exception(self):
+        """测试不健康状态抛出异常"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", False):
+            with patch("src.api.health._collect_database_health") as mock_db:
+                mock_db.return_value = {
+                    "healthy": False,
+                    "status": "unhealthy",
+                    "error": "Database connection failed",
+                }
+
+                with pytest.raises(Exception) as exc_info:
+                    await readiness_check()
+
+                assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+                detail = exc_info.value.detail
+                assert detail["ready"] is False
+                assert detail["checks"]["database"]["healthy"] is False
+
+    @pytest.mark.asyncio
+    async def test_readiness_check_handles_exceptions(self):
+        """测试就绪性检查处理异常"""
+        with patch("src.api.health._collect_database_health") as mock_db:
+            mock_db.side_effect = Exception("Unexpected error")
+
+            result = await readiness_check()
+
+            # 应该捕获异常并标记为不健康
+            assert result["checks"]["database"]["healthy"] is False
+            assert "error" in result["checks"]["database"]
+
+
+class TestDatabaseHealthCheck:
+    """数据库健康检查测试"""
+
+    @pytest.mark.asyncio
+    async def test_check_database_success(self):
+        """测试数据库连接成功"""
+        mock_session = MagicMock()
+        mock_session.execute.return_value = None
+
+        result = await _check_database(mock_session)
+
+        assert result["healthy"] is True
+        assert result["status"] == "healthy"
+        assert "数据库连接正常" in result["details"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_check_database_failure(self):
+        """测试数据库连接失败"""
+        mock_session = MagicMock()
+        mock_session.execute.side_effect = SQLAlchemyError("Connection failed")
+
+        result = await _check_database(mock_session)
+
+        assert result["healthy"] is False
+        assert result["status"] == "unhealthy"
+        assert "Connection failed" in result["details"]["error"]
+
+    @pytest.mark.asyncio
+    async def test_collect_database_health_no_manager(self):
+        """测试数据库管理器未初始化的情况"""
         with patch("src.api.health.get_database_manager") as mock_get_manager:
-            mock_manager = Mock()
-            mock_manager.get_session.side_effect = RuntimeError("Not initialized")
-            mock_get_manager.return_value = mock_manager
+            mock_get_manager.side_effect = RuntimeError("Database manager not initialized")
 
             result = await _collect_database_health()
 
-            assert result["healthy"] is True
             assert result["status"] == "skipped"
             assert "Database manager not initialised" in result["details"]["message"]
 
     @pytest.mark.asyncio
     async def test_collect_database_health_session_unavailable(self):
-        """测试数据库会话不可用"""
+        """测试数据库会话不可用的情况"""
         with patch("src.api.health.get_database_manager") as mock_get_manager:
-            mock_manager = Mock()
-            session_mock = Mock()
-            session_mock.__enter__.side_effect = RuntimeError("Session unavailable")
-            mock_manager.get_session.return_value = session_mock
+            mock_manager = MagicMock()
+            mock_manager.get_session.side_effect = RuntimeError("Session unavailable")
             mock_get_manager.return_value = mock_manager
 
             result = await _collect_database_health()
 
-            assert result["healthy"] is True
             assert result["status"] == "skipped"
             assert "Database session unavailable" in result["details"]["message"]
 
-    def test_health_check_minimal_mode(self, client):
-        """测试最小模式健康检查"""
-        os.environ["MINIMAL_HEALTH_MODE"] = "true"
 
-        response = client.get("/")
-        assert response.status_code == 200
+class TestServiceCheckError:
+    """ServiceCheckError异常测试"""
 
-        data = response.json()
-        assert "status" in data
-        assert "checks" in data
+    def test_service_check_error_basic(self):
+        """测试ServiceCheckError基本功能"""
+        error = ServiceCheckError("Test error")
 
-    def test_health_check_with_db_param_true(self, client):
-        """测试显式要求数据库检查"""
-        with patch("src.api.health._collect_database_health") as mock_collect:
-            mock_collect.return_value = {"healthy": True, "status": "ok"}
-
-            response = client.get("/?check_db=true")
-
-            # 应该调用数据库检查
-            # 注意：由于实际的实现可能不同，这里需要根据实际情况调整
-
-    def test_health_check_with_db_param_false(self, client):
-        """测试显式跳过数据库检查"""
-        response = client.get("/?check_db=false")
-        assert response.status_code == 200
-
-    @pytest.mark.asyncio
-    async def test_service_check_error(self):
-        """测试服务检查错误"""
-        error = ServiceCheckError("Test error", details={"code": 500})
         assert str(error) == "Test error"
-        assert error.details == {"code": 500}
+        assert error.details == {}
+
+    def test_service_check_error_with_details(self):
+        """测试带详细信息的ServiceCheckError"""
+        details = {"code": 500, "service": "redis"}
+        error = ServiceCheckError("Test error", details=details)
+
+        assert str(error) == "Test error"
+        assert error.details == details
+
+
+class TestUtilityFunctions:
+    """工具函数测试"""
+
+    def test_optional_checks_enabled(self):
+        """测试_optional_checks_enabled函数"""
+        # 测试FAST_FAIL=true, MINIMAL_HEALTH_MODE=false
+        with patch("src.api.health.FAST_FAIL", True):
+            with patch("src.api.health.MINIMAL_HEALTH_MODE", False):
+                assert _optional_checks_enabled() is True
+
+        # 测试FAST_FAIL=false
+        with patch("src.api.health.FAST_FAIL", False):
+            with patch("src.api.health.MINIMAL_HEALTH_MODE", False):
+                assert _optional_checks_enabled() is False
+
+        # 测试MINIMAL_HEALTH_MODE=true
+        with patch("src.api.health.FAST_FAIL", True):
+            with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+                assert _optional_checks_enabled() is False
+
+    def test_optional_check_skipped(self):
+        """测试_optional_check_skipped函数"""
+        service = "Redis"
+        result = _optional_check_skipped(service)
+
+        assert result["healthy"] is True
+        assert result["status"] == "skipped"
+        assert result["response_time_ms"] == 0.0
+        assert service in result["details"]["message"]
+        assert result["details"]["message"] == f"{service} check skipped in minimal mode"
+
+
+class TestHealthCheckEdgeCases:
+    """边界情况测试"""
 
     @pytest.mark.asyncio
-    async def test_circuit_breaker_functionality(self):
-        """测试熔断器功能"""
-        from src.utils.retry import CircuitBreaker
+    async def test_health_check_uptime_calculation(self):
+        """测试运行时间计算"""
+        with patch("src.api.health._app_start_time", time.time() - 100):
+            with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+                with patch("src.api.health._collect_database_health"):
+                    result = await health_check(check_db=False)
 
-        # 创建一个测试用的熔断器
-        breaker = CircuitBreaker(
-            failure_threshold=2, recovery_timeout=1.0, retry_timeout=0.5
-        )
-
-        call_count = 0
-
-        async def failing_function():
-            nonlocal call_count
-            call_count += 1
-            if call_count <= 2:
-                raise Exception("Failed")
-            return "success"
-
-        # 前两次调用应该失败
-        with pytest.raises(Exception):
-            await breaker.call_async(failing_function)
-
-        with pytest.raises(Exception):
-            await breaker.call_async(failing_function)
-
-        # 第三次调用应该触发熔断
-        with pytest.raises(Exception):  # 应该是熔断异常
-            await breaker.call_async(failing_function)
+                    assert result["uptime"] >= 99  # 允许1秒误差
+                    assert result["uptime"] <= 101
 
     @pytest.mark.asyncio
-    async def test_health_check_all_dependencies_healthy(self):
-        """测试所有依赖健康的情况"""
+    async def test_health_check_global_exception_handling(self):
+        """测试全局异常处理"""
         with patch("src.api.health._collect_database_health") as mock_db:
-            mock_db.return_value = {
-                "healthy": True,
-                "status": "healthy",
-                "response_time_ms": 10.0,
-                "details": {"message": "Database connection successful"},
-            }
+            mock_db.side_effect = ValueError("Unexpected error")
 
-            # 模拟Redis健康检查
-            with patch("src.api.health._redis_circuit_breaker") as mock_redis_breaker:
-                mock_redis_breaker.call_async.return_value = {
-                    "healthy": True,
-                    "status": "healthy",
-                    "response_time_ms": 5.0,
-                }
+            with pytest.raises(Exception) as exc_info:
+                await health_check(check_db=True)
 
-                # 模拟Kafka健康检查
-                with patch(
-                    "src.api.health._kafka_circuit_breaker"
-                ) as mock_kafka_breaker:
-                    mock_kafka_breaker.call_async.return_value = {
-                        "healthy": True,
-                        "status": "healthy",
-                        "response_time_ms": 15.0,
-                    }
-
-                    # 模拟MLflow健康检查
-                    with patch(
-                        "src.api.health._mlflow_circuit_breaker"
-                    ) as mock_mlflow_breaker:
-                        mock_mlflow_breaker.call_async.return_value = {
-                            "healthy": True,
-                            "status": "healthy",
-                            "response_time_ms": 20.0,
-                        }
-
-                        # 执行健康检查
-                        result = await health_check(check_db=True)
-
-                        assert result["status"] in ["healthy", "ok"]
-                        assert "checks" in result
-                        assert "database" in result["checks"]
+            assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+            detail = exc_info.value.detail
+            assert detail["status"] == "unhealthy"
+            assert "Unexpected error" in detail["error"]
 
     @pytest.mark.asyncio
-    async def test_health_check_database_unhealthy(self):
-        """测试数据库不健康的情况"""
-        with patch("src.api.health._collect_database_health") as mock_db:
-            mock_db.return_value = {
-                "healthy": False,
-                "status": "unhealthy",
-                "response_time_ms": 5000.0,
-                "details": {"error": "Connection timeout"},
-            }
+    async def test_health_check_timestamp_format(self):
+        """测试时间戳格式"""
+        with patch("src.api.health.MINIMAL_HEALTH_MODE", True):
+            with patch("src.api.health._collect_database_health"):
+                result = await health_check(check_db=False)
 
-            result = await health_check(check_db=True)
-
-            # 整体状态应该反映数据库问题
-            assert result["status"] in ["unhealthy", "degraded"]
-
-    @pytest.mark.asyncio
-    async def test_health_check_redis_failing(self):
-        """测试Redis失败的情况"""
-        os.environ["FAST_FAIL"] = "true"
-        os.environ["MINIMAL_HEALTH_MODE"] = "false"
-
-        with patch.object(_redis_circuit_breaker, "call_async") as mock_redis:
-            mock_redis.side_effect = Exception("Redis connection failed")
-
-            # 应该捕获Redis错误但不影响整体健康检查
-            result = await health_check(check_db=False)
-
-            # Redis错误应该被记录在checks中
-            assert "checks" in result
-
-    @pytest.mark.asyncio
-    async def test_health_check_kafka_failing(self):
-        """测试Kafka失败的情况"""
-        os.environ["FAST_FAIL"] = "true"
-        os.environ["MINIMAL_HEALTH_MODE"] = "false"
-
-        with patch.object(_kafka_circuit_breaker, "call_async") as mock_kafka:
-            mock_kafka.side_effect = Exception("Kafka broker unavailable")
-
-            result = await health_check(check_db=False)
-
-            # Kafka错误应该被记录
-            assert "checks" in result
-
-    @pytest.mark.asyncio
-    async def test_health_check_mlflow_failing(self):
-        """测试MLflow失败的情况"""
-        os.environ["FAST_FAIL"] = "true"
-        os.environ["MINIMAL_HEALTH_MODE"] = "false"
-
-        with patch.object(_mlflow_circuit_breaker, "call_async") as mock_mlflow:
-            mock_mlflow.side_effect = Exception("MLflow server unreachable")
-
-            result = await health_check(check_db=False)
-
-            # MLflow错误应该被记录
-            assert "checks" in result
-
-    @pytest.mark.asyncio
-    async def test_health_check_concurrent_requests(self):
-        """测试并发健康检查请求"""
-
-        async def make_health_check():
-            return await health_check(check_db=False)
-
-        # 并发执行10个健康检查
-        tasks = [make_health_check() for _ in range(10)]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # 所有请求都应该成功
-        for result in results:
-            assert not isinstance(result, Exception)
-            assert "status" in result
-
-    def test_health_check_endpoint_variations(self, client):
-        """测试健康检查端点变体"""
-        # 测试根路径
-        response = client.get("/")
-        assert response.status_code == 200
-
-        # 测试带斜杠的路径
-        response = client.get("/health")
-        assert response.status_code == 200
-
-        # 测试health路径
-        response = client.get("/api/health")
-        assert response.status_code == 200
-
-    def test_health_check_response_structure(self, client):
-        """测试健康检查响应结构"""
-        response = client.get("/")
-        assert response.status_code == 200
-
-        data = response.json()
-
-        # 验证响应结构
-        required_fields = ["status", "timestamp", "uptime_seconds", "version", "checks"]
-        for field in required_fields:
-            assert field in data
-
-        # 验证checks结构
-        assert "api" in data["checks"]
-        assert isinstance(data["checks"]["api"], dict)
-
-    def test_health_check_headers(self, client):
-        """测试健康检查响应头"""
-        response = client.get("/")
-        assert response.status_code == 200
-
-        # 检查常见响应头
-        assert "content-type" in response.headers
-        assert response.headers["content-type"] == "application/json"
-
-    @pytest.mark.asyncio
-    async def test_health_check_with_custom_endpoints(self):
-        """测试自定义端点健康检查"""
-        # 测试predictions端点可用性
-        with patch("src.api.health.PREDICTIONS_ENABLED", True):
-            result = await health_check(check_db=False)
-            # 应该显示predictions服务可用
-
-    @pytest.mark.asyncio
-    async def test_health_check_performance_metrics(self):
-        """测试健康检查性能指标"""
-        import time
-
-        start_time = time.time()
-        result = await health_check(check_db=False)
-        end_time = time.time()
-
-        # 健康检查应该快速完成
-        assert end_time - start_time < 5.0  # 应该在5秒内完成
-
-        # 响应应该包含性能相关信息
-        assert "response_time_ms" in str(result) or "checks" in result
-
-    @pytest.mark.asyncio
-    async def test_health_check_error_propagation(self):
-        """测试健康检查错误传播"""
-        # 模拟数据库抛出异常
-        with patch("src.api.health._collect_database_health") as mock_db:
-            mock_db.side_effect = DatabaseError("Database error")
-
-            # 应该优雅地处理错误
-            result = await health_check(check_db=True)
-
-            # 错误应该被捕获，响应仍然有效
-            assert "status" in result
-            assert result["status"] in ["unhealthy", "degraded", "error"]
-
-    def test_service_check_error_creation(self):
-        """测试服务检查错误创建"""
-        # 测试无details
-        error1 = ServiceCheckError("Simple error")
-        assert str(error1) == "Simple error"
-        assert error1.details == {}
-
-        # 测试有details
-        details = {"code": 500, "service": "database"}
-        error2 = ServiceCheckError("Error with details", details=details)
-        assert str(error2) == "Error with details"
-        assert error2.details == details
+                # 验证ISO格式时间戳
+                timestamp = result["timestamp"]
+                parsed = datetime.fromisoformat(timestamp)
+                assert parsed is not None
+                assert parsed.tzinfo is None or parsed.tzinfo.total_seconds() == 0

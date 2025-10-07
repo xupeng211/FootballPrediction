@@ -9,7 +9,13 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-COVERAGE_THRESHOLD := 80
+
+# Coverage thresholds for different environments
+COVERAGE_THRESHOLD_CI ?= 80      # CI environment (strict)
+COVERAGE_THRESHOLD_DEV ?= 60     # Development environment (relaxed)
+COVERAGE_THRESHOLD_MIN ?= 50     # Minimum acceptable coverage
+COVERAGE_THRESHOLD ?= $(COVERAGE_THRESHOLD_CI)  # Default to CI level
+
 IMAGE_NAME ?= football-prediction
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
@@ -191,20 +197,20 @@ audit-check: ## Security: Check for vulnerabilities only
 # ============================================================================
 # 🎨 Code Quality
 # ============================================================================
-lint: ## Quality: Run flake8 and mypy checks
+lint: ## Quality: Run ruff and mypy checks
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running flake8...$(RESET)" && \
-	flake8 src/ tests/ && \
+	echo "$(YELLOW)Running ruff check...$(RESET)" && \
+	ruff check src/ tests/ && \
 	echo "$(YELLOW)Running mypy...$(RESET)" && \
 	mypy src tests && \
 	echo "$(GREEN)✅ Linting and type checks passed$(RESET)"
 
-fmt: ## Quality: Format code with black and isort
+fmt: ## Quality: Format code with ruff
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running black...$(RESET)" && \
-	black src/ tests/ && \
-	echo "$(YELLOW)Running isort...$(RESET)" && \
-	isort src/ tests/ && \
+	echo "$(YELLOW)Running ruff format...$(RESET)" && \
+	ruff format src/ tests/ && \
+	echo "$(YELLOW)Running ruff check --fix...$(RESET)" && \
+	ruff check --fix src/ tests/ && \
 	echo "$(GREEN)✅ Code formatted$(RESET)"
 
 quality: lint fmt test ## Quality: Complete quality check (lint + format + test)
@@ -221,12 +227,6 @@ test: ## Test: Run pytest unit tests
 	echo "$(YELLOW)Running tests...$(RESET)" && \
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
-
-test-quick: ## Test: Quick test run (unit tests only, no coverage)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running quick tests...$(RESET)" && \
-	pytest -m "unit" --maxfail=10 --disable-warnings && \
-	echo "$(GREEN)✅ Quick tests passed$(RESET)"
 
 test-phase1: ## Test: Run Phase 1 core API tests (data, features, predictions)
 	@$(ACTIVATE) && \
@@ -248,13 +248,13 @@ test-full: ## Test: Run full unit test suite with coverage
 coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running coverage tests...$(RESET)" && \
-	pytest -m "unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) && \
+	pytest tests/unit --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=$(COVERAGE_THRESHOLD) && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
 coverage-fast: ## Test: Run fast coverage (unit tests only, no slow tests)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
-	pytest -m "unit and not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
+	pytest tests/unit -m "not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
 	echo "$(GREEN)✅ Fast coverage passed$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
@@ -287,6 +287,18 @@ test.slow: ## Test: Run slow tests only (marked with 'slow')
 	pytest -m "slow" && \
 	echo "$(GREEN)✅ Slow tests passed$(RESET)"
 
+test.containers: ## Test: Run tests with TestContainers (Docker required)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running tests with Docker containers...$(RESET)" && \
+	pytest tests/unit/test_database_with_containers.py -v --maxfail=3 && \
+	echo "$(GREEN)✅ Container tests passed$(RESET)"
+
+test.containers-all: ## Test: Run all container-based tests
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running all container-based tests...$(RESET)" && \
+	pytest -m "integration" tests/unit/test_database_with_containers.py -v --cov=src --cov-report=term-missing && \
+	echo "$(GREEN)✅ All container tests passed$(RESET)"
+
 cov.html: ## Test: Generate HTML coverage report
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Generating HTML coverage report...$(RESET)" && \
@@ -299,15 +311,15 @@ cov.enforce: ## Test: Run coverage with strict 80% threshold
 	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 && \
 	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
 
-coverage-ci: ## Test: Run CI coverage with 80% threshold (strict)
+coverage-ci: ## Test: Run CI coverage with strict threshold
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running CI coverage with 80% threshold...$(RESET)" && \
-	pytest --cov=src --cov-config=coverage_ci.ini --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+	echo "$(YELLOW)Running CI coverage with $(COVERAGE_THRESHOLD_CI)% threshold...$(RESET)" && \
+	pytest --cov=src --cov-config=coverage_ci.ini --cov-report=term-missing --cov-report=xml --cov-fail-under=$(COVERAGE_THRESHOLD_CI)
 
-coverage-local: ## Test: Run local coverage with 60% threshold (development)
+coverage-local: ## Test: Run local coverage with development threshold
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running local coverage with 60% threshold...$(RESET)" && \
-	pytest --cov=src --cov-config=coverage_local.ini --cov-report=term-missing --cov-fail-under=60
+	echo "$(YELLOW)Running local coverage with $(COVERAGE_THRESHOLD_DEV)% threshold...$(RESET)" && \
+	pytest --cov=src --cov-config=coverage_local.ini --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD_DEV)
 
 coverage-critical: ## Test: Test critical path modules with 100% coverage
 	@$(ACTIVATE) && \
@@ -807,66 +819,56 @@ setup-hooks: ## Git: Setup pre-commit hooks permissions
 		echo "$(YELLOW)⚠️ 未找到 .git/hooks/pre-commit$(RESET)"; \
 	fi
 
+# ============================================================================
+# 🧪 Test Environment Commands
+# ============================================================================
 
-# 额外的测试命令（使用不同的名称以避免冲突）
-test-all-verbose:
-	@echo "运行所有测试（详细模式）"
-	pytest tests/ -v
+test-env-start: ## Environment: Start test environment (Docker)
+	@echo "$(YELLOW)Starting test environment...$(RESET)"
+	./scripts/test/start-test-env.sh
 
-test-unit:
-	@echo "运行单元测试"
-	pytest tests/unit/ -v -m "unit"
+test-env-stop: ## Environment: Stop test environment
+	@echo "$(YELLOW)Stopping test environment...$(RESET)"
+	./scripts/test/stop-test-env.sh
 
-test-integration:
-	@echo "运行集成测试"
-	pytest tests/integration/ -v -m "integration"
+test-env-restart: ## Environment: Restart test environment
+	@echo "$(YELLOW)Restarting test environment...$(RESET)"
+	./scripts/test/stop-test-env.sh && \
+	sleep 2 && \
+	./scripts/test/start-test-env.sh
 
-test-e2e:
-	@echo "运行端到端测试"
-	pytest tests/e2e/ -v -m "e2e"
+test-local: ## Test: Run local tests without external services
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running local tests (no external deps)...$(RESET)" && \
+	pytest tests/unit/coverage_boost/ -v --maxfail=10 --disable-warnings && \
+	echo "$(GREEN)✅ Local tests passed$(RESET)"
 
-test-smoke:
-	@echo "运行冒烟测试"
-	pytest tests/ -v -m "smoke"
+test-core-modules: ## Test: Test high-value modules (config, utils, database)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Testing core modules...$(RESET)" && \
+	pytest tests/unit/utils/ tests/unit/core/ tests/unit/database/test_connection.py -v --cov=src --cov-report=term-missing && \
+	echo "$(GREEN)✅ Core modules tests passed$(RESET)"
 
-test-coverage:
-	@echo "运行测试并生成覆盖率报告"
-	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+test-with-db: ## Test: Run tests with PostgreSQL
+	@echo "$(YELLOW)Testing with PostgreSQL...$(RESET)"
+	@source .env.test 2>/dev/null || true && \
+	$(ACTIVATE) && \
+	pytest -m "requires_db" -v --maxfail=5 && \
+	echo "$(GREEN)✅ Database tests passed$(RESET)"
 
-test-watch:
-	@echo "监视文件变化并运行测试"
-	pytest-watch tests/
+test-with-redis: ## Test: Run tests with Redis
+	@echo "$(YELLOW)Testing with Redis...$(RESET)"
+	@source .env.test 2>/dev/null || true && \
+	$(ACTIVATE) && \
+	pytest -m "requires_redis" -v --maxfail=5 && \
+	echo "$(GREEN)✅ Redis tests passed$(RESET)"
 
-test-parallel:
-	@echo "并行运行测试"
-	pytest tests/ -n auto
+test-all-services: ## Test: Run tests with all external services
+	@echo "$(YELLOW)Testing with all services...$(RESET)"
+	@source .env.test 2>/dev/null || true && \
+	$(ACTIVATE) && \
+	INCLUDE_FULL_STACK=true ./scripts/test/start-test-env.sh && \
+	sleep 10 && \
+	pytest tests/ -v --maxfail=5 && \
+	echo "$(GREEN)✅ Full service tests passed$(RESET)"
 
-test-failed:
-	@echo "只运行失败的测试"
-	pytest tests/ --lf
-
-test-debug:
-	@echo "调试模式运行测试"
-	pytest tests/ -v -s --tb=long
-
-test-performance:
-	@echo "运行性能测试"
-	pytest tests/e2e/performance/ -v -m "performance"
-
-test-security:
-	@echo "运行安全测试"
-	pytest tests/ -v -m "security"
-
-# 清理测试数据
-clean-test:
-	@echo "清理测试数据"
-	rm -rf .pytest_cache/
-	rm -rf htmlcov/
-	rm -rf .coverage
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-
-# 生成测试报告
-test-report:
-	@echo "生成测试报告"
-	pytest tests/ --html=test-report.html --self-contained-html

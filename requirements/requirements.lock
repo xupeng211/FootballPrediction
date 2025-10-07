@@ -575,6 +575,7 @@ protobuf==5.29.5
     #   mlflow-skinny
 psutil==6.0.0
     # via
+    #   -r /home/user/projects/FootballPrediction/requirements/dev.in
     #   feast
     #   ipykernel
     #   locust

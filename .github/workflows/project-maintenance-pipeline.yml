@@ -1,0 +1,338 @@
+name: 项目维护流水线
+
+on:
+  # 每周一凌晨2点执行维护任务
+  schedule:
+    - cron: "0 2 * * 1" # 每周一凌晨 2 点 UTC
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Maintenance task to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - docs
+          - cleanup
+          - stats
+          - archive
+
+jobs:
+  # 文档更新
+  update-docs:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'docs' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements/base.txt" ]; then
+            pip install -r requirements/base.txt
+          elif [ -f "requirements/requirements.lock" ]; then
+            pip install -r requirements/requirements.lock
+          fi
+
+      - name: Generate API documentation
+        run: |
+          # 生成API文档
+          python scripts/generate_api_docs.py
+
+      - name: Update README statistics
+        run: |
+          # 更新README中的统计信息
+          python scripts/update_readme_stats.py
+
+      - name: Update contributor list
+        run: |
+          # 更新贡献者列表
+          python scripts/update_contributors.py
+
+      - name: Update CHANGELOG
+        run: |
+          # 自动生成changelog
+          python scripts/generate_changelog.py --days 7
+
+      - name: Commit documentation updates
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add docs/ README.md CHANGELOG.md
+          git commit -m "chore: auto-update documentation [skip ci]" || exit 0
+          git push
+
+  # 清理任务
+  cleanup:
+    name: Cleanup Old Data
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'cleanup' || github.event_name == 'schedule'
+
+    permissions:
+      actions: write
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+
+      - name: Clean project temporary files
+        run: |
+          # Use Makefile clean-temp command
+          make clean-temp || true
+
+          # Additional cleanup for CI-specific files
+          find . -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
+          find logs/ -type f -mtime +90 -delete 2>/dev/null || true
+
+          echo "📊 Cleanup Summary:"
+          echo "- Removed temporary report files"
+          echo "- Cleaned Python cache files"
+          echo "- Removed old log files (>30 days)"
+
+      - name: Cleanup old branches
+        run: |
+          # 清理已合并的PR分支
+          git branch -r --merged | grep -v 'origin/main\|origin/develop\|origin/hotfix' | \
+            sed 's/origin\///' | \
+            xargs -I {} git push origin --delete {} 2>/dev/null || true
+
+      - name: Cleanup old workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 删除90天前的workflow run
+          gh run list --repo ${{ github.repository }} --limit 500 \
+            --json databaseId,createdAt,status,conclusion \
+            | jq '.[] | select(.status == "completed" and (.createdAt | fromdateiso8601) < (now - 86400 * 90)) | .databaseId' \
+            | xargs -I {} gh run delete --repo ${{ github.repository }} {} --yes 2>/dev/null || true
+
+      - name: Cleanup stale issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 处理30天无更新的issues
+          gh issue list --repo ${{ github.repository }} --state open \
+            --json number,updatedAt,title \
+            | jq '.[] | select((.updatedAt | fromdateiso8601) < (now - 86400 * 30)) | .number' \
+            | while read -r issue; do
+                if [ -n "$issue" ]; then
+                  echo "Processing stale issue #$issue"
+                  # 添加过期标签
+                  gh issue edit $issue --add-label "stale"
+                  # 评论提醒
+                  gh issue comment $issue --body "🔔 This issue has been marked as stale due to no activity for 30 days. It will be closed in 7 days if there is no further activity."
+                fi
+              done || true
+
+      - name: Close very old stale issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 关闭60天无更新的stale issues
+          gh issue list --repo ${{ github.repository }} --state open --label stale \
+            --json number,updatedAt,title \
+            | jq '.[] | select((.updatedAt | fromdateiso8601) < (now - 86400 * 60)) | .number' \
+            | while read -r issue; do
+                if [ -n "$issue" ]; then
+                  echo "Closing very old stale issue #$issue"
+                  gh issue close $issue \
+                    --comment "This issue has been automatically closed due to no activity for 60 days. Feel free to reopen if it's still relevant."
+                fi
+              done || true
+
+      - name: Cleanup old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 删除旧的artifacts
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+
+            for (const artifact of artifacts.data.artifacts) {
+              if (new Date(artifact.created_at) < cutoffDate) {
+                console.log(`Deleting artifact: ${artifact.name}`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+              }
+            }
+
+  # 生成统计报告
+  generate-stats:
+    name: Generate Project Statistics
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'stats' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gitpython pandas matplotlib
+
+      - name: Generate statistics
+        run: |
+          python scripts/generate_project_stats.py \
+            --output reports/project_stats_$(date +%Y%m%d).html \
+            --days 30
+
+      - name: Generate contribution heat map
+        run: |
+          python scripts/generate_contribution_heatmap.py \
+            --output reports/contribution_heatmap_$(date +%Y%m%d).png
+
+      - name: Upload statistics
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-statistics
+          path: |
+            reports/project_stats_*.html
+            reports/contribution_heatmap_*.png
+          retention-days: 90
+
+  # 归档旧报告
+  archive-reports:
+    name: Archive Old Reports
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'archive' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Archive old reports
+        run: |
+          # 创建归档目录
+          mkdir -p docs/archive/$(date +%Y)/$(date +%m)
+
+          # 移动超过3个月的报告到归档
+          find reports/generated -name "*.md" -mtime +90 \
+            -exec mv {} docs/archive/$(date +%Y)/$(date +%m)/ \; 2>/dev/null || true
+
+          # 压缩更旧的报告
+          find docs/archive -name "*.md" -mtime +365 \
+            -exec gzip {} \; 2>/dev/null || true
+
+      - name: Update archive index
+        run: |
+          python scripts/generate_archive_index.py \
+            --archive-dir docs/archive \
+            --output docs/archive/README.md
+
+      - name: Commit archive updates
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add docs/archive/
+          git commit -m "chore: archive old reports [skip ci]" || exit 0
+          git push
+
+  # 生成维护报告
+  maintenance-report:
+    name: Generate Maintenance Report
+    runs-on: ubuntu-latest
+    needs: [update-docs, cleanup, generate-stats, archive-reports]
+    if: always() && github.event_name == 'schedule'
+
+    steps:
+      - name: Generate summary report
+        run: |
+          cat > maintenance_report.md << EOF
+          # Weekly Maintenance Report - $(date +%Y-%m-%d)
+
+          ## Tasks Status
+          - 📚 Documentation Update: ${{ needs.update-docs.result }}
+          - 🧹 Cleanup Tasks: ${{ needs.cleanup.result }}
+          - 📊 Statistics Generation: ${{ needs.generate-stats.result }}
+          - 📦 Archive Reports: ${{ needs.archive-reports.result }}
+
+          ## Summary
+
+          ### Documentation
+          - API docs updated
+          - README statistics refreshed
+          - Contributors list updated
+          - Changelog generated
+
+          ### Cleanup
+          - Old branches removed
+          - Stale issues processed
+          - Old workflow runs deleted
+          - Artifacts cleaned
+
+          ### Statistics
+          - Project metrics generated
+          - Contribution heatmap created
+          - Performance trends analyzed
+
+          ### Archive
+          - Old reports archived
+          - Archive index updated
+
+          ---
+          *Report generated automatically on $(date)*
+          EOF
+
+      - name: Create issue for review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('maintenance_report.md', 'utf8');
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '📋 Weekly Maintenance Report',
+              body: report,
+              labels: ['maintenance', 'weekly-report']
+            });
+
+      - name: Notify in Slack (optional)
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"Weekly maintenance completed for ${{ github.repository }}\"}" \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

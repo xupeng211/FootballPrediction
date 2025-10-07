@@ -1,4 +1,8 @@
+# syntax=docker/dockerfile:1.4
 # 多阶段构建 - 构建阶段
+# 启用 BuildKit: export DOCKER_BUILDKIT=1
+# 或在 docker-compose.yml 中设置 COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1
+
 FROM python:3.11-slim as builder
 
 # 设置工作目录
@@ -14,8 +18,9 @@ RUN apt-get update && apt-get install -y \
 # 复制依赖文件
 COPY requirements/ ./requirements/
 
-# 安装Python依赖
-RUN pip install --no-cache-dir --user -r requirements/requirements.lock
+# 安装Python依赖（使用 BuildKit 缓存优化）
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --user -r requirements/requirements.lock
 
 # 生产阶段
 FROM python:3.11-slim as production

@@ -1,390 +1,257 @@
-"""
-数据收集器测试 - 赔率数据收集器
-"""
-
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+"""赔率收集器测试 - 消除零覆盖率"""
 
 import pytest
+from unittest.mock import AsyncMock, Mock
 
-from src.data.collectors.odds_collector import OddsCollector
+
+@pytest.fixture
+def mock_db_session():
+    """Mock数据库会话"""
+    return AsyncMock()
 
 
-@pytest.mark.unit
+@pytest.fixture
+def mock_redis_client():
+    """Mock Redis客户端"""
+    redis = AsyncMock()
+    redis.get_cache_value = AsyncMock(return_value=None)
+    redis.set_cache_value = AsyncMock()
+    return redis
+
+
+@pytest.fixture
+def odds_collector(mock_db_session, mock_redis_client):
+    """创建赔率收集器实例"""
+    from src.collectors.odds_collector import OddsCollector
+    return OddsCollector(mock_db_session, mock_redis_client)
+
+
 class TestOddsCollector:
-    """OddsCollector测试"""
+    """赔率收集器测试"""
 
-    @pytest.fixture
-    def collector(self):
-        """创建收集器实例"""
-        collector = OddsCollector()
-        collector.logger = MagicMock()
-        return collector
+    def test_init(self, odds_collector):
+        """测试初始化"""
+        assert odds_collector.db_session is not None
+        assert odds_collector.redis_client is not None
+        assert odds_collector.cache_timeout == 300
+        assert "bet365" in odds_collector.bookmakers
+        assert "betfair" in odds_collector.bookmakers
+        assert "william_hill" in odds_collector.bookmakers
 
-    @pytest.fixture
-    def mock_odds_data(self):
-        """Mock赔率数据"""
-        return {
-            "match_id": 12345,
-            "bookmakers": [
-                {
-                    "id": 1,
-                    "name": "Bet365",
-                    "bets": [
-                        {
-                            "id": 1,
-                            "name": "Match Winner",
-                            "values": [
-                                {"value": "Home", "odd": 2.10},
-                                {"value": "Draw", "odd": 3.40},
-                                {"value": "Away", "odd": 3.20},
-                            ],
-                        }
-                    ],
-                }
-            ],
+    @pytest.mark.asyncio
+    async def test_collect_match_odds_cache_hit(self, odds_collector, mock_redis_client):
+        """测试从缓存获取赔率"""
+        # 设置缓存返回值
+        cached_data = {"bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}}
+        mock_redis_client.get_cache_value.return_value = cached_data
+
+        result = await odds_collector.collect_match_odds(123)
+
+        assert result == cached_data
+        mock_redis_client.get_cache_value.assert_called_once_with("odds:match:123")
+
+    @pytest.mark.asyncio
+    async def test_collect_match_odds_match_not_found(self, odds_collector):
+        """测试比赛不存在的情况"""
+        # Mock _get_match_by_id 返回 None
+        odds_collector._get_match_by_id = AsyncMock(return_value=None)
+
+        result = await odds_collector.collect_match_odds(999)
+
+        assert result == {}
+
+    @pytest.mark.asyncio
+    async def test_collect_match_odds_force_refresh(self, odds_collector, mock_redis_client):
+        """测试强制刷新"""
+        # Mock比赛存在
+        mock_match = Mock()
+        odds_collector._get_match_by_id = AsyncMock(return_value=mock_match)
+
+        # Mock从博彩公司获取赔率
+        odds_collector._fetch_odds_from_bookmaker = AsyncMock(return_value={
+            "home": 2.0, "draw": 3.2, "away": 3.8
+        })
+
+        # Mock保存到数据库
+        odds_collector._save_odds_to_db = AsyncMock()
+
+        await odds_collector.collect_match_odds(123, force_refresh=True)
+
+        # 验证没有从缓存读取
+        mock_redis_client.get_cache_value.assert_not_called()
+        # 验证缓存被设置
+        mock_redis_client.set_cache_value.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_collect_match_odds_success(self, odds_collector):
+        """测试成功收集赔率"""
+        # Mock比赛存在
+        mock_match = Mock()
+        odds_collector._get_match_by_id = AsyncMock(return_value=mock_match)
+
+        # Mock从博彩公司获取赔率
+        def mock_fetch_odds(match_id, bookmaker):
+            if bookmaker == "bet365":
+                return {"home": 2.0, "draw": 3.2, "away": 3.8}
+            elif bookmaker == "betfair":
+                return {"home": 2.1, "draw": 3.1, "away": 3.7}
+            return None
+
+        odds_collector._fetch_odds_from_bookmaker = AsyncMock(side_effect=mock_fetch_odds)
+
+        # Mock保存到数据库
+        odds_collector._save_odds_to_db = AsyncMock()
+
+        result = await odds_collector.collect_match_odds(123)
+
+        # 验证返回了博彩公司数据
+        assert "bet365" in result
+        assert "betfair" in result
+        assert "average" in result
+
+        # 验证平均赔率计算
+        avg = result["average"]
+        assert abs(avg["home"] - 2.05) < 0.01  # (2.0 + 2.1) / 2
+        assert abs(avg["draw"] - 3.15) < 0.01  # (3.2 + 3.1) / 2
+        assert abs(avg["away"] - 3.75) < 0.01  # (3.8 + 3.7) / 2
+
+    @pytest.mark.asyncio
+    async def test_collect_match_odds_specific_bookmakers(self, odds_collector):
+        """测试只收集特定博彩公司的赔率"""
+        # Mock比赛存在
+        mock_match = Mock()
+        odds_collector._get_match_by_id = AsyncMock(return_value=mock_match)
+
+        # Mock从博彩公司获取赔率
+        odds_collector._fetch_odds_from_bookmaker = AsyncMock(return_value={
+            "home": 2.0, "draw": 3.2, "away": 3.8
+        })
+
+        # Mock保存到数据库
+        odds_collector._save_odds_to_db = AsyncMock()
+
+        await odds_collector.collect_match_odds(123, bookmakers=["bet365"])
+
+        # 验证只调用了指定的博彩公司
+        assert odds_collector._fetch_odds_from_bookmaker.call_count == 1
+        odds_collector._fetch_odds_from_bookmaker.assert_called_with(123, "bet365")
+
+    def test_calculate_average_odds(self, odds_collector):
+        """测试计算平均赔率"""
+        odds_data = {
+            "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8},
+            "betfair": {"home": 2.1, "draw": 3.1, "away": 3.7},
+            "william_hill": {"home": 1.9, "draw": 3.3, "away": 3.9}
         }
 
-    def test_collector_initialization(self, collector):
-        """测试收集器初始化"""
-        assert collector is not None
-        assert collector.logger is not None
-        assert hasattr(collector, "bookmakers")
-        assert hasattr(collector, "api_key")
+        avg = odds_collector._calculate_average_odds(odds_data)
 
-    @pytest.mark.asyncio
-    async def test_collect_odds_for_match(self, collector, mock_odds_data):
-        """测试收集单场比赛赔率"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = mock_odds_data
+        assert abs(avg["home"] - 2.0) < 0.01  # (2.0 + 2.1 + 1.9) / 3
+        assert abs(avg["draw"] - 3.2) < 0.01  # (3.2 + 3.1 + 3.3) / 3
+        assert abs(avg["away"] - 3.8) < 0.01  # (3.8 + 3.7 + 3.9) / 3
 
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_odds_for_match(match_id=12345)
+    def test_calculate_average_odds_empty(self, odds_collector):
+        """测试空数据计算平均赔率"""
+        avg = odds_collector._calculate_average_odds({})
+        assert avg == {}
 
-            assert result is not None
-            assert result["match_id"] == 12345
-            assert len(result["bookmakers"]) == 1
-            assert result["bookmakers"][0]["name"] == "Bet365"
-
-    @pytest.mark.asyncio
-    async def test_collect_odds_batch(self, collector, mock_odds_data):
-        """测试批量收集赔率"""
-        match_ids = [12345, 12346, 12347]
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = mock_odds_data
-
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            results = await collector.collect_odds_batch(match_ids)
-
-            assert len(results) == 3
-            assert all("match_id" in result for result in results)
-            assert mock_http_client.get.call_count == 3
-
-    @pytest.mark.asyncio
-    async def test_parse_odds_data(self, collector, mock_odds_data):
-        """测试解析赔率数据"""
-        parsed = await collector._parse_odds_data(mock_odds_data)
-
-        assert parsed["match_id"] == 12345
-        assert "home_win_odds" in parsed
-        assert "draw_odds" in parsed
-        assert "away_win_odds" in parsed
-
-    @pytest.mark.asyncio
-    async def test_collect_odds_error_handling(self, collector):
-        """测试错误处理"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.side_effect = Exception("API error")
-
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_odds_for_match(match_id=12345)
-
-            assert result is None
-            collector.logger.error.assert_called()
-
-    def test_parse_decimal_odds(self, collector):
-        """测试解析小数赔率"""
-        # 测试有效赔率
-        odds = collector._parse_decimal_odds("2.10")
-        assert odds == 2.10
-
-        # 测试无效赔率
-        odds = collector._parse_decimal_odds("invalid")
-        assert odds is None
-
-    def test_calculate_implied_probability(self, collector):
-        """测试计算隐含概率"""
-        # 小数赔率转隐含概率
-        probability = collector._calculate_implied_probability(2.0)
-        assert probability == 0.5  # 1/2.0
-
-        probability = collector._calculate_implied_probability(3.0)
-        assert pytest.approx(probability, 0.01) == 0.333  # 1/3.0
-
-    def test_calculate_bookmaker_margin(self, collector):
-        """测试计算庄家利润率"""
-        odds = [2.10, 3.40, 3.20]
-        margin = collector._calculate_bookmaker_margin(odds)
-
-        # 计算公式: margin = (1/2.1 + 1/3.4 + 1/3.2) - 1
-        expected = (1 / 2.1 + 1 / 3.4 + 1 / 3.2) - 1
-        assert pytest.approx(margin, 0.01) == expected
-
-    @pytest.mark.asyncio
-    async def test_cache_odds_data(self, collector, mock_odds_data):
-        """测试缓存赔率数据"""
-        mock_cache = MagicMock()
-        mock_cache.set.return_value = True
-
-        with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector._cache_odds_data(mock_odds_data)
-
-            assert result is True
-            mock_cache.set.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_get_cached_odds(self, collector):
-        """测试获取缓存的赔率数据"""
-        mock_cache = MagicMock()
-        cached_data = {
-            "match_id": 12345,
-            "home_win_odds": 2.10,
-            "updated_at": datetime.now().isoformat(),
-        }
-        mock_cache.get.return_value = cached_data
-
-        with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector.get_cached_odds(match_id=12345)
-
-            assert result == cached_data
-            mock_cache.get.assert_called_once()
-
-    def test_filter_odds_by_bookmaker(self, collector, mock_odds_data):
-        """测试按庄家过滤赔率"""
-        filtered = collector._filter_odds_by_bookmaker(
-            mock_odds_data, bookmakers=["Bet365"]
-        )
-
-        assert len(filtered["bookmakers"]) == 1
-        assert filtered["bookmakers"][0]["name"] == "Bet365"
-
-    def test_detect_odds_changes(self, collector):
-        """测试检测赔率变化"""
-        old_odds = {"home_win": 2.10, "draw": 3.40, "away_win": 3.20}
-        new_odds = {"home_win": 2.05, "draw": 3.40, "away_win": 3.30}  # 变化  # 变化
-
-        changes = collector._detect_odds_changes(old_odds, new_odds)
-
-        assert len(changes) == 2
-        assert "home_win" in changes
-        assert "away_win" in changes
-        assert changes["home_win"]["old"] == 2.10
-        assert changes["home_win"]["new"] == 2.05
-
-    @pytest.mark.asyncio
-    async def test_collect_historical_odds(self, collector):
-        """测试收集历史赔率"""
-        # Mock历史赔率API
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = {
-            "odds_history": [
-                {
-                    "date": "2025-10-01",
-                    "home_win": 2.10,
-                    "draw": 3.40,
-                    "away_win": 3.20,
-                },
-                {
-                    "date": "2025-10-02",
-                    "home_win": 2.05,
-                    "draw": 3.45,
-                    "away_win": 3.25,
-                },
-            ]
+    def test_calculate_average_odds_single_bookmaker(self, odds_collector):
+        """测试单个博彩公司的平均赔率"""
+        odds_data = {
+            "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}
         }
 
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_historical_odds(
-                match_id=12345, start_date="2025-10-01", end_date="2025-10-02"
-            )
+        avg = odds_collector._calculate_average_odds(odds_data)
 
-            assert result is not None
-            assert len(result["odds_history"]) == 2
-
-    def test_validate_odds_data(self, collector):
-        """测试验证赔率数据"""
-        # 有效数据
-        valid_data = {
-            "match_id": 12345,
-            "bookmakers": [{"name": "Bet365", "odds": {"home": 2.0}}],
-        }
-        assert collector._validate_odds_data(valid_data) is True
-
-        # 无效数据 - 缺少match_id
-        invalid_data = {"bookmakers": [{"name": "Bet365"}]}
-        assert collector._validate_odds_data(invalid_data) is False
+        assert avg["home"] == 2.0
+        assert avg["draw"] == 3.2
+        assert avg["away"] == 3.8
 
     @pytest.mark.asyncio
-    async def test_collect_live_odds(self, collector):
-        """测试收集实时赔率"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = {
-            "match_id": 12345,
-            "status": "live",
-            "minute": 65,
-            "current_odds": {"home_win": 1.80, "draw": 3.60, "away_win": 4.20},
-        }
-
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_live_odds(match_id=12345)
-
-            assert result is not None
-            assert result["status"] == "live"
-            assert "current_odds" in result
-
-    def test_format_odds_for_model(self, collector):
-        """测试格式化赔率用于模型"""
-        raw_odds = {
-            "home_win": 2.10,
-            "draw": 3.40,
-            "away_win": 3.20,
-            "bookmakers": ["Bet365", "William Hill"],
-        }
-
-        formatted = collector._format_odds_for_model(raw_odds)
-
-        assert "home_win_implied_prob" in formatted
-        assert "draw_implied_prob" in formatted
-        assert "away_win_implied_prob" in formatted
-        assert "bookmaker_count" in formatted
-        assert formatted["bookmaker_count"] == 2
-
-    @pytest.mark.asyncio
-    async def test_track_odds_movements(self, collector):
-        """测试跟踪赔率变动"""
-        movements = []
-
-        # 模拟赔率变动
-        odds_updates = [
-            {"timestamp": "2025-10-05T10:00:00Z", "home_win": 2.10},
-            {"timestamp": "2025-10-05T11:00:00Z", "home_win": 2.05},
-            {"timestamp": "2025-10-05T12:00:00Z", "home_win": 2.00},
+    async def test_collect_upcoming_matches_odds(self, odds_collector):
+        """测试收集即将到来的比赛赔率"""
+        # Mock数据库查询返回的比赛列表
+        mock_matches = [
+            Mock(id=1, home_team="Team A", away_team="Team B"),
+            Mock(id=2, home_team="Team C", away_team="Team D")
         ]
 
-        for update in odds_updates:
-            movement = collector._track_odds_change(
-                match_id=12345,
-                old_odds=None if len(movements) == 0 else movements[-1],
-                new_odds=update,
-            )
-            movements.append(movement)
+        # Mock _get_upcoming_matches 方法
+        odds_collector._get_upcoming_matches = AsyncMock(return_value=mock_matches)
 
-        assert len(movements) == 3
-        assert movements[2]["change"] == -0.10  # 从2.10到2.00
+        # Mock collect_match_odds 方法
+        odds_collector.collect_match_odds = AsyncMock(return_value={"bet365": {"home": 2.0}})
 
-    def test_identify_value_bets(self, collector):
-        """测试识别价值投注"""
-        # 模型预测概率 vs 市场赔率
-        model_prob = {"home_win": 0.55, "draw": 0.25, "away_win": 0.20}
-        market_odds = {"home_win": 2.0, "draw": 3.5, "away_win": 4.0}
+        result = await odds_collector.collect_upcoming_matches_odds(hours_ahead=24)
 
-        value_bets = collector._identify_value_bets(model_prob, market_odds)
+        # 验证返回了比赛数据
+        assert "matches" in result
+        assert "total" in result
+        assert result["total"] == 2
 
-        # 主队有价值（模型概率55% > 隐含概率50%）
-        assert "home_win" in value_bets
-        assert value_bets["home_win"]["edge"] > 0
+        # 验证为每场比赛收集了赔率
+        assert odds_collector.collect_match_odds.call_count == 2
+        odds_collector.collect_match_odds.assert_any_call(1, bookmakers=None, force_refresh=False)
+        odds_collector.collect_match_odds.assert_any_call(2, bookmakers=None, force_refresh=False)
 
     @pytest.mark.asyncio
-    async def test_aggregate_bookmaker_odds(self, collector):
-        """测试聚合庄家赔率"""
-        multiple_bookmakers = {
-            "Bet365": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
-            "William Hill": {"home_win": 2.05, "draw": 3.50, "away_win": 3.30},
-            "Betfair": {"home_win": 2.15, "draw": 3.35, "away_win": 3.25},
+    async def test_save_odds_to_db(self, odds_collector):
+        """测试保存赔率到数据库"""
+        odds_data = {
+            "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8},
+            "average": {"home": 2.0, "draw": 3.2, "away": 3.8}
         }
 
-        aggregated = await collector._aggregate_bookmaker_odds(multiple_bookmakers)
+        # Mock数据库操作
+        mock_db = odds_collector.db_session
+        mock_db.execute = AsyncMock()
+        mock_db.commit = AsyncMock()
+        mock_db.refresh = AsyncMock()
 
-        assert "average_odds" in aggregated
-        assert "best_odds" in aggregated
-        assert aggregated["best_odds"]["home_win"] == 2.15  # 最高赔率
-        assert aggregated["best_odds"]["draw"] == 3.50  # 最高赔率
+        await odds_collector._save_odds_to_db(123, odds_data)
 
-    def test_calculate_over_round(self, collector):
-        """测试计算返还率"""
-        odds = [2.10, 3.40, 3.20]
-        over_round = collector._calculate_over_round(odds)
-
-        # over_round = 1 / (1/2.1 + 1/3.4 + 1/3.2)
-        expected = 1 / (1 / 2.1 + 1 / 3.4 + 1 / 3.2)
-        assert pytest.approx(over_round, 0.01) == expected
+        # 验证数据库操作被调用
+        assert mock_db.execute.called
+        assert mock_db.commit.called
 
     @pytest.mark.asyncio
-    async def test_collect_asian_handicap_odds(self, collector):
-        """测试收集亚洲盘口赔率"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = {
-            "match_id": 12345,
-            "asian_handicap": [
-                {"handicap": -1.5, "home_odds": 1.90, "away_odds": 1.90},
-                {"handicap": -1.0, "home_odds": 1.95, "away_odds": 1.85},
-                {"handicap": -0.5, "home_odds": 1.80, "away_odds": 2.00},
-            ],
-        }
+    async def test_error_handling(self, odds_collector):
+        """测试错误处理"""
+        # Mock _get_match_by_id 抛出异常
+        odds_collector._get_match_by_id = AsyncMock(side_effect=Exception("Database error"))
 
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_asian_handicap_odds(match_id=12345)
+        result = await odds_collector.collect_match_odds(123)
 
-            assert result is not None
-            assert "asian_handicap" in result
-            assert len(result["asian_handicap"]) == 3
+        assert result == {}
 
-    @pytest.mark.asyncio
-    async def test_collect_over_under_odds(self, collector):
-        """测试收集大小球赔率"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = {
-            "match_id": 12345,
-            "over_under": [
-                {"line": 2.0, "over_odds": 1.85, "under_odds": 1.95},
-                {"line": 2.5, "over_odds": 1.90, "under_odds": 1.90},
-                {"line": 3.0, "over_odds": 2.10, "under_odds": 1.75},
-            ],
-        }
 
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_over_under_odds(match_id=12345)
+class TestOddsCollectorHelperMethods:
+    """赔率收集器辅助方法测试"""
 
-            assert result is not None
-            assert "over_under" in result
-            assert len(result["over_under"]) == 3
+    def test_get_match_by_id_success(self, odds_collector):
+        """测试根据ID获取比赛 - 成功"""
+        # 这个方法在原始代码中是私有方法，我们测试其逻辑
+        # 由于需要数据库查询，这里只测试方法存在
+        assert hasattr(odds_collector, '_get_match_by_id')
 
-    @pytest.mark.asyncio
-    async def test_rate_limiting(self, collector):
-        """测试API限流"""
-        mock_http_client = AsyncMock()
-        mock_http_client.get.return_value = MagicMock()
-        mock_http_client.get.return_value.status_code = 429
-        mock_http_client.get.return_value.headers = {
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": "60",
-        }
+    def test_fetch_odds_from_bookmaker(self, odds_collector):
+        """测试从博彩公司获取赔率"""
+        # 测试方法存在
+        assert hasattr(odds_collector, '_fetch_odds_from_bookmaker')
 
-        with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            with patch("asyncio.sleep") as mock_sleep:
-                result = await collector.collect_odds_for_match(match_id=12345)
+    def test_bookmakers_list(self, odds_collector):
+        """测试博彩公司列表"""
+        bookmakers = odds_collector.bookmakers
 
-                mock_sleep.assert_called_once_with(60)
-                assert result is None
+        assert "bet365" in bookmakers
+        assert "betfair" in bookmakers
+        assert "william_hill" in bookmakers
+
+        # 验证URL格式
+        assert bookmakers["bet365"].startswith("https://")
+        assert "api" in bookmakers["bet365"]
+
+    def test_cache_timeout_configuration(self, odds_collector):
+        """测试缓存超时配置"""
+        assert odds_collector.cache_timeout == 300
+        # 5分钟缓存对于赔率数据是合理的

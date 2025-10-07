@@ -1,0 +1,664 @@
+name: MLOps 机器学习流水线
+
+on:
+  # 每日早上 8:00 UTC (北京时间 16:00)
+  schedule:
+    - cron: '0 8 * * *'
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'MLOps task to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - feedback-update
+        - performance-report
+        - retrain-check
+        - model-monitor
+        - cleanup
+      days_back:
+        description: 'Days of data to analyze'
+        required: false
+        default: '30'
+        type: string
+      force_retrain:
+        description: 'Force retrain evaluation'
+        required: false
+        default: false
+        type: boolean
+  # 推送到 main 分支时触发
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/models/**'
+      - 'scripts/**'
+      - 'requirements*.txt'
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  REDIS_URL: ${{ secrets.REDIS_URL }}
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+jobs:
+  # 阶段1: 更新预测结果和反馈
+  feedback-update:
+    name: Update Prediction Results
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'feedback-update' || github.event_name == 'schedule'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: football_prediction
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements/base.txt" ]; then
+            pip install -r requirements/base.txt
+          fi
+          if [ -f "requirements/ml.txt" ]; then
+            pip install -r requirements/ml.txt
+          fi
+
+      - name: Wait for services
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 1; done
+          until redis-cli -h localhost -p 6379 ping; do sleep 1; done
+
+      - name: Update prediction results
+        run: |
+          python scripts/ml/update_predictions.py \
+            --days ${{ github.event.inputs.days_back || 30 }} \
+            --verbose
+
+      - name: Update accuracy trends
+        run: |
+          python scripts/ml/update_predictions.py \
+            --report \
+            --trends \
+            --days ${{ github.event.inputs.days_back || 30 }} \
+            --output reports/generated/accuracy_trends.md
+
+      - name: Upload feedback results
+        uses: actions/upload-artifact@v4
+        with:
+          name: feedback-results
+          path: |
+            reports/generated/accuracy_trends.md
+            reports/generated/prediction_feedback_*.md
+          retention-days: 30
+
+  # 阶段2: 生成性能报告
+  performance-report:
+    name: Generate Performance Reports
+    runs-on: ubuntu-latest
+    needs: feedback-update
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'performance-report' || github.event_name == 'schedule'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: football_prediction
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install matplotlib seaborn plotly
+
+      - name: Wait for database
+        run: until pg_isready -h localhost -p 5432; do sleep 1; done
+
+      - name: Generate model performance report
+        run: |
+          python reports/model_performance_report.py \
+            --days ${{ github.event.inputs.days_back || 90 }} \
+            --output reports/generated \
+            --format html \
+            --charts \
+            --verbose
+
+      - name: Generate feature importance report
+        run: |
+          python scripts/feature_importance_analysis.py \
+            --days ${{ github.event.inputs.days_back || 30 }} \
+            --output reports/generated/feature_importance.html
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports
+          path: |
+            reports/generated/model_performance_*.html
+            reports/generated/feature_importance.html
+          retention-days: 30
+
+      - name: Update GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin gh-pages
+          git checkout gh-pages
+          cp -r reports/generated/*.html ./reports/
+          git add reports/*.html
+          git commit -m "chore: update performance reports [skip ci]" || exit 0
+          git push origin gh-pages
+
+  # 阶段3: 检查是否需要重训练
+  retrain-check:
+    name: Check Model Retrain
+    runs-on: ubuntu-latest
+    needs: [feedback-update, performance-report]
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'retrain-check' || github.event_name == 'schedule'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: football_prediction
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    outputs:
+      should-retrain: ${{ steps.check.outputs.should-retrain }}
+      retrain-reason: ${{ steps.check.outputs.reason }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install mlflow xgboost scikit-learn
+
+      - name: Wait for services
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 1; done
+          until redis-cli -h localhost -p 6379 ping; do sleep 1; done
+
+      - name: Check retrain conditions
+        id: check
+        run: |
+          # 运行重训练检查脚本
+          python scripts/ml/retrain_pipeline.py \
+            --threshold 0.45 \
+            --min-predictions 50 \
+            --window-days 30 \
+            --dry-run \
+            --output models/retrain_checks/check_$(date +%Y%m%d).json \
+            --verbose
+
+          # 解析结果
+          if python -c "import json; data=json.load(open('models/retrain_checks/check_$(date +%Y%m%d).json')); exit(0 if data.get('should_retrain', False) else 1)"; then
+            echo "should-retrain=true" >> $GITHUB_OUTPUT
+            echo "reason=Performance threshold breached" >> $GITHUB_OUTPUT
+          else
+            echo "should-retrain=false" >> $GITHUB_OUTPUT
+            echo "reason=Model performing well" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Dry run retrain (if needed)
+        if: steps.check.outputs.should-retrain == 'true' || github.event.inputs.force_retrain == 'true'
+        run: |
+          python scripts/ml/retrain_pipeline.py \
+            --threshold 0.45 \
+            --dry-run \
+            --verbose
+
+      - name: Create retrain issue (if needed)
+        if: steps.check.outputs.should-retrain == 'true' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔄 Model Retrain Recommended',
+              body: `
+              Model performance indicates retraining is needed.
+
+              **Reason:** ${{ needs.retrain-check.outputs.retrain-reason }}
+              **Date:** $(date +%Y-%m-%d)
+
+              ### Retrain Commands:
+              \`\`\`bash
+              # Run full retrain
+              python scripts/ml/retrain_pipeline.py --threshold 0.45 --verbose
+
+              # Validate new model
+              python scripts/validate_model.py --model-path models/new_model.pkl
+
+              # Deploy new model
+              make deploy-model
+              \`\`\`
+
+              Check retrain details in the artifacts.
+              `,
+              labels: ['mlops', 'retrain', 'enhancement']
+            })
+
+  # 阶段4: 模型监控
+  model-monitor:
+    name: Model Health Monitoring
+    runs-on: ubuntu-latest
+    needs: [feedback-update, performance-report]
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'model-monitor' || github.event_name == 'schedule'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: football_prediction
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install prometheus-client great-expectations
+
+      - name: Wait for services
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 1; done
+          until redis-cli -h localhost -p 6379 ping; do sleep 1; done
+
+      - name: Run model monitoring
+        run: |
+          python -m monitoring.enhanced_model_monitor \
+            --days-back ${{ github.event.inputs.days_back || 7 }} \
+            --output reports/monitoring \
+            --alert \
+            --verbose
+
+      - name: Run data quality checks
+        run: |
+          python scripts/data_quality_monitor.py \
+            --expectations config/great_expectations/football_predictions.json \
+            --output reports/data_quality \
+            --days ${{ github.event.inputs.days_back || 7 }}
+
+      - name: Upload monitoring reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-reports
+          path: |
+            reports/monitoring/
+            reports/data_quality/
+          retention-days: 30
+
+      - name: Create alert if issues found
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Model Monitoring Alert',
+              body: `
+              Model monitoring detected issues that need attention.
+
+              **Time:** $(date +%Y-%m-%d %H:%M:%S UTC)
+              **Workflow:** ${{ github.run_id }}
+
+              Please check the monitoring artifacts for details.
+              `,
+              labels: ['urgent', 'monitoring', 'alert']
+            })
+
+  # 阶段5: 清理旧数据
+  cleanup:
+    name: Cleanup Old Data
+    runs-on: ubuntu-latest
+    needs: [feedback-update, performance-report, retrain-check, model-monitor]
+    if: github.event.inputs.task == 'all' || github.event.inputs.task == 'cleanup' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Cleanup old predictions
+        run: |
+          python scripts/cleanup_old_data.py \
+            --days 365 \
+            --table predictions \
+            --dry-run false
+
+      - name: Cleanup old model artifacts
+        run: |
+          python scripts/cleanup_model_artifacts.py \
+            --days 90 \
+            --keep-count 10
+
+      - name: Cleanup old reports
+        run: |
+          find reports/generated -name "*.md" -mtime +30 -delete
+          find reports/generated -name "*.html" -mtime +30 -delete
+
+  # 阶段6: 自动重训练（需要人工审核后部署）
+  auto-retrain:
+    name: Auto Retrain (Requires Review)
+    runs-on: ubuntu-latest
+    needs: [feedback-update, performance-report, retrain-check, model-monitor]
+    if: always() && needs.retrain-check.result == 'success' && (needs.retrain-check.outputs.should-retrain == 'true' || github.event.inputs.force_retrain == 'true')
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: football_prediction
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements/base.txt" ]; then
+            pip install -r requirements/base.txt
+          fi
+          if [ -f "requirements/ml.txt" ]; then
+            pip install -r requirements/ml.txt
+          fi
+          pip install mlflow xgboost scikit-learn joblib
+
+      - name: Wait for services
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 1; done
+          until redis-cli -h localhost -p 6379 ping; do sleep 1; done
+
+      - name: Execute model retraining
+        run: |
+          python scripts/ml/retrain_pipeline.py \
+            --threshold 0.45 \
+            --min-predictions 50 \
+            --window-days 30 \
+            --output models/retrained_$(date +%Y%m%d_%H%M%S).pkl \
+            --verbose
+
+      - name: Validate new model
+        run: |
+          python scripts/validate_model.py \
+            --model-path models/retrained_$(date +%Y%m%d_%H%M%S).pkl \
+            --test-ratio 0.2 \
+            --metrics-file validation_metrics.json
+
+      - name: Compare with current model
+        run: |
+          python scripts/compare_models.py \
+            --new-model models/retrained_$(date +%Y%m%d_%H%M%S).pkl \
+            --current-model models/current_model.pkl \
+            --output comparison_report.json
+
+      - name: Upload retrained model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrained-model-${{ github.run_number }}
+          path: |
+            models/retrained_*.pkl
+            validation_metrics.json
+            comparison_report.json
+          retention-days: 90
+
+      - name: Create PR for model update (if better)
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 检查新模型是否更好
+          if python -c "import json; data=json.load(open('comparison_report.json')); exit(0 if data.get('new_model_better', False) else 1)"; then
+            echo "✅ 新模型性能更优，创建PR等待人工审核..."
+            
+            # 创建新分支
+            BRANCH_NAME="auto-retrain/model-update-$(date +%Y%m%d-%H%M%S)"
+            git config --global user.email "mlops-bot@github.com"
+            git config --global user.name "MLOps Bot"
+            git checkout -b "$BRANCH_NAME"
+            
+            # 备份旧模型并更新
+            mkdir -p models/backup_models
+            [ -f models/current_model.pkl ] && cp models/current_model.pkl models/backup_models/current_model_$(date +%Y%m%d).pkl
+            cp models/retrained_$(date +%Y%m%d_%H%M%S).pkl models/current_model.pkl
+            
+            # 记录版本
+            echo "$(date +%Y-%m-%d_%H-%M-%S): Model retrained (awaiting approval)" >> models/model_versions.log
+            
+            # 提交更改
+            git add models/current_model.pkl models/model_versions.log models/backup_models/
+            git commit -m "feat: update model after retraining
+
+Automated model retraining completed.
+
+Performance improvements:
+- See comparison_report.json in artifacts
+- Validation metrics available in run #${{ github.run_number }}
+
+Review required before deployment."
+            
+            # 推送分支
+            git push origin "$BRANCH_NAME"
+            
+            # 创建PR
+            gh pr create \
+              --title "🤖 Model Retraining - $(date +%Y-%m-%d)" \
+              --body "## 🔄 Automated Model Retraining
+
+This PR contains an updated model after automatic retraining.
+
+### 📊 Performance Metrics
+- **Workflow Run**: #${{ github.run_number }}
+- **Artifacts**: [View artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+### ✅ Next Steps
+1. Review the comparison report in artifacts
+2. Validate model performance
+3. Approve and merge to deploy
+
+### 📝 Notes
+- Old model backed up to \`models/backup_models/\`
+- Validation metrics available in artifacts
+- This PR requires manual review and approval
+
+**DO NOT** merge without reviewing the performance metrics!" \
+              --base main \
+              --head "$BRANCH_NAME" \
+              --label "mlops,model-update,needs-review"
+            
+            echo "✅ PR created successfully for manual review"
+          else
+            echo "⚠️ 新模型性能未超过当前模型，不创建PR"
+            echo "📊 请查看artifacts中的对比报告"
+          fi
+
+      - name: Notify team
+        run: |
+          echo "🤖 Model retraining completed"
+          echo "Check validation metrics in the artifacts"
+
+  # 阶段7: 汇总报告
+  summary:
+    name: MLOps Summary
+    runs-on: ubuntu-latest
+    needs: [feedback-update, performance-report, retrain-check, model-monitor, cleanup, auto-retrain]
+    if: always() && github.event_name == 'schedule'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+
+      - name: Generate summary report
+        run: |
+          cat > mlops_summary.md << EOF
+          # MLOps Pipeline Summary - $(date +%Y-%m-%d)
+
+          ## Tasks Status
+          - ✅ Feedback Update: ${{ needs.feedback-update.result }}
+          - ✅ Performance Report: ${{ needs.performance-report.result }}
+          - ✅ Retrain Check: ${{ needs.retrain-check.result }}
+          - ✅ Model Monitor: ${{ needs.model-monitor.result }}
+          - ✅ Cleanup: ${{ needs.cleanup.result }}
+
+          ## Key Metrics
+          EOF
+
+          if [ -d all-artifacts/feedback-results ]; then
+            echo "### Feedback Metrics" >> mlops_summary.md
+            ls all-artifacts/feedback-results/*.md | head -5 | while read file; do
+              echo "- $(basename $file)" >> mlops_summary.md
+            done
+          fi
+
+          if [ "${{ needs.retrain-check.outputs.should-retrain }}" = "true" ]; then
+            echo "" >> mlops_summary.md
+            echo "⚠️ **Model Retrain Recommended**: ${{ needs.retrain-check.outputs.retrain-reason }}" >> mlops_summary.md
+          fi
+
+      - name: Comment on commit
+        if: github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('mlops_summary.md', 'utf8');
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: summary
+            });
+
+      - name: Send Slack notification (optional)
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"MLOps pipeline completed for '$GITHUB_REPOSITORY'"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

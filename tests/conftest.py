@@ -1,20 +1,37 @@
-"""pytest配置及全局测试Mock定义"""
+"""
+pytest配置文件
+定义所有测试共享的fixtures和配置
+"""
 
-import asyncio
 import os
 import sys
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
-
-# import httpx
 import pytest
-from fastapi.testclient import TestClient
+import asyncio
+from unittest.mock import MagicMock, AsyncMock
+from pathlib import Path
+from datetime import datetime
 
+# 添加src到Python路径
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / "src"))
+
+# 设置测试环境变量
+os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("LOG_LEVEL", "DEBUG")
+os.environ.setdefault("TESTING", "true")
+
+# 导入mock模块以确保它们可以被使用
 try:
-    from pytest import MonkeyPatch
-except ImportError:  # pragma: no cover
-    from _pytest.monkeypatch import MonkeyPatch
+    from src.stubs.mocks import confluent_kafka  # noqa: F401
+    from src.stubs.mocks import feast  # noqa: F401
+except ImportError:
+    # 如果mock模块不存在，创建一个简单的跳过装饰器
+    def kafka_mock_required(func):
+        return pytest.mark.skip(reason="Kafka mock not available")(func)
+
+    def feast_mock_required(func):
+        return pytest.mark.skip(reason="Feast mock not available")(func)
+from fastapi.testclient import TestClient
 
 from tests.helpers import (
     MockRedis,
@@ -262,11 +279,9 @@ _setup_redis_mocks()
 _setup_feast_mocks()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_external_services() -> None:
+@pytest.fixture(autouse=True)
+def mock_external_services(monkeypatch) -> None:
     """在测试阶段统一Mock外部依赖"""
-
-    monkeypatch = MonkeyPatch()
 
     # Mock数据质量监控器
     mock_monitor = MagicMock()
@@ -295,9 +310,6 @@ def mock_external_services() -> None:
     apply_mlflow_mocks(monkeypatch)
     apply_kafka_mocks(monkeypatch)
     apply_http_mocks(monkeypatch, responses={})
-
-    yield
-    monkeypatch.undo()
 
 
 @pytest.fixture(scope="session")
