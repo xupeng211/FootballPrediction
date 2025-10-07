@@ -22,6 +22,9 @@ freezegun==1.5.1
 responses==0.25.3
 httpx==0.28.1
 
+# Container testing
+testcontainers==4.13.1
+
 # Performance testing
 locust==2.29.0
 pytest-benchmark==5.1.0
@@ -31,9 +34,6 @@ mimesis==13.1.0
 hypothesis==6.114.1
 
 # Code quality
-black==24.10.0
-isort==5.13.2
-flake8==7.1.1
 mypy==1.14.1
 ruff==0.8.4
 pre-commit==4.0.1
@@ -65,3 +65,4 @@ python-dotenv==1.1.1
 
 # Other development tools
 watchdog==6.0.0
+psutil==6.0.0

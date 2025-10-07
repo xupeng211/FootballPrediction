@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 测试数据库
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: football-prediction-postgres-test
+    environment:
+      POSTGRES_DB: football_prediction_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # 使用不同端口避免冲突
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/test/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d football_prediction_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Redis 测试缓存
+  redis-test:
+    image: redis:7-alpine
+    container_name: football-prediction-redis-test
+    ports:
+      - "6380:6379"  # 使用不同端口避免冲突
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # MinIO (S3兼容的存储) 用于数据湖测试
+  minio-test:
+    image: minio/minio:latest
+    container_name: football-prediction-minio-test
+    environment:
+      MINIO_ROOT_USER: test_access_key
+      MINIO_ROOT_PASSWORD: test_secret_key
+    ports:
+      - "9001:9000"
+      - "9002:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_test_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # MLflow 测试服务
+  mlflow-test:
+    image: python:3.11-slim
+    container_name: football-prediction-mlflow-test
+    environment:
+      MLFLOW_BACKEND_STORE_URI: sqlite:///mlflow_test.db
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: /mlflow/artifacts
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow_test_data:/mlflow
+    command: >
+      bash -c "
+        pip install mlflow psycopg2-binary redis &&
+        mlflow server
+        --backend-store-uri sqlite:///mlflow_test.db
+        --default-artifact-root /mlflow/artifacts
+        --host 0.0.0.0
+        --port 5000
+      "
+    depends_on:
+      - postgres-test
+    networks:
+      - test-network
+
+  # Kafka 测试集群 (可选)
+  zookeeper-test:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: football-prediction-zookeeper-test
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - test-network
+
+  kafka-test:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: football-prediction-kafka-test
+    depends_on:
+      - zookeeper-test
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-test:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+  minio_test_data:
+  mlflow_test_data:
+
+networks:
+  test-network:
+    driver: bridge

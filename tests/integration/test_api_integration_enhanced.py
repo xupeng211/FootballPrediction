@@ -228,7 +228,7 @@ class TestAPIIntegrationEnhanced:
             mock_delete.return_value = 1
 
             # 模拟数据更新
-            update_response = api_client.put(
+            api_client.put(
                 f"/api/v1/matches/{match_id}", json={"home_score": 1, "away_score": 0}
             )
 

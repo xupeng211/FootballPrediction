@@ -422,7 +422,7 @@ class PredictionService:
         cache_key = f"model:{model_name}"
 
         # 尝试从缓存获取 / Try to get from cache
-        cached_result = await self.model_cache.get(cache_key)
+        cached_result = await self.model_cache.get_async(cache_key)
         if cached_result:
             model, version = cached_result
             logger.debug(
@@ -437,7 +437,7 @@ class PredictionService:
             model_uri = f"models:/{model_name}/{version}"
 
             # 缓存模型（带TTL） / Cache model with TTL
-            await self.model_cache.set(
+            await self.model_cache.set_async(
                 cache_key, (model, version), ttl=self.model_cache_ttl
             )
 
@@ -511,7 +511,7 @@ class PredictionService:
         prediction_cache_key = f"prediction:{match_id}"
 
         # 尝试从缓存获取预测结果 / Try to get prediction result from cache
-        cached_result = await self.prediction_cache.get(prediction_cache_key)
+        cached_result = await self.prediction_cache.get_async(prediction_cache_key)
         if cached_result:
             logger.info(
                 f"使用缓存的预测结果：比赛 {match_id} / Using cached prediction result for match {match_id}"
@@ -592,7 +592,7 @@ class PredictionService:
             ).observe(prediction_duration)
 
             # 缓存预测结果（带TTL） / Cache prediction result with TTL
-            await self.prediction_cache.set(
+            await self.prediction_cache.set_async(
                 prediction_cache_key, result, ttl=self.prediction_cache_ttl
             )
 
@@ -1008,7 +1008,9 @@ class PredictionService:
             try:
                 # 为每个比赛创建缓存键并检查缓存
                 prediction_cache_key = f"prediction:{match_id}"
-                cached_result = await self.prediction_cache.get(prediction_cache_key)
+                cached_result = await self.prediction_cache.get_async(
+                    prediction_cache_key
+                )
 
                 if cached_result:
                     # 使用缓存的结果
