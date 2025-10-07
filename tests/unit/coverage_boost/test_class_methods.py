@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -25,8 +25,13 @@ class TestClassMethods:
 
             # 测试各种属性访问
             attrs = [
-                'DATABASE_URL', 'REDIS_URL', 'DEBUG', 'LOG_LEVEL',
-                'APP_NAME', 'VERSION', 'ENVIRONMENT'
+                "DATABASE_URL",
+                "REDIS_URL",
+                "DEBUG",
+                "LOG_LEVEL",
+                "APP_NAME",
+                "VERSION",
+                "ENVIRONMENT",
             ]
 
             for attr in attrs:
@@ -47,12 +52,12 @@ class TestClassMethods:
 
             # 测试各种静态方法
             methods = [
-                'escape_identifier',
-                'format_value',
-                'build_where_clause',
-                'create_insert_query',
-                'create_update_query',
-                'create_delete_query'
+                "escape_identifier",
+                "format_value",
+                "build_where_clause",
+                "create_insert_query",
+                "create_update_query",
+                "create_delete_query",
             ]
 
             for method in methods:
@@ -60,10 +65,10 @@ class TestClassMethods:
                     func = getattr(SQLCompat, method, None)
                     if func and callable(func):
                         # 尝试调用（使用简单参数）
-                        if method == 'escape_identifier':
-                            func('test')
-                        elif method == 'format_value':
-                            func('test')
+                        if method == "escape_identifier":
+                            func("test")
+                        elif method == "format_value":
+                            func("test")
                         else:
                             # 其他方法可能需要复杂参数，跳过
                             pass
@@ -85,10 +90,10 @@ class TestClassMethods:
             assert jsonb_type is not None
 
             # 测试方法
-            if hasattr(jsonb_type, 'process_bind_param'):
+            if hasattr(jsonb_type, "process_bind_param"):
                 jsonb_type.process_bind_param({}, None)
-            if hasattr(jsonb_type, 'process_result_value'):
-                jsonb_type.process_result_value('{}', None)
+            if hasattr(jsonb_type, "process_result_value"):
+                jsonb_type.process_result_value("{}", None)
         except ImportError:
             pytest.skip("Database types not available")
         except Exception:
@@ -100,7 +105,7 @@ class TestClassMethods:
             from src.utils.response import (
                 create_success_response,
                 create_error_response,
-                create_pagination_response
+                create_pagination_response,
             )
 
             # 测试成功响应
@@ -126,7 +131,7 @@ class TestClassMethods:
                 get_current_time,
                 format_datetime,
                 parse_datetime,
-                get_timestamp
+                get_timestamp,
             )
 
             # 测试各种时间函数
@@ -151,7 +156,7 @@ class TestClassMethods:
                 to_camel_case,
                 slugify,
                 truncate_string,
-                clean_string
+                clean_string,
             )
 
             # 测试字符串转换
@@ -182,7 +187,7 @@ class TestClassMethods:
                 flatten_dict,
                 unflatten_dict,
                 get_nested_value,
-                set_nested_value
+                set_nested_value,
             )
 
             # 测试字典操作
@@ -209,7 +214,7 @@ class TestClassMethods:
                 validate_email,
                 validate_phone,
                 validate_url,
-                validate_required
+                validate_required,
             )
 
             # 测试各种验证
@@ -232,11 +237,7 @@ class TestClassMethods:
     def test_retry_methods(self):
         """测试重试方法"""
         try:
-            from src.utils.retry import (
-                retry,
-                retry_with_backoff,
-                exponential_backoff
-            )
+            from src.utils.retry import retry, retry_with_backoff, exponential_backoff
 
             # 测试重试装饰器
             @retry(max_attempts=2, delay=0.001)
@@ -263,7 +264,7 @@ class TestClassMethods:
                 verify_password,
                 encrypt_data,
                 decrypt_data,
-                generate_token
+                generate_token,
             )
 
             # 测试密码哈希

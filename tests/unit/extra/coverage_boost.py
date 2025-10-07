@@ -8,7 +8,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -19,6 +19,7 @@ class TestExtraCoverageBoost:
         """测试主模块"""
         try:
             import src.main
+
             # 测试主模块导入成功
             assert True
         except ImportError:
@@ -26,10 +27,7 @@ class TestExtraCoverageBoost:
 
     def test_all_api_imports(self):
         """测试所有API模块导入"""
-        api_modules = [
-            'src.api.buggy_api',
-            'src.api.features_improved'
-        ]
+        api_modules = ["src.api.buggy_api", "src.api.features_improved"]
 
         for module in api_modules:
             try:
@@ -44,7 +42,7 @@ class TestExtraCoverageBoost:
             from src.database.sql_compatibility import SQLDialect, create_custom_dialect
 
             # 测试SQL方言
-            if 'SQLDialect' in globals():
+            if "SQLDialect" in globals():
                 dialect = SQLDialect()
                 assert dialect is not None
 
@@ -61,18 +59,18 @@ class TestExtraCoverageBoost:
         try:
             # 测试所有模型文件
             model_files = [
-                'raw_data',
-                'team',
-                'match',
-                'odds',
-                'predictions',
-                'features',
-                'league'
+                "raw_data",
+                "team",
+                "match",
+                "odds",
+                "predictions",
+                "features",
+                "league",
             ]
 
             for model in model_files:
                 try:
-                    module = __import__(f'src.database.models.{model}', fromlist=['*'])
+                    module = __import__(f"src.database.models.{model}", fromlist=["*"])
                     assert module is not None
                 except ImportError:
                     continue
@@ -82,19 +80,19 @@ class TestExtraCoverageBoost:
     def test_services_comprehensive(self):
         """测试服务综合"""
         service_classes = [
-            'UserProfileService',
-            'ContentAnalysisService',
-            'AuditService',
-            'ManagerService'
+            "UserProfileService",
+            "ContentAnalysisService",
+            "AuditService",
+            "ManagerService",
         ]
 
         for service_class in service_classes:
             try:
                 # 尝试在不同模块中查找
                 modules_to_check = [
-                    f'src.services.{service_class.lower()}',
-                    'src.services.manager',
-                    'src.services.audit_service'
+                    f"src.services.{service_class.lower()}",
+                    "src.services.manager",
+                    "src.services.audit_service",
                 ]
 
                 for module_path in modules_to_check:
@@ -111,11 +109,11 @@ class TestExtraCoverageBoost:
     def test_utils_comprehensive(self):
         """测试工具综合"""
         utils_functions = [
-            ('src.utils.response', 'create_success_response'),
-            ('src.utils.response', 'create_error_response'),
-            ('src.utils.warning_filters', 'filter_warnings'),
-            ('src.utils.file_utils', 'read_json'),
-            ('src.utils.file_utils', 'write_json')
+            ("src.utils.response", "create_success_response"),
+            ("src.utils.response", "create_error_response"),
+            ("src.utils.warning_filters", "filter_warnings"),
+            ("src.utils.file_utils", "read_json"),
+            ("src.utils.file_utils", "write_json"),
         ]
 
         for module_path, func_name in utils_functions:
@@ -129,10 +127,10 @@ class TestExtraCoverageBoost:
     def test_data_collectors(self):
         """测试数据收集器"""
         collectors = [
-            'src.collectors.base_collector',
-            'src.collectors.fixtures_collector',
-            'src.collectors.odds_collector',
-            'src.collectors.scores_collector'
+            "src.collectors.base_collector",
+            "src.collectors.fixtures_collector",
+            "src.collectors.odds_collector",
+            "src.collectors.scores_collector",
         ]
 
         for collector in collectors:
@@ -146,33 +144,27 @@ class TestExtraCoverageBoost:
         """测试迁移文件"""
         try:
             migrations_dir = os.path.join(
-                os.path.dirname(__file__),
-                '../../../src/database/migrations/versions'
+                os.path.dirname(__file__), "../../../src/database/migrations/versions"
             )
 
             if os.path.exists(migrations_dir):
                 files = os.listdir(migrations_dir)
-                py_files = [f for f in files if f.endswith('.py')]
+                py_files = [f for f in files if f.endswith(".py")]
                 assert len(py_files) >= 0  # 至少存在
         except Exception:
             pass  # 目录可能不存在
 
     def test_stubs_check(self):
         """测试类型存根文件"""
-        stub_files = [
-            'src/stubs/confluent_kafka.pyi',
-            'src/stubs/feast.pyi'
-        ]
+        stub_files = ["src/stubs/confluent_kafka.pyi", "src/stubs/feast.pyi"]
 
         for stub_file in stub_files:
             try:
                 full_path = os.path.join(
-                    os.path.dirname(__file__),
-                    '../../../',
-                    stub_file
+                    os.path.dirname(__file__), "../../../", stub_file
                 )
                 if os.path.exists(full_path):
-                    with open(full_path, 'r') as f:
+                    with open(full_path, "r") as f:
                         content = f.read()
                         assert len(content) > 0
             except Exception:
@@ -181,10 +173,10 @@ class TestExtraCoverageBoost:
     def test_streaming_components(self):
         """测试流处理组件"""
         streaming_components = [
-            'src.streaming.kafka_consumer',
-            'src.streaming.kafka_producer',
-            'src.streaming.stream_config',
-            'src.streaming.stream_processor'
+            "src.streaming.kafka_consumer",
+            "src.streaming.kafka_producer",
+            "src.streaming.stream_config",
+            "src.streaming.stream_processor",
         ]
 
         for component in streaming_components:
@@ -197,9 +189,9 @@ class TestExtraCoverageBoost:
     def test_scheduler_components(self):
         """测试调度器组件"""
         scheduler_components = [
-            'src.scheduler.task_scheduler',
-            'src.scheduler.job_manager',
-            'src.scheduler.tasks'
+            "src.scheduler.task_scheduler",
+            "src.scheduler.job_manager",
+            "src.scheduler.tasks",
         ]
 
         for component in scheduler_components:
@@ -212,9 +204,9 @@ class TestExtraCoverageBoost:
     def test_monitoring_components(self):
         """测试监控组件"""
         monitoring_components = [
-            'src.monitoring.metrics_collector',
-            'src.monitoring.system_monitor',
-            'src.monitoring.alert_manager'
+            "src.monitoring.metrics_collector",
+            "src.monitoring.system_monitor",
+            "src.monitoring.alert_manager",
         ]
 
         for component in monitoring_components:
@@ -227,8 +219,8 @@ class TestExtraCoverageBoost:
     def test_lineage_components(self):
         """测试数据血缘组件"""
         lineage_components = [
-            'src.lineage.lineage_reporter',
-            'src.lineage.metadata_manager'
+            "src.lineage.lineage_reporter",
+            "src.lineage.metadata_manager",
         ]
 
         for component in lineage_components:
@@ -241,9 +233,9 @@ class TestExtraCoverageBoost:
     def test_task_components(self):
         """测试任务组件"""
         task_components = [
-            'src.tasks.data_collection_tasks',
-            'src.tasks.maintenance_tasks',
-            'src.tasks.backup_tasks'
+            "src.tasks.data_collection_tasks",
+            "src.tasks.maintenance_tasks",
+            "src.tasks.backup_tasks",
         ]
 
         for component in task_components:
@@ -290,10 +282,7 @@ class TestExtraCoverageBoost:
     def test_exception_handling(self):
         """测试异常处理"""
         try:
-            from src.core.exceptions import (
-                FootballPredictionError,
-                ValidationError
-            )
+            from src.core.exceptions import FootballPredictionError, ValidationError
 
             # 测试异常创建
             error1 = FootballPredictionError("Test error")
@@ -319,6 +308,7 @@ class TestExtraCoverageBoost:
 
             # 测试过期
             import time
+
             cache.set("key2", "value2")
             time.sleep(0.1)  # 等待过期（如果TTL很短）
             result = cache.get("key2")
@@ -335,11 +325,7 @@ class TestExtraCoverageBoost:
             calculator = FeatureCalculator()
 
             # 测试方法存在
-            methods = [
-                'calculate_features',
-                'extract_features',
-                'validate_features'
-            ]
+            methods = ["calculate_features", "extract_features", "validate_features"]
 
             for method in methods:
                 if hasattr(calculator, method):

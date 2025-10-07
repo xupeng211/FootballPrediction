@@ -19,7 +19,7 @@ def run_command(cmd, capture_output=True):
             shell=True,
             capture_output=capture_output,
             text=True,
-            timeout=300  # 5分钟超时
+            timeout=300,  # 5分钟超时
         )
         return result
     except subprocess.TimeoutExpired:
@@ -32,12 +32,12 @@ def run_command(cmd, capture_output=True):
 
 def parse_coverage_output(output):
     """解析覆盖率输出"""
-    lines = output.split('\n')
+    lines = output.split("\n")
     total_line = None
     modules = {}
 
     for line in lines:
-        if 'TOTAL' in line:
+        if "TOTAL" in line:
             total_line = line
             break
 
@@ -46,11 +46,11 @@ def parse_coverage_output(output):
         parts = total_line.split()
         if len(parts) >= 5:
             coverage = {
-                'statements': int(parts[1]),
-                'missing': int(parts[2]),
-                'branches': int(parts[3]),
-                'partial': int(parts[4]),
-                'percent': float(parts[5].strip('%'))
+                "statements": int(parts[1]),
+                "missing": int(parts[2]),
+                "branches": int(parts[3]),
+                "partial": int(parts[4]),
+                "percent": float(parts[5].strip("%")),
             }
             return coverage
 
@@ -85,7 +85,9 @@ def generate_coverage_report():
             print(f"\n📈 整体覆盖率: {coverage['percent']}%")
             print(f"   - 总语句数: {coverage['statements']}")
             print(f"   - 未覆盖: {coverage['missing']}")
-            print(f"   - 覆盖率变化: +{(coverage['percent'] - 19):.1f}%")  # 假设基准是19%
+            print(
+                f"   - 覆盖率变化: +{(coverage['percent'] - 19):.1f}%"
+            )  # 假设基准是19%
     else:
         print("❌ 测试失败")
         if result:
@@ -110,7 +112,7 @@ def generate_coverage_report():
         if Path("coverage.json").exists():
             with open("coverage.json") as f:
                 data = json.load(f)
-                print(f"   JSON报告已生成: coverage.json")
+                print("   JSON报告已生成: coverage.json")
     else:
         print("❌ HTML报告生成失败")
 
@@ -121,13 +123,11 @@ def generate_coverage_report():
 
     # 4. 检查零覆盖率模块
     print("\n4️⃣ 零覆盖率模块检查...")
-    zero_coverage_cmd = (
-        "coverage report --show-missing | grep ' 0%' | head -10"
-    )
+    zero_coverage_cmd = "coverage report --show-missing | grep ' 0%' | head -10"
     result = run_command(zero_coverage_cmd)
     if result and result.stdout.strip():
         print("   零覆盖率模块:")
-        for line in result.stdout.strip().split('\n')[:5]:
+        for line in result.stdout.strip().split("\n")[:5]:
             print(f"   - {line}")
     else:
         print("   ✅ 没有零覆盖率模块（或未安装coverage）")

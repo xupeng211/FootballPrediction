@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -107,7 +107,10 @@ class TestDirectExecution:
     def test_response_utils(self):
         """测试响应工具"""
         try:
-            from src.utils.response import create_success_response, create_error_response
+            from src.utils.response import (
+                create_success_response,
+                create_error_response,
+            )
 
             # 创建成功响应
             success = create_success_response({"data": "test"})

@@ -8,8 +8,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, List, Tuple
-import json
+from typing import Dict, List
 
 
 class CoverageAnalyzer:
@@ -40,8 +39,8 @@ class CoverageAnalyzer:
 
         # 查找line-rate属性
         for elem in self.data.iter():
-            if 'line-rate' in elem.attrib:
-                return float(elem.attrib['line-rate']) * 100
+            if "line-rate" in elem.attrib:
+                return float(elem.attrib["line-rate"]) * 100
 
         return 0.0
 
@@ -52,12 +51,12 @@ class CoverageAnalyzer:
         if not self.data:
             return modules
 
-        for package in self.data.findall('.//package'):
-            package_name = package.get('name', '')
-            for class_elem in package.findall('.//class'):
-                class_name = class_elem.get('name', '')
-                full_name = f"{package_name}.{class_name}".replace('.', '/')
-                line_rate = float(class_elem.get('line-rate', 0)) * 100
+        for package in self.data.findall(".//package"):
+            package_name = package.get("name", "")
+            for class_elem in package.findall(".//class"):
+                class_name = class_elem.get("name", "")
+                full_name = f"{package_name}.{class_name}".replace(".", "/")
+                line_rate = float(class_elem.get("line-rate", 0)) * 100
                 modules[full_name] = line_rate
 
         return modules
@@ -147,7 +146,7 @@ class CoverageAnalyzer:
         """保存报告到文件"""
         report = self.generate_report()
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"✅ 报告已保存到: {output_file}")
@@ -163,20 +162,20 @@ class CoverageAnalyzer:
             print("❌ 任务看板文件不存在")
             return
 
-        with open(todo_file, 'r', encoding='utf-8') as f:
+        with open(todo_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 更新进度
         if total < 20:
             content = content.replace(
                 "**当前进度**: 16% → 20% (第一阶段)",
-                f"**当前进度**: {total:.1f}% → 20% (第一阶段)"
+                f"**当前进度**: {total:.1f}% → 20% (第一阶段)",
             )
 
-        with open(todo_file, 'w', encoding='utf-8') as f:
+        with open(todo_file, "w", encoding="utf-8") as f:
             f.write(content)
 
-        print(f"✅ 任务看板已更新")
+        print("✅ 任务看板已更新")
 
 
 def main():

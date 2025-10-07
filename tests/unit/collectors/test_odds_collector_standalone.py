@@ -91,19 +91,21 @@ class MockOddsCollector:
         """收集未来几小时内的比赛赔率"""
         mock_matches = [
             Mock(id=1, home_team="Team A", away_team="Team B"),
-            Mock(id=2, home_team="Team C", away_team="Team D")
+            Mock(id=2, home_team="Team C", away_team="Team D"),
         ]
 
         results = {"matches": [], "total": len(mock_matches)}
 
         for match in mock_matches:
             match_odds = await self.collect_match_odds(match.id, bookmakers)
-            results["matches"].append({
-                "match_id": match.id,
-                "home_team": match.home_team,
-                "away_team": match.away_team,
-                "odds": match_odds
-            })
+            results["matches"].append(
+                {
+                    "match_id": match.id,
+                    "home_team": match.home_team,
+                    "away_team": match.away_team,
+                    "odds": match_odds,
+                }
+            )
 
         return results
 
@@ -142,7 +144,9 @@ class TestOddsCollector:
         assert "william_hill" in odds_collector.bookmakers
 
     @pytest.mark.asyncio
-    async def test_collect_match_odds_cache_hit(self, odds_collector, mock_redis_client):
+    async def test_collect_match_odds_cache_hit(
+        self, odds_collector, mock_redis_client
+    ):
         """测试从缓存获取赔率"""
         # 设置缓存返回值
         cached_data = {"bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}}
@@ -164,7 +168,9 @@ class TestOddsCollector:
         assert result == {}
 
     @pytest.mark.asyncio
-    async def test_collect_match_odds_force_refresh(self, odds_collector, mock_redis_client):
+    async def test_collect_match_odds_force_refresh(
+        self, odds_collector, mock_redis_client
+    ):
         """测试强制刷新"""
         result = await odds_collector.collect_match_odds(123, force_refresh=True)
 
@@ -194,7 +200,7 @@ class TestOddsCollector:
         odds_data = {
             "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8},
             "betfair": {"home": 2.1, "draw": 3.1, "away": 3.7},
-            "william_hill": {"home": 1.9, "draw": 3.3, "away": 3.9}
+            "william_hill": {"home": 1.9, "draw": 3.3, "away": 3.9},
         }
 
         avg = odds_collector._calculate_average_odds(odds_data)
@@ -210,9 +216,7 @@ class TestOddsCollector:
 
     def test_calculate_average_odds_single_bookmaker(self, odds_collector):
         """测试单个博彩公司的平均赔率"""
-        odds_data = {
-            "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}
-        }
+        odds_data = {"bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}}
 
         avg = odds_collector._calculate_average_odds(odds_data)
 
@@ -244,7 +248,7 @@ class TestOddsCollector:
         """测试保存赔率到数据库"""
         odds_data = {
             "bet365": {"home": 2.0, "draw": 3.2, "away": 3.8},
-            "average": {"home": 2.0, "draw": 3.2, "away": 3.8}
+            "average": {"home": 2.0, "draw": 3.2, "away": 3.8},
         }
 
         # 这个方法在Mock中是空的，只测试调用不报错
@@ -255,7 +259,9 @@ class TestOddsCollector:
     async def test_error_handling(self, odds_collector):
         """测试错误处理"""
         # Mock _get_match_by_id 抛出异常
-        odds_collector._get_match_by_id = AsyncMock(side_effect=Exception("Database error"))
+        odds_collector._get_match_by_id = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         result = await odds_collector.collect_match_odds(123)
 
@@ -268,12 +274,12 @@ class TestOddsCollectorHelperMethods:
     def test_get_match_by_id_success(self, odds_collector):
         """测试根据ID获取比赛 - 成功"""
         # 测试方法存在
-        assert hasattr(odds_collector, '_get_match_by_id')
+        assert hasattr(odds_collector, "_get_match_by_id")
 
     def test_fetch_odds_from_bookmaker(self, odds_collector):
         """测试从博彩公司获取赔率"""
         # 测试方法存在
-        assert hasattr(odds_collector, '_fetch_odds_from_bookmaker')
+        assert hasattr(odds_collector, "_fetch_odds_from_bookmaker")
 
     def test_bookmakers_list(self, odds_collector):
         """测试博彩公司列表"""
@@ -306,7 +312,7 @@ class TestOddsCollectorHelperMethods:
         # 测试计算平均赔率时的数据结构要求
         odds_data = {
             "bookmaker1": {"home": 2.0, "draw": 3.0, "away": 3.5},
-            "bookmaker2": {"home": 2.1, "draw": 3.1, "away": 3.4}
+            "bookmaker2": {"home": 2.1, "draw": 3.1, "away": 3.4},
         }
 
         result = odds_collector._calculate_average_odds(odds_data)

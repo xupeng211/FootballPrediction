@@ -10,7 +10,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -30,7 +30,7 @@ class TestAPIModelsFunctional:
                 status=MatchStatus.COMPLETED,
                 home_score=2,
                 away_score=1,
-                match_date=datetime(2024, 1, 1, 15, 0)
+                match_date=datetime(2024, 1, 1, 15, 0),
             )
 
             assert match.id == 1
@@ -56,7 +56,7 @@ class TestAPIModelsFunctional:
                     status="INVALID_STATUS",  # 无效状态
                     home_score=2,
                     away_score=1,
-                    match_date=datetime(2024, 1, 1)
+                    match_date=datetime(2024, 1, 1),
                 )
             assert "status" in str(exc_info.value)
 
@@ -69,7 +69,7 @@ class TestAPIModelsFunctional:
                     status=MatchStatus.COMPLETED,
                     home_score=-1,  # 负分无效
                     away_score=1,
-                    match_date=datetime(2024, 1, 1)
+                    match_date=datetime(2024, 1, 1),
                 )
             assert "home_score" in str(exc_info.value)
 
@@ -86,7 +86,7 @@ class TestAPIModelsFunctional:
                 match_id=1,
                 prediction_type=PredictionType.WINNER,
                 home_team_id=100,
-                away_team_id=200
+                away_team_id=200,
             )
 
             assert request.match_id == 1
@@ -107,13 +107,9 @@ class TestAPIModelsFunctional:
                 match_id=1,
                 prediction=PredictionResult.HOME_WIN,
                 confidence=0.85,
-                probabilities={
-                    "home_win": 0.70,
-                    "draw": 0.20,
-                    "away_win": 0.10
-                },
+                probabilities={"home_win": 0.70, "draw": 0.20, "away_win": 0.10},
                 model_version="v1.0.0",
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             assert response.match_id == 1
@@ -135,7 +131,7 @@ class TestAPIModelsFunctional:
                 error_code=ErrorCode.NOT_FOUND,
                 message="Resource not found",
                 details={"resource_id": 123},
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
 
             assert error.error_code == ErrorCode.NOT_FOUND
@@ -158,11 +154,7 @@ class TestAPIModelsFunctional:
 
             # 创建分页响应
             response = PaginatedResponse(
-                items=[{"id": 1}, {"id": 2}],
-                total=100,
-                page=2,
-                size=20,
-                pages=5
+                items=[{"id": 1}, {"id": 2}], total=100, page=2, size=20, pages=5
             )
 
             assert len(response.items) == 2
@@ -184,13 +176,13 @@ class TestAPIModelsFunctional:
                 features={
                     "team_form": FeatureValue(value=0.85, confidence=0.9),
                     "head_to_head": FeatureValue(value=3, confidence=1.0),
-                    "recent_goals": FeatureValue(value=2.5, confidence=0.8)
+                    "recent_goals": FeatureValue(value=2.5, confidence=0.8),
                 },
                 feature_types={
                     "team_form": "float",
                     "head_to_head": "int",
-                    "recent_goals": "float"
-                }
+                    "recent_goals": "float",
+                },
             )
 
             assert feature.match_id == 1
@@ -215,7 +207,7 @@ class TestAPIModelsFunctional:
                 status=MatchStatus.SCHEDULED,
                 home_score=None,
                 away_score=None,
-                match_date=datetime(2024, 1, 1, 15, 0)
+                match_date=datetime(2024, 1, 1, 15, 0),
             )
 
             # 序列化为JSON
@@ -245,7 +237,7 @@ class TestAPIModelsFunctional:
                 # home_score, away_score 可以为 None
                 home_score=None,
                 away_score=None,
-                match_date=datetime(2024, 1, 1)
+                match_date=datetime(2024, 1, 1),
             )
 
             assert match.home_score is None
@@ -265,10 +257,12 @@ class TestAPIModelsFunctional:
                     match_id=1,
                     prediction_type=PredictionType.WINNER,
                     home_team_id=100,
-                    away_team_id=100  # 相同的队伍ID应该无效
+                    away_team_id=100,  # 相同的队伍ID应该无效
                 )
             # 假设有自定义验证会检查这个
-            if "home_team_id" in str(exc_info.value) or "away_team_id" in str(exc_info.value):
+            if "home_team_id" in str(exc_info.value) or "away_team_id" in str(
+                exc_info.value
+            ):
                 pass  # 自定义验证生效
             else:
                 # 如果没有自定义验证，这是预期的
@@ -284,12 +278,14 @@ class TestAPIModelsFunctional:
 
             # 测试基础模型
             base = BaseModel()
-            assert hasattr(base, 'model_dump')
+            assert hasattr(base, "model_dump")
 
             # 测试时间戳模型（如果存在）
             if TimestampedModel:
                 timestamped = TimestampedModel()
-                assert hasattr(timestamped, 'created_at') or hasattr(timestamped, 'timestamp')
+                assert hasattr(timestamped, "created_at") or hasattr(
+                    timestamped, "timestamp"
+                )
 
         except ImportError:
             pytest.skip("Base models not available")
@@ -300,12 +296,12 @@ class TestAPIModelsFunctional:
             from src.api.models import MatchResponse, TeamInfo
 
             # 检查模型配置
-            assert hasattr(MatchResponse, 'model_config')
+            assert hasattr(MatchResponse, "model_config")
             config = MatchResponse.model_config
 
             # 检查是否有populate_by_name或其他配置
-            if 'populate_by_name' in config:
-                assert config['populate_by_name'] is True
+            if "populate_by_name" in config:
+                assert config["populate_by_name"] is True
 
         except ImportError:
             pytest.skip("Models not available")
@@ -323,7 +319,7 @@ class TestAPIModelsFunctional:
                 "status": "completed",
                 "home_score": 2,
                 "away_score": 1,
-                "match_date": "2024-01-01T15:00:00"
+                "match_date": "2024-01-01T15:00:00",
             }
 
             match = MatchResponse(**match_data)
@@ -344,7 +340,7 @@ class TestAPIModelsFunctional:
                     id=100,
                     name="Team A",
                     short_name="TA",
-                    extra_field="not_allowed"  # 额外字段
+                    extra_field="not_allowed",  # 额外字段
                 )
 
             # 某些模型配置可能允许额外字段

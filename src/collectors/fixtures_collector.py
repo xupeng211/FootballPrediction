@@ -5,6 +5,7 @@
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+import os
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,9 +29,11 @@ class FixturesCollector:
             "football-api": "https://api.football-data.org/v4",
             "api-sports": "https://v3.football.api-sports.io",
         }
-        self.headers = {
-            "X-Auth-Token": "YOUR_FOOTBALL_DATA_API_TOKEN"
-        }  # 应该从配置中读取
+        # 从环境变量读取 API Token
+        api_token = os.getenv("FOOTBALL_API_TOKEN")
+        if not api_token:
+            logger.warning("未设置 FOOTBALL_API_TOKEN 环境变量")
+        self.headers = {"X-Auth-Token": api_token} if api_token else {}
 
     async def collect_team_fixtures(
         self, team_id: int, days_ahead: int = 30, force_refresh: bool = False

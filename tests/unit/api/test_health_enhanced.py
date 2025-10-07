@@ -84,7 +84,9 @@ class TestHealthCheckBasics:
                     with patch("src.api.health._check_redis") as mock_redis:
                         with patch("src.api.health._check_kafka") as mock_kafka:
                             with patch("src.api.health._check_mlflow") as mock_mlflow:
-                                with patch("src.api.health._check_filesystem") as mock_fs:
+                                with patch(
+                                    "src.api.health._check_filesystem"
+                                ) as mock_fs:
                                     # 设置所有检查通过
                                     mock_db.return_value = {
                                         "healthy": True,
@@ -116,8 +118,10 @@ class TestHealthCheckBasics:
 
                                     assert result["status"] == "healthy"
                                     assert result["mode"] == "full"
-                                    assert all(check["status"] == "healthy"
-                                             for check in result["checks"].values())
+                                    assert all(
+                                        check["status"] == "healthy"
+                                        for check in result["checks"].values()
+                                    )
 
     @pytest.mark.asyncio
     async def test_health_check_unhealthy_raises_exception(self):
@@ -245,7 +249,9 @@ class TestDatabaseHealthCheck:
     async def test_collect_database_health_no_manager(self):
         """测试数据库管理器未初始化的情况"""
         with patch("src.api.health.get_database_manager") as mock_get_manager:
-            mock_get_manager.side_effect = RuntimeError("Database manager not initialized")
+            mock_get_manager.side_effect = RuntimeError(
+                "Database manager not initialized"
+            )
 
             result = await _collect_database_health()
 
@@ -314,7 +320,9 @@ class TestUtilityFunctions:
         assert result["status"] == "skipped"
         assert result["response_time_ms"] == 0.0
         assert service in result["details"]["message"]
-        assert result["details"]["message"] == f"{service} check skipped in minimal mode"
+        assert (
+            result["details"]["message"] == f"{service} check skipped in minimal mode"
+        )
 
 
 class TestHealthCheckEdgeCases:

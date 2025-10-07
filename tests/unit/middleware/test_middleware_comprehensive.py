@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -21,12 +21,12 @@ class TestMiddlewareComprehensive:
     def test_middleware_imports(self):
         """测试中间件模块导入"""
         middleware_modules = [
-            'src.middleware.auth',
-            'src.middleware.cors',
-            'src.middleware.logging',
-            'src.middleware.rate_limit',
-            'src.middleware.security',
-            'src.middleware.timing'
+            "src.middleware.auth",
+            "src.middleware.cors",
+            "src.middleware.logging",
+            "src.middleware.rate_limit",
+            "src.middleware.security",
+            "src.middleware.timing",
         ]
 
         for module in middleware_modules:
@@ -47,7 +47,7 @@ class TestMiddlewareComprehensive:
             auth_middleware = AuthMiddleware(app)
 
             # 测试属性
-            assert hasattr(auth_middleware, 'app')
+            assert hasattr(auth_middleware, "app")
 
             # 测试JWT认证器（如果存在）
             try:
@@ -55,12 +55,12 @@ class TestMiddlewareComprehensive:
                 assert authenticator is not None
 
                 # 测试token验证
-                if hasattr(authenticator, 'verify_token'):
+                if hasattr(authenticator, "verify_token"):
                     result = authenticator.verify_token("invalid_token")
                     assert result is False or result is None
 
                 # 测试token生成
-                if hasattr(authenticator, 'generate_token'):
+                if hasattr(authenticator, "generate_token"):
                     token = authenticator.generate_token({"user_id": 123})
                     assert isinstance(token, str)
                     assert len(token) > 0
@@ -82,7 +82,7 @@ class TestMiddlewareComprehensive:
             cors_config = {
                 "allow_origins": ["*"],
                 "allow_methods": ["GET", "POST"],
-                "allow_headers": ["*"]
+                "allow_headers": ["*"],
             }
             cors_middleware = CORSMiddleware(app, **cors_config)
 
@@ -95,7 +95,7 @@ class TestMiddlewareComprehensive:
             MagicMock(return_value=Response("OK"))
 
             # 测试CORS头添加
-            if hasattr(cors_middleware, 'add_cors_headers'):
+            if hasattr(cors_middleware, "add_cors_headers"):
                 response = Response("OK")
                 cors_middleware.add_cors_headers(response, request.headers)
                 # 验证CORS头是否存在
@@ -115,8 +115,8 @@ class TestMiddlewareComprehensive:
             logging_middleware = LoggingMiddleware(app)
 
             # 测试属性
-            assert hasattr(logging_middleware, 'app')
-            assert hasattr(logging_middleware, 'logger')
+            assert hasattr(logging_middleware, "app")
+            assert hasattr(logging_middleware, "logger")
 
             # 模拟请求日志
             request = MagicMock()
@@ -126,7 +126,7 @@ class TestMiddlewareComprehensive:
             request.client.host = "127.0.0.1"
 
             # 测试日志记录
-            if hasattr(logging_middleware, 'log_request'):
+            if hasattr(logging_middleware, "log_request"):
                 logging_middleware.log_request(request)
                 assert True  # 如果没有抛出异常就通过
 
@@ -143,8 +143,8 @@ class TestMiddlewareComprehensive:
             rate_limiter = RateLimitMiddleware(app, requests_per_minute=60)
 
             # 测试属性
-            assert hasattr(rate_limiter, 'app')
-            assert hasattr(rate_limiter, 'requests_per_minute')
+            assert hasattr(rate_limiter, "app")
+            assert hasattr(rate_limiter, "requests_per_minute")
 
             # 测试限流逻辑
             request = MagicMock()
@@ -152,12 +152,12 @@ class TestMiddlewareComprehensive:
             request.client.host = "127.0.0.1"
 
             # 测试请求计数
-            if hasattr(rate_limiter, 'is_allowed'):
+            if hasattr(rate_limiter, "is_allowed"):
                 result = rate_limiter.is_allowed(request.client.host)
                 assert result is True or result is False
 
             # 测试限流状态
-            if hasattr(rate_limiter, 'get_rate_limit_status'):
+            if hasattr(rate_limiter, "get_rate_limit_status"):
                 status = rate_limiter.get_rate_limit_status(request.client.host)
                 assert isinstance(status, dict) or status is None
 
@@ -174,10 +174,10 @@ class TestMiddlewareComprehensive:
             security_middleware = SecurityMiddleware(app)
 
             # 测试属性
-            assert hasattr(security_middleware, 'app')
+            assert hasattr(security_middleware, "app")
 
             # 测试安全头
-            if hasattr(security_middleware, 'add_security_headers'):
+            if hasattr(security_middleware, "add_security_headers"):
                 response = MagicMock()
                 security_middleware.add_security_headers(response)
                 assert True  # 如果没有抛出异常就通过
@@ -195,10 +195,10 @@ class TestMiddlewareComprehensive:
             timing_middleware = TimingMiddleware(app)
 
             # 测试属性
-            assert hasattr(timing_middleware, 'app')
+            assert hasattr(timing_middleware, "app")
 
             # 测试请求计时
-            if hasattr(timing_middleware, 'start_timer'):
+            if hasattr(timing_middleware, "start_timer"):
                 timing_middleware.start_timer()
                 time.sleep(0.01)
                 duration = timing_middleware.end_timer()
@@ -209,6 +209,7 @@ class TestMiddlewareComprehensive:
 
     def test_middleware_integration(self):
         """测试中间件集成"""
+
         # 创建模拟的中间件堆栈
         class MiddlewareStack:
             def __init__(self):
@@ -221,13 +222,13 @@ class TestMiddlewareComprehensive:
 
             def process_request(self, request):
                 for middleware in self.middlewares:
-                    if hasattr(middleware, 'process_request'):
+                    if hasattr(middleware, "process_request"):
                         middleware.process_request(request)
                 return True
 
             def process_response(self, request, response):
                 for middleware in reversed(self.middlewares):
-                    if hasattr(middleware, 'process_response'):
+                    if hasattr(middleware, "process_response"):
                         middleware.process_response(request, response)
                 return response
 
@@ -260,30 +261,26 @@ class TestMiddlewareComprehensive:
             "auth": {
                 "enabled": True,
                 "secret_key": "test_secret",
-                "algorithm": "HS256"
+                "algorithm": "HS256",
             },
             "cors": {
                 "enabled": True,
                 "allow_origins": ["*"],
                 "allow_methods": ["GET", "POST", "PUT", "DELETE"],
                 "allow_headers": ["*"],
-                "expose_headers": ["X-Custom-Header"]
+                "expose_headers": ["X-Custom-Header"],
             },
             "rate_limit": {
                 "enabled": True,
                 "requests_per_minute": 60,
-                "burst_size": 10
+                "burst_size": 10,
             },
-            "logging": {
-                "enabled": True,
-                "log_level": "INFO",
-                "log_body": False
-            },
+            "logging": {"enabled": True, "log_level": "INFO", "log_body": False},
             "security": {
                 "enabled": True,
                 "ssl_redirect": True,
-                "hsts_max_age": 31536000
-            }
+                "hsts_max_age": 31536000,
+            },
         }
 
         # 验证配置
@@ -293,6 +290,7 @@ class TestMiddlewareComprehensive:
 
     def test_middleware_error_handling(self):
         """测试中间件错误处理"""
+
         # 创建错误处理中间件
         class ErrorHandlingMiddleware:
             def __init__(self, app):
@@ -307,7 +305,7 @@ class TestMiddlewareComprehensive:
             async def handle_error(self, error, send):
                 error_response = {
                     "error": str(error),
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
                 # 模拟发送错误响应
                 assert error_response is not None
@@ -326,12 +324,14 @@ class TestMiddlewareComprehensive:
         # 测试错误处理不会崩溃
         try:
             import asyncio
+
             asyncio.run(error_middleware(scope, receive, send))
         except Exception:
             pass  # 错误被处理，没有抛出
 
     def test_middleware_performance(self):
         """测试中间件性能"""
+
         # 创建性能测试中间件
         class PerformanceMiddleware:
             def __init__(self):
@@ -348,7 +348,7 @@ class TestMiddlewareComprehensive:
                     "total_requests": len(self.request_times),
                     "average_time": sum(self.request_times) / len(self.request_times),
                     "min_time": min(self.request_times),
-                    "max_time": max(self.request_times)
+                    "max_time": max(self.request_times),
                 }
 
         # 测试性能记录
@@ -370,6 +370,7 @@ class TestMiddlewareComprehensive:
 
     def test_middleware_order(self):
         """测试中间件执行顺序"""
+
         # 创建顺序跟踪中间件
         class OrderTrackingMiddleware:
             def __init__(self, name, tracker):
@@ -413,5 +414,5 @@ class TestMiddlewareComprehensive:
             "cors_request",
             "cors_response",
             "logging_response",
-            "auth_response"
+            "auth_response",
         ]

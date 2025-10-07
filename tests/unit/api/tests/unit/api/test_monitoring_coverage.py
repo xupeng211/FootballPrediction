@@ -19,44 +19,64 @@ os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 # Mock外部依赖
-sys.modules['psutil'] = Mock(cpu_percent=Mock(return_value=25.5),
-                             virtual_memory=Mock(return_value=Mock(total=8000000000,
-                                                                   available=4000000000,
-                                                                   percent=50.0)),
-                             disk_usage=Mock(return_value=Mock(total=1000000000000,
-                                                              used=500000000000,
-                                                              percent=50.0)),
-                             Process=Mock(return_value=Mock(memory_info=Mock(return_value=Mock(rss=200000000)),
-                                                          memory_percent=Mock(return_value=2.5))))
+sys.modules["psutil"] = Mock(
+    cpu_percent=Mock(return_value=25.5),
+    virtual_memory=Mock(
+        return_value=Mock(total=8000000000, available=4000000000, percent=50.0)
+    ),
+    disk_usage=Mock(
+        return_value=Mock(total=1000000000000, used=500000000000, percent=50.0)
+    ),
+    Process=Mock(
+        return_value=Mock(
+            memory_info=Mock(return_value=Mock(rss=200000000)),
+            memory_percent=Mock(return_value=2.5),
+        )
+    ),
+)
 
-sys.modules['redis'] = Mock(Redis=Mock(return_value=Mock(ping=Mock(return_value=True),
-                                                        info=Mock(return_value={'connected_clients': 5,
-                                                                               'used_memory': 1000000,
-                                                                               'used_memory_human': '1M'}))))
+sys.modules["redis"] = Mock(
+    Redis=Mock(
+        return_value=Mock(
+            ping=Mock(return_value=True),
+            info=Mock(
+                return_value={
+                    "connected_clients": 5,
+                    "used_memory": 1000000,
+                    "used_memory_human": "1M",
+                }
+            ),
+        )
+    )
+)
 
 # Mock内部模块
 mock_metrics_collector = Mock()
-mock_metrics_collector.get_metrics_collector = Mock(return_value=Mock(
-    collect_all_metrics=AsyncMock(return_value={}),
-    get_metric_value=Mock(return_value=0),
-    register_metric=Mock()
-))
-sys.modules['src.monitoring.metrics_collector'] = mock_metrics_collector
+mock_metrics_collector.get_metrics_collector = Mock(
+    return_value=Mock(
+        collect_all_metrics=AsyncMock(return_value={}),
+        get_metric_value=Mock(return_value=0),
+        register_metric=Mock(),
+    )
+)
+sys.modules["src.monitoring.metrics_collector"] = mock_metrics_collector
 
 mock_metrics_exporter = Mock()
-mock_metrics_exporter.get_metrics_exporter = Mock(return_value=Mock(
-    generate_prometheus_metrics=Mock(return_value="# HELP test_metric\n# TYPE test_metric counter\ntest_metric 1\n"),
-    export_metrics=Mock()
-))
-sys.modules['src.monitoring.metrics_exporter'] = mock_metrics_exporter
+mock_metrics_exporter.get_metrics_exporter = Mock(
+    return_value=Mock(
+        generate_prometheus_metrics=Mock(
+            return_value="# HELP test_metric\n# TYPE test_metric counter\ntest_metric 1\n"
+        ),
+        export_metrics=Mock(),
+    )
+)
+sys.modules["src.monitoring.metrics_exporter"] = mock_metrics_exporter
 
-sys.modules['src.core.logging'] = Mock(get_logger=Mock(return_value=Mock(
-    info=Mock(),
-    warning=Mock(),
-    error=Mock()
-)))
+sys.modules["src.core.logging"] = Mock(
+    get_logger=Mock(return_value=Mock(info=Mock(), warning=Mock(), error=Mock()))
+)
 
-sys.modules['src.database.connection'] = Mock(get_db_session=Mock())
+sys.modules["src.database.connection"] = Mock(get_db_session=Mock())
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -70,16 +90,17 @@ def setup_monitoring_module():
     # 修复相对导入
     code = code.replace(
         "from ..monitoring.metrics_collector import get_metrics_collector",
-        "from src.monitoring.metrics_collector import get_metrics_collector"
+        "from src.monitoring.metrics_collector import get_metrics_collector",
     )
     code = code.replace(
         "from ..monitoring.metrics_exporter import get_metrics_exporter",
-        "from src.monitoring.metrics_exporter import get_metrics_exporter"
+        "from src.monitoring.metrics_exporter import get_metrics_exporter",
     )
 
     # 创建临时模块
     module_name = "monitoring_test"
     import importlib.util
+
     spec = importlib.util.spec_from_loader(module_name, loader=None)
     monitoring_mod = importlib.util.module_from_spec(spec)
 
@@ -150,8 +171,8 @@ class TestMonitoringCoverage:
         # 测试正常数据
         mock_session.execute.side_effect = [
             MagicMock(fetchone=lambda: (100,)),  # 24h predictions
-            MagicMock(fetchone=lambda: (25,)),   # upcoming matches
-            MagicMock(fetchone=lambda: (75.0,)), # accuracy rate
+            MagicMock(fetchone=lambda: (25,)),  # upcoming matches
+            MagicMock(fetchone=lambda: (75.0,)),  # accuracy rate
         ]
 
         result = await monitoring._get_business_metrics(mock_session)
@@ -185,32 +206,34 @@ class TestMonitoringCoverage:
         assert "process" in result
 
         # 测试CPU错误
-        original_cpu = sys.modules['psutil'].cpu_percent
-        sys.modules['psutil'].cpu_percent = Mock(side_effect=Exception("CPU error"))
+        original_cpu = sys.modules["psutil"].cpu_percent
+        sys.modules["psutil"].cpu_percent = Mock(side_effect=Exception("CPU error"))
         result = await monitoring._get_system_metrics()
         assert "error" in result.get("cpu", {})
-        sys.modules['psutil'].cpu_percent = original_cpu
+        sys.modules["psutil"].cpu_percent = original_cpu
 
         # 测试内存错误
-        original_memory = sys.modules['psutil'].virtual_memory
-        sys.modules['psutil'].virtual_memory = Mock(side_effect=Exception("Memory error"))
+        original_memory = sys.modules["psutil"].virtual_memory
+        sys.modules["psutil"].virtual_memory = Mock(
+            side_effect=Exception("Memory error")
+        )
         result = await monitoring._get_system_metrics()
         assert "error" in result.get("memory", {})
-        sys.modules['psutil'].virtual_memory = original_memory
+        sys.modules["psutil"].virtual_memory = original_memory
 
         # 测试磁盘错误
-        original_disk = sys.modules['psutil'].disk_usage
-        sys.modules['psutil'].disk_usage = Mock(side_effect=Exception("Disk error"))
+        original_disk = sys.modules["psutil"].disk_usage
+        sys.modules["psutil"].disk_usage = Mock(side_effect=Exception("Disk error"))
         result = await monitoring._get_system_metrics()
         assert "error" in result.get("disk", {})
-        sys.modules['psutil'].disk_usage = original_disk
+        sys.modules["psutil"].disk_usage = original_disk
 
         # 测试进程错误
-        original_process = sys.modules['psutil'].Process
-        sys.modules['psutil'].Process = Mock(side_effect=Exception("Process error"))
+        original_process = sys.modules["psutil"].Process
+        sys.modules["psutil"].Process = Mock(side_effect=Exception("Process error"))
         result = await monitoring._get_system_metrics()
         assert "error" in result.get("process", {})
-        sys.modules['psutil'].Process = original_process
+        sys.modules["psutil"].Process = original_process
 
     @pytest.mark.asyncio
     async def test_redis_metrics_coverage(self, setup_monitoring_module):
@@ -224,12 +247,14 @@ class TestMonitoringCoverage:
         assert "used_memory" in result
 
         # 测试连接失败
-        original_redis = sys.modules['redis']
-        sys.modules['redis'] = Mock(Redis=Mock(side_effect=Exception("Redis connection failed")))
+        original_redis = sys.modules["redis"]
+        sys.modules["redis"] = Mock(
+            Redis=Mock(side_effect=Exception("Redis connection failed"))
+        )
         result = await monitoring._get_redis_metrics()
         assert result["healthy"] is False
         assert "error" in result
-        sys.modules['redis'] = original_redis
+        sys.modules["redis"] = original_redis
 
     @pytest.mark.asyncio
     async def test_get_metrics_endpoint_coverage(self, setup_monitoring_module):
@@ -241,11 +266,12 @@ class TestMonitoringCoverage:
         mock_session.execute.return_value.fetchone.return_value = (1,)
 
         # Mock所有依赖
-        with patch.object(monitoring, '_get_database_metrics') as mock_db:
-            with patch.object(monitoring, '_get_system_metrics') as mock_sys:
-                with patch.object(monitoring, '_get_redis_metrics') as mock_redis:
-                    with patch.object(monitoring, '_get_business_metrics') as mock_business:
-
+        with patch.object(monitoring, "_get_database_metrics") as mock_db:
+            with patch.object(monitoring, "_get_system_metrics") as mock_sys:
+                with patch.object(monitoring, "_get_redis_metrics") as mock_redis:
+                    with patch.object(
+                        monitoring, "_get_business_metrics"
+                    ) as mock_business:
                         # 设置返回值
                         mock_db.return_value = {"healthy": True, "statistics": {}}
                         mock_sys.return_value = {"cpu": {"usage": 25.5}}
@@ -266,7 +292,10 @@ class TestMonitoringCoverage:
 
                         # 测试全部不健康
                         mock_sys.return_value = {"error": "System error"}
-                        mock_redis.return_value = {"healthy": False, "error": "Redis error"}
+                        mock_redis.return_value = {
+                            "healthy": False,
+                            "error": "Redis error",
+                        }
                         result = await monitoring.get_metrics(mock_session)
                         assert result["status"] == "unhealthy"
 
@@ -304,9 +333,9 @@ class TestMonitoringCoverage:
         monitoring = setup_monitoring_module
 
         # 验证路由
-        assert hasattr(monitoring, 'router')
-        assert hasattr(monitoring.router, 'routes')
-        assert hasattr(monitoring.router, 'tags')
+        assert hasattr(monitoring, "router")
+        assert hasattr(monitoring.router, "routes")
+        assert hasattr(monitoring.router, "tags")
         assert "monitoring" in monitoring.router.tags
 
     @pytest.mark.asyncio

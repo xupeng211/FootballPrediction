@@ -10,7 +10,7 @@ import os
 import time
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -23,7 +23,7 @@ class TestCacheComprehensive:
             from src.cache.redis_manager import RedisManager
 
             # 创建RedisManager实例
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 # Mock同步客户端
                 mock_sync_client = MagicMock()
                 mock_sync_client.ping.return_value = True
@@ -68,7 +68,7 @@ class TestCacheComprehensive:
         try:
             from src.cache.redis_manager import RedisManager
 
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.side_effect = Exception("Connection failed")
                 mock_redis.Redis.return_value = mock_client
@@ -166,7 +166,7 @@ class TestCacheComprehensive:
         try:
             from src.cache.redis_manager import RedisManager
 
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True
                 mock_client.set.return_value = 1
@@ -178,6 +178,7 @@ class TestCacheComprehensive:
                 # 测试序列化存储
                 test_dict = {"key": "value"}
                 import json
+
                 serialized = json.dumps(test_dict)
                 manager.set("dict_key", serialized)
 
@@ -197,7 +198,7 @@ class TestCacheComprehensive:
         try:
             from src.cache.redis_manager import RedisManager
 
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True
                 mock_pipeline = MagicMock()
@@ -224,13 +225,13 @@ class TestCacheComprehensive:
         try:
             from src.cache.redis_manager import RedisManager
 
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True
                 mock_client.info.return_value = {
                     "redis_version": "6.0.0",
                     "connected_clients": 10,
-                    "used_memory": "1024000"
+                    "used_memory": "1024000",
                 }
                 mock_redis.Redis.return_value = mock_client
 
@@ -252,7 +253,7 @@ class TestCacheComprehensive:
         try:
             from src.cache.redis_manager import RedisManager
 
-            with patch('src.cache.redis_manager.redis') as mock_redis:
+            with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True
                 mock_redis.Redis.return_value = mock_client
@@ -260,7 +261,7 @@ class TestCacheComprehensive:
                 manager = RedisManager()
 
                 # 测试连接池属性
-                assert hasattr(manager, 'client')
+                assert hasattr(manager, "client")
                 assert manager.client is not None
 
         except ImportError:

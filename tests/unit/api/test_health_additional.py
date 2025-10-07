@@ -8,10 +8,11 @@ import asyncio
 from unittest.mock import patch
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入模块
 import importlib.util
+
 spec = importlib.util.spec_from_file_location("health", "src/api/health.py")
 health = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(health)
@@ -49,8 +50,8 @@ async def test_health_check_full():
     print("Testing full health check...")
 
     # 模拟minimal模式为False
-    with patch.object(health, 'MINIMAL_HEALTH_MODE', False):
-        with patch.object(health, 'FAST_FAIL', False):
+    with patch.object(health, "MINIMAL_HEALTH_MODE", False):
+        with patch.object(health, "FAST_FAIL", False):
             # 只测试基本的健康检查结构
             try:
                 result = await health.health_check(check_db=False)
@@ -76,8 +77,8 @@ async def test_liveness_readiness():
     assert "timestamp" in liveness
 
     # 测试就绪性检查
-    with patch.object(health, 'MINIMAL_HEALTH_MODE', True):
-        with patch.object(health, '_collect_database_health') as mock_db:
+    with patch.object(health, "MINIMAL_HEALTH_MODE", True):
+        with patch.object(health, "_collect_database_health") as mock_db:
             mock_db.return_value = health._optional_check_skipped("database")
 
             readiness = await health.readiness_check()

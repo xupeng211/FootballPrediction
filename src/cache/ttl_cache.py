@@ -73,7 +73,9 @@ class TTLCache:
     def _purge_expired(self, now: Optional[float] = None) -> None:
         if now is None:
             now = time.time()
-        expired_keys = [key for key, item in self._cache.items() if item.is_expired(now)]
+        expired_keys = [
+            key for key, item in self._cache.items() if item.is_expired(now)
+        ]
         for key in expired_keys:
             del self._cache[key]
             self.evictions += 1

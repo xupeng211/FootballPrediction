@@ -174,7 +174,7 @@ AWS_SECRET_ACCESS_KEY
 
 ```yaml
 工作流运行: 保留90天
-Artifacts: 保留30天  
+Artifacts: 保留30天
 Stale Issues: 30天标记 → 60天关闭
 旧报告: 90天归档 → 365天压缩
 ```
@@ -357,7 +357,7 @@ kubectl rollout status deployment/football-prediction -n production
 # 质量检查 和 Mock测试 并行运行
 quality-check:
   needs: [basic-checks]
-  
+
 mocked-coverage:
   needs: [basic-checks]  # 同时依赖，并行执行
 ```
@@ -501,6 +501,6 @@ main        # 生产代码，受保护
 
 ---
 
-**最后更新**: 2025-10-07  
-**维护者**: AI Assistant & Team  
+**最后更新**: 2025-10-07
+**维护者**: AI Assistant & Team
 **版本**: 2.0 (优化后)

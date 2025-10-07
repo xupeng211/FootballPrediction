@@ -24,7 +24,7 @@ class TestCoreConfigFunctional:
             "DATABASE_URL": "sqlite:///test.db",
             "REDIS_HOST": "localhost",
             "REDIS_PORT": "6379",
-            "LOG_LEVEL": "DEBUG"
+            "LOG_LEVEL": "DEBUG",
         }
 
         with patch.dict(os.environ, test_env):
@@ -40,7 +40,7 @@ class TestCoreConfigFunctional:
                 assert settings.LOG_LEVEL == "DEBUG"
 
                 # 测试设置对象的方法
-                assert hasattr(settings, 'dict')
+                assert hasattr(settings, "dict")
                 assert callable(settings.dict)
 
                 # 测试配置字典转换
@@ -56,7 +56,7 @@ class TestCoreConfigFunctional:
         db_configs = [
             "sqlite:///test.db",
             "postgresql://user:pass@localhost/test",
-            "mysql://user:pass@localhost:3306/test"
+            "mysql://user:pass@localhost:3306/test",
         ]
 
         for db_url in db_configs:
@@ -67,7 +67,7 @@ class TestCoreConfigFunctional:
                     settings = get_settings()
                     # 验证数据库URL可以被设置
                     # 注意：实际的属性名可能不同，需要检查配置类
-                    assert hasattr(settings, 'dict')  # 基本验证
+                    assert hasattr(settings, "dict")  # 基本验证
 
                 except ImportError:
                     pytest.skip("Config module not available")
@@ -78,7 +78,7 @@ class TestCoreConfigFunctional:
         invalid_configs = [
             {"LOG_LEVEL": "INVALID_LEVEL"},
             {"ENVIRONMENT": "invalid_env"},
-            {"REDIS_PORT": "not_a_number"}
+            {"REDIS_PORT": "not_a_number"},
         ]
 
         for invalid_config in invalid_configs:
@@ -90,7 +90,7 @@ class TestCoreConfigFunctional:
                     settings = get_settings()
 
                     # 验证配置对象仍然有效
-                    assert hasattr(settings, 'dict')
+                    assert hasattr(settings, "dict")
 
                 except ImportError:
                     pytest.skip("Config module not available")
@@ -114,7 +114,9 @@ port = 6379
 
         # 尝试创建配置文件并加载
         with patch("builtins.open", MagicMock()) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = config_content
+            mock_open.return_value.__enter__.return_value.read.return_value = (
+                config_content
+            )
 
             try:
                 from src.core.config import load_config_from_file
@@ -132,7 +134,7 @@ port = 6379
         feature_flags = {
             "ENABLE_FEATURE_X": "true",
             "ENABLE_FEATURE_Y": "false",
-            "EXPERIMENTAL_MODE": "1"
+            "EXPERIMENTAL_MODE": "1",
         }
 
         with patch.dict(os.environ, feature_flags):
@@ -157,7 +159,7 @@ port = 6379
             "SECRET_KEY",
             "DATABASE_PASSWORD",
             "API_TOKEN",
-            "REDIS_PASSWORD"
+            "REDIS_PASSWORD",
         ]
 
         for key in sensitive_configs:
@@ -249,7 +251,7 @@ port = 6379
 
                         # 验证配置已更新
                         # 注意：这取决于实际的实现
-                        assert hasattr(settings2, 'dict')
+                        assert hasattr(settings2, "dict")
 
             except ImportError:
                 pytest.skip("Config module not available")
@@ -268,7 +270,7 @@ port = 6379
                 settings = get_settings()
 
                 # 验证基本结构
-                assert hasattr(settings, 'dict')
+                assert hasattr(settings, "dict")
 
             except ImportError:
                 pytest.skip("Config module not available")

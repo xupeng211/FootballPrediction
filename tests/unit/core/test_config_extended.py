@@ -3,11 +3,7 @@
 import os
 from unittest.mock import patch
 
-from src.core.config import (
-    Settings,
-    get_settings,
-    config
-)
+from src.core.config import Settings, get_settings, config
 
 
 class TestConfigExtended:
@@ -27,29 +23,34 @@ class TestConfigExtended:
 
     def test_settings_with_custom_api_keys(self):
         """测试自定义API密钥"""
-        with patch.dict(os.environ, {
-            "OPENAI_API_KEY": "test-openai-key",
-            "ANTHROPIC_API_KEY": "test-anthropic-key"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "test-openai-key",
+                "ANTHROPIC_API_KEY": "test-anthropic-key",
+            },
+        ):
             settings = Settings()
             assert settings.openai_api_key == "test-openai-key"
             assert settings.anthropic_api_key == "test-anthropic-key"
 
     def test_settings_with_custom_urls(self):
         """测试自定义URLs"""
-        with patch.dict(os.environ, {
-            "API_V1_STR": "/api/v2",
-            "PROJECT_NAME": "Test Project"
-        }):
+        with patch.dict(
+            os.environ, {"API_V1_STR": "/api/v2", "PROJECT_NAME": "Test Project"}
+        ):
             settings = Settings()
             assert settings.api_v1_str == "/api/v2"
             assert settings.project_name == "Test Project"
 
     def test_settings_with_cors_origins(self):
         """测试CORS origins配置"""
-        with patch.dict(os.environ, {
-            "BACKEND_CORS_ORIGINS": '["http://localhost:3000", "https://example.com"]'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "BACKEND_CORS_ORIGINS": '["http://localhost:3000", "https://example.com"]'
+            },
+        ):
             settings = Settings()
             assert "http://localhost:3000" in settings.backend_cors_origins
             assert "https://example.com" in settings.backend_cors_origins
@@ -59,7 +60,7 @@ class TestConfigExtended:
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
             settings = Settings()
             # 测试环境属性（如果存在）
-            if hasattr(settings, 'environment'):
+            if hasattr(settings, "environment"):
                 assert settings.environment == "production"
 
     def test_config_object(self):
@@ -71,14 +72,14 @@ class TestConfigExtended:
         """测试数据库URL属性"""
         settings = Settings()
         # 测试数据库URL属性（如果存在）
-        if hasattr(settings, 'database_url'):
+        if hasattr(settings, "database_url"):
             assert settings.database_url is not None
 
     def test_redis_url_property(self):
         """测试Redis URL属性"""
         settings = Settings()
         # 测试Redis URL属性（如果存在）
-        if hasattr(settings, 'redis_url'):
+        if hasattr(settings, "redis_url"):
             assert settings.redis_url is not None
 
     def test_get_settings_caching(self):
@@ -97,13 +98,10 @@ class TestConfigExtended:
 
     def test_settings_with_numeric_values(self):
         """测试数值配置"""
-        with patch.dict(os.environ, {
-            "API_PORT": "9000",
-            "WORKERS": "4"
-        }):
+        with patch.dict(os.environ, {"API_PORT": "9000", "WORKERS": "4"}):
             settings = Settings()
             # 验证数值被正确解析（如果存在这些属性）
-            if hasattr(settings, 'api_port'):
+            if hasattr(settings, "api_port"):
                 assert settings.api_port == 9000
 
     def test_settings_with_boolean_values(self):
@@ -114,14 +112,14 @@ class TestConfigExtended:
             ("1", True),
             ("0", False),
             ("yes", True),
-            ("no", False)
+            ("no", False),
         ]
 
         for value, expected in test_cases:
             with patch.dict(os.environ, {"ENABLE_FEATURE": value}):
                 settings = Settings()
                 # 验证布尔值被正确解析（如果存在该属性）
-                if hasattr(settings, 'enable_feature'):
+                if hasattr(settings, "enable_feature"):
                     assert settings.enable_feature is expected
 
     def test_environment_detection(self):
@@ -132,5 +130,5 @@ class TestConfigExtended:
             with patch.dict(os.environ, {"ENVIRONMENT": env}):
                 settings = Settings()
                 # 测试环境检测（如果有相关属性）
-                if hasattr(settings, 'environment'):
+                if hasattr(settings, "environment"):
                     assert settings.environment == env

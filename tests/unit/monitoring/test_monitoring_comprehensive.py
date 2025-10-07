@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import json
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -24,40 +24,45 @@ class TestMonitoringComprehensive:
         try:
             from src.monitoring.metrics_collector import MetricsCollector
 
-            with patch('src.monitoring.metrics_collector.logger') as mock_logger:
+            with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
                 collector.logger = mock_logger
 
                 # 测试收集不同类型的指标
                 metrics = [
-                    ("counter", "requests_total", 1, {"method": "GET", "endpoint": "/api"}),
+                    (
+                        "counter",
+                        "requests_total",
+                        1,
+                        {"method": "GET", "endpoint": "/api"},
+                    ),
                     ("counter", "errors_total", 0, {"service": "api"}),
                     ("gauge", "active_connections", 10, {}),
                     ("gauge", "memory_usage", 75.5, {"unit": "percent"}),
                     ("histogram", "response_time", 0.05, {"bucket": "0.1"}),
-                    ("summary", "request_size", 1024, {"quantile": "0.95"})
+                    ("summary", "request_size", 1024, {"quantile": "0.95"}),
                 ]
 
                 for metric_type, name, value, labels in metrics:
-                    if hasattr(collector, 'collect_metric'):
+                    if hasattr(collector, "collect_metric"):
                         collector.collect_metric(name, value, labels, metric_type)
 
                 # 测试批量收集
-                if hasattr(collector, 'collect_batch'):
+                if hasattr(collector, "collect_batch"):
                     batch_metrics = {
                         "cpu_usage": 45.2,
                         "memory_usage": 67.8,
-                        "disk_usage": 23.4
+                        "disk_usage": 23.4,
                     }
                     collector.collect_batch(batch_metrics)
 
                 # 测试获取指标
-                if hasattr(collector, 'get_metrics'):
+                if hasattr(collector, "get_metrics"):
                     metrics_data = collector.get_metrics()
                     assert isinstance(metrics_data, dict)
 
                 # 测试重置指标
-                if hasattr(collector, 'reset'):
+                if hasattr(collector, "reset"):
                     collector.reset()
 
         except ImportError:
@@ -68,7 +73,7 @@ class TestMonitoringComprehensive:
         try:
             from src.monitoring.system_monitor import SystemMonitor
 
-            with patch('src.monitoring.system_monitor.logger') as mock_logger:
+            with patch("src.monitoring.system_monitor.logger") as mock_logger:
                 monitor = SystemMonitor()
                 monitor.logger = mock_logger
 
@@ -80,26 +85,26 @@ class TestMonitoringComprehensive:
                     "network_io",
                     "process_count",
                     "load_average",
-                    "uptime"
+                    "uptime",
                 ]
 
                 for metric in system_metrics:
-                    if hasattr(monitor, f'get_{metric}'):
-                        value = getattr(monitor, f'get_{metric}')()
+                    if hasattr(monitor, f"get_{metric}"):
+                        value = getattr(monitor, f"get_{metric}")()
                         assert value is not None
 
                 # 测试健康检查
-                if hasattr(monitor, 'check_system_health'):
+                if hasattr(monitor, "check_system_health"):
                     health = monitor.check_system_health()
                     assert isinstance(health, dict)
 
                 # 测试系统信息
-                if hasattr(monitor, 'get_system_info'):
+                if hasattr(monitor, "get_system_info"):
                     info = monitor.get_system_info()
                     assert isinstance(info, dict)
 
                 # 测试进程监控
-                if hasattr(monitor, 'monitor_processes'):
+                if hasattr(monitor, "monitor_processes"):
                     processes = monitor.monitor_processes()
                     assert isinstance(processes, list)
 
@@ -111,49 +116,52 @@ class TestMonitoringComprehensive:
         try:
             from src.monitoring.alert_manager import AlertManager
 
-            with patch('src.monitoring.alert_manager.logger') as mock_logger:
+            with patch("src.monitoring.alert_manager.logger") as mock_logger:
                 manager = AlertManager()
                 manager.logger = mock_logger
 
                 # 测试创建不同级别的告警
                 alerts = [
                     ("info", "System running normally", {"component": "system"}),
-                    ("warning", "High memory usage", {"threshold": "80%", "current": "85%"}),
+                    (
+                        "warning",
+                        "High memory usage",
+                        {"threshold": "80%", "current": "85%"},
+                    ),
                     ("error", "Database connection failed", {"retry_count": 3}),
-                    ("critical", "Service unavailable", {"downtime": "5min"})
+                    ("critical", "Service unavailable", {"downtime": "5min"}),
                 ]
 
                 for severity, message, context in alerts:
-                    if hasattr(manager, 'create_alert'):
+                    if hasattr(manager, "create_alert"):
                         alert = manager.create_alert(severity, message, context)
                         assert alert is not None
 
                 # 测试告警规则
-                if hasattr(manager, 'add_rule'):
+                if hasattr(manager, "add_rule"):
                     rule = {
                         "name": "high_cpu",
                         "condition": "cpu_usage > 90",
                         "severity": "warning",
-                        "action": "notify"
+                        "action": "notify",
                     }
                     manager.add_rule(rule)
 
                 # 测试告警评估
-                if hasattr(manager, 'evaluate_rules'):
+                if hasattr(manager, "evaluate_rules"):
                     metrics = {"cpu_usage": 95, "memory_usage": 70}
                     triggered_alerts = manager.evaluate_rules(metrics)
                     assert isinstance(triggered_alerts, list)
 
                 # 测试告警历史
-                if hasattr(manager, 'get_alert_history'):
+                if hasattr(manager, "get_alert_history"):
                     history = manager.get_alert_history(limit=10)
                     assert isinstance(history, list)
 
                 # 测试告警通知
-                if hasattr(manager, 'send_notification'):
+                if hasattr(manager, "send_notification"):
                     notification_sent = manager.send_notification(
-                        "Test notification",
-                        channel="email"
+                        "Test notification", channel="email"
                     )
                     assert notification_sent is True or notification_sent is False
 
@@ -165,7 +173,7 @@ class TestMonitoringComprehensive:
         try:
             from src.monitoring.anomaly_detector import AnomalyDetector
 
-            with patch('src.monitoring.anomaly_detector.logger') as mock_logger:
+            with patch("src.monitoring.anomaly_detector.logger") as mock_logger:
                 detector = AnomalyDetector()
                 detector.logger = mock_logger
 
@@ -176,9 +184,9 @@ class TestMonitoringComprehensive:
 
                 # 测试不同的检测方法
                 detection_methods = [
-                    'detect_statistical_anomalies',
-                    'detect_seasonal_anomalies',
-                    'detect_pattern_anomalies'
+                    "detect_statistical_anomalies",
+                    "detect_seasonal_anomalies",
+                    "detect_pattern_anomalies",
                 ]
 
                 for method in detection_methods:
@@ -187,11 +195,11 @@ class TestMonitoringComprehensive:
                         assert isinstance(anomalies, list)
 
                 # 测试模型训练（如果有）
-                if hasattr(detector, 'train_model'):
+                if hasattr(detector, "train_model"):
                     detector.train_model(normal_data)
 
                 # 测试异常评分
-                if hasattr(detector, 'get_anomaly_score'):
+                if hasattr(detector, "get_anomaly_score"):
                     score = detector.get_anomaly_score(100, normal_data)
                     assert isinstance(score, (int, float))
 
@@ -205,27 +213,27 @@ class TestMonitoringComprehensive:
             "overview": {
                 "system_health": "healthy",
                 "active_alerts": 2,
-                "last_check": datetime.now().isoformat()
+                "last_check": datetime.now().isoformat(),
             },
             "metrics": {
                 "cpu": {
                     "current": 45.2,
                     "average": 42.1,
                     "max": 78.5,
-                    "status": "normal"
+                    "status": "normal",
                 },
                 "memory": {
                     "current": 67.8,
                     "average": 65.3,
                     "max": 85.2,
-                    "status": "warning"
+                    "status": "warning",
                 },
                 "disk": {
                     "current": 23.4,
                     "average": 22.1,
                     "max": 45.7,
-                    "status": "normal"
-                }
+                    "status": "normal",
+                },
             },
             "alerts": [
                 {
@@ -233,28 +241,28 @@ class TestMonitoringComprehensive:
                     "severity": "warning",
                     "message": "Memory usage above 65%",
                     "timestamp": datetime.now().isoformat(),
-                    "acknowledged": False
+                    "acknowledged": False,
                 },
                 {
                     "id": 2,
                     "severity": "info",
                     "message": "System backup completed",
                     "timestamp": (datetime.now() - timedelta(hours=1)).isoformat(),
-                    "acknowledged": True
-                }
+                    "acknowledged": True,
+                },
             ],
             "graphs": {
                 "cpu_history": [
                     {"time": "2024-01-01T00:00:00Z", "value": 40.5},
                     {"time": "2024-01-01T00:05:00Z", "value": 42.3},
-                    {"time": "2024-01-01T00:10:00Z", "value": 45.2}
+                    {"time": "2024-01-01T00:10:00Z", "value": 45.2},
                 ],
                 "memory_history": [
                     {"time": "2024-01-01T00:00:00Z", "value": 65.1},
                     {"time": "2024-01-01T00:05:00Z", "value": 66.8},
-                    {"time": "2024-01-01T00:10:00Z", "value": 67.8}
-                ]
-            }
+                    {"time": "2024-01-01T00:10:00Z", "value": 67.8},
+                ],
+            },
         }
 
         # 验证数据结构
@@ -264,7 +272,11 @@ class TestMonitoringComprehensive:
         assert "graphs" in dashboard_data
 
         # 验证数据完整性
-        assert dashboard_data["overview"]["system_health"] in ["healthy", "warning", "critical"]
+        assert dashboard_data["overview"]["system_health"] in [
+            "healthy",
+            "warning",
+            "critical",
+        ]
         assert len(dashboard_data["metrics"]) == 3
         assert isinstance(dashboard_data["alerts"], list)
         assert "cpu_history" in dashboard_data["graphs"]
@@ -286,7 +298,7 @@ class TestMonitoringComprehensive:
                 def collect_all_metrics(self):
                     all_metrics = {}
                     for collector in self.collectors:
-                        if hasattr(collector, 'get_metrics'):
+                        if hasattr(collector, "get_metrics"):
                             metrics = collector.get_metrics()
                             all_metrics.update(metrics)
                     return all_metrics
@@ -296,11 +308,9 @@ class TestMonitoringComprehensive:
                     alerts = []
                     for name, value in metrics.items():
                         if isinstance(value, (int, float)) and value > 90:
-                            alerts.append({
-                                "metric": name,
-                                "value": value,
-                                "severity": "warning"
-                            })
+                            alerts.append(
+                                {"metric": name, "value": value, "severity": "warning"}
+                            )
                     return alerts
 
             # 测试集成
@@ -308,16 +318,10 @@ class TestMonitoringComprehensive:
 
             # 模拟收集器
             collector1 = MagicMock()
-            collector1.get_metrics.return_value = {
-                "cpu_usage": 45,
-                "memory_usage": 67
-            }
+            collector1.get_metrics.return_value = {"cpu_usage": 45, "memory_usage": 67}
 
             collector2 = MagicMock()
-            collector2.get_metrics.return_value = {
-                "disk_usage": 23,
-                "network_io": 1000
-            }
+            collector2.get_metrics.return_value = {"disk_usage": 23, "network_io": 1000}
 
             integration.add_collector(collector1)
             integration.add_collector(collector2)
@@ -345,13 +349,13 @@ class TestMonitoringComprehensive:
                 "system": {
                     "enabled": True,
                     "interval": 60,
-                    "metrics": ["cpu", "memory", "disk"]
+                    "metrics": ["cpu", "memory", "disk"],
                 },
                 "application": {
                     "enabled": True,
                     "interval": 30,
-                    "metrics": ["requests", "errors", "response_time"]
-                }
+                    "metrics": ["requests", "errors", "response_time"],
+                },
             },
             "alerts": {
                 "rules": [
@@ -359,34 +363,31 @@ class TestMonitoringComprehensive:
                         "name": "high_cpu",
                         "condition": "cpu > 80",
                         "severity": "warning",
-                        "cooldown": 300
+                        "cooldown": 300,
                     },
                     {
                         "name": "high_memory",
                         "condition": "memory > 90",
                         "severity": "critical",
-                        "cooldown": 60
-                    }
+                        "cooldown": 60,
+                    },
                 ],
                 "notifications": {
-                    "email": {
-                        "enabled": True,
-                        "recipients": ["admin@example.com"]
-                    },
+                    "email": {"enabled": True, "recipients": ["admin@example.com"]},
                     "slack": {
                         "enabled": True,
-                        "webhook": "https://hooks.slack.com/..."
-                    }
-                }
+                        "webhook": "https://hooks.slack.com/...",
+                    },
+                },
             },
             "dashboard": {
                 "refresh_interval": 5,
                 "retention_days": 7,
                 "graphs": [
                     {"name": "system_usage", "metrics": ["cpu", "memory", "disk"]},
-                    {"name": "application_metrics", "metrics": ["requests", "errors"]}
-                ]
-            }
+                    {"name": "application_metrics", "metrics": ["requests", "errors"]},
+                ],
+            },
         }
 
         # 验证配置
@@ -415,15 +416,11 @@ class TestMonitoringComprehensive:
                 "memory_usage": 67.8,
                 "disk_usage": 23.4,
                 "requests_per_second": 125,
-                "error_rate": 0.02
+                "error_rate": 0.02,
             },
             "alerts": [
-                {
-                    "id": 1,
-                    "severity": "warning",
-                    "message": "High memory usage"
-                }
-            ]
+                {"id": 1, "severity": "warning", "message": "High memory usage"}
+            ],
         }
 
         # 测试JSON导出
@@ -434,11 +431,13 @@ class TestMonitoringComprehensive:
         # 测试CSV导出（模拟）
         csv_rows = []
         for metric_name, value in monitoring_data["metrics"].items():
-            csv_rows.append({
-                "timestamp": monitoring_data["timestamp"],
-                "metric_name": metric_name,
-                "value": value
-            })
+            csv_rows.append(
+                {
+                    "timestamp": monitoring_data["timestamp"],
+                    "metric_name": metric_name,
+                    "value": value,
+                }
+            )
 
         assert len(csv_rows) == 5
         assert csv_rows[0]["metric_name"] == "cpu_usage"
@@ -457,6 +456,7 @@ class TestMonitoringComprehensive:
 
     def test_monitoring_performance(self):
         """测试监控模块性能"""
+
         # 测试大量指标收集
         class PerformanceTest:
             def __init__(self):
@@ -471,7 +471,7 @@ class TestMonitoringComprehensive:
                     {
                         "name": f"metric_{i}",
                         "value": i * 1.5,
-                        "labels": {"source": "test"}
+                        "labels": {"source": "test"},
                     }
                     self.metrics_count += 1
                 self.end_time = time.time()

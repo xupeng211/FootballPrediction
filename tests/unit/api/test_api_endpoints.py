@@ -10,7 +10,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -41,6 +41,7 @@ class TestAPIEndpoints:
     def test_predictions_endpoint(self, app):
         """测试预测端点"""
         try:
+
             @app.post("/predictions")
             async def predict(request: dict):
                 return {"prediction": [0.5, 0.3, 0.2]}
@@ -55,13 +56,10 @@ class TestAPIEndpoints:
     def test_data_endpoint(self, app):
         """测试数据端点"""
         try:
+
             @app.get("/data/matches/{match_id}")
             async def get_match(match_id: int):
-                return {
-                    "id": match_id,
-                    "home_team": "Team A",
-                    "away_team": "Team B"
-                }
+                return {"id": match_id, "home_team": "Team A", "away_team": "Team B"}
 
             client = TestClient(app)
             response = client.get("/data/matches/123")
@@ -73,12 +71,10 @@ class TestAPIEndpoints:
     def test_features_endpoint(self, app):
         """测试特征端点"""
         try:
+
             @app.get("/features/matches/{match_id}")
             async def get_features(match_id: int):
-                return {
-                    "match_id": match_id,
-                    "features": {"goal_difference": 1.5}
-                }
+                return {"match_id": match_id, "features": {"goal_difference": 1.5}}
 
             client = TestClient(app)
             response = client.get("/features/matches/123")
@@ -90,12 +86,13 @@ class TestAPIEndpoints:
     def test_models_endpoint(self, app):
         """测试模型端点"""
         try:
+
             @app.get("/models")
             async def list_models():
                 return {
                     "models": [
                         {"id": "model_1", "type": "classifier"},
-                        {"id": "model_2", "type": "regressor"}
+                        {"id": "model_2", "type": "regressor"},
                     ]
                 }
 
@@ -109,11 +106,12 @@ class TestAPIEndpoints:
     def test_monitoring_endpoint(self, app):
         """测试监控端点"""
         try:
+
             @app.get("/monitoring/metrics")
             async def get_metrics():
                 return {
                     "system": {"cpu": 50, "memory": 60},
-                    "application": {"requests_per_second": 100}
+                    "application": {"requests_per_second": 100},
                 }
 
             client = TestClient(app)
@@ -126,6 +124,7 @@ class TestAPIEndpoints:
     def test_error_handling(self, app):
         """测试错误处理"""
         try:
+
             @app.get("/error")
             async def error_endpoint():
                 raise ValueError("Test error")
@@ -167,7 +166,9 @@ class TestAPIEndpoints:
             assert response.status_code == 200
 
             # 无效请求
-            response = client.post("/validate", json={"match_id": "invalid", "model": "test"})
+            response = client.post(
+                "/validate", json={"match_id": "invalid", "model": "test"}
+            )
             assert response.status_code == 422
 
         except Exception:
@@ -194,12 +195,10 @@ class TestAPIEndpoints:
     def test_query_parameters(self, app):
         """测试查询参数"""
         try:
+
             @app.get("/search")
             async def search(q: str = None, limit: int = 10):
-                return {
-                    "query": q or "default",
-                    "limit": limit
-                }
+                return {"query": q or "default", "limit": limit}
 
             client = TestClient(app)
 
@@ -221,18 +220,19 @@ class TestAPIEndpoints:
     def test_headers_handling(self, app):
         """测试请求头处理"""
         try:
+
             @app.get("/headers")
             async def headers_endpoint(headers: dict):
                 return {
                     "user_agent": headers.get("user-agent"),
-                    "accept": headers.get("accept")
+                    "accept": headers.get("accept"),
                 }
 
             client = TestClient(app)
-            response = client.get("/headers", headers={
-                "user-agent": "test-client",
-                "accept": "application/json"
-            })
+            response = client.get(
+                "/headers",
+                headers={"user-agent": "test-client", "accept": "application/json"},
+            )
             assert response.status_code == 200
 
         except Exception:
@@ -246,8 +246,7 @@ class TestAPIEndpoints:
             @app.get("/custom-headers")
             async def custom_headers():
                 return Response(
-                    content="Custom content",
-                    headers={"X-Custom-Header": "test-value"}
+                    content="Custom content", headers={"X-Custom-Header": "test-value"}
                 )
 
             client = TestClient(app)
@@ -261,12 +260,13 @@ class TestAPIEndpoints:
     def test_json_response(self, app):
         """测试 JSON 响应"""
         try:
+
             @app.get("/json")
             async def json_endpoint():
                 return {
                     "message": "Hello, World!",
                     "data": {"key": "value"},
-                    "list": [1, 2, 3]
+                    "list": [1, 2, 3],
                 }
 
             client = TestClient(app)
@@ -288,7 +288,7 @@ class TestAPIEndpoints:
                 CORSMiddleware,
                 allow_origins=["*"],
                 allow_methods=["GET", "POST"],
-                allow_headers=["*"]
+                allow_headers=["*"],
             )
 
             @app.get("/cors-test")

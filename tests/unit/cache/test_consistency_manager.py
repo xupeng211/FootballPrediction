@@ -10,6 +10,7 @@ class TestConsistencyManagerBasic:
         """测试模块导入"""
         try:
             from src.cache.consistency_manager import ConsistencyManager
+
             assert ConsistencyManager is not None
         except ImportError as e:
             pytest.skip(f"无法导入ConsistencyManager: {e}")
@@ -18,6 +19,7 @@ class TestConsistencyManagerBasic:
         """测试类实例化"""
         try:
             from src.cache.consistency_manager import ConsistencyManager
+
             manager = ConsistencyManager()
             assert manager is not None
         except ImportError:
@@ -29,14 +31,11 @@ class TestConsistencyManagerBasic:
         """测试方法存在"""
         try:
             from src.cache.consistency_manager import ConsistencyManager
+
             manager = ConsistencyManager()
 
             # 检查常见的方法
-            expected_methods = [
-                'check_consistency',
-                'validate_cache',
-                'sync_data'
-            ]
+            expected_methods = ["check_consistency", "validate_cache", "sync_data"]
 
             for method in expected_methods:
                 if hasattr(manager, method):

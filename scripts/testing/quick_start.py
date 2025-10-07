@@ -4,7 +4,6 @@
 执行第一阶段的自动化改进任务
 """
 
-import os
 import sys
 import subprocess
 import json
@@ -15,20 +14,17 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
+
 def run_command(cmd, description, shell=True):
     """运行命令并记录结果"""
     print(f"\n{'='*60}")
     print(f"执行: {description}")
     print(f"命令: {cmd}")
-    print('='*60)
+    print("=" * 60)
 
     try:
         result = subprocess.run(
-            cmd,
-            shell=shell,
-            capture_output=True,
-            text=True,
-            cwd=project_root
+            cmd, shell=shell, capture_output=True, text=True, cwd=project_root
         )
 
         if result.stdout:
@@ -50,6 +46,7 @@ def run_command(cmd, description, shell=True):
         print(f"❌ 异常: {e}")
         return False
 
+
 def check_environment():
     """检查环境准备情况"""
     print("\n🔍 检查环境准备情况...")
@@ -68,6 +65,7 @@ def check_environment():
         results[name] = success
 
     return results
+
 
 def create_test_env_file():
     """创建测试环境配置文件"""
@@ -122,6 +120,7 @@ MOCK_DATABASE=true
     print(f"✅ 创建文件: {env_file}")
     return True
 
+
 def run_basic_tests():
     """运行基础测试"""
     print("\n🧪 运行基础测试...")
@@ -129,7 +128,7 @@ def run_basic_tests():
     # 1. 运行单个测试验证环境
     success = run_command(
         "python -m pytest tests/unit/api/test_health.py::TestHealthAPI::test_health_check_success -v",
-        "验证健康检查测试"
+        "验证健康检查测试",
     )
 
     if not success:
@@ -139,16 +138,17 @@ def run_basic_tests():
     # 2. 运行覆盖率测试（低阈值）
     success = run_command(
         "python -m pytest tests/unit/test_simple_functional.py --cov=src --cov-report=term-missing --cov-fail-under=10 -v",
-        "运行简单功能测试（覆盖率阈值10%）"
+        "运行简单功能测试（覆盖率阈值10%）",
     )
 
     # 3. 生成覆盖率报告
     run_command(
         "python -m pytest tests/unit/test_simple_functional.py --cov=src --cov-report=html --cov-report=term",
-        "生成HTML覆盖率报告"
+        "生成HTML覆盖率报告",
     )
 
     return True
+
 
 def analyze_current_coverage():
     """分析当前覆盖率状况"""
@@ -157,7 +157,7 @@ def analyze_current_coverage():
     # 运行覆盖率分析
     success = run_command(
         "python -m pytest --cov=src --cov-report=json --cov-report=term -q",
-        "生成覆盖率JSON报告"
+        "生成覆盖率JSON报告",
     )
 
     if not success:
@@ -187,17 +187,14 @@ def analyze_current_coverage():
 
         # 找出低覆盖率模块
         if low_coverage:
-            print(f"\n⚠️  低覆盖率模块 (<20%):")
+            print("\n⚠️  低覆盖率模块 (<20%):")
             for filename, coverage in sorted(low_coverage, key=lambda x: x[1]):
                 print(f"  - {filename}: {coverage:.2f}%")
 
-        return {
-            "total": total_coverage,
-            "files": files,
-            "low_coverage": low_coverage
-        }
+        return {"total": total_coverage, "files": files, "low_coverage": low_coverage}
 
     return None
+
 
 def generate_improvement_plan(coverage_data):
     """生成改进计划"""
@@ -234,17 +231,21 @@ def generate_improvement_plan(coverage_data):
         difficulty = min(10, lines / 50)
 
         # 优先级分数 = 重要性 * 提升潜力 / 难度
-        priority_score = (importance * uncovered_lines) / difficulty if difficulty > 0 else 0
+        priority_score = (
+            (importance * uncovered_lines) / difficulty if difficulty > 0 else 0
+        )
 
-        priority_modules.append({
-            "filename": filename,
-            "coverage": coverage,
-            "lines": lines,
-            "uncovered_lines": uncovered_lines,
-            "importance": importance,
-            "difficulty": difficulty,
-            "priority_score": priority_score
-        })
+        priority_modules.append(
+            {
+                "filename": filename,
+                "coverage": coverage,
+                "lines": lines,
+                "uncovered_lines": uncovered_lines,
+                "importance": importance,
+                "difficulty": difficulty,
+                "priority_score": priority_score,
+            }
+        )
 
     # 按优先级排序
     priority_modules.sort(key=lambda x: x["priority_score"], reverse=True)
@@ -256,10 +257,12 @@ def generate_improvement_plan(coverage_data):
     print("-" * 80)
 
     for i, module in enumerate(priority_modules[:10], 1):
-        print(f"{i:2d}. {module['filename']:<40} "
-              f"{module['coverage']:.1f}%{'':<7} "
-              f"{module['uncovered_lines']:.0f}行{'':<6} "
-              f"{module['priority_score']:.1f}")
+        print(
+            f"{i:2d}. {module['filename']:<40} "
+            f"{module['coverage']:.1f}%{'':<7} "
+            f"{module['uncovered_lines']:.0f}行{'':<6} "
+            f"{module['priority_score']:.1f}"
+        )
 
     # 保存改进计划
     plan_file = project_root / "test_improvement_plan.json"
@@ -269,6 +272,7 @@ def generate_improvement_plan(coverage_data):
     print(f"\n✅ 改进计划已保存到: {plan_file}")
 
     return priority_modules
+
 
 def create_weekly_tasks(priority_modules):
     """创建第一周任务列表"""
@@ -293,7 +297,7 @@ def create_weekly_tasks(priority_modules):
         "Day 6-7 (服务层)": [
             "提升 src/services/base.py 覆盖率到 85%",
             "创建测试数据工厂",
-        ]
+        ],
     }
 
     for phase, tasks in week_tasks.items():
@@ -313,11 +317,12 @@ def create_weekly_tasks(priority_modules):
 
     print(f"\n✅ 任务列表已保存到: {tasks_file}")
 
+
 def main():
     """主函数"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚀 测试覆盖率提升快速启动脚本")
-    print("="*60)
+    print("=" * 60)
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"项目根目录: {project_root}")
 
@@ -342,9 +347,9 @@ def main():
     create_weekly_tasks(priority_modules)
 
     # 7. 生成总结报告
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 快速启动完成！")
-    print("="*60)
+    print("=" * 60)
 
     if coverage_data:
         print(f"当前覆盖率: {coverage_data['total']:.2f}%")
@@ -361,6 +366,7 @@ def main():
     print("- 运行单元测试: make test.unit")
     print("- 生成覆盖率报告: make coverage-local")
     print("- 查看覆盖率报告: open htmlcov/index.html")
+
 
 if __name__ == "__main__":
     main()

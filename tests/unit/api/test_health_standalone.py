@@ -10,10 +10,11 @@ import time
 from unittest.mock import MagicMock, patch
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入模块，绕过services导入
 import importlib.util
+
 spec = importlib.util.spec_from_file_location("health", "src/api/health.py")
 health = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(health)
@@ -30,9 +31,9 @@ class TestHealthModuleStandalone:
 
     def test_constants(self):
         """测试常量定义"""
-        assert hasattr(health, '_app_start_time')
-        assert hasattr(health, 'router')
-        assert hasattr(health, 'ServiceCheckError')
+        assert hasattr(health, "_app_start_time")
+        assert hasattr(health, "router")
+        assert hasattr(health, "ServiceCheckError")
 
         # 验证启动时间
         assert isinstance(health._app_start_time, float)
@@ -67,16 +68,16 @@ class TestHealthModuleStandalone:
     def test_optional_checks_enabled(self):
         """测试_optional_checks_enabled函数"""
         # 模拟环境变量
-        with patch.object(health, 'FAST_FAIL', True):
-            with patch.object(health, 'MINIMAL_HEALTH_MODE', False):
+        with patch.object(health, "FAST_FAIL", True):
+            with patch.object(health, "MINIMAL_HEALTH_MODE", False):
                 assert health._optional_checks_enabled() is True
 
-        with patch.object(health, 'FAST_FAIL', False):
-            with patch.object(health, 'MINIMAL_HEALTH_MODE', False):
+        with patch.object(health, "FAST_FAIL", False):
+            with patch.object(health, "MINIMAL_HEALTH_MODE", False):
                 assert health._optional_checks_enabled() is False
 
-        with patch.object(health, 'FAST_FAIL', True):
-            with patch.object(health, 'MINIMAL_HEALTH_MODE', True):
+        with patch.object(health, "FAST_FAIL", True):
+            with patch.object(health, "MINIMAL_HEALTH_MODE", True):
                 assert health._optional_checks_enabled() is False
 
     @pytest.mark.asyncio
@@ -107,9 +108,9 @@ class TestHealthModuleStandalone:
 
     def test_circuit_breakers(self):
         """测试熔断器定义"""
-        assert hasattr(health, '_redis_circuit_breaker')
-        assert hasattr(health, '_kafka_circuit_breaker')
-        assert hasattr(health, '_mlflow_circuit_breaker')
+        assert hasattr(health, "_redis_circuit_breaker")
+        assert hasattr(health, "_kafka_circuit_breaker")
+        assert hasattr(health, "_mlflow_circuit_breaker")
 
         # 验证熔断器属性
         assert health._redis_circuit_breaker.failure_threshold == 3
@@ -134,8 +135,8 @@ class TestHealthModuleStandalone:
             ]
 
             for fast_fail, minimal, expected in test_cases:
-                with patch.object(health, 'FAST_FAIL', fast_fail == "true"):
-                    with patch.object(health, 'MINIMAL_HEALTH_MODE', minimal == "true"):
+                with patch.object(health, "FAST_FAIL", fast_fail == "true"):
+                    with patch.object(health, "MINIMAL_HEALTH_MODE", minimal == "true"):
                         assert health._optional_checks_enabled() == expected
 
         finally:
@@ -148,7 +149,7 @@ class TestHealthModuleStandalone:
     @pytest.mark.asyncio
     async def test_collect_database_health_no_manager(self):
         """测试数据库管理器未初始化"""
-        with patch('src.api.health.get_database_manager') as mock_get:
+        with patch("src.api.health.get_database_manager") as mock_get:
             mock_get.side_effect = RuntimeError("Manager not initialized")
 
             result = await health._collect_database_health()
@@ -162,7 +163,7 @@ class TestHealthModuleStandalone:
         mock_manager = MagicMock()
         mock_manager.get_session.side_effect = RuntimeError("Session error")
 
-        with patch('src.api.health.get_database_manager', return_value=mock_manager):
+        with patch("src.api.health.get_database_manager", return_value=mock_manager):
             result = await health._collect_database_health()
 
             assert result["status"] == "skipped"
@@ -172,14 +173,14 @@ class TestHealthModuleStandalone:
         """测试模块导入成功"""
         # 验证关键函数和类存在
         required_items = [
-            'ServiceCheckError',
-            '_optional_check_skipped',
-            '_optional_checks_enabled',
-            '_check_database',
-            '_collect_database_health',
-            'health_check',
-            'liveness_check',
-            'readiness_check'
+            "ServiceCheckError",
+            "_optional_check_skipped",
+            "_optional_checks_enabled",
+            "_check_database",
+            "_collect_database_health",
+            "health_check",
+            "liveness_check",
+            "readiness_check",
         ]
 
         for item in required_items:
@@ -192,12 +193,14 @@ class TestHealthModuleStandalone:
 
         # 检查路由路径
         paths = [route.path for route in routes]
-        assert any(path in ['', '/'] for path in paths), "Should have health check endpoint"
+        assert any(
+            path in ["", "/"] for path in paths
+        ), "Should have health check endpoint"
 
     def test_uptime_calculation(self):
         """测试运行时间计算"""
         current_time = time.time()
-        with patch.object(health, '_app_start_time', current_time - 100):
+        with patch.object(health, "_app_start_time", current_time - 100):
             uptime = current_time - health._app_start_time
             assert 99 <= uptime <= 101  # 允许1秒误差
 
@@ -209,8 +212,8 @@ class TestHealthModuleStandalone:
                 "service": "Redis",
                 "host": "localhost",
                 "port": 6379,
-                "error_code": "ECONNREFUSED"
-            }
+                "error_code": "ECONNREFUSED",
+            },
         )
 
         assert error.details["service"] == "Redis"
@@ -225,7 +228,8 @@ if __name__ == "__main__":
 
     # 修改asyncio事件循环策略以避免警告
     import asyncio
-    if sys.platform == 'win32':
+
+    if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     pytest.main([__file__, "-v"])

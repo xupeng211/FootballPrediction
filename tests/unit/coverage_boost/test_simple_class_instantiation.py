@@ -8,7 +8,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -22,7 +22,7 @@ class TestSimpleClassInstantiation:
 
             calculator = FeatureCalculator()
             assert calculator is not None
-            assert hasattr(calculator, 'calculate') or hasattr(calculator, 'compute')
+            assert hasattr(calculator, "calculate") or hasattr(calculator, "compute")
         except ImportError:
             pytest.skip("Feature calculator not available")
         except Exception as e:

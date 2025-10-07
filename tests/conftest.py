@@ -31,6 +31,8 @@ except ImportError:
 
     def feast_mock_required(func):
         return pytest.mark.skip(reason="Feast mock not available")(func)
+
+
 from fastapi.testclient import TestClient
 
 from tests.helpers import (

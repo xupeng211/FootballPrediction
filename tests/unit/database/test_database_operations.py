@@ -12,7 +12,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -46,7 +46,7 @@ class TestDatabaseOperations:
                 away_team_id=2,
                 match_date=datetime.now(),
                 status="scheduled",
-                league_id=1
+                league_id=1,
             )
 
             # 测试创建
@@ -94,7 +94,7 @@ class TestDatabaseOperations:
                 founded=2020,
                 stadium="Test Stadium",
                 city="Test City",
-                country="Test Country"
+                country="Test Country",
             )
 
             # 测试创建
@@ -138,7 +138,7 @@ class TestDatabaseOperations:
                 draw_prob=0.3,
                 away_win_prob=0.2,
                 confidence=0.85,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             # 测试创建
@@ -150,8 +150,9 @@ class TestDatabaseOperations:
             mock_session.scalars.return_value.all.return_value = predictions_list
 
             recent_predictions = mock_session.scalars(
-                select(Prediction)
-                .where(Prediction.created_at >= datetime.now() - timedelta(days=7))
+                select(Prediction).where(
+                    Prediction.created_at >= datetime.now() - timedelta(days=7)
+                )
             ).all()
 
             assert len(recent_predictions) == 2
@@ -166,10 +167,9 @@ class TestDatabaseOperations:
 
             # 测试模型性能统计
             mock_session.execute.return_value.fetchone.return_value = (100, 75)
-            stats_query = select(
-                Prediction.model_id,
-                Prediction.accuracy
-            ).where(Prediction.model_id == "test_model_v1")
+            stats_query = select(Prediction.model_id, Prediction.accuracy).where(
+                Prediction.model_id == "test_model_v1"
+            )
             stats = mock_session.execute(stats_query).fetchone()
             assert stats == (100, 75)
 
@@ -188,7 +188,7 @@ class TestDatabaseOperations:
                 home_win=2.5,
                 draw=3.2,
                 away_win=2.8,
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             )
 
             # 测试创建
@@ -217,7 +217,7 @@ class TestDatabaseOperations:
             assert odds.volume == 1000000
 
             # 测试赔率历史记录
-            if hasattr(odds, 'create_history_record'):
+            if hasattr(odds, "create_history_record"):
                 history_record = odds.create_history_record()
                 assert history_record.match_id == odds.match_id
                 assert history_record.bookmaker == odds.bookmaker
@@ -236,7 +236,7 @@ class TestDatabaseOperations:
                 feature_name="team_form",
                 feature_value=0.75,
                 feature_type="numeric",
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             # 测试创建
@@ -247,7 +247,7 @@ class TestDatabaseOperations:
             features_data = {
                 "team_form": 0.75,
                 "goal_difference": 5,
-                "head_to_head": 0.6
+                "head_to_head": 0.6,
             }
 
             for name, value in features_data.items():
@@ -255,7 +255,7 @@ class TestDatabaseOperations:
                     match_id=1,
                     feature_name=name,
                     feature_value=value,
-                    feature_type="numeric"
+                    feature_type="numeric",
                 )
                 mock_session.add(feature)
 
@@ -264,13 +264,12 @@ class TestDatabaseOperations:
             # 测试特征聚合
             mock_session.execute.return_value.fetchall.return_value = [
                 ("numeric", 10),
-                ("categorical", 5)
+                ("categorical", 5),
             ]
 
-            agg_query = select(
-                Feature.feature_type,
-                Feature.feature_value
-            ).group_by(Feature.feature_type)
+            agg_query = select(Feature.feature_type, Feature.feature_value).group_by(
+                Feature.feature_type
+            )
             aggregated = mock_session.execute(agg_query).fetchall()
 
             assert len(aggregated) == 2
@@ -290,7 +289,7 @@ class TestDatabaseOperations:
                 country="Test Country",
                 founded=2020,
                 current_season="2023/2024",
-                number_of_teams=20
+                number_of_teams=20,
             )
 
             # 测试创建
@@ -365,8 +364,7 @@ class TestDatabaseOperations:
             mock_session.scalars.return_value.all.return_value = []
 
             filtered_matches = mock_session.scalars(
-                select(Match)
-                .where(Match.status.in_(status_list))
+                select(Match).where(Match.status.in_(status_list))
             ).all()
 
             assert isinstance(filtered_matches, list)
@@ -374,9 +372,12 @@ class TestDatabaseOperations:
             # 测试复合查询
             mock_session.execute.return_value.fetchall.return_value = []
 
-            complex_query = select(Match).join(Match.home_team).where(
-                Match.status == "completed"
-            ).where(Match.match_date >= start_date)
+            complex_query = (
+                select(Match)
+                .join(Match.home_team)
+                .where(Match.status == "completed")
+                .where(Match.match_date >= start_date)
+            )
 
             results = mock_session.execute(complex_query).fetchall()
             assert isinstance(results, list)
@@ -391,8 +392,7 @@ class TestDatabaseOperations:
 
             # 批量插入
             teams_to_insert = [
-                Team(name=f"Team {i}", short_name=f"T{i}")
-                for i in range(100)
+                Team(name=f"Team {i}", short_name=f"T{i}") for i in range(100)
             ]
 
             for team in teams_to_insert:
@@ -402,19 +402,14 @@ class TestDatabaseOperations:
 
             # 批量更新
             update_statement = (
-                update(Team)
-                .where(Team.founded < 2000)
-                .values(stadium_capacity=50000)
+                update(Team).where(Team.founded < 2000).values(stadium_capacity=50000)
             )
 
             mock_session.execute(update_statement)
             mock_session.commit()
 
             # 批量删除
-            delete_statement = (
-                delete(Team)
-                .where(Team.name.like("Old%"))
-            )
+            delete_statement = delete(Team).where(Team.name.like("Old%"))
 
             mock_session.execute(delete_statement)
             mock_session.commit()
@@ -453,9 +448,12 @@ class TestDatabaseOperations:
     def test_database_connection_management(self):
         """测试数据库连接管理"""
         try:
-            from src.database.connection import DatabaseManager, MultiUserDatabaseManager
+            from src.database.connection import (
+                DatabaseManager,
+                MultiUserDatabaseManager,
+            )
 
-            with patch('src.database.connection.create_engine'):
+            with patch("src.database.connection.create_engine"):
                 # 测试单例模式（如果适用）
                 db_manager1 = DatabaseManager()
                 db_manager2 = DatabaseManager()

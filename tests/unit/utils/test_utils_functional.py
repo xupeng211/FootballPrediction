@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -19,7 +19,11 @@ class TestUtilsFunctional:
     def test_time_utils_functions(self):
         """测试时间工具函数"""
         try:
-            from src.utils.time_utils import get_current_time, format_duration, parse_datetime
+            from src.utils.time_utils import (
+                get_current_time,
+                format_duration,
+                parse_datetime,
+            )
 
             # 测试获取当前时间
             current_time = get_current_time()
@@ -96,7 +100,10 @@ class TestUtilsFunctional:
     def test_response_utils_functions(self):
         """测试响应工具函数"""
         try:
-            from src.utils.response import create_success_response, create_error_response
+            from src.utils.response import (
+                create_success_response,
+                create_error_response,
+            )
 
             # 测试成功响应
             if callable(create_success_response):
@@ -126,6 +133,7 @@ class TestUtilsFunctional:
 
             # 测试重试装饰器
             if callable(retry_with_backoff):
+
                 @retry_with_backoff(max_attempts=2)
                 def test_function():
                     return True
@@ -139,7 +147,11 @@ class TestUtilsFunctional:
     def test_crypto_utils_functions(self):
         """测试加密工具函数"""
         try:
-            from src.utils.crypto_utils import hash_password, verify_password, generate_token
+            from src.utils.crypto_utils import (
+                hash_password,
+                verify_password,
+                generate_token,
+            )
 
             # 测试密码哈希
             if callable(hash_password):
@@ -149,7 +161,7 @@ class TestUtilsFunctional:
                 assert hashed != password
 
             # 测试密码验证
-            if callable(verify_password) and 'hashed' in locals():
+            if callable(verify_password) and "hashed" in locals():
                 assert verify_password(password, hashed) is True
                 assert verify_password("wrong_password", hashed) is False
 
@@ -165,7 +177,11 @@ class TestUtilsFunctional:
     def test_data_validator_functions(self):
         """测试数据验证器函数"""
         try:
-            from src.utils.data_validator import validate_email, validate_phone, validate_url
+            from src.utils.data_validator import (
+                validate_email,
+                validate_phone,
+                validate_url,
+            )
 
             # 测试邮箱验证
             if callable(validate_email):
@@ -174,12 +190,18 @@ class TestUtilsFunctional:
 
             # 测试电话验证
             if callable(validate_phone):
-                assert validate_phone("+1234567890") is True or validate_phone("+1234567890") is False
+                assert (
+                    validate_phone("+1234567890") is True
+                    or validate_phone("+1234567890") is False
+                )
                 assert validate_phone("not-a-phone") is False
 
             # 测试URL验证
             if callable(validate_url):
-                assert validate_url("https://example.com") is True or validate_url("https://example.com") is False
+                assert (
+                    validate_url("https://example.com") is True
+                    or validate_url("https://example.com") is False
+                )
                 assert validate_url("not-a-url") is False
 
         except ImportError as e:
@@ -196,7 +218,10 @@ class TestUtilsFunctional:
             if callable(write_json):
                 # 使用临时文件
                 import tempfile
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".json", delete=False
+                ) as f:
                     temp_file = f.name
 
                 try:
@@ -209,6 +234,7 @@ class TestUtilsFunctional:
                 finally:
                     # 清理临时文件
                     import os
+
                     if os.path.exists(temp_file):
                         os.unlink(temp_file)
 
@@ -282,15 +308,13 @@ class TestUtilsFunctional:
             import pandas as pd
 
             # 测试DataFrame操作（如果可用）
-            df = pd.DataFrame({
-                'a': [1, 2, 3],
-                'b': ['x', 'y', 'z'],
-                'c': [1.1, 2.2, 3.3]
-            })
+            df = pd.DataFrame(
+                {"a": [1, 2, 3], "b": ["x", "y", "z"], "c": [1.1, 2.2, 3.3]}
+            )
 
             # 验证DataFrame创建
             assert len(df) == 3
-            assert list(df.columns) == ['a', 'b', 'c']
+            assert list(df.columns) == ["a", "b", "c"]
 
         except ImportError:
             pytest.skip("pandas not available")

@@ -23,8 +23,12 @@ class User(BaseModel):
     is_admin = Column(Boolean, default=False, nullable=False, comment="管理员标记")
     is_analyst = Column(Boolean, default=False, nullable=False, comment="分析师标记")
     is_premium = Column(Boolean, default=False, nullable=False, comment="高级订阅标记")
-    is_professional_bettor = Column(Boolean, default=False, nullable=False, comment="职业投注者")
-    is_casual_bettor = Column(Boolean, default=False, nullable=False, comment="休闲投注者")
+    is_professional_bettor = Column(
+        Boolean, default=False, nullable=False, comment="职业投注者"
+    )
+    is_casual_bettor = Column(
+        Boolean, default=False, nullable=False, comment="休闲投注者"
+    )
     last_login = Column(DateTime, nullable=True, comment="最近登录时间")
     subscription_plan = Column(String(32), nullable=True, comment="订阅计划")
     subscription_expires_at = Column(DateTime, nullable=True, comment="订阅过期时间")

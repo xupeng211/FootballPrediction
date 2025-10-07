@@ -11,7 +11,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -60,15 +60,29 @@ class TestDataCollectionTasksFunctional:
             # 设置mock返回值
             mock_storage.check_existing.return_value = False
             mock_collector.collect_data.return_value = [
-                {"id": 1, "home_team": "Team A", "away_team": "Team B", "date": "2024-01-01"},
-                {"id": 2, "home_team": "Team C", "away_team": "Team D", "date": "2024-01-02"}
+                {
+                    "id": 1,
+                    "home_team": "Team A",
+                    "away_team": "Team B",
+                    "date": "2024-01-01",
+                },
+                {
+                    "id": 2,
+                    "home_team": "Team C",
+                    "away_team": "Team D",
+                    "date": "2024-01-02",
+                },
             ]
             mock_collector.validate_data.return_value = True
             mock_storage.save_data.return_value = True
 
-            with patch('src.tasks.data_collection_tasks.FixturesCollector', return_value=mock_collector), \
-                 patch('src.tasks.data_collection_tasks.DataLakeStorage', return_value=mock_storage):
-
+            with patch(
+                "src.tasks.data_collection_tasks.FixturesCollector",
+                return_value=mock_collector,
+            ), patch(
+                "src.tasks.data_collection_tasks.DataLakeStorage",
+                return_value=mock_storage,
+            ):
                 result = await collect_fixtures_task(league_id=39)
 
                 assert result["success"] is True
@@ -80,7 +94,9 @@ class TestDataCollectionTasksFunctional:
             pytest.skip("Data collection tasks not available")
 
     @pytest.mark.asyncio
-    async def test_collect_scores_task_with_date_range(self, mock_collector, mock_storage):
+    async def test_collect_scores_task_with_date_range(
+        self, mock_collector, mock_storage
+    ):
         """测试按日期范围收集比分数据"""
         try:
             from src.tasks.data_collection_tasks import collect_scores_task
@@ -90,17 +106,30 @@ class TestDataCollectionTasksFunctional:
 
             # 设置mock
             mock_collector.collect_data.return_value = [
-                {"match_id": 1, "home_score": 2, "away_score": 1, "status": "completed"},
-                {"match_id": 2, "home_score": 0, "away_score": 0, "status": "completed"}
+                {
+                    "match_id": 1,
+                    "home_score": 2,
+                    "away_score": 1,
+                    "status": "completed",
+                },
+                {
+                    "match_id": 2,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "completed",
+                },
             ]
             mock_storage.save_data.return_value = True
 
-            with patch('src.tasks.data_collection_tasks.ScoresCollector', return_value=mock_collector), \
-                 patch('src.tasks.data_collection_tasks.DataLakeStorage', return_value=mock_storage):
-
+            with patch(
+                "src.tasks.data_collection_tasks.ScoresCollector",
+                return_value=mock_collector,
+            ), patch(
+                "src.tasks.data_collection_tasks.DataLakeStorage",
+                return_value=mock_storage,
+            ):
                 result = await collect_scores_task(
-                    start_date=start_date,
-                    end_date=end_date
+                    start_date=start_date, end_date=end_date
                 )
 
                 assert result["success"] is True
@@ -117,9 +146,14 @@ class TestDataCollectionTasksFunctional:
             from src.tasks.data_collection_tasks import collect_odds_task
 
             # 设置mock抛出异常
-            mock_collector.collect_data.side_effect = Exception("API rate limit exceeded")
+            mock_collector.collect_data.side_effect = Exception(
+                "API rate limit exceeded"
+            )
 
-            with patch('src.tasks.data_collection_tasks.OddsCollector', return_value=mock_collector):
+            with patch(
+                "src.tasks.data_collection_tasks.OddsCollector",
+                return_value=mock_collector,
+            ):
                 result = await collect_odds_task(bookmaker="bet365")
 
                 assert result["success"] is False
@@ -136,10 +170,13 @@ class TestDataCollectionTasksFunctional:
 
             # 测试有效参数
             assert validate_collection_params(league_id=39) is True
-            assert validate_collection_params(
-                start_date=datetime.now(),
-                end_date=datetime.now() + timedelta(days=1)
-            ) is True
+            assert (
+                validate_collection_params(
+                    start_date=datetime.now(),
+                    end_date=datetime.now() + timedelta(days=1),
+                )
+                is True
+            )
 
             # 测试无效参数
             with pytest.raises(ValueError):
@@ -148,7 +185,7 @@ class TestDataCollectionTasksFunctional:
             with pytest.raises(ValueError):
                 validate_collection_params(
                     start_date=datetime.now(),
-                    end_date=datetime.now() - timedelta(days=1)  # 结束日期早于开始日期
+                    end_date=datetime.now() - timedelta(days=1),  # 结束日期早于开始日期
                 )
 
         except ImportError:
@@ -163,16 +200,20 @@ class TestDataCollectionTasksFunctional:
             tasks = [
                 {"type": "fixtures", "league_id": 39},
                 {"type": "scores", "date": "2024-01-01"},
-                {"type": "odds", "bookmaker": "bet365"}
+                {"type": "odds", "bookmaker": "bet365"},
             ]
 
             # 设置mock
             mock_collector.collect_data.return_value = [{"id": 1, "data": "test"}]
             mock_storage.save_data.return_value = True
 
-            with patch('src.tasks.data_collection_tasks.get_collector', return_value=mock_collector), \
-                 patch('src.tasks.data_collection_tasks.DataLakeStorage', return_value=mock_storage):
-
+            with patch(
+                "src.tasks.data_collection_tasks.get_collector",
+                return_value=mock_collector,
+            ), patch(
+                "src.tasks.data_collection_tasks.DataLakeStorage",
+                return_value=mock_storage,
+            ):
                 result = await batch_collect_task(tasks)
 
                 assert result["success"] is True
@@ -195,16 +236,19 @@ class TestDataCollectionTasksFunctional:
             existing_data = [
                 {"id": 1, "match_id": 100, "data": "existing"},
                 {"id": 2, "match_id": 101, "data": "existing"},
-                {"id": 3, "match_id": 102, "data": "new"}  # 新数据
+                {"id": 3, "match_id": 102, "data": "new"},  # 新数据
             ]
 
             new_data = [
                 {"id": 1, "match_id": 100, "data": "updated"},
                 {"id": 3, "match_id": 102, "data": "new"},
-                {"id": 4, "match_id": 103, "data": "new"}
+                {"id": 4, "match_id": 103, "data": "new"},
             ]
 
-            with patch('src.tasks.data_collection_tasks.DataLakeStorage', return_value=mock_storage):
+            with patch(
+                "src.tasks.data_collection_tasks.DataLakeStorage",
+                return_value=mock_storage,
+            ):
                 result = await deduplicate_data(existing_data, new_data, "match_id")
 
                 # 应该只保留新数据或更新的数据
@@ -223,6 +267,7 @@ class TestDataCollectionTasksFunctional:
 
             # 前两次失败，第三次成功
             call_count = 0
+
             async def failing_collect():
                 nonlocal call_count
                 call_count += 1
@@ -248,8 +293,18 @@ class TestDataCollectionTasksFunctional:
 
             # 测试有效数据
             valid_data = [
-                {"match_id": 1, "home_team": "Team A", "away_team": "Team B", "score": "2-1"},
-                {"match_id": 2, "home_team": "Team C", "away_team": "Team D", "score": "0-0"}
+                {
+                    "match_id": 1,
+                    "home_team": "Team A",
+                    "away_team": "Team B",
+                    "score": "2-1",
+                },
+                {
+                    "match_id": 2,
+                    "home_team": "Team C",
+                    "away_team": "Team D",
+                    "score": "0-0",
+                },
             ]
 
             result = await validate_data_quality(valid_data, data_type="match")
@@ -259,7 +314,7 @@ class TestDataCollectionTasksFunctional:
             # 测试无效数据
             invalid_data = [
                 {"match_id": None, "home_team": "", "away_team": None},  # 缺少必要字段
-                {"match_id": 2, "home_team": "Team C"}  # 缺少away_team
+                {"match_id": 2, "home_team": "Team C"},  # 缺少away_team
             ]
 
             result = await validate_data_quality(invalid_data, data_type="match")
@@ -323,18 +378,19 @@ class TestDataCollectionTasksFunctional:
             from src.tasks.data_collection_tasks import concurrent_collect_with_limit
 
             # 创建多个任务
-            tasks = [
-                {"type": "fixtures", "league_id": i}
-                for i in range(10)
-            ]
+            tasks = [{"type": "fixtures", "league_id": i} for i in range(10)]
 
             # 设置mock
             mock_collector.collect_data.return_value = [{"id": i, "data": "test"}]
             mock_storage.save_data.return_value = True
 
-            with patch('src.tasks.data_collection_tasks.get_collector', return_value=mock_collector), \
-                 patch('src.tasks.data_collection_tasks.DataLakeStorage', return_value=mock_storage):
-
+            with patch(
+                "src.tasks.data_collection_tasks.get_collector",
+                return_value=mock_collector,
+            ), patch(
+                "src.tasks.data_collection_tasks.DataLakeStorage",
+                return_value=mock_storage,
+            ):
                 # 限制并发数为3
                 result = await concurrent_collect_with_limit(tasks, max_concurrent=3)
 

@@ -25,7 +25,9 @@ class MatchFactory(BaseFactory):
     home_team = factory.SubFactory("tests.factories.team_factory.TeamFactory")
     away_team = factory.SubFactory("tests.factories.team_factory.TeamFactory")
     league = factory.SubFactory("tests.factories.league_factory.LeagueFactory")
-    season = factory.LazyFunction(lambda: f"{datetime.utcnow().year}-{datetime.utcnow().year + 1}")
+    season = factory.LazyFunction(
+        lambda: f"{datetime.utcnow().year}-{datetime.utcnow().year + 1}"
+    )
     match_time = factory.LazyFunction(lambda: datetime.utcnow() + timedelta(days=1))
     match_status = MatchStatus.SCHEDULED
     venue = factory.LazyFunction(lambda: f"{_faker.company()} Stadium")
@@ -47,7 +49,9 @@ class MatchFactory(BaseFactory):
             obj.away_team.league = obj.league
 
     @classmethod
-    def create_with_teams(cls, home_team_id: int, away_team_id: int, league_id: int, **kwargs):
+    def create_with_teams(
+        cls, home_team_id: int, away_team_id: int, league_id: int, **kwargs
+    ):
         session = cls._meta.sqlalchemy_session
         if session is None:
             raise RuntimeError("MatchFactory requires an active SQLAlchemy session")
@@ -130,7 +134,9 @@ class MatchFactory(BaseFactory):
                             away_team=session.get(Team, team_ids[j]),
                             league=league,
                             match_time=start_date
-                            + timedelta(days=round_index * (team_count - 1) * 7 + i * 7),
+                            + timedelta(
+                                days=round_index * (team_count - 1) * 7 + i * 7
+                            ),
                             **kwargs,
                         )
                     )

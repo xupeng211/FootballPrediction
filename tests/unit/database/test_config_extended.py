@@ -9,7 +9,7 @@ from src.database.config import (
     get_production_database_config,
     _parse_int,
     _get_env_bool,
-    _ENV_PREFIX
+    _ENV_PREFIX,
 )
 
 
@@ -23,7 +23,7 @@ class TestDatabaseConfigExtended:
             port=5432,
             database=":memory:",
             username="user",
-            password="pass"
+            password="pass",
         )
         assert config.sync_url == "sqlite:///:memory:"
         assert config.async_url == "sqlite+aiosqlite:///:memory:"
@@ -36,7 +36,7 @@ class TestDatabaseConfigExtended:
             port=5432,
             database="test.db",
             username="user",
-            password="pass"
+            password="pass",
         )
         assert config.sync_url == "sqlite:///test.db"
         assert config.async_url == "sqlite+aiosqlite:///test.db"
@@ -49,7 +49,7 @@ class TestDatabaseConfigExtended:
             port=5432,
             database="mydb",
             username="myuser",
-            password="mypass"
+            password="mypass",
         )
         expected = "postgresql+psycopg2://myuser:mypass@db.example.com:5432/mydb"
         assert config.sync_url == expected
@@ -171,8 +171,16 @@ class TestDatabaseConfigExtended:
         assert config.echo is True
 
         # 清理
-        for key in ["ENVIRONMENT", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER",
-                    "DB_PASSWORD", "DB_POOL_SIZE", "DB_ECHO"]:
+        for key in [
+            "ENVIRONMENT",
+            "DB_HOST",
+            "DB_PORT",
+            "DB_NAME",
+            "DB_USER",
+            "DB_PASSWORD",
+            "DB_POOL_SIZE",
+            "DB_ECHO",
+        ]:
             if key in os.environ:
                 del os.environ[key]
 
@@ -214,7 +222,7 @@ class TestDatabaseConfigExtended:
             username="user",
             password="pass",
             async_pool_size=5,
-            async_max_overflow=10
+            async_max_overflow=10,
         )
         assert config.async_pool_size == 5
         assert config.async_max_overflow == 10
@@ -228,7 +236,7 @@ class TestDatabaseConfigExtended:
             username="user",
             password="pass",
             echo=True,
-            echo_pool=True
+            echo_pool=True,
         )
         assert config.echo is True
         assert config.echo_pool is True
