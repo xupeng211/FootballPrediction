@@ -104,6 +104,55 @@ make test-phase1      # 运行第一阶段核心 API 测试
 - Docker Compose 提供本地开发的 PostgreSQL、Redis 和 Nginx
 - MLOps 流程包括模型重训练和反馈循环
 
+## 项目特定规则
+
+### 代码风格
+- 优先修改已有文件，避免不必要的文件创建
+- 函数和类使用清晰的中文 docstring
+- 遵循仓库模式进行数据访问
+
+### 数据库相关
+- 使用异步 SQLAlchemy 操作
+- 所有数据库操作必须在 service 层，不要在 API 层直接操作
+- 使用 Alembic 进行数据库迁移
+
+### 错误处理
+- 使用项目定义的异常类（见 `src/core/exceptions.py`）
+- API 错误返回统一的错误格式
+- 敏感信息不得记录到日志中
+
+## 调试和故障排除
+
+### 调试测试
+```bash
+# 运行特定测试并显示详细输出
+pytest tests/unit/test_specific.py -v -s
+
+# 只运行失败的测试
+pytest --lf
+
+# 在测试失败时停止
+pytest -x
+
+# 调试模式（进入 pdb）
+pytest --pdb
+```
+
+### 常见端口冲突
+- PostgreSQL: 5432
+- Redis: 6379
+- FastAPI: 8000
+- 如果端口被占用，检查是否有其他服务在运行
+
+### 查看日志
+```bash
+# 开发环境日志
+tail -f logs/app.log
+
+# Docker 容器日志
+docker-compose logs -f app
+```
+
 ## 常见问题
 
 - 如果测试运行缓慢，使用 `make test-quick` 或 `make coverage-fast`
