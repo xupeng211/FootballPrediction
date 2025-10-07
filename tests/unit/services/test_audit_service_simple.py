@@ -17,7 +17,7 @@ class TestAuditServiceSimple:
     def audit_service(self):
         """创建审计服务实例"""
         # Mock DatabaseManager to avoid DB connection
-        with patch('src.services.audit_service.DatabaseManager'):
+        with patch("src.services.audit_service.DatabaseManager"):
             service = AuditService()
             service.db_manager = MagicMock()
             service.logger = MagicMock()
@@ -28,15 +28,13 @@ class TestAuditServiceSimple:
         assert audit_service.__class__.__name__ == "AuditService"
         assert audit_service.logger is not None
         assert audit_service.db_manager is not None
-        assert hasattr(audit_service, 'sensitive_tables')
-        assert hasattr(audit_service, 'sensitive_columns')
+        assert hasattr(audit_service, "sensitive_tables")
+        assert hasattr(audit_service, "sensitive_columns")
 
     def test_set_and_get_audit_context(self, audit_service):
         """测试审计上下文设置和获取"""
         context = AuditContext(
-            user_id="user123",
-            session_id="session456",
-            ip_address="192.168.1.1"
+            user_id="user123", session_id="session456", ip_address="192.168.1.1"
         )
 
         audit_service.set_audit_context(context)
@@ -49,7 +47,7 @@ class TestAuditServiceSimple:
     def test_log_action(self, audit_service):
         """测试记录操作日志"""
         # log_action方法可能不会调用logger，所以只测试方法存在
-        assert hasattr(audit_service, 'log_action')
+        assert hasattr(audit_service, "log_action")
         # 调用方法确保不报错
         audit_service.log_action("test_action", {"key": "value"})
 
@@ -108,7 +106,7 @@ class TestAuditServiceSimple:
         data = {
             "username": "test",
             "password": "secret123",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
 
         sanitized = audit_service._sanitize_data(data)

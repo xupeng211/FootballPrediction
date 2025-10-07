@@ -28,12 +28,12 @@ class TestDatabaseConnectionFunctional:
 
             # 测试数据库管理器
             db_manager = DatabaseManager()
-            assert hasattr(db_manager, 'engine')
+            assert hasattr(db_manager, "engine")
             assert db_manager.engine is not None
 
             # 验证引擎类型
-            assert hasattr(engine, 'execute')
-            assert hasattr(engine, 'connect')
+            assert hasattr(engine, "execute")
+            assert hasattr(engine, "connect")
 
         except ImportError:
             pytest.skip("Database connection module not available")
@@ -54,17 +54,21 @@ class TestDatabaseConnectionFunctional:
                 assert result.fetchone()[0] == 1
 
                 # 创建测试表
-                conn.execute(text("""
+                conn.execute(
+                    text(
+                        """
                     CREATE TABLE test_table (
                         id INTEGER PRIMARY KEY,
                         name TEXT NOT NULL
                     )
-                """))
+                """
+                    )
+                )
 
                 # 插入数据
-                conn.execute(text(
-                    "INSERT INTO test_table (name) VALUES (?)"
-                ), ("Test Name",))
+                conn.execute(
+                    text("INSERT INTO test_table (name) VALUES (?)"), ("Test Name",)
+                )
 
                 # 查询数据
                 result = conn.execute(text("SELECT name FROM test_table"))
@@ -87,9 +91,9 @@ class TestDatabaseConnectionFunctional:
             # 测试创建会话
             with get_session() as session:
                 assert session is not None
-                assert hasattr(session, 'execute')
-                assert hasattr(session, 'commit')
-                assert hasattr(session, 'rollback')
+                assert hasattr(session, "execute")
+                assert hasattr(session, "commit")
+                assert hasattr(session, "rollback")
 
         except ImportError:
             pytest.skip("Session factory not available")
@@ -104,17 +108,22 @@ class TestDatabaseConnectionFunctional:
             # 测试事务
             with db_manager.get_session() as session:
                 # 创建测试表
-                session.execute(text("""
+                session.execute(
+                    text(
+                        """
                     CREATE TABLE IF NOT EXISTS test_transaction (
                         id INTEGER PRIMARY KEY,
                         value TEXT
                     )
-                """))
+                """
+                    )
+                )
 
                 # 插入数据
-                session.execute(text(
-                    "INSERT INTO test_transaction (value) VALUES (?)"
-                ), ("test_value",))
+                session.execute(
+                    text("INSERT INTO test_transaction (value) VALUES (?)"),
+                    ("test_value",),
+                )
 
                 # 查询数据
                 result = session.execute(text("SELECT value FROM test_transaction"))
@@ -163,7 +172,7 @@ class TestDatabaseConnectionFunctional:
 
                 # 创建异步数据库管理器
                 db_manager = AsyncDatabaseManager()
-                assert hasattr(db_manager, 'engine')
+                assert hasattr(db_manager, "engine")
 
                 # 测试异步会话
                 async with db_manager.get_session() as session:
@@ -223,7 +232,7 @@ class TestDatabaseConnectionFunctional:
                     session.execute(text("INVALID SQL QUERY"))
 
             # 测试连接错误
-            with patch.object(db_manager, 'engine', None):
+            with patch.object(db_manager, "engine", None):
                 with pytest.raises((AttributeError, DatabaseError)):
                     db_manager.get_session()
 
@@ -240,11 +249,7 @@ class TestDatabaseConnectionFunctional:
             assert isinstance(config, dict)
 
             # 配置数据库
-            test_config = {
-                "echo": True,
-                "pool_size": 5,
-                "max_overflow": 10
-            }
+            test_config = {"echo": True, "pool_size": 5, "max_overflow": 10}
 
             configure_database(**test_config)
 
@@ -257,10 +262,7 @@ class TestDatabaseConnectionFunctional:
             from src.database.connection import DatabaseManager
 
             # 创建带超时配置的管理器
-            db_manager = DatabaseManager(
-                connect_timeout=5,
-                query_timeout=10
-            )
+            db_manager = DatabaseManager(connect_timeout=5, query_timeout=10)
 
             # 测试连接
             with db_manager.get_session() as session:
@@ -284,7 +286,7 @@ class TestDatabaseConnectionFunctional:
                 assert result.fetchone()[0] == 1
 
             # 测试关闭
-            if hasattr(db_manager, 'close'):
+            if hasattr(db_manager, "close"):
                 db_manager.close()
                 assert True  # 到这里说明关闭成功
 

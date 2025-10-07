@@ -9,9 +9,19 @@ from unittest.mock import Mock, patch
 
 # Mock所有外部依赖
 external_modules = [
-    'pandas', 'numpy', 'sklearn', 'sklearn.preprocessing', 'sklearn.impute',
-    'sklearn.ensemble', 'sklearn.metrics', 'nltk', 'spacy', 'tensorflow',
-    'torch', 'scipy', 'statsmodels'
+    "pandas",
+    "numpy",
+    "sklearn",
+    "sklearn.preprocessing",
+    "sklearn.impute",
+    "sklearn.ensemble",
+    "sklearn.metrics",
+    "nltk",
+    "spacy",
+    "tensorflow",
+    "torch",
+    "scipy",
+    "statsmodels",
 ]
 
 for module in external_modules:
@@ -19,15 +29,15 @@ for module in external_modules:
 
 # Mock内部依赖
 internal_modules = [
-    'src.data.processing.football_data_cleaner',
-    'src.data.processing.missing_data_handler',
-    'src.data.storage.data_lake_storage',
-    'src.database.manager',
-    'src.cache.redis_manager',
-    'src.models.model_training',
-    'src.features.feature_store',
-    'src.monitoring.metrics_collector',
-    'src.monitoring.metrics_exporter'
+    "src.data.processing.football_data_cleaner",
+    "src.data.processing.missing_data_handler",
+    "src.data.storage.data_lake_storage",
+    "src.database.manager",
+    "src.cache.redis_manager",
+    "src.models.model_training",
+    "src.features.feature_store",
+    "src.monitoring.metrics_collector",
+    "src.monitoring.metrics_exporter",
 ]
 
 for module in internal_modules:
@@ -35,6 +45,7 @@ for module in internal_modules:
 
 # 设置测试环境
 import os
+
 os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
@@ -46,12 +57,12 @@ class TestServiceCoverage:
     def mock_services(self):
         """创建所有服务的Mock"""
         return {
-            'data_processing': Mock(),
-            'audit': Mock(),
-            'content_analysis': Mock(),
-            'user_profile': Mock(),
-            'cache': Mock(),
-            'database': Mock()
+            "data_processing": Mock(),
+            "audit": Mock(),
+            "content_analysis": Mock(),
+            "user_profile": Mock(),
+            "cache": Mock(),
+            "database": Mock(),
         }
 
     def test_service_imports(self):
@@ -61,6 +72,7 @@ class TestServiceCoverage:
             from src.services.audit_service import AuditService
             from src.services.content_analysis import ContentAnalysisService
             from src.services.user_profile import UserProfileService
+
             print("✓ All services imported successfully")
         except ImportError as e:
             print(f"✗ Service import failed: {e}")
@@ -72,9 +84,13 @@ class TestServiceCoverage:
 
         service = DataProcessingService()
         expected_methods = [
-            'initialize', 'shutdown', 'process_raw_match_data',
-            'process_raw_odds_data', 'process_features_data',
-            'validate_data_quality', 'process_bronze_to_silver'
+            "initialize",
+            "shutdown",
+            "process_raw_match_data",
+            "process_raw_odds_data",
+            "process_features_data",
+            "validate_data_quality",
+            "process_bronze_to_silver",
         ]
 
         for method in expected_methods:
@@ -86,8 +102,11 @@ class TestServiceCoverage:
 
         service = AuditService()
         expected_methods = [
-            'log_action', 'get_audit_logs', 'create_audit_entry',
-            'validate_compliance', 'generate_report'
+            "log_action",
+            "get_audit_logs",
+            "create_audit_entry",
+            "validate_compliance",
+            "generate_report",
         ]
 
         for method in expected_methods:
@@ -99,8 +118,11 @@ class TestServiceCoverage:
 
         service = ContentAnalysisService()
         expected_methods = [
-            'analyze_text', 'extract_entities', 'classify_content',
-            'analyze_sentiment', 'generate_summary'
+            "analyze_text",
+            "extract_entities",
+            "classify_content",
+            "analyze_sentiment",
+            "generate_summary",
         ]
 
         for method in expected_methods:
@@ -112,8 +134,11 @@ class TestServiceCoverage:
 
         service = UserProfileService()
         expected_methods = [
-            'get_profile', 'update_profile', 'create_profile',
-            'delete_profile', 'get_preferences'
+            "get_profile",
+            "update_profile",
+            "create_profile",
+            "delete_profile",
+            "get_preferences",
         ]
 
         for method in expected_methods:
@@ -125,12 +150,11 @@ class TestServiceCoverage:
         from src.services.data_processing import DataProcessingService
 
         # Mock所有依赖
-        with patch('src.services.data_processing.DataLakeStorage'):
-            with patch('src.services.data_processing.DatabaseManager'):
-                with patch('src.services.data_processing.RedisManager'):
-                    with patch('src.services.data_processing.FootballDataCleaner'):
-                        with patch('src.services.data_processing.MissingDataHandler'):
-
+        with patch("src.services.data_processing.DataLakeStorage"):
+            with patch("src.services.data_processing.DatabaseManager"):
+                with patch("src.services.data_processing.RedisManager"):
+                    with patch("src.services.data_processing.FootballDataCleaner"):
+                        with patch("src.services.data_processing.MissingDataHandler"):
                             service = DataProcessingService()
 
                             # 测试初始化
@@ -148,7 +172,7 @@ class TestServiceCoverage:
         from src.services.audit_service import AuditService
 
         # Mock数据库
-        with patch('src.services.audit_service.get_db_session') as mock_get_session:
+        with patch("src.services.audit_service.get_db_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = mock_session
 
@@ -159,7 +183,7 @@ class TestServiceCoverage:
                 "user_id": "test_user",
                 "action": "test_action",
                 "resource": "test_resource",
-                "details": {"key": "value"}
+                "details": {"key": "value"},
             }
 
             # 应该不会抛出异常
@@ -178,9 +202,8 @@ class TestServiceCoverage:
         from src.services.content_analysis import ContentAnalysisService
 
         # Mock依赖
-        with patch('src.services.content_analysis.nltk') as mock_nltk:
-            with patch('src.services.content_analysis.spacy') as mock_spacy:
-
+        with patch("src.services.content_analysis.nltk") as mock_nltk:
+            with patch("src.services.content_analysis.spacy") as mock_spacy:
                 service = ContentAnalysisService()
 
                 # Mock分析结果
@@ -200,7 +223,7 @@ class TestServiceCoverage:
         from src.services.user_profile import UserProfileService
 
         # Mock数据库
-        with patch('src.services.user_profile.get_db_session') as mock_get_session:
+        with patch("src.services.user_profile.get_db_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = mock_session
 
@@ -211,7 +234,7 @@ class TestServiceCoverage:
                 "user_id": "test_user",
                 "username": "testuser",
                 "email": "test@example.com",
-                "preferences": {"theme": "dark"}
+                "preferences": {"theme": "dark"},
             }
 
             # 应该不会抛出异常
@@ -231,7 +254,7 @@ class TestServiceCoverage:
         service = DataProcessingService()
 
         # Mock logger
-        with patch.object(service, 'logger') as mock_logger:
+        with patch.object(service, "logger") as mock_logger:
             # 测试错误日志
             service.logger.error("Test error message", exc_info=True)
 
@@ -252,18 +275,19 @@ class TestServiceCoverage:
         from src.services.data_processing import DataProcessingService
 
         # Mock服务
-        with patch('src.services.data_processing.DataLakeStorage'):
-            with patch('src.services.data_processing.DatabaseManager'):
-                with patch('src.services.data_processing.RedisManager'):
-                    with patch('src.services.data_processing.FootballDataCleaner'):
-                        with patch('src.services.data_processing.MissingDataHandler'):
-
+        with patch("src.services.data_processing.DataLakeStorage"):
+            with patch("src.services.data_processing.DatabaseManager"):
+                with patch("src.services.data_processing.RedisManager"):
+                    with patch("src.services.data_processing.FootballDataCleaner"):
+                        with patch("src.services.data_processing.MissingDataHandler"):
                             service = DataProcessingService()
                             await service.initialize()
 
                             # 测试并发初始化
                             tasks = [service.initialize() for _ in range(5)]
-                            results = await asyncio.gather(*tasks, return_exceptions=True)
+                            results = await asyncio.gather(
+                                *tasks, return_exceptions=True
+                            )
 
                             # 所有操作都应该完成（可能有异常）
                             assert len(results) == 5
@@ -280,7 +304,7 @@ class TestServiceCoverage:
         assert service.name == "DataProcessingService"
 
         # 验证logger存在
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_service_health_check(self):
@@ -288,12 +312,11 @@ class TestServiceCoverage:
         from src.services.data_processing import DataProcessingService
 
         # Mock所有依赖
-        with patch('src.services.data_processing.DataLakeStorage'):
-            with patch('src.services.data_processing.DatabaseManager'):
-                with patch('src.services.data_processing.RedisManager'):
-                    with patch('src.services.data_processing.FootballDataCleaner'):
-                        with patch('src.services.data_processing.MissingDataHandler'):
-
+        with patch("src.services.data_processing.DataLakeStorage"):
+            with patch("src.services.data_processing.DatabaseManager"):
+                with patch("src.services.data_processing.RedisManager"):
+                    with patch("src.services.data_processing.FootballDataCleaner"):
+                        with patch("src.services.data_processing.MissingDataHandler"):
                             service = DataProcessingService()
 
                             # 健康检查

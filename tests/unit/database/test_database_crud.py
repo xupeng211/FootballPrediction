@@ -10,7 +10,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -27,7 +27,7 @@ class TestDatabaseCRUD:
                 home_team_id=1,
                 away_team_id=2,
                 match_date=datetime.now(),
-                status="scheduled"
+                status="scheduled",
             )
 
             # 测试创建
@@ -42,9 +42,9 @@ class TestDatabaseCRUD:
             assert match.home_score == 1
 
             # 测试读取属性
-            assert hasattr(match, 'id')
-            assert hasattr(match, 'home_team')
-            assert hasattr(match, 'away_team')
+            assert hasattr(match, "id")
+            assert hasattr(match, "home_team")
+            assert hasattr(match, "away_team")
 
         except ImportError:
             pytest.skip("Match model not available")
@@ -55,11 +55,7 @@ class TestDatabaseCRUD:
             from src.database.models.team import Team
 
             # 创建球队
-            team = Team(
-                name="Test Team",
-                short_name="TT",
-                founded=2020
-            )
+            team = Team(name="Test Team", short_name="TT", founded=2020)
 
             # 测试创建
             assert team.name == "Test Team"
@@ -73,8 +69,8 @@ class TestDatabaseCRUD:
             assert team.stadium_capacity == 50000
 
             # 测试关系属性
-            assert hasattr(team, 'home_matches')
-            assert hasattr(team, 'away_matches')
+            assert hasattr(team, "home_matches")
+            assert hasattr(team, "away_matches")
 
         except ImportError:
             pytest.skip("Team model not available")
@@ -91,7 +87,7 @@ class TestDatabaseCRUD:
                 home_win_prob=0.5,
                 draw_prob=0.3,
                 away_win_prob=0.2,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             # 测试创建
@@ -106,8 +102,8 @@ class TestDatabaseCRUD:
             assert prediction.home_win_prob == 0.6
 
             # 测试方法
-            assert hasattr(prediction, 'to_dict')
-            assert hasattr(prediction, 'from_dict')
+            assert hasattr(prediction, "to_dict")
+            assert hasattr(prediction, "from_dict")
 
         except ImportError:
             pytest.skip("Prediction model not available")
@@ -124,7 +120,7 @@ class TestDatabaseCRUD:
                 home_win=2.5,
                 draw=3.2,
                 away_win=2.8,
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             )
 
             # 测试创建
@@ -139,7 +135,7 @@ class TestDatabaseCRUD:
             assert odds.home_win == 2.4
 
             # 测试关系
-            assert hasattr(odds, 'match')
+            assert hasattr(odds, "match")
 
         except ImportError:
             pytest.skip("Odds model not available")
@@ -154,7 +150,7 @@ class TestDatabaseCRUD:
                 match_id=1,
                 feature_name="goal_difference",
                 feature_value=1.5,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             # 测试创建
@@ -168,7 +164,7 @@ class TestDatabaseCRUD:
             assert feature.feature_value == 2.0
 
             # 测试属性
-            assert hasattr(feature, 'match')
+            assert hasattr(feature, "match")
 
         except ImportError:
             pytest.skip("Feature model not available")
@@ -179,11 +175,7 @@ class TestDatabaseCRUD:
             from src.database.models.league import League
 
             # 创建联赛
-            league = League(
-                name="Premier League",
-                country="England",
-                founded=1992
-            )
+            league = League(name="Premier League", country="England", founded=1992)
 
             # 测试创建
             assert league.name == "Premier League"
@@ -196,8 +188,8 @@ class TestDatabaseCRUD:
             assert league.current_season == "2023/2024"
 
             # 测试关系
-            assert hasattr(league, 'teams')
-            assert hasattr(league, 'matches')
+            assert hasattr(league, "teams")
+            assert hasattr(league, "matches")
 
         except ImportError:
             pytest.skip("League model not available")
@@ -215,7 +207,7 @@ class TestDatabaseCRUD:
                 record_id=1,
                 old_data=None,
                 new_data={"status": "created"},
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
 
             # 测试创建
@@ -224,8 +216,8 @@ class TestDatabaseCRUD:
             assert audit_log.table_name == "matches"
 
             # 测试方法
-            assert hasattr(audit_log, 'to_dict')
-            assert hasattr(audit_log, 'from_dict')
+            assert hasattr(audit_log, "to_dict")
+            assert hasattr(audit_log, "from_dict")
 
         except ImportError:
             pytest.skip("AuditLog model not available")
@@ -240,13 +232,13 @@ class TestDatabaseCRUD:
                 source="api",
                 raw_data='{"id": 1, "status": "finished"}',
                 processed=False,
-                received_at=datetime.now()
+                received_at=datetime.now(),
             )
 
             # 测试创建
             assert raw_data.source == "api"
             assert raw_data.processed is False
-            assert 'id' in raw_data.raw_data
+            assert "id" in raw_data.raw_data
 
             # 测试更新
             raw_data.processed = True
@@ -261,14 +253,14 @@ class TestDatabaseCRUD:
         try:
             from src.database.connection import DatabaseManager
 
-            with patch('src.database.connection.create_engine'):
+            with patch("src.database.connection.create_engine"):
                 manager = DatabaseManager()
 
                 # 测试会话创建
-                assert hasattr(manager, 'create_session')
-                assert hasattr(manager, 'create_async_session')
-                assert hasattr(manager, 'get_session')
-                assert hasattr(manager, 'get_async_session')
+                assert hasattr(manager, "create_session")
+                assert hasattr(manager, "create_async_session")
+                assert hasattr(manager, "get_session")
+                assert hasattr(manager, "get_async_session")
 
         except ImportError:
             pytest.skip("Database manager not available")
@@ -278,14 +270,14 @@ class TestDatabaseCRUD:
         try:
             from src.database.connection import DatabaseManager
 
-            with patch('src.database.connection.create_engine'):
+            with patch("src.database.connection.create_engine"):
                 manager = DatabaseManager()
 
                 # 测试事务方法（如果存在）
                 transaction_methods = [
-                    'begin_transaction',
-                    'commit_transaction',
-                    'rollback_transaction'
+                    "begin_transaction",
+                    "commit_transaction",
+                    "rollback_transaction",
                 ]
 
                 for method in transaction_methods:
@@ -298,7 +290,10 @@ class TestDatabaseCRUD:
     def test_database_connection_management(self):
         """测试数据库连接管理"""
         try:
-            from src.database.connection import DatabaseManager, MultiUserDatabaseManager
+            from src.database.connection import (
+                DatabaseManager,
+                MultiUserDatabaseManager,
+            )
 
             # 测试单例模式
             db_manager1 = DatabaseManager()

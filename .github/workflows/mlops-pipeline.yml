@@ -532,21 +532,21 @@ jobs:
           # 检查新模型是否更好
           if python -c "import json; data=json.load(open('comparison_report.json')); exit(0 if data.get('new_model_better', False) else 1)"; then
             echo "✅ 新模型性能更优，创建PR等待人工审核..."
-            
+
             # 创建新分支
             BRANCH_NAME="auto-retrain/model-update-$(date +%Y%m%d-%H%M%S)"
             git config --global user.email "mlops-bot@github.com"
             git config --global user.name "MLOps Bot"
             git checkout -b "$BRANCH_NAME"
-            
+
             # 备份旧模型并更新
             mkdir -p models/backup_models
             [ -f models/current_model.pkl ] && cp models/current_model.pkl models/backup_models/current_model_$(date +%Y%m%d).pkl
             cp models/retrained_$(date +%Y%m%d_%H%M%S).pkl models/current_model.pkl
-            
+
             # 记录版本
             echo "$(date +%Y-%m-%d_%H-%M-%S): Model retrained (awaiting approval)" >> models/model_versions.log
-            
+
             # 提交更改
             git add models/current_model.pkl models/model_versions.log models/backup_models/
             git commit -m "feat: update model after retraining
@@ -558,10 +558,10 @@ Performance improvements:
 - Validation metrics available in run #${{ github.run_number }}
 
 Review required before deployment."
-            
+
             # 推送分支
             git push origin "$BRANCH_NAME"
-            
+
             # 创建PR
             gh pr create \
               --title "🤖 Model Retraining - $(date +%Y-%m-%d)" \
@@ -587,7 +587,7 @@ This PR contains an updated model after automatic retraining.
               --base main \
               --head "$BRANCH_NAME" \
               --label "mlops,model-update,needs-review"
-            
+
             echo "✅ PR created successfully for manual review"
           else
             echo "⚠️ 新模型性能未超过当前模型，不创建PR"

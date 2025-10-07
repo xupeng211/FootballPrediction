@@ -5,6 +5,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import os
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +29,11 @@ class ScoresCollector:
             "live_scores": "https://api.football-data.org/v4/matches",
             "events": "https://api.football-data.org/v4/matches/{match_id}/events",
         }
-        self.headers = {"X-Auth-Token": "YOUR_API_TOKEN"}  # 应该从配置中读取
+        # 从环境变量读取 API Token
+        api_token = os.getenv("FOOTBALL_API_TOKEN")
+        if not api_token:
+            logger.warning("未设置 FOOTBALL_API_TOKEN 环境变量")
+        self.headers = {"X-Auth-Token": api_token} if api_token else {}
 
     async def collect_live_scores(self, force_refresh: bool = False) -> Dict[str, Any]:
         """

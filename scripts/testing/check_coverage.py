@@ -5,8 +5,8 @@
 
 import subprocess
 import sys
-import re
 from pathlib import Path
+
 
 def run_coverage():
     """运行覆盖率测试并返回结果"""
@@ -16,7 +16,7 @@ def run_coverage():
         "--cov=src",
         "--cov-report=term-missing",
         "--cov-fail-under=0",  # 不设置最低要求
-        "-q"
+        "-q",
     ]
 
     try:
@@ -26,21 +26,23 @@ def run_coverage():
         print(f"Error running coverage: {e}")
         return "", str(e), 1
 
+
 def parse_coverage(output):
     """解析覆盖率输出"""
     # 查找TOTAL行
-    lines = output.split('\n')
+    lines = output.split("\n")
     for line in lines:
-        if 'TOTAL' in line:
+        if "TOTAL" in line:
             # 示例: TOTAL                            879   1227    72%
             parts = line.split()
             if len(parts) >= 4:
                 try:
-                    coverage = int(parts[-1].rstrip('%'))
+                    coverage = int(parts[-1].rstrip("%"))
                     return coverage
                 except ValueError:
                     pass
     return None
+
 
 def main():
     """主函数"""
@@ -56,10 +58,11 @@ def main():
         cmd = [
             "pytest",
             "tests/unit/",
-            "-k", "simple or basic",
+            "-k",
+            "simple or basic",
             "--cov=src",
             "--cov-report=term-missing",
-            "-q"
+            "-q",
         ]
 
         try:
@@ -98,6 +101,7 @@ def main():
         return coverage
 
     return 0
+
 
 if __name__ == "__main__":
     coverage = main()

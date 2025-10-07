@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -26,7 +26,7 @@ class TestModelsInstantiation:
                 name="Test Team",
                 short_name="TT",
                 country="Test Country",
-                founded=2020
+                founded=2020,
             )
             assert team.id == 1
             assert team.name == "Test Team"
@@ -48,7 +48,7 @@ class TestModelsInstantiation:
                 home_score=2,
                 away_score=1,
                 status="completed",
-                match_date=datetime.datetime(2024, 1, 1, 15, 0)
+                match_date=datetime.datetime(2024, 1, 1, 15, 0),
             )
             assert match.id == 1
             assert match.home_team_id == 100
@@ -66,10 +66,7 @@ class TestModelsInstantiation:
             from src.database.models.league import League
 
             league = League(
-                id=39,
-                name="Premier League",
-                country="England",
-                season=2024
+                id=39, name="Premier League", country="England", season=2024
             )
             assert league.id == 39
             assert league.name == "Premier League"
@@ -90,7 +87,7 @@ class TestModelsInstantiation:
                 model_version="v1.0",
                 prediction="HOME_WIN",
                 confidence=0.85,
-                created_at=datetime.datetime.now()
+                created_at=datetime.datetime.now(),
             )
             assert prediction.id == 1
             assert prediction.match_id == 100
@@ -113,7 +110,7 @@ class TestModelsInstantiation:
                 home_win=2.50,
                 draw=3.20,
                 away_win=2.80,
-                updated_at=datetime.datetime.now()
+                updated_at=datetime.datetime.now(),
             )
             assert odds.id == 1
             assert odds.match_id == 100
@@ -132,7 +129,11 @@ class TestModelsInstantiation:
             # 尝试创建基础模型实例（如果是抽象类可能会失败）
             try:
                 base = BaseModel()
-                assert hasattr(base, 'id') or hasattr(base, 'created_at') or hasattr(base, 'updated_at')
+                assert (
+                    hasattr(base, "id")
+                    or hasattr(base, "created_at")
+                    or hasattr(base, "updated_at")
+                )
             except TypeError:
                 # 抽象类不能实例化，这是正常的
                 pytest.skip("BaseModel is abstract")

@@ -9,7 +9,7 @@ import sys
 from unittest.mock import patch
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -34,12 +34,12 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             # 使用测试环境变量
-            with patch.dict(os.environ, {
-                'DATABASE_URL': 'sqlite:///test.db'
-            }):
+            with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"}):
                 config = Config()
                 # 检查是否有数据库相关属性
-                assert hasattr(config, 'DATABASE_URL') or hasattr(config, 'database_url')
+                assert hasattr(config, "DATABASE_URL") or hasattr(
+                    config, "database_url"
+                )
         except ImportError:
             pytest.skip("Config module not available")
         except Exception:
@@ -50,12 +50,10 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            with patch.dict(os.environ, {
-                'REDIS_URL': 'redis://localhost:6379/0'
-            }):
+            with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
                 config = Config()
                 # 检查是否有Redis相关属性
-                assert hasattr(config, 'REDIS_URL') or hasattr(config, 'redis_url')
+                assert hasattr(config, "REDIS_URL") or hasattr(config, "redis_url")
         except ImportError:
             pytest.skip("Config module not available")
         except Exception:
@@ -66,12 +64,10 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            with patch.dict(os.environ, {
-                'DEBUG': 'true'
-            }):
+            with patch.dict(os.environ, {"DEBUG": "true"}):
                 config = Config()
                 # 检查调试模式
-                debug_value = getattr(config, 'DEBUG', getattr(config, 'debug', False))
+                debug_value = getattr(config, "DEBUG", getattr(config, "debug", False))
                 assert debug_value is True
         except ImportError:
             pytest.skip("Config module not available")
@@ -83,13 +79,16 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            with patch.dict(os.environ, {
-                'LOG_LEVEL': 'INFO'
-            }):
+            with patch.dict(os.environ, {"LOG_LEVEL": "INFO"}):
                 config = Config()
                 # 检查日志级别
-                log_level = getattr(config, 'LOG_LEVEL', getattr(config, 'log_level', None))
-                assert log_level in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'] or log_level is None
+                log_level = getattr(
+                    config, "LOG_LEVEL", getattr(config, "log_level", None)
+                )
+                assert (
+                    log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+                    or log_level is None
+                )
         except ImportError:
             pytest.skip("Config module not available")
         except Exception:
@@ -102,7 +101,7 @@ class TestConfigFunctionality:
 
             config = Config()
             # 检查是否有应用名称
-            app_name = getattr(config, 'APP_NAME', getattr(config, 'app_name', None))
+            app_name = getattr(config, "APP_NAME", getattr(config, "app_name", None))
             assert app_name is None or isinstance(app_name, str)
         except ImportError:
             pytest.skip("Config module not available")
@@ -114,12 +113,12 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            with patch.dict(os.environ, {
-                'ENVIRONMENT': 'development'
-            }):
+            with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
                 config = Config()
-                env = getattr(config, 'ENVIRONMENT', getattr(config, 'environment', None))
-                assert env == 'development' or env is None
+                env = getattr(
+                    config, "ENVIRONMENT", getattr(config, "environment", None)
+                )
+                assert env == "development" or env is None
         except ImportError:
             pytest.skip("Config module not available")
         except Exception:

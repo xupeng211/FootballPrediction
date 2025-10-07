@@ -84,16 +84,16 @@ fi
   run: |
     echo "🔐 验证部署所需的secrets..."
     MISSING_SECRETS=()
-    
+
     [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && MISSING_SECRETS+=("AWS_ACCESS_KEY_ID")
     [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ] && MISSING_SECRETS+=("AWS_SECRET_ACCESS_KEY")
-    
+
     if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
       echo "❌ 缺少以下必需的secrets:"
       printf '%s\n' "${MISSING_SECRETS[@]}"
       exit 1
     fi
-    
+
     echo "✅ 所有必需的secrets已配置"
 ```
 
@@ -135,7 +135,7 @@ auto-retrain:
      run: |
        # 创建新分支
        BRANCH_NAME="auto-retrain/model-update-$(date +%Y%m%d-%H%M%S)"
-       
+
        # 创建PR
        gh pr create \
          --title "🤖 Model Retraining - $(date +%Y-%m-%d)" \
@@ -222,7 +222,7 @@ auto-retrain:
 # 覆盖率配置
 [coverage:run]
 source = src
-omit = 
+omit =
     */tests/*
     */test_*
     */__pycache__/*
@@ -257,7 +257,7 @@ output = coverage.json
       COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])")
       echo "📊 当前覆盖率: ${COVERAGE}%"
       echo "🎯 目标覆盖率: ${TARGET_COVERAGE}%"
-      
+
       if (( $(echo "$COVERAGE < $TARGET_COVERAGE" | bc -l) )); then
         echo "⚠️ 覆盖率 ${COVERAGE}% 低于目标 ${TARGET_COVERAGE}%"
         echo "提示：这是一个软警告，不会阻止CI通过"
@@ -361,6 +361,6 @@ restore-keys: |
 
 ---
 
-**变更日期**: 2025-10-07  
-**优化者**: AI Assistant  
+**变更日期**: 2025-10-07
+**优化者**: AI Assistant
 **审核者**: Team

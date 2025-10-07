@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -22,13 +22,13 @@ class TestAPIComprehensiveV2:
     def test_api_imports(self):
         """测试所有API模块导入"""
         api_modules = [
-            'src.api.data',
-            'src.api.features',
-            'src.api.features_improved',
-            'src.api.health',
-            'src.api.models',
-            'src.api.monitoring',
-            'src.api.predictions'
+            "src.api.data",
+            "src.api.features",
+            "src.api.features_improved",
+            "src.api.health",
+            "src.api.models",
+            "src.api.monitoring",
+            "src.api.predictions",
         ]
 
         for module_name in api_modules:
@@ -48,7 +48,7 @@ class TestAPIComprehensiveV2:
             return {
                 "status": "healthy",
                 "version": "1.0.0",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         # 详细健康检查
@@ -59,13 +59,9 @@ class TestAPIComprehensiveV2:
                 "services": {
                     "database": "healthy",
                     "redis": "healthy",
-                    "kafka": "healthy"
+                    "kafka": "healthy",
                 },
-                "checks": {
-                    "database": True,
-                    "redis": True,
-                    "kafka": False
-                }
+                "checks": {"database": True, "redis": True, "kafka": False},
             }
 
         client = TestClient(app)
@@ -107,7 +103,7 @@ class TestAPIComprehensiveV2:
                 prediction={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
                 confidence=0.85,
                 model_version=request.model_version,
-                created_at=datetime.now().isoformat()
+                created_at=datetime.now().isoformat(),
             )
 
         @app.get("/predictions/{prediction_id}")
@@ -119,7 +115,7 @@ class TestAPIComprehensiveV2:
                 prediction={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
                 confidence=0.85,
                 model_version="latest",
-                created_at=datetime.now().isoformat()
+                created_at=datetime.now().isoformat(),
             )
 
         client = TestClient(app)
@@ -128,7 +124,7 @@ class TestAPIComprehensiveV2:
         request_data = {
             "match_id": 123,
             "model_version": "v2.0",
-            "features": {"team_form": [1, 0, 1]}
+            "features": {"team_form": [1, 0, 1]},
         }
         response = client.post("/predictions", json=request_data)
         assert response.status_code == 200
@@ -153,11 +149,11 @@ class TestAPIComprehensiveV2:
             return {
                 "matches": [
                     {"id": 1, "home_team": "Team A", "away_team": "Team B"},
-                    {"id": 2, "home_team": "Team C", "away_team": "Team D"}
+                    {"id": 2, "home_team": "Team C", "away_team": "Team D"},
                 ],
                 "total": 2,
                 "limit": limit,
-                "offset": offset
+                "offset": offset,
             }
 
         @app.get("/data/matches/{match_id}")
@@ -170,7 +166,7 @@ class TestAPIComprehensiveV2:
                 "away_team": "Team B",
                 "score": {"home": 2, "away": 1},
                 "status": "completed",
-                "date": datetime.now().isoformat()
+                "date": datetime.now().isoformat(),
             }
 
         client = TestClient(app)
@@ -200,9 +196,9 @@ class TestAPIComprehensiveV2:
                     "home_team_form": [1, 1, 0, 1, 1],
                     "away_team_form": [0, 1, 1, 0, 0],
                     "head_to_head": {"wins": 3, "draws": 2, "losses": 1},
-                    "goal_difference": 5
+                    "goal_difference": 5,
                 },
-                "computed_at": datetime.now().isoformat()
+                "computed_at": datetime.now().isoformat(),
             }
 
         @app.post("/features/compute")
@@ -211,7 +207,7 @@ class TestAPIComprehensiveV2:
             return {
                 "job_id": "job_123",
                 "status": "processing",
-                "match_count": len(match_ids)
+                "match_count": len(match_ids),
             }
 
         client = TestClient(app)
@@ -242,15 +238,15 @@ class TestAPIComprehensiveV2:
                         "name": "Football Predictor v1.0",
                         "type": "classification",
                         "accuracy": 0.75,
-                        "created_at": "2024-01-01T00:00:00Z"
+                        "created_at": "2024-01-01T00:00:00Z",
                     },
                     {
                         "id": "model_v2",
                         "name": "Football Predictor v2.0",
                         "type": "classification",
                         "accuracy": 0.82,
-                        "created_at": "2024-02-01T00:00:00Z"
-                    }
+                        "created_at": "2024-02-01T00:00:00Z",
+                    },
                 ]
             }
 
@@ -263,8 +259,8 @@ class TestAPIComprehensiveV2:
                 "metadata": {
                     "training_data": "2023-2024 season",
                     "features": 50,
-                    "algorithm": "xgboost"
-                }
+                    "algorithm": "xgboost",
+                },
             }
 
         client = TestClient(app)
@@ -289,20 +285,13 @@ class TestAPIComprehensiveV2:
         @app.get("/monitoring/metrics")
         async def get_metrics():
             return {
-                "system": {
-                    "cpu_usage": 45.2,
-                    "memory_usage": 67.8,
-                    "disk_usage": 23.4
-                },
+                "system": {"cpu_usage": 45.2, "memory_usage": 67.8, "disk_usage": 23.4},
                 "application": {
                     "requests_per_second": 125,
                     "average_response_time": 0.12,
-                    "error_rate": 0.02
+                    "error_rate": 0.02,
                 },
-                "database": {
-                    "connections": 8,
-                    "query_time": 0.05
-                }
+                "database": {"connections": 8, "query_time": 0.05},
             }
 
         @app.get("/monitoring/alerts")
@@ -312,14 +301,14 @@ class TestAPIComprehensiveV2:
                     "id": 1,
                     "severity": "warning",
                     "message": "High memory usage",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 },
                 {
                     "id": 2,
                     "severity": "error",
                     "message": "Database connection failed",
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             ]
 
             if severity:
@@ -384,26 +373,17 @@ class TestAPIComprehensiveV2:
 
         @app.post("/validate")
         async def validate_data(request: ValidatedRequest):
-            return {
-                "validated": True,
-                "data": request.dict()
-            }
+            return {"validated": True, "data": request.dict()}
 
         client = TestClient(app)
 
         # 有效请求
-        valid_data = {
-            "name": "John Doe",
-            "age": 30,
-            "email": "john@example.com"
-        }
+        valid_data = {"name": "John Doe", "age": 30, "email": "john@example.com"}
         response = client.post("/validate", json=valid_data)
         assert response.status_code == 200
 
         # 无效请求（缺少字段）
-        invalid_data = {
-            "name": "John Doe"
-        }
+        invalid_data = {"name": "John Doe"}
         response = client.post("/validate", json=invalid_data)
         assert response.status_code == 422
 
@@ -417,7 +397,7 @@ class TestAPIComprehensiveV2:
                 raise HTTPException(
                     status_code=401,
                     detail="Invalid or missing authentication token",
-                    headers={"WWW-Authenticate": "Bearer"}
+                    headers={"WWW-Authenticate": "Bearer"},
                 )
             return {"message": "Access granted", "user": "authenticated"}
 
@@ -428,7 +408,9 @@ class TestAPIComprehensiveV2:
         assert response.status_code == 401
 
         # 有效认证
-        response = client.get("/protected", headers={"Authorization": "Bearer token123"})
+        response = client.get(
+            "/protected", headers={"Authorization": "Bearer token123"}
+        )
         assert response.status_code == 200
 
     def test_api_pagination(self):
@@ -453,8 +435,8 @@ class TestAPIComprehensiveV2:
                     "page": page,
                     "size": size,
                     "total": total,
-                    "pages": pages
-                }
+                    "pages": pages,
+                },
             }
 
         client = TestClient(app)
@@ -483,13 +465,14 @@ class TestAPIComprehensiveV2:
         client = TestClient(app)
 
         # 测试CORS头
-        response = client.options("/cors-test", headers={
-            "Origin": "https://example.com",
-            "Access-Control-Request-Method": "GET"
-        })
+        response = client.options(
+            "/cors-test",
+            headers={
+                "Origin": "https://example.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
 
         # 测试实际请求
-        response = client.get("/cors-test", headers={
-            "Origin": "https://example.com"
-        })
+        response = client.get("/cors-test", headers={"Origin": "https://example.com"})
         assert response.status_code == 200

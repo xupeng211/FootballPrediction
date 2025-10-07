@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestRedisManagerFixedV2:
     def redis_manager(self):
         """创建Redis管理器实例"""
         from src.cache.redis_manager import RedisManager
+
         manager = RedisManager()
         manager.logger = MagicMock()
         return manager
@@ -29,7 +30,7 @@ class TestRedisManagerFixedV2:
         """Mock同步Redis客户端"""
         client = MagicMock()
         client.ping.return_value = True
-        client.get.return_value = b'test_value'
+        client.get.return_value = b"test_value"
         client.setex.return_value = True
         client.delete.return_value = 1
         client.exists.return_value = 1

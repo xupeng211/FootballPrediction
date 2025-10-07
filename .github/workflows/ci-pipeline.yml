@@ -217,7 +217,7 @@ jobs:
             COVERAGE=$(python -c "import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])")
             echo "📊 当前覆盖率: ${COVERAGE}%"
             echo "🎯 目标覆盖率: ${TARGET_COVERAGE}%"
-            
+
             if (( $(echo "$COVERAGE < $TARGET_COVERAGE" | bc -l) )); then
               echo "⚠️ 覆盖率 ${COVERAGE}% 低于目标 ${TARGET_COVERAGE}%"
               echo "提示：这是一个软警告，不会阻止CI通过"

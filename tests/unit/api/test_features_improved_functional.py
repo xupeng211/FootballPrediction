@@ -10,7 +10,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -68,7 +68,7 @@ class TestFeaturesImprovedFunctional:
 
     def test_check_feature_store_availability_available(self):
         """测试特征存储可用性检查 - 可用"""
-        with patch('src.api.features_improved.feature_store', MagicMock()):
+        with patch("src.api.features_improved.feature_store", MagicMock()):
             from src.api.features_improved import check_feature_store_availability
 
             # 不应该抛出异常
@@ -76,7 +76,7 @@ class TestFeaturesImprovedFunctional:
 
     def test_check_feature_store_unavailable(self):
         """测试特征存储不可用时"""
-        with patch('src.api.features_improved.feature_store', None):
+        with patch("src.api.features_improved.feature_store", None):
             from src.api.features_improved import check_feature_store_availability
 
             with pytest.raises(HTTPException) as exc_info:
@@ -90,7 +90,9 @@ class TestFeaturesImprovedFunctional:
         from src.api.features_improved import get_match_info
 
         # 设置mock返回值
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = sample_match
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
+            sample_match
+        )
 
         result = await get_match_info(mock_db_session, 1)
         assert result == {}
@@ -131,11 +133,13 @@ class TestFeaturesImprovedFunctional:
         expected_features = {
             "team_form": {"home": 0.8, "away": 0.6},
             "head_to_head": {"home_wins": 3, "away_wins": 2},
-            "recent_performance": {"home_goals": 5, "away_goals": 3}
+            "recent_performance": {"home_goals": 5, "away_goals": 3},
         }
-        mock_feature_store.get_match_features_for_prediction.return_value = expected_features
+        mock_feature_store.get_match_features_for_prediction.return_value = (
+            expected_features
+        )
 
-        with patch('src.api.features_improved.feature_store', mock_feature_store):
+        with patch("src.api.features_improved.feature_store", mock_feature_store):
             features, error = await get_features_data(1, sample_match)
             assert features == expected_features
             assert error is None
@@ -148,7 +152,7 @@ class TestFeaturesImprovedFunctional:
         # 设置mock返回空
         mock_feature_store.get_match_features_for_prediction.return_value = {}
 
-        with patch('src.api.features_improved.feature_store', mock_feature_store):
+        with patch("src.api.features_improved.feature_store", mock_feature_store):
             features, error = await get_features_data(1, sample_match)
             assert features == {}
             assert error is None
@@ -159,9 +163,11 @@ class TestFeaturesImprovedFunctional:
         from src.api.features_improved import get_features_data
 
         # 设置mock抛出异常
-        mock_feature_store.get_match_features_for_prediction.side_effect = Exception("Feature store error")
+        mock_feature_store.get_match_features_for_prediction.side_effect = Exception(
+            "Feature store error"
+        )
 
-        with patch('src.api.features_improved.feature_store', mock_feature_store):
+        with patch("src.api.features_improved.feature_store", mock_feature_store):
             features, error = await get_features_data(1, sample_match)
             assert features == {}
             assert error == "Feature store error"
@@ -175,10 +181,7 @@ class TestFeaturesImprovedFunctional:
         include_raw = False
 
         response = build_response_data(
-            sample_match,
-            features,
-            features_error,
-            include_raw
+            sample_match, features, features_error, include_raw
         )
 
         # 验证响应结构
@@ -197,10 +200,7 @@ class TestFeaturesImprovedFunctional:
         include_raw = False
 
         response = build_response_data(
-            sample_match,
-            features,
-            features_error,
-            include_raw
+            sample_match, features, features_error, include_raw
         )
 
         assert response["features"] == {}
@@ -216,16 +216,13 @@ class TestFeaturesImprovedFunctional:
         include_raw = True
 
         response = build_response_data(
-            sample_match,
-            features,
-            features_error,
-            include_raw
+            sample_match, features, features_error, include_raw
         )
 
         assert "raw_features" in response
         assert response["raw_features"] == features
 
-    @patch('src.api.features_improved.feature_store', None)
+    @patch("src.api.features_improved.feature_store", None)
     def test_module_initialization_failure(self):
         """测试模块初始化失败的情况"""
         from src.api.features_improved import check_feature_store_availability
@@ -235,21 +232,25 @@ class TestFeaturesImprovedFunctional:
         assert exc_info.value.status_code == 503
 
     @pytest.mark.asyncio
-    async def test_full_workflow_success(self, mock_db_session, mock_feature_store, sample_match):
+    async def test_full_workflow_success(
+        self, mock_db_session, mock_feature_store, sample_match
+    ):
         """测试完整的工作流程 - 成功场景"""
         # 设置所有mock
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = sample_match
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
+            sample_match
+        )
         mock_feature_store.get_match_features_for_prediction.return_value = {
             "team_form": {"home": 0.8, "away": 0.6}
         }
 
-        with patch('src.api.features_improved.feature_store', mock_feature_store):
+        with patch("src.api.features_improved.feature_store", mock_feature_store):
             from src.api.features_improved import (
                 validate_match_id,
                 check_feature_store_availability,
                 get_match_info,
                 get_features_data,
-                build_response_data
+                build_response_data,
             )
 
             # 1. 验证参数
@@ -266,10 +267,7 @@ class TestFeaturesImprovedFunctional:
 
             # 5. 构建响应
             response = build_response_data(
-                sample_match,
-                features,
-                error,
-                include_raw=False
+                sample_match, features, error, include_raw=False
             )
 
             # 验证最终响应

@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -22,8 +22,9 @@ class TestTasksSimple:
             from src.tasks.data_collection_tasks import (
                 CollectFixturesTask,
                 CollectOddsTask,
-                CollectScoresTask
+                CollectScoresTask,
             )
+
             assert CollectFixturesTask is not None
             assert CollectOddsTask is not None
             assert CollectScoresTask is not None
@@ -36,8 +37,9 @@ class TestTasksSimple:
             from src.tasks.maintenance_tasks import (
                 DatabaseCleanupTask,
                 CacheCleanupTask,
-                LogRotationTask
+                LogRotationTask,
             )
+
             assert DatabaseCleanupTask is not None
             assert CacheCleanupTask is not None
             assert LogRotationTask is not None
@@ -50,8 +52,9 @@ class TestTasksSimple:
             from src.tasks.backup_tasks import (
                 DatabaseBackupTask,
                 ConfigBackupTask,
-                LogsBackupTask
+                LogsBackupTask,
             )
+
             assert DatabaseBackupTask is not None
             assert ConfigBackupTask is not None
             assert LogsBackupTask is not None
@@ -64,8 +67,9 @@ class TestTasksSimple:
             from src.tasks.streaming_tasks import (
                 StreamDataProcessor,
                 StreamDataCollector,
-                StreamDataValidator
+                StreamDataValidator,
             )
+
             assert StreamDataProcessor is not None
             assert StreamDataCollector is not None
             assert StreamDataValidator is not None
@@ -78,8 +82,9 @@ class TestTasksSimple:
             from src.tasks.monitoring import (
                 HealthCheckTask,
                 MetricsCollectionTask,
-                AlertCheckTask
+                AlertCheckTask,
             )
+
             assert HealthCheckTask is not None
             assert MetricsCollectionTask is not None
             assert AlertCheckTask is not None
@@ -89,11 +94,8 @@ class TestTasksSimple:
     def test_utils_import(self):
         """测试任务工具导入"""
         try:
-            from src.tasks.utils import (
-                TaskUtils,
-                TaskStatus,
-                TaskPriority
-            )
+            from src.tasks.utils import TaskUtils, TaskStatus, TaskPriority
+
             assert TaskUtils is not None
             assert TaskStatus is not None
             assert TaskPriority is not None
@@ -104,6 +106,7 @@ class TestTasksSimple:
         """测试错误日志导入"""
         try:
             from src.tasks.error_logger import TaskErrorLogger
+
             logger = TaskErrorLogger()
             assert logger is not None
         except ImportError as e:
@@ -114,14 +117,14 @@ class TestTasksSimple:
         try:
             from src.tasks.data_collection_tasks import CollectFixturesTask
 
-            with patch('src.tasks.data_collection_tasks.logger') as mock_logger:
+            with patch("src.tasks.data_collection_tasks.logger") as mock_logger:
                 task = CollectFixturesTask()
                 task.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(task, 'execute')
-                assert hasattr(task, 'validate_input')
-                assert hasattr(task, 'cleanup')
+                assert hasattr(task, "execute")
+                assert hasattr(task, "validate_input")
+                assert hasattr(task, "cleanup")
 
         except Exception as e:
             pytest.skip(f"Cannot test CollectFixturesTask: {e}")
@@ -131,14 +134,14 @@ class TestTasksSimple:
         try:
             from src.tasks.data_collection_tasks import CollectOddsTask
 
-            with patch('src.tasks.data_collection_tasks.logger') as mock_logger:
+            with patch("src.tasks.data_collection_tasks.logger") as mock_logger:
                 task = CollectOddsTask()
                 task.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(task, 'execute')
-                assert hasattr(task, 'validate_input')
-                assert hasattr(task, 'cleanup')
+                assert hasattr(task, "execute")
+                assert hasattr(task, "validate_input")
+                assert hasattr(task, "cleanup")
 
         except Exception as e:
             pytest.skip(f"Cannot test CollectOddsTask: {e}")
@@ -148,14 +151,14 @@ class TestTasksSimple:
         try:
             from src.tasks.maintenance_tasks import DatabaseCleanupTask
 
-            with patch('src.tasks.maintenance_tasks.logger') as mock_logger:
+            with patch("src.tasks.maintenance_tasks.logger") as mock_logger:
                 task = DatabaseCleanupTask()
                 task.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(task, 'execute')
-                assert hasattr(task, 'cleanup_old_data')
-                assert hasattr(task, 'optimize_tables')
+                assert hasattr(task, "execute")
+                assert hasattr(task, "cleanup_old_data")
+                assert hasattr(task, "optimize_tables")
 
         except Exception as e:
             pytest.skip(f"Cannot test DatabaseCleanupTask: {e}")
@@ -165,14 +168,14 @@ class TestTasksSimple:
         try:
             from src.tasks.backup_tasks import DatabaseBackupTask
 
-            with patch('src.tasks.backup_tasks.logger') as mock_logger:
+            with patch("src.tasks.backup_tasks.logger") as mock_logger:
                 task = DatabaseBackupTask()
                 task.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(task, 'execute')
-                assert hasattr(task, 'create_backup')
-                assert hasattr(task, 'verify_backup')
+                assert hasattr(task, "execute")
+                assert hasattr(task, "create_backup")
+                assert hasattr(task, "verify_backup")
 
         except Exception as e:
             pytest.skip(f"Cannot test DatabaseBackupTask: {e}")
@@ -182,14 +185,14 @@ class TestTasksSimple:
         try:
             from src.tasks.monitoring import HealthCheckTask
 
-            with patch('src.tasks.monitoring.logger') as mock_logger:
+            with patch("src.tasks.monitoring.logger") as mock_logger:
                 task = HealthCheckTask()
                 task.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(task, 'execute')
-                assert hasattr(task, 'check_database_health')
-                assert hasattr(task, 'check_cache_health')
+                assert hasattr(task, "execute")
+                assert hasattr(task, "check_database_health")
+                assert hasattr(task, "check_cache_health")
 
         except Exception as e:
             pytest.skip(f"Cannot test HealthCheckTask: {e}")
@@ -221,14 +224,14 @@ class TestTasksSimple:
         try:
             from src.tasks.error_logger import TaskErrorLogger
 
-            with patch('src.tasks.error_logger.logger') as mock_logger:
+            with patch("src.tasks.error_logger.logger") as mock_logger:
                 logger = TaskErrorLogger()
                 logger.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(logger, 'log_error')
-                assert hasattr(logger, 'log_warning')
-                assert hasattr(logger, 'get_error_summary')
+                assert hasattr(logger, "log_error")
+                assert hasattr(logger, "log_warning")
+                assert hasattr(logger, "get_error_summary")
 
         except Exception as e:
             pytest.skip(f"Cannot test TaskErrorLogger: {e}")
@@ -242,8 +245,8 @@ class TestTasksSimple:
             task = CollectFixturesTask()
 
             # 测试异步方法存在
-            assert hasattr(task, 'async_execute')
-            assert hasattr(task, 'async_validate')
+            assert hasattr(task, "async_execute")
+            assert hasattr(task, "async_validate")
 
         except Exception as e:
             pytest.skip(f"Cannot test async task execution: {e}")

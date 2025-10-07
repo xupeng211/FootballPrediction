@@ -21,6 +21,7 @@ from tests.factories.base import BaseFactory
 try:
     from testcontainers.postgres import PostgresContainer
     from testcontainers.redis import RedisContainer
+
     TESTCONTAINERS_AVAILABLE = True
 except ImportError:
     TESTCONTAINERS_AVAILABLE = False
@@ -40,7 +41,7 @@ def postgres_container():
         dbname="football_prediction_test",
         username="test_user",
         password="test_password",
-        port=5432
+        port=5432,
     ) as postgres:
         yield postgres
 
@@ -131,7 +132,7 @@ def test_redis_client(redis_container):
         host="localhost",
         port=redis_port,
         db=1,  # 使用测试数据库
-        decode_responses=True
+        decode_responses=True,
     )
 
     # 清空测试数据库
@@ -167,12 +168,7 @@ def setup_container_environment(postgres_container, redis_container):
     yield
 
     # 清理环境变量
-    for key in [
-        "DATABASE_URL",
-        "TEST_DATABASE_URL",
-        "REDIS_URL",
-        "TEST_REDIS_URL"
-    ]:
+    for key in ["DATABASE_URL", "TEST_DATABASE_URL", "REDIS_URL", "TEST_REDIS_URL"]:
         os.environ.pop(key, None)
 
 
@@ -186,24 +182,13 @@ def sample_test_data(test_db_session):
     from src.database.models.match import Match
 
     # 创建联赛
-    league = League(
-        league_name="Test League",
-        country="Test Country"
-    )
+    league = League(league_name="Test League", country="Test Country")
     test_db_session.add(league)
     test_db_session.flush()
 
     # 创建球队
-    home_team = Team(
-        name="Home Team",
-        short_name="HT",
-        country="Test Country"
-    )
-    away_team = Team(
-        name="Away Team",
-        short_name="AT",
-        country="Test Country"
-    )
+    home_team = Team(name="Home Team", short_name="HT", country="Test Country")
+    away_team = Team(name="Away Team", short_name="AT", country="Test Country")
     test_db_session.add_all([home_team, away_team])
     test_db_session.flush()
 
@@ -213,7 +198,7 @@ def sample_test_data(test_db_session):
         home_team_id=home_team.id,
         away_team_id=away_team.id,
         match_date="2024-01-01 15:00:00",
-        status="SCHEDULED"
+        status="SCHEDULED",
     )
     test_db_session.add(match)
     test_db_session.commit()
@@ -222,7 +207,7 @@ def sample_test_data(test_db_session):
         "league": league,
         "home_team": home_team,
         "away_team": away_team,
-        "match": match
+        "match": match,
     }
 
 
@@ -230,13 +215,22 @@ def sample_test_data(test_db_session):
 def pytest_runtest_setup(item):
     """测试前的设置"""
     # 检查是否需要TestContainers
-    if "postgres_container" in item.fixturenames or "redis_container" in item.fixturenames:
+    if (
+        "postgres_container" in item.fixturenames
+        or "redis_container" in item.fixturenames
+    ):
         if not TESTCONTAINERS_AVAILABLE:
-            pytest.skip("TestContainers not available - install with: pip install testcontainers")
+            pytest.skip(
+                "TestContainers not available - install with: pip install testcontainers"
+            )
 
     # 检查Docker是否运行
-    if "postgres_container" in item.fixturenames or "redis_container" in item.fixturenames:
+    if (
+        "postgres_container" in item.fixturenames
+        or "redis_container" in item.fixturenames
+    ):
         import subprocess
+
         try:
             subprocess.run(["docker", "info"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):

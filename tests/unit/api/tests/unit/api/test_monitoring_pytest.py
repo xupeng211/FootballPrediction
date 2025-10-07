@@ -21,39 +21,61 @@ os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 # Mock psutil
-pytest_psutil = Mock(cpu_percent=Mock(return_value=25.5),
-                     virtual_memory=Mock(return_value=Mock(total=8000000000,
-                                                           available=4000000000,
-                                                           percent=50.0)),
-                     disk_usage=Mock(return_value=Mock(total=1000000000000,
-                                                      used=500000000000,
-                                                      percent=50.0)),
-                     Process=Mock(return_value=Mock(memory_info=Mock(return_value=Mock(rss=200000000)),
-                                                  memory_percent=Mock(return_value=2.5))))
+pytest_psutil = Mock(
+    cpu_percent=Mock(return_value=25.5),
+    virtual_memory=Mock(
+        return_value=Mock(total=8000000000, available=4000000000, percent=50.0)
+    ),
+    disk_usage=Mock(
+        return_value=Mock(total=1000000000000, used=500000000000, percent=50.0)
+    ),
+    Process=Mock(
+        return_value=Mock(
+            memory_info=Mock(return_value=Mock(rss=200000000)),
+            memory_percent=Mock(return_value=2.5),
+        )
+    ),
+)
 
 # Mock redis
-pytest_redis = Mock(Redis=Mock(return_value=Mock(ping=Mock(return_value=True),
-                                                 info=Mock(return_value={'connected_clients': 5,
-                                                                        'used_memory': 1000000,
-                                                                        'used_memory_human': '1M'}))))
+pytest_redis = Mock(
+    Redis=Mock(
+        return_value=Mock(
+            ping=Mock(return_value=True),
+            info=Mock(
+                return_value={
+                    "connected_clients": 5,
+                    "used_memory": 1000000,
+                    "used_memory_human": "1M",
+                }
+            ),
+        )
+    )
+)
 
 # Mock内部监控模块
-pytest_metrics_collector = Mock(get_metrics_collector=Mock(return_value=Mock(
-    collect_all_metrics=AsyncMock(return_value={}),
-    get_metric_value=Mock(return_value=0),
-    register_metric=Mock()
-)))
+pytest_metrics_collector = Mock(
+    get_metrics_collector=Mock(
+        return_value=Mock(
+            collect_all_metrics=AsyncMock(return_value={}),
+            get_metric_value=Mock(return_value=0),
+            register_metric=Mock(),
+        )
+    )
+)
 
-pytest_metrics_exporter = Mock(get_metrics_exporter=Mock(return_value=Mock(
-    generate_prometheus_metrics=Mock(return_value="# HELP test_metric\n"),
-    export_metrics=Mock()
-)))
+pytest_metrics_exporter = Mock(
+    get_metrics_exporter=Mock(
+        return_value=Mock(
+            generate_prometheus_metrics=Mock(return_value="# HELP test_metric\n"),
+            export_metrics=Mock(),
+        )
+    )
+)
 
-pytest_logging = Mock(get_logger=Mock(return_value=Mock(
-    info=Mock(),
-    warning=Mock(),
-    error=Mock()
-)))
+pytest_logging = Mock(
+    get_logger=Mock(return_value=Mock(info=Mock(), warning=Mock(), error=Mock()))
+)
 
 pytest_db_connection = Mock(get_db_session=Mock())
 
@@ -61,20 +83,23 @@ pytest_db_connection = Mock(get_db_session=Mock())
 @pytest.fixture(scope="module", autouse=True)
 def mock_dependencies():
     """Mock所有依赖模块"""
-    sys.modules['psutil'] = pytest_psutil
-    sys.modules['redis'] = pytest_redis
-    sys.modules['src.monitoring.metrics_collector'] = pytest_metrics_collector
-    sys.modules['src.monitoring.metrics_exporter'] = pytest_metrics_exporter
-    sys.modules['src.core.logging'] = pytest_logging
-    sys.modules['src.database.connection'] = pytest_db_connection
+    sys.modules["psutil"] = pytest_psutil
+    sys.modules["redis"] = pytest_redis
+    sys.modules["src.monitoring.metrics_collector"] = pytest_metrics_collector
+    sys.modules["src.monitoring.metrics_exporter"] = pytest_metrics_exporter
+    sys.modules["src.core.logging"] = pytest_logging
+    sys.modules["src.database.connection"] = pytest_db_connection
 
     yield
 
     # 清理
     modules_to_remove = [
-        'psutil', 'redis', 'src.monitoring.metrics_collector',
-        'src.monitoring.metrics_exporter', 'src.core.logging',
-        'src.database.connection'
+        "psutil",
+        "redis",
+        "src.monitoring.metrics_collector",
+        "src.monitoring.metrics_exporter",
+        "src.core.logging",
+        "src.database.connection",
     ]
     for module in modules_to_remove:
         if module in sys.modules:
@@ -102,7 +127,9 @@ async def _get_database_metrics_test(db):
         teams = db.execute("SELECT COUNT(*) FROM teams")
         matches = db.execute("SELECT COUNT(*) FROM matches")
         predictions = db.execute("SELECT COUNT(*) FROM predictions")
-        active = db.execute("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
+        active = db.execute(
+            "SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'"
+        )
 
         def _val(res):
             try:
@@ -138,7 +165,9 @@ async def _get_business_metrics_test(db):
     try:
         # 模拟查询
         recent_predictions_q = "SELECT COUNT(*) FROM predictions WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
-        upcoming_matches_q = "SELECT COUNT(*) FROM matches WHERE match_time <= NOW() + INTERVAL '7 days'"
+        upcoming_matches_q = (
+            "SELECT COUNT(*) FROM matches WHERE match_time <= NOW() + INTERVAL '7 days'"
+        )
         accuracy_rate_q = "SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM (SELECT COUNT(*) AS total, 0 AS correct FROM predictions WHERE verified_at >= NOW() - INTERVAL '30 days') t"
 
         def _val(res):
@@ -190,7 +219,7 @@ async def _get_system_metrics_test():
             "used_percent": memory.percent,
         }
 
-        disk = pytest_psutil.disk_usage('/')
+        disk = pytest_psutil.disk_usage("/")
         result["disk"] = {
             "total": disk.total,
             "used": disk.used,
@@ -218,12 +247,14 @@ async def _get_redis_metrics_test():
         client.ping()
         info = client.info()
 
-        result.update({
-            "healthy": True,
-            "connected_clients": info.get("connected_clients", 0),
-            "used_memory": info.get("used_memory", 0),
-            "used_memory_human": info.get("used_memory_human", "0B"),
-        })
+        result.update(
+            {
+                "healthy": True,
+                "connected_clients": info.get("connected_clients", 0),
+                "used_memory": info.get("used_memory", 0),
+                "used_memory_human": info.get("used_memory_human", "0B"),
+            }
+        )
     except Exception as e:
         result["healthy"] = False
         result["error"] = str(e)
@@ -292,8 +323,8 @@ class TestMonitoringPytest:
         mock_session = MagicMock()
         mock_session.execute.side_effect = [
             MagicMock(fetchone=lambda: (100,)),  # 24h predictions
-            MagicMock(fetchone=lambda: (25,)),   # upcoming matches
-            MagicMock(fetchone=lambda: (0.75,)), # accuracy rate
+            MagicMock(fetchone=lambda: (25,)),  # upcoming matches
+            MagicMock(fetchone=lambda: (0.75,)),  # accuracy rate
         ]
 
         # 执行函数
@@ -439,10 +470,10 @@ class TestMonitoringPytest:
     def test_module_imports(self):
         """测试模块导入"""
         # 验证依赖模块都被正确mock
-        assert 'psutil' in sys.modules
-        assert 'redis' in sys.modules
-        assert 'src.monitoring.metrics_collector' in sys.modules
-        assert 'src.monitoring.metrics_exporter' in sys.modules
+        assert "psutil" in sys.modules
+        assert "redis" in sys.modules
+        assert "src.monitoring.metrics_collector" in sys.modules
+        assert "src.monitoring.metrics_exporter" in sys.modules
 
     @pytest.mark.asyncio
     async def test_metrics_integration(self):

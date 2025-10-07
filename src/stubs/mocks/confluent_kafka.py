@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 class MockMessage:
     """模拟Kafka消息"""
-    def __init__(self, topic: str, value: Any = None, key: Any = None, headers: List[tuple] = None):
+
+    def __init__(
+        self,
+        topic: str,
+        value: Any = None,
+        key: Any = None,
+        headers: List[tuple] = None,
+    ):
         self._topic = topic
         self._value = value
         self._key = key
@@ -26,7 +33,7 @@ class MockMessage:
         if self._value is None:
             return None
         if isinstance(self._value, str):
-            return self._value.encode('utf-8')
+            return self._value.encode("utf-8")
         return self._value
 
     def key(self) -> bytes:
@@ -34,7 +41,7 @@ class MockMessage:
         if self._key is None:
             return None
         if isinstance(self._key, str):
-            return self._key.encode('utf-8')
+            return self._key.encode("utf-8")
         return self._key
 
     def topic(self) -> str:
@@ -60,6 +67,7 @@ class MockMessage:
 
 class MockConsumer:
     """模拟Kafka消费者"""
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._topics = set()
@@ -131,6 +139,7 @@ class MockConsumer:
 
 class MockProducer:
     """模拟Kafka生产者"""
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._messages = defaultdict(list)
@@ -145,7 +154,7 @@ class MockProducer:
         key: Any = None,
         headers: List[tuple] = None,
         partition: int = 0,
-        on_delivery: Callable = None
+        on_delivery: Callable = None,
     ) -> None:
         """生产消息"""
         message = MockMessage(topic, value, key, headers)
@@ -155,10 +164,11 @@ class MockProducer:
         if on_delivery:
             try:
                 # 简单的延迟模拟
-                if hasattr(asyncio, 'get_event_loop') and asyncio.get_event_loop().is_running():
-                    asyncio.get_event_loop().call_soon(
-                        on_delivery, None, message
-                    )
+                if (
+                    hasattr(asyncio, "get_event_loop")
+                    and asyncio.get_event_loop().is_running()
+                ):
+                    asyncio.get_event_loop().call_soon(on_delivery, None, message)
                 else:
                     on_delivery(None, message)
             except Exception as e:
@@ -199,32 +209,30 @@ class MockProducer:
 
 class MockAdminClient:
     """模拟Kafka管理客户端"""
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self._metadata = {
-            'topics': {},
-            'brokers': {'1': 'localhost:9093'}
-        }
+        self._metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:
         """创建主题"""
         results = {}
         for topic in new_topics:
-            topic_name = getattr(topic, 'topic', str(topic))
-            self._metadata['topics'][topic_name] = {
-                'partitions': 1,
-                'replication_factor': 1
+            topic_name = getattr(topic, "topic", str(topic))
+            self._metadata["topics"][topic_name] = {
+                "partitions": 1,
+                "replication_factor": 1,
             }
-            results[topic_name] = {'topic_id': topic_name}
+            results[topic_name] = {"topic_id": topic_name}
         return results
 
     def delete_topics(self, topics: List[str]) -> Dict[str, Any]:
         """删除主题"""
         results = {}
         for topic in topics:
-            if topic in self._metadata['topics']:
-                del self._metadata['topics'][topic]
-                results[topic] = {'topic_id': topic}
+            if topic in self._metadata["topics"]:
+                del self._metadata["topics"][topic]
+                results[topic] = {"topic_id": topic}
         return results
 
     def list_topics(self, timeout: float = 1.0) -> Dict[str, Any]:
@@ -238,10 +246,11 @@ class MockAdminClient:
 
 class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self._key_deserializer = config.get('key.deserializer')
-        self._value_deserializer = config.get('value.deserializer')
+        self._key_deserializer = config.get("key.deserializer")
+        self._value_deserializer = config.get("value.deserializer")
 
     def poll(self, timeout: float = 1.0) -> Optional[MockMessage]:
         """轮询并反序列化消息"""
@@ -265,10 +274,11 @@ class MockDeserializingConsumer(MockConsumer):
 
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
+
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
-        self._key_serializer = config.get('key.serializer')
-        self._value_serializer = config.get('value.serializer')
+        self._key_serializer = config.get("key.serializer")
+        self._value_serializer = config.get("value.serializer")
 
     def produce(
         self,
@@ -277,7 +287,7 @@ class MockSerializingProducer(MockProducer):
         key: Any = None,
         headers: List[tuple] = None,
         partition: int = 0,
-        on_delivery: Callable = None
+        on_delivery: Callable = None,
     ) -> None:
         """序列化并发送消息"""
         serialized_key = key
@@ -301,21 +311,21 @@ class MockSerializingProducer(MockProducer):
             key=serialized_key,
             headers=headers,
             partition=partition,
-            on_delivery=on_delivery
+            on_delivery=on_delivery,
         )
 
 
 # 方便的工厂函数
 def Consumer(config: Dict[str, Any]) -> MockConsumer:
     """创建消费者"""
-    if 'key.deserializer' in config or 'value.deserializer' in config:
+    if "key.deserializer" in config or "value.deserializer" in config:
         return MockDeserializingConsumer(config)
     return MockConsumer(config)
 
 
 def Producer(config: Dict[str, Any]) -> MockProducer:
     """创建生产者"""
-    if 'key.serializer' in config or 'value.serializer' in config:
+    if "key.serializer" in config or "value.serializer" in config:
         return MockSerializingProducer(config)
     return MockProducer(config)
 
@@ -328,11 +338,13 @@ def AdminClient(config: Dict[str, Any]) -> MockAdminClient:
 # Kafka异常类的模拟
 class KafkaException(Exception):
     """Kafka异常基类"""
+
     pass
 
 
 class KafkaError(Exception):
     """Kafka错误"""
+
     def __init__(self, code: int, name: str):
         self.code = code
         self.name = name
@@ -341,6 +353,7 @@ class KafkaError(Exception):
 
 class TopicPartition:
     """主题分区"""
+
     def __init__(self, topic: str, partition: int = 0):
         self.topic = topic
         self.partition = partition

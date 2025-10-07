@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 @pytest.mark.integration
 @pytest.mark.skipif(
     not os.getenv("DOCKER_COMPOSE_ACTIVE"),
-    reason="Docker Compose services not active. Run 'docker-compose up -d postgres redis' first."
+    reason="Docker Compose services not active. Run 'docker-compose up -d postgres redis' first.",
 )
 class TestDatabaseIntegration:
     """使用Docker Compose服务的数据库集成测试"""
@@ -23,7 +23,7 @@ class TestDatabaseIntegration:
         # 从环境变量获取数据库URL，如果不存在则使用默认值
         return os.getenv(
             "DATABASE_URL",
-            "postgresql://postgres:postgres@localhost:5432/football_prediction_dev"
+            "postgresql://postgres:postgres@localhost:5432/football_prediction_dev",
         )
 
     @pytest.fixture(scope="class")
@@ -62,16 +62,24 @@ class TestDatabaseIntegration:
         """检查核心表是否存在"""
         with db_engine.connect() as conn:
             # 获取所有表名
-            result = conn.execute(text(
-                "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
-            ))
+            result = conn.execute(
+                text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
+                )
+            )
             tables = {row[0] for row in result.fetchall()}
 
             # 验证核心表存在
             core_tables = {
-                "leagues", "teams", "matches", "odds", "predictions",
-                "users", "audit_logs", "data_collection_logs"
+                "leagues",
+                "teams",
+                "matches",
+                "odds",
+                "predictions",
+                "users",
+                "audit_logs",
+                "data_collection_logs",
             }
 
             existing_core_tables = tables & core_tables
@@ -90,7 +98,7 @@ class TestDatabaseIntegration:
             team_code="TTF",
             country="Testland",
             founded_year=2020,
-            stadium="Test Stadium"
+            stadium="Test Stadium",
         )
 
         db_session.add(team)
@@ -114,7 +122,7 @@ class TestDatabaseIntegration:
             name="Test Premier League",
             country="Testland",
             season="2024-2025",
-            is_active=True
+            is_active=True,
         )
 
         db_session.add(league)
@@ -124,7 +132,9 @@ class TestDatabaseIntegration:
         assert league.id is not None
 
         # 查询联赛
-        retrieved = db_session.query(League).filter_by(name="Test Premier League").first()
+        retrieved = (
+            db_session.query(League).filter_by(name="Test Premier League").first()
+        )
         assert retrieved is not None
         assert retrieved.country == "Testland"
         assert retrieved.season == "2024-2025"
@@ -137,9 +147,7 @@ class TestDatabaseIntegration:
 
         # 创建联赛
         league = League(
-            league_name="Test Division",
-            country="Testland",
-            season="2024-2025"
+            league_name="Test Division", country="Testland", season="2024-2025"
         )
         db_session.add(league)
         db_session.flush()
@@ -149,17 +157,19 @@ class TestDatabaseIntegration:
             team_name="Test United",
             team_code="TU",
             country="Testland",
-            league_id=league.id  # 假设有外键关系
+            league_id=league.id,  # 假设有外键关系
         )
         db_session.add(team)
         db_session.commit()
 
         # 查询验证
-        retrieved_team = db_session.query(Team).filter_by(team_name="Test United").first()
+        retrieved_team = (
+            db_session.query(Team).filter_by(team_name="Test United").first()
+        )
         assert retrieved_team is not None
 
         # 根据实际模型关系验证
-        if hasattr(retrieved_team, 'league_id'):
+        if hasattr(retrieved_team, "league_id"):
             assert retrieved_team.league_id == league.id
 
     def test_query_with_pagination(self, db_session):
@@ -170,9 +180,7 @@ class TestDatabaseIntegration:
         teams = []
         for i in range(5):
             team = Team(
-                team_name=f"Team {i+1}",
-                team_code=f"T{i+1}",
-                country="Testland"
+                team_name=f"Team {i+1}", team_code=f"T{i+1}", country="Testland"
             )
             teams.append(team)
 
@@ -192,11 +200,7 @@ class TestDatabaseIntegration:
         from src.database.models.team import Team
 
         # 创建球队
-        team = Team(
-            team_name="Old Name FC",
-            team_code="OLD",
-            country="Testland"
-        )
+        team = Team(team_name="Old Name FC", team_code="OLD", country="Testland")
         db_session.add(team)
         db_session.commit()
 
@@ -215,11 +219,7 @@ class TestDatabaseIntegration:
         from src.database.models.team import Team
 
         # 创建球队
-        team = Team(
-            name="Delete Me FC",
-            short_name="DEL",
-            country="Testland"
-        )
+        team = Team(name="Delete Me FC", short_name="DEL", country="Testland")
         db_session.add(team)
         db_session.commit()
         team_id = team.id
@@ -236,7 +236,7 @@ class TestDatabaseIntegration:
 @pytest.mark.integration
 @pytest.mark.skipif(
     not os.getenv("DOCKER_COMPOSE_ACTIVE"),
-    reason="Docker Compose services not active. Run 'docker-compose up -d postgres redis' first."
+    reason="Docker Compose services not active. Run 'docker-compose up -d postgres redis' first.",
 )
 class TestRedisIntegration:
     """使用Docker Compose服务的Redis集成测试"""
@@ -248,11 +248,14 @@ class TestRedisIntegration:
             import redis
 
             # 从环境变量获取Redis URL
-            redis_url = os.getenv("REDIS_URL", "redis://:redis_password@localhost:6379/1")
+            redis_url = os.getenv(
+                "REDIS_URL", "redis://:redis_password@localhost:6379/1"
+            )
 
             # 解析Redis URL
             import re
-            match = re.match(r'redis://:(\w+)@([^:]+):(\d+)/(\d+)', redis_url)
+
+            match = re.match(r"redis://:(\w+)@([^:]+):(\d+)/(\d+)", redis_url)
             if match:
                 password, host, port, db = match.groups()
                 client = redis.Redis(
@@ -260,15 +263,12 @@ class TestRedisIntegration:
                     port=int(port),
                     db=int(db),
                     password=password,
-                    decode_responses=True
+                    decode_responses=True,
                 )
             else:
                 # 简单连接（无密码）
                 client = redis.Redis(
-                    host="localhost",
-                    port=6379,
-                    db=1,
-                    decode_responses=True
+                    host="localhost", port=6379, db=1, decode_responses=True
                 )
 
             # 测试连接
@@ -277,7 +277,7 @@ class TestRedisIntegration:
         except (ImportError, redis.exceptions.ConnectionError):
             pytest.skip("Redis not available")
         finally:
-            if 'client' in locals():
+            if "client" in locals():
                 client.close()
 
     def test_redis_connection(self, redis_client):
@@ -303,11 +303,10 @@ class TestRedisIntegration:
     def test_redis_hash_operations(self, redis_client):
         """测试Redis哈希操作"""
         # HSET操作
-        redis_client.hset("test:hash", mapping={
-            "field1": "value1",
-            "field2": "value2",
-            "field3": "value3"
-        })
+        redis_client.hset(
+            "test:hash",
+            mapping={"field1": "value1", "field2": "value2", "field3": "value3"},
+        )
 
         # HGET操作
         assert redis_client.hget("test:hash", "field1") == "value1"
@@ -317,7 +316,7 @@ class TestRedisIntegration:
         assert all_fields == {
             "field1": "value1",
             "field2": "value2",
-            "field3": "value3"
+            "field3": "value3",
         }
 
         # 清理
@@ -329,7 +328,7 @@ class TestRedisIntegration:
             "id": "123",
             "name": "Test Team",
             "short_name": "TT",
-            "country": "Testland"
+            "country": "Testland",
         }
 
         # 缓存数据

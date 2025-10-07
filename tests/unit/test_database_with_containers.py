@@ -21,10 +21,12 @@ class TestDatabaseWithContainers:
         """测试数据库表是否正确创建"""
         # 检查表是否存在
         with test_database_engine.connect() as conn:
-            result = conn.execute(text(
-                "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema = 'public'"
-            ))
+            result = conn.execute(
+                text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema = 'public'"
+                )
+            )
             tables = [row[0] for row in result.fetchall()]
 
             # 验证核心表存在
@@ -37,11 +39,7 @@ class TestDatabaseWithContainers:
         from src.database.models.team import Team
 
         # 创建球队
-        team = Team(
-            name="Test Team",
-            short_name="TT",
-            country="Test Country"
-        )
+        team = Team(name="Test Team", short_name="TT", country="Test Country")
         test_db_session.add(team)
         test_db_session.commit()
 
@@ -56,11 +54,7 @@ class TestDatabaseWithContainers:
         from src.database.models.league import League
 
         # 创建联赛
-        league = League(
-            name="Test League",
-            country="Test Country",
-            season="2024-2025"
-        )
+        league = League(name="Test League", country="Test Country", season="2024-2025")
         test_db_session.add(league)
         test_db_session.commit()
 
@@ -90,18 +84,18 @@ class TestDatabaseWithContainers:
 
         # 查询主队比赛
         home_team = sample_test_data["home_team"]
-        home_matches = test_db_session.query(Match).filter_by(
-            home_team_id=home_team.id
-        ).all()
+        home_matches = (
+            test_db_session.query(Match).filter_by(home_team_id=home_team.id).all()
+        )
 
         assert len(home_matches) == 1
         assert home_matches[0].away_team_id == sample_test_data["away_team"].id
 
         # 查询客队比赛
         away_team = sample_test_data["away_team"]
-        away_matches = test_db_session.query(Match).filter_by(
-            away_team_id=away_team.id
-        ).all()
+        away_matches = (
+            test_db_session.query(Match).filter_by(away_team_id=away_team.id).all()
+        )
 
         assert len(away_matches) == 1
         assert away_matches[0].home_team_id == sample_test_data["home_team"].id
@@ -112,9 +106,7 @@ class TestDatabaseWithContainers:
 
         # 查询联赛下的比赛
         league = sample_test_data["league"]
-        matches = test_db_session.query(Match).filter_by(
-            league_id=league.id
-        ).all()
+        matches = test_db_session.query(Match).filter_by(league_id=league.id).all()
 
         assert len(matches) == 1
         assert matches[0].home_team_id == sample_test_data["home_team"].id
@@ -200,7 +192,9 @@ class TestRedisWithContainers:
 class TestDatabaseRedisIntegration:
     """数据库和Redis集成测试"""
 
-    def test_cache_team_data(self, test_db_session, test_redis_client, sample_test_data):
+    def test_cache_team_data(
+        self, test_db_session, test_redis_client, sample_test_data
+    ):
         """测试缓存球队数据"""
         team = sample_test_data["home_team"]
 
@@ -210,7 +204,7 @@ class TestDatabaseRedisIntegration:
             "id": team.id,
             "name": team.name,
             "short_name": team.short_name,
-            "country": team.country
+            "country": team.country,
         }
 
         # 使用Redis哈希存储球队数据
@@ -224,7 +218,9 @@ class TestDatabaseRedisIntegration:
         assert cached_data["short_name"] == team.short_name
         assert cached_data["country"] == team.country
 
-    def test_cache_match_prediction(self, test_db_session, test_redis_client, sample_test_data):
+    def test_cache_match_prediction(
+        self, test_db_session, test_redis_client, sample_test_data
+    ):
         """测试缓存比赛预测数据"""
         match = sample_test_data["match"]
 
@@ -236,7 +232,7 @@ class TestDatabaseRedisIntegration:
             "away_win_prob": 0.10,
             "predicted_home_score": 2,
             "predicted_away_score": 1,
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
         # 缓存预测数据

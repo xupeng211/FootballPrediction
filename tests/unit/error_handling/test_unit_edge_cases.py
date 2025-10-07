@@ -12,7 +12,7 @@ import json
 import asyncio
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -71,8 +71,11 @@ class TestEdgeCasesAndErrorHandling:
         # 测试URL错误
         with pytest.raises((urllib.error.URLError, ValueError)):
             import urllib.request
+
             try:
-                urllib.request.urlopen("http://invalid-url-that-does-not-exist.com", timeout=1)
+                urllib.request.urlopen(
+                    "http://invalid-url-that-does-not-exist.com", timeout=1
+                )
             except:
                 raise urllib.error.URLError("Test URL error")
 
@@ -83,7 +86,7 @@ class TestEdgeCasesAndErrorHandling:
             from src.database.models.team import Team
 
             # 模拟唯一约束违反
-            with patch('src.database.connection.DatabaseManager') as mock_db:
+            with patch("src.database.connection.DatabaseManager") as mock_db:
                 mock_session = MagicMock()
                 mock_session.commit.side_effect = IntegrityError(
                     "Duplicate entry", "test", "UNIQUE constraint failed"
@@ -109,7 +112,7 @@ class TestEdgeCasesAndErrorHandling:
         import sys
 
         # 监控内存使用
-        initial_objects = len(gc.get_objects()) if 'gc' in sys.modules else 0
+        initial_objects = len(gc.get_objects()) if "gc" in sys.modules else 0
 
         # 创建大量对象
         large_list = []
@@ -123,8 +126,9 @@ class TestEdgeCasesAndErrorHandling:
         del large_list
 
         # 验证内存没有被泄漏太多
-        if 'gc' in sys.modules:
+        if "gc" in sys.modules:
             import gc
+
             gc.collect()
             final_objects = len(gc.get_objects())
             object_increase = final_objects - initial_objects
@@ -162,6 +166,7 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_data_type_mismatches(self):
         """测试数据类型不匹配"""
+
         # 测试期望字符串但得到数字
         def process_string(value):
             if not isinstance(value, str):
@@ -206,7 +211,7 @@ class TestEdgeCasesAndErrorHandling:
         # 测试日期运算边界
         today = date.today()
         future = today + timedelta(days=36500)  # 100年后
-        past = today - timedelta(days=36500)    # 100年前
+        past = today - timedelta(days=36500)  # 100年前
 
         assert future > today
         assert past < today
@@ -219,10 +224,11 @@ class TestEdgeCasesAndErrorHandling:
             date(2024, 13, 1)  # 没有13月
 
         with pytest.raises(ValueError):
-            time(25, 0, 0)     # 没有25小时
+            time(25, 0, 0)  # 没有25小时
 
     def test_json_serialization_errors(self):
         """测试JSON序列化错误"""
+
         # 测试不可序列化的对象
         class UnserializableObject:
             def __init__(self):
@@ -326,6 +332,7 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_async_error_handling(self):
         """测试异步错误处理"""
+
         async def failing_async_function():
             await asyncio.sleep(0.01)
             raise ValueError("Async error")
@@ -378,7 +385,7 @@ class TestEdgeCasesAndErrorHandling:
         assert math.isinf(result)
 
         # 测试NaN
-        nan_value = float('nan')
+        nan_value = float("nan")
         assert nan_value != nan_value  # NaN不等于自身
         assert math.isnan(nan_value)
 
@@ -389,22 +396,22 @@ class TestEdgeCasesAndErrorHandling:
     def test_encoding_errors(self):
         """测试编码错误"""
         # 测试无效UTF-8
-        invalid_bytes = b'\xff\xfe\x00'
+        invalid_bytes = b"\xff\xfe\x00"
 
         with pytest.raises(UnicodeDecodeError):
-            invalid_bytes.decode('utf-8')
+            invalid_bytes.decode("utf-8")
 
         # 测试不同的编码
         test_string = "测试中文字符"
 
         # UTF-8编码
-        utf8_bytes = test_string.encode('utf-8')
-        decoded = utf8_bytes.decode('utf-8')
+        utf8_bytes = test_string.encode("utf-8")
+        decoded = utf8_bytes.decode("utf-8")
         assert decoded == test_string
 
         # 测试不存在的编码
         with pytest.raises(LookupError):
-            test_string.encode('invalid-encoding')
+            test_string.encode("invalid-encoding")
 
     def test_resource_cleanup(self):
         """测试资源清理"""
@@ -450,16 +457,15 @@ class TestEdgeCasesAndErrorHandling:
             "database": {
                 "host": "localhost",
                 "port": 5432,
-                "credentials": {
-                    "username": "user",
-                    "password": "pass"
-                }
+                "credentials": {"username": "user", "password": "pass"},
             },
-            "features": []
+            "features": [],
         }
 
         # 访问深层嵌套值
-        username = nested_config.get("database", {}).get("credentials", {}).get("username")
+        username = (
+            nested_config.get("database", {}).get("credentials", {}).get("username")
+        )
         assert username == "user"
 
         # 测试不存在的键
@@ -470,7 +476,7 @@ class TestEdgeCasesAndErrorHandling:
         config_with_wrong_types = {
             "port": "not_a_number",
             "enabled": "maybe",
-            "count": "lots"
+            "count": "lots",
         }
 
         # 尝试类型转换

@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FeatureView:
     """特征视图"""
+
     name: str
     entities: List[str]
     features: List[str]
@@ -27,6 +28,7 @@ class FeatureView:
 @dataclass
 class Entity:
     """实体"""
+
     name: str
     value_type: str
     description: Optional[str] = None
@@ -36,6 +38,7 @@ class Entity:
 @dataclass
 class FeatureService:
     """特征服务"""
+
     name: str
     features: List[str]
     tags: Optional[Dict[str, str]] = None
@@ -43,6 +46,7 @@ class FeatureService:
 
 class ValueType:
     """值类型常量"""
+
     INT64 = "INT64"
     INT32 = "INT32"
     FLOAT = "FLOAT"
@@ -55,6 +59,7 @@ class ValueType:
 
 class MockFeatureStore:
     """模拟特征存储"""
+
     def __init__(self, repo_path: str = None, config_path: str = None):
         self.repo_path = repo_path
         self.config_path = config_path
@@ -107,9 +112,7 @@ class MockFeatureStore:
         return list(self._feature_services.values())
 
     def get_online_features(
-        self,
-        feature_refs: List[str],
-        entity_rows: List[Dict[str, Any]]
+        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
     ) -> Tuple[List[Dict[str, Any]], List[str]]:
         """获取在线特征"""
         features = []
@@ -135,7 +138,10 @@ class MockFeatureStore:
                 key = f"{feature_view}__{feature_name}"
 
                 # 查找特征值
-                if entity_key in self._feature_data and key in self._feature_data[entity_key]:
+                if (
+                    entity_key in self._feature_data
+                    and key in self._feature_data[entity_key]
+                ):
                     row_features[key] = self._feature_data[entity_key][key]
                 else:
                     # 返回默认值
@@ -160,20 +166,19 @@ class MockFeatureStore:
         self,
         feature_view_name: str,
         df: Any,  # DataFrame-like object
-        registry: Any = None
+        registry: Any = None,
     ) -> None:
         """写入在线存储"""
         logger.info(f"Writing to online store for {feature_view_name}")
         # Mock实现 - 不实际写入
 
     def materialize_incremental(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        feature_views: List[str] = None
+        self, start_date: datetime, end_date: datetime, feature_views: List[str] = None
     ) -> None:
         """增量物化"""
-        logger.info(f"Materializing incremental features from {start_date} to {end_date}")
+        logger.info(
+            f"Materializing incremental features from {start_date} to {end_date}"
+        )
 
     def teardown(self) -> None:
         """清理特征存储"""
@@ -195,12 +200,15 @@ class MockFeatureStore:
 
 class MockFeatureService:
     """模拟特征服务"""
+
     def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
         self._service_config = None
 
-    def get_feature_vector(self, entity_id: str, feature_refs: List[str]) -> Dict[str, Any]:
+    def get_feature_vector(
+        self, entity_id: str, feature_refs: List[str]
+    ) -> Dict[str, Any]:
         """获取特征向量"""
         entity_rows = [{"entity_id": entity_id}]
         features, _ = self.feature_store.get_online_features(feature_refs, entity_rows)
@@ -209,6 +217,7 @@ class MockFeatureService:
 
 class MockFeastClient:
     """模拟Feast客户端"""
+
     def __init__(self, repo_path: str = None, config_path: str = None):
         self.feature_store = MockFeatureStore(repo_path, config_path)
         self._services = {}
@@ -218,12 +227,12 @@ class MockFeastClient:
         self.feature_store.apply(objects)
 
     def get_online_features(
-        self,
-        feature_refs: List[str],
-        entity_rows: List[Dict[str, Any]]
+        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
     ) -> "MockOnlineResponse":
         """获取在线特征"""
-        features, field_names = self.feature_store.get_online_features(feature_refs, entity_rows)
+        features, field_names = self.feature_store.get_online_features(
+            feature_refs, entity_rows
+        )
         return MockOnlineResponse(features, field_names)
 
     def serve(self, port: int = 6566) -> None:
@@ -239,6 +248,7 @@ class MockFeastClient:
 
 class MockOnlineResponse:
     """模拟在线特征响应"""
+
     def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):
         self._features = features
         self._field_names = field_names
@@ -252,6 +262,7 @@ class MockOnlineResponse:
     def to_df(self):
         """转换为DataFrame（mock）"""
         import pandas as pd
+
         return pd.DataFrame(self._features, columns=self._field_names)
 
     @property
@@ -303,6 +314,7 @@ def generate_test_features(entity_id: str) -> Dict[str, Any]:
 
 # 创建全局实例
 global_feast_store = None
+
 
 def get_feast_store() -> MockFeatureStore:
     """获取全局特征存储实例"""

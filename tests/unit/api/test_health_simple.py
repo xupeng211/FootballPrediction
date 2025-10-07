@@ -43,7 +43,9 @@ class TestUtilityFunctions:
         assert result["healthy"] is True
         assert result["status"] == "skipped"
         assert result["response_time_ms"] == 0.0
-        assert f"{service} check skipped in minimal mode" in result["details"]["message"]
+        assert (
+            f"{service} check skipped in minimal mode" in result["details"]["message"]
+        )
 
     def test_optional_check_skipped_different_services(self):
         """测试不同服务的可选检查跳过"""
@@ -213,10 +215,12 @@ class TestHealthCheckEndpoints:
             # 重新导入模块以测试
             import importlib
             import src.api.health
+
             importlib.reload(src.api.health)
 
             # 验证环境变量被正确读取
             from src.api.health import FAST_FAIL, MINIMAL_HEALTH_MODE
+
             assert FAST_FAIL is True
             assert MINIMAL_HEALTH_MODE is False
 

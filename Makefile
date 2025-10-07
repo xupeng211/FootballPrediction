@@ -871,4 +871,3 @@ test-all-services: ## Test: Run tests with all external services
 	sleep 10 && \
 	pytest tests/ -v --maxfail=5 && \
 	echo "$(GREEN)✅ Full service tests passed$(RESET)"
-

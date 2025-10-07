@@ -8,7 +8,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -26,11 +26,11 @@ class TestCoreComprehensive:
 
             # 测试配置属性
             config_attrs = [
-                'DEBUG',
-                'TESTING',
-                'ENVIRONMENT',
-                'DATABASE_URL',
-                'REDIS_URL'
+                "DEBUG",
+                "TESTING",
+                "ENVIRONMENT",
+                "DATABASE_URL",
+                "REDIS_URL",
             ]
 
             for attr in config_attrs:
@@ -95,7 +95,7 @@ class TestCoreComprehensive:
                 ConfigurationError,
                 DatabaseError,
                 CacheError,
-                APIError
+                APIError,
             )
 
             # 测试基础异常
@@ -144,21 +144,24 @@ class TestCoreComprehensive:
         # 测试常量定义
         try:
             from src import __version__
+
             assert isinstance(__version__, str)
             assert len(__version__) > 0
         except (ImportError, AttributeError):
             pytest.skip("Version not available")
 
         # 测试环境变量处理
-        os.environ['TEST_VAR'] = 'test_value'
-        assert os.getenv('TEST_VAR') == 'test_value'
-        assert os.getenv('NON_EXISTENT_VAR') is None
+        os.environ["TEST_VAR"] = "test_value"
+        assert os.getenv("TEST_VAR") == "test_value"
+        assert os.getenv("NON_EXISTENT_VAR") is None
 
         # 测试路径处理
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        )
         assert os.path.exists(project_root)
 
-        src_path = os.path.join(project_root, 'src')
+        src_path = os.path.join(project_root, "src")
         assert os.path.exists(src_path)
 
     def test_core_integration(self):
@@ -231,6 +234,7 @@ class TestCoreComprehensive:
         def config_worker():
             try:
                 from src.core.config import Config
+
                 config = Config()
                 time.sleep(0.01)
                 assert config is not None
@@ -241,6 +245,7 @@ class TestCoreComprehensive:
         def logger_worker():
             try:
                 from src.core.logger import get_logger
+
                 logger = get_logger(f"thread_{threading.current_thread().name}")
                 logger.info("Thread-safe logging test")
                 time.sleep(0.01)
@@ -270,6 +275,7 @@ class TestCoreComprehensive:
         # 测试无效配置
         try:
             from src.core.config import validate_config
+
             if callable(validate_config):
                 # 测试空配置
                 result = validate_config({})
@@ -285,6 +291,7 @@ class TestCoreComprehensive:
         # 测试日志级别
         try:
             from src.core.logger import setup_logging
+
             if callable(setup_logging):
                 # 测试无效日志级别
                 setup_logging(level="INVALID_LEVEL")
@@ -296,6 +303,7 @@ class TestCoreComprehensive:
         # 测试异常链
         try:
             from src.core.exceptions import FootballPredictionError
+
             try:
                 raise ValueError("Original error")
             except ValueError as e:
@@ -306,30 +314,31 @@ class TestCoreComprehensive:
     def test_core_configuration_scenarios(self):
         """测试各种配置场景"""
         # 测试环境变量配置
-        os.environ['FOOTBALL_PREDICTION_DEBUG'] = 'true'
-        os.environ['FOOTBALL_PREDICTION_ENV'] = 'test'
+        os.environ["FOOTBALL_PREDICTION_DEBUG"] = "true"
+        os.environ["FOOTBALL_PREDICTION_ENV"] = "test"
 
         try:
             from src.core.config import Config
+
             config = Config()
 
             # 检查环境变量是否被正确读取
-            if hasattr(config, 'DEBUG'):
-                debug_value = getattr(config, 'DEBUG', None)
+            if hasattr(config, "DEBUG"):
+                debug_value = getattr(config, "DEBUG", None)
                 assert debug_value is True or debug_value is False
 
-            if hasattr(config, 'ENVIRONMENT'):
-                env_value = getattr(config, 'ENVIRONMENT', None)
+            if hasattr(config, "ENVIRONMENT"):
+                env_value = getattr(config, "ENVIRONMENT", None)
                 assert env_value is not None
 
         except ImportError:
             pytest.skip("Configuration scenarios not available")
 
         # 清理环境变量
-        if 'FOOTBALL_PREDICTION_DEBUG' in os.environ:
-            del os.environ['FOOTBALL_PREDICTION_DEBUG']
-        if 'FOOTBALL_PREDICTION_ENV' in os.environ:
-            del os.environ['FOOTBALL_PREDICTION_ENV']
+        if "FOOTBALL_PREDICTION_DEBUG" in os.environ:
+            del os.environ["FOOTBALL_PREDICTION_DEBUG"]
+        if "FOOTBALL_PREDICTION_ENV" in os.environ:
+            del os.environ["FOOTBALL_PREDICTION_ENV"]
 
     def test_core_logging_formats(self):
         """测试日志格式"""
@@ -339,9 +348,9 @@ class TestCoreComprehensive:
 
             # 测试不同格式
             formats = [
-                '%(name)s - %(levelname)s - %(message)s',
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                '%(levelname)s: %(message)s'
+                "%(name)s - %(levelname)s - %(message)s",
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "%(levelname)s: %(message)s",
             ]
 
             for fmt in formats:

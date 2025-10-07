@@ -34,6 +34,7 @@ class TestMainExtended:
             # 重新导入模块以测试环境变量
             import importlib
             import src.main
+
             importlib.reload(src.main)
             assert src.main.MINIMAL_API_MODE is False
 
@@ -47,22 +48,24 @@ class TestMainExtended:
             importlib.reload(src.main)
             assert src.main.MINIMAL_API_MODE is False
 
-    @patch('src.main.lifespan')
+    @patch("src.main.lifespan")
     def test_lifespan_context_manager(self, mock_lifespan):
         """测试生命周期管理器"""
         from src.main import lifespan
 
         # 这是一个简单的存在性测试，确保lifespan函数存在
         assert callable(lifespan)
-        assert hasattr(lifespan, '__aenter__')
-        assert hasattr(lifespan, '__aexit__')
+        assert hasattr(lifespan, "__aenter__")
+        assert hasattr(lifespan, "__aexit__")
 
     def test_http_exception_handler(self, client):
         """测试HTTP异常处理器"""
+
         # 创建一个会抛出HTTP异常的路由
         @app.get("/test-http-exception")
         async def test_http_exception():
             from fastapi import HTTPException
+
             raise HTTPException(status_code=400, detail="测试错误")
 
         response = client.get("/test-http-exception")
@@ -75,6 +78,7 @@ class TestMainExtended:
 
     def test_general_exception_handler(self, client):
         """测试通用异常处理器"""
+
         # 创建一个会抛出通用异常的路由
         @app.get("/test-general-exception")
         async def test_general_exception():
@@ -131,22 +135,28 @@ class TestMainExtended:
             assert origins == ["http://localhost:3000"]
 
         # 测试多个origins
-        with patch.dict(os.environ, {"CORS_ORIGINS": "http://localhost:3000,https://example.com"}, clear=True):
+        with patch.dict(
+            os.environ,
+            {"CORS_ORIGINS": "http://localhost:3000,https://example.com"},
+            clear=True,
+        ):
             origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
             assert origins == ["http://localhost:3000", "https://example.com"]
 
-    @patch('src.main.RATE_LIMIT_AVAILABLE', True)
-    @patch('src.main.limiter')
+    @patch("src.main.RATE_LIMIT_AVAILABLE", True)
+    @patch("src.main.limiter")
     def test_rate_limit_configuration(self, mock_limiter):
         """测试速率限制配置"""
         # 这是一个简单的测试，验证速率限制相关代码存在
         from src.main import RATE_LIMIT_AVAILABLE
+
         assert RATE_LIMIT_AVAILABLE is True
 
-    @patch('src.main.RATE_LIMIT_AVAILABLE', False)
+    @patch("src.main.RATE_LIMIT_AVAILABLE", False)
     def test_rate_limit_disabled(self):
         """测试速率限制禁用的情况"""
         from src.main import RATE_LIMIT_AVAILABLE
+
         assert RATE_LIMIT_AVAILABLE is False
 
     def test_warning_filters_setup(self):
@@ -154,10 +164,12 @@ class TestMainExtended:
         # 验证警告过滤相关的代码路径
         try:
             from src.utils.warning_filters import setup_warning_filters
+
             assert callable(setup_warning_filters)
         except ImportError:
             # 如果模块不存在，应该有备用处理
             import warnings
+
             # 验证warnings模块可用
             assert callable(warnings.filterwarnings)
 
@@ -172,14 +184,15 @@ class TestMainExtended:
     def test_logging_configuration(self):
         """测试日志配置"""
         import logging
+
         logger = logging.getLogger(__name__)
         assert logger is not None
         # 验证基本配置已设置
         assert len(logging.getLogger().handlers) > 0
 
-    @patch('src.main.initialize_database')
-    @patch('src.main.start_metrics_collection')
-    @patch('src.main.stop_metrics_collection')
+    @patch("src.main.initialize_database")
+    @patch("src.main.start_metrics_collection")
+    @patch("src.main.stop_metrics_collection")
     async def test_lifespan_startup_shutdown(self, mock_stop, mock_start, mock_init):
         """测试生命周期启动和关闭逻辑"""
         from src.main import lifespan

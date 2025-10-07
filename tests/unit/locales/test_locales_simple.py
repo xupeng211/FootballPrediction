@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestLocalesSimple:
         """测试国际化模块导入"""
         try:
             from src.locales.i18n import I18n, get_text, set_locale
+
             i18n = I18n()
             assert i18n is not None
             assert get_text is not None
@@ -31,6 +32,7 @@ class TestLocalesSimple:
         """测试翻译模块导入"""
         try:
             from src.locales.translations import Translations, load_translations
+
             translations = Translations()
             assert translations is not None
             assert load_translations is not None
@@ -41,6 +43,7 @@ class TestLocalesSimple:
         """测试语言检测器导入"""
         try:
             from src.locales.detector import LocaleDetector, detect_locale
+
             detector = LocaleDetector()
             assert detector is not None
             assert detect_locale is not None
@@ -51,6 +54,7 @@ class TestLocalesSimple:
         """测试格式化器导入"""
         try:
             from src.locales.formatter import DateFormatter, NumberFormatter
+
             date_formatter = DateFormatter()
             number_formatter = NumberFormatter()
             assert date_formatter is not None
@@ -63,14 +67,14 @@ class TestLocalesSimple:
         try:
             from src.locales.i18n import I18n, get_text
 
-            with patch('src.locales.i18n.logger') as mock_logger:
+            with patch("src.locales.i18n.logger") as mock_logger:
                 i18n = I18n()
                 i18n.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(i18n, 'get_translation')
-                assert hasattr(i18n, 'set_language')
-                assert hasattr(i18n, 'get_available_languages')
+                assert hasattr(i18n, "get_translation")
+                assert hasattr(i18n, "set_language")
+                assert hasattr(i18n, "get_available_languages")
 
                 # 测试全局函数
                 text = get_text("test_key", default="Test")
@@ -84,15 +88,15 @@ class TestLocalesSimple:
         try:
             from src.locales.translations import Translations
 
-            with patch('src.locales.translations.logger') as mock_logger:
+            with patch("src.locales.translations.logger") as mock_logger:
                 translations = Translations()
                 translations.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(translations, 'load')
-                assert hasattr(translations, 'get')
-                assert hasattr(translations, 'has_translation')
-                assert hasattr(translations, 'get_translated_text')
+                assert hasattr(translations, "load")
+                assert hasattr(translations, "get")
+                assert hasattr(translations, "has_translation")
+                assert hasattr(translations, "get_translated_text")
 
         except Exception as e:
             pytest.skip(f"Cannot test translations basic functionality: {e}")
@@ -102,14 +106,14 @@ class TestLocalesSimple:
         try:
             from src.locales.detector import LocaleDetector, detect_locale
 
-            with patch('src.locales.detector.logger') as mock_logger:
+            with patch("src.locales.detector.logger") as mock_logger:
                 detector = LocaleDetector()
                 detector.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(detector, 'detect_from_headers')
-                assert hasattr(detector, 'detect_from_accept_language')
-                assert hasattr(detector, 'detect_from_ip')
+                assert hasattr(detector, "detect_from_headers")
+                assert hasattr(detector, "detect_from_accept_language")
+                assert hasattr(detector, "detect_from_ip")
 
                 # 测试全局函数
                 locale = detect_locale("en-US,en;q=0.9")
@@ -124,14 +128,14 @@ class TestLocalesSimple:
             from src.locales.formatter import DateFormatter
             from datetime import datetime
 
-            with patch('src.locales.formatter.logger') as mock_logger:
+            with patch("src.locales.formatter.logger") as mock_logger:
                 formatter = DateFormatter()
                 formatter.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(formatter, 'format_date')
-                assert hasattr(formatter, 'format_time')
-                assert hasattr(formatter, 'format_datetime')
+                assert hasattr(formatter, "format_date")
+                assert hasattr(formatter, "format_time")
+                assert hasattr(formatter, "format_datetime")
 
                 # 测试格式化
                 date = datetime(2024, 1, 1)
@@ -146,14 +150,14 @@ class TestLocalesSimple:
         try:
             from src.locales.formatter import NumberFormatter
 
-            with patch('src.locales.formatter.logger') as mock_logger:
+            with patch("src.locales.formatter.logger") as mock_logger:
                 formatter = NumberFormatter()
                 formatter.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(formatter, 'format_number')
-                assert hasattr(formatter, 'format_currency')
-                assert hasattr(formatter, 'format_percentage')
+                assert hasattr(formatter, "format_number")
+                assert hasattr(formatter, "format_currency")
+                assert hasattr(formatter, "format_percentage")
 
         except Exception as e:
             pytest.skip(f"Cannot test NumberFormatter: {e}")
@@ -216,14 +220,14 @@ class TestLocalesSimple:
         try:
             from src.locales.i18n import I18n
 
-            with patch('src.locales.i18n.logger') as mock_logger:
+            with patch("src.locales.i18n.logger") as mock_logger:
                 i18n = I18n()
                 i18n.logger = mock_logger
 
                 # 测试缓存属性
-                assert hasattr(i18n, 'cache')
-                assert hasattr(i18n, 'clear_cache')
-                assert hasattr(i18n, 'preload_translations')
+                assert hasattr(i18n, "cache")
+                assert hasattr(i18n, "clear_cache")
+                assert hasattr(i18n, "preload_translations")
 
         except Exception as e:
             pytest.skip(f"Cannot test translation cache: {e}")
@@ -234,9 +238,11 @@ class TestLocalesSimple:
             from src.locales.translations import load_translations
 
             # 测试加载翻译文件
-            with patch('src.locales.translations.logger'):
+            with patch("src.locales.translations.logger"):
                 result = load_translations("en")
-                assert result is not None or result is False  # 可能返回False如果文件不存在
+                assert (
+                    result is not None or result is False
+                )  # 可能返回False如果文件不存在
 
         except Exception as e:
             pytest.skip(f"Cannot test dynamic loading: {e}")

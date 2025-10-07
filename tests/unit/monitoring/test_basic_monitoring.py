@@ -11,6 +11,7 @@ class TestBasicMonitoringImports:
         """测试异常检测器导入"""
         try:
             from src.monitoring import anomaly_detector
+
             assert anomaly_detector is not None
         except ImportError as e:
             pytest.skip(f"无法导入anomaly_detector: {e}")
@@ -19,6 +20,7 @@ class TestBasicMonitoringImports:
         """测试指标收集器导入"""
         try:
             from src.monitoring import metrics_collector
+
             assert metrics_collector is not None
         except ImportError as e:
             pytest.skip(f"无法导入metrics_collector: {e}")
@@ -27,6 +29,7 @@ class TestBasicMonitoringImports:
         """测试指标导出器导入"""
         try:
             from src.monitoring import metrics_exporter
+
             assert metrics_exporter is not None
         except ImportError as e:
             pytest.skip(f"无法导入metrics_exporter: {e}")
@@ -35,6 +38,7 @@ class TestBasicMonitoringImports:
         """测试质量监控器导入"""
         try:
             from src.monitoring import quality_monitor
+
             assert quality_monitor is not None
         except ImportError as e:
             pytest.skip(f"无法导入quality_monitor: {e}")
@@ -43,6 +47,7 @@ class TestBasicMonitoringImports:
         """测试系统监控器导入"""
         try:
             from src.monitoring import system_monitor
+
             assert system_monitor is not None
         except ImportError as e:
             pytest.skip(f"无法导入system_monitor: {e}")
@@ -51,6 +56,7 @@ class TestBasicMonitoringImports:
         """测试告警管理器导入"""
         try:
             from src.monitoring import alert_manager
+
             assert alert_manager is not None
         except ImportError as e:
             pytest.skip(f"无法导入alert_manager: {e}")
@@ -59,7 +65,7 @@ class TestBasicMonitoringImports:
 class TestBasicMonitoringFunctionality:
     """测试监控模块的基本功能"""
 
-    @patch('psutil.cpu_percent')
+    @patch("psutil.cpu_percent")
     def test_system_monitor_basic(self, mock_cpu):
         """测试系统监控基本功能"""
         try:

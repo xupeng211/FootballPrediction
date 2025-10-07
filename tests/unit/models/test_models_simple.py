@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestModelsSimple:
         """测试预测服务导入"""
         try:
             from src.models.prediction_service import PredictionService
+
             service = PredictionService()
             assert service is not None
         except ImportError as e:
@@ -29,6 +30,7 @@ class TestModelsSimple:
         """测试模型训练导入"""
         try:
             from src.models.model_training import ModelTrainer
+
             trainer = ModelTrainer()
             assert trainer is not None
         except ImportError as e:
@@ -40,8 +42,9 @@ class TestModelsSimple:
             from src.models.common_models import (
                 BaseModel,
                 PredictionModel,
-                ModelMetrics
+                ModelMetrics,
             )
+
             assert BaseModel is not None
             assert PredictionModel is not None
             assert ModelMetrics is not None
@@ -52,6 +55,7 @@ class TestModelsSimple:
         """测试指标导出器导入"""
         try:
             from src.models.metrics_exporter import MetricsExporter
+
             exporter = MetricsExporter()
             assert exporter is not None
         except ImportError as e:
@@ -62,14 +66,14 @@ class TestModelsSimple:
         try:
             from src.models.prediction_service import PredictionService
 
-            with patch('src.models.prediction_service.logger') as mock_logger:
+            with patch("src.models.prediction_service.logger") as mock_logger:
                 service = PredictionService()
                 service.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(service, 'predict')
-                assert hasattr(service, 'predict_batch')
-                assert hasattr(service, 'get_model_info')
+                assert hasattr(service, "predict")
+                assert hasattr(service, "predict_batch")
+                assert hasattr(service, "get_model_info")
 
         except Exception as e:
             pytest.skip(f"Cannot test PredictionService basic functionality: {e}")
@@ -80,13 +84,13 @@ class TestModelsSimple:
         try:
             from src.models.prediction_service import PredictionService
 
-            with patch('src.models.prediction_service.logger') as mock_logger:
+            with patch("src.models.prediction_service.logger") as mock_logger:
                 service = PredictionService()
                 service.logger = mock_logger
 
                 # 测试异步方法存在
-                assert hasattr(service, 'async_predict')
-                assert hasattr(service, 'async_predict_batch')
+                assert hasattr(service, "async_predict")
+                assert hasattr(service, "async_predict_batch")
 
         except Exception as e:
             pytest.skip(f"Cannot test PredictionService async functionality: {e}")
@@ -96,15 +100,15 @@ class TestModelsSimple:
         try:
             from src.models.model_training import ModelTrainer
 
-            with patch('src.models.model_training.logger') as mock_logger:
+            with patch("src.models.model_training.logger") as mock_logger:
                 trainer = ModelTrainer()
                 trainer.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(trainer, 'train')
-                assert hasattr(trainer, 'evaluate')
-                assert hasattr(trainer, 'save_model')
-                assert hasattr(trainer, 'load_model')
+                assert hasattr(trainer, "train")
+                assert hasattr(trainer, "evaluate")
+                assert hasattr(trainer, "save_model")
+                assert hasattr(trainer, "load_model")
 
         except Exception as e:
             pytest.skip(f"Cannot test ModelTrainer basic functionality: {e}")
@@ -116,9 +120,7 @@ class TestModelsSimple:
 
             # 创建测试模型
             model = BaseModel(
-                model_id="test_model",
-                model_type="test_type",
-                version="1.0.0"
+                model_id="test_model", model_type="test_type", version="1.0.0"
             )
 
             assert model.model_id == "test_model"
@@ -137,12 +139,12 @@ class TestModelsSimple:
             model = PredictionModel(
                 model_id="test_prediction_model",
                 model_type="prediction",
-                version="1.0.0"
+                version="1.0.0",
             )
 
             assert model.model_id == "test_prediction_model"
-            assert hasattr(model, 'predict')
-            assert hasattr(model, 'predict_proba')
+            assert hasattr(model, "predict")
+            assert hasattr(model, "predict_proba")
 
         except Exception as e:
             pytest.skip(f"Cannot test PredictionModel: {e}")
@@ -154,10 +156,7 @@ class TestModelsSimple:
 
             # 创建测试指标
             metrics = ModelMetrics(
-                accuracy=0.85,
-                precision=0.82,
-                recall=0.88,
-                f1_score=0.85
+                accuracy=0.85, precision=0.82, recall=0.88, f1_score=0.85
             )
 
             assert metrics.accuracy == 0.85
@@ -173,14 +172,14 @@ class TestModelsSimple:
         try:
             from src.models.metrics_exporter import MetricsExporter
 
-            with patch('src.models.metrics_exporter.logger') as mock_logger:
+            with patch("src.models.metrics_exporter.logger") as mock_logger:
                 exporter = MetricsExporter()
                 exporter.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(exporter, 'export_metrics')
-                assert hasattr(exporter, 'export_to_mlflow')
-                assert hasattr(exporter, 'export_to_csv')
+                assert hasattr(exporter, "export_metrics")
+                assert hasattr(exporter, "export_to_mlflow")
+                assert hasattr(exporter, "export_to_csv")
 
         except Exception as e:
             pytest.skip(f"Cannot test MetricsExporter basic functionality: {e}")

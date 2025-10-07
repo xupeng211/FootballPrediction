@@ -11,7 +11,7 @@ from unittest.mock import patch, mock_open
 
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.core.config import Config, Settings, HAS_PYDANTIC
 
@@ -24,9 +24,9 @@ class TestConfig:
         config = Config()
 
         # 验证基本属性
-        assert hasattr(config, 'config_dir')
-        assert hasattr(config, 'config_file')
-        assert hasattr(config, '_config')
+        assert hasattr(config, "config_dir")
+        assert hasattr(config, "config_file")
+        assert hasattr(config, "_config")
 
         # 验证配置目录路径
         assert config.config_dir == Path.home() / ".footballprediction"
@@ -118,11 +118,15 @@ class TestConfig:
                 config.save()
 
                 # 验证文件被写入
-                mock_file.assert_called_once_with(config.config_file, "w", encoding="utf-8")
+                mock_file.assert_called_once_with(
+                    config.config_file, "w", encoding="utf-8"
+                )
 
                 # 验证写入的内容
                 handle = mock_file()
-                written_data = ''.join(call.args[0] for call in handle.write.call_args_list)
+                written_data = "".join(
+                    call.args[0] for call in handle.write.call_args_list
+                )
                 saved_config = json.loads(written_data)
 
                 assert saved_config["test_key"] == "test_value"
@@ -152,9 +156,9 @@ class TestSettings:
         settings = Settings()
 
         # 验证基本属性存在
-        assert hasattr(settings, 'database_url')
-        assert hasattr(settings, 'test_database_url')
-        assert hasattr(settings, 'redis_url')
+        assert hasattr(settings, "database_url")
+        assert hasattr(settings, "test_database_url")
+        assert hasattr(settings, "redis_url")
 
         # 验证默认值
         assert "sqlite" in settings.database_url.lower()
@@ -184,6 +188,7 @@ class TestSettings:
             # 重新导入模块
             import importlib
             import src.core.config
+
             importlib.reload(src.core.config)
 
             from src.core.config import Settings as SettingsNoPydantic
@@ -191,7 +196,7 @@ class TestSettings:
             settings = SettingsNoPydantic()
 
             # 验证基本功能仍然工作
-            assert hasattr(settings, 'database_url')
+            assert hasattr(settings, "database_url")
             assert settings.database_url is not None
 
             print("✓ Settings without Pydantic test passed")
@@ -210,7 +215,7 @@ class TestSettings:
             # 注意：实际的覆盖行为取决于Pydantic的配置
             # 这里我们只验证Settings对象能正确创建
             assert settings is not None
-            assert hasattr(settings, 'database_url')
+            assert hasattr(settings, "database_url")
 
         print("✓ Settings environment override test passed")
 
@@ -287,7 +292,9 @@ class TestConfigEdgeCases:
 
                 # 验证Unicode字符被正确保存
                 handle = mock_file()
-                written_data = ''.join(call.args[0] for call in handle.write.call_args_list)
+                written_data = "".join(
+                    call.args[0] for call in handle.write.call_args_list
+                )
 
                 # ensure_ascii=False应该保证Unicode字符正确保存
                 for value in unicode_values.values():
@@ -367,10 +374,10 @@ class TestSettingsAdvanced:
 
         # 尝试获取配置字典
         try:
-            if hasattr(settings, 'model_dump'):
+            if hasattr(settings, "model_dump"):
                 # Pydantic v2
                 config_dict = settings.model_dump()
-            elif hasattr(settings, 'dict'):
+            elif hasattr(settings, "dict"):
                 # Pydantic v1
                 config_dict = settings.dict()
             else:
@@ -426,8 +433,9 @@ def run_comprehensive_tests():
 
         # 获取所有测试方法
         test_methods = [
-            method for method in dir(test_class)
-            if method.startswith('test_') and callable(getattr(test_class, method))
+            method
+            for method in dir(test_class)
+            if method.startswith("test_") and callable(getattr(test_class, method))
         ]
 
         for test_method in test_methods:

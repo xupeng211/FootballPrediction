@@ -8,14 +8,15 @@ import pytest
 from unittest.mock import Mock, AsyncMock, patch
 
 # Mock外部依赖
-sys.modules['pandas'] = Mock()
-sys.modules['numpy'] = Mock()
-sys.modules['sklearn'] = Mock()
-sys.modules['nltk'] = Mock()
-sys.modules['spacy'] = Mock()
+sys.modules["pandas"] = Mock()
+sys.modules["numpy"] = Mock()
+sys.modules["sklearn"] = Mock()
+sys.modules["nltk"] = Mock()
+sys.modules["spacy"] = Mock()
 
 # 设置测试环境
 import os
+
 os.environ["TESTING"] = "true"
 
 # Mock内部依赖
@@ -25,11 +26,21 @@ mock_data_lake = Mock()
 mock_db_manager = Mock()
 mock_cache_manager = Mock()
 
-sys.modules['src.data.processing.football_data_cleaner'] = Mock(FootballDataCleaner=Mock(return_value=mock_data_cleaner))
-sys.modules['src.data.processing.missing_data_handler'] = Mock(MissingDataHandler=Mock(return_value=mock_missing_handler))
-sys.modules['src.data.storage.data_lake_storage'] = Mock(DataLakeStorage=Mock(return_value=mock_data_lake))
-sys.modules['src.database.manager'] = Mock(DatabaseManager=Mock(return_value=mock_db_manager))
-sys.modules['src.cache.redis_manager'] = Mock(RedisManager=Mock(return_value=mock_cache_manager))
+sys.modules["src.data.processing.football_data_cleaner"] = Mock(
+    FootballDataCleaner=Mock(return_value=mock_data_cleaner)
+)
+sys.modules["src.data.processing.missing_data_handler"] = Mock(
+    MissingDataHandler=Mock(return_value=mock_missing_handler)
+)
+sys.modules["src.data.storage.data_lake_storage"] = Mock(
+    DataLakeStorage=Mock(return_value=mock_data_lake)
+)
+sys.modules["src.database.manager"] = Mock(
+    DatabaseManager=Mock(return_value=mock_db_manager)
+)
+sys.modules["src.cache.redis_manager"] = Mock(
+    RedisManager=Mock(return_value=mock_cache_manager)
+)
 
 from src.services.data_processing import DataProcessingService
 
@@ -67,7 +78,10 @@ class TestDataProcessingSimple:
     async def test_initialize_failure(self, service):
         """测试初始化失败"""
         # Mock初始化失败
-        with patch('src.services.data_processing.DataLakeStorage', side_effect=Exception("Storage error")):
+        with patch(
+            "src.services.data_processing.DataLakeStorage",
+            side_effect=Exception("Storage error"),
+        ):
             result = await service.initialize()
             assert result is False
 
@@ -113,7 +127,7 @@ class TestDataProcessingSimple:
                 "home_team": "Team A",
                 "away_team": "Team B",
                 "date": "2024-01-01",
-                "score": "2-1"
+                "score": "2-1",
             }
         ]
 
@@ -142,12 +156,7 @@ class TestDataProcessingSimple:
 
         # 测试数据
         odds_data = [
-            {
-                "match_id": "123",
-                "home_win": 2.50,
-                "draw": 3.20,
-                "away_win": 2.80
-            }
+            {"match_id": "123", "home_win": 2.50, "draw": 3.20, "away_win": 2.80}
         ]
 
         # 执行处理
@@ -170,12 +179,7 @@ class TestDataProcessingSimple:
         service.data_lake.store_features = AsyncMock(return_value=True)
 
         # 测试数据
-        features_data = [
-            {
-                "match_id": "123",
-                "features": {"home_form": [1, 0, 1]}
-            }
-        ]
+        features_data = [{"match_id": "123", "features": {"home_form": [1, 0, 1]}}]
 
         # 执行处理
         result = await service.process_features_data(features_data, mock_session)
@@ -210,7 +214,7 @@ class TestDataProcessingSimple:
         await service.initialize()
 
         # Mock文本处理
-        with patch('src.services.data_processing.nltk') as mock_nltk:
+        with patch("src.services.data_processing.nltk") as mock_nltk:
             mock_nltk.word_tokenize.return_value = ["team", "played", "well"]
             mock_nltk.pos_tag.return_value = [("team", "NN"), ("played", "VBD")]
 
@@ -230,7 +234,9 @@ class TestDataProcessingSimple:
         data_list = [{"id": 1}, {"id": 2}, {"id": 3}]
 
         # Mock批量处理
-        with patch.object(service, '_process_single_item', AsyncMock(side_effect=lambda x: x)) as mock_process:
+        with patch.object(
+            service, "_process_single_item", AsyncMock(side_effect=lambda x: x)
+        ) as mock_process:
             result = await service.process_batch(data_list)
 
         # 验证结果
@@ -305,7 +311,7 @@ class TestDataProcessingSimple:
         mock_df.columns = ["feature1", "feature2"]
 
         # Mock异常检测
-        with patch('sklearn.ensemble.IsolationForest') as mock_isolation:
+        with patch("sklearn.ensemble.IsolationForest") as mock_isolation:
             mock_isolation.return_value.fit_predict.return_value = [1, -1, 1, 1, -1]
 
             result = await service.detect_anomalies(mock_df)
@@ -316,7 +322,7 @@ class TestDataProcessingSimple:
     def test_error_logging(self, service):
         """测试错误日志"""
         # 测试错误日志记录
-        with patch.object(service.logger, 'error') as mock_error:
+        with patch.object(service.logger, "error") as mock_error:
             service.logger.error("Test error message")
             mock_error.assert_called_once_with("Test error message")
 

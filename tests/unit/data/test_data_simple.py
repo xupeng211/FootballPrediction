@@ -9,7 +9,7 @@ import sys
 import os
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 
 @pytest.mark.unit
@@ -20,6 +20,7 @@ class TestDataSimple:
         """测试足球数据清洗器导入"""
         try:
             from src.data.processing.football_data_cleaner import FootballDataCleaner
+
             cleaner = FootballDataCleaner()
             assert cleaner is not None
         except ImportError as e:
@@ -29,6 +30,7 @@ class TestDataSimple:
         """测试缺失数据处理导入"""
         try:
             from src.data.processing.missing_data_handler import MissingDataHandler
+
             handler = MissingDataHandler()
             assert handler is not None
         except ImportError as e:
@@ -38,6 +40,7 @@ class TestDataSimple:
         """测试赛程收集器导入"""
         try:
             from src.data.collectors.fixtures_collector import FixturesCollector
+
             collector = FixturesCollector()
             assert collector is not None
         except ImportError as e:
@@ -47,6 +50,7 @@ class TestDataSimple:
         """测试赔率收集器导入"""
         try:
             from src.data.collectors.odds_collector import OddsCollector
+
             collector = OddsCollector()
             assert collector is not None
         except ImportError as e:
@@ -56,6 +60,7 @@ class TestDataSimple:
         """测试比分收集器导入"""
         try:
             from src.data.collectors.scores_collector import ScoresCollector
+
             collector = ScoresCollector()
             assert collector is not None
         except ImportError as e:
@@ -65,6 +70,7 @@ class TestDataSimple:
         """测试流数据收集器导入"""
         try:
             from src.data.collectors.streaming_collector import StreamingCollector
+
             collector = StreamingCollector()
             assert collector is not None
         except ImportError as e:
@@ -74,6 +80,7 @@ class TestDataSimple:
         """测试基础收集器导入"""
         try:
             from src.data.collectors.base_collector import BaseCollector
+
             collector = BaseCollector()
             assert collector is not None
         except ImportError as e:
@@ -83,6 +90,7 @@ class TestDataSimple:
         """测试数据湖存储导入"""
         try:
             from src.data.storage.data_lake_storage import DataLakeStorage
+
             storage = DataLakeStorage()
             assert storage is not None
         except ImportError as e:
@@ -92,6 +100,7 @@ class TestDataSimple:
         """测试原始数据模型导入"""
         try:
             from src.database.models.raw_data import RawMatchData, RawOddsData
+
             assert RawMatchData is not None
             assert RawOddsData is not None
         except ImportError as e:
@@ -101,6 +110,7 @@ class TestDataSimple:
         """测试数据质量日志导入"""
         try:
             from src.database.models.data_quality_log import DataQualityLog
+
             assert DataQualityLog is not None
         except ImportError as e:
             pytest.skip(f"Cannot import DataQualityLog: {e}")
@@ -109,6 +119,7 @@ class TestDataSimple:
         """测试数据收集日志导入"""
         try:
             from src.database.models.data_collection_log import DataCollectionLog
+
             assert DataCollectionLog is not None
         except ImportError as e:
             pytest.skip(f"Cannot import DataCollectionLog: {e}")
@@ -118,14 +129,16 @@ class TestDataSimple:
         try:
             from src.data.processing.football_data_cleaner import FootballDataCleaner
 
-            with patch('src.data.processing.football_data_cleaner.logger') as mock_logger:
+            with patch(
+                "src.data.processing.football_data_cleaner.logger"
+            ) as mock_logger:
                 cleaner = FootballDataCleaner()
                 cleaner.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(cleaner, 'clean_match_data')
-                assert hasattr(cleaner, 'clean_odds_data')
-                assert hasattr(cleaner, 'validate_data')
+                assert hasattr(cleaner, "clean_match_data")
+                assert hasattr(cleaner, "clean_odds_data")
+                assert hasattr(cleaner, "validate_data")
 
         except Exception as e:
             pytest.skip(f"Cannot test FootballDataCleaner basic functionality: {e}")
@@ -135,14 +148,16 @@ class TestDataSimple:
         try:
             from src.data.processing.missing_data_handler import MissingDataHandler
 
-            with patch('src.data.processing.missing_data_handler.logger') as mock_logger:
+            with patch(
+                "src.data.processing.missing_data_handler.logger"
+            ) as mock_logger:
                 handler = MissingDataHandler()
                 handler.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(handler, 'handle_missing_values')
-                assert hasattr(handler, 'impute_data')
-                assert hasattr(handler, 'detect_missing_patterns')
+                assert hasattr(handler, "handle_missing_values")
+                assert hasattr(handler, "impute_data")
+                assert hasattr(handler, "detect_missing_patterns")
 
         except Exception as e:
             pytest.skip(f"Cannot test MissingDataHandler basic functionality: {e}")
@@ -152,14 +167,14 @@ class TestDataSimple:
         try:
             from src.data.collectors.base_collector import BaseCollector
 
-            with patch('src.data.collectors.base_collector.logger') as mock_logger:
+            with patch("src.data.collectors.base_collector.logger") as mock_logger:
                 collector = BaseCollector()
                 collector.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(collector, 'collect')
-                assert hasattr(collector, 'validate_data')
-                assert hasattr(collector, 'store_data')
+                assert hasattr(collector, "collect")
+                assert hasattr(collector, "validate_data")
+                assert hasattr(collector, "store_data")
 
         except Exception as e:
             pytest.skip(f"Cannot test BaseCollector basic functionality: {e}")
@@ -169,14 +184,14 @@ class TestDataSimple:
         try:
             from src.data.storage.data_lake_storage import DataLakeStorage
 
-            with patch('src.data.storage.data_lake_storage.logger') as mock_logger:
+            with patch("src.data.storage.data_lake_storage.logger") as mock_logger:
                 storage = DataLakeStorage()
                 storage.logger = mock_logger
 
                 # 测试基本属性
-                assert hasattr(storage, 'store_raw_data')
-                assert hasattr(storage, 'retrieve_raw_data')
-                assert hasattr(storage, 'list_data_files')
+                assert hasattr(storage, "store_raw_data")
+                assert hasattr(storage, "retrieve_raw_data")
+                assert hasattr(storage, "list_data_files")
 
         except Exception as e:
             pytest.skip(f"Cannot test DataLakeStorage basic functionality: {e}")
@@ -190,8 +205,8 @@ class TestDataSimple:
             collector = BaseCollector()
 
             # 测试异步方法存在
-            assert hasattr(collector, 'async_collect')
-            assert hasattr(collector, 'async_store')
+            assert hasattr(collector, "async_collect")
+            assert hasattr(collector, "async_store")
 
         except Exception as e:
             pytest.skip(f"Cannot test async data collection: {e}")

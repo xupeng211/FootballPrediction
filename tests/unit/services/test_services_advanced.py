@@ -13,64 +13,40 @@ import asyncio
 os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
+
 # 创建高级Mock系统
 def create_advanced_mock_system():
     """创建高级Mock系统"""
 
     # Mock外部数据科学库
-    sys.modules['pandas'] = MagicMock()
-    sys.modules['numpy'] = MagicMock()
-    sys.modules['sklearn'] = MagicMock()
-    sys.modules['sklearn.preprocessing'] = MagicMock()
-    sys.modules['sklearn.impute'] = MagicMock()
-    sys.modules['sklearn.ensemble'] = MagicMock()
-    sys.modules['sklearn.metrics'] = MagicMock()
-    sys.modules['nltk'] = MagicMock()
-    sys.modules['spacy'] = MagicMock()
-    sys.modules['tensorflow'] = MagicMock()
-    sys.modules['torch'] = MagicMock()
-    sys.modules['scipy'] = MagicMock()
-    sys.modules['statsmodels'] = MagicMock()
+    sys.modules["pandas"] = MagicMock()
+    sys.modules["numpy"] = MagicMock()
+    sys.modules["sklearn"] = MagicMock()
+    sys.modules["sklearn.preprocessing"] = MagicMock()
+    sys.modules["sklearn.impute"] = MagicMock()
+    sys.modules["sklearn.ensemble"] = MagicMock()
+    sys.modules["sklearn.metrics"] = MagicMock()
+    sys.modules["nltk"] = MagicMock()
+    sys.modules["spacy"] = MagicMock()
+    sys.modules["tensorflow"] = MagicMock()
+    sys.modules["torch"] = MagicMock()
+    sys.modules["scipy"] = MagicMock()
+    sys.modules["statsmodels"] = MagicMock()
 
     # Mock内部依赖
     mock_modules = {
-        'src.data.processing.football_data_cleaner': {
-            'FootballDataCleaner': Mock
-        },
-        'src.data.processing.missing_data_handler': {
-            'MissingDataHandler': Mock
-        },
-        'src.data.storage.data_lake_storage': {
-            'DataLakeStorage': Mock
-        },
-        'src.database.manager': {
-            'DatabaseManager': Mock
-        },
-        'src.cache.redis_manager': {
-            'RedisManager': Mock
-        },
-        'src.models.model_training': {
-            'BaselineModelTrainer': Mock
-        },
-        'src.features.feature_store': {
-            'FeatureStore': Mock
-        },
-        'src.monitoring.metrics_collector': {
-            'MetricsCollector': Mock
-        },
-        'src.monitoring.metrics_exporter': {
-            'MetricsExporter': Mock
-        },
-        'src.lineage.metadata_manager': {
-            'MetadataManager': Mock
-        },
-        'src.lineage.lineage_reporter': {
-            'LineageReporter': Mock
-        },
-        'src.database.connection': {
-            'get_db_session': Mock,
-            'DatabaseManager': Mock
-        }
+        "src.data.processing.football_data_cleaner": {"FootballDataCleaner": Mock},
+        "src.data.processing.missing_data_handler": {"MissingDataHandler": Mock},
+        "src.data.storage.data_lake_storage": {"DataLakeStorage": Mock},
+        "src.database.manager": {"DatabaseManager": Mock},
+        "src.cache.redis_manager": {"RedisManager": Mock},
+        "src.models.model_training": {"BaselineModelTrainer": Mock},
+        "src.features.feature_store": {"FeatureStore": Mock},
+        "src.monitoring.metrics_collector": {"MetricsCollector": Mock},
+        "src.monitoring.metrics_exporter": {"MetricsExporter": Mock},
+        "src.lineage.metadata_manager": {"MetadataManager": Mock},
+        "src.lineage.lineage_reporter": {"LineageReporter": Mock},
+        "src.database.connection": {"get_db_session": Mock, "DatabaseManager": Mock},
     }
 
     for module_name, classes in mock_modules.items():
@@ -80,18 +56,19 @@ def create_advanced_mock_system():
         sys.modules[module_name] = mock_module
 
     # Mock数据库模型
-    sys.modules['src.database.models'] = MagicMock()
+    sys.modules["src.database.models"] = MagicMock()
 
     # Mock API相关
-    sys.modules['src.api.models'] = MagicMock()
-    sys.modules['src.api.data'] = MagicMock()
-    sys.modules['src.api.features'] = MagicMock()
+    sys.modules["src.api.models"] = MagicMock()
+    sys.modules["src.api.data"] = MagicMock()
+    sys.modules["src.api.features"] = MagicMock()
 
     # Mock配置
-    sys.modules['src.core.config'] = MagicMock()
+    sys.modules["src.core.config"] = MagicMock()
 
     # Mock日志
-    sys.modules['src.core.logger'] = MagicMock()
+    sys.modules["src.core.logger"] = MagicMock()
+
 
 # 初始化Mock系统
 create_advanced_mock_system()
@@ -113,7 +90,7 @@ class TestAdvancedServices:
             "database_url": "sqlite:///:memory:",
             "redis_url": "redis://localhost:6379/0",
             "cache_ttl": 3600,
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
 
     @pytest.fixture
@@ -127,13 +104,10 @@ class TestAdvancedServices:
                     "away_team": "Team B",
                     "date": "2024-01-01",
                     "home_score": 2,
-                    "away_score": 1
+                    "away_score": 1,
                 }
             ],
-            "teams": [
-                {"id": 1, "name": "Team A"},
-                {"id": 2, "name": "Team B"}
-            ]
+            "teams": [{"id": 1, "name": "Team A"}, {"id": 2, "name": "Team B"}],
         }
 
     def test_data_processing_service_advanced(self, mock_config, sample_data):
@@ -156,18 +130,18 @@ class TestAdvancedServices:
 
         # 测试初始化
         assert service.name == "DataProcessingService"
-        assert hasattr(service, 'initialize')
-        assert hasattr(service, 'shutdown')
+        assert hasattr(service, "initialize")
+        assert hasattr(service, "shutdown")
 
         # 测试数据处理方法存在
-        assert hasattr(service, 'process_raw_match_data')
-        assert hasattr(service, 'process_raw_odds_data')
-        assert hasattr(service, 'process_features_data')
-        assert hasattr(service, 'validate_data_quality')
-        assert hasattr(service, 'process_bronze_to_silver')
+        assert hasattr(service, "process_raw_match_data")
+        assert hasattr(service, "process_raw_odds_data")
+        assert hasattr(service, "process_features_data")
+        assert hasattr(service, "validate_data_quality")
+        assert hasattr(service, "process_bronze_to_silver")
 
         # 测试日志
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_data_processing_service_async_operations(self, sample_data):
@@ -185,7 +159,9 @@ class TestAdvancedServices:
 
         # 测试异步数据处理
         mock_session = Mock()
-        result = await service.process_raw_match_data(sample_data["matches"], mock_session)
+        result = await service.process_raw_match_data(
+            sample_data["matches"], mock_session
+        )
 
         # 验证结果
         assert result is not None
@@ -216,16 +192,16 @@ class TestAdvancedServices:
         service = AuditService()
 
         # 验证服务属性
-        assert hasattr(service, 'log_action')
-        assert hasattr(service, 'create_audit_entry')
-        assert hasattr(service, 'validate_compliance')
-        assert hasattr(service, 'generate_report')
+        assert hasattr(service, "log_action")
+        assert hasattr(service, "create_audit_entry")
+        assert hasattr(service, "validate_compliance")
+        assert hasattr(service, "generate_report")
 
         # 测试服务名称
         assert service.name == "AuditService"
 
         # 测试日志器
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_audit_service_async_operations(self):
@@ -242,11 +218,11 @@ class TestAdvancedServices:
             "user_id": "test_user",
             "action": "test_action",
             "resource": "test_resource",
-            "details": {"key": "value"}
+            "details": {"key": "value"},
         }
 
         # 使用patch模拟数据库操作
-        with patch.object(service, '_get_db_session', return_value=mock_session):
+        with patch.object(service, "_get_db_session", return_value=mock_session):
             try:
                 await service.log_action(log_data)
                 # 应该不抛出异常
@@ -260,16 +236,16 @@ class TestAdvancedServices:
         service = ContentAnalysisService()
 
         # 验证服务属性
-        assert hasattr(service, 'analyze_text')
-        assert hasattr(service, 'classify_content')
-        assert hasattr(service, 'analyze_sentiment')
-        assert hasattr(service, 'generate_summary')
+        assert hasattr(service, "analyze_text")
+        assert hasattr(service, "classify_content")
+        assert hasattr(service, "analyze_sentiment")
+        assert hasattr(service, "generate_summary")
 
         # 测试服务名称
         assert service.name == "ContentAnalysisService"
 
         # 测试日志器
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_content_analysis_service_async_operations(self):
@@ -277,7 +253,7 @@ class TestAdvancedServices:
         service = ContentAnalysisService()
 
         # Mock文本处理
-        with patch('src.services.content_analysis.nltk') as mock_nltk:
+        with patch("src.services.content_analysis.nltk") as mock_nltk:
             mock_nltk.word_tokenize.return_value = ["test", "text"]
             mock_nltk.pos_tag.return_value = [("test", "NN"), ("text", "NN")]
 
@@ -296,16 +272,16 @@ class TestAdvancedServices:
         service = UserProfileService()
 
         # 验证服务属性
-        assert hasattr(service, 'get_profile')
-        assert hasattr(service, 'update_profile')
-        assert hasattr(service, 'create_profile')
-        assert hasattr(service, 'delete_profile')
+        assert hasattr(service, "get_profile")
+        assert hasattr(service, "update_profile")
+        assert hasattr(service, "create_profile")
+        assert hasattr(service, "delete_profile")
 
         # 测试服务名称
         assert service.name == "UserProfileService"
 
         # 测试日志器
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_user_profile_service_async_operations(self):
@@ -322,11 +298,11 @@ class TestAdvancedServices:
             "user_id": "test_user",
             "username": "testuser",
             "email": "test@example.com",
-            "preferences": {"theme": "dark"}
+            "preferences": {"theme": "dark"},
         }
 
         # 使用patch模拟数据库操作
-        with patch.object(service, '_get_db_session', return_value=mock_session):
+        with patch.object(service, "_get_db_session", return_value=mock_session):
             try:
                 await service.create_profile(profile_data)
                 # 应该不抛出异常
@@ -341,12 +317,12 @@ class TestAdvancedServices:
             DataProcessingService(),
             AuditService(),
             ContentAnalysisService(),
-            UserProfileService()
+            UserProfileService(),
         ]
 
         for service in services:
             # 验证每个服务都有logger
-            assert hasattr(service, 'logger')
+            assert hasattr(service, "logger")
 
             # Mock logger
             service.logger = Mock()
@@ -390,12 +366,12 @@ class TestAdvancedServices:
             DataProcessingService(),
             AuditService(),
             ContentAnalysisService(),
-            UserProfileService()
+            UserProfileService(),
         ]
 
         for service in services:
             # 验证服务有配置属性
-            assert hasattr(service, 'config') or hasattr(service, 'name')
+            assert hasattr(service, "config") or hasattr(service, "name")
 
             # 验证服务名称
             assert isinstance(service.name, str)
@@ -411,11 +387,11 @@ class TestAdvancedServices:
         service.metrics_collector.increment_counter = Mock()
 
         # 测试指标记录
-        if hasattr(service, '_record_processing_time'):
+        if hasattr(service, "_record_processing_time"):
             service._record_processing_time("test_operation", 1.5)
             service.metrics_collector.record_latency.assert_called()
 
-        if hasattr(service, '_record_processed_count'):
+        if hasattr(service, "_record_processed_count"):
             service._record_processed_count("test_operation", 100)
             service.metrics_collector.increment_counter.assert_called()
 
@@ -426,12 +402,12 @@ class TestAdvancedServices:
             DataProcessingService(),
             AuditService(),
             ContentAnalysisService(),
-            UserProfileService()
+            UserProfileService(),
         ]
 
         for service in services:
             # Mock健康检查方法
-            if hasattr(service, 'health_check'):
+            if hasattr(service, "health_check"):
                 service.health_check = AsyncMock(return_value={"status": "healthy"})
 
                 # 执行健康检查
@@ -451,11 +427,12 @@ class TestAdvancedServices:
         service = DataProcessingService()
 
         # 验证生命周期方法
-        assert hasattr(service, 'initialize')
-        assert hasattr(service, 'shutdown')
+        assert hasattr(service, "initialize")
+        assert hasattr(service, "shutdown")
 
         # 验证方法是异步的
         import inspect
+
         assert inspect.iscoroutinefunction(service.initialize)
         assert inspect.iscoroutinefunction(service.shutdown)
 
@@ -465,11 +442,11 @@ class TestAdvancedServices:
 
         # Mock依赖
         mock_dependencies = {
-            'data_cleaner': Mock(),
-            'missing_handler': Mock(),
-            'data_lake': Mock(),
-            'db_manager': AsyncMock(),
-            'cache_manager': Mock()
+            "data_cleaner": Mock(),
+            "missing_handler": Mock(),
+            "data_lake": Mock(),
+            "db_manager": AsyncMock(),
+            "cache_manager": Mock(),
         }
 
         # 注入依赖

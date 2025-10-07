@@ -21,7 +21,7 @@
 
 ## 1️⃣ CI 持续集成流水线
 
-**文件**: `.github/workflows/ci-pipeline.yml`  
+**文件**: `.github/workflows/ci-pipeline.yml`
 **名称**: CI 持续集成流水线
 
 ### 🎯 功能概述
@@ -92,7 +92,7 @@ make verify-deps
 
 ## 2️⃣ MLOps 机器学习流水线
 
-**文件**: `.github/workflows/mlops-pipeline.yml`  
+**文件**: `.github/workflows/mlops-pipeline.yml`
 **名称**: MLOps 机器学习流水线
 
 ### 🎯 功能概述
@@ -196,7 +196,7 @@ gh workflow run mlops-pipeline.yml -f task=retrain-check -f force_retrain=true
 
 ## 3️⃣ 部署流水线
 
-**文件**: `.github/workflows/deploy-pipeline.yml`  
+**文件**: `.github/workflows/deploy-pipeline.yml`
 **名称**: 部署流水线
 
 ### 🎯 功能概述
@@ -297,7 +297,7 @@ make rollback TAG=abc1234
 
 ## 4️⃣ 问题跟踪流水线
 
-**文件**: `.github/workflows/issue-tracking-pipeline.yml`  
+**文件**: `.github/workflows/issue-tracking-pipeline.yml`
 **名称**: 问题跟踪流水线
 
 ### 🎯 功能概述
@@ -372,7 +372,7 @@ workflow_dispatch:
 
 ## 5️⃣ 项目同步流水线
 
-**文件**: `.github/workflows/project-sync-pipeline.yml`  
+**文件**: `.github/workflows/project-sync-pipeline.yml`
 **名称**: 项目同步流水线
 
 ### 🎯 功能概述
@@ -430,7 +430,7 @@ python scripts/kanban_audit.py \
 
 ## 6️⃣ 项目维护流水线
 
-**文件**: `.github/workflows/project-maintenance-pipeline.yml`  
+**文件**: `.github/workflows/project-maintenance-pipeline.yml`
 **名称**: 项目维护流水线
 
 ### 🎯 功能概述
@@ -656,6 +656,6 @@ make prepush
 
 ---
 
-**维护者**: DevOps Team  
-**更新频率**: 每次工作流变更后更新  
+**维护者**: DevOps Team
+**更新频率**: 每次工作流变更后更新
 **反馈**: 通过 Issue 提交建议
