@@ -4,12 +4,11 @@ Unit Tests for Prediction Engine
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta
 
 from src.core.prediction_engine import PredictionEngine
 from src.models.prediction_service import PredictionResult
-from src.database.models import Match, MatchStatus
 
 
 @pytest.fixture

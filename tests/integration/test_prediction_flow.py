@@ -9,12 +9,9 @@ Test complete flow from data collection to prediction.
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from src.core.prediction_engine import PredictionEngine
 from src.models.prediction_service import PredictionResult
-from src.database.models import Match, MatchStatus, Team, League
-from src.cache.redis_manager import RedisManager
 
 
 @pytest.mark.integration

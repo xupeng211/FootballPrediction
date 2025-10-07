@@ -17,19 +17,16 @@ Provides structured logging with:
 - Audit logs
 """
 
-import json
 import logging
 import os
 import sys
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
-import structlog
 from pythonjsonlogger import jsonlogger
 
-from src.core.exceptions import BaseAppException
 
 
 class LogLevel(Enum):
@@ -385,7 +382,7 @@ def log_performance(operation: str, logger: Optional[StructuredLogger] = None):
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:
@@ -412,7 +409,7 @@ def log_async_performance(operation: str, logger: Optional[StructuredLogger] = N
             try:
                 result = await func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:

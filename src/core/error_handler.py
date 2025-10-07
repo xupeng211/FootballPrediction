@@ -15,14 +15,13 @@ Provides unified error handling and logging:
 - Error notifications and alerts
 """
 
-import logging
 import traceback
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Union
 
 import sentry_sdk
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 

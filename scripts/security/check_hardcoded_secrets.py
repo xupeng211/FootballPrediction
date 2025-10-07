@@ -5,7 +5,6 @@
 扫描代码库中的硬编码密码、API密钥、token等敏感信息
 """
 
-import os
 import re
 import sys
 from pathlib import Path
@@ -183,7 +182,7 @@ def main():
             total_findings += len(findings)
 
     print("\n" + "=" * 50)
-    print(f"📊 扫描结果:")
+    print("📊 扫描结果:")
     print(f"  📁 扫描文件数: {len([f for f in scan_dir.rglob('*') if f.is_file() and f.suffix in scan_extensions and not should_ignore_file(f)])}")
     print(f"  🚨 发现问题文件: {files_with_issues}")
     print(f"  ⚠️  发现敏感信息: {total_findings}")

@@ -436,6 +436,7 @@ def run_tests():
         "-m", "not slow"
     ]
 
+    cmd = ["python", "-m", "pytest"] + args
     print(f"Running: {' '.join(cmd)}")
     return subprocess.run(cmd).returncode
 

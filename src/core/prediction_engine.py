@@ -14,11 +14,9 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager, CacheKeyManager
 from src.collectors.fixtures_collector import FixturesCollector
@@ -35,9 +33,8 @@ from src.database.models import (
     Odds,
 )
 from src.features.feature_store import FootballFeatureStore
-from src.models.prediction_service import PredictionService, PredictionResult
+from src.models.prediction_service import PredictionService
 from src.monitoring.metrics_exporter import ModelMetricsExporter
-from src.utils.retry import RetryConfig, retry
 
 logger = logging.getLogger(__name__)
 

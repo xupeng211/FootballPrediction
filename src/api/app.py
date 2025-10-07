@@ -6,10 +6,10 @@ FastAPI Main Application
 Integrates all API routes and middleware.
 """
 
-import logging
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -109,7 +109,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 # 添加请求日志中间件
-import time
 app.add_middleware(RequestLoggingMiddleware)
 
 

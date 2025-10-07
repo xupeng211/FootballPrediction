@@ -16,13 +16,12 @@ Provides comprehensive business and system metrics collection:
 """
 
 import time
-import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 
-from prometheus_client import Counter, Histogram, Gauge, Info, CollectorRegistry, generate_latest
+from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, generate_latest
 import asyncio
 from src.core.logging_system import StructuredLogger, LogCategory
 
@@ -571,7 +570,7 @@ def track_prediction_performance(func):
         try:
             result = await func(*args, **kwargs)
             return result
-        except Exception as e:
+        except Exception:
             success = False
             raise
         finally:
