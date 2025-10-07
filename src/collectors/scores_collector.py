@@ -10,7 +10,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
-from src.database.base import DatabaseSession
+from src.database.connection import DatabaseManager
 from src.models.common_models import Match, MatchEvent, Score
 from src.utils.logger import get_logger
 
@@ -465,6 +465,6 @@ class ScoresCollectorFactory:
     @staticmethod
     def create() -> ScoresCollector:
         """创建比分收集器实例"""
-        db_session = DatabaseSession()
+        db_session = DatabaseManager()
         redis_client = RedisManager()
         return ScoresCollector(db_session, redis_client)

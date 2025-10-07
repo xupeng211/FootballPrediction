@@ -5,7 +5,7 @@
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException
 import time
@@ -139,7 +139,7 @@ class TestEdgeCases:
             try:
                 response = client.get("/health")
                 return response.status_code == 200
-            except:
+            except Exception:
                 return False
 
         # 创建100个并发请求
