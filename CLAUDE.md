@@ -89,11 +89,113 @@ make test-phase1      # 运行第一阶段核心 API 测试
 
 ## 开发工作流程
 
-1. 使用 `make dev-setup` 快速设置环境
-2. 开发前用 `make context` 加载上下文
-3. 开发过程中使用 `make test-quick` 获得快速反馈
-4. 提交前运行 `make prepush`
-5. 推送前执行 `./ci-verify.sh` 确保 CI 通过
+### 日常开发流程
+1. **开始开发前**
+   ```bash
+   make dev-setup      # 一键设置开发环境
+   make context        # 加载项目上下文
+   ```
+
+2. **开发过程中**
+   ```bash
+   # 编码阶段
+   # 定期运行快速测试
+   make test-quick     # 每10-15分钟运行一次
+
+   # 功能完成后
+   make test-unit      # 运行单元测试
+   make coverage-local # 检查本地覆盖率
+   ```
+
+3. **提交前检查**
+   ```bash
+   make fmt            # 格式化代码
+   make lint           # 代码质量检查
+   make prepush        # 完整的预推送验证
+   ```
+
+4. **推送前验证**
+   ```bash
+   ./ci-verify.sh      # 完整的CI验证（推荐）
+   # 或
+   make ci             # 模拟CI流程
+   ```
+
+### 分支管理策略
+- **main**: 生产环境代码，只接受 merge request
+- **develop**: 开发主分支，功能集成分支
+- **feature/***: 功能开发分支
+- **hotfix/***: 紧急修复分支
+
+### CI/CD 工作流理解
+1. **触发条件**
+   - Push 到 main/develop/hotfix 分支
+   - 创建 Pull Request
+   - 手动触发
+
+2. **CI 阶段**
+   ```mermaid
+   graph LR
+   A[基础检查] --> B[代码质量]
+   B --> C[单元测试]
+   C --> D[集成测试]
+   D --> E[构建镜像]
+   E --> F[安全扫描]
+   F --> G[部署/通知]
+   ```
+
+3. **质量门禁**
+   - 代码覆盖率 >= 80%
+   - 所有检查必须通过
+   - 安全扫描无高危漏洞
+
+### MLOps 工作流
+1. **模型训练流程**
+   - 数据收集 → 特征工程 → 模型训练 → 模型评估
+   - 自动触发：每日8:00 UTC
+   - 手动触发：`make mlops-pipeline`
+
+2. **模型部署流程**
+   - 模型验证 → 创建 PR → 人工审核 → 合并部署
+   - 需要两人审核才能部署到生产环境
+
+3. **反馈循环**
+   - 收集预测结果 → 更新模型性能 → 触发重训练
+   - 使用 `make feedback-update` 更新结果
+
+### 代码审查流程
+1. **创建 Pull Request**
+   - 使用清晰的标题和描述
+   - 关联相关 Issue
+   - 添加适当的标签
+
+2. **审查要求**
+   - 至少一人审查批准
+   - 所有 CI 检查通过
+   - 解决所有审查意见
+
+3. **合并规范**
+   - 使用 squash merge
+   - 删除功能分支
+   - 更新版本号（如需要）
+
+### 发布流程
+1. **版本管理**
+   ```bash
+   # 查看当前版本
+   git tag -l
+
+   # 创建新版本
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   git push origin v1.0.0
+   ```
+
+2. **发布检查清单**
+   - [ ] 所有测试通过
+   - [ ] 文档已更新
+   - [ ] CHANGELOG 已更新
+   - [ ] 版本号已更新
+   - [ ] 性能测试通过
 
 ## 重要说明
 
