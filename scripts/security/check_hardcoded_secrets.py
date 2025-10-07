@@ -57,6 +57,16 @@ IGNORE_PATTERNS = [
     r'\.pyo$',
     r'\.pyd$',
     r'\.DS_Store$',
+    r'\.mypy_cache/',
+    r'\.pytest_cache/',
+    r'htmlcov/',
+    r'\.coverage',
+    r'\.tox/',
+    r'\.cleanup_backup/',
+    r'\.cleanup_archive/',
+    r'/archive/',
+    r'/node_modules/',
+    r'\.cache/',
 ]
 
 # 白名单 - 这些是示例值，不是真实的密钥
