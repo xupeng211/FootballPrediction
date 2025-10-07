@@ -11,7 +11,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
-from src.database.base import DatabaseSession
+from src.database.connection import DatabaseManager
 from src.models.common_models import Match, Odds
 from src.utils.logger import get_logger
 
@@ -363,6 +363,6 @@ class OddsCollectorFactory:
     @staticmethod
     def create() -> OddsCollector:
         """创建赔率收集器实例"""
-        db_session = DatabaseSession()
+        db_session = DatabaseManager()
         redis_client = RedisManager()
         return OddsCollector(db_session, redis_client)

@@ -4,45 +4,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 📑 目录
 
-- [语言设置](#语言设置)
-- [快速开始](#快速开始)
-- [核心命令](#核心命令)
-- [开发原则](#开发原则)
-- [项目架构](#项目架构)
-- [重要文档](#重要文档)
-- [故障排除](#故障排除)
+- [Language Settings](#language-settings)
+- [Quick Start](#quick-start)
+- [Essential Commands](#essential-commands)
+- [Development Principles](#development-principles)
+- [Project Architecture](#project-architecture)
+- [Important Documents](#important-documents)
+- [Environment Management](#environment-management)
+- [CI/CD System](#cicd-system)
+- [Troubleshooting](#troubleshooting)
 
-## 🌏 语言设置
+## Language Settings
 
-**请始终使用中文回复！**
+**Please always reply in Chinese!**
 
-- 语言偏好: 中文 (简体)
-- 回复语言: 中文
-- 注释语言: 中文
-- 文档语言: 中文
+- Language: Chinese (Simplified)
+- Reply Language: Chinese
+- Comment Language: Chinese
+- Documentation Language: Chinese
 
-## 🚀 快速开始
+## Quick Start
 
-### 🤖 AI工具快速检查清单
+### For AI Tools - Essential Checklist
 
-**首次进入项目必须执行**：
+**Must execute on first entry**:
 ```bash
-make install      # 安装依赖
-make context      # 加载项目上下文 ⭐最重要
-make env-check    # 验证环境健康
-make test-phase1  # 验证测试环境（71个测试）
+make install      # Install dependencies
+make context      # Load project context ⭐most important
+make env-check    # Verify environment health
+make test-phase1  # Verify test environment (71 tests)
 ```
 
-**每次代码修改后**：
+**After each code modification**:
 ```bash
-make test-quick   # 快速测试验证
-make fmt && make lint  # 代码格式化和质量检查
-make prepush      # 完整提交前检查
+make test-quick   # Quick test verification
+make fmt && make lint  # Code formatting and quality check
+make prepush      # Complete pre-push check
 ```
 
-**如果添加了新依赖**：
+**If adding new dependencies**:
 ```bash
-make smart-deps   # 智能依赖检查和指导
+make smart-deps   # Smart dependency check and guidance
 ```
 
 ### 日常开发
@@ -54,94 +56,95 @@ make fmt && make lint  # 代码格式化和检查
 make prepush      # 提交前检查
 ```
 
-## 📋 核心命令
+## Essential Commands
 
-### 必须知道的命令
+### Must-Know Commands
 
-| 命令 | 说明 | 何时使用 |
-|------|------|----------|
-| `make help` | 查看所有命令 | 不确定时 |
-| `make context` | 加载项目上下文 | 开始工作前 |
-| `make install` | 安装依赖 | 首次使用 |
-| `make test-quick` | 快速测试（不包含coverage） | 开发中 |
-| `make test.unit` | 只运行单元测试 | 主要测试方式 |
-| `make coverage` | 运行覆盖率测试（80%阈值） | CI要求 |
-| `make ci` | 完整CI检查 | 推送前 |
-| `./ci-verify.sh` | Docker CI验证 | 发布前 |
-| `make prepush` | 提交前检查 | 必须运行 |
-| `make fmt` | 代码格式化 | 提交前 |
-| `make lint` | 代码质量检查 | 提交前 |
-| `make type-check` | 类型检查 | 提交前 |
-| `make lock-deps` | 锁定依赖版本 | 依赖更新后 |
-| `make verify-deps` | 验证依赖一致性 | 环境检查 |
-| `make smart-deps` | 智能依赖检查（带AI提醒） | 依赖变更后 |
-| `make ai-deps-reminder` | 显示依赖管理提醒 | 需要指导时 |
-| `make env-check` | 检查开发环境 | 环境问题排查 |
-| `make coverage-local` | 本地覆盖率检查（60%阈值） | 日常开发 |
-| `make coverage-ci` | CI覆盖率检查（80%阈值） | 提交前验证 |
+| Command | Description | When to Use |
+|---------|-------------|-------------|
+| `make help` | View all commands | When unsure |
+| `make context` | Load project context | Before starting work |
+| `make install` | Install dependencies | First time use |
+| `make test-quick` | Quick tests (no coverage) | During development |
+| `make test.unit` | Run only unit tests | Main testing method |
+| `make coverage` | Run coverage tests (80% threshold) | CI requirement |
+| `make ci` | Complete CI check | Before pushing |
+| `./ci-verify.sh` | Docker CI verification | Before release |
+| `make prepush` | Pre-push checks | Must run |
+| `make fmt` | Code formatting | Before commit |
+| `make lint` | Code quality check | Before commit |
+| `make type-check` | Type checking | Before commit |
+| `make lock-deps` | Lock dependency versions | After dependency updates |
+| `make verify-deps` | Verify dependency consistency | Environment check |
+| `make smart-deps` | Smart dependency check (with AI reminder) | After dependency changes |
+| `make ai-deps-reminder` | Show dependency management reminder | When guidance needed |
+| `make env-check` | Check development environment | Environment troubleshooting |
+| `make coverage-local` | Local coverage check (60% threshold) | Daily development |
+| `make coverage-ci` | CI coverage check (80% threshold) | Pre-push verification |
 
-### 快速参考
+### Quick Reference
 
-- 完整命令列表：[CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
-- 故障排除：[CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
+- Complete command list: [CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
+- Troubleshooting: [CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
 
-### 🔍 重要提醒
+### Important Reminders
 
-- **CI验证**: 推送前必须运行 `./ci-verify.sh` 模拟完整CI环境
-- **Docker服务**: 集成测试需要 `docker-compose up -d postgres redis`
-- **Phase 1测试**: 使用 `make test-phase1`（不是 `make test.phase1`）
+- **CI Verification**: Must run `./ci-verify.sh` before pushing to simulate complete CI environment
+- **Docker Services**: Integration tests require `docker-compose up -d postgres redis`
+- **Phase 1 Testing**: Use `make test-phase1` (not `make test.phase1`)
+- **Coverage Warning**: Do NOT use `--cov=src` with single test files - shows misleading 0% coverage
 
-## 🤖 AI开发原则
+## Development Principles
 
-### 核心原则
+### Core Principles
 
-1. **文档优先**：修改代码前先更新文档
-   - API变更 → 更新 `docs/reference/API_REFERENCE.md`
-   - 数据库变更 → 更新 `docs/reference/DATABASE_SCHEMA.md`
-   - 完成功能 → 生成完成报告
-2. **使用Makefile**：保持命令一致性
-3. **测试驱动**：确保测试覆盖率（目标≥80%）
-4. **修改优于创建**：优先修改现有文件
+1. **Documentation First**: Update documentation before modifying code
+   - API changes → Update `docs/reference/API_REFERENCE.md`
+   - Database changes → Update `docs/reference/DATABASE_SCHEMA.md`
+   - Feature completion → Generate completion report
+2. **Use Makefile**: Maintain command consistency
+3. **Test-Driven**: Ensure test coverage (target ≥80%)
+4. **Modify Over Create**: Prioritize modifying existing files
 
-### ⚠️ 测试运行重要提醒
+### Critical Testing Reminders
 
-**AI编程工具特别注意**：
+**AI Programming Tools Pay Special Attention**:
 
-1. **不要对单个测试文件使用 `--cov=src`** - 这会显示误导性的0%覆盖率
-2. **Phase 1 测试已完成**：
-   - data.py: 17个测试，90%覆盖率
-   - features.py: 27个测试，88%覆盖率
-   - predictions.py: 27个测试，88%覆盖率
-   - **总计**：71个测试用例
-3. **使用正确的命令**：
+1. **DO NOT use `--cov=src` with single test files** - This shows misleading 0% coverage
+2. **Phase 1 Testing is Complete**:
+   - data.py: 17 tests, 90% coverage
+   - features.py: 27 tests, 88% coverage
+   - predictions.py: 27 tests, 88% coverage
+   - **Total**: 71 test cases
+3. **Use Correct Commands**:
    ```bash
-   make test-phase1    # Phase 1核心测试
-   make test-quick     # 快速测试
-   make coverage       # 完整覆盖率
+   make test-phase1    # Phase 1 core tests
+   make test-quick     # Quick tests
+   make coverage       # Complete coverage
    ```
 
-### 文档自动化规则
+### Documentation Automation Rules
 
-根据 `docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md`：
+According to `docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md`:
 
-- **API变更** → 更新 `docs/reference/API_REFERENCE.md`
-- **数据库变更** → 更新 `docs/reference/DATABASE_SCHEMA.md`
-- **完成阶段** → 生成完成报告
-- **修复Bug** → 创建bugfix报告
+- **API changes** → Update `docs/reference/API_REFERENCE.md`
+- **Database changes** → Update `docs/reference/DATABASE_SCHEMA.md`
+- **Stage completion** → Generate completion report
+- **Bug fixes** → Create bugfix report
 
-## 🏗️ 项目架构
+## Project Architecture
 
-### 技术栈
+### Tech Stack
 
-- **Python版本**: 3.11+ （项目要求）
-- **框架**: FastAPI + SQLAlchemy 2.0
-- **数据库**: PostgreSQL (生产) + SQLite (测试)
-- **缓存**: Redis
-- **任务队列**: Celery
+- **Python Version**: 3.11+ (project requirement)
+- **Framework**: FastAPI + SQLAlchemy 2.0
+- **Database**: PostgreSQL (production) + SQLite (testing)
+- **Cache**: Redis
+- **Task Queue**: Celery
 - **MLOps**: MLflow + Feast
-- **监控**: Prometheus/Grafana
-- **测试**: pytest (96.35%覆盖率)
-- **代码质量**: black, flake8, mypy, bandit
+- **Monitoring**: Prometheus/Grafana
+- **Testing**: pytest (96.35% coverage)
+- **Code Quality**: black, flake8, mypy, bandit
 
 ### 项目结构
 
@@ -187,325 +190,325 @@ scripts/          # 辅助脚本（自动化工具）
 └── check-test-usage.sh  # 测试命令检查
 ```
 
-### 核心模块说明
+### Core Module Description
 
-- **api/**: FastAPI路由和端点定义
-  - `data.py` - 数据API端点（17个测试）
-  - `features.py` - 特征工程API（27个测试）
-  - `predictions.py` - 预测API（27个测试）
-  - `health.py` - 健康检查端点
+- **api/**: FastAPI routes and endpoint definitions
+  - `data.py` - Data API endpoints (17 tests)
+  - `features.py` - Feature engineering API (27 tests)
+  - `predictions.py` - Prediction API (27 tests)
+  - `health.py` - Health check endpoints
 
-- **config/**: 配置管理，包括环境变量和设置
-  - 使用Pydantic进行配置验证
-  - 支持多环境配置（dev/prod/ci）
+- **config/**: Configuration management, including environment variables and settings
+  - Uses Pydantic for configuration validation
+  - Supports multi-environment configuration (dev/prod/ci)
 
-- **database/**: SQLAlchemy模型、数据库连接和会话管理
-  - 使用PostgreSQL（生产）和SQLite（测试）
-  - 支持数据库迁移
+- **database/**: SQLAlchemy models, database connections, and session management
+  - Uses PostgreSQL (production) and SQLite (testing)
+  - Supports database migrations
 
-- **utils/**: 通用工具函数（国际化、字典操作等）
-  - `time_utils.py` - 时间处理工具
-  - `crypto_utils.py` - 加密工具
-  - `dict_utils.py` - 字典操作工具
+- **utils/**: Common utility functions (internationalization, dictionary operations, etc.)
+  - `time_utils.py` - Time processing utilities
+  - `crypto_utils.py` - Encryption utilities
+  - `dict_utils.py` - Dictionary operation utilities
 
-- **middleware/**: FastAPI中间件（认证、CORS、日志等）
-  - 认证中间件
-  - CORS中间件
-  - 请求日志中间件
+- **middleware/**: FastAPI middleware (authentication, CORS, logging, etc.)
+  - Authentication middleware
+  - CORS middleware
+  - Request logging middleware
 
-### 🏃‍♂️ 5分钟架构理解
+### 5-Minute Architecture Understanding
 
-AI工具需要快速理解项目架构时：
+For AI tools needing to quickly understand project architecture:
 
-1. **入口点**: `src/main.py` - FastAPI应用启动
-2. **路由注册**: `src/api/` - 所有API端点
-3. **数据层**: `src/database/models/` - SQLAlchemy模型
-4. **业务逻辑**: `src/services/` - 核心业务服务
-5. **配置中心**: `src/core/config.py` - 环境配置
+1. **Entry Point**: `src/main.py` - FastAPI application startup
+2. **Route Registration**: `src/api/` - All API endpoints
+3. **Data Layer**: `src/database/models/` - SQLAlchemy models
+4. **Business Logic**: `src/services/` - Core business services
+5. **Configuration Center**: `src/core/config.py` - Environment configuration
 
-**数据流向**:
+**Data Flow**:
 ```
-Request → API路由 → 业务服务 → 数据库 → 响应
+Request → API Routes → Business Service → Database → Response
     ↓
-   日志/监控
+   Logging/Monitoring
 ```
 
-## 📚 重要文档
+## Important Documents
 
-### 文档索引
+### Document Index
 
-- [文档首页](docs/INDEX.md) - 完整文档列表
-- [AI开发规则](docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md) - 必读
-- [测试指南](docs/testing/) - 测试策略
-- [架构文档](docs/architecture/) - 系统设计
-- [运维手册](docs/ops/) - 部署运维
+- [Document Home](docs/INDEX.md) - Complete document list
+- [AI Development Rules](docs/AI_DEVELOPMENT_DOCUMENTATION_RULES.md) - Must read
+- [Testing Guide](docs/testing/) - Testing strategy
+- [Architecture Documentation](docs/architecture/) - System design
+- [Operations Manual](docs/ops/) - Deployment and operations
 
-### API和参考
+### API and Reference
 
-- [API文档](docs/reference/API_REFERENCE.md)
-- [数据库架构](docs/reference/DATABASE_SCHEMA.md)
-- [开发指南](docs/reference/DEVELOPMENT_GUIDE.md)
+- [API Documentation](docs/reference/API_REFERENCE.md)
+- [Database Schema](docs/reference/DATABASE_SCHEMA.md)
+- [Development Guide](docs/reference/DEVELOPMENT_GUIDE.md)
 
-## 🔧 开发工作流
+## Development Workflow
 
-### 新功能开发
+### New Feature Development
 
-1. `make context` - 了解项目状态
-2. 更新相关文档（重要！）
-3. 编写代码
-4. `make test-quick` - 测试
-5. `make fmt && make lint` - 代码规范
-6. `make coverage-local` - 本地覆盖率检查
-7. `make prepush` - 提交前检查（触发CI）
+1. `make context` - Understand project status
+2. Update relevant documentation (important!)
+3. Write code
+4. `make test-quick` - Test
+5. `make fmt && make lint` - Code formatting and standards
+6. `make coverage-local` - Local coverage check
+7. `make prepush` - Pre-push check (triggers CI)
 
-### 运行单个测试
+### Running Single Tests
 
-⚠️ **重要警告**：不要对单个文件使用 `--cov=src`，这会显示误导性的0%覆盖率！
+⚠️ **Important Warning**: DO NOT use `--cov=src` with single test files - this shows misleading 0% coverage!
 
 ```bash
-# ✅ 正确：运行特定测试文件（不含覆盖率）
+# ✅ Correct: Run specific test file (without coverage)
 pytest tests/unit/api/test_health.py -v
 
-# ✅ 正确：运行特定测试函数
+# ✅ Correct: Run specific test function
 pytest tests/unit/api/test_health.py::test_health_endpoint -v
 
-# ✅ 正确：运行带标记的测试
+# ✅ Correct: Run tests with markers
 pytest -m "unit and not slow" --cov=src
 
-# ❌ 错误：单个文件 + 覆盖率（会显示0%！）
-# pytest tests/unit/api/test_health.py --cov=src  # 不要这样做！
+# ❌ Wrong: Single file + coverage (will show 0%!)
+# pytest tests/unit/api/test_health.py --cov=src  # Don't do this!
 
-# 调试模式运行测试
+# Debug mode tests
 pytest tests/unit/api/test_health.py -v -s --tb=long
 
-# 只运行上次失败的测试
+# Run only last failed tests
 pytest --lf
 
-# 并行运行测试（需要pytest-xdist）
+# Parallel tests (requires pytest-xdist)
 pytest tests/ -n auto
 
-# 生成HTML覆盖率报告
+# Generate HTML coverage report
 make cov.html
-# 查看报告：open htmlcov/index.html
+# View report: open htmlcov/index.html
 ```
 
-### Bug修复
+### Bug Fixes
 
-1. 查看Issue Tracker的Issue
-2. 理解失败原因
-3. 修复代码
-4. 添加测试
-5. 推送修复（CI自动运行）
+1. Check Issue Tracker issues
+2. Understand failure reasons
+3. Fix code
+4. Add tests
+5. Push fix (CI runs automatically)
 
-## ⚠️ 重要注意事项
+## Important Notes
 
-### 测试策略
+### Testing Strategy
 
-- **主要使用单元测试**：`tests/unit/` 目录包含96.35%覆盖率的测试
-- **测试标记系统**：
-  - `unit` - 单元测试（主要）
-  - `integration` - 集成测试（待重建）
-  - `e2e` - 端到端测试
-  - `slow` - 慢速测试
-  - `legacy` - 遗留测试（默认排除）
-- **覆盖率要求**：CI要求80%，本地开发20-60%即可
+- **Primarily use unit tests**: `tests/unit/` directory contains 96.35% coverage tests
+- **Test marking system**:
+  - `unit` - Unit tests (primary)
+  - `integration` - Integration tests (to be rebuilt)
+  - `e2e` - End-to-end tests
+  - `slow` - Slow tests
+  - `legacy` - Legacy tests (excluded by default)
+- **Coverage requirements**: CI requires 80%, local development 20-60% is acceptable
 
-### 环境管理
+### Environment Management
 
-#### 虚拟环境
-- **目录**：`.venv/`（通过Makefile自动管理）
-- **Python版本**：3.11+
-- **激活方式**：`source .venv/bin/activate` 或使用Makefile命令自动激活
+#### Virtual Environment
+- **Directory**: `.venv/` (automatically managed via Makefile)
+- **Python Version**: 3.11+
+- **Activation**: `source .venv/bin/activate` or use Makefile commands for automatic activation
 
-#### 服务依赖
+#### Service Dependencies
 ```bash
-# 核心服务（必须启动）
-docker-compose up -d postgres redis  # 数据库和缓存
+# Core services (must start)
+docker-compose up -d postgres redis  # Database and cache
 
-# 可选服务（按需启动）
-docker-compose --profile mlflow up    # MLflow模型管理
-docker-compose --profile celery up    # Celery任务队列
-docker-compose up nginx               # Nginx反向代理（无profile）
+# Optional services (start on demand)
+docker-compose --profile mlflow up    # MLflow model management
+docker-compose --profile celery up    # Celery task queue
+docker-compose up nginx               # Nginx reverse proxy (no profile)
 ```
 
-#### 环境配置
-- **开发环境**：`.env`（包含调试和开发设置）
-- **生产环境**：`.env.production`（安全设置）
-- **CI环境**：`.env.ci`（CI特定配置）
-- **示例配置**：`.env.example`（模板文件）
+#### Environment Configuration
+- **Development Environment**: `.env` (contains debugging and development settings)
+- **Production Environment**: `.env.production` (security settings)
+- **CI Environment**: `.env.ci` (CI-specific configuration)
+- **Example Configuration**: `.env.example` (template file)
 
-#### 环境检查命令
+#### Environment Check Commands
 ```bash
-make env-check      # 完整环境健康检查
-make check-services # 检查Docker服务状态
-make check-ports    # 检查端口占用情况
+make env-check      # Complete environment health check
+make check-services # Check Docker service status
+make check-ports    # Check port usage
 ```
 
-### 数据库操作
+### Database Operations
 
 ```bash
-# 启动数据库服务
+# Start database services
 docker-compose up -d postgres redis
 
-# 检查服务状态
+# Check service status
 docker-compose ps
 
-# 查看服务日志
+# View service logs
 docker-compose logs -f
 
-# 停止服务
+# Stop services
 docker-compose down
 
-# 使用profiles启动额外服务
-docker-compose --profile mlflow up   # 启动MLflow
-docker-compose --profile celery up   # 启动Celery任务队列
+# Use profiles to start additional services
+docker-compose --profile mlflow up   # Start MLflow
+docker-compose --profile celery up   # Start Celery task queue
 ```
 
-### 依赖管理
+### Dependency Management
 
-采用**分层依赖管理**方案，确保环境隔离和生产稳定性：
+Adopts a **layered dependency management** approach to ensure environment isolation and production stability:
 
-#### 依赖层次结构
+#### Dependency Hierarchy
 
 ```
 requirements/
-├── base.in/.lock      # Python基础版本（3.11+）
-├── core.txt           # 核心运行时依赖（FastAPI、SQLAlchemy等）
-├── ml.txt             # 机器学习依赖（scikit-learn、pandas等）
-├── api.txt            # API服务依赖（uvicorn、pydantic等）
-├── dev.in/.lock       # 开发工具依赖（pytest、black、mypy等）
-├── production.txt     # 生产环境（core + ml + api）
-├── development.txt     # 开发环境（production + dev）
-└── requirements.lock  # 完整锁定文件（所有依赖）
+├── base.in/.lock      # Python base version (3.11+)
+├── core.txt           # Core runtime dependencies (FastAPI, SQLAlchemy, etc.)
+├── ml.txt             # Machine learning dependencies (scikit-learn, pandas, etc.)
+├── api.txt            # API service dependencies (uvicorn, pydantic, etc.)
+├── dev.in/.lock       # Development tool dependencies (pytest, black, mypy, etc.)
+├── production.txt     # Production environment (core + ml + api)
+├── development.txt     # Development environment (production + dev)
+└── requirements.lock  # Complete lock file (all dependencies)
 ```
 
-#### 核心命令
+#### Core Commands
 
 ```bash
-# 安装依赖（首次使用）
-make install           # 从requirements.lock安装
+# Install dependencies (first time use)
+make install           # Install from requirements.lock
 
-# 锁定依赖版本（依赖变更后）
-make lock-deps         # 生成所有.lock文件
+# Lock dependency versions (after dependency changes)
+make lock-deps         # Generate all .lock files
 
-# 验证依赖一致性
-make verify-deps       # 检查当前环境与lock文件是否一致
+# Verify dependency consistency
+make verify-deps       # Check if current environment matches lock files
 
-# 重现性构建
-make install-locked    # 强制从lock文件重新安装
+# Reproducible builds
+make install-locked    # Force reinstall from lock files
 
-# 依赖分析和审计
-make audit-deps        # 扫描安全漏洞
-make analyze-deps      # 分析依赖冲突
+# Dependency analysis and audit
+make audit-deps        # Scan for security vulnerabilities
+make analyze-deps      # Analyze dependency conflicts
 ```
 
-#### 环境管理原则
+#### Environment Management Principles
 
-1. **开发环境**：包含所有依赖（dev + test + lint）
-2. **生产环境**：只包含运行时依赖（core + ml + api）
-3. **版本锁定**：所有依赖版本精确锁定
-4. **安全审计**：定期扫描依赖漏洞
+1. **Development Environment**: Includes all dependencies (dev + test + lint)
+2. **Production Environment**: Only includes runtime dependencies (core + ml + api)
+3. **Version Locking**: All dependency versions precisely locked
+4. **Security Auditing**: Regularly scan for dependency vulnerabilities
 
-## 🔄 CI/CD系统
+## CI/CD System
 
-### 必须遵守的规则
+### Must-Follow Rules
 
 ```bash
-# 提交前必须运行
+# Must run before committing
 make prepush
-# 或
+# or
 ./ci-verify.sh
 ```
 
-### Docker CI验证
+### Docker CI Verification
 
-- **推送前必须**：执行 `./ci-verify.sh` 验证CI兼容性
-- **环境一致性**：与GitHub Actions CI环境完全一致
-- **依赖验证**：确保 `requirements.lock` 在CI环境中正常工作
-- **服务测试**：在PostgreSQL和Redis服务下运行完整测试
+- **Before pushing**: Must execute `./ci-verify.sh` to verify CI compatibility
+- **Environment Consistency**: Exactly matches GitHub Actions CI environment
+- **Dependency Verification**: Ensure `requirements.lock` works properly in CI environment
+- **Service Testing**: Run complete tests under PostgreSQL and Redis services
 
-### CI失败处理
+### CI Failure Handling
 
-- Issue Tracker会自动创建Issue
-- Issue包含详细错误信息
-- 修复后自动关闭Issue
+- Issue Tracker automatically creates issues
+- Issues contain detailed error information
+- Automatically closes after fixes
 
-## 🆘 故障排除
+## Troubleshooting
 
-### 快速诊断
+### Quick Diagnostics
 
 ```bash
-# 环境问题
+# Environment issues
 make env-check
 
-# 查看所有命令
+# View all commands
 make help
 
-# 测试失败
-cat htmlcov/index.html  # 查看覆盖率报告
+# Test failures
+cat htmlcov/index.html  # View coverage report
 
-# CI问题
-./ci-verify.sh  # 本地验证
+# CI issues
+./ci-verify.sh  # Local verification
 
-# 检查mypy错误
-make type-check  # 或 mypy src --ignore-missing-imports
+# Check mypy errors
+make type-check  # or mypy src --ignore-missing-imports
 
-# 查看Docker服务状态
+# Check Docker service status
 docker-compose ps
 
-# 检查端口占用
+# Check port usage
 netstat -tulpn | grep :5432  # PostgreSQL
 netstat -tulpn | grep :6379  # Redis
-netstat -tulpn | grep :8000  # FastAPI应用
+netstat -tulpn | grep :8000  # FastAPI application
 ```
 
-### 常见问题
+### Common Issues
 
-- **测试失败**：查看 [故障排除指南](CLAUDE_TROUBLESHOOTING.md)
-- **命令不工作**：运行 `make help`
-- **环境问题**：运行 `make env-check`
-- **依赖问题**：检查 `requirements.lock.txt` 或运行 `make verify-deps`
-- **Docker问题**：确保 `docker-compose up -d`
-- **覆盖率不足**：运行 `make cov.html` 查看详细报告
-- **类型检查失败**：运行 `make type-check` 查看具体错误
-- **代码格式问题**：运行 `make fmt` 自动修复
-- **CI失败**：查看GitHub Actions日志，本地运行 `./ci-verify.sh`
-- **端口冲突**：修改 `.env` 文件中的端口配置
+- **Test failures**: See [Troubleshooting Guide](CLAUDE_TROUBLESHOOTING.md)
+- **Commands not working**: Run `make help`
+- **Environment issues**: Run `make env-check`
+- **Dependency issues**: Check `requirements.lock.txt` or run `make verify-deps`
+- **Docker issues**: Ensure `docker-compose up -d`
+- **Insufficient coverage**: Run `make cov.html` for detailed report
+- **Type check failures**: Run `make type-check` for specific errors
+- **Code formatting issues**: Run `make fmt` for automatic fixes
+- **CI failures**: Check GitHub Actions logs, run `./ci-verify.sh` locally
+- **Port conflicts**: Modify port configuration in `.env` file
 
-## 🤖 AI工具使用技巧
+## AI Tool Usage Tips
 
-### 🎯 高效工作流
+### Efficient Workflow
 
-1. **开始工作前**：
+1. **Before starting work**:
    ```bash
-   make context      # 加载项目上下文
-   make env-check    # 验证环境健康
+   make context      # Load project context
+   make env-check    # Verify environment health
    ```
 
-2. **测试策略**：
-   - 使用 `make test-phase1` 而不是单个文件测试
-   - 运行单个测试时**不要**添加 `--cov=src`
-   - 优先使用 `make test-quick` 进行快速验证
+2. **Testing Strategy**:
+   - Use `make test-phase1` instead of single file testing
+   - When running single tests, DO NOT add `--cov=src`
+   - Prioritize using `make test-quick` for quick verification
 
-3. **代码生成前**：
-   - 先查看现有代码模式
-   - 使用相同的imports和结构
-   - 遵循已有的命名规范
+3. **Before code generation**:
+   - First review existing code patterns
+   - Use same imports and structure
+   - Follow existing naming conventions
 
-4. **依赖操作**：
-   - 永远不要直接修改 `.lock` 文件
-   - **推荐使用**：`python scripts/dependency/add_dependency.py <package>`
-   - 手动操作：编辑 `.in` 文件后运行 `make lock-deps`
-   - 使用 `make verify-deps` 验证一致性
-   - **绝对不要**：直接运行 `pip install <package>`
+4. **Dependency operations**:
+   - Never directly modify `.lock` files
+   - **Recommended**: `python scripts/dependency/add_dependency.py <package>`
+   - Manual operation: Edit `.in` files then run `make lock-deps`
+   - Use `make verify-deps` to verify consistency
+   - **Absolutely not**: Directly run `pip install <package>`
 
-   > 💡 **AI工具特别提醒**：引入新依赖后，运行 `make smart-deps` 获取智能指导
+   > 💡 **AI Tool Special Reminder**: After introducing new dependencies, run `make smart-deps` for intelligent guidance
 
-### ⚡ 常见模式识别
+### Common Pattern Recognition
 
-1. **测试文件模式**：
+1. **Test file pattern**:
    ```python
-   # 正确的导入模式
+   # Correct import pattern
    from unittest.mock import Mock, patch
    import pytest
    from src.api.module import function_to_test
@@ -513,13 +516,13 @@ netstat -tulpn | grep :8000  # FastAPI应用
    class TestModuleName:
        @pytest.mark.unit
        def test_function_name(self, mock_fixture):
-           # 测试逻辑
+           # Test logic
            pass
    ```
 
-2. **API路由模式**：
+2. **API route pattern**:
    ```python
-   # FastAPI路由标准模式
+   # FastAPI route standard pattern
    from fastapi import APIRouter, Depends
    from src.core.logger import logger
 
@@ -531,9 +534,9 @@ netstat -tulpn | grep :8000  # FastAPI应用
        return {"status": "ok"}
    ```
 
-3. **数据库操作模式**：
+3. **Database operation pattern**:
    ```python
-   # SQLAlchemy标准模式
+   # SQLAlchemy standard pattern
    from sqlalchemy.orm import Session
    from src.database.models import Model
 
@@ -541,48 +544,48 @@ netstat -tulpn | grep :8000  # FastAPI应用
        return db.query(Model).all()
    ```
 
-### 🔍 快速诊断命令
+### Quick Diagnostic Commands
 
 ```bash
-# 检查为什么测试失败
+# Check why tests failed
 pytest tests/unit/api/test_xxx.py -v -s --tb=long
 
-# 查看哪些代码缺少测试
+# See which code lacks tests
 make cov.html && open htmlcov/index.html
 
-# 检查类型错误
+# Check type errors
 make type-check
 
-# 验证所有环境配置
+# Verify all environment configuration
 make env-check
 ```
 
-### 📋 提交前清单
+### Pre-push Checklist
 
-在推送代码前，AI工具应该：
-1. ✅ 运行 `make test-quick` 验证测试
-2. ✅ 运行 `make fmt` 格式化代码
-3. ✅ 运行 `make lint` 检查质量
-4. ✅ 运行 `make type-check` 类型检查
-5. ✅ 运行 `make verify-deps` 验证依赖
-6. ✅ 运行 `make prepush` 完整检查
+Before pushing code, AI tools should:
+1. ✅ Run `make test-quick` to verify tests
+2. ✅ Run `make fmt` to format code
+3. ✅ Run `make lint` to check quality
+4. ✅ Run `make type-check` for type checking
+5. ✅ Run `make verify-deps` to verify dependencies
+6. ✅ Run `make prepush` for complete check
 
-### 💡 性能提示
+### Performance Tips
 
-- 使用 `pytest -x` 在第一个失败时停止
-- 使用 `pytest --lf` 只运行上次失败的测试
-- 使用 `pytest -k "keyword"` 过滤测试
-- 避免在CI中运行慢速测试（使用 `-m "not slow"`）
+- Use `pytest -x` to stop at first failure
+- Use `pytest --lf` to run only last failed tests
+- Use `pytest -k "keyword"` to filter tests
+- Avoid running slow tests in CI (use `-m "not slow"`)
 
-## 📞 支持
+## Support
 
-- 快速参考：[CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
-- 故障排除：[CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
-- 完整文档：[docs/](docs/)
+- Quick reference: [CLAUDE_QUICK_REFERENCE.md](./CLAUDE_QUICK_REFERENCE.md)
+- Troubleshooting: [CLAUDE_TROUBLESHOOTING.md](./CLAUDE_TROUBLESHOOTING.md)
+- Complete documentation: [docs/](docs/)
 
 ---
 
-# 重要指令提醒
+# Important Instruction Reminder
 
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
