@@ -26,16 +26,20 @@ make context          # 加载项目上下文供 AI 开发使用
 ### 测试
 ```bash
 make test             # 运行所有单元测试
-make test-quick       # 快速单元测试（推荐用于快速反馈）
+make test-quick       # 快速单元测试（带超时限制）
 make test-unit        # 只运行单元测试（标记为 'unit' 的）
-make coverage         # 运行测试并检查覆盖率（要求80%）
+make test-phase1      # 运行第一阶段核心 API 测试
+make test-api         # 运行所有 API 测试
+make test.containers  # 运行需要 Docker 容器的测试
+make coverage         # 运行测试并检查覆盖率（默认80%）
 make coverage-fast    # 快速覆盖率检查（仅单元测试）
+make coverage-local   # 本地覆盖率检查（要求60%）
 ```
 
 ### 代码质量
 ```bash
-make lint             # 运行 flake8 和 mypy 检查
-make fmt              # 使用 black 和 isort 格式化代码
+make lint             # 运行 ruff 和 mypy 检查
+make fmt              # 使用 ruff 格式化代码（已替换 black 和 isort）
 make prepush          # 完整的提交前验证（ruff + mypy + pytest）
 make ci               # 模拟 GitHub Actions CI 流程
 ```
@@ -74,9 +78,10 @@ make test-phase1      # 运行第一阶段核心 API 测试
 
 ### 测试执行
 - 始终使用 Makefile 命令进行测试（不要直接运行 pytest）
-- 开发时使用 `make test-quick` 获得快速反馈
+- 开发时使用 `make test-quick` 获得快速反馈（带超时和失败限制）
 - 使用 `make coverage-fast` 生成不包含慢测试的覆盖率报告
-- CI 环境要求 >=80% 覆盖率，本地开发 >=20%
+- 覆盖率要求：CI 环境 >=80%，本地开发 >=60%（使用 coverage-local）
+- 运行单个测试：`pytest tests/unit/test_specific.py::test_function`
 
 ### 测试容器
 - 对需要真实服务的集成测试使用 TestContainers
@@ -92,8 +97,9 @@ make test-phase1      # 运行第一阶段核心 API 测试
 
 ## 重要说明
 
-- 项目使用 pip-tools 进行依赖管理
-- 所有 Python 代码必须通过 flake8 和 mypy 检查
+- 项目使用 pip-tools 进行依赖管理（requirements/ 目录）
+- 代码格式化和检查已迁移到 ruff（替代 flake8、black、isort）
+- 所有 Python 代码必须通过 ruff 和 mypy 检查
 - 测试使用 pytest 并生成覆盖率报告
 - Docker Compose 提供本地开发的 PostgreSQL、Redis 和 Nginx
 - MLOps 流程包括模型重训练和反馈循环
@@ -103,3 +109,5 @@ make test-phase1      # 运行第一阶段核心 API 测试
 - 如果测试运行缓慢，使用 `make test-quick` 或 `make coverage-fast`
 - 对于数据库相关的测试失败，确保 Docker 服务正在运行：`docker-compose up -d`
 - 如果导入失败，确保虚拟环境已激活：`source .venv/bin/activate`
+- ruff 同时处理代码检查和格式化，使用 `make fmt` 会自动运行 `ruff format` 和 `ruff check --fix`
+- 本地开发建议使用 `make coverage-local`（60%阈值）而不是 `make coverage`（80%阈值）
