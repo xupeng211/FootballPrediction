@@ -18,9 +18,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api import health_router, predictions_router, data_router
-from src.config.openapi_config import custom_openapi_schema
+from src.config.openapi_config import setup_openapi
 from src.core.prediction_engine import init_prediction_engine, close_prediction_engine
-from src.utils.logger import get_logger
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -53,7 +53,7 @@ app = FastAPI(
 )
 
 # 设置自定义OpenAPI schema
-app.openapi = lambda: custom_openapi_schema(app)
+setup_openapi(app)
 
 
 # 中间件配置
@@ -135,7 +135,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
                 "message": exc.detail,
                 "type": "http_error",
             }
-        }
+        },
     )
 
 
@@ -155,7 +155,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
                 "type": "validation_error",
                 "details": exc.errors(),
             }
-        }
+        },
     )
 
 
@@ -164,7 +164,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     """通用异常处理"""
     logger.error(
         f"Unhandled exception at {request.method} {request.url.path}: {str(exc)}",
-        exc_info=True
+        exc_info=True,
     )
 
     return JSONResponse(
@@ -175,7 +175,7 @@ async def general_exception_handler(request: Request, exc: Exception):
                 "message": "服务器内部错误",
                 "type": "internal_error",
             }
-        }
+        },
     )
 
 
