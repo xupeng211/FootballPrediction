@@ -188,6 +188,7 @@ async def test_async_operation(async_client):
 ### 数据隔离
 
 每个测试自动隔离：
+
 - 使用独立的内存数据库
 - Mock 服务状态在测试间自动重置
 - 不会相互影响
@@ -243,11 +244,13 @@ pytest -m slow         # 只运行慢速
 ## 🎨 最佳实践
 
 ### 1. 命名规范
+
 - fixture: `sample_*_data`
 - 测试方法: `test_*`
 - 测试类: `Test*`
 
 ### 2. 测试结构
+
 ```python
 def test_feature_behavior(self):
     """测试功能行为
@@ -268,6 +271,7 @@ def test_feature_behavior(self):
 ```
 
 ### 3. 使用描述性的断言
+
 ```python
 # 好的断言
 assert prediction.confidence > 0.5, "置信度应该大于 0.5"
@@ -281,6 +285,7 @@ with pytest.raises(ValueError, match="无效的比赛ID"):
 ## 🔍 调试技巧
 
 ### 1. 查看生成的内容
+
 ```python
 def test_something(test_data):
     # 打印数据用于调试
@@ -289,6 +294,7 @@ def test_something(test_data):
 ```
 
 ### 2. 使用断点
+
 ```python
 def test_complex_logic():
     # 添加断点
@@ -298,6 +304,7 @@ def test_complex_logic():
 ```
 
 ### 3. 查看错误详情
+
 ```bash
 # 显示完整错误堆栈
 pytest --tb=long

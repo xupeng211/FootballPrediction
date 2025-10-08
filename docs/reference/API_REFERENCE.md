@@ -18,6 +18,7 @@ GET /health
 ```
 
 **响应格式:**
+
 ```json
 {
   "status": "healthy",
@@ -49,6 +50,7 @@ GET /metrics
 ```
 
 **响应格式:**
+
 ```json
 {
   "timestamp": "2025-09-10T02:42:16.535410",

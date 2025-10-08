@@ -21,25 +21,37 @@ def setup_warning_filters() -> None:
     3. 确保未来升级的兼容性
     """
 
-    # 抑制 Marshmallow 4 兼容性警告 - 主要来自 Great Expectations
-    try:
-        import marshmallow.warnings
-
-        warnings.filterwarnings(
-            "ignore",
-            category=marshmallow.warnings.ChangedInMarshmallow4Warning,
-            message=r".*Number.*field should not be instantiated.*",
-        )
-        print("✅ Marshmallow 4 兼容性警告已抑制")
-    except ImportError:
-        # 如果无法导入 marshmallow.warnings，使用通用过滤器
-        warnings.filterwarnings(
-            "ignore", message=r".*Number.*field.*should.*not.*be.*instantiated.*"
-        )
-        print("⚠️  使用通用方式抑制 Marshmallow 警告")
+    # 抑制 Marshmallow 4 兼容性警告
+    # 注意：Marshmallow 4.x 已经移除了 marshmallow.warnings 模块
+    # 所以我们使用通用的消息过滤器来抑制可能的警告
+    _setup_marshmallow_warning_filters()
 
     # 抑制其他已知的第三方库警告
     _setup_third_party_warning_filters()
+
+
+def _setup_marshmallow_warning_filters() -> None:
+    """
+    设置 Marshmallow 相关的警告过滤器
+
+    Marshmallow 4.x 已经移除了 marshmallow.warnings 模块，
+    所以我们使用通用的消息过滤器。
+    """
+    # Marshmallow 4.x 不再有 marshmallow.warnings 模块
+    # 使用通用的消息过滤器来抑制可能的警告
+    warnings.filterwarnings(
+        "ignore",
+        message=r".*Number.*field.*should.*not.*be.*instantiated.*",
+        category=DeprecationWarning,
+    )
+    warnings.filterwarnings(
+        "ignore", message=r".*Number.*field.*should.*not.*be.*instantiated.*"
+    )
+    # 也抑制其他可能的 Marshmallow 迁移警告
+    warnings.filterwarnings(
+        "ignore", message=r".*ChangedInMarshmallow.*", category=DeprecationWarning
+    )
+    print("✅ Marshmallow 4.x 兼容性警告已抑制")
 
 
 def _setup_third_party_warning_filters() -> None:
@@ -91,18 +103,8 @@ def suppress_marshmallow_warnings(func=None):
     def decorator(func):
         def wrapper(*args, **kwargs):
             with warnings.catch_warnings():
-                try:
-                    import marshmallow.warnings
-
-                    warnings.filterwarnings(
-                        "ignore",
-                        category=marshmallow.warnings.ChangedInMarshmallow4Warning,
-                    )
-                except ImportError:
-                    warnings.filterwarnings(
-                        "ignore",
-                        message=r".*Number.*field.*should.*not.*be.*instantiated.*",
-                    )
+                # 设置 Marshmallow 警告过滤器
+                _setup_marshmallow_warning_filters()
 
                 return func(*args, **kwargs)
 

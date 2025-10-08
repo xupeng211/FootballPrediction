@@ -302,7 +302,7 @@ class FixturesCollector(DataCollector):
 
             response = await self._make_request(url=url, headers=headers, params=params)
 
-            return response.get("matches", [])
+            return response.get(str("matches"), [])
 
         except Exception as e:
             self.logger.error(
@@ -322,10 +322,10 @@ class FixturesCollector(DataCollector):
         """
         # 使用外部ID、主队、客队、比赛时间生成唯一键
         key_components = [
-            str(fixture_data.get("id", "")),
-            str(fixture_data.get("homeTeam", {}).get("id", "")),
-            str(fixture_data.get("awayTeam", {}).get("id", "")),
-            str(fixture_data.get("utcDate", "")),
+            str(fixture_data.get(str("id"), "")),
+            str(fixture_data.get(str("homeTeam"), {}).get(str("id"), "")),
+            str(fixture_data.get(str("awayTeam"), {}).get(str("id"), "")),
+            str(fixture_data.get(str("utcDate"), "")),
         ]
 
         key_string = "|".join(key_components)
@@ -358,13 +358,13 @@ class FixturesCollector(DataCollector):
             cleaned_data = {
                 "external_match_id": str(raw_fixture["id"]),
                 "external_league_id": str(
-                    raw_fixture.get("competition", {}).get("id", "")
+                    raw_fixture.get(str("competition"), {}).get(str("id"), "")
                 ),
                 "external_home_team_id": str(raw_fixture["homeTeam"]["id"]),
                 "external_away_team_id": str(raw_fixture["awayTeam"]["id"]),
                 "match_time": match_time.isoformat(),
-                "status": raw_fixture.get("status", "SCHEDULED"),
-                "season": raw_fixture.get("season", {}).get("id"),
+                "status": raw_fixture.get(str("status"), "SCHEDULED"),
+                "season": raw_fixture.get(str("season"), {}).get("id"),
                 "matchday": raw_fixture.get("matchday"),
                 "raw_data": raw_fixture,
                 "collected_at": datetime.now().isoformat(),

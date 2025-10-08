@@ -11,9 +11,10 @@ sqlalchemy==2.0.36
 alembic==1.16.5
 asyncpg==0.30.0
 psycopg2-binary==2.9.10
+aiosqlite==0.21.0  # SQLite async driver for testing
 
 # Cache
-redis==5.2.1
+redis==5.0.1
 aioredis==2.0.1
 
 # Authentication and security
@@ -30,6 +31,7 @@ pydantic-settings==2.7.1
 # HTTP client
 httpx==0.28.1
 requests==2.32.3
+aiohttp==3.12.15  # Async HTTP client for data collectors
 
 # Task queue
 celery==5.4.0

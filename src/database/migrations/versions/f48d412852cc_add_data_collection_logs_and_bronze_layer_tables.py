@@ -177,7 +177,8 @@ def upgrade() -> None:
     # 只添加在初始schema中不存在的字段
     try:
         # 添加新的特征字段以支持更复杂的ML特征
-        # 跳过已在初始schema中存在的字段：recent_5_draws, recent_5_losses, recent_5_goals_against, h2h_draws, h2h_losses
+        # 跳过已在初始schema中存在的字段：recent_5_draws, recent_5_losses,
+        # recent_5_goals_against, h2h_draws, h2h_losses
         new_columns = [
             ("home_advantage_score", sa.Numeric(5, 2), "主场优势评分"),
             (

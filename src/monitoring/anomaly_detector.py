@@ -207,7 +207,7 @@ class AnomalyDetector:
             List[AnomalyResult]: 异常检测结果
         """
         anomalies: List[AnomalyResult] = []
-        config = self.detection_config.get(table_name, {})
+        config = self.detection_config.get(str(table_name), {})
 
         if not config:
             logger.warning(f"表 {table_name} 没有检测配置")
@@ -221,7 +221,7 @@ class AnomalyDetector:
             return anomalies
 
         # 数值列异常检测
-        numeric_columns = config.get("numeric_columns", [])
+        numeric_columns = config.get(str("numeric_columns"), [])
         for column in numeric_columns:
             if column in table_data.columns:
                 column_anomalies = await self._detect_column_anomalies(
@@ -230,7 +230,7 @@ class AnomalyDetector:
                 anomalies.extend(column_anomalies)
 
         # 分类列异常检测
-        categorical_columns = config.get("categorical_columns", [])
+        categorical_columns = config.get(str("categorical_columns"), [])
         for column in categorical_columns:
             if column in table_data.columns:
                 column_anomalies = await self._detect_column_anomalies(
@@ -239,7 +239,7 @@ class AnomalyDetector:
                 anomalies.extend(column_anomalies)
 
         # 时间列异常检测
-        time_columns = config.get("time_columns", [])
+        time_columns = config.get(str("time_columns"), [])
         for column in time_columns:
             if column in table_data.columns:
                 column_anomalies = await self._detect_column_anomalies(
@@ -265,7 +265,8 @@ class AnomalyDetector:
         try:
             # 获取最近1000条记录进行异常检测
             # Safe: table_name is validated against whitelist above
-            # Note: Using f-string here is safe as table_name is validated against whitelist
+            # Note: Using f-string here is safe as table_name is validated against
+            # whitelist
             result = await session.execute(
                 text(
                     f"""
@@ -526,8 +527,8 @@ class AnomalyDetector:
         """
         try:
             # 获取配置的阈值
-            config = self.detection_config.get(table_name, {})
-            thresholds = config.get("thresholds", {}).get(column_name, {})
+            config = self.detection_config.get(str(table_name), {})
+            thresholds = config.get(str("thresholds"), {}).get(str(column_name), {})
 
             if not thresholds:
                 return []
@@ -724,19 +725,19 @@ class AnomalyDetector:
         by_severity: Dict[str, int] = {}
         for anomaly in anomalies:
             severity = anomaly.severity.value
-            by_severity[severity] = by_severity.get(severity, 0) + 1
+            by_severity[severity] = by_severity.get(str(severity), 0) + 1
 
         # 按类型统计
         by_type: Dict[str, int] = {}
         for anomaly in anomalies:
             anomaly_type = anomaly.anomaly_type.value
-            by_type[anomaly_type] = by_type.get(anomaly_type, 0) + 1
+            by_type[anomaly_type] = by_type.get(str(anomaly_type), 0) + 1
 
         # 按表统计
         by_table: Dict[str, int] = {}
         for anomaly in anomalies:
             table = anomaly.table_name
-            by_table[table] = by_table.get(table, 0) + 1
+            by_table[table] = by_table.get(str(table), 0) + 1
 
         return {
             "total_anomalies": len(anomalies),

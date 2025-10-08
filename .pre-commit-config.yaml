@@ -34,6 +34,13 @@ repos:
       - id: detect-private-key
         name: 检测私钥
 
+      - id: check-hardcoded-secrets
+        name: 检查硬编码密钥
+        entry: python scripts/security/check_hardcoded_secrets.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
   # MyPy类型检查 (可选 - 如需启用请手动运行 make type-check)
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.8.0

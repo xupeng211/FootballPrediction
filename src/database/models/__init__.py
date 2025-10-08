@@ -14,6 +14,7 @@ from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
+from .user import User
 
 # 为API兼容性创建别名
 Prediction = Predictions
@@ -25,6 +26,7 @@ __all__ = [
     # 核心业务模型
     "League",
     "Team",
+    "User",
     "Match",
     "Odds",
     "Features",

@@ -7,6 +7,7 @@ This document describes the retry mechanism implementation for external services
 ## Current State
 
 The system currently has limited or no retry mechanisms for external service calls:
+
 - Database connections may fail without retry
 - MLflow service calls may fail without retry
 - External API calls may fail without retry
@@ -309,6 +310,7 @@ class PredictionService:
 ## Configuration
 
 Environment variables for retry configuration:
+
 - `DATABASE_RETRY_MAX_ATTEMPTS`: Database retry max attempts (default: 5)
 - `DATABASE_RETRY_BASE_DELAY`: Database retry base delay in seconds (default: 1.0)
 - `DATABASE_RETRY_MAX_DELAY`: Database retry max delay in seconds (default: 30.0)

@@ -93,6 +93,22 @@ make verify-deps
   run: make test
 ```
 
+#### 实际CI集成
+
+本项目已在CI流水线中集成依赖一致性检查：
+
+1. **质量检查阶段** - 自动验证依赖一致性
+   - 如果 `requirements.lock.txt` 存在，CI会自动运行 `make verify-deps`
+   - 验证失败会阻止流水线继续执行
+
+2. **测试阶段** - 优先使用锁定依赖
+   - CI会自动检测并使用 `make install-locked`
+   - 确保测试环境与开发环境完全一致
+
+3. **缓存优化** - 包含锁文件哈希
+   - 依赖缓存键包含 `requirements.lock.txt`
+   - 依赖更新时自动刷新缓存
+
 ## 最佳实践
 
 ### ✅ 做什么
@@ -102,6 +118,7 @@ make verify-deps
    - 避免意外的版本更新
 
 2. **添加依赖后立即锁定**
+
    ```bash
    pip install some-package
    make lock-deps
@@ -109,6 +126,7 @@ make verify-deps
    ```
 
 3. **定期验证依赖**
+
    ```bash
    make verify-deps
    ```
@@ -171,7 +189,8 @@ make lock-deps
 
 - 所有直接和间接依赖
 - 精确的版本号
-- 总计177个包（包括传递依赖）
+- 总计208个包（包括传递依赖）
+- pip工具版本（pip, setuptools, wheel）
 
 ### 与其他工具的比较
 
@@ -189,4 +208,4 @@ make lock-deps
 - [requirements.txt 格式规范](https://pip.pypa.io/en/stable/reference/requirements-file-format/)
 
 ---
-最后更新: 2025-10-04
+最后更新: 2025-10-05

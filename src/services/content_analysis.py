@@ -40,14 +40,16 @@ class ContentAnalysisService(BaseService):
         # 实现内容分析逻辑
         # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
         if content.content_type == "text":
-            text_analysis = self.analyze_text(content.data.get("text", ""))
+            text_analysis = self.analyze_text(content.data.get(str("text", None), ""))
             analysis_data = {
-                "sentiment": text_analysis.get("sentiment", "neutral"),
-                "keywords": text_analysis.get("keywords", []),
-                "category": self._categorize_content(content.data.get("text", "")),
+                "sentiment": text_analysis.get(str("sentiment", None), "neutral"),
+                "keywords": text_analysis.get(str("keywords", None), []),
+                "category": self._categorize_content(
+                    content.data.get(str("text", None), "")
+                ),
                 "quality_score": self._calculate_quality_score(content),
-                "language": text_analysis.get("language", "zh"),
-                "word_count": text_analysis.get("word_count", 0),
+                "language": text_analysis.get(str("language", None), "zh"),
+                "word_count": text_analysis.get(str("word_count", None), 0),
             }
         else:
             # 非文本内容的默认分析
@@ -99,7 +101,7 @@ class ContentAnalysisService(BaseService):
     def _calculate_quality_score(self, content: Content) -> float:
         """计算内容质量分数"""
         if content.content_type == "text":
-            text = content.data.get("text", "")
+            text = content.data.get(str("text", None), "")
             # 基于长度、关键词数量等计算质量分数
             word_count = len(text.split())
             keyword_count = len([kw for kw in ["足球", "比赛", "分析"] if kw in text])
@@ -119,7 +121,115 @@ class ContentAnalysisService(BaseService):
         return {
             "word_count": len(words),
             "character_count": len(text),
-            "sentiment": "neutral",
+            "sentiment": self.analyze_sentiment(text),
             "keywords": words[:5] if words else [],
             "language": "auto-detected",
+            "entities": self.extract_entities(text),
+            "summary": self.generate_summary(text),
         }
+
+    def extract_entities(self, text: str) -> list:
+        """提取实体"""
+        # 简单的实体提取逻辑
+        entities = []
+        # 提取球队名称
+        teams = ["曼联", "切尔西", "阿森纳", "利物浦", "曼城", "巴塞罗那", "皇家马德里"]
+        for team in teams:
+            if team in text:
+                entities.append({"text": team, "type": "TEAM", "confidence": 0.9})
+
+        # 提取球员名称（简化版）
+        words = text.split()
+        for word in words:
+            if len(word) >= 2 and word.istitle():
+                entities.append({"text": word, "type": "PERSON", "confidence": 0.5})
+
+        return entities[:10]  # 限制返回数量
+
+    def classify_content(self, content: str) -> dict:
+        """内容分类"""
+        if not content:
+            return {"category": "unknown", "confidence": 0.0}
+
+        content_lower = content.lower()
+
+        # 定义分类规则
+        categories = {
+            "match_report": ["比赛", "战报", "终场", "比分", "进球"],
+            "transfer_news": ["转会", "签约", "租借", "交易"],
+            "injury_news": ["伤病", "受伤", "伤停", "恢复"],
+            "prediction": ["预测", "分析", "赔率", "胜平负"],
+            "interview": ["采访", "表示", "说道", "认为"],
+            "general": ["其他"],
+        }
+
+        # 计算每个类别的匹配度
+        scores = {}
+        for category, keywords in categories.items():
+            score = sum(1 for keyword in keywords if keyword in content_lower)
+            if score > 0:
+                scores[category] = score
+
+        if scores:
+            best_category = max(scores, key=scores.get)
+            confidence = min(scores[best_category] / 5, 1.0)  # 归一化到0-1
+            return {
+                "category": best_category,
+                "confidence": confidence,
+                "all_scores": scores,
+            }
+
+        return {"category": "general", "confidence": 0.5}
+
+    def analyze_sentiment(self, text: str) -> dict:
+        """情感分析"""
+        if not text:
+            return {"sentiment": "neutral", "score": 0.0}
+
+        # 简单的情感词典
+        positive_words = ["胜利", "精彩", "出色", "优秀", "完美", "激动", "兴奋"]
+        negative_words = ["失败", "糟糕", "失望", "糟糕", "痛苦", "遗憾", "失误"]
+
+        text_lower = text.lower()
+        pos_count = sum(1 for word in positive_words if word in text_lower)
+        neg_count = sum(1 for word in negative_words if word in text_lower)
+
+        total = pos_count + neg_count
+        if total == 0:
+            return {"sentiment": "neutral", "score": 0.0}
+
+        score = (pos_count - neg_count) / total
+
+        if score > 0.2:
+            sentiment = "positive"
+        elif score < -0.2:
+            sentiment = "negative"
+        else:
+            sentiment = "neutral"
+
+        return {
+            "sentiment": sentiment,
+            "score": score,
+            "positive_count": pos_count,
+            "negative_count": neg_count,
+        }
+
+    def generate_summary(self, text: str, max_length: int = 100) -> str:
+        """生成摘要"""
+        if not text or len(text) <= max_length:
+            return text or ""
+
+        # 简单的摘要生成：取前面部分加上省略号
+        sentences = text.split("。")
+        summary = ""
+
+        for sentence in sentences:
+            if len(summary + sentence) <= max_length:
+                summary += sentence + "。"
+            else:
+                break
+
+        if not summary:
+            summary = text[: max_length - 3] + "..."
+
+        return summary.strip()

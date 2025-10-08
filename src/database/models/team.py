@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, relationship
 
 from src.database.base import BaseModel
 
-from .match import Match
+# Match model imported locally to avoid circular imports
 
 
 class Team(BaseModel):
@@ -81,6 +81,11 @@ class Team(BaseModel):
         return f"<Team(id={self.id}, name='{self.team_name}', league='{self.league.league_name if self.league else None}')>"
 
     @property
+    def name(self) -> str:
+        """球队名称的别名属性，为了兼容性"""
+        return self.team_name
+
+    @property
     def display_name(self) -> str:
         """返回用于显示的球队名称。
 
@@ -103,7 +108,7 @@ class Team(BaseModel):
         # 这需要在调用时传入session
         return None  # 实际使用时需要session参数
 
-    def get_recent_matches(self, session: Session, limit: int = 5) -> List[Match]:
+    def get_recent_matches(self, session: Session, limit: int = 5) -> List:
         """获取最近的比赛。
 
         Args:
@@ -113,14 +118,13 @@ class Team(BaseModel):
         Returns:
             List[Match]: 按时间倒序排列的最近比赛列表。
         """
+        from .match import Match
         from sqlalchemy import desc, or_
 
         return (
             session.query(Match)
             .filter(
-                or_(  # type: ignore
-                    Match.home_team_id == self.id, Match.away_team_id == self.id
-                )
+                or_(Match.home_team_id == self.id, Match.away_team_id == self.id)  # type: ignore
             )
             .order_by(desc(Match.match_time))
             .limit(limit)
@@ -140,6 +144,7 @@ class Team(BaseModel):
                 - losses: 负场数
                 - total: 总场次
         """
+        from .match import Match
 
         home_matches = session.query(Match).filter(
             Match.home_team_id == self.id, Match.match_status == "finished"
@@ -169,6 +174,7 @@ class Team(BaseModel):
                 - losses: 负场数
                 - total: 总场次
         """
+        from .match import Match
 
         away_matches = session.query(Match).filter(
             Match.away_team_id == self.id, Match.match_status == "finished"
@@ -203,14 +209,13 @@ class Team(BaseModel):
                 - points: 积分
                 - goal_difference: 净胜球
         """
+        from .match import Match
         from sqlalchemy import or_
 
         matches = (
             session.query(Match)
             .filter(
-                or_(  # type: ignore
-                    Match.home_team_id == self.id, Match.away_team_id == self.id
-                ),
+                or_(Match.home_team_id == self.id, Match.away_team_id == self.id),  # type: ignore
                 Match.season == season,
                 Match.match_status == "finished",
             )
@@ -237,7 +242,7 @@ class Team(BaseModel):
 
         return stats
 
-    def _process_home_match(self, match: Match, stats: Dict[str, int]) -> None:
+    def _process_home_match(self, match, stats: Dict[str, int]) -> None:
         """处理主场比赛统计。
 
         Args:
@@ -254,7 +259,7 @@ class Team(BaseModel):
         else:
             stats["losses"] += 1
 
-    def _process_away_match(self, match: Match, stats: Dict[str, int]) -> None:
+    def _process_away_match(self, match, stats: Dict[str, int]) -> None:
         """处理客场比赛统计。
 
         Args:

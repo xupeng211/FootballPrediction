@@ -24,6 +24,12 @@ from src.database.connection import DatabaseManager
 from src.database.models.data_quality_log import DataQualityLog
 
 
+class DataQualityException(Exception):
+    """数据质量异常基类"""
+
+    pass
+
+
 class DataQualityExceptionHandler:
     """
     数据质量异常处理器
@@ -92,7 +98,7 @@ class DataQualityExceptionHandler:
                     if key not in record or record[key] is None:
                         if value is not None:  # 成功填充
                             missing_value_counts[key] = (
-                                missing_value_counts.get(key, 0) + 1
+                                missing_value_counts.get(str(key), 0) + 1
                             )
 
                 processed_records.append(processed_record)

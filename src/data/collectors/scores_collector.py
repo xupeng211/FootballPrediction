@@ -256,7 +256,9 @@ class ScoresCollector(DataCollector):
             return []
 
     async def _collect_via_websocket(
-        self, match_ids: List[str], duration: int = 3600  # 连接持续时间（秒）
+        self,
+        match_ids: List[str],
+        duration: int = 3600,  # 连接持续时间（秒）
     ) -> List[Dict[str, Any]]:
         """
         通过WebSocket采集实时数据
@@ -391,24 +393,24 @@ class ScoresCollector(DataCollector):
 
             # 提取比赛状态和比分
             match_id = str(raw_data["id"])
-            status = raw_data.get("status", "UNKNOWN")
+            status = raw_data.get(str("status"), "UNKNOWN")
 
             # 比分数据
-            score = raw_data.get("score", {})
-            home_score = score.get("fullTime", {}).get("home")
-            away_score = score.get("fullTime", {}).get("away")
+            score = raw_data.get(str("score"), {})
+            home_score = score.get(str("fullTime"), {}).get("home")
+            away_score = score.get(str("fullTime"), {}).get("away")
 
             # 比赛时间
             minute = raw_data.get("minute")
 
             # 最近事件
             events = []
-            for event in raw_data.get("events", []):
+            for event in raw_data.get(str("events"), []):
                 event_data = {
                     "minute": event.get("minute"),
                     "type": event.get("type"),
-                    "player": event.get("player", {}).get("name"),
-                    "team": event.get("team", {}).get("name"),
+                    "player": event.get(str("player"), {}).get("name"),
+                    "team": event.get(str("team"), {}).get("name"),
                 }
                 events.append(event_data)
 

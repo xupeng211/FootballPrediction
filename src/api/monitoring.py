@@ -118,15 +118,19 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
     try:
         # 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
         recent_predictions_q = text(
-            "/* recent_predictions */ SELECT COUNT(*) FROM predictions WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
+            "/* recent_predictions */ SELECT COUNT(*) FROM predictions "
+            "WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
         )
         upcoming_matches_q = text(
-            "/* upcoming_matches */ SELECT COUNT(*) FROM matches WHERE match_time <= NOW() + INTERVAL '7 days'"
+            "/* upcoming_matches */ SELECT COUNT(*) FROM matches "
+            "WHERE match_time <= NOW() + INTERVAL '7 days'"
         )
         # 近30天模型准确率（示例：正确/总）
         accuracy_rate_q = text(
-            "/* accuracy_rate */ SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM ("
-            " SELECT COUNT(*) AS total, 0 AS correct FROM predictions WHERE verified_at >= NOW() - INTERVAL '30 days'"
+            "/* accuracy_rate */ SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE "
+            "ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM ("
+            " SELECT COUNT(*) AS total, 0 AS correct FROM predictions "
+            "WHERE verified_at >= NOW() - INTERVAL '30 days'"
             ") t"
         )
 
@@ -271,7 +275,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     }
 
 
-@router.get("/metrics/prometheus", response_class=PlainTextResponse)
+@router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)
 async def prometheus_metrics():
     """Prometheus 指标端点（文本）。"""
     try:

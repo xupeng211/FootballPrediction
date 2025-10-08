@@ -3,11 +3,13 @@
 ## 使用方法
 
 ### 单一 docker-compose.yml
+
 项目已将多个 docker-compose 文件整合为一个配置文件 `docker-compose.yml`，通过环境变量控制不同环境。
 
 ### 环境切换
 
 #### 开发环境
+
 ```bash
 # 使用开发配置
 docker-compose --env-file .env.development up -d
@@ -17,6 +19,7 @@ make dev
 ```
 
 #### 生产环境
+
 ```bash
 # 使用生产配置
 docker-compose --env-file .env.production up -d
@@ -29,6 +32,7 @@ make prod
 ```
 
 #### 测试环境
+
 ```bash
 # 使用测试配置
 docker-compose --env-file .env.test up -d
@@ -40,21 +44,25 @@ make test-env
 ### 启动特定服务
 
 #### 仅启动基础服务（app, db, redis）
+
 ```bash
 docker-compose up -d
 ```
 
 #### 包含MLflow
+
 ```bash
 docker-compose --profile mlflow up -d
 ```
 
 #### 包含Celery任务队列
+
 ```bash
 docker-compose --profile celery up -d
 ```
 
 #### 完整生产环境
+
 ```bash
 docker-compose --profile mlflow --profile celery --profile production up -d
 ```
@@ -72,6 +80,7 @@ docker-compose --profile mlflow --profile celery --profile production up -d
 | REDIS_PORT | Redis端口 | 6379 |
 
 ### 旧的文件（已归档）
+
 - `docker-compose.dev.yml` → 移至 `config/docker/`
 - `docker-compose.prod.yml` → 移至 `config/docker/`
 - `docker-compose.test.yml` → 移至 `config/docker/`
@@ -87,6 +96,7 @@ docker-compose --profile mlflow --profile celery --profile production up -d
 ### 故障排除
 
 如果遇到端口冲突：
+
 ```bash
 # 修改环境变量中的端口配置
 export API_PORT=8001
