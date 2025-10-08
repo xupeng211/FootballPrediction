@@ -286,8 +286,8 @@ curl http://localhost:8000/predictions/{match_id}
                             "match_125"
                         ],
                         "model_version": "latest",
-                        "include_features": true,
-                        "force_recalculate": false
+                        "include_features": True,
+                        "force_recalculate": False
                     }
                 },
                 "BatchPredictionResponse": {

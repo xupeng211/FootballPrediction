@@ -31,8 +31,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager, CacheKeyManager
 from src.database.models import Match, Odds, MarketType, RawOddsData
+from src.database.models.match import MatchStatus
 from src.utils.retry import RetryConfig, retry
+
 from src.utils.time_utils import utc_now, parse_datetime
+
+# 重试配置
+retry_config = RetryConfig(
+    max_attempts=3,
+    backoff_factor=1,
+    max_delay=10,
+    retryable_exceptions=(Exception,)
+)
 
 logger = logging.getLogger(__name__)
 

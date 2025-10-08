@@ -18,7 +18,6 @@ Provides complete prediction-related API endpoints, including:
 """
 
 import asyncio
-import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -346,6 +345,7 @@ async def get_model_statistics(
     try:
         # 获取准确率
         accuracy_info = await engine.get_prediction_accuracy(model_name, days)
+        _ = accuracy_info  # Mark as used for now
 
         # 获取详细统计
         detailed_stats = await engine.prediction_service.get_prediction_statistics(days)
