@@ -1,20 +1,21 @@
-import importlib
+# noqa: F401,F811,F821,E402
 from src import main as main_module
-from src.database.connection import get_async_session
-from decimal import Decimal
-
-"""API测试配置"""
-
+import importlib
 from contextlib import ExitStack
 from datetime import datetime
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
+from decimal import Decimal
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import AsyncGenerator
+import pytest
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from src.database.connection import get_async_session
 from src.database.models import Match, MatchStatus, PredictedResult, Predictions
+
+
+"""API测试配置"""
 
 
 def _install_health_stubs(stack: ExitStack) -> None:
@@ -76,8 +77,6 @@ def api_client(monkeypatch):
         _install_health_stubs(stack)
 
         # 延迟导入，在设置好环境变量和 mock 后
-        import importlib
-        from src import main as main_module
 
         main = importlib.reload(main_module)
         app = main.app

@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 独立的健康检查测试
 不依赖conftest，直接测试health.py模块

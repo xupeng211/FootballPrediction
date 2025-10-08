@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 import pytest
 import os
 from unittest.mock import patch

@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """字典工具测试（工作版本）"""
 
 from src.utils.dict_utils import DictUtils

@@ -2,6 +2,10 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 import pytest
 from src.services.audit_service import AuditService
+# 暂时跳过此测试，方法不存在
+# 暂时跳过此测试，方法不存在
+# 缺少 action 字段
+
 
 """
 审计服务测试 / Audit Service Tests
@@ -89,7 +93,6 @@ class TestAuditService:
             {"id": 2, "action": action},
         ]
 
-        # 暂时跳过此测试，方法不存在
         pytest.skip("Method get_audit_logs_by_action not implemented")
 
         assert len(logs) == 2
@@ -110,7 +113,6 @@ class TestAuditService:
             {"id": 1, "user_id": "user123"}
         ]
 
-        # 暂时跳过此测试，方法不存在
         pytest.skip("Method search_audit_logs not implemented")
 
         assert len(results) >= 0
@@ -183,10 +185,7 @@ class TestAuditService:
 
     def test_validate_audit_data_missing_fields(self, mock_service):
         """测试审计数据验证 - 缺少必需字段"""
-        invalid_data = {
-            "user_id": "user123"
-            # 缺少 action 字段
-        }
+        invalid_data = {"user_id": "user123"}
 
         result = mock_service.validate_audit_data(invalid_data)
 

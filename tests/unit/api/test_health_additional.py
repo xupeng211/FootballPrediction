@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 Health模块额外测试 - 覆盖Redis、Kafka、MLflow等功能
 """

@@ -381,8 +381,6 @@ class TestServiceManagerEnhanced:
             manager.register_service(f"service{i}", service)
 
         # 并发初始化
-        import asyncio
-
         results = await asyncio.gather(
             *[service.initialize() for service in manager.services.values()]
         )

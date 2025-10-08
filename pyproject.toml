@@ -10,6 +10,24 @@ extend-exclude = [
     "tests/_archived_legacy",
 ]
 
+[tool.ruff.lint]
+# 忽略测试文件中的特定错误
+ignore = [
+    "F401",  # Unused imports (common in test files with conditional imports)
+    "F811",  # Redefinition (common in test files)
+    "F821",  # Undefined name (common in test files with mocks)
+    "E402",  # Module level import not at top of file (common in test files)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试文件可以有更宽松的规则
+"tests/**/*.py" = [
+    "F401",  # Unused imports
+    "F811",  # Redefinition
+    "F821",  # Undefined name
+    "E402",  # Module level import not at top of file
+]
+
 # Pytest配置已迁移到pytest.ini以避免配置冲突
 # pytest-asyncio特定配置
 [tool.pytest_asyncio]

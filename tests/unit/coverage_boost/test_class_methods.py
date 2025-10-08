@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 类方法调用测试
 测试类的各种方法调用
@@ -130,7 +131,6 @@ class TestClassMethods:
             from src.utils.time_utils import (
                 get_current_time,
                 format_datetime,
-                parse_datetime,
                 get_timestamp,
             )
 
@@ -185,7 +185,6 @@ class TestClassMethods:
             from src.utils.dict_utils import (
                 deep_merge,
                 flatten_dict,
-                unflatten_dict,
                 get_nested_value,
                 set_nested_value,
             )
@@ -237,7 +236,7 @@ class TestClassMethods:
     def test_retry_methods(self):
         """测试重试方法"""
         try:
-            from src.utils.retry import retry, retry_with_backoff, exponential_backoff
+            from src.utils.retry import retry, exponential_backoff
 
             # 测试重试装饰器
             @retry(max_attempts=2, delay=0.001)

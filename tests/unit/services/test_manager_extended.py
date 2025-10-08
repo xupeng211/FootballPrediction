@@ -1,12 +1,46 @@
-import threading
 import asyncio
+import pytest
+import threading
+from unittest.mock import Mock, AsyncMock
+from src.services.core import ServiceStatus
+from src.services.manager import ServiceManager
+# 注册服务
+# 验证服务已注册
+# 先注册
+# 注销服务
+# 注册服务
+# 获取服务
+# 获取不存在的服务
+# 初始状态
+# 注册服务
+# 启动服务
+# 初始状态
+# 添加服务
+# 执行健康检查
+# 注册有依赖的服务
+# 验证依赖关系
+# 测试注册无效服务
+# 测试注销不存在的服务
+# 应该不抛出异常
+# 创建多个线程同时注册服务
+# 等待所有线程完成
+# 验证所有服务都已注册
+# 添加服务后检查指标
+# 重启服务
+# 验证mock被调用（如果有相关方法）
+# 批量注册
+# 验证所有服务都已注册
+# 异步服务注册
+# 验证服务已注册
+# 运行异步测试
+# 模拟关闭
+# 注册不同类型的服务
+# 按类型查找服务
+# 注册不同版本
+# 获取特定版本
+
 
 """扩展的服务管理器测试 - 提升覆盖率"""
-
-import pytest
-from unittest.mock import Mock, AsyncMock
-
-from src.services.manager import ServiceManager
 
 
 class TestServiceManagerExtended:
@@ -28,10 +62,8 @@ class TestServiceManagerExtended:
         mock_service = Mock()
         service_id = "test_service"
 
-        # 注册服务
         manager.register_service(service_id, mock_service)
 
-        # 验证服务已注册
         assert service_id in manager.services
         assert manager.services[service_id] == mock_service
 
@@ -40,11 +72,9 @@ class TestServiceManagerExtended:
         mock_service = Mock()
         service_id = "test_service"
 
-        # 先注册
         manager.register_service(service_id, mock_service)
         assert service_id in manager.services
 
-        # 注销服务
         manager.deregister_service(service_id)
         assert service_id not in manager.services
 
@@ -53,40 +83,32 @@ class TestServiceManagerExtended:
         mock_service = Mock()
         service_id = "test_service"
 
-        # 注册服务
         manager.register_service(service_id, mock_service)
 
-        # 获取服务
         retrieved = manager.get_service(service_id)
         assert retrieved == mock_service
 
-        # 获取不存在的服务
         assert manager.get_service("nonexistent") is None
 
     def test_service_status_management(self, manager):
         """测试服务状态管理"""
         service_id = "test_service"
 
-        # 初始状态
         assert manager.get_service_status(service_id) == ServiceStatus.NOT_REGISTERED
 
-        # 注册服务
         mock_service = Mock()
         manager.register_service(service_id, mock_service)
         assert manager.get_service_status(service_id) == ServiceStatus.REGISTERED
 
-        # 启动服务
         if hasattr(manager, "start_service"):
             manager.start_service(service_id)
             assert manager.get_service_status(service_id) == ServiceStatus.RUNNING
 
     def test_list_all_services(self, manager):
         """测试列出所有服务"""
-        # 初始状态
         services = manager.list_services()
         assert isinstance(services, (list, dict))
 
-        # 添加服务
         manager.register_service("service1", Mock())
         manager.register_service("service2", Mock())
 
@@ -95,7 +117,6 @@ class TestServiceManagerExtended:
 
     def test_health_check(self, manager):
         """测试健康检查"""
-        # 执行健康检查
         if hasattr(manager, "health_check"):
             health_status = manager.health_check()
             assert isinstance(health_status, dict)
@@ -106,14 +127,12 @@ class TestServiceManagerExtended:
         service_a = Mock()
         service_b = Mock()
 
-        # 注册有依赖的服务
         if hasattr(manager, "register_service_with_dependencies"):
             manager.register_service_with_dependencies(
                 "service_b", service_b, dependencies=["service_a"]
             )
             manager.register_service("service_a", service_a)
 
-            # 验证依赖关系
             deps = manager.get_service_dependencies("service_b")
             assert "service_a" in deps
 
@@ -128,13 +147,10 @@ class TestServiceManagerExtended:
 
     def test_error_handling(self, manager):
         """测试错误处理"""
-        # 测试注册无效服务
         with pytest.raises(Exception):
             manager.register_service(None, None)
 
-        # 测试注销不存在的服务
         if hasattr(manager, "deregister_service"):
-            # 应该不抛出异常
             manager.deregister_service("nonexistent")
 
     def test_concurrent_access(self, manager):
@@ -146,18 +162,15 @@ class TestServiceManagerExtended:
             manager.register_service(service_id, Mock())
             results.append(service_id)
 
-        # 创建多个线程同时注册服务
         threads = []
         for i in range(5):
             t = threading.Thread(target=register_service, args=(f"service_{i}",))
             threads.append(t)
             t.start()
 
-        # 等待所有线程完成
         for t in threads:
             t.join()
 
-        # 验证所有服务都已注册
         assert len(results) == 5
 
     def test_service_metrics(self, manager):
@@ -166,7 +179,6 @@ class TestServiceManagerExtended:
             metrics = manager.get_service_metrics()
             assert isinstance(metrics, dict)
 
-            # 添加服务后检查指标
             manager.register_service("test_service", Mock())
             updated_metrics = manager.get_service_metrics()
             assert len(updated_metrics) >= len(metrics)
@@ -179,10 +191,8 @@ class TestServiceManagerExtended:
         manager.register_service(service_id, mock_service)
 
         if hasattr(manager, "restart_service"):
-            # 重启服务
             manager.restart_service(service_id)
 
-            # 验证mock被调用（如果有相关方法）
             if hasattr(mock_service, "restart"):
                 mock_service.restart.assert_called_once()
 
@@ -190,11 +200,9 @@ class TestServiceManagerExtended:
         """测试批量操作"""
         services = {"service1": Mock(), "service2": Mock(), "service3": Mock()}
 
-        # 批量注册
         if hasattr(manager, "register_services"):
             manager.register_services(services)
 
-            # 验证所有服务都已注册
             for service_id in services:
                 assert manager.get_service(service_id) is not None
 
@@ -202,15 +210,11 @@ class TestServiceManagerExtended:
         """测试异步操作"""
 
         async def async_test():
-            # 异步服务注册
             if hasattr(manager, "register_service_async"):
                 mock_service = AsyncMock()
                 await manager.register_service_async("async_service", mock_service)
 
-                # 验证服务已注册
                 assert manager.get_service("async_service") is not None
-
-        # 运行异步测试
 
         asyncio.run(async_test())
 
@@ -220,20 +224,17 @@ class TestServiceManagerExtended:
         if hasattr(mock_service, "cleanup"):
             manager.register_service("test_service", mock_service)
 
-            # 模拟关闭
             if hasattr(manager, "shutdown"):
                 manager.shutdown()
                 mock_service.cleanup.assert_called_once()
 
     def test_service_discovery(self, manager):
         """测试服务发现"""
-        # 注册不同类型的服务
         services = {"database": Mock(), "cache": Mock(), "messaging": Mock()}
 
         for service_id, service in services.items():
             manager.register_service(service_id, service)
 
-        # 按类型查找服务
         if hasattr(manager, "find_services_by_type"):
             db_services = manager.find_services_by_type("database")
             assert len(db_services) >= 0
@@ -243,12 +244,10 @@ class TestServiceManagerExtended:
         service_v1 = Mock()
         service_v2 = Mock()
 
-        # 注册不同版本
         if hasattr(manager, "register_service_version"):
             manager.register_service_version("test_service", service_v1, "1.0.0")
             manager.register_service_version("test_service", service_v2, "2.0.0")
 
-            # 获取特定版本
             v1_service = manager.get_service_version("test_service", "1.0.0")
             v2_service = manager.get_service_version("test_service", "2.0.0")
 

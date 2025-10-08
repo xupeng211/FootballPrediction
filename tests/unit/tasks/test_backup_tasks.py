@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 backup_tasks 模块测试
 """

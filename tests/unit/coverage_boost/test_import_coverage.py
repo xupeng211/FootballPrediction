@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 快速覆盖率提升测试
 只测试模块导入，确保能够运行
@@ -18,8 +19,8 @@ class TestImportCoverage:
     def test_core_imports(self):
         """测试核心模块导入"""
         try:
-            from src.core import config
-            from src.core import logger
+            from src.core import config  # noqa: F401
+            from src.core import logger  # noqa: F401
 
             assert True
         except ImportError:
@@ -28,12 +29,12 @@ class TestImportCoverage:
     def test_utils_imports(self):
         """测试工具模块导入"""
         try:
-            import src.utils.crypto_utils
-            import src.utils.data_validator
-            import src.utils.dict_utils
-            import src.utils.retry
-            import src.utils.time_utils
-            import src.utils.warning_filters
+            import src.utils.crypto_utils  # noqa: F401
+            import src.utils.data_validator  # noqa: F401
+            import src.utils.dict_utils  # noqa: F401
+            import src.utils.retry  # noqa: F401
+            import src.utils.time_utils  # noqa: F401
+            import src.utils.warning_filters  # noqa: F401
 
             assert True
         except ImportError:
@@ -42,10 +43,10 @@ class TestImportCoverage:
     def test_database_imports(self):
         """测试数据库模块导入"""
         try:
-            from src.database import base
-            from src.database import connection
-            from src.database import models
-            from src.database import sql_compatibility
+            from src.database import base  # noqa: F401
+            from src.database import connection  # noqa: F401
+            from src.database import models  # noqa: F401
+            from src.database import sql_compatibility  # noqa: F401
 
             assert True
         except ImportError:
@@ -54,8 +55,8 @@ class TestImportCoverage:
     def test_cache_imports(self):
         """测试缓存模块导入"""
         try:
-            from src.cache import redis_manager
-            from src.cache import ttl_cache
+            from src.cache import redis_manager  # noqa: F401
+            from src.cache import ttl_cache  # noqa: F401
 
             assert True
         except ImportError:
@@ -64,11 +65,11 @@ class TestImportCoverage:
     def test_api_imports(self):
         """测试API模块导入"""
         try:
-            from src.api import data
-            from src.api import features
-            from src.api import health
-            from src.api import models
-            from src.api import predictions
+            from src.api import data  # noqa: F401
+            from src.api import features  # noqa: F401
+            from src.api import health  # noqa: F401
+            from src.api import models  # noqa: F401
+            from src.api import predictions  # noqa: F401
 
             assert True
         except ImportError:
@@ -77,9 +78,9 @@ class TestImportCoverage:
     def test_monitoring_imports(self):
         """测试监控模块导入"""
         try:
-            from src.monitoring import metrics_collector
-            from src.monitoring import metrics_exporter
-            from src.monitoring import system_monitor
+            from src.monitoring import metrics_collector  # noqa: F401
+            from src.monitoring import metrics_exporter  # noqa: F401
+            from src.monitoring import system_monitor  # noqa: F401
 
             assert True
         except ImportError:
@@ -88,9 +89,9 @@ class TestImportCoverage:
     def test_scheduler_imports(self):
         """测试调度器模块导入"""
         try:
-            from src.scheduler import job_manager
-            from src.scheduler import task_scheduler
-            from src.scheduler import tasks
+            from src.scheduler import job_manager  # noqa: F401
+            from src.scheduler import task_scheduler  # noqa: F401
+            from src.scheduler import tasks  # noqa: F401
 
             assert True
         except ImportError:
@@ -99,9 +100,9 @@ class TestImportCoverage:
     def test_services_imports(self):
         """测试服务模块导入"""
         try:
-            from src.services import audit_service
-            from src.services import data_processing
-            from src.services import manager
+            from src.services import audit_service  # noqa: F401
+            from src.services import data_processing  # noqa: F401
+            from src.services import manager  # noqa: F401
 
             assert True
         except ImportError:
