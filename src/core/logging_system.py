@@ -28,9 +28,9 @@ from typing import Any, Dict, Optional
 from pythonjsonlogger import jsonlogger
 
 
-
 class LogLevel(Enum):
     """日志级别"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -40,6 +40,7 @@ class LogLevel(Enum):
 
 class LogCategory(Enum):
     """日志类别"""
+
     API = "api"
     PREDICTION = "prediction"
     DATA_COLLECTION = "data_collection"
@@ -91,13 +92,13 @@ class StructuredLogger:
         """创建日志格式化器"""
         if self.enable_json:
             return jsonlogger.JsonFormatter(
-                fmt='%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                fmt="%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d",
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
         else:
             return logging.Formatter(
-                fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
 
     def _add_console_handler(self):
@@ -113,7 +114,7 @@ class StructuredLogger:
             os.makedirs(log_dir, exist_ok=True)
             log_file = os.path.join(log_dir, f"{self.name}.log")
 
-        handler = logging.FileHandler(log_file, encoding='utf-8')
+        handler = logging.FileHandler(log_file, encoding="utf-8")
         handler.setFormatter(self.formatter)
         self.logger.addHandler(handler)
 
@@ -139,9 +140,7 @@ class StructuredLogger:
 
         # 记录日志
         getattr(self.logger, level.value.lower())(
-            message,
-            extra=log_extra,
-            exc_info=exc_info
+            message, extra=log_extra, exc_info=exc_info
         )
 
     def debug(self, message: str, **kwargs):
@@ -172,15 +171,11 @@ class StructuredLogger:
             audit_action=action,
             user_id=user_id,
             audit_timestamp=datetime.now().isoformat(),
-            **kwargs
+            **kwargs,
         )
 
     def performance(
-        self,
-        operation: str,
-        duration: float,
-        success: bool = True,
-        **kwargs
+        self, operation: str, duration: float, success: bool = True, **kwargs
     ):
         """性能日志"""
         self.info(
@@ -188,7 +183,7 @@ class StructuredLogger:
             operation=operation,
             duration_ms=duration * 1000,
             success=success,
-            **kwargs
+            **kwargs,
         )
 
     def api_request(
@@ -198,7 +193,7 @@ class StructuredLogger:
         status_code: int,
         duration: float,
         user_id: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """API请求日志"""
         self.info(
@@ -208,7 +203,7 @@ class StructuredLogger:
             status_code=status_code,
             duration_ms=duration * 1000,
             user_id=user_id,
-            **kwargs
+            **kwargs,
         )
 
     def prediction(
@@ -218,7 +213,7 @@ class StructuredLogger:
         prediction: str,
         confidence: float,
         success: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """预测日志"""
         level = LogLevel.INFO if success else LogLevel.ERROR
@@ -233,8 +228,8 @@ class StructuredLogger:
                 "prediction": prediction,
                 "confidence": confidence,
                 "success": success,
-                **kwargs
-            }
+                **kwargs,
+            },
         )
 
     def data_collection(
@@ -243,7 +238,7 @@ class StructuredLogger:
         data_type: str,
         records_count: int,
         success: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """数据收集日志"""
         level = LogLevel.INFO if success else LogLevel.WARNING
@@ -257,8 +252,8 @@ class StructuredLogger:
                 "data_type": data_type,
                 "records_count": records_count,
                 "success": success,
-                **kwargs
-            }
+                **kwargs,
+            },
         )
 
     def cache_operation(
@@ -267,7 +262,7 @@ class StructuredLogger:
         key: str,
         hit: Optional[bool] = None,
         duration_ms: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ):
         """缓存操作日志"""
         message = f"CACHE {operation.upper()}: {key}"
@@ -290,7 +285,7 @@ class StructuredLogger:
         severity: str = "medium",
         user_id: Optional[str] = None,
         ip_address: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """安全事件日志"""
         self.warning(
@@ -299,7 +294,7 @@ class StructuredLogger:
             severity=severity,
             user_id=user_id,
             ip_address=ip_address,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -315,14 +310,14 @@ class LoggerManager:
         level: LogLevel = LogLevel.INFO,
         enable_json: bool = True,
         log_dir: str = "logs",
-        **kwargs
+        **kwargs,
     ):
         """配置日志系统"""
         cls._config = {
             "level": level,
             "enable_json": enable_json,
             "log_dir": log_dir,
-            **kwargs
+            **kwargs,
         }
 
         # 确保日志目录存在
@@ -330,10 +325,7 @@ class LoggerManager:
 
     @classmethod
     def get_logger(
-        cls,
-        name: str,
-        category: LogCategory = LogCategory.API,
-        **kwargs
+        cls, name: str, category: LogCategory = LogCategory.API, **kwargs
     ) -> StructuredLogger:
         """获取日志器"""
         key = f"{name}:{category.value}"
@@ -343,11 +335,18 @@ class LoggerManager:
             config = cls._config.copy()
             config.update(kwargs)
 
-            # 创建日志器
+            # 创建日志器 - 过滤掉不支持的参数
+            supported_params = {
+                "level",
+                "enable_json",
+                "enable_console",
+                "enable_file",
+                "log_file",
+            }
+            filtered_config = {k: v for k, v in config.items() if k in supported_params}
+
             cls._loggers[key] = StructuredLogger(
-                name=name,
-                category=category,
-                **config
+                name=name, category=category, **filtered_config
             )
 
         return cls._loggers[key]
@@ -375,6 +374,7 @@ def get_logger(name: str, category: LogCategory = LogCategory.API) -> Structured
 # 性能监控装饰器
 def log_performance(operation: str, logger: Optional[StructuredLogger] = None):
     """性能监控装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -393,15 +393,18 @@ def log_performance(operation: str, logger: Optional[StructuredLogger] = None):
                     duration=duration,
                     success=success,
                     function=func.__name__,
-                    module=func.__module__
+                    module=func.__module__,
                 )
+
         return wrapper
+
     return decorator
 
 
 # 异步性能监控装饰器
 def log_async_performance(operation: str, logger: Optional[StructuredLogger] = None):
     """异步性能监控装饰器"""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -420,32 +423,39 @@ def log_async_performance(operation: str, logger: Optional[StructuredLogger] = N
                     duration=duration,
                     success=success,
                     function=func.__name__,
-                    module=func.__module__
+                    module=func.__module__,
                 )
+
         return wrapper
+
     return decorator
 
 
 # 审计日志装饰器
 def log_audit(action: str, logger: Optional[StructuredLogger] = None):
     """审计日志装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             log = logger or get_logger(func.__module__, LogCategory.AUDIT)
             # 尝试从kwargs或args中提取用户ID
             user_id = kwargs.get("user_id") or (
-                args[0] if args and isinstance(args[0], dict) and "user_id" in args[0] else None
+                args[0]
+                if args and isinstance(args[0], dict) and "user_id" in args[0]
+                else None
             )
 
             log.audit(
                 action=action,
                 user_id=user_id,
                 function=func.__name__,
-                module=func.__module__
+                module=func.__module__,
             )
 
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -453,5 +463,5 @@ def log_audit(action: str, logger: Optional[StructuredLogger] = None):
 LoggerManager.configure(
     level=LogLevel.INFO,
     enable_json=os.getenv("LOG_JSON", "true").lower() == "true",
-    log_dir=os.getenv("LOG_DIR", "logs")
+    log_dir=os.getenv("LOG_DIR", "logs"),
 )
