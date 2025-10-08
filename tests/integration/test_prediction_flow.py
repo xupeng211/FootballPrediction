@@ -258,18 +258,8 @@ class TestPredictionFlow:
         match_id = 12345
 
         # 模拟已完成的比赛
-        mock_match = {
-            "id": match_id,
-            "home_score": 2,
-            "away_score": 1,
-            "match_status": "finished",
-        }
 
         # 模拟预测记录
-        mock_prediction = {
-            "predicted_result": "home",
-            "confidence": 0.65,
-        }
 
         # 设置模拟
         prediction_engine.prediction_service.verify_prediction = AsyncMock(return_value=True)

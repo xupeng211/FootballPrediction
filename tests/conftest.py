@@ -484,28 +484,6 @@ def sample_league_data():
     }
 
 
-@pytest.fixture
-def sample_prediction_data():
-    """示例预测数据"""
-    return {
-        "match_id": 12345,
-        "model_version": "1.0.0",
-        "model_name": "football_baseline_model",
-        "home_win_probability": 0.5,
-        "draw_probability": 0.3,
-        "away_win_probability": 0.2,
-        "predicted_result": "home",
-        "confidence_score": 0.65,
-        "features_used": {
-            "home_recent_wins": 3,
-            "away_recent_wins": 2,
-            "h2h_home_advantage": 0.5,
-        },
-        "prediction_metadata": {
-            "feature_count": 10,
-            "prediction_time": "2024-01-01T14:00:00Z",
-        },
-    }
 
 
 @pytest.fixture
