@@ -107,22 +107,22 @@ class DataQualityLog(BaseModel):
 
     def mark_as_resolved(self, handler: str, notes: str) -> None:
         """标记为已解决"""
-        self.status = "resolved"
-        self.handled_by = handler
-        self.handled_at = datetime.now()
-        self.resolution_notes = notes
+        self.status = "resolved"  # type: ignore[assignment]
+        self.handled_by = handler  # type: ignore[assignment]
+        self.handled_at = datetime.now()  # type: ignore[assignment]
+        self.resolution_notes = notes  # type: ignore[assignment]
 
     def mark_as_ignored(self, handler: str, reason: str) -> None:
         """标记为忽略"""
-        self.status = "ignored"
-        self.handled_by = handler
-        self.handled_at = datetime.now()
-        self.resolution_notes = f"忽略原因: {reason}"
+        self.status = "ignored"  # type: ignore[assignment]
+        self.handled_by = handler  # type: ignore[assignment]
+        self.handled_at = datetime.now()  # type: ignore[assignment]
+        self.resolution_notes = f"忽略原因: {reason}"  # type: ignore[assignment]
 
     def assign_to_handler(self, handler: str) -> None:
         """分配给处理人员"""
-        self.status = "in_progress"
-        self.handled_by = handler
+        self.status = "in_progress"  # type: ignore[assignment]
+        self.handled_by = handler  # type: ignore[assignment]
 
     @classmethod
     def get_severity_level(cls, error_type: str) -> str:

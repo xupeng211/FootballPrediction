@@ -309,7 +309,7 @@ class Match(BaseModel):
             )
             .order_by(cls.match_time)
             .all()
-        )  # type: ignore
+        )
 
     @classmethod
     def get_finished_matches(
@@ -323,7 +323,7 @@ class Match(BaseModel):
         if season:
             query = query.filter(cls.season == season)
 
-        return query.order_by(cls.match_time.desc()).all()  # type: ignore
+        return query.order_by(cls.match_time.desc()).all()
 
     @classmethod
     def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
@@ -331,10 +331,10 @@ class Match(BaseModel):
         from sqlalchemy import or_
 
         query = session.query(cls).filter(
-            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)  # type: ignore
+            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)
         )
 
         if season:
             query = query.filter(cls.season == season)
 
-        return query.order_by(cls.match_time.desc()).all()  # type: ignore
+        return query.order_by(cls.match_time.desc()).all()

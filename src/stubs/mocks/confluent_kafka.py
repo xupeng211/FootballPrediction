@@ -19,7 +19,7 @@ class MockMessage:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: List[tuple] = None,
+        headers: Optional[List[tuple[str, bytes]]] = None,
     ):
         self._topic = topic
         self._value = value
@@ -28,7 +28,7 @@ class MockMessage:
         self._offset = 0
         self._partition = 0
 
-    def value(self) -> bytes:
+    def value(self) -> Optional[bytes]:
         """获取消息值"""
         if self._value is None:
             return None
@@ -36,7 +36,7 @@ class MockMessage:
             return self._value.encode("utf-8")
         return self._value
 
-    def key(self) -> bytes:
+    def key(self) -> Optional[bytes]:
         """获取消息键"""
         if self._key is None:
             return None
@@ -56,11 +56,11 @@ class MockMessage:
         """获取偏移量"""
         return self._offset
 
-    def headers(self) -> List[tuple]:
+    def headers(self) -> List[tuple[str, bytes]]:
         """获取头部"""
         return self._headers
 
-    def set_headers(self, headers: List[tuple]) -> None:
+    def set_headers(self, headers: List[tuple[str, bytes]]) -> None:
         """设置头部"""
         self._headers = headers
 
@@ -70,12 +70,12 @@ class MockConsumer:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self._topics = set()
-        self._messages = defaultdict(list)
-        self._current_offset = defaultdict(int)
+        self._topics: set[str] = set()
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
+        self._current_offset: Dict[str, int] = defaultdict(int)
         self._subscribed = False
         self._running = False
-        self._assignment = []
+        self._assignment: List[Any] = []
 
     def subscribe(self, topics: List[str]) -> None:
         """订阅主题"""
@@ -142,8 +142,8 @@ class MockProducer:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self._messages = defaultdict(list)
-        self._callbacks = {}
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
+        self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
         self._running = True
 
@@ -152,7 +152,7 @@ class MockProducer:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: List[tuple] = None,
+        headers: Optional[List[tuple[str, bytes]]] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:
@@ -223,7 +223,7 @@ class MockAdminClient:
                 "partitions": 1,
                 "replication_factor": 1,
             }
-            results[topic_name] = {"topic_id": topic_name}
+            results[topic_name] = topic_name
         return results
 
     def delete_topics(self, topics: List[str]) -> Dict[str, Any]:
@@ -285,7 +285,7 @@ class MockSerializingProducer(MockProducer):
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: List[tuple] = None,
+        headers: Optional[List[tuple[str, bytes]]] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:

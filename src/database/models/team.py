@@ -123,13 +123,11 @@ class Team(BaseModel):
 
         return (
             session.query(Match)
-            .filter(
-                or_(Match.home_team_id == self.id, Match.away_team_id == self.id)  # type: ignore
-            )
+            .filter(or_(Match.home_team_id == self.id, Match.away_team_id == self.id))
             .order_by(desc(Match.match_time))
             .limit(limit)
             .all()
-        )  # type: ignore
+        )
 
     def get_home_record(self, session: Session) -> Dict[str, int]:
         """获取主场战绩。
@@ -215,7 +213,7 @@ class Team(BaseModel):
         matches = (
             session.query(Match)
             .filter(
-                or_(Match.home_team_id == self.id, Match.away_team_id == self.id),  # type: ignore
+                or_(Match.home_team_id == self.id, Match.away_team_id == self.id),
                 Match.season == season,
                 Match.match_status == "finished",
             )
