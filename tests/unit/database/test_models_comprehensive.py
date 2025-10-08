@@ -1,17 +1,16 @@
+from datetime import datetime, timedelta
+import pytest
+from src.database.models.league import League
+from src.database.models.match import Match, MatchStatus
+from src.database.models.team import Team
+
 """
 数据库模型综合测试
 测试Match、Team、Prediction等核心模型的功能
 """
 
-from datetime import datetime, timedelta
-
-import pytest
-
-from src.database.models.league import League
-from src.database.models.match import Match, MatchStatus
 
 # from src.database.models.predictions import Predictions, PredictedResult  # TODO: 需要重写预测模型测试以匹配新API
-from src.database.models.team import Team
 
 
 @pytest.mark.unit

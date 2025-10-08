@@ -1,3 +1,5 @@
+from src.collectors.odds_collector import OddsCollector
+
 """赔率收集器测试 - 消除零覆盖率"""
 
 import pytest
@@ -22,7 +24,6 @@ def mock_redis_client():
 @pytest.fixture
 def odds_collector(mock_db_session, mock_redis_client):
     """创建赔率收集器实例"""
-    from src.collectors.odds_collector import OddsCollector
 
     return OddsCollector(mock_db_session, mock_redis_client)
 

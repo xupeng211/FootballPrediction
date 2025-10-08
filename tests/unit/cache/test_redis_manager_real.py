@@ -1,13 +1,12 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
+from src.cache.redis_manager import CacheKeyManager, RedisManager
+import redis
+
 """
 Redis管理器真实实现测试
 基于实际的RedisManager实现创建测试
 """
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
-from src.cache.redis_manager import CacheKeyManager, RedisManager
 
 
 @pytest.mark.unit
@@ -426,7 +425,6 @@ class TestRedisManager:
 
     def test_set_sync_error(self, redis_manager):
         """测试同步设置值错误处理"""
-        import redis
 
         redis_manager._sync_client.setex.side_effect = redis.ConnectionError(
             "Connection lost"
@@ -454,7 +452,6 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_set_async_error(self, redis_manager):
         """测试异步设置值错误处理"""
-        import redis
 
         redis_manager._async_client.setex.side_effect = redis.ConnectionError(
             "Connection lost"

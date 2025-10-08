@@ -3,10 +3,8 @@
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 from fastapi import status
-
 from src.database.models import PredictedResult
 from src.models.prediction_service import PredictionService
 

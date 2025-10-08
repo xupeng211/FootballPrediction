@@ -1,19 +1,21 @@
-"""
-Config模块综合测试
-提高config.py的覆盖率到90%
-"""
-
 import json
 import os
 import sys
 from pathlib import Path
 from unittest.mock import patch, mock_open
+from src.core.config import Config, Settings, HAS_PYDANTIC
+import importlib
+import src.core.config
+from src.core.config import Settings as SettingsNoPydantic
+
+"""
+Config模块综合测试
+提高config.py的覆盖率到90%
+"""
 
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
-
-from src.core.config import Config, Settings, HAS_PYDANTIC
 
 
 class TestConfig:
@@ -186,12 +188,8 @@ class TestSettings:
         # Mock HAS_PYDANTIC为False
         with patch("src.core.config.HAS_PYDANTIC", False):
             # 重新导入模块
-            import importlib
-            import src.core.config
 
             importlib.reload(src.core.config)
-
-            from src.core.config import Settings as SettingsNoPydantic
 
             settings = SettingsNoPydantic()
 
@@ -245,7 +243,7 @@ class TestPydanticCompatibility:
                 with patch("src.core.config.BaseSettings", side_effect=ImportError):
                     # 这个测试验证回退逻辑
                     print("✓ Pydantic v1 fallback test handled")
-        except:
+        except Exception:
             print("✓ Pydantic v1 fallback test handled")
 
     def test_no_pydantic_fallback(self):

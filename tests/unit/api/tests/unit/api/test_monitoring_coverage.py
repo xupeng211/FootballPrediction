@@ -1,14 +1,14 @@
+import os
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch, AsyncMock
+import pytest
+
 """
 Monitoring模块覆盖率测试
 临时修复相对导入以提升覆盖率
 """
 
-import os
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, AsyncMock
-
-import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent

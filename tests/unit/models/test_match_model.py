@@ -1,14 +1,12 @@
+from datetime import datetime
+from unittest.mock import AsyncMock
+import pytest
+from src.database.models.match import Match, MatchStatus
+from src.database.models.team import Team
+
 """
 数据库模型测试 - Match模型
 """
-
-from datetime import datetime
-from unittest.mock import AsyncMock
-
-import pytest
-
-from src.database.models.match import Match, MatchStatus
-from src.database.models.team import Team
 
 
 @pytest.mark.unit

@@ -1,11 +1,14 @@
+import sys
+import pytest
+from unittest.mock import Mock, patch, AsyncMock
+import os
+from src.services.data_processing import DataProcessingService
+
 """
 DataProcessingService真实测试
 测试实际存在的方法
 """
 
-import sys
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
 
 # Mock外部依赖
 sys.modules["pandas"] = Mock()
@@ -17,12 +20,10 @@ sys.modules["nltk"] = Mock()
 sys.modules["spacy"] = Mock()
 
 # 设置测试环境
-import os
 
 os.environ["TESTING"] = "true"
 
 # 导入服务
-from src.services.data_processing import DataProcessingService
 
 
 class TestDataProcessingServiceReal:

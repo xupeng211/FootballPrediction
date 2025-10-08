@@ -1,12 +1,17 @@
+import pytest
+from unittest.mock import MagicMock, patch
+import sys
+import os
+from src.core.config import Config
+from src.core.exceptions import FootballPredictionError, ValidationError
+from src import __version__
+from src.core.config import getattr as config_getattr
+
 """
 额外覆盖率提升测试
 专注于模块导入和简单功能测试
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -160,8 +165,6 @@ class TestExtraCoverageBoost:
     def test_config_imports(self):
         """测试配置模块导入"""
         try:
-            from src.core.config import Config
-
             assert True
         except ImportError:
             pytest.skip("Config not available")
@@ -178,8 +181,6 @@ class TestExtraCoverageBoost:
     def test_exception_imports(self):
         """测试异常模块导入"""
         try:
-            from src.core.exceptions import FootballPredictionError, ValidationError
-
             assert True
         except ImportError:
             pytest.skip("Exceptions not available")
@@ -238,8 +239,6 @@ class TestExtraCoverageBoost:
     def test_data_storage_imports(self):
         """测试数据存储导入"""
         try:
-            from src.data.storage.data_lake_storage import DataLakeStorage
-
             assert True
         except ImportError:
             pytest.skip("DataLakeStorage not available")
@@ -291,8 +290,6 @@ class TestExtraCoverageBoost:
     def test_locales_import(self):
         """测试本地化导入"""
         try:
-            from src.locales import get_text, set_locale
-
             assert True
         except ImportError:
             pytest.skip("Locales not available")
@@ -342,8 +339,6 @@ class TestExtraCoverageBoost:
         """测试类实例化"""
         # 测试异常类
         try:
-            from src.core.exceptions import FootballPredictionError, ValidationError
-
             error1 = FootballPredictionError("Test error")
             error2 = ValidationError("Validation failed")
             assert str(error1) == "Test error"
@@ -353,8 +348,6 @@ class TestExtraCoverageBoost:
 
         # 测试配置类
         try:
-            from src.core.config import Config
-
             config = Config()
             assert config is not None
         except ImportError:
@@ -382,8 +375,6 @@ class TestExtraCoverageBoost:
         """测试常量值"""
         # 测试版本常量
         try:
-            from src import __version__
-
             assert isinstance(__version__, str)
         except (ImportError, AttributeError):
             pytest.skip("Version not available")
@@ -393,8 +384,6 @@ class TestExtraCoverageBoost:
 
         for value in config_values:
             try:
-                from src.core.config import getattr as config_getattr
-
                 config_getattr(value, None)
                 # 不强制要求存在，只是尝试访问
             except ImportError:

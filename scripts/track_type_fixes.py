@@ -9,11 +9,12 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 # 进度数据文件
 PROGRESS_FILE = "type_fix_progress.json"
 REPORT_FILE = "type_fix_report.md"
+
 
 class TypeFixTracker:
     def __init__(self):
@@ -28,31 +29,35 @@ class TypeFixTracker:
         ann401_result = subprocess.run(
             ["mypy", "src/", "--show-error-codes", "--no-error-summary"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         ann401_count = ann401_result.stderr.count("ANN401")
 
         # 获取总 MyPy 错误
-        total_errors = len([line for line in ann401_result.stderr.split('\n') if 'error:' in line])
+        total_errors = len(
+            [line for line in ann401_result.stderr.split("\n") if "error:" in line]
+        )
 
         # 按错误类型统计
         error_types = {}
-        for line in ann401_result.stderr.split('\n'):
-            if '[' in line and ']' in line:
-                error_code = line.split('[')[-1].split(']')[0]
+        for line in ann401_result.stderr.split("\n"):
+            if "[" in line and "]" in line:
+                error_code = line.split("[")[-1].split("]")[0]
                 error_types[error_code] = error_types.get(error_code, 0) + 1
 
         # 获取警告统计
-        warnings = len([line for line in ann401_result.stderr.split('\n') if 'warning:' in line])
+        warnings = len(
+            [line for line in ann401_result.stderr.split("\n") if "warning:" in line]
+        )
 
         # 按目录统计
         errors_by_dir = {}
-        for line in ann401_result.stderr.split('\n'):
-            if ':' in line and 'src/' in line:
-                file_path = line.split(':')[0]
-                if 'src/' in file_path:
-                    dir_path = '/'.join(file_path.split('/')[:2])
+        for line in ann401_result.stderr.split("\n"):
+            if ":" in line and "src/" in line:
+                file_path = line.split(":")[0]
+                if "src/" in file_path:
+                    dir_path = "/".join(file_path.split("/")[:2])
                     errors_by_dir[dir_path] = errors_by_dir.get(dir_path, 0) + 1
 
         return {
@@ -83,7 +88,7 @@ class TypeFixTracker:
         # 只保留最近30条记录
         history = history[-30:]
 
-        with open(self.progress_file, 'w') as f:
+        with open(self.progress_file, "w") as f:
             json.dump(history, f, indent=2)
 
     def calculate_trend(self, history: List[Dict]) -> Dict:
@@ -96,13 +101,15 @@ class TypeFixTracker:
 
         return {
             "ann401_trend": previous["ann401_count"] - current["ann401_count"],
-            "errors_trend": previous["total_mypy_errors"] - current["total_mypy_errors"],
-            "time_diff": self._parse_time(current["timestamp"]) - self._parse_time(previous["timestamp"]),
+            "errors_trend": previous["total_mypy_errors"]
+            - current["total_mypy_errors"],
+            "time_diff": self._parse_time(current["timestamp"])
+            - self._parse_time(previous["timestamp"]),
         }
 
     def _parse_time(self, time_str: str) -> datetime:
         """解析时间字符串"""
-        return datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+        return datetime.fromisoformat(time_str.replace("Z", "+00:00"))
 
     def format_duration(self, td: timedelta) -> str:
         """格式化时间差"""
@@ -115,47 +122,63 @@ class TypeFixTracker:
 
     def print_summary(self, stats: Dict, trend: Dict):
         """打印摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 类型安全修复进度报告")
-        print("="*60)
+        print("=" * 60)
 
         # 当前状态
         print(f"\n📅 时间: {stats['timestamp'][:19].replace('T', ' ')}")
 
         # ANN401 进度
-        ann401_color = "🟢" if stats['ann401_count'] == 0 else "🟡" if stats['ann401_count'] < 100 else "🔴"
+        ann401_color = (
+            "🟢"
+            if stats["ann401_count"] == 0
+            else "🟡"
+            if stats["ann401_count"] < 100
+            else "🔴"
+        )
         print(f"\n{ann401_color} ANN401 类型注解: {stats['ann401_count']:,} 个")
-        if trend['ann401_trend'] != 0:
-            arrow = "↑" if trend['ann401_trend'] > 0 else "↓"
+        if trend["ann401_trend"] != 0:
+            arrow = "↑" if trend["ann401_trend"] > 0 else "↓"
             print(f"   趋势: {arrow} {abs(trend['ann401_trend'])} 个")
 
         # 总错误进度
-        errors_color = "🟢" if stats['total_mypy_errors'] == 0 else "🟡" if stats['total_mypy_errors'] < 50 else "🔴"
+        errors_color = (
+            "🟢"
+            if stats["total_mypy_errors"] == 0
+            else "🟡"
+            if stats["total_mypy_errors"] < 50
+            else "🔴"
+        )
         print(f"\n{errors_color} MyPy 总错误: {stats['total_mypy_errors']:,} 个")
-        if trend['errors_trend'] != 0:
-            arrow = "↑" if trend['errors_trend'] > 0 else "↓"
+        if trend["errors_trend"] != 0:
+            arrow = "↑" if trend["errors_trend"] > 0 else "↓"
             print(f"   趋势: {arrow} {abs(trend['errors_trend'])} 个")
 
         # 警告
         print(f"\n⚠️  警告: {stats['total_warnings']:,} 个")
 
         # 错误类型分布
-        if stats['error_types']:
-            print(f"\n📈 错误类型分布:")
-            for error_type, count in sorted(stats['error_types'].items(), key=lambda x: x[1], reverse=True)[:5]:
+        if stats["error_types"]:
+            print("\n📈 错误类型分布:")
+            for error_type, count in sorted(
+                stats["error_types"].items(), key=lambda x: x[1], reverse=True
+            )[:5]:
                 print(f"   {error_type}: {count:,} 个")
 
         # 目录分布
-        if stats['errors_by_dir']:
-            print(f"\n📁 错误分布:")
-            for dir_path, count in sorted(stats['errors_by_dir'].items(), key=lambda x: x[1], reverse=True)[:5]:
+        if stats["errors_by_dir"]:
+            print("\n📁 错误分布:")
+            for dir_path, count in sorted(
+                stats["errors_by_dir"].items(), key=lambda x: x[1], reverse=True
+            )[:5]:
                 print(f"   {dir_path}: {count:,} 个")
 
         # 成功状态
-        if stats['success']:
+        if stats["success"]:
             print("\n🎉 恭喜！所有类型错误已修复！")
 
-        print("="*60)
+        print("=" * 60)
 
     def generate_report(self, history: List[Dict]):
         """生成 Markdown 报告"""
@@ -173,8 +196,10 @@ class TypeFixTracker:
         report.append("|------|--------|----------|------|")
 
         for stats in history[-10:]:  # 最近10条记录
-            time = stats['timestamp'][:10]
-            report.append(f"| {time} | {stats['ann401_count']:,} | {stats['total_mypy_errors']:,} | {stats['total_warnings']:,} |")
+            time = stats["timestamp"][:10]
+            report.append(
+                f"| {time} | {stats['ann401_count']:,} | {stats['total_mypy_errors']:,} | {stats['total_warnings']:,} |"
+            )
 
         # 统计图表
         report.append("\n## 📈 统计图表\n")
@@ -184,8 +209,20 @@ class TypeFixTracker:
             first = history[0]
             current = history[-1]
 
-            ann401_progress = (first['ann401_count'] - current['ann401_count']) / first['ann401_count'] * 100 if first['ann401_count'] > 0 else 100
-            errors_progress = (first['total_mypy_errors'] - current['total_mypy_errors']) / first['total_mypy_errors'] * 100 if first['total_mypy_errors'] > 0 else 100
+            ann401_progress = (
+                (first["ann401_count"] - current["ann401_count"])
+                / first["ann401_count"]
+                * 100
+                if first["ann401_count"] > 0
+                else 100
+            )
+            errors_progress = (
+                (first["total_mypy_errors"] - current["total_mypy_errors"])
+                / first["total_mypy_errors"]
+                * 100
+                if first["total_mypy_errors"] > 0
+                else 100
+            )
 
             report.append(f"- ANN401 修复进度: {ann401_progress:.1f}%")
             report.append(f"- MyPy错误修复进度: {errors_progress:.1f}%")
@@ -193,14 +230,16 @@ class TypeFixTracker:
         # 错误类型分析
         if history:
             latest = history[-1]
-            if latest['error_types']:
+            if latest["error_types"]:
                 report.append("\n## 🏷️ 错误类型分析\n")
-                for error_type, count in sorted(latest['error_types'].items(), key=lambda x: x[1], reverse=True):
+                for error_type, count in sorted(
+                    latest["error_types"].items(), key=lambda x: x[1], reverse=True
+                ):
                     report.append(f"- **{error_type}**: {count:,} 个")
 
         # 写入文件
-        with open(self.report_file, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(report))
+        with open(self.report_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(report))
 
         print(f"\n📝 报告已生成: {self.report_file}")
 
@@ -231,7 +270,11 @@ class TypeFixTracker:
         history = self.load_history()
 
         # 计算趋势
-        trend = self.calculate_trend(history) if history else {"ann401_trend": 0, "errors_trend": 0}
+        trend = (
+            self.calculate_trend(history)
+            if history
+            else {"ann401_trend": 0, "errors_trend": 0}
+        )
 
         # 保存进度
         self.save_progress(stats)
@@ -246,7 +289,7 @@ class TypeFixTracker:
         self.generate_report(history)
 
         # 提示
-        if stats['ann401_count'] > 0 or stats['total_mypy_errors'] > 0:
+        if stats["ann401_count"] > 0 or stats["total_mypy_errors"] > 0:
             print("\n💡 提示:")
             print("  - 运行 './scripts/fix_ann401_batch.sh' 开始修复 ANN401")
             print("  - 运行 './scripts/fix_mypy_batch.sh attr-defined' 修复属性错误")

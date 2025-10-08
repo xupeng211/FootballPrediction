@@ -1,3 +1,9 @@
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+import numpy as np
+import pytest
+from src.models.prediction_service import PredictionResult, PredictionService
+
 """
 PredictionService单元测试 / Unit Tests for PredictionService
 
@@ -15,14 +21,6 @@ Tests core functionality of prediction service, including:
 - Prediction result verification
 - Statistics retrieval
 """
-
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import numpy as np
-import pytest
-
-from src.models.prediction_service import PredictionResult, PredictionService
 
 
 class TestPredictionService:

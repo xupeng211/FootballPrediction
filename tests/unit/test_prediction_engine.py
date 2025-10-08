@@ -1,14 +1,13 @@
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timedelta
+from src.core.prediction_engine import PredictionEngine
+from src.models.prediction_service import PredictionResult
+
 """
 预测引擎单元测试
 Unit Tests for Prediction Engine
 """
-
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta
-
-from src.core.prediction_engine import PredictionEngine
-from src.models.prediction_service import PredictionResult
 
 
 @pytest.fixture
@@ -55,18 +54,24 @@ class TestPredictionEngine:
     """预测引擎测试类"""
 
     @pytest.mark.asyncio
-    async def test_predict_match_success(self, prediction_engine, mock_match, mock_prediction_result):
+    async def test_predict_match_success(
+        self, prediction_engine, mock_match, mock_prediction_result
+    ):
         """测试成功预测比赛"""
         # 模拟依赖
         prediction_engine._get_match_info = AsyncMock(return_value=mock_match)
-        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=mock_prediction_result)
-        prediction_engine._get_match_odds = AsyncMock(return_value={
-            "home_win": 2.0,
-            "draw": 3.2,
-            "away_win": 3.8,
-            "bookmaker": "test_bookmaker",
-            "last_updated": datetime.now().isoformat(),
-        })
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            return_value=mock_prediction_result
+        )
+        prediction_engine._get_match_odds = AsyncMock(
+            return_value={
+                "home_win": 2.0,
+                "draw": 3.2,
+                "away_win": 3.8,
+                "bookmaker": "test_bookmaker",
+                "last_updated": datetime.now().isoformat(),
+            }
+        )
 
         # 执行预测
         result = await prediction_engine.predict_match(12345)
@@ -88,7 +93,9 @@ class TestPredictionEngine:
             await prediction_engine.predict_match(12345)
 
     @pytest.mark.asyncio
-    async def test_predict_match_from_cache(self, prediction_engine, mock_prediction_result):
+    async def test_predict_match_from_cache(
+        self, prediction_engine, mock_prediction_result
+    ):
         """测试从缓存获取预测"""
         # 设置缓存
         cache_key = prediction_engine.cache_key_manager.prediction_key(12345)
@@ -114,11 +121,13 @@ class TestPredictionEngine:
     async def test_batch_predict(self, prediction_engine):
         """测试批量预测"""
         # 模拟单个预测
-        prediction_engine.predict_match = AsyncMock(side_effect=[
-            {"match_id": 12345, "prediction": "home"},
-            {"match_id": 12346, "prediction": "draw"},
-            {"match_id": 12347, "prediction": "away"},
-        ])
+        prediction_engine.predict_match = AsyncMock(
+            side_effect=[
+                {"match_id": 12345, "prediction": "home"},
+                {"match_id": 12346, "prediction": "draw"},
+                {"match_id": 12347, "prediction": "away"},
+            ]
+        )
 
         # 执行批量预测
         results = await prediction_engine.batch_predict([12345, 12346, 12347])
@@ -133,11 +142,13 @@ class TestPredictionEngine:
     async def test_batch_predict_with_error(self, prediction_engine):
         """测试批量预测包含错误"""
         # 模拟预测，其中第二个失败
-        prediction_engine.predict_match = AsyncMock(side_effect=[
-            {"match_id": 12345, "prediction": "home"},
-            ValueError("Match not found"),
-            {"match_id": 12347, "prediction": "away"},
-        ])
+        prediction_engine.predict_match = AsyncMock(
+            side_effect=[
+                {"match_id": 12345, "prediction": "home"},
+                ValueError("Match not found"),
+                {"match_id": 12347, "prediction": "away"},
+            ]
+        )
 
         # 执行批量预测
         results = await prediction_engine.batch_predict([12345, 12346, 12347])
@@ -153,14 +164,24 @@ class TestPredictionEngine:
         """测试预测即将开始的比赛"""
         # 模拟即将开始的比赛
         upcoming_matches = [
-            {"id": 12345, "match_time": (datetime.now() + timedelta(hours=1)).isoformat()},
-            {"id": 12346, "match_time": (datetime.now() + timedelta(hours=2)).isoformat()},
+            {
+                "id": 12345,
+                "match_time": (datetime.now() + timedelta(hours=1)).isoformat(),
+            },
+            {
+                "id": 12346,
+                "match_time": (datetime.now() + timedelta(hours=2)).isoformat(),
+            },
         ]
-        prediction_engine._get_upcoming_matches = AsyncMock(return_value=upcoming_matches)
-        prediction_engine.batch_predict = AsyncMock(return_value=[
-            {"match_id": 12345, "prediction": "home"},
-            {"match_id": 12346, "prediction": "draw"},
-        ])
+        prediction_engine._get_upcoming_matches = AsyncMock(
+            return_value=upcoming_matches
+        )
+        prediction_engine.batch_predict = AsyncMock(
+            return_value=[
+                {"match_id": 12345, "prediction": "home"},
+                {"match_id": 12346, "prediction": "draw"},
+            ]
+        )
 
         # 执行预测
         results = await prediction_engine.predict_upcoming_matches(hours_ahead=24)
@@ -174,7 +195,9 @@ class TestPredictionEngine:
     async def test_verify_predictions(self, prediction_engine):
         """测试验证预测结果"""
         # 模拟验证
-        prediction_engine.prediction_service.verify_prediction = AsyncMock(return_value=True)
+        prediction_engine.prediction_service.verify_prediction = AsyncMock(
+            return_value=True
+        )
 
         # 执行验证
         stats = await prediction_engine.verify_predictions([12345, 12346])
@@ -192,7 +215,9 @@ class TestPredictionEngine:
             {"id": 12345},
             {"id": 12346},
         ]
-        prediction_engine._get_upcoming_matches = AsyncMock(return_value=upcoming_matches)
+        prediction_engine._get_upcoming_matches = AsyncMock(
+            return_value=upcoming_matches
+        )
         prediction_engine.predict_match = AsyncMock(return_value={"prediction": "home"})
 
         # 执行缓存预热
@@ -248,7 +273,9 @@ class TestPredictionEngine:
         """测试健康检查 - 降级状态"""
         # 模拟Redis不健康
         prediction_engine.prediction_service.get_production_model = AsyncMock()
-        prediction_engine.redis_manager.aping = AsyncMock(side_effect=Exception("Redis error"))
+        prediction_engine.redis_manager.aping = AsyncMock(
+            side_effect=Exception("Redis error")
+        )
 
         async with prediction_engine.db_manager.get_async_session() as session:
             session.execute = AsyncMock()
@@ -264,7 +291,9 @@ class TestPredictionEngine:
     async def test_clear_cache(self, prediction_engine):
         """测试清理缓存"""
         # 模拟Redis操作
-        prediction_engine.redis_manager.client.keys = AsyncMock(return_value=["key1", "key2"])
+        prediction_engine.redis_manager.client.keys = AsyncMock(
+            return_value=["key1", "key2"]
+        )
         prediction_engine.redis_manager.adelete = AsyncMock(return_value=2)
 
         # 执行清理
@@ -293,5 +322,9 @@ class TestPredictionEngine:
         await prediction_engine._collect_latest_data(12345, match_info)
 
         # 验证调用了收集器
-        prediction_engine.collectors["odds"].collect_match_odds.assert_called_once_with(12345)
-        prediction_engine.collectors["scores"].collect_match_score.assert_not_called()  # 比赛未开始
+        prediction_engine.collectors["odds"].collect_match_odds.assert_called_once_with(
+            12345
+        )
+        prediction_engine.collectors[
+            "scores"
+        ].collect_match_score.assert_not_called()  # 比赛未开始

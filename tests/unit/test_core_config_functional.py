@@ -1,12 +1,16 @@
+import pytest
+import os
+from unittest.mock import patch, MagicMock
+from src.core.exceptions import ConfigError as ConfigurationError
+from src.core.config import get_settings
+from src.core.config import load_config_from_file
+from src.core.config import export_config, import_config
+
 """
 配置模块功能测试
 测试核心配置功能，而不是仅仅测试导入
 """
 
-import pytest
-import os
-from unittest.mock import patch, MagicMock
-from src.core.exceptions import ConfigError as ConfigurationError
 
 # 设置测试环境
 os.environ["ENVIRONMENT"] = "test"
@@ -31,8 +35,6 @@ class TestCoreConfigFunctional:
         with patch.dict(os.environ, test_env):
             # 尝试导入配置模块
             try:
-                from src.core.config import get_settings, Settings
-
                 # 测试获取设置
                 settings = get_settings()
 
@@ -85,8 +87,6 @@ class TestCoreConfigFunctional:
         for invalid_config in invalid_configs:
             with patch.dict(os.environ, invalid_config, clear=False):
                 try:
-                    from src.core.config import get_settings
-
                     # 配置应该有默认值或验证
                     settings = get_settings()
 
@@ -120,8 +120,6 @@ port = 6379
             )
 
             try:
-                from src.core.config import load_config_from_file
-
                 # 如果存在这个函数，测试它
                 if callable(load_config_from_file):
                     config = load_config_from_file("test_config.ini")
@@ -167,8 +165,6 @@ port = 6379
             test_value = "test_sensitive_value"
             with patch.dict(os.environ, {key: test_value}):
                 try:
-                    from src.core.config import get_settings
-
                     settings = get_settings()
                     config_dict = settings.dict()
 
@@ -208,8 +204,6 @@ port = 6379
     def test_config_caching(self):
         """测试配置缓存机制"""
         try:
-            from src.core.config import get_settings, _settings_cache
-
             # 第一次调用
             settings1 = get_settings()
 
@@ -265,8 +259,6 @@ port = 6379
         # 测试缺失关键配置
         with patch.dict(os.environ, {}, clear=True):
             try:
-                from src.core.config import get_settings
-
                 # 应该有默认值或抛出有意义的错误
                 settings = get_settings()
 
@@ -306,8 +298,6 @@ port = 6379
     def test_config_export_import(self):
         """测试配置导出和导入"""
         try:
-            from src.core.config import get_settings, export_config, import_config
-
             get_settings()
 
             # 测试导出

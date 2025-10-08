@@ -1,16 +1,14 @@
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+import pandas as pd
+import pytest
+from src.services.data_processing import DataProcessingService
+
 """
 数据处理服务简化测试 / Data Processing Service Simple Tests
 
 测试数据处理服务的核心功能，使用简化的测试方法
 """
-
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pandas as pd
-import pytest
-
-from src.services.data_processing import DataProcessingService
 
 
 @pytest.mark.asyncio

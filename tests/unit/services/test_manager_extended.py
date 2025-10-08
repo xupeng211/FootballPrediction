@@ -1,3 +1,6 @@
+import threading
+import asyncio
+
 """扩展的服务管理器测试 - 提升覆盖率"""
 
 import pytest
@@ -136,7 +139,6 @@ class TestServiceManagerExtended:
 
     def test_concurrent_access(self, manager):
         """测试并发访问"""
-        import threading
 
         results = []
 
@@ -209,7 +211,6 @@ class TestServiceManagerExtended:
                 assert manager.get_service("async_service") is not None
 
         # 运行异步测试
-        import asyncio
 
         asyncio.run(async_test())
 

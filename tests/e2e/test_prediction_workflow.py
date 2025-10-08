@@ -1,12 +1,12 @@
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
+from src.services.prediction_workflow import PredictionWorkflow
+
 """
 端到端测试 - 预测工作流
 测试从数据收集到预测的完整流程
 """
-
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 
 @pytest.mark.e2e
@@ -113,8 +113,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-            from src.services.prediction_workflow import PredictionWorkflow
-
             workflow = PredictionWorkflow()
             results = await workflow.run_batch_predictions(match_ids)
 
@@ -159,8 +157,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.FeatureService",
             return_value=mock_services["feature_service"],
         ):
-            from src.services.prediction_workflow import PredictionWorkflow
-
             workflow = PredictionWorkflow()
 
             # 应该优雅地处理错误
@@ -244,8 +240,6 @@ class TestPredictionWorkflow:
             "src.services.prediction_workflow.PredictionService",
             return_value=mock_services["prediction_service"],
         ):
-            from src.services.prediction_workflow import PredictionWorkflow
-
             workflow = PredictionWorkflow()
             result = await workflow.update_live_prediction(12345, live_match_data)
 
@@ -306,8 +300,6 @@ class TestPredictionWorkflow:
         with patch(
             "src.services.prediction_workflow.collect_metrics", return_value=metrics
         ):
-            from src.services.prediction_workflow import PredictionWorkflow
-
             workflow = PredictionWorkflow()
 
             # 模拟工作流执行
@@ -355,7 +347,6 @@ class TestPredictionWorkflow:
     async def test_prediction_workflow_validation(self, api_client_full, mock_services):
         """测试预测工作流验证"""
         # 测试无效的match_id
-        from src.services.prediction_workflow import PredictionWorkflow
 
         workflow = PredictionWorkflow()
 

@@ -1,8 +1,3 @@
-"""
-特征工程模块综合测试
-专注于提升特征工程模块覆盖率
-"""
-
 import pytest
 from unittest.mock import patch
 import sys
@@ -10,6 +5,15 @@ import os
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from src.features.feature_calculator import FeatureCalculator
+from src.features.feature_store import FeatureStore
+import time
+
+"""
+特征工程模块综合测试
+专注于提升特征工程模块覆盖率
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -22,8 +26,6 @@ class TestFeaturesComprehensive:
     def test_feature_calculator_all_features(self):
         """测试特征计算器所有功能"""
         try:
-            from src.features.feature_calculator import FeatureCalculator
-
             calculator = FeatureCalculator()
 
             # 测试计算各种特征
@@ -99,8 +101,6 @@ class TestFeaturesComprehensive:
     def test_feature_store_comprehensive(self):
         """测试特征存储综合功能"""
         try:
-            from src.features.feature_store import FeatureStore
-
             with patch("src.features.feature_store.logger") as mock_logger:
                 store = FeatureStore()
                 store.logger = mock_logger
@@ -515,7 +515,6 @@ class TestFeaturesComprehensive:
 
         # 测试TTL过期
         cache.set("temp_feature", {"value": 0.5}, ttl=0.001)
-        import time
 
         time.sleep(0.1)
         assert cache.is_expired("temp_feature") is True

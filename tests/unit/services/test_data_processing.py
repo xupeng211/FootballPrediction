@@ -1,3 +1,8 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+import pandas as pd
+import pytest
+from src.services.data_processing import DataProcessingService
+
 """
 数据处理服务测试 / Data Processing Service Tests
 
@@ -10,13 +15,6 @@
 - 缓存管理
 - 异常检测
 """
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pandas as pd
-import pytest
-
-from src.services.data_processing import DataProcessingService
 
 
 @pytest.mark.asyncio

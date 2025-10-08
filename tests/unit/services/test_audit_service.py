@@ -1,3 +1,8 @@
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock
+import pytest
+from src.services.audit_service import AuditService
+
 """
 审计服务测试 / Audit Service Tests
 
@@ -6,13 +11,6 @@
 - 审计追踪
 - 日志查询
 """
-
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock
-
-import pytest
-
-from src.services.audit_service import AuditService
 
 
 @pytest.mark.asyncio

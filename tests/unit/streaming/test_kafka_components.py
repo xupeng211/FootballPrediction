@@ -1,3 +1,6 @@
+import pytest
+from collections import namedtuple
+
 """
 流处理单元测试 - Kafka组件
 
@@ -5,7 +8,6 @@
 暂时跳过这些测试，后续专门修复
 """
 
-import pytest
 
 # 暂时跳过整个streaming测试模块，因为需要大量修复
 pytest.skip(
@@ -129,7 +131,6 @@ class TestKafkaConsumer:
     @pytest.fixture
     def sample_record(self):
         """示例Kafka记录"""
-        from collections import namedtuple
 
         Record = namedtuple("Record", ["topic", "partition", "offset", "key", "value"])
 

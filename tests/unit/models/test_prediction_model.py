@@ -1,15 +1,13 @@
-"""
-数据库模型测试 - Prediction模型
-"""
-
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
-
 import pytest
-
 from src.database.models.match import Match
 from src.database.models.predictions import PredictedResult, Predictions
+
+"""
+数据库模型测试 - Prediction模型
+"""
 
 
 @pytest.mark.unit

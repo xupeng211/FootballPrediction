@@ -1,3 +1,7 @@
+from src.services.audit_service import AuditService
+from src.services.content_analysis import ContentAnalysisService
+from src.services.manager import ServiceManager
+
 """增强版服务层测试 - 提升覆盖率"""
 
 import sys
@@ -82,7 +86,6 @@ class TestAuditServiceEnhanced:
 
     def test_log_action(self):
         """测试日志记录"""
-        from src.services.audit_service import AuditService
 
         service = AuditService()
 
@@ -131,7 +134,6 @@ class TestAuditServiceEnhanced:
 
     def test_get_user_audit_logs(self):
         """测试获取用户审计日志"""
-        from src.services.audit_service import AuditService
 
         service = AuditService()
 
@@ -162,7 +164,6 @@ class TestContentAnalysisServiceEnhanced:
 
     def test_analyze_text_detailed(self):
         """测试详细的文本分析"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -208,7 +209,6 @@ class TestContentAnalysisServiceEnhanced:
 
     def test_entity_extraction_various_teams(self):
         """测试各种球队实体提取"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -251,7 +251,6 @@ class TestContentAnalysisServiceEnhanced:
 
     def test_summary_generation_different_lengths(self):
         """测试不同长度文本的摘要生成"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -352,7 +351,6 @@ class TestServiceManagerEnhanced:
 
     def test_service_registration_errors(self):
         """测试服务注册错误处理"""
-        from src.services.manager import ServiceManager
 
         manager = ServiceManager()
 
