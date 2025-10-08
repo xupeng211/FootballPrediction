@@ -1,11 +1,11 @@
+from unittest.mock import MagicMock, patch
+import pytest
+from src.api.features import FeaturesService
+
 """
 API集成测试 - Features模块集成测试
 测试Features API与数据库、缓存等服务的集成
 """
-
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 @pytest.mark.integration
@@ -15,7 +15,6 @@ class TestFeaturesIntegration:
     @pytest.fixture
     def features_service(self, mock_async_session):
         """创建特征服务实例"""
-        from src.api.features import FeaturesService
 
         service = FeaturesService()
         service.db_session = mock_async_session

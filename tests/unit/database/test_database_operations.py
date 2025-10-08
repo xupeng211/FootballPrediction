@@ -1,8 +1,3 @@
-"""
-数据库操作测试
-专注于实用的CRUD操作和业务逻辑
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
@@ -10,6 +5,17 @@ from sqlalchemy import select, update, delete
 from datetime import datetime, timedelta
 import sys
 import os
+from src.database.models.team import Team
+from src.database.models.odds import Odds
+from src.database.models.league import League
+from src.database.models.match import Match
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
+
+"""
+数据库操作测试
+专注于实用的CRUD操作和业务逻辑
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -85,8 +91,6 @@ class TestDatabaseOperations:
     def test_team_crud_operations(self, mock_session):
         """测试球队CRUD操作"""
         try:
-            from src.database.models.team import Team
-
             # 创建球队
             team = Team(
                 name="Test Team",
@@ -179,8 +183,6 @@ class TestDatabaseOperations:
     def test_odds_crud_operations(self, mock_session):
         """测试赔率CRUD操作"""
         try:
-            from src.database.models.odds import Odds
-
             # 创建赔率记录
             odds = Odds(
                 match_id=1,
@@ -281,8 +283,6 @@ class TestDatabaseOperations:
     def test_league_crud_operations(self, mock_session):
         """测试联赛CRUD操作"""
         try:
-            from src.database.models.league import League
-
             # 创建联赛
             league = League(
                 name="Test League",
@@ -337,14 +337,12 @@ class TestDatabaseOperations:
         try:
             with mock_session.begin():
                 raise Exception("Test error")
-        except:
+        except Exception:
             mock_session.rollback.assert_called()
 
     def test_database_query_with_filters(self, mock_session):
         """测试带过滤器的数据库查询"""
         try:
-            from src.database.models.match import Match
-
             # 测试日期范围查询
             start_date = datetime.now() - timedelta(days=30)
             end_date = datetime.now()
@@ -421,7 +419,6 @@ class TestDatabaseOperations:
 
     def test_database_error_handling(self, mock_session):
         """测试数据库错误处理"""
-        from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 
         # 测试完整性错误
         mock_session.commit.side_effect = IntegrityError(

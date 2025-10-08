@@ -1,15 +1,14 @@
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict
+from unittest.mock import MagicMock, AsyncMock
+
 """
 测试环境配置
 
 提供测试专用的配置和mock管理
 """
-
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import MagicMock
-
 # 添加src到Python路径
 test_dir = Path(__file__).parent
 project_root = test_dir.parent.parent
@@ -50,7 +49,6 @@ def mock_redis_cluster() -> None:
     预先Mock Redis集群模块
     解决Redis/Feast版本兼容性问题
     """
-    from unittest.mock import MagicMock
 
     class RedisClusterStub:
         """Redis集群的轻量级Mock实现"""
@@ -106,7 +104,6 @@ def initialize_test_mocks() -> Dict[str, Any]:
     mocks = {}
 
     # Mock数据质量监控器
-    from unittest.mock import AsyncMock
 
     mock_dqm = MagicMock()
     mock_dqm.generate_quality_report = AsyncMock(

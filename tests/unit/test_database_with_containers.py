@@ -1,10 +1,12 @@
+import pytest
+from sqlalchemy import text
+from src.database.models.team import Team
+from src.database.models.match import Match
+
 """
 使用TestContainers的数据库测试
 提供真实的数据库测试环境
 """
-
-import pytest
-from sqlalchemy import text
 
 
 @pytest.mark.integration
@@ -36,7 +38,6 @@ class TestDatabaseWithContainers:
 
     def test_create_and_retrieve_team(self, test_db_session):
         """测试创建和检索球队"""
-        from src.database.models.team import Team
 
         # 创建球队
         team = Team(name="Test Team", short_name="TT", country="Test Country")
@@ -66,7 +67,6 @@ class TestDatabaseWithContainers:
 
     def test_create_and_retrieve_match(self, test_db_session, sample_test_data):
         """测试创建和检索比赛"""
-        from src.database.models.match import Match
 
         # 使用sample_test_data中的预创建数据
         match = sample_test_data["match"]
@@ -102,7 +102,6 @@ class TestDatabaseWithContainers:
 
     def test_league_match_relationship(self, test_db_session, sample_test_data):
         """测试联赛和比赛的关系"""
-        from src.database.models.match import Match
 
         # 查询联赛下的比赛
         league = sample_test_data["league"]

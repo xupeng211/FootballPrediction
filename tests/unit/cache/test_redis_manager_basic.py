@@ -1,13 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
+from src.cache.redis_manager import CacheKeyManager, RedisManager
+
 """
 Redis管理器基础测试
 测试RedisManager的核心功能
 """
-
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
-from src.cache.redis_manager import CacheKeyManager, RedisManager
 
 
 @pytest.mark.unit

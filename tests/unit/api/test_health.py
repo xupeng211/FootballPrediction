@@ -1,10 +1,8 @@
 """API测试模板"""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 from fastapi import status
-
 from src.api import predictions as predictions_module
 
 

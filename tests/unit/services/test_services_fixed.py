@@ -1,3 +1,10 @@
+from src.services.data_processing import DataProcessingService
+from src.services.audit_service import AuditService
+from src.services.content_analysis import ContentAnalysisService
+from src.services.user_profile import UserProfileService
+from src.services.manager import ServiceManager
+from src.services.base import BaseService
+
 """修复后的服务层测试"""
 
 import sys
@@ -82,7 +89,6 @@ class TestDataProcessingService:
 
     def test_import_and_init(self):
         """测试导入和初始化"""
-        from src.services.data_processing import DataProcessingService
 
         service = DataProcessingService()
         assert service.name == "DataProcessingService"
@@ -109,7 +115,6 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_initialize(self):
         """测试异步初始化"""
-        from src.services.data_processing import DataProcessingService
 
         service = DataProcessingService()
 
@@ -149,7 +154,6 @@ class TestAuditService:
 
     def test_methods_exist(self):
         """测试方法存在"""
-        from src.services.audit_service import AuditService
 
         service = AuditService()
 
@@ -208,7 +212,6 @@ class TestContentAnalysisService:
 
     def test_methods_exist(self):
         """测试方法存在"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -240,7 +243,6 @@ class TestContentAnalysisService:
 
     def test_extract_entities(self):
         """测试实体提取"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -263,7 +265,6 @@ class TestContentAnalysisService:
 
     def test_analyze_sentiment(self):
         """测试情感分析"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
 
@@ -298,7 +299,6 @@ class TestUserProfileService:
 
     def test_methods_exist(self):
         """测试方法存在"""
-        from src.services.user_profile import UserProfileService
 
         service = UserProfileService()
 
@@ -313,7 +313,6 @@ class TestServiceManager:
 
     def test_import_and_init(self):
         """测试导入和初始化"""
-        from src.services.manager import ServiceManager
 
         manager = ServiceManager()
         assert hasattr(manager, "services")
@@ -340,8 +339,6 @@ class TestServiceManager:
     @pytest.mark.asyncio
     async def test_register_service(self):
         """测试注册服务"""
-        from src.services.manager import ServiceManager
-        from src.services.base import BaseService
 
         manager = ServiceManager()
 
@@ -380,8 +377,6 @@ class TestServiceManager:
     @pytest.mark.asyncio
     async def test_shutdown_all(self):
         """测试关闭所有服务"""
-        from src.services.manager import ServiceManager
-        from src.services.base import BaseService
 
         manager = ServiceManager()
 
@@ -404,7 +399,6 @@ class TestBaseService:
 
     def test_import_and_init(self):
         """测试导入和初始化"""
-        from src.services.base import BaseService
 
         service = BaseService("TestService")
         assert service.name == "TestService"
@@ -423,7 +417,6 @@ class TestBaseService:
     @pytest.mark.asyncio
     async def test_shutdown(self):
         """测试关闭"""
-        from src.services.base import BaseService
 
         service = BaseService("TestService")
         await service.shutdown()

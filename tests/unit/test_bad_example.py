@@ -1,3 +1,6 @@
+from src.bad_example import badly_formatted_function
+import src.bad_example
+
 """Bad Example模块测试 - 消除零覆盖率"""
 
 import pytest
@@ -17,7 +20,6 @@ class TestBadExample:
 
     def test_badly_formatted_function_positive(self):
         """测试正数输入"""
-        from src.bad_example import badly_formatted_function
 
         result = badly_formatted_function(1, 2, 3)
         assert result == 6
@@ -31,7 +33,6 @@ class TestBadExample:
 
     def test_badly_formatted_function_negative(self):
         """测试负数输入"""
-        from src.bad_example import badly_formatted_function
 
         result = badly_formatted_function(-1, 2, 3)
         assert result is None
@@ -45,7 +46,6 @@ class TestBadExample:
 
     def test_badly_formatted_function_floats(self):
         """测试浮点数输入"""
-        from src.bad_example import badly_formatted_function
 
         result = badly_formatted_function(1.5, 2.5, 3.0)
         assert result == 7.0
@@ -64,7 +64,6 @@ class TestBadExample:
     def test_imports(self):
         """测试模块导入"""
         # 测试模块是否可以导入（即使有未使用的导入）
-        import src.bad_example
 
         assert src.bad_example is not None
 

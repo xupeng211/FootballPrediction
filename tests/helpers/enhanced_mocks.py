@@ -1,12 +1,12 @@
-"""
-增强的Mock助手
-提供常用的Mock对象和装饰器
-"""
-
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
+
+"""
+增强的Mock助手
+提供常用的Mock对象和装饰器
+"""
 
 
 class EnhancedMock:

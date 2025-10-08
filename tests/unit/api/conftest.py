@@ -1,3 +1,8 @@
+import importlib
+from src import main as main_module
+from src.database.connection import get_async_session
+from decimal import Decimal
+
 """API测试配置"""
 
 from contextlib import ExitStack
@@ -121,9 +126,6 @@ def api_client_full(monkeypatch):
         _install_health_stubs(stack)
 
         # 延迟导入，在设置好环境变量和 mock 后
-        import importlib
-        from src import main as main_module
-        from src.database.connection import get_async_session
 
         main = importlib.reload(main_module)
         app = main.app
@@ -142,8 +144,6 @@ def api_client_full(monkeypatch):
     finally:
         # 清理dependency overrides - 在测试结束后清理
         try:
-            from src.main import app
-
             app.dependency_overrides.clear()
         except Exception:
             pass
@@ -191,7 +191,6 @@ def sample_match_finished():
 @pytest.fixture
 def sample_prediction():
     """创建一个示例预测"""
-    from decimal import Decimal
 
     prediction = MagicMock(spec=Predictions)
     prediction.id = 1

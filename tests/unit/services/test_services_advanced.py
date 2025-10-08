@@ -1,13 +1,14 @@
-"""
-高级服务层测试
-使用更精确的Mock策略
-"""
-
 import sys
 import os
 import pytest
 from unittest.mock import Mock, AsyncMock, MagicMock, patch
 import asyncio
+
+"""
+高级服务层测试
+使用更精确的Mock策略
+"""
+
 
 # 设置测试环境
 os.environ["TESTING"] = "true"

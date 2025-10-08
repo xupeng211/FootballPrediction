@@ -1,3 +1,12 @@
+import asyncio
+import os
+import time
+import pytest
+import psutil
+from unittest.mock import AsyncMock
+from src.core.prediction_engine import PredictionEngine
+from src.models.prediction_service import PredictionResult
+
 """
 预测性能基准测试
 Performance Benchmarks for Prediction
@@ -5,14 +14,6 @@ Performance Benchmarks for Prediction
 测试预测引擎的性能指标。
 Test performance metrics of prediction engine.
 """
-
-import asyncio
-import time
-import pytest
-from unittest.mock import AsyncMock
-
-from src.core.prediction_engine import PredictionEngine
-from src.models.prediction_service import PredictionResult
 
 
 @pytest.mark.performance
@@ -25,12 +26,14 @@ class TestPredictionBenchmarks:
         match_id = 12345
 
         # 模拟快速预测
-        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=PredictionResult(
-            match_id=match_id,
-            model_version="1.0.0",
-            predicted_result="home",
-            confidence_score=0.65,
-        ))
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            return_value=PredictionResult(
+                match_id=match_id,
+                model_version="1.0.0",
+                predicted_result="home",
+                confidence_score=0.65,
+            )
+        )
         prediction_engine._get_match_info = AsyncMock(return_value={"id": match_id})
 
         # 测试多次预测延迟
@@ -67,10 +70,12 @@ class TestPredictionBenchmarks:
             match_ids = list(range(10000, 10000 + batch_size))
 
             # 模拟预测
-            prediction_engine.predict_match = AsyncMock(side_effect=lambda mid: {
-                "match_id": mid,
-                "prediction": "home" if mid % 2 == 0 else "away",
-            })
+            prediction_engine.predict_match = AsyncMock(
+                side_effect=lambda mid: {
+                    "match_id": mid,
+                    "prediction": "home" if mid % 2 == 0 else "away",
+                }
+            )
 
             # 执行批量预测
             start_time = time.perf_counter()
@@ -138,7 +143,9 @@ class TestPredictionBenchmarks:
         # 分析可扩展性
         print("\n可扩展性分析:")
         max_throughput = max(r["throughput"] for r in results.values())
-        optimal_concurrency = max(results.keys(), key=lambda k: results[k]["efficiency"])
+        optimal_concurrency = max(
+            results.keys(), key=lambda k: results[k]["efficiency"]
+        )
         print(f"  最大吞吐量: {max_throughput:.2f} predictions/sec")
         print(f"  最优并发级别: {optimal_concurrency}")
 
@@ -153,7 +160,9 @@ class TestPredictionBenchmarks:
         }
 
         # 测试缓存未命中
-        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=prediction_data)
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            return_value=prediction_data
+        )
         prediction_engine._get_match_info = AsyncMock(return_value={"id": match_id})
 
         # 第一次预测（缓存未命中）
@@ -167,7 +176,9 @@ class TestPredictionBenchmarks:
         cache_hit_time = (time.perf_counter() - start_time) * 1000
 
         # 计算缓存效果
-        speedup = cache_miss_time / cache_hit_time if cache_hit_time > 0 else float('inf')
+        speedup = (
+            cache_miss_time / cache_hit_time if cache_hit_time > 0 else float("inf")
+        )
 
         print("\n缓存性能:")
         print(f"  缓存未命中: {cache_miss_time:.2f}ms")
@@ -181,8 +192,6 @@ class TestPredictionBenchmarks:
     @pytest.mark.asyncio
     async def test_memory_usage(self, prediction_engine):
         """测试内存使用"""
-        import psutil
-        import os
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -191,11 +200,13 @@ class TestPredictionBenchmarks:
         for batch in range(10):
             match_ids = list(range(30000 + batch * 100, 30000 + (batch + 1) * 100))
 
-            prediction_engine.predict_match = AsyncMock(side_effect=lambda mid: {
-                "match_id": mid,
-                "prediction": "home",
-                "features": {f"feature_{i}": i for i in range(100)},  # 大量特征数据
-            })
+            prediction_engine.predict_match = AsyncMock(
+                side_effect=lambda mid: {
+                    "match_id": mid,
+                    "prediction": "home",
+                    "features": {f"feature_{i}": i for i in range(100)},  # 大量特征数据
+                }
+            )
 
             await prediction_engine.batch_predict(match_ids)
 
@@ -235,7 +246,9 @@ class TestPredictionBenchmarks:
                 confidence_score=0.6 + (mid % 5) * 0.05,
             )
 
-        prediction_engine.prediction_service.predict_match = AsyncMock(side_effect=mock_predict_with_error)
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            side_effect=mock_predict_with_error
+        )
         prediction_engine._get_match_info = AsyncMock(return_value={"id": 1})
 
         # 执行大量预测
@@ -252,7 +265,11 @@ class TestPredictionBenchmarks:
 
         # 计算成功率
         success_rate = len(results) / len(match_ids)
-        avg_confidence = sum(r.get("confidence", 0) for r in results) / len(results) if results else 0
+        avg_confidence = (
+            sum(r.get("confidence", 0) for r in results) / len(results)
+            if results
+            else 0
+        )
 
         print("\n负载测试结果:")
         print(f"  成功率: {success_rate:.2%}")
@@ -271,10 +288,12 @@ class TestPredictionBenchmarks:
         duration_minutes = 1  # 运行1分钟
         target_rate = 50  # 目标50 predictions/sec
 
-        prediction_engine.predict_match = AsyncMock(side_effect=lambda mid: {
-            "match_id": mid,
-            "prediction": "home",
-        })
+        prediction_engine.predict_match = AsyncMock(
+            side_effect=lambda mid: {
+                "match_id": mid,
+                "prediction": "home",
+            }
+        )
 
         start_time = time.time()
         end_time = start_time + duration_minutes * 60
@@ -305,8 +324,12 @@ class TestPredictionBenchmarks:
         print(f"  成功率: {len(predictions)/(len(predictions)+errors):.2%}")
 
         # 性能断言
-        assert actual_rate > target_rate * 0.9, f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
-        assert errors / (len(predictions) + errors) < 0.05, f"错误率过高: {errors/(len(predictions)+errors):.2%}"
+        assert (
+            actual_rate > target_rate * 0.9
+        ), f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
+        assert (
+            errors / (len(predictions) + errors) < 0.05
+        ), f"错误率过高: {errors/(len(predictions)+errors):.2%}"
 
 
 @pytest.fixture

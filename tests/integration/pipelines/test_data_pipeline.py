@@ -1,18 +1,22 @@
-"""
-数据管道集成测试
-测试完整的数据收集、处理、存储流程
-"""
-
 import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 from src.services.data_processing import DataProcessingService
 from src.data.collectors.base_collector import DataCollector
 from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.database.models.team import Team
+from src.database.base import Base
+from src.cache.redis_manager import RedisManager
+from src.utils.data_validator import DataValidator
+from src.streaming.kafka_producer import KafkaProducer
+from src.streaming.kafka_consumer import KafkaConsumer
+
+"""
+数据管道集成测试
+测试完整的数据收集、处理、存储流程
+"""
 
 
 class TestDataPipeline:
@@ -24,7 +28,6 @@ class TestDataPipeline:
         engine = create_engine("sqlite:///:memory:")
         Session = sessionmaker(bind=engine)
         # 创建表结构
-        from src.database.base import Base
 
         Base.metadata.create_all(engine)
         session = Session()
@@ -96,8 +99,6 @@ class TestDataPipeline:
         ) as mock_get_client:
             mock_get_client.return_value = mock_redis_client
 
-            from src.cache.redis_manager import RedisManager
-
             cache_manager = RedisManager()
 
             # 测试缓存未命中
@@ -134,7 +135,6 @@ class TestDataPipeline:
     @pytest.mark.integration
     def test_pipeline_data_validation(self):
         """测试管道数据验证"""
-        from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -213,8 +213,6 @@ class TestDataPipeline:
             mock_producer = AsyncMock()
             MockProducer.return_value = mock_producer
 
-            from src.streaming.kafka_producer import KafkaProducer
-
             producer = KafkaProducer()
 
             # 发送消息
@@ -226,8 +224,6 @@ class TestDataPipeline:
                 mock_consumer = AsyncMock()
                 mock_consumer.consume.return_value = [{"test": "message"}]
                 MockConsumer.return_value = mock_consumer
-
-                from src.streaming.kafka_consumer import KafkaConsumer
 
                 consumer = KafkaConsumer()
 

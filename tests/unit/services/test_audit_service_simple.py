@@ -1,12 +1,12 @@
+import pytest
+from unittest.mock import MagicMock, patch
+from src.services.audit_service import AuditService, AuditContext
+
 """
 审计服务简化测试 / Audit Service Simple Tests
 
 只测试实际存在的方法
 """
-
-import pytest
-from unittest.mock import MagicMock, patch
-from src.services.audit_service import AuditService, AuditContext
 
 
 @pytest.mark.unit

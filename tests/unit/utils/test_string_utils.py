@@ -1,8 +1,8 @@
+from src.utils.string_utils import StringUtils
+
 """
 测试字符串处理工具模块
 """
-
-from src.utils.string_utils import StringUtils
 
 
 class TestStringUtils:

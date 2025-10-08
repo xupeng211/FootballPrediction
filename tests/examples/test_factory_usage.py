@@ -1,3 +1,4 @@
+
 """测试数据工厂使用示例。"""
 
 pytest_plugins = ["tests.conftest_containers"]

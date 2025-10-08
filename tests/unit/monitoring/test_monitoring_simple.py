@@ -1,12 +1,17 @@
+import pytest
+from unittest.mock import patch
+import sys
+import os
+from src.monitoring.metrics_collector import MetricsCollector
+from src.monitoring.quality_monitor import QualityMonitor
+from src.monitoring.metrics_exporter import MetricsExporter
+from src.monitoring.alert_manager import AlertManager
+
 """
 监控模块简化测试
 测试基本的监控功能，不涉及复杂的外部依赖
 """
 
-import pytest
-from unittest.mock import patch
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -19,8 +24,6 @@ class TestMonitoringSimple:
     def test_metrics_collector_import(self):
         """测试指标收集器导入"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             collector = MetricsCollector()
             assert collector is not None
         except ImportError as e:
@@ -39,8 +42,6 @@ class TestMonitoringSimple:
     def test_quality_monitor_import(self):
         """测试质量监控器导入"""
         try:
-            from src.monitoring.quality_monitor import QualityMonitor
-
             monitor = QualityMonitor()
             assert monitor is not None
         except ImportError as e:
@@ -59,8 +60,6 @@ class TestMonitoringSimple:
     def test_metrics_exporter_import(self):
         """测试指标导出器导入"""
         try:
-            from src.monitoring.metrics_exporter import MetricsExporter
-
             exporter = MetricsExporter()
             assert exporter is not None
         except ImportError as e:
@@ -80,8 +79,6 @@ class TestMonitoringSimple:
     async def test_metrics_collector_basic(self):
         """测试指标收集器基本功能"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             # Mock logger to avoid dependency issues
             with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
@@ -116,8 +113,6 @@ class TestMonitoringSimple:
     def test_quality_monitor_basic(self):
         """测试质量监控器基本功能"""
         try:
-            from src.monitoring.quality_monitor import QualityMonitor
-
             with patch("src.monitoring.quality_monitor.logger") as mock_logger:
                 monitor = QualityMonitor()
                 monitor.logger = mock_logger
@@ -148,8 +143,6 @@ class TestMonitoringSimple:
     def test_alert_manager_basic(self):
         """测试告警管理器基本功能"""
         try:
-            from src.monitoring.alert_manager import AlertManager
-
             with patch("src.monitoring.alert_manager.logger") as mock_logger:
                 manager = AlertManager()
                 manager.logger = mock_logger

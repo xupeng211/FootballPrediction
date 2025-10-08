@@ -1,7 +1,8 @@
+from decimal import Decimal
+
 """扩展的特征定义测试 - 提升覆盖率"""
 
 from datetime import datetime
-from decimal import Decimal
 
 from src.features.feature_definitions import (
     RecentPerformanceFeatures,
@@ -177,7 +178,6 @@ class TestFeatureDefinitionsExtended:
 
     def test_feature_calculations_with_decimals(self):
         """测试使用Decimal的特征计算"""
-        from decimal import Decimal
 
         # 创建带有Decimal值的赔率特征
         features = OddsFeatures(

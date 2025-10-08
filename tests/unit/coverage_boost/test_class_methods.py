@@ -38,7 +38,7 @@ class TestClassMethods:
                 try:
                     getattr(config, attr, None)
                     assert True  # 能访问属性就算成功
-                except:
+                except Exception:
                     pass
         except ImportError:
             pytest.skip("Config not available")
@@ -73,7 +73,7 @@ class TestClassMethods:
                             # 其他方法可能需要复杂参数，跳过
                             pass
                     assert True
-                except:
+                except Exception:
                     pass
         except ImportError:
             pytest.skip("SQLCompat not available")
