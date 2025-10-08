@@ -15,7 +15,7 @@ class DatabaseConfig:
     port: int
     database: str
     username: str
-    password: str
+    password: Optional[str]
     pool_size: int = 10
     max_overflow: int = 20
     pool_timeout: int = 30
@@ -34,8 +34,9 @@ class DatabaseConfig:
             if self.database == ":memory:":
                 return "sqlite:///:memory:"
             return f"sqlite:///{self.database}"
+        password_part = f":{self.password}" if self.password else ""
         return (
-            f"postgresql+psycopg2://{self.username}:{self.password}"
+            f"postgresql+psycopg2://{self.username}{password_part}"
             f"@{self.host}:{self.port}/{self.database}"
         )
 
@@ -45,8 +46,9 @@ class DatabaseConfig:
             if self.database == ":memory:":
                 return "sqlite+aiosqlite:///:memory:"
             return f"sqlite+aiosqlite:///{self.database}"
+        password_part = f":{self.password}" if self.password else ""
         return (
-            f"postgresql+asyncpg://{self.username}:{self.password}"
+            f"postgresql+asyncpg://{self.username}{password_part}"
             f"@{self.host}:{self.port}/{self.database}"
         )
 
@@ -84,7 +86,9 @@ def _parse_int(key: str, default: int) -> int:
 def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
     """根据环境返回数据库配置。"""
 
-    env = (environment or os.getenv("ENVIRONMENT", "development")).lower()
+    env = (
+        environment or os.getenv("ENVIRONMENT", "development") or "development"
+    ).lower()
     prefix = _ENV_PREFIX.get(env, "")
 
     if env == "test":

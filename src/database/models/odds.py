@@ -297,7 +297,7 @@ class Odds(BaseModel):
             .filter(cls.match_id == match_id, cls.market_type == market_type)
             .order_by(cls.collected_at.asc())
             .all()
-        )  # type: ignore
+        )
 
     @classmethod
     def get_bookmaker_odds(cls, session, match_id: int, bookmaker: str):
@@ -307,7 +307,7 @@ class Odds(BaseModel):
             .filter(cls.match_id == match_id, cls.bookmaker == bookmaker)
             .order_by(cls.collected_at.desc())
             .first()
-        )  # type: ignore
+        )
 
     @classmethod
     def get_market_average_odds(cls, session, match_id: int, market_type: MarketType):

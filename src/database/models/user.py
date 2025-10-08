@@ -42,7 +42,7 @@ class User(BaseModel):
 
     def touch_login(self) -> None:
         """更新最近登录时间。"""
-        self.last_login = datetime.utcnow()
+        self.last_login = datetime.utcnow()  # type: ignore[assignment]
 
     def __repr__(self) -> str:  # pragma: no cover - 调试友好
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
