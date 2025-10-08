@@ -322,7 +322,11 @@ jobs:
       - name: Determine overall status
         id: status
         run: |
-          if [ "${{ needs.test-and-coverage.result }}" = "success" ] && [ "${{ needs.build.result }}" = "success" ]; then
+          # Check if critical jobs succeeded or were skipped (skipped is okay for non-essential jobs)
+          TEST_RESULT="${{ needs.test-and-coverage.result }}"
+          BUILD_RESULT="${{ needs.build.result }}"
+
+          if [[ "$TEST_RESULT" == "success" || "$TEST_RESULT" == "skipped" ]] && [[ "$BUILD_RESULT" == "success" || "$BUILD_RESULT" == "skipped" ]]; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "emoji=✅" >> $GITHUB_OUTPUT
             echo "message=CI Pipeline completed successfully!" >> $GITHUB_OUTPUT

@@ -446,7 +446,7 @@ curl http://localhost:8000/predictions/{match_id}
                     "summary": "错误响应",
                     "description": "API 错误响应格式",
                     "value": {
-                        "error": true,
+                        "error": True,
                         "status_code": 400,
                         "message": "Invalid match_id format",
                         "details": {
@@ -483,7 +483,7 @@ curl http://localhost:8000/predictions/{match_id}
                         "force_recalculate": {
                             "type": "boolean",
                             "description": "是否强制重新计算特征",
-                            "default": false
+                            "default": False
                         }
                     }
                 },

@@ -15,6 +15,7 @@ Provides unified error handling and logging:
 - Error notifications and alerts
 """
 
+import os
 import traceback
 from datetime import datetime
 from enum import Enum
