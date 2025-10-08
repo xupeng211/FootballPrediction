@@ -25,7 +25,7 @@ from pydantic import BaseModel
 
 from src.api.dependencies import get_current_user
 from src.database.connection import get_async_session
-from src.database.models import Match, Team, League, Odds, MatchStatus
+from src.database.models import Match, League, Odds, MatchStatus
 from src.utils.logger import get_logger
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
