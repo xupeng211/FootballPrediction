@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 from src.api.dependencies import get_current_user, get_prediction_engine
 from src.core.prediction_engine import PredictionEngine
 from src.database.connection import get_async_session
-from src.utils.logger import get_logger
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -39,6 +39,7 @@ router = APIRouter(prefix="/api/v1/predictions", tags=["predictions"])
 # Pydantic模型
 class PredictionRequest(BaseModel):
     """预测请求模型"""
+
     match_id: int = Field(..., description="比赛ID", gt=0)
     force_refresh: bool = Field(False, description="是否强制刷新缓存")
     include_features: bool = Field(False, description="是否包含特征信息")
@@ -46,13 +47,17 @@ class PredictionRequest(BaseModel):
 
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
-    match_ids: List[int] = Field(..., description="比赛ID列表", min_items=1, max_items=100)
+
+    match_ids: List[int] = Field(
+        ..., description="比赛ID列表", min_items=1, max_items=100
+    )
     force_refresh: bool = Field(False, description="是否强制刷新缓存")
     include_features: bool = Field(False, description="是否包含特征信息")
 
 
 class UpcomingMatchesRequest(BaseModel):
     """即将开始比赛预测请求模型"""
+
     hours_ahead: int = Field(24, description="预测未来多少小时内的比赛", ge=1, le=168)
     league_ids: Optional[List[int]] = Field(None, description="指定联赛ID列表")
     force_refresh: bool = Field(False, description="是否强制刷新缓存")
@@ -60,6 +65,7 @@ class UpcomingMatchesRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
+
     match_id: int
     prediction: str
     probabilities: Dict[str, float]
@@ -74,6 +80,7 @@ class PredictionResponse(BaseModel):
 
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模型"""
+
     total: int
     successful: int
     failed: int
@@ -82,6 +89,7 @@ class BatchPredictionResponse(BaseModel):
 
 class ModelStatsResponse(BaseModel):
     """模型统计响应模型"""
+
     model_name: str
     period_days: int
     total_predictions: int
@@ -149,14 +157,13 @@ async def predict_matches_batch(
         BatchPredictionResponse: 批量预测结果
     """
     try:
-        logger.info(f"用户 {current_user.get('id')} 请求批量预测 {len(request.match_ids)} 场比赛")
+        logger.info(
+            f"用户 {current_user.get('id')} 请求批量预测 {len(request.match_ids)} 场比赛"
+        )
 
         # 检查请求数量限制
         if len(request.match_ids) > 100:
-            raise HTTPException(
-                status_code=400,
-                detail="批量预测最多支持100场比赛"
-            )
+            raise HTTPException(status_code=400, detail="批量预测最多支持100场比赛")
 
         # 执行批量预测
         results = await engine.batch_predict(
@@ -208,7 +215,9 @@ async def predict_upcoming_matches(
         List[Dict]: 预测结果列表
     """
     try:
-        logger.info(f"用户 {current_user.get('id')} 请求预测未来 {request.hours_ahead} 小时内的比赛")
+        logger.info(
+            f"用户 {current_user.get('id')} 请求预测未来 {request.hours_ahead} 小时内的比赛"
+        )
 
         results = await engine.predict_upcoming_matches(
             hours_ahead=request.hours_ahead,
@@ -286,31 +295,38 @@ async def get_match_prediction_history(
         from sqlalchemy import select
 
         async with get_async_session() as session:
-            query = select(Predictions).where(
-                Predictions.match_id == match_id
-            ).order_by(Predictions.created_at.desc()).limit(limit)
+            query = (
+                select(Predictions)
+                .where(Predictions.match_id == match_id)
+                .order_by(Predictions.created_at.desc())
+                .limit(limit)
+            )
 
             result = await session.execute(query)
             predictions = result.scalars().all()
 
             history = []
             for pred in predictions:
-                history.append({
-                    "id": pred.id,
-                    "model_version": pred.model_version,
-                    "model_name": pred.model_name,
-                    "predicted_result": pred.predicted_result,
-                    "probabilities": {
-                        "home_win": pred.home_win_probability,
-                        "draw": pred.draw_probability,
-                        "away_win": pred.away_win_probability,
-                    },
-                    "confidence": pred.confidence_score,
-                    "created_at": pred.created_at.isoformat(),
-                    "actual_result": pred.actual_result,
-                    "is_correct": pred.is_correct,
-                    "verified_at": pred.verified_at.isoformat() if pred.verified_at else None,
-                })
+                history.append(
+                    {
+                        "id": pred.id,
+                        "model_version": pred.model_version,
+                        "model_name": pred.model_name,
+                        "predicted_result": pred.predicted_result,
+                        "probabilities": {
+                            "home_win": pred.home_win_probability,
+                            "draw": pred.draw_probability,
+                            "away_win": pred.away_win_probability,
+                        },
+                        "confidence": pred.confidence_score,
+                        "created_at": pred.created_at.isoformat(),
+                        "actual_result": pred.actual_result,
+                        "is_correct": pred.is_correct,
+                        "verified_at": pred.verified_at.isoformat()
+                        if pred.verified_at
+                        else None,
+                    }
+                )
 
             return {
                 "match_id": match_id,
@@ -358,7 +374,9 @@ async def get_model_statistics(
                 break
 
         if not model_stats:
-            raise HTTPException(status_code=404, detail=f"模型 {model_name} 没有统计数据")
+            raise HTTPException(
+                status_code=404, detail=f"模型 {model_name} 没有统计数据"
+            )
 
         return ModelStatsResponse(
             model_name=model_name,
@@ -403,11 +421,19 @@ async def get_prediction_overview(
         detailed_stats = await engine.prediction_service.get_prediction_statistics(days)
 
         # 计算总体统计
-        total_predictions = sum(s["total_predictions"] for s in detailed_stats["statistics"])
-        total_verified = sum(s["verified_predictions"] for s in detailed_stats["statistics"])
-        total_correct = sum(s["correct_predictions"] for s in detailed_stats["statistics"])
+        total_predictions = sum(
+            s["total_predictions"] for s in detailed_stats["statistics"]
+        )
+        total_verified = sum(
+            s["verified_predictions"] for s in detailed_stats["statistics"]
+        )
+        total_correct = sum(
+            s["correct_predictions"] for s in detailed_stats["statistics"]
+        )
 
-        overall_accuracy = total_correct / total_verified if total_verified > 0 else None
+        overall_accuracy = (
+            total_correct / total_verified if total_verified > 0 else None
+        )
 
         return {
             "period_days": days,
@@ -490,6 +516,7 @@ async def stream_match_predictions(
     Returns:
         StreamingResponse: 实时预测更新流
     """
+
     async def generate():
         """生成实时数据流"""
         try:
@@ -523,7 +550,7 @@ async def stream_match_predictions(
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-        }
+        },
     )
 
 

@@ -34,7 +34,7 @@ from src.database.models import (
 )
 from src.features.feature_store import FootballFeatureStore
 from src.models.prediction_service import PredictionService
-from src.monitoring.metrics_exporter import ModelMetricsExporter
+from src.monitoring.metrics_exporter import MetricsExporter
 
 logger = logging.getLogger(__name__)
 
@@ -94,12 +94,16 @@ class PredictionEngine:
         self.scores_collector = None
 
         # 初始化指标导出器
-        self.metrics_exporter = ModelMetricsExporter()
+        self.metrics_exporter = MetricsExporter()
 
         # 配置参数
-        self.max_concurrent_predictions = int(os.getenv("MAX_CONCURRENT_PREDICTIONS", "10"))
+        self.max_concurrent_predictions = int(
+            os.getenv("MAX_CONCURRENT_PREDICTIONS", "10")
+        )
         self.prediction_timeout = float(os.getenv("PREDICTION_TIMEOUT", "30.0"))
-        self.cache_warmup_enabled = os.getenv("CACHE_WARMUP_ENABLED", "true").lower() == "true"
+        self.cache_warmup_enabled = (
+            os.getenv("CACHE_WARMUP_ENABLED", "true").lower() == "true"
+        )
 
         # 性能统计
         self.stats = {
@@ -197,12 +201,16 @@ class PredictionEngine:
             self.stats["total_predictions"] += 1
             prediction_time = time.time() - start_time
             self.stats["avg_prediction_time"] = (
-                self.stats["avg_prediction_time"] * (self.stats["total_predictions"] - 1) + prediction_time
+                self.stats["avg_prediction_time"]
+                * (self.stats["total_predictions"] - 1)
+                + prediction_time
             ) / self.stats["total_predictions"]
 
-            logger.info(f"比赛 {match_id} 预测完成: {prediction_result.predicted_result} "
-                       f"(置信度: {prediction_result.confidence_score:.3f}, "
-                       f"耗时: {prediction_time:.3f}s)")
+            logger.info(
+                f"比赛 {match_id} 预测完成: {prediction_result.predicted_result} "
+                f"(置信度: {prediction_result.confidence_score:.3f}, "
+                f"耗时: {prediction_time:.3f}s)"
+            )
 
             return result
 
@@ -262,11 +270,13 @@ class PredictionEngine:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"预测比赛 {match_ids[i]} 出现异常: {result}")
-                processed_results.append({
-                    "match_id": match_ids[i],
-                    "error": str(result),
-                    "prediction": None,
-                })
+                processed_results.append(
+                    {
+                        "match_id": match_ids[i],
+                        "error": str(result),
+                        "prediction": None,
+                    }
+                )
             else:
                 processed_results.append(result)
 
@@ -381,30 +391,36 @@ class PredictionEngine:
         if stats["verified"] > 0:
             stats["accuracy"] = stats["correct"] / stats["verified"]
 
-        logger.info(f"预测验证完成: {stats['correct']}/{stats['verified']} 正确 "
-                   f"(准确率: {stats['accuracy']:.2%})")
+        logger.info(
+            f"预测验证完成: {stats['correct']}/{stats['verified']} 正确 "
+            f"(准确率: {stats['accuracy']:.2%})"
+        )
 
         return stats
 
     async def _get_match_info(self, match_id: int) -> Optional[Dict[str, Any]]:
         """获取比赛基本信息"""
         async with self.db_manager.get_async_session() as session:
-            query = select(
-                Match.id,
-                Match.home_team_id,
-                Match.away_team_id,
-                Match.league_id,
-                Match.match_time,
-                Match.match_status,
-                Match.venue,
-                Team.team_name.label("home_team_name"),
-                Team.team_name.label("away_team_name"),
-                League.league_name,
-            ).select_from(
-                Match.join(Team, Match.home_team_id == Team.id)
-                .join(Team, Match.away_team_id == Team.id, isouter=True)
-                .join(League, Match.league_id == League.id, isouter=True)
-            ).where(Match.id == match_id)
+            query = (
+                select(
+                    Match.id,
+                    Match.home_team_id,
+                    Match.away_team_id,
+                    Match.league_id,
+                    Match.match_time,
+                    Match.match_status,
+                    Match.venue,
+                    Team.team_name.label("home_team_name"),
+                    Team.team_name.label("away_team_name"),
+                    League.league_name,
+                )
+                .select_from(
+                    Match.join(Team, Match.home_team_id == Team.id)
+                    .join(Team, Match.away_team_id == Team.id, isouter=True)
+                    .join(League, Match.league_id == League.id, isouter=True)
+                )
+                .where(Match.id == match_id)
+            )
 
             result = await session.execute(query)
             match = result.first()
@@ -454,10 +470,14 @@ class PredictionEngine:
         """获取比赛赔率信息"""
         try:
             async with self.db_manager.get_async_session() as session:
-                query = select(Odds).where(
-                    Odds.match_id == match_id,
-                    Odds.market_type == "match_winner",
-                ).order_by(Odds.created_at.desc())
+                query = (
+                    select(Odds)
+                    .where(
+                        Odds.match_id == match_id,
+                        Odds.market_type == "match_winner",
+                    )
+                    .order_by(Odds.created_at.desc())
+                )
 
                 result = await session.execute(query)
                 odds = result.scalar_one_or_none()
@@ -504,24 +524,28 @@ class PredictionEngine:
         end_time = start_time + timedelta(hours=hours_ahead)
 
         async with self.db_manager.get_async_session() as session:
-            query = select(
-                Match.id,
-                Match.home_team_id,
-                Match.away_team_id,
-                Match.league_id,
-                Match.match_time,
-                Match.match_status,
-                Team.team_name.label("home_team_name"),
-                Team.team_name.label("away_team_name"),
-                League.league_name,
-            ).select_from(
-                Match.join(Team, Match.home_team_id == Team.id)
-                .join(Team, Match.away_team_id == Team.id, isouter=True)
-                .join(League, Match.league_id == League.id, isouter=True)
-            ).where(
-                Match.match_time >= start_time,
-                Match.match_time <= end_time,
-                Match.match_status == MatchStatus.SCHEDULED,
+            query = (
+                select(
+                    Match.id,
+                    Match.home_team_id,
+                    Match.away_team_id,
+                    Match.league_id,
+                    Match.match_time,
+                    Match.match_status,
+                    Team.team_name.label("home_team_name"),
+                    Team.team_name.label("away_team_name"),
+                    League.league_name,
+                )
+                .select_from(
+                    Match.join(Team, Match.home_team_id == Team.id)
+                    .join(Team, Match.away_team_id == Team.id, isouter=True)
+                    .join(League, Match.league_id == League.id, isouter=True)
+                )
+                .where(
+                    Match.match_time >= start_time,
+                    Match.match_time <= end_time,
+                    Match.match_status == MatchStatus.SCHEDULED,
+                )
             )
 
             if league_ids:
@@ -590,8 +614,10 @@ class PredictionEngine:
             except Exception as e:
                 logger.error(f"预热比赛 {match_id} 缓存失败: {e}")
 
-        logger.info(f"缓存预热完成: {stats['warmed_up']} 个新缓存, "
-                   f"{stats['skipped']} 个已有缓存")
+        logger.info(
+            f"缓存预热完成: {stats['warmed_up']} 个新缓存, "
+            f"{stats['skipped']} 个已有缓存"
+        )
 
         return stats
 
@@ -600,7 +626,8 @@ class PredictionEngine:
         return {
             **self.stats,
             "cache_hit_rate": (
-                self.stats["cache_hits"] / (self.stats["cache_hits"] + self.stats["cache_misses"])
+                self.stats["cache_hits"]
+                / (self.stats["cache_hits"] + self.stats["cache_misses"])
                 if (self.stats["cache_hits"] + self.stats["cache_misses"]) > 0
                 else 0.0
             ),
