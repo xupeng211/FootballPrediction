@@ -296,7 +296,6 @@ class TestTimeUtilsFunctional:
         try:
             from src.utils.time_utils import (
                 parse_iso_datetime,
-                format_datetime,
                 time_ago,
             )
 

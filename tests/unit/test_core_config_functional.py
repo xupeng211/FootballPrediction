@@ -6,7 +6,7 @@
 import pytest
 import os
 from unittest.mock import patch, MagicMock
-from src.core.exceptions import ConfigurationError
+from src.core.exceptions import ConfigError as ConfigurationError
 
 # 设置测试环境
 os.environ["ENVIRONMENT"] = "test"

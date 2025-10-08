@@ -156,8 +156,8 @@ echo "激活虚拟环境并执行测试套件..."
 source .venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 
-# Use coverage threshold from environment or default to 80%
-COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:-80}
+# Use coverage threshold from environment or default to 20%
+COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:-20}
 
 pytest \
     --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \

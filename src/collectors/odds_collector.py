@@ -12,8 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
 from src.database.connection import DatabaseManager
-from src.models.common_models import Match, Odds
-from src.utils.logger import get_logger
+from src.database.models.match import Match
+from src.database.models.odds import Odds
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 

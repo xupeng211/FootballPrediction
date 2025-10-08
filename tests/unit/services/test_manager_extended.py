@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import Mock, AsyncMock
 
-from src.services.manager import ServiceManager, ServiceStatus
+from src.services.manager import ServiceManager
 
 
 class TestServiceManagerExtended:
