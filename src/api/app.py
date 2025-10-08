@@ -113,7 +113,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 
 # 注册路由
-app.include_router(health_router)
+app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(predictions_router)
 app.include_router(data_router)
 
