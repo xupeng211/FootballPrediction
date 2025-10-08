@@ -158,12 +158,12 @@ class TestPredictionBenchmarks:
 
         # 第一次预测（缓存未命中）
         start_time = time.perf_counter()
-        result1 = await prediction_engine.predict_match(match_id)
+        await prediction_engine.predict_match(match_id)
         cache_miss_time = (time.perf_counter() - start_time) * 1000
 
         # 第二次预测（缓存命中）
         start_time = time.perf_counter()
-        result2 = await prediction_engine.predict_match(match_id)
+        await prediction_engine.predict_match(match_id)
         cache_hit_time = (time.perf_counter() - start_time) * 1000
 
         # 计算缓存效果
@@ -222,7 +222,6 @@ class TestPredictionBenchmarks:
     async def test_prediction_accuracy_under_load(self, prediction_engine):
         """测试负载下的预测准确性"""
         # 准备测试数据
-        correct_predictions = 0
         total_predictions = 0
 
         # 模拟预测服务（有时会失败）

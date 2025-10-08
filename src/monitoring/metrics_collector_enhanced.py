@@ -602,7 +602,7 @@ def track_cache_performance(func):
             hit = result is not None
             return result
         finally:
-            duration = time.time() - start_time
+            time.time() - start_time
             collector = get_metrics_collector()
             cache_type = kwargs.get("cache_type", "default")
             collector.record_cache_operation(

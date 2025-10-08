@@ -44,6 +44,7 @@ except ImportError:
 
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
+from src.config.openapi_config import setup_openapi
 from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import (
@@ -123,7 +124,6 @@ if RATE_LIMIT_AVAILABLE and limiter:
     logger.info("✅ API速率限制已启用")
 
 # 配置 OpenAPI 文档
-from src.config.openapi_config import setup_openapi
 setup_openapi(app)
 
 # 配置CORS（如果需要）

@@ -157,7 +157,7 @@ source .venv/bin/activate
 export PYTHONPATH="$(pwd):${PYTHONPATH}"
 
 # Use coverage threshold from environment or default to 20%
-COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:-20}
+COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:-30}
 
 pytest \
     --cov=src/core --cov=src/models --cov=src/services --cov=src/utils --cov=src/database --cov=src/api \
