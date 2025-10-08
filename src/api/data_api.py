@@ -26,7 +26,7 @@ from pydantic import BaseModel
 from src.api.dependencies import get_current_user
 from src.database.connection import get_async_session
 from src.database.models import Match, League, Odds, MatchStatus
-from src.utils.logger import get_logger
+from src.core.logging_system import get_logger
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
@@ -39,6 +39,7 @@ router = APIRouter(prefix="/api/v1/data", tags=["data"])
 # Pydantic模型
 class TeamInfo(BaseModel):
     """球队信息模型"""
+
     id: int
     name: str
     country: Optional[str]
@@ -50,6 +51,7 @@ class TeamInfo(BaseModel):
 
 class LeagueInfo(BaseModel):
     """联赛信息模型"""
+
     id: int
     name: str
     country: str
@@ -61,6 +63,7 @@ class LeagueInfo(BaseModel):
 
 class MatchInfo(BaseModel):
     """比赛信息模型"""
+
     id: int
     home_team: TeamInfo
     away_team: TeamInfo
@@ -76,6 +79,7 @@ class MatchInfo(BaseModel):
 
 class OddsInfo(BaseModel):
     """赔率信息模型"""
+
     match_id: int
     bookmaker: str
     market_type: str
@@ -141,7 +145,9 @@ async def get_matches(
                     match_status = MatchStatus(status)
                     filters.append(Match.match_status == match_status)
                 except ValueError:
-                    raise HTTPException(status_code=400, detail=f"无效的比赛状态: {status}")
+                    raise HTTPException(
+                        status_code=400, detail=f"无效的比赛状态: {status}"
+                    )
             if start_date:
                 filters.append(Match.match_time >= start_date)
             if end_date:
@@ -224,11 +230,15 @@ async def get_match_details(
     """
     try:
         async with get_async_session() as session:
-            query = select(Match).options(
-                selectinload(Match.home_team),
-                selectinload(Match.away_team),
-                selectinload(Match.league),
-            ).where(Match.id == match_id)
+            query = (
+                select(Match)
+                .options(
+                    selectinload(Match.home_team),
+                    selectinload(Match.away_team),
+                    selectinload(Match.league),
+                )
+                .where(Match.id == match_id)
+            )
 
             result = await session.execute(query)
             match = result.scalar_one_or_none()
@@ -542,17 +552,24 @@ async def get_data_statistics(
             # 统计比赛数量
             total_matches = await session.scalar(select(func.count(Match.id)))
             scheduled_matches = await session.scalar(
-                select(func.count(Match.id)).where(Match.match_status == MatchStatus.SCHEDULED)
+                select(func.count(Match.id)).where(
+                    Match.match_status == MatchStatus.SCHEDULED
+                )
             )
             live_matches = await session.scalar(
-                select(func.count(Match.id)).where(Match.match_status == MatchStatus.IN_PROGRESS)
+                select(func.count(Match.id)).where(
+                    Match.match_status == MatchStatus.IN_PROGRESS
+                )
             )
             finished_matches = await session.scalar(
-                select(func.count(Match.id)).where(Match.match_status == MatchStatus.FINISHED)
+                select(func.count(Match.id)).where(
+                    Match.match_status == MatchStatus.FINISHED
+                )
             )
 
             # 统计球队数量
             from src.database.models import Team
+
             total_teams = await session.scalar(select(func.count(Team.id)))
             active_teams = await session.scalar(
                 select(func.count(Team.id)).where(Team.is_active.is_(True))
@@ -630,77 +647,101 @@ async def search_data(
             # 搜索比赛
             if type is None or type == "matches":
                 from src.database.models import Team
-                match_query = select(Match).options(
-                    selectinload(Match.home_team),
-                    selectinload(Match.away_team),
-                    selectinload(Match.league),
-                ).join(Team, Match.home_team_id == Team.id).where(
-                    or_(
-                        Team.team_name.ilike(f"%{q}%"),
-                        Match.venue.ilike(f"%{q}%"),
+
+                match_query = (
+                    select(Match)
+                    .options(
+                        selectinload(Match.home_team),
+                        selectinload(Match.away_team),
+                        selectinload(Match.league),
                     )
-                ).limit(limit)
+                    .join(Team, Match.home_team_id == Team.id)
+                    .where(
+                        or_(
+                            Team.team_name.ilike(f"%{q}%"),
+                            Match.venue.ilike(f"%{q}%"),
+                        )
+                    )
+                    .limit(limit)
+                )
 
                 match_result = await session.execute(match_query)
                 matches = match_result.scalars().all()
 
                 for match in matches:
-                    results["matches"].append({
-                        "id": match.id,
-                        "home_team": match.home_team.team_name,
-                        "away_team": match.away_team.team_name,
-                        "league": match.league.league_name,
-                        "match_time": match.match_time.isoformat(),
-                        "status": match.match_status.value,
-                    })
+                    results["matches"].append(
+                        {
+                            "id": match.id,
+                            "home_team": match.home_team.team_name,
+                            "away_team": match.away_team.team_name,
+                            "league": match.league.league_name,
+                            "match_time": match.match_time.isoformat(),
+                            "status": match.match_status.value,
+                        }
+                    )
 
             # 搜索球队
             if type is None or type == "teams":
                 from src.database.models import Team
-                team_query = select(Team).where(
-                    or_(
-                        Team.team_name.ilike(f"%{q}%"),
-                        Team.team_name_short.ilike(f"%{q}%"),
-                        Team.country.ilike(f"%{q}%"),
+
+                team_query = (
+                    select(Team)
+                    .where(
+                        or_(
+                            Team.team_name.ilike(f"%{q}%"),
+                            Team.team_name_short.ilike(f"%{q}%"),
+                            Team.country.ilike(f"%{q}%"),
+                        )
                     )
-                ).limit(limit)
+                    .limit(limit)
+                )
 
                 team_result = await session.execute(team_query)
                 teams = team_result.scalars().all()
 
                 for team in teams:
-                    results["teams"].append({
-                        "id": team.id,
-                        "name": team.team_name,
-                        "country": team.country,
-                        "founded_year": team.founded_year,
-                        "stadium": team.stadium,
-                    })
+                    results["teams"].append(
+                        {
+                            "id": team.id,
+                            "name": team.team_name,
+                            "country": team.country,
+                            "founded_year": team.founded_year,
+                            "stadium": team.stadium,
+                        }
+                    )
 
             # 搜索联赛
             if type is None or type == "leagues":
-                league_query = select(League).where(
-                    or_(
-                        League.league_name.ilike(f"%{q}%"),
-                        League.country.ilike(f"%{q}%"),
+                league_query = (
+                    select(League)
+                    .where(
+                        or_(
+                            League.league_name.ilike(f"%{q}%"),
+                            League.country.ilike(f"%{q}%"),
+                        )
                     )
-                ).limit(limit)
+                    .limit(limit)
+                )
 
                 league_result = await session.execute(league_query)
                 leagues = league_result.scalars().all()
 
                 for league in leagues:
-                    results["leagues"].append({
-                        "id": league.id,
-                        "name": league.league_name,
-                        "country": league.country,
-                        "season": league.season,
-                    })
+                    results["leagues"].append(
+                        {
+                            "id": league.id,
+                            "name": league.league_name,
+                            "country": league.country,
+                            "season": league.season,
+                        }
+                    )
 
         return {
             "query": q,
             "results": results,
-            "total": len(results["matches"]) + len(results["teams"]) + len(results["leagues"]),
+            "total": len(results["matches"])
+            + len(results["teams"])
+            + len(results["leagues"]),
         }
 
     except Exception as e:

@@ -26,13 +26,14 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from src.utils.logger import get_logger
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
 
 class ErrorCode(Enum):
     """错误码枚举"""
+
     # 通用错误
     INTERNAL_ERROR = "INTERNAL_ERROR"
     VALIDATION_ERROR = "VALIDATION_ERROR"
@@ -62,6 +63,7 @@ class ErrorCode(Enum):
 
 class ErrorSeverity(Enum):
     """错误严重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -93,110 +95,119 @@ class BaseAppException(Exception):
 
 class BusinessError(BaseAppException):
     """业务逻辑错误"""
+
     pass
 
 
 class DataError(BaseAppException):
     """数据相关错误"""
+
     pass
 
 
 class ExternalServiceError(BaseAppException):
     """外部服务错误"""
+
     pass
 
 
 class ValidationError(BaseAppException):
     """数据验证错误"""
-    def __init__(
-        self,
-        message: str,
-        field: str,
-        value: Any,
-        **kwargs
-    ):
+
+    def __init__(self, message: str, field: str, value: Any, **kwargs):
         details = kwargs.get("details", {})
-        details.update({
-            "field": field,
-            "value": str(value),
-        })
+        details.update(
+            {
+                "field": field,
+                "value": str(value),
+            }
+        )
         super().__init__(
             message=message,
             error_code=ErrorCode.VALIDATION_ERROR,
             status_code=400,
             details=details,
-            **kwargs
+            **kwargs,
         )
 
 
 class NotFoundError(BaseAppException):
     """资源未找到错误"""
+
     def __init__(self, resource_type: str, resource_id: Any, **kwargs):
         message = f"{resource_type} with ID {resource_id} not found"
         details = kwargs.get("details", {})
-        details.update({
-            "resource_type": resource_type,
-            "resource_id": str(resource_id),
-        })
+        details.update(
+            {
+                "resource_type": resource_type,
+                "resource_id": str(resource_id),
+            }
+        )
         super().__init__(
             message=message,
             error_code=ErrorCode.NOT_FOUND,
             status_code=404,
             details=details,
-            **kwargs
+            **kwargs,
         )
 
 
 class PredictionError(BusinessError):
     """预测错误"""
+
     def __init__(self, match_id: int, reason: str, **kwargs):
         message = f"Prediction failed for match {match_id}: {reason}"
         details = kwargs.get("details", {})
-        details.update({
-            "match_id": match_id,
-            "reason": reason,
-        })
+        details.update(
+            {
+                "match_id": match_id,
+                "reason": reason,
+            }
+        )
         super().__init__(
             message=message,
             error_code=ErrorCode.PREDICTION_FAILED,
             status_code=500,
             severity=ErrorSeverity.HIGH,
             details=details,
-            **kwargs
+            **kwargs,
         )
 
 
 class DataCollectionError(DataError):
     """数据收集错误"""
+
     def __init__(self, source: str, error: str, **kwargs):
         message = f"Data collection failed from {source}: {error}"
         details = kwargs.get("details", {})
-        details.update({
-            "source": source,
-            "error": error,
-        })
+        details.update(
+            {
+                "source": source,
+                "error": error,
+            }
+        )
         super().__init__(
             message=message,
             error_code=ErrorCode.DATA_COLLECTION_FAILED,
             details=details,
-            **kwargs
+            **kwargs,
         )
 
 
 class CacheError(DataError):
     """缓存错误"""
+
     def __init__(self, operation: str, key: str, **kwargs):
         message = f"Cache {operation} failed for key {key}"
         details = kwargs.get("details", {})
-        details.update({
-            "operation": operation,
-            "key": key,
-        })
+        details.update(
+            {
+                "operation": operation,
+                "key": key,
+            }
+        )
         super().__init__(
-            message=message,
-            error_code=ErrorCode.CACHE_ERROR,
-            details=details,
-            **kwargs
+            message=message, error_code=ErrorCode.CACHE_ERROR, details=details, **kwargs
         )
 
 
@@ -252,8 +263,7 @@ class ErrorHandler:
 
         # 返回响应
         return JSONResponse(
-            status_code=error_info["status_code"],
-            content=error_info["response"]
+            status_code=error_info["status_code"], content=error_info["response"]
         )
 
     def _format_app_exception(self, exception: BaseAppException) -> Dict[str, Any]:
@@ -274,7 +284,9 @@ class ErrorHandler:
             "error_class": exception.__class__.__name__,
         }
 
-    def _format_http_exception(self, exception: Union[StarletteHTTPException, HTTPException]) -> Dict[str, Any]:
+    def _format_http_exception(
+        self, exception: Union[StarletteHTTPException, HTTPException]
+    ) -> Dict[str, Any]:
         """格式化HTTP异常"""
         return {
             "type": "http_exception",
@@ -336,11 +348,14 @@ class ErrorHandler:
             with sentry_sdk.configure_scope as scope:
                 # 添加请求信息
                 if request:
-                    scope.set_context("request", {
-                        "method": request.method,
-                        "url": str(request.url),
-                        "headers": dict(request.headers),
-                    })
+                    scope.set_context(
+                        "request",
+                        {
+                            "method": request.method,
+                            "url": str(request.url),
+                            "headers": dict(request.headers),
+                        },
+                    )
 
                 # 添加上下文信息
                 if context:
@@ -381,7 +396,7 @@ class ErrorHandler:
         if self.error_counts.get(error_code, 0) > 10:  # 1分钟内超过10次
             self._send_alert(
                 error_info,
-                f"High error frequency for {error_code}: {self.error_counts[error_code]} occurrences"
+                f"High error frequency for {error_code}: {self.error_counts[error_code]} occurrences",
             )
 
     def _send_alert(self, error_info: Dict[str, Any], message: str):
@@ -404,7 +419,10 @@ class ErrorHandler:
                     "text": message,
                     "attachments": [
                         {
-                            "color": "red" if error_info.get("severity") == ErrorSeverity.CRITICAL.value else "yellow",
+                            "color": "red"
+                            if error_info.get("severity")
+                            == ErrorSeverity.CRITICAL.value
+                            else "yellow",
                             "fields": [
                                 {
                                     "title": "Error Code",
@@ -465,6 +483,7 @@ def handle_errors(
     reraise: bool = False,
 ):
     """错误处理装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
@@ -483,7 +502,9 @@ def handle_errors(
                     if reraise:
                         raise app_exception
                     return handle_exception(app_exception)
+
         return wrapper
+
     return decorator
 
 
@@ -494,6 +515,7 @@ def handle_async_errors(
     reraise: bool = False,
 ):
     """异步错误处理装饰器"""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             try:
@@ -512,5 +534,7 @@ def handle_async_errors(
                     if reraise:
                         raise app_exception
                     return handle_exception(app_exception)
+
         return wrapper
+
     return decorator

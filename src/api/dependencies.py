@@ -21,7 +21,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from src.core.prediction_engine import PredictionEngine
-from src.utils.logger import get_logger
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -32,7 +32,7 @@ security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict:
     """
     获取当前用户
@@ -55,9 +55,7 @@ async def get_current_user(
     try:
         # 解码JWT token
         payload = jwt.decode(
-            credentials.credentials,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
+            credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM]
         )
         user_id: str = payload.get("sub")
         role: str = payload.get("role", "user")
@@ -65,19 +63,13 @@ async def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-        return {
-            "id": int(user_id),
-            "role": role,
-            "token": credentials.credentials
-        }
+        return {"id": int(user_id), "role": role, "token": credentials.credentials}
 
     except JWTError:
         raise credentials_exception
 
 
-async def get_admin_user(
-    current_user: Dict = Depends(get_current_user)
-) -> Dict:
+async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
     """
     获取管理员用户
 
@@ -92,8 +84,7 @@ async def get_admin_user(
     """
     if current_user.get("role") != "admin":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
         )
     return current_user
 
@@ -106,18 +97,19 @@ async def get_prediction_engine() -> PredictionEngine:
         PredictionEngine: 预测引擎
     """
     from src.core.prediction_engine import get_prediction_engine
+
     return await get_prediction_engine()
 
 
 async def get_redis_manager():
     """获取Redis管理器"""
     from src.cache.redis_manager import get_redis_manager
+
     return get_redis_manager()
 
 
 async def verify_prediction_permission(
-    match_id: int,
-    current_user: Dict = Depends(get_current_user)
+    match_id: int, current_user: Dict = Depends(get_current_user)
 ):
     """
     验证预测权限
@@ -134,9 +126,7 @@ async def verify_prediction_permission(
     return True
 
 
-async def rate_limit_check(
-    current_user: Dict = Depends(get_current_user)
-):
+async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
     """
     速率限制检查
 
