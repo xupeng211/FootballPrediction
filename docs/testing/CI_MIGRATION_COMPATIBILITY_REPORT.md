@@ -9,11 +9,13 @@
 ## 核心问题
 
 ### 原始问题
+
 - GitHub Actions CI 在执行 `alembic upgrade head --sql` 时失败
 - 错误信息：`AttributeError: 'NoneType' object has no attribute 'fetchall'`
 - 根本原因：多个迁移文件使用 `op.get_bind()` 但未检查离线模式
 
 ### 问题分析
+
 1. **离线模式特性**: Alembic 的 `--sql` 标志启用离线模式，此时 `op.get_bind()` 返回 `None`
 2. **迁移文件缺陷**: 6个迁移文件直接使用 `op.get_bind()` 而未进行离线模式检查
 3. **CI 环境依赖**: CI 需要生成 SQL 脚本而不实际连接数据库
@@ -23,6 +25,7 @@
 ### 1. 迁移文件改造 ✅
 
 修复的迁移文件：
+
 - `d6d814cc1078_database_performance_optimization_.py`
 - `c1d8ae5075f0_add_jsonb_sqlite_compatibility.py`
 - `006_add_missing_database_indexes.py`
@@ -31,6 +34,7 @@
 - `09d03cebf664_implement_partitioned_tables_and_indexes.py`
 
 **修复模式**:
+
 ```python
 from alembic import context
 
@@ -50,11 +54,13 @@ def upgrade() -> None:
 ### 2. CI 兼容性修复 ✅
 
 **CI Pipeline 增强**:
+
 - 在 `.github/workflows/ci.yml` 的 `ci-verify` job 中新增 Migration Health Check
 - 添加完整的数据库迁移测试流程
 - 确保迁移在 Docker 环境中正常执行
 
 **新增步骤**:
+
 ```yaml
 - name: Migration Health Check
   run: |
@@ -71,12 +77,14 @@ def upgrade() -> None:
 ### 3. 验证脚本优化 ✅
 
 **scripts/verify_migrations.sh 增强**:
+
 - 添加离线模式兼容性验证
 - 修复数据库连接配置（localhost vs db）
 - 优化环境变量设置
 - 增加错误处理和诊断信息
 
 **验证命令**:
+
 ```bash
 # 离线模式测试
 alembic upgrade head --sql
@@ -91,12 +99,14 @@ alembic upgrade head
 ## 验证结果
 
 ### 1. 离线模式测试 ✅
+
 ```bash
 $ alembic upgrade head --sql 2>&1 | grep -q "offline mode:" && echo "✅ Offline mode comments found"
 ✅ Offline mode comments found
 ```
 
 ### 2. 在线模式测试 ✅
+
 ```bash
 $ ENVIRONMENT=test TEST_DB_HOST=localhost TEST_DB_USER=postgres TEST_DB_PASSWORD=postgres alembic upgrade head
 INFO  [alembic.runtime.migration] Running upgrade  -> d56c8d0d5aa0, Initial database schema
@@ -105,6 +115,7 @@ INFO  [alembic.runtime.migration] Running upgrade d56c8d0d5aa0 -> f48d412852cc, 
 ```
 
 ### 3. 单元测试验证 ✅
+
 ```bash
 $ make test-quick
 ============================= test session starts ==============================
@@ -113,6 +124,7 @@ collected 1836 items
 ```
 
 ### 4. 验证脚本测试 ✅
+
 ```bash
 $ ./scripts/verify_migrations.sh
 🔍 数据库迁移验证开始
@@ -138,12 +150,14 @@ $ ./scripts/verify_migrations.sh
 ## 影响范围
 
 ### 直接影响
+
 - ✅ CI/CD 流水线现在可以正常完成数据库迁移步骤
 - ✅ 离线 SQL 生成功能正常工作
 - ✅ 本地开发环境迁移执行稳定
 - ✅ 测试套件全部通过
 
 ### 间接影响
+
 - ✅ 部署流程更加可靠
 - ✅ 开发人员体验改善
 - ✅ 数据库架构变更流程标准化
@@ -152,11 +166,13 @@ $ ./scripts/verify_migrations.sh
 ## 后续建议
 
 ### 短期维护
+
 1. **监控 CI 状态**: 持续观察 main 分支 CI 执行情况
 2. **定期验证**: 每周运行 `./scripts/verify_migrations.sh` 确保迁移健康
 3. **文档更新**: 保持迁移开发文档与实际实现同步
 
 ### 长期改进
+
 1. **迁移测试自动化**: 将迁移验证集成到 CI 流程中
 2. **性能监控**: 监控迁移执行时间和资源使用
 3. **回滚策略**: 完善迁移失败时的回滚机制

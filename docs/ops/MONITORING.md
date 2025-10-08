@@ -15,6 +15,7 @@
 ### 监控维度
 
 #### 1. 数据新鲜度 (Data Freshness)
+
 监控数据的最后更新时间，确保数据及时性：
 
 ```python
@@ -28,6 +29,7 @@ freshness_thresholds = {
 ```
 
 #### 2. 数据完整性 (Data Completeness)
+
 检查关键字段的缺失情况：
 
 ```python
@@ -39,6 +41,7 @@ critical_fields = {
 ```
 
 #### 3. 数据一致性 (Data Consistency)
+
 验证数据间的关联关系：
 
 - **外键一致性**: 检查matches表中的team_id是否在teams表中存在
@@ -48,11 +51,13 @@ critical_fields = {
 ### 质量评分
 
 系统计算综合质量得分（0-1），基于以下权重：
+
 - 数据新鲜度: 40%
 - 数据完整性: 35%
 - 数据一致性: 25%
 
 质量等级划分：
+
 - **优秀** (0.9-1.0): 数据质量极佳
 - **良好** (0.8-0.9): 数据质量良好
 - **一般** (0.7-0.8): 数据质量一般，需要注意
@@ -64,14 +69,18 @@ critical_fields = {
 ### 检测方法
 
 #### 1. 3σ规则检测
+
 基于正态分布的异常检测：
+
 ```python
 lower_bound = mean - 3 * std
 upper_bound = mean + 3 * std
 ```
 
 #### 2. IQR方法检测
+
 基于四分位距的异常检测：
+
 ```python
 Q1 = data.quantile(0.25)
 Q3 = data.quantile(0.75)
@@ -81,14 +90,18 @@ upper_bound = Q3 + 1.5 * IQR
 ```
 
 #### 3. Z-score分析
+
 计算标准化得分识别异常：
+
 ```python
 z_scores = abs((data - mean) / std)
 outliers = data[z_scores > threshold]
 ```
 
 #### 4. 范围检查
+
 基于业务规则的范围验证：
+
 ```python
 thresholds = {
     "home_odds": {"min": 1.01, "max": 100.0},
@@ -98,7 +111,9 @@ thresholds = {
 ```
 
 #### 5. 频率分布检测
+
 检测分类数据的频率异常：
+
 ```python
 # 检测频率过高或过低的值
 expected_freq = total_count / unique_values
@@ -106,7 +121,9 @@ anomalous = count > expected_freq * 5 or count < expected_freq * 0.1
 ```
 
 #### 6. 时间间隔检测
+
 检测时间序列数据的间隔异常：
+
 ```python
 time_diffs = time_data.diff().dt.total_seconds()
 # 使用IQR方法检测异常间隔
@@ -147,6 +164,7 @@ time_diffs = time_data.diff().dt.total_seconds()
 ### 默认告警规则
 
 #### 数据新鲜度告警
+
 ```yaml
 data_freshness_critical:
   condition: "freshness_hours > 24"
@@ -160,6 +178,7 @@ data_freshness_warning:
 ```
 
 #### 数据完整性告警
+
 ```yaml
 data_completeness_critical:
   condition: "completeness_ratio < 0.8"
@@ -173,6 +192,7 @@ data_completeness_warning:
 ```
 
 #### 数据质量告警
+
 ```yaml
 data_quality_critical:
   condition: "quality_score < 0.7"
@@ -181,6 +201,7 @@ data_quality_critical:
 ```
 
 #### 异常检测告警
+
 ```yaml
 anomaly_critical:
   condition: "anomaly_score > 0.2"
@@ -196,6 +217,7 @@ anomaly_warning:
 ### 告警去重
 
 系统实现告警去重机制，避免重复告警：
+
 - 基于告警ID（标题+来源+标签的hash）去重
 - 配置可调的去重时间窗口
 - 相同告警在时间窗口内只触发一次
@@ -402,21 +424,25 @@ alert_manager.register_handler(AlertChannel.WEBHOOK, custom_handler)
 ## 最佳实践
 
 ### 1. 监控频率
+
 - 数据新鲜度: 每30分钟检查一次
 - 数据完整性: 每小时检查一次
 - 异常检测: 每2小时检查一次
 
 ### 2. 告警管理
+
 - 设置合理的去重时间，避免告警风暴
 - 区分不同级别的告警处理方式
 - 定期清理已解决的告警
 
 ### 3. 指标监控
+
 - 使用Grafana可视化Prometheus指标
 - 设置仪表板监控系统健康状态
 - 配置告警规则自动处理异常
 
 ### 4. 性能优化
+
 - 限制监控查询的数据量
 - 使用异步处理提高性能
 - 合理配置数据库索引

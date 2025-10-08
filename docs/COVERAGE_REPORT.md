@@ -9,6 +9,7 @@
 - **部分覆盖的文件数**: 多个
 - **未覆盖的文件数**: 多个
 
+
 ## 查看详细报告
 
 ### HTML报告
@@ -37,19 +38,24 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 以下模块测试覆盖率达标：
 
 ### 工具类 (Utils)
+
 - `src/utils/dict_utils.py` - 100%
 - `src/utils/string_utils.py` - 100%
 - `src/utils/time_utils.py` - 100%
 - `src/core/logger.py` - 93%
 
+
 ### 数据模型
+
 - `src/features/entities.py` - 75%
 - `src/database/models/league.py` - 72%
 - `src/features/feature_definitions.py` - 68%
 
+
 ## 需要改进的模块 (<20%)
 
 ### 高优先级 (核心功能)
+
 1. **API端点** (11-29%)
    - `src/api/data.py` - 11%
    - `src/api/features.py` - 15%
@@ -65,7 +71,9 @@ pytest --cov=src --cov-report=term-missing:skip-covered
    - `src/cache/redis_manager.py` - 14%
    - `src/cache/ttl_cache.py` - 28%
 
+
 ### 中优先级
+
 1. **特征工程** (11-17%)
    - `src/features/feature_calculator.py` - 11%
    - `src/features/feature_store.py` - 17%
@@ -74,7 +82,9 @@ pytest --cov=src --cov-report=term-missing:skip-covered
    - `src/database/connection.py` - 37%
    - `src/database/config.py` - 62%
 
+
 ### 低优先级 (可延后)
+
 1. **流处理** (0%)
    - `src/streaming/*` - 全部未覆盖
 
@@ -83,6 +93,7 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 
 3. **数据质量** (8-18%)
    - `src/data/quality/*` - 大部分未覆盖
+
 
 ## 覆盖率提升计划
 
@@ -93,6 +104,8 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 **优先添加测试：**
 
 1. **API端点测试** (预计+15%)
+
+
    ```python
    # tests/unit/api/test_predictions.py
    - test_create_prediction
@@ -102,6 +115,8 @@ pytest --cov=src --cov-report=term-missing:skip-covered
    ```
 
 2. **核心服务测试** (预计+10%)
+
+
    ```python
    # tests/unit/services/test_data_processing.py
    - test_clean_data
@@ -110,6 +125,8 @@ pytest --cov=src --cov-report=term-missing:skip-covered
    ```
 
 3. **数据库操作测试** (预计+8%)
+
+
    ```python
    # tests/unit/database/test_operations.py
    - test_create_match
@@ -127,6 +144,7 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 2. **缓存层** (预计+8%)
 3. **集成测试** (预计+10%)
 
+
 ### 长期目标 (3个月)
 
 #### 目标: 达到80%总体覆盖率
@@ -137,6 +155,7 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 2. 任务调度
 3. 数据质量监控
 4. 端到端测试
+
 
 ## 测试编写指南
 
@@ -240,6 +259,7 @@ pytest --cov=src --cov-fail-under=80 || exit 1
 - [pytest-cov文档](https://pytest-cov.readthedocs.io/)
 - [Coverage.py文档](https://coverage.readthedocs.io/)
 - [测试指南](./TESTING_GUIDE.md)
+
 
 ## 更新历史
 

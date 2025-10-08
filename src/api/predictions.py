@@ -42,12 +42,36 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# 可选的速率限制
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+
+    limiter = Limiter(key_func=get_remote_address)
+    RATE_LIMIT_AVAILABLE = True
+except ImportError:
+    RATE_LIMIT_AVAILABLE = False
+
+    # 创建空的装饰器函数
+    def limiter_decorator(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    class _LimiterStub:
+        def limit(self, *args, **kwargs):
+            return limiter_decorator
+
+    limiter = _LimiterStub()
+
 from src.database.connection import get_async_session
-from src.database.models import Match, Prediction
+from src.database.models import Match, MatchStatus
+from src.database.models import Predictions as Prediction
 from src.models.prediction_service import PredictionService
 from src.utils.response import APIResponse
 
@@ -60,9 +84,12 @@ prediction_service = PredictionService()
 
 
 @router.get(
-    "/{match_id}",
+    "/{match_id:int}",
     summary="获取比赛预测结果 / Get Match Prediction",
-    description="获取指定比赛的预测结果，如果不存在则实时生成 / Get prediction result for specified match, generate in real-time if not exists",
+    description=(
+        "获取指定比赛的预测结果，如果不存在则实时生成 / "
+        "Get prediction result for specified match, generate in real-time if not exists"
+    ),
     responses={
         200: {
             "description": "成功获取预测结果 / Successfully retrieved prediction",
@@ -98,9 +125,14 @@ prediction_service = PredictionService()
         500: {"description": "服务器内部错误 / Internal server error"},
     },
 )
+@limiter.limit("20/minute")  # 每分钟最多20次请求
 async def get_match_prediction(
+    request: Request,
     match_id: int = Path(
-        ..., description="比赛唯一标识符 / Unique match identifier", ge=1, example=12345
+        ...,
+        description="比赛唯一标识符 / Unique match identifier",
+        ge=1,
+        examples=[12345],
     ),
     force_predict: bool = Query(
         default=False, description="是否强制重新预测 / Whether to force re-prediction"
@@ -116,12 +148,15 @@ async def get_match_prediction(
 
     This endpoint first checks if there's a cached prediction result for the match in the database.
     If it exists and force_predict is not set, it returns the cached result directly.
-    Otherwise, it generates a new prediction in real-time and stores it in the database.
+    Otherwise,
+        it generates a new prediction in real-time and stores it in the database.
 
     Args:
         match_id (int): 比赛唯一标识符，必须大于0 / Unique match identifier, must be greater than 0
-        force_predict (bool): 是否强制重新预测，默认为False / Whether to force re-prediction, defaults to False
-        session (AsyncSession): 数据库会话，由依赖注入提供 / Database session, provided by dependency injection
+        force_predict (bool): 是否强制重新预测，默认为False / Whether to force re-prediction,
+            defaults to False
+        session (AsyncSession): 数据库会话，由依赖注入提供 / Database session,
+            provided by dependency injection
 
     Returns:
         Dict[str, Any]: API响应字典 / API response dictionary
@@ -178,11 +213,27 @@ async def get_match_prediction(
                         "id": prediction.id,
                         "model_version": prediction.model_version,
                         "model_name": prediction.model_name,
-                        "home_win_probability": float(prediction.home_win_probability),
-                        "draw_probability": float(prediction.draw_probability),
-                        "away_win_probability": float(prediction.away_win_probability),
+                        "home_win_probability": (
+                            float(prediction.home_win_probability)
+                            if prediction.home_win_probability is not None
+                            else 0.0
+                        ),
+                        "draw_probability": (
+                            float(prediction.draw_probability)
+                            if prediction.draw_probability is not None
+                            else 0.0
+                        ),
+                        "away_win_probability": (
+                            float(prediction.away_win_probability)
+                            if prediction.away_win_probability is not None
+                            else 0.0
+                        ),
                         "predicted_result": prediction.predicted_result,
-                        "confidence_score": float(prediction.confidence_score),
+                        "confidence_score": (
+                            float(prediction.confidence_score)
+                            if prediction.confidence_score is not None
+                            else 0.0
+                        ),
                         "created_at": prediction.created_at.isoformat(),
                         "is_correct": prediction.is_correct,
                         "actual_result": prediction.actual_result,
@@ -195,13 +246,13 @@ async def get_match_prediction(
             logger.info(f"实时生成预测：比赛 {match_id}")
 
             # 检查比赛状态，如果已结束则不允许实时预测
-            if match.match_status in ["finished", "completed"]:
+            if match.match_status == MatchStatus.FINISHED:
                 logger.warning(f"尝试为已结束的比赛 {match_id} 生成预测")
                 raise HTTPException(
                     status_code=400, detail=f"比赛 {match_id} 已结束，无法生成预测"
                 )
 
-            prediction_result = await prediction_service.predict_match(match_id)
+            prediction_result_data = await prediction_service.predict_match(match_id)
 
             return APIResponse.success(
                 data={
@@ -215,7 +266,7 @@ async def get_match_prediction(
                         "match_status": match.match_status,
                         "season": match.season,
                     },
-                    "prediction": prediction_result.to_dict(),
+                    "prediction": prediction_result_data.to_dict(),
                     "source": "real_time",
                 }
             )
@@ -228,7 +279,7 @@ async def get_match_prediction(
 
 
 @router.post(
-    "/{match_id}/predict",
+    "/{match_id:int}/predict",
     summary="实时预测比赛结果",
     description="对指定比赛进行实时预测",
 )
@@ -257,10 +308,10 @@ async def predict_match(
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
         # 进行预测
-        prediction_result = await prediction_service.predict_match(match_id)
+        prediction_result_data = await prediction_service.predict_match(match_id)
 
         return APIResponse.success(
-            data=prediction_result.to_dict(), message=f"比赛 {match_id} 预测完成"
+            data=prediction_result_data.to_dict(), message=f"比赛 {match_id} 预测完成"
         )
 
     except HTTPException:
@@ -271,8 +322,11 @@ async def predict_match(
 
 
 @router.post("/batch", summary="批量预测比赛", description="对多场比赛进行批量预测")
+@limiter.limit("5/minute")  # 批量预测：每分钟最多5次（更耗费资源）
 async def batch_predict_matches(
-    match_ids: List[int], session: AsyncSession = Depends(get_async_session)
+    request: Request,
+    match_ids: List[int],
+    session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
     批量预测多场比赛
@@ -320,7 +374,7 @@ async def batch_predict_matches(
 
 
 @router.get(
-    "/history/{match_id}",
+    "/history/{match_id:int}",
     summary="获取比赛历史预测",
     description="获取指定比赛的所有历史预测记录",
 )
@@ -369,16 +423,35 @@ async def get_match_prediction_history(
                     "id": prediction.id,
                     "model_version": prediction.model_version,
                     "model_name": prediction.model_name,
-                    "home_win_probability": float(prediction.home_win_probability),
-                    "draw_probability": float(prediction.draw_probability),
-                    "away_win_probability": float(prediction.away_win_probability),
+                    "home_win_probability": (
+                        float(prediction.home_win_probability)
+                        if prediction.home_win_probability is not None
+                        else 0.0
+                    ),
+                    "draw_probability": (
+                        float(prediction.draw_probability)
+                        if prediction.draw_probability is not None
+                        else 0.0
+                    ),
+                    "away_win_probability": (
+                        float(prediction.away_win_probability)
+                        if prediction.away_win_probability is not None
+                        else 0.0
+                    ),
                     "predicted_result": prediction.predicted_result,
-                    "confidence_score": float(prediction.confidence_score),
+                    "confidence_score": (
+                        float(prediction.confidence_score)
+                        if prediction.confidence_score is not None
+                        else 0.0
+                    ),
                     "created_at": prediction.created_at.isoformat(),
                     "is_correct": prediction.is_correct,
                     "actual_result": prediction.actual_result,
                     "verified_at": (
                         prediction.verified_at.isoformat()
+                        if prediction.verified_at
+                        and hasattr(prediction.verified_at, "isoformat")
+                        else None
                         if prediction.verified_at
                         else None
                     ),
@@ -400,7 +473,7 @@ async def get_match_prediction_history(
         raise HTTPException(status_code=500, detail="获取历史预测失败")
 
 
-@router.get("/recent", summary="获取最近的预测", description="获取最近的预测记录")
+@router.get(str("/recent"), summary="获取最近的预测", description="获取最近的预测记录")
 async def get_recent_predictions(
     hours: int = Query(default=24, description="时间范围（小时）", ge=1, le=168),
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
@@ -457,7 +530,11 @@ async def get_recent_predictions(
                     "model_version": pred.model_version,
                     "model_name": pred.model_name,
                     "predicted_result": pred.predicted_result,
-                    "confidence_score": float(pred.confidence_score),
+                    "confidence_score": (
+                        float(pred.confidence_score)
+                        if pred.confidence_score is not None
+                        else 0.0
+                    ),
                     "created_at": pred.created_at.isoformat(),
                     "is_correct": pred.is_correct,
                     "match_info": {
@@ -483,7 +560,7 @@ async def get_recent_predictions(
 
 
 @router.post(
-    "/{match_id}/verify",
+    "/{match_id:int}/verify",
     summary="验证预测结果",
     description="验证指定比赛的预测结果（比赛结束后调用）",
 )

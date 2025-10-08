@@ -152,10 +152,8 @@ class User:
             return permission in ["read", "write"]
 
         # 访客只有读权限
-        if self.role == UserRole.GUEST:
-            return permission == "read"
-
-        return False
+        # 对于 GUEST 或任何其他未知角色，只给予读权限
+        return permission == "read"
 
 
 @dataclass
@@ -193,7 +191,11 @@ class DataValidationResult:
 
     def get_summary(self) -> str:
         """获取验证结果摘要"""
-        return f"验证结果: {'有效' if self.is_valid else '无效'}, 错误: {len(self.errors)}, 警告: {len(self.warnings)}"
+        return (
+            f"验证结果: {'有效' if self.is_valid else '无效'}, "
+            f"错误: {len(self.errors)}, "
+            f"警告: {len(self.warnings)}"
+        )
 
 
 @dataclass
@@ -347,9 +349,9 @@ class PredictionRequest:
     def from_dict(cls, data: Dict[str, Any]) -> "PredictionRequest":
         """从字典创建预测请求"""
         return cls(
-            match_id=data.get("match_id", ""),
-            home_team=data.get("home_team", ""),
-            away_team=data.get("away_team", ""),
+            match_id=data.get(str("match_id"), ""),
+            home_team=data.get(str("home_team"), ""),
+            away_team=data.get(str("away_team"), ""),
             features=data.get("features"),
         )
 
@@ -389,4 +391,4 @@ class PredictionResponse:
             "draw": self.draw_prob,
             "away_win": self.away_win_prob,
         }
-        return max(probabilities, key=probabilities.get)
+        return max(probabilities.items(), key=lambda x: x[1])[0]

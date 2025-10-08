@@ -5,11 +5,13 @@
 您遇到的两类问题已全部诊断并修复：
 
 ### 🚨 **问题类型 1: typeguard.TypeCheckError**
+
 ```
 typeguard.TypeCheckError: argument "entities" did not match any element in the union
 ```
 
 ### 🚨 **问题类型 2: 断言错误和异步完成问题**
+
 ```
 AssertionError: assert 0 == 1
 AssertionError: assert None == 'logged'
@@ -23,6 +25,7 @@ AssertionError: assert None == 'logged'
 ### ❌ **原始问题**
 
 1. **Mock对象缺少必需属性**
+
    ```python
    # ❌ 问题代码
    entities = feature_store.get_entity_definitions()
@@ -30,6 +33,7 @@ AssertionError: assert None == 'logged'
    ```
 
 2. **异步操作Mock配置错误**
+
    ```python
    # ❌ 问题代码
    mock_result = AsyncMock()
@@ -38,6 +42,7 @@ AssertionError: assert None == 'logged'
    ```
 
 3. **日志记录验证缺失**
+
    ```python
    # ❌ 问题代码
    success = await feature_store.register_features()
@@ -253,12 +258,14 @@ async def test_async_operations_completion(self, feature_store):
 ## 📁 **文件对比**
 
 ### **原始问题文件**: `tests/test_features/test_feature_store.py`
+
 - ❌ Mock对象缺少属性
 - ❌ 异步Mock配置错误
 - ❌ 日志验证缺失
 - ❌ 类型检查失败
 
 ### **修复版文件**: `tests/test_features/test_feature_store_fixed.py`
+
 - ✅ 完整的Mock对象属性
 - ✅ 正确的异步Mock配置
 - ✅ 完整的日志验证

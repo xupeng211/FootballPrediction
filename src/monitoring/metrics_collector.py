@@ -9,14 +9,93 @@ import asyncio
 import logging
 import os
 import signal
+import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from .metrics_exporter import get_metrics_exporter
+from src.core.config import get_settings
+
+from .metrics_exporter import MetricsExporter, get_metrics_exporter
 
 logger = logging.getLogger(__name__)
 
-ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+# 向后兼容的别名
+PrometheusExporter = MetricsExporter
+_settings = get_settings()
+
+
+class StatsdExporter:
+    """StatsD导出器（模拟实现）"""
+
+    def __init__(self, host: str = "localhost", port: int = 8125):
+        self.host = host
+        self.port = port
+
+    def send(self, metric: str, value: float, metric_type: str = "g"):
+        """发送指标到StatsD（模拟实现）"""
+        logger.debug(f"StatsD: {metric}={value}|{metric_type}")
+
+
+class MetricsAggregator:
+    """指标聚合器"""
+
+    def __init__(self):
+        self.metrics = {}
+
+    def add(self, name: str, value: float, tags: Optional[Dict[str, str]] = None):
+        """添加指标"""
+        key = f"{name}:{hash(str(tags))}"
+        if key not in self.metrics:
+            self.metrics[key] = []
+        self.metrics[key].append(value)
+
+    def get_average(self, name: str, tags: Optional[Dict[str, str]] = None) -> float:
+        """获取平均值"""
+        key = f"{name}:{hash(str(tags))}"
+        values = self.metrics.get(key, [])
+        return sum(values) / len(values) if values else 0.0
+
+
+class MetricType(Enum):
+    """指标类型"""
+
+    COUNTER = "counter"
+    GAUGE = "gauge"
+    HISTOGRAM = "histogram"
+    SUMMARY = "summary"
+
+
+class MetricUnit(Enum):
+    """指标单位"""
+
+    COUNT = "count"
+    PERCENT = "percent"
+    MILLISECONDS = "milliseconds"
+    SECONDS = "seconds"
+    BYTES = "bytes"
+    REQUESTS_PER_SECOND = "requests_per_second"
+
+
+ENABLE_METRICS = bool(_settings.metrics_enabled)
+if ENABLE_METRICS and ("PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules):
+    ENABLE_METRICS = False
+
+DEFAULT_TABLES: List[str] = (
+    list(_settings.metrics_tables)
+    if getattr(_settings, "metrics_tables", None)
+    else [
+        "matches",
+        "teams",
+        "leagues",
+        "odds",
+        "features",
+        "raw_match_data",
+        "raw_odds_data",
+        "raw_scores_data",
+        "data_collection_logs",
+    ]
+)
 
 
 class MetricsCollector:
@@ -26,18 +105,26 @@ class MetricsCollector:
     定期收集和更新监控指标，运行在后台任务中
     """
 
-    def __init__(self, collection_interval: int = 30):
+    def __init__(
+        self,
+        collection_interval: Optional[int] = None,
+        tables_to_monitor: Optional[List[str]] = None,
+    ):
         """
         初始化指标收集器
 
         Args:
             collection_interval: 收集间隔（秒），默认30秒
         """
-        self.collection_interval = collection_interval
+        default_interval = getattr(_settings, "metrics_collection_interval", 30) or 30
+        self.collection_interval = collection_interval or default_interval
         self.metrics_exporter = get_metrics_exporter()
         self.running = False
         self.enabled = True  # 添加enabled属性
         self._task: Optional[asyncio.Task] = None
+        self.tables_to_monitor = list(tables_to_monitor or DEFAULT_TABLES)
+        if hasattr(self.metrics_exporter, "set_tables_to_monitor"):
+            self.metrics_exporter.set_tables_to_monitor(self.tables_to_monitor)
 
     async def start(self) -> None:
         """

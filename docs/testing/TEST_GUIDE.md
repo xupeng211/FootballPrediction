@@ -134,6 +134,7 @@ Legacy 测试使用真实的外部服务，用于验证真实环境下的集成�
 ### 运行条件
 
 1. **启动服务**：
+
 ```bash
 # 使用 Docker Compose
 cd tests/legacy
@@ -144,6 +145,7 @@ docker-compose ps
 ```
 
 2. **设置环境变量**：
+
 ```bash
 export DATABASE_URL=postgresql://postgres:testpass@localhost:5432/football_test
 export REDIS_URL=redis://localhost:6379
@@ -318,21 +320,25 @@ make coverage-dashboard
 ### 调试技巧
 
 1. **运行单个测试**：
+
 ```bash
 pytest tests/unit/test_example.py::TestClass::test_method -v -s
 ```
 
 2. **显示输出**：
+
 ```bash
 pytest -s  # 不捕获输出
 ```
 
 3. **进入调试**：
+
 ```python
 import pdb; pdb.set_trace()  # 在测试中添加断点
 ```
 
 4. **详细错误**：
+
 ```bash
 pytest --tb=long  # 显示完整错误堆栈
 ```

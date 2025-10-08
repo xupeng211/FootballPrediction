@@ -142,6 +142,7 @@ def is_match_day() -> bool:
         # 实现检查今日是否有比赛的逻辑
         # 查询数据库中今日的比赛安排
         from datetime import date
+
         from src.database.connection import DatabaseManager
 
         DatabaseManager()
@@ -169,6 +170,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
         # 实现获取即将开始比赛的逻辑
         # 查询数据库中未来N小时内的比赛
         from datetime import datetime, timedelta
+
         from src.database.connection import DatabaseManager
 
         DatabaseManager()

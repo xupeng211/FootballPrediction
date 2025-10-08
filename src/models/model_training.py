@@ -37,9 +37,8 @@ except ImportError:
 
 # 处理可选依赖
 try:
-    import mlflow.sklearn
-
     import mlflow
+    import mlflow.sklearn
     from mlflow import MlflowClient
 
     HAS_MLFLOW = True
@@ -85,7 +84,7 @@ except ImportError:
     MlflowClient = MockMlflowClient
 
 from src.database.connection import DatabaseManager
-from src.database.models import Match
+from src.database.models import Match, MatchStatus
 from src.features.feature_store import FootballFeatureStore
 
 logger = logging.getLogger(__name__)
@@ -245,7 +244,7 @@ class BaselineModelTrainer:
                     and_(
                         Match.match_time >= start_date,
                         Match.match_time <= end_date,
-                        Match.match_status == "completed",
+                        Match.match_status == MatchStatus.FINISHED,
                         Match.home_score.isnot(None),
                         Match.away_score.isnot(None),
                     )
@@ -284,7 +283,11 @@ class BaselineModelTrainer:
         home_score = row["home_score"]
         away_score = row["away_score"]
 
-        if home_score > away_score:
+        if (
+            home_score is not None
+            and away_score is not None
+            and home_score > away_score
+        ):
             return "home"
         elif home_score < away_score:
             return "away"
@@ -337,7 +340,7 @@ class BaselineModelTrainer:
                 and_(
                     or_(Match.home_team_id == team_id, Match.away_team_id == team_id),
                     Match.match_time < match_time,
-                    Match.match_status == "completed",
+                    Match.match_status == MatchStatus.FINISHED,
                 )
             )
             .order_by(desc(Match.match_time))

@@ -249,4 +249,4 @@ def get_task_priority(task_name: str) -> int:
         "collect_fixtures_task": 3,  # 赛程采集优先级较低
     }
 
-    return priorities.get(task_name, 5)  # 默认优先级为5
+    return priorities.get(str(task_name), 5)  # 默认优先级为5

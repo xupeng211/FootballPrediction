@@ -44,7 +44,7 @@ class DataLakeStorage:
 
     def __init__(
         self,
-        base_path: str = None,
+        base_path: Optional[str] = None,
         compression: str = "snappy",
         partition_cols: Optional[List[str]] = None,
         max_file_size_mb: int = 100,
@@ -452,7 +452,7 @@ class S3DataLakeStorage:
 
     def __init__(
         self,
-        bucket_name: str = None,
+        bucket_name: Optional[str] = None,
         endpoint_url: str = None,
         access_key: str = None,
         secret_key: str = None,

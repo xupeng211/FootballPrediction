@@ -148,7 +148,7 @@ def start_continuous_consumer_task(
 
             return {
                 "task_id": self.request.id,
-                "status": "completed",
+                "status": "finished",
                 "topics": topics or "all",
                 "consumer_group_id": consumer_group_id,
             }
@@ -297,7 +297,9 @@ def stream_health_check_task(self):
 
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
-    self, topics: Optional[List[str]] = None, processing_duration: int = 300  # 5分钟
+    self,
+    topics: Optional[List[str]] = None,
+    processing_duration: int = 300,  # 5分钟
 ):
     """
     流数据处理任务

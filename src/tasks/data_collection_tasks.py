@@ -114,20 +114,22 @@ def collect_fixtures_task(
         result = asyncio.run(_collect_fixtures())
 
         if isinstance(result, dict) and result.get("status") == "failed":
-            raise Exception(f"赛程采集失败: {result.get('error_message', '未知错误')}")
+            raise Exception(
+                f"赛程采集失败: {result.get(str('error_message'), '未知错误')}"
+            )
 
         success_count = (
-            result.get("success_count", 0)
+            result.get(str("success_count"), 0)
             if isinstance(result, dict)
             else getattr(result, "success_count", 0)
         )
         error_count = (
-            result.get("error_count", 0)
+            result.get(str("error_count"), 0)
             if isinstance(result, dict)
             else getattr(result, "error_count", 0)
         )
         records_collected = (
-            result.get("records_collected", 0)
+            result.get(str("records_collected"), 0)
             if isinstance(result, dict)
             else getattr(result, "records_collected", 0)
         )
@@ -137,7 +139,7 @@ def collect_fixtures_task(
         )
 
         status = (
-            result.get("status", "success")
+            result.get(str("status"), "success")
             if isinstance(result, dict)
             else getattr(result, "status", "success")
         )
@@ -496,7 +498,8 @@ def emergency_data_collection_task(
 
             # 高优先级收集该比赛的所有相关数据
             fixtures_task = collect_fixtures_task.apply_async(
-                kwargs={"days_ahead": 1}, priority=9  # 最高优先级
+                kwargs={"days_ahead": 1},
+                priority=9,  # 最高优先级
             )
             odds_task = collect_odds_task.apply_async(priority=9)
             scores_task = collect_scores_task.apply_async(
@@ -591,5 +594,212 @@ class FixturesCollector:
         }
 
 
+@app.task(base=DataCollectionTask, bind=True)
+def collect_historical_data_task(
+    self,
+    team_id: int,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    data_types: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    收集历史数据任务
+
+    收集指定球队在指定时间段内的历史比赛数据，包括：
+    - 比赛结果
+    - 进球/失球统计
+    - 赔率数据
+    - 球员表现数据
+
+    Args:
+        team_id: 球队ID
+        start_date: 开始日期 (YYYY-MM-DD格式)，默认为1年前
+        end_date: 结束日期 (YYYY-MM-DD格式)，默认为当前日期
+        data_types: 需要收集的数据类型列表，默认为所有类型
+
+    Returns:
+        Dict[str, Any]: 收集结果
+            - status: 执行状态
+            - team_id: 球队ID
+            - matches: 收集的比赛数量
+            - data_summary: 数据摘要（按类型统计）
+            - execution_time: 执行时间
+            - timestamp: 时间戳
+    """
+    logger.info(
+        f"开始收集历史数据: team_id={team_id}, start_date={start_date}, end_date={end_date}"
+    )
+
+    # 设置默认日期范围
+    if start_date is None:
+        start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    if end_date is None:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    if data_types is None:
+        data_types = ["matches", "odds", "scores", "players"]
+
+    async def _collect_historical_data():
+        """内部异步收集函数"""
+        try:
+            # 动态导入以避免循环导入问题
+            from src.data.collectors.scores_collector import ScoresCollector
+
+            collector = ScoresCollector()
+
+            logger.info(
+                f"收集历史数据: 球队={team_id}, "
+                f"时间范围={start_date} 到 {end_date}, "
+                f"数据类型={data_types}"
+            )
+
+            # 执行收集
+            result = await collector.collect_historical_matches(
+                team_id=team_id,
+                start_date=start_date,
+                end_date=end_date,
+                data_types=data_types,
+            )
+
+            return result
+
+        except Exception as e:
+            # 记录API失败
+            if hasattr(self, "error_logger"):
+                await self.error_logger.log_api_failure(
+                    task_name="collect_historical_data_task",
+                    api_endpoint="historical_data_api",
+                    http_status=None,
+                    error_message=str(e),
+                    retry_count=self.request.retries if hasattr(self, "request") else 0,
+                )
+            raise e
+
+    try:
+        # 运行异步任务
+        result = asyncio.run(_collect_historical_data())
+
+        if isinstance(result, dict) and result.get("status") == "failed":
+            raise Exception(
+                f"历史数据收集失败: {result.get('error_message', '未知错误')}"
+            )
+
+        # 处理结果
+        if isinstance(result, list):
+            # 如果返回的是列表，转换为字典格式
+            matches_collected = len(result)
+            data_summary = {"matches": matches_collected}
+        elif isinstance(result, dict):
+            matches_collected = result.get("matches_collected", 0)
+            data_summary = result.get("data_summary", {})
+        else:
+            matches_collected = getattr(result, "matches_collected", 0)
+            data_summary = getattr(result, "data_summary", {})
+
+        logger.info(
+            f"历史数据收集完成: 球队={team_id}, "
+            f"比赛数={matches_collected}, 数据摘要={data_summary}"
+        )
+
+        return {
+            "status": "success",
+            "team_id": team_id,
+            "matches": matches_collected,
+            "data_summary": data_summary,
+            "start_date": start_date,
+            "end_date": end_date,
+            "data_types": data_types,
+            "execution_time": datetime.now().isoformat(),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as exc:
+        # 获取重试配置（历史数据收集可以重试较多次数）
+        retry_config = TaskRetryConfig.get_retry_config("collect_historical_data_task")
+        max_retries = retry_config["max_retries"]
+        retry_delay = retry_config["retry_delay"]
+
+        # 检查是否需要重试
+        if self.request.retries < max_retries:
+            logger.warning(
+                f"历史数据收集失败，将在{retry_delay}秒后重试 (第{self.request.retries + 1}次): {str(exc)}"
+            )
+            raise self.retry(exc=exc, countdown=retry_delay)
+        else:
+            # 最终失败，记录到错误日志
+            logger.error(f"历史数据收集任务最终失败，已达最大重试次数: {str(exc)}")
+
+            # 异步记录到数据采集日志
+            asyncio.run(
+                self.error_logger.log_data_collection_error(
+                    data_source="historical_data_api",
+                    collection_type="historical_matches",
+                    error_message=str(exc),
+                    error_count=1,
+                    context={
+                        "team_id": team_id,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                    },
+                )
+            )
+
+            raise exc
+
+
 # 为了向后兼容性，创建函数别名
 collect_all_data_task = manual_collect_all_data
+
+
+def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
+    """
+    验证收集的数据
+
+    Args:
+        data: 待验证的数据
+        data_type: 数据类型
+
+    Returns:
+        Dict[str, Any]: 验证结果
+    """
+    result = {"is_valid": True, "errors": [], "warnings": []}
+
+    try:
+        if not data:
+            result["is_valid"] = False
+            result["errors"].append("数据为空")
+            return result
+
+        if data_type == "match":
+            # 验证比赛数据
+            required_fields = ["id", "home_team_id", "away_team_id", "start_time"]
+            for field in required_fields:
+                if field not in data:
+                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["is_valid"] = False
+
+        elif data_type == "team":
+            # 验证球队数据
+            required_fields = ["id", "name"]
+            for field in required_fields:
+                if field not in data:
+                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["is_valid"] = False
+
+        elif data_type == "odds":
+            # 验证赔率数据
+            required_fields = ["match_id", "home_win", "draw", "away_win"]
+            for field in required_fields:
+                if field not in data:
+                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["is_valid"] = False
+                else:
+                    # 检查赔率值是否为正数
+                    if field != "match_id" and data[field] <= 0:
+                        result["errors"].append(f"赔率值必须为正数: {field}")
+                        result["is_valid"] = False
+
+    except Exception as e:
+        result["is_valid"] = False
+        result["errors"].append(f"验证过程出错: {str(e)}")
+
+    return result

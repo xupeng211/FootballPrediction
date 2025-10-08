@@ -1,0 +1,9 @@
+# PyArrow类型存根
+from typing import Any
+
+class Table:
+    def to_pandas(self) -> Any: ...
+
+class Dataset:
+    def to_table(self) -> Table: ...
+    def to_pandas(self) -> Any: ...

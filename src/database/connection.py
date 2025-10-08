@@ -202,7 +202,7 @@ class DatabaseManager:
                 port=5432,
                 database="football_prediction",
                 user="football_user",
-                password="football_password"
+                password=os.getenv("DB_PASSWORD")  # 密码必须从环境变量获取
             )
             db_manager.initialize(config)
             ```
@@ -476,7 +476,7 @@ class DatabaseManager:
             db_manager = DatabaseManager()
             db_manager.initialize()
 
-            success = await db_manager.update_match(12345, {"match_status": "completed"})
+            success = await db_manager.update_match(12345, {"match_status": "finished"})
             if success:
                 print("比赛信息更新成功")
             ```
@@ -742,19 +742,22 @@ class MultiUserDatabaseManager:
         if base_config is None:
             base_config = get_database_config()
 
-        # 用户凭据映射
+        # 用户凭据映射 - 从环境变量读取密码
         user_credentials = {
             DatabaseRole.READER: {
-                "username": "football_reader",
-                "password": "reader_password_2025",
+                "username": os.getenv("DB_READER_USER", "football_reader"),
+                "password": os.getenv(
+                    "DB_READER_PASSWORD",
+                    base_config.password,  # 使用基础配置的密码作为后备
+                ),
             },
             DatabaseRole.WRITER: {
-                "username": "football_writer",
-                "password": "writer_password_2025",
+                "username": os.getenv("DB_WRITER_USER", "football_writer"),
+                "password": os.getenv("DB_WRITER_PASSWORD", base_config.password),
             },
             DatabaseRole.ADMIN: {
-                "username": "football_admin",
-                "password": "admin_password_2025",
+                "username": os.getenv("DB_ADMIN_USER", "football_admin"),
+                "password": os.getenv("DB_ADMIN_PASSWORD", base_config.password),
             },
         }
 

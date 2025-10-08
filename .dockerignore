@@ -60,3 +60,38 @@ npm-debug.log*
 # Temporary files
 tmp/
 temp/
+
+# Test files and coverage reports
+htmlcov/
+htmlcov_*/
+.coverage
+coverage.xml
+coverage.json
+test-report.html
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Development scripts
+scripts/test/
+scripts/archive/
+scripts/fixes/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# MLflow artifacts
+mlruns/
+mlflow_artifacts/
+
+# Docker files
+docker-compose.*.yml
+Dockerfile.dev
+
+# Virtual environment
+.venv/
+.venv*/

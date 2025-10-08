@@ -26,12 +26,14 @@
 ### 1. Football-Data.org 配置
 
 #### 注册和获取API密钥
-1. 访问 https://www.football-data.org/
+
+1. 访问 <https://www.football-data.org/>
 2. 点击 "Sign Up" 注册账户
 3. 验证邮箱后登录
 4. 在账户页面找到API密钥
 
 #### 环境变量配置
+
 ```bash
 # 在 .env.staging 或 .env 文件中添加
 FOOTBALL_DATA_API_KEY=your_actual_api_key_here
@@ -39,6 +41,7 @@ FOOTBALL_DATA_API_URL=https://api.football-data.org/v4
 ```
 
 #### API限制和特性
+
 - **免费额度**: 每日100次API调用
 - **付费计划**: €10/月 无限制调用
 - **数据覆盖**: 200+联赛，实时比分
@@ -46,6 +49,7 @@ FOOTBALL_DATA_API_URL=https://api.football-data.org/v4
 - **支持格式**: JSON
 
 #### 使用示例
+
 ```python
 # 测试API连接
 import requests
@@ -61,12 +65,14 @@ print(response.json())
 ### 2. The-Odds-API.com 配置
 
 #### 注册和获取API密钥
-1. 访问 https://the-odds-api.com/
+
+1. 访问 <https://the-odds-api.com/>
 2. 注册免费账户
 3. 登录后在Dashboard获取API密钥
 4. 选择需要的订阅计划
 
 #### 环境变量配置
+
 ```bash
 # 在 .env.staging 或 .env 文件中添加
 ODDS_API_KEY=your_actual_odds_api_key_here
@@ -74,6 +80,7 @@ ODDS_API_URL=https://api.the-odds-api.com/v4
 ```
 
 #### API限制和特性
+
 - **免费额度**: 每日500次API调用
 - **付费计划**: $10/月 25,000次调用
 - **数据覆盖**: 30+博彩公司，赔率历史
@@ -81,6 +88,7 @@ ODDS_API_URL=https://api.the-odds-api.com/v4
 - **支持市场**: 1x2、让球、大小球等
 
 #### 使用示例
+
 ```python
 # 测试API连接
 import requests
@@ -95,6 +103,7 @@ print(response.json())
 ### 3. 可选数据源配置
 
 #### API-Football (备用数据源)
+
 ```bash
 # 环境变量配置
 API_FOOTBALL_KEY=your_api_football_key
@@ -107,6 +116,7 @@ API_FOOTBALL_URL=https://v3.football.api-sports.io
 ```
 
 #### SportsDataIO (专业数据源)
+
 ```bash
 # 环境变量配置
 SPORTSDATAIO_KEY=your_sportsdataio_key
@@ -125,6 +135,7 @@ SPORTSDATAIO_URL=https://api.sportsdata.io
 ### 步骤1: 获取API密钥
 
 #### 推荐方案 (免费开发)
+
 ```bash
 # 1. Football-Data.org (主要用于赛程和比分)
 FOOTBALL_DATA_API_KEY=your_free_key_here
@@ -134,6 +145,7 @@ ODDS_API_KEY=your_free_odds_key_here
 ```
 
 #### 高级方案 (付费生产)
+
 ```bash
 # 1. Football-Data.org 付费版 (€10/月)
 # 无限制调用，实时数据
@@ -145,6 +157,7 @@ ODDS_API_KEY=your_free_odds_key_here
 ### 步骤2: 配置环境变量
 
 #### 更新 .env.staging 文件
+
 ```bash
 # 足球数据API配置
 FOOTBALL_DATA_API_KEY=your_actual_api_key_here
@@ -160,6 +173,7 @@ API_RETRY_COUNT=3
 ```
 
 #### 创建生产环境配置 (.env.production)
+
 ```bash
 # 生产环境配置示例
 FOOTBALL_DATA_API_KEY=production_api_key_here
@@ -174,6 +188,7 @@ API_RETRY_COUNT=2
 ### 步骤3: 验证配置
 
 #### 测试API连接
+
 ```python
 # 创建测试脚本 test_api_connection.py
 import os
@@ -255,6 +270,7 @@ if __name__ == "__main__":
 ### 步骤4: 运行数据采集任务
 
 #### 手动测试采集
+
 ```bash
 # 激活虚拟环境
 source .venv/bin/activate
@@ -270,6 +286,7 @@ python -m celery -A src.tasks worker -l info -Q fixtures -P solo
 ```
 
 #### 启动定时采集
+
 ```bash
 # 启动Celery Beat和Worker
 python -m celery -A src.tasks beat --loglevel=info
@@ -291,6 +308,7 @@ python -m celery -A src.tasks worker --loglevel=info
 ### 自定义配置示例
 
 #### 修改采集频率 (src/tasks/beat_schedule.py)
+
 ```python
 # 在 beat_schedule 中修改
 beat_schedule = {
@@ -319,11 +337,13 @@ beat_schedule = {
 ### 问题1: API调用频率限制
 
 **错误信息**:
+
 ```
 429 Too Many Requests
 ```
 
 **解决方案**:
+
 ```bash
 # 增加API调用间隔
 API_RATE_LIMIT_DELAY=2  # 从1秒增加到2秒
@@ -335,12 +355,14 @@ API_RATE_LIMIT_DELAY=2  # 从1秒增加到2秒
 ### 问题2: API密钥无效
 
 **错误信息**:
+
 ```
 401 Unauthorized
 403 Forbidden
 ```
 
 **解决方案**:
+
 ```bash
 # 检查API密钥是否正确
 echo $FOOTBALL_DATA_API_KEY
@@ -352,11 +374,13 @@ echo $FOOTBALL_DATA_API_KEY
 ### 问题3: 网络连接问题
 
 **错误信息**:
+
 ```
 ConnectionError: Failed to establish connection
 ```
 
 **解决方案**:
+
 ```bash
 # 检查网络连接
 ping api.football-data.org
@@ -372,12 +396,14 @@ HTTPS_PROXY=http://proxy.example.com:8080
 ### 问题4: 数据格式变化
 
 **错误信息**:
+
 ```
 KeyError: 'matches'
 JSONDecodeError
 ```
 
 **解决方案**:
+
 ```python
 # 在数据采集器中添加错误处理
 try:
@@ -397,6 +423,7 @@ except Exception as e:
 ### 1. API密钥管理
 
 #### 安全存储
+
 ```bash
 # 使用环境变量，不要硬编码在代码中
 # 不要将API密钥提交到版本控制
@@ -404,6 +431,7 @@ except Exception as e:
 ```
 
 #### 配置分离
+
 ```bash
 # 开发环境使用测试密钥
 # 生产环境使用付费密钥
@@ -413,6 +441,7 @@ except Exception as e:
 ### 2. 错误处理和重试
 
 #### 指数退避重试
+
 ```python
 async def fetch_with_retry(url, headers, max_retries=3):
     """带重试机制的数据获取"""
@@ -437,6 +466,7 @@ async def fetch_with_retry(url, headers, max_retries=3):
 ### 3. 数据验证
 
 #### 数据质量检查
+
 ```python
 def validate_fixture_data(fixture):
     """验证赛程数据质量"""
@@ -452,6 +482,7 @@ def validate_odds_data(odds):
 ### 4. 成本控制
 
 #### API调用监控
+
 ```python
 # 记录API调用次数和成本
 class APICallTracker:
@@ -476,6 +507,7 @@ class APICallTracker:
 ### 1. 缓存策略
 
 #### Redis缓存配置
+
 ```python
 # 配置Redis缓存API响应
 CACHE_TTL = 300  # 5分钟缓存
@@ -495,6 +527,7 @@ async def get_cached_data(key, fetch_func, ttl=CACHE_TTL):
 ### 2. 批量处理
 
 #### 批量API调用
+
 ```python
 async def batch_collect_fixtures(league_list):
     """批量采集多个联赛的数据"""
@@ -510,6 +543,7 @@ async def batch_collect_fixtures(league_list):
 ### 3. 异步优化
 
 #### 并发控制
+
 ```python
 import asyncio
 from aiohttp import ClientSession, ClientTimeout
@@ -533,6 +567,7 @@ class AsyncDataCollector:
 ### 1. 采集任务监控
 
 #### 监控指标
+
 ```python
 # 关键监控指标
 COLLECTION_METRICS = {
@@ -546,6 +581,7 @@ COLLECTION_METRICS = {
 ### 2. 告警配置
 
 #### 告警规则
+
 ```yaml
 # Prometheus告警规则
 groups:
@@ -576,15 +612,15 @@ groups:
 
 | 服务 | 支持网站 | 文档 | 状态页面 |
 |------|----------|------|----------|
-| **Football-Data.org** | https://www.football-data.org/ | API Docs | Status Page |
-| **The-Odds-API.com** | https://the-odds-api.com/ | API Docs | Status Page |
-| **API-Football** | https://api-football.com/ | API Docs | Status Page |
+| **Football-Data.org** | <https://www.football-data.org/> | API Docs | Status Page |
+| **The-Odds-API.com** | <https://the-odds-api.com/> | API Docs | Status Page |
+| **API-Football** | <https://api-football.com/> | API Docs | Status Page |
 
 ### 常见问题资源
 
 1. **API文档**:
-   - Football-Data.org: https://www.football-data.org/documentation
-   - The-Odds-API: https://the-odds-api.com/liveapidocs
+   - Football-Data.org: <https://www.football-data.org/documentation>
+   - The-Odds-API: <https://the-odds-api.com/liveapidocs>
 
 2. **社区支持**:
    - Stack Overflow

@@ -15,6 +15,7 @@
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
@@ -38,13 +39,13 @@ def example_initialize_feature_store() -> FootballFeatureStore:
     """
     print("🚀 初始化特征仓库...")
 
-    # 配置PostgreSQL离线存储
+    # 配置PostgreSQL离线存储 - 使用环境变量
     postgres_config = {
-        "host": "localhost",
-        "port": 5432,
-        "database": "football_prediction_dev",
-        "user": "football_reader",
-        "password": "reader_password_2025",
+        "host": os.getenv("DB_HOST", "localhost"),
+        "port": int(os.getenv("DB_PORT", "5432")),
+        "database": os.getenv("DB_NAME", "football_prediction_dev"),
+        "user": os.getenv("DB_READER_USER", "football_reader"),
+        "password": os.getenv("DB_READER_PASSWORD", ""),
     }
 
     # 配置Redis在线存储
@@ -317,10 +318,10 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
         try:
             stats = feature_store.get_feature_statistics(fv_name)
             print(f"\n🔍 特征视图: {fv_name}")
-            print(f"  📈 特征数量: {stats.get('num_features', 'N/A')}")
-            print(f"  🏷️  实体: {', '.join(stats.get('entities', []))}")
-            print(f"  ⏰ TTL: {stats.get('ttl_days', 'N/A')} 天")
-            print(f"  🏷️  标签: {stats.get('tags', {})}")
+            print(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
+            print(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
+            print(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
+            print(f"  🏷️  标签: {stats.get(str('tags'), {})}")
         except Exception as e:
             print(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
 

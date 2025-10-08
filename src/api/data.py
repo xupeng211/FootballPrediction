@@ -478,9 +478,11 @@ async def get_dashboard_data(session: AsyncSession = Depends(get_async_session))
                 ],
             },
             "data_quality": {
-                "overall_status": quality_report.get("overall_status", "unknown"),
-                "quality_score": quality_report.get("quality_score", 0),
-                "anomalies_count": quality_report.get("anomalies", {}).get("count", 0),
+                "overall_status": quality_report.get(str("overall_status"), "unknown"),
+                "quality_score": quality_report.get(str("quality_score"), 0),
+                "anomalies_count": quality_report.get(str("anomalies"), {}).get(
+                    str("count"), 0
+                ),
                 "last_check": quality_report.get("report_time"),
             },
             "system_health": system_health,

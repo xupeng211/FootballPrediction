@@ -48,52 +48,50 @@ class MockKafkaProducer:
         **kwargs: Any,
     ) -> None:
         self.messages.append((topic, key, value))
-        if callback:
-            callback(None, MockKafkaMessage(topic, value, key))
-
-    def poll(self, _timeout: float = 0.0) -> int:
-        return 0
-
-    def flush(self, _timeout: Optional[float] = None) -> int:
-        return 0
 
 
 class MockKafkaConsumer:
-    """基于内存队列的 Kafka Consumer"""
+    """返回预定义消息的内存 Kafka Consumer"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        topics: List[str],
+        config: Optional[Dict[str, Any]] = None,
+        messages: Optional[List[MockKafkaMessage]] = None,
+    ) -> None:
+        self.topics = topics
         self.config = config or {}
-        self._queue: List[MockKafkaMessage] = []
-        self.subscriptions: List[str] = []
+        self._messages = messages or []
+        self._message_index = 0
 
-    def subscribe(self, topics: List[str]) -> None:
-        self.subscriptions = topics
-
-    def poll(self, _timeout: float = 0.1) -> Optional[MockKafkaMessage]:
-        if self._queue:
-            return self._queue.pop(0)
-        return None
+    def poll(self, timeout_ms: float = 1000) -> Dict[Any, MockKafkaMessage]:
+        """返回一条预定义的消息"""
+        if self._message_index < len(self._messages):
+            msg = self._messages[self._message_index]
+            self._message_index += 1
+            return {None: msg}
+        return {}
 
     def close(self) -> None:
-        return None
-
-    def push(self, topic: str, value: bytes, key: Optional[str] = None) -> None:
-        self._queue.append(MockKafkaMessage(topic, value, key))
+        """关闭消费者"""
 
 
 def apply_kafka_mocks(monkeypatch: MonkeyPatch) -> None:
-    """替换 confluent_kafka 为测试桩"""
+    """
+    应用 Kafka mock
 
-    try:
-        import confluent_kafka as kafka  # type: ignore
-    except ImportError:
-        kafka = ModuleType("confluent_kafka")  # type: ignore
-        sys.modules["confluent_kafka"] = kafka
+    Args:
+        monkeypatch: pytest monkeypatch fixture
+    """
+    # 创建 mock 模块
+    mock_kafka = ModuleType("kafka")
+    mock_kafka.Producer = MockKafkaProducer
+    mock_kafka.Consumer = MockKafkaConsumer
 
-    monkeypatch.setattr(kafka, "Producer", MockKafkaProducer, raising=False)
-    monkeypatch.setattr(kafka, "Consumer", MockKafkaConsumer, raising=False)
-    monkeypatch.setattr(kafka, "KafkaException", RuntimeError, raising=False)
-    monkeypatch.setattr(kafka, "KafkaError", RuntimeError, raising=False)
+    # 应用 mock
+    monkeypatch.setitem(sys.modules, "kafka", mock_kafka)
+    monkeypatch.setitem(sys.modules, "kafka.producer", mock_kafka)
+    monkeypatch.setitem(sys.modules, "kafka.consumer", mock_kafka)
 
 
 __all__ = [
