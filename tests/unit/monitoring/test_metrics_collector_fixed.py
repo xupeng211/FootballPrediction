@@ -1,14 +1,16 @@
-"""
-metrics_collector修复版测试
-修复所有失败的测试用例
-"""
-
 import pytest
 from unittest.mock import patch
 import sys
 import os
 from datetime import datetime, timedelta
 import json
+from src.monitoring.metrics_collector import MetricsCollector
+
+"""
+metrics_collector修复版测试
+修复所有失败的测试用例
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -21,8 +23,6 @@ class TestMetricsCollectorFixed:
     def test_metrics_collector_basic_fixed(self):
         """测试指标收集器基本功能 - 修复版"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
                 collector.logger = mock_logger

@@ -1,12 +1,18 @@
+import pytest
+from unittest.mock import patch
+import sys
+import os
+from src.monitoring.metrics_collector import MetricsCollector
+from src.monitoring.system_monitor import SystemMonitor
+from src.monitoring.anomaly_detector import AnomalyDetector
+from src.monitoring.quality_monitor import QualityMonitor
+from src.monitoring.alert_manager import AlertManager
+
 """
 监控模块修复版测试
 修复了 metrics_exporter 导入问题
 """
 
-import pytest
-from unittest.mock import patch
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -19,8 +25,6 @@ class TestMonitoringFixed:
     def test_metrics_collector_import(self):
         """测试指标收集器导入"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             collector = MetricsCollector()
             assert collector is not None
         except ImportError as e:
@@ -47,8 +51,6 @@ class TestMonitoringFixed:
     def test_system_monitor_import(self):
         """测试系统监控器导入"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
-
             monitor = SystemMonitor()
             assert monitor is not None
         except ImportError as e:
@@ -67,8 +69,6 @@ class TestMonitoringFixed:
     def test_anomaly_detector_import(self):
         """测试异常检测器导入"""
         try:
-            from src.monitoring.anomaly_detector import AnomalyDetector
-
             detector = AnomalyDetector()
             assert detector is not None
         except ImportError as e:
@@ -87,8 +87,6 @@ class TestMonitoringFixed:
     def test_metrics_collector_basic(self):
         """测试指标收集器基本功能"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
                 collector.logger = mock_logger
@@ -123,8 +121,6 @@ class TestMonitoringFixed:
     def test_quality_monitor_basic(self):
         """测试质量监控器基本功能"""
         try:
-            from src.monitoring.quality_monitor import QualityMonitor
-
             with patch("src.monitoring.quality_monitor.logger") as mock_logger:
                 monitor = QualityMonitor()
                 monitor.logger = mock_logger
@@ -173,8 +169,6 @@ class TestMonitoringFixed:
     def test_alert_manager_basic(self):
         """测试告警管理器基本功能"""
         try:
-            from src.monitoring.alert_manager import AlertManager
-
             with patch("src.monitoring.alert_manager.logger") as mock_logger:
                 manager = AlertManager()
                 manager.logger = mock_logger
@@ -205,9 +199,6 @@ class TestMonitoringFixed:
     def test_monitoring_integration(self):
         """测试监控集成"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-            from src.monitoring.alert_manager import AlertManager
-
             # 创建监控组件
             collector = MetricsCollector()
             manager = AlertManager()

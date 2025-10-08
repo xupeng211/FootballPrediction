@@ -1,11 +1,16 @@
+import sys
+import pytest
+from unittest.mock import Mock, patch
+import os
+from src.services.data_processing import DataProcessingService
+from src.services.content_analysis import ContentAnalysisService
+import asyncio
+
 """
 服务层覆盖率测试
 通用测试以提升覆盖率
 """
 
-import sys
-import pytest
-from unittest.mock import Mock, patch
 
 # Mock所有外部依赖
 external_modules = [
@@ -44,7 +49,6 @@ for module in internal_modules:
     sys.modules[module] = Mock()
 
 # 设置测试环境
-import os
 
 os.environ["TESTING"] = "true"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -80,7 +84,6 @@ class TestServiceCoverage:
 
     def test_data_processing_service_methods(self):
         """测试DataProcessingService方法存在性"""
-        from src.services.data_processing import DataProcessingService
 
         service = DataProcessingService()
         expected_methods = [
@@ -114,7 +117,6 @@ class TestServiceCoverage:
 
     def test_content_analysis_service_methods(self):
         """测试ContentAnalysisService方法存在性"""
-        from src.services.content_analysis import ContentAnalysisService
 
         service = ContentAnalysisService()
         expected_methods = [
@@ -147,7 +149,6 @@ class TestServiceCoverage:
     @pytest.mark.asyncio
     async def test_data_processing_service_lifecycle(self):
         """测试DataProcessingService生命周期"""
-        from src.services.data_processing import DataProcessingService
 
         # Mock所有依赖
         with patch("src.services.data_processing.DataLakeStorage"):
@@ -199,7 +200,6 @@ class TestServiceCoverage:
     @pytest.mark.asyncio
     async def test_content_analysis_service_analysis(self):
         """测试ContentAnalysisService分析功能"""
-        from src.services.content_analysis import ContentAnalysisService
 
         # Mock依赖
         with patch("src.services.content_analysis.nltk") as mock_nltk:
@@ -249,7 +249,6 @@ class TestServiceCoverage:
 
     def test_service_error_handling(self):
         """测试服务错误处理"""
-        from src.services.data_processing import DataProcessingService
 
         service = DataProcessingService()
 
@@ -270,9 +269,6 @@ class TestServiceCoverage:
     @pytest.mark.asyncio
     async def test_service_concurrent_operations(self):
         """测试服务并发操作"""
-        import asyncio
-
-        from src.services.data_processing import DataProcessingService
 
         # Mock服务
         with patch("src.services.data_processing.DataLakeStorage"):
@@ -309,7 +305,6 @@ class TestServiceCoverage:
     @pytest.mark.asyncio
     async def test_service_health_check(self):
         """测试服务健康检查"""
-        from src.services.data_processing import DataProcessingService
 
         # Mock所有依赖
         with patch("src.services.data_processing.DataLakeStorage"):

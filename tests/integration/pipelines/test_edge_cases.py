@@ -1,14 +1,19 @@
+import pytest
+import asyncio
+import time
+from unittest.mock import Mock, patch, AsyncMock
+from sqlalchemy.exc import DatabaseError
+from fastapi import HTTPException, FastAPI, Request
+from fastapi.testclient import TestClient
+from src.services.data_processing import DataProcessingService
+from src.streaming.kafka_producer import KafkaProducer
+from src.api.health import router
+from src.database.connection import DatabaseManager
+
 """
 边界测试和异常场景测试
 测试系统在各种边界条件和异常情况下的行为
 """
-
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
-from sqlalchemy.exc import DatabaseError
-from fastapi import HTTPException
-import time
 
 
 class TestEdgeCases:
@@ -22,8 +27,6 @@ class TestEdgeCases:
             mock_manager = Mock()
             mock_manager.get_session.side_effect = DatabaseError("Connection failed")
             MockDBManager.return_value = mock_manager
-
-            from src.services.data_processing import DataProcessingService
 
             service = DataProcessingService()
 
@@ -57,8 +60,6 @@ class TestEdgeCases:
             mock_producer.produce.side_effect = Exception("Kafka broker unavailable")
             MockProducer.return_value = mock_producer
 
-            from src.streaming.kafka_producer import KafkaProducer
-
             producer = KafkaProducer()
 
             # 应该处理Kafka错误
@@ -83,7 +84,6 @@ class TestEdgeCases:
     @pytest.mark.integration
     def test_large_dataset_processing(self):
         """测试大数据集处理"""
-        from src.services.data_processing import DataProcessingService
 
         service = DataProcessingService()
 
@@ -129,8 +129,6 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_concurrent_requests_limit(self):
         """测试并发请求限制"""
-        from src.api.health import router
-        from fastapi.testclient import TestClient
 
         client = TestClient(router)
 
@@ -188,8 +186,6 @@ class TestEdgeCases:
             ]
             MockDBManager.return_value = mock_manager
 
-            from src.database.connection import DatabaseManager
-
             db_manager = DatabaseManager()
 
             # 应该有重试机制
@@ -243,9 +239,6 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_invalid_api_requests(self):
         """测试无效API请求"""
-        from fastapi import FastAPI
-        from fastapi.testclient import TestClient
-        from src.api.health import router
 
         app = FastAPI()
         app.include_router(router)
@@ -290,8 +283,6 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_rate_limiting(self):
         """测试速率限制"""
-        from fastapi import Request
-        import time
 
         # 模拟速率限制中间件
         request_times = []
@@ -308,7 +299,6 @@ class TestEdgeCases:
             return call_next(request)
 
         # 模拟快速请求
-        from unittest.mock import Mock
 
         mock_request = Mock()
         mock_call_next = Mock(return_value=Mock(status_code=200))

@@ -1,23 +1,14 @@
-"""预测API集成测试
-
-使用真实的 FastAPI 路由和内存 SQLite 数据库，验证预测接口在无外部依赖
-（Feast/Redis/MLflow）情况下的核心流程。
-"""
-
 from __future__ import annotations
-
 import importlib
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import AsyncGenerator, Dict
-
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
 from src.database.models import (
     League,
     Match,
@@ -26,6 +17,12 @@ from src.database.models import (
     Predictions,
     Team,
 )
+
+"""预测API集成测试
+
+使用真实的 FastAPI 路由和内存 SQLite 数据库，验证预测接口在无外部依赖
+（Feast/Redis/MLflow）情况下的核心流程。
+"""
 
 
 @pytest_asyncio.fixture(scope="session")

@@ -1,14 +1,12 @@
-"""
-数据收集器测试 - 比分数据收集器
-"""
-
 import json
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
-
 from src.data.collectors.scores_collector import ScoresCollector
+
+"""
+数据收集器测试 - 比分数据收集器
+"""
 
 
 @pytest.mark.unit

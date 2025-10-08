@@ -1,14 +1,12 @@
-"""
-监控模块测试 - 告警管理器
-"""
-
 import json
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
-
 from src.monitoring.alert_manager import AlertManager, AlertSeverity, AlertType
+
+"""
+监控模块测试 - 告警管理器
+"""
 
 
 @pytest.mark.unit

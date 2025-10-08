@@ -1,11 +1,16 @@
+import pytest
+import sys
+import os
+from src.database.sql_compatibility import SQLDialect, create_custom_dialect
+from src.core.config import validate_config, get_config
+from src.core.exceptions import FootballPredictionError, ValidationError
+from src.features.feature_calculator import FeatureCalculator
+
 """
 额外覆盖率提升测试
 专注于覆盖更多代码路径
 """
 
-import pytest
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -18,8 +23,6 @@ class TestExtraCoverageBoost:
     def test_main_module(self):
         """测试主模块"""
         try:
-            import src.main
-
             # 测试主模块导入成功
             assert True
         except ImportError:
@@ -39,8 +42,6 @@ class TestExtraCoverageBoost:
     def test_database_sql_compatibility(self):
         """测试数据库SQL兼容性"""
         try:
-            from src.database.sql_compatibility import SQLDialect, create_custom_dialect
-
             # 测试SQL方言
             if "SQLDialect" in globals():
                 dialect = SQLDialect()
@@ -248,8 +249,6 @@ class TestExtraCoverageBoost:
     def test_config_validation(self):
         """测试配置验证"""
         try:
-            from src.core.config import validate_config, get_config
-
             if callable(validate_config):
                 # 测试配置验证
                 result = validate_config({})
@@ -282,8 +281,6 @@ class TestExtraCoverageBoost:
     def test_exception_handling(self):
         """测试异常处理"""
         try:
-            from src.core.exceptions import FootballPredictionError, ValidationError
-
             # 测试异常创建
             error1 = FootballPredictionError("Test error")
             error2 = ValidationError("Validation error")
@@ -320,8 +317,6 @@ class TestExtraCoverageBoost:
     def test_feature_calculator(self):
         """测试特征计算器"""
         try:
-            from src.features.feature_calculator import FeatureCalculator
-
             calculator = FeatureCalculator()
 
             # 测试方法存在

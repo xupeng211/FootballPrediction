@@ -1,8 +1,3 @@
-"""
-边界情况和错误处理测试
-专注于测试各种异常场景和边界条件
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch
 import sys
@@ -10,6 +5,18 @@ import os
 from datetime import timedelta
 import json
 import asyncio
+import socket
+import urllib.error
+import urllib.request
+import gc
+import math
+import tempfile
+
+"""
+边界情况和错误处理测试
+专注于测试各种异常场景和边界条件
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -53,30 +60,26 @@ class TestEdgeCasesAndErrorHandling:
 
             with pytest.raises(PermissionError):
                 mock_file.read()
-        except:
+        except Exception:
             pass  # 在某些环境中可能无法测试
 
     def test_network_timeout_errors(self):
         """测试网络超时错误"""
-        import socket
-        import urllib.error
 
         # 测试socket超时
         with pytest.raises((socket.timeout, OSError)):
             try:
                 socket.create_connection(("192.0.2.1", 80), timeout=0.001)
-            except:
+            except Exception:
                 raise socket.timeout("Test timeout")
 
         # 测试URL错误
         with pytest.raises((urllib.error.URLError, ValueError)):
-            import urllib.request
-
             try:
                 urllib.request.urlopen(
                     "http://invalid-url-that-does-not-exist.com", timeout=1
                 )
-            except:
+            except Exception:
                 raise urllib.error.URLError("Test URL error")
 
     def test_database_constraint_violations(self):
@@ -109,7 +112,6 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_memory_exhaustion(self):
         """测试内存耗尽场景"""
-        import sys
 
         # 监控内存使用
         initial_objects = len(gc.get_objects()) if "gc" in sys.modules else 0
@@ -127,8 +129,6 @@ class TestEdgeCasesAndErrorHandling:
 
         # 验证内存没有被泄漏太多
         if "gc" in sys.modules:
-            import gc
-
             gc.collect()
             final_objects = len(gc.get_objects())
             object_increase = final_objects - initial_objects
@@ -302,7 +302,6 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_recursion_limits(self):
         """测试递归限制"""
-        import sys
 
         # 获取当前递归限制
         original_limit = sys.getrecursionlimit()
@@ -368,7 +367,6 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_numeric_precision(self):
         """测试数值精度"""
-        import math
 
         # 测试浮点精度
         very_small = 1e-10
@@ -415,8 +413,6 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_resource_cleanup(self):
         """测试资源清理"""
-        import tempfile
-        import os
 
         # 测试文件清理
         temp_file = None

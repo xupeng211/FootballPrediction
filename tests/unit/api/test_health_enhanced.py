@@ -6,11 +6,9 @@
 import time
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-
 import pytest
 from fastapi import status
 from sqlalchemy.exc import SQLAlchemyError
-
 from src.api.health import (
     ServiceCheckError,
     _check_database,

@@ -1,15 +1,14 @@
-"""
-TestContainers配置模块
-提供PostgreSQL和Redis的容器化测试环境
-"""
-
 import os
 from typing import Optional
-
 import pytest
 from testcontainers.core.waiting_utils import wait_for_logs
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
+
+"""
+TestContainers配置模块
+提供PostgreSQL和Redis的容器化测试环境
+"""
 
 
 class TestPostgresContainer(PostgresContainer):

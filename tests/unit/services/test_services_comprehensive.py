@@ -1,12 +1,17 @@
+import pytest
+from unittest.mock import MagicMock, patch
+import sys
+import os
+from src.services.manager import ServiceManager
+from src.services.content_analysis import ContentAnalysisService
+from src.services.data_processing import DataProcessingService
+from src.services.audit_service import AuditService
+
 """
 服务模块综合简化测试
 覆盖更多的服务功能，使用 mock 避免复杂依赖
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -59,8 +64,6 @@ class TestServicesComprehensive:
     def test_manager_service(self):
         """测试管理器服务"""
         try:
-            from src.services.manager import ServiceManager
-
             with patch("src.services.manager.logger") as mock_logger:
                 manager = ServiceManager()
                 manager.logger = mock_logger
@@ -95,8 +98,6 @@ class TestServicesComprehensive:
     def test_content_analysis_service(self):
         """测试内容分析服务"""
         try:
-            from src.services.content_analysis import ContentAnalysisService
-
             with patch("src.services.content_analysis.logger") as mock_logger:
                 service = ContentAnalysisService()
                 service.logger = mock_logger
@@ -130,8 +131,6 @@ class TestServicesComprehensive:
     def test_service_metrics(self):
         """测试服务指标"""
         try:
-            from src.services.data_processing import DataProcessingService
-
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
                 service.logger = mock_logger
@@ -165,8 +164,6 @@ class TestServicesComprehensive:
     async def test_async_service_operations(self):
         """测试异步服务操作"""
         try:
-            from src.services.data_processing import DataProcessingService
-
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
                 service.logger = mock_logger
@@ -206,9 +203,6 @@ class TestServicesComprehensive:
     def test_service_error_handling(self):
         """测试服务错误处理"""
         try:
-            from src.services.data_processing import DataProcessingService
-            from src.services.exceptions import ServiceError
-
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
                 service.logger = mock_logger
@@ -241,8 +235,6 @@ class TestServicesComprehensive:
     def test_service_serialization(self):
         """测试服务序列化"""
         try:
-            from src.services.data_processing import DataProcessingService
-
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
                 service.logger = mock_logger
@@ -286,8 +278,6 @@ class TestServicesComprehensive:
     def test_service_lifecycle(self):
         """测试服务生命周期"""
         try:
-            from src.services.data_processing import DataProcessingService
-
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
                 service.logger = mock_logger
@@ -321,9 +311,6 @@ class TestServicesComprehensive:
     def test_service_integration(self):
         """测试服务集成"""
         try:
-            from src.services.data_processing import DataProcessingService
-            from src.services.audit_service import AuditService
-
             # 创建服务实例
             with patch("src.services.data_processing.logger") as mock_logger1, patch(
                 "src.services.audit_service.logger"

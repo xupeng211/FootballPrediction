@@ -1,8 +1,8 @@
+from src.utils.dict_utils import DictUtils
+
 """
 测试字典处理工具模块
 """
-
-from src.utils.dict_utils import DictUtils
 
 
 class TestDictUtils:

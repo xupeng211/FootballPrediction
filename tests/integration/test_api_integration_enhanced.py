@@ -1,19 +1,17 @@
-"""
-增强的API集成测试
-测试API端点之间的交互和数据流
-"""
-
 import asyncio
 from unittest.mock import patch
-
 import pytest
-
 from tests.helpers.enhanced_mocks import (
     EnhancedMock,
     MockDataGenerator,
     mock_database_session,
     mock_redis_cache,
 )
+
+"""
+增强的API集成测试
+测试API端点之间的交互和数据流
+"""
 
 
 @pytest.mark.integration

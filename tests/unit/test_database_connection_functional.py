@@ -1,12 +1,20 @@
+import pytest
+import os
+from unittest.mock import patch
+from sqlalchemy import text
+from src.database.connection import DatabaseManager, get_engine
+from src.database.connection import create_session_factory, get_session
+from src.database.connection import get_engine_with_pool
+from src.database.connection import check_database_health
+from src.database.connection import DatabaseError
+from src.database.connection import parse_database_url
+import threading
+
 """
 数据库连接功能测试
 测试实际的数据库连接和操作功能
 """
 
-import pytest
-import os
-from unittest.mock import patch
-from sqlalchemy import text
 
 # 设置测试环境
 os.environ["TESTING"] = "true"
@@ -20,8 +28,6 @@ class TestDatabaseConnectionFunctional:
     def test_database_engine_creation(self):
         """测试数据库引擎创建"""
         try:
-            from src.database.connection import DatabaseManager, get_engine
-
             # 测试获取引擎
             engine = get_engine()
             assert engine is not None
@@ -81,8 +87,6 @@ class TestDatabaseConnectionFunctional:
     def test_session_factory_creation(self):
         """测试会话工厂创建"""
         try:
-            from src.database.connection import create_session_factory, get_session
-
             # 创建会话工厂
             session_factory = create_session_factory()
             assert session_factory is not None
@@ -138,8 +142,6 @@ class TestDatabaseConnectionFunctional:
     def test_connection_pooling(self):
         """测试连接池"""
         try:
-            from src.database.connection import get_engine_with_pool
-
             # 创建带连接池的引擎
             engine = get_engine_with_pool(pool_size=5, max_overflow=10)
             assert engine is not None
@@ -189,8 +191,6 @@ class TestDatabaseConnectionFunctional:
     def test_database_health_check(self):
         """测试数据库健康检查"""
         try:
-            from src.database.connection import check_database_health
-
             # 执行健康检查
             health = check_database_health()
             assert isinstance(health, dict)
@@ -222,8 +222,6 @@ class TestDatabaseConnectionFunctional:
     def test_database_error_handling(self):
         """测试数据库错误处理"""
         try:
-            from src.database.connection import DatabaseManager, DatabaseError
-
             db_manager = DatabaseManager()
 
             # 测试无效SQL
@@ -259,8 +257,6 @@ class TestDatabaseConnectionFunctional:
     def test_connection_timeout(self):
         """测试连接超时"""
         try:
-            from src.database.connection import DatabaseManager
-
             # 创建带超时配置的管理器
             db_manager = DatabaseManager(connect_timeout=5, query_timeout=10)
 
@@ -296,8 +292,6 @@ class TestDatabaseConnectionFunctional:
     def test_database_url_parsing(self):
         """测试数据库URL解析"""
         try:
-            from src.database.connection import parse_database_url
-
             test_urls = [
                 "sqlite:///test.db",
                 "postgresql://user:pass@localhost:5432/test",
@@ -333,11 +327,8 @@ class TestDatabaseConnectionFunctional:
 
     def test_thread_safety(self):
         """测试线程安全性"""
-        import threading
 
         try:
-            from src.database.connection import get_session
-
             results = []
 
             def worker():

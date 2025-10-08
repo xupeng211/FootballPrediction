@@ -1,15 +1,13 @@
-"""
-数据质量测试 - 异常检测器
-"""
-
 from datetime import datetime
 from unittest.mock import MagicMock
-
 import numpy as np
 import pandas as pd
 import pytest
-
 from src.data.quality.anomaly_detector import StatisticalAnomalyDetector
+
+"""
+数据质量测试 - 异常检测器
+"""
 
 
 @pytest.mark.unit

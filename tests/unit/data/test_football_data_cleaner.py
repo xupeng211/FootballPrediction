@@ -1,13 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock
+import pytest
+from src.data.processing.football_data_cleaner import FootballDataCleaner
+
 """
 足球数据清洗器测试
 测试FootballDataCleaner的各种数据清洗功能
 """
-
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-
-from src.data.processing.football_data_cleaner import FootballDataCleaner
 
 
 @pytest.mark.unit

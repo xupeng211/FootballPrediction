@@ -1,13 +1,16 @@
+import pytest
+from unittest.mock import MagicMock, patch
+import sys
+import os
+from src.collectors.fixtures_collector import FixturesCollector
+from src.collectors.scores_collector import ScoresCollector
+
 """
 数据收集器简化测试 / Data Collectors Simple Tests
 
 只测试基本的初始化和存在的方法
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -34,8 +37,6 @@ class TestCollectorsSimple:
             mock_logger = MagicMock()
             with patch("src.utils.logger.get_logger", return_value=mock_logger):
                 try:
-                    from src.collectors.fixtures_collector import FixturesCollector
-
                     assert FixturesCollector is not None
                     assert FixturesCollector.__name__ == "FixturesCollector"
                 except ImportError as e:
@@ -78,8 +79,6 @@ class TestCollectorsSimple:
             mock_logger = MagicMock()
             with patch("src.utils.logger.get_logger", return_value=mock_logger):
                 try:
-                    from src.collectors.scores_collector import ScoresCollector
-
                     assert ScoresCollector is not None
                     assert ScoresCollector.__name__ == "ScoresCollector"
                 except ImportError as e:

@@ -1,14 +1,12 @@
+from unittest.mock import AsyncMock, MagicMock
+import pytest
+from src.services.data_processing import DataProcessingService
+
 """
 数据处理服务补充测试 / Additional Data Processing Service Tests
 
 补充更多的测试用例以提高覆盖率
 """
-
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-
-from src.services.data_processing import DataProcessingService
 
 
 @pytest.mark.asyncio

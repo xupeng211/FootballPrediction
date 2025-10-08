@@ -1,11 +1,12 @@
+import pytest
+import sys
+import os
+
 """
 快速覆盖率提升测试
 专注于提升覆盖率，创建简单有效的测试
 """
 
-import pytest
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

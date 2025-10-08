@@ -1,13 +1,14 @@
-"""
-真实API集成测试
-测试请求能够真正流转到service层，而不是返回mock数据
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 import sys
 import os
+from src.main import app
+
+"""
+真实API集成测试
+测试请求能够真正流转到service层，而不是返回mock数据
+"""
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -22,8 +23,6 @@ class TestRealAPIIntegration:
         """创建测试客户端"""
         # 尝试导入并创建FastAPI应用
         try:
-            from src.main import app
-
             return TestClient(app)
         except ImportError:
             pytest.skip("FastAPI app not available")

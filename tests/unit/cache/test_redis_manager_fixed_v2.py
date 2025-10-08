@@ -1,12 +1,14 @@
+import pytest
+from unittest.mock import MagicMock, AsyncMock
+import sys
+import os
+from src.cache.redis_manager import RedisManager
+
 """
 Redis管理器修复版测试 V2
 修复了所有已知的问题
 """
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock
-import sys
-import os
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -19,7 +21,6 @@ class TestRedisManagerFixedV2:
     @pytest.fixture
     def redis_manager(self):
         """创建Redis管理器实例"""
-        from src.cache.redis_manager import RedisManager
 
         manager = RedisManager()
         manager.logger = MagicMock()

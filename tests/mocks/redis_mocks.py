@@ -1,11 +1,12 @@
+import sys
+from unittest.mock import MagicMock
+import redis.asyncio
+
 """
 Redis Mocks for Testing
 
 提供Redis相关的Mock实现，解决版本兼容性问题
 """
-
-import sys
-from unittest.mock import MagicMock
 
 
 # 创建所有必要的Redis mock类
@@ -92,8 +93,6 @@ def install_redis_mocks():
 
     # 修补已经存在的redis.asyncio模块
     try:
-        import redis.asyncio
-
         if not hasattr(redis.asyncio, "RedisCluster"):
             redis.asyncio.RedisCluster = RedisClusterStub
         if not hasattr(redis.asyncio, "Sentinel"):

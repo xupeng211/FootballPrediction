@@ -1,14 +1,12 @@
+import json
+from unittest.mock import AsyncMock, MagicMock
+import pytest
+from src.cache.redis_manager import CacheKeyManager, RedisManager
+
 """
 Redis管理器测试
 测试Redis连接池、基础操作方法
 """
-
-import json
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-
-from src.cache.redis_manager import CacheKeyManager, RedisManager
 
 
 @pytest.mark.unit

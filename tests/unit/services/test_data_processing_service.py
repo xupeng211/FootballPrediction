@@ -1,11 +1,14 @@
+import sys
+import pytest
+from unittest.mock import Mock, patch
+import os
+from src.services.data_processing import DataProcessingService
+
 """
 DataProcessingService测试
 提升服务层覆盖率
 """
 
-import sys
-import pytest
-from unittest.mock import Mock, patch
 
 # Mock外部依赖
 sys.modules["pandas"] = Mock()
@@ -15,11 +18,8 @@ sys.modules["sklearn.preprocessing"] = Mock()
 sys.modules["sklearn.impute"] = Mock()
 
 # 设置测试环境
-import os
 
 os.environ["TESTING"] = "true"
-
-from src.services.data_processing import DataProcessingService
 
 
 class TestDataProcessingService:

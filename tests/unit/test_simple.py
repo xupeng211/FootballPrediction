@@ -1,3 +1,12 @@
+import celery  # noqa: F401
+import fastapi  # noqa: F401
+import numpy  # noqa: F401
+import pandas  # noqa: F401
+import pydantic  # noqa: F401
+import redis  # noqa: F401
+import sqlalchemy  # noqa: F401
+from pydantic import BaseModel
+
 """简单测试 - 验证基本功能"""
 
 import sys
@@ -12,14 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 def test_imports():
     """测试核心包导入"""
     try:
-        import celery  # noqa: F401
-        import fastapi  # noqa: F401
-        import numpy  # noqa: F401
-        import pandas  # noqa: F401
-        import pydantic  # noqa: F401
-        import redis  # noqa: F401
-        import sqlalchemy  # noqa: F401
-
         assert True
     except ImportError as e:
         pytest.fail(f"导入失败: {e}")
@@ -41,7 +42,6 @@ def test_fastapi_app():
 
 def test_pydantic_model():
     """测试Pydantic模型"""
-    from pydantic import BaseModel
 
     class TestModel(BaseModel):
         name: str

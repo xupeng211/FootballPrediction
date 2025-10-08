@@ -1,12 +1,16 @@
-"""
-数据库集成测试
-使用现有的docker-compose服务进行测试
-"""
-
 import pytest
 import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from src.database.models.league import League
+from src.database.models.team import Team
+import redis
+import re
+
+"""
+数据库集成测试
+使用现有的docker-compose服务进行测试
+"""
 
 
 @pytest.mark.integration
@@ -115,7 +119,6 @@ class TestDatabaseIntegration:
 
     def test_create_league(self, db_session):
         """测试创建联赛记录"""
-        from src.database.models.league import League
 
         # 创建联赛
         league = League(
@@ -174,7 +177,6 @@ class TestDatabaseIntegration:
 
     def test_query_with_pagination(self, db_session):
         """测试分页查询"""
-        from src.database.models.team import Team
 
         # 创建多个球队
         teams = []
@@ -216,7 +218,6 @@ class TestDatabaseIntegration:
 
     def test_delete_record(self, db_session):
         """测试删除记录"""
-        from src.database.models.team import Team
 
         # 创建球队
         team = Team(name="Delete Me FC", short_name="DEL", country="Testland")
@@ -245,15 +246,12 @@ class TestRedisIntegration:
     def redis_client(self):
         """创建Redis客户端"""
         try:
-            import redis
-
             # 从环境变量获取Redis URL
             redis_url = os.getenv(
                 "REDIS_URL", "redis://:redis_password@localhost:6379/1"
             )
 
             # 解析Redis URL
-            import re
 
             match = re.match(r"redis://:(\w+)@([^:]+):(\d+)/(\d+)", redis_url)
             if match:

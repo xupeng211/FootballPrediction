@@ -1,11 +1,14 @@
+import sys
+import pytest
+from unittest.mock import Mock, AsyncMock, patch
+import os
+from src.services.data_processing import DataProcessingService
+
 """
 数据处理服务简单测试
 测试核心功能以提升覆盖率
 """
 
-import sys
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 # Mock外部依赖
 sys.modules["pandas"] = Mock()
@@ -15,7 +18,6 @@ sys.modules["nltk"] = Mock()
 sys.modules["spacy"] = Mock()
 
 # 设置测试环境
-import os
 
 os.environ["TESTING"] = "true"
 
@@ -41,8 +43,6 @@ sys.modules["src.database.manager"] = Mock(
 sys.modules["src.cache.redis_manager"] = Mock(
     RedisManager=Mock(return_value=mock_cache_manager)
 )
-
-from src.services.data_processing import DataProcessingService
 
 
 class TestDataProcessingSimple:

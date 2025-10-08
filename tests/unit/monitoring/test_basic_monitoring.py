@@ -1,3 +1,8 @@
+from src.monitoring import metrics_collector
+from src.monitoring import quality_monitor
+from src.monitoring import alert_manager
+from src.monitoring.system_monitor import SystemMonitor
+
 """监控模块基础测试"""
 
 import pytest
@@ -19,8 +24,6 @@ class TestBasicMonitoringImports:
     def test_import_metrics_collector(self):
         """测试指标收集器导入"""
         try:
-            from src.monitoring import metrics_collector
-
             assert metrics_collector is not None
         except ImportError as e:
             pytest.skip(f"无法导入metrics_collector: {e}")
@@ -37,8 +40,6 @@ class TestBasicMonitoringImports:
     def test_import_quality_monitor(self):
         """测试质量监控器导入"""
         try:
-            from src.monitoring import quality_monitor
-
             assert quality_monitor is not None
         except ImportError as e:
             pytest.skip(f"无法导入quality_monitor: {e}")
@@ -55,8 +56,6 @@ class TestBasicMonitoringImports:
     def test_import_alert_manager(self):
         """测试告警管理器导入"""
         try:
-            from src.monitoring import alert_manager
-
             assert alert_manager is not None
         except ImportError as e:
             pytest.skip(f"无法导入alert_manager: {e}")
@@ -69,8 +68,6 @@ class TestBasicMonitoringFunctionality:
     def test_system_monitor_basic(self, mock_cpu):
         """测试系统监控基本功能"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
-
             # Mock psutil
             mock_cpu.return_value = 50.0
 

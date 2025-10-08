@@ -1,13 +1,17 @@
-"""
-缓存综合测试
-专注于提升缓存模块的覆盖率
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 import sys
 import os
 import time
+from src.cache.redis_manager import RedisManager
+from src.cache.ttl_cache import TTLCache
+import json
+
+"""
+缓存综合测试
+专注于提升缓存模块的覆盖率
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -20,8 +24,6 @@ class TestCacheComprehensive:
     def test_redis_manager_all_methods(self):
         """测试RedisManager的所有方法"""
         try:
-            from src.cache.redis_manager import RedisManager
-
             # 创建RedisManager实例
             with patch("src.cache.redis_manager.redis") as mock_redis:
                 # Mock同步客户端
@@ -85,8 +87,6 @@ class TestCacheComprehensive:
     def test_ttl_cache_basic(self):
         """测试TTL缓存基本功能"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             # 创建缓存实例
             cache = TTLCache(max_size=10, ttl=60)
 
@@ -127,8 +127,6 @@ class TestCacheComprehensive:
     def test_ttl_cache_max_size(self):
         """测试TTL缓存最大大小限制"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             # 创建小缓存
             cache = TTLCache(max_size=2, ttl=60)
 
@@ -164,8 +162,6 @@ class TestCacheComprehensive:
     def test_cache_serialization(self):
         """测试缓存序列化"""
         try:
-            from src.cache.redis_manager import RedisManager
-
             with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True
@@ -177,7 +173,6 @@ class TestCacheComprehensive:
 
                 # 测试序列化存储
                 test_dict = {"key": "value"}
-                import json
 
                 serialized = json.dumps(test_dict)
                 manager.set("dict_key", serialized)
@@ -223,8 +218,6 @@ class TestCacheComprehensive:
     def test_cache_health_check(self):
         """测试缓存健康检查"""
         try:
-            from src.cache.redis_manager import RedisManager
-
             with patch("src.cache.redis_manager.redis") as mock_redis:
                 mock_client = MagicMock()
                 mock_client.ping.return_value = True

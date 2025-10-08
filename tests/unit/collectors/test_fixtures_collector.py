@@ -1,13 +1,11 @@
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
+from src.data.collectors.fixtures_collector import FixturesCollector
+
 """
 数据收集器测试 - 比赛数据收集器
 """
-
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
-from src.data.collectors.fixtures_collector import FixturesCollector
 
 
 @pytest.mark.unit

@@ -1,8 +1,3 @@
-"""
-监控模块综合测试
-专注于提升监控模块覆盖率
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch
 import sys
@@ -10,6 +5,14 @@ import os
 import time
 from datetime import datetime, timedelta
 import json
+from src.monitoring.metrics_collector import MetricsCollector
+from src.monitoring.alert_manager import AlertManager
+
+"""
+监控模块综合测试
+专注于提升监控模块覆盖率
+"""
+
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -22,8 +25,6 @@ class TestMonitoringComprehensive:
     def test_metrics_collector_comprehensive(self):
         """测试指标收集器综合功能"""
         try:
-            from src.monitoring.metrics_collector import MetricsCollector
-
             with patch("src.monitoring.metrics_collector.logger") as mock_logger:
                 collector = MetricsCollector()
                 collector.logger = mock_logger
@@ -114,8 +115,6 @@ class TestMonitoringComprehensive:
     def test_alert_manager_comprehensive(self):
         """测试告警管理器综合功能"""
         try:
-            from src.monitoring.alert_manager import AlertManager
-
             with patch("src.monitoring.alert_manager.logger") as mock_logger:
                 manager = AlertManager()
                 manager.logger = mock_logger

@@ -1,12 +1,16 @@
+import pytest
+import sys
+import os
+import time
+from src.cache.ttl_cache import TTLCache, CacheItem
+from src.cache.redis_manager import CacheKeyManager
+import threading
+
 """
 缓存模块简化测试
 测试基础的缓存功能，避免复杂的 Redis 依赖
 """
 
-import pytest
-import sys
-import os
-import time
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -19,8 +23,6 @@ class TestCacheSimple:
     def test_ttl_cache_import(self):
         """测试TTL缓存导入"""
         try:
-            from src.cache.ttl_cache import TTLCache, CacheItem
-
             cache = TTLCache(max_size=100, ttl=60)
             assert cache is not None
             assert CacheItem is not None
@@ -42,8 +44,6 @@ class TestCacheSimple:
     def test_ttl_cache_basic(self):
         """测试TTL缓存基本功能"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             # 创建缓存
             cache = TTLCache(max_size=100, ttl=60)
 
@@ -90,8 +90,6 @@ class TestCacheSimple:
     def test_ttl_cache_size_limit(self):
         """测试TTL缓存大小限制"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             # 创建小缓存
             cache = TTLCache(max_size=2, ttl=60)
 
@@ -133,8 +131,6 @@ class TestCacheSimple:
     def test_cache_key_manager(self):
         """测试缓存键管理器"""
         try:
-            from src.cache.redis_manager import CacheKeyManager
-
             # 测试键构建
             key = CacheKeyManager.build_key("match", 123, "features")
             assert "match" in key
@@ -178,8 +174,6 @@ class TestCacheSimple:
     def test_cache_statistics(self):
         """测试缓存统计"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试统计属性
@@ -232,8 +226,6 @@ class TestCacheSimple:
     def test_cache_serialization(self):
         """测试缓存序列化"""
         try:
-            from src.cache.ttl_cache import TTLCache
-
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试复杂对象
@@ -289,9 +281,6 @@ class TestCacheSimple:
     def test_cache_thread_safety(self):
         """测试缓存线程安全"""
         try:
-            from src.cache.ttl_cache import TTLCache
-            import threading
-
             cache = TTLCache(max_size=100, ttl=60)
 
             # 测试锁属性存在

@@ -5,7 +5,6 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-
 from src.api.health import (
     ServiceCheckError,
     _check_database,

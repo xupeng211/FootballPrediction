@@ -1,3 +1,9 @@
+import pytest
+import asyncio
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, patch
+from src.models.prediction_service import PredictionResult
+
 """
 预测流程集成测试
 Integration Tests for Prediction Flow
@@ -5,13 +11,6 @@ Integration Tests for Prediction Flow
 测试完整的数据收集到预测流程。
 Test complete flow from data collection to prediction.
 """
-
-import pytest
-import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
-
-from src.models.prediction_service import PredictionResult
 
 
 @pytest.mark.integration
@@ -79,7 +78,9 @@ class TestPredictionFlow:
         prediction_engine._get_match_info = AsyncMock(return_value=mock_match)
         prediction_engine._get_match_features = AsyncMock(return_value=mock_features)
         prediction_engine._get_match_odds = AsyncMock(return_value=mock_odds)
-        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=mock_prediction)
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            return_value=mock_prediction
+        )
 
         # 2. 执行预测
         result = await prediction_engine.predict_match(match_id, include_features=True)
@@ -127,17 +128,21 @@ class TestPredictionFlow:
                 "match_id": match_id,
                 "prediction": ["home", "draw", "away"][i],
                 "probabilities": {
-                    "home_win": 0.5 - i*0.1,
+                    "home_win": 0.5 - i * 0.1,
                     "draw": 0.3,
-                    "away_win": 0.2 + i*0.1,
+                    "away_win": 0.2 + i * 0.1,
                 },
-                "confidence": 0.65 - i*0.05,
+                "confidence": 0.65 - i * 0.05,
                 "model_version": "1.0.0",
             }
 
         # 设置模拟
-        prediction_engine._get_match_info = AsyncMock(side_effect=lambda mid: matches_data.get(mid))
-        prediction_engine.predict_match = AsyncMock(side_effect=lambda mid, **kw: predictions_data.get(mid))
+        prediction_engine._get_match_info = AsyncMock(
+            side_effect=lambda mid: matches_data.get(mid)
+        )
+        prediction_engine.predict_match = AsyncMock(
+            side_effect=lambda mid, **kw: predictions_data.get(mid)
+        )
 
         # 执行批量预测
         results = await prediction_engine.batch_predict(match_ids)
@@ -189,16 +194,26 @@ class TestPredictionFlow:
         # 设置模拟
         prediction_engine._get_match_info = AsyncMock(return_value=match_info)
 
-        with patch.object(prediction_engine, 'scores_collector') as mock_scores_collector:
-            with patch.object(prediction_engine, 'odds_collector') as mock_odds_collector:
-                mock_scores_collector.collect_match_score = AsyncMock(return_value=mock_scores)
-                mock_odds_collector.collect_match_odds = AsyncMock(return_value=mock_odds)
+        with patch.object(
+            prediction_engine, "scores_collector"
+        ) as mock_scores_collector:
+            with patch.object(
+                prediction_engine, "odds_collector"
+            ) as mock_odds_collector:
+                mock_scores_collector.collect_match_score = AsyncMock(
+                    return_value=mock_scores
+                )
+                mock_odds_collector.collect_match_odds = AsyncMock(
+                    return_value=mock_odds
+                )
 
                 # 收集最新数据
                 await prediction_engine._collect_latest_data(match_id, match_info)
 
                 # 验证调用
-                mock_scores_collector.collect_match_score.assert_called_once_with(match_id)
+                mock_scores_collector.collect_match_score.assert_called_once_with(
+                    match_id
+                )
                 mock_odds_collector.collect_match_odds.assert_called_once_with(match_id)
 
     @pytest.mark.asyncio
@@ -208,12 +223,14 @@ class TestPredictionFlow:
 
         # 第一次预测
         prediction_engine._get_match_info = AsyncMock(return_value={"id": match_id})
-        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=PredictionResult(
-            match_id=match_id,
-            model_version="1.0.0",
-            predicted_result="home",
-            confidence_score=0.65,
-        ))
+        prediction_engine.prediction_service.predict_match = AsyncMock(
+            return_value=PredictionResult(
+                match_id=match_id,
+                model_version="1.0.0",
+                predicted_result="home",
+                confidence_score=0.65,
+            )
+        )
 
         result1 = await prediction_engine.predict_match(match_id)
 
@@ -234,12 +251,15 @@ class TestPredictionFlow:
 
         # 模拟第一次失败
         prediction_engine.prediction_service.predict_match = AsyncMock(
-            side_effect=[Exception("Model service unavailable"), PredictionResult(
-                match_id=match_id,
-                model_version="1.0.0",
-                predicted_result="home",
-                confidence_score=0.65,
-            )]
+            side_effect=[
+                Exception("Model service unavailable"),
+                PredictionResult(
+                    match_id=match_id,
+                    model_version="1.0.0",
+                    predicted_result="home",
+                    confidence_score=0.65,
+                ),
+            ]
         )
 
         prediction_engine._get_match_info = AsyncMock(return_value={"id": match_id})
@@ -262,7 +282,9 @@ class TestPredictionFlow:
         # 模拟预测记录
 
         # 设置模拟
-        prediction_engine.prediction_service.verify_prediction = AsyncMock(return_value=True)
+        prediction_engine.prediction_service.verify_prediction = AsyncMock(
+            return_value=True
+        )
 
         # 执行验证
         stats = await prediction_engine.verify_predictions([match_id])
@@ -270,7 +292,9 @@ class TestPredictionFlow:
         # 验证结果
         assert stats["total_matches"] == 1
         assert stats["verified"] == 1
-        prediction_engine.prediction_service.verify_prediction.assert_called_once_with(match_id)
+        prediction_engine.prediction_service.verify_prediction.assert_called_once_with(
+            match_id
+        )
 
     @pytest.mark.asyncio
     async def test_performance_monitoring(self, prediction_engine):
@@ -326,10 +350,12 @@ class TestPredictionFlow:
         match_ids = list(range(2000, 2050))  # 50场比赛
 
         # 模拟预测
-        prediction_engine.predict_match = AsyncMock(side_effect=lambda mid: {
-            "match_id": mid,
-            "prediction": "home" if mid % 2 == 0 else "away",
-        })
+        prediction_engine.predict_match = AsyncMock(
+            side_effect=lambda mid: {
+                "match_id": mid,
+                "prediction": "home" if mid % 2 == 0 else "away",
+            }
+        )
 
         # 并发执行预测
         tasks = [prediction_engine.predict_match(mid) for mid in match_ids]
