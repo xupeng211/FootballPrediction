@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📖 重要提示
+
+**请先阅读 [.claude-preferences.md](/.claude-preferences.md)**
+- 该文件记录了用户的核心偏好和已选择的最佳实践
+- 包含用户的开发哲学和当前项目状态
+- 了解用户的渐进式改进理念
+
+**核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
+
 ## 🌏 语言设置
 
 **重要规则：在与用户交流时，请使用简体中文回复。** 用户不懂英文，所以所有解释和说明都应该用中文。
