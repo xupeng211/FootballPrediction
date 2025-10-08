@@ -321,7 +321,7 @@ class ScoresCollector:
 
         return None
 
-    @retry(retry_config)
+    @retry(lambda: None)
     async def _fetch_from_source(self, source: str, match_id: int) -> Optional[Dict[str, Any]]:
         """从指定数据源获取数据"""
         if source == "football_api":
@@ -490,7 +490,7 @@ class ScoresCollector:
                 updated_at=utc_now(),
             )
 
-            result = await self.db_session.execute(stmt)
+            await self.db_session.execute(stmt)
 
             # 保存原始数据（用于审计和分析）
             raw_data = RawScoresData(
