@@ -16,6 +16,5 @@ def sample_prediction_data():
         "home_team": "Team A",
         "away_team": "Team B",
         "match_date": "2024-01-01",
-        "league": "Premier League"
+        "league": "Premier League",
     }
-

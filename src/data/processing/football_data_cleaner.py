@@ -14,12 +14,18 @@
 基于 DATA_DESIGN.md 第4.1节设计。
 """
 
+import hashlib
 import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from src.database.connection import DatabaseManager
+from src.database.models.league import League
+from src.database.models.team import Team
 
 
 class FootballDataCleaner:
@@ -56,36 +62,45 @@ class FootballDataCleaner:
             if not self._validate_match_data(raw_data):
                 return None
 
+            league_id = await self._map_league_id(raw_data.get(str("competition"), {}))
+
+            home_team_id = await self._map_team_id(
+                raw_data.get(str("homeTeam"), {}), league_id=league_id
+            )
+            away_team_id = await self._map_team_id(
+                raw_data.get(str("awayTeam"), {}), league_id=league_id
+            )
+
             cleaned_data = {
                 # 基础信息
-                "external_match_id": str(raw_data.get("id", "")),
+                "external_match_id": str(raw_data.get(str("id"), "")),
                 "external_league_id": str(
-                    raw_data.get("competition", {}).get("id", "")
+                    raw_data.get(str("competition"), {}).get(str("id"), "")
                 ),
                 # 时间统一 - 转换为UTC
                 "match_time": self._to_utc_time(raw_data.get("utcDate")),
                 # 球队ID统一 - 映射到标准ID
-                "home_team_id": await self._map_team_id(raw_data.get("homeTeam", {})),
-                "away_team_id": await self._map_team_id(raw_data.get("awayTeam", {})),
+                "home_team_id": home_team_id,
+                "away_team_id": away_team_id,
                 # 联赛ID映射
-                "league_id": await self._map_league_id(raw_data.get("competition", {})),
+                "league_id": league_id,
                 # 比赛状态标准化
                 "match_status": self._standardize_match_status(raw_data.get("status")),
                 # 比分验证 - 范围检查
                 "home_score": self._validate_score(
-                    raw_data.get("score", {}).get("fullTime", {}).get("home")
+                    raw_data.get(str("score"), {}).get(str("fullTime"), {}).get("home")
                 ),
                 "away_score": self._validate_score(
-                    raw_data.get("score", {}).get("fullTime", {}).get("away")
+                    raw_data.get(str("score"), {}).get(str("fullTime"), {}).get("away")
                 ),
                 "home_ht_score": self._validate_score(
-                    raw_data.get("score", {}).get("halfTime", {}).get("home")
+                    raw_data.get(str("score"), {}).get(str("halfTime"), {}).get("home")
                 ),
                 "away_ht_score": self._validate_score(
-                    raw_data.get("score", {}).get("halfTime", {}).get("away")
+                    raw_data.get(str("score"), {}).get(str("halfTime"), {}).get("away")
                 ),
                 # 其他信息
-                "season": self._extract_season(raw_data.get("season", {})),
+                "season": self._extract_season(raw_data.get(str("season"), {})),
                 "matchday": raw_data.get("matchday"),
                 "venue": self._clean_venue_name(raw_data.get("venue")),
                 "referee": self._clean_referee_name(raw_data.get("referees")),
@@ -121,7 +136,7 @@ class FootballDataCleaner:
                     continue
 
                 # 提取和验证赔率值
-                outcomes = odds.get("outcomes", [])
+                outcomes = odds.get(str("outcomes"), [])
                 cleaned_outcomes = []
 
                 for outcome in outcomes:
@@ -147,7 +162,7 @@ class FootballDataCleaner:
                     continue
 
                 cleaned_data = {
-                    "external_match_id": str(odds.get("match_id", "")),
+                    "external_match_id": str(odds.get(str("match_id"), "")),
                     "bookmaker": self._standardize_bookmaker_name(
                         odds.get("bookmaker")
                     ),
@@ -210,7 +225,9 @@ class FootballDataCleaner:
             self.logger.warning(f"Invalid time format: {time_str}, error: {str(e)}")
             return None
 
-    async def _map_team_id(self, team_data: Dict[str, Any]) -> Optional[int]:
+    async def _map_team_id(
+        self, team_data: Dict[str, Any], *, league_id: Optional[int] = None
+    ) -> Optional[int]:
         """
         球队ID映射到标准ID
 
@@ -223,25 +240,75 @@ class FootballDataCleaner:
         if not team_data:
             return None
 
-        external_id = str(team_data.get("id", ""))
-        team_name = team_data.get("name", "")
+        external_id = team_data.get("id")
+        team_name = team_data.get("name") or team_data.get("shortName") or ""
+        team_code = team_data.get("tla")
 
-        # 检查缓存
-        cache_key = f"{external_id}:{team_name}"
+        cache_key = f"{external_id}:{team_name}:{team_code}:{league_id}"
         if cache_key in self._team_id_cache:
             return self._team_id_cache[cache_key]
 
-        try:
-            # TODO: 从数据库查询或创建球队记录
-            # 这里需要实现球队映射逻辑
-            # 暂时返回外部ID的哈希值作为占位符
-            team_id = hash(cache_key) % 100000
-            self._team_id_cache[cache_key] = team_id
-            return team_id
+        api_team_id: Optional[int] = None
+        if external_id not in (None, ""):
+            try:
+                api_team_id = int(external_id)
+            except (TypeError, ValueError):
+                api_team_id = None
 
-        except Exception as e:
-            self.logger.error(f"Failed to map team ID for {team_data}: {str(e)}")
-            return None
+        try:
+            async with self.db_manager.get_async_session() as session:
+                stmt = select(Team.id)
+                if api_team_id is not None:
+                    stmt = stmt.where(Team.api_team_id == api_team_id)
+                elif team_code:
+                    stmt = stmt.where(Team.team_code == team_code)
+                else:
+                    stmt = stmt.where(Team.team_name == team_name)
+
+                result = await session.execute(stmt)
+                team_id = result.scalar_one_or_none()
+
+                if team_id is None:
+                    team_record = Team(
+                        team_name=team_name or team_code or f"Team-{external_id}",
+                        team_code=team_code,
+                        api_team_id=api_team_id,
+                        league_id=league_id,
+                    )
+                    session.add(team_record)
+                    try:
+                        await session.flush()
+                    except IntegrityError:
+                        await session.rollback()
+                        lookup_stmt = select(Team.id)
+                        if api_team_id is not None:
+                            lookup_stmt = lookup_stmt.where(
+                                Team.api_team_id == api_team_id
+                            )
+                        elif team_code:
+                            lookup_stmt = lookup_stmt.where(Team.team_code == team_code)
+                        else:
+                            lookup_stmt = lookup_stmt.where(Team.team_name == team_name)
+                        result = await session.execute(lookup_stmt)
+                        team_id = result.scalar_one_or_none()
+                    else:
+                        team_id = team_record.id
+
+                if team_id is not None:
+                    self._team_id_cache[cache_key] = team_id
+                    return team_id
+
+        except (RuntimeError, SQLAlchemyError) as e:
+            self.logger.warning(
+                "Team ID lookup failed for %s (%s), falling back to deterministic mapping: %s",
+                team_name,
+                external_id,
+                e,
+            )
+
+        deterministic_id = self._deterministic_id(cache_key, modulus=100000)
+        self._team_id_cache[cache_key] = deterministic_id
+        return deterministic_id
 
     async def _map_league_id(self, league_data: Dict[str, Any]) -> Optional[int]:
         """
@@ -256,25 +323,90 @@ class FootballDataCleaner:
         if not league_data:
             return None
 
-        external_id = str(league_data.get("id", ""))
-        league_name = league_data.get("name", "")
+        external_id = league_data.get("id")
+        league_name = league_data.get("name") or ""
+        league_code = league_data.get("code") or league_data.get("codeName")
+        country = None
+        area = league_data.get("area")
+        if isinstance(area, dict):
+            country = area.get("name")
 
-        # 检查缓存
-        cache_key = f"{external_id}:{league_name}"
+        cache_key = f"{external_id}:{league_name}:{league_code}"
         if cache_key in self._league_id_cache:
             return self._league_id_cache[cache_key]
 
-        try:
-            # TODO: 从数据库查询或创建联赛记录
-            # 这里需要实现联赛映射逻辑
-            # 暂时返回外部ID的哈希值作为占位符
-            league_id = hash(cache_key) % 1000
-            self._league_id_cache[cache_key] = league_id
-            return league_id
+        api_league_id: Optional[int] = None
+        if external_id not in (None, ""):
+            try:
+                api_league_id = int(external_id)
+            except (TypeError, ValueError):
+                api_league_id = None
 
-        except Exception as e:
-            self.logger.error(f"Failed to map league ID for {league_data}: {str(e)}")
-            return None
+        try:
+            async with self.db_manager.get_async_session() as session:
+                stmt = select(League.id)
+                if api_league_id is not None:
+                    stmt = stmt.where(League.api_league_id == api_league_id)
+                elif league_code:
+                    stmt = stmt.where(League.league_code == league_code)
+                else:
+                    stmt = stmt.where(League.league_name == league_name)
+
+                result = await session.execute(stmt)
+                league_id = result.scalar_one_or_none()
+
+                if league_id is None:
+                    league_record = League(
+                        league_name=league_name
+                        or league_code
+                        or f"League-{external_id}",
+                        league_code=league_code,
+                        api_league_id=api_league_id,
+                        country=country,
+                    )
+                    session.add(league_record)
+                    try:
+                        await session.flush()
+                    except IntegrityError:
+                        await session.rollback()
+                        lookup_stmt = select(League.id)
+                        if api_league_id is not None:
+                            lookup_stmt = lookup_stmt.where(
+                                League.api_league_id == api_league_id
+                            )
+                        elif league_code:
+                            lookup_stmt = lookup_stmt.where(
+                                League.league_code == league_code
+                            )
+                        else:
+                            lookup_stmt = lookup_stmt.where(
+                                League.league_name == league_name
+                            )
+                        result = await session.execute(lookup_stmt)
+                        league_id = result.scalar_one_or_none()
+                    else:
+                        league_id = league_record.id
+
+                if league_id is not None:
+                    self._league_id_cache[cache_key] = league_id
+                    return league_id
+
+        except (RuntimeError, SQLAlchemyError) as e:
+            self.logger.warning(
+                "League ID lookup failed for %s (%s), falling back to deterministic mapping: %s",
+                league_name,
+                external_id,
+                e,
+            )
+
+        deterministic_id = self._deterministic_id(cache_key, modulus=1000)
+        self._league_id_cache[cache_key] = deterministic_id
+        return deterministic_id
+
+    def _deterministic_id(self, value: str, *, modulus: int) -> int:
+        """基于稳定哈希生成确定性ID"""
+        digest = hashlib.sha1(value.encode("utf-8", "ignore")).hexdigest()
+        return int(digest[:12], 16) % modulus
 
     def _standardize_match_status(self, status: Optional[str]) -> str:
         """标准化比赛状态"""
@@ -293,7 +425,7 @@ class FootballDataCleaner:
             "SUSPENDED": "suspended",
         }
 
-        return status_mapping.get(status.upper(), "unknown")
+        return status_mapping.get(str(status.upper()), "unknown")
 
     def _validate_score(self, score: Any) -> Optional[int]:
         """
@@ -395,7 +527,7 @@ class FootballDataCleaner:
             "Under": "under",
         }
 
-        return name_mapping.get(str(name).strip(), str(name).lower())
+        return name_mapping.get(str(str(name).strip()), str(name).lower())
 
     def _standardize_bookmaker_name(self, bookmaker: Optional[str]) -> str:
         """标准化博彩公司名称"""
@@ -417,7 +549,9 @@ class FootballDataCleaner:
             "btts": "both_teams_score",
         }
 
-        return market_mapping.get(str(market_type).lower(), str(market_type).lower())
+        return market_mapping.get(
+            str(str(market_type).lower()), str(market_type).lower()
+        )
 
     def _validate_odds_consistency(self, outcomes: List[Dict[str, Any]]) -> bool:
         """

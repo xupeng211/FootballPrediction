@@ -311,7 +311,9 @@ class Predictions(BaseModel):
                     "recommendation": (
                         "BET"
                         if expected_value > 0.05
-                        else "CONSIDER" if expected_value > 0 else "AVOID"
+                        else "CONSIDER"
+                        if expected_value > 0
+                        else "AVOID"
                     ),
                 }
 

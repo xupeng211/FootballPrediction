@@ -1,8 +1,11 @@
 """API测试模板"""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from fastapi import status
-from unittest.mock import patch
+
+from src.api import predictions as predictions_module
 
 
 class TestHealthAPI:
@@ -18,16 +21,23 @@ class TestHealthAPI:
         assert "timestamp" in data
         assert "version" in data
 
-    @pytest.mark.skip(reason="需要重构：当前API不支持check_db参数")
-    def test_health_check_with_database(self, api_client, mock_db_session):
+    def test_health_check_with_database(self, api_client):
         """测试带数据库检查的健康检查"""
-        with patch("src.api.health.database.check") as mock_check:
-            mock_check.return_value = True
+        with patch(
+            "src.api.health._collect_database_health", new=AsyncMock()
+        ) as mock_check:
+            mock_check.return_value = {
+                "healthy": True,
+                "status": "healthy",
+                "response_time_ms": 10,
+                "details": {"message": "数据库连接正常"},
+            }
 
             response = api_client.get("/api/health?check_db=true")
 
             assert response.status_code == status.HTTP_200_OK
-            assert response.json()["database"] == "connected"
+            data = response.json()
+            assert data["checks"]["database"]["status"] == "healthy"
 
     @pytest.mark.parametrize("endpoint", ["/api/health", "/api/health/"])
     def test_health_check_endpoints(self, api_client, endpoint):
@@ -37,71 +47,44 @@ class TestHealthAPI:
 
 
 class TestPredictionAPI:
-    """预测API测试"""
+    """预测API路由测试"""
 
-    @pytest.mark.skip(reason="需要实现auth_headers和sample_prediction_data fixtures")
-    def test_create_prediction_success(self, api_client, auth_headers, sample_prediction_data):
-        """测试创建预测成功"""
-        with patch("src.api.predictions.PredictionService") as mock_service:
-            mock_service.create_prediction.return_value = {
-                "id": 1,
-                **sample_prediction_data,
-                "status": "pending"
-            }
+    def test_predictions_route_available_in_full_mode(
+        self, api_client_full, sample_match
+    ):
+        """在完整模式下预测路由可用，并可返回实时预测结果"""
+        mock_match_result = MagicMock()
+        mock_match_result.scalar_one_or_none.return_value = sample_match
+        mock_prediction_result = MagicMock()
+        mock_prediction_result.scalar_one_or_none.return_value = None
 
-            response = api_client.post(
-                "/api/predictions",
-                json=sample_prediction_data,
-                headers=auth_headers
+        api_client_full.mock_session.execute.side_effect = [
+            mock_match_result,
+            mock_prediction_result,
+        ]
+
+        prediction_payload = {
+            "id": 42,
+            "model_version": "2.1",
+            "predicted_result": "home",
+            "home_win_probability": 0.6,
+            "draw_probability": 0.25,
+            "away_win_probability": 0.15,
+            "confidence_score": 0.8,
+        }
+
+        async_mock = AsyncMock()
+        async_mock.return_value = MagicMock(to_dict=lambda: prediction_payload)
+
+        with patch.object(
+            predictions_module.prediction_service, "predict_match", new=async_mock
+        ):
+            response = api_client_full.get(
+                "/api/v1/predictions/12345?force_predict=true"
             )
 
-            assert response.status_code == status.HTTP_201_CREATED
-            data = response.json()
-            assert data["id"] == 1
-            assert data["status"] == "pending"
-
-    @pytest.mark.skip(reason="需要实现sample_prediction_data fixture")
-    def test_create_prediction_unauthorized(self, api_client, sample_prediction_data):
-        """测试未授权创建预测"""
-        response = api_client.post("/api/predictions", json=sample_prediction_data)
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
-    def test_create_prediction_invalid_data(self, api_client, auth_headers):
-        """测试无效数据创建预测"""
-        invalid_data = {"match_id": "invalid"}
-
-        response = api_client.post(
-            "/api/predictions",
-            json=invalid_data,
-            headers=auth_headers
-        )
-
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
-    def test_get_prediction_success(self, api_client, auth_headers):
-        """测试获取预测成功"""
-        with patch("src.api.predictions.PredictionService") as mock_service:
-            mock_service.get_prediction.return_value = {
-                "id": 1,
-                "result": "2-1",
-                "confidence": 0.75
-            }
-
-            response = api_client.get("/api/predictions/1", headers=auth_headers)
-
-            assert response.status_code == status.HTTP_200_OK
-            data = response.json()
-            assert data["id"] == 1
-
-    @pytest.mark.skip(reason="需要实现auth_headers fixture")
-    def test_get_prediction_not_found(self, api_client, auth_headers):
-        """测试获取不存在的预测"""
-        with patch("src.api.predictions.PredictionService") as mock_service:
-            mock_service.get_prediction.return_value = None
-
-            response = api_client.get("/api/predictions/999", headers=auth_headers)
-
-            assert response.status_code == status.HTTP_404_NOT_FOUND
+        data = response.json()
+        assert response.status_code == status.HTTP_200_OK, data
+        assert data["success"] is True
+        assert data["data"]["match_id"] == 12345
+        assert data["data"]["prediction"]["id"] == 42

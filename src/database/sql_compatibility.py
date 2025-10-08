@@ -5,7 +5,7 @@ SQL兼容性工具模块
 """
 
 import logging
-from typing import Union, Tuple, Dict, Any
+from typing import Any, Dict, Tuple, Union
 
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -71,7 +71,7 @@ class SQLCompatibilityHelper:
                 "minute": "minutes",
                 "second": "seconds",
             }
-            sqlite_unit = unit_map.get(interval_unit, interval_unit)
+            sqlite_unit = unit_map.get(str(interval_unit), interval_unit)
             if base_time.upper() == "NOW()":
                 base_time = "'now'"
             return f"datetime({base_time}, '-{interval_value} {sqlite_unit}')"

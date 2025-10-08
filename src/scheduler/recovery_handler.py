@@ -675,13 +675,15 @@ class RecoveryHandler:
         failure_by_type: Dict[str, int] = {}
         for failure in self.failure_history:
             failure_type = failure.failure_type.value
-            failure_by_type[failure_type] = failure_by_type.get(failure_type, 0) + 1
+            failure_by_type[failure_type] = (
+                failure_by_type.get(str(failure_type), 0) + 1
+            )
 
         # 按任务统计
         failure_by_task: Dict[str, int] = {}
         for failure in self.failure_history:
             task_id = failure.task_id
-            failure_by_task[task_id] = failure_by_task.get(task_id, 0) + 1
+            failure_by_task[task_id] = failure_by_task.get(str(task_id), 0) + 1
 
         # 最近24小时统计
         recent_failures = [

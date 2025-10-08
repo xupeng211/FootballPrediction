@@ -7,6 +7,7 @@ extend-exclude = [
     "notebooks",
     "playground",
     "tests/legacy",
+    "tests/_archived_legacy",
 ]
 
 # Pytest配置已迁移到pytest.ini以避免配置冲突

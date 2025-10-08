@@ -251,7 +251,7 @@ class StreamingDataCollector(DataCollector):
         tasks = []
         for config in collection_configs:
             collection_type = config.get("type")
-            collection_kwargs = config.get("kwargs", {})
+            collection_kwargs = config.get(str("kwargs"), {})
 
             if collection_type == "fixtures":
                 task = self.collect_fixtures_with_streaming(**collection_kwargs)

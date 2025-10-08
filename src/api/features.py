@@ -1,10 +1,9 @@
 """
-import asyncio
 特征服务 API
 
 提供特征查询相关的 FastAPI 端点：
-- /features/{match_id} → 返回比赛特征
-- /teams/{team_id}/features → 返回球队特征
+- /features/{match_id} -> 返回比赛特征
+- /teams/{team_id}/features -> 返回球队特征
 - 支持在线和离线特征查询
 """
 
@@ -21,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database.connection import get_async_session
 from ..database.models.match import Match
 from ..database.models.team import Team
-from ..features.entities import MatchEntity, TeamEntity
+from ..features.entities import MatchEntity
 from ..features.feature_calculator import FeatureCalculator
 from ..features.feature_store import FootballFeatureStore
 from ..utils.response import APIResponse
@@ -38,8 +37,42 @@ try:
     logger.info("特征存储和计算器初始化成功")
 except Exception as e:
     logger.error(f"特征存储初始化失败: {e}")
-    feature_store = None
-    feature_calculator = None
+    feature_store: Optional[FootballFeatureStore] = None
+    feature_calculator: Optional[FeatureCalculator] = None
+
+
+# 健康检查端点（必须在 /{match_id} 之前定义）
+@router.get("/health", summary="特征服务健康检查")
+async def features_health_check():
+    """
+    特征服务健康检查
+
+    检查各个组件的可用性
+    """
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "components": {
+            "feature_store": feature_store is not None,
+            "feature_calculator": feature_calculator is not None,
+        },
+    }
+
+    # 检查特征存储连接
+    if feature_store:
+        try:
+            # 这里可以添加特征存储的连接测试
+            health_status["components"]["feature_store_connection"] = True
+        except Exception as e:
+            logger.warning(f"特征存储连接检查失败: {e}")
+            health_status["components"]["feature_store_connection"] = False
+            health_status["status"] = "degraded"
+
+    if not all(health_status["components"].values()):
+        health_status["status"] = "unhealthy"
+        return health_status
+
+    return health_status
 
 
 @router.get(
@@ -101,10 +134,10 @@ async def get_match_features(
         # 4. 构造比赛实体（防御性编程）
         try:
             match_entity = MatchEntity(
-                match_id=match.id,
-                home_team_id=match.home_team_id,
-                away_team_id=match.away_team_id,
-                league_id=match.league_id,
+                match_id=int(int(match.id)),
+                home_team_id=int(match.home_team_id),
+                away_team_id=int(match.away_team_id),
+                league_id=int(match.league_id),
                 match_time=match.match_time,
                 season=match.season or "2024-25",
             )
@@ -114,9 +147,7 @@ async def get_match_features(
             raise HTTPException(status_code=500, detail="处理比赛数据时发生错误")
 
         # 5. 获取特征数据（优雅降级）
-        features = None
         features_error = None
-
         try:
             logger.debug(f"从特征存储获取特征 (match_id={match_id})")
             features = await feature_store.get_match_features_for_prediction(
@@ -133,14 +164,13 @@ async def get_match_features(
 
         except Exception as feature_error:
             logger.error(f"获取特征数据失败: {feature_error}")
-            raise HTTPException(
-                status_code=500, detail=f"获取特征数据失败: {feature_error}"
-            )
+            features_error = str(feature_error)
+            features = {}
 
         # 6. 构造响应数据
         response_data = {
             "match_info": {
-                "match_id": match.id,
+                "match_id": int(match.id),
                 "home_team_id": match.home_team_id,
                 "away_team_id": match.away_team_id,
                 "league_id": match.league_id,
@@ -155,9 +185,9 @@ async def get_match_features(
 
         # 添加特征获取状态
         if features_error:
-            response_data["features_warning"] = (
-                f"特征数据获取部分失败: {features_error}"
-            )
+            response_data[
+                "features_warning"
+            ] = f"特征数据获取部分失败: {features_error}"
 
         # 7. 处理原始特征请求（可选）
         if include_raw and feature_calculator:
@@ -170,16 +200,15 @@ async def get_match_features(
                 logger.debug("原始特征计算完成")
             except Exception as raw_error:
                 logger.error(f"计算原始特征失败: {raw_error}")
-                response_data["raw_features_error"] = str(raw_error)
+                response_data["raw_features_error"] = {"error": str(raw_error)}
 
         # 8. 成功响应
         message = f"成功获取比赛 {match_id} 的特征"
-        if features_error:
+        if not features:
             message += "（特征数据部分缺失）"
 
         logger.info(f"比赛 {match_id} 特征获取完成")
         return APIResponse.success(data=response_data, message=message)
-
     except HTTPException:
         # 重新抛出HTTP异常
         raise
@@ -203,7 +232,6 @@ async def get_team_features(
     calculation_date: Optional[datetime] = Query(
         None, description="特征计算日期，默认为当前时间"
     ),
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
     """
@@ -212,78 +240,54 @@ async def get_team_features(
     Args:
         team_id: 球队ID
         calculation_date: 特征计算日期
-        include_raw: 是否包含原始特征计算数据
         session: 数据库会话
 
     Returns:
         APIResponse: 包含球队特征的响应
     """
-    try:
-        # 查询球队信息
-        team_query = select(Team).where(Team.id == team_id)
-        team_result = await session.execute(team_query)
-        team = team_result.scalar_one_or_none()
+    # 查询球队信息
+    team_query = select(Team).where(Team.id == team_id)
+    team_result = await session.execute(team_query)
+    team = team_result.scalar_one_or_none()
 
-        if not team:
-            raise HTTPException(status_code=404, detail=f"球队 {team_id} 不存在")
+    if not team:
+        raise HTTPException(status_code=404, detail=f"球队 {team_id} 不存在")
 
-        if calculation_date is None:
-            calculation_date = datetime.now()
+    if calculation_date is None:
+        calculation_date = datetime.now()
 
-        # 从特征存储获取球队特征
-        team_features = await feature_store.get_online_features(
-            feature_refs=[
-                "team_recent_performance:recent_5_wins",
-                "team_recent_performance:recent_5_draws",
-                "team_recent_performance:recent_5_losses",
-                "team_recent_performance:recent_5_goals_for",
-                "team_recent_performance:recent_5_goals_against",
-                "team_recent_performance:recent_5_points",
-                "team_recent_performance:recent_5_home_wins",
-                "team_recent_performance:recent_5_away_wins",
-            ],
-            entity_rows=[{"team_id": team_id}],
-        )
+    # 从特征存储获取球队特征
+    team_features = await feature_store.get_online_features(
+        feature_refs=[
+            "team_recent_performance:recent_5_wins",
+            "team_recent_performance:recent_5_draws",
+            "team_recent_performance:recent_5_losses",
+            "team_recent_performance:recent_5_goals_for",
+            "team_recent_performance:recent_5_goals_against",
+            "team_recent_performance:recent_5_points",
+            "team_recent_performance:recent_5_home_wins",
+            "team_recent_performance:recent_5_away_wins",
+        ],
+        entity_rows=[{"team_id": team_id}],
+    )
 
-        response_data = {
-            "team_info": {
-                "team_id": team.id,
-                "team_name": team.name,
-                "league_id": team.league_id,
-                "founded_year": team.founded_year,
-                "venue": team.venue,
-            },
-            "calculation_date": calculation_date.isoformat(),
-            "features": (
-                team_features.to_dict("records")[0] if not team_features.empty else {}
-            ),
-        }
+    response_data = {
+        "team_info": {
+            "team_id": team.id,
+            "team_name": team.name,
+            "league_id": int(team.league_id),
+            "founded_year": team.founded_year,
+            "venue": getattr(team, "venue", None),
+        },
+        "calculation_date": calculation_date.isoformat(),
+        "features": (
+            team_features.to_dict("records")[0] if not team_features.empty else {}
+        ),
+    }
 
-        # 如果需要原始特征数据，直接计算
-        if include_raw:
-            try:
-                team_entity = TeamEntity(
-                    team_id=team.id,
-                    team_name=team.name,
-                    league_id=team.league_id,
-                    home_venue=team.venue,
-                )
-
-                all_features = await feature_calculator.calculate_all_team_features(
-                    team_entity, calculation_date
-                )
-                response_data["raw_features"] = all_features.to_dict()
-            except Exception as e:
-                response_data["raw_features_error"] = str(e)
-
-        return APIResponse.success(
-            data=response_data, message=f"成功获取球队 {team.name} 的特征"
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取球队特征失败: {str(e)}")
+    return APIResponse.success(
+        data=response_data, message=f"成功获取球队 {team.name} 的特征"
+    )
 
 
 @router.post(
@@ -307,54 +311,48 @@ async def calculate_match_features(
     Returns:
         APIResponse: 计算结果
     """
-    try:
-        # 查询比赛信息
-        match_query = select(Match).where(Match.id == match_id)
-        match_result = await session.execute(match_query)
-        match = match_result.scalar_one_or_none()
+    # 查询比赛信息
+    match_query = select(Match).where(Match.id == match_id)
+    match_result = await session.execute(match_query)
+    match = match_result.scalar_one_or_none()
 
-        if not match:
-            raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
+    if not match:
+        raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
-        # 创建比赛实体
-        match_entity = MatchEntity(
-            match_id=match.id,
-            home_team_id=match.home_team_id,
-            away_team_id=match.away_team_id,
-            league_id=match.league_id,
-            match_time=match.match_time,
-            season=match.season or "2024-25",
-        )
+    # 创建比赛实体
+    match_entity = MatchEntity(
+        match_id=int(match.id),
+        home_team_id=int(match.home_team_id),
+        away_team_id=int(match.away_team_id),
+        league_id=int(match.league_id),
+        match_time=match.match_time,
+        season=match.season or "2024-25",
+    )
 
-        # 计算并存储特征
-        success = await feature_store.calculate_and_store_match_features(match_entity)
+    # 计算并存储特征
+    success = await feature_store.calculate_and_store_match_features(match_entity)
 
-        # 计算并存储球队特征
-        home_team_success = await feature_store.calculate_and_store_team_features(
-            match.home_team_id, match.match_time
-        )
-        away_team_success = await feature_store.calculate_and_store_team_features(
-            match.away_team_id, match.match_time
-        )
+    # 计算并存储球队特征
+    home_team_success = await feature_store.calculate_and_store_team_features(
+        match.home_team_id, match.match_time
+    )
+    away_team_success = await feature_store.calculate_and_store_team_features(
+        match.away_team_id, match.match_time
+    )
 
-        return APIResponse.success(
-            data={
-                "match_id": match_id,
-                "match_features_stored": success,
-                "home_team_features_stored": home_team_success,
-                "away_team_features_stored": away_team_success,
-                "calculation_time": datetime.now().isoformat(),
-            },
-            message="特征计算完成",
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"计算比赛特征失败: {str(e)}")
+    return APIResponse.success(
+        data={
+            "match_id": match_id,
+            "match_features_stored": success,
+            "home_team_features_stored": home_team_success,
+            "away_team_features_stored": away_team_success,
+            "calculation_time": datetime.now().isoformat(),
+        },
+        message="特征计算完成",
+    )
 
 
-@router.post(
+@router.get(
     "/calculate/teams/{team_id}",
     summary="计算球队特征",
     description="实时计算指定球队的特征并存储到特征存储",
@@ -377,37 +375,30 @@ async def calculate_team_features(
     Returns:
         APIResponse: 计算结果
     """
-    try:
-        # 查询球队信息
-        team_query = select(Team).where(Team.id == team_id)
-        team_result = await session.execute(team_query)
-        team = team_result.scalar_one_or_none()
+    # 查询球队信息
+    team_query = select(Team).where(Team.id == team_id)
+    team_result = await session.execute(team_query)
+    team = team_result.scalar_one_or_none()
 
-        if not team:
-            raise HTTPException(status_code=404, detail=f"球队 {team_id} 不存在")
+    if not team:
+        raise HTTPException(status_code=404, detail=f"球队 {team_id} 不存在")
 
-        if calculation_date is None:
-            calculation_date = datetime.now()
+    if calculation_date is None:
+        calculation_date = datetime.now()
 
-        # 计算并存储特征
-        success = await feature_store.calculate_and_store_team_features(
-            team_id, calculation_date
-        )
+    # 计算并存储特征
+    success = await feature_store.calculate_and_store_team_features(
+        team_id, calculation_date
+    )
 
-        return APIResponse.success(
-            data={
-                "team_id": team_id,
-                "team_name": team.name,
-                "features_stored": success,
-                "calculation_date": calculation_date.isoformat(),
-            },
-            message=f"球队 {team.name} 特征计算完成",
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"计算球队特征失败: {str(e)}")
+    return APIResponse.success(
+        data={
+            "team_id": team_id,
+            "features_stored": success,
+            "calculation_date": calculation_date.isoformat(),
+        },
+        message=f"球队 {team.name} 特征计算完成",
+    )
 
 
 @router.post(
@@ -418,48 +409,37 @@ async def calculate_team_features(
 async def batch_calculate_features(
     start_date: datetime = Query(..., description="开始日期"),
     end_date: datetime = Query(..., description="结束日期"),
-    session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    if start_date >= end_date:
-        raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
-
-    if (end_date - start_date).days > 30:
-        raise HTTPException(status_code=400, detail="时间范围不能超过30天")
-
     """
     批量计算特征
 
     Args:
         start_date: 开始日期
         end_date: 结束日期
-        session: 数据库会话
 
     Returns:
         APIResponse: 批量计算结果
     """
-    try:
-        if start_date >= end_date:
-            raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
+    if start_date >= end_date:
+        raise HTTPException(status_code=400, detail="开始日期必须早于结束日期")
 
-        # 执行批量计算
-        stats = await feature_store.batch_calculate_features(start_date, end_date)
+    if (end_date - start_date).days > 30:
+        raise HTTPException(status_code=400, detail="时间范围不能超过30天")
 
-        return APIResponse.success(
-            data={
-                "date_range": {
-                    "start_date": start_date.isoformat(),
-                    "end_date": end_date.isoformat(),
-                },
-                "statistics": stats,
-                "completion_time": datetime.now().isoformat(),
+    # 执行批量计算
+    stats = await feature_store.batch_calculate_features(start_date, end_date)
+
+    return APIResponse.success(
+        data={
+            "date_range": {
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
             },
-            message="批量特征计算完成",
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"批量计算特征失败: {str(e)}")
+            "statistics": stats,
+            "completion_time": datetime.now().isoformat(),
+        },
+        message="批量特征计算完成",
+    )
 
 
 @router.get(
@@ -483,82 +463,41 @@ async def get_historical_features(
     Returns:
         APIResponse: 历史特征数据
     """
-    try:
-        # 查询比赛信息
-        match_query = select(Match).where(Match.id == match_id)
-        match_result = await session.execute(match_query)
-        match = match_result.scalar_one_or_none()
+    # 查询比赛信息
+    match_query = select(Match).where(Match.id == match_id)
+    match_result = await session.execute(match_query)
+    match = match_result.scalar_one_or_none()
 
-        if not match:
-            raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
+    if not match:
+        raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
 
-        # 创建实体DataFrame
-        entity_df = pd.DataFrame(
-            [
-                {
-                    "match_id": match_id,
-                    "team_id": match.home_team_id,
-                    "event_timestamp": match.match_time,
-                },
-                {
-                    "match_id": match_id,
-                    "team_id": match.away_team_id,
-                    "event_timestamp": match.match_time,
-                },
-            ]
-        )
-
-        # 获取历史特征
-        historical_features = await feature_store.get_historical_features(
-            entity_df=entity_df, feature_refs=feature_refs, full_feature_names=True
-        )
-
-        return APIResponse.success(
-            data={
+    # 创建实体DataFrame
+    entity_df = pd.DataFrame(
+        [
+            {
                 "match_id": match_id,
-                "feature_refs": feature_refs,
-                "features": historical_features.to_dict("records"),
-                "feature_count": len(historical_features.columns),
-                "record_count": len(historical_features),
+                "team_id": match.home_team_id,
+                "event_timestamp": match.match_time,
             },
-            message="成功获取历史特征数据",
-        )
+            {
+                "match_id": match_id,
+                "team_id": match.away_team_id,
+                "event_timestamp": match.match_time,
+            },
+        ]
+    )
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取历史特征失败: {str(e)}")
+    # 获取历史特征
+    historical_features = await feature_store.get_historical_features(
+        entity_df=entity_df, feature_refs=feature_refs, full_feature_names=True
+    )
 
-
-# 健康检查端点
-@router.get("/health", summary="特征服务健康检查")
-async def features_health_check():
-    """
-    特征服务健康检查
-
-    检查各个组件的可用性
-    """
-    health_status = {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "components": {
-            "feature_store": feature_store is not None,
-            "feature_calculator": feature_calculator is not None,
+    return APIResponse.success(
+        data={
+            "feature_refs": feature_refs,
+            "features": historical_features.to_dict("records"),
+            "feature_count": len(historical_features.columns),
+            "record_count": len(historical_features),
         },
-    }
-
-    # 检查特征存储连接
-    if feature_store:
-        try:
-            # 这里可以添加特征存储的连接测试
-            health_status["components"]["feature_store_connection"] = True
-        except Exception as e:
-            logger.warning(f"特征存储连接检查失败: {e}")
-            health_status["components"]["feature_store_connection"] = False
-            health_status["status"] = "degraded"
-
-    if not all(health_status["components"].values()):
-        health_status["status"] = "unhealthy"
-        return {"status": "unhealthy", **health_status}
-
-    return {"status": "healthy", **health_status}
+        message="成功获取历史特征数据",
+    )

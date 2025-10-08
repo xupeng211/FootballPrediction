@@ -98,6 +98,7 @@ INSTRUCTIONS:
 ## 🎨 使用模板
 
 ### 基础使用
+
 ```bash
 # 设置任务描述
 TASK="实现用户认证模块，包含登录、注册、密码重置功能"
@@ -115,6 +116,7 @@ echo "开始执行Cursor闭环开发流程..."
 ```
 
 ### 高级配置
+
 ```bash
 # 自定义检查规则
 export CODE_QUALITY_THRESHOLD=80
@@ -151,24 +153,28 @@ export LOG_FILE="logs/iteration_$(date +%Y%m%d).log"
 ### 常见错误及解决方案
 
 1. **测试失败**
+
    ```bash
    错误: pytest失败
    解决: 分析失败用例，修复代码逻辑，重新运行测试
    ```
 
 2. **代码风格问题**
+
    ```bash
    错误: flake8检查失败
    解决: 运行black格式化，修复剩余风格问题
    ```
 
 3. **依赖冲突**
+
    ```bash
    错误: 包导入失败
    解决: 检查requirements.txt，更新依赖版本
    ```
 
 4. **Git推送失败**
+
    ```bash
    错误: 推送被拒绝
    解决: 拉取最新代码，解决冲突，重新推送

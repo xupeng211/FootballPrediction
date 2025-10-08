@@ -1,50 +1,50 @@
-"""
-Feast 特征存储集成
+"""Feast 特征存储集成及其测试环境替身实现。"""
 
-集成 Feast 特征存储，支持：
-- 在线特征服务（快速查询）
-- 离线特征服务（批量训练）
-- 特征视图定义和管理
-- 特征注册和更新
-"""
-
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-# 处理可选依赖
+ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
+
+
 try:
-    from feast import Entity, FeatureStore, FeatureView, Field
+    if not ENABLE_FEAST:
+        raise ImportError("Feast explicitly disabled via ENABLE_FEAST=false")
+
+    from feast import Entity, FeatureStore, FeatureView, Field, ValueType
     from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import (
         PostgreSQLSource,
     )
     from feast.types import Float64, Int64
 
     HAS_FEAST = True
-except ImportError:
+except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
     HAS_FEAST = False
 
-    # 创建模拟类（使用Mock前缀避免命名冲突）
+    class _MockFeastResult:
+        """轻量的Feast查询结果，仅实现 to_df 方法。"""
+
+        def __init__(self, rows: List[Dict[str, Any]]):
+            self._rows = rows
+
+        def to_df(self):
+            import pandas as _pd
+
+            return _pd.DataFrame(self._rows)
+
     class MockEntity:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    class MockFeatureStore:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def get_online_features(self, *args, **kwargs):
-            return {"features": {}}
-
-        def get_historical_features(self, *args, **kwargs):
-            return {}
+        def __init__(self, name: str, *args, **kwargs):
+            self.name = name
 
     class MockFeatureView:
-        def __init__(self, *args, **kwargs):
-            pass
+        def __init__(self, name: str, entities: List[Any], *args, **kwargs):
+            self.name = name
+            self.entities = entities
 
     class MockField:
-        def __init__(self, *args, **kwargs):
-            pass
+        def __init__(self, name: str, dtype: Any):
+            self.name = name
+            self.dtype = dtype
 
     class MockFloat64:
         pass
@@ -56,23 +56,58 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             pass
 
-    # 将模拟类赋值给原名称，保持向后兼容
+    class MockValueType:
+        INT64 = "INT64"
+
+    class MockFeatureStore:
+        """测试友好的Feast替代实现。"""
+
+        def __init__(self, *args, **kwargs):
+            self.applied_objects: List[Any] = []
+
+        def apply(self, obj: Any) -> None:
+            self.applied_objects.append(obj)
+
+        def get_online_features(
+            self, features: List[str], entity_rows: List[Dict[str, Any]]
+        ) -> _MockFeastResult:
+            enriched_rows: List[Dict[str, Any]] = []
+            for row in entity_rows:
+                enriched = dict(row)
+                for feature in features:
+                    short_name = feature.split(":")[-1]
+                    enriched.setdefault(short_name, 0.0)
+                enriched_rows.append(enriched)
+            return _MockFeastResult(enriched_rows)
+
+        def get_historical_features(
+            self,
+            entity_df: Any,
+            features: List[str],
+            full_feature_names: bool = False,
+        ) -> _MockFeastResult:
+            return _MockFeastResult([])
+
+        def push(self, *args, **kwargs) -> None:
+            return None
+
     Entity = MockEntity
-    FeatureStore = MockFeatureStore
+    FeatureStore = MockFeatureStore  # type: ignore[assignment]
     FeatureView = MockFeatureView
     Field = MockField
     Float64 = MockFloat64
     Int64 = MockInt64
     PostgreSQLSource = MockPostgreSQLSource
+    ValueType = MockValueType
 
 
-import pandas as pd
+import pandas as pd  # noqa: E402
 
-from src.cache import CacheKeyManager, RedisManager
-from src.database.connection import DatabaseManager
+from src.cache import CacheKeyManager, RedisManager  # noqa: E402
+from src.database.connection import DatabaseManager  # noqa: E402
 
-from .entities import MatchEntity
-from .feature_calculator import FeatureCalculator
+from .entities import MatchEntity  # noqa: E402
+from .feature_calculator import FeatureCalculator  # noqa: E402
 
 
 class FootballFeatureStore:
@@ -117,8 +152,6 @@ class FootballFeatureStore:
         Returns:
             Dict[str, Entity]: 实体名称到实体对象的映射
         """
-        from feast import ValueType
-
         return {
             "match": Entity(
                 name="match",

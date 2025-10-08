@@ -21,8 +21,26 @@ from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histo
 logger = logging.getLogger(__name__)
 
 
+class AlertSeverity(Enum):
+    """告警严重程度"""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class AlertType(Enum):
+    """告警类型"""
+
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
+    SYSTEM = "system"
+
+
 class AlertLevel(Enum):
-    """告警级别"""
+    """告警级别（向后兼容）"""
 
     INFO = "info"
     WARNING = "warning"
@@ -57,6 +75,8 @@ class Alert:
         message: str,
         level: AlertLevel,
         source: str,
+        alert_type: Optional[AlertType] = None,
+        severity: Optional[AlertSeverity] = None,
         labels: Optional[Dict[str, str]] = None,
         annotations: Optional[Dict[str, str]] = None,
         created_at: Optional[datetime] = None,
@@ -68,8 +88,10 @@ class Alert:
             alert_id: 告警ID
             title: 告警标题
             message: 告警消息
-            level: 告警级别
+            level: 告警级别（向后兼容）
             source: 告警源
+            alert_type: 告警类型
+            severity: 告警严重程度
             labels: 标签
             annotations: 注释
             created_at: 创建时间
@@ -79,11 +101,33 @@ class Alert:
         self.message = message
         self.level = level
         self.source = source
+        self.type = alert_type or self._level_to_type(level)
+        self.severity = severity or self._level_to_severity(level)
         self.labels = labels or {}
         self.annotations = annotations or {}
         self.created_at = created_at or datetime.now()
         self.status = AlertStatus.ACTIVE
         self.resolved_at: Optional[datetime] = None
+
+    def _level_to_type(self, level: AlertLevel) -> AlertType:
+        """将 AlertLevel 转换为 AlertType"""
+        mapping = {
+            AlertLevel.INFO: AlertType.INFO,
+            AlertLevel.WARNING: AlertType.WARNING,
+            AlertLevel.ERROR: AlertType.ERROR,
+            AlertLevel.CRITICAL: AlertType.ERROR,
+        }
+        return mapping.get(level, AlertType.INFO)
+
+    def _level_to_severity(self, level: AlertLevel) -> AlertSeverity:
+        """将 AlertLevel 转换为 AlertSeverity"""
+        mapping = {
+            AlertLevel.INFO: AlertSeverity.LOW,
+            AlertLevel.WARNING: AlertSeverity.MEDIUM,
+            AlertLevel.ERROR: AlertSeverity.HIGH,
+            AlertLevel.CRITICAL: AlertSeverity.CRITICAL,
+        }
+        return mapping.get(level, AlertSeverity.LOW)
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
@@ -92,6 +136,8 @@ class Alert:
             "title": self.title,
             "message": self.message,
             "level": self.level.value,
+            "type": self.type.value,
+            "severity": self.severity.value,
             "source": self.source,
             "labels": self.labels,
             "annotations": self.annotations,
@@ -403,7 +449,6 @@ class AlertManager:
         if self._should_throttle(alert_id, rule_id):
             logger.debug(f"告警被去重: {alert_id}")
             return None
-
         # 创建告警
         alert = Alert(
             alert_id=alert_id,
@@ -429,7 +474,7 @@ class AlertManager:
         self._update_alert_metrics(alert, rule_id)
 
         logger.info(f"触发告警: {title} [{level.value}]")
-        return alert
+        return alert if isinstance(alert, dict) else {}
 
     def _generate_alert_id(
         self, title: str, source: str, labels: Optional[Dict[str, str]]
@@ -452,7 +497,14 @@ class AlertManager:
             sorted_labels = sorted(labels.items())
             content += "|" + "|".join([f"{k}={v}" for k, v in sorted_labels])
 
-        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+        return (
+            hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
+            if isinstance(
+                hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12],
+                dict,
+            )
+            else {}
+        )
 
     def _should_throttle(self, alert_id: str, rule_id: Optional[str]) -> bool:
         """
@@ -466,15 +518,17 @@ class AlertManager:
             bool: 是否应该去重
         """
         if not rule_id or rule_id not in self.rules:
-            return False
-
+            return False if isinstance(False, dict) else {}
         rule = self.rules[rule_id]
         if not rule.last_fired:
-            return False
-
+            return False if isinstance(False, dict) else {}
         # 检查去重时间
         throttle_delta = timedelta(seconds=rule.throttle_seconds)
-        return datetime.now() - rule.last_fired < throttle_delta
+        return (
+            datetime.now() - rule.last_fired < throttle_delta
+            if isinstance(datetime.now() - rule.last_fired < throttle_delta, dict)
+            else {}
+        )
 
     def _send_alert(self, alert: Alert, rule_id: Optional[str]) -> None:
         """
@@ -494,7 +548,7 @@ class AlertManager:
 
         # 发送到各个渠道
         for channel in channels:
-            handlers = self.alert_handlers.get(channel, [])
+            handlers = self.alert_handlers.get(str(channel, None), [])
             for handler in handlers:
                 try:
                     handler(alert)
@@ -540,7 +594,7 @@ class AlertManager:
             AlertLevel.WARNING: logging.WARNING,
             AlertLevel.ERROR: logging.ERROR,
             AlertLevel.CRITICAL: logging.CRITICAL,
-        }.get(alert.level, logging.INFO)
+        }.get(str(alert.level, None), logging.INFO)
 
         logger.log(
             log_level,
@@ -573,8 +627,8 @@ class AlertManager:
                 alert.resolve()
                 self._update_alert_metrics(alert, None)
                 logger.info(f"解决告警: {alert_id}")
-                return True
-        return False
+                return True if isinstance(True, dict) else {}
+        return False if isinstance(False, dict) else {}
 
     def get_active_alerts(self, level: Optional[AlertLevel] = None) -> List[Alert]:
         """
@@ -591,7 +645,13 @@ class AlertManager:
         if level:
             active_alerts = [a for a in active_alerts if a.level == level]
 
-        return sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
+        return (
+            sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
+            if isinstance(
+                sorted(active_alerts, key=lambda x: x.created_at, reverse=True), dict
+            )
+            else {}
+        )
 
     def get_alert_summary(self) -> Dict[str, Any]:
         """
@@ -623,11 +683,97 @@ class AlertManager:
             ),
             "by_level": dict(by_level),
             "by_source": dict(by_source),
-            "critical_alerts": by_level.get("critical", 0),
+            "critical_alerts": by_level.get(str("critical", None), 0),
             "rules_count": len(self.rules),
             "enabled_rules": len([r for r in self.rules.values() if r.enabled]),
             "summary_time": datetime.now().isoformat(),
         }
+
+    def get_alerts_by_severity(self, severity: AlertSeverity) -> List[Alert]:
+        """
+        根据严重程度获取告警列表
+
+        Args:
+            severity: 告警严重程度
+
+        Returns:
+            List[Alert]: 匹配的告警列表
+        """
+        return [alert for alert in self.alerts if alert.severity == severity]
+
+    def get_alerts_by_type(self, alert_type: AlertType) -> List[Alert]:
+        """
+        根据类型获取告警列表
+
+        Args:
+            alert_type: 告警类型
+
+        Returns:
+            List[Alert]: 匹配的告警列表
+        """
+        return [alert for alert in self.alerts if alert.type == alert_type]
+
+    def create_alert(
+        self,
+        type: AlertType,
+        severity: AlertSeverity,
+        message: str,
+        source: str,
+        title: Optional[str] = None,
+        labels: Optional[Dict[str, str]] = None,
+        annotations: Optional[Dict[str, str]] = None,
+    ) -> Alert:
+        """
+        创建告警对象
+
+        Args:
+            type: 告警类型
+            severity: 告警严重程度
+            message: 告警消息
+            source: 告警源
+            title: 告警标题
+            labels: 标签
+            annotations: 注释
+
+        Returns:
+            Alert: 创建的告警对象
+        """
+        # 将 AlertType 和 AlertSeverity 转换为 AlertLevel（向后兼容）
+        level_mapping = {
+            (AlertType.INFO, AlertSeverity.LOW): AlertLevel.INFO,
+            (AlertType.WARNING, AlertSeverity.MEDIUM): AlertLevel.WARNING,
+            (AlertType.ERROR, AlertSeverity.HIGH): AlertLevel.ERROR,
+            (AlertType.ERROR, AlertSeverity.CRITICAL): AlertLevel.CRITICAL,
+            (AlertType.SYSTEM, AlertSeverity.HIGH): AlertLevel.ERROR,
+            (AlertType.SYSTEM, AlertSeverity.CRITICAL): AlertLevel.CRITICAL,
+        }
+
+        level = level_mapping.get((type, severity), AlertLevel.INFO)
+
+        alert = Alert(
+            alert_id=self._generate_alert_id(title or message, source, labels),
+            title=title or f"{type.value.title()} Alert",
+            message=message,
+            level=level,
+            source=source,
+            alert_type=type,
+            severity=severity,
+            labels=labels,
+            annotations=annotations,
+        )
+
+        return alert
+
+    def add_alert(self, alert: Alert) -> None:
+        """
+        添加告警到列表
+
+        Args:
+            alert: 告警对象
+        """
+        self.alerts.append(alert)
+        # 更新指标
+        self._update_alert_metrics(alert, None)
 
     def update_quality_metrics(self, quality_data: Dict[str, Any]) -> None:
         """
@@ -636,7 +782,7 @@ class AlertManager:
         Args:
             quality_data: 质量数据
         """
-        freshness_data = quality_data.get("freshness", {})
+        freshness_data = quality_data.get(str("freshness", None), {})
         for table_name, result in freshness_data.items():
             if isinstance(result, dict) and "hours_since_last_update" in result:
                 hours = result["hours_since_last_update"]
@@ -644,7 +790,7 @@ class AlertManager:
                     hours
                 )
 
-        completeness_data = quality_data.get("completeness", {})
+        completeness_data = quality_data.get(str("completeness", None), {})
         for table_name, result in completeness_data.items():
             if isinstance(result, dict) and "completeness_ratio" in result:
                 ratio = result["completeness_ratio"]
@@ -694,7 +840,7 @@ class AlertManager:
         fired_alerts = []
 
         # 检查新鲜度告警
-        freshness_data = quality_data.get("freshness", {})
+        freshness_data = quality_data.get(str("freshness", None), {})
         for table_name, result in freshness_data.items():
             if isinstance(result, dict) and "hours_since_last_update" in result:
                 hours = result["hours_since_last_update"]
@@ -723,7 +869,7 @@ class AlertManager:
                         fired_alerts.append(alert)
 
         # 检查完整性告警
-        completeness_data = quality_data.get("completeness", {})
+        completeness_data = quality_data.get(str("completeness", None), {})
         for table_name, result in completeness_data.items():
             if isinstance(result, dict) and "completeness_ratio" in result:
                 ratio = result["completeness_ratio"]
@@ -766,7 +912,7 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts
+        return fired_alerts if isinstance(fired_alerts, dict) else {}
 
     def check_and_fire_anomaly_alerts(self, anomalies: List[Any]) -> List[Alert]:
         """
@@ -812,4 +958,4 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts
+        return fired_alerts if isinstance(fired_alerts, dict) else {}

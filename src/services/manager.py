@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 from src.core import logger
+from src.core.config import get_settings
 
 from .base import BaseService
 from .content_analysis import ContentAnalysisService
@@ -23,6 +24,19 @@ class ServiceManager:
 
     def register_service(self, name: str, service: BaseService) -> None:
         """注册服务 - 将服务加入管理器，支持后续统一初始化和管理"""
+        if name in self._services:
+            existing = self._services[name]
+            if existing is service or existing.__class__ is service.__class__:
+                self.logger.debug(f"服务已存在，跳过重复注册: {name}")
+                return
+
+            self.logger.warning(
+                "替换已注册服务 %s (旧: %s, 新: %s)",
+                name,
+                existing.__class__.__name__,
+                service.__class__.__name__,
+            )
+
         self._services[name] = service
         self.logger.info(f"已注册服务: {name}")
 
@@ -69,7 +83,29 @@ class ServiceManager:
 
 # 全局服务管理器实例
 service_manager = ServiceManager()
-# 注册默认服务
-service_manager.register_service("ContentAnalysisService", ContentAnalysisService())
-service_manager.register_service("UserProfileService", UserProfileService())
-service_manager.register_service("DataProcessingService", DataProcessingService())
+
+
+_SERVICE_FACTORIES = {
+    "ContentAnalysisService": ContentAnalysisService,
+    "UserProfileService": UserProfileService,
+    "DataProcessingService": DataProcessingService,
+}
+
+
+def _ensure_default_services() -> None:
+    settings = get_settings()
+    enabled_services = getattr(settings, "enabled_services", []) or []
+
+    for service_name in enabled_services:
+        factory = _SERVICE_FACTORIES.get(service_name)
+        if not factory:
+            service_manager.logger.warning(
+                "未识别的服务名称，跳过注册: %s", service_name
+            )
+            continue
+
+        if service_name not in service_manager.services:
+            service_manager.register_service(service_name, factory())
+
+
+_ensure_default_services()

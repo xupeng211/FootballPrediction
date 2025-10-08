@@ -17,6 +17,7 @@ from packaging import version
 @dataclass
 class Dependency:
     """依赖项数据类"""
+
     name: str
     current_version: Optional[str] = None
     required_versions: List[str] = None
@@ -43,38 +44,38 @@ class DependencyResolver:
             "pandas": {
                 "compatible_versions": ["2.1.3", "2.1.4"],
                 "conflicts": ["great-expectations<1.5.11"],
-                "notes": "great-expectations 1.5.11 需要 pandas<2.2"
+                "notes": "great-expectations 1.5.11 需要 pandas<2.2",
             },
             "numpy": {
                 "compatible_versions": ["1.26.4", "2.0.0"],
                 "conflicts": ["feast<0.53.0"],
-                "notes": "feast 0.53.0 需要 numpy>=2.0.0"
+                "notes": "feast 0.53.0 需要 numpy>=2.0.0",
             },
             "pydantic": {
                 "compatible_versions": ["2.10.6"],
                 "conflicts": ["feast<0.53.0"],
-                "notes": "feast 0.53.0 需要 pydantic==2.10.6"
+                "notes": "feast 0.53.0 需要 pydantic==2.10.6",
             },
             "requests": {
                 "compatible_versions": ["2.32.3", "2.32.4"],
                 "conflicts": ["openlineage-python<1.37.0"],
-                "notes": "openlineage-python 1.37.0 需要 requests>=2.32.4"
+                "notes": "openlineage-python 1.37.0 需要 requests>=2.32.4",
             },
             "rich": {
                 "compatible_versions": ["13.5.2"],
                 "conflicts": ["semgrep<1.139.0"],
-                "notes": "semgrep 1.139.0 需要 rich~=13.5.2"
+                "notes": "semgrep 1.139.0 需要 rich~=13.5.2",
             },
             "urllib3": {
                 "compatible_versions": ["2.0.7"],
                 "conflicts": ["semgrep<1.139.0"],
-                "notes": "semgrep 1.139.0 需要 urllib3~=2.0"
+                "notes": "semgrep 1.139.0 需要 urllib3~=2.0",
             },
             "typer": {
                 "compatible_versions": ["0.16.0"],
                 "conflicts": ["safety<3.6.2"],
-                "notes": "safety 3.6.2 需要 typer>=0.16.0"
-            }
+                "notes": "safety 3.6.2 需要 typer>=0.16.0",
+            },
         }
 
     def detect_conflicts(self) -> Dict[str, Dependency]:
@@ -86,9 +87,7 @@ class DependencyResolver:
         # 1. 运行pip check
         print("  - 运行 pip check...")
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "check"],
-            capture_output=True,
-            text=True
+            [sys.executable, "-m", "pip", "check"], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -113,7 +112,9 @@ class DependencyResolver:
                     if pkg_name not in conflicts:
                         conflicts[pkg_name] = Dependency(name=pkg_name)
                     conflicts[pkg_name].current_version = current_version
-                    conflicts[pkg_name].required_versions = pkg_info["compatible_versions"]
+                    conflicts[pkg_name].required_versions = pkg_info[
+                        "compatible_versions"
+                    ]
                     conflicts[pkg_name].conflicts.extend(pkg_info["conflicts"])
 
         # 3. 生成冲突报告
@@ -130,8 +131,8 @@ class DependencyResolver:
 
         for match in re.finditer(pattern, output):
             package = match.group(1)
-            requirement = match.group(2)
-            version_constraint = match.group(3)
+            match.group(2)
+            match.group(3)
             conflict_package = match.group(4)
             conflict_version = match.group(5)
 
@@ -144,7 +145,7 @@ class DependencyResolver:
         result = subprocess.run(
             [sys.executable, "-m", "pip", "list", "--format=json"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         packages = {}
@@ -162,7 +163,7 @@ class DependencyResolver:
             "timestamp": "2025-10-04T09:30:00Z",
             "total_conflicts": len(conflicts),
             "conflicts": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
         for pkg_name, dep in conflicts.items():
@@ -170,18 +171,20 @@ class DependencyResolver:
                 "current_version": dep.current_version,
                 "required_versions": dep.required_versions,
                 "conflicts": dep.conflicts,
-                "notes": self.dependency_db.get(pkg_name, {}).get("notes", "")
+                "notes": self.dependency_db.get(pkg_name, {}).get("notes", ""),
             }
 
             # 生成建议
             if dep.required_versions:
                 latest_compatible = max(dep.required_versions, key=version.parse)
-                report["recommendations"].append({
-                    "package": pkg_name,
-                    "action": "upgrade",
-                    "target_version": latest_compatible,
-                    "command": f"pip install {pkg_name}=={latest_compatible}"
-                })
+                report["recommendations"].append(
+                    {
+                        "package": pkg_name,
+                        "action": "upgrade",
+                        "target_version": latest_compatible,
+                        "command": f"pip install {pkg_name}=={latest_compatible}",
+                    }
+                )
 
         # 保存报告
         self.conflicts_file.parent.mkdir(parents=True, exist_ok=True)
@@ -205,10 +208,7 @@ class DependencyResolver:
 
             if step["type"] == "install":
                 result = subprocess.run(
-                    step["command"],
-                    shell=True,
-                    capture_output=True,
-                    text=True
+                    step["command"], shell=True, capture_output=True, text=True
                 )
 
                 if result.returncode != 0:
@@ -220,10 +220,7 @@ class DependencyResolver:
             elif step["type"] == "uninstall":
                 # 先卸载冲突包
                 result = subprocess.run(
-                    step["command"],
-                    shell=True,
-                    capture_output=True,
-                    text=True
+                    step["command"], shell=True, capture_output=True, text=True
                 )
 
                 if result.returncode != 0:
@@ -239,7 +236,15 @@ class DependencyResolver:
         plan = []
 
         # 按优先级排序
-        priority_order = ["pydantic", "numpy", "pandas", "requests", "rich", "urllib3", "typer"]
+        priority_order = [
+            "pydantic",
+            "numpy",
+            "pandas",
+            "requests",
+            "rich",
+            "urllib3",
+            "typer",
+        ]
 
         for pkg_name in priority_order:
             if pkg_name in conflicts:
@@ -248,33 +253,41 @@ class DependencyResolver:
                 if dep.required_versions:
                     # 升级到兼容版本
                     target_version = max(dep.required_versions, key=version.parse)
-                    plan.append({
-                        "type": "install",
-                        "description": f"升级 {pkg_name} 到 {target_version}",
-                        "command": f"pip install {pkg_name}=={target_version}"
-                    })
+                    plan.append(
+                        {
+                            "type": "install",
+                            "description": f"升级 {pkg_name} 到 {target_version}",
+                            "command": f"pip install {pkg_name}=={target_version}",
+                        }
+                    )
 
                 # 处理冲突包
                 for conflict in dep.conflicts:
                     if "great-expectations" in conflict:
-                        plan.append({
-                            "type": "install",
-                            "description": "安装兼容版本的 great-expectations",
-                            "command": "pip install 'great-expectations>=1.5.11,<2.0.0'"
-                        })
+                        plan.append(
+                            {
+                                "type": "install",
+                                "description": "安装兼容版本的 great-expectations",
+                                "command": "pip install 'great-expectations>=1.5.11,<2.0.0'",
+                            }
+                        )
                     elif "feast" in conflict:
-                        plan.append({
-                            "type": "install",
-                            "description": "升级 feast 到兼容版本",
-                            "command": "pip install 'feast>=0.53.0,<1.0.0'"
-                        })
+                        plan.append(
+                            {
+                                "type": "install",
+                                "description": "升级 feast 到兼容版本",
+                                "command": "pip install 'feast>=0.53.0,<1.0.0'",
+                            }
+                        )
 
         # 最后验证
-        plan.append({
-            "type": "verify",
-            "description": "验证依赖冲突是否解决",
-            "command": "pip check"
-        })
+        plan.append(
+            {
+                "type": "verify",
+                "description": "验证依赖冲突是否解决",
+                "command": "pip check",
+            }
+        )
 
         return plan
 
@@ -288,14 +301,14 @@ class DependencyResolver:
             subprocess.run(
                 [sys.executable, "-m", "pip", "install", "pip-tools"],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # 生成锁定文件
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "compile", str(self.requirements_file)],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode == 0:
@@ -321,7 +334,7 @@ class DependencyResolver:
             "target_version": [],
             "conflicts_with": [],
             "resolution": [],
-            "priority": []
+            "priority": [],
         }
 
         for pkg_name, pkg_info in self.dependency_db.items():
@@ -343,6 +356,7 @@ class DependencyResolver:
 
         # 保存为CSV
         import csv
+
         matrix_file = Path("docs/_reports/DEPENDENCY_MATRIX.csv")
         matrix_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -388,9 +402,7 @@ class DependencyResolver:
         # 5. 验证
         print("\n🔍 最终验证...")
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "check"],
-            capture_output=True,
-            text=True
+            [sys.executable, "-m", "pip", "check"], capture_output=True, text=True
         )
 
         if result.returncode == 0:
@@ -444,15 +456,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="依赖冲突解决工具")
+    parser.add_argument("--detect-only", action="store_true", help="仅检测冲突，不解决")
     parser.add_argument(
-        "--detect-only",
-        action="store_true",
-        help="仅检测冲突，不解决"
-    )
-    parser.add_argument(
-        "--create-test-reqs",
-        action="store_true",
-        help="创建测试requirements"
+        "--create-test-reqs", action="store_true", help="创建测试requirements"
     )
 
     args = parser.parse_args()

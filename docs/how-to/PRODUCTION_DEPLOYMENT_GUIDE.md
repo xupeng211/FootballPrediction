@@ -10,6 +10,7 @@
 ## 📋 执行摘要
 
 ### 🎯 手册目标
+
 本手册旨在为足球预测系统的生产部署提供标准化的执行流程，涵盖从部署准备到验证再到回滚演练的完整环节。通过遵循本手册，确保系统部署过程的安全性、可控性和可回滚性。
 
 ### 🏗️ 上线涉及的核心组件
@@ -34,6 +35,7 @@
 ### 1. 代码和CI/CD验证
 
 #### ✅ 检查清单：代码准备
+
 - [ ] **主分支状态**: 确认代码已合并至 `main` 分支
 - [ ] **CI/CD通过**: 最新提交的CI/CD流程全部通过
 - [ ] **版本标记**: 使用正确的版本标签格式 `football-predict:phase6`
@@ -41,6 +43,7 @@
 - [ ] **安全扫描**: Bandit和Safety安全扫描通过
 
 #### 🔄 版本号规范
+
 ```bash
 # 版本命名规范
 football-predict:phase6              # Phase 6 生产版本
@@ -50,6 +53,7 @@ football-predict:phase6-<timestamp>  # 时间戳版本
 ```
 
 #### 📋 验证命令
+
 ```bash
 # 1. 检查代码状态
 git status
@@ -168,6 +172,7 @@ PRODUCTION_MODEL_VERSION=latest
 ```
 
 #### 📁 环境文件创建
+
 ```bash
 # 1. 创建生产环境文件
 cp .env.production.example .env.production
@@ -183,6 +188,7 @@ grep -E "PASSWORD|SECRET|KEY" .env.production
 ### 3. 数据库迁移检查
 
 #### ✅ 检查清单：数据库准备
+
 - [ ] **迁移文件完整**: 确认所有12个Alembic迁移文件存在
 - [ ] **数据库备份**: 生产数据库有完整备份
 - [ ] **连接测试**: 数据库连接配置正确
@@ -190,6 +196,7 @@ grep -E "PASSWORD|SECRET|KEY" .env.production
 - [ ] **性能配置**: 数据库性能参数优化
 
 #### 🗄️ 数据库迁移命令
+
 ```bash
 # 1. 检查迁移状态
 alembic current
@@ -226,6 +233,7 @@ asyncio.run(check_tables())
 ### 4. 模型文件与缓存预加载
 
 #### ✅ 检查清单：模型准备
+
 - [ ] **模型文件存在**: 确认MLflow中已注册生产模型
 - [ ] **模型版本正确**: 使用正确的模型版本标签
 - [ ] **Feature Store**: Feast feature store已初始化
@@ -233,6 +241,7 @@ asyncio.run(check_tables())
 - [ ] **模型加载**: 模型加载测试通过
 
 #### 🤖 模型验证命令
+
 ```bash
 # 1. 检查MLflow模型注册
 curl -s http://mlflow:5000/api/2.0/registered-models/list | jq '.registered_models[].name'
@@ -273,6 +282,7 @@ print('Cache warmed up successfully')
 ### 1. Docker Compose 部署
 
 #### ✅ 检查清单：部署准备
+
 - [ ] **镜像准备**: 所有服务镜像已构建并推送
 - [ ] **配置文件**: 所有配置文件已准备就绪
 - [ ] **存储准备**: 数据目录和备份目录已创建
@@ -376,6 +386,7 @@ docker-compose exec redis redis-cli ping
 ### 2. Kubernetes 部署
 
 #### ✅ 检查清单：K8s准备
+
 - [ ] **集群连接**: kubectl配置正确
 - [ ] **命名空间**: 生产命名空间已创建
 - [ ] **密钥配置**: Kubernetes secrets已创建
@@ -717,6 +728,7 @@ docker-compose logs app | grep -E "(slow query|query.*ms|execution time)"
 ### 1. 功能验证
 
 #### ✅ 检查清单：功能验证
+
 - [ ] **API服务响应**: 所有核心API接口正常响应
 - [ ] **数据库读写**: 数据库连接正常，读写操作成功
 - [ ] **缓存功能**: Redis缓存读写正常
@@ -1032,6 +1044,7 @@ curl -s http://localhost:5002/api/2.0/mlflow/runs/search | jq '.runs[] | select(
 ### 2. 性能验证
 
 #### ✅ 检查清单：性能验证
+
 - [ ] **响应时间**: API响应时间在可接受范围内
 - [ ] **吞吐量**: 系统支持预期的并发请求量
 - [ ] **资源使用**: CPU、内存、磁盘使用正常
@@ -1257,6 +1270,7 @@ python db_pool_test.py
 ### 3. 监控验证
 
 #### ✅ 检查清单：监控验证
+
 - [ ] **Grafana仪表盘**: 所有仪表盘加载正常
 - [ ] **Prometheus指标**: 指标数据正常采集
 - [ **AlertManager配置**: 告警规则和通知配置正确
@@ -1423,6 +1437,7 @@ curl -s http://localhost:9121/metrics | grep redis_keyspace_hits_total
 ### 1. 容器回滚
 
 #### ✅ 检查清单：容器回滚准备
+
 - [ ] **镜像备份**: 确保有可用的回滚镜像
 - [ ] **版本记录**: 记录当前部署版本信息
 - [ ] **回滚脚本**: 回滚脚本准备就绪
@@ -1577,6 +1592,7 @@ echo "Kubernetes rollback completed at $(date)" >> k8s_rollback_log.txt
 ### 2. 数据库回滚
 
 #### ✅ 检查清单：数据库回滚准备
+
 - [ ] **完整备份**: 有时间点最近的完整数据库备份
 - [ **WAL归档**: WAL日志归档正常
 - [ ] **回滚脚本**: 数据库回滚脚本准备就绪
@@ -1833,6 +1849,7 @@ chmod +x migration_rollback.sh
 ### 3. 配置回滚
 
 #### ✅ 检查清单：配置回滚准备
+
 - [ ] **配置备份**: 当前环境配置文件已备份
 - [ ] **版本控制**: 配置文件在版本控制中
 - [ ] **回滚脚本**: 配置回滚脚本准备就绪
@@ -1999,6 +2016,7 @@ chmod +x partial_config_rollback.sh
 ### 4. 验证回滚成功的检查步骤
 
 #### ✅ 检查清单：回滚验证
+
 - [ ] **服务状态**: 所有服务正常运行
 - [ ] **数据一致性**: 数据回滚后一致性验证
 - [ ] **功能验证**: 核心功能正常工作

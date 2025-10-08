@@ -1,22 +1,23 @@
-from datetime import datetime, timedelta
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar
-
-from contextvars import ContextVar
-from fastapi import Request
-from src.database.connection import DatabaseManager
-from src.database.models.audit_log import (
-    AuditAction,
-    AuditLog,
-    AuditSeverity,
-    AuditLogSummary,
-)
-from sqlalchemy import and_, desc
 import asyncio
 import hashlib
 import inspect
 import logging
 import time
+from contextvars import ContextVar
+from datetime import datetime, timedelta
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, TypeVar
+
+from fastapi import Request
+from sqlalchemy import and_, desc
+
+from src.database.connection import DatabaseManager
+from src.database.models.audit_log import (
+    AuditAction,
+    AuditLog,
+    AuditLogSummary,
+    AuditSeverity,
+)
 
 """
 权限审计服务
@@ -304,7 +305,7 @@ class AuditService:
             # 创建审计日志条目
             audit_entry = AuditLog(
                 # 用户信息（从上下文获取）
-                user_id=context_dict.get("user_id", "system"),
+                user_id=context_dict.get(str("user_id"), "system"),
                 username=context_dict.get("username"),
                 user_role=context_dict.get("user_role"),
                 session_id=context_dict.get("session_id"),
@@ -345,7 +346,7 @@ class AuditService:
                 if inspect.isawaitable(refresh_result):
                     await refresh_result
                 self.logger.info(
-                    f"审计日志已记录: {action} on {table_name} by {context_dict.get('user_id', 'system')}"
+                    f"审计日志已记录: {action} on {table_name} by {context_dict.get(str('user_id'), 'system')}"
                 )
                 return int(audit_entry.id) if audit_entry.id is not None else None
         except Exception as e:
@@ -397,7 +398,9 @@ class AuditService:
             )
             return [log.to_dict() for log in high_risk_logs.scalars()]
 
-    def log_action(self, action: str, user_id: str, metadata: dict = None) -> dict:
+    def log_action(
+        self, action: str, user_id: str, metadata: Optional[dict] = None
+    ) -> dict:
         """记录操作日志 - 同步版本用于测试"""
         log_entry = {
             "action": action,
@@ -440,9 +443,9 @@ class AuditService:
         results = []
         for action_data in actions:
             result = self.log_action(
-                action_data.get("action", ""),
-                action_data.get("user_id", ""),
-                action_data.get("metadata", {}),
+                action_data.get(str("action"), ""),
+                action_data.get(str("user_id"), ""),
+                action_data.get(str("metadata"), {}),
             )
             results.append(result)
         return results
@@ -499,7 +502,7 @@ class AuditService:
                             record_id = result["id"]
                     # 使用轻量的log_action，避免异步会话依赖
                     context_dict = audit_context.get({})
-                    user_id = context_dict.get("user_id", "system")
+                    user_id = context_dict.get(str("user_id"), "system")
                     self.log_action(
                         action=action,
                         user_id=user_id,
@@ -518,7 +521,7 @@ class AuditService:
                     duration_ms = int((time.time() - start_time) * 1000)
                     # 失败也记录一次轻量审计
                     context_dict = audit_context.get({})
-                    user_id = context_dict.get("user_id", "system")
+                    user_id = context_dict.get(str("user_id"), "system")
                     self.log_action(
                         action=action,
                         user_id=user_id,
@@ -756,7 +759,7 @@ def audit_operation(
                 try:
                     # 从上下文获取用户信息
                     context = audit_context.get({})
-                    user_id = context.get("user_id", "system")
+                    user_id = context.get(str("user_id"), "system")
                     # 使用传入的服务实例或全局实例
                     service = service_instance or audit_service
                     # 使用同步的log_action方法

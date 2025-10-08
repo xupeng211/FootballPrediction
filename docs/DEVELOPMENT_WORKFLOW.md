@@ -35,6 +35,7 @@ make env-check
 #### VSCode
 
 创建`.vscode/settings.json`:
+
 ```json
 {
   "python.defaultInterpreterPath": ".venv/bin/python",
@@ -61,7 +62,7 @@ make env-check
 
 ### 分支策略
 
-```
+```text
 main (生产)
   ↑
 develop (开发)
@@ -204,24 +205,27 @@ git commit -m "feat(api): 添加新端点"
 ### TDD流程
 
 1. **红色阶段**：先写测试，测试失败
-```python
-def test_new_feature():
-    result = new_feature()
-    assert result == expected
-```
+
+   ```python
+   def test_new_feature():
+       result = new_feature()
+       assert result == expected
+   ```
 
 2. **绿色阶段**：实现功能，让测试通过
-```python
-def new_feature():
-    return expected
-```
+
+   ```python
+   def new_feature():
+       return expected
+   ```
 
 3. **重构阶段**：优化代码，保持测试通过
-```python
-def new_feature():
-    # 优化后的实现
-    return calculate_result()
-```
+
+   ```python
+   def new_feature():
+       # 优化后的实现
+       return calculate_result()
+   ```
 
 ### 示例：TDD开发新功能
 
@@ -363,38 +367,41 @@ make profile-memory
 ### 优化建议
 
 1. **数据库查询优化**
-```python
-# ❌ N+1查询问题
-for match in matches:
-    team = db.get_team(match.team_id)
 
-# ✅ 批量查询
-team_ids = [m.team_id for m in matches]
-teams = db.get_teams(team_ids)
-```
+   ```python
+   # ❌ N+1查询问题
+   for match in matches:
+       team = db.get_team(match.team_id)
+
+   # ✅ 批量查询
+   team_ids = [m.team_id for m in matches]
+   teams = db.get_teams(team_ids)
+   ```
 
 2. **缓存使用**
-```python
-from functools import lru_cache
 
-@lru_cache(maxsize=100)
-def expensive_calculation(param):
-    # 耗时计算
-    return result
-```
+   ```python
+   from functools import lru_cache
+
+   @lru_cache(maxsize=100)
+   def expensive_calculation(param):
+       # 耗时计算
+       return result
+   ```
 
 3. **异步优化**
-```python
-# ❌ 串行执行
-result1 = await api_call_1()
-result2 = await api_call_2()
 
-# ✅ 并行执行
-result1, result2 = await asyncio.gather(
-    api_call_1(),
-    api_call_2()
-)
-```
+   ```python
+   # ❌ 串行执行
+   result1 = await api_call_1()
+   result2 = await api_call_2()
+
+   # ✅ 并行执行
+   result1, result2 = await asyncio.gather(
+       api_call_1(),
+       api_call_2()
+   )
+   ```
 
 ## 依赖管理
 
@@ -556,7 +563,7 @@ git push origin v1.2.3
 ## 获取帮助
 
 - **Slack**: #football-prediction
-- **邮件**: dev-team@example.com
+- **邮件**: <dev-team@example.com>
 - **Issues**: GitHub Issues
 - **Wiki**: 项目Wiki
 

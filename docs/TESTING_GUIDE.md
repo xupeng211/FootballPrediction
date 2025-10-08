@@ -7,11 +7,13 @@
 ## 快速开始
 
 ### 运行所有测试
+
 ```bash
 make test
 ```
 
 ### 运行特定类型的测试
+
 ```bash
 # 单元测试
 make test.unit
@@ -27,6 +29,7 @@ make test-quick
 ```
 
 ### 生成覆盖率报告
+
 ```bash
 # 生成HTML覆盖率报告
 make cov.html
@@ -40,7 +43,7 @@ pytest --cov=src --cov-report=term-missing
 
 ## 测试结构
 
-```
+```text
 tests/
 ├── unit/           # 单元测试 - 测试单个函数/类
 │   ├── api/        # API端点测试
@@ -65,6 +68,7 @@ tests/
 ```
 
 ### 运行特定标记的测试
+
 ```bash
 # 只运行单元测试
 pytest -m unit
@@ -278,18 +282,21 @@ make ci
 ## 最佳实践
 
 1. **测试命名**: 使用描述性名称，清楚说明测试内容
+
    ```python
    def test_user_registration_with_valid_email_creates_user():
        ...
    ```
 
 2. **一个测试一个断言**: 保持测试简单和专注
+
    ```python
    def test_addition():
        assert add(2, 3) == 5  # 只测试一件事
    ```
 
 3. **使用fixture复用**: 避免重复的setup代码
+
    ```python
    @pytest.fixture
    def database():
@@ -299,6 +306,7 @@ make ci
    ```
 
 4. **独立性**: 测试之间不应相互依赖
+
    ```python
    # ❌ 不好
    test_order = []
@@ -311,6 +319,7 @@ make ci
    ```
 
 5. **清晰的失败消息**: 使用自定义消息
+
    ```python
    assert result == expected, f"Expected {expected}, got {result}"
    ```

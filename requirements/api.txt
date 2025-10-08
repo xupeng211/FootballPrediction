@@ -230,4 +230,4 @@ oslo-policy==4.5.0
 
 # API审计
 fastapi-audit==0.1.0
-auditlog==0.2.1
+auditlog==0.2.1slowapi==0.1.9  # API速率限制

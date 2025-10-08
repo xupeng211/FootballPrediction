@@ -82,23 +82,23 @@ class LineageReporter:
         if description:
             job_facets["description"] = {"description": description}
         if source_location:
-            job_facets["sourceCodeLocation"] = (
-                source_code_location_job.SourceCodeLocationJobFacet(
-                    type="git", url=source_location
-                )
+            job_facets[
+                "sourceCodeLocation"
+            ] = source_code_location_job.SourceCodeLocationJobFacet(
+                type="git", url=source_location
             )
         if transformation_sql:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
 
         # 构建运行信息
-        run_facets = {}
+        run_facets: Dict[str, Any] = {}
         # TODO: Implement parent_run functionality with proper UUID handling
 
         # 构建输入数据集
         input_datasets = []
         for input_info in inputs:
-            dataset_name = input_info.get("name", "unknown")
-            dataset_namespace = input_info.get("namespace", self.namespace)
+            dataset_name = input_info.get(str("name"), "unknown")
+            dataset_namespace = input_info.get(str("namespace"), self.namespace)
 
             dataset_facets = {}
             if "schema" in input_info:
@@ -165,8 +165,8 @@ class LineageReporter:
         # 构建输出数据集
         output_datasets = []
         for output_info in outputs:
-            dataset_name = output_info.get("name", "unknown")
-            dataset_namespace = output_info.get("namespace", self.namespace)
+            dataset_name = output_info.get(str("name"), "unknown")
+            dataset_namespace = output_info.get(str("namespace"), self.namespace)
 
             dataset_facets = {}
             if "schema" in output_info:
@@ -187,7 +187,7 @@ class LineageReporter:
             )
 
         # 构建运行指标
-        run_facets = {}
+        run_facets: Dict[str, Any] = {}
         if metrics:
             run_facets["processing_engine"] = {
                 "processing_engine": {
@@ -302,7 +302,7 @@ class LineageReporter:
             {
                 "name": source_name,
                 "namespace": "external",
-                "schema": source_config.get("schema", {}) if source_config else {},
+                "schema": source_config.get(str("schema"), {}) if source_config else {},
             }
         ]
 

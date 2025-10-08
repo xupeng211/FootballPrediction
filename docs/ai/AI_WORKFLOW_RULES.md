@@ -7,6 +7,7 @@
 ## 📋 必须执行的工作流交互
 
 ### 1. 代码提交前
+
 ```yaml
 Claude Code 必须执行：
   - make prepush
@@ -19,6 +20,7 @@ Claude Code 必须执行：
 ```
 
 ### 2. 理解CI失败
+
 ```yaml
 当CI失败时：
   1. 查看 GitHub Actions 中的 Issue Tracker 工作流
@@ -34,6 +36,7 @@ Claude Code 必须执行：
 ```
 
 ### 3. MLOps交互
+
 ```yaml
 当收到MLOps Issue时：
   1. Issue类型说明：
@@ -48,6 +51,7 @@ Claude Code 必须执行：
 ## 🔄 工作流触发时机
 
 ### 自动触发（无需Claude操作）
+
 - `CI Pipeline` - push到main/develop/hotfix/**
 - `Deploy` - CI成功后自动
 - `MLOps` - 每日8:00 UTC
@@ -56,6 +60,7 @@ Claude Code 必须执行：
 - `Issue Tracker` - CI/MLOps失败时
 
 ### 手动触发（Claude可操作）
+
 ```yaml
 可以手动触发的情况：
   1. MLOps - 需要立即检查模型
@@ -67,6 +72,7 @@ Claude Code 必须执行：
 ## 📝 Claude Code 开发检查清单
 
 ### 修改代码后
+
 - [ ] 运行 `make prepush`
 - [ ] 检查是否通过所有测试
 - [ ] 确认代码覆盖率不低于80%
@@ -74,12 +80,14 @@ Claude Code 必须执行：
 - [ ] 提交代码
 
 ### 提交后
+
 - [ ] 查看GitHub Actions状态
 - [ ] 如有失败，查看Issue Tracker
 - [ ] 修复问题（如有）
 - [ ] 确认Issue自动关闭
 
 ### 处理Issue
+
 - [ ] 阅读Issue详情
 - [ ] 理解失败原因
 - [ ] 修复代码
@@ -89,6 +97,7 @@ Claude Code 必须执行：
 ## 🎯 常见场景处理指南
 
 ### 场景1：添加新功能
+
 ```yaml
 步骤：
   1. 理解需求
@@ -101,6 +110,7 @@ Claude Code 必须执行：
 ```
 
 ### 场景2：修复Bug
+
 ```yaml
 步骤：
   1. 查看Issue Tracker的Issue
@@ -113,6 +123,7 @@ Claude Code 必须执行：
 ```
 
 ### 场景3：模型优化
+
 ```yaml
 步骤：
   1. MLOps自动检测
@@ -124,6 +135,7 @@ Claude Code 必须执行：
 ```
 
 ### 场景4：紧急修复
+
 ```yaml
 步骤：
   1. 快速修复代码
@@ -135,14 +147,16 @@ Claude Code 必须执行：
 
 ## ⚠️ 禁止行为
 
-### Claude Code 不应该：
+### Claude Code 不应该
+
 - ❌ 跳过 `make prepush` 直接提交
 - ❌ 手动关闭 CI 失败的 Issue
 - ❌ 修改生产环境配置
 - ❌ 禁用或跳过工作流
 - ❌ 直接修改 `.github/workflows/`（除非明确需要）
 
-### 应该做：
+### 应该做
+
 - ✅ 始终运行本地检查
 - ✅ 阅读并理解工作流反馈
 - ✅ 及时处理自动创建的 Issue
@@ -152,6 +166,7 @@ Claude Code 必须执行：
 ## 📊 工作流性能考虑
 
 ### 优化建议
+
 1. **减少不必要的提交**
    - 多个小改动合并为一个提交
    - 使用有意义的提交信息
@@ -167,6 +182,7 @@ Claude Code 必须执行：
 ## 🔧 故障排除
 
 ### CI Pipeline失败
+
 ```bash
 # 本地调试
 make test
@@ -178,6 +194,7 @@ make type-check
 ```
 
 ### MLOps问题
+
 ```bash
 # 手动触发MLOps
 GitHub Actions → MLOps → Run workflow
@@ -185,6 +202,7 @@ GitHub Actions → MLOps → Run workflow
 ```
 
 ### Deploy问题
+
 - 检查CI是否成功
 - 查看Deploy工作流日志
 - 必要时手动触发
@@ -192,11 +210,13 @@ GitHub Actions → MLOps → Run workflow
 ## 📞 获取帮助
 
 ### 工作流文档
+
 - `docs/ai/CLAUDE_WORKFLOW_GUIDE.md` - Claude专用指南
 - `.github/workflows/README.md` - 完整工作流文档
 - `CLAUDE.md` - 项目开发指南
 
 ### 命令帮助
+
 - `make help` - 查看所有命令
 - `make context` - 加载项目上下文
 

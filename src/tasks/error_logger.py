@@ -222,8 +222,8 @@ class TaskErrorLogger:
                         "error_type": error_details.get("error_type"),
                         "error_message": error_details.get("error_message"),
                         "traceback": error_details.get("traceback"),
-                        "retry_count": error_details.get("retry_count", 0),
-                        "context_data": str(error_details.get("context", {})),
+                        "retry_count": error_details.get(str("retry_count"), 0),
+                        "context_data": str(error_details.get(str("context"), {})),
                         "created_at": datetime.now(),
                     },
                 )

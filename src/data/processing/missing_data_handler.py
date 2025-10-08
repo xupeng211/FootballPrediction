@@ -12,12 +12,19 @@
 基于 DATA_DESIGN.md 第4.3节设计。
 """
 
+import json
 import logging
-from typing import Any, Dict, List
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 
+from src.core.config import get_settings
 from src.database.connection import DatabaseManager
+from src.database.models.features import Features
 
 
 class MissingDataHandler:
@@ -35,10 +42,20 @@ class MissingDataHandler:
         "odds": "market_consensus",  # 市场共识
     }
 
+    _DEFAULT_FALLBACK_AVERAGES: Dict[str, float] = {
+        "avg_possession": 50.0,
+        "avg_shots_per_game": 12.5,
+        "avg_goals_per_game": 1.5,
+        "league_position": 10.0,
+    }
+
     def __init__(self):
         """初始化缺失数据处理器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"handler.{self.__class__.__name__}")
+        self._feature_average_cache: Dict[str, float] = {}
+        self._settings = get_settings()
+        self._fallback_defaults = self._load_fallback_defaults()
 
     async def handle_missing_match_data(
         self, match_data: Dict[str, Any]
@@ -56,13 +73,15 @@ class MissingDataHandler:
         if match_data.get("home_score") is None:
             match_data["home_score"] = 0
             self.logger.debug(
-                f"Filled missing home_score for match {match_data.get('id')}"
+                "Filled missing home_score for match %s",
+                match_data.get("external_match_id") or match_data.get("id"),
             )
 
         if match_data.get("away_score") is None:
             match_data["away_score"] = 0
             self.logger.debug(
-                f"Filled missing away_score for match {match_data.get('id')}"
+                "Filled missing away_score for match %s",
+                match_data.get("external_match_id") or match_data.get("id"),
             )
 
         # 示例：填充缺失的场地和裁判
@@ -91,11 +110,10 @@ class MissingDataHandler:
             # 遍历所有特征列
             for col in features_df.columns:
                 if features_df[col].isnull().any():
-                    fill_strategy = self.FILL_STRATEGIES.get("team_stats", "zero")
+                    fill_strategy = self.FILL_STRATEGIES.get(str("team_stats"), "zero")
 
                     if fill_strategy == "historical_average":
                         # 使用历史平均值填充
-                        # TODO: 实现从数据库获取历史平均值的逻辑
                         historical_avg = await self._get_historical_average(col)
                         features_df[col].fillna(historical_avg, inplace=True)
                         self.logger.info(
@@ -130,23 +148,113 @@ class MissingDataHandler:
         Returns:
             float: 历史平均值
         """
-        try:
-            # TODO: 实现从数据库查询历史平均值的逻辑
-            # 这里返回一个固定的默认值作为占位符
-            default_averages = {
-                "avg_possession": 50.0,
-                "avg_shots_per_game": 12.5,
-                "avg_goals_per_game": 1.5,
-                "league_position": 10.0,
-            }
+        if feature_name in self._feature_average_cache:
+            return self._feature_average_cache[feature_name]
 
-            return default_averages.get(feature_name, 0.0)
-
-        except Exception as e:
-            self.logger.error(
-                f"Failed to get historical average for {feature_name}: {str(e)}"
+        column = getattr(Features, feature_name, None)
+        if column is None:
+            self.logger.warning(
+                "Feature column %s does not exist on Features model; using default fallback.",
+                feature_name,
             )
-            return 0.0
+            return self._fallback_average(feature_name)
+
+        try:
+            async with self.db_manager.get_async_session() as session:
+                stmt = select(func.avg(column))
+                result = await session.execute(stmt)
+                avg_value: Optional[float] = result.scalar()
+
+                if avg_value is None:
+                    avg_value = self._fallback_average(feature_name)
+                else:
+                    avg_value = float(avg_value)
+
+                self._feature_average_cache[feature_name] = avg_value
+                return avg_value
+
+        except (RuntimeError, SQLAlchemyError) as exc:
+            self.logger.warning(
+                "Unable to query historical average for %s, fallback will be used. Error: %s",
+                feature_name,
+                exc,
+            )
+            return self._fallback_average(feature_name)
+
+    def _fallback_average(self, feature_name: str) -> float:
+        """提供默认平均值作为数据库不可用时的回退策略"""
+        return self._fallback_defaults.get(str(feature_name), 0.0)
+
+    def register_fallback_average(self, feature_name: str, value: float) -> None:
+        """在运行时注册或覆盖指定特征的默认均值。"""
+
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError):
+            self.logger.warning("忽略无效的默认均值: %s=%s", feature_name, value)
+            return
+
+        self._fallback_defaults[feature_name] = numeric_value
+
+    def _load_fallback_defaults(self) -> Dict[str, float]:
+        """加载缺失值默认均值配置，支持环境变量或JSON配置文件。"""
+
+        defaults = self._DEFAULT_FALLBACK_AVERAGES.copy()
+
+        settings_json = getattr(self._settings, "missing_data_defaults_json", None)
+        if settings_json:
+            self._merge_default_source(defaults, settings_json, source="settings")
+
+        candidate_paths: List[Path] = []
+        settings_path = getattr(self._settings, "missing_data_defaults_path", None)
+        if settings_path:
+            candidate_paths.append(Path(settings_path))
+
+        legacy_env_path = os.getenv("MISSING_DATA_DEFAULTS_PATH")
+        if legacy_env_path:
+            candidate_paths.append(Path(legacy_env_path))
+
+        candidate_paths.append(Path("config/missing_data_defaults.json"))
+
+        for path in candidate_paths:
+            if path.is_file():
+                try:
+                    content = path.read_text(encoding="utf-8")
+                    self._merge_default_source(defaults, content, source=str(path))
+                except Exception as exc:
+                    self.logger.warning("读取缺失值默认配置失败: %s (%s)", path, exc)
+
+                # 找到第一个有效文件即可
+                break
+
+        legacy_json = os.getenv("MISSING_DATA_DEFAULTS")
+        if legacy_json:
+            self._merge_default_source(defaults, legacy_json, source="env")
+
+        return defaults
+
+    def _merge_default_source(
+        self, defaults: Dict[str, float], raw_json: str, *, source: str
+    ) -> None:
+        """将来自字符串的 JSON 数据合并到默认映射。"""
+
+        try:
+            payload = json.loads(raw_json)
+        except json.JSONDecodeError as exc:
+            self.logger.warning("解析默认均值 JSON 失败（来源: %s）: %s", source, exc)
+            return
+
+        if not isinstance(payload, dict):
+            self.logger.warning("默认均值配置必须是对象（来源: %s）", source)
+            return
+
+        for key, value in payload.items():
+            try:
+                defaults[key] = float(value)
+            except (TypeError, ValueError):
+                self.logger.warning(
+                    "忽略无效的默认均值（来源: %s）: %s=%s", source, key, value
+                )
 
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:
         """
@@ -193,3 +301,14 @@ class MissingDataHandler:
         except Exception as e:
             self.logger.error(f"Failed to remove rows with missing data: {str(e)}")
             return df
+
+    def reload_fallback_defaults(self) -> None:
+        """重新加载缺省均值配置并清除缓存，支持运行时热更新。"""
+
+        self._fallback_defaults = self._load_fallback_defaults()
+        self._feature_average_cache.clear()
+
+    def clear_cached_averages(self) -> None:
+        """清理历史均值缓存。"""
+
+        self._feature_average_cache.clear()

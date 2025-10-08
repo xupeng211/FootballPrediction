@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -67,25 +67,60 @@ def _optional_check_skipped(service: str) -> Dict[str, Any]:
 
 async def _collect_database_health() -> Dict[str, Any]:
     """获取数据库健康状态（内部使用）"""
-    with get_database_manager().get_session() as session:
-        return await _check_database(session)
+    db_manager = get_database_manager()
+    try:
+        session_ctx = db_manager.get_session()
+    except RuntimeError as exc:
+        logger.warning("数据库管理器未初始化，跳过数据库健康检查: %s", exc)
+        return _optional_check_skipped("database") | {
+            "details": {
+                "message": "Database manager not initialised; health check skipped",
+            }
+        }
+
+    try:
+        with session_ctx as session:
+            return await _check_database(session)
+    except RuntimeError as exc:
+        logger.warning("数据库会话不可用，跳过数据库健康检查: %s", exc)
+        return _optional_check_skipped("database") | {
+            "details": {
+                "message": "Database session unavailable; health check skipped",
+            }
+        }
 
 
 @router.get(
-    "/health",
+    "",
     summary="系统健康检查",
     description="检查API、数据库、缓存等服务状态",
     response_model=HealthCheckResponse,
 )
-async def health_check() -> Dict[str, Any]:
+async def health_check(
+    check_db: Optional[bool] = Query(None, description="是否执行数据库健康检查"),
+) -> Dict[str, Any]:
     """
     系统健康检查端点
+
+    Args:
+        check_db: 是否执行数据库健康检查（覆盖MINIMAL_HEALTH_MODE设置）
 
     Returns:
         Dict[str, Any]: 系统健康状态信息
     """
     start_time = time.time()
-    logger.info("健康检查请求: minimal_mode=%s", MINIMAL_HEALTH_MODE)
+
+    # 处理check_db参数
+    force_db_check = check_db is not None
+    if force_db_check:
+        minimal_mode = not check_db
+        logger.info(
+            "健康检查请求: minimal_mode=%s (check_db=%s)", minimal_mode, check_db
+        )
+    else:
+        minimal_mode = MINIMAL_HEALTH_MODE
+        logger.info("健康检查请求: minimal_mode=%s", minimal_mode)
+
     health_status: Dict[str, Any] = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -100,7 +135,7 @@ async def health_check() -> Dict[str, Any]:
         health_status["mode"] = "full" if optional_checks_enabled else "minimal"
 
         # 检查数据库连接
-        if MINIMAL_HEALTH_MODE:
+        if minimal_mode:
             health_status["checks"]["database"] = _optional_check_skipped("database")
         else:
             health_status["checks"]["database"] = await _collect_database_health()
@@ -155,7 +190,7 @@ async def health_check() -> Dict[str, Any]:
 
 
 @router.get(
-    "/health/liveness",
+    "liveness",
     summary="存活性检查",
     description="简单的存活性检查，仅返回基本状态",
 )
@@ -168,7 +203,7 @@ async def liveness_check() -> Dict[str, Any]:
 
 
 @router.get(
-    "/health/readiness",
+    "readiness",
     summary="就绪性检查",
     description="检查服务是否就绪，包括依赖服务检查",
 )
@@ -199,7 +234,7 @@ async def readiness_check() -> Dict[str, Any]:
             checks[service] = _optional_check_skipped(service)
 
     # 判断整体就绪状态
-    all_healthy = all(check.get("healthy", False) for check in checks.values())
+    all_healthy = all(check.get(str("healthy"), False) for check in checks.values())
 
     status_code = (
         status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
@@ -266,9 +301,9 @@ async def _check_redis() -> Dict[str, Any]:
             "details": {
                 "message": "Redis连接正常",
                 "server_info": {
-                    "version": info.get("version", "unknown"),
-                    "connected_clients": info.get("connected_clients", 0),
-                    "used_memory": info.get("used_memory_human", "0B"),
+                    "version": info.get(str("version"), "unknown"),
+                    "connected_clients": info.get(str("connected_clients"), 0),
+                    "used_memory": info.get(str("used_memory_human"), "0B"),
                 },
             },
         }
@@ -379,9 +414,8 @@ async def _check_mlflow() -> Dict[str, Any]:
 
     async def _probe() -> Dict[str, Any]:
         try:
-            from mlflow.tracking import MlflowClient
-
             import mlflow
+            from mlflow.tracking import MlflowClient
         except Exception as exc:  # pragma: no cover - 在未安装MLflow时触发
             raise ServiceCheckError(
                 "MLflow依赖不可用",

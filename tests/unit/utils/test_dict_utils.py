@@ -59,36 +59,10 @@ class TestDictUtils:
 
     def test_deep_merge_complex_nested(self):
         """测试复杂嵌套结构"""
-        dict1 = {
-            "level1": {
-                "level2": {
-                    "a": 1,
-                    "b": 2
-                },
-                "c": 3
-            }
-        }
-        dict2 = {
-            "level1": {
-                "level2": {
-                    "b": 4,
-                    "d": 5
-                },
-                "e": 6
-            }
-        }
+        dict1 = {"level1": {"level2": {"a": 1, "b": 2}, "c": 3}}
+        dict2 = {"level1": {"level2": {"b": 4, "d": 5}, "e": 6}}
         result = DictUtils.deep_merge(dict1, dict2)
-        expected = {
-            "level1": {
-                "level2": {
-                    "a": 1,
-                    "b": 4,
-                    "d": 5
-                },
-                "c": 3,
-                "e": 6
-            }
-        }
+        expected = {"level1": {"level2": {"a": 1, "b": 4, "d": 5}, "c": 3, "e": 6}}
         assert result == expected
 
     def test_deep_merge_original_unchanged(self):

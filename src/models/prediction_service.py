@@ -55,22 +55,53 @@ Provides real-time match prediction functionality, including:
     - src.utils.retry: 重试机制 / Retry mechanism
 """
 
+import inspect
 import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import mlflow.sklearn
 import numpy as np
-from mlflow.exceptions import MlflowException
 from sqlalchemy import select, text
 
-import mlflow
-from mlflow import MlflowClient
+try:
+    import mlflow
+    import mlflow.sklearn
+    from mlflow import MlflowClient
+    from mlflow.exceptions import MlflowException
+
+    HAS_MLFLOW = True
+except ImportError:  # pragma: no cover - optional dependency path
+    HAS_MLFLOW = False
+
+    class MlflowException(Exception):
+        """Fallback异常：仅在缺失MLflow依赖时使用。"""
+
+    class _MockMlflowModule:
+        """最小化的 MLflow 模拟实现。"""
+
+        class sklearn:  # type: ignore
+            @staticmethod
+            def load_model(*args, **kwargs):
+                raise MlflowException("MLflow is not installed; cannot load models.")
+
+        @staticmethod
+        def set_tracking_uri(*args, **kwargs) -> None:
+            return None
+
+    class MlflowClient:  # type: ignore
+        def __init__(self, *args, **kwargs) -> None:
+            raise MlflowException("MLflow is not installed; client unavailable.")
+
+        def get_latest_versions(self, *args, **kwargs):  # pragma: no cover - fallback
+            return []
+
+    mlflow = _MockMlflowModule()  # type: ignore
+
 from src.cache.ttl_cache import TTLCache
 from src.database.connection import DatabaseManager
-from src.database.models import Match, Prediction
+from src.database.models import Match, MatchStatus, Prediction
 from src.features.feature_store import FootballFeatureStore
 from src.utils.retry import RetryConfig, retry
 
@@ -227,15 +258,16 @@ class PredictionService:
 
         # 定义模型预期的特征顺序 / Define expected feature order for model
         self.feature_order: List[str] = [
-            "home_team_form",
-            "away_team_form",
-            "head_to_head_ratio",
-            "home_goals_avg",
-            "away_goals_avg",
-            "home_defense_rating",
-            "away_defense_rating",
-            "recent_performance_home",
-            "recent_performance_away",
+            "home_recent_wins",
+            "home_recent_goals_for",
+            "home_recent_goals_against",
+            "away_recent_wins",
+            "away_recent_goals_for",
+            "away_recent_goals_against",
+            "h2h_home_advantage",
+            "home_implied_probability",
+            "draw_implied_probability",
+            "away_implied_probability",
         ]
 
     @retry(MLFLOW_RETRY_CONFIG)
@@ -390,14 +422,13 @@ class PredictionService:
         cache_key = f"model:{model_name}"
 
         # 尝试从缓存获取 / Try to get from cache
-        cached_result = await self.model_cache.get(cache_key)
+        cached_result = await self.model_cache.get_async(cache_key)
         if cached_result:
             model, version = cached_result
             logger.debug(
                 f"使用缓存的模型 {model_name} 版本 {version} / Using cached model {model_name} version {version}"
             )
             return model, version
-
         try:
             # 使用带重试机制的方法加载模型
             model, version = await self.get_production_model_with_retry(model_name)
@@ -406,7 +437,7 @@ class PredictionService:
             model_uri = f"models:/{model_name}/{version}"
 
             # 缓存模型（带TTL） / Cache model with TTL
-            await self.model_cache.set(
+            await self.model_cache.set_async(
                 cache_key, (model, version), ttl=self.model_cache_ttl
             )
 
@@ -421,7 +452,6 @@ class PredictionService:
                 f"成功加载模型 {model_name} 版本 {version} / Successfully loaded model {model_name} version {version}"
             )
             return model, version
-
         except Exception as e:
             logger.error(f"加载生产模型失败: {e}")
             raise
@@ -481,13 +511,12 @@ class PredictionService:
         prediction_cache_key = f"prediction:{match_id}"
 
         # 尝试从缓存获取预测结果 / Try to get prediction result from cache
-        cached_result = await self.prediction_cache.get(prediction_cache_key)
+        cached_result = await self.prediction_cache.get_async(prediction_cache_key)
         if cached_result:
             logger.info(
                 f"使用缓存的预测结果：比赛 {match_id} / Using cached prediction result for match {match_id}"
             )
             return cached_result
-
         try:
             logger.info(f"开始预测比赛 {match_id}")
 
@@ -501,10 +530,15 @@ class PredictionService:
 
             # 从特征存储获取实时特征
             try:
-                features = await self.feature_store.get_match_features_for_prediction(
+                raw_features = self.feature_store.get_match_features_for_prediction(
                     match_id=match_id,
                     home_team_id=match_info["home_team_id"],
                     away_team_id=match_info["away_team_id"],
+                )
+                features = (
+                    await raw_features
+                    if inspect.isawaitable(raw_features)
+                    else raw_features
                 )
             except Exception as e:
                 logger.warning(f"获取比赛 {match_id} 的特征失败: {e}，使用默认特征")
@@ -558,7 +592,7 @@ class PredictionService:
             ).observe(prediction_duration)
 
             # 缓存预测结果（带TTL） / Cache prediction result with TTL
-            await self.prediction_cache.set(
+            await self.prediction_cache.set_async(
                 prediction_cache_key, result, ttl=self.prediction_cache_ttl
             )
 
@@ -567,7 +601,6 @@ class PredictionService:
                 f"Match {match_id} prediction completed: {predicted_class} (confidence: {result.confidence_score:.3f})"
             )
             return result
-
         except Exception as e:
             logger.error(f"预测比赛 {match_id} 失败: {e}")
             raise
@@ -701,24 +734,10 @@ class PredictionService:
             特征顺序必须与模型训练时保持一致。
             Feature order must be consistent with model training.
         """
-        # 定义特征顺序（应该与训练时保持一致）
-        feature_order = [
-            "home_recent_wins",
-            "home_recent_goals_for",
-            "home_recent_goals_against",
-            "away_recent_wins",
-            "away_recent_goals_for",
-            "away_recent_goals_against",
-            "h2h_home_advantage",
-            "home_implied_probability",
-            "draw_implied_probability",
-            "away_implied_probability",
-        ]
-
-        # 构建特征数组
+        # 使用类中定义的特征顺序，保持一致性
         feature_values = []
-        for feature_name in feature_order:
-            value = features.get(feature_name, 0.0)
+        for feature_name in self.feature_order:
+            value = features.get(str(feature_name), 0.0)
             feature_values.append(float(value))
 
         return np.array([feature_values])
@@ -764,7 +783,9 @@ class PredictionService:
                     created_at=result.created_at or datetime.now(),
                 )
 
-                session.add(prediction)
+                add_result = session.add(prediction)
+                if inspect.isawaitable(add_result):
+                    await add_result
                 await session.commit()
                 logger.debug(f"预测结果已存储到数据库：比赛 {result.match_id}")
 
@@ -797,15 +818,17 @@ class PredictionService:
             ```
 
         Note:
-            该方法应在比赛状态变为"completed"后调用。
-            This method should be called after match status becomes "completed".
+            该方法应在比赛状态变为"finished"后调用。
+            This method should be called after match status becomes "finished".
         """
         try:
             async with self.db_manager.get_async_session() as session:
                 # 获取比赛实际结果
                 match_query = select(
                     Match.id, Match.home_score, Match.away_score, Match.match_status
-                ).where(Match.id == match_id, Match.match_status == "completed")
+                ).where(
+                    Match.id == match_id, Match.match_status == MatchStatus.FINISHED
+                )
 
                 match_result = await session.execute(match_query)
                 match = match_result.first()
@@ -813,7 +836,6 @@ class PredictionService:
                 if not match:
                     logger.warning(f"比赛 {match_id} 未完成或不存在")
                     return False
-
                 # 计算实际结果
                 actual_result = self._calculate_actual_result(
                     match.home_score, match.away_score
@@ -843,7 +865,6 @@ class PredictionService:
                 await session.commit()
                 logger.info(f"比赛 {match_id} 预测结果已验证：实际结果 {actual_result}")
                 return True
-
         except Exception as e:
             logger.error(f"验证预测结果失败: {e}")
             return False
@@ -939,10 +960,8 @@ class PredictionService:
                     logger.info(
                         f"模型 {model_name} 最近 {days} 天准确率: {accuracy:.3f} ({row.correct}/{row.total})"
                     )
-                    return accuracy
-
+                    return float(accuracy)
                 return None
-
         except Exception as e:
             logger.error(f"获取模型准确率失败: {e}")
             return None
@@ -989,7 +1008,9 @@ class PredictionService:
             try:
                 # 为每个比赛创建缓存键并检查缓存
                 prediction_cache_key = f"prediction:{match_id}"
-                cached_result = await self.prediction_cache.get(prediction_cache_key)
+                cached_result = await self.prediction_cache.get_async(
+                    prediction_cache_key
+                )
 
                 if cached_result:
                     # 使用缓存的结果
@@ -1092,7 +1113,6 @@ class PredictionService:
                     )
 
                 return {"period_days": days, "statistics": stats}
-
         except Exception as e:
             logger.error(f"获取预测统计信息失败: {e}")
             return {"period_days": days, "statistics": []}

@@ -12,16 +12,16 @@
 
 import asyncio
 import logging
-import psutil
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+import psutil
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy import text
 
 from src.cache.redis_manager import get_redis_manager
-from src.database.connection import get_async_session, DatabaseManager
+from src.database.connection import DatabaseManager, get_async_session
 
 logger = logging.getLogger(__name__)
 
@@ -538,8 +538,10 @@ class SystemMonitor:
                 "response_time": response_time,
                 "write_time": write_time,
                 "read_time": read_time,
-                "connected_clients": info.get("connected_clients", 0) if info else 0,
-                "used_memory": info.get("used_memory", 0) if info else 0,
+                "connected_clients": (
+                    info.get(str("connected_clients"), 0) if info else 0
+                ),
+                "used_memory": info.get(str("used_memory"), 0) if info else 0,
                 "timestamp": datetime.now().isoformat(),
             }
 
@@ -616,8 +618,9 @@ class SystemMonitor:
             warnings = []
 
             # 检查最近的错误日志
-            from src.database.connection import get_async_session
             from sqlalchemy import text
+
+            from src.database.connection import get_async_session
 
             async with get_async_session() as session:
                 # 检查最近1小时的错误数量
@@ -730,8 +733,9 @@ class SystemMonitor:
             status = "healthy"
             warnings = []
 
-            from src.database.connection import get_async_session
             from sqlalchemy import text
+
+            from src.database.connection import get_async_session
 
             async with get_async_session() as session:
                 # 检查数据新鲜度

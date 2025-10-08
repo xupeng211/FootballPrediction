@@ -1,14 +1,15 @@
+import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
+
 from src.cache import CacheKeyManager, RedisManager
 from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 from src.data.storage.data_lake_storage import DataLakeStorage
 from src.database.connection import DatabaseManager
 from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
-import asyncio
 
 from .base import BaseService
 
@@ -297,7 +298,7 @@ class DataProcessingService(BaseService):
                         )
             elif data_type == "odds":
                 # 检查赔率数据
-                outcomes = data.get("outcomes", [])
+                outcomes = data.get(str("outcomes"), [])
                 if not outcomes:
                     quality_report["issues"].append("No odds outcomes found")
                     quality_report["is_valid"] = False
@@ -566,7 +567,7 @@ class DataProcessingService(BaseService):
                                 score_info.get("status")
                             ),
                             "match_minute": score_info.get("minute"),
-                            "events": score_info.get("events", []),
+                            "events": score_info.get(str("events"), []),
                             "is_live": raw_scores.is_live,
                             "is_finished": raw_scores.is_finished,
                             # 元数据

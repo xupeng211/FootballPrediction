@@ -154,11 +154,11 @@ class RawOddsData(BaseModel):
             return None
 
         try:
-            outcomes = self.raw_data.get("outcomes", [])
+            outcomes = self.raw_data.get(str("outcomes"), [])
             odds_dict = {}
 
             for outcome in outcomes:
-                name = outcome.get("name", "").lower()
+                name = outcome.get(str("name"), "").lower()
                 price = outcome.get("price")
                 if name and price:
                     odds_dict[name] = float(price)
@@ -256,13 +256,16 @@ class RawScoresData(BaseModel):
 
         try:
             return {
-                "home_score": self.home_score or self.raw_data.get("home_score", 0),
-                "away_score": self.away_score or self.raw_data.get("away_score", 0),
-                "status": self.match_status or self.raw_data.get("status", "unknown"),
+                "home_score": self.home_score
+                or self.raw_data.get(str("home_score"), 0),
+                "away_score": self.away_score
+                or self.raw_data.get(str("away_score"), 0),
+                "status": self.match_status
+                or self.raw_data.get(str("status"), "unknown"),
                 "minute": self.match_minute or self.raw_data.get("minute"),
                 "half_time_home": self.raw_data.get("half_time_home"),
                 "half_time_away": self.raw_data.get("half_time_away"),
-                "events": self.raw_data.get("events", []),  # 进球、黄牌等事件
+                "events": self.raw_data.get(str("events"), []),  # 进球、黄牌等事件
             }
         except Exception:
             return None
@@ -280,12 +283,12 @@ class RawScoresData(BaseModel):
         if not self.raw_data or "events" not in self.raw_data:
             return []
 
-        events = self.raw_data.get("events", [])
+        events = self.raw_data.get(str("events"), [])
         if event_type:
             events = [e for e in events if e.get("type") == event_type]
 
         # 按时间排序，最新的在前
-        return sorted(events, key=lambda x: x.get("minute", 0), reverse=True)
+        return sorted(events, key=lambda x: x.get(str("minute"), 0), reverse=True)
 
     def __repr__(self) -> str:
         """字符串表示"""
