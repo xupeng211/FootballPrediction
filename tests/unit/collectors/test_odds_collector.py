@@ -1,9 +1,11 @@
+import pytest
+
+from unittest.mock import AsyncMock, Mock
+
 from src.collectors.odds_collector import OddsCollector
 
-"""赔率收集器测试 - 消除零覆盖率"""
 
-import pytest
-from unittest.mock import AsyncMock, Mock
+"""赔率收集器测试 - 消除零覆盖率"""
 
 
 @pytest.fixture

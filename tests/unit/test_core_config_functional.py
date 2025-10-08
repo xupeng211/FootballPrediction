@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 import pytest
 import os
 from unittest.mock import patch, MagicMock
@@ -212,7 +213,7 @@ port = 6379
 
             # 验证是同一个对象（如果使用缓存）
             # 或者至少配置相同
-            assert type(settings1) == type(settings2)
+            assert isinstance(settings2, type(settings1))
 
             # 验证配置内容
             dict1 = settings1.dict()

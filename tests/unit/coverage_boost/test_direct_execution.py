@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 直接执行测试
 直接调用函数执行代码，避免mock
@@ -19,7 +20,7 @@ class TestDirectExecution:
     def test_logger_functions(self):
         """测试日志函数"""
         try:
-            from src.core.logger import get_logger
+            from src.core.logger import get_logger  # noqa: F401
 
             # 获取logger实例
             logger = get_logger("test")
@@ -38,7 +39,7 @@ class TestDirectExecution:
     def test_sql_compatibility_functions(self):
         """测试SQL兼容性函数"""
         try:
-            from src.database.sql_compatibility import SQLCompat
+            from src.database.sql_compatibility import SQLCompat  # noqa: F401
 
             # 测试转义函数
             result = SQLCompat.escape_identifier("test_table")
@@ -57,7 +58,7 @@ class TestDirectExecution:
     def test_warning_filters_setup(self):
         """测试警告过滤器设置"""
         try:
-            from src.utils.warning_filters import setup_warning_filters
+            from src.utils.warning_filters import setup_warning_filters  # noqa: F401
 
             # 调用设置函数
             setup_warning_filters()
@@ -71,7 +72,7 @@ class TestDirectExecution:
     def test_time_utils_get_time(self):
         """测试时间工具获取时间"""
         try:
-            from src.utils.time_utils import get_current_time
+            from src.utils.time_utils import get_current_time  # noqa: F401
 
             # 调用函数
             result = get_current_time()
@@ -86,7 +87,7 @@ class TestDirectExecution:
     def test_dict_utils_operations(self):
         """测试字典操作工具"""
         try:
-            from src.utils.dict_utils import deep_merge, flatten_dict
+            from src.utils.dict_utils import deep_merge, flatten_dict  # noqa: F401
 
             # 测试深度合并
             dict1 = {"a": {"b": 1}}
@@ -107,7 +108,7 @@ class TestDirectExecution:
     def test_response_utils(self):
         """测试响应工具"""
         try:
-            from src.utils.response import (
+            from src.utils.response import (  # noqa: F401
                 create_success_response,
                 create_error_response,
             )
@@ -129,7 +130,7 @@ class TestDirectExecution:
     def test_crypto_utils_hash(self):
         """测试加密工具哈希功能"""
         try:
-            from src.utils.crypto_utils import hash_password
+            from src.utils.crypto_utils import hash_password  # noqa: F401
 
             # 哈希密码
             password = "test123"
@@ -146,7 +147,7 @@ class TestDirectExecution:
     def test_database_base_functions(self):
         """测试数据库基础函数"""
         try:
-            from src.database.base import get_database_url, create_engine
+            from src.database.base import get_database_url, create_engine  # noqa: F401
 
             # 获取数据库URL
             url = get_database_url()
@@ -161,7 +162,7 @@ class TestDirectExecution:
     def test_retry_decorator(self):
         """测试重试装饰器"""
         try:
-            from src.utils.retry import retry
+            from src.utils.retry import retry  # noqa: F401
 
             call_count = 0
 
@@ -185,7 +186,7 @@ class TestDirectExecution:
     def test_string_utils(self):
         """测试字符串工具"""
         try:
-            from src.utils.string_utils import to_snake_case, to_camel_case
+            from src.utils.string_utils import to_snake_case, to_camel_case  # noqa: F401
 
             # 转换为蛇形命名
             snake = to_snake_case("CamelCaseString")

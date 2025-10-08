@@ -3,7 +3,39 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
+from src.monitoring.anomaly_detector import AnomalyType
 from src.data.quality.anomaly_detector import StatisticalAnomalyDetector
+# 添加异常值
+# 检测到home_goals=50和shots=100的异常
+# home_goals列应该检测到异常
+# 应该检测到2个异常点
+# 创建季节性数据
+# 创建正常数据
+# 添加异常点
+# 应该检测到至少2个异常
+# 最后一个值的Z-score应该最大
+# 应该检测到Unknown League
+# 模拟实时数据流
+# 初始化检测器
+# 添加正常数据
+# 检测正常数据
+# 检测异常数据
+# 统计异常评分
+# 距离异常评分
+# 模拟绘图（不实际显示）
+# 验证方法被调用（通过mock）
+# Mock通知器
+# 初始阈值
+# 更新阈值
+# 验证阈值已更新
+# 自定义检测函数
+# 检测值为负数的异常
+# 注册自定义检测器
+# 测试数据
+# 历史异常数据
+# 学习模式
+# 使用学习到的模式进行预测
+
 
 """
 数据质量测试 - 异常检测器
@@ -39,7 +71,6 @@ class TestAnomalyDetector:
         """时间序列数据"""
         dates = pd.date_range("2025-01-01", periods=100)
         values = np.random.normal(50, 5, 100)
-        # 添加异常值
         values[50] = 200  # 异常高峰
         values[75] = -50  # 异常低谷
 
@@ -60,7 +91,6 @@ class TestAnomalyDetector:
 
         assert isinstance(anomalies, list)
         assert len(anomalies) > 0
-        # 检测到home_goals=50和shots=100的异常
         assert any(a["index"] == 5 for a in anomalies)
 
     def test_detect_iqr_outliers(self, detector, sample_data):
@@ -72,7 +102,6 @@ class TestAnomalyDetector:
         assert isinstance(anomalies, dict)
         assert "home_goals" in anomalies
         assert "possession" in anomalies
-        # home_goals列应该检测到异常
         assert len(anomalies["home_goals"]) > 0
 
     def test_detect_isolation_forest(self, detector, sample_data):
@@ -92,12 +121,10 @@ class TestAnomalyDetector:
         )
 
         assert isinstance(anomalies, list)
-        # 应该检测到2个异常点
         assert len(anomalies) >= 2
 
     def test_detect_seasonal_anomalies(self, detector):
         """测试季节性异常检测"""
-        # 创建季节性数据
         dates = pd.date_range("2024-01-01", periods=365)
         seasonal_data = 50 + 20 * np.sin(2 * np.pi * np.arange(365) / 30)
         seasonal_data[180] = 200  # 添加异常
@@ -114,10 +141,8 @@ class TestAnomalyDetector:
     def test_detect_multivariate_anomalies(self, detector):
         """测试多变量异常检测"""
         np.random.seed(42)
-        # 创建正常数据
         normal_data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], 100)
 
-        # 添加异常点
         anomalies_points = np.array([[10, 10], [-10, -10]])
         data = np.vstack([normal_data, anomalies_points])
 
@@ -126,7 +151,6 @@ class TestAnomalyDetector:
         detected = detector.detect_multivariate_anomalies(df, method="mahalanobis")
 
         assert isinstance(detected, list)
-        # 应该检测到至少2个异常
         assert len(detected) >= 2
 
     def test_calculate_zscore(self, detector):
@@ -135,7 +159,6 @@ class TestAnomalyDetector:
         zscores = detector._calculate_zscore(data)
 
         assert len(zscores) == len(data)
-        # 最后一个值的Z-score应该最大
         assert zscores[-1] > 3  # 异常阈值
 
     def test_calculate_iqr_bounds(self, detector):
@@ -179,7 +202,6 @@ class TestAnomalyDetector:
         assert isinstance(anomalies, dict)
         assert "league" in anomalies
         assert "season" in anomalies
-        # 应该检测到Unknown League
         assert "Unknown League" in str(anomalies["league"])
 
     def test_detect_null_anomalies(self, detector):
@@ -228,35 +250,28 @@ class TestAnomalyDetector:
     @pytest.mark.asyncio
     async def test_real_time_anomaly_detection(self, detector):
         """测试实时异常检测"""
-        # 模拟实时数据流
         normal_data = {"value": 10, "timestamp": datetime.now()}
         anomaly_data = {"value": 1000, "timestamp": datetime.now()}
 
-        # 初始化检测器
         detector.initialize_real_time_detection(window_size=100)
 
-        # 添加正常数据
         for _ in range(100):
             data = {"value": np.random.normal(10, 2), "timestamp": datetime.now()}
             detector.update_real_time_data(data)
 
-        # 检测正常数据
         normal_result = detector.detect_real_time_anomaly(normal_data)
         assert normal_result["is_anomaly"] is False
 
-        # 检测异常数据
         anomaly_result = detector.detect_real_time_anomaly(anomaly_data)
         assert anomaly_result["is_anomaly"] is True
 
     def test_calculate_anomaly_score(self, detector):
         """测试异常评分计算"""
-        # 统计异常评分
         score = detector.calculate_anomaly_score(
             value=100, mean=50, std=10, method="statistical"
         )
         assert score > 3  # Z-score > 3
 
-        # 距离异常评分
         score = detector.calculate_anomaly_score(
             value=10, centroid=0, threshold=5, method="distance"
         )
@@ -266,7 +281,6 @@ class TestAnomalyDetector:
         """测试异常可视化"""
         anomalies = [{"index": 5, "value": 50, "column": "home_goals"}]
 
-        # 模拟绘图（不实际显示）
         detector.visualize_anomalies(
             data=sample_data,
             anomalies=anomalies,
@@ -274,7 +288,6 @@ class TestAnomalyDetector:
             save_path="/tmp/anomaly_plot.png",
         )
 
-        # 验证方法被调用（通过mock）
         assert hasattr(detector, "visualize_anomalies")
 
     def test_export_anomaly_report(self, detector, sample_data):
@@ -296,7 +309,6 @@ class TestAnomalyDetector:
     @pytest.mark.asyncio
     async def test_anomaly_notification(self, detector):
         """测试异常通知"""
-        # Mock通知器
         mock_notifier = MagicMock()
         mock_notifier.send.return_value = True
         detector.add_notifier(mock_notifier)
@@ -320,31 +332,24 @@ class TestAnomalyDetector:
 
     def test_threshold_adaptation(self, detector):
         """测试阈值自适应"""
-        # 初始阈值
         initial_threshold = detector.threshold
 
-        # 更新阈值
         detector.adapt_threshold(new_data=[1, 2, 3, 1000], method="percentile")
 
-        # 验证阈值已更新
         assert detector.threshold != initial_threshold
 
     def test_custom_anomaly_detector(self, detector):
         """测试自定义异常检测器"""
 
-        # 自定义检测函数
         def custom_detector(data):
-            # 检测值为负数的异常
             anomalies = []
             for idx, row in data.iterrows():
                 if row["value"] < 0:
                     anomalies.append({"index": idx, "value": row["value"]})
             return anomalies
 
-        # 注册自定义检测器
         detector.register_custom_detector("negative_values", custom_detector)
 
-        # 测试数据
         test_data = pd.DataFrame({"value": [1, 2, -5, 3, -1, 4]})
 
         results = detector.detect_anomalies(test_data, method="negative_values")
@@ -354,7 +359,6 @@ class TestAnomalyDetector:
     @pytest.mark.asyncio
     async def test_anomaly_pattern_learning(self, detector):
         """测试异常模式学习"""
-        # 历史异常数据
         historical_anomalies = [
             {"timestamp": datetime(2025, 1, 1, 10, 0), "pattern": "morning_spike"},
             {"timestamp": datetime(2025, 1, 2, 10, 0), "pattern": "morning_spike"},
@@ -362,14 +366,12 @@ class TestAnomalyDetector:
             {"timestamp": datetime(2025, 1, 2, 15, 0), "pattern": "afternoon_dip"},
         ]
 
-        # 学习模式
         patterns = detector.learn_anomaly_patterns(historical_anomalies)
 
         assert isinstance(patterns, dict)
         assert "morning_spike" in patterns
         assert "afternoon_dip" in patterns
 
-        # 使用学习到的模式进行预测
         current_time = datetime(2025, 1, 3, 10, 0)
         prediction = detector.predict_anomaly_probability(current_time, patterns)
         assert prediction > 0.5  # 上午10点异常概率高

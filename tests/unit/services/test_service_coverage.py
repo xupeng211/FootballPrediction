@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 import sys
 import pytest
 from unittest.mock import Mock, patch
@@ -72,10 +73,10 @@ class TestServiceCoverage:
     def test_service_imports(self):
         """测试服务导入"""
         try:
-            from src.services.data_processing import DataProcessingService
-            from src.services.audit_service import AuditService
-            from src.services.content_analysis import ContentAnalysisService
-            from src.services.user_profile import UserProfileService
+            from src.services.data_processing import DataProcessingService  # noqa: F401
+            from src.services.audit_service import AuditService  # noqa: F401
+            from src.services.content_analysis import ContentAnalysisService  # noqa: F401
+            from src.services.user_profile import UserProfileService  # noqa: F401
 
             print("✓ All services imported successfully")
         except ImportError as e:
