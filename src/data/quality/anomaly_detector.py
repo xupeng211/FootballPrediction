@@ -22,7 +22,7 @@
 import logging
 import warnings
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import numpy as np
 import pandas as pd
@@ -728,7 +728,7 @@ class MachineLearningAnomalyDetector:
             List[AnomalyDetectionResult]: 检测结果列表
         """
         start_time = datetime.now()
-        results = []
+        results: List[Any] = []
 
         try:
             # 获取数值列
@@ -1036,7 +1036,7 @@ class AdvancedAnomalyDetector:
             List[AnomalyDetectionResult]: 异常检测结果列表
         """
         start_time = datetime.now()
-        results = []
+        results: List[Any] = []
 
         try:
             self.logger.info(f"开始对表 {table_name} 进行综合异常检测")
@@ -1220,7 +1220,7 @@ class AdvancedAnomalyDetector:
         self, table_name: str, data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行3σ检测"""
-        results = []
+        results: List[Any] = []
         for column in config["key_columns"]:
             if column in data.columns and data[column].dtype in ["int64", "float64"]:
                 try:
@@ -1236,7 +1236,7 @@ class AdvancedAnomalyDetector:
         self, table_name: str, data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行IQR检测"""
-        results = []
+        results: List[Any] = []
         for column in config["key_columns"]:
             if column in data.columns and data[column].dtype in ["int64", "float64"]:
                 try:
@@ -1273,7 +1273,7 @@ class AdvancedAnomalyDetector:
         self, table_name: str, current_data: pd.DataFrame, config: Dict[str, Any]
     ) -> List[AnomalyDetectionResult]:
         """运行分布偏移检测"""
-        results = []
+        results: List[Any] = []
         try:
             # 获取基准数据
             baseline_days = config.get(str("drift_baseline_days"), 30)

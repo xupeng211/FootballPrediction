@@ -11,7 +11,7 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from .kafka_consumer import FootballKafkaConsumer
 from .kafka_producer import FootballKafkaProducer

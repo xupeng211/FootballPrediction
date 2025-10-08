@@ -57,7 +57,7 @@ import logging
 import os
 from contextlib import asynccontextmanager, contextmanager
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, Generator, Optional
+from typing import Any, AsyncGenerator, Dict, Generator, Optional, cast
 
 from sqlalchemy import Engine, create_engine, select, text, update
 from sqlalchemy.ext.asyncio import (

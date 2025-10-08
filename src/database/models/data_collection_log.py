@@ -9,7 +9,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import validates

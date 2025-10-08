@@ -19,7 +19,7 @@ import os
 import traceback
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import sentry_sdk
 from fastapi import HTTPException, Request

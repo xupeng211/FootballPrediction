@@ -1,3 +1,5 @@
+from typing import cast, Any, Optional, Union
+
 """Phase 3 改进迁移
 Phase 3 improvements migration
 
@@ -10,8 +12,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '007_improve_phase3_implementations'
-down_revision = 'd3bf28af22ff'
+revision = "007_improve_phase3_implementations"
+down_revision = "d3bf28af22ff"
 branch_labels = None
 depends_on = None
 
@@ -21,57 +23,58 @@ def upgrade():
 
     # 创建预测结果索引
     op.create_index(
-        'idx_predictions_match_model_created',
-        'predictions',
-        ['match_id', 'model_name', 'created_at']
+        "idx_predictions_match_model_created",
+        "predictions",
+        ["match_id", "model_name", "created_at"],
     )
 
     # 创建预测验证索引
     op.create_index(
-        'idx_predictions_verified',
-        'predictions',
-        ['is_correct', 'verified_at']
+        "idx_predictions_verified", "predictions", ["is_correct", "verified_at"]
     )
 
     # 创建比赛时间索引（优化即将开始比赛的查询）
     op.create_index(
-        'idx_matches_time_status',
-        'matches',
-        ['match_time', 'match_status']
+        "idx_matches_time_status", "matches", ["match_time", "match_status"]
     )
 
     # 创建赔率复合索引
     op.create_index(
-        'idx_odds_match_bookmaker_market',
-        'odds',
-        ['match_id', 'bookmaker', 'market_type', 'created_at']
+        "idx_odds_match_bookmaker_market",
+        "odds",
+        ["match_id", "bookmaker", "market_type", "created_at"],
     )
 
     # 创建数据收集日志索引
     op.create_index(
-        'idx_data_collection_type_status_time',
-        'data_collection_logs',
-        ['collection_type', 'status', 'collected_at']
+        "idx_data_collection_type_status_time",
+        "data_collection_logs",
+        ["collection_type", "status", "collected_at"],
     )
 
     # 创建原始数据分区表（如果不存在）
-    op.execute("""
+    op.execute(
+        """
         CREATE TABLE IF NOT EXISTS raw_scores_data_partitioned (
             LIKE raw_scores_data INCLUDING ALL
         ) PARTITION BY RANGE (collected_at);
-    """)
+    """
+    )
 
     # 创建分区表
-    current_year = sa.text('EXTRACT(YEAR FROM CURRENT_DATE)')
+    current_year = sa.text("EXTRACT(YEAR FROM CURRENT_DATE)")
     for year_offset in range(0, 3):  # 创建当前年份和未来2年的分区
-        op.execute(f"""
+        op.execute(
+            f"""
             CREATE TABLE IF NOT EXISTS raw_scores_data_y{year_offset}
             PARTITION OF raw_scores_data_partitioned
             FOR VALUES FROM ({current_year} + {year_offset}) TO ({current_year} + {year_offset + 1});
-        """)
+        """
+        )
 
     # 添加预测结果统计视图
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW prediction_stats_view AS
         SELECT
             model_name,
@@ -87,10 +90,12 @@ def upgrade():
         FROM predictions
         GROUP BY model_name, model_version, DATE_TRUNC('day', created_at)
         ORDER BY prediction_date DESC;
-    """)
+    """
+    )
 
     # 添加模型准确率视图
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW model_accuracy_view AS
         SELECT
             model_name,
@@ -107,10 +112,12 @@ def upgrade():
         WHERE is_correct IS NOT NULL
         GROUP BY model_name, model_version
         ORDER BY accuracy_percentage DESC;
-    """)
+    """
+    )
 
     # 添加实时比赛统计视图
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE VIEW live_matches_view AS
         SELECT
             m.id,
@@ -150,10 +157,12 @@ def upgrade():
         JOIN leagues l ON m.league_id = l.id
         WHERE m.match_status IN ('SCHEDULED', 'IN_PROGRESS', 'PAUSED')
         ORDER BY m.match_time;
-    """)
+    """
+    )
 
     # 创建性能优化函数
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION cleanup_old_predictions(days_to_keep INTEGER DEFAULT 90)
         RETURNS INTEGER AS $$
         DECLARE
@@ -167,10 +176,12 @@ def upgrade():
             RETURN deleted_count;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # 创建数据质量检查函数
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION check_data_quality()
         RETURNS TABLE(
             table_name TEXT,
@@ -226,10 +237,12 @@ def upgrade():
             RETURN;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # 添加更新时间戳触发器函数
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION update_updated_at_column()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -237,18 +250,21 @@ def upgrade():
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
     # 为需要的表添加更新时间戳触发器
-    tables_with_updated_at = ['matches', 'teams', 'leagues', 'predictions']
+    tables_with_updated_at = ["matches", "teams", "leagues", "predictions"]
     for table in tables_with_updated_at:
         try:
-            op.execute(f"""
+            op.execute(
+                f"""
                 CREATE TRIGGER update_{table}_updated_at
                     BEFORE UPDATE ON {table}
                     FOR EACH ROW
                 EXECUTE FUNCTION update_updated_at_column();
-            """)
+            """
+            )
         except Exception:
             # 触发器可能已存在，忽略错误
             pass
@@ -258,7 +274,7 @@ def downgrade():
     """回滚数据库架构"""
 
     # 删除触发器
-    tables_with_updated_at = ['matches', 'teams', 'leagues', 'predictions']
+    tables_with_updated_at = ["matches", "teams", "leagues", "predictions"]
     for table in tables_with_updated_at:
         op.execute(f"DROP TRIGGER IF EXISTS update_{table}_updated_at ON {table};")
 
@@ -279,8 +295,10 @@ def downgrade():
     op.execute("DROP TABLE IF EXISTS raw_scores_data_partitioned;")
 
     # 删除索引
-    op.drop_index('idx_data_collection_type_status_time', table_name='data_collection_logs')
-    op.drop_index('idx_odds_match_bookmaker_market', table_name='odds')
-    op.drop_index('idx_matches_time_status', table_name='matches')
-    op.drop_index('idx_predictions_verified', table_name='predictions')
-    op.drop_index('idx_predictions_match_model_created', table_name='predictions')
+    op.drop_index(
+        "idx_data_collection_type_status_time", table_name="data_collection_logs"
+    )
+    op.drop_index("idx_odds_match_bookmaker_market", table_name="odds")
+    op.drop_index("idx_matches_time_status", table_name="matches")
+    op.drop_index("idx_predictions_verified", table_name="predictions")
+    op.drop_index("idx_predictions_match_model_created", table_name="predictions")

@@ -14,7 +14,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
@@ -474,7 +474,7 @@ class AlertManager:
         self._update_alert_metrics(alert, rule_id)
 
         logger.info(f"触发告警: {title} [{level.value}]")
-        return alert if isinstance(alert, dict) else {}
+        return alert if isinstance(alert, Alert) else None
 
     def _generate_alert_id(
         self, title: str, source: str, labels: Optional[Dict[str, str]]
@@ -497,14 +497,7 @@ class AlertManager:
             sorted_labels = sorted(labels.items())
             content += "|" + "|".join([f"{k}={v}" for k, v in sorted_labels])
 
-        return (
-            hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
-            if isinstance(
-                hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12],
-                dict,
-            )
-            else {}
-        )
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
 
     def _should_throttle(self, alert_id: str, rule_id: Optional[str]) -> bool:
         """
@@ -518,17 +511,13 @@ class AlertManager:
             bool: 是否应该去重
         """
         if not rule_id or rule_id not in self.rules:
-            return False if isinstance(False, dict) else {}
+            return False
         rule = self.rules[rule_id]
         if not rule.last_fired:
-            return False if isinstance(False, dict) else {}
+            return False
         # 检查去重时间
         throttle_delta = timedelta(seconds=rule.throttle_seconds)
-        return (
-            datetime.now() - rule.last_fired < throttle_delta
-            if isinstance(datetime.now() - rule.last_fired < throttle_delta, dict)
-            else {}
-        )
+        return datetime.now() - rule.last_fired < throttle_delta
 
     def _send_alert(self, alert: Alert, rule_id: Optional[str]) -> None:
         """
@@ -627,8 +616,8 @@ class AlertManager:
                 alert.resolve()
                 self._update_alert_metrics(alert, None)
                 logger.info(f"解决告警: {alert_id}")
-                return True if isinstance(True, dict) else {}
-        return False if isinstance(False, dict) else {}
+                return True
+        return False
 
     def get_active_alerts(self, level: Optional[AlertLevel] = None) -> List[Alert]:
         """
@@ -645,13 +634,7 @@ class AlertManager:
         if level:
             active_alerts = [a for a in active_alerts if a.level == level]
 
-        return (
-            sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
-            if isinstance(
-                sorted(active_alerts, key=lambda x: x.created_at, reverse=True), dict
-            )
-            else {}
-        )
+        return sorted(active_alerts, key=lambda x: x.created_at, reverse=True)
 
     def get_alert_summary(self) -> Dict[str, Any]:
         """
@@ -683,7 +666,7 @@ class AlertManager:
             ),
             "by_level": dict(by_level),
             "by_source": dict(by_source),
-            "critical_alerts": by_level.get(str("critical", None), 0),
+            "critical_alerts": by_level.get("critical", 0),
             "rules_count": len(self.rules),
             "enabled_rules": len([r for r in self.rules.values() if r.enabled]),
             "summary_time": datetime.now().isoformat(),
@@ -912,7 +895,7 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts if isinstance(fired_alerts, dict) else {}
+        return fired_alerts
 
     def check_and_fire_anomaly_alerts(self, anomalies: List[Any]) -> List[Alert]:
         """
@@ -958,4 +941,4 @@ class AlertManager:
                 if alert:
                     fired_alerts.append(alert)
 
-        return fired_alerts if isinstance(fired_alerts, dict) else {}
+        return fired_alerts

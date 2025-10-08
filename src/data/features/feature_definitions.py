@@ -8,7 +8,7 @@
 """
 
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 
 class FeatureDefinitions:

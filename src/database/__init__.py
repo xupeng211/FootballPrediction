@@ -1,3 +1,5 @@
+from typing import cast, Any, Optional, Union
+
 """
 足球预测系统 - 数据库模块
 

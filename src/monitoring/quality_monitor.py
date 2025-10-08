@@ -41,7 +41,7 @@ Supports real-time monitoring, historical trend analysis, and quality score calc
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import func, quoted_name, select, text
 from sqlalchemy.ext.asyncio import AsyncSession

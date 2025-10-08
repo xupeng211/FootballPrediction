@@ -22,7 +22,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import aiohttp
 import numpy as np
@@ -38,10 +38,7 @@ from src.utils.time_utils import utc_now, parse_datetime
 
 # 重试配置
 retry_config = RetryConfig(
-    max_attempts=3,
-    backoff_factor=1,
-    max_delay=10,
-    retryable_exceptions=(Exception,)
+    max_attempts=3, backoff_factor=1, max_delay=10, retryable_exceptions=(Exception,)
 )
 
 logger = logging.getLogger(__name__)
@@ -83,14 +80,24 @@ class OddsCollector:
         # API端点
         self.api_endpoints = {
             "odds_api": os.getenv("ODDS_API_URL", "https://api.the-odds-api.com/v4"),
-            "betfair": os.getenv("BETFAIR_URL", "https://api.betfair.com/exchange/betting/rest/v1.0"),
+            "betfair": os.getenv(
+                "BETFAIR_URL", "https://api.betfair.com/exchange/betting/rest/v1.0"
+            ),
             "pinnacle": os.getenv("PINNACLE_URL", "https://api.pinnacle.com/v1"),
         }
 
         # 支持的博彩公司
         self.bookmakers = [
-            "bet365", "william_hill", "ladbrokes", "betfair", "pinnacle",
-            "betway", "888sport", "unibet", "betfred", "coral"
+            "bet365",
+            "william_hill",
+            "ladbrokes",
+            "betfair",
+            "pinnacle",
+            "betway",
+            "888sport",
+            "unibet",
+            "betfred",
+            "coral",
         ]
 
         # 支持的市场类型
@@ -240,10 +247,7 @@ class OddsCollector:
             return []
 
         # 批量收集赔率
-        tasks = [
-            self.collect_match_odds(match["id"])
-            for match in upcoming_matches
-        ]
+        tasks = [self.collect_match_odds(match["id"]) for match in upcoming_matches]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -279,14 +283,19 @@ class OddsCollector:
         """
         cutoff_time = utc_now() - timedelta(hours=hours)
 
-        query = select(Odds).where(
-            and_(
-                Odds.match_id == match_id,
-                Odds.bookmaker == bookmaker,
-                Odds.market_type == self.market_types.get(market, MarketType.MATCH_WINNER),
-                Odds.created_at >= cutoff_time,
+        query = (
+            select(Odds)
+            .where(
+                and_(
+                    Odds.match_id == match_id,
+                    Odds.bookmaker == bookmaker,
+                    Odds.market_type
+                    == self.market_types.get(market, MarketType.MATCH_WINNER),
+                    Odds.created_at >= cutoff_time,
+                )
             )
-        ).order_by(Odds.created_at)
+            .order_by(Odds.created_at)
+        )
 
         result = await self.db_session.execute(query)
         odds_records = result.scalars().all()
@@ -434,7 +443,9 @@ class OddsCollector:
                 market_key = market.get("key")
                 if market_key == "h2h":
                     # Match winner market
-                    outcomes = {o["name"]: o["price"] for o in market.get("outcomes", [])}
+                    outcomes = {
+                        o["name"]: o["price"] for o in market.get("outcomes", [])
+                    }
                     bookmaker_data["markets"]["match_winner"] = {
                         "home_win": outcomes.get("Home"),
                         "draw": outcomes.get("Draw"),
@@ -442,12 +453,18 @@ class OddsCollector:
                     }
                 elif market_key == "ou":
                     # Over/Under market
-                    outcomes = {o["name"]: o["price"] for o in market.get("outcomes", [])}
+                    outcomes = {
+                        o["name"]: o["price"] for o in market.get("outcomes", [])
+                    }
                     over_line = None
                     if "Over" in outcomes:
                         # 提取盘口线
                         import re
-                        match = re.search(r"Over (\d+\.?\d*)", market.get("outcomes", [{}])[0].get("name", ""))
+
+                        match = re.search(
+                            r"Over (\d+\.?\d*)",
+                            market.get("outcomes", [{}])[0].get("name", ""),
+                        )
                         if match:
                             over_line = float(match.group(1))
 
@@ -458,7 +475,9 @@ class OddsCollector:
                     }
                 elif market_key == "bts":
                     # Both teams to score
-                    outcomes = {o["name"]: o["price"] for o in market.get("outcomes", [])}
+                    outcomes = {
+                        o["name"]: o["price"] for o in market.get("outcomes", [])
+                    }
                     bookmaker_data["markets"]["both_teams_score"] = {
                         "yes": outcomes.get("Yes"),
                         "no": outcomes.get("No"),
@@ -497,13 +516,15 @@ class OddsCollector:
                 if "match_winner" in markets:
                     h2h_odds = markets["match_winner"]
                     if all(h2h_odds.values()):
-                        processed["bookmakers"].append({
-                            "name": bookmaker_name,
-                            "home_win": h2h_odds["home_win"],
-                            "draw": h2h_odds["draw"],
-                            "away_win": h2h_odds["away_win"],
-                            "source": source,
-                        })
+                        processed["bookmakers"].append(
+                            {
+                                "name": bookmaker_name,
+                                "home_win": h2h_odds["home_win"],
+                                "draw": h2h_odds["draw"],
+                                "away_win": h2h_odds["away_win"],
+                                "source": source,
+                            }
+                        )
 
                         all_home_win.append(h2h_odds["home_win"])
                         all_draw.append(h2h_odds["draw"])
@@ -573,11 +594,15 @@ class OddsCollector:
             # 更新统计
             self.stats["total_updates"] += 1
             self.stats["successful_updates"] += 1
-            self.stats["unique_matches"] = len(set(o.get("match_id") for o in self.odds_cache.values()))
+            self.stats["unique_matches"] = len(
+                set(o.get("match_id") for o in self.odds_cache.values())
+            )
 
             processing_time = (utc_now() - start_time).total_seconds()
             self.stats["average_processing_time"] = (
-                self.stats["average_processing_time"] * (self.stats["successful_updates"] - 1) + processing_time
+                self.stats["average_processing_time"]
+                * (self.stats["successful_updates"] - 1)
+                + processing_time
             ) / self.stats["successful_updates"]
 
             logger.debug(f"保存比赛 {odds_data['match_id']} 赔率数据成功")
@@ -588,7 +613,9 @@ class OddsCollector:
             logger.error(f"保存赔率数据失败: {e}")
             raise
 
-    async def _identify_value_bets(self, odds_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _identify_value_bets(
+        self, odds_data: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """识别价值投注机会"""
         value_bets = []
 
@@ -614,18 +641,26 @@ class OddsCollector:
 
                     if value > 0:  # 有价值
                         # 计算凯利比例
-                        kelly_fraction = (bookmaker_odds * model_probability - 1) / (bookmaker_odds - 1)
+                        kelly_fraction = (bookmaker_odds * model_probability - 1) / (
+                            bookmaker_odds - 1
+                        )
 
-                        value_bets.append({
-                            "bookmaker": bookmaker["name"],
-                            "outcome": outcome,
-                            "odds": bookmaker_odds,
-                            "model_probability": model_probability,
-                            "implied_probability": implied_prob,
-                            "value": value,
-                            "kelly_fraction": kelly_fraction,
-                            "confidence": "high" if value > 0.1 else "medium" if value > 0.05 else "low",
-                        })
+                        value_bets.append(
+                            {
+                                "bookmaker": bookmaker["name"],
+                                "outcome": outcome,
+                                "odds": bookmaker_odds,
+                                "model_probability": model_probability,
+                                "implied_probability": implied_prob,
+                                "value": value,
+                                "kelly_fraction": kelly_fraction,
+                                "confidence": "high"
+                                if value > 0.1
+                                else "medium"
+                                if value > 0.05
+                                else "low",
+                            }
+                        )
 
         # 按价值排序
         value_bets.sort(key=lambda x: x["value"], reverse=True)
@@ -648,9 +683,13 @@ class OddsCollector:
 
             # 从数据库获取最新预测
             from src.database.models import Predictions
-            query = select(Predictions).where(
-                Predictions.match_id == match_id
-            ).order_by(Predictions.created_at.desc()).limit(1)
+
+            query = (
+                select(Predictions)
+                .where(Predictions.match_id == match_id)
+                .order_by(Predictions.created_at.desc())
+                .limit(1)
+            )
 
             result = await self.db_session.execute(query)
             prediction = result.scalar_one_or_none()
@@ -687,11 +726,13 @@ class OddsCollector:
             if odds_data.get("value_bets"):
                 await self.redis_manager.client.publish(
                     "value_bets:alerts",
-                    json.dumps({
-                        "match_id": odds_data["match_id"],
-                        "value_bets": odds_data["value_bets"],
-                        "timestamp": odds_data["timestamp"],
-                    })
+                    json.dumps(
+                        {
+                            "match_id": odds_data["match_id"],
+                            "value_bets": odds_data["value_bets"],
+                            "timestamp": odds_data["timestamp"],
+                        }
+                    ),
                 )
 
         except Exception as e:
@@ -722,13 +763,18 @@ class OddsCollector:
         start_time = utc_now()
         end_time = start_time + timedelta(hours=hours_ahead)
 
-        query = select(Match).where(
-            and_(
-                Match.match_time >= start_time,
-                Match.match_time <= end_time,
-                Match.match_status == MatchStatus.SCHEDULED,
+        query = (
+            select(Match)
+            .where(
+                and_(
+                    Match.match_time >= start_time,
+                    Match.match_time <= end_time,
+                    Match.match_status == MatchStatus.SCHEDULED,
+                )
             )
-        ).order_by(Match.match_time).limit(max_matches)
+            .order_by(Match.match_time)
+            .limit(max_matches)
+        )
 
         result = await self.db_session.execute(query)
         matches = result.scalars().all()
@@ -769,6 +815,7 @@ class OddsCollectorManager:
         """获取或创建收集器实例"""
         if session_id not in self.collectors:
             from src.database.connection import get_async_session
+
             async with get_async_session() as session:
                 collector = OddsCollector(session, self.redis_manager)
                 self.collectors[session_id] = collector

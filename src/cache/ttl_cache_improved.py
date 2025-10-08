@@ -22,7 +22,7 @@ import heapq
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from threading import RLock
 
 logger = logging.getLogger(__name__)
@@ -257,7 +257,7 @@ class TTLCache:
         Returns:
             Dict[str, Any]: 键值对字典
         """
-        result = {}
+        result: Dict[str, Any] = {}
         for key in keys:
             value = self.get(key)
             if value is not None:
@@ -330,7 +330,9 @@ class TTLCache:
             if ttl is not None:
                 entry.expires_at = time.time() + ttl
             else:
-                entry.expires_at = time.time() + self.default_ttl if self.default_ttl else None
+                entry.expires_at = (
+                    time.time() + self.default_ttl if self.default_ttl else None
+                )
 
             entry.access()
             return True

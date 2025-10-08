@@ -14,7 +14,7 @@ Great Expectations 配置模块
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from src.database.connection import DatabaseManager
 
@@ -39,8 +39,6 @@ except ImportError:
     gx = MockGX()
     DataContextError = MockDataContextError
     YAMLHandler = None
-
-# type: ignore
 
 
 # Temporarily commented out for pytest testing

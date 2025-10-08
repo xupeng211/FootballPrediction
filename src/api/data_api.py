@@ -18,7 +18,7 @@ Provides complete data management API endpoints, including:
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel

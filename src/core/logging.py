@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from .logger import Logger as _BaseLogger
 

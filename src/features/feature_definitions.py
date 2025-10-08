@@ -10,7 +10,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from .entities import MatchEntity, TeamEntity
 

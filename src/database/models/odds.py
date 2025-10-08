@@ -7,7 +7,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from sqlalchemy import DECIMAL, CheckConstraint, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -142,9 +142,9 @@ class Odds(BaseModel):
         """
         if self.is_1x2_market and all([self.home_odds, self.draw_odds, self.away_odds]):
             # 安全的类型转换，这里我们已经检查了all()，所以值不为None
-            home_prob = 1.0 / float(self.home_odds)  # type: ignore
-            draw_prob = 1.0 / float(self.draw_odds)  # type: ignore
-            away_prob = 1.0 / float(self.away_odds)  # type: ignore
+            home_prob = 1.0 / float(self.home_odds)
+            draw_prob = 1.0 / float(self.draw_odds)
+            away_prob = 1.0 / float(self.away_odds)
 
             # 标准化概率（去除博彩公司的利润边际）
             total_prob = home_prob + draw_prob + away_prob
@@ -158,8 +158,8 @@ class Odds(BaseModel):
 
         elif self.is_over_under_market and all([self.over_odds, self.under_odds]):
             # 安全的类型转换，这里我们已经检查了all()，所以值不为None
-            over_prob = 1.0 / float(self.over_odds)  # type: ignore
-            under_prob = 1.0 / float(self.under_odds)  # type: ignore
+            over_prob = 1.0 / float(self.over_odds)
+            under_prob = 1.0 / float(self.under_odds)
             total_prob = over_prob + under_prob
 
             return {

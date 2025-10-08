@@ -5,7 +5,7 @@ Confluent Kafka Mock 实现
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any, Callable, cast
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,9 @@ class MockMessage:
             return None
         if isinstance(self._value, str):
             return self._value.encode("utf-8")
-        return self._value
+        if isinstance(self._value, bytes):
+            return self._value
+        return cast(Optional[bytes], self._value)
 
     def key(self) -> Optional[bytes]:
         """获取消息键"""
@@ -42,7 +44,9 @@ class MockMessage:
             return None
         if isinstance(self._key, str):
             return self._key.encode("utf-8")
-        return self._key
+        if isinstance(self._key, bytes):
+            return self._key
+        return cast(Optional[bytes], self._key)
 
     def topic(self) -> str:
         """获取主题"""
@@ -216,14 +220,14 @@ class MockAdminClient:
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:
         """创建主题"""
-        results = {}
+        results: Dict[str, Any] = {}
         for topic in new_topics:
             topic_name = getattr(topic, "topic", str(topic))
             self._metadata["topics"][topic_name] = {
                 "partitions": 1,
                 "replication_factor": 1,
             }
-            results[topic_name] = topic_name
+            results[topic_name] = f"Created topic {topic_name}"
         return results
 
     def delete_topics(self, topics: List[str]) -> Dict[str, Any]:

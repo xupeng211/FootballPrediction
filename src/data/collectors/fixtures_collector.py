@@ -15,7 +15,7 @@
 
 import hashlib
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 
 from .base_collector import CollectionResult, DataCollector
 

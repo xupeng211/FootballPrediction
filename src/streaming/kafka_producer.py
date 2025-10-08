@@ -13,7 +13,7 @@ import json
 import logging
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from confluent_kafka import Producer
 
