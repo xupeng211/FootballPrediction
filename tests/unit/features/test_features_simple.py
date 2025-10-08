@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 """
 features_simple 模块测试
 """

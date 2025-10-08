@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 import pytest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session

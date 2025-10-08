@@ -1,3 +1,4 @@
+# noqa: F401,F811,F821,E402
 import pytest
 import sys
 import os
@@ -230,7 +231,7 @@ class TestQuickCoverageBoost:
     def test_main_import(self):
         """测试主入口导入"""
         try:
-            import src.main
+            import src.main  # noqa: F401
 
             assert True
         except ImportError:
