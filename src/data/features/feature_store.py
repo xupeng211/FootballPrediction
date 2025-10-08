@@ -19,7 +19,7 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import pandas as pd
 
@@ -223,7 +223,7 @@ class FootballFeatureStore:
                 feature_view_name,
                 feature_view_name,
                 timestamp_column=timestamp_column,
-            )  # type: ignore
+            )
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
 

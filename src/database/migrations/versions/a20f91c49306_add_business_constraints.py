@@ -12,7 +12,7 @@ Create Date: 2025-09-11 23:59:32.853716
 4. 外键引用一致性触发器
 """
 
-from typing import Sequence, Union
+from typing import Sequence, Union, cast
 
 import sqlalchemy as sa
 from alembic import op

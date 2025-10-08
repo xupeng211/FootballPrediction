@@ -8,7 +8,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,

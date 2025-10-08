@@ -10,7 +10,7 @@ import asyncio
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_, select

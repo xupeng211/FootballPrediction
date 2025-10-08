@@ -11,7 +11,7 @@ Z-score分析等多种异常检测算法。
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd

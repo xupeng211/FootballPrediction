@@ -11,7 +11,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from celery import Task
 

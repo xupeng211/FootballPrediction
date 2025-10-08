@@ -1,3 +1,5 @@
+from typing import cast, Any, Optional, Union
+
 """
 缓存模块
 

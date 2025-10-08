@@ -10,7 +10,7 @@ import logging
 import os
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import redis
 import redis.asyncio as redis_async

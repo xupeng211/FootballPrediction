@@ -14,7 +14,7 @@ import asyncio
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import psutil
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram

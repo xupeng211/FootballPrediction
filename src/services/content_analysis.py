@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from src.models import AnalysisResult, Content
 

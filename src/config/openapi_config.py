@@ -2,7 +2,7 @@
 OpenAPI 配置和文档增强
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, cast
 from fastapi import FastAPI
 
 
@@ -107,30 +107,27 @@ curl http://localhost:8000/predictions/{match_id}
             "contact": {
                 "name": "Football Prediction Team",
                 "url": "https://github.com/xupeng211/FootballPrediction",
-                "email": "support@football-prediction.com"
+                "email": "support@football-prediction.com",
             },
             "license_info": {
                 "name": "MIT License",
-                "url": "https://opensource.org/licenses/MIT"
-            }
+                "url": "https://opensource.org/licenses/MIT",
+            },
         }
 
     @staticmethod
     def get_servers() -> List[Dict[str, str]]:
         """获取服务器配置"""
         return [
-            {
-                "url": "http://localhost:8000",
-                "description": "开发环境 - 本地开发"
-            },
+            {"url": "http://localhost:8000", "description": "开发环境 - 本地开发"},
             {
                 "url": "https://staging-api.football-prediction.com",
-                "description": "测试环境 - 功能验证"
+                "description": "测试环境 - 功能验证",
             },
             {
                 "url": "https://api.football-prediction.com",
-                "description": "生产环境 - 正式服务"
-            }
+                "description": "生产环境 - 正式服务",
+            },
         ]
 
     @staticmethod
@@ -142,49 +139,49 @@ curl http://localhost:8000/predictions/{match_id}
                 "description": "系统健康状态检查相关接口",
                 "externalDocs": {
                     "description": "健康检查详细说明",
-                    "url": "https://football-prediction.com/docs/health-check"
-                }
+                    "url": "https://football-prediction.com/docs/health-check",
+                },
             },
             {
                 "name": "预测",
                 "description": "比赛预测相关接口",
                 "externalDocs": {
                     "description": "预测模型说明",
-                    "url": "https://football-prediction.com/docs/prediction-models"
-                }
+                    "url": "https://football-prediction.com/docs/prediction-models",
+                },
             },
             {
                 "name": "数据",
                 "description": "数据管理和查询接口",
                 "externalDocs": {
                     "description": "数据源说明",
-                    "url": "https://football-prediction.com/docs/data-sources"
-                }
+                    "url": "https://football-prediction.com/docs/data-sources",
+                },
             },
             {
                 "name": "特征",
                 "description": "特征工程相关接口",
                 "externalDocs": {
                     "description": "特征工程文档",
-                    "url": "https://football-prediction.com/docs/feature-engineering"
-                }
+                    "url": "https://football-prediction.com/docs/feature-engineering",
+                },
             },
             {
                 "name": "模型",
                 "description": "ML模型管理接口",
                 "externalDocs": {
                     "description": "MLOps 流程说明",
-                    "url": "https://football-prediction.com/docs/mlops"
-                }
+                    "url": "https://football-prediction.com/docs/mlops",
+                },
             },
             {
                 "name": "监控",
                 "description": "系统监控和指标接口",
                 "externalDocs": {
                     "description": "监控配置指南",
-                    "url": "https://football-prediction.com/docs/monitoring"
-                }
-            }
+                    "url": "https://football-prediction.com/docs/monitoring",
+                },
+            },
         ]
 
     @staticmethod
@@ -195,14 +192,14 @@ curl http://localhost:8000/predictions/{match_id}
                 "type": "apiKey",
                 "in": "header",
                 "name": "X-API-Key",
-                "description": "API密钥认证，请在请求头中携带 X-API-Key"
+                "description": "API密钥认证，请在请求头中携带 X-API-Key",
             },
             "BearerAuth": {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "description": "JWT Token 认证，格式：Bearer <token>"
-            }
+                "description": "JWT Token 认证，格式：Bearer <token>",
+            },
         }
 
     @staticmethod
@@ -221,6 +218,7 @@ curl http://localhost:8000/predictions/{match_id}
 
             # 先获取基础 schema
             from fastapi.openapi.utils import get_openapi
+
             openapi_schema = get_openapi(
                 title=info["title"],
                 version=info["version"],
@@ -258,37 +256,29 @@ curl http://localhost:8000/predictions/{match_id}
                         "probabilities": {
                             "home_win": 0.65,
                             "draw": 0.25,
-                            "away_win": 0.10
+                            "away_win": 0.10,
                         },
                         "features_used": [
                             "team_form",
                             "head_to_head",
                             "home_advantage",
                             "player_stats",
-                            "recent_performance"
+                            "recent_performance",
                         ],
                         "model_version": "v2.1.0",
                         "predicted_at": "2024-01-01T10:00:00Z",
-                        "odds": {
-                            "home_win": 2.10,
-                            "draw": 3.40,
-                            "away_win": 3.20
-                        }
-                    }
+                        "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
+                    },
                 },
                 "BatchPredictionRequest": {
                     "summary": "批量预测请求",
                     "description": "多场比赛批量预测请求",
                     "value": {
-                        "match_ids": [
-                            "match_123",
-                            "match_124",
-                            "match_125"
-                        ],
+                        "match_ids": ["match_123", "match_124", "match_125"],
                         "model_version": "latest",
                         "include_features": True,
-                        "force_recalculate": False
-                    }
+                        "force_recalculate": False,
+                    },
                 },
                 "BatchPredictionResponse": {
                     "summary": "批量预测响应",
@@ -299,26 +289,25 @@ curl http://localhost:8000/predictions/{match_id}
                                 "match_id": "match_123",
                                 "prediction": "home_win",
                                 "confidence": 0.65,
-                                "predicted_at": "2024-01-01T10:00:00Z"
+                                "predicted_at": "2024-01-01T10:00:00Z",
                             },
                             {
                                 "match_id": "match_124",
                                 "prediction": "draw",
                                 "confidence": 0.45,
-                                "predicted_at": "2024-01-01T10:01:00Z"
+                                "predicted_at": "2024-01-01T10:01:00Z",
                             },
                             {
                                 "match_id": "match_125",
                                 "prediction": "away_win",
                                 "confidence": 0.72,
-                                "predicted_at": "2024-01-01T10:02:00Z"
-                            }
+                                "predicted_at": "2024-01-01T10:02:00Z",
+                            },
                         ],
                         "total_count": 3,
-                        "processing_time_ms": 450.5
-                    }
+                        "processing_time_ms": 450.5,
+                    },
                 },
-
                 # 健康检查示例
                 "HealthCheckExample": {
                     "summary": "系统健康检查",
@@ -336,8 +325,8 @@ curl http://localhost:8000/predictions/{match_id}
                                 "details": {
                                     "connection_pool": "8/20",
                                     "active_connections": 5,
-                                    "total_connections": 150
-                                }
+                                    "total_connections": 150,
+                                },
                             },
                             "redis": {
                                 "status": "healthy",
@@ -345,8 +334,8 @@ curl http://localhost:8000/predictions/{match_id}
                                 "details": {
                                     "memory_usage": "45%",
                                     "connected_clients": 3,
-                                    "hit_rate": 0.89
-                                }
+                                    "hit_rate": 0.89,
+                                },
                             },
                             "ml_model": {
                                 "status": "healthy",
@@ -354,21 +343,17 @@ curl http://localhost:8000/predictions/{match_id}
                                 "details": {
                                     "model_version": "v2.1.0",
                                     "last_prediction": "2024-01-01T09:45:00Z",
-                                    "model_load_time_ms": 45.2
-                                }
+                                    "model_load_time_ms": 45.2,
+                                },
                             },
                             "external_apis": {
                                 "status": "healthy",
                                 "response_time_ms": 234.5,
-                                "details": {
-                                    "football_api": "OK",
-                                    "odds_api": "OK"
-                                }
-                            }
-                        }
-                    }
+                                "details": {"football_api": "OK", "odds_api": "OK"},
+                            },
+                        },
+                    },
                 },
-
                 # 特征数据示例
                 "MatchFeaturesExample": {
                     "summary": "比赛特征数据",
@@ -382,33 +367,32 @@ curl http://localhost:8000/predictions/{match_id}
                                 "last_5_games": 4,
                                 "goals_scored": 10,
                                 "goals_conceded": 3,
-                                "possession_avg": 58.5
+                                "possession_avg": 58.5,
                             },
                             "away_team_form": {
                                 "last_5_games": 3,
                                 "goals_scored": 8,
                                 "goals_conceded": 5,
-                                "possession_avg": 52.3
+                                "possession_avg": 52.3,
                             },
                             "head_to_head": {
                                 "last_10_meetings": {
                                     "home_wins": 6,
                                     "away_wins": 3,
-                                    "draws": 1
+                                    "draws": 1,
                                 },
-                                "avg_goals": 2.8
+                                "avg_goals": 2.8,
                             },
                             "context": {
                                 "home_advantage": 0.15,
                                 "days_since_last_match_home": 3,
                                 "days_since_last_match_away": 4,
-                                "travel_distance_km": 35
-                            }
+                                "travel_distance_km": 35,
+                            },
                         },
-                        "computed_at": "2024-01-01T09:30:00Z"
-                    }
+                        "computed_at": "2024-01-01T09:30:00Z",
+                    },
                 },
-
                 # 模型信息示例
                 "ModelInfoExample": {
                     "summary": "模型信息",
@@ -424,23 +408,22 @@ curl http://localhost:8000/predictions/{match_id}
                             "precision": 0.66,
                             "recall": 0.64,
                             "f1_score": 0.65,
-                            "auc_roc": 0.72
+                            "auc_roc": 0.72,
                         },
                         "training_data": {
                             "matches_count": 15000,
                             "features_count": 45,
-                            "training_time_hours": 2.5
+                            "training_time_hours": 2.5,
                         },
                         "feature_importance": {
                             "team_form": 0.23,
                             "head_to_head": 0.19,
                             "home_advantage": 0.15,
                             "player_stats": 0.12,
-                            "recent_goals": 0.10
-                        }
-                    }
+                            "recent_goals": 0.10,
+                        },
+                    },
                 },
-
                 # 错误响应示例
                 "ErrorResponseExample": {
                     "summary": "错误响应",
@@ -452,76 +435,82 @@ curl http://localhost:8000/predictions/{match_id}
                         "details": {
                             "field": "match_id",
                             "provided_value": "invalid",
-                            "expected_format": "string starting with 'match_'"
+                            "expected_format": "string starting with 'match_'",
                         },
                         "timestamp": "2024-01-01T10:00:00Z",
-                        "path": "/predictions/match/invalid"
-                    }
-                }
+                        "path": "/predictions/match/invalid",
+                    },
+                },
             }
 
             # 添加请求/响应模型
             if "schemas" not in openapi_schema["components"]:
                 openapi_schema["components"]["schemas"] = {}
 
-            openapi_schema["components"]["schemas"].update({
-                "PredictionRequest": {
-                    "type": "object",
-                    "required": ["match_id"],
-                    "properties": {
-                        "match_id": {
-                            "type": "string",
-                            "description": "比赛唯一标识符",
-                            "pattern": "^match_\\d+$",
-                            "example": "match_123456"
+            openapi_schema["components"]["schemas"].update(
+                {
+                    "PredictionRequest": {
+                        "type": "object",
+                        "required": ["match_id"],
+                        "properties": {
+                            "match_id": {
+                                "type": "string",
+                                "description": "比赛唯一标识符",
+                                "pattern": "^match_\\d+$",
+                                "example": "match_123456",
+                            },
+                            "model_version": {
+                                "type": "string",
+                                "description": "指定模型版本，默认使用最新版本",
+                                "example": "v2.1.0",
+                            },
+                            "force_recalculate": {
+                                "type": "boolean",
+                                "description": "是否强制重新计算特征",
+                                "default": False,
+                            },
                         },
-                        "model_version": {
-                            "type": "string",
-                            "description": "指定模型版本，默认使用最新版本",
-                            "example": "v2.1.0"
+                    },
+                    "PredictionResponse": {
+                        "type": "object",
+                        "properties": {
+                            "match_id": {"type": "string"},
+                            "home_team": {"type": "string"},
+                            "away_team": {"type": "string"},
+                            "prediction": {
+                                "type": "string",
+                                "enum": ["home_win", "draw", "away_win"],
+                            },
+                            "confidence": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
+                            "probabilities": {
+                                "type": "object",
+                                "properties": {
+                                    "home_win": {"type": "number"},
+                                    "draw": {"type": "number"},
+                                    "away_win": {"type": "number"},
+                                },
+                            },
+                            "model_version": {"type": "string"},
+                            "predicted_at": {"type": "string", "format": "date-time"},
                         },
-                        "force_recalculate": {
-                            "type": "boolean",
-                            "description": "是否强制重新计算特征",
-                            "default": False
-                        }
-                    }
-                },
-                "PredictionResponse": {
-                    "type": "object",
-                    "properties": {
-                        "match_id": {"type": "string"},
-                        "home_team": {"type": "string"},
-                        "away_team": {"type": "string"},
-                        "prediction": {
-                            "type": "string",
-                            "enum": ["home_win", "draw", "away_win"]
+                    },
+                    "ErrorResponse": {
+                        "type": "object",
+                        "properties": {
+                            "error": {"type": "boolean"},
+                            "status_code": {"type": "integer"},
+                            "message": {"type": "string"},
+                            "details": {"type": "object"},
+                            "timestamp": {"type": "string", "format": "date-time"},
+                            "path": {"type": "string"},
                         },
-                        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                        "probabilities": {
-                            "type": "object",
-                            "properties": {
-                                "home_win": {"type": "number"},
-                                "draw": {"type": "number"},
-                                "away_win": {"type": "number"}
-                            }
-                        },
-                        "model_version": {"type": "string"},
-                        "predicted_at": {"type": "string", "format": "date-time"}
-                    }
-                },
-                "ErrorResponse": {
-                    "type": "object",
-                    "properties": {
-                        "error": {"type": "boolean"},
-                        "status_code": {"type": "integer"},
-                        "message": {"type": "string"},
-                        "details": {"type": "object"},
-                        "timestamp": {"type": "string", "format": "date-time"},
-                        "path": {"type": "string"}
-                    }
+                    },
                 }
-            })
+            )
 
             # 添加安全配置
             openapi_schema["components"]["securitySchemes"] = security_schemes
@@ -531,27 +520,21 @@ curl http://localhost:8000/predictions/{match_id}
                 "ApiKeyAuth": {
                     "type": "apiKey",
                     "description": "API Key 认证流程：\n1. 联系管理员获取 API Key\n2. 在请求头中添加 X-API-Key: your-api-key\n3. 正常调用 API",
-                    "example": "curl -H 'X-API-Key: your-api-key' https://api.football-prediction.com/predictions/match_123"
+                    "example": "curl -H 'X-API-Key: your-api-key' https://api.football-prediction.com/predictions/match_123",
                 },
                 "BearerAuth": {
                     "type": "http",
                     "scheme": "bearer",
                     "bearerFormat": "JWT",
                     "description": "JWT Bearer Token 认证流程：\n1. 使用用户名密码登录获取 JWT\n2. 在请求头中添加 Authorization: Bearer <jwt-token>\n3. Token 有效期为 24 小时",
-                    "example": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' https://api.football-prediction.com/predictions/match_123"
-                }
+                    "example": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' https://api.football-prediction.com/predictions/match_123",
+                },
             }
 
             # 添加扩展信息
             openapi_schema["x-tag-groups"] = [
-                {
-                    "name": "核心业务",
-                    "tags": ["预测", "数据", "特征"]
-                },
-                {
-                    "name": "系统管理",
-                    "tags": ["健康检查", "监控", "模型"]
-                }
+                {"name": "核心业务", "tags": ["预测", "数据", "特征"]},
+                {"name": "系统管理", "tags": ["健康检查", "监控", "模型"]},
             ]
 
             app.openapi_schema = openapi_schema

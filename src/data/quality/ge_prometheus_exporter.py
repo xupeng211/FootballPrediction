@@ -13,7 +13,7 @@ Great Expectations Prometheus 指标导出器
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from prometheus_client import Gauge, Histogram, Info
 from prometheus_client.core import CollectorRegistry

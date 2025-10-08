@@ -60,7 +60,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from sqlalchemy import select, text
@@ -81,7 +81,7 @@ except ImportError:  # pragma: no cover - optional dependency path
     class _MockMlflowModule:
         """最小化的 MLflow 模拟实现。"""
 
-        class sklearn:  # type: ignore
+        class sklearn:
             @staticmethod
             def load_model(*args, **kwargs):
                 raise MlflowException("MLflow is not installed; cannot load models.")
@@ -90,14 +90,14 @@ except ImportError:  # pragma: no cover - optional dependency path
         def set_tracking_uri(*args, **kwargs) -> None:
             return None
 
-    class MlflowClient:  # type: ignore
+    class MlflowClient:
         def __init__(self, *args, **kwargs) -> None:
             raise MlflowException("MLflow is not installed; client unavailable.")
 
         def get_latest_versions(self, *args, **kwargs):  # pragma: no cover - fallback
             return []
 
-    mlflow = _MockMlflowModule()  # type: ignore
+    mlflow = _MockMlflowModule()
 
 from src.cache.ttl_cache import TTLCache
 from src.database.connection import DatabaseManager
@@ -999,7 +999,7 @@ class PredictionService:
             This method reuses the same model instance to improve performance.
             Batch prediction results are also cached to improve performance for repeated requests.
         """
-        results = []
+        results: List[Any] = []
 
         # 获取生产模型（只加载一次）
         model, model_version = await self.get_production_model()

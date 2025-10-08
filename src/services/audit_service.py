@@ -6,7 +6,7 @@ import time
 from contextvars import ContextVar
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 from fastapi import Request
 from sqlalchemy import and_, desc
@@ -440,7 +440,7 @@ class AuditService:
 
     def batch_log_actions(self, actions: list) -> list:
         """批量记录操作日志"""
-        results = []
+        results: List[Any] = []
         for action_data in actions:
             result = self.log_action(
                 action_data.get(str("action"), ""),
@@ -582,9 +582,9 @@ class AuditService:
                     raise
 
             if inspect.iscoroutinefunction(func):
-                return async_wrapper  # type: ignore
+                return async_wrapper
             else:
-                return sync_wrapper  # type: ignore
+                return sync_wrapper
 
         return decorator
 
@@ -748,7 +748,7 @@ def audit_operation(
 
         # 根据原函数是否为异步决定返回哪个包装器
         if inspect.iscoroutinefunction(func):
-            return async_wrapper  # type: ignore
+            return async_wrapper
         else:
             # 同步函数的包装器，需要记录审计日志
             @wraps(func)
@@ -777,7 +777,7 @@ def audit_operation(
                     logger.error(f"审计日志记录失败: {e}")
                 return result
 
-            return sync_wrapper_fixed  # type: ignore
+            return sync_wrapper_fixed
 
     return decorator
 
@@ -850,7 +850,7 @@ def audit_database_operation(
             def sync_wrapper(*args, **kwargs):
                 return asyncio.run(async_wrapper(*args, **kwargs))
 
-            return sync_wrapper  # type: ignore
+            return sync_wrapper
 
     return decorator
 

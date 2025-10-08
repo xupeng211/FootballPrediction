@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 

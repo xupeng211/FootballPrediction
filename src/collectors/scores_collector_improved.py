@@ -22,7 +22,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import aiohttp
 import websockets
@@ -75,9 +75,15 @@ class ScoresCollector:
 
         # API端点
         self.api_endpoints = {
-            "football_api": os.getenv("FOOTBALL_API_URL", "https://api.football-data.org/v4"),
-            "api_sports": os.getenv("API_SPORTS_URL", "https://v3.football.api-sports.io"),
-            "scorebat": os.getenv("SCOREBAT_URL", "https://www.scorebat.com/video/api/v1"),
+            "football_api": os.getenv(
+                "FOOTBALL_API_URL", "https://api.football-data.org/v4"
+            ),
+            "api_sports": os.getenv(
+                "API_SPORTS_URL", "https://v3.football.api-sports.io"
+            ),
+            "scorebat": os.getenv(
+                "SCOREBAT_URL", "https://www.scorebat.com/video/api/v1"
+            ),
         }
 
         # 状态管理
@@ -148,7 +154,9 @@ class ScoresCollector:
             except asyncio.CancelledError:
                 pass
 
-    async def collect_match_score(self, match_id: int, force: bool = False) -> Optional[Dict[str, Any]]:
+    async def collect_match_score(
+        self, match_id: int, force: bool = False
+    ) -> Optional[Dict[str, Any]]:
         """
         收集指定比赛的比分数据
 
@@ -238,10 +246,9 @@ class ScoresCollector:
 
                     # 发送认证信息
                     if self.api_key:
-                        await websocket.send(json.dumps({
-                            "type": "auth",
-                            "token": self.api_key
-                        }))
+                        await websocket.send(
+                            json.dumps({"type": "auth", "token": self.api_key})
+                        )
 
                     # 监听消息
                     async for message in websocket:
@@ -295,7 +302,9 @@ class ScoresCollector:
 
                     if match_id and score_data:
                         # 处理比分更新
-                        processed_data = await self._process_score_data(match_id, score_data)
+                        processed_data = await self._process_score_data(
+                            match_id, score_data
+                        )
                         if processed_data:
                             await self._save_score_data(processed_data)
                             await self._publish_score_update(processed_data)
@@ -307,7 +316,9 @@ class ScoresCollector:
         except Exception as e:
             logger.error(f"处理WebSocket消息失败: {e}")
 
-    async def _fetch_match_score_from_api(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _fetch_match_score_from_api(
+        self, match_id: int
+    ) -> Optional[Dict[str, Any]]:
         """从API获取比赛比分"""
         # 尝试多个数据源
         for source_name, base_url in self.api_endpoints.items():
@@ -322,7 +333,9 @@ class ScoresCollector:
         return None
 
     @retry(lambda: None)
-    async def _fetch_from_source(self, source: str, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _fetch_from_source(
+        self, source: str, match_id: int
+    ) -> Optional[Dict[str, Any]]:
         """从指定数据源获取数据"""
         if source == "football_api":
             return await self._fetch_from_football_api(match_id)
@@ -402,7 +415,9 @@ class ScoresCollector:
             "events": data.get("events", []),
         }
 
-    async def _process_score_data(self, match_id: int, score_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _process_score_data(
+        self, match_id: int, score_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """处理和验证比分数据"""
         try:
             # 获取数据库中的比赛信息
@@ -412,7 +427,9 @@ class ScoresCollector:
                 return None
 
             # 验证数据完整性
-            if not all(k in score_data for k in ["home_score", "away_score", "match_status"]):
+            if not all(
+                k in score_data for k in ["home_score", "away_score", "match_status"]
+            ):
                 logger.warning(f"比赛 {match_id} 比分数据不完整")
                 return None
 
@@ -462,7 +479,10 @@ class ScoresCollector:
     def _has_significant_change(self, match: Match, new_data: Dict[str, Any]) -> bool:
         """检查是否有实质性变化"""
         # 比分变化
-        if match.home_score != new_data["home_score"] or match.away_score != new_data["away_score"]:
+        if (
+            match.home_score != new_data["home_score"]
+            or match.away_score != new_data["away_score"]
+        ):
             return True
 
         # 状态变化
@@ -470,7 +490,10 @@ class ScoresCollector:
             return True
 
         # 半场比分变化
-        if match.home_half_score != new_data["home_half_score"] or match.away_half_score != new_data["away_half_score"]:
+        if (
+            match.home_half_score != new_data["home_half_score"]
+            or match.away_half_score != new_data["away_half_score"]
+        ):
             return True
 
         return False
@@ -481,13 +504,17 @@ class ScoresCollector:
             start_time = utc_now()
 
             # 更新比赛表
-            stmt = update(Match).where(Match.id == score_data["match_id"]).values(
-                home_score=score_data["home_score"],
-                away_score=score_data["away_score"],
-                home_half_score=score_data["home_half_score"],
-                away_half_score=score_data["away_half_score"],
-                match_status=score_data["match_status"],
-                updated_at=utc_now(),
+            stmt = (
+                update(Match)
+                .where(Match.id == score_data["match_id"])
+                .values(
+                    home_score=score_data["home_score"],
+                    away_score=score_data["away_score"],
+                    home_half_score=score_data["home_half_score"],
+                    away_half_score=score_data["away_half_score"],
+                    match_status=score_data["match_status"],
+                    updated_at=utc_now(),
+                )
             )
 
             await self.db_session.execute(stmt)
@@ -509,7 +536,9 @@ class ScoresCollector:
 
             processing_time = (utc_now() - start_time).total_seconds()
             self.stats["average_processing_time"] = (
-                self.stats["average_processing_time"] * (self.stats["successful_updates"] - 1) + processing_time
+                self.stats["average_processing_time"]
+                * (self.stats["successful_updates"] - 1)
+                + processing_time
             ) / self.stats["successful_updates"]
 
             logger.debug(f"保存比赛 {score_data['match_id']} 比分数据成功")
@@ -537,8 +566,7 @@ class ScoresCollector:
 
             # 发布到全局频道
             await self.redis_manager.client.publish(
-                "scores:global_updates",
-                json.dumps(message)
+                "scores:global_updates", json.dumps(message)
             )
 
         except Exception as e:
@@ -551,12 +579,16 @@ class ScoresCollector:
 
     async def _get_live_matches(self) -> List[Dict[str, Any]]:
         """获取进行中的比赛"""
-        query = select(Match).where(
-            or_(
-                Match.match_status == MatchStatus.IN_PROGRESS,
-                Match.match_status == MatchStatus.PAUSED,
+        query = (
+            select(Match)
+            .where(
+                or_(
+                    Match.match_status == MatchStatus.IN_PROGRESS,
+                    Match.match_status == MatchStatus.PAUSED,
+                )
             )
-        ).order_by(Match.match_time)
+            .order_by(Match.match_time)
+        )
 
         result = await self.db_session.execute(query)
         matches = result.scalars().all()
@@ -580,7 +612,8 @@ class ScoresCollector:
                 cutoff_time = utc_now() - timedelta(hours=1)
 
                 expired_matches = [
-                    match_id for match_id, last_update in self.last_update_cache.items()
+                    match_id
+                    for match_id, last_update in self.last_update_cache.items()
                     if last_update < cutoff_time
                 ]
 
@@ -625,6 +658,7 @@ class ScoresCollectorManager:
         """获取或创建收集器实例"""
         if session_id not in self.collectors:
             from src.database.connection import get_async_session
+
             async with get_async_session() as session:
                 collector = ScoresCollector(session, self.redis_manager)
                 self.collectors[session_id] = collector

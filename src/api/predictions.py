@@ -40,7 +40,7 @@ Provides API endpoints for match prediction:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy import desc, select

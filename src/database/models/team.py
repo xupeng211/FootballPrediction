@@ -4,7 +4,7 @@
 存储足球队伍的基础信息，如曼联、巴塞罗那等。
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Session, relationship

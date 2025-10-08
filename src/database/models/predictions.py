@@ -9,7 +9,7 @@ import math
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import DECIMAL, JSON, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -320,7 +320,7 @@ class Predictions(BaseModel):
                 recommendations.append(recommendation)
 
         # 按期望价值排序
-        recommendations.sort(key=lambda x: float(x["expected_value"]), reverse=True)  # type: ignore
+        recommendations.sort(key=lambda x: float(x["expected_value"]), reverse=True)
 
         return recommendations
 
@@ -362,7 +362,7 @@ class Predictions(BaseModel):
             .filter(cls.match_id == match_id)
             .order_by(cls.predicted_at.desc())
             .all()
-        )  # type: ignore
+        )
 
     @classmethod
     def get_latest_prediction(
@@ -372,7 +372,7 @@ class Predictions(BaseModel):
         query = session.query(cls).filter(cls.match_id == match_id)
         if model_name:
             query = query.filter(cls.model_name == model_name)
-        return query.order_by(cls.predicted_at.desc()).first()  # type: ignore
+        return query.order_by(cls.predicted_at.desc()).first()
 
     @classmethod
     def get_model_predictions(cls, session, model_name: str, limit: int = 100):
@@ -383,7 +383,7 @@ class Predictions(BaseModel):
             .order_by(cls.predicted_at.desc())
             .limit(limit)
             .all()
-        )  # type: ignore
+        )
 
     @classmethod
     def calculate_model_accuracy(cls, session, model_name: str, days: int = 30):
@@ -410,7 +410,7 @@ class Predictions(BaseModel):
             session.query(cls)
             .join(Match)
             .filter(
-                and_(  # type: ignore
+                and_(
                     cls.model_name == model_name,
                     cls.predicted_at >= cutoff_date,
                     Match.match_status == "finished",

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 """用户数据模型。"""
 
-from __future__ import annotations
+from typing import cast, Any, Optional, Union
 
 from datetime import datetime
 

@@ -23,7 +23,7 @@ import sys
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from pythonjsonlogger import jsonlogger
 
@@ -269,11 +269,11 @@ class StructuredLogger:
         extra = {"operation": operation, "key": key}
 
         if hit is not None:
-            extra["hit"] = hit
+            extra["hit"] = str(hit)
             message += f" - {'HIT' if hit else 'MISS'}"
 
         if duration_ms is not None:
-            extra["duration_ms"] = duration_ms
+            extra["duration_ms"] = str(duration_ms)
 
         extra.update(kwargs)
 

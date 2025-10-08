@@ -5,7 +5,7 @@ Feast Feature Store Mock 实现
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, cast
 from dataclasses import dataclass
 from collections import defaultdict
 
@@ -117,7 +117,7 @@ class MockFeatureStore:
         self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
     ) -> Tuple[List[Dict[str, Any]], List[str]]:
         """获取在线特征"""
-        features = []
+        features: List[Any] = []
         field_names = []
 
         # 解析特征引用

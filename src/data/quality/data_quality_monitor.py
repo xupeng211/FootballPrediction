@@ -15,7 +15,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from sqlalchemy import text
 
