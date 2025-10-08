@@ -5,7 +5,7 @@
 # ⚽ FootballPrediction - 足球预测系统
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
-[![Code Coverage](https://img.shields.io/badge/Coverage-96.35%25-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Code Coverage](https://img.shields.io/badge/Coverage-16.5%25-yellow?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
@@ -14,6 +14,8 @@
 基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI构建，具备完整的开发基础设施和最佳实践配置。
 
 > 🎯 **项目成熟度：⭐⭐⭐⭐⭐** - 已达到生产就绪标准
+>
+> 💡 **开发理念**：采用渐进式改进方法，优先确保 CI 绿灯，持续提升代码质量。详情请见 [.claude-preferences.md](/.claude-preferences.md)
 
 ## ✨ 核心特性
 
