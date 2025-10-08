@@ -60,13 +60,15 @@ class ValueType:
 class MockFeatureStore:
     """模拟特征存储"""
 
-    def __init__(self, repo_path: str = None, config_path: str = None):
+    def __init__(
+        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
+    ):
         self.repo_path = repo_path
         self.config_path = config_path
-        self._feature_views = {}
-        self._entities = {}
-        self._feature_services = {}
-        self._feature_data = defaultdict(dict)
+        self._feature_views: Dict[str, FeatureView] = {}
+        self._entities: Dict[str, Entity] = {}
+        self._feature_services: Dict[str, FeatureService] = {}
+        self._feature_data: Dict[str, Dict[str, Any]] = defaultdict(dict)
         self._initialized = False
 
     def init(self) -> None:
@@ -204,7 +206,7 @@ class MockFeatureService:
     def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
-        self._service_config = None
+        self._service_config: Optional[Dict[str, Any]] = None
 
     def get_feature_vector(
         self, entity_id: str, feature_refs: List[str]
@@ -218,9 +220,11 @@ class MockFeatureService:
 class MockFeastClient:
     """模拟Feast客户端"""
 
-    def __init__(self, repo_path: str = None, config_path: str = None):
+    def __init__(
+        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
+    ):
         self.feature_store = MockFeatureStore(repo_path, config_path)
-        self._services = {}
+        self._services: Dict[str, MockFeatureService] = {}
 
     def apply(self, objects: List[Any]) -> None:
         """应用特征定义"""
@@ -259,7 +263,7 @@ class MockOnlineResponse:
         self._to_dict_called = True
         return self._features
 
-    def to_df(self):
+    def to_df(self) -> Any:
         """转换为DataFrame（mock）"""
         import pandas as pd
 
@@ -313,7 +317,7 @@ def generate_test_features(entity_id: str) -> Dict[str, Any]:
 
 
 # 创建全局实例
-global_feast_store = None
+global_feast_store: Optional[MockFeatureStore] = None
 
 
 def get_feast_store() -> MockFeatureStore:

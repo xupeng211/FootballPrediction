@@ -92,7 +92,7 @@ class DataCollectionLog(BaseModel):
     def duration_seconds(self) -> Optional[float]:
         """计算采集耗时（秒）"""
         if self.start_time and self.end_time:
-            return (self.end_time - self.start_time).total_seconds()
+            return (self.end_time - self.start_time).total_seconds()  # type: ignore[return-value]
         return None
 
     @property
@@ -101,16 +101,16 @@ class DataCollectionLog(BaseModel):
         total = self.success_count + self.error_count
         if total == 0:
             return 0.0
-        return self.success_count / total
+        return float(self.success_count) / float(total)  # type: ignore[return-value]
 
     @property
     def is_completed(self) -> bool:
         """是否已完成（成功或失败）"""
-        return self.status in [
+        return self.status in (  # type: ignore[return-value]
             CollectionStatus.SUCCESS.value,
             CollectionStatus.FAILED.value,
             CollectionStatus.PARTIAL.value,
-        ]
+        )
 
     @property
     def is_successful(self) -> bool:
@@ -119,8 +119,8 @@ class DataCollectionLog(BaseModel):
 
     def mark_started(self) -> None:
         """标记采集开始"""
-        self.start_time = datetime.now()
-        self.status = CollectionStatus.RUNNING.value
+        self.start_time = datetime.now()  # type: ignore[assignment]
+        self.status = CollectionStatus.RUNNING.value  # type: ignore[assignment]
 
     def mark_completed(
         self,
@@ -140,13 +140,13 @@ class DataCollectionLog(BaseModel):
             error_count: 错误数量
             error_message: 错误信息
         """
-        self.end_time = datetime.now()
-        self.status = status.value
-        self.records_collected = records_collected
-        self.success_count = success_count
-        self.error_count = error_count
+        self.end_time = datetime.now()  # type: ignore[assignment]
+        self.status = status.value  # type: ignore[assignment]
+        self.records_collected = records_collected  # type: ignore[assignment]
+        self.success_count = success_count  # type: ignore[assignment]
+        self.error_count = error_count  # type: ignore[assignment]
         if error_message:
-            self.error_message = error_message
+            self.error_message = error_message  # type: ignore[assignment]
 
     def __repr__(self) -> str:
         """字符串表示"""
