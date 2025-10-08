@@ -17,11 +17,17 @@ Provides comprehensive business and system metrics collection:
 
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, cast
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 
-from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, generate_latest
+from prometheus_client import (
+    Counter,
+    Histogram,
+    Gauge,
+    CollectorRegistry,
+    generate_latest,
+)
 import asyncio
 from src.core.logging_system import StructuredLogger, LogCategory
 
@@ -31,6 +37,7 @@ logger = StructuredLogger(__name__, LogCategory.PERFORMANCE)
 @dataclass
 class MetricPoint:
     """指标数据点"""
+
     name: str
     value: float
     labels: Dict[str, str] = field(default_factory=dict)
@@ -74,14 +81,16 @@ class MetricsAggregator:
                 "last": values[-1],
             }
 
-    def get_metric(self, name: str, labels: Dict[str, str] = None) -> Optional[Dict[str, float]]:
+    def get_metric(
+        self, name: str, labels: Dict[str, str] = None
+    ) -> Optional[Dict[str, float]]:
         """获取指标聚合"""
         key = self._make_key(name, labels or {})
         return self.aggregates.get(key)
 
     def get_all_metrics(self) -> Dict[str, Dict[str, Dict[str, float]]]:
         """获取所有指标"""
-        result = {}
+        result: Dict[str, Dict[str, Dict[str, float]]] = {}
         for key, aggregates in self.aggregates.items():
             if "[" in key:
                 name, label_str = key.split("[", 1)
@@ -120,8 +129,8 @@ class EnhancedMetricsCollector:
         self.model_loads = 0
 
         # 性能指标
-        self.request_durations = deque(maxlen=1000)
-        self.error_counts = defaultdict(int)
+        self.request_durations: Deque[float] = deque(maxlen=1000)
+        self.error_counts: Dict[str, int] = defaultdict(int)
 
         # 定期聚合任务
         self._aggregation_task: Optional[asyncio.Task] = None
@@ -130,85 +139,92 @@ class EnhancedMetricsCollector:
         """初始化Prometheus指标"""
         # 业务指标
         self.prediction_counter = Counter(
-            'predictions_total',
-            'Total number of predictions',
-            ['model_version', 'result'],
-            registry=self.registry
+            "predictions_total",
+            "Total number of predictions",
+            ["model_version", "result"],
+            registry=self.registry,
         )
 
         self.prediction_accuracy = Gauge(
-            'prediction_accuracy',
-            'Prediction accuracy rate',
-            ['model_version', 'time_window'],
-            registry=self.registry
+            "prediction_accuracy",
+            "Prediction accuracy rate",
+            ["model_version", "time_window"],
+            registry=self.registry,
         )
 
         self.model_load_counter = Counter(
-            'model_loads_total',
-            'Total number of model loads',
-            ['model_name', 'status'],
-            registry=self.registry
+            "model_loads_total",
+            "Total number of model loads",
+            ["model_name", "status"],
+            registry=self.registry,
         )
 
         # 性能指标
         self.request_duration = Histogram(
-            'request_duration_seconds',
-            'Request duration in seconds',
-            ['endpoint', 'method'],
-            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
-            registry=self.registry
+            "request_duration_seconds",
+            "Request duration in seconds",
+            ["endpoint", "method"],
+            buckets=[
+                0.001,
+                0.005,
+                0.01,
+                0.025,
+                0.05,
+                0.1,
+                0.25,
+                0.5,
+                1.0,
+                2.5,
+                5.0,
+                10.0,
+            ],
+            registry=self.registry,
         )
 
         self.cache_hit_ratio = Gauge(
-            'cache_hit_ratio',
-            'Cache hit ratio',
-            ['cache_type'],
-            registry=self.registry
+            "cache_hit_ratio", "Cache hit ratio", ["cache_type"], registry=self.registry
         )
 
         # 系统指标
         self.active_connections = Gauge(
-            'active_connections',
-            'Number of active connections',
-            ['connection_type'],
-            registry=self.registry
+            "active_connections",
+            "Number of active connections",
+            ["connection_type"],
+            registry=self.registry,
         )
 
         self.error_rate = Gauge(
-            'error_rate',
-            'Error rate',
-            ['error_type'],
-            registry=self.registry
+            "error_rate", "Error rate", ["error_type"], registry=self.registry
         )
 
         # 资源指标
         self.memory_usage = Gauge(
-            'memory_usage_bytes',
-            'Memory usage in bytes',
-            ['component'],
-            registry=self.registry
+            "memory_usage_bytes",
+            "Memory usage in bytes",
+            ["component"],
+            registry=self.registry,
         )
 
         self.cpu_usage = Gauge(
-            'cpu_usage_percent',
-            'CPU usage percentage',
-            ['component'],
-            registry=self.registry
+            "cpu_usage_percent",
+            "CPU usage percentage",
+            ["component"],
+            registry=self.registry,
         )
 
         # 自定义业务指标
         self.value_bets_counter = Counter(
-            'value_bets_total',
-            'Total number of value bets identified',
-            ['confidence_level'],
-            registry=self.registry
+            "value_bets_total",
+            "Total number of value bets identified",
+            ["confidence_level"],
+            registry=self.registry,
         )
 
         self.data_collection_counter = Counter(
-            'data_collection_operations_total',
-            'Total data collection operations',
-            ['source', 'status'],
-            registry=self.registry
+            "data_collection_operations_total",
+            "Total data collection operations",
+            ["source", "status"],
+            registry=self.registry,
         )
 
     def record_prediction(
@@ -217,13 +233,12 @@ class EnhancedMetricsCollector:
         predicted_result: str,
         confidence: float,
         duration: float,
-        success: bool = True
+        success: bool = True,
     ):
         """记录预测指标"""
         # 更新计数器
         self.prediction_counter.labels(
-            model_version=model_version,
-            result=predicted_result
+            model_version=model_version, result=predicted_result
         ).inc()
 
         self.predictions_total += 1
@@ -233,24 +248,20 @@ class EnhancedMetricsCollector:
             name="prediction_duration",
             value=duration,
             labels={"model_version": model_version},
-            unit="seconds"
+            unit="seconds",
         )
         self.aggregator.add_metric(metric)
 
         # 记录到Prometheus
-        self.request_duration.labels(
-            endpoint="/predict",
-            method="POST"
-        ).observe(duration)
+        self.request_duration.labels(endpoint="/predict", method="POST").observe(
+            duration
+        )
 
         # 检查告警
         self._check_prediction_alerts(duration, confidence)
 
     def record_prediction_verification(
-        self,
-        model_version: str,
-        is_correct: bool,
-        time_window: str = "1h"
+        self, model_version: str, is_correct: bool, time_window: str = "1h"
     ):
         """记录预测验证指标"""
         self.predictions_verified += 1
@@ -261,8 +272,7 @@ class EnhancedMetricsCollector:
         if self.predictions_verified > 0:
             accuracy = self.predictions_correct / self.predictions_verified
             self.prediction_accuracy.labels(
-                model_version=model_version,
-                time_window=time_window
+                model_version=model_version, time_window=time_window
             ).set(accuracy)
 
             # 记录到聚合器
@@ -270,7 +280,7 @@ class EnhancedMetricsCollector:
                 name="prediction_accuracy",
                 value=accuracy,
                 labels={"model_version": model_version, "window": time_window},
-                unit="ratio"
+                unit="ratio",
             )
             self.aggregator.add_metric(metric)
 
@@ -279,7 +289,7 @@ class EnhancedMetricsCollector:
         cache_type: str,
         operation: str,
         hit: Optional[bool] = None,
-        size: Optional[int] = None
+        size: Optional[int] = None,
     ):
         """记录缓存操作指标"""
         if hit is not None:
@@ -289,19 +299,11 @@ class EnhancedMetricsCollector:
 
         if size is not None:
             metric = MetricPoint(
-                name="cache_size",
-                value=size,
-                labels={"type": cache_type},
-                unit="items"
+                name="cache_size", value=size, labels={"type": cache_type}, unit="items"
             )
             self.aggregator.add_metric(metric)
 
-    def record_error(
-        self,
-        error_type: str,
-        component: str,
-        severity: str = "medium"
-    ):
+    def record_error(self, error_type: str, component: str, severity: str = "medium"):
         """记录错误指标"""
         self.error_counts[f"{component}:{error_type}"] += 1
 
@@ -315,8 +317,8 @@ class EnhancedMetricsCollector:
             labels={
                 "error_type": error_type,
                 "component": component,
-                "severity": severity
-            }
+                "severity": severity,
+            },
         )
         self.aggregator.add_metric(metric)
 
@@ -324,18 +326,11 @@ class EnhancedMetricsCollector:
         self._check_error_alerts(error_type, component)
 
     def record_model_load(
-        self,
-        model_name: str,
-        model_version: str,
-        success: bool,
-        load_time: float
+        self, model_name: str, model_version: str, success: bool, load_time: float
     ):
         """记录模型加载指标"""
         status = "success" if success else "failed"
-        self.model_load_counter.labels(
-            model_name=model_name,
-            status=status
-        ).inc()
+        self.model_load_counter.labels(model_name=model_name, status=status).inc()
 
         self.model_loads += 1
 
@@ -346,26 +341,18 @@ class EnhancedMetricsCollector:
             labels={
                 "model_name": model_name,
                 "model_version": model_version,
-                "status": status
+                "status": status,
             },
-            unit="seconds"
+            unit="seconds",
         )
         self.aggregator.add_metric(metric)
 
     def record_data_collection(
-        self,
-        source: str,
-        data_type: str,
-        records: int,
-        success: bool,
-        duration: float
+        self, source: str, data_type: str, records: int, success: bool, duration: float
     ):
         """记录数据收集指标"""
         status = "success" if success else "failed"
-        self.data_collection_counter.labels(
-            source=source,
-            status=status
-        ).inc()
+        self.data_collection_counter.labels(source=source, status=status).inc()
 
         # 记录吞吐量
         if duration > 0:
@@ -373,33 +360,22 @@ class EnhancedMetricsCollector:
             metric = MetricPoint(
                 name="data_collection_throughput",
                 value=throughput,
-                labels={
-                    "source": source,
-                    "data_type": data_type
-                },
-                unit="records/sec"
+                labels={"source": source, "data_type": data_type},
+                unit="records/sec",
             )
             self.aggregator.add_metric(metric)
 
     def record_value_bet(
-        self,
-        bookmaker: str,
-        confidence_level: str,
-        expected_value: float
+        self, bookmaker: str, confidence_level: str, expected_value: float
     ):
         """记录价值投注指标"""
-        self.value_bets_counter.labels(
-            confidence_level=confidence_level
-        ).inc()
+        self.value_bets_counter.labels(confidence_level=confidence_level).inc()
 
         metric = MetricPoint(
             name="value_bet_ev",
             value=expected_value,
-            labels={
-                "bookmaker": bookmaker,
-                "confidence_level": confidence_level
-            },
-            unit="ratio"
+            labels={"bookmaker": bookmaker, "confidence_level": confidence_level},
+            unit="ratio",
         )
         self.aggregator.add_metric(metric)
 
@@ -433,7 +409,7 @@ class EnhancedMetricsCollector:
             self._trigger_alert(
                 "prediction_latency_high",
                 f"Prediction latency high: {duration:.2f}s",
-                severity="high"
+                severity="high",
             )
 
         # 低置信度告警
@@ -441,7 +417,7 @@ class EnhancedMetricsCollector:
             self._trigger_alert(
                 "prediction_confidence_low",
                 f"Prediction confidence low: {confidence:.3f}",
-                severity="medium"
+                severity="medium",
             )
 
     def _check_error_alerts(self, error_type: str, component: str):
@@ -454,7 +430,7 @@ class EnhancedMetricsCollector:
             self._trigger_alert(
                 "error_rate_high",
                 f"High error rate in {component}: {error_count} errors",
-                severity="high"
+                severity="high",
             )
 
     def _trigger_alert(self, alert_name: str, message: str, severity: str = "medium"):
@@ -474,7 +450,7 @@ class EnhancedMetricsCollector:
             alert_name=alert_name,
             message=message,
             severity=severity,
-            timestamp=now.isoformat()
+            timestamp=now.isoformat(),
         )
 
         # 这里可以添加更多告警渠道：
@@ -492,14 +468,16 @@ class EnhancedMetricsCollector:
                 "predictions_verified": self.predictions_verified,
                 "accuracy": (
                     self.predictions_correct / self.predictions_verified
-                    if self.predictions_verified > 0 else 0
+                    if self.predictions_verified > 0
+                    else 0
                 ),
                 "model_loads": self.model_loads,
             },
             "performance": {
                 "avg_prediction_duration": (
                     sum(self.request_durations) / len(self.request_durations)
-                    if self.request_durations else 0
+                    if self.request_durations
+                    else 0
                 ),
                 "error_counts": dict(self.error_counts),
             },
@@ -509,7 +487,7 @@ class EnhancedMetricsCollector:
 
     def get_prometheus_metrics(self) -> str:
         """获取Prometheus格式的指标"""
-        return generate_latest(self.registry).decode('utf-8')
+        return generate_latest(self.registry).decode("utf-8")
 
     async def start_aggregation_task(self, interval: int = 60):
         """启动定期聚合任务"""
@@ -525,7 +503,8 @@ class EnhancedMetricsCollector:
                     # 清理过期的告警记录
                     now = datetime.now()
                     expired_alerts = [
-                        k for k, v in self.last_alerts.items()
+                        k
+                        for k, v in self.last_alerts.items()
                         if (now - v) > timedelta(hours=1)
                     ]
                     for alert in expired_alerts:
@@ -564,6 +543,7 @@ def get_metrics_collector() -> EnhancedMetricsCollector:
 # 便捷装饰器
 def track_prediction_performance(func):
     """跟踪预测性能的装饰器"""
+
     async def wrapper(*args, **kwargs):
         start_time = time.time()
         success = True
@@ -586,13 +566,15 @@ def track_prediction_performance(func):
                 predicted_result=predicted_result,
                 confidence=confidence,
                 duration=duration,
-                success=success
+                success=success,
             )
+
     return wrapper
 
 
 def track_cache_performance(func):
     """跟踪缓存性能的装饰器"""
+
     def wrapper(*args, **kwargs):
         start_time = time.time()
         hit = False
@@ -606,8 +588,7 @@ def track_cache_performance(func):
             collector = get_metrics_collector()
             cache_type = kwargs.get("cache_type", "default")
             collector.record_cache_operation(
-                cache_type=cache_type,
-                operation=func.__name__,
-                hit=hit
+                cache_type=cache_type, operation=func.__name__, hit=hit
             )
+
     return wrapper

@@ -14,7 +14,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import select, text
 
@@ -316,7 +316,7 @@ class PredictionEngine:
         predictions = await self.batch_predict(match_ids, force_refresh)
 
         # 合并比赛信息和预测结果
-        results = []
+        results: List[Any] = []
         for prediction in predictions:
             match_info = next(
                 (m for m in upcoming_matches if m["id"] == prediction["match_id"]),

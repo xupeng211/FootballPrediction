@@ -12,7 +12,7 @@ import signal
 import sys
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from src.core.config import get_settings
 

@@ -5,7 +5,7 @@ SQLAlchemy基础模型
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase
@@ -58,7 +58,7 @@ class BaseModel(Base, TimestampMixin):
         if exclude_fields is None:
             exclude_fields = set()
 
-        result = {}
+        result: Dict[str, Any] = {}
         for column in self.__table__.columns:
             column_name = column.name
             if column_name not in exclude_fields:

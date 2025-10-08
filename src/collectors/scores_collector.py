@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 import os
 
 from sqlalchemy import or_, select

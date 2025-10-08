@@ -49,7 +49,7 @@ import logging
 import random
 import time
 from enum import Enum
-from typing import Any, Callable, Optional, Tuple, Type, TypeVar
+from typing import Any, Callable, Optional, Tuple, Type, TypeVar, cast
 
 T = TypeVar("T")
 

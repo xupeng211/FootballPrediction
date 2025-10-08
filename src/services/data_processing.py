@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pandas as pd
 
@@ -940,7 +940,7 @@ class DataProcessingService(BaseService):
         Returns:
             List[Any]: 处理后的结果列表
         """
-        results = []
+        results: List[Any] = []
         async for batch in self._process_in_batches(dataset, batch_size):
             # 模拟批处理逻辑
             processed_batch = await self.process_batch(batch)

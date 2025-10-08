@@ -19,7 +19,7 @@ Provides complete prediction-related API endpoints, including:
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Path
 from fastapi.responses import StreamingResponse

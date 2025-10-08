@@ -11,7 +11,7 @@ import asyncio
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 import pandas as pd
 
@@ -28,12 +28,12 @@ from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 try:
-    import xgboost as xgb  # type: ignore
+    import xgboost as xgb
 
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
-    xgb = None  # type: ignore
+    xgb = None
 
 # 处理可选依赖
 try:
@@ -70,8 +70,8 @@ except ImportError:
             def log_model(*args, **kwargs):
                 pass
 
-    mlflow = MockMLflow()  # type: ignore
-    mlflow.sklearn = MockMLflow.sklearn()  # type: ignore
+    mlflow = MockMLflow()
+    mlflow.sklearn = MockMLflow.sklearn()
 
     class MockMlflowClient:
         def __init__(self, *args, **kwargs):

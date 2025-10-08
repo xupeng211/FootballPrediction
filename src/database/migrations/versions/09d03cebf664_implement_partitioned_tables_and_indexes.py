@@ -15,7 +15,7 @@ Create Date: 2025-09-12 12:48:23.849021
 
 """
 
-from typing import Sequence, Union
+from typing import Sequence, Union, cast
 
 from alembic import context, op
 from sqlalchemy import text

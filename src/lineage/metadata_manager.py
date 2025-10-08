@@ -6,7 +6,7 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from urllib.parse import urljoin
 
 import requests
@@ -248,15 +248,13 @@ class MetadataManager:
             params["namespace"] = namespace
 
         try:
-            response = self.session.get(
-                str(urljoin(self.api_url, None), "search"), params=params
-            )
+            response = self.session.get(urljoin(self.api_url, "search"), params=params)
             response.raise_for_status()
 
             result = response.json()
-            datasets = result.get(str("results", None), [])
+            datasets = result.get("results", [])
             logger.info(f"搜索数据集成功，找到 {len(datasets)} 个结果")
-            return datasets if isinstance(datasets, dict) else {}
+            return datasets if isinstance(datasets, list) else []
         except requests.exceptions.RequestException as e:
             logger.error(f"搜索数据集失败: {e}")
             raise
@@ -281,11 +279,11 @@ class MetadataManager:
             response.raise_for_status()
 
             result = response.json()
-            versions = result.get(str("versions", None), [])
+            versions = result.get("versions", [])
             logger.info(
                 f"获取数据集版本成功: {namespace}.{name}, 共 {len(versions)} 个版本"
             )
-            return versions if isinstance(versions, dict) else {}
+            return versions if isinstance(versions, list) else []
         except requests.exceptions.RequestException as e:
             logger.error(f"获取数据集版本失败 {namespace}.{name}: {e}")
             raise
@@ -312,11 +310,11 @@ class MetadataManager:
             response.raise_for_status()
 
             result = response.json()
-            runs = result.get(str("runs", None), [])
+            runs = result.get("runs", [])
             logger.info(
                 f"获取作业运行历史成功: {namespace}.{job_name}, 共 {len(runs)} 条记录"
             )
-            return runs if isinstance(runs, dict) else {}
+            return runs if isinstance(runs, list) else []
         except requests.exceptions.RequestException as e:
             logger.error(f"获取作业运行历史失败 {namespace}.{job_name}: {e}")
             raise
@@ -470,12 +468,11 @@ class MetadataManager:
             for dataset in datasets:
                 try:
                     # Type annotations to help mypy understand the correct types
-                    namespace_str: str = dataset["namespace"]  # type: ignore
-                    name_str: str = dataset["name"]  # type: ignore
-                    # type: ignore
-                    description_str: Optional[str] = dataset["description"]
-                    schema_list: Optional[List[Dict[str, str]]] = dataset["schema"]  # type: ignore
-                    tags_list: Optional[List[str]] = dataset["tags"]  # type: ignore
+                    namespace_str: str = str(dataset["namespace"])
+                    name_str: str = str(dataset["name"])
+                    description_str: Optional[str] = dataset.get("description")
+                    schema_list = dataset.get("schema")
+                    tags_list = dataset.get("tags")
 
                     self.create_dataset(
                         namespace=namespace_str,
@@ -510,4 +507,4 @@ def get_metadata_manager() -> MetadataManager:
     global _metadata_manager
     if _metadata_manager is None:
         _metadata_manager = MetadataManager()
-    return _metadata_manager if isinstance(_metadata_manager, dict) else {}
+    return _metadata_manager

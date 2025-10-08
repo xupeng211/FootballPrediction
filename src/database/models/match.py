@@ -6,7 +6,7 @@
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from sqlalchemy import CheckConstraint, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -305,7 +305,7 @@ class Match(BaseModel):
             session.query(cls)
             .filter(
                 cls.match_status == MatchStatus.SCHEDULED,
-                cls.match_time.between(start_date, end_date),  # type: ignore
+                cls.match_time.between(start_date, end_date),
             )
             .order_by(cls.match_time)
             .all()

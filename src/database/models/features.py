@@ -6,7 +6,7 @@
 
 from decimal import Decimal
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 
 from sqlalchemy import DECIMAL, Boolean
 from sqlalchemy import Enum as SQLEnum

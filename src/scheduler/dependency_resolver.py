@@ -10,7 +10,7 @@
 import logging
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 logger = logging.getLogger(__name__)
 
