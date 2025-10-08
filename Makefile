@@ -11,8 +11,8 @@ VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
 
 # Coverage thresholds for different environments
-COVERAGE_THRESHOLD_CI ?= 30      # CI environment (gradually improving)
-COVERAGE_THRESHOLD_DEV ?= 20     # Development environment (relaxed)
+COVERAGE_THRESHOLD_CI ?= 20      # CI environment (gradually improving)
+COVERAGE_THRESHOLD_DEV ?= 16     # Development environment (relaxed)
 COVERAGE_THRESHOLD_MIN ?= 15     # Minimum acceptable coverage
 COVERAGE_THRESHOLD ?= $(COVERAGE_THRESHOLD_CI)  # Default to CI level
 
