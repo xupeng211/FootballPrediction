@@ -1,27 +1,46 @@
 """
-service.py
-service
+数据处理服务模块
+Data Processing Service Module
 
-此文件已被拆分为多个模块以提供更好的组织结构。
-This file has been split into multiple modules for better organization.
-
-为了向后兼容，此文件重新导出所有模块中的类。
-For backward compatibility, this file re-exports all classes from the modules.
+提供数据清洗、验证和转换功能。
+Provides data cleaning, validation, and transformation functionality.
 """
 
-import warnings
+from typing import Any, Dict, List, Optional, Union
+import logging
+from datetime import datetime
 
-warnings.warn(
-    "直接从 service 导入已弃用。" "请从 src/services/data_processing/mod 导入相关类。",
-    DeprecationWarning,
-    stacklevel=2,
-)
+from ..base_service import BaseService
+from ..data_processing import DataProcessingService as OriginalService
 
-# 从新模块导入所有内容
-from .........src.services.data_processing.mod import pipeline
-from .........src.services.data_processing.mod import validator
-from .........src.services.data_processing.mod import transformer
-from .........src.services.data_processing.mod import service
+logger = logging.getLogger(__name__)
 
-# 导出所有类
-__all__ = ["pipeline", "validator", "transformer", "service"]
+
+class DataProcessingService(BaseService):
+    """
+    数据处理服务
+    Data Processing Service
+
+    负责数据的清洗、验证和转换。
+    Responsible for data cleaning, validation, and transformation.
+    """
+
+    def __init__(self):
+        super().__init__("DataProcessingService")
+        self.original_service = OriginalService()
+
+    async def process_data(self, data: Any) -> Any:
+        """处理数据"""
+        return await self.original_service.process_data(data)
+
+    async def validate_data(self, data: Any) -> bool:
+        """验证数据"""
+        return await self.original_service.validate_data(data)
+
+    async def clean_data(self, data: Any) -> Any:
+        """清洗数据"""
+        return await self.original_service.clean_data(data)
+
+    async def transform_data(self, data: Any, config: Optional[Dict] = None) -> Any:
+        """转换数据"""
+        return await self.original_service.transform_data(data, config)

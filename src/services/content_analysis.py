@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class Content:
     """内容类"""
+
     def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
         self.id = content_id
         self.content_type = content_type
@@ -19,6 +20,7 @@ class Content:
 
 class AnalysisResult:
     """分析结果类"""
+
     def __init__(
         self,
         id: str = "",
@@ -26,7 +28,7 @@ class AnalysisResult:
         result: Dict[str, Any] = None,
         confidence: float = 0.0,
         timestamp: Optional[datetime] = None,
-        content_id: str = ""
+        content_id: str = "",
     ):
         self.id = id
         self.analysis_type = analysis_type
@@ -68,9 +70,7 @@ class ContentAnalysisService(BaseService):
             analysis_data = {
                 "sentiment": text_analysis.get("sentiment", "neutral"),
                 "keywords": text_analysis.get("keywords", []),
-                "category": self._categorize_content(
-                    content.data.get("text", "")
-                ),
+                "category": self._categorize_content(content.data.get("text", "")),
                 "quality_score": self._calculate_quality_score(content),
                 "language": text_analysis.get("language", "zh"),
                 "word_count": text_analysis.get("word_count", 0),

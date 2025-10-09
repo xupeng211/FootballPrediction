@@ -1,68 +1,39 @@
 """
-足球预测系统数据处理服务模块
-Football Prediction System Data Processing Service Module
+足球预测系统数据处理服务模块（兼容性垫片）
+Football Prediction System Data Processing Service Module (Compatibility Shim)
 
-提供数据清洗、处理和特征提取功能。
-集成了足球数据清洗器和缺失值处理器。
+⚠️ 已弃用：此文件仅用于向后兼容。
+Deprecated: This file is for backward compatibility only.
 
-Provides data cleaning, processing, and feature extraction functionality.
-Integrates football data cleaner and missing data handler.
-
-⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.services.data_processing_mod import <class_name>
-
-主要类 / Main Classes:
-    DataProcessingService: 数据处理服务 / Data processing service
-
-主要方法 / Main Methods:
-    DataProcessingService.process_raw_match_data(): 处理原始比赛数据 / Process raw match data
-    DataProcessingService.process_bronze_to_silver(): 处理青铜到银层数据 / Process bronze to silver layer data
-
-使用示例 / Usage Example:
-    ```python
-    from src.services.data_processing_mod import DataProcessingService
-
-    # 创建服务实例
-    service = DataProcessingService()
-    await service.initialize()
-
-    # 处理数据
-    result = await service.process_raw_match_data(raw_data)
-    ```
-
-依赖 / Dependencies:
-    - src.data.processing.football_data_cleaner: 足球数据清洗器 / Football data cleaner
-    - src.data.processing.missing_data_handler: 缺失值处理器 / Missing data handler
-    - src.database.connection: 数据库连接管理 / Database connection management
-
-重构历史 / Refactoring History:
-    - 原始文件：972行，包含所有数据处理功能
-    - 重构为模块化结构：
-      - processors.py: 数据处理器（比赛、赔率、比分、特征）
-      - pipeline.py: 数据处理管道（青铜到银层、质量验证、异常检测）
-      - handlers.py: 特殊数据处理器（缺失数据、缺失比分、缺失队伍）
-      - service.py: 核心数据处理服务
+请使用新路径：from src.services.data_processing_mod import DataProcessingService
+Please use new path: from src.services.data_processing_mod import DataProcessingService
 """
 
-from .data_processing_mod import (
-    # 为了向后兼容性，从新的模块化结构中导入所有内容
-    # 核心服务
-    DataProcessingService,
-    # 数据处理器
-    MatchDataProcessor,
-    OddsDataProcessor,
-    ScoresDataProcessor,
-    FeaturesDataProcessor,
-    # 数据管道
-    BronzeToSilverProcessor,
-    DataQualityValidator,
-    AnomalyDetector,
-    # 处理器
-    MissingDataHandler,
-    MissingScoresHandler,
-    MissingTeamDataHandler,
+# 动态导入以避免循环依赖
+import warnings
+import importlib
+
+warnings.warn(
+    "使用src.services.data_processing已弃用，请使用src.services.data_processing_mod",
+    DeprecationWarning,
+    stacklevel=2
 )
+
+# 动态导入模块
+_mod = importlib.import_module("src.services.data_processing_mod")
+
+# 重新导出所有内容
+DataProcessingService = _mod.DataProcessingService
+MatchDataProcessor = _mod.MatchDataProcessor
+OddsDataProcessor = _mod.OddsDataProcessor
+ScoresDataProcessor = _mod.ScoresDataProcessor
+FeaturesDataProcessor = _mod.FeaturesDataProcessor
+BronzeToSilverProcessor = _mod.BronzeToSilverProcessor
+DataQualityValidator = _mod.DataQualityValidator
+AnomalyDetector = _mod.AnomalyDetector
+MissingDataHandler = _mod.MissingDataHandler
+MissingScoresHandler = _mod.MissingScoresHandler
+MissingTeamHandler = _mod.MissingTeamHandler
 
 # 重新导出以保持原始接口
 __all__ = [
@@ -80,7 +51,7 @@ __all__ = [
     # 处理器
     "MissingDataHandler",
     "MissingScoresHandler",
-    "MissingTeamDataHandler",
+    "MissingTeamHandler",
 ]
 
 # 原始实现已移至 src/services/data_processing_mod/ 模块
