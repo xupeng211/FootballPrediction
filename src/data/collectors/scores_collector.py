@@ -13,16 +13,6 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-import asyncio
-import json
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, cast
-
-import websockets
-
-from .base_collector import CollectionResult, DataCollector
-
 
 class MatchStatus(Enum):
     """比赛状态枚举"""
@@ -462,6 +452,7 @@ class ScoresCollector(DataCollector):
                 # 获取当前需要监控的比赛
                 if not match_ids:
                     current_matches = await self._get_live_matches()
+
                 else:
                     current_matches = match_ids
 

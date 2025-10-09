@@ -484,8 +484,6 @@ def sample_league_data():
     }
 
 
-
-
 @pytest.fixture
 async def mock_prediction_engine():
     """模拟预测引擎"""
@@ -493,21 +491,27 @@ async def mock_prediction_engine():
     from src.core.prediction_engine import PredictionEngine
 
     engine = MagicMock(spec=PredictionEngine)
-    engine.predict_match = AsyncMock(return_value={
-        "match_id": 12345,
-        "prediction": "home",
-        "probabilities": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
-        "confidence": 0.65,
-        "model_version": "1.0.0",
-    })
-    engine.batch_predict = AsyncMock(return_value=[
-        {"match_id": 12345, "prediction": "home"},
-        {"match_id": 12346, "prediction": "draw"},
-    ])
-    engine.get_performance_stats = MagicMock(return_value={
-        "total_predictions": 100,
-        "cache_hit_rate": 0.7,
-        "error_rate": 0.05,
-    })
+    engine.predict_match = AsyncMock(
+        return_value={
+            "match_id": 12345,
+            "prediction": "home",
+            "probabilities": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
+            "confidence": 0.65,
+            "model_version": "1.0.0",
+        }
+    )
+    engine.batch_predict = AsyncMock(
+        return_value=[
+            {"match_id": 12345, "prediction": "home"},
+            {"match_id": 12346, "prediction": "draw"},
+        ]
+    )
+    engine.get_performance_stats = MagicMock(
+        return_value={
+            "total_predictions": 100,
+            "cache_hit_rate": 0.7,
+            "error_rate": 0.05,
+        }
+    )
 
     return engine

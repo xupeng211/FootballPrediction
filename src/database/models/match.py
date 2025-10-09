@@ -1,19 +1,12 @@
 """
+        from sqlalchemy import or_
+
+from src.database.base import BaseModel
+
 比赛模型
 
 存储足球比赛的详细信息，包括比赛时间、比分、状态等。
 """
-
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, Optional, cast
-
-from sqlalchemy import CheckConstraint, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from src.database.base import BaseModel
 
 
 class MatchStatus(Enum):
@@ -328,7 +321,6 @@ class Match(BaseModel):
     @classmethod
     def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
         """获取某个球队的所有比赛"""
-        from sqlalchemy import or_
 
         query = session.query(cls).filter(
             or_(cls.home_team_id == team_id, cls.away_team_id == team_id)

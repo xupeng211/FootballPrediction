@@ -7,14 +7,6 @@ Bronze层原始数据模型
 基于 DATA_DESIGN.md 第2.1节Bronze层设计。
 """
 
-from typing import Any, Dict, Optional, cast
-
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
-from sqlalchemy.orm import validates
-
-from src.database.base import BaseModel
-from src.database.types import JsonbType
-
 
 class RawMatchData(BaseModel):
     """

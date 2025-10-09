@@ -14,11 +14,6 @@ Create Date: 2025-09-10 21:51:46.967609
 
 """
 
-from typing import Sequence, Union, cast
-
-from alembic import context, op
-from sqlalchemy import text
-
 # revision identifiers, used by Alembic.
 revision: str = "d6d814cc1078"
 down_revision: Union[str, None] = "004_configure_permissions"
@@ -631,6 +626,7 @@ def downgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过性能优化回滚")
+
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute(
             "-- offline mode: skipped database performance optimization rollback"

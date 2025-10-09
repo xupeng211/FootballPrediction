@@ -1,0 +1,275 @@
+"""
+测试模块化的特征存储
+Test Modular Feature Store
+
+验证拆分后的特征存储模块功能。
+"""
+
+import pytest
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from src.features.store import (
+    FeatureRegistry,
+    FeatureRepository,
+    FootballFeatureStore,
+    get_entity_definitions,
+    get_feature_view_definitions,
+)
+from src.features.store.mock_feast import Entity, FeatureView, MockFeatureStore
+
+
+@pytest.mark.unit
+class TestFeatureStoreModular:
+    """测试模块化的特征存储"""
+
+    @pytest.fixture
+    def mock_store(self):
+        """模拟特征存储"""
+        return MockFeatureStore()
+
+    @pytest.fixture
+    def feature_store(self, mock_store):
+        """创建特征存储实例"""
+        with patch("src.features.store.client.FeatureStore", return_value=mock_store):
+            store = FootballFeatureStore()
+            return store
+
+    def test_get_entity_definitions(self):
+        """测试获取实体定义"""
+        entities = get_entity_definitions()
+
+        assert "match" in entities
+        assert "team" in entities
+        assert entities["match"].name == "match"
+        assert entities["team"].name == "team"
+
+    def test_get_feature_view_definitions(self):
+        """测试获取特征视图定义"""
+        feature_views = get_feature_view_definitions()
+
+        assert "team_recent_performance" in feature_views
+        assert "historical_matchup" in feature_views
+        assert "odds_features" in feature_views
+
+        # 验证特征视图属性
+        team_fv = feature_views["team_recent_performance"]
+        assert team_fv.name == "team_recent_performance"
+        assert len(team_fv.schema) > 0
+
+    @pytest.mark.asyncio
+    async def test_feature_registry_register_all(self, mock_store):
+        """测试特征注册器"""
+        registry = FeatureRegistry(mock_store)
+
+        success = await registry.register_all()
+
+        assert success
+        # 验证对象被应用
+        assert len(mock_store.applied_objects) > 0
+
+    @pytest.mark.asyncio
+    async def test_feature_registry_register_entity(self, mock_store):
+        """测试注册单个实体"""
+        registry = FeatureRegistry(mock_store)
+
+        success = await registry.register_entity("match")
+
+        assert success
+        # 验证实体被应用
+        assert any(obj.name == "match" for obj in mock_store.applied_objects)
+
+    @pytest.mark.asyncio
+    async def test_feature_registry_register_feature_view(self, mock_store):
+        """测试注册单个特征视图"""
+        registry = FeatureRegistry(mock_store)
+
+        success = await registry.register_feature_view("team_recent_performance")
+
+        assert success
+        # 验证特征视图被应用
+        assert any(
+            obj.name == "team_recent_performance" for obj in mock_store.applied_objects
+        )
+
+    @pytest.mark.asyncio
+    async def test_feature_repository_get_online_features(self, mock_store):
+        """测试获取在线特征"""
+        repository = FeatureRepository(mock_store)
+
+        features = await repository.get_online_features(
+            feature_refs=["team_recent_performance:recent_5_wins"],
+            entity_rows=[{"team_id": 1}],
+        )
+
+        assert not features.empty
+        assert "team_id" in features.columns
+        assert "recent_5_wins" in features.columns
+
+    @pytest.mark.asyncio
+    async def test_feature_repository_get_historical_features(self, mock_store):
+        """测试获取历史特征"""
+        repository = FeatureRepository(mock_store)
+
+        import pandas as pd
+
+        entity_df = pd.DataFrame(
+            {"team_id": [1, 2], "event_timestamp": [datetime.now(), datetime.now()]}
+        )
+
+        features = await repository.get_historical_features(
+            entity_df=entity_df, feature_refs=["team_recent_performance:recent_5_wins"]
+        )
+
+        # Mock 返回空 DataFrame
+        assert isinstance(features, pd.DataFrame)
+
+    @pytest.mark.asyncio
+    async def test_feature_repository_push_features(self, mock_store):
+        """测试推送特征到在线存储"""
+        repository = FeatureRepository(mock_store)
+
+        import pandas as pd
+
+        df = pd.DataFrame(
+            {"team_id": [1], "recent_5_wins": [3], "event_timestamp": [datetime.now()]}
+        )
+
+        success = await repository.push_features_to_online_store(
+            "team_recent_performance", df
+        )
+
+        assert success
+
+    @pytest.mark.asyncio
+    async def test_feature_store_initialization(self):
+        """测试特征存储初始化"""
+        with patch("src.features.store.client.FeatureStore") as mock_fs:
+            mock_fs.return_value = MagicMock()
+
+            store = FootballFeatureStore()
+
+            assert store is not None
+            assert store.repository is not None
+            assert store.registry is not None
+
+    @pytest.mark.asyncio
+    async def test_feature_store_register_features(self, feature_store):
+        """测试特征存储注册特征"""
+        success = await feature_store.register_features()
+
+        assert success
+
+    @pytest.mark.asyncio
+    async def test_feature_store_get_online_features(self, feature_store):
+        """测试特征存储获取在线特征"""
+        features = await feature_store.get_online_features(
+            feature_refs=["team_recent_performance:recent_5_wins"],
+            entity_rows=[{"team_id": 1}],
+        )
+
+        assert not features.empty
+
+    @pytest.mark.asyncio
+    async def test_feature_store_get_historical_features(self, feature_store):
+        """测试特征存储获取历史特征"""
+        import pandas as pd
+
+        entity_df = pd.DataFrame({"team_id": [1], "event_timestamp": [datetime.now()]})
+
+        features = await feature_store.get_historical_features(
+            entity_df=entity_df, feature_refs=["team_recent_performance:recent_5_wins"]
+        )
+
+        assert isinstance(features, pd.DataFrame)
+
+    @pytest.mark.asyncio
+    async def test_feature_store_push_features(self, feature_store):
+        """测试特征存储推送特征"""
+        import pandas as pd
+
+        df = pd.DataFrame(
+            {"team_id": [1], "recent_5_wins": [3], "event_timestamp": [datetime.now()]}
+        )
+
+        success = await feature_store.push_features_to_online_store(
+            "team_recent_performance", df
+        )
+
+        assert success
+
+    @pytest.mark.asyncio
+    async def test_feature_store_get_match_features(self, feature_store):
+        """测试获取比赛特征"""
+        with patch.object(
+            feature_store.repository, "get_match_features_for_prediction"
+        ) as mock_get:
+            mock_get.return_value = {
+                "team_features": [{"team_id": 1}],
+                "h2h_features": {"h2h_total_matches": 5},
+                "odds_features": {"home_implied_probability": 0.5},
+            }
+
+            features = await feature_store.get_match_features_for_prediction(1, 1, 2)
+
+            assert features is not None
+            assert "team_features" in features
+            assert "h2h_features" in features
+            assert "odds_features" in features
+
+    @pytest.mark.asyncio
+    async def test_feature_store_batch_calculate(self, feature_store):
+        """测试批量计算特征"""
+        start_date = datetime(2024, 1, 1)
+        end_date = datetime(2024, 1, 7)
+
+        with patch.object(
+            feature_store.repository, "batch_calculate_features"
+        ) as mock_batch:
+            mock_batch.return_value = {
+                "matches_processed": 10,
+                "teams_processed": 20,
+                "features_stored": 30,
+                "errors": 0,
+            }
+
+            stats = await feature_store.batch_calculate_features(start_date, end_date)
+
+            assert stats["matches_processed"] == 10
+            assert stats["teams_processed"] == 20
+            assert stats["features_stored"] == 30
+            assert stats["errors"] == 0
+
+    def test_backward_compatibility(self):
+        """测试向后兼容性"""
+        # 测试从原始模块导入
+        from src.features.feature_store import (
+            FootballFeatureStore as OldStore,
+            FeatureRegistry,
+            get_entity_definitions,
+        )
+
+        # 验证导入成功
+        assert OldStore is not None
+        assert FeatureRegistry is not None
+
+        # 验证实体定义
+        entities = get_entity_definitions()
+        assert "match" in entities
+        assert "team" in entities
+
+    @pytest.mark.asyncio
+    async def test_repository_with_no_store(self):
+        """测试没有存储时的行为"""
+        repository = FeatureRepository(None)
+
+        # 获取在线特征应该抛出异常
+        with pytest.raises(ValueError, match="Feast 存储未初始化"):
+            await repository.get_online_features([], [])
+
+        # 推送特征应该返回 False
+        import pandas as pd
+
+        df = pd.DataFrame({"team_id": [1]})
+        success = await repository.push_features_to_online_store("test", df)
+        assert not success

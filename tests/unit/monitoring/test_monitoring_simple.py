@@ -33,7 +33,7 @@ class TestMonitoringSimple:
     def test_system_monitor_import(self):
         """测试系统监控器导入"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
+            from src.monitoring.system_monitor_mod import SystemMonitor
 
             monitor = SystemMonitor()
             assert monitor is not None
@@ -98,7 +98,7 @@ class TestMonitoringSimple:
     def test_system_monitor_basic(self):
         """测试系统监控器基本功能"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
+            from src.monitoring.system_monitor_mod import SystemMonitor
 
             with patch("src.monitoring.system_monitor.logger") as mock_logger:
                 monitor = SystemMonitor()

@@ -6,10 +6,6 @@
 - TeamEntity: 球队实体，用于球队级别的特征
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
-
 
 @dataclass
 class MatchEntity:

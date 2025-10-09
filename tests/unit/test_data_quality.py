@@ -27,7 +27,7 @@ class TestDataQuality:
     def test_exception_handler_import(self):
         """测试异常处理器导入"""
         try:
-            from src.data.quality.exception_handler import DataExceptionHandler
+            from src.data.quality.exception_handler_mod import DataExceptionHandler
 
             assert DataExceptionHandler is not None
         except ImportError:

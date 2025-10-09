@@ -2,7 +2,7 @@ import sys
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 import os
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
 
 """
 DataProcessingService真实测试

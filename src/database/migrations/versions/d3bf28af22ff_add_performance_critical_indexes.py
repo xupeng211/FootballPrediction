@@ -15,11 +15,6 @@ Create Date: 2025-09-29 23:08:00.000000
 
 """
 
-from typing import Sequence, Union, cast
-
-from alembic import context, op
-from sqlalchemy import text
-
 # revision identifiers, used by Alembic.
 revision: str = "d3bf28af22ff"
 down_revision: Union[str, None] = "006_missing_indexes"
@@ -350,6 +345,7 @@ def downgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过索引删除")
+
         op.execute("-- offline mode: skipped performance indexes removal")
         return
 
