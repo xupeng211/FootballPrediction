@@ -2,7 +2,7 @@
 WebhookJf S
 Webhook Alert Channel
 
-«HTTP webhook—Jf
+HTTP webhookJf
 Sends alerts via HTTP webhook.
 """
 
@@ -22,17 +22,17 @@ class WebhookChannel(BaseAlertChannel):
     WebhookJf S
     Webhook Alert Channel
 
-    «HTTP webhook—Jf
+    HTTP webhookJf
     Sends alerts via HTTP webhook.
     """
 
     def __init__(self, name: str = "webhook", config: Dict[str, Any] | None = None):
         """
-        ÀWebhook S
+        Webhook S
         Initialize Webhook Channel
 
         Args:
-            name:  S / Channel name
+            name:  S / Channel name
             config:  SMn / Channel configuration
         """
         super().__init__(name, config)
@@ -48,14 +48,14 @@ class WebhookChannel(BaseAlertChannel):
 
     async def send(self, alert: Alert) -> bool:
         """
-        —Webhook˜B
+        WebhookB
         Send Webhook Request
 
         Args:
-            alert: Jf˘a / Alert object
+            alert: Jfa / Alert object
 
         Returns:
-            bool: /&—ü / Whether sent successfully
+            bool: /& / Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -104,14 +104,14 @@ class WebhookChannel(BaseAlertChannel):
 
     async def send_batch(self, alerts: List[Alert]) -> Dict[str, bool]:
         """
-        yœ—Webhook
+        yWebhook
         Send Batch Webhook
 
         Args:
-            alerts: Jfh / List of alerts
+            alerts: Jfh / List of alerts
 
         Returns:
-            Dict[str, bool]: —”ú / Send results
+            Dict[str, bool]: ”ú / Send results
         """
         if not self.is_enabled():
             return {alert.alert_id: False for alert in alerts}

@@ -2,7 +2,7 @@
 SlackJf S
 Slack Alert Channel
 
-ÇSlack webhookÑJf
+Slack webhookJf
 Sends alerts via Slack webhook.
 """
 
@@ -19,17 +19,17 @@ class SlackChannel(BaseAlertChannel):
     SlackJf S
     Slack Alert Channel
 
-    ÇSlack webhookÑJf
+    Slack webhookJf
     Sends alerts via Slack webhook.
     """
 
     def __init__(self, name: str = "slack", config: Dict[str, Any] | None = None):
         """
-        ËSlack S
+        Slack S
         Initialize Slack Channel
 
         Args:
-            name:  Sð / Channel name
+            name:  S / Channel name
             config:  SMn / Channel configuration
         """
         super().__init__(name, config)
@@ -44,14 +44,14 @@ class SlackChannel(BaseAlertChannel):
 
     async def send(self, alert: Alert) -> bool:
         """
-        ÑSlackˆo
+        Slacko
         Send Slack Message
 
         Args:
-            alert: Jfùa / Alert object
+            alert: Jfa / Alert object
 
         Returns:
-            bool: /&ÑŸ / Whether sent successfully
+            bool: /& / Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -117,19 +117,19 @@ class SlackChannel(BaseAlertChannel):
 
     def _get_color_by_level(self, level: str) -> str:
         """
-        9n§+·Öœr
+        9n+Öœr
         Get Color by Level
 
         Args:
-            level: Jf§+ / Alert level
+            level: Jf+ / Alert level
 
         Returns:
-            str: œrã / Color code
+            str: r / Color code
         """
         colors = {
-            "info": "#36a64f",      # ÿr
+            "info": "#36a64f",      # r
             "warning": "#ff9500",   # Yr
-            "error": "#ff0000",     # ¢r
-            "critical": "#8b0000",  # ñ¢r
+            "error": "#ff0000",     # r
+            "critical": "#8b0000",  # r
         }
         return colors.get(level, "#808080")  # Ø¤pr

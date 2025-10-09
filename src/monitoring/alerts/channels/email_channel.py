@@ -1,8 +1,8 @@
 """
-®öJf S
+Jf S
 Email Alert Channel
 
-Ç®öÑJf
+Ç®Jf
 Sends alerts via email.
 """
 
@@ -15,20 +15,20 @@ from ...alert_manager_mod.models import Alert
 
 class EmailChannel(BaseAlertChannel):
     """
-    ®öJf S
+    Jf S
     Email Alert Channel
 
-    Ç®öÑJf
+    Ç®Jf
     Sends alerts via email.
     """
 
     def __init__(self, name: str = "email", config: Dict[str, Any] | None = None):
         """
-        Ë®ö S
+         S
         Initialize Email Channel
 
         Args:
-            name:  Sð / Channel name
+            name:  S / Channel name
             config:  SMn / Channel configuration
         """
         super().__init__(name, config)
@@ -46,14 +46,14 @@ class EmailChannel(BaseAlertChannel):
 
     async def send(self, alert: Alert) -> bool:
         """
-        Ñ®öJf
+        Jf
         Send Email Alert
 
         Args:
-            alert: Jfùa / Alert object
+            alert: Jfa / Alert object
 
         Returns:
-            bool: /&ÑŸ / Whether sent successfully
+            bool: /& / Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -91,54 +91,54 @@ class EmailChannel(BaseAlertChannel):
 
     def _format_email_body(self, alert: Alert) -> str:
         """
-        <®öc‡
+        <c
         Format Email Body
 
         Args:
-            alert: Jfùa / Alert object
+            alert: Jfa / Alert object
 
         Returns:
-            str: <„®öc‡ / Formatted email body
+            str: <c / Formatted email body
         """
         body = f"""
-Jfå / Alert Notification
+Jf / Alert Notification
 ============================
 
 JfID / Alert ID: {alert.alert_id}
-˜ / Title: {alert.title}
-ˆo / Message: {alert.message}
-§+ / Level: {alert.level.value}
-%Í¦ / Severity: {alert.severity.value}
-e / Source: {alert.source}
-¶ / Status: {alert.status.value}
-úöô / Created At: {alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+ / Title: {alert.title}
+o / Message: {alert.message}
++ / Level: {alert.level.value}
+% / Severity: {alert.severity.value}
+e / Source: {alert.source}
+ / Status: {alert.status.value}
+ / Created At: {alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
 
-~ / Labels:
+~ / Labels:
 {json.dumps(alert.labels, indent=2, ensure_ascii=False)}
 
-èÊ / Annotations:
+ / Annotations:
 {json.dumps(alert.annotations, indent=2, ensure_ascii=False)}
 
 ---
-d®ö1Jfûßê¨Ñ / This email was sent automatically by the alert system
+d1Jf / This email was sent automatically by the alert system
         """.strip()
 
         return body
 
     async def send_batch(self, alerts: List[Alert]) -> Dict[str, bool]:
         """
-        yÏÑ®öJf
+        yJf
         Send Batch Email Alerts
 
         Args:
-            alerts: Jfh / List of alerts
+            alerts: Jfh / List of alerts
 
         Returns:
-            Dict[str, bool]: ÑÓœ / Send results
+            Dict[str, bool]: Óœ / Send results
         """
         results = {}
 
-        # ùŽ®ö*ÑåM®öÇ'
+        # *M'
         for alert in alerts:
             results[alert.alert_id] = await self.send(alert)
 

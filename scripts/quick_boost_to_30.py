@@ -368,13 +368,15 @@ def create_boost_tests():
     print(f"\n📊 总计创建 {total_created} 个测试文件")
 
     # 创建额外的批量测试 - 专门用于快速提升覆盖率
-    create_batch_coverage_tests()
+    batch_created = create_batch_coverage_tests()
+    total_created += batch_created
 
     return total_created
 
 
 def create_batch_coverage_tests():
     """创建批量测试来最大化覆盖率"""
+    total_created = 0
 
     # 为0覆盖率的模块创建最基础的测试
     zero_coverage_tests = [
@@ -643,6 +645,7 @@ def test_collector_methods():
         total_created += 1
 
     print(f"\n📊 总计创建了 {len(zero_coverage_tests)} 个批量测试")
+    return total_created
 
 
 def main():

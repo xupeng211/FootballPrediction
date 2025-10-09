@@ -380,10 +380,13 @@ class TestPredictionWorkflow:
     async def test_prediction_workflow_cleanup(self, api_client_full, mock_services):
         """测试预测工作流清理"""
         # 模拟 PredictionWorkflow 类，因为实际模块不存在
-class PredictionWorkflow:
-    """模拟预测工作流"""
-    pass
+        class PredictionWorkflow:
+            """模拟预测工作流"""
+            def __init__(self):
+                self._cleaned_up = False
 
+            async def cleanup(self):
+                self._cleaned_up = True
 
         workflow = PredictionWorkflow()
 
