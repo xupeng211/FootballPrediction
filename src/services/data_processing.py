@@ -16,7 +16,7 @@ import importlib
 warnings.warn(
     "使用src.services.data_processing已弃用，请使用src.services.data_processing_mod",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 动态导入模块
