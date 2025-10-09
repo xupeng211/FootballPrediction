@@ -41,9 +41,8 @@ from collections import namedtuple
 # 重试连接
 # 记录性能指标
 # 检查指标
-from src.streaming.kafka_components import KafkaDeserializer
-from src.streaming.kafka_components import KafkaSerializer
-from src.streaming.kafka_producer import KafkaProducer
+from src.streaming.kafka_components import MessageSerializer, FootballKafkaProducer, FootballKafkaConsumer
+from src.streaming.kafka_producer import FootballKafkaProducer as LegacyKafkaProducer
 from src.streaming.stream_processor import StreamProcessor
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
@@ -73,6 +72,11 @@ class TestKafkaProducer:
     def producer(self):
         """创建生产者实例"""
         config = StreamConfig(bootstrap_servers="localhost:9092")
+        config = StreamConfig(
+            bootstrap_servers="localhost:9092",
+            topic="test_topic",
+            group_id="test_group"
+        )
         producer = FootballKafkaProducer(config=config)
         producer.producer = MagicMock()
         producer.logger = MagicMock()
@@ -137,7 +141,7 @@ class TestKafkaProducer:
 
     def test_serialize_message(self, producer, sample_message):
         """测试消息序列化"""
-        serializer = KafkaSerializer()
+        serializer = MessageSerializer()
 
         serialized = serializer.serialize(
             topic="match_events",
@@ -166,7 +170,7 @@ class TestKafkaConsumer:
     @pytest.fixture
     def consumer(self):
         """创建消费者实例"""
-        consumer = KafkaConsumer(
+        consumer = FootballKafkaConsumer(
             bootstrap_servers="localhost:9092",
             group_id="test_group",
             topics=["test_topic"],
@@ -213,7 +217,7 @@ class TestKafkaConsumer:
     @pytest.mark.asyncio
     async def test_consume_with_deserializer(self, consumer, sample_record):
         """测试使用反序列化器消费"""
-        deserializer = KafkaDeserializer()
+        deserializer = MessageSerializer()
         consumer.deserializer = deserializer
 
         consumer.consumer.getmany = AsyncMock(
@@ -614,13 +618,13 @@ class TestStreamProcessor:
 
 
 @pytest.mark.unit
-class TestKafkaSerializer:
+class TestMessageSerializer:
     """Kafka序列化器测试"""
 
     @pytest.fixture
     def serializer(self):
         """创建序列化器实例"""
-        return KafkaSerializer()
+        return MessageSerializer()
 
     def test_serialize_json(self, serializer):
         """测试JSON序列化"""
@@ -672,13 +676,13 @@ class TestKafkaSerializer:
 
 
 @pytest.mark.unit
-class TestKafkaDeserializer:
+class TestMessageDeserializer:
     """Kafka反序列化器测试"""
 
     @pytest.fixture
     def deserializer(self):
         """创建反序列化器实例"""
-        return KafkaDeserializer()
+        return MessageSerializer()
 
     def test_deserialize_json(self, deserializer):
         """测试JSON反序列化"""
@@ -730,11 +734,16 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_end_to_end_flow(self):
         """测试端到端流程"""
-        producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        config = StreamConfig(
+            bootstrap_servers="localhost:9092",
+            topic="test_topic",
+            group_id="test_group"
+        )
+        producer = FootballKafkaProducer(config=config)
         producer.producer = MagicMock()
         producer.producer.send_and_wait = AsyncMock(return_value=True)
 
-        consumer = KafkaConsumer(
+        consumer = FootballKafkaConsumer(
             bootstrap_servers="localhost:9092",
             group_id="test_group",
             topics=["test_topic"],
@@ -746,7 +755,7 @@ class TestKafkaIntegration:
         result = await producer.send_message("test_topic", message)
         assert result is True
 
-        serializer = KafkaSerializer()
+        serializer = MessageSerializer()
         serialized = serializer.serialize("test_topic", message)
         assert serialized[1] is not None
 
@@ -766,7 +775,12 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_reconnection_logic(self):
         """测试重连逻辑"""
-        producer = KafkaProducer(bootstrap_servers="localhost:9092")
+        config = StreamConfig(
+            bootstrap_servers="localhost:9092",
+            topic="test_topic",
+            group_id="test_group"
+        )
+        producer = FootballKafkaProducer(config=config)
 
         connection_attempts = []
 

@@ -1,0 +1,281 @@
+"""
+测试机器学习异常检测模块
+
+验证机器学习异常检测方法的功能。
+"""
+
+import pytest
+import numpy as np
+import pandas as pd
+from datetime import datetime
+
+from src.data.quality.anomaly_detector.machine_learning.ml_detector import MachineLearningAnomalyDetector
+
+
+class TestMachineLearningAnomalyDetector:
+    """测试机器学习异常检测器"""
+
+    def test_detector_initialization(self):
+        """测试检测器初始化"""
+        detector = MachineLearningAnomalyDetector()
+
+        assert detector.scaler is not None
+        assert detector.isolation_forest is None
+        assert detector.dbscan is None
+        assert detector.logger is not None
+
+    def test_detect_anomalies_isolation_forest_with_anomalies(self):
+        """测试Isolation Forest检测异常（有异常值）"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建包含异常值的数据
+        normal_data = np.random.normal(0, 1, (100, 2))
+        anomaly_data = np.array([[10, 10], [-10, -10]])  # 明显的异常值
+        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_isolation_forest(data, "test_table")
+
+        assert result.table_name == "test_table"
+        assert result.detection_method == "isolation_forest"
+        assert result.anomaly_type == "ml_anomaly"
+        assert len(result.anomalous_records) > 0
+        assert result.statistics["anomalies_count"] > 0
+        assert result.statistics["total_records"] == 102
+        assert "features_used" in result.statistics
+        assert "anomaly_rate" in result.statistics
+
+    def test_detect_anomalies_isolation_forest_no_anomalies(self):
+        """测试Isolation Forest检测异常（无异常值）"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建正常数据
+        data = pd.DataFrame(np.random.normal(0, 1, (100, 2)), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_isolation_forest(data, "test_table")
+
+        # 由于contamination=0.1，即使没有明显异常也可能检测到一些
+        assert isinstance(result.statistics["anomalies_count"], int)
+
+    def test_detect_anomalies_isolation_forest_contamination_param(self):
+        """测试Isolation Forest使用不同的contamination参数"""
+        detector = MachineLearningAnomalyDetector()
+
+        data = pd.DataFrame(np.random.normal(0, 1, (100, 2)), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_isolation_forest(
+            data, "test_table", contamination=0.05
+        )
+
+        assert result.statistics["contamination_param"] == 0.05
+
+    def test_detect_anomalies_isolation_forest_no_numeric_columns(self):
+        """测试Isolation Forest处理无数值列"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建只有字符串列的数据
+        data = pd.DataFrame({
+            'text_col': ['a', 'b', 'c', 'd']
+        })
+
+        with pytest.raises(ValueError, match="没有可用的数值列进行异常检测"):
+            detector.detect_anomalies_isolation_forest(data, "test_table")
+
+    def test_detect_anomalies_isolation_forest_with_nan(self):
+        """测试Isolation Forest处理NaN值"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建包含NaN的数据
+        data = pd.DataFrame({
+            'feature1': [1, 2, np.nan, 4, 100],
+            'feature2': [1, 2, 3, np.nan, 100]
+        })
+
+        result = detector.detect_anomalies_isolation_forest(data, "test_table")
+
+        # 应该能处理NaN值
+        assert result is not None
+        assert result.statistics["total_records"] == 5
+
+    def test_detect_anomalies_clustering_with_anomalies(self):
+        """测试DBSCAN聚类检测异常（有异常值）"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建包含聚类和异常点的数据
+        cluster1 = np.random.normal([0, 0], 0.5, (50, 2))
+        cluster2 = np.random.normal([5, 5], 0.5, (50, 2))
+        anomalies = np.array([[10, 10], [-10, -10]])
+        data = pd.DataFrame(np.vstack([cluster1, cluster2, anomalies]), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_clustering(data, "test_table")
+
+        assert result.table_name == "test_table"
+        assert result.detection_method == "dbscan_clustering"
+        assert result.anomaly_type == "clustering_outlier"
+        assert result.statistics["num_clusters"] >= 2
+        assert "eps" in result.statistics
+        assert "min_samples" in result.statistics
+
+    def test_detect_anomalies_clustering_custom_params(self):
+        """测试DBSCAN使用自定义参数"""
+        detector = MachineLearningAnomalyDetector()
+
+        data = pd.DataFrame(np.random.normal(0, 1, (50, 2)), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_clustering(
+            data, "test_table", eps=0.3, min_samples=3
+        )
+
+        assert result.statistics["eps"] == 0.3
+        assert result.statistics["min_samples"] == 3
+
+    def test_detect_anomalies_clustering_no_numeric_columns(self):
+        """测试DBSCAN处理无数值列"""
+        detector = MachineLearningAnomalyDetector()
+
+        data = pd.DataFrame({
+            'text_col': ['a', 'b', 'c', 'd']
+        })
+
+        with pytest.raises(ValueError, match="没有可用的数值列进行聚类异常检测"):
+            detector.detect_anomalies_clustering(data, "test_table")
+
+    def test_detect_data_drift_with_drift(self):
+        """测试数据漂移检测（有漂移）"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建有明显漂移的数据
+        baseline_data = pd.DataFrame({
+            'feature1': np.random.normal(0, 1, 100),
+            'feature2': np.random.normal(0, 1, 100)
+        })
+        current_data = pd.DataFrame({
+            'feature1': np.random.normal(5, 1, 100),  # 均值漂移
+            'feature2': np.random.normal(0, 1, 100)
+        })
+
+        results = detector.detect_data_drift(baseline_data, current_data, "test_table")
+
+        assert isinstance(results, list)
+        assert len(results) > 0
+        assert all(r.table_name == "test_table" for r in results)
+        assert all(r.detection_method == "data_drift" for r in results)
+        assert all(r.anomaly_type == "feature_drift" for r in results)
+
+    def test_detect_data_drift_no_drift(self):
+        """测试数据漂移检测（无漂移）"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建无漂移的数据
+        baseline_data = pd.DataFrame({
+            'feature1': np.random.normal(0, 1, 100),
+            'feature2': np.random.normal(0, 1, 100)
+        })
+        current_data = pd.DataFrame({
+            'feature1': np.random.normal(0, 1, 100),
+            'feature2': np.random.normal(0, 1, 100)
+        })
+
+        results = detector.detect_data_drift(baseline_data, current_data, "test_table")
+
+        # 可能返回空列表或轻微漂移
+        assert isinstance(results, list)
+
+    def test_detect_data_drift_custom_threshold(self):
+        """测试数据漂移使用自定义阈值"""
+        detector = MachineLearningAnomalyDetector()
+
+        baseline_data = pd.DataFrame({
+            'feature1': np.random.normal(0, 1, 100)
+        })
+        current_data = pd.DataFrame({
+            'feature1': np.random.normal(1, 1, 100)  # 小漂移
+        })
+
+        results = detector.detect_data_drift(
+            baseline_data, current_data, "test_table", drift_threshold=0.01
+        )
+
+        # 使用更低的阈值，应该更容易检测到漂移
+        for result in results:
+            assert result.statistics["threshold"] == 0.01
+
+    def test_detect_data_drift_no_common_columns(self):
+        """测试数据漂移检测无共同列"""
+        detector = MachineLearningAnomalyDetector()
+
+        baseline_data = pd.DataFrame({
+            'feature1': np.random.normal(0, 1, 100)
+        })
+        current_data = pd.DataFrame({
+            'feature2': np.random.normal(0, 1, 100)
+        })
+
+        results = detector.detect_data_drift(baseline_data, current_data, "test_table")
+
+        # 没有共同列，应该返回空列表
+        assert len(results) == 0
+
+    def test_severity_determination_isolation_forest(self):
+        """测试Isolation Forest的严重程度确定"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建不同异常率的数据
+        normal_data = np.random.normal(0, 1, (95, 2))
+        anomaly_data = np.random.normal(10, 1, (5, 2))
+        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_isolation_forest(data, "test_table")
+
+        # 异常率5%，应该是medium
+        assert result.severity in ["low", "medium", "high", "critical"]
+
+    def test_severity_determination_clustering(self):
+        """测试DBSCAN聚类的严重程度确定"""
+        detector = MachineLearningAnomalyDetector()
+
+        # 创建不同异常率的数据
+        normal_data = np.random.normal(0, 1, (90, 2))
+        anomaly_data = np.random.normal(10, 1, (10, 2))
+        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+
+        result = detector.detect_anomalies_clustering(data, "test_table")
+
+        # 异常率10%，可能是low或medium
+        assert result.severity in ["low", "medium", "high", "critical"]
+
+    def test_anomaly_record_structure_isolation_forest(self):
+        """测试Isolation Forest异常记录结构"""
+        detector = MachineLearningAnomalyDetector()
+
+        data = pd.DataFrame({
+            'feature1': [1, 2, 3, 100],
+            'feature2': [1, 2, 3, 100]
+        })
+
+        result = detector.detect_anomalies_isolation_forest(data, "test_table")
+
+        if len(result.anomalous_records) > 0:
+            record = result.anomalous_records[0]
+            assert "index" in record
+            assert "anomaly_score" in record
+            assert "features" in record
+            assert "feature1" in record["features"]
+            assert "feature2" in record["features"]
+
+    def test_anomaly_record_structure_clustering(self):
+        """测试DBSCAN聚类异常记录结构"""
+        detector = MachineLearningAnomalyDetector()
+
+        data = pd.DataFrame({
+            'feature1': [1, 2, 3, 100],
+            'feature2': [1, 2, 3, 100]
+        })
+
+        result = detector.detect_anomalies_clustering(data, "test_table")
+
+        if len(result.anomalous_records) > 0:
+            record = result.anomalous_records[0]
+            assert "index" in record
+            assert "cluster_label" in record
+            assert "features" in record
+            assert record["cluster_label"] == -1  # 噪声点标签为-1

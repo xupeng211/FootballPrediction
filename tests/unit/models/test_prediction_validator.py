@@ -1,0 +1,223 @@
+"""
+预测验证器测试
+
+测试预测结果验证功能
+"""
+
+import pytest
+from datetime import datetime, timedelta
+from src.models.prediction.core import PredictionResult
+from src.models.prediction.validators import PredictionValidator
+
+
+@pytest.fixture
+def validator():
+    """创建验证器实例"""
+    config = {
+        "confidence_threshold": 0.3,
+        "probability_tolerance": 0.01,
+        "max_confidence": 0.95
+    }
+    return PredictionValidator(config)
+
+
+@pytest.fixture
+def valid_prediction():
+    """创建有效的预测结果"""
+    return PredictionResult(
+        match_id=12345,
+        model_version="1",
+        model_name="football_baseline_model",
+        home_win_probability=0.5,
+        draw_probability=0.3,
+        away_win_probability=0.2,
+        predicted_result="home",
+        confidence_score=0.5,
+        features_used={"feature1": 1.0},
+        prediction_metadata={},
+        created_at=datetime.now()
+    )
+
+
+class TestPredictionValidator:
+    """测试预测验证器"""
+
+    def test_validate_valid_prediction(self, validator, valid_prediction):
+        """测试验证有效的预测结果"""
+        assert validator.validate_prediction_result(valid_prediction) is True
+
+    def test_validate_missing_match_id(self, validator):
+        """测试缺少比赛ID的预测"""
+        prediction = PredictionResult(
+            match_id=None,  # 缺少match_id
+            model_version="1",
+            model_name="football_baseline_model",
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_invalid_match_id(self, validator):
+        """测试无效的比赛ID"""
+        prediction = PredictionResult(
+            match_id=-1,  # 负数ID
+            model_version="1",
+            model_name="football_baseline_model",
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_invalid_predicted_result(self, validator):
+        """测试无效的预测结果"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            predicted_result="invalid",  # 无效结果
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_probability_out_of_range(self, validator):
+        """测试超出范围的概率值"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=1.5,  # 超出范围
+            draw_probability=0.3,
+            away_win_probability=0.2,
+            predicted_result="home",
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_probability_sum_not_one(self, validator):
+        """测试概率和不为1"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.6,
+            draw_probability=0.6,
+            away_win_probability=0.2,
+            predicted_result="home",
+            created_at=datetime.now()
+        )
+        # 概率和为1.4，超出容差
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_confidence_out_of_range(self, validator):
+        """测试超出范围的置信度"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.5,
+            draw_probability=0.3,
+            away_win_probability=0.2,
+            predicted_result="home",
+            confidence_score=1.5,  # 超出范围
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_low_confidence(self, validator):
+        """测试低置信度（应该通过但产生警告）"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.34,
+            draw_probability=0.33,
+            away_win_probability=0.33,
+            predicted_result="home",
+            confidence_score=0.34,  # 低于阈值0.3但接近
+            created_at=datetime.now()
+        )
+        # 低置信度不是错误，应该通过
+        assert validator.validate_prediction_result(prediction) is True
+
+    def test_validate_inconsistent_prediction(self, validator):
+        """测试预测结果与最高概率不一致"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.2,
+            draw_probability=0.3,
+            away_win_probability=0.5,
+            predicted_result="home",  # 最高概率是away，但预测是home
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_future_timestamp(self, validator):
+        """测试未来的时间戳"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.5,
+            draw_probability=0.3,
+            away_win_probability=0.2,
+            predicted_result="home",
+            created_at=datetime.now() + timedelta(days=1)  # 未来时间
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_empty_features(self, validator):
+        """测试没有使用特征"""
+        prediction = PredictionResult(
+            match_id=12345,
+            model_version="1",
+            model_name="football_baseline_model",
+            home_win_probability=0.5,
+            draw_probability=0.3,
+            away_win_probability=0.2,
+            predicted_result="home",
+            features_used={},  # 空特征
+            created_at=datetime.now()
+        )
+        assert validator.validate_prediction_result(prediction) is False
+
+    def test_validate_batch_predictions(self, validator, valid_prediction):
+        """测试批量验证预测结果"""
+        # 创建多个预测结果
+        predictions = [valid_prediction] * 5
+
+        # 修改其中一个使其无效
+        invalid_prediction = PredictionResult(
+            match_id=None,  # 无效
+            model_version="1",
+            model_name="football_baseline_model",
+            created_at=datetime.now()
+        )
+        predictions.append(invalid_prediction)
+
+        # 批量验证
+        stats = validator.validate_batch_predictions(predictions)
+
+        assert stats["total"] == 6
+        assert stats["valid"] == 5
+        assert stats["invalid"] == 1
+        assert stats["pass_rate"] == 5/6
+        assert len(stats["errors"]) == 1
+
+    def test_get_validation_summary(self, validator):
+        """测试生成验证摘要"""
+        stats = {
+            "total": 10,
+            "valid": 8,
+            "invalid": 2,
+            "pass_rate": 0.8,
+            "errors": ["Error 1", "Error 2", "Error 3"],
+            "warnings": ["Warning 1", "Warning 2"]
+        }
+
+        summary = validator.get_validation_summary(stats)
+
+        assert "10" in summary
+        assert "8" in summary
+        assert "80.00%" in summary
+        assert "Error 1" in summary
+        assert "Warning 1" in summary

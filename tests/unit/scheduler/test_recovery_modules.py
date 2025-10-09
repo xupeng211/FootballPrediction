@@ -1,0 +1,717 @@
+"""
+测试拆分后的恢复处理模块
+"""
+
+import pytest
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
+
+from src.scheduler.recovery import (
+    FailureType,
+    RecoveryStrategy,
+    TaskFailure,
+    RecoveryHandler,
+    ImmediateRetryStrategy,
+    ExponentialBackoffStrategy,
+    FixedDelayStrategy,
+    ManualInterventionStrategy,
+    SkipAndContinueStrategy,
+    FailureClassifier,
+    AlertManager,
+    RecoveryStatistics,
+    StrategyFactory,
+)
+
+
+class TestRecoveryModels:
+    """测试恢复模型"""
+
+    def test_task_failure_creation(self):
+        """测试任务失败记录创建"""
+        failure = TaskFailure(
+            task_id="test_task_1",
+            failure_time=datetime.now(),
+            failure_type=FailureType.TIMEOUT,
+            error_message="Connection timeout",
+            retry_count=2,
+            context={"key": "value"},
+        )
+
+        assert failure.task_id == "test_task_1"
+        assert failure.failure_type == FailureType.TIMEOUT
+        assert failure.error_message == "Connection timeout"
+        assert failure.retry_count == 2
+        assert failure.context == {"key": "value"}
+        assert len(failure.recovery_attempts) == 0
+
+    def test_task_failure_add_recovery_attempt(self):
+        """测试添加恢复尝试记录"""
+        failure = TaskFailure(
+            task_id="test_task_1",
+            failure_time=datetime.now(),
+            failure_type=FailureType.CONNECTION_ERROR,
+            error_message="Connection refused",
+        )
+
+        failure.add_recovery_attempt(
+            strategy=RecoveryStrategy.IMMEDIATE_RETRY,
+            success=True,
+            attempt_time=datetime.now(),
+            details="Retry scheduled successfully",
+        )
+
+        assert len(failure.recovery_attempts) == 1
+        attempt = failure.recovery_attempts[0]
+        assert attempt["strategy"] == "immediate_retry"
+        assert attempt["success"] is True
+        assert "Retry scheduled successfully" in attempt["details"]
+
+    def test_task_failure_to_dict(self):
+        """测试转换为字典"""
+        failure = TaskFailure(
+            task_id="test_task_1",
+            failure_time=datetime.now(),
+            failure_type=FailureType.DATA_ERROR,
+            error_message="Invalid JSON format",
+        )
+
+        failure_dict = failure.to_dict()
+
+        assert failure_dict["task_id"] == "test_task_1"
+        assert failure_dict["failure_type"] == "data_error"
+        assert failure_dict["error_message"] == "Invalid JSON format"
+        assert "failure_time" in failure_dict
+        assert "recovery_attempts" in failure_dict
+
+    def test_task_failure_repr(self):
+        """测试字符串表示"""
+        failure = TaskFailure(
+            task_id="test_task_1",
+            failure_time=datetime.now(),
+            failure_type=FailureType.RESOURCE_ERROR,
+            error_message="Out of memory",
+            retry_count=1,
+        )
+
+        repr_str = repr(failure)
+        assert "TaskFailure" in repr_str
+        assert "test_task_1" in repr_str
+        assert "resource_error" in repr_str
+        assert "retries=1" in repr_str
+
+
+class TestRecoveryStrategies:
+    """测试恢复策略"""
+
+    def test_immediate_retry_strategy(self):
+        """测试立即重试策略"""
+        strategy = ImmediateRetryStrategy()
+
+        # 创建模拟任务
+        task = MagicMock()
+        task.retry_count = 0
+        task.task_id = "test_task"
+
+        # 创建失败记录
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.TIMEOUT,
+            error_message="Timeout error",
+        )
+
+        # 配置
+        config = {"max_retries": 3}
+
+        # 执行策略
+        result = strategy.execute(task, failure, config)
+
+        assert result is True
+        assert task.retry_count == 1
+        assert task.next_run_time is not None
+        assert len(failure.recovery_attempts) == 1
+
+    def test_exponential_backoff_strategy(self):
+        """测试指数退避策略"""
+        strategy = ExponentialBackoffStrategy()
+
+        # 创建模拟任务
+        task = MagicMock()
+        task.retry_count = 1
+        task.task_id = "test_task"
+
+        # 创建失败记录
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.CONNECTION_ERROR,
+            error_message="Connection error",
+        )
+
+        # 配置
+        config = {
+            "max_retries": 3,
+            "base_delay": 60,
+            "backoff_factor": 2.0,
+            "max_delay": 300,
+        }
+
+        # 执行策略
+        result = strategy.execute(task, failure, config)
+
+        assert result is True
+        assert task.retry_count == 2
+        # 第二次重试应该是 60 * 2^1 = 120 秒
+        expected_delay = 120
+        assert task.next_run_time == datetime.now() + timedelta(seconds=expected_delay)
+
+    def test_fixed_delay_strategy(self):
+        """测试固定延迟策略"""
+        strategy = FixedDelayStrategy()
+
+        task = MagicMock()
+        task.retry_count = 0
+        task.task_id = "test_task"
+
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.DATA_ERROR,
+            error_message="Data error",
+        )
+
+        config = {"max_retries": 2, "base_delay": 300}
+
+        result = strategy.execute(task, failure, config)
+
+        assert result is True
+        assert task.retry_count == 1
+        assert task.next_run_time == datetime.now() + timedelta(seconds=300)
+
+    def test_manual_intervention_strategy(self):
+        """测试人工干预策略"""
+        strategy = ManualInterventionStrategy()
+
+        task = MagicMock()
+        task.task_id = "test_task"
+
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.PERMISSION_ERROR,
+            error_message="Permission denied",
+        )
+
+        config = {}
+
+        result = strategy.execute(task, failure, config)
+
+        assert result is True
+        # 任务应该被暂停（设置为一年后执行）
+        assert task.next_run_time > datetime.now() + timedelta(days=300)
+
+    def test_skip_and_continue_strategy(self):
+        """测试跳过并继续策略"""
+        strategy = SkipAndContinueStrategy()
+
+        task = MagicMock()
+        task.retry_count = 5
+        task.task_id = "test_task"
+        task._update_next_run_time = MagicMock()
+
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.UNKNOWN_ERROR,
+            error_message="Unknown error",
+        )
+
+        config = {}
+
+        result = strategy.execute(task, failure, config)
+
+        assert result is True
+        assert task.retry_count == 0  # 重试次数应该被重置
+        task._update_next_run_time.assert_called_once()
+
+    def test_strategy_factory(self):
+        """测试策略工厂"""
+        # 获取已知策略
+        strategy = StrategyFactory.get_strategy(RecoveryStrategy.EXPONENTIAL_BACKOFF)
+        assert isinstance(strategy, ExponentialBackoffStrategy)
+
+        strategy = StrategyFactory.get_strategy(RecoveryStrategy.IMMEDIATE_RETRY)
+        assert isinstance(strategy, ImmediateRetryStrategy)
+
+        # 测试未知策略
+        with pytest.raises(ValueError):
+            StrategyFactory.get_strategy("unknown_strategy")
+
+
+class TestFailureClassifier:
+    """测试失败分类器"""
+
+    def test_classify_timeout_failure(self):
+        """测试分类超时失败"""
+        classifier = FailureClassifier()
+
+        # 英文错误消息
+        failure_type = classifier.classify_failure("Connection timeout after 30 seconds")
+        assert failure_type == FailureType.TIMEOUT
+
+        # 中文错误消息
+        failure_type = classifier.classify_failure("连接超时")
+        assert failure_type == FailureType.TIMEOUT
+
+    def test_classify_connection_error(self):
+        """测试分类连接错误"""
+        classifier = FailureClassifier()
+
+        error_messages = [
+            "Connection refused",
+            "Network unreachable",
+            "连接被拒绝",
+            "网络不可达",
+        ]
+
+        for msg in error_messages:
+            failure_type = classifier.classify_failure(msg)
+            assert failure_type == FailureType.CONNECTION_ERROR
+
+    def test_classify_data_error(self):
+        """测试分类数据错误"""
+        classifier = FailureClassifier()
+
+        error_messages = [
+            "Invalid JSON format",
+            "XML parse error",
+            "数据格式错误",
+            "解析失败",
+        ]
+
+        for msg in error_messages:
+            failure_type = classifier.classify_failure(msg)
+            assert failure_type == FailureType.DATA_ERROR
+
+    def test_classify_resource_error(self):
+        """测试分类资源错误"""
+        classifier = FailureClassifier()
+
+        error_messages = [
+            "Out of memory",
+            "No space left on device",
+            "内存不足",
+            "磁盘空间不足",
+        ]
+
+        for msg in error_messages:
+            failure_type = classifier.classify_failure(msg)
+            assert failure_type == FailureType.RESOURCE_ERROR
+
+    def test_classify_permission_error(self):
+        """测试分类权限错误"""
+        classifier = FailureClassifier()
+
+        error_messages = [
+            "Permission denied",
+            "Access forbidden",
+            "权限被拒绝",
+            "访问被禁止",
+        ]
+
+        for msg in error_messages:
+            failure_type = classifier.classify_failure(msg)
+            assert failure_type == FailureType.PERMISSION_ERROR
+
+    def test_classify_unknown_error(self):
+        """测试分类未知错误"""
+        classifier = FailureClassifier()
+
+        failure_type = classifier.classify_failure("Some unknown error occurred")
+        assert failure_type == FailureType.UNKNOWN_ERROR
+
+    def test_add_custom_keywords(self):
+        """测试添加自定义关键词"""
+        classifier = FailureClassifier()
+
+        # 添加自定义关键词
+        classifier.add_custom_keywords(
+            FailureType.TIMEOUT, ["custom_timeout", "自定义超时"]
+        )
+
+        # 测试自定义关键词
+        failure_type = classifier.classify_failure("custom_timeout occurred")
+        assert failure_type == FailureType.TIMEOUT
+
+        failure_type = classifier.classify_failure("自定义超时错误")
+        assert failure_type == FailureType.TIMEOUT
+
+
+class TestAlertManager:
+    """测试告警管理器"""
+
+    def test_register_handler(self):
+        """测试注册告警处理器"""
+        alert_manager = AlertManager()
+
+        handler = MagicMock()
+        alert_manager.register_handler(handler)
+
+        assert handler in alert_manager.handlers
+
+    def test_send_alert(self):
+        """测试发送告警"""
+        alert_manager = AlertManager()
+
+        handler = MagicMock()
+        alert_manager.register_handler(handler)
+
+        # 发送告警
+        result = alert_manager.send_alert(
+            level="WARNING",
+            message="Test alert",
+            details={"key": "value"},
+        )
+
+        assert result is True
+        handler.assert_called_once()
+
+        # 检查告警数据
+        alert_data = handler.call_args[0][0]
+        assert alert_data["level"] == "WARNING"
+        assert alert_data["message"] == "Test alert"
+        assert alert_data["details"]["key"] == "value"
+        assert "timestamp" in alert_data
+        assert "id" in alert_data
+
+    def test_check_retry_threshold(self):
+        """测试检查重试阈值"""
+        alert_manager = AlertManager()
+
+        # 注册处理器
+        handler = MagicMock()
+        alert_manager.register_handler(handler)
+
+        # 创建模拟任务
+        task = MagicMock()
+        task.task_id = "test_task"
+        task.retry_count = 3
+
+        # 创建失败记录
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.TIMEOUT,
+            error_message="Timeout error",
+        )
+
+        # 配置
+        config = {"alert_threshold": 2}
+
+        # 检查并发送告警
+        alert_manager.check_retry_threshold(task, failure, config)
+
+        # 应该发送告警
+        handler.assert_called()
+        alert_data = handler.call_args[0][0]
+        assert alert_data["level"] == "WARNING"
+
+    def test_suppression_rules(self):
+        """测试告警抑制规则"""
+        alert_manager = AlertManager()
+
+        # 添加抑制规则
+        alert_manager.add_suppression_rule(
+            name="test_rule",
+            pattern="test message",
+            duration_minutes=5,
+            max_alerts=1,
+        )
+
+        # 注册处理器
+        handler = MagicMock()
+        alert_manager.register_handler(handler)
+
+        # 第一次发送告警
+        result1 = alert_manager.send_alert(
+            level="INFO",
+            message="test message",
+        )
+        assert result1 is True
+        assert handler.call_count == 1
+
+        # 第二次发送相同告警（应该被抑制）
+        result2 = alert_manager.send_alert(
+            level="INFO",
+            message="test message",
+        )
+        assert result2 is False
+        assert handler.call_count == 1  # 没有增加
+
+
+class TestRecoveryStatistics:
+    """测试恢复统计"""
+
+    def test_add_failure(self):
+        """测试添加失败记录"""
+        stats = RecoveryStatistics()
+
+        failure = TaskFailure(
+            task_id="test_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.TIMEOUT,
+            error_message="Timeout error",
+        )
+
+        stats.add_failure(failure)
+
+        assert stats.total_failures == 1
+        assert len(stats.failure_history) == 1
+
+    def test_record_recovery(self):
+        """测试记录恢复结果"""
+        stats = RecoveryStatistics()
+
+        stats.record_recovery(True)
+        assert stats.successful_recoveries == 1
+        assert stats.failed_recoveries == 0
+
+        stats.record_recovery(False)
+        assert stats.successful_recoveries == 1
+        assert stats.failed_recoveries == 1
+
+    def test_update_failure_pattern(self):
+        """测试更新失败模式"""
+        stats = RecoveryStatistics()
+
+        stats.update_failure_pattern("task_1", FailureType.TIMEOUT)
+        stats.update_failure_pattern("task_1", FailureType.CONNECTION_ERROR)
+
+        assert "task_1" in stats.failure_patterns
+        assert len(stats.failure_patterns["task_1"]) == 2
+        assert FailureType.TIMEOUT in stats.failure_patterns["task_1"]
+        assert FailureType.CONNECTION_ERROR in stats.failure_patterns["task_1"]
+
+    def test_get_statistics(self):
+        """测试获取统计信息"""
+        stats = RecoveryStatistics()
+
+        # 添加一些失败记录
+        for i in range(3):
+            failure = TaskFailure(
+                task_id=f"task_{i % 2}",
+                failure_time=datetime.now() - timedelta(hours=i),
+                failure_type=FailureType.TIMEOUT if i % 2 == 0 else FailureType.CONNECTION_ERROR,
+                error_message=f"Error {i}",
+            )
+            stats.add_failure(failure)
+
+        # 记录恢复结果
+        stats.record_recovery(True)
+        stats.record_recovery(False)
+        stats.record_recovery(True)
+
+        # 获取统计信息
+        statistics = stats.get_statistics()
+
+        assert statistics["total_failures"] == 3
+        assert statistics["successful_recoveries"] == 2
+        assert statistics["failed_recoveries"] == 1
+        assert statistics["recovery_success_rate"] == 2/3 * 100
+        assert "timeout" in statistics["failure_by_type"]
+        assert "connection_error" in statistics["failure_by_type"]
+        assert "recent_24h" in statistics
+        assert "trend_analysis" in statistics
+
+    def test_clear_old_failures(self):
+        """测试清理旧失败记录"""
+        stats = RecoveryStatistics()
+
+        # 添加旧记录
+        old_failure = TaskFailure(
+            task_id="old_task",
+            failure_time=datetime.now() - timedelta(days=31),
+            failure_type=FailureType.TIMEOUT,
+            error_message="Old error",
+        )
+        stats.add_failure(old_failure)
+
+        # 添加新记录
+        new_failure = TaskFailure(
+            task_id="new_task",
+            failure_time=datetime.now(),
+            failure_type=FailureType.CONNECTION_ERROR,
+            error_message="New error",
+        )
+        stats.add_failure(new_failure)
+
+        # 清理30天前的记录
+        cleared_count = stats.clear_old_failures(days_to_keep=30)
+
+        assert cleared_count == 1
+        assert len(stats.failure_history) == 1
+        assert stats.failure_history[0].task_id == "new_task"
+
+
+class TestRecoveryHandler:
+    """测试恢复处理器"""
+
+    def test_handler_initialization(self):
+        """测试处理器初始化"""
+        handler = RecoveryHandler()
+
+        assert handler.classifier is not None
+        assert handler.alert_manager is not None
+        assert handler.statistics is not None
+        assert len(handler.recovery_configs) == 6  # 6种失败类型
+
+    def test_handle_task_failure(self):
+        """测试处理任务失败"""
+        handler = RecoveryHandler()
+
+        # 创建模拟任务
+        task = MagicMock()
+        task.task_id = "test_task"
+        task.retry_count = 0
+        task.name = "Test Task"
+
+        # 处理失败
+        result = handler.handle_task_failure(
+            task,
+            "Connection timeout after 30 seconds"
+        )
+
+        assert result is True  # 应该成功安排重试
+        assert handler.statistics.total_failures == 1
+
+    def test_register_alert_handler(self):
+        """测试注册告警处理器"""
+        handler = RecoveryHandler()
+
+        handler_func = MagicMock()
+        handler.register_alert_handler(handler_func)
+
+        assert handler_func in handler.alert_manager.handlers
+
+    def test_get_failure_statistics(self):
+        """测试获取失败统计"""
+        handler = RecoveryHandler()
+
+        # 添加一些失败
+        for i in range(5):
+            task = MagicMock()
+            task.task_id = f"task_{i}"
+            task.retry_count = 0
+            handler.handle_task_failure(task, f"Error {i}")
+
+        # 获取统计
+        stats = handler.get_failure_statistics()
+
+        assert stats["total_failures"] == 5
+        assert "recovery_success_rate" in stats
+        assert "failure_by_type" in stats
+
+    def test_update_recovery_config(self):
+        """测试更新恢复配置"""
+        handler = RecoveryHandler()
+
+        new_config = {
+            "strategy": RecoveryStrategy.IMMEDIATE_RETRY,
+            "max_retries": 5,
+            "alert_threshold": 3,
+        }
+
+        handler.update_recovery_config(FailureType.TIMEOUT, new_config)
+
+        assert handler.recovery_configs[FailureType.TIMEOUT] == new_config
+
+    def test_add_custom_keywords(self):
+        """测试添加自定义关键词"""
+        handler = RecoveryHandler()
+
+        handler.add_custom_keywords(
+            FailureType.TIMEOUT,
+            ["custom_timeout", "自定义超时"]
+        )
+
+        # 测试分类器是否包含了新关键词
+        failure_type = handler.classifier.classify_failure("custom_timeout occurred")
+        assert failure_type == FailureType.TIMEOUT
+
+    def test_clear_old_failures(self):
+        """测试清理旧失败记录"""
+        handler = RecoveryHandler()
+
+        # 添加一些失败
+        for i in range(3):
+            task = MagicMock()
+            task.task_id = f"task_{i}"
+            task.retry_count = 0
+            handler.handle_task_failure(task, f"Error {i}")
+
+        # 清理
+        cleared_count = handler.clear_old_failures(days_to_keep=30)
+
+        # 由于记录都是新的，清理数量应该为0
+        assert cleared_count == 0
+
+
+class TestModuleIntegration:
+    """测试模块集成"""
+
+    def test_import_from_recovery_module(self):
+        """测试从recovery模块导入"""
+        from src.scheduler.recovery import (
+            FailureType,
+            RecoveryStrategy,
+            TaskFailure,
+            RecoveryHandler,
+            ImmediateRetryStrategy,
+            ExponentialBackoffStrategy,
+            FixedDelayStrategy,
+            ManualInterventionStrategy,
+            SkipAndContinueStrategy,
+            FailureClassifier,
+            AlertManager,
+            RecoveryStatistics,
+        )
+
+        assert FailureType is not None
+        assert RecoveryStrategy is not None
+        assert TaskFailure is not None
+        assert RecoveryHandler is not None
+        assert ImmediateRetryStrategy is not None
+        assert ExponentialBackoffStrategy is not None
+        assert FixedDelayStrategy is not None
+        assert ManualInterventionStrategy is not None
+        assert SkipAndContinueStrategy is not None
+        assert FailureClassifier is not None
+        assert AlertManager is not None
+        assert RecoveryStatistics is not None
+
+    def test_backward_compatibility_import(self):
+        """测试向后兼容性导入"""
+        from src.scheduler.recovery_handler import (
+            FailureType,
+            RecoveryStrategy,
+            TaskFailure,
+            RecoveryHandler,
+        )
+
+        assert FailureType is not None
+        assert RecoveryStrategy is not None
+        assert TaskFailure is not None
+        assert RecoveryHandler is not None
+
+    def test_module_info(self):
+        """测试模块信息"""
+        from src.scheduler.recovery_handler import get_module_info
+
+        info = get_module_info()
+
+        assert info["module"] == "recovery_handler"
+        assert info["status"] == "refactored"
+        assert "new_location" in info
+        assert "components" in info
+        assert "migration_guide" in info
+        assert "enhanced_features" in info

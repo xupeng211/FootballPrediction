@@ -8,7 +8,9 @@ from typing import cast, Any, Optional, Union
 
 from .base import Base
 from .config import DatabaseConfig, get_database_config
-from .connection import DatabaseManager, get_async_db_session, get_db_session
+from .connection import DatabaseManager
+# 从兼容性模块导入全局函数
+from .compatibility import get_async_db_session, get_db_session
 
 __all__ = [
     "DatabaseConfig",

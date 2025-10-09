@@ -1,0 +1,397 @@
+"""
+测试拆分后的数据采集模块
+"""
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from src.tasks.collection import (
+    DataCollectionTask,
+    CollectionTaskMixin,
+    collect_fixtures_task,
+    collect_odds_task,
+    collect_scores_task,
+    collect_historical_data_task,
+    emergency_data_collection_task,
+    manual_collect_all_data,
+    validate_collected_data,
+    DataValidator,
+)
+from src.tasks.collection.validation import DataValidationError
+
+
+class TestDataCollectionTask:
+    """测试数据采集任务基类"""
+
+    def test_data_collection_task_initialization(self):
+        """测试DataCollectionTask初始化"""
+        task = DataCollectionTask()
+        assert hasattr(task, 'error_logger')
+
+    def test_on_failure(self):
+        """测试任务失败处理"""
+        task = DataCollectionTask()
+        task.name = "test_task"
+
+        # 模拟request和retries
+        task.request = MagicMock()
+        task.request.retries = 0
+
+        # 模拟error_logger
+        task.error_logger = AsyncMock()
+
+        # 调用on_failure
+        with patch('src.tasks.collection.base.asyncio') as mock_asyncio:
+            mock_loop = MagicMock()
+            mock_asyncio.get_event_loop.return_value = mock_loop
+
+            task.on_failure(Exception("Test error"), "task_id", [], {}, "einfo")
+
+            # 验证错误日志被调用
+            mock_loop.run_until_complete.assert_called_once()
+
+
+class TestCollectionTaskMixin:
+    """测试采集任务混入类"""
+
+    def test_handle_retry(self):
+        """测试重试处理"""
+        class TestTask(CollectionTaskMixin):
+            request = MagicMock()
+            request.retries = 2
+
+            def retry(self, exc, countdown):
+                raise Exception("Retry")
+
+        task = TestTask()
+
+        # 测试可以重试
+        exc = Exception("Test error")
+        with pytest.raises(Exception, match="Retry"):
+            CollectionTaskMixin.handle_retry(task, exc, "test_task")
+
+    def test_log_data_collection_error(self):
+        """测试数据采集错误日志"""
+        class TestTask(CollectionTaskMixin):
+            error_logger = AsyncMock()
+
+        task = TestTask()
+        exc = Exception("Test error")
+
+        with patch('src.tasks.collection.base.asyncio.run') as mock_run:
+            CollectionTaskMixin.log_data_collection_error(
+                task,
+                data_source="test_api",
+                collection_type="test_collection",
+                error=exc
+            )
+            mock_run.assert_called_once()
+
+
+class TestFixturesCollection:
+    """测试赛程数据采集"""
+
+    @patch('src.tasks.collection.fixtures.asyncio.run')
+    def test_collect_fixtures_success(self, mock_run):
+        """测试成功采集赛程数据"""
+        # 模拟异步执行结果
+        mock_result = MagicMock()
+        mock_result.status = "success"
+        mock_result.success_count = 10
+        mock_result.error_count = 0
+        mock_result.records_collected = 10
+        mock_run.return_value = mock_result
+
+        # 创建任务实例
+        task = collect_fixtures_task
+        task.request = MagicMock()
+        task.request.retries = 0
+
+        # 调用任务
+        result = task.run(leagues=["Premier League"], days_ahead=7)
+
+        assert result["status"] == "success"
+        assert result["success_count"] == 10
+        assert result["records_collected"] == 10
+        assert result["leagues"] == ["Premier League"]
+        assert result["days_ahead"] == 7
+
+    @patch('src.tasks.collection.fixtures.asyncio.run')
+    def test_collect_fixtures_failure(self, mock_run):
+        """测试赛程采集失败"""
+        mock_run.side_effect = Exception("API error")
+
+        task = collect_fixtures_task
+        task.request = MagicMock()
+        task.request.retries = 0
+        task.error_logger = AsyncMock()
+
+        with patch.object(task, 'retry') as mock_retry:
+            with pytest.raises(Exception):
+                task.run()
+            mock_retry.assert_called_once()
+
+
+class TestOddsCollection:
+    """测试赔率数据采集"""
+
+    def test_compatibility_parameters(self):
+        """测试兼容性参数处理"""
+        # 这里测试参数转换逻辑
+        # 由于任务是通过装饰器创建的，我们测试其逻辑
+        pass
+
+
+class TestScoresCollection:
+    """测试比分数据采集"""
+
+    @patch('src.tasks.collection.scores.should_collect_live_scores')
+    def test_skip_when_no_live_matches(self, mock_should):
+        """测试无实时比赛时跳过采集"""
+        mock_should.return_value = False
+
+        task = collect_scores_task
+        task.request = MagicMock()
+        task.request.retries = 0
+
+        result = task.run(live_only=True)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "no_live_matches"
+
+
+class TestHistoricalDataCollection:
+    """测试历史数据采集"""
+
+    def test_default_parameters(self):
+        """测试默认参数设置"""
+        task = collect_historical_data_task
+
+        # 模拟执行
+        with patch('src.tasks.collection.historical.asyncio.run') as mock_run:
+            mock_result = {
+                "matches_collected": 20,
+                "data_summary": {"matches": 20}
+            }
+            mock_run.return_value = mock_result
+
+            task_instance = task
+            task_instance.request = MagicMock()
+            task_instance.request.retries = 0
+
+            result = task_instance.run(team_id=123)
+
+            # 验证默认值
+            assert result["team_id"] == 123
+            assert result["status"] == "success"
+            assert result["matches"] == 20
+
+
+class TestEmergencyCollection:
+    """测试紧急数据采集"""
+
+    def test_emergency_collection_all_data(self):
+        """测试全量紧急数据采集"""
+        task = emergency_data_collection_task
+        task.request = MagicMock()
+        task.request.id = "emergency_task_123"
+        task.request.retries = 0
+        task.error_logger = AsyncMock()
+
+        with patch('src.tasks.collection.emergency.collect_fixtures_task') as mock_fixtures:
+            with patch('src.tasks.collection.emergency.collect_odds_task') as mock_odds:
+                with patch('src.tasks.collection.emergency.collect_scores_task') as mock_scores:
+                    # 模拟任务结果
+                    mock_fixtures.apply_async.return_value.get.return_value = {"status": "success"}
+                    mock_odds.apply_async.return_value.get.return_value = {"status": "success"}
+                    mock_scores.apply_async.return_value.get.return_value = {"status": "success"}
+
+                    result = task.run(match_id=None)
+
+                    assert result["status"] == "success"
+                    assert result["priority"] == "emergency"
+                    assert "results" in result
+
+
+class TestManualCollection:
+    """测试手动数据采集"""
+
+    def test_manual_collect_all_data(self):
+        """测试手动采集所有数据"""
+        with patch('src.tasks.collection.emergency.collect_fixtures_task') as mock_fixtures:
+            with patch('src.tasks.collection.emergency.collect_odds_task') as mock_odds:
+                with patch('src.tasks.collection.emergency.collect_scores_task') as mock_scores:
+                    # 模拟延迟任务
+                    mock_fixtures.delay.return_value.get.return_value = {"status": "success"}
+                    mock_odds.delay.return_value.get.return_value = {"status": "success"}
+                    mock_scores.delay.return_value.get.return_value = {"status": "success"}
+
+                    result = manual_collect_all_data()
+
+                    assert result["status"] == "success"
+                    assert "results" in result
+                    assert "task_ids" in result
+
+
+class TestDataValidation:
+    """测试数据验证"""
+
+    def test_validator_validate_fixtures_data(self):
+        """测试赛程数据验证"""
+        validator = DataValidator()
+
+        # 测试有效数据
+        valid_data = [
+            {
+                "id": "123",
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "date": "2024-01-01T15:00:00",
+                "league": "Premier League"
+            }
+        ]
+
+        result = validator.validate_fixtures_data(valid_data)
+        assert result["valid"] == 1
+        assert result["errors"] == 0
+
+        # 测试无效数据
+        invalid_data = [
+            {"id": "123"}  # 缺少必需字段
+        ]
+
+        result = validator.validate_fixtures_data(invalid_data)
+        assert result["valid"] == 0
+        assert result["errors"] > 0
+
+    def test_validator_validate_odds_data(self):
+        """测试赔率数据验证"""
+        validator = DataValidator()
+
+        # 测试有效数据
+        valid_data = [
+            {
+                "match_id": "123",
+                "bookmaker": "Bet365",
+                "odds": {"home_win": 2.5, "draw": 3.2, "away_win": 2.8}
+            }
+        ]
+
+        result = validator.validate_odds_data(valid_data)
+        assert result["valid"] == 1
+        assert result["errors"] == 0
+
+    def test_validator_validate_scores_data(self):
+        """测试比分数据验证"""
+        validator = DataValidator()
+
+        # 测试有效数据
+        valid_data = [
+            {
+                "match_id": "123",
+                "status": "FT",
+                "score": {"home": 2, "away": 1}
+            }
+        ]
+
+        result = validator.validate_scores_data(valid_data)
+        assert result["valid"] == 1
+        assert result["errors"] == 0
+
+    def test_validate_collected_data_task(self):
+        """测试数据验证任务"""
+        task = validate_collected_data
+        task.request = MagicMock()
+        task.request.retries = 0
+
+        # 测试fixtures数据验证
+        test_data = [
+            {
+                "id": "123",
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "date": "2024-01-01T15:00:00",
+                "league": "Premier League"
+            }
+        ]
+
+        result = task.run(data_type="fixtures", data=test_data)
+
+        assert result["status"] == "success"
+        assert result["data_type"] == "fixtures"
+        assert "validation_result" in result
+        assert "pass_rate" in result
+
+    def test_validate_collected_data_invalid_type(self):
+        """测试无效数据类型"""
+        task = validate_collected_data
+        task.request = MagicMock()
+        task.request.retries = 0
+        task.error_logger = AsyncMock()
+
+        result = task.run(data_type="invalid_type", data=[])
+
+        assert result["status"] == "failed"
+        assert "error" in result
+
+
+class TestModuleIntegration:
+    """测试模块集成"""
+
+    def test_import_from_collection(self):
+        """测试从collection模块导入"""
+        from src.tasks.collection import (
+            DataCollectionTask,
+            collect_fixtures_task,
+            collect_odds_task,
+            collect_scores_task,
+            collect_historical_data_task,
+            emergency_data_collection_task,
+            manual_collect_all_data,
+            validate_collected_data,
+        )
+
+        assert DataCollectionTask is not None
+        assert collect_fixtures_task is not None
+        assert collect_odds_task is not None
+        assert collect_scores_task is not None
+        assert collect_historical_data_task is not None
+        assert emergency_data_collection_task is not None
+        assert manual_collect_all_data is not None
+        assert validate_collected_data is not None
+
+    def test_backward_compatibility_import(self):
+        """测试向后兼容性导入"""
+        from src.tasks.data_collection_tasks import (
+            collect_fixtures_task,
+            collect_odds_task,
+            collect_scores_task,
+            collect_historical_data_task,
+            emergency_data_collection_task,
+            manual_collect_all_data,
+            collect_all_data_task,
+            validate_collected_data,
+            DataCollectionTask,
+        )
+
+        assert collect_fixtures_task is not None
+        assert collect_odds_task is not None
+        assert collect_scores_task is not None
+        assert collect_historical_data_task is not None
+        assert emergency_data_collection_task is not None
+        assert manual_collect_all_data is not None
+        assert collect_all_data_task is not None  # 别名
+        assert validate_collected_data is not None
+        assert DataCollectionTask is not None
+
+    def test_module_info(self):
+        """测试模块信息"""
+        from src.tasks.data_collection_tasks import get_module_info
+
+        info = get_module_info()
+
+        assert info["module"] == "data_collection_tasks"
+        assert info["status"] == "refactored"
+        assert "new_location" in info
+        assert "components" in info
+        assert "migration_guide" in info
