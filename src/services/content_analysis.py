@@ -5,6 +5,35 @@
 """
 
 from .base_service import BaseService
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+
+
+class Content:
+    """内容类"""
+    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
+        self.id = content_id
+        self.content_type = content_type
+        self.data = data
+
+
+class AnalysisResult:
+    """分析结果类"""
+    def __init__(
+        self,
+        id: str = "",
+        analysis_type: str = "",
+        result: Dict[str, Any] = None,
+        confidence: float = 0.0,
+        timestamp: Optional[datetime] = None,
+        content_id: str = ""
+    ):
+        self.id = id
+        self.analysis_type = analysis_type
+        self.result = result or {}
+        self.confidence = confidence
+        self.timestamp = timestamp or datetime.now()
+        self.content_id = content_id
 
 
 class ContentAnalysisService(BaseService):
@@ -35,16 +64,16 @@ class ContentAnalysisService(BaseService):
         # 实现内容分析逻辑
         # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
         if content.content_type == "text":
-            text_analysis = self.analyze_text(content.data.get(str("text", None), ""))
+            text_analysis = self.analyze_text(content.data.get("text", ""))
             analysis_data = {
-                "sentiment": text_analysis.get(str("sentiment", None), "neutral"),
-                "keywords": text_analysis.get(str("keywords", None), []),
+                "sentiment": text_analysis.get("sentiment", "neutral"),
+                "keywords": text_analysis.get("keywords", []),
                 "category": self._categorize_content(
-                    content.data.get(str("text", None), "")
+                    content.data.get("text", "")
                 ),
                 "quality_score": self._calculate_quality_score(content),
-                "language": text_analysis.get(str("language", None), "zh"),
-                "word_count": text_analysis.get(str("word_count", None), 0),
+                "language": text_analysis.get("language", "zh"),
+                "word_count": text_analysis.get("word_count", 0),
             }
         else:
             # 非文本内容的默认分析
@@ -96,7 +125,7 @@ class ContentAnalysisService(BaseService):
     def _calculate_quality_score(self, content: Content) -> float:
         """计算内容质量分数"""
         if content.content_type == "text":
-            text = content.data.get(str("text", None), "")
+            text = content.data.get("text", "")
             # 基于长度、关键词数量等计算质量分数
             word_count = len(text.split())
             keyword_count = len([kw for kw in ["足球", "比赛", "分析"] if kw in text])
