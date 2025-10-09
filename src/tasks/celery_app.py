@@ -1,60 +1,73 @@
 
 """
-Celery 应用配置
 
+
+"""
+
+
+
+
+
+    """数据库管理器模拟类，用于支持测试"""
+
+
+        """获取数据库连接"""
+
+        """关闭数据库连接"""
+
+
+    """Redis管理器模拟类，用于支持测试"""
+
+
+        """获取Redis客户端"""
+
+        """关闭Redis连接"""
+
+
+
+
+
+
+
+
+    """任务重试配置"""
+
+
+
+        """获取任务的重试配置"""
+
+
+
+
+Celery 应用配置
 基于 Redis 的任务队列系统，支持：
 - 多队列任务路由
 - 定时任务调度
 - 任务重试机制
 - 监控指标收集
-
 基于 DATA_DESIGN.md 第3节《任务调度系统》设计。
-"""
-
-
-
 # 配置日志记录器（用于测试支持）
 logger = logging.getLogger(__name__)
-
-
 # 模拟的数据库管理器类（用于测试支持）
 class DatabaseManager:
-    """数据库管理器模拟类，用于支持测试"""
-
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
-
     def get_connection(self):
-        """获取数据库连接"""
         return None
-
     def close_connection(self):
-        """关闭数据库连接"""
-
-
 # 模拟的Redis管理器类（用于测试支持）
 class RedisManager:
-    """Redis管理器模拟类，用于支持测试"""
-
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.RedisManager")
-
     def get_redis_client(self):
-        """获取Redis客户端"""
         return None
-
     def close_connection(self):
-        """关闭Redis连接"""
-
-
 # 创建 Celery 应用实例
 app = Celery("football_prediction_tasks")
-
 # Redis 配置（作为消息代理和结果后端）
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", REDIS_URL)
-
 # 更新配置
 app.conf.update(
     # 消息代理配置
@@ -118,7 +131,6 @@ app.conf.update(
         },
     },
 )
-
 # 定时任务配置（Celery Beat）
 app.conf.beat_schedule = {
     # 每日赛程采集 - 凌晨2:00
@@ -205,18 +217,12 @@ app.conf.beat_schedule = {
         "kwargs": {"database_name": "football_prediction"},
     },
 }
-
 # 自动发现任务模块
 app.autodiscover_tasks(["src.tasks"])
-
-
 class TaskRetryConfig:
-    """任务重试配置"""
-
     # 默认重试配置
     DEFAULT_MAX_RETRIES = 3
     DEFAULT_RETRY_DELAY = 60  # 秒
-
     # 各类任务的重试配置
     TASK_RETRY_CONFIGS = {
         "collect_fixtures_task": {
@@ -238,23 +244,17 @@ class TaskRetryConfig:
             "retry_jitter": False,
         },
     }
-
     @classmethod
     def get_retry_config(cls, task_name: str) -> dict:
-        """获取任务的重试配置"""
         return cls.TASK_RETRY_CONFIGS.get(
             task_name,
             {
                 "max_retries": cls.DEFAULT_MAX_RETRIES,
                 "retry_delay": cls.DEFAULT_RETRY_DELAY, Any, Optional, Union
-
-
                 "retry_backoff": False,
                 "retry_jitter": False,
             },
         )
-
-
 # 任务监控配置
 TASK_MONITORING = {
     "enable_metrics": True,

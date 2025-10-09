@@ -1,11 +1,45 @@
 """
-Kafka主题管理器
 """
 
 
-try:
+
+
+
+
+
+    """Kafka主题管理器"""
+
+        """
+
+        """
+
+
+
+        """
+
+
+        """
+
+
+        """
+
+
+        """
+
+        """
+
+        """
+
+        """关闭管理器"""
+
+
+
     from confluent_kafka import KafkaError, KafkaException
     from confluent_kafka.admin import AdminClient, NewTopic
+from src.streaming.kafka.config.stream_config import StreamConfig
+
+Kafka主题管理器
+try:
     KAFKA_TOPIC_AVAILABLE = True
 except ImportError:
     KAFKA_TOPIC_AVAILABLE = False
@@ -13,10 +47,7 @@ except ImportError:
     NewTopic = None
     KafkaError = None
     KafkaException = None
-
-
 logger = logging.getLogger(__name__)
-
 # 默认主题配置
 DEFAULT_TOPICS = {
     "match-events": {
@@ -40,24 +71,15 @@ DEFAULT_TOPICS = {
         "config": {"retention.ms": "604800000"},  # 7天
     },
 }
-
-
 class KafkaTopicManager:
-    """Kafka主题管理器"""
-
     def __init__(self, config: Optional[StreamConfig] = None):
-        """
         初始化主题管理器
-
         Args:
             config: 流配置
-        """
         if not KAFKA_TOPIC_AVAILABLE:
             raise ImportError("confluent_kafka 未安装，无法使用Kafka功能")
-
         self.config = config or StreamConfig()
         self.admin_client = None
-
         try:
             self.admin_client = AdminClient(
                 {"bootstrap.servers": self.config.bootstrap_servers}
@@ -66,7 +88,6 @@ class KafkaTopicManager:
         except Exception as e:
             logger.error(f"Kafka管理器初始化失败: {e}")
             raise
-
     def create_topic(
         self,
         topic_name: str,
@@ -74,18 +95,14 @@ class KafkaTopicManager:
         replication_factor: int = 1,
         config: Optional[Dict[str, str]] = None,
     ) -> bool:
-        """
         创建主题
-
         Args:
             topic_name: 主题名称
             num_partitions: 分区数
             replication_factor: 副本因子
             config: 主题配置
-
         Returns:
             bool: 是否创建成功
-        """
         try:
             topic = NewTopic(
                 topic=topic_name,
@@ -93,7 +110,6 @@ class KafkaTopicManager:
                 replication_factor=replication_factor,
                 config=config or {},
             )
-
             future = self.admin_client.create_topics([topic])
             for topic_name, future in future.items():
                 try:
@@ -110,17 +126,12 @@ class KafkaTopicManager:
         except Exception as e:
             logger.error(f"创建主题失败: {e}")
             return False
-
     def delete_topic(self, topic_name: str) -> bool:
-        """
         删除主题
-
         Args:
             topic_name: 主题名称
-
         Returns:
             bool: 是否删除成功
-        """
         try:
             future = self.admin_client.delete_topics([topic_name])
             for topic_name, future in future.items():
@@ -134,14 +145,10 @@ class KafkaTopicManager:
         except Exception as e:
             logger.error(f"删除主题失败: {e}")
             return False
-
     def list_topics(self) -> Dict[str, Any]:
-        """
         列出所有主题
-
         Returns:
             Dict[str, Any]: 主题元数据
-        """
         try:
             metadata = self.admin_client.list_topics(timeout=10.0)
             return {
@@ -151,12 +158,7 @@ class KafkaTopicManager:
         except Exception as e:
             logger.error(f"列出主题失败: {e}")
             return {}
-
     def close(self) -> None:
-        """关闭管理器"""
         if self.admin_client:
             # AdminClient没有close方法
             logger.info("Kafka管理器已关闭")
-
-from src.streaming.kafka.config.stream_config import StreamConfig
-

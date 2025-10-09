@@ -1,12 +1,41 @@
 """
+
+
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+    """获取模块信息"""
+
+
+
+
+    """
+    """
+
+
+
+
+
+
+
 from .metrics_exporter import MetricsExporter
 
 监控指标收集器 - 向后兼容性包装器
 Monitoring Metrics Collector - Backward Compatibility Wrapper
-
 ⚠️  警告：此文件已被重构为模块化结构
 ⚠️  Warning: This file has been refactored into a modular structure
-
 新的实现位于 src/monitoring/metrics/ 目录下：
 - types.py - 指标类型和单位定义
 - aggregator.py - 指标聚合器
@@ -14,11 +43,7 @@ Monitoring Metrics Collector - Backward Compatibility Wrapper
 - base.py - 基础收集器抽象类
 - collectors.py - 具体收集器实现
 - global_collector.py - 全局收集器管理
-
 此文件保留用于向后兼容性，建议新代码直接导入新的模块。
-"""
-
-
 # 从新的模块化结构导入所有功能
     # Types
     MetricType,
@@ -38,11 +63,8 @@ Monitoring Metrics Collector - Backward Compatibility Wrapper
     stop_metrics_collection,
     get_async_session,
 )
-
 # 从配置中导入常量
-
 _settings = get_settings()
-
 # 导出常量
 ENABLE_METRICS = bool(_settings.metrics_enabled)
 DEFAULT_TABLES: List[str] = (
@@ -60,19 +82,14 @@ DEFAULT_TABLES: List[str] = (
         "data_collection_logs",
     ]
 )
-
 logger = logging.getLogger(__name__)
-
 # =============================================================================
 # 向后兼容性别名
 # =============================================================================
-
 # 为了保持向后兼容，使用原始的类名
 MetricsCollector = OriginalMetricsCollector
-
 # PrometheusExporter 的别名
 PrometheusExporter = MetricsExporter
-
 # 保持原有的 __all__ 导出
 __all__ = [
     # Constants
@@ -94,13 +111,10 @@ __all__ = [
     "stop_metrics_collection",
     "get_async_session",
 ]
-
 # =============================================================================
 # 模块信息
 # =============================================================================
-
 def get_module_info() -> Dict[str, Any]:
-    """获取模块信息"""
     return {
         "module": "metrics_collector",
         "status": "refactored",
@@ -127,26 +141,15 @@ def get_module_info() -> Dict[str, Any]:
             "Support for multiple metric types and units",
         ],
     }
-
-
 # 记录模块加载信息
 logger.info(
     "Loading metrics_collector module (deprecated) - "
     "consider importing from src.monitoring.metrics instead"
 )
-
-
 if __name__ == "__main__":
-    """
     独立运行指标收集器
-    """
-
-
     async def main():
         collector = MetricsCollector(collection_interval=10)  # 10秒间隔用于测试
-
-
-
         try:
             await collector.start()
             # 保持运行直到被中断
@@ -156,11 +159,9 @@ if __name__ == "__main__":
             logger.info("接收到中断信号")
         finally:
             await collector.stop()
-
     # 配置日志
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-
     asyncio.run(main())

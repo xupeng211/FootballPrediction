@@ -1,36 +1,46 @@
 """
-指标数据类型定义 / Metric Data Types
 
-定义指标收集相关的数据类型和基础结构。
 """
 
 
 
-@dataclass
-class MetricPoint:
     """指标数据点
 
-    表示单个时间点的指标值，包含名称、值、标签和时间戳。
     """
+
+        """初始化后处理"""
+
+
+    """指标摘要
+
+    """
+
+        """转换为字典"""
+
+
+    """告警信息
+
+    """
+
+        """转换为字典"""
+
+指标数据类型定义 / Metric Data Types
+定义指标收集相关的数据类型和基础结构。
+@dataclass
+class MetricPoint:
+    表示单个时间点的指标值，包含名称、值、标签和时间戳。
     name: str
     value: float
     labels: Dict[str, str] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
     unit: str = ""
-
     def __post_init__(self):
-        """初始化后处理"""
         if isinstance(self.timestamp, str):
             # 支持字符串时间戳
             self.timestamp = datetime.fromisoformat(self.timestamp)
-
-
 @dataclass
 class MetricSummary:
-    """指标摘要
-
     表示一段时间内的指标聚合统计。
-    """
     count: int
     sum: float
     avg: float
@@ -40,9 +50,7 @@ class MetricSummary:
     p50: float = 0.0
     p95: float = 0.0
     p99: float = 0.0
-
     def to_dict(self) -> Dict[str, float]:
-        """转换为字典"""
         return {
             "count": self.count,
             "sum": self.sum,
@@ -54,14 +62,9 @@ class MetricSummary:
             "p95": self.p95,
             "p99": self.p99,
         }
-
-
 @dataclass
 class AlertInfo:
-    """告警信息
-
     表示一个告警的详细信息。
-    """
     name: str
     message: str
     severity: str
@@ -69,13 +72,10 @@ class AlertInfo:
     component: str = ""
     labels: Dict[str, str] = field(default_factory=dict)
     context: Dict[str, Any] = field(default_factory=dict)
-
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
         return {
             "name": self.name,
             "message": self.message, field
-
             "severity": self.severity,
             "timestamp": self.timestamp.isoformat(),
             "component": self.component,

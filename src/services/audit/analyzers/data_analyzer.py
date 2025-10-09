@@ -1,32 +1,75 @@
 """
-审计数据分析器
 
-分析审计日志，提取统计信息和异常模式。
 """
 
 
 
+
+
+    """审计状态枚举（临时定义）"""
+
+
+    """审计数据分析器"""
+
+        """初始化分析器"""
+
+        """
+
+
+        """
+
+
+
+
+
+        """
+
+
+        """
+
+
+
+
+        """
+
+
+        """
+
+
+
+
+
+
+
+
+
+
+        """
+
+
+        """
+
+
+
+
+
+
+
+
+审计数据分析器
+分析审计日志，提取统计信息和异常模式。
     AuditAction,
     AuditLog,
     AuditLogSummary,
     AuditSeverity,
 )
-
-
 class AuditStatus(str, Enum):
-    """审计状态枚举（临时定义）"""
     SUCCESS = "success"
     FAILED = "failed"
     PENDING = "pending"
-
-
 class AuditAnalyzer:
-    """审计数据分析器"""
-
     def __init__(self):
-        """初始化分析器"""
         self.logger = logging.getLogger(f"audit.{self.__class__.__name__}")
-
     async def get_audit_summary(
         self,
         start_date: Optional[datetime] = None,
@@ -34,25 +77,20 @@ class AuditAnalyzer:
         user_id: Optional[str] = None,
         table_name: Optional[str] = None,
     ) -> Optional[AuditLogSummary]:
-        """
         获取审计日志摘要
-
         Args:
             start_date: 开始日期
             end_date: 结束日期
             user_id: 用户ID
             table_name: 表名
-
         Returns:
             AuditLogSummary: 审计日志摘要
-        """
         try:
             # 默认查询最近7天
             if not end_date:
                 end_date = datetime.utcnow()
             if not start_date:
                 start_date = end_date - timedelta(days=7)
-
             async with get_async_session() as session:
                 # 构建查询条件
                 conditions = [
@@ -63,7 +101,6 @@ class AuditAnalyzer:
                     conditions.append(AuditLog.user_id == user_id)
                 if table_name:
                     conditions.append(AuditLog.table_name == table_name)
-
                 # 统计查询
                 result = await session.execute(
                     session.query(AuditLog)
@@ -86,7 +123,6 @@ class AuditAnalyzer:
                     )
                     .first()
                 )
-
                 if result:
                     return AuditLogSummary(
                         start_date=start_date,
@@ -98,11 +134,9 @@ class AuditAnalyzer:
                         failed_operations=result.failed_operations or 0,
                         avg_execution_time_ms=float(result.avg_execution_time_ms or 0),
                     )
-
         except Exception as e:
             self.logger.error(f"获取审计摘要失败: {e}", exc_info=True)
             return None
-
     async def get_user_activity(
         self,
         user_id: str,
@@ -110,18 +144,14 @@ class AuditAnalyzer:
         end_date: Optional[datetime] = None,
         limit: int = 100,
     ) -> List[AuditLog]:
-        """
         获取用户活动记录
-
         Args:
             user_id: 用户ID
             start_date: 开始日期
             end_date: 结束日期
             limit: 返回记录数限制
-
         Returns:
             List[AuditLog]: 审计日志列表
-        """
         try:
             async with get_async_session() as session:
                 query = (
@@ -130,40 +160,31 @@ class AuditAnalyzer:
                     .order_by(desc(AuditLog.timestamp))
                     .limit(limit)
                 )
-
                 if start_date:
                     query = query.filter(AuditLog.timestamp >= start_date)
                 if end_date:
                     query = query.filter(AuditLog.timestamp <= end_date)
-
                 result = await session.execute(query)
                 return result.scalars().all()
-
         except Exception as e:
             self.logger.error(f"获取用户活动失败: {e}", exc_info=True)
             return []
-
     async def detect_anomalies(
         self,
         hours: int = 24,
         failed_threshold: int = 10,
         high_risk_threshold: int = 5,
     ) -> List[Dict[str, Any]]:
-        """
         检测异常活动
-
         Args:
             hours: 检查最近多少小时
             failed_threshold: 失败操作阈值
             high_risk_threshold: 高风险操作阈值
-
         Returns:
             List[Dict]: 异常列表
-        """
         try:
             start_time = datetime.utcnow() - timedelta(hours=hours)
             anomalies = []
-
             async with get_async_session() as session:
                 # 检测失败率高的用户
                 failed_users = await session.execute(
@@ -177,7 +198,6 @@ class AuditAnalyzer:
                     .group_by(AuditLog.user_id)
                     .having(func.count(AuditLog.id) >= failed_threshold)
                 )
-
                 for user_id, count in failed_users:
                     anomalies.append(
                         {
@@ -187,7 +207,6 @@ class AuditAnalyzer:
                             "time_window_hours": hours,
                         }
                     )
-
                 # 检测高风险操作频繁的用户
                 risk_users = await session.execute(
                     session.query(AuditLog.user_id, func.count(AuditLog.id))
@@ -200,7 +219,6 @@ class AuditAnalyzer:
                     .group_by(AuditLog.user_id)
                     .having(func.count(AuditLog.id) >= high_risk_threshold)
                 )
-
                 for user_id, count in risk_users:
                     anomalies.append(
                         {
@@ -210,7 +228,6 @@ class AuditAnalyzer:
                             "time_window_hours": hours,
                         }
                     )
-
                 # 检测异常时间段的活动
                 hourly_activity = await session.execute(
                     session.query(
@@ -222,11 +239,9 @@ class AuditAnalyzer:
                     .order_by(desc("count"))
                     .limit(5)
                 )
-
                 avg_count = sum(row.count for row in hourly_activity) / max(
                     len(hourly_activity.fetchall()), 1
                 )
-
                 for hour, count in hourly_activity:
                     if count > avg_count * 3:  # 超过平均值3倍
                         anomalies.append(
@@ -237,39 +252,28 @@ class AuditAnalyzer:
                                 "average_count": avg_count,
                             }
                         )
-
             return anomalies
-
         except Exception as e:
             self.logger.error(f"检测异常失败: {e}", exc_info=True)
             return []
-
     async def get_operation_statistics(
         self,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> Dict[str, Any]:
-        """
         获取操作统计信息
-
         Args:
             start_date: 开始日期
             end_date: 结束日期
-
         Returns:
             Dict: 统计信息
-        """
         try:
             if not end_date:
                 end_date = datetime.utcnow()
             if not start_date:
                 start_date = end_date - timedelta(days=7)
-
             async with get_async_session() as session:
                 # 按操作类型统计
-
-
-
                 action_stats = await session.execute(
                     session.query(
                         AuditLog.action,
@@ -284,7 +288,6 @@ class AuditAnalyzer:
                     .group_by(AuditLog.action)
                     .order_by(desc("count"))
                 )
-
                 # 按表名统计
                 table_stats = await session.execute(
                     session.query(
@@ -302,7 +305,6 @@ class AuditAnalyzer:
                     .order_by(desc("count"))
                     .limit(10)
                 )
-
                 # 按用户统计
                 user_stats = await session.execute(
                     session.query(
@@ -320,7 +322,6 @@ class AuditAnalyzer:
                     .order_by(desc("count"))
                     .limit(10)
                 )
-
                 return {
                     "by_action": [
                         {"action": action.value, "count": count}
@@ -335,7 +336,6 @@ class AuditAnalyzer:
                         for user_id, username, count in user_stats
                     ],
                 }
-
         except Exception as e:
             self.logger.error(f"获取操作统计失败: {e}", exc_info=True)
             return {}

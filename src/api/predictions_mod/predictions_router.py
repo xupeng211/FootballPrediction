@@ -1,15 +1,58 @@
 """
-from .schemas import (
-from src.database.connection import get_async_session
 
-预测API路由器 / Predictions API Router
 
-整合所有预测相关的API端点。
 """
 
 
 
 
+
+
+
+
+
+    """
+
+
+
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+
+
+    """
+from .schemas import (
+from src.database.connection import get_async_session
+
+预测API路由器 / Predictions API Router
+整合所有预测相关的API端点。
     get_match_prediction_history_handler,
     get_recent_predictions_handler,
 )
@@ -24,15 +67,10 @@ from src.database.connection import get_async_session
     RecentPredictionsResponse,
     VerificationResponse,
 )
-
 logger = logging.getLogger(__name__)
-
 router = APIRouter(prefix="/predictions", tags=["predictions"])
-
 # 获取速率限制器
 limiter = get_rate_limiter()
-
-
 @router.get(
     "/{match_id:int}",
     summary="获取比赛预测结果 / Get Match Prediction",
@@ -89,24 +127,19 @@ async def get_match_prediction(
     ),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    """
     获取指定比赛的预测结果 / Get Prediction for Specified Match
-
     该端点首先检查数据库中是否存在该比赛的缓存预测结果。
     如果存在且未设置force_predict参数，则直接返回缓存结果。
     否则，实时生成新的预测结果并存储到数据库。
-
     This endpoint first checks if there's a cached prediction result for the match in the database.
     If it exists and force_predict is not set, it returns the cached result directly.
     Otherwise, it generates a new prediction in real-time and stores it in the database.
-
     Args:
         match_id (int): 比赛唯一标识符，必须大于0 / Unique match identifier, must be greater than 0
         force_predict (bool): 是否强制重新预测，默认为False / Whether to force re-prediction,
             defaults to False
         session (AsyncSession): 数据库会话，由依赖注入提供 / Database session,
             provided by dependency injection
-
     Returns:
         Dict[str, Any]: API响应字典 / API response dictionary
             - success (bool): 请求是否成功 / Whether request was successful
@@ -114,17 +147,13 @@ async def get_match_prediction(
                 - match_id (int): 比赛ID / Match ID
                 - match_info (Dict): 比赛信息 / Match information
                 - prediction (Dict): 预测结果 / Prediction result
-
     Raises:
         HTTPException:
             - 404: 当比赛不存在时 / When match does not exist
             - 500: 当预测过程发生错误时 / When prediction process fails
-    """
     return await get_match_prediction_handler(
         request, match_id, force_predict, session
     )
-
-
 @router.post(
     "/{match_id:int}/predict",
     summary="实时预测比赛结果",
@@ -133,19 +162,13 @@ async def get_match_prediction(
 async def predict_match(
     match_id: int, session: AsyncSession = Depends(get_async_session)
 ) -> Dict[str, Any]:
-    """
     对指定比赛进行实时预测
-
     Args:
         match_id: 比赛ID
         session: 数据库会话
-
     Returns:
         API响应，包含预测结果
-    """
     return await predict_match_handler(match_id, session)
-
-
 @router.post(
     "/batch",
     summary="批量预测比赛",
@@ -158,19 +181,13 @@ async def batch_predict_matches(
     match_ids: List[int],
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    """
     批量预测多场比赛
-
     Args:
         match_ids: 比赛ID列表
         session: 数据库会话
-
     Returns:
         API响应，包含批量预测结果
-    """
     return await batch_predict_matches_handler(request, match_ids, session)
-
-
 @router.get(
     "/history/{match_id:int}",
     summary="获取比赛历史预测",
@@ -181,20 +198,14 @@ async def get_match_prediction_history(
     limit: int = Query(10, description="返回记录数量限制", ge=1, le=100),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    """
     获取比赛的历史预测记录
-
     Args:
         match_id: 比赛ID
         limit: 返回记录数量限制
         session: 数据库会话
-
     Returns:
         API响应，包含历史预测记录
-    """
     return await get_match_prediction_history_handler(match_id, limit, session)
-
-
 @router.get(
     "/recent",
     summary="获取最近的预测",
@@ -205,20 +216,14 @@ async def get_recent_predictions(
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    """
     获取最近的预测记录
-
     Args:
         hours: 时间范围（小时）
         limit: 返回记录数量限制
         session: 数据库会话
-
     Returns:
         API响应，包含最近预测记录
-    """
     return await get_recent_predictions_handler(hours, limit, session)
-
-
 @router.post(
     "/{match_id:int}/verify",
     summary="验证预测结果",
@@ -227,14 +232,10 @@ async def get_recent_predictions(
 async def verify_prediction(
     match_id: int, session: AsyncSession = Depends(get_async_session)
 ) -> Dict[str, Any]:
-    """
     验证预测结果
-
     Args:
         match_id: 比赛ID
         session: 数据库会话
-
     Returns:
         API响应，包含验证结果
-    """
     return await verify_prediction_handler(match_id, session)

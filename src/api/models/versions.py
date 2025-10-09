@@ -1,42 +1,60 @@
 """
-模型版本管理端点
-Model Versions Endpoint
 
-提供模型版本相关的API接口。
 """
 
 
 
 
+
+
+    """
+
+
+    """
+
+
+
+
+
+
+
+    """
+
+
+    """
+
+
+
+
+
+
+
+
+
+模型版本管理端点
+Model Versions Endpoint
+提供模型版本相关的API接口。
 logger = logging.getLogger(__name__)
-
-
 async def get_model_versions(
     model_name: str,
     limit: int = Query(default=20, description="返回版本数量限制", ge=1, le=100),
     mlflow_client: MlflowClient = None,
 ) -> Dict[str, Any]:
-    """
     获取模型版本列表
-
     Args:
         model_name: 模型名称
         limit: 返回版本数量限制
         mlflow_client: MLflow客户端
-
     Returns:
         API响应，包含模型版本信息
-    """
     try:
         logger.info(f"获取模型 {model_name} 的版本列表")
-
         # 获取模型版本
         model_versions = mlflow_client.search_model_versions(
             filter_string=f"name='{model_name}'",
             max_results=limit,
             order_by=["version_number DESC"],
         )
-
         versions_info = []
         for version in model_versions:
             # 获取运行信息
@@ -53,7 +71,6 @@ async def get_model_versions(
                     }
                 except Exception as e:
                     logger.warning(f"无法获取版本 {version.version} 的运行信息: {e}")
-
             version_info = {
                 "version": version.version,
                 "creation_timestamp": version.creation_timestamp,
@@ -69,7 +86,6 @@ async def get_model_versions(
                 "run_info": run_info,
             }
             versions_info.append(version_info)
-
         return APIResponse.success(
             data={
                 "model_name": model_name,
@@ -77,12 +93,9 @@ async def get_model_versions(
                 "versions": versions_info,
             }
         )
-
     except Exception as e:
         logger.error(f"获取模型版本失败: {e}")
         raise HTTPException(status_code=500, detail={"error": "获取模型版本失败"})
-
-
 async def promote_model_version(
     model_name: str,
     version: str,
@@ -91,30 +104,21 @@ async def promote_model_version(
     ),
     mlflow_client: MlflowClient = None,
 ) -> Dict[str, Any]:
-    """
     推广模型版本到指定阶段
-
     Args:
         model_name: 模型名称
         version: 版本号
         target_stage: 目标阶段
         mlflow_client: MLflow客户端
-
     Returns:
         API响应，包含推广结果
-    """
     try:
         logger.info(f"推广模型 {model_name} 版本 {version} 到 {target_stage} 阶段")
-
         if target_stage not in ["Staging", "Production"]:
             raise HTTPException(
                 status_code=400, Dict, Optional
-
-
-
                 detail={"error": "目标阶段必须是 Staging 或 Production"},
             )
-
         # 验证版本存在
         try:
             model_version = mlflow_client.get_model_version(
@@ -125,7 +129,6 @@ async def promote_model_version(
                 status_code=404,
                 detail={"error": f"模型版本 {model_name}:{version} 不存在"},
             )
-
         # 推广模型版本
         mlflow_client.transition_model_version_stage(
             name=model_name,
@@ -135,12 +138,10 @@ async def promote_model_version(
                 target_stage == "Production"
             ),  # 生产环境时归档现有版本
         )
-
         # 获取更新后的版本信息
         updated_version = mlflow_client.get_model_version(
             name=model_name, version=version
         )
-
         return APIResponse.success(
             data={
                 "model_name": model_name,
@@ -151,7 +152,6 @@ async def promote_model_version(
             },
             message=f"模型版本已成功推广到 {target_stage} 阶段",
         )
-
     except HTTPException:
         raise
     except Exception as e:

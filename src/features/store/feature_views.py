@@ -1,28 +1,29 @@
 """
-特征视图定义
-Feature View Definitions
 
-定义 Feast 特征存储的特征视图。
 """
 
 
 
 
-def get_feature_view_definitions() -> Dict[str, FeatureView]:
     """
-    获取特征视图定义
 
-    Returns:
-        Dict[str, FeatureView]: 特征视图名称到视图对象的映射
     """
-    entities = get_entity_definitions()
 
-    return {
-        "team_recent_performance": FeatureView(
-            name="team_recent_performance").data_sources import get_match_data_source, get_odds_data_source, get_team_data_source
+
 from .entities import get_entity_definitions
 from .mock_feast import FeatureView, Field, Float64, Int64
 
+特征视图定义
+Feature View Definitions
+定义 Feast 特征存储的特征视图。
+def get_feature_view_definitions() -> Dict[str, FeatureView]:
+    获取特征视图定义
+    Returns:
+        Dict[str, FeatureView]: 特征视图名称到视图对象的映射
+    entities = get_entity_definitions()
+    return {
+        "team_recent_performance": FeatureView(
+            name="team_recent_performance").data_sources import get_match_data_source, get_odds_data_source, get_team_data_source
             entities=[entities["team"]],
             ttl=timedelta(days=7),
             schema=[

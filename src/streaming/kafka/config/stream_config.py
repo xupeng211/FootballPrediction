@@ -1,15 +1,24 @@
 """
-Kafka流处理配置
 """
 
 
 
-_settings = get_settings()
 
 
-class StreamConfig:
     """流处理配置"""
 
+        """
+
+        """
+
+        """转换为生产者配置"""
+
+        """转换为消费者配置"""
+
+
+Kafka流处理配置
+_settings = get_settings()
+class StreamConfig:
     def __init__(
         self,
         bootstrap_servers: Optional[str] = None,
@@ -19,9 +28,7 @@ class StreamConfig:
         session_timeout_ms: int = 30000,
         heartbeat_interval_ms: int = 3000,
     ):
-        """
         初始化流配置
-
         Args:
             bootstrap_servers: Kafka服务器地址
             group_id: 消费者组ID
@@ -29,7 +36,6 @@ class StreamConfig:
             enable_auto_commit: 是否自动提交偏移量
             session_timeout_ms: 会话超时时间
             heartbeat_interval_ms: 心跳间隔
-        """
         self.bootstrap_servers = bootstrap_servers or getattr(
             _settings, "kafka_bootstrap_servers", "localhost:9092"
         )
@@ -40,9 +46,7 @@ class StreamConfig:
         self.enable_auto_commit = enable_auto_commit
         self.session_timeout_ms = session_timeout_ms
         self.heartbeat_interval_ms = heartbeat_interval_ms
-
     def to_producer_config(self) -> Dict[str, Any]:
-        """转换为生产者配置"""
         return {
             "bootstrap.servers": self.bootstrap_servers,
             "client.id": f"football-prediction-producer-{int(time.time())}",
@@ -53,14 +57,10 @@ class StreamConfig:
             "batch.size": 16384,
             "compression.type": "snappy",
         }
-
     def to_consumer_config(self) -> Dict[str, Any]:
-        """转换为消费者配置"""
         return {
             "bootstrap.servers": self.bootstrap_servers,
             "group.id": self.group_id, Dict, Optional
-
-
             "auto.offset.reset": self.auto_offset_reset,
             "enable.auto.commit": self.enable_auto_commit,
             "session.timeout.ms": self.session_timeout_ms,

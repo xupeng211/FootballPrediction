@@ -1,43 +1,62 @@
 """
-历史预测处理器 / History Prediction Handlers
 
-处理历史预测相关的请求。
 """
 
 
 
 
+
+
+    """
+
+
+
+    """
+
+
+
+
+
+
+
+
+    """
+
+
+
+    """
+
+
+
+
+
+
+
+
+历史预测处理器 / History Prediction Handlers
+处理历史预测相关的请求。
 logger = logging.getLogger(__name__)
-
-
 async def get_match_prediction_history_handler(
     match_id: int,
     limit: int = Query(10, description="返回记录数量限制", ge=1, le=100),
     session: Optional[AsyncSession] = None,
 ) -> Dict[str, Any]:
-    """
     获取比赛历史预测的处理器
-
     Args:
         match_id: 比赛ID
         limit: 返回记录数量限制
         session: 数据库会话
-
     Returns:
         API响应字典
-
     Raises:
         HTTPException: 当比赛不存在或查询失败时
-    """
     try:
         # 验证比赛存在
         match_query = select(Match).where(Match.id == match_id)
         match_result = await session.execute(match_query)
         match = match_result.scalar_one_or_none()
-
         if not match:
             raise HTTPException(status_code=404, detail=f"比赛 {match_id} 不存在")
-
         # 查询历史预测
         limit_value = limit
         history_query = (
@@ -46,10 +65,8 @@ async def get_match_prediction_history_handler(
             .order_by(desc(Prediction.created_at))
             .limit(limit_value)
         )
-
         history_result = await session.execute(history_query)
         predictions = history_result.scalars().all()
-
         prediction_list = []
         for prediction in predictions:
             prediction_list.append(
@@ -91,7 +108,6 @@ async def get_match_prediction_history_handler(
                     ),
                 }
             )
-
         return APIResponse.success(
             data={
                 "match_id": match_id,
@@ -99,45 +115,33 @@ async def get_match_prediction_history_handler(
                 "predictions": prediction_list,
             }
         )
-
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取比赛 {match_id} 历史预测失败: {e}")
         raise HTTPException(status_code=500, detail="获取历史预测失败")
-
-
 async def get_recent_predictions_handler(
     hours: int = Query(default=24, description="时间范围（小时）", ge=1, le=168),
     limit: int = Query(50, description="返回记录数量限制", ge=1, le=200),
     session: Optional[AsyncSession] = None,
 ) -> Dict[str, Any]:
-    """
     获取最近预测的处理器
-
     Args:
         hours: 时间范围（小时）
         limit: 返回记录数量限制
         session: 数据库会话
-
     Returns:
         API响应字典
-
     Raises:
         HTTPException: 当查询失败时
-    """
     try:
         # 计算时间范围
         since_time = datetime.now() - timedelta(hours=hours)
-
         # 查询最近预测
         limit_value = limit
         recent_query = (
             select(
                 Prediction.id, timedelta
-
-
-
                 Prediction.match_id,
                 Prediction.model_version,
                 Prediction.model_name,
@@ -155,10 +159,8 @@ async def get_recent_predictions_handler(
             .order_by(desc(Prediction.created_at))
             .limit(limit_value)
         )
-
         result = await session.execute(recent_query)
         predictions = result.fetchall()
-
         prediction_list = []
         for pred in predictions:
             prediction_list.append(
@@ -183,7 +185,6 @@ async def get_recent_predictions_handler(
                     },
                 }
             )
-
         return APIResponse.success(
             data={
                 "time_range_hours": hours,
@@ -191,7 +192,6 @@ async def get_recent_predictions_handler(
                 "predictions": prediction_list,
             }
         )
-
     except Exception as e:
         logger.error(f"获取最近预测失败: {e}")
         raise HTTPException(status_code=500, detail="获取最近预测失败")
