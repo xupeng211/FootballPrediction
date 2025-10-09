@@ -1,8 +1,7 @@
 """
-WebhookJf S
+Webhook Alert Channel
 Webhook Alert Channel
 
-ÇHTTP webhookÑJf
 Sends alerts via HTTP webhook.
 """
 
@@ -14,26 +13,23 @@ from typing import Any, Dict, List
 import aiohttp
 
 from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
+from ...core.exceptions import ValidationError
 
 
 class WebhookChannel(BaseAlertChannel):
     """
-    WebhookJf S
     Webhook Alert Channel
 
-    ÇHTTP webhookÑJf
     Sends alerts via HTTP webhook.
     """
 
     def __init__(self, name: str = "webhook", config: Dict[str, Any] | None = None):
         """
-        ËWebhook S
         Initialize Webhook Channel
 
         Args:
-            name:  Sð / Channel name
-            config:  SMn / Channel configuration
+            name: Channel name
+            config: Channel configuration
         """
         super().__init__(name, config)
         self.url = self.config.get("url")
@@ -46,16 +42,15 @@ class WebhookChannel(BaseAlertChannel):
         if not self.url:
             raise ValueError("Webhook URL is required")
 
-    async def send(self, alert: Alert) -> bool:
+    async def send(self, alert) -> bool:
         """
-        ÑWebhook÷B
         Send Webhook Request
 
         Args:
-            alert: Jfùa / Alert object
+            alert: Alert object
 
         Returns:
-            bool: /&ÑŸ / Whether sent successfully
+            bool: Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -64,14 +59,10 @@ class WebhookChannel(BaseAlertChannel):
             "alert_id": alert.alert_id,
             "title": alert.title,
             "message": alert.message,
-            "level": alert.level.value,
-            "severity": alert.severity.value,
+            "severity": alert.severity,
             "source": alert.source,
-            "status": alert.status.value,
-            "created_at": alert.created_at.isoformat(),
-            "labels": alert.labels,
-            "annotations": alert.annotations,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": alert.timestamp.isoformat(),
+            "metadata": alert.metadata,
         }
 
         for attempt in range(self.retry_count):
@@ -80,38 +71,34 @@ class WebhookChannel(BaseAlertChannel):
                     async with session.request(
                         method=self.method,
                         url=self.url,
-                        headers=self.headers,
                         json=payload,
-                        timeout=self.timeout
+                        headers=self.headers,
+                        timeout=aiohttp.ClientTimeout(total=self.timeout),
                     ) as response:
-                        if 200 <= response.status < 300:
-                            self.logger.info(f"Webhook sent successfully: {alert.alert_id}")
+                        if response.status < 400:
                             return True
                         else:
                             self.logger.warning(
-                                f"Webhook failed with status {response.status}: {alert.alert_id}"
+                                f"Webhook failed with status {response.status}: {await response.text()}"
                             )
 
             except Exception as e:
-                self.logger.error(
-                    f"Webhook attempt {attempt + 1} failed: {e}"
-                )
+                self.logger.error(f"Webhook send failed (attempt {attempt + 1}): {e}")
 
             if attempt < self.retry_count - 1:
                 await asyncio.sleep(self.retry_delay)
 
         return False
 
-    async def send_batch(self, alerts: List[Alert]) -> Dict[str, bool]:
+    async def send_batch(self, alerts: List) -> Dict[str, bool]:
         """
-        yÏÑWebhook
         Send Batch Webhook
 
         Args:
-            alerts: Jfh / List of alerts
+            alerts: List of alerts
 
         Returns:
-            Dict[str, bool]: ÑÓœ / Send results
+            Dict[str, bool]: Send results
         """
         if not self.is_enabled():
             return {alert.alert_id: False for alert in alerts}
@@ -122,32 +109,59 @@ class WebhookChannel(BaseAlertChannel):
                     "alert_id": alert.alert_id,
                     "title": alert.title,
                     "message": alert.message,
-                    "level": alert.level.value,
-                    "severity": alert.severity.value,
+                    "severity": alert.severity,
                     "source": alert.source,
-                    "status": alert.status.value,
-                    "created_at": alert.created_at.isoformat(),
-                    "labels": alert.labels,
-                    "annotations": alert.annotations,
+                    "timestamp": alert.timestamp.isoformat(),
+                    "metadata": alert.metadata,
                 }
                 for alert in alerts
             ],
-            "timestamp": datetime.utcnow().isoformat(),
-            "count": len(alerts),
+            "batch_timestamp": datetime.utcnow().isoformat(),
         }
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.request(
-                    method=self.method,
-                    url=self.url,
-                    headers=self.headers,
-                    json=payload,
-                    timeout=self.timeout
-                ) as response:
-                    success = 200 <= response.status < 300
-                    return {alert.alert_id: success for alert in alerts}
+        results = {}
 
-        except Exception as e:
-            self.logger.error(f"Batch webhook failed: {e}")
-            return {alert.alert_id: False for alert in alerts}
+        for attempt in range(self.retry_count):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.request(
+                        method=self.method,
+                        url=self.url,
+                        json=payload,
+                        headers=self.headers,
+                        timeout=aiohttp.ClientTimeout(total=self.timeout),
+                    ) as response:
+                        if response.status < 400:
+                            # Assume all alerts in batch were sent successfully
+                            for alert in alerts:
+                                results[alert.alert_id] = True
+                            return results
+                        else:
+                            self.logger.warning(
+                                f"Batch webhook failed with status {response.status}: {await response.text()}"
+                            )
+
+            except Exception as e:
+                self.logger.error(
+                    f"Batch webhook send failed (attempt {attempt + 1}): {e}"
+                )
+
+            if attempt < self.retry_count - 1:
+                await asyncio.sleep(self.retry_delay)
+
+        # If all retries failed, mark all as failed
+        for alert in alerts:
+            results[alert.alert_id] = False
+
+        return results
+
+    def validate_config(self) -> bool:
+        """Validate webhook configuration"""
+        if not self.url:
+            return False
+
+        # Basic URL validation
+        if not (self.url.startswith("http://") or self.url.startswith("https://")):
+            return False
+
+        return True

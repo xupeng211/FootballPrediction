@@ -1,8 +1,8 @@
 """
-SlackJf S
+Slack告警通道
 Slack Alert Channel
 
-�Slack webhook�Jf
+通过Slack webhook发送告警
 Sends alerts via Slack webhook.
 """
 
@@ -16,21 +16,21 @@ from ...alert_manager_mod.models import Alert
 
 class SlackChannel(BaseAlertChannel):
     """
-    SlackJf S
+    Slack告警通道
     Slack Alert Channel
 
-    �Slack webhook�Jf
+    通过Slack webhook发送告警
     Sends alerts via Slack webhook.
     """
 
     def __init__(self, name: str = "slack", config: Dict[str, Any] | None = None):
         """
-        �Slack S
+        初始化Slack通道
         Initialize Slack Channel
 
         Args:
-            name:  S� / Channel name
-            config:  SMn / Channel configuration
+            name: 通道名称 / Channel name
+            config: 通道配置 / Channel configuration
         """
         super().__init__(name, config)
         self.webhook_url = self.config.get("webhook_url")
@@ -44,14 +44,14 @@ class SlackChannel(BaseAlertChannel):
 
     async def send(self, alert: Alert) -> bool:
         """
-        �Slack�o
+        发送Slack消息
         Send Slack Message
 
         Args:
-            alert: Jf�a / Alert object
+            alert: 告警对象 / Alert object
 
         Returns:
-            bool: /&�� / Whether sent successfully
+            bool: 是否发送成功 / Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -87,7 +87,9 @@ class SlackChannel(BaseAlertChannel):
                             },
                             {
                                 "title": "Created At",
-                                "value": alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC'),
+                                "value": alert.created_at.strftime(
+                                    "%Y-%m-%d %H:%M:%S UTC"
+                                ),
                                 "short": True,
                             },
                         ],
@@ -100,9 +102,7 @@ class SlackChannel(BaseAlertChannel):
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.webhook_url,
-                    json=payload,
-                    timeout=10
+                    self.webhook_url, json=payload, timeout=10
                 ) as response:
                     success = response.status == 200
                     if success:
@@ -117,19 +117,19 @@ class SlackChannel(BaseAlertChannel):
 
     def _get_color_by_level(self, level: str) -> str:
         """
-        9n�+�֜r
+        根据级别获取颜色
         Get Color by Level
 
         Args:
-            level: Jf�+ / Alert level
+            level: 告警级别 / Alert level
 
         Returns:
-            str: �r� / Color code
+            str: 颜色代码 / Color code
         """
         colors = {
-            "info": "#36a64f",      # �r
-            "warning": "#ff9500",   # Yr
-            "error": "#ff0000",     # �r
-            "critical": "#8b0000",  # �r
+            "info": "#36a64f",  # 绿色
+            "warning": "#ff9500",  # 黄色
+            "error": "#ff0000",  # 红色
+            "critical": "#8b0000",  # 深红色
         }
-        return colors.get(level, "#808080")  # ؤpr
+        return colors.get(level, "#808080")  # 灰色

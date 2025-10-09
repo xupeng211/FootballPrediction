@@ -1,8 +1,8 @@
 """
-��Jf S
+邮件告警通道
 Email Alert Channel
 
-Ǯ��Jf
+通过邮件发送告警
 Sends alerts via email.
 """
 
@@ -15,21 +15,21 @@ from ...alert_manager_mod.models import Alert
 
 class EmailChannel(BaseAlertChannel):
     """
-    ��Jf S
+    邮件告警通道
     Email Alert Channel
 
-    Ǯ��Jf
+    通过邮件发送告警
     Sends alerts via email.
     """
 
     def __init__(self, name: str = "email", config: Dict[str, Any] | None = None):
         """
-        ��� S
+        初始化邮件通道
         Initialize Email Channel
 
         Args:
-            name:  S� / Channel name
-            config:  SMn / Channel configuration
+            name: 通道名称 / Channel name
+            config: 通道配置 / Channel configuration
         """
         super().__init__(name, config)
         self.smtp_host = self.config.get("smtp_host")
@@ -46,14 +46,14 @@ class EmailChannel(BaseAlertChannel):
 
     async def send(self, alert: Alert) -> bool:
         """
-        ���Jf
+        发送邮件告警
         Send Email Alert
 
         Args:
-            alert: Jf�a / Alert object
+            alert: 告警对象 / Alert object
 
         Returns:
-            bool: /&�� / Whether sent successfully
+            bool: 是否发送成功 / Whether sent successfully
         """
         if not self.is_enabled():
             return False
@@ -91,54 +91,54 @@ class EmailChannel(BaseAlertChannel):
 
     def _format_email_body(self, alert: Alert) -> str:
         """
-        <��c�
+        格式化邮件正文
         Format Email Body
 
         Args:
-            alert: Jf�a / Alert object
+            alert: 告警对象 / Alert object
 
         Returns:
-            str: <���c� / Formatted email body
+            str: 格式化的邮件正文 / Formatted email body
         """
         body = f"""
-Jf� / Alert Notification
+告警通知 / Alert Notification
 ============================
 
-JfID / Alert ID: {alert.alert_id}
-� / Title: {alert.title}
-�o / Message: {alert.message}
-�+ / Level: {alert.level.value}
-%�� / Severity: {alert.severity.value}
-e� / Source: {alert.source}
-� / Status: {alert.status.value}
-��� / Created At: {alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+告警ID / Alert ID: {alert.alert_id}
+标题 / Title: {alert.title}
+消息 / Message: {alert.message}
+级别 / Level: {alert.level.value}
+严重程度 / Severity: {alert.severity.value}
+来源 / Source: {alert.source}
+状态 / Status: {alert.status.value}
+创建时间 / Created At: {alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
 
-~ / Labels:
+标签 / Labels:
 {json.dumps(alert.labels, indent=2, ensure_ascii=False)}
 
-�� / Annotations:
+注释 / Annotations:
 {json.dumps(alert.annotations, indent=2, ensure_ascii=False)}
 
 ---
-d��1Jf���� / This email was sent automatically by the alert system
+此邮件由告警系统自动发送 / This email was sent automatically by the alert system
         """.strip()
 
         return body
 
     async def send_batch(self, alerts: List[Alert]) -> Dict[str, bool]:
         """
-        y����Jf
+        批量发送邮件告警
         Send Batch Email Alerts
 
         Args:
-            alerts: Jfh / List of alerts
+            alerts: 告警列表 / List of alerts
 
         Returns:
-            Dict[str, bool]: �Ӝ / Send results
+            Dict[str, bool]: 发送结果 / Send results
         """
         results = {}
 
-        # ����*��M���'
+        # 为每个告警单独发送邮件
         for alert in alerts:
             results[alert.alert_id] = await self.send(alert)
 
