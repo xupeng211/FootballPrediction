@@ -79,3 +79,19 @@ class TaskExecutionError(FootballPredictionError):
 
 class TaskRetryError(FootballPredictionError):
     """任务重试异常"""
+
+
+class AuthenticationError(FootballPredictionError):
+    """认证异常"""
+
+
+class AuthorizationError(FootballPredictionError):
+    """授权异常"""
+
+
+class RateLimitError(FootballPredictionError):
+    """限流异常"""
+
+
+class TimeoutError(FootballPredictionError):
+    """超时异常"""
