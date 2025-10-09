@@ -1,57 +1,24 @@
-from typing import cast, Any, Optional, Union
-from abc import ABC, abstractmethod
-
-from src.core import logger
-
 """
 足球预测系统基础服务模块
 
-定义所有业务服务的基础抽象类。
+注意：此文件已被重构为使用统一的基础服务类。
+为了向后兼容性，这里保留原有的导入。
+
+推荐使用：from src.services.base_unified import BaseService, SimpleService
 """
 
+# 为了向后兼容，从新的统一基类导入
+from .base_unified import BaseService, SimpleService
+from .base_unified import BaseService as AbstractBaseService  # 兼容原有的抽象基类名称
 
-class BaseService:
-    """基础服务类"""
+# 保持向后兼容的导出
+__all__ = ["BaseService", "AbstractBaseService", "SimpleService"]
 
-    def __init__(self, name: str = "BaseService"):
-        self.name = name
-        self.logger = logger
-        self._running = True
+# 添加弃用警告
+import warnings
 
-    async def initialize(self) -> bool:
-        """服务初始化"""
-        return True
-
-    async def shutdown(self) -> None:
-        """服务关闭"""
-        self._running = False
-
-    def start(self) -> bool:
-        """启动服务"""
-        self._running = True
-        return True
-
-    def stop(self) -> bool:
-        """停止服务"""
-        self._running = False
-        return True
-
-    def get_status(self) -> str:
-        """获取服务状态"""
-        return "running" if self._running else "stopped"
-
-
-class AbstractBaseService(ABC):
-    """抽象基础服务类 - 供需要强制实现的服务继承"""
-
-    def __init__(self, name: str):
-        self.name = name
-        self.logger = logger
-
-    @abstractmethod
-    async def initialize(self) -> bool:
-        """服务初始化"""
-
-    @abstractmethod
-    async def shutdown(self) -> None:
-        """服务关闭"""
+warnings.warn(
+    "src.services.base 已被弃用，请使用 src.services.base_unified 中的统一基础服务类",
+    DeprecationWarning,
+    stacklevel=2,
+)

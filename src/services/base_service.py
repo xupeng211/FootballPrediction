@@ -1,43 +1,23 @@
 """
 基础服务类
 
-所有服务的基类，提供通用的功能。
+注意：此文件已被重构为使用统一的基础服务类。
+为了向后兼容性，这里保留原有的导入。
+
+推荐使用：from src.services.base_unified import BaseService, SimpleService
 """
 
-import logging
-from abc import ABC
-from typing import Any, Dict, Optional
+# 为了向后兼容，从新的统一基类导入
+from .base_unified import BaseService, SimpleService
 
-from src.database.connection_mod import DatabaseManager
+# 保持向后兼容的导出
+__all__ = ["BaseService", "SimpleService"]
 
+# 添加弃用警告
+import warnings
 
-class BaseService(ABC):
-    """服务基类 / Base Service Class"""
-
-    def __init__(self, db_manager: Optional[DatabaseManager] = None):
-        """
-        初始化基础服务
-
-        Args:
-            db_manager: 数据库管理器实例
-        """
-        self.db_manager = db_manager or DatabaseManager()
-        self.logger = logging.getLogger(self.__class__.__name__)
-
-    async def get_async_session(self):
-        """获取异步数据库会话"""
-        return self.db_manager.get_async_session()
-
-    def get_sync_session(self):
-        """获取同步数据库会话"""
-        return self.db_manager.get_session()
-
-    def log_operation(self, operation: str, details: Optional[Dict[str, Any]] = None):
-        """
-        记录操作日志
-
-        Args:
-            operation: 操作名称
-            details: 操作详情
-        """
-        self.logger.info(f"Operation: {operation}, Details: {details or {}}")
+warnings.warn(
+    "src.services.base_service 已被弃用，请使用 src.services.base_unified 中的统一基础服务类",
+    DeprecationWarning,
+    stacklevel=2,
+)

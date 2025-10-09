@@ -29,6 +29,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 这是一个足球预测系统，使用 FastAPI、SQLAlchemy、Redis 和 PostgreSQL 构建。项目采用现代 Python 架构，具有完整的测试、CI/CD 和 MLOps 功能。
 
+**当前正在进行最佳实践优化**，详见 [BEST_PRACTICES_KANBAN.md](BEST_PRACTICES_KANBAN.md)
+
 ## 开发命令
 
 ### 环境设置
@@ -64,9 +66,22 @@ make ci               # 模拟 GitHub Actions CI 流程
 
 ### 本地 CI 验证
 ```bash
-./ci-verify.sh        # 在本地运行完整的 CI 验证
+./scripts/ci-verify.sh        # 在本地运行完整的 CI 验证
 make test-phase1      # 运行第一阶段核心 API 测试
 ./scripts/quality-check.sh  # 推荐的快速质量检查
+```
+
+### 最佳实践优化（新增）
+```bash
+make best-practices-plan        # 查看今天的优化任务
+make best-practices-today       # 一键开始今天的工作
+make best-practices-start TASK=1.1  # 开始特定任务
+make best-practices-done        # 完成当前任务
+make best-practices-check       # 运行代码质量检查
+make best-practices-progress    # 查看整体进度
+make best-practices-summary     # 生成优化总结报告
+make best-practices-status      # 查看当前状态
+./scripts/check_best_practices.sh  # 运行最佳实践检查脚本
 ```
 
 ## 架构说明
@@ -87,14 +102,22 @@ make test-phase1      # 运行第一阶段核心 API 测试
 
 ### 关键模式
 - 使用支持异步的 SQLAlchemy（asyncpg 驱动）
-- 数据访问使用仓库模式
+- **注意**：仓库模式正在实施中（Phase 1.2）
 - 通过 FastAPI 的依赖系统进行依赖注入
 - 测试数据使用工厂模式（见 `tests/factories/`）
 - 全面使用 Pydantic 模型进行数据验证
-- 服务层继承 `EnhancedBaseService`（统一服务基类）
+- 服务层继承 `BaseService`（当前存在重复的基础服务类，待统一）
 - 使用项目内置的 `KeyManager` 系统管理密钥（禁止硬编码）
 - 使用结构化日志记录（JSON 格式）
 - 支持 TestContainers 进行集成测试
+
+### 当前架构状态
+- **代码质量评分**：6.2/10（目标 8.5/10）
+- **主要问题**：
+  - 存在重复的基础服务类（`src/services/base.py` 和 `src/services/base_service.py`）
+  - 仓储模式未完全实现
+  - 领域模型待引入
+  - 设计模式使用不足（目前仅3个）
 
 ## 测试指南
 
@@ -147,7 +170,7 @@ make test-phase1      # 运行第一阶段核心 API 测试
 
 4. **推送前验证**
    ```bash
-   ./ci-verify.sh      # 完整的CI验证（推荐）
+   ./scripts/ci-verify.sh      # 完整的CI验证（推荐）
    # 或
    make ci             # 模拟CI流程
    ```
@@ -259,6 +282,13 @@ make debt-summary            # 生成清理总结报告
 4. **Phase 4**: 代码质量优化（类型注解、文档、性能）
 
 详细信息请查看：[TECHNICAL_DEBT_KANBAN.md](TECHNICAL_DEBT_KANBAN.md)
+
+## 最佳实践优化
+
+### 当前状态
+- 正在进行 Phase 1：架构基础优化
+- 目标：将代码质量评分从 6.2/10 提升到 8.5/10
+- 详情请查看：[BEST_PRACTICES_KANBAN.md](BEST_PRACTICES_KANBAN.md)
 
 ## 重要说明
 
@@ -461,3 +491,28 @@ make lint             # 包含 MyPy 检查
 - 使用 Python 3.11+ 的新类型特性（如 `|` 联合类型）
 - 复杂类型使用 `typing` 模块
 - 避免 `Any` 类型，必要时添加 `# type: ignore` 注释
+
+## 🚨 重要架构说明
+
+### 需要立即关注的问题
+1. **重复的基础服务类** - `src/services/base.py` 和 `src/services/base_service.py` 需要合并
+2. **缺少仓储模式** - 数据访问直接在 Service 层，需要引入 Repository 层
+3. **缺少领域模型** - 业务逻辑散布在 Service 层，需要封装到 Domain 模型中
+
+### 优化优先级
+1. **P0 (紧急)**: 统一基础服务类，实现仓储模式
+2. **P1 (高)**: 引入领域模型，优化依赖注入
+3. **P2 (中)**: 实现更多设计模式（策略、装饰器、事件等）
+4. **P3 (低)**: 高级架构模式（CQRS、门面模式等）
+
+### 快速开始优化
+```bash
+# 查看今天的优化任务
+make best-practices-plan
+
+# 开始第一个任务（统一基础服务类）
+make best-practices-start TASK=1.1
+
+# 运行最佳实践检查
+./scripts/check_best_practices.sh
+```

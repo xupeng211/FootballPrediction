@@ -4,7 +4,7 @@
 提供内容分析和处理功能。
 """
 
-from .base_service import BaseService
+from .base_unified import SimpleService
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
@@ -38,25 +38,40 @@ class AnalysisResult:
         self.content_id = content_id
 
 
-class ContentAnalysisService(BaseService):
+class ContentAnalysisService(SimpleService):
     """内容分析服务"""
 
     def __init__(self):
         super().__init__("ContentAnalysisService")
-        self._initialized = False
+        self._models_loaded = False
 
-    async def initialize(self) -> bool:
+    async def _on_initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
         # 加载AI模型、连接外部API等
         # 在实际生产环境中，这里会加载ML模型和建立外部连接
-        self._initialized = True
-        return True
+        try:
+            # 这里可以加载ML模型
+            self._models_loaded = True
+            return True
+        except Exception as e:
+            self.logger.error(f"初始化失败: {e}")
+            return False
 
-    async def shutdown(self) -> None:
+    async def _on_shutdown(self) -> None:
         """关闭服务"""
         self.logger.info(f"正在关闭 {self.name}")
-        self._initialized = False
+        self._models_loaded = False
+
+    async def _get_service_info(self) -> Dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": self.name,
+            "type": self.__class__.__name__,
+            "description": "Content analysis service for football prediction system",
+            "version": "1.0.0",
+            "models_loaded": self._models_loaded,
+        }
 
     async def analyze_content(self, content: Content) -> Optional[AnalysisResult]:
         """分析内容"""

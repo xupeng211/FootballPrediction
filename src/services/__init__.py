@@ -1,5 +1,5 @@
 from typing import cast, Any, Optional, Union
-from .base import BaseService
+from .base_unified import BaseService, SimpleService
 from .content_analysis import ContentAnalysisService
 from .data_processing import DataProcessingService
 from .manager import ServiceManager, service_manager
