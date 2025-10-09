@@ -164,7 +164,7 @@ class DataValidator:
                 if not pd.api.types.is_datetime64_any_dtype(df[field]):
                     try:
                         pd.to_datetime(df[field])
-                    except:
+                    except Exception:
                         result["errors"].append(f"字段 {field} 不是有效的日期格式")
 
         numeric_fields = rules.get("numeric_fields", [])
@@ -173,7 +173,7 @@ class DataValidator:
                 if not pd.api.types.is_numeric_dtype(df[field]):
                     try:
                         pd.to_numeric(df[field])
-                    except:
+                    except Exception:
                         result["warnings"].append(f"字段 {field} 包含非数值数据")
 
         return result
@@ -210,9 +210,9 @@ class DataValidator:
             )
 
         # 检查异常值
-        numeric_cols = df.select_dtypes(include=['number']).columns
+        numeric_cols = df.select_dtypes(include=["number"]).columns
         for col in numeric_cols:
-            if df[col].dtype in ['float64', 'int64']:
+            if df[col].dtype in ["float64", "int64"]:
                 # 使用IQR方法检测异常值
                 Q1 = df[col].quantile(0.25)
                 Q3 = df[col].quantile(0.75)
@@ -254,14 +254,16 @@ class DataValidator:
 
         return result
 
-    async def _validate_match_business_rules(
-        self, df: pd.DataFrame
-    ) -> Dict[str, Any]:
+    async def _validate_match_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证比赛数据业务规则"""
         result = {"errors": [], "warnings": []}
 
         # 检查同一日期的重复比赛
-        if "match_date" in df.columns and "home_team" in df.columns and "away_team" in df.columns:
+        if (
+            "match_date" in df.columns
+            and "home_team" in df.columns
+            and "away_team" in df.columns
+        ):
             date_team_pairs = df.groupby("match_date").apply(
                 lambda x: x.duplicated(subset=["home_team", "away_team"]).any()
             )
@@ -293,9 +295,7 @@ class DataValidator:
 
         return result
 
-    async def _validate_odds_business_rules(
-        self, df: pd.DataFrame
-    ) -> Dict[str, Any]:
+    async def _validate_odds_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证赔率数据业务规则"""
         result = {"errors": [], "warnings": []}
 
@@ -314,7 +314,7 @@ class DataValidator:
 
         # 检查隐含概率
         if all(x in df.columns for x in ["home_win", "draw", "away_win"]):
-            implied_probs = 1/df["home_win"] + 1/df["draw"] + 1/df["away_win"]
+            implied_probs = 1 / df["home_win"] + 1 / df["draw"] + 1 / df["away_win"]
             # 检查隐含概率过低（套利机会）
             arbitrage = implied_probs < 1
             if arbitrage.any():
@@ -339,19 +339,17 @@ class DataValidator:
                 # 标准化后的值应该在[-3, 3]范围内
                 out_of_range = (df[col] < -3) | (df[col] > 3)
                 if out_of_range.any():
-                    result["warnings"].append(
-                        f"标准化特征 {col} 存在超出±3标准差的值"
-                    )
+                    result["warnings"].append(f"标准化特征 {col} 存在超出±3标准差的值")
 
         # 检查比率型特征
-        ratio_features = [col for col in df.columns if "rate" in col.lower() or "ratio" in col.lower()]
+        ratio_features = [
+            col for col in df.columns if "rate" in col.lower() or "ratio" in col.lower()
+        ]
         for col in ratio_features:
-            if df[col].dtype in ['float64', 'int64']:
+            if df[col].dtype in ["float64", "int64"]:
                 invalid_ratios = (df[col] < 0) | (df[col] > 1)
                 if invalid_ratios.any():
-                    result["errors"].append(
-                        f"比率特征 {col} 的值必须在[0, 1]范围内"
-                    )
+                    result["errors"].append(f"比率特征 {col} 的值必须在[0, 1]范围内")
 
         return result
 
@@ -373,13 +371,13 @@ class DataValidator:
         }
 
         # 数值列统计
-        numeric_cols = df.select_dtypes(include=['number']).columns
+        numeric_cols = df.select_dtypes(include=["number"]).columns
         if not numeric_cols.empty:
             numeric_stats = df[numeric_cols].describe().to_dict()
             stats["numeric_statistics"] = numeric_stats
 
         # 时间范围统计
-        date_cols = df.select_dtypes(include=['datetime64']).columns
+        date_cols = df.select_dtypes(include=["datetime64"]).columns
         if not date_cols.empty:
             date_stats = {}
             for col in date_cols:
@@ -399,10 +397,14 @@ class DataValidator:
         if results["valid"]:
             self.logger.info(f"{data_type} 数据验证通过")
         else:
-            self.logger.error(f"{data_type} 数据验证失败，错误数: {len(results['errors'])}")
+            self.logger.error(
+                f"{data_type} 数据验证失败，错误数: {len(results['errors'])}"
+            )
 
         if results["warnings"]:
-            self.logger.warning(f"{data_type} 数据验证警告数: {len(results['warnings'])}")
+            self.logger.warning(
+                f"{data_type} 数据验证警告数: {len(results['warnings'])}"
+            )
 
         # 记录统计信息
         stats = results.get("statistics", {})
@@ -441,9 +443,7 @@ class DataValidator:
             batch_cols = set(batch.columns)
             if batch_cols != first_batch_cols:
                 result["consistent"] = False
-                result["issues"].append(
-                    f"批次 {i} 的列与批次 0 不一致"
-                )
+                result["issues"].append(f"批次 {i} 的列与批次 0 不一致")
 
         # 检查数据类型一致性
         for col in first_batch_cols:

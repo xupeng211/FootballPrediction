@@ -24,7 +24,7 @@ class TestCoreConfig:
             get_config()
             # 不关心返回值，只关心是否可以调用
             assert True
-        except:
+        except Exception:
             pytest.skip("get_config function not callable")
 
     def test_config_module_attributes(self):
@@ -34,5 +34,5 @@ class TestCoreConfig:
 
             # 检查是否有常见属性
             assert hasattr(config_module, "get_config")
-        except:
+        except Exception:
             pytest.skip("config module attributes not testable")

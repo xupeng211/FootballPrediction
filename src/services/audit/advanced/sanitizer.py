@@ -68,17 +68,17 @@ class DataSanitizer:
         # 敏感数据模式
         self.sensitive_patterns = [
             # 信用卡号
-            r'\b(?:\d[ -]*?){13,16}\b',
+            r"\b(?:\d[ -]*?){13,16}\b",
             # 社会安全号码
-            r'\b\d{3}-?\d{2}-?\d{4}\b',
+            r"\b\d{3}-?\d{2}-?\d{4}\b",
             # 邮箱地址
-            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             # 电话号码
-            r'\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b',
+            r"\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b",
             # IP地址
-            r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b',
+            r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",
             # API密钥
-            r'\b[A-Za-z0-9]{32,}\b',
+            r"\b[A-Za-z0-9]{32,}\b",
         ]
 
         # 合规类别映射
@@ -95,10 +95,21 @@ class DataSanitizer:
 
         # PII指示器
         self.pii_indicators = [
-            "ssn", "social_security", "credit_card", "bank_account",
-            "email", "phone", "address", "id_number",
-            "passport", "license", "personal", "private",
-            "confidential", "secret", "sensitive",
+            "ssn",
+            "social_security",
+            "credit_card",
+            "bank_account",
+            "email",
+            "phone",
+            "address",
+            "id_number",
+            "passport",
+            "license",
+            "personal",
+            "private",
+            "confidential",
+            "secret",
+            "sensitive",
         ]
 
     def is_sensitive_table(self, table_name: str) -> bool:
@@ -194,7 +205,13 @@ class DataSanitizer:
             return True
 
         # 检查动作
-        sensitive_actions = ["delete", "update_password", "reset_password", "change_role", "export"]
+        sensitive_actions = [
+            "delete",
+            "update_password",
+            "reset_password",
+            "change_role",
+            "export",
+        ]
         if action and action.lower() in sensitive_actions:
             return True
 
@@ -223,7 +240,9 @@ class DataSanitizer:
             self.logger.error(f"哈希敏感值失败: {e}")
             return "***HASHED***"
 
-    def mask_sensitive_value(self, value: str, mask_char: str = "*", show_chars: int = 4) -> str:
+    def mask_sensitive_value(
+        self, value: str, mask_char: str = "*", show_chars: int = 4
+    ) -> str:
         """
         掩码敏感值 / Mask Sensitive Value
 
@@ -280,10 +299,11 @@ class DataSanitizer:
         try:
             # 尝试解析为JSON
             import json
+
             parsed_data = json.loads(data)
             # 递归处理嵌套结构
             return self.sanitize_data(parsed_data)
-        except:
+        except Exception:
             # 如果不是JSON，直接哈希
             return self.hash_sensitive_value(data)
 
@@ -338,7 +358,9 @@ class DataSanitizer:
 
         return sensitive_fields
 
-    def redact_data(self, data: Dict[str, Any], fields_to_redact: Optional[List[str]] = None) -> Dict[str, Any]:
+    def redact_data(
+        self, data: Dict[str, Any], fields_to_redact: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """
         删除数据 / Redact Data
 
@@ -428,7 +450,9 @@ class DataSanitizer:
             "total_fields": total_fields,
             "sensitive_fields_count": len(sensitive_fields),
             "sensitive_fields": sensitive_fields,
-            "sanitization_ratio": len(sensitive_fields) / total_fields if total_fields > 0 else 0,
+            "sanitization_ratio": len(sensitive_fields) / total_fields
+            if total_fields > 0
+            else 0,
             "compliance_categories": [
                 self.compliance_mapping.get(field, "unknown")
                 for field in sensitive_fields
@@ -462,7 +486,9 @@ class DataSanitizer:
         except Exception as e:
             self.logger.error(f"更新敏感列失败: {e}")
 
-    def get_compliance_category(self, table_name: Optional[str] = None) -> Optional[str]:
+    def get_compliance_category(
+        self, table_name: Optional[str] = None
+    ) -> Optional[str]:
         """
         获取合规类别 / Get Compliance Category
 

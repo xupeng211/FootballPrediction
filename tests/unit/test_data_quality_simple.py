@@ -1,11 +1,11 @@
 # 数据质量简单测试
 def test_data_quality_import():
     quality = [
-        'src.data.quality.anomaly_detector',
-        'src.data.quality.data_quality_monitor',
-        'src.data.quality.exception_handler',
-        'src.data.quality.ge_prometheus_exporter',
-        'src.data.quality.great_expectations_config'
+        "src.data.quality.anomaly_detector",
+        "src.data.quality.data_quality_monitor",
+        "src.data.quality.exception_handler",
+        "src.data.quality.ge_prometheus_exporter",
+        "src.data.quality.great_expectations_config",
     ]
 
     for module in quality:
@@ -15,10 +15,12 @@ def test_data_quality_import():
         except ImportError:
             assert True
 
+
 def test_quality_creation():
     try:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+
         monitor = DataQualityMonitor()
         assert monitor is not None
-    except:
+    except Exception:
         assert True

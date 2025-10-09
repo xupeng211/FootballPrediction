@@ -10,12 +10,14 @@ try:
     from feast.data_source import PushSource
     from feast.value_type import ValueType
     from datetime import timedelta
+
     HAS_FEAST = True
 except ImportError:
     HAS_FEAST = False
 
 # 创建虚拟类以防Feast未安装
 if not HAS_FEAST:
+
     class Entity:
         def __init__(self, *args, **kwargs):
             pass
@@ -50,6 +52,7 @@ if not HAS_FEAST:
         STRING = "string"
         FLOAT = "float"
 
+
 # 定义实体
 match_entity = Entity(
     name="match_id",
@@ -66,24 +69,40 @@ team_entity = Entity(
 )
 
 # 定义数据源 - 使用None作为占位符
-match_data_source = None if not HAS_FEAST else PushSource(
-    name="match_data_source",
-    batch_source=None,
+match_data_source = (
+    None
+    if not HAS_FEAST
+    else PushSource(
+        name="match_data_source",
+        batch_source=None,
+    )
 )
 
-team_data_source = None if not HAS_FEAST else PushSource(
-    name="team_data_source",
-    batch_source=None,
+team_data_source = (
+    None
+    if not HAS_FEAST
+    else PushSource(
+        name="team_data_source",
+        batch_source=None,
+    )
 )
 
-odds_data_source = None if not HAS_FEAST else PushSource(
-    name="odds_data_source",
-    batch_source=None,
+odds_data_source = (
+    None
+    if not HAS_FEAST
+    else PushSource(
+        name="odds_data_source",
+        batch_source=None,
+    )
 )
 
-head_to_head_data_source = None if not HAS_FEAST else PushSource(
-    name="head_to_head_data_source",
-    batch_source=None,
+head_to_head_data_source = (
+    None
+    if not HAS_FEAST
+    else PushSource(
+        name="head_to_head_data_source",
+        batch_source=None,
+    )
 )
 
 # 定义特征视图 - 创建简化版本
@@ -155,6 +174,6 @@ if HAS_FEAST:
             ],
             source=head_to_head_data_source,
         )
-    except:
+    except Exception:
         # 如果创建失败，保持为None
         pass

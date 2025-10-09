@@ -122,9 +122,7 @@ class PatternAnalyzer:
         anomalies = self._detect_anomalies(audit_logs)
 
         # 计算风险分数
-        risk_score = self._calculate_pattern_risk_score(
-            suspicious_patterns, anomalies
-        )
+        risk_score = self._calculate_pattern_risk_score(suspicious_patterns, anomalies)
 
         return {
             "basic_patterns": basic_patterns,
@@ -136,7 +134,9 @@ class PatternAnalyzer:
             "analysis_timestamp": datetime.now().isoformat(),
         }
 
-    def _analyze_basic_patterns(self, audit_logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_basic_patterns(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         分析基本模式 / Analyze Basic Patterns
 
@@ -167,9 +167,13 @@ class PatternAnalyzer:
             "resource_distribution": dict(resource_counts),
             "user_distribution": dict(user_counts),
             "severity_distribution": dict(severity_counts),
-            "most_common_action": action_counts.most_common(1)[0] if action_counts else None,
+            "most_common_action": action_counts.most_common(1)[0]
+            if action_counts
+            else None,
             "most_active_user": user_counts.most_common(1)[0] if user_counts else None,
-            "most_accessed_resource": resource_counts.most_common(1)[0] if resource_counts else None,
+            "most_accessed_resource": resource_counts.most_common(1)[0]
+            if resource_counts
+            else None,
         }
 
     def _detect_suspicious_patterns(
@@ -199,60 +203,60 @@ class PatternAnalyzer:
         # 检查每个用户的可疑模式
         for user_id, logs in user_logs.items():
             # 快速登录尝试
-            login_attempts = [
-                log for log in logs
-                if log.get("action") == "login"
-            ]
+            login_attempts = [log for log in logs if log.get("action") == "login"]
             if self._check_rapid_attempts(login_attempts, 5, timedelta(minutes=5)):
-                suspicious_patterns.append({
-                    "type": "rapid_login_attempts",
-                    "user_id": user_id,
-                    "count": len(login_attempts),
-                    "severity": "high",
-                    "detected_at": datetime.now().isoformat(),
-                })
+                suspicious_patterns.append(
+                    {
+                        "type": "rapid_login_attempts",
+                        "user_id": user_id,
+                        "count": len(login_attempts),
+                        "severity": "high",
+                        "detected_at": datetime.now().isoformat(),
+                    }
+                )
 
             # 批量数据导出
-            export_attempts = [
-                log for log in logs
-                if log.get("action") == "export"
-            ]
+            export_attempts = [log for log in logs if log.get("action") == "export"]
             if self._check_rapid_attempts(export_attempts, 3, timedelta(minutes=10)):
-                suspicious_patterns.append({
-                    "type": "bulk_data_export",
-                    "user_id": user_id,
-                    "count": len(export_attempts),
-                    "severity": "high",
-                    "detected_at": datetime.now().isoformat(),
-                })
+                suspicious_patterns.append(
+                    {
+                        "type": "bulk_data_export",
+                        "user_id": user_id,
+                        "count": len(export_attempts),
+                        "severity": "high",
+                        "detected_at": datetime.now().isoformat(),
+                    }
+                )
 
             # 权限变更
             permission_changes = [
-                log for log in logs
-                if log.get("resource_type") == "permissions"
+                log for log in logs if log.get("resource_type") == "permissions"
             ]
             if len(permission_changes) > 2:
-                suspicious_patterns.append({
-                    "type": "multiple_permission_changes",
-                    "user_id": user_id,
-                    "count": len(permission_changes),
-                    "severity": "medium",
-                    "detected_at": datetime.now().isoformat(),
-                })
+                suspicious_patterns.append(
+                    {
+                        "type": "multiple_permission_changes",
+                        "user_id": user_id,
+                        "count": len(permission_changes),
+                        "severity": "medium",
+                        "detected_at": datetime.now().isoformat(),
+                    }
+                )
 
             # 失败操作
             failed_operations = [
-                log for log in logs
-                if log.get("metadata", {}).get("error")
+                log for log in logs if log.get("metadata", {}).get("error")
             ]
             if len(failed_operations) > 10:
-                suspicious_patterns.append({
-                    "type": "multiple_failures",
-                    "user_id": user_id,
-                    "count": len(failed_operations),
-                    "severity": "medium",
-                    "detected_at": datetime.now().isoformat(),
-                })
+                suspicious_patterns.append(
+                    {
+                        "type": "multiple_failures",
+                        "user_id": user_id,
+                        "count": len(failed_operations),
+                        "severity": "medium",
+                        "detected_at": datetime.now().isoformat(),
+                    }
+                )
 
         return suspicious_patterns
 
@@ -282,9 +286,11 @@ class PatternAnalyzer:
             timestamp_str = attempt.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     timestamps.append(timestamp)
-                except:
+                except Exception:
                     continue
 
         if len(timestamps) < threshold:
@@ -299,7 +305,9 @@ class PatternAnalyzer:
 
         return False
 
-    def _analyze_time_patterns(self, audit_logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_time_patterns(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         分析时间模式 / Analyze Time Patterns
 
@@ -318,7 +326,9 @@ class PatternAnalyzer:
             timestamp_str = log.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     hour = timestamp.hour
                     day = timestamp.strftime("%A").lower()
 
@@ -329,23 +339,33 @@ class PatternAnalyzer:
                         weekend_activity += 1
                     else:
                         weekday_activity += 1
-                except:
+                except Exception:
                     continue
 
         # 计算峰值时间
         peak_hour = hourly_activity.index(max(hourly_activity))
-        peak_day = max(daily_activity.items(), key=lambda x: x[1])[0] if daily_activity else "unknown"
+        peak_day = (
+            max(daily_activity.items(), key=lambda x: x[1])[0]
+            if daily_activity
+            else "unknown"
+        )
 
         return {
             "hourly_distribution": hourly_activity,
             "daily_distribution": dict(daily_activity),
             "peak_hour": peak_hour,
             "peak_day": peak_day,
-            "weekend_ratio": weekend_activity / (weekend_activity + weekday_activity) if (weekend_activity + weekday_activity) > 0 else 0,
-            "business_hours_activity": sum(hourly_activity[9:18]) / sum(hourly_activity) if sum(hourly_activity) > 0 else 0,
+            "weekend_ratio": weekend_activity / (weekend_activity + weekday_activity)
+            if (weekend_activity + weekday_activity) > 0
+            else 0,
+            "business_hours_activity": sum(hourly_activity[9:18]) / sum(hourly_activity)
+            if sum(hourly_activity) > 0
+            else 0,
         }
 
-    def _analyze_behavior_patterns(self, audit_logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_behavior_patterns(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         分析行为模式 / Analyze Behavior Patterns
 
@@ -355,14 +375,16 @@ class PatternAnalyzer:
         Returns:
             Dict[str, Any]: 行为模式 / Behavior patterns
         """
-        user_profiles = defaultdict(lambda: {
-            "total_actions": 0,
-            "unique_resources": set(),
-            "unique_actions": set(),
-            "session_count": 0,
-            "first_action": None,
-            "last_action": None,
-        })
+        user_profiles = defaultdict(
+            lambda: {
+                "total_actions": 0,
+                "unique_resources": set(),
+                "unique_actions": set(),
+                "session_count": 0,
+                "first_action": None,
+                "last_action": None,
+            }
+        )
 
         for log in audit_logs:
             user_id = log.get("user_id", "unknown")
@@ -375,12 +397,17 @@ class PatternAnalyzer:
             timestamp_str = log.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                    if not profile["first_action"] or timestamp < profile["first_action"]:
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
+                    if (
+                        not profile["first_action"]
+                        or timestamp < profile["first_action"]
+                    ):
                         profile["first_action"] = timestamp
                     if not profile["last_action"] or timestamp > profile["last_action"]:
                         profile["last_action"] = timestamp
-                except:
+                except Exception:
                     continue
 
         # 分类用户行为
@@ -404,13 +431,19 @@ class PatternAnalyzer:
                 "total_actions": total_actions,
                 "unique_resources": unique_resources,
                 "unique_actions": unique_actions,
-                "resource_diversity": unique_resources / total_actions if total_actions > 0 else 0,
-                "action_diversity": unique_actions / total_actions if total_actions > 0 else 0,
+                "resource_diversity": unique_resources / total_actions
+                if total_actions > 0
+                else 0,
+                "action_diversity": unique_actions / total_actions
+                if total_actions > 0
+                else 0,
             }
 
         return behavior_profiles
 
-    def _detect_anomalies(self, audit_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_anomalies(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测异常 / Detect Anomalies
 
@@ -436,7 +469,9 @@ class PatternAnalyzer:
 
         return anomalies
 
-    def _detect_time_anomalies(self, audit_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_time_anomalies(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测时间异常 / Detect Time Anomalies
 
@@ -450,35 +485,39 @@ class PatternAnalyzer:
 
         # 检查夜间活动
         night_logs = [
-            log for log in audit_logs
-            if self._is_night_hour(log.get("timestamp"))
+            log for log in audit_logs if self._is_night_hour(log.get("timestamp"))
         ]
 
         if len(night_logs) > len(audit_logs) * 0.2:  # 超过20%的夜间活动
-            anomalies.append({
-                "type": "high_night_activity",
-                "count": len(night_logs),
-                "percentage": len(night_logs) / len(audit_logs) * 100,
-                "severity": "medium",
-            })
+            anomalies.append(
+                {
+                    "type": "high_night_activity",
+                    "count": len(night_logs),
+                    "percentage": len(night_logs) / len(audit_logs) * 100,
+                    "severity": "medium",
+                }
+            )
 
         # 检查周末活动
         weekend_logs = [
-            log for log in audit_logs
-            if self._is_weekend(log.get("timestamp"))
+            log for log in audit_logs if self._is_weekend(log.get("timestamp"))
         ]
 
         if len(weekend_logs) > len(audit_logs) * 0.3:  # 超过30%的周末活动
-            anomalies.append({
-                "type": "high_weekend_activity",
-                "count": len(weekend_logs),
-                "percentage": len(weekend_logs) / len(audit_logs) * 100,
-                "severity": "low",
-            })
+            anomalies.append(
+                {
+                    "type": "high_weekend_activity",
+                    "count": len(weekend_logs),
+                    "percentage": len(weekend_logs) / len(audit_logs) * 100,
+                    "severity": "low",
+                }
+            )
 
         return anomalies
 
-    def _detect_user_anomalies(self, audit_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_user_anomalies(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测用户异常 / Detect User Anomalies
 
@@ -501,17 +540,21 @@ class PatternAnalyzer:
             avg_activity = sum(user_activity.values()) / len(user_activity)
             for user_id, activity in user_activity.items():
                 if activity > avg_activity * 5:  # 超过平均5倍
-                    anomalies.append({
-                        "type": "hyperactive_user",
-                        "user_id": user_id,
-                        "activity_count": activity,
-                        "average_activity": avg_activity,
-                        "severity": "medium",
-                    })
+                    anomalies.append(
+                        {
+                            "type": "hyperactive_user",
+                            "user_id": user_id,
+                            "activity_count": activity,
+                            "average_activity": avg_activity,
+                            "severity": "medium",
+                        }
+                    )
 
         return anomalies
 
-    def _detect_resource_anomalies(self, audit_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_resource_anomalies(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测资源异常 / Detect Resource Anomalies
 
@@ -534,13 +577,15 @@ class PatternAnalyzer:
             avg_access = sum(resource_access.values()) / len(resource_access)
             for resource, access_count in resource_access.items():
                 if access_count > avg_access * 10:  # 超过平均10倍
-                    anomalies.append({
-                        "type": "high_access_resource",
-                        "resource": resource,
-                        "access_count": access_count,
-                        "average_access": avg_access,
-                        "severity": "low",
-                    })
+                    anomalies.append(
+                        {
+                            "type": "high_access_resource",
+                            "resource": resource,
+                            "access_count": access_count,
+                            "average_access": avg_access,
+                            "severity": "low",
+                        }
+                    )
 
         return anomalies
 
@@ -598,9 +643,9 @@ class PatternAnalyzer:
             return False
 
         try:
-            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
             return 0 <= timestamp.hour < 6
-        except:
+        except Exception:
             return False
 
     def _is_weekend(self, timestamp_str: Optional[str]) -> bool:
@@ -617,9 +662,9 @@ class PatternAnalyzer:
             return False
 
         try:
-            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
             return timestamp.weekday() >= 5  # 5=Saturday, 6=Sunday
-        except:
+        except Exception:
             return False
 
     def get_pattern_summary(self, patterns: Dict[str, Any]) -> str:

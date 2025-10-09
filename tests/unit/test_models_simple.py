@@ -1,10 +1,10 @@
 # 模型和预测简单测试
 def test_models_import():
     models = [
-        'src.models.common_models',
-        'src.models.metrics_exporter',
-        'src.models.model_training',
-        'src.models.prediction_service'
+        "src.models.common_models",
+        "src.models.metrics_exporter",
+        "src.models.model_training",
+        "src.models.prediction_service",
     ]
 
     for model in models:
@@ -14,10 +14,12 @@ def test_models_import():
         except ImportError:
             assert True
 
+
 def test_prediction_service():
     try:
         from src.models.prediction_service import PredictionService
+
         service = PredictionService()
         assert service is not None
-    except:
+    except Exception:
         assert True

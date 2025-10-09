@@ -40,7 +40,7 @@ class StructuredLogger:
         try:
             # 创建格式化器
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
 
             # 如果没有处理器，添加控制台处理器
@@ -86,7 +86,9 @@ class StructuredLogger:
         # 构建基础消息结构
         message = {
             "event_type": "audit_log",
-            "timestamp": audit_log.timestamp.isoformat() if audit_log.timestamp else datetime.now().isoformat(),
+            "timestamp": audit_log.timestamp.isoformat()
+            if audit_log.timestamp
+            else datetime.now().isoformat(),
             "event_id": audit_log.id,
             "user": {
                 "id": audit_log.user_id,
@@ -137,7 +139,7 @@ class StructuredLogger:
         if not severity:
             return logging.INFO
 
-        severity_value = severity.value if hasattr(severity, 'value') else str(severity)
+        severity_value = severity.value if hasattr(severity, "value") else str(severity)
 
         if severity_value == "critical":
             return logging.CRITICAL
@@ -193,12 +195,16 @@ class StructuredLogger:
             severity = details.get("severity", "medium")
             level = self._get_log_level(severity)
 
-            self.audit_logger.log(level, json.dumps(security_message, ensure_ascii=False, default=str))
+            self.audit_logger.log(
+                level, json.dumps(security_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录安全事件失败: {e}")
 
-    def log_compliance_event(self, compliance_type: str, details: Dict[str, Any]) -> None:
+    def log_compliance_event(
+        self, compliance_type: str, details: Dict[str, Any]
+    ) -> None:
         """
         记录合规事件 / Log Compliance Event
 
@@ -219,7 +225,9 @@ class StructuredLogger:
             # 清理空值
             compliance_message = self._clean_empty_values(compliance_message)
 
-            self.audit_logger.info(json.dumps(compliance_message, ensure_ascii=False, default=str))
+            self.audit_logger.info(
+                json.dumps(compliance_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录合规事件失败: {e}")
@@ -242,7 +250,9 @@ class StructuredLogger:
             # 清理空值
             performance_message = self._clean_empty_values(performance_message)
 
-            self.audit_logger.info(json.dumps(performance_message, ensure_ascii=False, default=str))
+            self.audit_logger.info(
+                json.dumps(performance_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录性能指标失败: {e}")
@@ -271,7 +281,9 @@ class StructuredLogger:
             # 清理空值
             error_message = self._clean_empty_values(error_message)
 
-            self.audit_logger.error(json.dumps(error_message, ensure_ascii=False, default=str))
+            self.audit_logger.error(
+                json.dumps(error_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录错误事件失败: {e}")
@@ -288,8 +300,9 @@ class StructuredLogger:
         """
         try:
             import traceback
+
             return traceback.format_exc()
-        except:
+        except Exception:
             return None
 
     def log_custom_event(self, event_type: str, data: Dict[str, Any]) -> None:
@@ -315,7 +328,9 @@ class StructuredLogger:
             severity = data.get("severity", "info")
             level = self._get_log_level(severity)
 
-            self.audit_logger.log(level, json.dumps(custom_message, ensure_ascii=False, default=str))
+            self.audit_logger.log(
+                level, json.dumps(custom_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录自定义事件失败: {e}")
@@ -332,6 +347,7 @@ class StructuredLogger:
         """
         try:
             import uuid
+
             trail_id = str(uuid.uuid4())
 
             trail_message = {
@@ -345,7 +361,9 @@ class StructuredLogger:
             # 清理空值
             trail_message = self._clean_empty_values(trail_message)
 
-            self.audit_logger.info(json.dumps(trail_message, ensure_ascii=False, default=str))
+            self.audit_logger.info(
+                json.dumps(trail_message, ensure_ascii=False, default=str)
+            )
 
             return trail_id
 
@@ -353,7 +371,9 @@ class StructuredLogger:
             self.logger.error(f"创建审计跟踪失败: {e}")
             return ""
 
-    def log_data_access(self, user_id: str, resource: str, access_type: str, details: Dict[str, Any]) -> None:
+    def log_data_access(
+        self, user_id: str, resource: str, access_type: str, details: Dict[str, Any]
+    ) -> None:
         """
         记录数据访问 / Log Data Access
 
@@ -377,12 +397,16 @@ class StructuredLogger:
             # 清理空值
             access_message = self._clean_empty_values(access_message)
 
-            self.audit_logger.info(json.dumps(access_message, ensure_ascii=False, default=str))
+            self.audit_logger.info(
+                json.dumps(access_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录数据访问失败: {e}")
 
-    def log_system_event(self, system_name: str, event_type: str, details: Dict[str, Any]) -> None:
+    def log_system_event(
+        self, system_name: str, event_type: str, details: Dict[str, Any]
+    ) -> None:
         """
         记录系统事件 / Log System Event
 
@@ -411,12 +435,16 @@ class StructuredLogger:
             else:
                 level = logging.INFO
 
-            self.audit_logger.log(level, json.dumps(system_message, ensure_ascii=False, default=str))
+            self.audit_logger.log(
+                level, json.dumps(system_message, ensure_ascii=False, default=str)
+            )
 
         except Exception as e:
             self.logger.error(f"记录系统事件失败: {e}")
 
-    def export_logs_to_json(self, logs: List[Dict[str, Any]], output_file: Optional[str] = None) -> str:
+    def export_logs_to_json(
+        self, logs: List[Dict[str, Any]], output_file: Optional[str] = None
+    ) -> str:
         """
         导出日志到JSON / Export Logs to JSON
 
@@ -434,10 +462,12 @@ class StructuredLogger:
                 "logs": logs,
             }
 
-            json_data = json.dumps(export_data, ensure_ascii=False, indent=2, default=str)
+            json_data = json.dumps(
+                export_data, ensure_ascii=False, indent=2, default=str
+            )
 
             if output_file:
-                with open(output_file, 'w', encoding='utf-8') as f:
+                with open(output_file, "w", encoding="utf-8") as f:
                     f.write(json_data)
                 self.logger.info(f"日志已导出到文件: {output_file}")
                 return output_file

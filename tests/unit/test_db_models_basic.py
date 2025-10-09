@@ -17,10 +17,12 @@ def test_db_models():
     except ImportError:
         assert True
 
+
 def test_db_model_creation():
     try:
         from src.database.models.league import League
+
         league = League(name="Test League")
         assert league.name == "Test League"
-    except:
+    except Exception:
         assert True

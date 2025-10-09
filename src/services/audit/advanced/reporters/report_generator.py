@@ -48,11 +48,7 @@ class ReportGenerator:
         }
 
     def generate_report(
-        self,
-        report_type: str,
-        data: Dict[str, Any],
-        format: str = "json",
-        **kwargs
+        self, report_type: str, data: Dict[str, Any], format: str = "json", **kwargs
     ) -> Dict[str, Any]:
         """
         生成报告 / Generate Report
@@ -107,10 +103,7 @@ class ReportGenerator:
             }
 
     def _generate_report_content(
-        self,
-        report_type: str,
-        data: Dict[str, Any],
-        **kwargs
+        self, report_type: str, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成报告内容 / Generate Report Content
@@ -143,9 +136,7 @@ class ReportGenerator:
             raise ValueError(f"未知报告类型: {report_type}")
 
     def _generate_user_activity_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成用户活动报告 / Generate User Activity Report
@@ -177,7 +168,9 @@ class ReportGenerator:
             },
             "activity_breakdown": {
                 "action_distribution": data.get("action_counts", {}),
-                "hourly_activity": self._calculate_hourly_activity(data.get("logs", [])),
+                "hourly_activity": self._calculate_hourly_activity(
+                    data.get("logs", [])
+                ),
                 "daily_activity": self._calculate_daily_activity(data.get("logs", [])),
             },
             "top_activities": self._get_top_activities(data.get("logs", [])),
@@ -188,9 +181,7 @@ class ReportGenerator:
         return report
 
     def _generate_security_summary_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成安全摘要报告 / Generate Security Summary Report
@@ -212,7 +203,9 @@ class ReportGenerator:
             },
             "risk_analysis": {
                 "risk_score": data.get("overall_risk_score", 0),
-                "risk_level": self._determine_risk_level(data.get("overall_risk_score", 0)),
+                "risk_level": self._determine_risk_level(
+                    data.get("overall_risk_score", 0)
+                ),
                 "top_risks": data.get("top_risks", []),
                 "risk_trends": data.get("risk_trends", {}),
             },
@@ -225,9 +218,7 @@ class ReportGenerator:
         return report
 
     def _generate_compliance_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成合规报告 / Generate Compliance Report
@@ -260,9 +251,7 @@ class ReportGenerator:
         return report
 
     def _generate_risk_assessment_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成风险评估报告 / Generate Risk Assessment Report
@@ -293,9 +282,7 @@ class ReportGenerator:
         return report
 
     def _generate_performance_metrics_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成性能指标报告 / Generate Performance Metrics Report
@@ -324,9 +311,7 @@ class ReportGenerator:
         return report
 
     def _generate_data_access_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成数据访问报告 / Generate Data Access Report
@@ -356,9 +341,7 @@ class ReportGenerator:
         return report
 
     def _generate_system_health_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
+        self, data: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         """
         生成系统健康报告 / Generate System Health Report
@@ -386,11 +369,7 @@ class ReportGenerator:
 
         return report
 
-    def _generate_custom_report(
-        self,
-        data: Dict[str, Any],
-        **kwargs
-    ) -> Dict[str, Any]:
+    def _generate_custom_report(self, data: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """
         生成自定义报告 / Generate Custom Report
 
@@ -427,10 +406,12 @@ class ReportGenerator:
             timestamp_str = log.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     hour = timestamp.hour
                     hourly_activity[hour] += 1
-                except:
+                except Exception:
                     continue
 
         return hourly_activity
@@ -451,15 +432,19 @@ class ReportGenerator:
             timestamp_str = log.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     day = timestamp.strftime("%Y-%m-%d")
                     daily_activity[day] = daily_activity.get(day, 0) + 1
-                except:
+                except Exception:
                     continue
 
         return daily_activity
 
-    def _get_top_activities(self, logs: List[Dict[str, Any]], limit: int = 10) -> List[Dict[str, Any]]:
+    def _get_top_activities(
+        self, logs: List[Dict[str, Any]], limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         获取热门活动 / Get Top Activities
 
@@ -481,9 +466,7 @@ class ReportGenerator:
 
         # 排序并返回前N个
         sorted_activities = sorted(
-            activity_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
+            activity_counts.items(), key=lambda x: x[1], reverse=True
         )[:limit]
 
         return [
@@ -496,7 +479,9 @@ class ReportGenerator:
             for activity, count in sorted_activities
         ]
 
-    def _detect_activity_anomalies(self, logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_activity_anomalies(
+        self, logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测活动异常 / Detect Activity Anomalies
 
@@ -626,10 +611,7 @@ class ReportGenerator:
         return self.report_formats.copy()
 
     def validate_report_parameters(
-        self,
-        report_type: str,
-        format: str,
-        **kwargs
+        self, report_type: str, format: str, **kwargs
     ) -> List[str]:
         """
         验证报告参数 / Validate Report Parameters

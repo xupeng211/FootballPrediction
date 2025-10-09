@@ -1,10 +1,10 @@
 # 特征工程简单测试
 def test_features_import():
     features = [
-        'src.features.entities',
-        'src.features.feature_calculator',
-        'src.features.feature_definitions',
-        'src.features.feature_store'
+        "src.features.entities",
+        "src.features.feature_calculator",
+        "src.features.feature_definitions",
+        "src.features.feature_store",
     ]
 
     for module in features:
@@ -14,10 +14,12 @@ def test_features_import():
         except ImportError:
             assert True
 
+
 def test_feature_creation():
     try:
         from src.features.entities import FeatureEntity
+
         entity = FeatureEntity(entity_id="test", entity_type="team")
         assert entity.entity_id == "test"
-    except:
+    except Exception:
         assert True

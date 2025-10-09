@@ -27,22 +27,46 @@ class RiskAnalyzer:
 
         # 高风险动作
         self.high_risk_actions = {
-            "delete", "export", "import", "admin", "reset_password",
-            "change_role", "bulk_delete", "system_config", "database_backup",
-            "user_deletion", "permission_grant", "data_restore"
+            "delete",
+            "export",
+            "import",
+            "admin",
+            "reset_password",
+            "change_role",
+            "bulk_delete",
+            "system_config",
+            "database_backup",
+            "user_deletion",
+            "permission_grant",
+            "data_restore",
         }
 
         # 高风险表
         self.high_risk_tables = {
-            "users", "permissions", "tokens", "payment_info", "personal_data",
-            "financial_data", "health_records", "system_config", "audit_logs",
-            "security_settings", "encryption_keys", "api_keys"
+            "users",
+            "permissions",
+            "tokens",
+            "payment_info",
+            "personal_data",
+            "financial_data",
+            "health_records",
+            "system_config",
+            "audit_logs",
+            "security_settings",
+            "encryption_keys",
+            "api_keys",
         }
 
         # 高风险角色
         self.high_risk_roles = {
-            "admin", "superadmin", "root", "system", "administrator",
-            "db_admin", "security_admin", "audit_admin"
+            "admin",
+            "superadmin",
+            "root",
+            "system",
+            "administrator",
+            "db_admin",
+            "security_admin",
+            "audit_admin",
         }
 
         # 风险权重配置
@@ -138,12 +162,12 @@ class RiskAnalyzer:
 
         # 计算综合风险分数
         total_risk = (
-            action_risk * self.risk_weights["action"] +
-            resource_risk * self.risk_weights["resource"] +
-            role_risk * self.risk_weights["user_role"] +
-            time_risk * self.risk_weights["time_pattern"] +
-            frequency_risk * self.risk_weights["frequency"] +
-            error_risk * self.risk_weights["error_rate"]
+            action_risk * self.risk_weights["action"]
+            + resource_risk * self.risk_weights["resource"]
+            + role_risk * self.risk_weights["user_role"]
+            + time_risk * self.risk_weights["time_pattern"]
+            + frequency_risk * self.risk_weights["frequency"]
+            + error_risk * self.risk_weights["error_rate"]
         )
 
         # 确定风险级别
@@ -259,7 +283,7 @@ class RiskAnalyzer:
             return 50.0  # 无时间信息视为中等风险
 
         try:
-            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
             hour = timestamp.hour
             weekday = timestamp.weekday()
 
@@ -277,7 +301,7 @@ class RiskAnalyzer:
 
             return min(100.0, time_risk)
 
-        except:
+        except Exception:
             return 50.0
 
     def _calculate_frequency_risk(self, user_id: str, timestamp_str: str) -> float:
@@ -341,9 +365,7 @@ class RiskAnalyzer:
             return "low"
 
     def _identify_threat_types(
-        self,
-        operation: Dict[str, Any],
-        risk_score: float
+        self, operation: Dict[str, Any], risk_score: float
     ) -> List[str]:
         """
         识别威胁类型 / Identify Threat Types
@@ -360,7 +382,7 @@ class RiskAnalyzer:
         action = operation.get("action", "")
         resource_type = operation.get("resource_type", "")
         user_role = operation.get("user_role", "")
-        user_id = operation.get("user_id", "")
+        operation.get("user_id", "")
 
         # 基于动作识别威胁
         if action in ["delete", "bulk_delete"]:
@@ -385,9 +407,7 @@ class RiskAnalyzer:
         return list(set(threat_types))
 
     def _generate_recommendations(
-        self,
-        operation: Dict[str, Any],
-        risk_score: float
+        self, operation: Dict[str, Any], risk_score: float
     ) -> List[str]:
         """
         生成建议 / Generate Recommendations
@@ -402,23 +422,20 @@ class RiskAnalyzer:
         recommendations = []
 
         if risk_score > 80:
-            recommendations.extend([
-                "立即审查此操作",
-                "通知安全团队",
-                "考虑临时限制用户访问",
-                "进行详细的行为分析"
-            ])
+            recommendations.extend(
+                [
+                    "立即审查此操作",
+                    "通知安全团队",
+                    "考虑临时限制用户访问",
+                    "进行详细的行为分析",
+                ]
+            )
         elif risk_score > 60:
-            recommendations.extend([
-                "密切监控用户后续操作",
-                "验证操作合法性",
-                "考虑加强身份验证"
-            ])
+            recommendations.extend(
+                ["密切监控用户后续操作", "验证操作合法性", "考虑加强身份验证"]
+            )
         elif risk_score > 40:
-            recommendations.extend([
-                "记录此操作以备后续审查",
-                "定期检查相关活动"
-            ])
+            recommendations.extend(["记录此操作以备后续审查", "定期检查相关活动"])
 
         action = operation.get("action", "")
         if action in ["export", "delete"]:
@@ -431,9 +448,7 @@ class RiskAnalyzer:
         return recommendations
 
     def analyze_risk_trends(
-        self,
-        operations: List[Dict[str, Any]],
-        time_window: Optional[timedelta] = None
+        self, operations: List[Dict[str, Any]], time_window: Optional[timedelta] = None
     ) -> Dict[str, Any]:
         """
         分析风险趋势 / Analyze Risk Trends
@@ -470,10 +485,12 @@ class RiskAnalyzer:
             timestamp_str = operation.get("timestamp", "")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     date_key = timestamp.date().isoformat()
                     time_risks[date_key].append(risk_score)
-                except:
+                except Exception:
                     pass
 
         # 分析风险分布
@@ -486,13 +503,10 @@ class RiskAnalyzer:
 
         # 识别高风险用户
         user_avg_risks = {
-            user_id: sum(risks) / len(risks)
-            for user_id, risks in user_risks.items()
+            user_id: sum(risks) / len(risks) for user_id, risks in user_risks.items()
         }
         top_risky_users = sorted(
-            user_avg_risks.items(),
-            key=lambda x: x[1],
-            reverse=True
+            user_avg_risks.items(), key=lambda x: x[1], reverse=True
         )[:10]
 
         # 分析风险趋势
@@ -510,8 +524,7 @@ class RiskAnalyzer:
             "risk_distribution": risk_distribution,
             "high_risk_users": top_risky_users,
             "daily_risk_averages": {
-                date: sum(risks) / len(risks)
-                for date, risks in time_risks.items()
+                date: sum(risks) / len(risks) for date, risks in time_risks.items()
             },
             "analysis_timestamp": datetime.now().isoformat(),
         }
@@ -554,7 +567,7 @@ class RiskAnalyzer:
             "unauthorized_access",
             "data_exfiltration",
             "privilege_escalation",
-            "malicious_activity"
+            "malicious_activity",
         ]
 
         if any(threat in critical_threats for threat in threat_types):

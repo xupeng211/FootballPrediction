@@ -152,12 +152,16 @@ class DataAnalyzer:
             elif key not in old_values and key in new_values:
                 added_fields.append(key)
             elif old_val != new_val:
-                changed_fields.append({
-                    "field": key,
-                    "old_value": old_val,
-                    "new_value": new_val,
-                    "value_type": type(old_val).__name__ if old_val else type(new_val).__name__,
-                })
+                changed_fields.append(
+                    {
+                        "field": key,
+                        "old_value": old_val,
+                        "new_value": new_val,
+                        "value_type": type(old_val).__name__
+                        if old_val
+                        else type(new_val).__name__,
+                    }
+                )
 
         # 确定变更类型
         if changed_fields or added_fields or removed_fields:
@@ -174,7 +178,9 @@ class DataAnalyzer:
             "changed_fields": changed_fields,
             "added_fields": added_fields,
             "removed_fields": removed_fields,
-            "change_count": len(changed_fields) + len(added_fields) + len(removed_fields),
+            "change_count": len(changed_fields)
+            + len(added_fields)
+            + len(removed_fields),
         }
 
     def analyze_user_behavior(
@@ -224,10 +230,12 @@ class DataAnalyzer:
             timestamp_str = log.get("timestamp")
             if timestamp_str:
                 try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    timestamp = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    )
                     hour = timestamp.hour
                     time_patterns[hour] = time_patterns.get(hour, 0) + 1
-                except:
+                except Exception:
                     pass
 
             # 风险指标检测
@@ -272,32 +280,40 @@ class DataAnalyzer:
         # 检查高风险动作
         high_risk_actions = ["delete", "export", "admin", "reset_password"]
         if action in high_risk_actions:
-            risk_indicators.append({
-                "type": "high_risk_action",
-                "action": action,
-                "resource": resource_type,
-                "severity": severity,
-                "timestamp": log.get("timestamp"),
-            })
+            risk_indicators.append(
+                {
+                    "type": "high_risk_action",
+                    "action": action,
+                    "resource": resource_type,
+                    "severity": severity,
+                    "timestamp": log.get("timestamp"),
+                }
+            )
 
         # 检查异常访问模式
         if resource_type in ["users", "permissions", "admin"]:
-            risk_indicators.append({
-                "type": "sensitive_resource_access",
-                "action": action,
-                "resource": resource_type,
-                "severity": severity,
-                "timestamp": log.get("timestamp"),
-            })
+            risk_indicators.append(
+                {
+                    "type": "sensitive_resource_access",
+                    "action": action,
+                    "resource": resource_type,
+                    "severity": severity,
+                    "timestamp": log.get("timestamp"),
+                }
+            )
 
         # 检查错误频率
-        if severity == "critical" or (log.get("metadata") and log.get("metadata", {}).get("error")):
-            risk_indicators.append({
-                "type": "error_occurrence",
-                "action": action,
-                "error": log.get("metadata", {}).get("error"),
-                "timestamp": log.get("timestamp"),
-            })
+        if severity == "critical" or (
+            log.get("metadata") and log.get("metadata", {}).get("error")
+        ):
+            risk_indicators.append(
+                {
+                    "type": "error_occurrence",
+                    "action": action,
+                    "error": log.get("metadata", {}).get("error"),
+                    "timestamp": log.get("timestamp"),
+                }
+            )
 
     def _calculate_behavior_score(
         self,
@@ -369,24 +385,28 @@ class DataAnalyzer:
         for i, log in enumerate(audit_logs):
             for field in required_fields:
                 if field not in log or log[field] is None:
-                    missing_fields.append({
-                        "log_index": i,
-                        "missing_field": field,
-                        "log_id": log.get("id"),
-                    })
+                    missing_fields.append(
+                        {
+                            "log_index": i,
+                            "missing_field": field,
+                            "log_id": log.get("id"),
+                        }
+                    )
 
             # 检查时间戳格式
             timestamp = log.get("timestamp")
             if timestamp:
                 try:
-                    datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                except:
-                    invalid_formats.append({
-                        "log_index": i,
-                        "field": "timestamp",
-                        "value": timestamp,
-                        "error": "Invalid timestamp format",
-                    })
+                    datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                except Exception:
+                    invalid_formats.append(
+                        {
+                            "log_index": i,
+                            "field": "timestamp",
+                            "value": timestamp,
+                            "error": "Invalid timestamp format",
+                        }
+                    )
 
         # 检查重复条目
         seen_logs = set()
@@ -399,18 +419,25 @@ class DataAnalyzer:
                 log.get("resource_id"),
             )
             if log_key in seen_logs:
-                duplicates.append({
-                    "log_index": i,
-                    "duplicate_key": log_key,
-                    "log_id": log.get("id"),
-                })
+                duplicates.append(
+                    {
+                        "log_index": i,
+                        "duplicate_key": log_key,
+                        "log_id": log.get("id"),
+                    }
+                )
             seen_logs.add(log_key)
 
         # 检查异常
         anomalies = self._detect_data_anomalies(audit_logs)
 
         # 计算完整性分数
-        total_issues = len(missing_fields) + len(invalid_formats) + len(duplicates) + len(anomalies)
+        total_issues = (
+            len(missing_fields)
+            + len(invalid_formats)
+            + len(duplicates)
+            + len(anomalies)
+        )
         integrity_score = max(0.0, 100.0 - (total_issues / len(audit_logs)) * 100)
 
         return {
@@ -423,7 +450,9 @@ class DataAnalyzer:
             "analysis_timestamp": datetime.now().isoformat(),
         }
 
-    def _detect_data_anomalies(self, audit_logs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _detect_data_anomalies(
+        self, audit_logs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         检测数据异常 / Detect Data Anomalies
 
@@ -441,27 +470,31 @@ class DataAnalyzer:
             timestamp = log.get("timestamp")
             if timestamp:
                 try:
-                    timestamps.append(datetime.fromisoformat(timestamp.replace('Z', '+00:00')))
-                except:
+                    timestamps.append(
+                        datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                    )
+                except Exception:
                     pass
 
         if len(timestamps) > 1:
             timestamps.sort()
             time_gaps = []
             for i in range(1, len(timestamps)):
-                gap = (timestamps[i] - timestamps[i-1]).total_seconds()
+                gap = (timestamps[i] - timestamps[i - 1]).total_seconds()
                 time_gaps.append(gap)
 
             if time_gaps:
                 avg_gap = sum(time_gaps) / len(time_gaps)
                 for i, gap in enumerate(time_gaps):
                     if gap > avg_gap * 10:  # 异常大的时间间隔
-                        anomalies.append({
-                            "type": "time_gap_anomaly",
-                            "log_index": i + 1,
-                            "gap_seconds": gap,
-                            "average_gap": avg_gap,
-                        })
+                        anomalies.append(
+                            {
+                                "type": "time_gap_anomaly",
+                                "log_index": i + 1,
+                                "gap_seconds": gap,
+                                "average_gap": avg_gap,
+                            }
+                        )
 
         # 检查用户行为异常
         user_actions = {}
@@ -477,12 +510,14 @@ class DataAnalyzer:
         for user_id, actions in user_actions.items():
             for action, count in actions.items():
                 if count > 100:  # 超过100次可能异常
-                    anomalies.append({
-                        "type": "high_frequency_action",
-                        "user_id": user_id,
-                        "action": action,
-                        "count": count,
-                    })
+                    anomalies.append(
+                        {
+                            "type": "high_frequency_action",
+                            "user_id": user_id,
+                            "action": action,
+                            "count": count,
+                        }
+                    )
 
         return anomalies
 
@@ -523,8 +558,12 @@ class DataAnalyzer:
         severity_counts = audit_data.get("severity_counts", {})
 
         insights["trends"] = {
-            "most_common_action": max(action_counts.items(), key=lambda x: x[1])[0] if action_counts else None,
-            "highest_severity": max(severity_counts.items(), key=lambda x: x[1])[0] if severity_counts else None,
+            "most_common_action": max(action_counts.items(), key=lambda x: x[1])[0]
+            if action_counts
+            else None,
+            "highest_severity": max(severity_counts.items(), key=lambda x: x[1])[0]
+            if severity_counts
+            else None,
             "action_diversity": len(action_counts),
             "severity_distribution": severity_counts,
         }
@@ -533,18 +572,22 @@ class DataAnalyzer:
         recommendations = []
 
         if severity_counts.get("critical", 0) > 0:
-            recommendations.append({
-                "type": "security",
-                "priority": "high",
-                "message": f"发现 {severity_counts['critical']} 个严重错误，需要立即处理",
-            })
+            recommendations.append(
+                {
+                    "type": "security",
+                    "priority": "high",
+                    "message": f"发现 {severity_counts['critical']} 个严重错误，需要立即处理",
+                }
+            )
 
         if action_counts.get("delete", 0) > total_logs * 0.1:
-            recommendations.append({
-                "type": "data_protection",
-                "priority": "medium",
-                "message": "删除操作比例较高，建议检查数据保护策略",
-            })
+            recommendations.append(
+                {
+                    "type": "data_protection",
+                    "priority": "medium",
+                    "message": "删除操作比例较高，建议检查数据保护策略",
+                }
+            )
 
         insights["recommendations"] = recommendations
 
