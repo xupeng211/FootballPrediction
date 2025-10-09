@@ -487,6 +487,50 @@ context: ## Load project context for AI development
 	echo "$(GREEN)✅ Context loaded$(RESET)"
 
 # ============================================================================
+# 🧹 Technical Debt Cleanup - Manage and track technical debt
+# ============================================================================
+
+debt-plan: ## Other: Show daily technical debt cleanup plan
+	@echo "$(YELLOW)📋 Generating daily technical debt cleanup plan...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py plan
+
+debt-start: ## Other: Start executing specific task
+	@if [ -z "$(TASK)" ]; then \
+		echo "$(RED)❌ Please specify task ID: make debt-start TASK=1.1.1$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)🚀 Starting task $(TASK)...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py start --task=$(TASK)
+
+debt-check: ## Other: Run code health check
+	@echo "$(YELLOW)🔍 Running code health check...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py health
+
+debt-done: ## Other: Mark current task as completed
+	@echo "$(YELLOW)✅ Completing current task...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py done --notes="$(NOTES)"
+
+debt-progress: ## Other: View overall cleanup progress
+	@echo "$(BLUE)📊 Technical debt cleanup progress:$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py progress
+
+debt-summary: ## Other: Generate cleanup summary report
+	@echo "$(YELLOW)📄 Generating cleanup summary report...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py summary
+
+debt-today: ## Other: Quick start for today's debt cleanup work
+	@echo "$(GREEN)🚀 Starting today's technical debt cleanup...$(RESET)"
+	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py plan --hours=4
+
+debt-status: ## Other: Show current task and status
+	@echo "$(BLUE)Current status:$(RESET)"
+	@if [ -f .technical_debt_status.json ]; then \
+		python3 -c "import json; d=json.load(open('.technical_debt_status.json')); print(f'Phase: {d.get(\"current_phase\", 1)}'); print(f'Current task: {d.get(\"current_task\", \"None\")}'); print(f'Completed tasks: {len(d.get(\"completed_tasks\", []))}');"; \
+	else \
+		echo "No status file found. Run 'make debt-plan' to start."; \
+	fi
+
+# ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
 # ============================================================================
 
