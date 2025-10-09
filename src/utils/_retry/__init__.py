@@ -23,12 +23,14 @@ class RetryConfig:
         max_delay: float = 60.0,
         exponential_base: float = 2.0,
         jitter: bool = True,
+        retryable_exceptions: tuple = (Exception,),
     ):
         self.max_attempts = max_attempts
         self.base_delay = base_delay
         self.max_delay = max_delay
         self.exponential_base = exponential_base
         self.jitter = jitter
+        self.retryable_exceptions = retryable_exceptions
 
 
 class RetryError(Exception):
