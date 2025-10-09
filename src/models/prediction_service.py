@@ -32,7 +32,7 @@ Provides real-time match prediction functionality, including:
 
 使用示例 / Usage Example:
     ```python
-    from src.models.prediction_service import PredictionService
+    from src.models.prediction_service_mod import PredictionService
 
     service = PredictionService(mlflow_tracking_uri="http://localhost:5002")
     result = await service.predict_match(12345)

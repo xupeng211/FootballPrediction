@@ -24,7 +24,7 @@ Integrates retry mechanisms to improve connection reliability.
 
 使用示例 / Usage Example:
     ```python
-    from src.database.connection import DatabaseManager
+    from src.database.connection_mod import DatabaseManager
 
     # 初始化数据库连接
     db_manager = DatabaseManager()

@@ -1,17 +1,3 @@
-from typing import Optional
-from decimal import Decimal
-from enum import Enum
-from sqlalchemy import (
-    Boolean,
-    DECIMAL,
-    Enum as SQLEnum,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-)
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 """
 features.py
 features
@@ -24,10 +10,17 @@ For backward compatibility, this file re-exports all classes from the modules.
 """
 
 import warnings
+from decimal import Decimal
+from enum import Enum
+from typing import Optional
+
 from sqlalchemy import DECIMAL, Boolean
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..base import BaseModel
+
 from .feature_mod import feature_entity
 from .feature_mod import feature_metadata
 from .feature_mod import feature_types
@@ -39,14 +32,11 @@ from sqlalchemy import String
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
-
 # 添加原始的类定义以保持兼容性
 class TeamType(Enum):
     """球队类型枚举"""
-
     HOME = "home"  # 主队
     AWAY = "away"  # 客队
-
 
 class Features(BaseModel):
     """
@@ -161,7 +151,6 @@ class Features(BaseModel):
     match = relationship("Match", back_populates="features")
     team = relationship("Team", back_populates="features")
 
-
 warnings.warn(
     "直接从 features 导入已弃用。" "请从 src/database/models/feature_mod 导入相关类。",
     DeprecationWarning,
@@ -171,11 +160,4 @@ warnings.warn(
 # 从新模块导入所有内容
 
 # 导出所有类
-__all__ = [
-    "Features",
-    "TeamType",
-    "feature_entity",
-    "feature_types",
-    "feature_metadata",
-    "models",
-]
+__all__ = ["Features", "TeamType", "feature_entity", "feature_types", "feature_metadata", "models"]
