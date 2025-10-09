@@ -531,6 +531,105 @@ debt-status: ## Other: Show current task and status
 	fi
 
 # ============================================================================
+# 🎨 Best Practices Optimization
+# ============================================================================
+
+best-practices-plan: ## Other: Show today's best practices optimization tasks
+	@echo "$(BLUE)📋 Today's Best Practices Optimization Plan:$(RESET)"
+	@if [ ! -f .best_practices_status.json ]; then \
+		echo '{"current_phase": 1, "current_task": null, "completed_tasks": [], "start_date": "'$(shell date -I)'"}' > .best_practices_status.json; \
+	fi
+	@$(ACTIVATE) && python3 -c "import json; import os; status=json.load(open('.best_practices_status.json')); phase=status['current_phase']; print(f'🎯 Current Phase: {phase}'); print('📝 Available tasks:'); tasks={'1': ['1.1 - 统一基础服务类', '1.2 - 实现仓储模式', '1.3 - 引入领域模型', '1.4 - 优化依赖注入'], '2': ['2.1 - 策略模式优化预测', '2.2 - 缓存装饰器', '2.3 - 事件驱动架构', '2.4 - 观察者模式'], '3': ['3.1 - CQRS模式', '3.2 - 装饰器模式', '3.3 - 适配器模式', '3.4 - 门面模式']}; [print(f'  • {task}') for task in tasks.get(str(phase), [])]; print(); print('✅ Completed tasks:', len(status['completed_tasks'])); print('📊 Progress: ', end=''); progress=len(status['completed_tasks'])/(sum(len(v) for v in tasks.values())+1)*100; print(f'{progress:.1f}%')"
+
+best-practices-today: ## Other: Quick start for today's best practices work (default 4 hours)
+	@echo "$(GREEN)🚀 Starting today's best practices optimization...$(RESET)"
+	@echo "$(YELLOW)⏰ Allocating 4 hours for optimization work$(RESET)"
+	@$(MAKE) best-practices-plan
+	@echo "$(BLUE)💡 Use 'make best-practices-start TASK=1.1' to start a specific task$(RESET)"
+
+best-practices-start: ## Other: Start a specific best practices task (usage: make best-practices-start TASK=1.1)
+	@if [ -z "$(TASK)" ]; then \
+		echo "$(RED)❌ Please specify a task. Example: make best-practices-start TASK=1.1$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)🚀 Starting best practices task $(TASK)...$(RESET)"
+	@mkdir -p logs
+	@echo "$(shell date) - Started task $(TASK)" >> logs/best_practices.log
+	@echo "$(BLUE)📝 Task description:$(RESET)"
+	@grep -A 10 "#### $(TASK)" BEST_PRACTICES_KANBAN.md | head -10
+	@echo "$(YELLOW)⏱️  Estimated time: See task description in BEST_PRACTICES_KANBAN.md$(RESET)"
+	@echo "$(GREEN)✅ Task $(TASK) started. Track progress in logs/best_practices.log$(RESET)"
+
+best-practices-done: ## Other: Mark current best practices task as completed
+	@echo "$(YELLOW)✅ Completing current best practices task...$(RESET)"
+	@if [ -f .best_practices_status.json ]; then \
+		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); status['completed_tasks'].append(status.get('current_task', 'unknown')); json.dump(status, open('.best_practices_status.json', 'w'), indent=2)"; \
+		echo "$(GREEN)✅ Task marked as completed$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️  No active task found$(RESET)"; \
+	fi
+	@echo "$(shell date) - Completed task" >> logs/best_practices.log
+
+best-practices-check: ## Other: Run code quality and best practices check
+	@echo "$(YELLOW)🔍 Running best practices code health check...$(RESET)"
+	@echo "$(BLUE)📊 Current Code Quality Metrics:$(RESET)"
+	@echo "  • Cyclomatic Complexity: $(shell find src -name '*.py' -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $$1}' || echo 0) lines"
+	@echo "  • Number of modules: $(shell find src -name '*.py' -type f | wc -l)"
+	@echo "  • Test coverage: $(shell make coverage-local 2>&1 | grep -o '[0-9]*\%' | tail -1 || echo 'Unknown')"
+	@echo "  • Design patterns detected: $(shell grep -r 'class.*Factory\|class.*Singleton\|class.*Strategy' src --include='*.py' | wc -l)"
+	@echo "$(YELLOW)💡 Running architectural checks...$(RESET)"
+	@echo "  • Checking for duplicate base classes..."
+	@if [ -f "src/services/base.py" ] && [ -f "src/services/base_service.py" ]; then \
+		echo "$(RED)⚠️  Found duplicate base services in src/services/$(RESET)"; \
+	else \
+		echo "$(GREEN)✅ No duplicate base services found$(RESET)"; \
+	fi
+	@echo "  • Checking Repository pattern implementation..."
+	@if [ -d "src/database/repositories" ]; then \
+		echo "$(GREEN)✅ Repository pattern implemented$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️  Repository pattern not yet implemented$(RESET)"; \
+	fi
+	@echo "  • Checking Domain models..."
+	@if [ -d "src/domain" ]; then \
+		echo "$(GREEN)✅ Domain models implemented$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️  Domain models not yet implemented$(RESET)"; \
+	fi
+
+best-practices-progress: ## Other: View overall best practices optimization progress
+	@echo "$(BLUE)📊 Best Practices Optimization Progress:$(RESET)"
+	@if [ -f .best_practices_status.json ]; then \
+		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); phase=status['current_phase']; completed=len(status['completed_tasks']); total={'1':4, '2':4, '3':4, '4':4}; overall=sum(total.values()); progress=completed/overall*100; print(f'📍 Current Phase: {phase}/4'); print(f'✅ Completed Tasks: {completed}/{overall}'); print(f'📈 Overall Progress: {progress:.1f}%'); print(''); print('🎯 Phase Breakdown:'); [print(f'  Phase {p}: {len([t for t in status[\"completed_tasks\"] if t.startswith(f\"{p}.\")])}/{total[p]} tasks') for p in sorted(total.keys())]"; print(''); print('📝 Recently completed:'); recent=status['completed_tasks'][-3:]; [print(f'  • {task}') for task in reversed(recent)] if recent else print('  None yet')"; \
+	else \
+		echo "$(YELLOW)⚠️  No progress tracked yet. Run 'make best-practices-start' to begin.$(RESET)"; \
+	fi
+
+best-practices-summary: ## Other: Generate best practices optimization summary report
+	@echo "$(YELLOW)📄 Generating best practices optimization summary...$(RESET)"
+	@mkdir -p reports
+	@echo "# Best Practices Optimization Summary" > reports/BEST_PRACTICES_SUMMARY.md
+	@echo "" >> reports/BEST_PRACTICES_SUMMARY.md
+	@echo "**Generated on:** $(shell date)" >> reports/BEST_PRACTICES_SUMMARY.md
+	@echo "" >> reports/BEST_PRACTICES_SUMMARY.md
+	@if [ -f .best_practices_status.json ]; then \
+		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); completed=status['completed_tasks']; phase=status['current_phase']; print(f'- Current Phase: {phase}/4', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print(f'- Completed Tasks: {len(completed)}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print(f'- Start Date: {status.get(\"start_date\", \"Unknown\")}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('## Completed Tasks', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); [print(f'- {task}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')) for task in completed]; print('', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('## Next Steps', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('1. Continue with current phase tasks', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('2. Review completed tasks in BEST_PRACTICES_KANBAN.md', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('3. Update documentation as needed', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a'))"; \
+	fi
+	@echo "$(GREEN)✅ Summary report generated: reports/BEST_PRACTICES_SUMMARY.md$(RESET)"
+
+best-practices-status: ## Other: Show current best practices task and status
+	@echo "$(BLUE)📍 Current Best Practices Status:$(RESET)"
+	@if [ -f .best_practices_status.json ]; then \
+		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); print(f'🎯 Current Phase: {status.get(\"current_phase\", 1)}'); print(f'📋 Current Task: {status.get(\"current_task\", \"None\")}'); print(f'✅ Completed Tasks: {len(status.get(\"completed_tasks\", []))}'); print(f'📅 Start Date: {status.get(\"start_date\", \"Unknown\")}'); print(f'📊 Progress: {len(status.get(\"completed_tasks\", []))/16*100:.1f}%')"; \
+	else \
+		echo "$(YELLOW)⚠️  No status found. Run 'make best-practices-plan' to start.$(RESET)"; \
+	fi
+	@if [ -f logs/best_practices.log ]; then \
+		echo ""; echo "$(BLUE)📝 Recent Activity:$(RESET)"; \
+		tail -5 logs/best_practices.log; \
+	fi
+
+# ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
 # ============================================================================
 

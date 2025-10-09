@@ -3,7 +3,7 @@ from typing import Dict, Optional, cast
 from src.core import logger
 from src.core.config import get_settings
 
-from .base import BaseService
+from .base_unified import BaseService
 from .content_analysis import ContentAnalysisService
 from .data_processing import DataProcessingService
 from .user_profile import UserProfileService
