@@ -4,6 +4,8 @@
 提供内容分析和处理功能。
 """
 
+from .base_service import BaseService
+
 
 class ContentAnalysisService(BaseService):
     """内容分析服务"""
