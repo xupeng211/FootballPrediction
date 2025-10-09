@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.services.audit_service import AuditService, AuditContext
+from src.services.audit_service_mod import AuditService, AuditContext
 
 """
 审计服务简化测试 / Audit Service Simple Tests

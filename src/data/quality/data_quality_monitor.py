@@ -13,14 +13,6 @@
 基于 DATA_DESIGN.md 第5.1节设计。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, cast
-
-from sqlalchemy import text
-
-from src.database.connection import DatabaseManager
-
 
 class DataQualityMonitor:
     """

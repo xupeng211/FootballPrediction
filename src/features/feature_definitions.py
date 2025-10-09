@@ -7,13 +7,6 @@
 - 赔率特征：implied_probability, bookmaker_consensus
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from decimal import Decimal
-from typing import Any, Dict, Optional, cast
-
-from .entities import MatchEntity, TeamEntity
-
 
 @dataclass
 class RecentPerformanceFeatures:

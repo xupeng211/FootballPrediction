@@ -4,12 +4,16 @@
 分析和优化测试执行性能
 """
 
+from typing import Dict
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+import pytest
 import sys
 import time
 import json
 import subprocess
 from pathlib import Path
-from typing import List, Dict
 from collections import defaultdict
 import re
 
@@ -53,7 +57,7 @@ class TestPerformanceAnalyzer:
         try:
             with open("/tmp/test_results.json", "r") as f:
                 json_data = json.load(f)
-        except:
+        except Exception:
             json_data = {"summary": {}, "tests": []}
 
         return {
@@ -260,7 +264,7 @@ class TestPerformanceAnalyzer:
                 if "patch(" in content:
                     mock_patterns["patch"] += 1
 
-            except:
+            except Exception:
                 pass
 
         # 生成建议
@@ -417,11 +421,9 @@ filterwarnings =
         run_script = project_root / "scripts" / "testing" / "run_optimized_tests.py"
         with open(run_script, "w") as f:
             f.write(
-                f'''#!/usr/bin/env python3
+                '''#!/usr/bin/env python3
 """Optimized test runner"""
 
-import subprocess
-import sys
 
 def run_tests():
     """Run tests with optimizations"""
@@ -436,8 +438,8 @@ def run_tests():
         "-m", "not slow"
     ]
 
-    cmd = ["python", "-m", "pytest"] + args
-    print(f"Running: {' '.join(cmd)}")
+    cmd = ["python", "-m", "pytest"]
+    print("Running: " + " ".join(cmd))
     return subprocess.run(cmd).returncode
 
 if __name__ == "__main__":

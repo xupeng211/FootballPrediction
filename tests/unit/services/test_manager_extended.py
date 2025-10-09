@@ -3,7 +3,7 @@ import pytest
 import threading
 from unittest.mock import Mock, AsyncMock
 from src.services.core import ServiceStatus
-from src.services.manager import ServiceManager
+from src.services.manager_mod import ServiceManager
 # 注册服务
 # 验证服务已注册
 # 先注册

@@ -3,7 +3,7 @@ import sys
 import pytest
 from unittest.mock import Mock, patch
 import os
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
 from src.services.content_analysis import ContentAnalysisService
 import asyncio
 
@@ -73,8 +73,8 @@ class TestServiceCoverage:
     def test_service_imports(self):
         """测试服务导入"""
         try:
-            from src.services.data_processing import DataProcessingService  # noqa: F401
-            from src.services.audit_service import AuditService  # noqa: F401
+            from src.services.data_processing_mod import DataProcessingService  # noqa: F401
+            from src.services.audit_service_mod import AuditService  # noqa: F401
             from src.services.content_analysis import ContentAnalysisService  # noqa: F401
             from src.services.user_profile import UserProfileService  # noqa: F401
 
@@ -102,7 +102,7 @@ class TestServiceCoverage:
 
     def test_audit_service_methods(self):
         """测试AuditService方法存在性"""
-        from src.services.audit_service import AuditService
+        from src.services.audit_service_mod import AuditService
 
         service = AuditService()
         expected_methods = [
@@ -171,7 +171,7 @@ class TestServiceCoverage:
     @pytest.mark.asyncio
     async def test_audit_service_logging(self):
         """测试AuditService日志功能"""
-        from src.services.audit_service import AuditService
+        from src.services.audit_service_mod import AuditService
 
         # Mock数据库
         with patch("src.services.audit_service.get_db_session") as mock_get_session:
@@ -293,7 +293,7 @@ class TestServiceCoverage:
 
     def test_service_metrics(self):
         """测试服务指标"""
-        from src.services.data_processing import DataProcessingService
+        from src.services.data_processing_mod import DataProcessingService
 
         service = DataProcessingService()
 

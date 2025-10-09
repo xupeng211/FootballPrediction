@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 import pandas as pd
 import pytest
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
 
 """
 数据处理服务测试 / Data Processing Service Tests

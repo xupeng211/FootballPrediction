@@ -401,7 +401,7 @@ class EnhancedTestSyntaxFixer:
                         if len(content) > 500:
                             f.write("\n...")
                         f.write("\n```\n\n")
-                    except:
+                    except Exception:
                         f.write("Could not read file content\n")
                     f.write("---\n\n")
 

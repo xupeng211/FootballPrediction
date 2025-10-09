@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 数据采集器模块
 
@@ -11,6 +9,8 @@ from typing import cast, Any, Optional, Union
 
 基于 DATA_DESIGN.md 第1节设计实现。
 """
+
+from typing import cast, Any, Optional, Union
 
 from .base_collector import DataCollector
 from .fixtures_collector import FixturesCollector

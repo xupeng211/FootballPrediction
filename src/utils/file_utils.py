@@ -8,7 +8,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Union, Dict, Any, List, Optional
+import time
 
 
 class FileUtils:
@@ -88,7 +89,6 @@ class FileUtils:
     @staticmethod
     def cleanup_old_files(directory: Union[str, Path], days: int = 30) -> int:
         """清理旧文件"""
-        import time
 
         directory = Path(directory)
         if not directory.exists():

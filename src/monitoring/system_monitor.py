@@ -21,7 +21,7 @@ from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histo
 from sqlalchemy import text
 
 from src.cache.redis_manager import get_redis_manager
-from src.database.connection import DatabaseManager, get_async_session
+from src.database.connection_mod import DatabaseManager, get_async_session
 
 logger = logging.getLogger(__name__)
 
@@ -620,7 +620,7 @@ class SystemMonitor:
             # 检查最近的错误日志
             from sqlalchemy import text
 
-            from src.database.connection import get_async_session
+            from src.database.connection_mod import get_async_session
 
             async with get_async_session() as session:
                 # 检查最近1小时的错误数量
@@ -735,7 +735,7 @@ class SystemMonitor:
 
             from sqlalchemy import text
 
-            from src.database.connection import get_async_session
+            from src.database.connection_mod import get_async_session
 
             async with get_async_session() as session:
                 # 检查数据新鲜度

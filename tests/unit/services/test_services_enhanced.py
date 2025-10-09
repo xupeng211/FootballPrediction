@@ -1,6 +1,6 @@
-from src.services.audit_service import AuditService
+from src.services.audit_service_mod import AuditService
 from src.services.content_analysis import ContentAnalysisService
-from src.services.manager import ServiceManager
+from src.services.manager_mod import ServiceManager
 
 """增强版服务层测试 - 提升覆盖率"""
 
@@ -111,7 +111,7 @@ class TestAuditServiceEnhanced:
 
     def test_set_and_get_audit_context(self):
         """测试设置和获取审计上下文"""
-        from src.services.audit_service import AuditService
+        from src.services.audit_service_mod import AuditService
 
         service = AuditService()
 
@@ -325,7 +325,7 @@ class TestServiceManagerEnhanced:
 
     def test_service_lifecycle(self):
         """测试服务生命周期"""
-        from src.services.manager import ServiceManager
+        from src.services.manager_mod import ServiceManager
         from src.services.base import BaseService
 
         manager = ServiceManager()
@@ -367,7 +367,7 @@ class TestServiceManagerEnhanced:
     @pytest.mark.asyncio
     async def test_concurrent_service_operations(self):
         """测试并发服务操作"""
-        from src.services.manager import ServiceManager
+        from src.services.manager_mod import ServiceManager
         from src.services.base import BaseService
 
         manager = ServiceManager()

@@ -26,7 +26,7 @@ class TestRetryUtils:
 
             result = test_function()
             assert result == "success"
-        except:
+        except Exception:
             pytest.skip("retry decorator not available")
 
     def test_retry_error_class(self):

@@ -11,13 +11,6 @@ Great Expectations 配置模块
 - 比分必须在 [0, 99] 范围内
 """
 
-import logging
-import os
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
-
-from src.database.connection import DatabaseManager
-
 # Temporarily commented out for pytest testing
 try:
     import great_expectations as gx

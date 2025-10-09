@@ -5,10 +5,10 @@ from unittest.mock import Mock, patch, AsyncMock
 from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException, FastAPI, Request
 from fastapi.testclient import TestClient
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
 from src.streaming.kafka_producer import KafkaProducer
 from src.api.health import router
-from src.database.connection import DatabaseManager
+from src.database.connection_mod import DatabaseManager
 
 """
 边界测试和异常场景测试
@@ -69,7 +69,7 @@ class TestEdgeCases:
     @pytest.mark.integration
     def test_empty_dataset_processing(self):
         """测试空数据集处理"""
-        from src.data.processing.football_data_cleaner import FootballDataCleaner
+        from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
         cleaner = FootballDataCleaner()
 

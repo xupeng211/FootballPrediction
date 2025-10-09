@@ -34,5 +34,5 @@ class TestDataAPI:
             routes = list(router.routes)
             # 可能没有路由，但不应该抛出异常
             assert isinstance(routes, list)
-        except:
+        except Exception:
             pytest.skip("endpoints not testable")

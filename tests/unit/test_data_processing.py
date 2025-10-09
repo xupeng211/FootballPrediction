@@ -9,7 +9,9 @@ class TestDataProcessing:
     def test_football_data_cleaner_import(self):
         """测试足球数据清理器导入"""
         try:
-            from src.data.processing.football_data_cleaner import FootballDataCleaner
+            from src.data.processing.football_data_cleaner_mod import (
+                FootballDataCleaner,
+            )
 
             assert FootballDataCleaner is not None
         except ImportError:

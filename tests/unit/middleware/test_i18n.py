@@ -27,5 +27,5 @@ class TestI18nMiddleware:
                 # 如果需要参数，使用None
                 middleware = I18nMiddleware(None)
             assert middleware is not None
-        except:
+        except Exception:
             pytest.skip("Cannot create I18nMiddleware")

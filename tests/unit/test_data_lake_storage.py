@@ -1,0 +1,12 @@
+from src.data.storage.data_lake_storage import DataLakeStorage
+
+
+def test_data_lake_storage():
+    storage = DataLakeStorage()
+    assert storage is not None
+
+
+def test_storage_methods():
+    storage = DataLakeStorage()
+    assert hasattr(storage, "store_data")
+    assert hasattr(storage, "retrieve_data")

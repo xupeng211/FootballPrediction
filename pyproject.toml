@@ -14,6 +14,8 @@ extend-exclude = [
 # 忽略测试文件中的特定错误
 ignore = [
     "F401",  # Unused imports (common in test files with conditional imports)
+    "F403",  # Star imports (无法检测未定义的名称)
+    "F405",  # Star imports可能未定义的名称
     "F811",  # Redefinition (common in test files)
     "F821",  # Undefined name (common in test files with mocks)
     "E402",  # Module level import not at top of file (common in test files)

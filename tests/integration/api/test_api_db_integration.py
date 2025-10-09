@@ -77,7 +77,7 @@ async def predictions_app(
         test_db, class_=AsyncSession, expire_on_commit=False
     )
 
-    from src.database.connection import get_async_session
+    from src.database.connection_mod import get_async_session
 
     async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
         async with async_session_factory() as session:

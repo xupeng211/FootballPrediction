@@ -12,11 +12,6 @@ Create Date: 2025-09-11 23:59:32.853716
 4. 外键引用一致性触发器
 """
 
-from typing import Sequence, Union, cast
-
-import sqlalchemy as sa
-from alembic import op
-
 # revision identifiers, used by Alembic.
 revision: str = "a20f91c49306"
 down_revision: Union[str, None] = "d82ea26f05d0"

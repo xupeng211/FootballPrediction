@@ -34,7 +34,7 @@ class TestDataCollector:
             assert result.success is True
             assert result.data == {"test": "data"}
             assert result.message == "Test collection"
-        except:
+        except Exception:
             pytest.skip("Cannot create CollectionResult")
 
     def test_data_collector_is_abstract(self):
@@ -46,5 +46,5 @@ class TestDataCollector:
             # DataCollector 应该是抽象类，不能直接实例化
             with pytest.raises(TypeError):
                 DataCollector()
-        except:
+        except Exception:
             pytest.skip("DataCollector abstract test not available")
