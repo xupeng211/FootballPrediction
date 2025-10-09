@@ -1,7 +1,5 @@
-"""
 
 
-"""
 
 
 
@@ -15,9 +13,7 @@
 
 
 
-    """
 
-    """
 
 
 
@@ -29,19 +25,17 @@
 
         """验证采集状态"""
 
-        """计算采集耗时（秒）"""
+        """计算采集耗时(秒)"""
 
         """计算成功率"""
 
-        """是否已完成（成功或失败）"""
+        """是否已完成(成功或失败)"""
 
         """是否成功完成"""
 
         """标记采集开始"""
 
-        """
 
-        """
 
         """字符串表示"""
 
@@ -50,9 +44,9 @@
 
 
 数据采集日志模型
-记录数据采集任务的执行日志，包括采集状态、成功失败统计等信息。
-对应数据库表：data_collection_logs
-基于 DATA_DESIGN.md 第1.3节设计。
+记录数据采集任务的执行日志,包括采集状态、成功失败统计等信息.
+对应数据库表:data_collection_logs
+基于 DATA_DESIGN.md 第1.3节设计.
 class CollectionStatus(Enum):
     SUCCESS = "success"
     FAILED = "failed"
@@ -65,8 +59,8 @@ class CollectionType(Enum):
     LIVE_SCORES = "live_scores"
 class DataCollectionLog(BaseModel):
     数据采集日志模型
-    记录每次数据采集任务的详细执行信息，
-    用于监控采集状态、调试错误、统计性能等。
+    记录每次数据采集任务的详细执行信息,
+    用于监控采集状态、调试错误、统计性能等.
     __tablename__ = "data_collection_logs"
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")

@@ -1,44 +1,34 @@
-"""
-
-
-
-"""
 
 
 
 
 
-    """
 
-    """
+
+
+
 
 
 
         """初始化缺失数据处理器"""
 
-        """
-
-
-        """
-
-
-
-
-
-        """
-
-
-        """
 
 
 
 
 
 
-        """
 
 
-        """
+
+
+
+
+
+
+
+
+
 
 
 
@@ -47,11 +37,11 @@
 
         """提供默认平均值作为数据库不可用时的回退策略"""
 
-        """在运行时注册或覆盖指定特征的默认均值。"""
+        """在运行时注册或覆盖指定特征的默认均值."""
 
 
 
-        """加载缺失值默认均值配置，支持环境变量或JSON配置文件。"""
+        """加载缺失值默认均值配置,支持环境变量或JSON配置文件."""
 
 
 
@@ -63,28 +53,24 @@
 
 
 
-        """将来自字符串的 JSON 数据合并到默认映射。"""
+        """将来自字符串的 JSON 数据合并到默认映射."""
 
 
 
 
-        """
-
-
-        """
-
-        """
-
-
-        """
 
 
 
 
-        """重新加载缺省均值配置并清除缓存，支持运行时热更新。"""
 
 
-        """清理历史均值缓存。"""
+
+
+
+        """重新加载缺省均值配置并清除缓存,支持运行时热更新."""
+
+
+        """清理历史均值缓存."""
 
 
 
@@ -102,17 +88,17 @@ from src.database.connection import DatabaseManager
 from src.database.models.features import Features
 
 缺失数据处理器
-实现处理数据缺失的逻辑，包括填充、插值、删除等策略。
-填充策略：
-- 球队统计：使用历史平均值
-- 球员统计：使用位置中位数
-- 天气数据：使用季节正常值
-- 赔率数据：使用市场共识
-基于 DATA_DESIGN.md 第4.3节设计。
+实现处理数据缺失的逻辑,包括填充、插值、删除等策略.
+填充策略:
+- 球队统计:使用历史平均值
+- 球员统计:使用位置中位数
+- 天气数据:使用季节正常值
+- 赔率数据:使用市场共识
+基于 DATA_DESIGN.md 第4.3节设计.
 class MissingDataHandler:
     缺失数据处理器
-    提供多种策略来处理数据集中的缺失值，
-    确保数据完整性，为模型训练做准备。
+    提供多种策略来处理数据集中的缺失值,
+    确保数据完整性,为模型训练做准备.
     FILL_STRATEGIES = {
         "team_stats": "historical_average",  # 历史平均值
         "player_stats": "position_median",  # 位置中位数
@@ -139,7 +125,7 @@ class MissingDataHandler:
             match_data: 清洗后的比赛数据
         Returns:
             Dict[str, Any]: 处理缺失值后的数据
-        # 示例：填充缺失的比分
+        # 示例:填充缺失的比分
         if match_data.get("home_score") is None:
             match_data["home_score"] = 0
             self.logger.debug(
@@ -152,7 +138,7 @@ class MissingDataHandler:
                 "Filled missing away_score for match %s",
                 match_data.get("external_match_id") or match_data.get("id"),
             )
-        # 示例：填充缺失的场地和裁判
+        # 示例:填充缺失的场地和裁判
         if not match_data.get("venue"):
             match_data["venue"] = "Unknown"
         if not match_data.get("referee"):
@@ -266,17 +252,17 @@ class MissingDataHandler:
         try:
             payload = json.loads(raw_json)
         except json.JSONDecodeError as exc:
-            self.logger.warning("解析默认均值 JSON 失败（来源: %s）: %s", source, exc)
+            self.logger.warning("解析默认均值 JSON 失败(来源: %s): %s", source, exc)
             return
         if not isinstance(payload, dict):
-            self.logger.warning("默认均值配置必须是对象（来源: %s）", source)
+            self.logger.warning("默认均值配置必须是对象(来源: %s)", source)
             return
         for key, value in payload.items():
             try:
                 defaults[key] = float(value)
             except (TypeError, ValueError):
                 self.logger.warning(
-                    "忽略无效的默认均值（来源: %s）: %s=%s", source, key, value
+                    "忽略无效的默认均值(来源: %s): %s=%s", source, key, value
                 )
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:
         使用插值法填充时间序列数据

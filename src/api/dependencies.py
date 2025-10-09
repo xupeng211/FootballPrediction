@@ -1,34 +1,26 @@
-"""
-
-
-"""
 
 
 
 
 
 
-    """
-
-
-
-    """
 
 
 
 
 
 
-    """
 
 
 
-    """
 
 
-    """
 
-    """
+
+
+
+
+
 
 
 
@@ -36,16 +28,12 @@
 
 
 
-    """
 
 
-    """
 
 
-    """
 
 
-    """
 
 
 
@@ -57,7 +45,7 @@ from jose import JWTError, jwt
 
 API依赖注入
 API Dependencies
-提供FastAPI依赖注入函数，包括：
+提供FastAPI依赖注入函数,包括:
 - 用户认证
 - 预测引擎
 - 权限检查
@@ -129,7 +117,7 @@ async def verify_prediction_permission(
     Returns:
         bool: 是否有权限
     # 这里可以实现更复杂的权限逻辑
-    # 例如：检查用户是否有访问特定比赛的权限
+    # 例如:检查用户是否有访问特定比赛的权限
     return True
 async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
     速率限制检查
@@ -138,5 +126,5 @@ async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
     Returns:
         bool: 是否通过限制
     # 这里可以实现速率限制逻辑
-    # 例如：检查用户在时间窗口内的请求次数
+    # 例如:检查用户在时间窗口内的请求次数
     return True

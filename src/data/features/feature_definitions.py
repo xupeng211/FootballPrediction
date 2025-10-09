@@ -5,7 +5,7 @@
 
 
 
-    """特征定义类，包含所有特征相关的定义"""
+    """特征定义类,包含所有特征相关的定义"""
 
 
 
@@ -33,9 +33,9 @@
 
 
 足球预测系统特征定义
-定义用于机器学习模型的实体和特征视图。
-包括比赛特征、球队统计特征、赔率衍生特征等。
-基于 DATA_DESIGN.md 第6.1节特征仓库设计。
+定义用于机器学习模型的实体和特征视图.
+包括比赛特征、球队统计特征、赔率衍生特征等.
+基于 DATA_DESIGN.md 第6.1节特征仓库设计.
 class FeatureDefinitions:
     # 实体定义
     ENTITIES = {
@@ -84,7 +84,7 @@ class FeatureDefinitions:
             ],
         },
     }
-# 为了兼容性，提供简化的模拟对象
+# 为了兼容性,提供简化的模拟对象
 class MockEntity:
     def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
         self.name = name
@@ -164,7 +164,7 @@ head_to_head_features_view = MockFeatureView(
     source=odds_features_source,  # 复用数据源
     tags={"team": "data", "type": "historical_matchup"},
 )
-# 特征服务定义（简化版本）
+# 特征服务定义(简化版本)
 class FeatureServices:
     MATCH_PREDICTION = {
         "name": "match_prediction_v1", List, Optional, cast

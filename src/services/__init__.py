@@ -12,7 +12,7 @@ from .manager import ServiceManager, service_manager
 from .user_profile import UserProfileService
 
 足球预测系统业务服务模块
-提供系统业务逻辑服务，包括：
+提供系统业务逻辑服务,包括:
 - 内容分析服务
 - 用户画像服务
 - 数据处理服务

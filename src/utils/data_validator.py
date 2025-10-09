@@ -1,6 +1,4 @@
-"""
 
-"""
 
 
 
@@ -10,9 +8,9 @@
 
         """验证URL格式"""
 
-        """验证必需字段 - 检查数据完整性，返回缺失字段列表用于错误提示"""
+        """验证必需字段 - 检查数据完整性,返回缺失字段列表用于错误提示"""
 
-        """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
+        """验证数据类型 - 确保输入数据符合预期类型,防止运行时类型错误"""
 
         """清理输入数据"""
 
@@ -29,10 +27,11 @@
         """验证日期范围 - 开始日期应早于结束日期"""
 
 
+
 import re
 
 足球预测系统数据验证工具模块
-提供数据验证相关的工具函数。
+提供数据验证相关的工具函数.
 class DataValidator:
     @staticmethod
     def is_valid_email(email: str) -> bool:
@@ -56,7 +55,7 @@ class DataValidator:
     ) -> List[str]:
         missing_fields = []
         for field in required_fields:
-            # 检查字段是否存在且不为None，确保数据有效性
+            # 检查字段是否存在且不为None,确保数据有效性
             if field not in data or data[field] is None:
                 missing_fields.append(field)
         return missing_fields
@@ -67,7 +66,7 @@ class DataValidator:
         invalid_fields = []
         for field, expected_type in type_specs.items():
             if field in data and not isinstance(data[field], expected_type):
-                # 提供详细的类型不匹配信息，便于调试
+                # 提供详细的类型不匹配信息,便于调试
                 invalid_fields.append(
                     f"{field}: 期望 {expected_type.__name__}, "
                     f"实际 {type(data[field]).__name__}"
@@ -92,13 +91,13 @@ class DataValidator:
         return DataValidator.is_valid_email(email)
     @staticmethod
     def validate_phone(phone: str) -> bool:
-        # 移除所有非数字字符（除了开头的+号）
+        # 移除所有非数字字符(除了开头的+号)
         clean_phone = re.sub(r"[^\d+]", "", phone)
         # 支持多种手机号格式
         patterns = [
-            r"^1[3-9]\d{9}$",  # 中国手机号（11位）
-            r"^\+\d{8,15}$",  # 国际格式（+号开头）
-            r"^\d{8,15}$",  # 纯数字格式（8-15位）
+            r"^1[3-9]\d{9}$",  # 中国手机号(11位)
+            r"^\+\d{8,15}$",  # 国际格式(+号开头)
+            r"^\d{8,15}$",  # 纯数字格式(8-15位)
         ]
         return any(bool(re.match(pattern, clean_phone)) for pattern in patterns)
     @staticmethod

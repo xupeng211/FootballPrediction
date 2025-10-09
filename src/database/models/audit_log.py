@@ -1,8 +1,6 @@
-"""
 
 
 
-"""
 
 
 
@@ -19,9 +17,7 @@
 
 
 
-    """
 
-    """
 
 
 
@@ -38,7 +34,7 @@
 
         """判断是否为高风险操作"""
 
-        """计算风险评分（0-100）"""
+        """计算风险评分(0-100)"""
 
 
 
@@ -52,10 +48,8 @@
 
         """移除标签"""
 
-        """
 
 
-        """
 
 
 
@@ -83,12 +77,13 @@
 
 
 
+
         from sqlalchemy import and_, func
 
 权限审计日志模型
-实现全面的数据库操作审计功能，记录所有敏感数据的访问和修改操作。
-支持合规要求和安全审计。
-基于 DATA_DESIGN.md 中的权限控制设计。
+实现全面的数据库操作审计功能,记录所有敏感数据的访问和修改操作.
+支持合规要求和安全审计.
+基于 DATA_DESIGN.md 中的权限控制设计.
 class AuditAction(str, Enum):
     # 数据操作
     CREATE = "CREATE"  # 创建记录
@@ -107,14 +102,14 @@ class AuditAction(str, Enum):
     CONFIG_CHANGE = "CONFIG_CHANGE"  # 配置变更
     SCHEMA_CHANGE = "SCHEMA_CHANGE"  # 架构变更
 class AuditSeverity(str, Enum):
-    INFO = "INFO"  # 信息级：一般性成功事件
-    LOW = "LOW"  # 低风险：普通读操作
-    MEDIUM = "MEDIUM"  # 中风险：普通写操作
-    HIGH = "HIGH"  # 高风险：删除、权限变更
-    CRITICAL = "CRITICAL"  # 极高风险：系统级操作
+    INFO = "INFO"  # 信息级:一般性成功事件
+    LOW = "LOW"  # 低风险:普通读操作
+    MEDIUM = "MEDIUM"  # 中风险:普通写操作
+    HIGH = "HIGH"  # 高风险:删除、权限变更
+    CRITICAL = "CRITICAL"  # 极高风险:系统级操作
 class AuditLog(BaseModel):
     权限审计日志模型
-    记录系统中所有敏感操作的详细信息，包括：
+    记录系统中所有敏感操作的详细信息,包括:
     - 用户身份和操作类型
     - 受影响的数据表和字段
     - 操作前后的数据值
@@ -138,8 +133,8 @@ class AuditLog(BaseModel):
     # 数据变更信息
     old_value = Column(Text, nullable=True, comment="操作前值")
     new_value = Column(Text, nullable=True, comment="操作后值")
-    old_value_hash = Column(String(64), nullable=True, comment="旧值哈希（敏感数据）")
-    new_value_hash = Column(String(64), nullable=True, comment="新值哈希（敏感数据）")
+    old_value_hash = Column(String(64), nullable=True, comment="旧值哈希(敏感数据)")
+    new_value_hash = Column(String(64), nullable=True, comment="新值哈希(敏感数据)")
     # 上下文信息
     ip_address = Column(String(45), nullable=True, comment="客户端IP地址")
     user_agent = Column(Text, nullable=True, comment="用户代理")
@@ -161,14 +156,14 @@ class AuditLog(BaseModel):
         default=func.now(),
         comment="操作时间戳",
     )
-    duration_ms = Column(Integer, nullable=True, comment="操作耗时（毫秒）")
+    duration_ms = Column(Integer, nullable=True, comment="操作耗时(毫秒)")
     # 扩展信息
     extra_data = Column(SQLiteCompatibleJSONB, nullable=True, comment="扩展元数据")
-    tags = Column(String(500), nullable=True, comment="标签（逗号分隔）")
+    tags = Column(String(500), nullable=True, comment="标签(逗号分隔)")
     # 合规相关
     compliance_category = Column(String(100), nullable=True, comment="合规分类")
     retention_period_days = Column(
-        Integer, nullable=True, default=2555, comment="保留期限（天）"
+        Integer, nullable=True, default=2555, comment="保留期限(天)"
     )  # 7年
     is_sensitive = Column(
         Boolean, nullable=False, default=False, comment="是否包含敏感数据"
@@ -182,7 +177,7 @@ class AuditLog(BaseModel):
         Index("idx_audit_success", "success"),
         Index("idx_audit_sensitive", "is_sensitive"),
         Index("idx_audit_compliance", "compliance_category"),
-        {"comment": "权限审计日志表，记录所有敏感操作的详细信息"},
+        {"comment": "权限审计日志表,记录所有敏感操作的详细信息"},
     )
     def __repr__(self) -> str:
         return (

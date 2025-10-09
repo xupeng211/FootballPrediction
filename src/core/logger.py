@@ -13,11 +13,12 @@
 
 
 
+
 from typing import cast, Any, Optional, Union
 import logging
 
 足球预测系统日志管理模块
-提供统一的日志配置和管理功能。
+提供统一的日志配置和管理功能.
 class Logger:
     @staticmethod
     def setup_logger(name: str, level: str = "INFO") -> logging.Logger:

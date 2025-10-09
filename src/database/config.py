@@ -3,7 +3,7 @@
 
 
 
-    """封装数据库连接配置及常用连接URL。"""
+    """封装数据库连接配置及常用连接URL."""
 
 
 
@@ -17,7 +17,7 @@
 
 
 
-    """根据环境返回数据库配置。"""
+    """根据环境返回数据库配置."""
 
 
 
@@ -26,11 +26,12 @@
 
 
 
-    """返回测试环境数据库配置。"""
+    """返回测试环境数据库配置."""
 
 
 
-    """返回生产环境数据库配置。"""
+    """返回生产环境数据库配置."""
+
 
 
 import os
@@ -111,11 +112,11 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
     port = _parse_int(f"{prefix}DB_PORT", 5432)
     database = os.getenv(f"{prefix}DB_NAME", default_db)
     username = os.getenv(f"{prefix}DB_USER", "football_user")
-    # 数据库密码必须通过环境变量提供（测试环境除外）
+    # 数据库密码必须通过环境变量提供(测试环境除外)
     password = os.getenv(f"{prefix}DB_PASSWORD")
     if password is None and env != "test":
         raise ValueError(
-            f"数据库密码未配置！请设置环境变量: {prefix}DB_PASSWORD\n"
+            f"数据库密码未配置!请设置环境变量: {prefix}DB_PASSWORD\n"
             f"Database password not configured! Please set environment variable: {prefix}DB_PASSWORD"
         )
     pool_size = _parse_int(f"{prefix}DB_POOL_SIZE", 10)

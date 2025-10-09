@@ -1,9 +1,3 @@
-"""
-
-
-
-
-"""
 
 
 
@@ -13,58 +7,46 @@
 
 
 
-    """
-    """
-
-
-    """
-
-    """
-
-        """初始化服务（向后兼容）"""
-
-        """
-        """
-
-
-
-
-
-        """
-        """
 
 
 
 
 
 
-        """
-        """
+
+
+        """初始化服务(向后兼容)"""
 
 
 
 
-        """对敏感数据进行哈希处理（向后兼容）"""
-
-        """对敏感数据进行哈希处理 - 别名方法（向后兼容）"""
-
-        """清理数据中的敏感信息（向后兼容）"""
 
 
 
 
-    """
-
-    """
 
 
-    """
-
-    """
 
 
-    """
-    """
+
+
+
+
+        """对敏感数据进行哈希处理(向后兼容)"""
+
+        """对敏感数据进行哈希处理 - 别名方法(向后兼容)"""
+
+        """清理数据中的敏感信息(向后兼容)"""
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -78,11 +60,11 @@
         from .audit_service_mod.utils import sanitize_data as _sanitize
 
 权限审计服务
-提供API层面的自动审计功能，记录所有写操作到audit_log表。
-支持装饰器模式，自动捕获操作上下文和数据变更。
-基于 DATA_DESIGN.md 中的权限控制设计。
-注意：此文件已重构为模块化结构以保持向后兼容。
-新功能请使用 src.services.audit_service_mod 模块。
+提供API层面的自动审计功能,记录所有写操作到audit_log表.
+支持装饰器模式,自动捕获操作上下文和数据变更.
+基于 DATA_DESIGN.md 中的权限控制设计.
+注意:此文件已重构为模块化结构以保持向后兼容.
+新功能请使用 src.services.audit_service_mod 模块.
 # 导入重构后的模块化组件
     # 核心服务
     AuditService as _AuditService,
@@ -105,7 +87,7 @@
     calculate_operation_risk,
     format_audit_log_for_display,
 )
-# 导入原始数据库模型（保持向后兼容）
+# 导入原始数据库模型(保持向后兼容)
     AuditAction as DBAuditAction,
     AuditLog as DBAuditLog,
     AuditLogSummary as DBAuditLogSummary,
@@ -114,20 +96,20 @@
 # 保持向后兼容的类型别名
 # 类型定义
 F = TypeVar("F", bound=Callable[..., Any])
-# 上下文变量，用于在请求处理过程中传递审计信息
+# 上下文变量,用于在请求处理过程中传递审计信息
 audit_context: ContextVar[Dict[str, Any]] = ContextVar("audit_context", default={})
 logger = logging.getLogger(__name__)
 # 向后兼容的包装类
 class AuditContext(_AuditContext):
-    审计上下文管理器（向后兼容包装器）
+    审计上下文管理器(向后兼容包装器)
     Audit Context Manager (Backward compatibility wrapper)
-    pass  # 直接继承，所有功能都在基类中实现
+    pass  # 直接继承,所有功能都在基类中实现
 class AuditService(_AuditService):
-    权限审计服务（向后兼容包装器）
+    权限审计服务(向后兼容包装器)
     Audit Service (Backward compatibility wrapper)
-    注意：此类继承自重构后的模块化服务。
-    建议直接使用 audit_service_mod.AuditService 获取最新功能。
-    # 向后兼容：保持旧的方法名
+    注意:此类继承自重构后的模块化服务.
+    建议直接使用 audit_service_mod.AuditService 获取最新功能.
+    # 向后兼容:保持旧的方法名
     async def initialize(self):
         # 新的服务类已经自动初始化
         pass
@@ -146,7 +128,7 @@ class AuditService(_AuditService):
         severity: str = "medium",
         **kwargs
     ) -> Optional[int]:
-        创建审计日志（向后兼容方法）
+        创建审计日志(向后兼容方法)
         Create Audit Log (Backward compatibility method)
         # 创建上下文
         context = AuditContext(
@@ -186,7 +168,7 @@ class AuditService(_AuditService):
         limit: int = 100,
         offset: int = 0
     ) -> List[Dict[str, Any]]:
-        获取审计日志（向后兼容方法）
+        获取审计日志(向后兼容方法)
         Get Audit Logs (Backward compatibility method)
         # 构建过滤条件
         filters = {}
@@ -220,7 +202,7 @@ class AuditService(_AuditService):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None
     ) -> Dict[str, Any]:
-        获取审计日志摘要（向后兼容方法）
+        获取审计日志摘要(向后兼容方法)
         Get Audit Logs Summary (Backward compatibility method)
         # 构建日期范围
         date_range = None
@@ -243,7 +225,7 @@ class AuditService(_AuditService):
         storage = AuditStorage()
         summary = await storage.get_logs_summary(date_range=date_range)
         return summary.to_dict()
-    # 向后兼容：保持旧的私有方法
+    # 向后兼容:保持旧的私有方法
     def _hash_sensitive_value(self, value: str) -> str:
         return hash_sensitive_data(value)
     def _hash_sensitive_data(self, data: str) -> str:
@@ -255,7 +237,7 @@ class AuditService(_AuditService):
             "ssn", "credit_card", "bank_account", "api_key"
         }
         return _sanitize(data, sensitive_columns)
-# 向后兼容：保持旧的装饰器函数名
+# 向后兼容:保持旧的装饰器函数名
 def log_operation(action: str, resource_type: Optional[str] = None, **kwargs):
     向后兼容的装饰器函数 / Backward compatible decorator function
     请使用 audit_action 替代 / Please use audit_action instead
@@ -264,7 +246,7 @@ def audit_decorator(action: str, **kwargs):
     向后兼容的装饰器函数 / Backward compatible decorator function
     请使用 audit_action 替代 / Please use audit_action instead
     return audit_action(action, **kwargs)
-# 向后兼容：保持旧的函数
+# 向后兼容:保持旧的函数
 def create_audit_context(
     user_id: str,
     username: Optional[str] = None,
@@ -272,7 +254,7 @@ def create_audit_context(
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None
 ) -> AuditContext:
-    创建审计上下文（向后兼容函数）
+    创建审计上下文(向后兼容函数)
     Create Audit Context (Backward compatibility function)
     return AuditContext(
         user_id=user_id,
@@ -301,7 +283,7 @@ __all__ = [
     "AuditSeverity",
     "AuditLog",
     "AuditLogSummary",
-    # 数据库模型（向后兼容）
+    # 数据库模型(向后兼容)
     "DBAuditAction",
     "DBAuditLog",
     "DBAuditLogSummary",

@@ -1,6 +1,4 @@
-"""
 
-"""
 
 
 
@@ -15,9 +13,7 @@
 
 
 
-    """
 
-    """
 
 
         """从环境变量加载Kafka配置"""
@@ -36,10 +32,11 @@
         """检查Topic是否有效"""
 
 
+
 import os
 
 流式处理配置管理
-提供Kafka和流处理的配置管理功能，包括：
+提供Kafka和流处理的配置管理功能,包括:
 - Kafka连接配置
 - Topic配置管理
 - 序列化配置
@@ -111,7 +108,7 @@ class StreamConfig:
             # 赔率数据流
             "odds-stream": TopicConfig(
                 name="odds-stream",
-                partitions=6,  # 赔率数据量大，更多分区
+                partitions=6,  # 赔率数据量大,更多分区
                 retention_ms=43200000,  # 12小时
             ),
             # 比分数据流
@@ -152,7 +149,7 @@ class StreamConfig:
             "auto.offset.reset": self.kafka_config.consumer_auto_offset_reset,
             "enable.auto.commit": self.kafka_config.consumer_enable_auto_commit,
             "auto.commit.interval.ms": self.kafka_config.consumer_auto_commit_interval_ms,
-            # confluent-kafka不支持max.poll.records，改用max.poll.interval.ms
+            # confluent-kafka不支持max.poll.records,改用max.poll.interval.ms
             "max.poll.interval.ms": 300000,  # 5分钟
             "session.timeout.ms": 30000,
             "heartbeat.interval.ms": 3000,

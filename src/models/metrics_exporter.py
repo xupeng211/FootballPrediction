@@ -1,14 +1,10 @@
-"""
-
-"""
 
 
 
 
 
-    """
 
-    """
+
 
         """初始化Prometheus指标"""
 
@@ -20,51 +16,37 @@
 
 
 
-        """
-
-        """
 
 
 
 
 
-        """
-
-        """
 
 
 
-        """
-
-        """
 
 
-        """
-
-        """
 
 
-        """
-
-        """
 
 
-        """
-
-        """
 
 
-        """
 
-        """
+
+
+
+
+
+
 
 
 模型指标导出器
-提供Prometheus指标导出功能，监控模型性能和预测质量
+提供Prometheus指标导出功能,监控模型性能和预测质量
 logger = logging.getLogger(__name__)
 class ModelMetricsExporter:
     模型指标导出器
-    提供模型性能监控指标导出，包括：
+    提供模型性能监控指标导出,包括:
     - 预测数量统计
     - 预测准确率监控
     - 置信度分布
@@ -72,7 +54,7 @@ class ModelMetricsExporter:
     def __init__(self, registry=None):
         # 使用自定义registry避免重复注册错误
         if registry is None:
-            # 在测试环境中创建新的registry，避免重复注册
+            # 在测试环境中创建新的registry,避免重复注册
             self.registry = CollectorRegistry()
         else:
             self.registry = registry
@@ -154,7 +136,7 @@ class ModelMetricsExporter:
                 model_name=result.model_name, date=today
             ).inc()
             logger.debug(
-                f"已导出预测指标：match_id={result.match_id}, result={result.predicted_result}"
+                f"已导出预测指标:match_id={result.match_id}, result={result.predicted_result}"
             )
         except Exception as e:
             logger.error(f"导出预测指标失败: {e}")
@@ -178,7 +160,7 @@ class ModelMetricsExporter:
                 time_window=time_window,
             ).set(accuracy)
             logger.debug(
-                f"已导出准确率指标：{model_name} v{model_version} = {accuracy:.3f}"
+                f"已导出准确率指标:{model_name} v{model_version} = {accuracy:.3f}"
             )
         except Exception as e:
             logger.error(f"导出准确率指标失败: {e}")
@@ -189,7 +171,7 @@ class ModelMetricsExporter:
         Args:
             model_name: 模型名称
             model_version: 模型版本
-            duration: 持续时间（秒）
+            duration: 持续时间(秒)
         try:
             self.prediction_duration.labels(
                 model_name=model_name, model_version=model_version
@@ -233,7 +215,7 @@ class ModelMetricsExporter:
         Args:
             model_name: 模型名称
             model_version: 模型版本
-            duration: 加载时间（秒）
+            duration: 加载时间(秒)
         try:
             self.model_load_duration.labels(
                 model_name=model_name, model_version=model_version

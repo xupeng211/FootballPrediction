@@ -1,8 +1,6 @@
 
 
-"""
 
-"""
 
 
     """基础服务类"""
@@ -29,10 +27,11 @@
 
 
 
+
 from src.core import logger
 
 足球预测系统基础服务模块
-定义所有业务服务的基础抽象类。
+定义所有业务服务的基础抽象类.
 class BaseService:
     def __init__(self, name: str = "BaseService"):
         self.name = name

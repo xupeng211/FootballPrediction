@@ -1,5 +1,3 @@
-"""
-"""
 
 
 
@@ -9,10 +7,6 @@
     """比赛赛程收集器"""
 
 
-        """
-
-
-        """
 
 
 
@@ -21,10 +15,10 @@
 
 
 
-        """
 
 
-        """
+
+
 
 
 
@@ -49,17 +43,15 @@
 
 
 
-        """生成模拟数据（仅用于测试）"""
+        """生成模拟数据(仅用于测试)"""
 
 
 
-        """生成联赛模拟数据（仅用于测试）"""
+        """生成联赛模拟数据(仅用于测试)"""
 
 
 
-        """
 
-        """
 
 
 
@@ -71,6 +63,7 @@
     """赛程收集器工厂类"""
 
         """创建赛程收集器实例"""
+
 
 
 
@@ -121,7 +114,7 @@ class FixturesCollector:
             # 从数据库查询
             fixtures = await self._get_fixtures_from_db(team_id, days_ahead)
             if not fixtures:
-                # 如果数据库没有，从API获取
+                # 如果数据库没有,从API获取
                 fixtures = await self._fetch_fixtures_from_api(team_id, days_ahead)
                 # 保存到数据库
                 if fixtures:
@@ -144,7 +137,7 @@ class FixturesCollector:
         收集联赛的比赛赛程
         Args:
             league_id: 联赛ID
-            matchday: 轮次（可选）
+            matchday: 轮次(可选)
             force_refresh: 是否强制刷新缓存
         Returns:
             比赛信息列表
@@ -198,7 +191,7 @@ class FixturesCollector:
     async def _fetch_fixtures_from_api(
         self, team_id: int, days_ahead: int
     ) -> List[Dict[str, Any]]:
-        # 模拟数据，实际使用时替换为真实API调用
+        # 模拟数据,实际使用时替换为真实API调用
         return await self._get_mock_fixtures(team_id, days_ahead)
     async def _fetch_league_fixtures_from_api(
         self, league_id: int, matchday: Optional[int] = None
@@ -297,7 +290,7 @@ class FixturesCollector:
                 )
                 stats["total_fixtures"] += len(fixtures)
                 # 这里可以根据实际情况统计新增和更新的比赛
-            logger.info(f"刷新完成，总共收集 {stats['total_fixtures']} 场比赛")
+            logger.info(f"刷新完成,总共收集 {stats['total_fixtures']} 场比赛")
         except Exception as e:
             logger.error(f"刷新所有赛程失败: {e}")
             stats["errors"] += 1

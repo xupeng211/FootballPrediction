@@ -34,16 +34,16 @@ from .metrics_exporter import MetricsExporter
 
 监控指标收集器 - 向后兼容性包装器
 Monitoring Metrics Collector - Backward Compatibility Wrapper
-⚠️  警告：此文件已被重构为模块化结构
+⚠️  警告:此文件已被重构为模块化结构
 ⚠️  Warning: This file has been refactored into a modular structure
-新的实现位于 src/monitoring/metrics/ 目录下：
+新的实现位于 src/monitoring/metrics/ 目录下:
 - types.py - 指标类型和单位定义
 - aggregator.py - 指标聚合器
 - exporters.py - 各种导出器实现
 - base.py - 基础收集器抽象类
 - collectors.py - 具体收集器实现
 - global_collector.py - 全局收集器管理
-此文件保留用于向后兼容性，建议新代码直接导入新的模块。
+此文件保留用于向后兼容性,建议新代码直接导入新的模块.
 # 从新的模块化结构导入所有功能
     # Types
     MetricType,
@@ -86,7 +86,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # 向后兼容性别名
 # =============================================================================
-# 为了保持向后兼容，使用原始的类名
+# 为了保持向后兼容,使用原始的类名
 MetricsCollector = OriginalMetricsCollector
 # PrometheusExporter 的别名
 PrometheusExporter = MetricsExporter

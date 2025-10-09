@@ -1,6 +1,4 @@
-"""
 
-"""
 
 
 
@@ -8,31 +6,23 @@
     """SQLAlchemy基础模型类"""
 
 
-    """时间戳混入类，为模型添加创建时间和更新时间字段"""
+    """时间戳混入类,为模型添加创建时间和更新时间字段"""
 
 
 
 
-    """
-
-    """
 
 
 
-        """
 
 
-        """
 
 
-        """
 
 
-        """
 
-        """
 
-        """
+
 
 
 
@@ -42,11 +32,12 @@
 
 
 
+
 from datetime import datetime
 from typing import Any, Dict
 
 SQLAlchemy基础模型
-提供所有数据模型的基础类，包含通用字段和方法。
+提供所有数据模型的基础类,包含通用字段和方法.
 class Base(DeclarativeBase):
 class TimestampMixin:
     created_at = Column(
@@ -61,7 +52,7 @@ class TimestampMixin:
     )
 class BaseModel(Base, TimestampMixin):
     基础模型类
-    所有业务模型都应该继承此类，自动包含：
+    所有业务模型都应该继承此类,自动包含:
     - 主键ID字段
     - 创建时间和更新时间字段
     - 常用的方法
@@ -114,5 +105,5 @@ class BaseModel(Base, TimestampMixin):
                 setattr(self, key, value)
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
-# 导出基础类，供其他模型使用
+# 导出基础类,供其他模型使用
 __all__ = ["Base", "BaseModel", "TimestampMixin"]

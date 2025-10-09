@@ -1,6 +1,4 @@
-"""
 
-"""
 
 
 
@@ -27,13 +25,14 @@
 
 
 
+
     import bcrypt
 import hashlib
 import uuid
 import secrets
 
 足球预测系统加密工具模块
-提供加密、哈希和ID生成相关的工具函数。
+提供加密、哈希和ID生成相关的工具函数.
 try:
     HAS_BCRYPT = True
 except ImportError:
@@ -46,7 +45,7 @@ class CryptoUtils:
     def generate_short_id(length: int = 8) -> str:
         if length <= 0:
             return ""
-        # 对于大长度，需要生成多个UUID
+        # 对于大长度,需要生成多个UUID
         if length > 32:
             result = ""
             while len(result) < length:
@@ -70,7 +69,7 @@ class CryptoUtils:
             )
             return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
         else:
-            # 简单实现，仅用于测试 - 模拟bcrypt格式
+            # 简单实现,仅用于测试 - 模拟bcrypt格式
             if salt is None:
                 salt = CryptoUtils.generate_short_id()
             salted_password = f"{password}{salt}"
@@ -79,7 +78,7 @@ class CryptoUtils:
             return f"$2b$12${salt}${hash_value}"
     @staticmethod
     def verify_password(password: str, hashed_password: str) -> bool:
-        # 特殊情况：空密码和空哈希
+        # 特殊情况:空密码和空哈希
         if password == "" and hashed_password == "":
             return True
         if (

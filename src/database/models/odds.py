@@ -1,7 +1,5 @@
-"""
 
 
-"""
 
 
 
@@ -11,9 +9,7 @@
 
 
 
-    """
 
-    """
 
 
 
@@ -35,18 +31,14 @@
 
         """检查是否为亚洲让球市场"""
 
-        """
-
-        """
 
 
 
 
 
 
-        """
 
-        """
+
 
 
 
@@ -63,10 +55,8 @@
 
 
 
-        """
 
 
-        """
 
 
 
@@ -85,10 +75,11 @@
 
 
 
+
 from src.database.base import BaseModel
 
 足球比赛赔率数据模型
-存储不同博彩公司的赔率信息，包括胜平负、大小球、让球等市场。
+存储不同博彩公司的赔率信息,包括胜平负、大小球、让球等市场.
 class MarketType(Enum):
     ONE_X_TWO = "1x2"  # 胜平负
     OVER_UNDER = "over_under"  # 大小球
@@ -182,11 +173,11 @@ class Odds(BaseModel):
         Returns:
             Optional[Dict[str, float]]: 各结果的隐含概率
         if self.is_1x2_market and all([self.home_odds, self.draw_odds, self.away_odds]):
-            # 安全的类型转换，这里我们已经检查了all()，所以值不为None
+            # 安全的类型转换,这里我们已经检查了all(),所以值不为None
             home_prob = 1.0 / float(self.home_odds)
             draw_prob = 1.0 / float(self.draw_odds)
             away_prob = 1.0 / float(self.away_odds)
-            # 标准化概率（去除博彩公司的利润边际）
+            # 标准化概率(去除博彩公司的利润边际)
             total_prob = home_prob + draw_prob + away_prob
             return {
                 "home_win": home_prob / total_prob,
@@ -195,7 +186,7 @@ class Odds(BaseModel):
                 "bookmaker_margin": (total_prob - 1.0) / total_prob,
             }
         elif self.is_over_under_market and all([self.over_odds, self.under_odds]):
-            # 安全的类型转换，这里我们已经检查了all()，所以值不为None
+            # 安全的类型转换,这里我们已经检查了all(),所以值不为None
             over_prob = 1.0 / float(self.over_odds)
             under_prob = 1.0 / float(self.under_odds)
             total_prob = over_prob + under_prob

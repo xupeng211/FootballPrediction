@@ -20,8 +20,8 @@ from .backup.executor.backup_executor import BackupExecutor
 from .backup.tasks import (
 from .backup.validation.backup_validator import BackupValidator
 
-备份任务模块（重构后）
-这是一个重构后的备份任务模块，将原来的1380行大文件拆分为：
+备份任务模块(重构后)
+这是一个重构后的备份任务模块,将原来的1380行大文件拆分为:
 - BackupConfig: 备份配置管理
 - BackupExecutor: 备份执行器
 - BackupValidator: 备份验证器
@@ -56,7 +56,7 @@ from .backup.validation.backup_validator import BackupValidator
     logs_cleanup_task
 )
 # 导出核心组件
-# 为了向后兼容，保留一些常用的导入
+# 为了向后兼容,保留一些常用的导入
 __all__ = [
     # 主要任务类
     "DatabaseBackupTask",
@@ -88,4 +88,4 @@ __all__ = [
 # 版本信息
 __version__ = "2.0.0"
 __author__ = "Claude Code"
-__description__ = "重构后的备份任务模块，提供模块化、可测试的备份功能"
+__description__ = "重构后的备份任务模块,提供模块化、可测试的备份功能"

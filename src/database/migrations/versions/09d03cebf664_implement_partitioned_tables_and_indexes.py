@@ -4,7 +4,6 @@
 
 
 
-"""
 
 
 
@@ -16,9 +15,7 @@
     """检测当前是否为PostgreSQL数据库"""
 
 
-    """
 
-    """
 
 
 
@@ -27,16 +24,10 @@
 
     """PostgreSQL环境下实现分区表和高级索引"""
 
-            """
 
-    """
 
-            """
 
-    """
 
-                    """
-        """
 
 
 
@@ -54,15 +45,13 @@
 
 
 
-    """实现基础索引（通用数据库）"""
+    """实现基础索引(通用数据库)"""
 
 
 
 
-    """创建PostgreSQL索引（如果不存在）"""
+    """创建PostgreSQL索引(如果不存在)"""
 
-                """
-    """
 
 
 
@@ -73,9 +62,7 @@
     """创建简单索引"""
 
 
-    """
 
-    """
 
 
 
@@ -93,7 +80,7 @@
 
 
 实现分区表和索引优化策略
-基于 architecture.md 第3.4节和第3.3节的设计要求，实现：
+基于 architecture.md 第3.4节和第3.3节的设计要求,实现:
 1. 比赛表按年份分区
 2. 预测表按月分区
 3. 补充缺失的查询优化索引
@@ -117,26 +104,26 @@ def is_postgresql():
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
 def upgrade() -> None:
-    升级数据库：实现分区表和索引优化
-    SQLite不支持分区表，但会创建相应的索引来优化查询性能。
-    PostgreSQL将实现完整的分区表策略和高级索引。
+    升级数据库:实现分区表和索引优化
+    SQLite不支持分区表,但会创建相应的索引来优化查询性能.
+    PostgreSQL将实现完整的分区表策略和高级索引.
     # 检查是否在离线模式
     if context.is_offline_mode():
-        print("⚠️  离线模式：跳过分区表实现")
-        # 在离线模式下执行注释，确保 SQL 生成正常
+        print("⚠️  离线模式:跳过分区表实现")
+        # 在离线模式下执行注释,确保 SQL 生成正常
         op.execute("-- offline mode: skipped partitioned tables implementation")
         op.execute("-- offline mode: skipped advanced indexes creation")
         return
     bind = op.get_bind()
     print(f"当前数据库类型: {bind.dialect.name}")
     if is_postgresql():
-        print("PostgreSQL环境：实现分区表和高级索引...")
+        print("PostgreSQL环境:实现分区表和高级索引...")
         _implement_postgresql_partitioning_and_indexes()
     elif is_sqlite():
-        print("SQLite环境：实现优化索引（不支持分区表）...")
+        print("SQLite环境:实现优化索引(不支持分区表)...")
         _implement_sqlite_optimized_indexes()
     else:
-        print(f"其他数据库类型 {bind.dialect.name}：实现基础索引...")
+        print(f"其他数据库类型 {bind.dialect.name}:实现基础索引...")
         _implement_basic_indexes()
     print("分区表和索引优化实施完成")
 def _implement_postgresql_partitioning_and_indexes():
@@ -196,8 +183,8 @@ def _implement_postgresql_partitioning_and_indexes():
         $$ LANGUAGE plpgsql;
         )
     )
-    # 3. 为现有表添加分区（需要先备份数据）
-    # 注意：在生产环境中，这需要谨慎操作
+    # 3. 为现有表添加分区(需要先备份数据)
+    # 注意:在生产环境中,这需要谨慎操作
     try:
         # 检查表是否已分区
         result = (
@@ -211,18 +198,18 @@ def _implement_postgresql_partitioning_and_indexes():
             .scalar()
         )
         if result == 0:
-            print("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
-            # 在实际部署中，需要先创建分区表，再迁移数据
+            print("  提醒:matches表尚未分区,建议在维护窗口期间手动执行分区操作")
+            # 在实际部署中,需要先创建分区表,再迁移数据
     except Exception as e:
         print(f"  分区检查失败: {e}")
-    # 4. 创建年度分区（示例）
+    # 4. 创建年度分区(示例)
     current_year = 2025
     for year in range(2020, current_year + 2):
         try:
             op.execute(text(f"SELECT create_match_partition({year})"))
         except Exception as e:
             print(f"  创建分区 {year} 失败: {e}")
-    # 5. 创建月度分区（最近12个月）
+    # 5. 创建月度分区(最近12个月)
     for year in [2024, 2025]:
         for month in range(1, 13):
             if year == 2024 and month < 9:  # 跳过太早的月份
@@ -235,7 +222,7 @@ def _implement_postgresql_partitioning_and_indexes():
     _create_postgresql_advanced_indexes()
 def _create_postgresql_advanced_indexes():
     advanced_indexes = [
-        # JSONB字段的GIN索引（如果尚未存在）
+        # JSONB字段的GIN索引(如果尚未存在)
         {
             "name": "idx_raw_match_data_jsonb_gin",
             "table": "raw_match_data",
@@ -272,7 +259,7 @@ def _create_postgresql_advanced_indexes():
             "method": "btree",
             "condition": "confidence_score IS NOT NULL",
         },
-        # 部分索引（仅索引活跃数据）
+        # 部分索引(仅索引活跃数据)
         {
             "name": "idx_matches_recent_finished",
             "table": "matches",
@@ -364,7 +351,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
         .scalar()
     )
     if exists > 0:
-        print(f"  索引 {name} 已存在，跳过创建")
+        print(f"  索引 {name} 已存在,跳过创建")
         return
     # 构建索引创建语句
     columns_str = ", ".join(columns)
@@ -382,16 +369,16 @@ def _create_simple_index(name, table, columns):
         print(f"  ✓ 已创建索引: {name}")
     except Exception as e:
         if "already exists" in str(e).lower():
-            print(f"  索引 {name} 已存在，跳过创建")
+            print(f"  索引 {name} 已存在,跳过创建")
         else:
             raise
 def downgrade() -> None:
-    降级操作：移除分区表和索引
-    注意：分区表的降级需要谨慎操作，可能需要数据迁移
+    降级操作:移除分区表和索引
+    注意:分区表的降级需要谨慎操作,可能需要数据迁移
     # 检查是否在离线模式
     if context.is_offline_mode():
-        print("⚠️  离线模式：跳过分区表降级")
-        # 在离线模式下执行注释，确保 SQL 生成正常
+        print("⚠️  离线模式:跳过分区表降级")
+        # 在离线模式下执行注释,确保 SQL 生成正常
         op.execute("-- offline mode: skipped partitioned tables downgrade")
         op.execute("-- offline mode: skipped advanced indexes removal")
         return

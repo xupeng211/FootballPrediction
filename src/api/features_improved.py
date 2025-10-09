@@ -1,6 +1,3 @@
-"""
-
-"""
 
 
 
@@ -9,7 +6,8 @@
 
 
 
-    """获取（或初始化）特征存储实例。"""
+
+    """获取(或初始化)特征存储实例."""
 
 
 
@@ -25,7 +23,7 @@
 
 
 
-    """获取特征数据（支持优雅降级）"""
+    """获取特征数据(支持优雅降级)"""
 
 
 
@@ -37,9 +35,7 @@
 
 
 
-    """
 
-    """
 
 
 
@@ -53,6 +49,7 @@
 
 
 
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -60,10 +57,10 @@ from src.data.features.feature_store import FootballFeatureStore
 from src.database.models import Match
 
 改进版特征获取API
-提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
+提供更可靠、更详细的特征获取接口,包含完善的错误处理和日志记录.
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features-improved", tags=["特征管理"])
-# 全局特征存储实例（惰性初始化，避免导入时报错）
+# 全局特征存储实例(惰性初始化,避免导入时报错)
 feature_store: Optional[FootballFeatureStore] = None
 def get_feature_store() -> Optional[FootballFeatureStore]:
     global feature_store
@@ -84,7 +81,7 @@ def check_feature_store_availability() -> None:
     if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
-            status_code=503, detail="特征存储服务暂时不可用，请稍后重试"
+            status_code=503, detail="特征存储服务暂时不可用,请稍后重试"
         )
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     logger.debug(f"查询比赛 {match_id} 的基础信息")
@@ -101,7 +98,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise
     except SQLAlchemyError as db_error:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
-        raise HTTPException(status_code=500, detail="数据库查询失败，请稍后重试")
+        raise HTTPException(status_code=500, detail="数据库查询失败,请稍后重试")
     except Exception as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(status_code=500, detail="查询比赛信息失败")
@@ -123,7 +120,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
         return {}, None
     except Exception as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
-        return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败
+        return {}, str(feature_error)  # 优雅降级:返回空特征而不是完全失败
 def build_response_data(
     match: Match,
     features: Dict[str, Any],
@@ -155,15 +152,15 @@ def build_response_data(
 @router.get(
     "/{match_id}",
     summary="获取比赛特征",
-    description="获取指定比赛的所有特征，包括球队近期表现、历史对战、赔率等",
+    description="获取指定比赛的所有特征,包括球队近期表现、历史对战、赔率等",
 )
 async def get_match_features_improved(
     match_id: int,
     include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
 ) -> Dict[str, Any]:
-    改进版本：获取比赛特征
-    改进点：
+    改进版本:获取比赛特征
+    改进点:
     1. ✅ 详细的日志记录
     2. ✅ 分层错误处理
     3. ✅ 服务可用性检查

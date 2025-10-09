@@ -1,6 +1,4 @@
-"""
 
-"""
 
 
 
@@ -14,11 +12,11 @@
         """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
                 with open(self.config_file, "r", encoding="utf-8") as f:
 
-        """获取配置项 - 支持默认值，确保程序健壮性"""
+        """获取配置项 - 支持默认值,确保程序健壮性"""
 
-        """设置配置项 - 仅更新内存中的配置，需调用save()持久化"""
+        """设置配置项 - 仅更新内存中的配置,需调用save()持久化"""
 
-        """保存配置到文件 - 自动创建目录，确保配置持久化"""
+        """保存配置到文件 - 自动创建目录,确保配置持久化"""
         with open(self.config_file, "w", encoding="utf-8") as f:
 
 
@@ -64,7 +62,7 @@ import logging
 import os
 
 足球预测系统配置管理模块
-提供统一的配置读写和持久化机制。
+提供统一的配置读写和持久化机制.
 # Pydantic compatibility logic
 try:
     # Pydantic v2
@@ -80,7 +78,7 @@ except ImportError:
             return None
 class Config:
     def __init__(self):
-        # 配置文件存储在用户主目录下，避免权限问题
+        # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
         self._config: Dict[str, Any] = {}
@@ -90,14 +88,14 @@ class Config:
             try:
                     self._config = json.load(f)
             except Exception as e:
-                # 配置文件损坏时记录警告，但不中断程序执行
+                # 配置文件损坏时记录警告,但不中断程序执行
                 logging.warning(f"配置文件加载失败: {e}")
     def get(self, key: str, default: Any = None) -> Any:
         return self._config.get(str(key), default)
     def set(self, key: str, value: Any) -> None:
         self._config[key] = value
     def save(self) -> None:
-        # 确保配置目录存在，parents=True递归创建父目录
+        # 确保配置目录存在,parents=True递归创建父目录
         self.config_dir.mkdir(parents=True, exist_ok=True)
             # ensure_ascii=False保证中文字符正确显示
             json.dump(self._config, f, ensure_ascii=False, indent=2)
@@ -196,7 +194,7 @@ class Settings(SettingsClass):
         ]
     )
     metrics_collection_interval: int = (
-        Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
+        Field(default=30, description="指标收集间隔(秒)") if HAS_PYDANTIC else 30
     )
     missing_data_defaults_path: Optional[str] = (
         Field(default=None, description="缺失值默认配置文件路径")

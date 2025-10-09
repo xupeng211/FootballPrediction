@@ -1,24 +1,3 @@
-"""
-
-
-"""
-
-
-
-
-
-    """
-
-    """
-
-        """
-
-        """
-
-        """
-
-
-        """
 
 
 
@@ -28,10 +7,6 @@
 
 
 
-        """
-
-
-        """
 
 
 
@@ -41,49 +16,57 @@
 
 
 
-        """
-
-
-        """
 
 
 
 
 
 
-        """
-
-
-        """
 
 
 
 
 
 
-        """
-
-
-        """
 
 
 
 
 
 
-        """
 
-        """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         """清理所有活跃运行记录"""
+
 
 
 from openlineage.client.event_v2 import InputDataset, Job, OutputDataset, Run, RunEvent
 from openlineage.client.facet_v2 import (
 
 数据血缘报告器
-集成 OpenLineage 标准，自动上报数据血缘信息到 Marquez。
-跟踪数据流转过程，包括采集、清洗、转换等各个环节。
+集成 OpenLineage 标准,自动上报数据血缘信息到 Marquez.
+跟踪数据流转过程,包括采集、清洗、转换等各个环节.
     error_message_run,
     schema_dataset,
     source_code_location_job,
@@ -92,8 +75,8 @@ from openlineage.client.facet_v2 import (
 logger = logging.getLogger(__name__)
 class LineageReporter:
     数据血缘报告器
-    负责向 Marquez 报告数据血缘信息，跟踪数据流转过程。
-    支持多种数据处理场景：采集、清洗、转换、聚合等。
+    负责向 Marquez 报告数据血缘信息,跟踪数据流转过程.
+    支持多种数据处理场景:采集、清洗、转换、聚合等.
     def __init__(
         self,
         marquez_url: str = "http://localhost:5000",
@@ -119,11 +102,11 @@ class LineageReporter:
         开始一个作业运行
         Args:
             job_name: 作业名称
-            job_type: 作业类型（BATCH/STREAM）
+            job_type: 作业类型(BATCH/STREAM)
             inputs: 输入数据集信息
             description: 作业描述
             source_location: 源码位置
-            parent_run_id: 父运行ID（如果是子作业）
+            parent_run_id: 父运行ID(如果是子作业)
             transformation_sql: 转换SQL语句
         Returns:
             str: 运行ID
@@ -192,7 +175,7 @@ class LineageReporter:
             job_name: 作业名称
             outputs: 输出数据集信息
             metrics: 运行指标
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+            run_id: 运行ID(如果不提供,从活跃运行中获取)
         Returns:
             bool: 是否成功
         if outputs is None:
@@ -261,7 +244,7 @@ class LineageReporter:
         Args:
             job_name: 作业名称
             error_message: 错误信息
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+            run_id: 运行ID(如果不提供,从活跃运行中获取)
         Returns:
             bool: 是否成功
         # 获取运行ID
@@ -316,7 +299,7 @@ class LineageReporter:
         Returns:
             str: 运行ID
         job_name = f"data_collection_{source_name}"
-        # 输入数据集（外部数据源）
+        # 输入数据集(外部数据源)
         inputs = [
             {
                 "name": source_name,
@@ -332,7 +315,7 @@ class LineageReporter:
             description=f"Collect data from {source_name} to {target_table}",
             source_location="src/data/collectors/",
         )
-        # 输出数据集（数据库表）
+        # 输出数据集(数据库表)
         outputs = [
             {
                 "name": target_table,

@@ -25,9 +25,9 @@
 
 数据采集任务 - 向后兼容性包装器
 Data Collection Tasks - Backward Compatibility Wrapper
-⚠️  警告：此文件已被重构为模块化结构
+⚠️  警告:此文件已被重构为模块化结构
 ⚠️  Warning: This file has been refactored into a modular structure
-新的实现位于 src/tasks/collection/ 目录下：
+新的实现位于 src/tasks/collection/ 目录下:
 - fixtures.py - 赛程数据采集
 - odds.py - 赔率数据采集
 - scores.py - 比分数据采集
@@ -35,7 +35,7 @@ Data Collection Tasks - Backward Compatibility Wrapper
 - emergency.py - 紧急数据采集
 - validation.py - 数据验证
 - base.py - 基础类和混入
-此文件保留用于向后兼容性，建议新代码直接导入新的模块。
+此文件保留用于向后兼容性,建议新代码直接导入新的模块.
 # 从新的模块化结构导入所有功能
     DataCollectionTask,
     collect_fixtures_task,
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # 向后兼容性别名
 # =============================================================================
-# 为了保持向后兼容性，创建别名
+# 为了保持向后兼容性,创建别名
 collect_all_data_task = manual_collect_all_data
 # =============================================================================
 # 废弃警告
@@ -58,14 +58,14 @@ collect_all_data_task = manual_collect_all_data
 def _deprecation_warning(message: str):
     warnings.warn(
         f"{message}\n"
-        "请更新您的导入语句以使用新的模块化结构。\n"
-        "示例：from src.tasks.collection import collect_fixtures_task\n"
+        "请更新您的导入语句以使用新的模块化结构.\n"
+        "示例:from src.tasks.collection import collect_fixtures_task\n"
         "See: src/tasks/collection/ for the new modular implementation.",
         DeprecationWarning,
         stacklevel=3,
     )
 # =============================================================================
-# 导出的公共接口（保持向后兼容）
+# 导出的公共接口(保持向后兼容)
 # =============================================================================
 __all__ = [
     # 任务函数

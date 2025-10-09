@@ -1,7 +1,5 @@
-"""
 
 
-"""
 
 
 
@@ -9,9 +7,7 @@
 
     """作业执行结果类"""
 
-        """
 
-        """
 
         """转换为字典格式"""
 
@@ -20,9 +16,7 @@
 
         """初始化资源监控器"""
 
-        """
 
-        """
 
 
             """监控线程"""
@@ -32,28 +26,6 @@
 
 
 
-        """
-
-        """
-
-
-
-
-
-    """
-
-    """
-
-        """
-
-        """
-
-
-
-        """
-
-
-        """
 
 
 
@@ -68,58 +40,54 @@
 
 
 
-        """
-
-
-        """
-
-        """
-
-
-        """
-
-
-
-        """
-
-        """
 
 
 
 
-        """
-
-        """
-
-
-
-        """
-
-        """
-
-
-        """
-
-
-        """
 
 
 
 
-        """
-
-        """
-
-        """
-
-        """
 
 
 
-        """
 
 
-        """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         """清理资源"""
 
@@ -127,6 +95,7 @@
 
 
         """析构函数"""
+
 
 
 
@@ -141,9 +110,9 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from src.database.connection import DatabaseManager
 
 作业管理器
-负责管理和执行具体的作业任务，提供超时控制、资源管理、
-状态监控等功能。支持同步和异步任务执行。
-基于 DATA_DESIGN.md 第3节调度策略设计。
+负责管理和执行具体的作业任务,提供超时控制、资源管理、
+状态监控等功能.支持同步和异步任务执行.
+基于 DATA_DESIGN.md 第3节调度策略设计.
 logger = logging.getLogger(__name__)
 class JobExecutionResult:
     def __init__(
@@ -166,9 +135,9 @@ class JobExecutionResult:
             end_time: 结束时间
             result: 执行结果
             error: 错误信息
-            execution_time: 执行时间（秒）
-            memory_usage: 内存使用量（MB）
-            cpu_usage: CPU使用率（%）
+            execution_time: 执行时间(秒)
+            memory_usage: 内存使用量(MB)
+            cpu_usage: CPU使用率(%)
         self.job_id = job_id
         self.success = success
         self.start_time = start_time
@@ -210,7 +179,7 @@ class ResourceMonitor:
             process = psutil.Process()
             while self.monitoring:
                 try:
-                    # 获取内存使用情况（MB）
+                    # 获取内存使用情况(MB)
                     memory_mb = process.memory_info().rss / 1024 / 1024
                     self.resource_stats["memory"].append(memory_mb)
                     # 获取CPU使用率
@@ -246,7 +215,7 @@ class ResourceMonitor:
         return avg_memory, avg_cpu
 class JobManager:
     作业管理器主类
-    负责管理和执行具体的作业任务，提供以下功能：
+    负责管理和执行具体的作业任务,提供以下功能:
     - 任务执行和超时控制
     - 资源使用监控
     - 执行状态跟踪
@@ -265,7 +234,7 @@ class JobManager:
         self.total_jobs_executed = 0
         self.successful_jobs = 0
         self.failed_jobs = 0
-        logger.info(f"作业管理器初始化完成，最大工作线程数: {max_workers}")
+        logger.info(f"作业管理器初始化完成,最大工作线程数: {max_workers}")
     def execute_job(
         self,
         task_id: str,
@@ -280,11 +249,11 @@ class JobManager:
             task_function: 要执行的任务函数
             args: 任务函数参数
             kwargs: 任务函数关键字参数
-            timeout: 超时时间（秒）
+            timeout: 超时时间(秒)
         Returns:
             bool: 执行是否成功
         if task_id in self.running_jobs:
-            logger.warning(f"作业 {task_id} 正在执行中，跳过")
+            logger.warning(f"作业 {task_id} 正在执行中,跳过")
             return False
         start_time = datetime.now()
         resource_monitor = ResourceMonitor()
@@ -419,7 +388,7 @@ class JobManager:
         # 保留最近100条记录
         if len(self.execution_history) > 100:
             self.execution_history = self.execution_history[-100:]
-        # 记录到数据库（异步执行，避免阻塞）
+        # 记录到数据库(异步执行,避免阻塞)
         threading.Thread(
             target=self._save_execution_result_to_db,
             args=(result,),
@@ -445,8 +414,8 @@ class JobManager:
             logger.warning(f"作业不存在或未运行: {task_id}")
             return False
         try:
-            # 注意：Python线程无法直接强制终止
-            # 这里只是从记录中移除，实际的线程可能仍在运行
+            # 注意:Python线程无法直接强制终止
+            # 这里只是从记录中移除,实际的线程可能仍在运行
             del self.running_jobs[task_id]
             logger.info(f"作业已标记终止: {task_id}")
             return True

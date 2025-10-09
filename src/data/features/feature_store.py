@@ -10,9 +10,9 @@ from .feature_store_main import (
 from .utils import (
     from .feature_store_original import (
 
-足球特征商店（向后兼容）
+足球特征商店(向后兼容)
 Football Feature Store (Backward Compatible)
-为了保持向后兼容性，此文件重新导出新的模块化特征仓库。
+为了保持向后兼容性,此文件重新导出新的模块化特征仓库.
 Provides backward compatible exports for the modular feature store.
 # 重新导出主类和函数
     FootballFeatureStore,
@@ -35,7 +35,7 @@ try:
         initialize_feature_store as initialize_original_feature_store,
     )
 except ImportError:
-    # 如果原始文件有问题，使用新的模块化版本
+    # 如果原始文件有问题,使用新的模块化版本
     OriginalFootballFeatureStore = FootballFeatureStore
     get_original_feature_store = get_feature_store
     initialize_original_feature_store = initialize_feature_store

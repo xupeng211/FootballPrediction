@@ -1,8 +1,6 @@
 
-"""
 
 
-"""
 
 
 
@@ -22,20 +20,14 @@
 
 
 
-                """
-
-    """
 
 
-                    """
-        """
+
 
 
     """降级数据库架构 - 删除audit_logs表"""
 
 
-                    """
-            """
 
 
 
@@ -43,8 +35,8 @@
 from datetime import datetime, timezone
 
 增强权限审计功能 - 创建audit_logs表
-创建新的权限审计日志表，支持详细的操作记录和合规要求。
-扩展原有的permission_audit_log功能，提供更全面的审计能力。
+创建新的权限审计日志表,支持详细的操作记录和合规要求.
+扩展原有的permission_audit_log功能,提供更全面的审计能力.
 迁移ID: 005
 创建时间: 2025-09-12
 # 版本标识
@@ -92,13 +84,13 @@ def upgrade():
             "old_value_hash",
             sa.String(length=64),
             nullable=True,
-            comment="旧值哈希（敏感数据）",
+            comment="旧值哈希(敏感数据)",
         ),
         sa.Column(
             "new_value_hash",
             sa.String(length=64),
             nullable=True,
-            comment="新值哈希（敏感数据）",
+            comment="新值哈希(敏感数据)",
         ),
         # 上下文信息
         sa.Column(
@@ -129,7 +121,7 @@ def upgrade():
             comment="操作时间戳",
         ),
         sa.Column(
-            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"
+            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时(毫秒)"
         ),
         # 扩展信息
         sa.Column(
@@ -139,7 +131,7 @@ def upgrade():
             comment="扩展元数据",
         ),
         sa.Column(
-            "tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"
+            "tags", sa.String(length=500), nullable=True, comment="标签(逗号分隔)"
         ),
         # 合规相关
         sa.Column(
@@ -153,7 +145,7 @@ def upgrade():
             sa.Integer(),
             nullable=True,
             server_default="2555",
-            comment="保留期限（天）",
+            comment="保留期限(天)",
         ),  # 7年
         sa.Column(
             "is_sensitive",
@@ -180,7 +172,7 @@ def upgrade():
         # 主键约束
         sa.PrimaryKeyConstraint("id"),
         # 表注释
-        comment="权限审计日志表，记录所有敏感操作的详细信息",
+        comment="权限审计日志表,记录所有敏感操作的详细信息",
     )
     # 创建索引以优化查询性能
     with op.batch_alter_table("audit_logs") as batch_op:
@@ -204,11 +196,11 @@ def upgrade():
         connection = op.get_bind()
         # 为只读用户授予查询权限
         connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
-        # 为写入用户授予查询和插入权限（审计日志通常只允许插入，不允许修改）
+        # 为写入用户授予查询和插入权限(审计日志通常只允许插入,不允许修改)
         connection.execute(
             text("GRANT SELECT, INSERT ON audit_logs TO football_writer;")
         )
-        # 为管理员用户授予所有权限（包括删除权限，用于数据清理）
+        # 为管理员用户授予所有权限(包括删除权限,用于数据清理)
         connection.execute(
             text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;")
         )
@@ -218,7 +210,7 @@ def upgrade():
                 "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
             )
         )
-        # 创建审计日志清理函数（用于定期清理过期日志）
+        # 创建审计日志清理函数(用于定期清理过期日志)
         connection.execute(
             text(
             CREATE OR REPLACE FUNCTION cleanup_expired_audit_logs()
@@ -244,20 +236,20 @@ def upgrade():
                 "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
             )
         )
-        # 记录迁移日志到原有的权限审计表（如果存在）
+        # 记录迁移日志到原有的权限审计表(如果存在)
         try:
             connection.execute(
                 text(
             INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
             VALUES ('system', 'CREATE_TABLE', 'audit_logs', 'DDL', true, 'migration_005',
-                   '创建增强的权限审计日志表，支持详细的操作记录和合规要求');
+                   '创建增强的权限审计日志表,支持详细的操作记录和合规要求');
                 )
             )
         except Exception as e:
-            # 如果permission_audit_log表不存在，忽略错误但记录日志
+            # 如果permission_audit_log表不存在,忽略错误但记录日志
             print(f"Warning: Could not drop permission_audit_log table: {e}")
     else:
-        # 离线模式下执行注释，确保 SQL 生成正常
+        # 离线模式下执行注释,确保 SQL 生成正常
         op.execute("-- offline mode: skipped audit_logs permission grants")
         op.execute("-- offline mode: skipped audit_logs cleanup function creation")
         op.execute("-- offline mode: skipped audit_logs function execution grants")
@@ -271,11 +263,11 @@ def downgrade():
                 text(
                 INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
                 VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',
-                       '回滚：删除增强的权限审计日志表');
+                       '回滚:删除增强的权限审计日志表');
                 )
             )
         except Exception as e:
-            # 如果permission_audit_log表不存在，忽略错误但记录日志
+            # 如果permission_audit_log表不存在,忽略错误但记录日志
             print(f"Warning: Could not drop permission_audit_log table: {e}")
                 VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',)
         # 删除清理函数
@@ -283,10 +275,10 @@ def downgrade():
             text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();")
         )
     else:
-        # 离线模式下执行注释，确保 SQL 生成正常
+        # 离线模式下执行注释,确保 SQL 生成正常
         op.execute("-- offline mode: skipped audit_logs cleanup function deletion")
         op.execute("-- offline mode: skipped audit_logs rollback logging")
-    # 删除索引（会随表一起删除，但为了明确性仍然列出）
+    # 删除索引(会随表一起删除,但为了明确性仍然列出)
     # 索引会随着表的删除自动删除
     # 删除audit_logs表
     op.drop_table("audit_logs")

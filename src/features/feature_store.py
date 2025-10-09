@@ -1,19 +1,21 @@
-"""Feast 特征存储集成及其测试环境替身实现。"""
+"""Feast 特征存储集成及其测试环境替身实现."""
 
 
 
+
+
+# 为了向后兼容,从新的模块化实现重新导出所有类
 
 from .store import (
 from .store.mock_feast import (
 
-# 为了向后兼容，从新的模块化实现重新导出所有类
     FeatureRegistry,
     FeatureRepository,
     FootballFeatureStore,
     get_entity_definitions,
     get_feature_view_definitions,
 )
-# 为了向后兼容，保留原有的导入
+# 为了向后兼容,保留原有的导入
     Entity,
     FeatureStore,
     FeatureView,

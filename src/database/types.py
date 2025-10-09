@@ -1,27 +1,21 @@
-"""
-
-"""
 
 
 
 
-    """
 
-    """
+
 
 
         """根据数据库方言加载对应的实现"""
 
-        """处理绑定参数（Python值 -> 数据库值）"""
+        """处理绑定参数(Python值 -> 数据库值)"""
 
 
-        """处理结果值（数据库值 -> Python值）"""
+        """处理结果值(数据库值 -> Python值)"""
 
 
 
-    """
 
-    """
 
 
         """根据数据库方言加载对应的实现"""
@@ -36,10 +30,8 @@
 
 
 
-    """
 
 
-    """
 
 
 
@@ -50,18 +42,18 @@ from sqlalchemy import JSON, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
 数据库类型适配模块
-提供跨数据库兼容的数据类型定义，特别是JSONB与SQLite的兼容性支持。
+提供跨数据库兼容的数据类型定义,特别是JSONB与SQLite的兼容性支持.
 class SQLiteCompatibleJSONB(TypeDecorator):
     SQLite兼容的JSONB类型
-    在PostgreSQL中使用JSONB，在SQLite中自动转换为TEXT存储。
-    提供统一的JSON操作接口。
+    在PostgreSQL中使用JSONB,在SQLite中自动转换为TEXT存储.
+    提供统一的JSON操作接口.
     impl = Text
     cache_ok = True
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
         else:
-            # 对于SQLite和其他数据库，使用TEXT
+            # 对于SQLite和其他数据库,使用TEXT
             return dialect.type_descriptor(Text())
     def process_bind_param(self, value: Any, dialect) -> Union[str, Any]:
         if value is None:
@@ -74,12 +66,12 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             if isinstance(value, (dict, list)):
                 return json.dumps(value, ensure_ascii=False)
             elif isinstance(value, str):
-                # 如果已经是字符串，验证是否为有效JSON
+                # 如果已经是字符串,验证是否为有效JSON
                 try:
                     json.loads(value)
                     return value
                 except (json.JSONDecodeError, TypeError):
-                    # 如果不是有效JSON，包装成字符串
+                    # 如果不是有效JSON,包装成字符串
                     return json.dumps(value, ensure_ascii=False)
             else:
                 return json.dumps(value, ensure_ascii=False)
@@ -90,7 +82,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             # PostgreSQL的JSONB会自动反序列化
             return value
         else:
-            # SQLite存储的是JSON字符串，需要反序列化
+            # SQLite存储的是JSON字符串,需要反序列化
             if isinstance(value, str):
                 try:
                     return json.loads(value)
@@ -99,7 +91,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return value
 class CompatibleJSON(TypeDecorator):
     跨数据库兼容的JSON类型
-    自动根据数据库类型选择最佳的JSON存储方式。
+    自动根据数据库类型选择最佳的JSON存储方式.
     impl = Text
     cache_ok = True
     def load_dialect_impl(self, dialect):
@@ -132,12 +124,12 @@ class CompatibleJSON(TypeDecorator):
 JsonType = SQLiteCompatibleJSONB()
 JsonbType = SQLiteCompatibleJSONB()
 CompatJsonType = CompatibleJSON()
-# 传统方式的兼容定义（向后兼容）
+# 传统方式的兼容定义(向后兼容)
 JsonTypeCompat = JSONB().with_variant(JSON(), "sqlite")
 def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
     获取兼容的JSON类型
     Args:
-        use_jsonb: 是否优先使用JSONB（仅在PostgreSQL中有效）
+        use_jsonb: 是否优先使用JSONB(仅在PostgreSQL中有效)
     Returns:
         TypeDecorator: 兼容的JSON类型
     if use_jsonb:

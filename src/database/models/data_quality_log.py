@@ -1,15 +1,11 @@
-"""
-
-
-"""
 
 
 
 
 
-    """
 
-    """
+
+
 
 
 
@@ -38,16 +34,16 @@
 
 
 数据质量日志数据库模型
-记录数据质量检查中发现的问题和异常处理情况，
-支持人工排查和质量改进追踪。
-用途：
+记录数据质量检查中发现的问题和异常处理情况,
+支持人工排查和质量改进追踪.
+用途:
 - 记录数据质量异常和错误
 - 跟踪异常处理进度
 - 支持数据治理决策
 class DataQualityLog(BaseModel):
     数据质量日志模型
-    记录数据质量检查过程中发现的各类问题，
-    包括数据异常、处理结果和人工干预需求。
+    记录数据质量检查过程中发现的各类问题,
+    包括数据异常、处理结果和人工干预需求.
     __tablename__ = "data_quality_logs"
     # 基础信息
     id = Column(Integer, primary_key=True, index=True, comment="日志记录唯一标识")
@@ -154,7 +150,7 @@ class DataQualityLog(BaseModel):
                 ),
                 "success_rate": validation_result.get(str("success_rate"), 0),
             },
-            error_message=f"GE数据质量验证失败，成功率: {validation_result.get(str('success_rate'), 0)}%",
+            error_message=f"GE数据质量验证失败,成功率: {validation_result.get(str('success_rate'), 0)}%",
             status="logged",
             requires_manual_review=validation_result.get(str("success_rate"), 0) < 80,
             detected_at=datetime.now(),

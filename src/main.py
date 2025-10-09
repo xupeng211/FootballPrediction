@@ -74,11 +74,11 @@ from src.database.connection import initialize_database
 
 足球预测系统 FastAPI 主应用
 基于机器学习的足球比赛结果预测API服务
-# 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
+# 🔧 在应用启动前设置警告过滤器,确保测试日志清洁
 try:
     setup_warning_filters()
 except ImportError:
-    # 如果警告过滤器模块不可用，手动设置基本过滤器
+    # 如果警告过滤器模块不可用,手动设置基本过滤器
     # Marshmallow 4.x 已经移除了 warnings 模块
     # 使用通用的消息过滤器
     warnings.filterwarnings(
@@ -103,21 +103,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 MINIMAL_API_MODE = os.getenv("MINIMAL_API_MODE", "false").lower() == "true"
-# 配置API速率限制（如果可用）
+# 配置API速率限制(如果可用)
 if RATE_LIMIT_AVAILABLE:
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=[
             "100/minute",
             "1000/hour",
-        ],  # 默认限制：每分钟100次，每小时1000次
-        storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储，回退到内存
+        ],  # 默认限制:每分钟100次,每小时1000次
+        storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储,回退到内存
         headers_enabled=True,  # 在响应头中返回速率限制信息
     )
 else:
     limiter = None
     logger.warning(
-        "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
+        "⚠️  slowapi 未安装,API速率限制功能已禁用.安装方法: pip install slowapi"
     )
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -140,21 +140,21 @@ async def lifespan(app: FastAPI):
     # 停止监控指标收集
     logger.info("📉 停止监控指标收集...")
     await stop_metrics_collection()
-# 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
+# 创建FastAPI应用(详细信息在 openapi_config.py 中配置)
 app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
-# 配置速率限制（如果可用）
+# 配置速率限制(如果可用)
 if RATE_LIMIT_AVAILABLE and limiter:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     logger.info("✅ API速率限制已启用")
 # 配置 OpenAPI 文档
 setup_openapi(app)
-# 配置CORS（如果需要）
+# 配置CORS(如果需要)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 生产环境应该限制具体域名
@@ -176,7 +176,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(health_router, prefix="/api/health")
 if MINIMAL_API_MODE:
-    logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
+    logger.info("MINIMAL_API_MODE 启用,仅注册健康检查路由")
 else:
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
@@ -185,8 +185,8 @@ else:
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
 async def root():
     API服务根路径
-    提供服务基本信息，包括版本号、文档地址等。
-    适用于服务发现和基本信息查询。
+    提供服务基本信息,包括版本号、文档地址等.
+    适用于服务发现和基本信息查询.
     return {
         "service": "足球预测API",
         "version": "1.0.0",
@@ -197,7 +197,7 @@ async def root():
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     HTTP异常处理器
-    统一处理HTTP异常，返回标准错误格式。
+    统一处理HTTP异常,返回标准错误格式.
     logger.error(f"HTTP异常: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
@@ -211,8 +211,8 @@ async def http_exception_handler(request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc: Exception):
     通用异常处理器
-    处理所有未被捕获的异常，确保返回标准错误格式。
-    记录详细错误信息用于调试。
+    处理所有未被捕获的异常,确保返回标准错误格式.
+    记录详细错误信息用于调试.
     logger.error(f"未处理异常: {type(exc).__name__}: {exc}")
     return JSONResponse(
         status_code=500,
@@ -225,8 +225,8 @@ async def general_exception_handler(request, exc: Exception):
     )
 if __name__ == "__main__":
     port = int(os.getenv("API_PORT", 8000))
-    # 安全修复：根据环境设置默认主机地址
-    # 开发环境允许所有接口访问，生产环境只允许本地访问
+    # 安全修复:根据环境设置默认主机地址
+    # 开发环境允许所有接口访问,生产环境只允许本地访问
     if os.getenv("ENVIRONMENT") == "development":
         default_host = "0.0.0.0"  # nosec B104 # 开发环境允许绑定所有接口
     else:

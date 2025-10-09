@@ -11,7 +11,7 @@ from .exceptions import (
 from .logger import Logger, logger
 
 足球预测系统核心功能模块
-提供系统核心功能，包括：
+提供系统核心功能,包括:
 - 配置管理
 - 日志系统
 - 异常处理

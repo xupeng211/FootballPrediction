@@ -1,14 +1,12 @@
 
-"""
-
-
-"""
 
 
 
 
 
-    """数据库管理器模拟类，用于支持测试"""
+
+
+    """数据库管理器模拟类,用于支持测试"""
 
 
         """获取数据库连接"""
@@ -16,7 +14,7 @@
         """关闭数据库连接"""
 
 
-    """Redis管理器模拟类，用于支持测试"""
+    """Redis管理器模拟类,用于支持测试"""
 
 
         """获取Redis客户端"""
@@ -40,22 +38,22 @@
 
 
 Celery 应用配置
-基于 Redis 的任务队列系统，支持：
+基于 Redis 的任务队列系统,支持:
 - 多队列任务路由
 - 定时任务调度
 - 任务重试机制
 - 监控指标收集
-基于 DATA_DESIGN.md 第3节《任务调度系统》设计。
-# 配置日志记录器（用于测试支持）
+基于 DATA_DESIGN.md 第3节《任务调度系统》设计.
+# 配置日志记录器(用于测试支持)
 logger = logging.getLogger(__name__)
-# 模拟的数据库管理器类（用于测试支持）
+# 模拟的数据库管理器类(用于测试支持)
 class DatabaseManager:
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
     def get_connection(self):
         return None
     def close_connection(self):
-# 模拟的Redis管理器类（用于测试支持）
+# 模拟的Redis管理器类(用于测试支持)
 class RedisManager:
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.RedisManager")
@@ -64,7 +62,7 @@ class RedisManager:
     def close_connection(self):
 # 创建 Celery 应用实例
 app = Celery("football_prediction_tasks")
-# Redis 配置（作为消息代理和结果后端）
+# Redis 配置(作为消息代理和结果后端)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", REDIS_URL)
@@ -131,7 +129,7 @@ app.conf.update(
         },
     },
 )
-# 定时任务配置（Celery Beat）
+# 定时任务配置(Celery Beat)
 app.conf.beat_schedule = {
     # 每日赛程采集 - 凌晨2:00
     "collect-daily-fixtures": {
@@ -185,7 +183,7 @@ app.conf.beat_schedule = {
         "task": "tasks.streaming_tasks.stream_data_processing_task",
         "schedule": 300.0,  # 5分钟
         "options": {"queue": "streaming"},
-        "kwargs": {"processing_duration": 280},  # 运行4分40秒，留20秒间隔
+        "kwargs": {"processing_duration": 280},  # 运行4分40秒,留20秒间隔
     },
     # 数据库备份任务
     # 每日全量备份 - 凌晨3:00

@@ -8,12 +8,13 @@
 
 
     """设置 OpenAPI 配置的便捷函数"""
+
 from src.config.openapi import OpenAPIConfig
 from src.config.openapi_config import OpenAPIConfig  # 仍然有效
 
 OpenAPI 配置 - 向后兼容性导入
 OpenAPI Configuration - Backward Compatibility Import
-此文件已拆分为模块化结构，为了保持向后兼容性，这里重新导出主要类。
+此文件已拆分为模块化结构,为了保持向后兼容性,这里重新导出主要类.
 This file has been split into a modular structure, main classes are re-exported here for backward compatibility.
 新的模块化结构 / New modular structure:
 - openapi/auth_config.py: 认证配置
