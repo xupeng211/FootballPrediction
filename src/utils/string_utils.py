@@ -5,7 +5,9 @@
 """
 
 import re
-from typing import List, cast
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+import json
 
 
 class StringUtils:
@@ -49,4 +51,5 @@ class StringUtils:
         """从文本中提取数字"""
         pattern = r"-?\d+\.?\d*"
         numbers = re.findall(pattern, text)
+
         return [float(num) for num in numbers if num]

@@ -1,4 +1,12 @@
 """
+from sqlalchemy.orm import Session
+import psutil
+
+from ..monitoring.metrics_collector import get_metrics_collector
+from ..monitoring.metrics_exporter import get_metrics_exporter
+from src.core.logging import get_logger
+from src.database.connection_mod import get_db_session
+
 监控API路由
 
 提供监控相关的API端点：
@@ -8,25 +16,8 @@
 - /collector/*: 指标收集器控制与状态
 """
 
-import os
-import time
-from datetime import datetime
-from inspect import isawaitable
-from typing import Any, Dict, Optional, cast
-
-import psutil
-import redis
-from fastapi import APIRouter, Depends, HTTPException, Response
-from fastapi.responses import PlainTextResponse
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
-from src.core.logging import get_logger
-from src.database.connection import get_db_session
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
-from ..monitoring.metrics_collector import get_metrics_collector
-from ..monitoring.metrics_exporter import get_metrics_exporter
 
 logger = get_logger(__name__)
 
@@ -293,6 +284,7 @@ async def collector_health() -> Dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
+
         return {
             "status": "healthy",
             "timestamp": collector_status,

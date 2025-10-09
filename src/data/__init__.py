@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 数据管道模块
 
@@ -13,6 +11,8 @@ from typing import cast, Any, Optional, Union
 - quality: 数据质量监控和异常检测
 - features: 特征仓库和特征工程
 """
+
+from typing import cast, Any, Optional, Union
 
 from . import collectors, features, processing, quality, storage
 

@@ -3,11 +3,6 @@ Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
 """
 
-import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Callable, cast
-from collections import defaultdict
-
 logger = logging.getLogger(__name__)
 
 

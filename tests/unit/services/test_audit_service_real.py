@@ -1,6 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
-from src.services.audit_service import AuditContext, AuditService
+from src.services.audit_service_mod import AuditContext, AuditService
 
 """
 审计服务真实方法测试 / Audit Service Real Methods Tests

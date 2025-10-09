@@ -24,7 +24,7 @@ class TestCoreLogger:
             assert logger is not None
             # 检查基本方法
             assert hasattr(logger, "info") or hasattr(logger, "log")
-        except:
+        except Exception:
             pytest.skip("get_logger function not available")
 
     def test_logger_methods(self):
@@ -37,7 +37,7 @@ class TestCoreLogger:
             try:
                 logger.info("Test message")
                 assert True
-            except:
+            except Exception:
                 pytest.skip("logger methods not available")
-        except:
+        except Exception:
             pytest.skip("logger creation failed")

@@ -7,12 +7,6 @@ Create Date: 2025-09-10 18:20:30.000000
 
 """
 
-from typing import Sequence, Union, cast
-
-import sqlalchemy as sa
-from alembic import op
-from sqlalchemy.dialects import postgresql
-
 # revision identifiers, used by Alembic.
 revision: str = "002_add_raw_scores_data_and_upgrade_jsonb"
 down_revision: Union[str, None] = "f48d412852cc"
@@ -198,6 +192,7 @@ def downgrade() -> None:
     op.execute(
         "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
     )
+
     op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
     op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
 

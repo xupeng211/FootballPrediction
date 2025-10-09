@@ -1,8 +1,8 @@
-from src.services.data_processing import DataProcessingService
-from src.services.audit_service import AuditService
+from src.services.data_processing_mod import DataProcessingService
+from src.services.audit_service_mod import AuditService
 from src.services.content_analysis import ContentAnalysisService
 from src.services.user_profile import UserProfileService
-from src.services.manager import ServiceManager
+from src.services.manager_mod import ServiceManager
 from src.services.base import BaseService
 
 """修复后的服务层测试"""
@@ -97,7 +97,7 @@ class TestDataProcessingService:
 
     def test_methods_exist(self):
         """测试方法存在"""
-        from src.services.data_processing import DataProcessingService
+        from src.services.data_processing_mod import DataProcessingService
 
         service = DataProcessingService()
 
@@ -132,7 +132,7 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_shutdown(self):
         """测试关闭"""
-        from src.services.data_processing import DataProcessingService
+        from src.services.data_processing_mod import DataProcessingService
 
         service = DataProcessingService()
         service.db_manager = AsyncMock()
@@ -147,7 +147,7 @@ class TestAuditService:
 
     def test_import_and_init(self):
         """测试导入和初始化"""
-        from src.services.audit_service import AuditService
+        from src.services.audit_service_mod import AuditService
 
         service = AuditService()
         assert hasattr(service, "logger")
@@ -174,7 +174,7 @@ class TestAuditService:
     @pytest.mark.asyncio
     async def test_log_operation(self):
         """测试记录操作"""
-        from src.services.audit_service import AuditService
+        from src.services.audit_service_mod import AuditService
 
         service = AuditService()
 
@@ -321,7 +321,7 @@ class TestServiceManager:
 
     def test_methods_exist(self):
         """测试方法存在"""
-        from src.services.manager import ServiceManager
+        from src.services.manager_mod import ServiceManager
 
         manager = ServiceManager()
 
@@ -356,7 +356,7 @@ class TestServiceManager:
     @pytest.mark.asyncio
     async def test_initialize_all(self):
         """测试初始化所有服务"""
-        from src.services.manager import ServiceManager
+        from src.services.manager_mod import ServiceManager
         from src.services.base import BaseService
 
         manager = ServiceManager()

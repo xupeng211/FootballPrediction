@@ -11,7 +11,7 @@ import pytest
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.database.connection import get_async_session
+from src.database.connection_mod import get_async_session
 from src.database.models import Match, MatchStatus, PredictedResult, Predictions
 
 

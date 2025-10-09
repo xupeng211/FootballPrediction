@@ -13,13 +13,6 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-import hashlib
-from datetime import datetime
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, cast
-
-from .base_collector import CollectionResult, DataCollector
-
 
 class OddsCollector(DataCollector):
     """

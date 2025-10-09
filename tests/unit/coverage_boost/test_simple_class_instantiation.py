@@ -116,7 +116,7 @@ class TestSimpleClassInstantiation:
     def test_system_monitor_instantiation(self):
         """测试系统监控器实例化"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
+            from src.monitoring.system_monitor_mod import SystemMonitor
 
             monitor = SystemMonitor()
             assert monitor is not None
@@ -128,7 +128,7 @@ class TestSimpleClassInstantiation:
     def test_audit_service_instantiation(self):
         """测试审计服务实例化"""
         try:
-            from src.services.audit_service import AuditService
+            from src.services.audit_service_mod import AuditService
 
             service = AuditService()
             assert service is not None
@@ -140,7 +140,7 @@ class TestSimpleClassInstantiation:
     def test_data_processing_instantiation(self):
         """测试数据处理服务实例化"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             service = DataProcessingService()
             assert service is not None

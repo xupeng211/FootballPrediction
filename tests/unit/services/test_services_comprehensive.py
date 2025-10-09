@@ -3,10 +3,10 @@ import pytest
 from unittest.mock import MagicMock, patch
 import sys
 import os
-from src.services.manager import ServiceManager
+from src.services.manager_mod import ServiceManager
 from src.services.content_analysis import ContentAnalysisService
-from src.services.data_processing import DataProcessingService
-from src.services.audit_service import AuditService
+from src.services.data_processing_mod import DataProcessingService
+from src.services.audit_service_mod import AuditService
 
 """
 服务模块综合简化测试
@@ -47,7 +47,7 @@ class TestServicesComprehensive:
     def test_data_processing_service(self):
         """测试数据处理服务"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
@@ -115,7 +115,7 @@ class TestServicesComprehensive:
     def test_service_health_check(self):
         """测试服务健康检查"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
@@ -147,7 +147,7 @@ class TestServicesComprehensive:
     def test_service_caching(self):
         """测试服务缓存"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
@@ -180,7 +180,7 @@ class TestServicesComprehensive:
     def test_service_configuration(self):
         """测试服务配置"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             # 测试服务配置
             config = {
@@ -219,7 +219,7 @@ class TestServicesComprehensive:
     def test_service_validation(self):
         """测试服务验证"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
@@ -252,7 +252,7 @@ class TestServicesComprehensive:
     def test_service_dependencies(self):
         """测试服务依赖"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             # 模拟依赖
             mock_db = MagicMock()
@@ -295,7 +295,7 @@ class TestServicesComprehensive:
     def test_service_performance(self):
         """测试服务性能"""
         try:
-            from src.services.data_processing import DataProcessingService
+            from src.services.data_processing_mod import DataProcessingService
 
             with patch("src.services.data_processing.logger") as mock_logger:
                 service = DataProcessingService()
@@ -313,9 +313,10 @@ class TestServicesComprehensive:
         """测试服务集成"""
         try:
             # 创建服务实例
-            with patch("src.services.data_processing.logger") as mock_logger1, patch(
-                "src.services.audit_service.logger"
-            ) as mock_logger2:
+            with (
+                patch("src.services.data_processing.logger") as mock_logger1,
+                patch("src.services.audit_service.logger") as mock_logger2,
+            ):
                 processing_service = DataProcessingService()
                 processing_service.logger = mock_logger1
 

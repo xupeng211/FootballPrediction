@@ -1,28 +1,21 @@
-from typing import cast, Any, Optional, Union
-
 """
 import asyncio
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+from src.database.base import Base  # noqa: E402
+from src.database.config import get_database_config  # noqa: E402
+from src.database.models import Odds  # noqa: F401, E402
+
 Alembic环境配置
 
 配置数据库迁移环境，使用我们的数据库配置和模型。
 """
 
-import asyncio
-import os
-import sys
-from logging.config import fileConfig
-
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-
 # 导入我们的数据库配置和模型
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
 
-from src.database.base import Base  # noqa: E402
-from src.database.config import get_database_config  # noqa: E402
 
 # 导入所有模型以确保它们被注册到Base.metadata
-from src.database.models import Odds  # noqa: F401, E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -51,7 +44,6 @@ if use_local_db or in_ci:
     db_config.host = "localhost"
     db_config.port = "5432"
     # 重新构建URL
-    from urllib.parse import urlparse, urlunparse
 
     parsed_url = urlparse(db_config.alembic_url)
     local_url = urlunparse(
@@ -122,7 +114,6 @@ def do_run_migrations(connection):
 
 async def run_async_migrations():
     """在异步模式下运行迁移"""
-    from sqlalchemy.ext.asyncio import create_async_engine
 
     connectable = create_async_engine(
         db_config.async_url,

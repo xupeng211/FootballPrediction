@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 足球预测系统时间处理工具模块
 
@@ -38,3 +36,32 @@ class TimeUtils:
     ) -> datetime:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)
+
+
+# 为了向后兼容，添加常用函数别名
+def utc_now() -> datetime:
+    """获取当前UTC时间（向后兼容性函数）"""
+    return datetime.now(timezone.utc)
+
+
+def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
+    """解析日期时间字符串（向后兼容性函数）"""
+    if date_str is None:
+        return None
+
+    try:
+        return datetime.strptime(date_str, format_str)
+    except (ValueError, TypeError):
+        # 尝试其他常见格式
+        formats = [
+            "%Y-%m-%dT%H:%M:%S.%fZ",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d",
+        ]
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        return None

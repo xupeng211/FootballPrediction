@@ -446,7 +446,7 @@ class TestDatabaseOperations:
     def test_database_connection_management(self):
         """测试数据库连接管理"""
         try:
-            from src.database.connection import (
+            from src.database.connection_mod import (
                 DatabaseManager,
                 MultiUserDatabaseManager,
             )

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 import pytest
-from src.services.audit_service import AuditService
+from src.services.audit_service_mod import AuditService
 # 暂时跳过此测试，方法不存在
 # 暂时跳过此测试，方法不存在
 # 缺少 action 字段

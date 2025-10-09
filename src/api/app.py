@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 FastAPI主应用
 FastAPI Main Application
@@ -7,22 +5,6 @@ FastAPI Main Application
 整合所有API路由和中间件。
 Integrates all API routes and middleware.
 """
-
-import time
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from src.api import health_router, predictions_router, data_router
-from src.config.openapi_config import setup_openapi
-from src.core.prediction_engine import init_prediction_engine, close_prediction_engine
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,15 +1,8 @@
-from typing import cast, Any, Optional, Union
-
 """
 联赛模型
 
 存储足球联赛的基础信息，如英超、西甲等。
 """
-
-from sqlalchemy import Boolean, Column, Index, Integer, String
-from sqlalchemy.orm import relationship
-
-from src.database.base import BaseModel
 
 
 class League(BaseModel):
