@@ -87,7 +87,7 @@ class ProcessingCache:
             key_parts.append(params_hash)
 
         # 生成完整键
-        full_key = ":".join(key_parts)
+        ":".join(key_parts)
 
         # 使用键管理器规范化
         return self.key_manager.create_key(

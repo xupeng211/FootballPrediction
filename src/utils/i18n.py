@@ -25,7 +25,7 @@ def init_i18n():
     LOCALE_DIR.mkdir(exist_ok=True)
 
     # 设置默认语言
-    lang = os.getenv("LANGUAGE", "zh_CN")
+    os.getenv("LANGUAGE", "zh_CN")
 
     try:
         # 设置gettext

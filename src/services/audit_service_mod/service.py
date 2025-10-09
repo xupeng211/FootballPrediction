@@ -123,7 +123,7 @@ class AuditService:
             parsed_data = json.loads(data)
             # 递归处理嵌套结构
             return self._sanitize_data(parsed_data)
-        except:
+        except Exception:
             # 如果不是JSON，直接哈希
             return self._hash_sensitive_value(data)
 
@@ -624,7 +624,7 @@ class AuditService:
 
         for action_data in actions:
             try:
-                context = action_data.get("context")
+                action_data.get("context")
                 result = self.log_action(**action_data)
                 results.append(
                     {

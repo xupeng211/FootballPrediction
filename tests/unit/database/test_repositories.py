@@ -85,7 +85,7 @@ class TestMatchRepository:
         mock_session.refresh.return_value = None
 
         # 调用方法
-        result = repository.create(new_match)
+        repository.create(new_match)
 
         # 验证
         mock_session.add.assert_called_once_with(new_match)

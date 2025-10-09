@@ -11,18 +11,17 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 import subprocess
 
+
 def run_command(cmd: List[str], cwd: str = None) -> Tuple[bool, str]:
     """运行命令并返回结果"""
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=cwd or Path.cwd()
+            cmd, capture_output=True, text=True, cwd=cwd or Path.cwd()
         )
         return result.returncode == 0, result.stdout + result.stderr
     except Exception as e:
         return False, str(e)
+
 
 def backup_original_files():
     """备份原始文件"""
@@ -51,6 +50,7 @@ def backup_original_files():
             print(f"✓ 备份已存在: {dst}")
 
     return True
+
 
 def update_imports_in_files():
     """更新所有文件中的导入路径"""
@@ -83,7 +83,7 @@ def update_imports_in_files():
         "src/core",
         "src/utils",
         "src/monitoring",
-        "tests"
+        "tests",
     ]
 
     total_updated = 0
@@ -96,7 +96,7 @@ def update_imports_in_files():
         print(f"\n更新目录: {directory}")
         for py_file in dir_path.rglob("*.py"):
             try:
-                content = py_file.read_text(encoding='utf-8')
+                content = py_file.read_text(encoding="utf-8")
                 original_content = content
 
                 # 应用所有导入映射
@@ -106,7 +106,7 @@ def update_imports_in_files():
 
                 # 如果内容有变化，保存文件
                 if content != original_content:
-                    py_file.write_text(content, encoding='utf-8')
+                    py_file.write_text(content, encoding="utf-8")
                     total_updated += 1
                     print(f"  ✓ 更新: {py_file.relative_to(Path.cwd())}")
             except Exception as e:
@@ -114,6 +114,7 @@ def update_imports_in_files():
 
     print(f"\n总计更新了 {total_updated} 个文件")
     return total_updated > 0
+
 
 def create_compatibility_shims():
     """创建兼容性垫片（向后兼容）"""
@@ -157,21 +158,22 @@ __all__ = [
     for file_path, content in shim_files.items():
         path = Path(file_path)
         if not path.exists():
-            path.write_text(content, encoding='utf-8')
+            path.write_text(content, encoding="utf-8")
             print(f"✓ 创建垫片: {file_path}")
         else:
             # 检查是否已经是垫片
-            if "兼容性垫片" in path.read_text(encoding='utf-8'):
+            if "兼容性垫片" in path.read_text(encoding="utf-8"):
                 print(f"✓ 垫片已存在: {file_path}")
             else:
                 # 备份并替换
-                backup_path = path.with_suffix('.py.bak')
+                backup_path = path.with_suffix(".py.bak")
                 if not backup_path.exists():
                     shutil.copy2(path, backup_path)
-                path.write_text(content, encoding='utf-8')
+                path.write_text(content, encoding="utf-8")
                 print(f"✓ 替换为垫片: {file_path}")
 
     return True
+
 
 def run_tests():
     """运行测试验证"""
@@ -180,7 +182,9 @@ def run_tests():
     print("=" * 60)
 
     print("\n运行语法检查...")
-    success, output = run_command(["python", "-m", "py_compile", "src/services/audit_service_mod/service.py"])
+    success, output = run_command(
+        ["python", "-m", "py_compile", "src/services/audit_service_mod/service.py"]
+    )
     if success:
         print("✓ audit_service_mod 语法正确")
     else:
@@ -189,9 +193,21 @@ def run_tests():
 
     print("\n运行快速导入测试...")
     test_commands = [
-        ["python", "-c", "from src.services.audit_service_mod import AuditService; print('✓ AuditService 导入成功')"],
-        ["python", "-c", "from src.services.manager_mod import ServiceManager; print('✓ ServiceManager 导入成功')"],
-        ["python", "-c", "from src.services.data_processing_mod import DataProcessingService; print('✓ DataProcessingService 导入成功')"],
+        [
+            "python",
+            "-c",
+            "from src.services.audit_service_mod import AuditService; print('✓ AuditService 导入成功')",
+        ],
+        [
+            "python",
+            "-c",
+            "from src.services.manager_mod import ServiceManager; print('✓ ServiceManager 导入成功')",
+        ],
+        [
+            "python",
+            "-c",
+            "from src.services.data_processing_mod import DataProcessingService; print('✓ DataProcessingService 导入成功')",
+        ],
     ]
 
     all_passed = True
@@ -204,6 +220,7 @@ def run_tests():
             all_passed = False
 
     return all_passed
+
 
 def commit_changes():
     """提交更改"""
@@ -267,6 +284,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print(f"✗ 提交失败: {output}")
         return False
 
+
 def push_to_remote():
     """推送到远程仓库"""
     print("\n" + "=" * 60)
@@ -293,11 +311,14 @@ def push_to_remote():
         # 尝试推送当前分支
         current_branch, _ = run_command(["git", "branch", "--show-current"])
         if current_branch.strip():
-            success, output = run_command(["git", "push", "origin", current_branch.strip()])
+            success, output = run_command(
+                ["git", "push", "origin", current_branch.strip()]
+            )
             if success:
                 print(f"✓ 推送到分支 {current_branch.strip()} 成功")
                 return True
         return False
+
 
 def main():
     """主函数"""
@@ -364,6 +385,7 @@ def main():
     else:
         print("\n⚠️  部分步骤未完成，请检查错误信息")
         print("💡 您可以手动完成剩余步骤")
+
 
 if __name__ == "__main__":
     main()

@@ -443,7 +443,7 @@ class TestPredictionService:
         with patch.object(service, "get_production_model") as mock_get_model:
             with patch.object(service, "_get_match_info") as mock_get_match:
                 with patch.object(service, "_get_features") as mock_get_features:
-                    with patch.object(service, "_store_prediction") as mock_store:
+                    with patch.object(service, "_store_prediction"):
                         mock_get_model.return_value = (mock_model, "v1.0.0")
                         mock_get_match.return_value = {
                             "id": 12345,

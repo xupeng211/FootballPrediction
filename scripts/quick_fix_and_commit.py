@@ -7,10 +7,12 @@ import os
 import subprocess
 from pathlib import Path
 
+
 def run_cmd(cmd):
     """运行命令"""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.returncode == 0, result.stdout + result.stderr
+
 
 def fix_base_service_imports():
     """修复所有BaseService的导入"""
@@ -25,23 +27,30 @@ def fix_base_service_imports():
     for file_path in files_to_fix:
         path = Path(file_path)
         if path.exists():
-            content = path.read_text(encoding='utf-8')
+            content = path.read_text(encoding="utf-8")
 
             # 添加BaseService导入
-            if "BaseService" in content and "from src.services.base_service import BaseService" not in content:
-                lines = content.split('\n')
+            if (
+                "BaseService" in content
+                and "from src.services.base_service import BaseService" not in content
+            ):
+                lines = content.split("\n")
 
                 # 找到导入位置
                 import_idx = -1
                 for i, line in enumerate(lines):
-                    if line.startswith('from ') or line.startswith('import '):
+                    if line.startswith("from ") or line.startswith("import "):
                         import_idx = i
 
                 if import_idx >= 0:
-                    lines.insert(import_idx + 1, "from src.services.base_service import BaseService")
-                    content = '\n'.join(lines)
-                    path.write_text(content, encoding='utf-8')
+                    lines.insert(
+                        import_idx + 1,
+                        "from src.services.base_service import BaseService",
+                    )
+                    content = "\n".join(lines)
+                    path.write_text(content, encoding="utf-8")
                     print(f"✓ 修复了 {file_path}")
+
 
 def commit_and_push():
     """提交并推送代码"""
@@ -106,6 +115,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         else:
             print("⚠️  推送失败，请手动推送")
 
+
 def main():
     """主函数"""
     print("=" * 60)
@@ -123,6 +133,7 @@ def main():
     print("=" * 60)
     print("\n✅ 代码已成功提交并推送到远程仓库！")
     print("\n🎉 您的代码拆分工作已经成功保存！")
+
 
 if __name__ == "__main__":
     main()

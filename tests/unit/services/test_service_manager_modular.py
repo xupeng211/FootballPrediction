@@ -213,7 +213,9 @@ class TestServiceFactory:
     def test_register_builder(self):
         """测试注册构建器"""
         factory = ServiceFactory()
-        builder = lambda: MockService()
+
+        def builder():
+            return MockService()
 
         factory.register_builder("test", builder)
         service = factory.create_service("test")
@@ -246,7 +248,9 @@ class TestServiceHealthChecker:
     def test_register_check(self):
         """测试注册健康检查"""
         checker = ServiceHealthChecker()
-        check_func = lambda: True
+
+        def check_func():
+            return True
 
         checker.register_check("test", check_func)
         # 测试注册成功

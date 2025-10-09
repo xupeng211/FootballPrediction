@@ -454,7 +454,7 @@ class TestAuditStorage:
             mock_session.commit.return_value = None
             mock_session.refresh.return_value = None
 
-            log_id = await storage.save_log(log)
+            await storage.save_log(log)
 
             # 验证保存操作
             mock_session.add.assert_called_once()

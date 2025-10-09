@@ -197,7 +197,7 @@ class QualityLogger:
             async with self.db_manager.get_async_session() as session:
                 query = (
                     select(DataQualityLog)
-                    .where(DataQualityLog.requires_manual_review == True)
+                    .where(DataQualityLog.requires_manual_review is True)
                     .order_by(desc(DataQualityLog.detected_at))
                 )
 
@@ -287,7 +287,7 @@ class QualityLogger:
                 delete_stmt = delete(DataQualityLog).where(
                     DataQualityLog.detected_at < cutoff_date,
                     DataQualityLog.status == "reviewed",
-                    DataQualityLog.requires_manual_review == False,
+                    DataQualityLog.requires_manual_review is False,
                 )
 
                 result = await session.execute(delete_stmt)

@@ -32,7 +32,7 @@ class TestCacheWarmupManager:
         mock_match.venue = "Stadium"
 
         with (
-            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch("src.cache.redis.warmup.warmup_manager.select"),
             patch(
                 "src.cache.redis.warmup.warmup_manager.get_async_session"
             ) as mock_session,
@@ -54,7 +54,7 @@ class TestCacheWarmupManager:
     async def test_warmup_match_cache_not_found(self):
         """测试预热不存在的比赛缓存"""
         with (
-            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch("src.cache.redis.warmup.warmup_manager.select"),
             patch(
                 "src.cache.redis.warmup.warmup_manager.get_async_session"
             ) as mock_session,
@@ -84,7 +84,7 @@ class TestCacheWarmupManager:
         mock_team.stadium = "Home Stadium"
 
         with (
-            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch("src.cache.redis.warmup.warmup_manager.select"),
             patch(
                 "src.cache.redis.warmup.warmup_manager.get_async_session"
             ) as mock_session,
@@ -116,7 +116,7 @@ class TestCacheWarmupManager:
         mock_match2.away_team_id = 40
 
         with (
-            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch("src.cache.redis.warmup.warmup_manager.select"),
             patch(
                 "src.cache.redis.warmup.warmup_manager.get_async_session"
             ) as mock_session,

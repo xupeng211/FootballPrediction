@@ -111,12 +111,14 @@ class DatabaseMetrics:
             async with get_async_session() as session:
                 # 查询数据库连接数
                 result = await session.execute(
-                    text("""
+                    text(
+                        """
                         SELECT state, COUNT(*)
                         FROM pg_stat_activity
                         WHERE datname = current_database()
                         GROUP BY state
-                    """)
+                    """
+                    )
                 )
 
                 for state, count in result.fetchall():

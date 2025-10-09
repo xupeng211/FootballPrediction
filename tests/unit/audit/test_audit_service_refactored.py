@@ -51,16 +51,16 @@ class TestAuditServiceRefactored:
         sanitizer = DataSanitizer()
 
         # 测试敏感表检测
-        assert sanitizer.is_sensitive_table("users") == True
-        assert sanitizer.is_sensitive_table("matches") == False
+        assert sanitizer.is_sensitive_table("users") is True
+        assert sanitizer.is_sensitive_table("matches") is False
 
         # 测试敏感字段检测
-        assert sanitizer.is_sensitive_column("password") == True
-        assert sanitizer.is_sensitive_column("name") == False
+        assert sanitizer.is_sensitive_column("password") is True
+        assert sanitizer.is_sensitive_column("name") is False
 
         # 测试高风险操作检测
-        assert sanitizer.is_high_risk_action(AuditAction.DELETE) == True
-        assert sanitizer.is_high_risk_action(AuditAction.READ) == False
+        assert sanitizer.is_high_risk_action(AuditAction.DELETE) is True
+        assert sanitizer.is_high_risk_action(AuditAction.READ) is False
 
         # 测试数据清理
         data = {
@@ -204,8 +204,8 @@ class TestAuditServiceRefactored:
         assert cleaned["name"] == "test"
 
         # 测试敏感数据检测
-        assert audit_service._is_sensitive_data("users", "password") == True
-        assert audit_service._is_sensitive_data("matches", "name") == False
+        assert audit_service._is_sensitive_data("users", "password") is True
+        assert audit_service._is_sensitive_data("matches", "name") is False
 
     @pytest.mark.asyncio
     async def test_get_recent_activity(self, audit_service):

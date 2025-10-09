@@ -395,7 +395,7 @@ def test_decorators_isolated():
                     hit = False
                     raise
                 finally:
-                    duration = (datetime.now() - start_time).total_seconds()
+                    (datetime.now() - start_time).total_seconds()
 
                     collector.record_cache_operation(
                         cache_type=cache_type, operation=func.__name__, hit=hit

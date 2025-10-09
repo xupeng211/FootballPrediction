@@ -10,14 +10,16 @@ import os
 from pathlib import Path
 from typing import Dict, List, Set
 
+
 def run_git_command(cmd: List[str]) -> str:
     """运行git命令并返回输出"""
-    result = subprocess.run(cmd, capture_output=True, text=True, errors='ignore')
+    result = subprocess.run(cmd, capture_output=True, text=True, errors="ignore")
     if result.returncode != 0:
         print(f"命令失败: {' '.join(cmd)}")
         print(f"错误: {result.stderr}")
         return ""
     return result.stdout
+
 
 def get_files_from_commit(commit: str, path: str = "") -> Set[str]:
     """获取指定commit中特定路径下的所有文件"""
@@ -27,16 +29,18 @@ def get_files_from_commit(commit: str, path: str = "") -> Set[str]:
 
     output = run_git_command(cmd)
     files = set()
-    for line in output.strip().split('\n'):
+    for line in output.strip().split("\n"):
         if line.strip():
             files.add(line.strip())
     return files
+
 
 def get_file_content_at_commit(commit: str, file_path: str) -> str:
     """获取指定commit中文件的内容"""
     cmd = ["git", "show", f"{commit}:{file_path}"]
     output = run_git_command(cmd)
     return output
+
 
 def restore_split_modules():
     """恢复用户拆分的所有模块"""
@@ -63,7 +67,7 @@ def restore_split_modules():
     # 识别拆分的模块（包含_mod的目录和文件）
     split_modules = []
     for file_path in all_files:
-        if '_mod' in file_path or file_path.endswith('_mod.py'):
+        if "_mod" in file_path or file_path.endswith("_mod.py"):
             split_modules.append(file_path)
 
     print(f"发现 {len(split_modules)} 个拆分模块:")
@@ -88,7 +92,7 @@ def restore_split_modules():
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 写入文件
-            with open(module_path, 'w', encoding='utf-8') as f:
+            with open(module_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"✓ 恢复: {module_path}")
@@ -141,6 +145,7 @@ def restore_split_modules():
     print("1. 运行 'make lint' 检查代码质量")
     print("2. 运行 'make test-quick' 快速测试")
     print("3. 根据需要调整导入语句")
+
 
 if __name__ == "__main__":
     restore_split_modules()

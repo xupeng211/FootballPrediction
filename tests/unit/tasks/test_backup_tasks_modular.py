@@ -94,7 +94,7 @@ class TestDatabaseModule:
         mock_backup_dir.mkdir.return_value = None
         mock_backup_dir.__truediv__.return_value = mock_backup_file
         mock_backup_file.with_suffix.return_value = mock_backup_file
-        mock_backup_file.stat.return_value = st_size = 1024
+        mock_backup_file.stat.return_value = 1024
         mock_backup_file.__str__ = lambda x: "/tmp/backups/test.sql.gz"
         mock_path.return_value = mock_backup_dir
 

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any
 
+
 def analyze_code_quality():
     """分析代码质量"""
     print("=" * 60)
@@ -34,7 +35,7 @@ def analyze_code_quality():
 
     for name, orig_path in original_files.items():
         if orig_path.exists():
-            lines = len(orig_path.read_text(encoding='utf-8').split('\n'))
+            lines = len(orig_path.read_text(encoding="utf-8").split("\n"))
             total_original_lines += lines
             print(f"  原始 {name}: {lines} 行")
 
@@ -48,16 +49,16 @@ def analyze_code_quality():
                 file_count = 0
                 for py_file in split_path.rglob("*.py"):
                     file_count += 1
-                    lines = len(py_file.read_text(encoding='utf-8').split('\n'))
+                    lines = len(py_file.read_text(encoding="utf-8").split("\n"))
                     total_lines += lines
                 total_split_lines += total_lines
                 print(f"  拆分 {name}: {file_count} 个文件, {total_lines} 行")
             else:
-                lines = len(split_path.read_text(encoding='utf-8').split('\n'))
+                lines = len(split_path.read_text(encoding="utf-8").split("\n"))
                 total_split_lines += lines
                 print(f"  拆分 {name}: {lines} 行")
 
-    print(f"\n总计:")
+    print("\n总计:")
     print(f"  原始代码总行数: {total_original_lines}")
     print(f"  拆分后总行数: {total_split_lines}")
 
@@ -74,6 +75,7 @@ def analyze_code_quality():
         print("  ✓ 更易于维护和测试")
 
     return True
+
 
 def provide_recommendations():
     """提供使用建议"""
@@ -100,6 +102,7 @@ def provide_recommendations():
     print("3. 运行 'make lint' 检查代码质量")
     print("4. 逐步清理原始文件（确认无误后）")
 
+
 def create_import_mapping():
     """创建导入映射表"""
     print("\n" + "=" * 60)
@@ -116,7 +119,7 @@ def create_import_mapping():
         "src.data.processing.football_data_cleaner": "src.data.processing.football_data_cleaner_mod",
         "src.data.quality.exception_handler": "src.data.quality.exception_handler_mod",
         "src.monitoring.system_monitor": "src.monitoring.system_monitor_mod",
-        "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced_mod"
+        "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced_mod",
     }
 
     print("\n建议的导入路径更新:")
@@ -124,6 +127,7 @@ def create_import_mapping():
 
     for old_path, new_path in mapping.items():
         print(f"  {old_path}  →  {new_path}")
+
 
 def main():
     """主函数"""
@@ -151,6 +155,7 @@ def main():
     print("✅ 模块化程度高")
     print("\n💡 建议：保留并使用拆分后的代码，")
     print("    它们代表了更好的代码组织方式！")
+
 
 if __name__ == "__main__":
     main()

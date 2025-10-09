@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Set
 
+
 def fix_audit_service_imports():
     """修复audit_service_mod的导入问题"""
     print("修复audit_service_mod的导入问题...")
@@ -18,7 +19,7 @@ def fix_audit_service_imports():
         print(f"文件不存在: {service_file}")
         return
 
-    content = service_file.read_text(encoding='utf-8')
+    content = service_file.read_text(encoding="utf-8")
 
     # 检查并添加缺失的导入
     if "BaseService" in content and "BaseService" not in content.split("\n")[0]:
@@ -38,11 +39,14 @@ def fix_audit_service_imports():
 
         # 插入BaseService导入
         lines = content.split("\n")
-        lines.insert(last_import + 1, "from src.services.base_service import BaseService")
+        lines.insert(
+            last_import + 1, "from src.services.base_service import BaseService"
+        )
         content = "\n".join(lines)
 
-        service_file.write_text(content, encoding='utf-8')
+        service_file.write_text(content, encoding="utf-8")
         print("✓ 添加了BaseService导入")
+
 
 def fix_manager_imports():
     """修复manager_mod的导入问题"""
@@ -63,8 +67,11 @@ def fix_manager_imports():
             manager_dir.mkdir(exist_ok=True)
             target = manager_dir / "manager.py"
             if not target.exists():
-                target.write_text(original.read_text(encoding='utf-8'), encoding='utf-8')
+                target.write_text(
+                    original.read_text(encoding="utf-8"), encoding="utf-8"
+                )
                 print("✓ 复制了原始manager.py到manager目录")
+
 
 def fix_data_processing_imports():
     """修复data_processing_mod的导入问题"""
@@ -75,7 +82,7 @@ def fix_data_processing_imports():
         print(f"文件不存在: {service_file}")
         return
 
-    content = service_file.read_text(encoding='utf-8')
+    content = service_file.read_text(encoding="utf-8")
 
     # 添加BaseService导入
     if "BaseService" in content and "BaseService" not in content.split("\n")[0:10]:
@@ -87,11 +94,14 @@ def fix_data_processing_imports():
             if line.startswith("from ") or line.startswith("import "):
                 last_import = i
 
-        lines.insert(last_import + 1, "from src.services.base_service import BaseService")
+        lines.insert(
+            last_import + 1, "from src.services.base_service import BaseService"
+        )
         content = "\n".join(lines)
 
-        service_file.write_text(content, encoding='utf-8')
+        service_file.write_text(content, encoding="utf-8")
         print("✓ 添加了BaseService导入")
+
 
 def check_base_service():
     """检查BaseService是否存在"""
@@ -102,13 +112,14 @@ def check_base_service():
         # 尝试从enhanced_base_service导入
         enhanced = Path("src/services/enhanced_base_service.py")
         if enhanced.exists():
-            content = enhanced.read_text(encoding='utf-8')
+            content = enhanced.read_text(encoding="utf-8")
             # 替换类名
             content = content.replace("class EnhancedBaseService", "class BaseService")
-            base_service.write_text(content, encoding='utf-8')
+            base_service.write_text(content, encoding="utf-8")
             print("✓ 创建了BaseService（基于EnhancedBaseService）")
         else:
             print("✗ 找不到EnhancedBaseService，需要手动创建BaseService")
+
 
 def main():
     """主函数"""
@@ -127,6 +138,7 @@ def main():
     print("\n" + "=" * 60)
     print("导入修复完成！")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
