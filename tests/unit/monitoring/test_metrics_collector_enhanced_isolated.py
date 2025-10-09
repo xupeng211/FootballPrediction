@@ -53,15 +53,12 @@ def test_metric_types_isolated():
                 "component": self.component,
                 "context": self.context,
                 "labels": self.labels,
-                "timestamp": self.timestamp.isoformat()
+                "timestamp": self.timestamp.isoformat(),
             }
 
     # 测试MetricPoint
     point = MetricPoint(
-        name="test_metric",
-        value=100.5,
-        labels={"env": "test"},
-        unit="ms"
+        name="test_metric", value=100.5, labels={"env": "test"}, unit="ms"
     )
     assert point.name == "test_metric"
     assert point.value == 100.5
@@ -71,12 +68,7 @@ def test_metric_types_isolated():
 
     # 测试MetricSummary
     summary = MetricSummary(
-        count=10,
-        sum=1000.0,
-        avg=100.0,
-        min=50.0,
-        max=150.0,
-        last=95.0
+        count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0
     )
     assert summary.count == 10
     assert summary.avg == 100.0
@@ -88,7 +80,7 @@ def test_metric_types_isolated():
         name="test_alert",
         message="Test alert message",
         severity="high",
-        component="test_component"
+        component="test_component",
     )
     assert alert.name == "test_alert"
     assert alert.message == "Test alert message"
@@ -168,7 +160,7 @@ def test_aggregator_isolated():
                 avg=statistics.mean(values),
                 min=min(values),
                 max=max(values),
-                last=values[-1]
+                last=values[-1],
             )
             self.last_update[key] = datetime.now()
 
@@ -180,18 +172,10 @@ def test_aggregator_isolated():
     aggregator = MetricsAggregator(window_size=60)
 
     # 添加指标点
-    point1 = MetricPoint(
-        name="test_metric",
-        value=100.0,
-        labels={"env": "test"}
-    )
+    point1 = MetricPoint(name="test_metric", value=100.0, labels={"env": "test"})
     aggregator.add_metric(point1)
 
-    point2 = MetricPoint(
-        name="test_metric",
-        value=200.0,
-        labels={"env": "test"}
-    )
+    point2 = MetricPoint(name="test_metric", value=200.0, labels={"env": "test"})
     aggregator.add_metric(point2)
 
     # 获取指标聚合
@@ -226,7 +210,9 @@ def test_alert_manager_isolated():
             self.alert_history = []
             self.alert_handlers = []
 
-        def add_alert_rule(self, name, condition, severity="medium", description="", cooldown=300):
+        def add_alert_rule(
+            self, name, condition, severity="medium", description="", cooldown=300
+        ):
             self.alert_rules[name] = {
                 "condition": condition,
                 "severity": severity,
@@ -241,7 +227,9 @@ def test_alert_manager_isolated():
             for name, rule in self.alert_rules.items():
                 try:
                     if rule["last_triggered"]:
-                        cooldown_end = rule["last_triggered"] + timedelta(seconds=rule["cooldown"])
+                        cooldown_end = rule["last_triggered"] + timedelta(
+                            seconds=rule["cooldown"]
+                        )
                         if now < cooldown_end:
                             continue
 
@@ -276,7 +264,9 @@ def test_alert_manager_isolated():
         def get_alert_summary(self):
             severity_counts = {}
             for alert in self.active_alerts.values():
-                severity_counts[alert.severity] = severity_counts.get(alert.severity, 0) + 1
+                severity_counts[alert.severity] = (
+                    severity_counts.get(alert.severity, 0) + 1
+                )
 
             return {
                 "active_alerts": len(self.active_alerts),
@@ -296,7 +286,7 @@ def test_alert_manager_isolated():
         name="high_error_rate",
         condition=high_error_rate,
         severity="high",
-        description="Error rate is too high"
+        description="Error rate is too high",
     )
 
     # 检查告警（不应触发）
@@ -340,12 +330,12 @@ def test_decorators_isolated():
                 try:
                     result = await func(*args, **kwargs)
                     success = True
-                except Exception as e:
+                except Exception:
                     success = False
                     raise
                 finally:
                     duration = (datetime.now() - start_time).total_seconds()
-                    if hasattr(result, 'predicted_result'):
+                    if hasattr(result, "predicted_result"):
                         predicted_result = result.predicted_result
                     else:
                         predicted_result = "unknown"
@@ -355,9 +345,9 @@ def test_decorators_isolated():
                     collector.record_prediction(
                         model_version=model_version,
                         predicted_result=predicted_result,
-                        confidence=getattr(result, 'confidence_score', 0.0),
+                        confidence=getattr(result, "confidence_score", 0.0),
                         duration=duration,
-                        success=success
+                        success=success,
                     )
                 return result
 
@@ -367,7 +357,7 @@ def test_decorators_isolated():
                 try:
                     result = func(*args, **kwargs)
                     success = True
-                except Exception as e:
+                except Exception:
                     success = False
                     raise
                 finally:
@@ -379,11 +369,12 @@ def test_decorators_isolated():
                         predicted_result="sync_call",
                         confidence=0.0,
                         duration=duration,
-                        success=success
+                        success=success,
                     )
                 return result
 
             import asyncio
+
             if asyncio.iscoroutinefunction(func):
                 return async_wrapper
             else:
@@ -404,15 +395,15 @@ def test_decorators_isolated():
                     hit = False
                     raise
                 finally:
-                    duration = (datetime.now() - start_time).total_seconds()
+                    (datetime.now() - start_time).total_seconds()
 
                     collector.record_cache_operation(
-                        cache_type=cache_type,
-                        operation=func.__name__,
-                        hit=hit
+                        cache_type=cache_type, operation=func.__name__, hit=hit
                     )
                 return result
+
             return wrapper
+
         return decorator
 
     # 测试缓存性能装饰器
@@ -466,7 +457,7 @@ def test_metric_summary_to_dict():
                 "last": self.last,
                 "p50": self.p50,
                 "p95": self.p95,
-                "p99": self.p99
+                "p99": self.p99,
             }
 
     summary = MetricSummary(
@@ -478,7 +469,7 @@ def test_metric_summary_to_dict():
         last=95.0,
         p50=98.0,
         p95=150.0,
-        p99=190.0
+        p99=190.0,
     )
 
     # 转换为字典

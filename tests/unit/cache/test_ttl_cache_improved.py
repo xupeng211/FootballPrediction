@@ -21,7 +21,7 @@ class TestTTLCache:
         try:
             cache = TTLCache(max_size=100, default_ttl=60)
             assert cache is not None
-        except:
+        except Exception:
             pytest.skip("Cannot create TTLCache")
 
     def test_cache_basic_operations(self):
@@ -32,7 +32,7 @@ class TestTTLCache:
             cache.set("key1", "value1")
             result = cache.get("key1")
             assert result == "value1"
-        except:
+        except Exception:
             pytest.skip("Cache operations not available")
 
     def test_cache_factory(self):
@@ -40,7 +40,7 @@ class TestTTLCache:
         try:
             cache = CacheFactory.create_cache("sync", max_size=100)
             assert isinstance(cache, TTLCache)
-        except:
+        except Exception:
             pytest.skip("CacheFactory not available")
 
     def test_cache_ttl(self):
@@ -51,7 +51,7 @@ class TestTTLCache:
             ttl = cache.ttl("test_key")
             # TTL应该是正数或None
             assert ttl is None or ttl > 0
-        except:
+        except Exception:
             pytest.skip("TTL functionality not available")
 
     def test_cache_stats(self):
@@ -62,7 +62,7 @@ class TestTTLCache:
             assert isinstance(stats, dict)
             assert "hits" in stats
             assert "misses" in stats
-        except:
+        except Exception:
             pytest.skip("Cache stats not available")
 
 
@@ -74,7 +74,7 @@ class TestCacheFactory:
         try:
             cache = CacheFactory.create_cache("sync")
             assert isinstance(cache, TTLCache)
-        except:
+        except Exception:
             pytest.skip("CacheFactory not available")
 
     def test_create_lru_cache(self):
@@ -82,5 +82,5 @@ class TestCacheFactory:
         try:
             cache = CacheFactory.create_lru_cache()
             assert isinstance(cache, TTLCache)
-        except:
+        except Exception:
             pytest.skip("LRU cache creation not available")

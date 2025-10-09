@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.models import Match, Odds, RawOddsData
 from src.database.models.match import MatchStatus
 
+
 # Market type mapping
 class MarketType:
     MATCH_WINNER = "match_winner"
@@ -23,6 +24,8 @@ class MarketType:
     HANDICAP = "handicap"
     BOTH_TEAMS_SCORE = "both_teams_score"
     CORRECT_SCORE = "correct_score"
+
+
 from .time_utils_compat import utc_now, parse_datetime
 
 logger = logging.getLogger(__name__)
@@ -66,7 +69,7 @@ class OddsStorage:
             是否成功
         """
         try:
-            start_time = utc_now()
+            # start_time = utc_now()  # 暂时未使用
 
             # 保存每个博彩公司的赔率
             for bookmaker_data in odds_data.get("bookmakers", []):
@@ -127,8 +130,7 @@ class OddsStorage:
                 and_(
                     Odds.match_id == match_id,
                     Odds.bookmaker == bookmaker,
-                    Odds.market_type
-                    == market,  # 直接比较字符串
+                    Odds.market_type == market,  # 直接比较字符串
                     Odds.created_at >= cutoff_time,
                 )
             )
@@ -284,9 +286,7 @@ class OddsStorage:
                 "timestamp": odds_data["timestamp"],
             }
 
-            await self.redis_manager.client.publish(
-                channel, json.dumps(message)
-            )
+            await self.redis_manager.client.publish(channel, json.dumps(message))
 
             # 如果有价值投注，发送通知
             if odds_data.get("value_bets"):

@@ -21,7 +21,7 @@ class TestFeaturesImproved:
             from src.api.features_improved import router
 
             assert hasattr(router, "routes")
-        except:
+        except Exception:
             pytest.skip("features_improved router not available")
 
     def test_features_improved_endpoints(self):
@@ -31,5 +31,5 @@ class TestFeaturesImproved:
 
             routes = list(router.routes)
             assert isinstance(routes, list)
-        except:
+        except Exception:
             pytest.skip("features_improved endpoints not testable")

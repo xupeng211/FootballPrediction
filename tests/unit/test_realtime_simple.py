@@ -1,9 +1,9 @@
 # 实时数据处理简单测试
 def test_realtime_import():
     realtime = [
-        'src.realtime.websocket',
-        'src.realtime.event_handlers',
-        'src.realtime.message_processor'
+        "src.realtime.websocket",
+        "src.realtime.event_handlers",
+        "src.realtime.message_processor",
     ]
 
     for module in realtime:
@@ -13,10 +13,12 @@ def test_realtime_import():
         except ImportError:
             assert True
 
+
 def test_websocket():
     try:
         from src.realtime.websocket import WebSocketHandler
+
         handler = WebSocketHandler()
         assert handler is not None
-    except:
+    except Exception:
         assert True

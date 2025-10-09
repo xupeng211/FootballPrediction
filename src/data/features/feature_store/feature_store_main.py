@@ -70,7 +70,7 @@ class FootballFeatureStore:
                 return
 
             # 获取Feast配置
-            feast_config = self.config_manager.get_feast_config()
+            # feast_config = self.config_manager.get_feast_config()  # 暂时未使用
 
             # 保存配置文件
             self.config_manager.save_feast_config()
@@ -78,6 +78,7 @@ class FootballFeatureStore:
             # 初始化FeatureStore实例
             try:
                 from feast import FeatureStore
+
                 self._store = FeatureStore(repo_path=self.config_manager.repo_path)
             except ImportError:
                 logger.error("无法导入 FeatureStore，请确保 Feast 已正确安装")
@@ -85,10 +86,14 @@ class FootballFeatureStore:
 
             # 初始化管理器
             self._storage_manager = FeatureStorageManager(self._store)
-            self._query_manager = FeatureQueryManager(self._store, self._storage_manager)
+            self._query_manager = FeatureQueryManager(
+                self._store, self._storage_manager
+            )
             self._dataset_manager = FeatureDatasetManager(self._query_manager)
 
-            self.logger.info(f"特征仓库初始化成功，路径: {self.config_manager.repo_path}")
+            self.logger.info(
+                f"特征仓库初始化成功，路径: {self.config_manager.repo_path}"
+            )
 
         except Exception as e:
             self.logger.error(f"特征仓库初始化失败: {str(e)}")

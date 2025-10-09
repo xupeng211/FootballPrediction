@@ -23,7 +23,7 @@ class TestWarningFilters:
             # 应该能正常执行而不出错
             setup_warning_filters()
             assert True
-        except:
+        except Exception:
             pytest.skip("setup_warning_filters failed")
 
     def test_filter_deprecation_warnings(self):
@@ -35,5 +35,5 @@ class TestWarningFilters:
                 warnings.warn("This is deprecated", DeprecationWarning, stacklevel=2)
                 # 应该有警告
                 assert len(w) >= 0
-        except:
+        except Exception:
             pytest.skip("Warning filtering test failed")

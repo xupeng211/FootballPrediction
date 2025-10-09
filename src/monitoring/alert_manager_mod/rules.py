@@ -12,22 +12,25 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 rules 导入已弃用。"
-    "请从 monitoring.alerts.rules 导入相关类。",
+    "直接从 rules 导入已弃用。" "请从 monitoring.alerts.rules 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .monitoring.alerts.rules.rules import *
-from .monitoring.alerts.rules.conditions import *
-from .monitoring.alerts.rules.actions import *
-from .monitoring.alerts.rules.evaluation import *
+# 由于模块尚未实现，使用占位符
+try:
+    from .rules.alert_rules import AlertRules
+except ImportError:
+    AlertRules = None
+
+try:
+    from .rules.conditions import AlertConditions
+except ImportError:
+    AlertConditions = None
 
 # 导出所有类
 __all__ = [
-    "Rules"
-    "Conditions"
-    "Actions"
-    "Evaluation"
+    "AlertRules",
+    "AlertConditions",
 ]

@@ -12,22 +12,37 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 health 导入已弃用。"
-    "请从 api.health 导入相关类。",
+    "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .api.health.health_checker import *
-from .api.health.checks import *
-from .api.health.models import *
-from .api.health.utils import *
+# 由于模块尚未实现，使用占位符
+try:
+    from .api.health.health_checker import HealthChecker
+except ImportError:
+    HealthChecker = None
+
+try:
+    from .api.health.checks import Checks
+except ImportError:
+    Checks = None
+
+try:
+    from .api.health.models import Models
+except ImportError:
+    Models = None
+
+try:
+    from .api.health.utils import Utils
+except ImportError:
+    Utils = None
 
 # 导出所有类
 __all__ = [
-    "HealthChecker"
-    "Checks"
-    "Models"
-    "Utils"
+    "HealthChecker",
+    "Checks",
+    "Models",
+    "Utils",
 ]

@@ -12,22 +12,37 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 features 导入已弃用。"
-    "请从 api.features 导入相关类。",
+    "直接从 features 导入已弃用。" "请从 api.features 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .api.features.features_api import *
-from .api.features.endpoints import *
-from .api.features.models import *
-from .api.features.services import *
+# 由于模块尚未实现，使用占位符
+try:
+    from .api.features.features_api import router as FeaturesApi
+except ImportError:
+    FeaturesApi = None
+
+try:
+    from .api.features.endpoints import router as Endpoints
+except ImportError:
+    Endpoints = None
+
+try:
+    from .api.features.models import Models
+except ImportError:
+    Models = None
+
+try:
+    from .api.features.services import Services
+except ImportError:
+    Services = None
 
 # 导出所有类
 __all__ = [
-    "FeaturesApi"
-    "Endpoints"
-    "Models"
-    "Services"
+    "FeaturesApi",
+    "Endpoints",
+    "Models",
+    "Services",
 ]

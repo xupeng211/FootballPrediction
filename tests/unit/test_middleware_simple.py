@@ -1,9 +1,6 @@
 # 中间件简单测试
 def test_middleware_import():
-    middleware = [
-        'src.middleware.i18n',
-        'src.middleware.performance_monitoring'
-    ]
+    middleware = ["src.middleware.i18n", "src.middleware.performance_monitoring"]
 
     for module in middleware:
         try:
@@ -12,10 +9,12 @@ def test_middleware_import():
         except ImportError:
             assert True
 
+
 def test_middleware_creation():
     try:
         from src.middleware.i18n import I18nMiddleware
+
         middleware = I18nMiddleware()
         assert middleware is not None
-    except:
+    except Exception:
         assert True

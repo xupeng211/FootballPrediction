@@ -49,7 +49,7 @@ class MetadataManager:
         # 加载表元数据
         if self.tables_metadata_file.exists():
             try:
-                with open(self.tables_metadata_file, 'r') as f:
+                with open(self.tables_metadata_file, "r") as f:
                     self.tables_metadata = json.load(f)
             except Exception as e:
                 self.logger.error(f"Failed to load tables metadata: {e}")
@@ -60,7 +60,7 @@ class MetadataManager:
         # 加载模式元数据
         if self.schemas_file.exists():
             try:
-                with open(self.schemas_file, 'r') as f:
+                with open(self.schemas_file, "r") as f:
                     self.schemas_metadata = json.load(f)
             except Exception as e:
                 self.logger.error(f"Failed to load schemas metadata: {e}")
@@ -72,11 +72,11 @@ class MetadataManager:
         """保存元数据到文件"""
         try:
             # 保存表元数据
-            with open(self.tables_metadata_file, 'w') as f:
+            with open(self.tables_metadata_file, "w") as f:
                 json.dump(self.tables_metadata, f, indent=2, default=str)
 
             # 保存模式元数据
-            with open(self.schemas_file, 'w') as f:
+            with open(self.schemas_file, "w") as f:
                 json.dump(self.schemas_metadata, f, indent=2, default=str)
 
         except Exception as e:
@@ -89,7 +89,7 @@ class MetadataManager:
         record_count: int,
         file_size: int,
         partition_date: datetime,
-        schema: Optional[Dict[str, Any]] = None
+        schema: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         更新表元数据
@@ -110,7 +110,7 @@ class MetadataManager:
                     "files": [],
                     "total_records": 0,
                     "total_size_bytes": 0,
-                    "partitions": set()
+                    "partitions": set(),
                 }
 
             # 添加文件信息
@@ -120,14 +120,16 @@ class MetadataManager:
                 "record_count": record_count,
                 "size_bytes": file_size,
                 "partition_date": partition_date.isoformat(),
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
             }
             table_meta["files"].append(file_info)
 
             # 更新统计信息
             table_meta["total_records"] += record_count
             table_meta["total_size_bytes"] += file_size
-            table_meta["partitions"].add(f"{partition_date.year}-{partition_date.month:02d}")
+            table_meta["partitions"].add(
+                f"{partition_date.year}-{partition_date.month:02d}"
+            )
             table_meta["last_updated"] = datetime.now().isoformat()
 
             # 转换set为list以便JSON序列化
@@ -137,7 +139,7 @@ class MetadataManager:
             if schema:
                 self.schemas_metadata[table_name] = {
                     "schema": schema,
-                    "last_updated": datetime.now().isoformat()
+                    "last_updated": datetime.now().isoformat(),
                 }
 
             # 保存到文件
@@ -307,8 +309,12 @@ class MetadataManager:
                     if valid_files:
                         table_meta["files"] = valid_files
                         # 重新计算统计信息
-                        table_meta["total_records"] = sum(f["record_count"] for f in valid_files)
-                        table_meta["total_size_bytes"] = sum(f["size_bytes"] for f in valid_files)
+                        table_meta["total_records"] = sum(
+                            f["record_count"] for f in valid_files
+                        )
+                        table_meta["total_size_bytes"] = sum(
+                            f["size_bytes"] for f in valid_files
+                        )
                     else:
                         # 如果没有有效文件，删除整个表元数据
                         del self.tables_metadata[table_name]
@@ -348,7 +354,7 @@ class S3MetadataManager:
         record_count: int,
         file_size: int,
         partition_date: datetime,
-        schema: Optional[Dict[str, Any]] = None
+        schema: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         更新S3对象元数据
@@ -367,19 +373,21 @@ class S3MetadataManager:
             tags = [
                 {"Key": "Table", "Value": table_name},
                 {"Key": "Records", "Value": str(record_count)},
-                {"Key": "Partition", "Value": f"{partition_date.year}-{partition_date.month:02d}"},
-                {"Key": "UpdatedAt", "Value": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+                {
+                    "Key": "Partition",
+                    "Value": f"{partition_date.year}-{partition_date.month:02d}",
+                },
+                {
+                    "Key": "UpdatedAt",
+                    "Value": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                },
             ]
 
-            # 将标签转换为查询字符串格式
-            tag_string = "&".join([f"{tag['Key']}={tag['Value']}" for tag in tags])
+            # 将标签转换为查询字符串格式（暂时未使用）
+            # tag_string = "&".join([f"{tag['Key']}={tag['Value']}" for tag in tags])
 
             self.s3_client.put_object_tagging(
-                Bucket=bucket_name,
-                Key=object_key,
-                Tagging={
-                    "TagSet": tags
-                }
+                Bucket=bucket_name, Key=object_key, Tagging={"TagSet": tags}
             )
 
             self.logger.debug(f"Updated S3 metadata for {object_key}")
@@ -387,7 +395,9 @@ class S3MetadataManager:
         except Exception as e:
             self.logger.warning(f"Failed to update S3 metadata: {e}")
 
-    async def get_table_stats(self, bucket_name: str, object_path: str) -> Dict[str, Any]:
+    async def get_table_stats(
+        self, bucket_name: str, object_path: str
+    ) -> Dict[str, Any]:
         """
         获取S3表的统计信息
 
@@ -427,6 +437,7 @@ class S3MetadataManager:
 
                             if year_part and month_part and day_part:
                                 from datetime import datetime
+
                                 date_ranges.append(
                                     datetime(year_part, month_part, day_part)
                                 )
@@ -451,5 +462,7 @@ class S3MetadataManager:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get S3 stats for {bucket_name}/{object_path}: {e}")
+            self.logger.error(
+                f"Failed to get S3 stats for {bucket_name}/{object_path}: {e}"
+            )
             return {"error": str(e)}

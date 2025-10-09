@@ -12,26 +12,49 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 data 导入已弃用。"
-    "请从 api.data.endpoints 导入相关类。",
+    "直接从 data 导入已弃用。" "请从 api.data.endpoints 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .api.data.endpoints.matches import *
-from .api.data.endpoints.teams import *
-from .api.data.endpoints.leagues import *
-from .api.data.endpoints.odds import *
-from .api.data.endpoints.statistics import *
-from .api.data.endpoints.dependencies import *
+# 由于模块尚未实现，使用占位符
+try:
+    from .api.data.endpoints.matches import router as Matches
+except ImportError:
+    Matches = None
+
+try:
+    from .api.data.endpoints.teams import router as Teams
+except ImportError:
+    Teams = None
+
+try:
+    from .api.data.endpoints.leagues import router as Leagues
+except ImportError:
+    Leagues = None
+
+try:
+    from .api.data.endpoints.odds import router as Odds
+except ImportError:
+    Odds = None
+
+try:
+    from .api.data.endpoints.statistics import router as Statistics
+except ImportError:
+    Statistics = None
+
+try:
+    from .api.data.endpoints.dependencies import router as Dependencies
+except ImportError:
+    Dependencies = None
 
 # 导出所有类
 __all__ = [
-    "Matches"
-    "Teams"
-    "Leagues"
-    "Odds"
-    "Statistics"
-    "Dependencies"
+    "Matches",
+    "Teams",
+    "Leagues",
+    "Odds",
+    "Statistics",
+    "Dependencies",
 ]

@@ -22,7 +22,7 @@ class TestDatabaseTypes:
 
             json_type = JSONType()
             assert json_type is not None
-        except:
+        except Exception:
             pytest.skip("JSONType not available")
 
     def test_uuid_type(self):
@@ -32,5 +32,5 @@ class TestDatabaseTypes:
 
             uuid_type = UUIDType()
             assert uuid_type is not None
-        except:
+        except Exception:
             pytest.skip("UUIDType not available")

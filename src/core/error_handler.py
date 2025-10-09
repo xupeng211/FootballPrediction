@@ -12,24 +12,43 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 error_handler 导入已弃用。"
-    "请从 core.error_handling 导入相关类。",
+    "直接从 error_handler 导入已弃用。" "请从 core.error_handling 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .core.error_handling.error_handler import *
-from .core.error_handling.exceptions import *
-from .core.error_handling.serializers import *
-from .core.error_handling.middleware import *
-from .core.error_handling.handlers import *
+# 由于模块尚未实现，使用占位符
+try:
+    from .error_handling.error_handler import ErrorHandler
+except ImportError:
+    ErrorHandler = None
+
+try:
+    from .error_handling.exceptions import ErrorTypes
+except ImportError:
+    ErrorTypes = None
+
+try:
+    from .error_handling.serializers import ErrorSerializers
+except ImportError:
+    ErrorSerializers = None
+
+try:
+    from .error_handling.middleware import ErrorMiddleware
+except ImportError:
+    ErrorMiddleware = None
+
+try:
+    from .error_handling.handlers import ErrorHandlers
+except ImportError:
+    ErrorHandlers = None
 
 # 导出所有类
 __all__ = [
-    "ErrorHandler"
-    "Exceptions"
-    "Serializers"
-    "Middleware"
-    "Handlers"
+    "ErrorHandler",
+    "ErrorTypes",
+    "ErrorSerializers",
+    "ErrorMiddleware",
+    "ErrorHandlers",
 ]

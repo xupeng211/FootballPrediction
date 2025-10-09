@@ -1,9 +1,9 @@
 # 收集器简单测试
 def test_collectors_import():
     collectors = [
-        'src.collectors.fixtures_collector',
-        'src.collectors.odds_collector',
-        'src.collectors.scores_collector'
+        "src.collectors.fixtures_collector",
+        "src.collectors.odds_collector",
+        "src.collectors.scores_collector",
     ]
 
     for collector in collectors:
@@ -13,10 +13,12 @@ def test_collectors_import():
         except ImportError:
             assert True
 
+
 def test_collector_creation():
     try:
         from src.collectors.fixtures_collector import FixturesCollector
+
         collector = FixturesCollector()
         assert collector is not None
-    except:
+    except Exception:
         assert True
