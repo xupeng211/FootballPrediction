@@ -1,12 +1,27 @@
-"""
-        from sqlalchemy import and_
+from datetime import datetime, timedelta
+from decimal import Decimal
+from enum import Enum
+from typing import Optional, Dict, List, Any
+from ..base import BaseModel
 
-        from .match import Match
+from enum import Enum
+from typing import TYPE_CHECKING
+from ..base import BaseModel
 
+from sqlalchemy import (
+    DECIMAL,
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.base import BaseModel
 
+"""
 预测结果数据模型
 
 存储机器学习模型的预测结果，包括胜负概率、比分预测等。

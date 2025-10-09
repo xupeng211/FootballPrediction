@@ -657,7 +657,7 @@ class ScoresCollectorManager:
     async def get_collector(self, session_id: int) -> ScoresCollector:
         """获取或创建收集器实例"""
         if session_id not in self.collectors:
-            from src.database.connection import get_async_session
+            from src.database.connection_mod import get_async_session
 
             async with get_async_session() as session:
                 collector = ScoresCollector(session, self.redis_manager)

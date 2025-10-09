@@ -1,8 +1,20 @@
+from datetime import datetime
+from enum import Enum
+from typing import TYPE_CHECKING, Optional, Dict, Any
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from ..base import BaseModel
+
+
 """
-        from sqlalchemy import or_
-
-from src.database.base import BaseModel
-
 比赛模型
 
 存储足球比赛的详细信息，包括比赛时间、比分、状态等。
@@ -16,6 +28,14 @@ class MatchStatus(Enum):
     LIVE = "live"  # 进行中
     FINISHED = "finished"  # 已结束
     CANCELLED = "cancelled"  # 已取消
+
+
+class MatchResult(Enum):
+    """比赛结果枚举"""
+
+    HOME_WIN = "home_win"  # 主队获胜
+    AWAY_WIN = "away_win"  # 客队获胜
+    DRAW = "draw"  # 平局
 
 
 class Match(BaseModel):

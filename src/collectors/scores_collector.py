@@ -11,7 +11,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
-from src.database.connection import DatabaseManager
+from src.database.connection_mod import DatabaseManager
 from src.database.models.match import Match
 from src.core.logging_system import get_logger
 

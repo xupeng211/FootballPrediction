@@ -12,7 +12,10 @@ Provides complete data management API endpoints, including:
 - 数据统计和分析
 """
 
-from .data import router
+# 避免循环导入，直接创建路由器
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/data", tags=["data"])
 from .data.models import TeamInfo, LeagueInfo, MatchInfo, OddsInfo
 
 # 重新导出所有路由和模型以保持向后兼容
