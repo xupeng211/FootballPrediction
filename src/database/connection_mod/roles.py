@@ -6,6 +6,7 @@ Database Role Definitions
 """
 
 from enum import Enum
+from typing import Dict
 
 
 class DatabaseRole(str, Enum):

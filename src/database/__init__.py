@@ -9,7 +9,7 @@
 from typing import cast, Any, Optional, Union
 
 from .base import Base
-from .compatibility import get_async_db_session, get_db_session
+# from .compatibility import get_async_db_session, get_db_session  # 暂时注释，compatibility模块不存在
 from .config import DatabaseConfig, get_database_config
 from .connection import DatabaseManager
 
@@ -17,7 +17,7 @@ __all__ = [
     "DatabaseConfig",
     "get_database_config",
     "DatabaseManager",
-    "get_db_session",
-    "get_async_db_session",
+    # "get_db_session",          # 暂时注释
+    # "get_async_db_session",    # 暂时注释
     "Base",
 ]
