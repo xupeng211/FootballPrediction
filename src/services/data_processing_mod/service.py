@@ -10,13 +10,13 @@ from typing import Any, Dict, List, Optional, Union
 import logging
 from datetime import datetime
 
-from ..base_service import BaseService
+from ..base_unified import SimpleService
 # from ..data_processing import DataProcessingService as OriginalService  # 避免循环导入
 
 logger = logging.getLogger(__name__)
 
 
-class DataProcessingService(BaseService):
+class DataProcessingService(SimpleService):
     """
     数据处理服务
     Data Processing Service
@@ -48,3 +48,34 @@ class DataProcessingService(BaseService):
         """转换数据"""
         # TODO: 实现数据转换逻辑
         return data
+
+    async def _on_initialize(self) -> bool:
+        """初始化服务"""
+        self.logger.info(f"正在初始化 {self.name}")
+        # 初始化数据处理组件
+        try:
+            # 这里可以加载处理模型、配置等
+            return True
+        except Exception as e:
+            self.logger.error(f"初始化失败: {e}")
+            return False
+
+    async def _on_shutdown(self) -> None:
+        """关闭服务"""
+        self.logger.info(f"正在关闭 {self.name}")
+        # 清理资源
+
+    async def _get_service_info(self) -> Dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": self.name,
+            "type": self.__class__.__name__,
+            "description": "Data processing service for football prediction system",
+            "version": "1.0.0",
+            "capabilities": [
+                "process_data",
+                "validate_data",
+                "clean_data",
+                "transform_data",
+            ],
+        }

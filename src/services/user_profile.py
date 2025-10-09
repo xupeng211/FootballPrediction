@@ -1,31 +1,64 @@
 """
-        from src.models import UserProfile
-
 足球预测系统用户画像服务模块
 
 提供用户画像生成和管理功能。
 """
 
+from typing import Any, Dict
+from .base_unified import SimpleService
 
-class UserProfileService(BaseService):
+
+# 简化的UserProfile类定义
+class UserProfile:
+    def __init__(
+        self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]
+    ):
+        self.user_id = user_id
+        self.display_name = display_name
+        self.email = email
+        self.preferences = preferences
+
+
+# 简化的User类定义
+class User:
+    def __init__(self, id: str, username: str):
+        self.id = id
+        self.username = username
+
+
+class UserProfileService(SimpleService):
     """用户画像服务"""
 
     def __init__(self) -> None:
         super().__init__("UserProfileService")
         self._user_profiles: Dict[str, UserProfile] = {}
 
-    async def initialize(self) -> bool:
+    async def _on_initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
         # 加载用户数据、模型等
         # 在实际生产环境中，这里会从数据库加载用户数据
-        self._initialized = True
-        return True
+        try:
+            # 这里可以加载用户数据
+            return True
+        except Exception as e:
+            self.logger.error(f"初始化失败: {e}")
+            return False
 
-    async def shutdown(self) -> None:
+    async def _on_shutdown(self) -> None:
         """关闭服务"""
         self.logger.info(f"正在关闭 {self.name}")
         self._user_profiles.clear()
+
+    async def _get_service_info(self) -> Dict[str, Any]:
+        """获取服务信息"""
+        return {
+            "name": self.name,
+            "type": self.__class__.__name__,
+            "description": "User profile service for managing user preferences and behavior",
+            "version": "1.0.0",
+            "profiles_count": len(self._user_profiles),
+        }
 
     async def generate_profile(self, user: User) -> UserProfile:
         """生成用户画像"""
