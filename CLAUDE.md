@@ -228,6 +228,38 @@ make test-phase1      # 运行第一阶段核心 API 测试
    - [ ] 版本号已更新
    - [ ] 性能测试通过
 
+## 技术债务清理
+
+### 当前状态
+- 技术债务分支：`wip/technical-debt-and-refactoring`
+- Lint 错误数：约 375 个（主要是 bare except 和 star imports）
+- 测试覆盖率：16.51%（目标 30%）
+
+### 技术债务清理命令
+```bash
+# 查看每日清理计划
+make debt-plan         # 显示今天的技术债务清理任务
+make debt-today        # 一键开始今天的工作（默认4小时）
+
+# 任务管理
+make debt-start TASK=1.1.1    # 开始执行特定任务
+make debt-done               # 完成当前任务
+make debt-status             # 查看当前状态
+
+# 监控和报告
+make debt-check              # 运行代码健康检查
+make debt-progress           # 查看整体清理进度
+make debt-summary            # 生成清理总结报告
+```
+
+### 清理阶段概览
+1. **Phase 1**: 紧急问题修复（语法错误、编码问题）
+2. **Phase 2**: 核心模块重构（API、监控、缓存系统）
+3. **Phase 3**: 测试覆盖率提升（16.51% → 30%）
+4. **Phase 4**: 代码质量优化（类型注解、文档、性能）
+
+详细信息请查看：[TECHNICAL_DEBT_KANBAN.md](TECHNICAL_DEBT_KANBAN.md)
+
 ## 重要说明
 
 ### 技术栈
