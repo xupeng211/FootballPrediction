@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection_mod import get_async_session
-from src.models.prediction_service import PredictionService
+from src.models.prediction_service_mod import PredictionService
 from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)

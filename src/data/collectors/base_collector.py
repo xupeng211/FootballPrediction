@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, cast
 
 import aiohttp
 
-from src.database.connection import DatabaseManager
+from src.database.connection_mod import DatabaseManager
 from src.utils.retry import RetryConfig, retry
 
 # 外部API重试配置 / External API retry configuration

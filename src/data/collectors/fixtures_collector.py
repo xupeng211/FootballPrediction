@@ -13,6 +13,14 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
+from abc import ABC, abstractmethod
+from typing import Dict, List, Optional, Union, Any
+from datetime import datetime
+import asyncio
+import logging
+
+from .base_collector import DataCollector, CollectionResult
+
 
 class FixturesCollector(DataCollector):
     """

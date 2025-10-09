@@ -4,7 +4,7 @@
 分析和优化测试执行性能
 """
 
-from typing import Dict
+from typing import Dict, List
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch

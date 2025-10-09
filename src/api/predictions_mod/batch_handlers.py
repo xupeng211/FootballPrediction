@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Match
-from src.models.prediction_service import PredictionService
+from src.models.prediction_service_mod import PredictionService
 from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)

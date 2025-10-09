@@ -1,19 +1,20 @@
-from __future__ import annotations
-
-from typing import Any, Optional, Union
-from datetime import datetime
-from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String
 from ..base import BaseModel
+
+from __future__ import annotations
 
 """用户数据模型。"""
 
 from typing import cast, Any, Optional, Union
+
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String
+
 from src.database.base import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
 from sqlalchemy import String
-
 
 class User(BaseModel):
     """平台用户表，满足测试所需的基本字段。"""

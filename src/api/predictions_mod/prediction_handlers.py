@@ -13,7 +13,7 @@ from sqlalchemy import select
 
 from src.database.models import Match, MatchStatus
 from src.database.models import Predictions as Prediction
-from src.models.prediction_service import PredictionService
+from src.models.prediction_service_mod import PredictionService
 from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)

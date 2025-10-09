@@ -8,7 +8,11 @@ Test Modular Prediction Engine
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.core.prediction import PredictionEngine, PredictionConfig, PredictionStatistics
+from src.core.prediction_engine import (
+    PredictionEngine,
+    PredictionConfig,
+    PredictionStatistics,
+)
 from src.core.prediction.cache_manager import PredictionCacheManager
 from src.core.prediction.data_loader import PredictionDataLoader
 from src.core.prediction.model_loader import ModelLoader
