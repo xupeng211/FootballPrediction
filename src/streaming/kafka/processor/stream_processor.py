@@ -2,6 +2,10 @@
 Kafka流处理器
 """
 
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 import logging
 from typing import Any, Callable, List, Optional, Union
 

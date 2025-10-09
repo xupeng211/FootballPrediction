@@ -4,6 +4,10 @@
 负责记录和管理数据质量相关的日志。
 """
 
+from datetime import timedelta
+from typing import Dict
+from typing import List
+from typing import Optional
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -79,7 +83,7 @@ class QualityLogger:
                     "table_name": table_name,
                     "error_type": error_type,
                     "record_id": record_id,
-                }
+                },
             )
 
     async def log_missing_value_handling(
@@ -106,7 +110,9 @@ class QualityLogger:
         except Exception as e:
             self.logger.error(f"记录缺失值处理日志失败: {str(e)}")
 
-    async def log_suspicious_odds(self, suspicious_details: List[Dict[str, Any]]) -> None:
+    async def log_suspicious_odds(
+        self, suspicious_details: List[Dict[str, Any]]
+    ) -> None:
         """记录可疑赔率日志"""
         try:
             async with self.db_manager.get_async_session() as session:
@@ -193,9 +199,11 @@ class QualityLogger:
             from sqlalchemy import select, desc
 
             async with self.db_manager.get_async_session() as session:
-                query = select(DataQualityLog).where(
-                    DataQualityLog.requires_manual_review == True
-                ).order_by(desc(DataQualityLog.detected_at))
+                query = (
+                    select(DataQualityLog)
+                    .where(DataQualityLog.requires_manual_review is True)
+                    .order_by(desc(DataQualityLog.detected_at))
+                )
 
                 if table_name:
                     query = query.where(DataQualityLog.table_name == table_name)
@@ -222,7 +230,7 @@ class QualityLogger:
             self.logger.error(f"获取待审核问题失败: {str(e)}")
             raise QualityLogException(
                 f"获取待审核问题失败: {str(e)}",
-                log_data={"table_name": table_name, "limit": limit}
+                log_data={"table_name": table_name, "limit": limit},
             )
 
     async def mark_review_completed(
@@ -260,7 +268,7 @@ class QualityLogger:
             self.logger.error(f"标记审核完成失败: {str(e)}")
             raise QualityLogException(
                 f"标记审核完成失败: {str(e)}",
-                log_data={"log_id": log_id, "reviewer": reviewer}
+                log_data={"log_id": log_id, "reviewer": reviewer},
             )
 
     async def cleanup_old_logs(self, days_to_keep: int = 90) -> Dict[str, Any]:
@@ -283,7 +291,7 @@ class QualityLogger:
                 delete_stmt = delete(DataQualityLog).where(
                     DataQualityLog.detected_at < cutoff_date,
                     DataQualityLog.status == "reviewed",
-                    DataQualityLog.requires_manual_review == False,
+                    DataQualityLog.requires_manual_review is False,
                 )
 
                 result = await session.execute(delete_stmt)
@@ -306,6 +314,5 @@ class QualityLogger:
         except Exception as e:
             self.logger.error(f"清理旧日志失败: {str(e)}")
             raise QualityLogException(
-                f"清理旧日志失败: {str(e)}",
-                log_data={"days_to_keep": days_to_keep}
+                f"清理旧日志失败: {str(e)}", log_data={"days_to_keep": days_to_keep}
             )

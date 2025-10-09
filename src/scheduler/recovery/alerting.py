@@ -5,6 +5,9 @@ Alert Handling
 负责处理恢复过程中的告警通知。
 """
 
+from datetime import timedelta
+from typing import Dict
+from typing import List
 import logging
 from datetime import datetime
 from typing import Any, Callable, Dict, List
@@ -155,9 +158,7 @@ class AlertManager:
                     source="failure_pattern",
                 )
 
-    def request_manual_intervention(
-        self, task: Any, failure: TaskFailure
-    ) -> None:
+    def request_manual_intervention(self, task: Any, failure: TaskFailure) -> None:
         """
         发送人工干预请求
 
@@ -228,6 +229,7 @@ class AlertManager:
     def _generate_alert_id(self) -> str:
         """生成告警ID"""
         import uuid
+
         return str(uuid.uuid4())[:8]
 
     def _get_log_level(self, level: str) -> int:

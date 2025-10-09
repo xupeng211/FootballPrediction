@@ -4,6 +4,11 @@
 验证处理后的数据质量和完整性。
 """
 
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple

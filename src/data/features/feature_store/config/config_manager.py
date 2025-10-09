@@ -3,6 +3,9 @@
 Feature Store Configuration Management Module
 """
 
+from src.database.models.config import RepoConfig
+from typing import Dict
+from typing import Optional
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 import os
@@ -12,6 +15,7 @@ from pathlib import Path
 @dataclass
 class FeatureStoreConfig:
     """特征仓库配置"""
+
     project_name: str = "football_prediction"
     repo_path: Optional[str] = None
     postgres_config: Optional[Dict[str, Any]] = None
@@ -64,6 +68,7 @@ class FeatureStoreConfigManager:
         """创建临时仓库目录"""
         if self._temp_dir is None:
             import tempfile
+
             self._temp_dir = tempfile.TemporaryDirectory(prefix="feast_repo_")
             self._temp_dir_cleaned = False
             self.repo_path = Path(self._temp_dir.name)

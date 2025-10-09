@@ -5,6 +5,9 @@ Audit Decorators
 提供自动审计功能的装饰器。
 """
 
+import time
+import asyncio
+from typing import Optional
 import functools
 import inspect
 from contextvars import ContextVar
@@ -53,6 +56,7 @@ def audit_action(
             pass
         ```
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -92,7 +96,9 @@ def audit_action(
                         resource_id=resource_id,
                         description=description or f"执行 {action} 操作",
                         old_values=kwargs.get("old_values"),
-                        new_values=kwargs.get("new_values", result if result is not None else {}),
+                        new_values=kwargs.get(
+                            "new_values", result if result is not None else {}
+                        ),
                         error=error,
                         duration=time.time() - start_time if start_time else None,
                         severity=severity,
@@ -125,18 +131,22 @@ def audit_action(
                 # 记录审计日志
                 if context:
                     resource_id = _extract_resource_id(args, kwargs)
-                    asyncio.create_task(audit_service.async_log_action(
-                        context=context,
-                        action=action,
-                        resource_type=resource_type,
-                        resource_id=resource_id,
-                        description=description or f"执行 {action} 操作",
-                        old_values=kwargs.get("old_values"),
-                        new_values=kwargs.get("new_values", result if result is not None else {}),
-                        error=error,
-                        duration=time.time() - start_time if start_time else None,
-                        severity=severity,
-                    ))
+                    asyncio.create_task(
+                        audit_service.async_log_action(
+                            context=context,
+                            action=action,
+                            resource_type=resource_type,
+                            resource_id=resource_id,
+                            description=description or f"执行 {action} 操作",
+                            old_values=kwargs.get("old_values"),
+                            new_values=kwargs.get(
+                                "new_values", result if result is not None else {}
+                            ),
+                            error=error,
+                            duration=time.time() - start_time if start_time else None,
+                            severity=severity,
+                        )
+                    )
 
         # 返回适当的包装器
         if inspect.iscoroutinefunction(func):

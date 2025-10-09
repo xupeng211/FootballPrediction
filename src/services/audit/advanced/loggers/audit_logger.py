@@ -5,6 +5,11 @@ Audit Logger
 负责审计日志的记录和管理。
 """
 
+from datetime import timedelta
+from typing import Dict
+from typing import List
+from typing import Optional
+import logging
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -212,35 +217,51 @@ class AuditLogger:
                     # 动作过滤
                     if filters.get("action"):
                         if isinstance(filters["action"], list):
-                            conditions.append(AuditLogModel.action.in_(filters["action"]))
+                            conditions.append(
+                                AuditLogModel.action.in_(filters["action"])
+                            )
                         else:
                             conditions.append(AuditLogModel.action == filters["action"])
 
                     # 严重性过滤
                     if filters.get("severity"):
                         if isinstance(filters["severity"], list):
-                            conditions.append(AuditLogModel.severity.in_(filters["severity"]))
+                            conditions.append(
+                                AuditLogModel.severity.in_(filters["severity"])
+                            )
                         else:
-                            conditions.append(AuditLogModel.severity == filters["severity"])
+                            conditions.append(
+                                AuditLogModel.severity == filters["severity"]
+                            )
 
                     # 资源类型过滤
                     if filters.get("resource_type"):
-                        conditions.append(AuditLogModel.resource_type == filters["resource_type"])
+                        conditions.append(
+                            AuditLogModel.resource_type == filters["resource_type"]
+                        )
 
                     # 时间范围过滤
                     if filters.get("start_date"):
-                        conditions.append(AuditLogModel.timestamp >= filters["start_date"])
+                        conditions.append(
+                            AuditLogModel.timestamp >= filters["start_date"]
+                        )
 
                     if filters.get("end_date"):
-                        conditions.append(AuditLogModel.timestamp <= filters["end_date"])
+                        conditions.append(
+                            AuditLogModel.timestamp <= filters["end_date"]
+                        )
 
                     # IP地址过滤
                     if filters.get("ip_address"):
-                        conditions.append(AuditLogModel.ip_address == filters["ip_address"])
+                        conditions.append(
+                            AuditLogModel.ip_address == filters["ip_address"]
+                        )
 
                     # 会话ID过滤
                     if filters.get("session_id"):
-                        conditions.append(AuditLogModel.session_id == filters["session_id"])
+                        conditions.append(
+                            AuditLogModel.session_id == filters["session_id"]
+                        )
 
                     if conditions:
                         query = query.where(and_(*conditions))
@@ -263,28 +284,32 @@ class AuditLogger:
                 # 转换为字典格式
                 audit_logs = []
                 for log in logs:
-                    audit_logs.append({
-                        "id": log.id,
-                        "timestamp": log.timestamp.isoformat(),
-                        "user_id": log.user_id,
-                        "username": log.username,
-                        "user_role": log.user_role,
-                        "session_id": log.session_id,
-                        "action": log.action.value if log.action else "unknown",
-                        "resource_type": log.resource_type,
-                        "resource_id": log.resource_id,
-                        "description": log.description,
-                        "ip_address": log.ip_address,
-                        "user_agent": log.user_agent,
-                        "old_values": log.old_values,
-                        "new_values": log.new_values,
-                        "severity": log.severity.value if log.severity else "unknown",
-                        "table_name": log.table_name,
-                        "compliance_category": log.compliance_category,
-                        "request_id": log.request_id,
-                        "correlation_id": log.correlation_id,
-                        "metadata": log.metadata,
-                    })
+                    audit_logs.append(
+                        {
+                            "id": log.id,
+                            "timestamp": log.timestamp.isoformat(),
+                            "user_id": log.user_id,
+                            "username": log.username,
+                            "user_role": log.user_role,
+                            "session_id": log.session_id,
+                            "action": log.action.value if log.action else "unknown",
+                            "resource_type": log.resource_type,
+                            "resource_id": log.resource_id,
+                            "description": log.description,
+                            "ip_address": log.ip_address,
+                            "user_agent": log.user_agent,
+                            "old_values": log.old_values,
+                            "new_values": log.new_values,
+                            "severity": log.severity.value
+                            if log.severity
+                            else "unknown",
+                            "table_name": log.table_name,
+                            "compliance_category": log.compliance_category,
+                            "request_id": log.request_id,
+                            "correlation_id": log.correlation_id,
+                            "metadata": log.metadata,
+                        }
+                    )
 
                 return audit_logs
 
@@ -323,21 +348,31 @@ class AuditLogger:
 
                     if filters.get("action"):
                         if isinstance(filters["action"], list):
-                            conditions.append(AuditLogModel.action.in_(filters["action"]))
+                            conditions.append(
+                                AuditLogModel.action.in_(filters["action"])
+                            )
                         else:
                             conditions.append(AuditLogModel.action == filters["action"])
 
                     if filters.get("severity"):
                         if isinstance(filters["severity"], list):
-                            conditions.append(AuditLogModel.severity.in_(filters["severity"]))
+                            conditions.append(
+                                AuditLogModel.severity.in_(filters["severity"])
+                            )
                         else:
-                            conditions.append(AuditLogModel.severity == filters["severity"])
+                            conditions.append(
+                                AuditLogModel.severity == filters["severity"]
+                            )
 
                     if filters.get("start_date"):
-                        conditions.append(AuditLogModel.timestamp >= filters["start_date"])
+                        conditions.append(
+                            AuditLogModel.timestamp >= filters["start_date"]
+                        )
 
                     if filters.get("end_date"):
-                        conditions.append(AuditLogModel.timestamp <= filters["end_date"])
+                        conditions.append(
+                            AuditLogModel.timestamp <= filters["end_date"]
+                        )
 
                     if conditions:
                         query = query.where(and_(*conditions))
@@ -437,38 +472,56 @@ class AuditLogger:
                     base_query = base_query.where(AuditLogModel.timestamp <= end_date)
 
                 # 总日志数
-                total_count_query = select(func.count()).select_from(base_query.subquery())
+                total_count_query = select(func.count()).select_from(
+                    base_query.subquery()
+                )
                 total_result = await session.execute(total_count_query)
                 total_logs = total_result.scalar() or 0
 
                 # 按动作统计
-                action_stats_query = select(
-                    AuditLogModel.action,
-                    func.count(AuditLogModel.id).label("count")
-                ).select_from(base_query.subquery()).group_by(AuditLogModel.action)
+                action_stats_query = (
+                    select(
+                        AuditLogModel.action,
+                        func.count(AuditLogModel.id).label("count"),
+                    )
+                    .select_from(base_query.subquery())
+                    .group_by(AuditLogModel.action)
+                )
 
                 action_result = await session.execute(action_stats_query)
                 action_stats = {row.action.value: row.count for row in action_result}
 
                 # 按严重性统计
-                severity_stats_query = select(
-                    AuditLogModel.severity,
-                    func.count(AuditLogModel.id).label("count")
-                ).select_from(base_query.subquery()).group_by(AuditLogModel.severity)
+                severity_stats_query = (
+                    select(
+                        AuditLogModel.severity,
+                        func.count(AuditLogModel.id).label("count"),
+                    )
+                    .select_from(base_query.subquery())
+                    .group_by(AuditLogModel.severity)
+                )
 
                 severity_result = await session.execute(severity_stats_query)
-                severity_stats = {row.severity.value: row.count for row in severity_result}
+                severity_stats = {
+                    row.severity.value: row.count for row in severity_result
+                }
 
                 # 按用户统计（前10名）
-                user_stats_query = select(
-                    AuditLogModel.user_id,
-                    func.count(AuditLogModel.id).label("count")
-                ).select_from(base_query.subquery()).group_by(
-                    AuditLogModel.user_id
-                ).order_by(func.count(AuditLogModel.id).desc()).limit(10)
+                user_stats_query = (
+                    select(
+                        AuditLogModel.user_id,
+                        func.count(AuditLogModel.id).label("count"),
+                    )
+                    .select_from(base_query.subquery())
+                    .group_by(AuditLogModel.user_id)
+                    .order_by(func.count(AuditLogModel.id).desc())
+                    .limit(10)
+                )
 
                 user_result = await session.execute(user_stats_query)
-                user_stats = [{"user_id": row.user_id, "count": row.count} for row in user_result]
+                user_stats = [
+                    {"user_id": row.user_id, "count": row.count} for row in user_result
+                ]
 
                 return {
                     "total_logs": total_logs,

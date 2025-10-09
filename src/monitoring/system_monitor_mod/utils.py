@@ -2,6 +2,7 @@
 系统监控便捷函数和全局管理
 """
 
+from src.monitoring.system_monitor import SystemMonitor
 import logging
 from typing import Optional
 

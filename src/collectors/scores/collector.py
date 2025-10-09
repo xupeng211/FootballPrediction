@@ -5,6 +5,10 @@ Scores Collector
 实时比分收集器主类。
 """
 
+from sqlalchemy import or_
+from typing import Dict
+from typing import List
+from typing import Optional
 import asyncio
 import json
 import logging
@@ -162,7 +166,9 @@ class ScoresCollector:
 
             if score_data:
                 # 验证和处理数据
-                processed_data = await self.processor.process_score_data(match_id, score_data)
+                processed_data = await self.processor.process_score_data(
+                    match_id, score_data
+                )
 
                 if processed_data:
                     # 更新缓存
@@ -218,15 +224,23 @@ class ScoresCollector:
             # 处理结果
             for match, result in zip(matches, results):
                 if isinstance(result, dict):
-                    live_matches.append({
-                        "match_id": match.id,
-                        "home_team": match.home_team.name if match.home_team else "",
-                        "away_team": match.away_team.name if match.away_team else "",
-                        "home_score": result["home_score"],
-                        "away_score": result["away_score"],
-                        "match_status": result["match_status"],
-                        "match_time": match.match_time.isoformat() if match.match_time else "",
-                    })
+                    live_matches.append(
+                        {
+                            "match_id": match.id,
+                            "home_team": match.home_team.name
+                            if match.home_team
+                            else "",
+                            "away_team": match.away_team.name
+                            if match.away_team
+                            else "",
+                            "home_score": result["home_score"],
+                            "away_score": result["away_score"],
+                            "match_status": result["match_status"],
+                            "match_time": match.match_time.isoformat()
+                            if match.match_time
+                            else "",
+                        }
+                    )
 
             # 发布实时比赛列表
             await self.publisher.publish_live_matches_list(live_matches)
@@ -396,8 +410,8 @@ class ScoresCollector:
         else:
             # 计算移动平均
             self.stats["average_processing_time"] = (
-                (current_avg * (total_updates - 1) + processing_time) / total_updates
-            )
+                current_avg * (total_updates - 1) + processing_time
+            ) / total_updates
 
     def get_stats(self) -> Dict[str, Any]:
         """获取性能统计"""
@@ -405,7 +419,6 @@ class ScoresCollector:
             **self.stats,
             "running": self.running,
             "cached_matches": len(self.match_cache),
-            "cache_size_mb": sum(
-                len(str(v)) for v in self.match_cache.values()
-            ) / (1024 * 1024),
+            "cache_size_mb": sum(len(str(v)) for v in self.match_cache.values())
+            / (1024 * 1024),
         }

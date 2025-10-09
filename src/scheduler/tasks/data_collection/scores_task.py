@@ -4,6 +4,8 @@
 负责采集实时比分数据。
 """
 
+from datetime import timedelta
+from typing import Optional
 import asyncio
 import logging
 from datetime import datetime
@@ -54,7 +56,7 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
                 query = select(Match).where(
                     Match.match_date >= cutoff_start,
                     Match.match_date <= cutoff_end,
-                    Match.status.in_(["live", "scheduled", "halftime", "delayed"])
+                    Match.status.in_(["live", "scheduled", "halftime", "delayed"]),
                 )
 
                 result = await session.execute(query)
@@ -104,7 +106,9 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
 
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_live_scores", {})
         max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)
-        retry_delay = retry_config.get("retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY)
+        retry_delay = retry_config.get(
+            "retry_delay", TaskRetryConfig.DEFAULT_RETRY_DELAY
+        )
 
         if self.request.retries < max_retries:
             logger.warning(f"实时比分采集失败，将在{retry_delay}秒后重试: {str(exc)}")

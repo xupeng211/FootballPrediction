@@ -5,6 +5,11 @@ Advanced Audit Service
 提供核心的审计功能实现，整合所有子模块功能。
 """
 
+from src.database.connection import DatabaseManager
+from typing import Dict
+from typing import List
+from typing import Optional
+import logging
 import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -205,10 +210,14 @@ class AuditService:
         try:
             # 确定严重性
             if not severity:
-                severity = self.risk_analyzer.determine_severity(action, table_name, error)
+                severity = self.risk_analyzer.determine_severity(
+                    action, table_name, error
+                )
 
             # 确定合规类别
-            compliance_category = self.data_analyzer.determine_compliance_category(table_name, action)
+            compliance_category = self.data_analyzer.determine_compliance_category(
+                table_name, action
+            )
 
             # 检查敏感数据
             is_sensitive = self.data_sanitizer.is_sensitive_data(
@@ -250,9 +259,7 @@ class AuditService:
             success = await self.audit_logger.save_audit_entry(audit_log)
 
             if success:
-                self.logger.debug(
-                    f"审计日志已记录: {action} - {context.user_id}"
-                )
+                self.logger.debug(f"审计日志已记录: {action} - {context.user_id}")
 
             return success
 
@@ -367,19 +374,23 @@ class AuditService:
 
         for action_data in actions:
             try:
-                context = action_data.get("context")
+                action_data.get("context")
                 result = self.log_action(**action_data)
-                results.append({
-                    "action": action_data.get("action"),
-                    "success": result is not None,
-                    "error": None if result is not None else "Failed to log",
-                })
+                results.append(
+                    {
+                        "action": action_data.get("action"),
+                        "success": result is not None,
+                        "error": None if result is not None else "Failed to log",
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "action": action_data.get("action"),
-                    "success": False,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "action": action_data.get("action"),
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
         return results
 
@@ -448,13 +459,13 @@ class AuditService:
                 )[:5]
 
                 summary.top_actions = [
-                    {"action": action, "count": count}
-                    for action, count in top_actions
+                    {"action": action, "count": count} for action, count in top_actions
                 ]
 
                 # 获取高风险操作
                 high_risk = [
-                    log for log in logs
+                    log
+                    for log in logs
                     if log.severity and log.severity.value in ["high", "critical"]
                 ]
 
@@ -473,9 +484,7 @@ class AuditService:
             self.logger.error(f"获取用户审计摘要失败: {e}")
             return None
 
-    async def get_high_risk_operations(
-        self, hours: int = 24
-    ) -> List[Dict[str, Any]]:
+    async def get_high_risk_operations(self, hours: int = 24) -> List[Dict[str, Any]]:
         """
         获取高风险操作 / Get High Risk Operations
 
@@ -498,11 +507,15 @@ class AuditService:
                 start_time = end_time - timedelta(hours=hours)
 
                 # 获取高风险操作
-                query = select(AuditLogModel).where(
-                    AuditLogModel.severity.in_(["high", "critical"]),
-                    AuditLogModel.timestamp >= start_time,
-                    AuditLogModel.timestamp <= end_time,
-                ).order_by(AuditLogModel.timestamp.desc())
+                query = (
+                    select(AuditLogModel)
+                    .where(
+                        AuditLogModel.severity.in_(["high", "critical"]),
+                        AuditLogModel.timestamp >= start_time,
+                        AuditLogModel.timestamp <= end_time,
+                    )
+                    .order_by(AuditLogModel.timestamp.desc())
+                )
 
                 result = await session.execute(query)
                 logs = result.scalars().all()
@@ -510,18 +523,20 @@ class AuditService:
                 # 格式化结果
                 operations = []
                 for log in logs:
-                    operations.append({
-                        "id": log.id,
-                        "timestamp": log.timestamp.isoformat(),
-                        "user_id": log.user_id,
-                        "username": log.username,
-                        "action": log.action.value,
-                        "resource_type": log.resource_type,
-                        "resource_id": log.resource_id,
-                        "description": log.description,
-                        "severity": log.severity.value,
-                        "ip_address": log.ip_address,
-                    })
+                    operations.append(
+                        {
+                            "id": log.id,
+                            "timestamp": log.timestamp.isoformat(),
+                            "user_id": log.user_id,
+                            "username": log.username,
+                            "action": log.action.value,
+                            "resource_type": log.resource_type,
+                            "resource_id": log.resource_id,
+                            "description": log.description,
+                            "severity": log.severity.value,
+                            "ip_address": log.ip_address,
+                        }
+                    )
 
                 return operations
 
@@ -543,9 +558,7 @@ class AuditService:
             审计日志列表 / List of audit logs
         """
         loop = asyncio.new_event_loop()
-        return loop.run_until_complete(
-            self.async_get_user_audit_logs(user_id, limit)
-        )
+        return loop.run_until_complete(self.async_get_user_audit_logs(user_id, limit))
 
     async def async_get_user_audit_logs(
         self, user_id: str, limit: int = 100
@@ -568,9 +581,12 @@ class AuditService:
                 from sqlalchemy import select
                 from src.database.models.audit_log import AuditLog as AuditLogModel
 
-                query = select(AuditLogModel).where(
-                    AuditLogModel.user_id == user_id
-                ).order_by(AuditLogModel.timestamp.desc()).limit(limit)
+                query = (
+                    select(AuditLogModel)
+                    .where(AuditLogModel.user_id == user_id)
+                    .order_by(AuditLogModel.timestamp.desc())
+                    .limit(limit)
+                )
 
                 result = await session.execute(query)
                 logs = result.scalars().all()
@@ -603,13 +619,9 @@ class AuditService:
             审计摘要 / Audit summary
         """
         loop = asyncio.new_event_loop()
-        return loop.run_until_complete(
-            self.async_get_audit_summary(days)
-        )
+        return loop.run_until_complete(self.async_get_audit_summary(days))
 
-    async def async_get_audit_summary(
-        self, days: int = 30
-    ) -> Dict[str, Any]:
+    async def async_get_audit_summary(self, days: int = 30) -> Dict[str, Any]:
         """
         获取审计摘要 / Get Audit Summary
 
@@ -634,12 +646,12 @@ class AuditService:
                 # 获取统计数据
                 query = select(
                     func.count(AuditLogModel.id).label("total_logs"),
-                    func.count(
-                        func.distinct(AuditLogModel.user_id)
-                    ).label("unique_users"),
-                    func.count(
-                        func.distinct(AuditLogModel.action)
-                    ).label("unique_actions"),
+                    func.count(func.distinct(AuditLogModel.user_id)).label(
+                        "unique_users"
+                    ),
+                    func.count(func.distinct(AuditLogModel.action)).label(
+                        "unique_actions"
+                    ),
                 ).where(
                     AuditLogModel.timestamp >= start_date,
                     AuditLogModel.timestamp <= end_date,
@@ -659,26 +671,32 @@ class AuditService:
                     }
 
                 # 获取动作和严重性分布
-                action_query = select(
-                    AuditLogModel.action,
-                    func.count(AuditLogModel.id).label("count")
-                ).where(
-                    AuditLogModel.timestamp >= start_date,
-                    AuditLogModel.timestamp <= end_date,
-                ).group_by(AuditLogModel.action)
+                action_query = (
+                    select(
+                        AuditLogModel.action,
+                        func.count(AuditLogModel.id).label("count"),
+                    )
+                    .where(
+                        AuditLogModel.timestamp >= start_date,
+                        AuditLogModel.timestamp <= end_date,
+                    )
+                    .group_by(AuditLogModel.action)
+                )
 
                 action_result = await session.execute(action_query)
-                action_counts = {
-                    row.action.value: row.count for row in action_result
-                }
+                action_counts = {row.action.value: row.count for row in action_result}
 
-                severity_query = select(
-                    AuditLogModel.severity,
-                    func.count(AuditLogModel.id).label("count")
-                ).where(
-                    AuditLogModel.timestamp >= start_date,
-                    AuditLogModel.timestamp <= end_date,
-                ).group_by(AuditLogModel.severity)
+                severity_query = (
+                    select(
+                        AuditLogModel.severity,
+                        func.count(AuditLogModel.id).label("count"),
+                    )
+                    .where(
+                        AuditLogModel.timestamp >= start_date,
+                        AuditLogModel.timestamp <= end_date,
+                    )
+                    .group_by(AuditLogModel.severity)
+                )
 
                 severity_result = await session.execute(severity_query)
                 severity_counts = {
