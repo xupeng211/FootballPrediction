@@ -5,12 +5,7 @@ Feature Calculator
 负责计算各种特征。
 """
 
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from ..feature_calculator import FeatureCalculator as BaseCalculator
-from ..entities import MatchEntity
 
 
 class FeatureCalculator(BaseCalculator):
@@ -69,7 +64,6 @@ class FeatureCalculator(BaseCalculator):
                 )
             else:
                 # 如果没有仓库，直接推送到 Feast 存储
-                from .mock_feast import FeatureStore
 
                 store = FeatureStore()
                 store.push(push_source_name="team_recent_performance_push_source", df=df)
@@ -101,6 +95,9 @@ class FeatureCalculator(BaseCalculator):
 
         try:
             # 计算历史对战特征
+
+
+
             h2h_features = await self.calculate_historical_matchup_features(
                 match_entity.home_team_id, match_entity.away_team_id, calculation_date
             )
@@ -168,7 +165,6 @@ class FeatureCalculator(BaseCalculator):
                 )
             else:
                 # 如果没有仓库，直接推送到 Feast 存储
-                from .mock_feast import FeatureStore
 
                 store = FeatureStore()
                 store.push(push_source_name="historical_matchup_push_source", df=h2h_df)

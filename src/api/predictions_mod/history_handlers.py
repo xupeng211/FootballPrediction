@@ -4,17 +4,8 @@
 处理历史预测相关的请求。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from fastapi import HTTPException, Query
-from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import Match
-from src.database.models import Predictions as Prediction
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +134,10 @@ async def get_recent_predictions_handler(
         limit_value = limit
         recent_query = (
             select(
-                Prediction.id,
+                Prediction.id, timedelta
+
+
+
                 Prediction.match_id,
                 Prediction.model_version,
                 Prediction.model_name,

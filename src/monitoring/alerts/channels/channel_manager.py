@@ -6,11 +6,7 @@ Alert Channel Manager
 Manages all alert channels.
 """
 
-import logging
-from typing import Any, Dict, List
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +219,8 @@ class AlertChannelManager:
         for name, channel in self.channels.items():
             try:
                 # KJf
+
+
                 test_alert = Alert(
                     alert_id=f"test-{name}-{int(__import__('time').time())}",
                     title="Test Alert",

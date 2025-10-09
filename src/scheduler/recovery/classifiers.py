@@ -5,10 +5,7 @@ Failure Classifier
 负责分析错误消息并分类失败类型。
 """
 
-import logging
-from typing import Dict, List
 
-from .models import FailureType
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +137,8 @@ class FailureClassifier:
         stats = {}
         for message in error_messages:
             failure_type = self.classify_failure(message)
+
+
             type_name = failure_type.value
             stats[type_name] = stats.get(type_name, 0) + 1
 

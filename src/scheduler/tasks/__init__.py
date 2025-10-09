@@ -5,13 +5,14 @@ Scheduler Tasks Module
 提供所有Celery调度任务的模块化结构。
 """
 
+
 from .base import BaseDataTask
 from .collection import collect_fixtures, collect_odds, collect_live_scores_conditional
 from .features import calculate_features_batch
 from .maintenance import cleanup_data, backup_database
-from .quality import run_quality_checks
 from .predictions import generate_predictions
 from .processing import process_bronze_to_silver
+from .quality import run_quality_checks
 
 # 为了向后兼容性，添加任务别名
 calculate_features_task = calculate_features_batch

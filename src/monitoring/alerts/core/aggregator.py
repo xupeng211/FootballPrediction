@@ -1,4 +1,6 @@
 """
+                from enum import Enum
+
 告警聚合器
 Alert Aggregator
 
@@ -6,18 +8,15 @@ Alert Aggregator
 Extracted from AlertManager to handle alert aggregation and grouping logic.
 """
 
-import hashlib
-import logging
-from collections import defaultdict
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 # 尝试从不同位置导入模型
-try:
-    from ..models import Alert, AlertStatus
+# Import moved to top
+
+try: AlertStatus
 except ImportError:
-    try:
-        from monitoring.alerts.models import Alert, AlertStatus
+    # Import moved to top
+
+    try: AlertStatus
     except ImportError:
         # 创建基本类型
         from enum import Enum
@@ -43,7 +42,6 @@ except ImportError:
 
             @property
             def type(self):
-                from enum import Enum
                 class AlertType(Enum):
                     SYSTEM = "system"
                 return AlertType.SYSTEM
@@ -670,6 +668,7 @@ class AlertAggregator:
         active_groups = len(self.get_active_groups())
         total_alerts = sum(len(group.alerts) for group in self.groups.values())
         total_active_alerts = sum(group.get_active_count() for group in self.groups.values())
+
 
         return {
             "groups": {

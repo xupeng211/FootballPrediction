@@ -4,10 +4,7 @@
 提供 get_logger(name, level) 以兼容各处引用（例如监控与脚本）。
 """
 
-import logging
-from typing import Optional, cast
 
-from .logger import Logger as _BaseLogger
 
 
 def get_logger(name: str, level: Optional[str] = "INFO") -> logging.Logger:
@@ -22,3 +19,6 @@ def get_logger(name: str, level: Optional[str] = "INFO") -> logging.Logger:
     """
     # 复用现有的标准化配置，确保输出一致
     return _BaseLogger.setup_logger(name, level or "INFO")
+
+from .logger import Logger as _BaseLogger
+

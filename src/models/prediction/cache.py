@@ -5,17 +5,12 @@ Prediction Cache Management
 提供预测结果的缓存功能。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
 
-from src.cache.ttl_cache import TTLCache
 
 
 def get_ttl_cache(cache_key: str, ttl_seconds: float) -> TTLCache:
     """获取TTL缓存实例 / Get TTL cache instance"""
     return TTLCache(ttl_seconds=ttl_seconds)
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -180,7 +175,9 @@ class PredictionCache:
             stats = {
                 "model_cache": await self.model_cache.get_stats(),
                 "prediction_cache": await self.prediction_cache.get_stats(),
-                "feature_cache": await self.feature_cache.get_stats(),
+                "prediction_cache": await self.prediction_cache.get_stats(),)
+
+
                 "timestamp": datetime.now().isoformat()
             }
             return stats

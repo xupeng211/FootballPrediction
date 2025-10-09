@@ -2,13 +2,7 @@
 Kafka流高级封装
 """
 
-import asyncio
-import logging
-from typing import Callable, List, Optional
 
-from src.streaming.kafka.admin.topic_manager import KafkaTopicManager, DEFAULT_TOPICS
-from src.streaming.kafka.config.stream_config import StreamConfig
-from src.streaming.kafka.processor.stream_processor import StreamProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +93,9 @@ async def ensure_topics_exist(config: Optional[StreamConfig] = None) -> None:
         for topic_name, topic_config in DEFAULT_TOPICS.items():
             manager.create_topic(
                 topic_name=topic_name,
-                num_partitions=topic_config["partitions"],
+                num_partitions=topic_config["partitions"], List, Optional
+
+
                 replication_factor=topic_config["replication_factor"],
                 config=topic_config["config"],
             )

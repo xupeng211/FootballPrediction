@@ -4,11 +4,7 @@
 提供跨数据库兼容的数据类型定义，特别是JSONB与SQLite的兼容性支持。
 """
 
-import json
-from typing import Any, Union, cast
 
-from sqlalchemy import JSON, Text, TypeDecorator
-from sqlalchemy.dialects.postgresql import JSONB
 
 
 class SQLiteCompatibleJSONB(TypeDecorator):
@@ -140,6 +136,11 @@ def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
     else:
         return CompatibleJSON()
 
+
+import json
+
+from sqlalchemy import JSON, Text
+from sqlalchemy.dialects.postgresql import JSONB
 
 # 导出类型定义
 __all__ = [

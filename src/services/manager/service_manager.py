@@ -4,13 +4,7 @@
 负责管理所有业务服务的生命周期和依赖关系。
 """
 
-from typing import Dict, Optional, List
-import asyncio
-from datetime import datetime
 
-from src.core import logger
-from src.core.config import get_settings
-from ..base import BaseService
 
 
 class ServiceManager:
@@ -213,5 +207,7 @@ class ServiceManager:
             "service_count": len(self._services),
             "initialized_count": len(self._initialized_services),
             "created_at": self._created_at.isoformat(),
-            "startup_order": self._startup_order.copy(),
+            "created_at": self._created_at.isoformat(),)
+
+
         }

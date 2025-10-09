@@ -3,11 +3,7 @@
 Logging Manager
 """
 
-import os
-from typing import Any, Dict
 
-from .loggers import StructuredLogger
-from .types import LogLevel, LogCategory
 
 
 class LoggerManager:
@@ -81,3 +77,7 @@ class LoggerManager:
 def get_logger(name: str, category: LogCategory = LogCategory.API) -> StructuredLogger:
     """获取日志器的便捷函数"""
     return LoggerManager.get_logger(name, category)
+import os
+
+from .loggers import StructuredLogger
+

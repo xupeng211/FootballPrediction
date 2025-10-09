@@ -3,7 +3,6 @@
 Time Utils Compatibility Module
 """
 
-from datetime import datetime, timezone
 
 
 def utc_now() -> datetime:
@@ -14,6 +13,8 @@ def utc_now() -> datetime:
 def parse_datetime(date_str: str) -> datetime:
     """解析日期时间字符串"""
     # ISO格式解析
+from datetime import datetime, timezone
+
     if "T" in date_str:
         from datetime import datetime
         return datetime.fromisoformat(date_str.replace("Z", "+00:00"))

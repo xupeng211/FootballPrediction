@@ -4,11 +4,7 @@
 负责处理Kafka消息的解析、反序列化和路由。
 """
 
-import json
-import logging
-from typing import Any, Dict
 
-from .data_processor import DataProcessor
 
 
 class MessageProcessor:
@@ -84,6 +80,8 @@ class MessageProcessor:
         try:
             topic = message_data.get("topic", "")
             data = message_data.get("data", {})
+
+
 
             if "matches" in topic:
                 return await self.data_processor.process_match_message(data)

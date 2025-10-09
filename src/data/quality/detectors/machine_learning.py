@@ -1,4 +1,9 @@
 """
+import pandas as pd
+
+from .base import AnomalyDetectionResult
+from .metrics import (
+
 机器学习异常检测器
 Machine Learning Anomaly Detector
 
@@ -8,20 +13,8 @@ Machine Learning Anomaly Detector
 - 聚类异常检测（DBSCAN）
 """
 
-import logging
-import warnings
-from datetime import datetime
-from typing import Any, Dict, List
 
-import numpy as np
-import pandas as pd
-from scipy import stats
-from sklearn.cluster import DBSCAN
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 
-from .base import AnomalyDetectionResult
-from .metrics import (
     anomalies_detected_total,
     data_drift_score,
     anomaly_detection_duration_seconds,
@@ -346,6 +339,9 @@ class MachineLearningAnomalyDetector:
             X_scaled = self.scaler.fit_transform(X)
 
             # 执行DBSCAN聚类
+
+
+
             self.dbscan = DBSCAN(eps=eps, min_samples=min_samples)
             cluster_labels = self.dbscan.fit_predict(X_scaled)
 

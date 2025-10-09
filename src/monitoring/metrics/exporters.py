@@ -5,8 +5,6 @@ Metrics Exporters
 提供将指标数据导出到各种监控系统的功能。
 """
 
-import logging
-from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -252,3 +250,5 @@ class CloudWatchExporter:
         """禁用导出器"""
         self.enabled = False
         logger.info("CloudWatch导出器已禁用")
+from typing import Any, Dict
+

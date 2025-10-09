@@ -20,7 +20,6 @@ from src.config.openapi_config import OpenAPIConfig  # 仍然有效
 """
 
 # 导入拆分后的模块以保持向后兼容性
-from .openapi import (
     OpenAPIConfig,
     AuthConfig,
     RateLimitConfig,

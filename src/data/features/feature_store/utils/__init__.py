@@ -4,6 +4,7 @@ Feature Store Utils Module
 """
 
 from .feature_definitions import (
+
     HAS_FEAST,
     match_entity,
     team_entity,

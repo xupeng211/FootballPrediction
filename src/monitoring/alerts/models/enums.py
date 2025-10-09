@@ -6,7 +6,6 @@ Alert Enums
 Defines all enumeration types for the alert system.
 """
 
-from enum import Enum
 
 
 class AlertSeverity(Enum):
@@ -146,6 +145,7 @@ class NotificationStatus(Enum):
     """
 
     PENDING = "pending"
+
     SENT = "sent"
     DELIVERED = "delivered"
     FAILED = "failed"

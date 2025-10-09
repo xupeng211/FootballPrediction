@@ -5,28 +5,9 @@ Scores Collector
 实时比分收集器主类。
 """
 
-from sqlalchemy import or_
-from typing import Dict
-from typing import List
-from typing import Optional
-import asyncio
-import json
-import logging
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-import websockets
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.redis_manager import RedisManager, CacheKeyManager
-from src.database.models import Match, RawScoresData
-from src.utils.retry import RetryConfig, retry
-from src.utils.time_utils import utc_now
 
-from .data_sources import ScoreSourceManager
-from .processor import ScoreDataProcessor
-from .publisher import ScoreUpdatePublisher
 
 logger = logging.getLogger(__name__)
 
@@ -422,3 +403,21 @@ class ScoresCollector:
             "cache_size_mb": sum(len(str(v)) for v in self.match_cache.values())
             / (1024 * 1024),
         }
+from datetime import datetime, timedelta
+from typing import Dict
+from typing import Optional
+import asyncio
+import json
+import os
+
+from sqlalchemy import or_
+import websockets
+
+from .data_sources import ScoreSourceManager
+from .processor import ScoreDataProcessor
+from .publisher import ScoreUpdatePublisher
+from src.cache.redis_manager import CacheKeyManager
+from src.database.models import Match, RawScoresData
+from src.utils.retry import RetryConfig
+from src.utils.time_utils import utc_now
+

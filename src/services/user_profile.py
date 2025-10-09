@@ -1,11 +1,9 @@
-from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
 
-from src.models import User, UserProfile
 
-from .base import BaseService
 
 """
+        from src.models import UserProfile
+
 足球预测系统用户画像服务模块
 
 提供用户画像生成和管理功能。
@@ -121,7 +119,6 @@ class UserProfileService(BaseService):
         """创建用户画像 - 同步版本用于测试"""
         if not user_data or not user_data.get("user_id"):
             return {"status": "error", "message": "Empty or invalid user data"}
-        from src.models import UserProfile
 
         user_id = user_data["user_id"]
         interests = user_data.get(str("interests"), ["足球", "体育"])
@@ -155,4 +152,6 @@ class UserProfileService(BaseService):
         return {
             user_id: profile.to_dict() if hasattr(profile, "to_dict") else profile
             for user_id, profile in self._user_profiles.items()
+
+
         }

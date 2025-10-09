@@ -5,16 +5,9 @@ Statistics Endpoints
 处理模型统计和性能相关的API端点。
 """
 
-from datetime import datetime
-from typing import Dict, List, Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Query
 
-from src.api.dependencies import get_current_user, get_prediction_engine
-from src.core.logging_system import get_logger
-from src.core.prediction_engine import PredictionEngine
 
-from ..models import (
     ModelStatsResponse,
     PredictionOverviewResponse,
     VerificationResponse,

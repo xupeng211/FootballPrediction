@@ -1,9 +1,5 @@
-from datetime import datetime
-from typing import List, Optional, cast
 
-from src.models import AnalysisResult, Content
 
-from .base import BaseService
 
 """
 足球预测系统内容分析服务模块
@@ -220,6 +216,8 @@ class ContentAnalysisService(BaseService):
             return text or ""
 
         # 简单的摘要生成：取前面部分加上省略号
+
+
         sentences = text.split("。")
         summary = ""
 

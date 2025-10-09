@@ -19,8 +19,9 @@ from src.models.prediction.service import PredictionService
 from src.models.prediction.service import PredictionService  # 仍然有效
 """
 
-# 导入拆分后的模块以保持向后兼容性
 from .service import PredictionService
+
+# 导入拆分后的模块以保持向后兼容性
 
 # 重新导出主要类
 __all__ = ['PredictionService']

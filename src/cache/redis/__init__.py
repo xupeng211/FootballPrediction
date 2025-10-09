@@ -4,10 +4,12 @@ Redis缓存模块
 提供Redis连接管理、缓存操作和缓存预热功能
 """
 
-# 导入核心类
 from .core import CacheKeyManager, RedisConnectionManager
 from .redis_manager import RedisManager
 from .utils import (
+from .warmup import CacheWarmupManager, warmup_cache_on_startup
+
+# 导入核心类
     adelete_cache,
     aexists_cache,
     aget_cache,
@@ -27,7 +29,6 @@ from .utils import (
     startup_warmup,
     ttl_cache,
 )
-from .warmup import CacheWarmupManager, warmup_cache_on_startup
 
 # 导出所有公共接口
 __all__ = [

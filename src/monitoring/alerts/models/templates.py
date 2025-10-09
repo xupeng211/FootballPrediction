@@ -6,12 +6,7 @@ Alert Notification Templates
 Defines notification templates and formatting tools for various channels.
 """
 
-import json
-from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from .enums import AlertChannel, AlertSeverity, AlertType
 
 
 class BaseTemplate(ABC):
@@ -544,3 +539,10 @@ Annotations:
             return template.format(**data)
         except KeyError as e:
             return template.replace(f"{{{e.args[0]}}}", f"[MISSING: {e.args[0]}]")
+from datetime import datetime
+from typing import Dict
+import json
+
+
+from .enums import AlertChannel, AlertSeverity
+

@@ -4,11 +4,7 @@
 提供Prometheus指标导出功能，监控模型性能和预测质量
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, cast
 
-from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +245,9 @@ class ModelMetricsExporter:
         try:
             return {
                 "predictions_total": "预测总数统计",
-                "prediction_accuracy": "预测准确率监控",
+                "prediction_accuracy": "预测准确率监控", Dict, cast
+
+
                 "prediction_confidence": "预测置信度分布",
                 "prediction_duration": "预测响应时间",
                 "model_coverage_rate": "模型覆盖率",

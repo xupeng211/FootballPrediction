@@ -1,20 +1,14 @@
 """
+from ..base.base_task import BaseDataTask
+from src.database.connection import get_async_session
+from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
+
 数据转换任务
 
 负责将原始数据从Bronze层转换到Silver层。
 """
 
-import asyncio
-import json
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional
 
-from src.database.connection import get_async_session
-from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
-from sqlalchemy import select, text
-from ...celery_config import app, TaskRetryConfig
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +306,9 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                 "raw_odds_data",
                 "raw_scores_data"
             ]
+
+
+
 
             results = {}
             total_processed = 0

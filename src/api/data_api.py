@@ -12,9 +12,10 @@ Provides complete data management API endpoints, including:
 - 数据统计和分析
 """
 
-# 重新导出所有路由和模型以保持向后兼容
 from .data import router
 from .data.models import TeamInfo, LeagueInfo, MatchInfo, OddsInfo
+
+# 重新导出所有路由和模型以保持向后兼容
 
 # 导出所有必要的符号以保持兼容性
 __all__ = [

@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .........src.database.models.feature_mod import feature_entity
+from .........src.database.models.feature_mod import feature_metadata
+from .........src.database.models.feature_mod import feature_types
+from .........src.database.models.feature_mod import models
 
 warnings.warn(
     "直接从 features 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.database.models.feature_mod import feature_entity
-from .........src.database.models.feature_mod import feature_types
-from .........src.database.models.feature_mod import feature_metadata
-from .........src.database.models.feature_mod import models
 
 # 导出所有类
 __all__ = [

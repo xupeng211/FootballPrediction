@@ -28,16 +28,14 @@
 
 from .batch_handlers import batch_predict_matches_handler
 from .history_handlers import (
+
     get_match_prediction_history_handler,
     get_recent_predictions_handler,
 )
-from .prediction_handlers import (
     get_match_prediction_handler,
     predict_match_handler,
     verify_prediction_handler,
 )
-from .predictions_router import router
-from .rate_limiter import get_rate_limiter, is_rate_limit_available
 
 # 为了向后兼容，导出主要组件
 __all__ = [

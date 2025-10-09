@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ............src.services.processing.processors.features import aggregator
+from ............src.services.processing.processors.features import calculator
+from ............src.services.processing.processors.features import processor
+from ............src.services.processing.processors.features import validator
 
 warnings.warn(
     "直接从 features_processor 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ............src.services.processing.processors.features import calculator
-from ............src.services.processing.processors.features import aggregator
-from ............src.services.processing.processors.features import validator
-from ............src.services.processing.processors.features import processor
 
 # 导出所有类
 __all__ = [

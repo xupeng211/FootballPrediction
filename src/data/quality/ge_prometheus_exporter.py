@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .........src.data.quality.prometheus import collector
+from .........src.data.quality.prometheus import exporter
+from .........src.data.quality.prometheus import metrics
+from .........src.data.quality.prometheus import utils
 
 warnings.warn(
     "直接从 ge_prometheus_exporter 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.data.quality.prometheus import metrics
-from .........src.data.quality.prometheus import collector
-from .........src.data.quality.prometheus import exporter
-from .........src.data.quality.prometheus import utils
 
 # 导出所有类
 __all__ = [

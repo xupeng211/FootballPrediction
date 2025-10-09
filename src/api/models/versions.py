@@ -5,14 +5,8 @@ Model Versions Endpoint
 提供模型版本相关的API接口。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-from fastapi import HTTPException, Query
-from mlflow import MlflowClient
 
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +108,10 @@ async def promote_model_version(
 
         if target_stage not in ["Staging", "Production"]:
             raise HTTPException(
-                status_code=400,
+                status_code=400, Dict, Optional
+
+
+
                 detail={"error": "目标阶段必须是 Staging 或 Production"},
             )
 

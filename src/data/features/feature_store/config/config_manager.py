@@ -1,15 +1,13 @@
 """
+            from feast import RepoConfig
+            from feast.infra.offline_stores.postgres import PostgreSQLOfflineStoreConfig
+            from feast.infra.online_stores.redis import RedisOnlineStoreConfig
+            import tempfile
+
 特征仓库配置管理模块
 Feature Store Configuration Management Module
 """
 
-from src.database.models.config import RepoConfig
-from typing import Dict
-from typing import Optional
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
-import os
-from pathlib import Path
 
 
 @dataclass
@@ -67,7 +65,6 @@ class FeatureStoreConfigManager:
     def create_temp_repo(self) -> Path:
         """创建临时仓库目录"""
         if self._temp_dir is None:
-            import tempfile
 
             self._temp_dir = tempfile.TemporaryDirectory(prefix="feast_repo_")
             self._temp_dir_cleaned = False
@@ -84,9 +81,6 @@ class FeatureStoreConfigManager:
     def get_feast_config(self) -> "RepoConfig":
         """获取Feast配置对象"""
         try:
-            from feast import RepoConfig
-            from feast.infra.offline_stores.postgres import PostgreSQLOfflineStoreConfig
-            from feast.infra.online_stores.redis import RedisOnlineStoreConfig
         except ImportError:
             raise ImportError("Feast 未安装，请安装 feast 以启用完整功能")
 
@@ -119,5 +113,7 @@ class FeatureStoreConfigManager:
 
         with open(config_path, "w") as f:
             f.write(config.to_yaml())
+
+
 
         return config_path

@@ -23,8 +23,6 @@ Provides high-performance real-time scores collection with:
 """
 
 # 为了向后兼容性，从新的模块化结构中导入所有类
-from .scores.collector import ScoresCollector
-from .scores.manager import ScoresCollectorManager, get_scores_manager
 
 # 重新导出以保持原始接口
 __all__ = ["ScoresCollector", "ScoresCollectorManager", "get_scores_manager"]
@@ -53,6 +51,9 @@ class _ScoresCollectorManagerCompat(ScoresCollectorManager):
     建议直接使用从 src.collectors.scores 导入的 ScoresCollectorManager。
     """
     pass
+
+from .scores.collector import ScoresCollector
+from .scores.manager import ScoresCollectorManager, get_scores_manager
 
 # 使用别名保持向后兼容性
 ScoresCollectorManager = _ScoresCollectorManagerCompat

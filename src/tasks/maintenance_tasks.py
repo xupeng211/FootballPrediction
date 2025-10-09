@@ -1,4 +1,11 @@
 """
+            import os
+            import redis
+
+            import shutil
+
+from src.database.connection import DatabaseManager
+
 维护任务模块
 
 包含系统维护相关的任务：
@@ -8,17 +15,9 @@
 - 数据库维护
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, cast
 
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
 
-from .celery_app import app
-from .error_logger import TaskErrorLogger
 
 logger = logging.getLogger(__name__)
 
@@ -251,9 +250,7 @@ def system_health_check_task() -> Dict[str, Any]:
 
         try:
             # 2. 检查Redis连接
-            import os
 
-            import redis
 
             redis_client = redis.from_url(
                 os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -270,7 +267,6 @@ def system_health_check_task() -> Dict[str, Any]:
 
         try:
             # 3. 检查磁盘空间
-            import shutil
 
             disk_usage = shutil.disk_usage("/")
             free_space_gb = disk_usage.free / (1024**3)
@@ -391,6 +387,9 @@ def database_maintenance_task() -> Dict[str, Any]:
                     {"table": row.table_name, "size": row.size} for row in rows
                 ]
                 maintenance_results["table_sizes"] = table_sizes
+
+
+
 
                 await session.commit()
 

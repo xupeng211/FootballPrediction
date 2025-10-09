@@ -5,14 +5,8 @@ Data Processors
 提供各类数据的处理功能。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, cast
 
-import pandas as pd
 
-from src.core.logging import get_logger
-from src.data.processing.football_data_cleaner import FootballDataCleaner
 
 logger = get_logger(__name__)
 
@@ -449,6 +443,9 @@ class FeaturesDataProcessor(BaseDataProcessor):
 
         # 示例：创建历史交锋胜率
         if "head_to_head_home_wins" in df.columns and "head_to_head_total" in df.columns:
+
+
+
             df["h2h_home_win_rate"] = df["head_to_head_home_wins"] / df["head_to_head_total"]
 
         return df

@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ......src.models.common import api_models
+from ......src.models.common import base_models
+from ......src.models.common import data_models
+from ......src.models.common import utils
 
 warnings.warn(
     "直接从 common_models 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ......src.models.common import base_models
-from ......src.models.common import data_models
-from ......src.models.common import api_models
-from ......src.models.common import utils
 
 # 导出所有类
 __all__ = [

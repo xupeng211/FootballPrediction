@@ -4,11 +4,7 @@ SQLAlchemy基础模型
 提供所有数据模型的基础类，包含通用字段和方法。
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import Column, DateTime, Integer
-from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
@@ -113,4 +109,8 @@ class BaseModel(Base, TimestampMixin):
 
 
 # 导出基础类，供其他模型使用
+from datetime import datetime
+from typing import Any, Dict
+
+
 __all__ = ["Base", "BaseModel", "TimestampMixin"]

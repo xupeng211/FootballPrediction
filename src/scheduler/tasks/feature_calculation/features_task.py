@@ -1,19 +1,12 @@
 """
+            from sqlalchemy import select
+
 特征计算任务
 
 负责为即将开始的比赛计算特征。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import List
 
-from src.database.connection import get_async_session
-from src.database.models.match import Match
-from src.data.features.feature_store import FeatureStore
-from ...celery_config import app, TaskRetryConfig
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +25,11 @@ def calculate_features_batch(self, hours_ahead: int = 2):
         cutoff_time = datetime.now() + timedelta(hours=hours_ahead)
 
         async with get_async_session() as session:
-            from sqlalchemy import select
 
             # 查询即将开始的比赛
             query = select(Match).where(
+
+
                 Match.match_date <= cutoff_time,
                 Match.match_date >= datetime.now(),
                 Match.status == "scheduled"

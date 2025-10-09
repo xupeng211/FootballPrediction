@@ -17,11 +17,8 @@ Data Collection Tasks - Backward Compatibility Wrapper
 此文件保留用于向后兼容性，建议新代码直接导入新的模块。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
 # 从新的模块化结构导入所有功能
-from .collection import (
     DataCollectionTask,
     collect_fixtures_task,
     collect_odds_task,
@@ -45,7 +42,6 @@ collect_all_data_task = manual_collect_all_data
 # 废弃警告
 # =============================================================================
 
-import warnings
 
 
 def _deprecation_warning(message: str):
@@ -87,7 +83,9 @@ def get_module_info() -> Dict[str, Any]:
     return {
         "module": "data_collection_tasks",
         "status": "refactored",
-        "message": "This module has been refactored into a modular structure",
+        "message": "This module has been refactored into a modular structure", Dict, List, Optional
+
+
         "new_location": "src.tasks.collection",
         "components": [
             "base - Base classes and mixins",

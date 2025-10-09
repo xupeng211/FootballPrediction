@@ -10,7 +10,6 @@ and maintains compatibility with old version APIs.
 """
 
 # 导入重构后的模块化组件
-from .alert_manager_mod import (
     # 核心管理器
     AlertManager as _AlertManager,
     AlertRuleEngine,
@@ -38,9 +37,6 @@ from .alert_manager_mod import (
 )
 
 # 保持向后兼容的导入
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +245,9 @@ async def send_alert(
     return await manager.create_alert(
         title=title,
         message=message,
-        level=level,
+        level=level, timedelta
+
+
         source=source,
         labels=labels,
         channels=channels,

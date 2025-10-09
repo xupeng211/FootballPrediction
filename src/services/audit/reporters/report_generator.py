@@ -4,14 +4,7 @@
 生成各种格式的审计报告。
 """
 
-import csv
-import io
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 
-from src.database.models.audit_log import AuditLog, AuditLogSummary
 
 
 class AuditReportGenerator:
@@ -265,7 +258,10 @@ class AuditReportGenerator:
                     {
                         "report_type": "audit_anomalies",
                         "generated_at": datetime.utcnow().isoformat(),
-                        "total_anomalies": len(anomalies),
+                        "generated_at": datetime.utcnow().isoformat(),)
+
+
+
                         "anomalies": anomalies,
                     },
                     indent=2,

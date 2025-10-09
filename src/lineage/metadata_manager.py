@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .lineage.metadata.metadata_manager import *  # type: ignore
+from .lineage.metadata.query import *  # type: ignore
+from .lineage.metadata.serializer import *  # type: ignore
+from .lineage.metadata.storage import *  # type: ignore
 
 warnings.warn(
     "直接从 metadata_manager 导入已弃用。" "请从 lineage.metadata 导入相关类。",
@@ -18,10 +24,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .lineage.metadata.metadata_manager import *  # type: ignore
-from .lineage.metadata.storage import *  # type: ignore
-from .lineage.metadata.query import *  # type: ignore
-from .lineage.metadata.serializer import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

@@ -4,12 +4,7 @@
 负责处理赔率数据的清洗、验证和标准化。
 """
 
-import logging
-import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
-from .time_processor import TimeProcessor
 
 
 class OddsProcessor:
@@ -256,3 +251,9 @@ class OddsProcessor:
         """
         required_fields = ["match_id", "bookmaker", "market_type", "outcomes"]
         return all(field in raw_odds for field in required_fields)
+from datetime import datetime, timezone
+import logging
+import re
+
+from .time_processor import TimeProcessor
+

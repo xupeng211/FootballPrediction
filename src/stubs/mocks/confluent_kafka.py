@@ -3,10 +3,6 @@ Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
 """
 
-import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Callable, cast
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -361,6 +357,7 @@ class TopicPartition:
     def __init__(self, topic: str, partition: int = 0):
         self.topic = topic
         self.partition = partition
+
 
     def __repr__(self):
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"

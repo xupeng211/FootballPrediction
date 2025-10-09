@@ -1,30 +1,22 @@
 """
+from .config import DatabaseConfig, get_database_config
+from src.core.logging import get_logger
+from src.utils.retry import RetryConfig, retry
+
 数据库连接管理器
 Database Connection Manager
 
 提供单例模式的数据库连接管理。
 """
 
-import asyncio
-import logging
-import os
-from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncGenerator, Dict, Generator, Optional, cast
 
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import QueuePool
 
-from src.utils.retry import RetryConfig, retry
-from src.core.logging import get_logger
 
-from .config import DatabaseConfig, get_database_config
 
 logger = get_logger(__name__)
 
@@ -344,4 +336,4 @@ class DatabaseManager:
             "pool_size": self._engine.pool.size() if self._engine else 0,
             "checked_in": self._engine.pool.checkedin() if self._engine else 0,
             "checked_out": self._engine.pool.checkedout() if self._engine else 0,
-        }
+            "checked_out": self._engine.pool.checkedout() if self._engine else 0,)

@@ -4,8 +4,6 @@
 定义异常检测的结果数据结构。
 """
 
-from datetime import datetime
-from typing import Any, Dict, List
 
 
 class AnomalyDetectionResult:
@@ -51,7 +49,8 @@ class AnomalyDetectionResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
-            "table_name": self.table_name,
+            "table_name": self.table_name, Dict, List
+
             "detection_method": self.detection_method,
             "anomaly_type": self.anomaly_type,
             "severity": self.severity,

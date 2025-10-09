@@ -5,13 +5,7 @@ Anomaly Detector Main Class
 提供异常检测的主要接口和协调功能。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from src.database.connection import DatabaseManager
-from .analyzers import TableAnalyzer
-from .models import AnomalyResult
-from .summary import AnomalySummarizer
 
 logger = logging.getLogger(__name__)
 
@@ -154,3 +148,8 @@ class AnomalyDetector:
             Dict[str, Any]: 异常摘要
         """
         return await self.summarizer.generate_summary(anomalies)
+
+from .analyzers import TableAnalyzer
+from .summary import AnomalySummarizer
+from src.database.connection import DatabaseManager
+

@@ -17,18 +17,19 @@
 集成 Prometheus 监控指标，支持实时异常告警。
 """
 
-# 导入核心结果类
+from .core.anomaly_detector import AdvancedAnomalyDetector
 from .core.result import AnomalyDetectionResult
+from .machine_learning.ml_detector import MachineLearningAnomalyDetector
+from .metrics.prometheus_metrics import (
+from .statistical.statistical_detector import StatisticalAnomalyDetector
+
+# 导入核心结果类
 
 # 导入高级异常检测器（主要接口）
-from .core.anomaly_detector import AdvancedAnomalyDetector
 
 # 导入具体检测器（供高级检测器内部使用）
-from .statistical.statistical_detector import StatisticalAnomalyDetector
-from .machine_learning.ml_detector import MachineLearningAnomalyDetector
 
 # 导入Prometheus指标（供监控系统使用）
-from .metrics.prometheus_metrics import (
     anomaly_detection_coverage,
     anomaly_detection_duration_seconds,
     anomalies_detected_total,

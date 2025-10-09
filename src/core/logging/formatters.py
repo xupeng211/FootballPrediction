@@ -3,12 +3,12 @@
 Logging Formatters
 """
 
-import logging
-import os
-from typing import Optional
+
+# Import moved to top
+
+
 
 try:
-    from pythonjsonlogger import jsonlogger
     HAS_JSON_LOGGER = True
 except ImportError:
     HAS_JSON_LOGGER = False
@@ -24,7 +24,11 @@ class StructuredFormatter:
         """创建日志格式化器"""
         if self.enable_json:
             return jsonlogger.JsonFormatter(
-                "%(asctime)s %(name)s %(levelname)s %(message)s",
+                "%(asctime)s %(name)s %(levelname)s %(message)s",)
+from typing import Optional
+import logging
+import os
+
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
         else:

@@ -1,4 +1,9 @@
 """
+            from src.database.models.data_collection_log import DataCollectionLog
+
+from src.database.connection import DatabaseManager
+from src.utils.retry import RetryConfig, retry
+
 数据采集器抽象基类
 
 定义足球数据采集的统一接口和基础功能。
@@ -8,18 +13,8 @@
 基于 DATA_DESIGN.md 第1.2节设计。
 """
 
-import asyncio
-import logging
-import os
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
 
-import aiohttp
 
-from src.database.connection import DatabaseManager
-from src.utils.retry import RetryConfig, retry
 
 # 外部API重试配置 / External API retry configuration
 EXTERNAL_API_RETRY_CONFIG = RetryConfig(
@@ -260,7 +255,6 @@ class DataCollector(ABC):
         try:
             # 导入相应的Bronze层模型
 
-            from src.database.models.raw_data import (
                 RawMatchData,
                 RawOddsData,
                 RawScoresData,
@@ -388,7 +382,6 @@ class DataCollector(ABC):
             int: 日志记录ID
         """
         try:
-            from src.database.models.data_collection_log import DataCollectionLog
 
             log_entry = DataCollectionLog(
                 data_source=self.data_source, collection_type=collection_type
@@ -415,8 +408,9 @@ class DataCollector(ABC):
             log_id: 日志记录ID
             result: 采集结果
         """
+        # Import moved to top
+
         try:
-            from src.database.models.data_collection_log import (
                 CollectionStatus,
                 DataCollectionLog,
             )
@@ -466,7 +460,10 @@ class DataCollector(ABC):
             ("live_scores", self.collect_live_scores),
         ]
 
-        for data_type, collect_method in collection_tasks:
+            ("live_scores", self.collect_live_scores),)
+
+
+
             log_id = 0
             try:
                 self.logger.info(f"Starting {data_type} collection...")

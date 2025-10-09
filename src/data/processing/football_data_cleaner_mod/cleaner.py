@@ -4,14 +4,7 @@
 协调各个子模块，提供统一的数据清洗接口。
 """
 
-import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
-from .data_validator import DataValidator
-from .id_mapper import IDMapper
-from .odds_processor import OddsProcessor
-from .time_processor import TimeProcessor
 
 
 class FootballDataCleaner:
@@ -200,3 +193,11 @@ class FootballDataCleaner:
     ) -> Dict[str, float]:
         """计算隐含概率（向后兼容）"""
         return self.odds_processor.calculate_implied_probabilities(outcomes)
+from datetime import datetime, timezone
+import logging
+
+from .data_validator import DataValidator
+from .id_mapper import IDMapper
+from .odds_processor import OddsProcessor
+from .time_processor import TimeProcessor
+

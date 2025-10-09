@@ -4,15 +4,7 @@
 整合所有检查器，提供统一的数据质量监控接口。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from ..checks.freshness import FreshnessChecker
-from ..checks.completeness import CompletenessChecker
-from ..checks.consistency import ConsistencyChecker
-from ..scores.calculator import QualityScoreCalculator
-from ..trends.analyzer import QualityTrendAnalyzer
-from .results import DataFreshnessResult, DataCompletenessResult
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +162,10 @@ class QualityMonitor:
             List[str]: 改进建议列表
         """
         return self.trend_analyzer._generate_quality_recommendations(quality_data)
+
+from ..checks.completeness import CompletenessChecker
+from ..checks.consistency import ConsistencyChecker
+from ..checks.freshness import FreshnessChecker
+from ..scores.calculator import QualityScoreCalculator
+from ..trends.analyzer import QualityTrendAnalyzer
+

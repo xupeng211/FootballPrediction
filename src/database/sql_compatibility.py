@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ......src.database.compatibility import compatibility
+from ......src.database.compatibility import dialects
+from ......src.database.compatibility import postgres_compat
+from ......src.database.compatibility import sqlite_compat
 
 warnings.warn(
     "直接从 sql_compatibility 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ......src.database.compatibility import sqlite_compat
-from ......src.database.compatibility import postgres_compat
-from ......src.database.compatibility import dialects
-from ......src.database.compatibility import compatibility
 
 # 导出所有类
 __all__ = [

@@ -1,15 +1,12 @@
 """
+                import requests
+
 告警管理 / Alerting Management
 
 管理指标告警的触发、抑制和通知。
 """
 
-import logging
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, Callable, Any, List, Optional
 
-from .metric_types import AlertInfo
 
 logger = logging.getLogger(__name__)
 
@@ -308,9 +305,10 @@ class DefaultAlertHandlers:
         """
         def handler(alert: AlertInfo):
             try:
-                import requests
 
                 payload = {
+
+
                     "alert_name": alert.name,
                     "message": alert.message,
                     "severity": alert.severity,

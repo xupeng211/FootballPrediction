@@ -7,12 +7,7 @@
 - 赔率特征：implied_probability, bookmaker_consensus
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from decimal import Decimal
-from typing import Any, Dict, Optional, cast
 
-from .entities import MatchEntity, TeamEntity
 
 
 @dataclass
@@ -296,3 +291,5 @@ class AllTeamFeatures:
             "team_entity": self.team_entity.to_dict(),
             "recent_performance": self.recent_performance.to_dict(),
         }
+
+

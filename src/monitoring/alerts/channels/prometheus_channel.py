@@ -4,13 +4,8 @@ Prometheus告警渠道
 通过Prometheus指标记录告警信息。
 """
 
-from typing import Dict, Optional
 
-from prometheus_client import REGISTRY, CollectorRegistry
 
-from ..models import Alert, AlertChannel
-from ..metrics import PrometheusMetrics
-from .base_channel import BaseAlertChannel
 
 
 class PrometheusAlertChannel(BaseAlertChannel):
@@ -73,6 +68,9 @@ class PrometheusAlertChannel(BaseAlertChannel):
             list(self.metrics.registry._collector_to_names)
             self.logger.info("Prometheus告警渠道测试成功")
             return True
+
+
+
         except Exception as e:
             self.logger.error(f"Prometheus告警渠道测试失败: {e}")
             return False

@@ -1,19 +1,12 @@
 """
+from src.database.models import Match, Team, League, Odds, MatchStatus
+
 统计数据路由
 Statistics Data Routes
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select, or_
-from sqlalchemy.orm import selectinload
 
-from src.api.dependencies import get_current_user
-from src.database.connection import get_async_session
-from src.database.models import Match, Team, League, Odds, MatchStatus
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -129,6 +122,9 @@ async def search_data(
 
         async with get_async_session() as session:
             # 搜索比赛
+
+
+
             if type is None or type == "matches":
                 match_query = (
                     select(Match)

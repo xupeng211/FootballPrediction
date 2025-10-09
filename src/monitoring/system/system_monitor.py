@@ -4,17 +4,8 @@
 整合所有监控组件，提供统一的系统监控接口。
 """
 
-import asyncio
-import logging
-import time
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-from prometheus_client import CollectorRegistry
 
-from .collectors import ApplicationCollector, CacheCollector, DatabaseCollector, SystemCollector
-from .health import HealthChecker
-from .metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -281,3 +272,13 @@ async def stop_system_monitoring():
     """停止系统监控（便捷函数）"""
     monitor = get_system_monitor()
     await monitor.stop_monitoring()
+from datetime import datetime
+from typing import Optional
+import asyncio
+import time
+
+
+from .collectors import ApplicationCollector, CacheCollector, DatabaseCollector, SystemCollector
+from .health import HealthChecker
+from .metrics import SystemMetrics
+

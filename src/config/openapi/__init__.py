@@ -5,11 +5,12 @@ OpenAPI Configuration Module
 提供 FastAPI 应用的 OpenAPI 配置和文档增强功能。
 """
 
+
 from .auth_config import AuthConfig
-from .rate_limit_config import RateLimitConfig
+from .config_manager import OpenAPIConfig
 from .cors_config import CORSConfig
 from .docs_config import DocsConfig
-from .config_manager import OpenAPIConfig
+from .rate_limit_config import RateLimitConfig
 
 __all__ = [
     'AuthConfig',

@@ -9,7 +9,6 @@
 """
 
 # 从新模块导入所有公共接口
-from .metrics_exporter_mod import (
     MetricsExporter,
     get_metrics_exporter,
     reset_metrics_exporter,
@@ -30,7 +29,6 @@ _DEPRECATED_MSG = """
     from src.monitoring.metrics_exporter import MetricsExporter
 
 新用法：
-    from src.monitoring.metrics_exporter_mod import MetricsExporter
 
 或者继续使用当前导入，它将自动重定向到新模块。
 """

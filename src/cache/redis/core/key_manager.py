@@ -4,7 +4,6 @@
 统一管理缓存Key的命名规则和TTL策略
 """
 
-from typing import Optional
 
 
 class CacheKeyManager:
@@ -115,3 +114,4 @@ class CacheKeyManager:
     def prediction_key(match_id: int, model_version: str = "latest") -> str:
         """预测结果Key: predictions:{match_id}:{model_version}"""
         return CacheKeyManager.build_key("predictions", match_id, model_version)
+

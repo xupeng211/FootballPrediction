@@ -5,16 +5,8 @@ Streaming Prediction Endpoints
 处理实时流式预测相关的API端点。
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Path
-from fastapi.responses import StreamingResponse
 
-from src.api.dependencies import get_current_user, get_prediction_engine
-from src.core.logging_system import get_logger
-from src.core.prediction_engine import PredictionEngine
 
 logger = get_logger(__name__)
 
@@ -50,6 +42,9 @@ async def stream_match_predictions(
             # 监听更新
             last_time = datetime.now()
             while True:
+
+
+
                 # 检查是否有更新
                 current_prediction = await engine.predict_match(match_id)
                 current_time = datetime.now()

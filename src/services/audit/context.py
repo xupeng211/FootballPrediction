@@ -4,9 +4,6 @@
 管理用户会话信息和请求上下文。
 """
 
-from contextvars import ContextVar
-from datetime import datetime
-from typing import Any, Dict, Optional
 
 # 上下文变量，用于在请求处理过程中传递审计信息
 audit_context: ContextVar[Dict[str, Any]] = ContextVar("audit_context", default={})
@@ -73,3 +70,5 @@ class AuditContext:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """退出上下文管理器"""
         audit_context.set({})
+
+

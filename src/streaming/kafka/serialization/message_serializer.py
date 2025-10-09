@@ -2,9 +2,6 @@
 Kafka消息序列化器
 """
 
-import json
-import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +29,7 @@ class MessageSerializer:
         try:
             if not value:
                 return None
+
             # 尝试解析为JSON
             return json.loads(value.decode("utf-8"))
         except json.JSONDecodeError:

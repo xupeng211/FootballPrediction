@@ -1,4 +1,6 @@
 """
+            from src.streaming import StreamConfig
+
 实时数据流任务
 
 处理实时数据流，包括：
@@ -7,15 +9,8 @@
 - 流数据持久化
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, List, Optional, cast
 
-from celery import Task
 
-from src.streaming import FootballKafkaConsumer, FootballKafkaProducer, StreamProcessor
-from src.tasks.celery_app import app
-from src.tasks.error_logger import TaskErrorLogger
 
 
 class StreamingTask(Task):
@@ -387,11 +382,13 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
     async def _kafka_topic_management():
         try:
-            from src.streaming import StreamConfig
 
             config = StreamConfig()
 
             if action == "list":
+
+
+
                 # 列出所有配置的Topic
                 topics = config.get_all_topics()
 

@@ -5,16 +5,9 @@ Admin Endpoints
 处理缓存管理、健康检查等管理功能的API端点。
 """
 
-from datetime import datetime
-from typing import Dict
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
-from src.api.dependencies import get_current_user, get_prediction_engine
-from src.core.logging_system import get_logger
-from src.core.prediction_engine import PredictionEngine
 
-from ..models import (
     CacheClearResponse,
     HealthCheckResponse,
 )
@@ -84,6 +77,9 @@ async def prediction_health_check(
         if isinstance(health_status, dict):
             health_status["timestamp"] = health_status.get("timestamp", datetime.now().isoformat())
             return HealthCheckResponse(**health_status)
+
+
+
         else:
             # 如果返回的不是字典，创建默认响应
             return HealthCheckResponse(

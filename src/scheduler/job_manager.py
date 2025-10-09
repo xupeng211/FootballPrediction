@@ -7,15 +7,7 @@
 基于 DATA_DESIGN.md 第3节调度策略设计。
 """
 
-import asyncio
-import logging
-import threading
-import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
-from src.database.connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -507,3 +499,13 @@ class JobManager:
     def __del__(self):
         """析构函数"""
         self.cleanup_resources()
+from datetime import datetime
+from typing import Dict, List, Optional
+import asyncio
+import threading
+import time
+
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+from src.database.connection import DatabaseManager
+

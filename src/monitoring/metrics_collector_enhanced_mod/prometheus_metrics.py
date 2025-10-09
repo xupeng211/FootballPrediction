@@ -4,11 +4,11 @@ Prometheus指标管理 / Prometheus Metrics Management
 定义和管理所有的Prometheus指标。
 """
 
-from typing import Optional, Dict, Any
 
 # 可选的prometheus_client导入
+# Import moved to top
+
 try:
-    from prometheus_client import (
         Counter,
         Histogram,
         Gauge,
@@ -289,6 +289,7 @@ class PrometheusMetricsManager:
     def reset_metrics(self):
         """重置所有指标（仅用于测试）"""
         if PROMETHEUS_AVAILABLE:
+
             # 注意：这需要重新创建注册表
             self.registry = CollectorRegistry()
             self._init_business_metrics()

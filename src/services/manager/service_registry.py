@@ -4,9 +4,6 @@
 管理服务的工厂模式和依赖配置。
 """
 
-from typing import Dict, Type, Optional, List
-from src.core import logger
-from ..base import BaseService
 
 
 class ServiceRegistry:
@@ -85,6 +82,8 @@ class ServiceRegistry:
         # 拓扑排序
         result = []
         visited = set()
+
+
         temp_visited = set()
 
         def visit(name: str):

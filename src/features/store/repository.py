@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .........src.features.store.repo import cache_repository
+from .........src.features.store.repo import database_repository
+from .........src.features.store.repo import query_builder
+from .........src.features.store.repo import repository
 
 warnings.warn(
     "直接从 repository 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.features.store.repo import cache_repository
-from .........src.features.store.repo import database_repository
-from .........src.features.store.repo import query_builder
-from .........src.features.store.repo import repository
 
 # 导出所有类
 __all__ = [

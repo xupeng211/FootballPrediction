@@ -1,4 +1,6 @@
 """
+from .feature_definitions import (  # noqa: E402
+
 足球特征仓库管理器
 
 基于Feast实现的特征存储服务，提供特征的注册、计算、存储和获取功能。
@@ -13,15 +15,7 @@
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
-import atexit
-import logging
-import os
-import tempfile
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
 
-import pandas as pd
 
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
 
@@ -34,7 +28,6 @@ try:
         PostgreSQLOfflineStoreConfig,
     )
     from feast.infra.online_stores.redis import RedisOnlineStoreConfig
-    from feast.repo_config import RepoConfig
 
     HAS_FEAST = True
 except ImportError:  # pragma: no cover - optional dependency path
@@ -44,7 +37,6 @@ except ImportError:  # pragma: no cover - optional dependency path
     RepoConfig = None  # type: ignore[assignment]
     HAS_FEAST = False
 
-from .feature_definitions import (  # noqa: E402
     head_to_head_features_view,
     match_entity,
     match_features_view,
@@ -488,4 +480,7 @@ def initialize_feature_store(
     )
     _feature_store.initialize()
     _feature_store.apply_features()
+
+
+
     return _feature_store if isinstance(_feature_store, dict) else {}

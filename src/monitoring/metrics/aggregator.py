@@ -5,8 +5,6 @@ Metrics Aggregator
 提供指标数据的聚合功能，如计算平均值、总和等。
 """
 
-import logging
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +165,7 @@ class MetricsAggregator:
         """
         result = {}
         for key, values in self.metrics.items():
+
             if values:
                 name = key.split(":")[0]
                 result[name] = {

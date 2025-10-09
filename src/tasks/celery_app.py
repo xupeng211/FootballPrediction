@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 Celery 应用配置
@@ -12,11 +11,7 @@ Celery 应用配置
 基于 DATA_DESIGN.md 第3节《任务调度系统》设计。
 """
 
-import logging
-import os
 
-from celery import Celery
-from celery.schedules import crontab
 
 # 配置日志记录器（用于测试支持）
 logger = logging.getLogger(__name__)
@@ -251,7 +246,9 @@ class TaskRetryConfig:
             task_name,
             {
                 "max_retries": cls.DEFAULT_MAX_RETRIES,
-                "retry_delay": cls.DEFAULT_RETRY_DELAY,
+                "retry_delay": cls.DEFAULT_RETRY_DELAY, Any, Optional, Union
+
+
                 "retry_backoff": False,
                 "retry_jitter": False,
             },

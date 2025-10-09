@@ -3,13 +3,7 @@
 Structured Loggers
 """
 
-import logging
-import os
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-from .handlers import LogHandlerManager
-from .types import LogLevel, LogCategory
 
 
 class StructuredLogger:
@@ -220,6 +214,8 @@ class StructuredLogger:
             security_event=event_type,
             severity=severity,
             user_id=user_id,
-            ip_address=ip_address,
+            ip_address=ip_address, Dict, Optional
+
+
             **kwargs,
         )

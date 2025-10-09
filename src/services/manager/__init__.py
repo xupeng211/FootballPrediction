@@ -8,11 +8,12 @@
 - 健康检查
 """
 
+
+from .global_manager import global_service_manager, get_service_manager, get_service, register_service
+from .health_checker import ServiceHealthChecker
+from .service_factory import ServiceFactory
 from .service_manager import ServiceManager
 from .service_registry import ServiceRegistry
-from .service_factory import ServiceFactory
-from .health_checker import ServiceHealthChecker
-from .global_manager import global_service_manager, get_service_manager, get_service, register_service
 
 __all__ = [
     "ServiceManager",

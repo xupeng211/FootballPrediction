@@ -1,15 +1,14 @@
 """
+            import asyncio
+
+            from src.monitoring.alert_manager import AlertManager
+
 基础任务类
 
 提供所有调度任务的通用基类和功能。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict
 
-from celery import Task
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +31,7 @@ class BaseDataTask(Task):
     def _send_alert_notification(self, task_name, error, task_id, args, kwargs):
         """发送告警通知"""
         try:
-            import asyncio
 
-            from src.monitoring.alert_manager import AlertManager
 
             async def _send_alert():
                 alert_manager = AlertManager()
@@ -75,5 +72,7 @@ class BaseDataTask(Task):
             "status": status,
             "execution_time": datetime.now().isoformat(),
             **kwargs
-        }
+            "execution_time": datetime.now().isoformat(),)
+
+
         return result

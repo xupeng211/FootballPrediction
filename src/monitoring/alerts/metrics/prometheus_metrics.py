@@ -4,11 +4,8 @@ Prometheus指标管理
 管理告警相关的Prometheus指标。
 """
 
-from typing import Dict, Optional
 
-from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
-from ..models import Alert, AlertLevel
 
 
 class PrometheusMetrics:
@@ -179,3 +176,7 @@ class PrometheusMetrics:
             error_type: 错误类型
         """
         self.monitoring_errors_total.labels(error_type=error_type).inc()
+
+from prometheus_client import REGISTRY, Counter, Gauge, Histogram
+
+

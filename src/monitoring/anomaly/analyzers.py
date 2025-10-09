@@ -5,14 +5,8 @@ Data Analyzers
 负责分析表和列的数据，协调各种检测方法。
 """
 
-import logging
-from typing import Any, Dict, List
 
-import pandas as pd
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from .methods import (
     FrequencyDetector,
     IQRDetector,
     RangeDetector,
@@ -20,7 +14,6 @@ from .methods import (
     TimeGapDetector,
     ZScoreDetector,
 )
-from .models import AnomalyResult
 
 logger = logging.getLogger(__name__)
 
@@ -221,6 +214,9 @@ class TableAnalyzer:
             rows = result.fetchall()
             data = pd.DataFrame([dict(row._mapping) for row in rows])
             return data
+
+
+
 
         except Exception as e:
             logger.error(f"获取表 {table_name} 数据失败: {e}")

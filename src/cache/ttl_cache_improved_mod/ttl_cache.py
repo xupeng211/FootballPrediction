@@ -5,15 +5,7 @@ TTL Cache Implementation
 提供线程安全的TTL缓存，支持LRU淘汰策略。
 """
 
-import asyncio
-import heapq
-import logging
-import time
-from collections import OrderedDict
-from threading import RLock
-from typing import Any, Dict, List, Optional
 
-from .cache_entry import CacheEntry
 
 logger = logging.getLogger(__name__)
 
@@ -416,6 +408,9 @@ class TTLCache:
                 break
             except Exception as e:
                 logger.error(f"自动清理失败: {e}")
+
+
+
                 await asyncio.sleep(5)
 
     def __len__(self) -> int:

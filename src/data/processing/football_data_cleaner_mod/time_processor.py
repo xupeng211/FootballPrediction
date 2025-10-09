@@ -4,9 +4,6 @@
 负责处理各种时间格式的转换和标准化。
 """
 
-import logging
-from datetime import datetime, timezone
-from typing import Optional
 
 
 class TimeProcessor:
@@ -57,6 +54,7 @@ class TimeProcessor:
         """
         if not season_data:
             return None
+
 
         # 尝试不同的赛季格式
         season_id = season_data.get("id")

@@ -4,12 +4,8 @@
 存储足球队伍的基础信息，如曼联、巴塞罗那等。
 """
 
-from typing import Dict, List, Optional, cast
 
-from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String
-from sqlalchemy.orm import Session, relationship
 
-from src.database.base import BaseModel
 
 # Match model imported locally to avoid circular imports
 
@@ -311,3 +307,6 @@ class Team(BaseModel):
             List[Team]: 所有活跃状态的球队列表。
         """
         return session.query(cls).filter(cls.is_active is True).all()
+
+
+

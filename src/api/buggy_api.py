@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-from fastapi import APIRouter, Query
 
 router = APIRouter()
 
@@ -33,6 +31,8 @@ async def buggy_query(
     """
     # 确保返回的 limit 是 int 类型，避免 TypeError
     return {"limit": int(limit), "type": type(limit).__name__}
+
+
 
 
 class SomeAsyncService:

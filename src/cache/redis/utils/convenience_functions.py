@@ -4,13 +4,7 @@ Redis便捷函数
 提供全局单例和便捷的缓存操作函数
 """
 
-import logging
-from typing import Any, Dict, Optional
 
-from ..core.connection_manager import RedisConnectionManager
-from ..operations.async_operations import RedisAsyncOperations
-from ..operations.sync_operations import RedisSyncOperations
-from ..warmup.warmup_manager import warmup_cache_on_startup
 
 logger = logging.getLogger(__name__)
 
@@ -163,3 +157,9 @@ async def startup_warmup() -> Dict[str, int]:
     """
     manager = get_redis_manager()
     return await warmup_cache_on_startup(manager)
+
+from ..core.connection_manager import RedisConnectionManager
+from ..operations.async_operations import RedisAsyncOperations
+from ..operations.sync_operations import RedisSyncOperations
+from ..warmup.warmup_manager import warmup_cache_on_startup
+

@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .services.audit.storage.cache import *  # type: ignore
+from .services.audit.storage.database import *  # type: ignore
+from .services.audit.storage.file_storage import *  # type: ignore
+from .services.audit.storage.storage import *  # type: ignore
 
 warnings.warn(
     "直接从 storage 导入已弃用。" "请从 services.audit.storage 导入相关类。",
@@ -18,10 +24,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .services.audit.storage.storage import *  # type: ignore
-from .services.audit.storage.database import *  # type: ignore
-from .services.audit.storage.file_storage import *  # type: ignore
-from .services.audit.storage.cache import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

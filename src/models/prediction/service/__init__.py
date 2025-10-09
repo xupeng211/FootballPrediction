@@ -5,10 +5,11 @@ Prediction Service Module
 提供实时比赛预测功能的核心服务。
 """
 
-from .prediction_service import PredictionService
+
 from .batch_predictor import BatchPredictor
 from .cache_manager import PredictionCacheManager
 from .model_loader import ModelLoader
+from .prediction_service import PredictionService
 from .predictors import MatchPredictor
 
 __all__ = [

@@ -4,13 +4,7 @@
 负责计算数据质量的综合评分。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List
 
-from ..checks.freshness import FreshnessChecker
-from ..checks.completeness import CompletenessChecker
-from ..checks.consistency import ConsistencyChecker
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +133,8 @@ class QualityScoreCalculator:
             return "良好"
         elif score >= 70:
             return "一般"
+
+
         elif score >= 50:
             return "较差"
         else:

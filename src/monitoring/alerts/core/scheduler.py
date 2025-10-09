@@ -1,4 +1,6 @@
 """
+                from enum import Enum
+
 告警调度器
 Alert Scheduler
 
@@ -6,17 +8,15 @@ Alert Scheduler
 Extracted from AlertManager to handle background task scheduling logic.
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Set
 
 # 尝试从不同位置导入模型
-try:
-    from ..models import Alert, AlertStatus
+# Import moved to top
+
+try: AlertStatus
 except ImportError:
-    try:
-        from monitoring.alerts.models import Alert, AlertStatus
+    # Import moved to top
+
+    try: AlertStatus
     except ImportError:
         # 创建基本类型
         from enum import Enum
@@ -42,7 +42,6 @@ except ImportError:
 
             @property
             def type(self):
-                from enum import Enum
                 class AlertType(Enum):
                     SYSTEM = "system"
                 return AlertType.SYSTEM
@@ -608,6 +607,7 @@ class AlertTaskFactory:
         def cleanup_resolved_alerts():
             retention_time = timedelta(hours=retention_hours)
             now = datetime.utcnow()
+
 
             to_remove = []
             for alert_id, alert in alerts_dict.items():

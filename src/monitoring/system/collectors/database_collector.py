@@ -4,15 +4,8 @@
 收集数据库连接和查询性能指标。
 """
 
-import logging
-import time
-from typing import Dict, Optional
 
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 
-from src.database.connection import get_async_session
-from ..metrics.system_metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +158,9 @@ class DatabaseCollector:
             duration = time.time() - start_time
 
             # 记录连接测试查询
+
+
+
             self.record_query("test", "connection", duration)
             return True
 

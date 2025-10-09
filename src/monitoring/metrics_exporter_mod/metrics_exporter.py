@@ -4,21 +4,9 @@
 主导出器类，协调所有指标记录组件。
 """
 
-import logging
-import time
-from datetime import datetime
-from typing import List, Optional, Tuple
 
-from prometheus_client import CollectorRegistry, REGISTRY
 
-from src.core.config import get_settings
 
-from .metric_definitions import MetricsDefinitions
-from .data_collection_metrics import DataCollectionMetrics
-from .data_cleaning_metrics import DataCleaningMetrics
-from .scheduler_metrics import SchedulerMetrics
-from .database_metrics import DatabaseMetrics
-from .utils import format_metrics_for_prometheus, get_metric_summary
 
 logger = logging.getLogger(__name__)
 
@@ -357,3 +345,15 @@ def reset_metrics_exporter():
     """
     global _metrics_exporter_instance
     _metrics_exporter_instance = None
+import time
+
+from prometheus_client import REGISTRY
+
+from .data_cleaning_metrics import DataCleaningMetrics
+from .data_collection_metrics import DataCollectionMetrics
+from .database_metrics import DatabaseMetrics
+from .metric_definitions import MetricsDefinitions
+from .scheduler_metrics import SchedulerMetrics
+from .utils import format_metrics_for_prometheus, get_metric_summary
+from src.core.config import get_settings
+

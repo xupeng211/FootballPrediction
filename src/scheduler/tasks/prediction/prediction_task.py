@@ -4,16 +4,7 @@
 负责为即将开始的比赛生成预测。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
 
-from src.database.connection import get_async_session
-from src.database.models.match import Match
-from src.models.prediction_service import PredictionService
-from ...celery_config import app, TaskRetryConfig
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +27,13 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
 
         if match_ids:
             # 为指定比赛生成预测
+from datetime import datetime, timedelta
+
+
             target_matches = match_ids
         else:
             # 获取即将开始的比赛（未来24小时内）
             async with get_async_session() as session:
-                from sqlalchemy import select
 
                 cutoff_time = datetime.now() + timedelta(hours=24)
 

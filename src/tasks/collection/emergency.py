@@ -1,17 +1,15 @@
 """
+        from .fixtures import collect_fixtures_task
+        from .odds import collect_odds_task
+        from .scores import collect_scores_task
+
 紧急数据采集任务
 Emergency Data Collection Tasks
 
 提供紧急情况下的数据采集功能。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-from ..celery_app import app
-from .base import DataCollectionTask
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +28,6 @@ def manual_collect_all_data() -> Dict[str, Any]:
         logger.info("开始手动执行所有数据采集任务")
 
         # 导入任务
-        from .fixtures import collect_fixtures_task
-        from .odds import collect_odds_task
-        from .scores import collect_scores_task
 
         # 1. 赛程采集
         fixtures_result = collect_fixtures_task.delay(days_ahead=7)
@@ -95,10 +90,9 @@ def emergency_data_collection_task(
         results = {}
         start_time = datetime.now()
 
+
+
         # 导入任务
-        from .fixtures import collect_fixtures_task
-        from .odds import collect_odds_task
-        from .scores import collect_scores_task
 
         if match_id:
             # 针对特定比赛的紧急收集

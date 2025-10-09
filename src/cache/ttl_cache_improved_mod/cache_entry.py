@@ -5,8 +5,6 @@ Cache Entry Definition
 定义缓存中的单个条目，包含值、过期时间和访问统计。
 """
 
-import time
-from typing import Any, Optional
 
 
 class CacheEntry:
@@ -102,3 +100,5 @@ class CacheEntry:
         """字符串表示"""
         ttl_str = f"TTL={self.get_remaining_ttl()}s" if self.expires_at else "TTL=∞"
         return f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"
+import time
+

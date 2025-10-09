@@ -1,21 +1,16 @@
 """
+        import urllib.parse
+
+from ...celery_config import app
+from ..base.base_task import BaseDataTask
+from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
+
 数据库备份任务
 
 负责创建和管理数据库备份。
 """
 
-import asyncio
-import gzip
-import logging
-import os
-import subprocess
-import tempfile
-from datetime import datetime
-from typing import Optional
 
-from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
-from ...celery_config import app
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +24,6 @@ async def _create_database_backup(timestamp: str) -> tuple:
     # 解析数据库连接信息
     if db_url.startswith("postgresql://"):
         # 提取数据库连接参数
-        import urllib.parse
         parsed = urllib.parse.urlparse(db_url)
         db_name = parsed.path[1:]  # 去掉开头的 /
         db_user = parsed.username
@@ -238,6 +232,9 @@ def backup_database():
 
             # 2. 上传到存储
             storage_key = f"backups/database/backup_{timestamp}.sql.gz"
+
+
+
             backup_location = await _upload_backup_to_storage(
                 backup_file,
                 storage_key

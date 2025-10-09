@@ -6,7 +6,6 @@ Predefined Cache Instances
 Provides commonly used cache instances, ready to use.
 """
 
-from .ttl_cache import TTLCache
 
 # 预定义的缓存实例
 # Predefined cache instances
@@ -88,6 +87,7 @@ def clear_all_caches():
 def cleanup_all_expired():
     """清理所有缓存的过期项"""
     total_cleaned = 0
+
     for cache in CACHES.values():
         total_cleaned += cache.cleanup_expired()
     return total_cleaned

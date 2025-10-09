@@ -1,7 +1,11 @@
-from typing import cast, Any, Optional, Union
 
 """
 from datetime import datetime, timezone
+        from datetime import date
+        from datetime import datetime, timedelta
+
+        from src.database.connection import DatabaseManager
+
 Celery调度器配置
 
 配置Celery任务队列和定时任务，实现足球数据的自动化采集调度。
@@ -16,11 +20,7 @@ Celery调度器配置
 基于 DATA_DESIGN.md 第3节设计。
 """
 
-import os
 
-import redis
-from celery import Celery
-from celery.schedules import crontab
 
 # Celery应用配置
 app = Celery("football_data_scheduler")
@@ -143,9 +143,7 @@ def is_match_day() -> bool:
     try:
         # 实现检查今日是否有比赛的逻辑
         # 查询数据库中今日的比赛安排
-        from datetime import date
 
-        from src.database.connection import DatabaseManager
 
         DatabaseManager()
         date.today()
@@ -171,9 +169,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
     try:
         # 实现获取即将开始比赛的逻辑
         # 查询数据库中未来N小时内的比赛
-        from datetime import datetime, timedelta
 
-        from src.database.connection import DatabaseManager
 
         DatabaseManager()
         now = datetime.now()
@@ -252,6 +248,8 @@ class MonitoringConfig:
         "collect_fixtures": 180,  # 3分钟
         "collect_odds": 120,  # 2分钟
         "collect_live_scores": 60,  # 1分钟
+
+
         "calculate_features": 300,  # 5分钟
     }
 

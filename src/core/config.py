@@ -4,11 +4,6 @@
 提供统一的配置读写和持久化机制。
 """
 
-import json
-import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
 
 # Pydantic compatibility logic
 try:
@@ -322,3 +317,9 @@ config = Config()
 def get_settings() -> Settings:
     """获取应用程序设置实例"""
     return Settings()
+from pathlib import Path
+from typing import Any, Dict
+import json
+import logging
+import os
+

@@ -15,7 +15,6 @@ For backward compatibility, this file re-exports the AlertManager class from the
 Recommended: from src.monitoring.alerts.core import AlertManager
 """
 
-import warnings
 
 # 发出弃用警告
 warnings.warn(
@@ -28,14 +27,11 @@ warnings.warn(
 )
 
 # 从新模块重新导出AlertManager
+# Import moved to top
+
 try:
-    from ..alerts.core.alert_manager import AlertManager
 except ImportError:
     # 如果导入失败，创建一个基本的占位符
-    import asyncio
-    import logging
-    from datetime import datetime, timedelta
-    from typing import Any, Dict, List, Optional, Set
 
     logger = logging.getLogger(__name__)
 
@@ -65,6 +61,7 @@ except ImportError:
         async def create_alert(self, *args, **kwargs):
             """创建告警（占位符）"""
             self.logger.warning("create_alert called on placeholder AlertManager")
+
             return None
 
         # 添加其他必要的方法占位符...
@@ -83,8 +80,9 @@ if 'AlertManager' in globals():
     __all__ = ['AlertManager']
 
     # 尝试导出相关的枚举和模型
+    # Import moved to top
+
     try:
-        from ..alerts import (
             Alert, AlertLevel, AlertStatus, AlertRule,
             AlertSeverity, AlertType, AlertChannel
         )
@@ -94,5 +92,3 @@ if 'AlertManager' in globals():
         ])
     except ImportError:
         pass
-
-

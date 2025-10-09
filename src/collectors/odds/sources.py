@@ -5,14 +5,7 @@ Odds Data Sources Management
 管理多个博彩公司的API数据源
 """
 
-import asyncio
-import logging
-import os
-from typing import Any, Dict, List, Optional
 
-import aiohttp
-from src.utils.retry import RetryConfig, retry
-from .time_utils_compat import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +222,9 @@ class OddsSourceManager:
             "bookmakers": [],
         }
 
+
+
+
         for bookmaker in data.get("bookmakers", []):
             bookmaker_data = {
                 "key": bookmaker.get("key"),
@@ -256,7 +252,6 @@ class OddsSourceManager:
                     over_line = None
                     if "Over" in outcomes:
                         # 提取盘口线
-                        import re
                         match = re.search(
                             r"Over (\d+\.?\d*)",
                             market.get("outcomes", [{}])[0].get("name", ""),

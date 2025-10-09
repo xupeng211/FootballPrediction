@@ -2,11 +2,12 @@
 Prometheus指标定义和管理
 """
 
-import logging
-from typing import Any, Dict, List, Optional
+
+# Import moved to top
+
+
 
 try:
-    from prometheus_client import (
         REGISTRY,
         CollectorRegistry,
         Counter,
@@ -275,5 +276,6 @@ def get_prometheus_metrics() -> PrometheusMetrics:
     """
     global _prometheus_metrics
     if _prometheus_metrics is None:
+
         _prometheus_metrics = PrometheusMetrics()
     return _prometheus_metrics

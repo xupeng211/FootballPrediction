@@ -5,10 +5,7 @@ Model Information
 提供模型基本信息和路由配置。
 """
 
-from fastapi import APIRouter
-from mlflow import MlflowClient
 
-from src.models.prediction_service import PredictionService
 
 # 创建路由器
 router = APIRouter(prefix="/models", tags=["models"])
@@ -26,7 +23,8 @@ def get_model_info() -> dict:
     """
     return {
         "api": router,
-        "prefix": "/models",
+        "prefix": "/models"}src.models.prediction_service import PredictionService
+
         "tags": ["models"],
         "prediction_service": prediction_service,
     }

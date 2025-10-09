@@ -8,16 +8,17 @@ Kafka流处理模块
 - 健康检查和监控
 """
 
-# 导入各个子模块
 from .admin import KafkaAdmin, KafkaTopicManager
+from .compatibility import (
 from .config import StreamConfig
 from .consumer import FootballKafkaConsumer
-from .producer import FootballKafkaProducer
 from .processor import KafkaStream, StreamProcessor, DEFAULT_TOPICS
+from .producer import FootballKafkaProducer
 from .serialization import MessageSerializer
 
+# 导入各个子模块
+
 # 向后兼容性导出
-from .compatibility import (
     KAFKA_AVAILABLE,
     Consumer,
     KafkaError,

@@ -4,9 +4,6 @@
 定义指标收集相关的数据类型和基础结构。
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, Any
 
 
 @dataclass
@@ -77,7 +74,8 @@ class AlertInfo:
         """转换为字典"""
         return {
             "name": self.name,
-            "message": self.message,
+            "message": self.message, field
+
             "severity": self.severity,
             "timestamp": self.timestamp.isoformat(),
             "component": self.component,

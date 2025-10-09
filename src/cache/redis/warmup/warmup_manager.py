@@ -4,11 +4,7 @@
 负责在系统启动和运行时预热高频访问的缓存数据
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Dict
 
-from ..core.key_manager import CacheKeyManager
 
 
 logger = logging.getLogger(__name__)
@@ -249,3 +245,7 @@ async def warmup_cache_on_startup(redis_manager) -> Dict[str, int]:
     """
     warmup_manager = CacheWarmupManager(redis_manager)
     return await warmup_manager.full_warmup()
+from datetime import datetime, timedelta
+
+from ..core.key_manager import CacheKeyManager
+

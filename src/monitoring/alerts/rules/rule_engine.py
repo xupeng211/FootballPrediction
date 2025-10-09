@@ -1,15 +1,12 @@
 """
+        from ..models import AlertChannel
+
 告警规则引擎
 
 管理告警规则的创建、评估和执行。
 """
 
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional
 
-from ..models import Alert, AlertLevel, AlertRule
-from ..channels.base_channel import BaseAlertChannel
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +24,6 @@ class AlertRuleEngine:
 
     def _init_default_rules(self) -> None:
         """初始化默认告警规则"""
-        from ..models import AlertChannel
 
         default_rules = [
             AlertRule(
@@ -237,4 +233,6 @@ class AlertRuleEngine:
             rule.enabled = False
             self.logger.info(f"禁用告警规则: {rule.name}")
             return True
+
+
         return False

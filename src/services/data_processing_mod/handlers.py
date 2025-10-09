@@ -5,15 +5,12 @@ Data Handlers
 提供特殊数据的处理功能。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
 
 from src.core.logging import get_logger
-from src.data.processing.missing_data_handler import MissingDataHandler
 
 logger = get_logger(__name__)
 
@@ -29,7 +26,6 @@ class MissingDataHandler:
     def __init__(self):
         """初始化处理器 / Initialize handler"""
         self.logger = get_logger(f"{__name__}.MissingDataHandler")
-        self.handler = MissingDataHandler()
 
     async def handle_missing_data(
         self, data: pd.DataFrame, strategy: str = "auto"

@@ -4,16 +4,9 @@
 负责检查数据表的完整性，统计关键字段的缺失情况。
 """
 
-import inspect
-import logging
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import quoted_name, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import DatabaseManager
 
-from ..core.results import DataCompletenessResult
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +78,10 @@ class CompletenessChecker:
             logger.warning(f"表 {table_name} 未定义关键字段")
             return DataCompletenessResult(
                 table_name=table_name,
-                total_records=0,
+                total_records=0, Dict, List, Optional
+
+
+
                 missing_critical_fields={},
                 missing_rate=0.0,
                 completeness_score=100.0,

@@ -2,18 +2,18 @@
 Kafka管理器
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-try:
-    from confluent_kafka.admin import AdminClient, NewTopic
+# Import moved to top
+
+
+
+try: NewTopic
     KAFKA_ADMIN_AVAILABLE = True
 except ImportError:
     KAFKA_ADMIN_AVAILABLE = False
     AdminClient = None
     NewTopic = None
 
-from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 _settings = get_settings()
@@ -60,6 +60,8 @@ class KafkaAdmin:
         """删除主题"""
         try:
             result = self.admin_client.delete_topics(topic_names)
+
+
 
             # 等待删除完成
             for topic_name, future in result.items():

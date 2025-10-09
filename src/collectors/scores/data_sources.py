@@ -5,14 +5,8 @@ Data Sources
 定义各种比分数据源的接口和实现。
 """
 
-import os
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
 
-import aiohttp
 
-from src.utils.retry import RetryConfig, retry
-from src.utils.time_utils import utc_now, parse_datetime
 
 logger = __import__("logging").getLogger(__name__)
 
@@ -233,3 +227,9 @@ class ScoreSourceManager:
             Optional[BaseScoreSource]: 数据源实例
         """
         return self.sources.get(source_name)
+import os
+
+import aiohttp
+
+from src.utils.time_utils import utc_now
+

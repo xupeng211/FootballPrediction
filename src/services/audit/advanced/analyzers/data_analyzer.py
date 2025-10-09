@@ -5,11 +5,7 @@ Data Analyzer
 负责审计数据的分析和处理。
 """
 
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -537,7 +533,9 @@ class DataAnalyzer:
         insights = {
             "summary": {},
             "trends": {},
-            "recommendations": [],
+            "recommendations": [], timedelta
+
+
             "compliance_status": {},
         }
 

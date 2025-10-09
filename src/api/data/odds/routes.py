@@ -3,16 +3,8 @@
 Odds Data Routes
 """
 
-from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import select
 
-from src.api.dependencies import get_current_user
-from src.api.data.models.common import OddsInfo
-from src.database.connection import get_async_session
-from src.database.models import Odds
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -73,7 +65,10 @@ def _convert_odds_to_info(odds: Odds) -> OddsInfo:
         home_win_odds=odds.home_win_odds,
         draw_odds=odds.draw_odds,
         away_win_odds=odds.away_win_odds,
-        over_line=odds.over_line,
+        over_line=odds.over_line, List, Optional
+
+
+
         over_odds=odds.over_odds,
         under_odds=odds.under_odds,
         created_at=odds.created_at,

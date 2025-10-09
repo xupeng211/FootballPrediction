@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ............src.data.storage.lake.utils_mod import compression
+from ............src.data.storage.lake.utils_mod import file_utils
+from ............src.data.storage.lake.utils_mod import helpers
+from ............src.data.storage.lake.utils_mod import validation
 
 warnings.warn(
     "直接从 utils 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ............src.data.storage.lake.utils_mod import file_utils
-from ............src.data.storage.lake.utils_mod import compression
-from ............src.data.storage.lake.utils_mod import validation
-from ............src.data.storage.lake.utils_mod import helpers
 
 # 导出所有类
 __all__ = [

@@ -5,11 +5,7 @@ Feature Store Client
 足球特征存储管理器，基于 Feast 实现。
 """
 
-from typing import Optional
 
-from .mock_feast import FeatureStore
-from .registry import FeatureRegistry
-from .repository import FeatureRepository
 
 
 class FootballFeatureStore:
@@ -140,3 +136,9 @@ class FootballFeatureStore:
             Dict[str, int]: 处理统计
         """
         return await self.repository.batch_calculate_features(start_date, end_date)
+from typing import Optional
+
+from .mock_feast import FeatureStore
+from .registry import FeatureRegistry
+from .repository import FeatureRepository
+

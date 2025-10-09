@@ -2,9 +2,6 @@
 系统监控便捷函数和全局管理
 """
 
-from src.monitoring.system_monitor import SystemMonitor
-import logging
-from typing import Optional
 
 # 全局监控器实例
 _system_monitor: Optional["SystemMonitor"] = None
@@ -145,3 +142,6 @@ def get_monitoring_status() -> dict:
     """
     monitor = get_system_monitor()
     return monitor.get_monitoring_status()
+
+from src.monitoring.system_monitor import SystemMonitor
+

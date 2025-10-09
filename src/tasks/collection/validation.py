@@ -5,12 +5,7 @@ Data Validation Module
 负责验证采集的数据的质量和完整性。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
 
-from ..celery_app import app
-from .base import DataCollectionTask, CollectionTaskMixin
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +162,8 @@ def validate_collected_data(
 
     try:
         validator = DataValidator()
+
+
 
         # 根据数据类型选择验证器
         if data_type == "fixtures":

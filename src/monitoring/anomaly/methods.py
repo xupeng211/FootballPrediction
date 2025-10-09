@@ -5,13 +5,8 @@ Anomaly Detection Methods
 实现各种异常检测算法。
 """
 
-import logging
-from typing import List
 
-import numpy as np
-import pandas as pd
 
-from .models import AnomalyResult, AnomalySeverity, AnomalyType
 
 logger = logging.getLogger(__name__)
 
@@ -366,6 +361,9 @@ class TimeGapDetector(BaseDetector):
             time_data = pd.to_datetime(data).sort_values()
 
             if len(time_data) < 2:
+
+
+
                 return []
 
             # 计算时间间隔

@@ -1,22 +1,15 @@
 """
+from .metadata import S3MetadataManager
+from .partition import PartitionManager
+
 S3数据湖存储
 S3 Data Lake Storage
 
 提供基于S3/MinIO的数据湖存储功能。
 """
 
-import io
-import logging
-import os
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
 
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
-from .partition import PartitionManager
-from .metadata import S3MetadataManager
 
 try:
     import boto3
@@ -363,5 +356,8 @@ class S3DataLakeStorage:
             return await self.metadata_manager.get_table_stats(bucket_name, object_path)
 
         except Exception as e:
+
+
+
             self.logger.error(f"Failed to get S3 stats for {table_name}: {str(e)}")
             return {"error": str(e)}

@@ -4,7 +4,6 @@
 提供API速率限制功能，支持可选的slowapi集成。
 """
 
-from typing import Any, Callable
 
 try:
     from slowapi import Limiter
@@ -37,3 +36,5 @@ def get_rate_limiter():
 def is_rate_limit_available() -> bool:
     """检查速率限制功能是否可用"""
     return RATE_LIMIT_AVAILABLE
+from typing import Callable
+

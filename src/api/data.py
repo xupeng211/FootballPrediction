@@ -9,7 +9,15 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .data.endpoints.dependencies import *  # type: ignore
+from .data.endpoints.leagues import *  # type: ignore
+from .data.endpoints.matches import *  # type: ignore
+from .data.endpoints.odds import *  # type: ignore
+from .data.endpoints.statistics import *  # type: ignore
+from .data.endpoints.teams import *  # type: ignore
 
 warnings.warn(
     "直接从 data 导入已弃用。" "请从 api.data.endpoints 导入相关类。",
@@ -18,12 +26,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .data.endpoints.matches import *  # type: ignore
-from .data.endpoints.teams import *  # type: ignore
-from .data.endpoints.leagues import *  # type: ignore
-from .data.endpoints.odds import *  # type: ignore
-from .data.endpoints.statistics import *  # type: ignore
-from .data.endpoints.dependencies import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

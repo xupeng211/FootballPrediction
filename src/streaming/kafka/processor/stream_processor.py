@@ -2,16 +2,7 @@
 Kafka流处理器
 """
 
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
-import logging
-from typing import Any, Callable, List, Optional, Union
 
-from src.streaming.kafka.config.stream_config import StreamConfig
-from src.streaming.kafka.consumer.kafka_consumer import FootballKafkaConsumer
-from src.streaming.kafka.producer.kafka_producer import FootballKafkaProducer
 
 logger = logging.getLogger(__name__)
 
@@ -101,3 +92,8 @@ class StreamProcessor:
         consumer_healthy = self.consumer.health_check() if self.consumer else True
         producer_healthy = self.producer.health_check() if self.producer else True
         return consumer_healthy and producer_healthy
+
+from src.streaming.kafka.config.stream_config import StreamConfig
+from src.streaming.kafka.consumer.kafka_consumer import FootballKafkaConsumer
+from src.streaming.kafka.producer.kafka_producer import FootballKafkaProducer
+

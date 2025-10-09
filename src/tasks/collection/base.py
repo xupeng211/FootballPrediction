@@ -1,18 +1,14 @@
 """
+        from ..celery_app import TaskRetryConfig
+
 数据采集任务基类
 Base Data Collection Task
 
 提供数据采集任务的基础功能。
 """
 
-import asyncio
-import logging
-from typing import Any, Dict
 
-from celery import Task
 
-from ..celery_app import app
-from ..error_logger import TaskErrorLogger
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +53,6 @@ class CollectionTaskMixin:
     @staticmethod
     def handle_retry(self, task, exc, task_name: str):
         """处理任务重试逻辑"""
-        from ..celery_app import TaskRetryConfig
 
         retry_config = TaskRetryConfig.get_retry_config(task_name)
         max_retries = retry_config["max_retries"]
@@ -95,7 +90,10 @@ class CollectionTaskMixin:
                 task.error_logger.log_data_collection_error(
                     data_source=data_source,
                     collection_type=collection_type,
-                    error_message=str(error),
+                    error_message=str(error),)
+
+
+
                     error_count=1,
                     context=context,
                 )

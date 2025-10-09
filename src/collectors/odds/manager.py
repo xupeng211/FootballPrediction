@@ -5,12 +5,8 @@ Odds Collector Manager
 管理多个收集器实例
 """
 
-import logging
-from typing import Dict, Optional
 
-from src.cache.redis_manager import RedisManager
 
-from .collector import OddsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -122,3 +118,8 @@ def get_odds_manager() -> OddsCollectorManager:
     if _odds_manager is None:
         _odds_manager = OddsCollectorManager()
     return _odds_manager
+from typing import Dict
+
+from .collector import OddsCollector
+from src.cache.redis_manager import RedisManager
+

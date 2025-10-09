@@ -3,13 +3,7 @@
 Stream Processor Manager
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, List, Optional
 
-from ..stream_config import StreamConfig
-from .processor import StreamProcessor
-from .statistics import ProcessingStatistics
 
 
 class StreamProcessorManager:
@@ -182,3 +176,11 @@ class StreamProcessorManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         self.stop_all_processors()
+from typing import List
+import asyncio
+import logging
+
+from ..stream_config import StreamConfig
+from .processor import StreamProcessor
+from .statistics import ProcessingStatistics
+

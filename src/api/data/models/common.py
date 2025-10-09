@@ -3,10 +3,7 @@
 Common Data Models
 """
 
-from datetime import datetime
-from typing import Optional
 
-from pydantic import BaseModel
 
 
 class TeamInfo(BaseModel):
@@ -64,6 +61,8 @@ class OddsInfo(BaseModel):
     match_id: int
     bookmaker: str
     market_type: str
+
+
     home_win_odds: Optional[float]
     draw_odds: Optional[float]
     away_win_odds: Optional[float]

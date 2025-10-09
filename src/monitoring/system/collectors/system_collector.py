@@ -4,13 +4,8 @@
 收集系统级别的资源使用指标。
 """
 
-import logging
-import time
-from typing import Dict
 
-import psutil
 
-from ..metrics.system_metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +85,9 @@ class SystemCollector:
             uptime = time.time() - boot_time
 
             return {
+
+
+
                 "cpu_count": psutil.cpu_count(),
                 "cpu_count_logical": psutil.cpu_count(logical=True),
                 "memory_total": psutil.virtual_memory().total,

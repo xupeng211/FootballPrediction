@@ -13,12 +13,7 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-import hashlib
-from datetime import datetime
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, cast
 
-from .base_collector import CollectionResult, DataCollector
 
 
 class OddsCollector(DataCollector):
@@ -391,6 +386,8 @@ class OddsCollector(DataCollector):
             required_fields = ["match_id", "bookmaker", "market_type", "outcomes"]
             if not all(field in raw_odds for field in required_fields):
                 return None
+
+
 
             # 赔率值验证和标准化
             cleaned_outcomes = []

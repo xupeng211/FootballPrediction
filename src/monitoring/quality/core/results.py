@@ -4,8 +4,6 @@
 定义数据质量检查的各种结果数据结构。
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
 
 
 class DataFreshnessResult:
@@ -82,7 +80,8 @@ class DataCompletenessResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
-            "table_name": self.table_name,
+            "table_name": self.table_name, Dict, Optional
+
             "total_records": self.total_records,
             "missing_critical_fields": self.missing_critical_fields,
             "missing_rate": round(self.missing_rate, 4),

@@ -1,4 +1,8 @@
 """
+                import hashlib
+
+                from enum import Enum
+
 告警去重器
 Alert Deduplicator
 
@@ -6,17 +10,15 @@ Alert Deduplicator
 Extracted from AlertManager to handle deduplication and suppression logic.
 """
 
-import hashlib
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 # 尝试从不同位置导入模型
-try:
-    from ..models import Alert, AlertStatus
+# Import moved to top
+
+try: AlertStatus
 except ImportError:
-    try:
-        from monitoring.alerts.models import Alert, AlertStatus
+    # Import moved to top
+
+    try: AlertStatus
     except ImportError:
         # 创建基本类型
         from enum import Enum
@@ -42,13 +44,11 @@ except ImportError:
 
             @property
             def fingerprint(self) -> str:
-                import hashlib
                 content = f"{self.title}:{self.source}:{self.level.value}"
                 return hashlib.md5(content.encode()).hexdigest()
 
             @property
             def type(self):
-                from enum import Enum
                 class AlertType(Enum):
                     SYSTEM = "system"
                 return AlertType.SYSTEM
@@ -536,6 +536,7 @@ class AlertDeduplicator:
         total_suppressions = sum(
             rule.suppressed_count for rule in self.suppression_rules.values()
         )
+
 
         active_suppressions = len([
             rule for rule in self.suppression_rules.values()

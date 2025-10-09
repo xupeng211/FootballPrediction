@@ -5,15 +5,9 @@ Batch Prediction Endpoints
 处理批量预测相关的API端点。
 """
 
-from typing import Dict, List
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from src.api.dependencies import get_current_user, get_prediction_engine
-from src.core.logging_system import get_logger
-from src.core.prediction_engine import PredictionEngine
 
-from ..models import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     UpcomingMatchesRequest,

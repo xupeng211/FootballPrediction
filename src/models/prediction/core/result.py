@@ -4,9 +4,6 @@
 定义预测结果的完整数据结构
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -67,7 +64,8 @@ class PredictionResult:
         """
         return {
             "match_id": self.match_id,
-            "model_version": self.model_version,
+            "model_version": self.model_version}typing import Any, Dict, Optional
+
             "model_name": self.model_name,
             "home_win_probability": self.home_win_probability,
             "draw_probability": self.draw_probability,

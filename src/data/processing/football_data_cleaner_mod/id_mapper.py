@@ -4,16 +4,8 @@ ID映射器模块
 负责处理球队和联赛的ID映射功能。
 """
 
-import hashlib
-import logging
-from typing import Any, Dict, Optional
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from ....database.connection import DatabaseManager
-from ....database.models.league import League
-from ....database.models.team import Team
 
 
 class IDMapper:
@@ -226,3 +218,14 @@ class IDMapper:
         """
         digest = hashlib.sha1(value.encode("utf-8", "ignore")).hexdigest()
         return int(digest[:12], 16) % modulus
+from typing import Dict, Optional
+import hashlib
+import logging
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+from ....database.connection import DatabaseManager
+from ....database.models.league import League
+from ....database.models.team import Team
+

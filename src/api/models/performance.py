@@ -5,15 +5,8 @@ Model Performance Endpoint
 提供获取模型详细性能的API接口。
 """
 
-import logging
-from typing import Any, Dict, Optional
 
-from fastapi import HTTPException, Query
-from mlflow import MlflowClient
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +123,9 @@ async def get_model_performance(
         )
 
         stats = result.first()
+
+
+
 
         performance_data = {
             "model_info": {

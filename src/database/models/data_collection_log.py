@@ -7,14 +7,8 @@
 基于 DATA_DESIGN.md 第1.3节设计。
 """
 
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import Column, DateTime, Integer, String, Text, func
-from sqlalchemy.orm import validates
 
-from src.database.base import BaseModel
 
 
 class CollectionStatus(Enum):
@@ -167,7 +161,10 @@ class DataCollectionLog(BaseModel):
             "data_source": self.data_source,
             "collection_type": self.collection_type,
             "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None,
+            "start_time": self.start_time.isoformat() if self.start_time else None,)
+
+
+
             "records_collected": self.records_collected,
             "success_count": self.success_count,
             "error_count": self.error_count,

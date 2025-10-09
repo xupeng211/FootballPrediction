@@ -1,22 +1,19 @@
 """
+        from sqlalchemy import and_
+
+        from .match import Match
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.database.base import BaseModel
+
 预测结果数据模型
 
 存储机器学习模型的预测结果，包括胜负概率、比分预测等。
 """
 
-import json
-import math
-from datetime import datetime, timedelta
-from decimal import Decimal
-from enum import Enum
-from typing import Any, Dict, List, Optional, cast
 
-from sqlalchemy import DECIMAL, JSON, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.base import BaseModel
 
 
 class PredictedResult(Enum):
@@ -399,9 +396,7 @@ class Predictions(BaseModel):
             Dict[str, Any]: 准确性统计
         """
 
-        from sqlalchemy import and_
 
-        from .match import Match
 
         # 获取指定天数内已结束比赛的预测
         cutoff_date = datetime.utcnow() - timedelta(days=days)
@@ -410,6 +405,9 @@ class Predictions(BaseModel):
             session.query(cls)
             .join(Match)
             .filter(
+
+
+
                 and_(
                     cls.model_name == model_name,
                     cls.predicted_at >= cutoff_date,

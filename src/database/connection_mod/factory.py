@@ -5,15 +5,8 @@ Database Manager Factory
 提供数据库管理器的创建和初始化功能。
 """
 
-import logging
-import os
-from typing import Optional
 
-from src.core.logging import get_logger
 
-from .config import DatabaseConfig, get_database_config
-from .manager import DatabaseManager
-from .multi_user_manager import MultiUserDatabaseManager
 
 logger = get_logger(__name__)
 
@@ -114,3 +107,9 @@ def close_multi_user_database() -> None:
         _multi_user_manager.close()
         _multi_user_manager = None
         logger.info("多用户数据库连接已关闭")
+import os
+
+from .config import DatabaseConfig
+from .manager import DatabaseManager
+from .multi_user_manager import MultiUserDatabaseManager
+

@@ -4,13 +4,7 @@
 提供服务健康状态监控和检查功能。
 """
 
-import asyncio
-from typing import Dict, List, Optional, Callable, Any
-from datetime import datetime, timedelta
-from dataclasses import dataclass
 
-from src.core import logger
-from ..base import BaseService
 
 
 @dataclass
@@ -184,7 +178,9 @@ class ServiceHealthChecker:
         unhealthy = len(self.get_unhealthy_services())
 
         return {
-            "total_services": total,
+            "total_services": total, timedelta
+
+
             "healthy_count": healthy,
             "unhealthy_count": unhealthy,
             "healthy_percentage": (healthy / total * 100) if total > 0 else 0,

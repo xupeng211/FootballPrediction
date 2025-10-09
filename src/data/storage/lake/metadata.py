@@ -5,15 +5,7 @@ Metadata Manager
 管理数据湖的元数据信息。
 """
 
-import json
-import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
 
@@ -406,6 +398,8 @@ class S3MetadataManager:
 
             paginator = self.s3_client.get_paginator("list_objects_v2")
             for page in paginator.paginate(
+
+
                 Bucket=bucket_name, Prefix=f"{object_path}/"
             ):
                 if "Contents" in page:
@@ -426,7 +420,6 @@ class S3MetadataManager:
                                     day_part = int(part.split("=")[1])
 
                             if year_part and month_part and day_part:
-                                from datetime import datetime
                                 date_ranges.append(
                                     datetime(year_part, month_part, day_part)
                                 )

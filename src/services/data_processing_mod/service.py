@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .........src.services.data_processing.mod import pipeline
+from .........src.services.data_processing.mod import service
+from .........src.services.data_processing.mod import transformer
+from .........src.services.data_processing.mod import validator
 
 warnings.warn(
     "直接从 service 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.services.data_processing.mod import pipeline
-from .........src.services.data_processing.mod import validator
-from .........src.services.data_processing.mod import transformer
-from .........src.services.data_processing.mod import service
 
 # 导出所有类
 __all__ = [

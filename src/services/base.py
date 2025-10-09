@@ -1,7 +1,4 @@
-from typing import cast, Any, Optional, Union
-from abc import ABC, abstractmethod
 
-from src.core import logger
 
 """
 足球预测系统基础服务模块
@@ -55,3 +52,7 @@ class AbstractBaseService(ABC):
     @abstractmethod
     async def shutdown(self) -> None:
         """服务关闭"""
+
+
+from src.core import logger
+

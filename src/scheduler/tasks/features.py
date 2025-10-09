@@ -1,20 +1,14 @@
 """
+        from sqlalchemy import text
+
 特征计算任务
 Feature Calculation Tasks
 
 包含批量特征计算任务。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Optional
 
-from src.data.features.feature_store import FootballFeatureStore
-from src.database.connection import get_async_session
 
-from .base import BaseDataTask
-from ..celery_config import app
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +24,6 @@ def calculate_features_batch(self, hours_ahead: int = 2):
     try:
         logger.info(f"开始执行特征计算任务，计算未来{hours_ahead}小时内的比赛特征")
 
-        from sqlalchemy import text
 
         async def _calculate_features():
             """异步计算特征"""
@@ -53,6 +46,8 @@ def calculate_features_batch(self, hours_ahead: int = 2):
                 if not matches:
                     logger.info(f"未来{hours_ahead}小时内没有需要计算特征的比赛")
                     return 0, 0
+
+
 
                 # 2. 初始化特征存储
                 feature_store = FootballFeatureStore()

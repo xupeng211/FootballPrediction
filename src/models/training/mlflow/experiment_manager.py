@@ -4,8 +4,6 @@ MLflow 实验管理器
 负责管理MLflow实验、运行和模型注册
 """
 
-import logging
-from typing import Any, Dict, Optional
 
 # 处理可选依赖
 try:
@@ -253,6 +251,7 @@ class ExperimentManager:
         """
         try:
             run = self.mlflow_client.get_run(run_id)
+
 
             return {
                 "run_id": run_id,

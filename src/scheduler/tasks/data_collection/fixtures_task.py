@@ -4,14 +4,7 @@
 负责从外部API采集足球赛程数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
 
-from src.data.collectors.fixtures_collector import FixturesCollector
-from ...celery_config import app
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +26,9 @@ def collect_fixtures(self, leagues: Optional[List[str]] = None, days_ahead: int 
         # 设置采集时间范围
         date_from = datetime.now()
         date_to = date_from + timedelta(days=days_ahead)
+
+from datetime import datetime, timedelta
+
 
         logger.info(
             f"开始采集赛程数据: 时间范围 {date_from.date()} 到 {date_to.date()}"

@@ -5,13 +5,7 @@ Partition Manager
 管理数据湖的分区策略和操作。
 """
 
-import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import pandas as pd
-from pyarrow import compute as pc
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +238,8 @@ class PartitionManager:
         for col in self.partition_cols:
             if col not in schema.names:
                 missing_cols.append(col)
+
+
 
         if missing_cols:
             self.logger.warning(

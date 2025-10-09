@@ -6,11 +6,7 @@ Log Alert Channel
 Logs alerts to the logging system.
 """
 
-import logging
-from typing import Any, Dict
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 
 class LogChannel(BaseAlertChannel):
@@ -49,7 +45,9 @@ class LogChannel(BaseAlertChannel):
         try:
             log_message = f"[ALERT] {alert.title}: {alert.message}"
             log_data = {
-                "alert_id": alert.alert_id,
+                "alert_id": alert.alert_id, Dict
+
+
                 "title": alert.title,
                 "message": alert.message,
                 "level": alert.level.value,

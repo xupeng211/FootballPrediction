@@ -3,10 +3,7 @@
 Match Related Models
 """
 
-from datetime import datetime
-from typing import Optional
 
-from pydantic import BaseModel, Field
 
 
 class MatchQueryParams(BaseModel):
@@ -37,6 +34,8 @@ class MatchUpdateRequest(BaseModel):
     match_time: Optional[datetime] = Field(None, description="比赛时间")
     venue: Optional[str] = Field(None, description="比赛场地")
     home_score: Optional[int] = Field(None, ge=0, description="主队得分")
+
+
     away_score: Optional[int] = Field(None, ge=0, description="客队得分")
     home_half_score: Optional[int] = Field(None, ge=0, description="主队半场得分")
     away_half_score: Optional[int] = Field(None, ge=0, description="客队半场得分")

@@ -15,10 +15,7 @@ Create Date: 2025-09-12 12:48:23.849021
 
 """
 
-from typing import Sequence, Union, cast
 
-from alembic import context, op
-from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision: str = "09d03cebf664"
@@ -425,7 +422,9 @@ def _downgrade_sqlite_features():
 
     indexes_to_drop = [
         "idx_matches_date_league",
-        "idx_matches_teams_date",
+        "idx_matches_teams_date", Union, cast
+
+
         "idx_predictions_match_model_date",
         "idx_odds_match_bookmaker_time",
         "idx_features_team_match",

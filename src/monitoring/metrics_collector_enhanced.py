@@ -27,8 +27,9 @@ Provides comprehensive business and system metrics collection:
 基于 MONITORING_DESIGN.md 第3.2节设计。
 """
 
-# 为了向后兼容，从新的模块化实现重新导出
 from .metrics_collector_enhanced_mod import (
+
+# 为了向后兼容，从新的模块化实现重新导出
     EnhancedMetricsCollector,
     MetricsAggregator,
     MetricPoint,
@@ -38,7 +39,6 @@ from .metrics_collector_enhanced_mod import (
 )
 
 # 重新导出类型
-from .metrics_collector_enhanced_mod import MetricSummary, AlertInfo
 
 # 保持原有的导出
 __all__ = [

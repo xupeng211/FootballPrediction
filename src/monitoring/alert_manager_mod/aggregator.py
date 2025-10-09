@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .monitoring.alerts.aggregation.aggregator import *  # type: ignore
+from .monitoring.alerts.aggregation.deduplicator import *  # type: ignore
+from .monitoring.alerts.aggregation.grouping import *  # type: ignore
+from .monitoring.alerts.aggregation.silence import *  # type: ignore
 
 warnings.warn(
     "直接从 aggregator 导入已弃用。" "请从 monitoring.alerts.aggregation 导入相关类。",
@@ -18,10 +24,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .monitoring.alerts.aggregation.aggregator import *  # type: ignore
-from .monitoring.alerts.aggregation.deduplicator import *  # type: ignore
-from .monitoring.alerts.aggregation.grouping import *  # type: ignore
-from .monitoring.alerts.aggregation.silence import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

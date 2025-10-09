@@ -4,12 +4,7 @@
 收集应用级别的性能和业务指标。
 """
 
-import logging
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List
 
-from ..metrics.system_metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +307,8 @@ class ApplicationCollector:
         self.request_stats = [
             r for r in self.request_stats
             if r["timestamp"] > one_hour_ago
+
+
         ]
 
         # 清理超过7天的预测统计

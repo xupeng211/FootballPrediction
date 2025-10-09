@@ -1,13 +1,28 @@
 """
+    from .analyzers.data_analyzer import DataAnalyzer
+    from .analyzers.pattern_analyzer import PatternAnalyzer
+    from .analyzers.risk_analyzer import RiskAnalyzer
+    from .decorators.audit_decorators import (
+    from .decorators.performance_decorator import (
+    from .decorators.security_decorator import (
+    from .loggers.async_logger import AsyncLogger
+    from .loggers.audit_logger import AuditLogger
+    from .loggers.structured_logger import StructuredLogger
+    from .reporters.export_manager import ExportManager
+    from .reporters.report_generator import ReportGenerator
+    from .reporters.template_manager import TemplateManager
+
 高级审计服务
 Advanced Audit Service
 
 提供企业级的审计功能，包括数据分析、模式识别、风险评估等。
 """
 
-from .service import AuditService
 from .context import AuditContext
 from .models import (
+from .sanitizer import DataSanitizer
+from .service import AuditService
+
     AuditAction,
     AuditSeverity,
     AuditLog,
@@ -15,40 +30,27 @@ from .models import (
     AuditFilter,
     AuditConfig,
 )
-from .sanitizer import DataSanitizer
 
 __version__ = "1.0.0"
 __author__ = "Audit Service Team"
 
 # 延迟导入函数
 def _import_analyzers():
-    from .analyzers.data_analyzer import DataAnalyzer
-    from .analyzers.pattern_analyzer import PatternAnalyzer
-    from .analyzers.risk_analyzer import RiskAnalyzer
     return DataAnalyzer, PatternAnalyzer, RiskAnalyzer
 
 def _import_loggers():
-    from .loggers.audit_logger import AuditLogger
-    from .loggers.structured_logger import StructuredLogger
-    from .loggers.async_logger import AsyncLogger
     return AuditLogger, StructuredLogger, AsyncLogger
 
 def _import_reporters():
-    from .reporters.report_generator import ReportGenerator
-    from .reporters.template_manager import TemplateManager
-    from .reporters.export_manager import ExportManager
     return ReportGenerator, TemplateManager, ExportManager
 
 def _import_decorators():
-    from .decorators.audit_decorators import (
         audit_action, audit_api_endpoint, audit_database_operation,
         audit_sensitive_operation, audit_batch_operation,
     )
-    from .decorators.performance_decorator import (
         monitor_performance, cache_result, rate_limit,
         retry_on_failure, timeout,
     )
-    from .decorators.security_decorator import (
         require_permission, require_role, authenticate_user,
         rate_limit_by_user, validate_input, protect_csrf,
         detect_intrusion, SecurityError, AuthenticationError,

@@ -5,19 +5,9 @@ Predictors Module
 提供比赛预测的核心逻辑。
 """
 
-import inspect
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, text
 
-from src.database.connection import DatabaseManager
-from src.database.models import Match, Prediction
-from src.core.logging import get_logger
 
-from .cache_manager import PredictionCacheManager
-from .model_loader import ModelLoader
 
 try:
     from .feature_processor import FeatureProcessor
@@ -461,6 +451,19 @@ class MatchPredictor:
                         COUNT(DISTINCT model_version) as model_versions_used
                     FROM predictions
                     WHERE created_at >= :cutoff_date
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+import inspect
+import logging
+
+from sqlalchemy import select, text
+
+from .cache_manager import PredictionCacheManager
+from .model_loader import ModelLoader
+from src.core.logging import get_logger
+from src.database.connection import DatabaseManager
+from src.database.models import Match, Prediction
+
                 """)
 
                 cutoff_date = datetime.now() - timedelta(days=days)

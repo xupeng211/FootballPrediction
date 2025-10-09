@@ -1,22 +1,15 @@
 """
+from src.database.models import Match, MatchStatus
+from src.features.feature_store import FootballFeatureStore
+
 特征处理器
 
 负责处理训练数据的获取和预处理
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, Tuple
 
-import pandas as pd
-from sqlalchemy import and_, desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import DatabaseManager
-from src.database.models import Match, MatchStatus
-from src.features.feature_store import FootballFeatureStore
 
-from ..utils.data_utils import calculate_match_result
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +222,9 @@ class FeatureProcessor:
                     Match.match_status == MatchStatus.FINISHED,
                 )
             )
+
+
+
             .order_by(desc(Match.match_time))
             .limit(5)
         )

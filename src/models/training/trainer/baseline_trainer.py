@@ -4,19 +4,13 @@
 使用XGBoost实现足球比赛结果预测的基准模型
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
 
-import pandas as pd
-from sklearn.metrics import (
     accuracy_score,
     classification_report,
     f1_score,
     precision_score,
     recall_score,
 )
-from sklearn.model_selection import train_test_split
 
 try:
     import xgboost as xgb
@@ -25,8 +19,6 @@ except ImportError:
     HAS_XGB = False
     xgb = None
 
-from ..features.feature_processor import FeatureProcessor
-from ..mlflow.experiment_manager import ExperimentManager
 
 logger = logging.getLogger(__name__)
 

@@ -4,8 +4,6 @@
 负责记录数据采集相关的各项指标。
 """
 
-import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -129,3 +127,4 @@ class DataCollectionMetrics:
         """
         for collection in collections:
             self.record_collection(**collection)
+

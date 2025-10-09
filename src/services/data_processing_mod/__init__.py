@@ -5,19 +5,20 @@ Data Processing Service Module
 提供足球数据的清洗、处理和特征提取功能。
 """
 
-from .service import DataProcessingService
+from .handlers import (
+from .pipeline import (
 from .processors import (
+from .service import DataProcessingService
+
     MatchDataProcessor,
     OddsDataProcessor,
     ScoresDataProcessor,
     FeaturesDataProcessor,
 )
-from .pipeline import (
     BronzeToSilverProcessor,
     DataQualityValidator,
     AnomalyDetector,
 )
-from .handlers import (
     MissingDataHandler,
     MissingScoresHandler,
     MissingTeamDataHandler,

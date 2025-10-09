@@ -5,8 +5,9 @@ Kafka组件模块 - 兼容性包装器
 实际的实现已经拆分到 src/streaming/kafka/ 目录下。
 """
 
-# 从新模块化结构导入所有组件
 from .kafka import (
+
+# 从新模块化结构导入所有组件
     KafkaAdmin,
     FootballKafkaProducer,
     FootballKafkaConsumer,

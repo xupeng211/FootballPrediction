@@ -3,12 +3,7 @@
 Logging Decorators
 """
 
-import time
-from typing import Callable, Optional
 
-from .loggers import StructuredLogger
-from .manager import get_logger
-from .types import LogCategory
 
 
 def log_performance(operation: str, logger: Optional[StructuredLogger] = None):
@@ -77,6 +72,8 @@ def log_audit(action: str, logger: Optional[StructuredLogger] = None):
             log = logger or get_logger(func.__module__, LogCategory.AUDIT)
             # 尝试从kwargs或args中提取用户ID
             user_id = kwargs.get("user_id") or (
+
+
                 args[0]
                 if args and isinstance(args[0], dict) and "user_id" in args[0]
                 else None

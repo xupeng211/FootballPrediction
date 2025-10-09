@@ -5,12 +5,7 @@ Feature View Definitions
 定义 Feast 特征存储的特征视图。
 """
 
-from datetime import timedelta
-from typing import Dict
 
-from .data_sources import get_match_data_source, get_odds_data_source, get_team_data_source
-from .entities import get_entity_definitions
-from .mock_feast import FeatureView, Field, Float64, Int64
 
 
 def get_feature_view_definitions() -> Dict[str, FeatureView]:
@@ -24,7 +19,10 @@ def get_feature_view_definitions() -> Dict[str, FeatureView]:
 
     return {
         "team_recent_performance": FeatureView(
-            name="team_recent_performance",
+            name="team_recent_performance").data_sources import get_match_data_source, get_odds_data_source, get_team_data_source
+from .entities import get_entity_definitions
+from .mock_feast import FeatureView, Field, Float64, Int64
+
             entities=[entities["team"]],
             ttl=timedelta(days=7),
             schema=[

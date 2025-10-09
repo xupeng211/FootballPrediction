@@ -5,15 +5,14 @@ Cache Manager Module
 管理预测缓存相关操作。
 """
 
-import logging
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
 
-from src.core.logging import get_logger
+
+# Import moved to top
+
+
+
 
 try:
-    from .cache import PredictionCache
 except ImportError:
     # 如果无法导入，创建一个简单的缓存实现
     class PredictionCache:
@@ -173,7 +172,9 @@ class PredictionCacheManager:
             stats = await self.cache.get_cache_stats()
             return {
                 "cache_type": "prediction_cache",
-                "statistics": stats,
+                "statistics": stats, timedelta
+
+
                 "timestamp": datetime.now().isoformat()
             }
         except Exception as e:

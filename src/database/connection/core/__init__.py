@@ -3,6 +3,8 @@
 """
 
 from .config import (
+from .enums import DatabaseRole
+
     DATABASE_RETRY_CONFIG,
     DEFAULT_ASYNC_MAX_OVERFLOW,
     DEFAULT_ASYNC_POOL_SIZE,
@@ -12,7 +14,6 @@ from .config import (
     DEFAULT_POOL_TIMEOUT,
     get_pool_settings,
 )
-from .enums import DatabaseRole
 
 __all__ = [
     "DatabaseRole",

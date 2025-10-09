@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """Phase 3 改进迁移
 Phase 3 improvements migration
@@ -8,8 +7,6 @@ Revises: d3bf28af22ff
 Create Date: 2024-01-10 10:00:00.000000
 
 """
-from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "007_improve_phase3_implementations"
@@ -276,6 +273,8 @@ def downgrade():
     # 删除触发器
     tables_with_updated_at = ["matches", "teams", "leagues", "predictions"]
     for table in tables_with_updated_at:
+
+
         op.execute(f"DROP TRIGGER IF EXISTS update_{table}_updated_at ON {table};")
 
     # 删除函数

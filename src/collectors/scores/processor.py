@@ -5,12 +5,8 @@ Data Processor
 处理和验证比分数据。
 """
 
-from typing import Any, Dict, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import Match, MatchStatus
-from src.utils.time_utils import parse_datetime
 
 logger = __import__("logging").getLogger(__name__)
 
@@ -151,6 +147,9 @@ class ScoreDataProcessor:
         for field in required_fields:
             if field not in score_data:
                 return False
+
+
+
 
         # 验证比分是否为数字
         try:

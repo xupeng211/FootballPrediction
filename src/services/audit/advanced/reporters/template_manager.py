@@ -5,11 +5,7 @@ Template Manager
 管理审计报告的模板和样式。
 """
 
-import json
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -691,13 +687,14 @@ class TemplateManager:
             template_data = json.loads(template_json)
             name = template_data.get("name")
 
+
+
             if not name:
                 self.logger.error("模板名称不能为空")
                 return False
 
             # 如果模板已存在，添加时间戳避免冲突
             if name in self.custom_templates:
-                import time
                 name = f"{name}_{int(time.time())}"
 
             self.custom_templates[name] = template_data

@@ -11,8 +11,9 @@ Celery Scheduler Tasks
 基于 DATA_DESIGN.md 第3节设计。
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有任务
 from .tasks import (
+
+# 为了向后兼容性，从新的模块化结构中导入所有任务
     # 基础类
     BaseDataTask,
 

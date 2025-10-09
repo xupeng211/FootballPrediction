@@ -21,6 +21,8 @@ from .async_cache import AsyncTTLCache
 from .cache_entry import CacheEntry
 from .cache_factory import CacheFactory
 from .cache_instances import (
+from .ttl_cache import TTLCache
+
     CACHES,
     clear_all_caches,
     cleanup_all_expired,
@@ -35,7 +37,6 @@ from .cache_instances import (
     stop_auto_cleanup,
     temp_cache,
 )
-from .ttl_cache import TTLCache
 
 __all__ = [
     # Core classes

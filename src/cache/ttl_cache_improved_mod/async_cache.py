@@ -6,9 +6,7 @@ Async TTL Cache Wrapper
 Provides async interface for TTLCache.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
-from .ttl_cache import TTLCache
 
 
 class AsyncTTLCache:
@@ -222,6 +220,8 @@ class AsyncTTLCache:
     async def __acontains__(self, key: str) -> bool:
         """异步in操作符"""
         return await self.get(key) is not None
+
+
 
     def __repr__(self) -> str:
         return f"AsyncTTLCache({self._cache.__repr__()})"

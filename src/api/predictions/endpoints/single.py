@@ -1,22 +1,16 @@
 """
+from src.database.connection import get_async_session
+from src.database.models import Predictions
+
 单个预测端点
 Single Prediction Endpoints
 
 处理单场比赛预测相关的API端点。
 """
 
-from typing import Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import select
 
-from src.api.dependencies import get_current_user, get_prediction_engine
-from src.core.logging_system import get_logger
-from src.database.connection import get_async_session
-from src.database.models import Predictions
-from src.core.prediction_engine import PredictionEngine
 
-from ..models import (
     PredictionRequest,
     PredictionResponse,
     PredictionHistoryResponse,
@@ -125,6 +119,9 @@ async def get_match_prediction_history(
                 .order_by(Predictions.created_at.desc())
                 .limit(limit)
             )
+
+
+
 
             result = await session.execute(query)
             predictions = result.scalars().all()

@@ -5,11 +5,12 @@ Kafka消费者模块 - 兼容性包装器
 实际的实现已经拆分到 src/streaming/consumer/ 目录下。
 """
 
-# 从新模块化结构导入所有组件
 from .consumer import FootballKafkaConsumer
-from .message_processor import MessageProcessor
 from .data_processor import DataProcessor
+from .message_processor import MessageProcessor
 from .utils import get_session
+
+# 从新模块化结构导入所有组件
 
 # 重新导出以保持向后兼容性
 __all__ = [

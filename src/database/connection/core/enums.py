@@ -4,8 +4,6 @@
 定义数据库角色和类型相关的枚举
 """
 
-from enum import Enum
-from typing import Dict
 
 
 class DatabaseRole(str, Enum):
@@ -76,3 +74,4 @@ class DatabaseRole(str, Enum):
         """
         permissions = self.get_permissions(self)
         return permissions.get(permission, False)
+

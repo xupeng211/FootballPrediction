@@ -8,10 +8,11 @@ Football Prediction Engine Core Module
 注意：此文件已重构为模块化结构，具体实现请查看 src/core/prediction/ 目录。
 """
 
-# 为了向后兼容，从新模块导入所有内容
 from src.core.prediction import PredictionEngine
 from src.core.prediction.config import PredictionConfig
 from src.core.prediction.statistics import PredictionStatistics
+
+# 为了向后兼容，从新模块导入所有内容
 
 # 保持原有的导入方式
 __all__ = [

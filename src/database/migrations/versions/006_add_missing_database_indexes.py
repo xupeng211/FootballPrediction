@@ -15,10 +15,7 @@ Create Date: 2025-09-12 01:35:00.000000
 
 """
 
-from typing import Sequence, Union, cast
 
-from alembic import context, op
-from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
 revision: str = "006_missing_indexes"
@@ -224,6 +221,8 @@ def downgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过索引回滚")
+
+
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database indexes rollback")
         return

@@ -4,16 +4,8 @@
 分析审计日志，提取统计信息和异常模式。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from enum import Enum
 
-from sqlalchemy import and_, desc, func
-from sqlalchemy.orm import Session
 
-from src.database.connection import get_async_session
-from src.database.models.audit_log import (
     AuditAction,
     AuditLog,
     AuditLogSummary,
@@ -275,6 +267,9 @@ class AuditAnalyzer:
 
             async with get_async_session() as session:
                 # 按操作类型统计
+
+
+
                 action_stats = await session.execute(
                     session.query(
                         AuditLog.action,

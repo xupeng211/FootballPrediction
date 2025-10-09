@@ -5,15 +5,8 @@ Model Metrics Endpoint
 提供获取模型性能指标的API接口。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict
 
-from fastapi import HTTPException, Query
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +142,9 @@ async def get_model_metrics(
             trend_query,
             {"model_name": model_name, "start_date": start_date, "end_date": end_date},
         )
+
+
+
 
         daily_trends = []
         for row in trend_result:

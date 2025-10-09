@@ -7,8 +7,11 @@ Logging System (Backward Compatible)
 Provides backward compatible exports for the modular logging system.
 """
 
-# 重新导出主要类和函数
+import os
+
 from .logging import (
+
+# 重新导出主要类和函数
     LogLevel,
     LogCategory,
     StructuredLogger,
@@ -20,7 +23,6 @@ from .logging import (
 )
 
 # 初始化默认配置
-import os
 
 LoggerManager.configure(
     level=LogLevel.INFO,

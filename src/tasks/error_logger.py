@@ -10,16 +10,8 @@
 支持写入到 error_logs 表和数据采集日志表。
 """
 
-import logging
-import traceback
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
-from src.database.models.data_collection_log import CollectionStatus, DataCollectionLog
-from src.database.sql_compatibility import (
     CompatibleQueryBuilder,
     SQLCompatibilityHelper,
     get_db_type_from_engine,

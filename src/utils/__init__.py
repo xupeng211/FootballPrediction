@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统工具模块
@@ -11,6 +10,9 @@ from typing import cast, Any, Optional, Union
 - 字符串处理工具
 - 字典处理工具
 """
+
+
+from typing import cast, Any, Optional, Union
 
 from .crypto_utils import CryptoUtils
 from .data_validator import DataValidator

@@ -5,11 +5,7 @@ Prediction Cache Manager
 管理预测结果的缓存。
 """
 
-import logging
-from typing import Any, Dict, Optional
 
-from src.cache.redis_manager import RedisManager
-from src.cache.redis.core.key_manager import CacheKeyManager
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +205,8 @@ class PredictionCacheManager:
             # 使用Redis模式匹配删除所有预测相关键
             pattern = "prediction:*"
             keys = await self.redis_manager.keys(pattern)
+
+
             if keys:
                 await self.redis_manager.delete(*keys)
                 logger.info(f"清除预测缓存: {len(keys)} 个键")

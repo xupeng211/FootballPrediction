@@ -4,9 +4,7 @@
 定义所有系统监控相关的Prometheus指标。
 """
 
-from typing import Dict, List, Optional
 
-from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 
 
 class SystemMetrics:
@@ -128,7 +126,6 @@ class SystemMetrics:
         try:
             return Counter(name, description, labels or [], registry=self.registry)
         except ValueError:
-            from unittest.mock import Mock
 
             mock = Mock()
             mock.inc = Mock()
@@ -142,7 +139,6 @@ class SystemMetrics:
         try:
             return Gauge(name, description, labels or [], registry=self.registry)
         except ValueError:
-            from unittest.mock import Mock
 
             mock = Mock()
             mock.set = Mock()
@@ -157,8 +153,9 @@ class SystemMetrics:
         """创建Histogram指标"""
         try:
             return Histogram(name, description, labels or [], registry=self.registry)
+
+
         except ValueError:
-            from unittest.mock import Mock
 
             mock = Mock()
             mock.observe = Mock()

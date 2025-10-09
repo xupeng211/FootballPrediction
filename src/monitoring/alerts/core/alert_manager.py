@@ -6,15 +6,7 @@ Alert Manager (Core Module)
 Core alert manager that coordinates various components while maintaining backward compatibility.
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
 
-from .aggregator import AlertAggregator
-from .deduplicator import AlertDeduplicator
-from .rule_engine import AlertRuleEngine
-from .scheduler import AlertScheduler, AlertTaskFactory
 
 # 尝试从不同位置导入模型和渠道
 try:
@@ -704,3 +696,12 @@ class AlertManager:
     def aggregate_alert(self, alert: Alert):
         """向后兼容：聚合告警"""
         return self.aggregator.aggregate_alert(alert)
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+import logging
+
+from .aggregator import AlertAggregator
+from .deduplicator import AlertDeduplicator
+from .rule_engine import AlertRuleEngine
+from .scheduler import AlertScheduler, AlertTaskFactory
+

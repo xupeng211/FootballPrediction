@@ -2,8 +2,6 @@
 足球预测系统Kafka生产者
 """
 
-import logging
-from typing import Any, Callable, Dict, Optional
 
 try:
     from confluent_kafka import Producer
@@ -12,8 +10,6 @@ except ImportError:
     KAFKA_PRODUCER_AVAILABLE = False
     Producer = None
 
-from src.streaming.kafka.config.stream_config import StreamConfig
-from src.streaming.kafka.serialization.message_serializer import MessageSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -132,3 +128,7 @@ class FootballKafkaProducer:
     def get_producer_config(self) -> Dict[str, Any]:
         """获取生产者配置"""
         return self.config.to_producer_config()
+
+from src.streaming.kafka.config.stream_config import StreamConfig
+from src.streaming.kafka.serialization.message_serializer import MessageSerializer
+

@@ -5,12 +5,7 @@ Pattern Analyzer
 负责分析审计日志中的行为模式和趋势。
 """
 
-import re
-from collections import Counter, defaultdict
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -682,6 +677,8 @@ class PatternAnalyzer:
         risk_score = patterns.get("risk_score", 0.0)
 
         summary = f"检测到 {suspicious_count} 个可疑模式和 {anomaly_count} 个异常，风险分数为 {risk_score:.1f}"
+
+
 
         if risk_score > 70:
             summary += " (高风险)"

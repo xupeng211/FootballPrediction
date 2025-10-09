@@ -1,23 +1,16 @@
 """
+import pandas as pd
+
+from ..core.result import AnomalyDetectionResult
+from ..metrics.prometheus_metrics import (
+
 机器学习异常检测器
 
 实现基于机器学习的异常检测方法，包括Isolation Forest、DBSCAN聚类和数据漂移检测。
 """
 
-import logging
-import warnings
-from datetime import datetime
-from typing import List
 
-import numpy as np
-import pandas as pd
-from scipy import stats
-from sklearn.cluster import DBSCAN
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 
-from ..core.result import AnomalyDetectionResult
-from ..metrics.prometheus_metrics import (
     anomaly_detection_duration_seconds,
     anomalies_detected_total,
     data_drift_score,
@@ -342,6 +335,9 @@ class MachineLearningAnomalyDetector:
             X_scaled = self.scaler.fit_transform(X)
 
             # 执行DBSCAN聚类
+
+
+
             self.dbscan = DBSCAN(eps=eps, min_samples=min_samples)
             cluster_labels = self.dbscan.fit_predict(X_scaled)
 

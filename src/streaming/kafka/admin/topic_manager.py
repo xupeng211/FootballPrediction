@@ -2,8 +2,6 @@
 Kafka主题管理器
 """
 
-import logging
-from typing import Any, Dict, Optional
 
 try:
     from confluent_kafka import KafkaError, KafkaException
@@ -16,7 +14,6 @@ except ImportError:
     KafkaError = None
     KafkaException = None
 
-from src.streaming.kafka.config.stream_config import StreamConfig
 
 logger = logging.getLogger(__name__)
 
@@ -160,3 +157,6 @@ class KafkaTopicManager:
         if self.admin_client:
             # AdminClient没有close方法
             logger.info("Kafka管理器已关闭")
+
+from src.streaming.kafka.config.stream_config import StreamConfig
+

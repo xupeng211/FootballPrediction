@@ -5,13 +5,8 @@ Active Models Endpoint
 提供获取当前活跃模型信息的API接口。
 """
 
-import logging
-from typing import Any, Dict
 
-from fastapi import HTTPException
-from mlflow import MlflowClient
 
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +25,12 @@ async def get_active_models(mlflow_client: MlflowClient) -> Dict[str, Any]:
         logger.info("获取当前活跃模型信息")
 
         # 获取所有注册模型
-        try:
+        # Import moved to top
+
+        try: Dict
+
+
+
             registered_models = mlflow_client.search_registered_models()
         except Exception as e:
             logger.error(f"无法连接到MLflow服务: {e}")

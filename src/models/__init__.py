@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测模型模块
@@ -10,17 +9,19 @@ from typing import cast, Any, Optional, Union
 - 通用数据模型: Content, AnalysisResult, User等
 """
 
+    AnalysisResult, Any, Optional, Union
+
 from .common_models import (
-    AnalysisResult,
+from .metrics_exporter import ModelMetricsExporter
+from .model_training import BaselineModelTrainer
+from .prediction_service import PredictionResult, PredictionService
+
     Content,
     ContentType,
     User,
     UserProfile,
     UserRole,
 )
-from .metrics_exporter import ModelMetricsExporter
-from .model_training import BaselineModelTrainer
-from .prediction_service import PredictionResult, PredictionService
 
 __all__ = [
     "BaselineModelTrainer",

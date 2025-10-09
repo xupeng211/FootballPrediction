@@ -5,7 +5,6 @@ Rate Limit Configuration Module
 管理 API 限流相关配置。
 """
 
-from typing import Dict, Any
 
 
 class RateLimitConfig:
@@ -127,6 +126,7 @@ class RateLimitConfig:
             Dict[str, Any]: 限流策略配置 / Rate limiting strategies configuration
         """
         return {
+
             "strategy": "sliding_window",  # fixed_window, sliding_window, token_bucket
             "key_generator": "ip_address",  # ip_address, user_id, api_key, custom
             "storage": "redis",  # memory, redis, database

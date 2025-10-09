@@ -1,18 +1,16 @@
 """
+            import uuid
+
+            import traceback
+
 结构化日志器
 Structured Logger
 
 提供结构化的审计日志记录功能。
 """
 
-import json
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
 
-from src.core.logging import get_logger
 
-from ..models import AuditLog
 
 logger = get_logger(__name__)
 
@@ -299,7 +297,6 @@ class StructuredLogger:
             Optional[str]: 堆栈信息 / Traceback information
         """
         try:
-            import traceback
 
             return traceback.format_exc()
         except Exception:
@@ -346,7 +343,6 @@ class StructuredLogger:
             str: 审计跟踪ID / Audit trail ID
         """
         try:
-            import uuid
 
             trail_id = str(uuid.uuid4())
 
@@ -504,7 +500,9 @@ class StructuredLogger:
                 "logger_name": self.audit_logger.name,
                 "level": self.audit_logger.level,
                 "handlers_count": len(self.audit_logger.handlers),
-                "effective_level": self.audit_logger.getEffectiveLevel(),
+                "handlers_count": len(self.audit_logger.handlers),)
+
+
                 "is_enabled_for_info": self.audit_logger.isEnabledFor(logging.INFO),
                 "is_enabled_for_error": self.audit_logger.isEnabledFor(logging.ERROR),
             }

@@ -1,22 +1,15 @@
 """
+        from ...database.connection import DatabaseManager
+
 特征计算器核心模块
 
 定义基础的特征计算器类和通用接口。
 """
 
-import asyncio
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from ..feature_definitions import (
     AllMatchFeatures,
     AllTeamFeatures,
 )
-from ..entities import MatchEntity, TeamEntity
-from .recent_performance import RecentPerformanceCalculator
-from .historical_matchup import HistoricalMatchupCalculator
-from .odds_features import OddsFeaturesCalculator
-from .batch_calculator import BatchCalculator
 
 
 class FeatureCalculator:
@@ -31,7 +24,6 @@ class FeatureCalculator:
     """
 
     def __init__(self, config: Optional[Dict] = None):
-        from ...database.connection import DatabaseManager
 
         self.db_manager = DatabaseManager()
         self.config = config or {}
@@ -112,8 +104,6 @@ class FeatureCalculator:
             results = await asyncio.gather(*tasks)
 
             # 类型转换确保正确的类型匹配
-            from typing import cast
-            from ..feature_definitions import (
                 RecentPerformanceFeatures,
                 HistoricalMatchupFeatures,
                 OddsFeatures,

@@ -1,31 +1,23 @@
 """
+from .config import DatabaseConfig, get_database_config
+from .roles import DatabaseRole
+from src.core.logging import get_logger
+from src.utils.retry import RetryConfig, retry
+
 多用户数据库管理器
 Multi-User Database Manager
 
 支持多角色、多权限的数据库连接管理。
 """
 
-import asyncio
-import logging
-import os
-from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
-from sqlalchemy import Engine, create_engine, text
-from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import QueuePool
 
-from src.core.logging import get_logger
-from src.utils.retry import RetryConfig, retry
 
-from .config import DatabaseConfig, get_database_config
-from .roles import DatabaseRole
 
 logger = get_logger(__name__)
 
@@ -358,4 +350,4 @@ class MultiUserDatabaseManager:
             "pool_size": engine.pool.size(),
             "checked_in": engine.pool.checkedin(),
             "checked_out": engine.pool.checkedout(),
-        }
+            "checked_out": engine.pool.checkedout(),)

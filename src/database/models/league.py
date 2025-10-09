@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 联赛模型
@@ -6,10 +5,7 @@ from typing import cast, Any, Optional, Union
 存储足球联赛的基础信息，如英超、西甲等。
 """
 
-from sqlalchemy import Boolean, Column, Index, Integer, String
-from sqlalchemy.orm import relationship
 
-from src.database.base import BaseModel
 
 
 class League(BaseModel):
@@ -90,3 +86,6 @@ class League(BaseModel):
     def get_active_leagues(cls, session):
         """获取所有活跃的联赛"""
         return session.query(cls).filter(cls.is_active is True).all()
+
+
+

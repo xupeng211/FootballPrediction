@@ -10,7 +10,10 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all core classes and enums.
 """
 
+
 import warnings
+
+from ..alerts.models import (
 
 # 发出弃用警告
 warnings.warn(
@@ -23,7 +26,6 @@ warnings.warn(
 )
 
 # 从新模块重新导出所有核心类型
-from ..alerts.models import (
     # 核心实体类
     Alert,
     AlertRule,

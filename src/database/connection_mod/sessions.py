@@ -5,13 +5,8 @@ Session Retrieval Helper Functions
 提供便捷的会话获取函数。
 """
 
-from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
-from sqlalchemy.orm import Session
 
-from .factory import get_database_manager, get_multi_user_database_manager
-from .roles import DatabaseRole
 
 
 @contextmanager
@@ -154,6 +149,9 @@ async def get_async_session(role: Optional[str] = None) -> AsyncGenerator[Sessio
         async with manager.get_async_session() as session:
             yield session
     else:
+
+
+
         manager = get_multi_user_database_manager()
         async with manager.get_async_session(role=role) as session:
             yield session

@@ -6,13 +6,7 @@ Alert Serialization Tools
 Provides serialization and deserialization functionality for alert objects.
 """
 
-import json
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from .alert import Alert
-from .escalation import Escalation, EscalationRule
-from .enums import (
     AlertChannel,
     AlertLevel,
     AlertSeverity,
@@ -23,8 +17,6 @@ from .enums import (
     IncidentStatus,
     NotificationStatus,
 )
-from .incident import Incident
-from .rule import AlertRule
 
 T = TypeVar('T')
 
@@ -625,7 +617,14 @@ class ValidationSerializer:
                 return False
 
         # 验证枚举值
-        try:
+        # Import moved to top
+
+        # Import moved to top
+
+
+        try: Dict, List, Optional, Type, TypeVar, Union
+
+
             IncidentSeverity(data["severity"])
             if "status" in data:
                 IncidentStatus(data["status"])

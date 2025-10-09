@@ -3,15 +3,7 @@
 Stream Data Processor
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, List, Optional
 
-from ..kafka_consumer import FootballKafkaConsumer
-from ..kafka_producer import FootballKafkaProducer
-from ..stream_config import StreamConfig
-from .health import HealthChecker
-from .statistics import ProcessingStatistics
 
 
 class StreamProcessor:
@@ -269,3 +261,13 @@ class StreamProcessor:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         self.stop_processing()
+from typing import Optional
+import asyncio
+import logging
+
+from ..kafka_consumer import FootballKafkaConsumer
+from ..kafka_producer import FootballKafkaProducer
+from ..stream_config import StreamConfig
+from .health import HealthChecker
+from .statistics import ProcessingStatistics
+

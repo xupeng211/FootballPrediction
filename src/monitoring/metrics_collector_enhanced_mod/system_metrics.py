@@ -1,16 +1,14 @@
 """
+            import os
+
+            import psutil
+
 系统指标收集器 / System Metrics Collector
 
 收集和管理系统相关的指标，如CPU、内存、连接数等。
 """
 
-import logging
-from datetime import datetime
-from typing import Dict, Any, Optional
 
-from .metric_types import MetricPoint
-from .prometheus_metrics import PrometheusMetricsManager
-from .aggregator import MetricsAggregator
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +41,6 @@ class SystemMetricsCollector:
     def update_system_metrics(self):
         """更新系统指标"""
         try:
-            import psutil
-            import os
 
             process = psutil.Process(os.getpid())
 
@@ -305,6 +301,8 @@ class SystemMetricsCollector:
         # 计算各缓存类型的命中率
         cache_summaries = {}
         for cache_type, stats in self.cache_stats.items():
+
+
             if stats["total_ops"] > 0:
                 hit_rate = stats["hits"] / stats["total_ops"]
                 cache_summaries[cache_type] = {

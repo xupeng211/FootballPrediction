@@ -1,4 +1,6 @@
 """
+            import hashlib
+
 告警管理模块
 Alert Management Module
 
@@ -7,7 +9,6 @@ Provides complete alert management functionality including alert creation, rule 
 """
 
 # 导入核心模块（新的拆分后的组件）
-from .core import (
     AlertManager as CoreAlertManager,
     AlertRuleEngine as CoreAlertRuleEngine,
     AlertDeduplicator,
@@ -23,9 +24,12 @@ from .core import (
 )
 
 # 向后兼容：导入原有的类
+# Import moved to top
+
+# Import moved to top
+
+
 try:
-    from .alert_manager import AlertManager
-    from .models import (
         Alert,
         AlertChannel,
         AlertLevel,
@@ -34,9 +38,6 @@ try:
         AlertStatus,
         AlertType,
     )
-    from .channels import BaseAlertChannel, LogAlertChannel, PrometheusAlertChannel
-    from .metrics import PrometheusMetrics
-    from .rules import AlertRuleEngine
 
     # 如果存在原有的AlertManager，使用它作为主要导出
     MainAlertManager = AlertManager
@@ -52,9 +53,6 @@ except ImportError:
 
 # 如果Alert类不存在，创建基本实现
 if Alert is None:
-    from enum import Enum
-    from typing import Any, Dict, Optional
-    from datetime import datetime
 
     class AlertLevel(Enum):
         CRITICAL = "critical"
@@ -117,7 +115,7 @@ if Alert is None:
         @property
         def fingerprint(self) -> str:
             """生成告警指纹"""
-            import hashlib
+
             content = f"{self.title}:{self.source}:{self.level.value}"
             return hashlib.md5(content.encode()).hexdigest()
 

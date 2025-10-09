@@ -4,12 +4,7 @@
 负责记录数据库相关的各项指标。
 """
 
-import logging
-import time
-from typing import Optional, List, Dict
 
-from sqlalchemy import text
-from src.database import get_async_db_session as get_async_session
 
 logger = logging.getLogger(__name__)
 
@@ -189,3 +184,9 @@ class DatabaseMetrics:
             List[str]: 表名列表
         """
         return self.tables_to_monitor.copy()
+import time
+
+from sqlalchemy import text
+
+from src.database import get_async_db_session as get_async_session
+

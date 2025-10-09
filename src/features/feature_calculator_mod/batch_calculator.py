@@ -4,13 +4,8 @@
 负责批量计算多个球队或比赛的特征，优化性能和数据库查询。
 """
 
-import asyncio
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from .recent_performance import RecentPerformanceCalculator
 
 
 class BatchCalculator:
@@ -75,8 +70,6 @@ class BatchCalculator:
             calculation_date = datetime.now()
 
         # 首先获取比赛信息
-        from sqlalchemy import select
-        from ...database.models.match import Match
 
         async with self.db_manager.get_async_session() as session:
             match_query = select(Match).where(Match.match_id.in_(match_ids))
@@ -86,7 +79,6 @@ class BatchCalculator:
         # 为每场比赛计算特征
         match_features = {}
         for match in matches:
-            from ..entities import MatchEntity
 
             match_entity = MatchEntity(
                 match_id=match.match_id,
@@ -96,7 +88,6 @@ class BatchCalculator:
             )
 
             # 使用完整的特征计算器
-            from .core import FeatureCalculator
 
             calculator = FeatureCalculator()
             features = await calculator.calculate_all_match_features(
@@ -133,7 +124,6 @@ class BatchCalculator:
         # 为每个球队生成时间序列特征
         for team_id in team_ids:
             # 生成日期序列（每周一个时间点）
-            from datetime import timedelta
 
             current_date = start_date
             while current_date <= end_date:
@@ -176,8 +166,6 @@ class BatchCalculator:
             feature_types = ["recent_performance", "historical_matchup", "odds_features"]
 
         # 获取赛季的所有比赛
-        from sqlalchemy import select, extract
-        from ...database.models.match import Match
 
         async with self.db_manager.get_async_session() as session:
             season_query = select(Match).where(
@@ -201,7 +189,6 @@ class BatchCalculator:
             "computation_time": None,
         }
 
-        from datetime import datetime
         start_time = datetime.now()
 
         # 计算每种特征类型
@@ -263,6 +250,9 @@ class BatchCalculator:
 
         # 计算最优批次数
         batch_size = max_concurrent_tasks
+
+
+
         batches = []
 
         for i in range(0, total_items, batch_size):

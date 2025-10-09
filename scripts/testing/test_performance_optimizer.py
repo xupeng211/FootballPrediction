@@ -14,7 +14,6 @@ import time
 import json
 import subprocess
 from pathlib import Path
-from typing import List, Dict
 from collections import defaultdict
 import re
 
@@ -425,8 +424,6 @@ filterwarnings =
                 '''#!/usr/bin/env python3
 """Optimized test runner"""
 
-import subprocess
-import sys
 
 def run_tests():
     """Run tests with optimizations"""

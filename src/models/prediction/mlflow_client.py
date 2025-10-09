@@ -5,13 +5,7 @@ MLflow Client Wrapper
 提供MLflow模型加载和管理功能。
 """
 
-import logging
-import os
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.logging import get_logger
-from src.utils.retry import retry_async as AsyncRetry, ExponentialBackoffStrategy as ExponentialBackoff
 
 logger = get_logger(__name__)
 
@@ -239,7 +233,9 @@ class MLflowModelClient:
 
         try:
             self.client.transition_model_version_stage(
-                name=self.model_name,
+                name=self.model_name, Dict, List, Optional, Tuple
+
+
                 version=version,
                 stage=new_stage,
                 archive_existing_versions=archive_existing_versions

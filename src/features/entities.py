@@ -6,9 +6,6 @@
 - TeamEntity: 球队实体，用于球队级别的特征
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
 
 
 @dataclass
@@ -92,6 +89,7 @@ class FeatureKey:
     entity_type: str  # "match" 或 "team"
     entity_id: int  # match_id 或 team_id
     feature_timestamp: datetime
+
 
     def __hash__(self) -> int:
         return hash((self.entity_type, self.entity_id, self.feature_timestamp))

@@ -1,14 +1,5 @@
 """Lightweight TTL cache with sync and async helpers."""
-from __future__ import annotations
 
-import asyncio
-import json
-import threading
-import time
-from dataclasses import dataclass, field
-from datetime import timedelta
-from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, cast
 
 
 @dataclass
@@ -51,6 +42,8 @@ class TTLCache:
     ) -> None:
         if maxsize is not None:
             max_size = maxsize
+
+
         self._max_size = max_size
         self._default_ttl = self._normalize_ttl(ttl)
         self._cache: Dict[str, CacheItem] = {}

@@ -1,17 +1,16 @@
 """
+            import os
+
+            from src.database.config import DatabaseConfig
+            from src.database.connection.managers.database_manager import DatabaseManager
+        from src.database.connection.managers.database_manager import DatabaseManager
+
 数据库管理器
 
 主要的数据库连接管理类，整合引擎管理和会话管理
 """
 
-import logging
-from typing import Optional
 
-from src.database.config import DatabaseConfig, get_database_config
-from src.database.connection.core.config import DATABASE_RETRY_CONFIG
-from src.database.connection.pools.engine_manager import DatabaseEngineManager
-from src.database.connection.sessions.session_manager import DatabaseSessionManager
-from src.utils.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,6 @@ class DatabaseManager:
 
     使用示例 / Usage Example:
         ```python
-        from src.database.connection.managers.database_manager import DatabaseManager
 
         # 初始化数据库连接
         db_manager = DatabaseManager()
@@ -83,9 +81,6 @@ class DatabaseManager:
 
         Example:
             ```python
-            from src.database.connection.managers.database_manager import DatabaseManager
-            from src.database.config import DatabaseConfig
-            import os
 
             # 使用自定义配置
             config = DatabaseConfig(
@@ -260,6 +255,8 @@ class DatabaseManager:
             if self.engine_manager._sync_engine:
                 sync_pool = self.engine_manager._sync_engine.pool
                 pool_status["sync"] = {
+
+
                     "size": sync_pool.size(),
                     "checked_in": sync_pool.checkedin(),
                     "checked_out": sync_pool.checkedout(),

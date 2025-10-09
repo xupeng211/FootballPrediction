@@ -4,9 +4,7 @@ API响应模型定义
 为所有API端点提供标准化的响应模型，确保API文档的一致性和完整性。
 """
 
-from typing import Any, Dict, Optional, cast
 
-from pydantic import BaseModel, Field
 
 
 class ServiceCheck(BaseModel):
@@ -63,5 +61,7 @@ class ErrorResponse(BaseModel):
 
     error: bool = Field(..., description="是否为错误")
     status_code: int = Field(..., description="HTTP状态码")
+
+
     message: str = Field(..., description="错误消息")
     path: str = Field(..., description="请求路径")

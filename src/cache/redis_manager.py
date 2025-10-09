@@ -4,11 +4,12 @@ Redis缓存管理器
 实现Redis连接池、基础操作方法，支持异步和同步两种模式
 """
 
-# 导入重构后的Redis管理器
 from .redis import RedisManager, CacheKeyManager, get_redis_manager
+from .redis.utils import (
+
+# 导入重构后的Redis管理器
 
 # 向后兼容：导出原有的便捷函数
-from .redis.utils import (
     adelete_cache,
     aexists_cache,
     aget_cache,

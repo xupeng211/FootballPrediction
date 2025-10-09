@@ -3,11 +3,7 @@
 Health Check
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-from ..kafka_consumer import FootballKafkaConsumer
-from ..kafka_producer import FootballKafkaProducer
 
 
 class HealthChecker:
@@ -108,3 +104,6 @@ class HealthChecker:
             Topic列表
         """
         return health_status.get("available_topics", [])
+from datetime import datetime
+
+

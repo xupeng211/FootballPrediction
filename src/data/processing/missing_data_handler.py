@@ -12,19 +12,8 @@
 基于 DATA_DESIGN.md 第4.3节设计。
 """
 
-import json
-import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
 
-import pandas as pd
-from sqlalchemy import func, select
-from sqlalchemy.exc import SQLAlchemyError
 
-from src.core.config import get_settings
-from src.database.connection import DatabaseManager
-from src.database.models.features import Features
 
 
 class MissingDataHandler:
@@ -312,3 +301,16 @@ class MissingDataHandler:
         """清理历史均值缓存。"""
 
         self._feature_average_cache.clear()
+from pathlib import Path
+from typing import Dict, List, Optional
+import json
+import logging
+import os
+
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
+
+from src.core.config import get_settings
+from src.database.connection import DatabaseManager
+from src.database.models.features import Features
+

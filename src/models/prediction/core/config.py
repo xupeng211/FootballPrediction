@@ -4,14 +4,12 @@
 定义预测服务的配置参数和重试配置
 """
 
-import os
-from datetime import timedelta
 
-from src.utils.retry import RetryConfig
 
 # MLflow重试配置 / MLflow retry configuration
+# Import moved to top
+
 try:
-    from mlflow.exceptions import MlflowException
 
     MLFLOW_RETRY_CONFIG = RetryConfig(
         max_attempts=int(os.getenv("MLFLOW_RETRY_MAX_ATTEMPTS", "3")),
@@ -43,6 +41,8 @@ class PredictionConfig:
     def __init__(self):
         # MLflow配置
         self.mlflow_tracking_uri = os.getenv(
+
+
             "MLFLOW_TRACKING_URI",
             "http://localhost:5002"
         )

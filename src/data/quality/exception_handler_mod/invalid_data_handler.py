@@ -4,11 +4,7 @@
 负责处理无效数据，记录到质量日志供人工排查。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from .exceptions import InvalidDataException
 
 
 class InvalidDataHandler:
@@ -298,3 +294,8 @@ class InvalidDataHandler:
         """
         self.config.update(new_config)
         self.logger.info(f"无效数据处理器配置已更新: {new_config}")
+from datetime import datetime
+import logging
+
+from .exceptions import InvalidDataException
+

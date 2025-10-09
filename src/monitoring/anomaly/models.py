@@ -5,9 +5,6 @@ Anomaly Detection Models
 定义异常检测相关的数据模型。
 """
 
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List
 
 
 class AnomalyType(Enum):
@@ -85,7 +82,8 @@ class AnomalyResult:
         """字符串表示"""
         return (
             f"AnomalyResult({self.table_name}.{self.column_name}, "
-            f"type={self.anomaly_type.value}, "
+            "detected_at": self.detected_at.isoformat(),)
+
             f"severity={self.severity.value}, "
             f"score={self.anomaly_score:.3f})"
         )

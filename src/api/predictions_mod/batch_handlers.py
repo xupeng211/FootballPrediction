@@ -4,16 +4,8 @@
 处理批量预测相关的请求。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from fastapi import HTTPException, Request
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import Match
-from src.models.prediction_service import PredictionService
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +47,9 @@ async def batch_predict_matches_handler(
             raise HTTPException(
                 status_code=400,
                 detail="批量预测最多支持50场比赛"
+
+
+
             )
 
         # 验证比赛存在

@@ -5,11 +5,7 @@ Anomaly Summary Generator
 生成异常检测结果的统计摘要。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List
 
-from .models import AnomalyResult, AnomalySeverity
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +157,8 @@ class AnomalySummarizer:
 
         # 基于严重程度的建议
         if by_severity.get("critical", 0) > 0:
+
+
             recommendations.append(
                 f"发现 {by_severity['critical']} 个严重异常，需要立即处理"
             )

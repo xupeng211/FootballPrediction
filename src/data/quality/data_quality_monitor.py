@@ -13,13 +13,8 @@
 基于 DATA_DESIGN.md 第5.1节设计。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, cast
 
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
 
 
 class DataQualityMonitor:
@@ -444,6 +439,9 @@ class DataQualityMonitor:
         if freshness_check.get("status") in ["warning", "error"]:
             recommendations.append("检查数据采集调度器是否正常运行")
             recommendations.append("验证外部API连接状态")
+
+
+
 
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
         if high_severity_count > 0:

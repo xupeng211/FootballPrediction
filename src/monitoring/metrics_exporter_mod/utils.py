@@ -1,14 +1,12 @@
 """
+    from unittest.mock import Mock
+
 工具函数 / Utility Functions
 
 提供指标导出器使用的工具函数。
 """
 
-import logging
-from typing import Optional, List
-from datetime import datetime
 
-from prometheus_client import (
     CONTENT_TYPE_LATEST,
     generate_latest,
     CollectorRegistry,
@@ -82,7 +80,6 @@ def get_or_create_gauge(
 
 def _create_mock_counter():
     """创建 Mock Counter 用于测试"""
-    from unittest.mock import Mock
     mock = Mock()
     mock.inc = Mock()
     mock.labels = Mock(return_value=mock)
@@ -91,7 +88,6 @@ def _create_mock_counter():
 
 def _create_mock_gauge():
     """创建 Mock Gauge 用于测试"""
-    from unittest.mock import Mock
     mock = Mock()
     mock.set = Mock()
     mock.labels = Mock(return_value=mock)
@@ -202,7 +198,9 @@ def get_metric_summary(registry: CollectorRegistry) -> dict:
     summary = {
         "total_metrics": 0,
         "metrics_by_type": {
-            "counter": 0,
+            "counter": 0, List
+
+
             "gauge": 0,
             "histogram": 0,
             "summary": 0,

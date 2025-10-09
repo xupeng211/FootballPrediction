@@ -6,12 +6,8 @@ Slack webhookJf
 Sends alerts via Slack webhook.
 """
 
-from typing import Any, Dict
 
-import aiohttp
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 
 class SlackChannel(BaseAlertChannel):
@@ -131,6 +127,9 @@ class SlackChannel(BaseAlertChannel):
             "info": "#36a64f",  # r
             "warning": "#ff9500",  # Yr
             "error": "#ff0000",  # r
+
+
+
             "critical": "#8b0000",  # r
         }
         return colors.get(level, "#808080")  # ؤpr

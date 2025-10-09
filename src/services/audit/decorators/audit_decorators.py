@@ -4,16 +4,8 @@
 自动审计函数调用和数据库操作。
 """
 
-import functools
-import inspect
-import logging
-import time
-from typing import Any, Callable, Dict, Optional, TypeVar
 
-from fastapi import Request
 
-from src.database.models.audit_log import AuditAction, AuditSeverity
-from enum import Enum
 
 
 class AuditStatus(str, Enum):
@@ -22,8 +14,6 @@ class AuditStatus(str, Enum):
     FAILED = "failed"
     PENDING = "pending"
 
-from ..context import AuditContext, audit_context
-from ..loggers.audit_logger import AuditLogger
 
 F = TypeVar("F", bound=Callable[..., Any])
 logger = logging.getLogger(__name__)
@@ -267,3 +257,12 @@ def audit_delete(table_name: str):
         record_id_param="id",
         old_values_param="old_data",
     )
+import functools
+import inspect
+import time
+
+
+from ..context import AuditContext, audit_context
+from ..loggers.audit_logger import AuditLogger
+from src.database.models.audit_log import AuditAction, AuditSeverity
+

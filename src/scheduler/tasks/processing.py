@@ -1,21 +1,14 @@
 """
+    from sqlalchemy import text
+
 数据处理任务
 Data Processing Tasks
 
 包含Bronze层到Silver层的数据处理任务。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict
 
-from src.data.processing.football_data_cleaner import FootballDataCleaner
-from src.data.quality.data_quality_monitor import DataQualityMonitor
-from src.database.connection import get_async_session
 
-from .base import BaseDataTask
-from ..celery_config import app
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +43,6 @@ def _get_bronze_table_query(table_name: str) -> str:
 
 def _get_update_query(table_name: str):
     """获取更新查询语句"""
-    from sqlalchemy import text
 
     queries = {
         "raw_matches": text(
@@ -127,7 +119,6 @@ async def _transform_to_silver_format(cleaned_data, bronze_table, record_id):
 
 async def _save_to_silver_layer(session, silver_data, bronze_table):
     """保存到Silver层"""
-    from sqlalchemy import text
 
     # 确定Silver表名
     silver_table_map = {
@@ -259,7 +250,6 @@ async def _process_bronze_table(
         return 0
 
     # 获取查询语句
-    from sqlalchemy import text
 
     query = _get_bronze_table_query(table_name)
     if not query:
@@ -313,6 +303,8 @@ def process_bronze_to_silver(self, batch_size: int = 1000):
                 batches_processed = 0
 
                 # 从Bronze层读取原始数据
+
+
                 logger.info("从Bronze层读取原始数据...")
                 bronze_tables = [
                     "raw_matches",

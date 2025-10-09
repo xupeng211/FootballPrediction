@@ -5,8 +5,9 @@
 实际的实现已经拆分到 src/models/training/ 目录下。
 """
 
-# 从新模块化结构导入所有组件
 from .training import BaselineModelTrainer
+
+# 从新模块化结构导入所有组件
 
 # 处理可选依赖（保持向后兼容）
 try:

@@ -7,10 +7,7 @@ Create Date: 2025-09-10 20:42:25.754318
 
 """
 
-from typing import Sequence, Union, cast
 
-import sqlalchemy as sa
-from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f48d412852cc"
@@ -217,6 +214,8 @@ def downgrade() -> None:
     # 删除Gold层特征表的扩展字段
     try:
         # 只删除在此迁移中添加的字段
+
+
         columns_to_drop = [
             "last_updated",
             "feature_version",

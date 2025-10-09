@@ -4,13 +4,7 @@
 负责将审计事件记录到数据库。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, Optional
-from enum import Enum
 
-from src.database.connection import get_async_session
-from src.database.models.audit_log import (
     AuditAction,
     AuditLog,
     AuditSeverity,
@@ -65,7 +59,6 @@ class AuditLogger:
         session_obj = None
         try:
             # 1. 获取上下文信息
-            from ..sanitizer import DataSanitizer
             sanitizer = DataSanitizer()
             context_dict = context or {}
 
@@ -146,6 +139,8 @@ class AuditLogger:
             try:
                 # 开始事务
                 await session.begin()
+
+
 
                 # 批量创建审计日志
                 audit_logs = []

@@ -1,4 +1,6 @@
 """
+        from .audit_service_mod.utils import sanitize_data as _sanitize
+
 权限审计服务
 
 提供API层面的自动审计功能，记录所有写操作到audit_log表。
@@ -11,7 +13,6 @@
 """
 
 # 导入重构后的模块化组件
-from .audit_service_mod import (
     # 核心服务
     AuditService as _AuditService,
     AuditStorage,
@@ -39,7 +40,6 @@ from .audit_service_mod import (
 )
 
 # 导入原始数据库模型（保持向后兼容）
-from src.database.models.audit_log import (
     AuditAction as DBAuditAction,
     AuditLog as DBAuditLog,
     AuditLogSummary as DBAuditLogSummary,
@@ -47,11 +47,6 @@ from src.database.models.audit_log import (
 )
 
 # 保持向后兼容的类型别名
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
-from contextvars import ContextVar
-import logging
-import time
-from functools import wraps
 
 # 类型定义
 F = TypeVar("F", bound=Callable[..., Any])
@@ -110,8 +105,6 @@ class AuditService(_AuditService):
         )
 
         # 转换动作类型
-        from .audit_service_mod.models import AuditAction as ModAuditAction
-        from .audit_service_mod.models import AuditSeverity as ModAuditSeverity
 
         try:
             action_enum = ModAuditAction(action)
@@ -151,7 +144,6 @@ class AuditService(_AuditService):
         获取审计日志（向后兼容方法）
         Get Audit Logs (Backward compatibility method)
         """
-        from datetime import datetime
 
         # 构建过滤条件
         filters = {}
@@ -194,8 +186,6 @@ class AuditService(_AuditService):
         获取审计日志摘要（向后兼容方法）
         Get Audit Logs Summary (Backward compatibility method)
         """
-        from datetime import datetime
-        from .audit_service_mod.models import AuditLogSummary
 
         # 构建日期范围
         date_range = None
@@ -232,7 +222,6 @@ class AuditService(_AuditService):
 
     def _sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """清理数据中的敏感信息（向后兼容）"""
-        from .audit_service_mod.utils import sanitize_data as _sanitize
 
         # 使用旧的敏感字段列表
         sensitive_columns = {
@@ -276,7 +265,9 @@ def create_audit_context(
     """
     return AuditContext(
         user_id=user_id,
-        username=username,
+        username=username, Callable, Dict, List, Optional, TypeVar, cast
+
+
         user_role=user_role,
         ip_address=ip_address,
         user_agent=user_agent

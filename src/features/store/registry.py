@@ -1,13 +1,14 @@
 """
+            from .entities import get_entity_definitions
+            from .feature_views import get_feature_view_definitions
+
 特征注册器
 Feature Registry
 
 负责将实体和特征视图注册到 Feast 存储。
 """
 
-from typing import Optional
 
-from .mock_feast import FeatureStore
 
 
 class FeatureRegistry:
@@ -35,14 +36,12 @@ class FeatureRegistry:
 
         try:
             # 注册实体
-            from .entities import get_entity_definitions
 
             entities = get_entity_definitions()
             for entity in entities.values():
                 self.store.apply(entity)
 
             # 注册特征视图
-            from .feature_views import get_feature_view_definitions
 
             feature_views = get_feature_view_definitions()
             for fv in feature_views.values():
@@ -70,7 +69,6 @@ class FeatureRegistry:
             return False
 
         try:
-            from .entities import get_entity_definitions
 
             entities = get_entity_definitions()
             if entity_name not in entities:
@@ -97,10 +95,14 @@ class FeatureRegistry:
         """
         if not self.store:
             print("Feast 存储未初始化")
+
+
             return False
 
+        # Import moved to top
+
+
         try:
-            from .feature_views import get_feature_view_definitions
 
             feature_views = get_feature_view_definitions()
             if feature_view_name not in feature_views:

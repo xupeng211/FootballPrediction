@@ -4,19 +4,17 @@ Redis同步操作
 提供Redis的同步基础操作方法，包括get、set、delete等
 """
 
-import json
-import logging
-from typing import Any, Dict, List, Optional, Union
 
-import redis
 
 # 兼容性处理：支持不同版本的redis包
-try:
-    from redis.exceptions import ConnectionError, RedisError, TimeoutError
+# Import moved to top
+
+try: RedisError, TimeoutError
 except ImportError:
     # 如果redis.exceptions不可用，从redis模块直接导入
-    try:
-        from redis import ConnectionError, RedisError, TimeoutError
+    # Import moved to top
+
+    try: RedisError, TimeoutError
     except ImportError:
         # 如果还是没有，创建基本异常类
         class RedisError(Exception):
@@ -28,7 +26,6 @@ except ImportError:
         class TimeoutError(RedisError):
             pass
 
-from ..core.key_manager import CacheKeyManager
 
 
 logger = logging.getLogger(__name__)
@@ -317,7 +314,12 @@ class RedisSyncOperations:
         if not client or not mapping:
             return False
 
-        try:
+        # Import moved to top
+
+
+        try: Dict, List, Optional, Union
+
+
             # 序列化所有值
             serialized_mapping: Dict[
                 Union[str, bytes], Union[str, bytes, int, float]

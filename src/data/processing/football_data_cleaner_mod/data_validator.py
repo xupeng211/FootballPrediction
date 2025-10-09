@@ -4,10 +4,6 @@
 负责验证比赛数据和比分数据的合法性。
 """
 
-import logging
-import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 
 class DataValidator:
@@ -128,6 +124,7 @@ class DataValidator:
             return None
 
         # 查找主裁判
+
         for referee in referees:
             if referee.get("role") == "REFEREE":
                 name = referee.get("name")

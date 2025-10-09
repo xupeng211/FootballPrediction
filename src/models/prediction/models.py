@@ -5,9 +5,6 @@ Prediction Result Data Models
 定义预测结果相关的数据结构和类型。
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
 
 
 @dataclass
@@ -138,6 +135,7 @@ class PredictionResult:
         if home_score > away_score:
             self.actual_result = "home"
         elif home_score < away_score:
+
             self.actual_result = "away"
         else:
             self.actual_result = "draw"

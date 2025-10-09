@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统日志管理模块
@@ -6,7 +5,6 @@ from typing import cast, Any, Optional, Union
 提供统一的日志配置和管理功能。
 """
 
-import logging
 
 
 class Logger:
@@ -17,6 +15,9 @@ class Logger:
         """设置日志器 - 创建具有标准格式的日志器"""
         logger = logging.getLogger(name)
         logger.setLevel(getattr(logging, level.upper()))
+
+from typing import cast, Any, Optional, Union
+import logging
 
         if not logger.handlers:
             handler = logging.StreamHandler()

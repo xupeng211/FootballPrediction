@@ -5,11 +5,13 @@ Odds Collection Module
 提供高性能的赔率数据收集功能
 """
 
+
+from .analyzer import OddsAnalyzer
 from .collector import OddsCollector
 from .manager import OddsCollectorManager
-from .sources import OddsSourceManager
+from .manager import get_odds_manager
 from .processor import OddsProcessor
-from .analyzer import OddsAnalyzer
+from .sources import OddsSourceManager
 from .storage import OddsStorage
 
 # 导出主要接口
@@ -24,4 +26,3 @@ __all__ = [
 ]
 
 # 导入全局管理器
-from .manager import get_odds_manager

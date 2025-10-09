@@ -6,11 +6,7 @@ Base Alert Channel
 Defines common interface and base functionality for alert channels.
 """
 
-import logging
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List
 
-from ...alert_manager_mod.models import Alert
 
 logger = logging.getLogger(__name__)
 
@@ -85,3 +81,7 @@ class BaseAlertChannel(ABC):
     def disable(self):
         """禁用渠道"""
         self.enabled = False
+import logging
+
+
+

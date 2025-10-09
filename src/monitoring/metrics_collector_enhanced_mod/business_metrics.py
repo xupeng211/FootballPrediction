@@ -4,11 +4,7 @@
 收集和管理业务相关的指标，如预测数量、准确率等。
 """
 
-from datetime import datetime
-from typing import Dict, Any
 
-from .metric_types import MetricPoint
-from .prometheus_metrics import PrometheusMetricsManager
 
 
 class BusinessMetricsCollector:
@@ -250,7 +246,9 @@ class BusinessMetricsCollector:
         summary = {
             "predictions": {
                 "total": self.predictions_total,
-                "correct": self.predictions_correct,
+                "correct": self.predictions_correct, Any
+
+
                 "verified": self.predictions_verified,
                 "accuracy": (
                     self.predictions_correct / self.predictions_verified

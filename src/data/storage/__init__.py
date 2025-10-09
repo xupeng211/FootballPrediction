@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 数据存储模块
@@ -8,6 +7,9 @@ from typing import cast, Any, Optional, Union
 
 基于 DATA_DESIGN.md 第2节数据存储设计。
 """
+
+
+from typing import cast, Any, Optional, Union
 
 from .data_lake_storage import DataLakeStorage
 

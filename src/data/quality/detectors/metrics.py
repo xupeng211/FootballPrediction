@@ -1,12 +1,12 @@
 """
+    from prometheus_client import REGISTRY
+
 异常检测监控指标
 Anomaly Detection Metrics
 
 提供Prometheus监控指标定义。
 """
 
-import logging
-from prometheus_client import Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,10 @@ def _get_or_create_metric(metric_class, name: str, description: str, labels: lis
     Returns:
         Prometheus指标实例
     """
-    from prometheus_client import REGISTRY
+
+import logging
+
+from prometheus_client import Counter, Gauge, Histogram
 
     # 尝试从已注册的指标中查找
     for collector in list(REGISTRY._collector_to_names.keys()):

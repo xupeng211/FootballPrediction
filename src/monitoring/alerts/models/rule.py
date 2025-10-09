@@ -6,10 +6,7 @@ Alert Rule Entity
 Defines the data structure for alert trigger conditions and actions.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from .enums import AlertChannel, AlertLevel
 
 
 class AlertRule:
@@ -267,4 +264,6 @@ class AlertRule:
         return (
             f"AlertRule(id={self.rule_id}, name={self.name}, "
             f"level={self.level.value}, enabled={self.enabled})"
+
+
         )

@@ -5,9 +5,6 @@ Database Configuration
 定义数据库连接配置类。
 """
 
-import os
-from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -72,7 +69,8 @@ def get_database_config() -> DatabaseConfig:
     """
     return DatabaseConfig(
         host=os.getenv("DB_HOST", "localhost"),
-        port=int(os.getenv("DB_PORT", "5432")),
+        host=os.getenv("DB_HOST", "localhost"),)
+
         database=os.getenv("DB_NAME", "football_prediction"),
         username=os.getenv("DB_USER", "postgres"),
         password=os.getenv("DB_PASSWORD", ""),

@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 流式数据处理模块
@@ -14,6 +13,9 @@ from typing import cast, Any, Optional, Union
 - stream_config.py: 流配置管理
 - stream_processor.py: 流数据处理器
 """
+
+
+from typing import cast, Any, Optional, Union
 
 from .kafka_consumer import FootballKafkaConsumer
 from .kafka_producer import FootballKafkaProducer

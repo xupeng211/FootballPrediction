@@ -1,17 +1,13 @@
 """
+            from src.data.collectors.scores_collector import ScoresCollector
+
 比分数据采集任务
 Scores Collection Task
 
 负责采集足球比分数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from ..celery_app import app
-from .base import DataCollectionTask, CollectionTaskMixin
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +44,10 @@ def collect_scores_task(
         """内部异步采集函数"""
         try:
             # 动态导入以避免循环导入问题
-            from src.data.collectors.scores_collector import ScoresCollector
 
             collector = ScoresCollector()
+
+
 
             logger.info(f"开始采集比分数据: 比赛={match_ids}, 仅实时={live_only}")
 
@@ -78,7 +75,6 @@ def collect_scores_task(
         # 根据live_only决定是否跳过
         if live_only:
             # 检查是否有进行中的比赛（简化版检查）
-            from ..utils import should_collect_live_scores
 
             if not should_collect_live_scores():
                 logger.info("当前无进行中的比赛，跳过实时比分采集")

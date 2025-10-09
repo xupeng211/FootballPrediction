@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统时间处理工具模块
@@ -6,7 +5,6 @@ from typing import cast, Any, Optional, Union
 提供时间和日期处理相关的工具函数。
 """
 
-from datetime import datetime, timezone
 
 
 class TimeUtils:
@@ -50,6 +48,7 @@ def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> date
     """解析日期时间字符串（向后兼容性函数）"""
     if date_str is None:
         return None
+
     try:
         return datetime.strptime(date_str, format_str)
     except (ValueError, TypeError):

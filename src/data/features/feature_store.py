@@ -7,13 +7,14 @@ Football Feature Store (Backward Compatible)
 Provides backward compatible exports for the modular feature store.
 """
 
-# 重新导出主类和函数
 from .feature_store_main import (
+from .utils import (
+
+# 重新导出主类和函数
     FootballFeatureStore,
     get_feature_store,
     initialize_feature_store,
 )
-from .utils import (
     HAS_FEAST,
     match_entity,
     team_entity,

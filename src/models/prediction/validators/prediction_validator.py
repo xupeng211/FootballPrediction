@@ -4,12 +4,7 @@
 负责验证预测结果的有效性和业务规则
 """
 
-import logging
-import numpy as np
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from src.models.prediction.core import PredictionResult
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +265,9 @@ class PredictionValidator:
             f"  总数：{validation_stats['total']}\n"
             f"  有效：{validation_stats['valid']}\n"
             f"  无效：{validation_stats['invalid']}\n"
+
+
+
             f"  通过率：{validation_stats['pass_rate']:.2%}\n"
         )
 

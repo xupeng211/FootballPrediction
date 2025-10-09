@@ -1,20 +1,14 @@
 """
+from .context import AuditContext
+from .service import AuditService
+
 审计装饰器
 Audit Decorators
 
 提供自动审计功能的装饰器。
 """
 
-import time
-import asyncio
-from typing import Optional
-import functools
-import inspect
-from contextvars import ContextVar
-from typing import Any, Callable, TypeVar, cast
 
-from .context import AuditContext
-from .service import AuditService
 
 # 上下文变量，用于在请求处理过程中传递审计信息
 audit_context: ContextVar[AuditContext] = ContextVar("audit_context", default=None)
@@ -291,6 +285,9 @@ def _extract_resource_id(args: tuple, kwargs: dict) -> Optional[str]:
         "fixture_id",
         "prediction_id",
     ]
+
+
+
 
     # 从位置参数查找
     if args:

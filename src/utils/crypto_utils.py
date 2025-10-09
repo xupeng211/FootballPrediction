@@ -4,10 +4,6 @@
 提供加密、哈希和ID生成相关的工具函数。
 """
 
-import hashlib
-import secrets
-import uuid
-from typing import Optional, cast
 
 try:
     import bcrypt
@@ -118,3 +114,8 @@ class CryptoUtils:
     def generate_token(length: int = 32) -> str:
         """生成随机令牌"""
         return secrets.token_hex(length)
+import hashlib
+import uuid
+
+import secrets
+

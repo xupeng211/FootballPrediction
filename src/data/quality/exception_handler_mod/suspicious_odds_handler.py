@@ -1,14 +1,12 @@
 """
+            from .quality_logger import QualityLogger
+
 可疑赔率处理模块
 
 负责检测和处理可疑的赔率数据。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List
 
-from .exceptions import SuspiciousOddsException
 
 
 class SuspiciousOddsHandler:
@@ -155,7 +153,6 @@ class SuspiciousOddsHandler:
     async def _log_suspicious_odds(self, suspicious_details: List[Dict[str, Any]]) -> None:
         """记录可疑赔率到日志"""
         try:
-            from .quality_logger import QualityLogger
 
             logger = QualityLogger(self.db_manager)
             await logger.log_suspicious_odds(suspicious_details)
@@ -242,6 +239,8 @@ class SuspiciousOddsHandler:
         return {
             "min_odds": self.config["min_odds"],
             "max_odds": self.config["max_odds"],
-            "probability_range": self.config["probability_range"],
+            "probability_range": self.config["probability_range"], Dict, List
+
+
             "mark_suspicious": self.config["mark_suspicious"],
         }

@@ -5,7 +5,6 @@ Authentication Configuration Module
 管理 API 认证相关的配置。
 """
 
-from typing import Dict, Any
 
 
 class AuthConfig:
@@ -100,6 +99,7 @@ class AuthConfig:
             Dict[str, Any]: 限流规则配置 / Rate limiting rules configuration
         """
         return {
+
             "anonymous": {
                 "requests_per_minute": 60,
                 "requests_per_hour": 1000,

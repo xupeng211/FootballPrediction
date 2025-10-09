@@ -11,9 +11,6 @@ Models API Endpoints
 """
 
 # 为了向后兼容，从新模块导入所有内容
-from src.api.models.endpoints import router
-from src.api.models.mlflow_client import mlflow_client
-from src.api.models import prediction_service
 
 
 def get_model_info() -> dict:
@@ -25,7 +22,8 @@ def get_model_info() -> dict:
     """
     return {
         "api": router,
-        "prefix": "/models",
+        "prefix": "/models"}src.api.models.mlflow_client import mlflow_client
+
         "tags": ["models"],
         "mlflow_client": mlflow_client,
         "prediction_service": prediction_service,

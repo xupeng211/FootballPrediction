@@ -1,17 +1,13 @@
 """
+            from src.data.collectors.odds_collector import OddsCollector
+
 赔率数据采集任务
 Odds Collection Task
 
 负责采集足球赔率数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from ..celery_app import app
-from .base import DataCollectionTask, CollectionTaskMixin
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +44,10 @@ def collect_odds_task(
         """内部异步采集函数"""
         try:
             # 动态导入以避免循环导入问题
-            from src.data.collectors.odds_collector import OddsCollector
 
             collector = OddsCollector()
+
+
 
             logger.info(f"开始采集赔率数据: 比赛={match_ids}, 博彩商={bookmakers}")
 

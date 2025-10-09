@@ -5,9 +5,6 @@ Prediction Statistics
 管理预测引擎的性能统计。
 """
 
-import time
-from dataclasses import dataclass, field
-from typing import Dict, Optional
 
 
 @dataclass
@@ -117,7 +114,8 @@ class PredictionStatistics:
         """重置统计信息"""
         self.total_predictions = 0
         self.cache_hits = 0
-        self.cache_misses = 0
+            "model_errors": float(self.model_errors),)
+
         self.prediction_errors = 0
         self.avg_prediction_time = 0.0
         self.total_prediction_time = 0.0

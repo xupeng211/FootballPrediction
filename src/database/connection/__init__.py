@@ -11,9 +11,6 @@ Integrates retry mechanisms to improve connection reliability.
 """
 
 # 导出核心接口以保持向后兼容
-from .managers.database_manager import DatabaseManager
-from .managers.multi_user_manager import MultiUserDatabaseManager
-from .core import DatabaseRole, DATABASE_RETRY_CONFIG
 
 # 创建一个全局数据库管理器实例
 _database_manager = DatabaseManager()
@@ -33,6 +30,10 @@ async def get_async_session(role=DatabaseRole.READER):
     from ..connection import get_async_session as _get_async_session
     async for session in _get_async_session(role):
         yield session
+
+from .core import DatabaseRole, DATABASE_RETRY_CONFIG
+from .managers.database_manager import DatabaseManager
+from .managers.multi_user_manager import MultiUserDatabaseManager
 
 __all__ = [
     "DatabaseManager",

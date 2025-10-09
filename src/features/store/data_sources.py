@@ -5,7 +5,6 @@ Data Source Definitions
 定义 Feast 特征存储的数据源。
 """
 
-from .mock_feast import PostgreSQLSource
 
 
 def get_team_data_source() -> PostgreSQLSource:
@@ -72,6 +71,7 @@ def get_odds_data_source() -> PostgreSQLSource:
         PostgreSQLSource: 赔率数据源
     """
     return PostgreSQLSource(
+
         name="football_odds_postgres",
         query="""
             SELECT

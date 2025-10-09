@@ -5,15 +5,8 @@ Quality Check Tasks
 包含数据质量检查任务。
 """
 
-import asyncio
-import logging
-from datetime import datetime
 
-from src.data.quality.data_quality_monitor import DataQualityMonitor
-from src.database.connection import get_async_session
 
-from .base import BaseDataTask
-from ..celery_config import app
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +137,8 @@ def run_quality_checks():
                 # 1. 检查数据完整性
                 integrity_checks, integrity_issues = await _check_data_integrity(
                     session, monitor
+
+
                 )
 
                 # 2. 检查数据一致性

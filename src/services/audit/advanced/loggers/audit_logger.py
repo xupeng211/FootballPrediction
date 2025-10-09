@@ -5,19 +5,8 @@ Audit Logger
 负责审计日志的记录和管理。
 """
 
-from datetime import timedelta
-from typing import Dict
-from typing import List
-from typing import Optional
-import logging
-import asyncio
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from src.core.logging import get_logger
-from src.database.connection import get_database_manager
 
-from ..models import AuditLog
 
 logger = get_logger(__name__)
 
@@ -71,7 +60,6 @@ class AuditLogger:
 
         try:
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import insert
                 from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 创建审计日志记录
@@ -200,7 +188,7 @@ class AuditLogger:
 
         try:
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import select, and_, or_, desc, asc
+                from sqlalchemy import select, and_, desc, asc
                 from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 构建查询
@@ -591,3 +579,8 @@ class AuditLogger:
         self._initialized = False
         self.db_manager = None
         self.logger.info("审计日志器已关闭")
+from datetime import datetime
+from datetime import timedelta
+
+from src.core.logging import get_logger
+

@@ -5,16 +5,8 @@ Audit Decorators
 提供审计功能的装饰器实现。
 """
 
-import asyncio
-import functools
-import time
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
 
-from src.core.logging import get_logger
 
-from ..context import AuditContext
-from ..models import AuditAction, AuditSeverity
 
 logger = get_logger(__name__)
 
@@ -687,3 +679,10 @@ async def _check_approval(context: Optional[AuditContext], approval_role: Option
 
     if approval_role and context.user_role != approval_role:
         raise PermissionError(f"需要 {approval_role} 角色才能执行此操作")
+from typing import Callable
+import asyncio
+import functools
+import time
+
+from ..context import AuditContext
+

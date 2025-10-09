@@ -3,7 +3,6 @@
 Logging Type Definitions
 """
 
-from enum import Enum
 
 
 class LogLevel(Enum):
@@ -18,6 +17,8 @@ class LogLevel(Enum):
 class LogCategory(Enum):
     """日志类别"""
     API = "api"
+from enum import Enum
+
     PREDICTION = "prediction"
     DATA_COLLECTION = "data_collection"
     CACHE = "cache"

@@ -1,4 +1,9 @@
 """
+            import os
+            import redis
+
+            from unittest.mock import Mock
+
 任务监控模块
 
 提供任务调度系统的监控功能，包括：
@@ -8,15 +13,8 @@
 - 错误率统计
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
 
-from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
-from src.database.sql_compatibility import (
     CompatibleQueryBuilder,
     get_db_type_from_engine,
 )
@@ -93,7 +91,6 @@ class TaskMonitor:
                 if hasattr(collector, "_name") and collector._name == name:
                     return cast(Counter, collector)
             # 返回 mock 对象用于测试
-            from unittest.mock import Mock
 
             mock_counter = Mock()
             mock_counter.inc = Mock()
@@ -107,7 +104,6 @@ class TaskMonitor:
         try:
             return Histogram(name, description, labels, registry=self.registry)
         except ValueError:
-            from unittest.mock import Mock
 
             mock_histogram = Mock()
             mock_histogram.observe = Mock()
@@ -121,7 +117,6 @@ class TaskMonitor:
         try:
             return Gauge(name, description, labels, registry=self.registry)
         except ValueError:
-            from unittest.mock import Mock
 
             mock_gauge = Mock()
             mock_gauge.set = Mock()
@@ -409,9 +404,7 @@ class TaskMonitor:
     async def _get_queue_sizes(self) -> Dict[str, int]:
         """获取队列大小"""
         try:
-            import os
 
-            import redis
 
             redis_client = redis.from_url(
                 os.getenv("REDIS_URL", "redis://localhost:6379 / 0")
@@ -469,7 +462,10 @@ class TaskMonitor:
             "metrics_available": [
                 "task_counter",
                 "task_duration",
-                "task_error_rate",
+                "task_error_rate", Dict, Optional, cast
+
+
+
                 "active_tasks",
                 "queue_size",
                 "retry_counter",

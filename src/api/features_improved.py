@@ -4,17 +4,8 @@
 提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
 """
 
-import logging
-from typing import Any, Dict, Optional, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.data.features.feature_store import FootballFeatureStore
-from src.database.connection import get_async_session
-from src.database.models import Match
 
 logger = logging.getLogger(__name__)
 
@@ -188,3 +179,11 @@ async def health_check() -> Dict[str, Any]:
         "status": "healthy" if get_feature_store() else "unhealthy",
         "feature_store": "available" if get_feature_store() else "unavailable",
     }
+
+from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
+from src.data.features.feature_store import FootballFeatureStore
+from src.database.models import Match
+

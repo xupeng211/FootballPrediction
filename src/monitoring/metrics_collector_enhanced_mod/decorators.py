@@ -1,17 +1,15 @@
 """
+    from .collector import get_metrics_collector
+
 性能跟踪装饰器 / Performance Tracking Decorators
 
 提供用于跟踪函数性能的装饰器。
 """
 
-import time
-import functools
-from typing import Callable, Any, Optional
 
 # 延迟导入以避免循环依赖
 def _get_collector():
     """延迟获取metrics collector"""
-    from .collector import get_metrics_collector
     return get_metrics_collector()
 
 
@@ -112,7 +110,6 @@ def track_prediction_performance(
                 )
 
         # 根据函数类型返回相应的包装器
-        import asyncio
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
@@ -259,7 +256,6 @@ def track_database_performance(
                     )
 
         # 根据函数类型返回相应的包装器
-        import asyncio
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
@@ -287,6 +283,7 @@ def track_performance(
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+
             start_time = time.time()
             success = True
 
@@ -318,7 +315,6 @@ def track_performance(
                 ).observe(duration)
 
                 # 记录到聚合器
-                from .metric_types import MetricPoint
                 metric = MetricPoint(
                     name=metric_name,
                     value=duration,

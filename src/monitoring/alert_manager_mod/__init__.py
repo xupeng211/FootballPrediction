@@ -5,7 +5,13 @@ Alert Manager Module
 提供数据质量监控和异常检测的告警机制。
 """
 
+from .aggregator import AlertAggregator
+from .channels import (
+from .manager import AlertManager
+from .metrics import PrometheusMetrics
 from .models import (
+from .rules import AlertRuleEngine
+
     Alert,
     AlertRule,
     AlertSeverity,
@@ -15,9 +21,7 @@ from .models import (
     AlertChannel,
 )
 
-from .metrics import PrometheusMetrics
 
-from .channels import (
     LogChannel,
     PrometheusChannel,
     WebhookChannel,
@@ -25,11 +29,8 @@ from .channels import (
     AlertChannelManager,
 )
 
-from .manager import AlertManager
 
-from .rules import AlertRuleEngine
 
-from .aggregator import AlertAggregator
 
 __all__ = [
     # 模型

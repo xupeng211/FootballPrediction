@@ -4,10 +4,7 @@
 负责分析数据质量的历史趋势和生成改进建议。
 """
 
-import logging
-from typing import Any, Dict, List
 
-from ..scores.calculator import QualityScoreCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +57,8 @@ class QualityTrendAnalyzer:
         recommendations = []
 
         # 基于各项评分给出建议
+
+
         if quality_data.get(str("freshness_score"), 0) < 80:
             recommendations.append(
                 "数据新鲜度较低，建议检查数据采集任务的执行频率和稳定性"

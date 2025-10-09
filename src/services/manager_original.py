@@ -1,12 +1,5 @@
-from typing import Dict, Optional, cast
 
-from src.core import logger
-from src.core.config import get_settings
 
-from .base import BaseService
-from .content_analysis import ContentAnalysisService
-from .data_processing import DataProcessingService
-from .user_profile import UserProfileService
 
 """
 足球预测系统服务管理器模块
@@ -80,6 +73,15 @@ class ServiceManager:
                 # 关闭失败不应阻止其他服务的正常关闭
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
 
+
+from typing import Dict
+
+from .base import BaseService
+from .content_analysis import ContentAnalysisService
+from .data_processing import DataProcessingService
+from .user_profile import UserProfileService
+from src.core import logger
+from src.core.config import get_settings
 
 # 全局服务管理器实例
 service_manager = ServiceManager()

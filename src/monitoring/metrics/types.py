@@ -5,7 +5,6 @@ Metric Types Definition
 定义指标的类型和单位枚举。
 """
 
-from enum import Enum
 
 
 class MetricType(Enum):
@@ -21,6 +20,8 @@ class MetricUnit(Enum):
     """指标单位"""
 
     COUNT = "count"
+from enum import Enum
+
     PERCENT = "percent"
     MILLISECONDS = "milliseconds"
     SECONDS = "seconds"

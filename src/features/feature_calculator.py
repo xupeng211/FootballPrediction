@@ -15,8 +15,10 @@
 - statistics_utils: 统计工具函数
 """
 
-# 为了向后兼容，从新的模块化实现重新导出所有类
 from .feature_calculator_mod import (
+from .feature_calculator_mod import (
+
+# 为了向后兼容，从新的模块化实现重新导出所有类
     FeatureCalculator,
     RecentPerformanceCalculator,
     HistoricalMatchupCalculator,
@@ -27,7 +29,6 @@ from .feature_calculator_mod import (
 )
 
 # 为了向后兼容，重新导出统计函数
-from .feature_calculator_mod import (
     calculate_mean,
     calculate_std,
     calculate_min,

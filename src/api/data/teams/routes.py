@@ -3,16 +3,8 @@
 Team Data Routes
 """
 
-from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import select, and_, or_
 
-from src.api.dependencies import get_current_user
-from src.api.data.models.common import TeamInfo
-from src.database.connection import get_async_session
-from src.database.models import Team
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -119,5 +111,8 @@ def _convert_team_to_info(team: Team) -> TeamInfo:
         founded_year=team.founded_year,
         stadium=team.stadium,
         logo_url=team.logo_url,
-        is_active=team.is_active,
+        is_active=team.is_active, List, Optional
+
+
+
     )

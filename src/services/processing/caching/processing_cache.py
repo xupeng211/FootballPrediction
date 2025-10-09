@@ -4,13 +4,7 @@
 提供数据处理的缓存功能，避免重复计算。
 """
 
-import hashlib
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 
-from src.cache import CacheKeyManager, RedisManager
 
 
 class ProcessingCache:
@@ -397,6 +391,8 @@ class ProcessingCache:
             return
 
         self.logger.info(f"开始缓存预热，共 {len(operations)} 个操作")
+
+
 
         for operation in operations:
             for i, data in enumerate(sample_data[:5]):  # 每个操作预热5个样本

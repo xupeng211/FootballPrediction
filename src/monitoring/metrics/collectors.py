@@ -1,16 +1,13 @@
 """
+            import psutil
+
 指标收集器实现
 Metrics Collectors Implementation
 
 实现各种具体的指标收集器。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from .base import BaseMetricsCollector, DEFAULT_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +51,6 @@ class MetricsCollector(BaseMetricsCollector):
             Dict[str, Any]: 系统指标数据
         """
         try:
-            import psutil
 
             # 收集CPU使用率
             cpu_usage = psutil.cpu_percent(interval=1)
@@ -203,7 +199,6 @@ class SystemMetricsCollector(BaseMetricsCollector):
             return {}
 
         try:
-            import psutil
 
             # 获取CPU使用率可能抛出TimeoutError
             cpu_percent = psutil.cpu_percent(interval=1)
@@ -235,7 +230,6 @@ class SystemMetricsCollector(BaseMetricsCollector):
             return {}
 
         try:
-            import psutil
 
             memory = psutil.virtual_memory()
 
@@ -407,6 +401,8 @@ class ApplicationMetricsCollector(BaseMetricsCollector):
 
         try:
             # 这里应该从业务数据库获取实际指标
+
+
             # 暂时返回模拟数据
             return {
                 "total_predictions": 2500,

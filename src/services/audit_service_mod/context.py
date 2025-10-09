@@ -5,7 +5,6 @@ Audit Context
 管理审计过程中的上下文信息。
 """
 
-from typing import Any, Dict, Optional
 
 
 class AuditContext:
@@ -140,6 +139,7 @@ class AuditContext:
             AuditContext: 合并后的新上下文 / Merged new context
         """
         merged = self.to_dict()
+
 
         # 使用非空值更新
         for key, value in other_context.to_dict().items():

@@ -16,8 +16,9 @@ This file has been split into multiple modules, please use the new modular struc
 For backward compatibility, main classes are imported here.
 """
 
-# 导入拆分后的模块
 from .service import (
+
+# 导入拆分后的模块
     PredictionService,
     BatchPredictor,
     PredictionCacheManager,

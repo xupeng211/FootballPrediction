@@ -3,18 +3,8 @@
 从各种数据源收集比赛赛程信息
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
-import os
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.redis_manager import RedisManager
-from src.database.connection import DatabaseManager
-from src.database.models.match import Match
-from src.database.models.team import Team
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -306,3 +296,13 @@ class FixturesCollectorFactory:
         db_session = DatabaseManager()
         redis_client = RedisManager()
         return FixturesCollector(db_session, redis_client)
+from datetime import datetime, timedelta
+import os
+
+from sqlalchemy import select
+
+from src.cache.redis_manager import RedisManager
+from src.database.connection import DatabaseManager
+from src.database.models.match import Match
+from src.database.models.team import Team
+

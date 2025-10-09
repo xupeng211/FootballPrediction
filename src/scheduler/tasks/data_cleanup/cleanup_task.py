@@ -1,20 +1,15 @@
 """
+    import glob
+
+from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
+from src.database.connection import get_async_session
+
 数据清理任务
 
 负责数据归档、清理和维护。
 """
 
-import asyncio
-import logging
-import os
-from datetime import datetime, timedelta
-from typing import Optional
 
-from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
-from src.database.connection import get_async_session
-from sqlalchemy import text
-from ...celery_config import app
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +133,6 @@ async def _cleanup_expired_database_data(archive_before):
 
 async def _cleanup_temp_files(archive_before):
     """清理临时文件"""
-    import glob
 
     temp_dirs = [
         "/tmp/football_data",
@@ -194,6 +188,9 @@ def cleanup_data(days_to_keep: int = 30):
             storage = await _initialize_storage()
 
             # 2. 归档数据到数据湖
+
+
+
             logger.info("开始归档数据到数据湖")
             archived_records = await _archive_data_to_lake(storage, archive_before)
 

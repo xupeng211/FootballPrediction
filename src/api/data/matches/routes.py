@@ -3,18 +3,8 @@
 Match Data Routes
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from sqlalchemy import select, and_, or_
-from sqlalchemy.orm import selectinload
 
-from src.api.dependencies import get_current_user
-from src.api.data.models.common import MatchInfo, TeamInfo, LeagueInfo
-from src.database.connection import get_async_session
-from src.database.models import Match, Team, League, MatchStatus
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -153,7 +143,10 @@ def _convert_match_to_info(match: Match) -> MatchInfo:
             founded_year=match.home_team.founded_year,
             stadium=match.home_team.stadium,
             logo_url=match.home_team.logo_url,
-            is_active=match.home_team.is_active,
+            is_active=match.home_team.is_active, List, Optional
+
+
+
         ),
         away_team=TeamInfo(
             id=match.away_team.id,

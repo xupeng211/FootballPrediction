@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .models.prediction.refactored.cache import *  # type: ignore
+from .models.prediction.refactored.prediction_service import *  # type: ignore
+from .models.prediction.refactored.predictors import *  # type: ignore
+from .models.prediction.refactored.validators import *  # type: ignore
 
 warnings.warn(
     "直接从 prediction_service_refactored 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .models.prediction.refactored.prediction_service import *  # type: ignore
-from .models.prediction.refactored.predictors import *  # type: ignore
-from .models.prediction.refactored.validators import *  # type: ignore
-from .models.prediction.refactored.cache import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

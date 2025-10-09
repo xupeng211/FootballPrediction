@@ -6,10 +6,6 @@ Alert Rule Engine
 Extracted from AlertManager to handle rule evaluation and triggering logic.
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 # 尝试从不同位置导入模型
 try:
@@ -597,3 +593,8 @@ class AlertRuleEngine:
             Dict[str, Any]: 统计信息 / Statistics
         """
         return self.get_statistics()
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
+import asyncio
+import logging
+

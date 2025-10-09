@@ -2,18 +2,8 @@
 监控数据收集器
 """
 
-import asyncio
-import logging
-import time
-from datetime import datetime
-from typing import Any, Dict, Optional
 
-import psutil
 
-from .metrics import get_prometheus_metrics
-from ...cache.redis_manager import get_redis_manager
-from ...database.connection import DatabaseManager, get_async_session
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -289,3 +279,15 @@ class MetricsCollectorManager:
             Dict[str, BaseMetricsCollector]: 收集器字典
         """
         return self.collectors.copy()
+from datetime import datetime
+import asyncio
+import logging
+import time
+
+from sqlalchemy import text
+import psutil
+
+from ...cache.redis_manager import get_redis_manager
+from ...database.connection import DatabaseManager, get_async_session
+from .metrics import get_prometheus_metrics
+

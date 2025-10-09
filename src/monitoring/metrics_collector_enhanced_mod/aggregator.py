@@ -4,12 +4,7 @@
 负责收集、聚合和存储时序指标数据。
 """
 
-import statistics
-from collections import defaultdict, deque
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Deque, Tuple
 
-from .metric_types import MetricPoint, MetricSummary
 
 
 class MetricsAggregator:
@@ -244,3 +239,10 @@ class MetricsAggregator:
             "total_points": sum(len(m) for m in self.metrics.values()),
             "active_aggregates": len(self.aggregates),
         }
+from collections import defaultdict, deque
+from datetime import datetime, timedelta
+from typing import Dict, Deque
+import statistics
+
+from .metric_types import MetricPoint, MetricSummary
+

@@ -4,18 +4,7 @@
 负责采集实时比分数据。
 """
 
-from datetime import timedelta
-from typing import Optional
-import asyncio
-import logging
-from datetime import datetime
-from typing import List, Optional
 
-from src.data.collectors.scores_collector import ScoresCollector
-from src.database.connection import get_async_session
-from src.database.models.match import Match
-from ...celery_config import app, should_collect_live_scores
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +28,8 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
         collector = ScoresCollector()
 
         matches_updated = 0
+
+
         scores_collected = 0
 
         if match_ids:
@@ -47,7 +38,6 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
         else:
             # 获取正在进行和即将开始的比赛
             async with get_async_session() as session:
-                from sqlalchemy import select
 
                 # 查询最近1小时开始和未来2小时内的比赛
                 cutoff_start = datetime.now() - timedelta(hours=1)
@@ -101,8 +91,7 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
-        from ...celery_config import TaskRetryConfig
+            "execution_time": datetime.now().isoformat(),)
 
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_live_scores", {})
         max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)

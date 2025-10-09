@@ -1,18 +1,14 @@
 """
+from openlineage.client.event_v2 import InputDataset, Job, OutputDataset, Run, RunEvent
+from openlineage.client.facet_v2 import (
+
 数据血缘报告器
 
 集成 OpenLineage 标准，自动上报数据血缘信息到 Marquez。
 跟踪数据流转过程，包括采集、清洗、转换等各个环节。
 """
 
-import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, cast
-from uuid import uuid4
 
-from openlineage.client import OpenLineageClient
-from openlineage.client.event_v2 import InputDataset, Job, OutputDataset, Run, RunEvent
-from openlineage.client.facet_v2 import (
     error_message_run,
     schema_dataset,
     source_code_location_job,

@@ -5,11 +5,7 @@ Feature Processor
 处理预测所需的特征数据。
 """
 
-import logging
-from typing import Any, Dict, Optional
 
-import numpy as np
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -234,6 +230,9 @@ class FeatureProcessor:
 
         for feature_name in required_features:
             if feature_name not in features:
+
+
+
                 logger.warning(f"缺少特征: {feature_name}")
                 return False
 

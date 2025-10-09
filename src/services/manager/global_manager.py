@@ -4,16 +4,6 @@
 提供全局默认的服务管理器实例。
 """
 
-from typing import Dict, Optional
-from src.core import logger
-from src.core.config import get_settings
-from .service_manager import ServiceManager
-from .service_registry import ServiceRegistry
-from .service_factory import ServiceFactory
-from .health_checker import ServiceHealthChecker
-from ..base import BaseService
-from ..data_processing import DataProcessingService
-from ..user_profile import UserProfileService
 
 
 # 全局服务管理器实例
@@ -148,7 +138,9 @@ def get_global_service_info() -> Dict:
         "manager": manager.get_manager_info(),
         "registry": {
             "registered_services": registry.get_all_services(),
-            "dependencies": registry._dependencies,
+            "dependencies": registry._dependencies, Optional
+            "registered_services": registry.get_all_services(),)
+
         },
         "factory": {
             "registered_builders": factory.get_registered_services(),

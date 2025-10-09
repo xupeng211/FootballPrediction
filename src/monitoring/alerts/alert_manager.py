@@ -4,16 +4,7 @@
 整合所有告警组件，提供统一的告警管理接口。
 """
 
-import logging
-import uuid
-from collections import defaultdict
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
 
-from .channels import BaseAlertChannel, LogAlertChannel, PrometheusAlertChannel
-from .metrics import PrometheusMetrics
-from .models import Alert, AlertChannel, AlertLevel, AlertRule, AlertStatus
-from .rules import AlertRuleEngine
 
 logger = logging.getLogger(__name__)
 
@@ -439,6 +430,8 @@ class AlertManager:
                 alert.status == AlertStatus.RESOLVED
                 and alert.resolved_at
                 and alert.resolved_at < cutoff_time
+
+
             )
         ]
 

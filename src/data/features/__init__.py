@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 特征仓库模块
@@ -14,14 +13,16 @@ from typing import cast, Any, Optional, Union
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
+    match_entity, Any, Optional, Union
+
 from .feature_definitions import (
-    match_entity,
+from .feature_store import FootballFeatureStore
+
     match_features_view,
     odds_features_view,
     team_entity,
     team_recent_stats_view,
 )
-from .feature_store import FootballFeatureStore
 
 __all__ = [
     "FootballFeatureStore",

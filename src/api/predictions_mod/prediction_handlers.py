@@ -1,20 +1,13 @@
 """
+from src.utils.response import APIResponse
+
 预测处理器 / Prediction Handlers
 
 处理单个比赛的预测相关请求。
 """
 
-import logging
-from typing import Any, Dict, Optional
 
-from fastapi import HTTPException, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from src.database.models import Match, MatchStatus
-from src.database.models import Predictions as Prediction
-from src.models.prediction_service import PredictionService
-from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +229,10 @@ def _format_realtime_prediction(match: Match, prediction_result_data) -> Dict[st
                 "home_team_id": match.home_team_id,
                 "away_team_id": match.away_team_id,
                 "league_id": match.league_id,
-                "match_time": match.match_time.isoformat(),
+                "match_time": match.match_time.isoformat(),)
+
+
+
                 "match_status": match.match_status,
                 "season": match.season,
             },

@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ............src.monitoring.alerts.models.alert_mod import alert_entity
+from ............src.monitoring.alerts.models.alert_mod import alert_severity
+from ............src.monitoring.alerts.models.alert_mod import alert_status
+from ............src.monitoring.alerts.models.alert_mod import alert_utils
 
 warnings.warn(
     "直接从 alert 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ............src.monitoring.alerts.models.alert_mod import alert_entity
-from ............src.monitoring.alerts.models.alert_mod import alert_status
-from ............src.monitoring.alerts.models.alert_mod import alert_severity
-from ............src.monitoring.alerts.models.alert_mod import alert_utils
 
 # 导出所有类
 __all__ = [

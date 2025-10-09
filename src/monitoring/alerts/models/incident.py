@@ -6,10 +6,7 @@ Incident Entity
 Defines the data structure and management functionality for alert incidents.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from .enums import IncidentSeverity, IncidentStatus
 
 
 class Incident:
@@ -339,4 +336,6 @@ class Incident:
         return (
             f"Incident(id={self.incident_id}, severity={self.severity.value}, "
             f"status={self.status.value}, alerts={len(self.alert_ids)})"
+
+
         )

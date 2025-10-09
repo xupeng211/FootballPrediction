@@ -1,12 +1,9 @@
-from typing import cast, Any, Optional, Union
 
 """
 FastAPI 中文配置
 """
 
-from fastapi import FastAPI
 
-from src.utils.i18n import _, init_i18n
 
 
 def create_chinese_app() -> FastAPI:
@@ -14,6 +11,12 @@ def create_chinese_app() -> FastAPI:
 
     # 初始化中文
     init_i18n("zh_CN")
+
+from typing import cast, Any, Optional, Union
+
+from fastapi import FastAPI
+
+from src.utils.i18n import _, init_i18n
 
     app = FastAPI(
         title=_("Football Prediction API"),

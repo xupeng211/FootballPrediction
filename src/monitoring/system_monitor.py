@@ -10,7 +10,6 @@ and maintains compatibility with old version APIs.
 """
 
 # 导入重构后的模块化组件
-from .system_monitor_mod import (
     # 核心监控器
     SystemMonitor as _SystemMonitor,
 
@@ -53,6 +52,7 @@ class SystemMonitor(_SystemMonitor):
     建议直接使用 system_monitor_mod.SystemMonitor 获取最新功能。
     """
     pass  # 直接继承，所有功能都在基类中实现
+
 
 # 导出所有公共接口以保持向后兼容
 __all__ = [

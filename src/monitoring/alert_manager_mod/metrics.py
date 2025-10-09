@@ -5,11 +5,12 @@ Prometheus Metrics Management
 管理告警相关的Prometheus指标。
 """
 
-import time
-from typing import Optional, Dict, Any
+
+# Import moved to top
+
+
 
 try:
-    from prometheus_client import (
         REGISTRY,
         CollectorRegistry,
         Counter,
@@ -336,5 +337,6 @@ class PrometheusMetrics:
         """
         if self.enabled and hasattr(self.registry, '_collector_to_names'):
             # 在实际环境中，这需要更复杂的逻辑来重置指标
+
             # 这里只是示例
             pass

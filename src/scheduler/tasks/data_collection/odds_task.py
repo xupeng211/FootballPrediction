@@ -4,16 +4,7 @@
 负责从外部API采集足球赔率数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
 
-from src.data.collectors.odds_collector import OddsCollector
-from src.database.connection import get_async_session
-from src.database.models.match import Match
-from ...celery_config import app, should_collect_live_scores
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +34,8 @@ def collect_odds(
         if match_ids:
             # 采集指定比赛的赔率
             for match_id in match_ids:
+
+
                 try:
                     result = await collector.collect_odds_for_match(match_id)
                     if result.get("status") == "success":
@@ -61,7 +54,6 @@ def collect_odds(
 
             async with get_async_session() as session:
                 # 查询即将开始的比赛
-                from sqlalchemy import select
 
                 query = select(Match).where(
                     Match.match_date <= cutoff_time,
@@ -110,8 +102,7 @@ def collect_odds(
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
-        from ...celery_config import TaskRetryConfig
+            "execution_time": datetime.now().isoformat(),)
 
         retry_config = TaskRetryConfig.RETRY_CONFIGS.get("collect_odds", {})
         max_retries = retry_config.get("max_retries", TaskRetryConfig.MAX_RETRIES)

@@ -5,11 +5,7 @@ Data Sanitizer
 处理敏感数据的清理和掩码功能。
 """
 
-import hashlib
-import re
-from typing import Any, Dict, List, Optional, Union
 
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -501,3 +497,8 @@ class DataSanitizer:
         if table_name and table_name in self.compliance_mapping:
             return self.compliance_mapping[table_name]
         return None
+import hashlib
+import re
+
+from src.core.logging import get_logger
+

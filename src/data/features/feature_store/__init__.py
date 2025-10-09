@@ -3,12 +3,6 @@
 Feature Store Module
 """
 
-from typing import Optional, Dict, Any
-from .feature_store_main import FootballFeatureStore
-from .config import FeatureStoreConfig, FeatureStoreConfigManager
-from .storage import FeatureStorageManager
-from .query import FeatureQueryManager
-from .computation import FeatureDatasetManager
 
 # 全局特征仓库实例
 _feature_store: Optional[FootballFeatureStore] = None
@@ -46,7 +40,9 @@ def initialize_feature_store(
         project_name=project_name,
         repo_path=repo_path,
         postgres_config=postgres_config,
-        redis_config=redis_config,
+        redis_config=redis_config, Dict, Any
+
+
     )
     _feature_store.initialize()
     _feature_store.apply_features()

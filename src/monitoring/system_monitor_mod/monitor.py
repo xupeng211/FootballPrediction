@@ -2,14 +2,7 @@
 系统监控器主模块
 """
 
-import asyncio
-import logging
-import time
-from typing import Any, Dict, Optional
 
-from .metrics import get_prometheus_metrics
-from .collectors import MetricsCollectorManager
-from .health_checks import HealthChecker
 
 logger = logging.getLogger(__name__)
 
@@ -220,3 +213,12 @@ class SystemMonitor:
             "collectors": list(self.collector_manager.collectors.keys()),
             "health_checkers": self.health_checker.get_checkers(),
         }
+from typing import Optional
+import asyncio
+import logging
+import time
+
+from .collectors import MetricsCollectorManager
+from .health_checks import HealthChecker
+from .metrics import get_prometheus_metrics
+

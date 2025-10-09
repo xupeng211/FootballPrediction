@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 特征管理模块
@@ -10,16 +9,18 @@ from typing import cast, Any, Optional, Union
 - Feast特征存储集成
 """
 
+    AllMatchFeatures, Any, Optional, Union
+
 from .entities import MatchEntity, TeamEntity
 from .feature_calculator import FeatureCalculator
 from .feature_definitions import (
-    AllMatchFeatures,
+from .feature_store import FootballFeatureStore
+
     AllTeamFeatures,
     HistoricalMatchupFeatures,
     OddsFeatures,
     RecentPerformanceFeatures,
 )
-from .feature_store import FootballFeatureStore
 
 __all__ = [
     "MatchEntity",

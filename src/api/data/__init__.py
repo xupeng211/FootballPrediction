@@ -10,15 +10,17 @@ Data API Module
 - 数据统计和分析
 """
 
-from .models.common import TeamInfo, LeagueInfo, MatchInfo, OddsInfo
-from .matches.routes import router as matches_router
-from .teams.routes import router as teams_router
+
+from fastapi import APIRouter
+
 from .leagues.routes import router as leagues_router
+from .matches.routes import router as matches_router
+from .models.common import TeamInfo, LeagueInfo, MatchInfo, OddsInfo
 from .odds.routes import router as odds_router
 from .statistics.routes import router as statistics_router
+from .teams.routes import router as teams_router
 
 # 创建主路由器并整合所有子路由
-from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/v1/data", tags=["data"])
 

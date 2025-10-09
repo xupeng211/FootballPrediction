@@ -4,8 +4,6 @@ Prometheus 指标定义 / Prometheus Metric Definitions
 定义所有用于监控的 Prometheus 指标。
 """
 
-from typing import Optional, List
-from prometheus_client import (
     CollectorRegistry,
     Counter,
     Gauge,
@@ -14,8 +12,9 @@ from prometheus_client import (
 )
 
 # 可选的 prometheus_client 导入，用于测试兼容性
+# Import moved to top
+
 try:
-    from prometheus_client import REGISTRY
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False

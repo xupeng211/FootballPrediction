@@ -5,10 +5,7 @@ Prediction API Data Models
 定义所有预测相关的请求和响应模型。
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
@@ -125,3 +122,5 @@ class HealthCheckResponse(BaseModel):
     status: str
     error: Optional[str] = None
     timestamp: str
+
+

@@ -1,18 +1,13 @@
 """
+                from src.cache.redis_manager import RedisManager
+
 预测数据加载器
 Prediction Data Loader
 
 加载预测所需的数据。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from src.database.connection import DatabaseManager
-from src.database.models import League, Match, Odds, Team
-from src.collectors.fixtures_collector import FixturesCollector
-from src.collectors.odds_collector import OddsCollector
-from src.collectors.scores_collector import ScoresCollector
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +232,6 @@ class PredictionDataLoader:
             # 初始化收集器（如果需要）
             if not self.fixtures_collector:
                 # 延迟初始化
-                from src.cache.redis_manager import RedisManager
                 redis_manager = RedisManager()
                 async with self.db_manager.get_async_session() as session:
                     self.fixtures_collector = FixturesCollector(session, redis_manager)
@@ -298,6 +292,8 @@ class PredictionDataLoader:
 
                 matches = []
                 for row in rows:
+
+
                     matches.append(
                         {
                             "id": row.id,

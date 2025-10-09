@@ -6,12 +6,8 @@ Microsoft Teams webhookJf
 Sends alerts via Microsoft Teams webhook.
 """
 
-from typing import Any, Dict
 
-import aiohttp
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 
 class TeamsChannel(BaseAlertChannel):
@@ -155,6 +151,9 @@ class TeamsChannel(BaseAlertChannel):
             return {alert.alert_id: False for alert in alerts}
 
         # Teams/(*o-+*sections
+
+
+
         try:
             payload = {
                 "@type": "MessageCard",

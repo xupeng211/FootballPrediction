@@ -3,11 +3,6 @@ Feast Feature Store Mock 实现
 用于测试环境，避免真实的Feast依赖
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, cast
-from dataclasses import dataclass
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -335,3 +330,6 @@ def reset_feast_store() -> None:
     if global_feast_store:
         global_feast_store.teardown()
     global_feast_store = None
+from collections import defaultdict
+from typing import Dict, List, Optional, Any
+

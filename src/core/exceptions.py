@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统异常定义模块
@@ -73,3 +72,4 @@ class TaskExecutionError(FootballPredictionError):
 
 class TaskRetryError(FootballPredictionError):
     """任务重试异常"""
+

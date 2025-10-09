@@ -1,17 +1,13 @@
 """
+            from src.data.collectors.fixtures_collector import (
+
 赛程数据采集任务
 Fixtures Collection Task
 
 负责采集足球赛程数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from ..celery_app import app
-from .base import DataCollectionTask, CollectionTaskMixin
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +31,6 @@ def collect_fixtures_task(
         """内部异步采集函数"""
         try:
             # 动态导入以避免循环导入问题
-            from src.data.collectors.fixtures_collector import (
                 FixturesCollector as RealFixturesCollector,
             )
 
@@ -136,5 +131,7 @@ class FixturesCollector:
             "status": "success",
             "fixtures_collected": 0,
             "days_ahead": days_ahead,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().isoformat(),)
+
+
         }

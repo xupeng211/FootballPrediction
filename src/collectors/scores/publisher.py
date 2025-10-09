@@ -5,10 +5,7 @@ Publisher
 发布比分更新到Redis频道。
 """
 
-import json
-from typing import Any, Dict
 
-from src.cache.redis_manager import RedisManager
 
 logger = __import__("logging").getLogger(__name__)
 
@@ -104,7 +101,9 @@ class ScoreUpdatePublisher:
         """
         try:
             message = {
-                "type": "live_matches",
+                "type": "live_matches", Dict
+
+
                 "matches": matches,
                 "count": len(matches),
                 "timestamp": json.dumps(matches[0].get("timestamp", "") if matches else ""),

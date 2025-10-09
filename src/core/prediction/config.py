@@ -5,9 +5,6 @@ Prediction Engine Configuration
 管理预测引擎的配置参数。
 """
 
-import os
-from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -78,6 +75,7 @@ class PredictionConfig:
         config = cls.from_env()
 
         if mlflow_tracking_uri:
+
             config.mlflow_tracking_uri = mlflow_tracking_uri
         if max_concurrent_predictions:
             config.max_concurrent_predictions = max_concurrent_predictions

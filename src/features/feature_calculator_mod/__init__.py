@@ -10,16 +10,10 @@
 """
 
 # 导入核心类
-from .core import FeatureCalculator
 
 # 导入子模块计算器
-from .recent_performance import RecentPerformanceCalculator
-from .historical_matchup import HistoricalMatchupCalculator
-from .odds_features import OddsFeaturesCalculator
-from .batch_calculator import BatchCalculator
 
 # 导入工具类
-from .statistics_utils import StatisticsUtils
 
 # 为了向后兼容，重新导出统计工具函数
 stats_utils = StatisticsUtils()
@@ -66,8 +60,16 @@ def calculate_rolling_mean(data, window: int = 3):
 # 添加到导出列表
 __all__.extend([
     "calculate_mean",
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
+    "calculate_std",)
     "calculate_std",
-    "calculate_min",
-    "calculate_max",
-    "calculate_rolling_mean",
-])

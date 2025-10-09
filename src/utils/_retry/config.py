@@ -1,11 +1,11 @@
 """
+        from src.utils.retry import RetryConfig
+
 重试配置
 Retry Configuration
 """
 
-from typing import Tuple, Type
 
-from .strategies import ExponentialBackoffStrategy
 
 
 class RetryConfig:
@@ -25,7 +25,6 @@ class RetryConfig:
 
     Example:
         ```python
-        from src.utils.retry import RetryConfig
 
         # 创建数据库重试配置
         db_config = RetryConfig(
@@ -75,6 +74,8 @@ class RetryConfig:
         """
         self.max_attempts = max_attempts
         self.base_delay = base_delay
+
+
         self.max_delay = max_delay
         self.exponential_base = exponential_base
         self.jitter = jitter

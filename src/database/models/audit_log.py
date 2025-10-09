@@ -1,4 +1,6 @@
 """
+        from sqlalchemy import and_, func
+
 权限审计日志模型
 
 实现全面的数据库操作审计功能，记录所有敏感数据的访问和修改操作。
@@ -7,15 +9,8 @@
 基于 DATA_DESIGN.md 中的权限控制设计。
 """
 
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
-from sqlalchemy.sql import func
 
-from ..base import BaseModel
-from ..types import SQLiteCompatibleJSONB
 
 
 class AuditAction(str, Enum):
@@ -330,7 +325,6 @@ class AuditLogSummary:
 
     def get_user_activity_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
         """获取用户活动摘要"""
-        from sqlalchemy import and_, func
 
         cutoff_date = datetime.now() - timedelta(days=days)
 
@@ -408,14 +402,16 @@ class AuditLogSummary:
     def get_table_activity_summary(
         self, table_name: str, days: int = 7
     ) -> Dict[str, Any]:
-        """获取表操作活动摘要"""
-        from sqlalchemy import and_, func
+            "failure_ratio": failed_count / max(total_actions, 1),)
 
         cutoff_date = datetime.now() - timedelta(days=days)
 
         # 基础统计
         total_operations = (
             self.session.query(AuditLog)
+
+
+
             .filter(
                 and_(
                     AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date

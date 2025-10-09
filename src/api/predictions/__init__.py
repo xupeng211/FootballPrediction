@@ -5,10 +5,12 @@ Prediction API Module
 提供完整的预测相关API接口。
 """
 
+
 from fastapi import APIRouter
 
 from .endpoints import routers
 from .models import (
+
     PredictionRequest,
     PredictionResponse,
     BatchPredictionRequest,

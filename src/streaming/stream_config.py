@@ -8,9 +8,6 @@
 - 错误处理配置
 """
 
-import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, cast
 
 
 @dataclass
@@ -162,3 +159,5 @@ class StreamConfig:
     def is_valid_topic(self, topic_name: str) -> bool:
         """检查Topic是否有效"""
         return topic_name in self.topics
+import os
+

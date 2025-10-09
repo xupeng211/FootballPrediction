@@ -4,10 +4,7 @@
 定义数据库连接的重试配置和常量
 """
 
-import os
-from typing import Tuple
 
-from src.utils.retry import RetryConfig
 
 # 数据库重试配置 / Database retry configuration
 DATABASE_RETRY_CONFIG = RetryConfig(
@@ -46,6 +43,8 @@ def get_pool_settings(
     if is_sqlite:
         # SQLite不使用连接池
         return 0, 0, 0, 0
+
+
 
     if is_async:
         return (

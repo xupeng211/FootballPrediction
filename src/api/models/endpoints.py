@@ -5,18 +5,8 @@ Models API Endpoints
 整合所有模型管理相关的API端点。
 """
 
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query
 
-from src.api.models.active import get_active_models
-from src.api.models.experiments import get_experiments
-from src.api.models.metrics import get_model_metrics
-from src.api.models.model_info import get_model_info
-from src.api.models.performance import get_model_performance
-from src.api.models.versions import get_model_versions, promote_model_version
-from src.api.models.mlflow_client import mlflow_client
-from src.database.compatibility import get_async_db_session
 
 # 获取模型信息
 model_info = get_model_info()
@@ -83,3 +73,12 @@ async def get_experiments_endpoint(
 ) -> dict:
     """获取MLflow实验列表"""
     return await get_experiments(limit, client)
+
+
+from src.api.models.active import get_active_models
+from src.api.models.experiments import get_experiments
+from src.api.models.metrics import get_model_metrics
+from src.api.models.mlflow_client import mlflow_client
+from src.api.models.performance import get_model_performance
+from src.api.models.versions import get_model_versions, promote_model_version
+

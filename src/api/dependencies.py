@@ -15,13 +15,7 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Dict, cast
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from src.core.prediction_engine import PredictionEngine
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -139,3 +133,8 @@ async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
     # 这里可以实现速率限制逻辑
     # 例如：检查用户在时间窗口内的请求次数
     return True
+
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+
+

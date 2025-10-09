@@ -5,10 +5,7 @@ Model Loader
 管理预测模型的加载和版本控制。
 """
 
-import logging
-from typing import Optional
 
-from src.models.prediction_service import PredictionService
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +211,8 @@ class ModelLoader:
         try:
             models = self.prediction_service.mlflow_client.search_registered_models()
             available_models = []
+
+
 
             for model in models:
                 versions = self.prediction_service.mlflow_client.get_latest_versions(

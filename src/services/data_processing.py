@@ -45,8 +45,9 @@ Integrates football data cleaner and missing data handler.
       - service.py: 核心数据处理服务
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有内容
 from .data_processing_mod import (
+
+# 为了向后兼容性，从新的模块化结构中导入所有内容
     # 核心服务
     DataProcessingService,
 

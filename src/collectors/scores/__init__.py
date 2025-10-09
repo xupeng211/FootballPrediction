@@ -6,14 +6,15 @@ Scores Collection Module
 """
 
 from .collector import ScoresCollector
-from .manager import ScoresCollectorManager, get_scores_manager
 from .data_sources import (
+from .manager import ScoresCollectorManager, get_scores_manager
+from .processor import ScoreDataProcessor
+from .publisher import ScoreUpdatePublisher
+
     FootballAPISource,
     ApiSportsSource,
     ScorebatSource,
 )
-from .processor import ScoreDataProcessor
-from .publisher import ScoreUpdatePublisher
 
 __all__ = [
     "ScoresCollector",

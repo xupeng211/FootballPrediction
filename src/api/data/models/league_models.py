@@ -3,10 +3,7 @@
 League Related Models
 """
 
-from datetime import datetime
-from typing import Optional
 
-from pydantic import BaseModel, Field
 
 
 class LeagueQueryParams(BaseModel):
@@ -26,5 +23,10 @@ class LeagueCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="联赛名称")
     country: str = Field(..., max_length=50, description="国家")
     season: str = Field(..., max_length=20, description="赛季")
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
     start_date: Optional[datetime] = Field(None, description="开始日期")
     end_date: Optional[datetime] = Field(None, description="结束日期")

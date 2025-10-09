@@ -4,16 +4,8 @@ Kafka消费者核心实现
 提供Kafka消费的核心功能，包括连接管理、Topic订阅和消息消费。
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, List, Optional
 
-from confluent_kafka import Consumer, KafkaError, KafkaException
 
-from src.database.connection import DatabaseManager
-from .message_processor import MessageProcessor
-from .utils import get_session
-from ..stream_config import StreamConfig
 
 # 为了测试兼容性添加的别名
 KafkaConsumer = Consumer
@@ -337,3 +329,12 @@ class FootballKafkaConsumer:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         self.stop_consuming()
+import asyncio
+import logging
+
+from confluent_kafka import Consumer, KafkaError, KafkaException
+
+from ..stream_config import StreamConfig
+from .message_processor import MessageProcessor
+from src.database.connection import DatabaseManager
+

@@ -3,6 +3,7 @@
 Feature Store Query Module
 """
 
+
 from .query_manager import FeatureQueryManager
 
 __all__ = ["FeatureQueryManager"]

@@ -5,7 +5,6 @@ Documentation Configuration Module
 管理 API 文档和示例相关配置。
 """
 
-from typing import Dict, Any, List
 
 
 class DocsConfig:
@@ -354,6 +353,7 @@ curl http://localhost:8000/predictions/{match_id}
             Dict[str, Any]: 模型定义 / Model definitions
         """
         return {
+
             "PredictionRequest": {
                 "type": "object",
                 "required": ["match_id"],

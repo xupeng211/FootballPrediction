@@ -5,15 +5,7 @@ Recovery Handler Main Class
 协调恢复处理的各个组件。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Callable, Dict
 
-from .alerting import AlertManager
-from .classifiers import FailureClassifier
-from .models import FailureType, RecoveryStrategy, TaskFailure
-from .statistics import RecoveryStatistics
-from .strategies import StrategyFactory
 
 logger = logging.getLogger(__name__)
 
@@ -316,3 +308,11 @@ class RecoveryHandler:
         self.alert_manager.add_suppression_rule(
             name, pattern, duration_minutes, max_alerts
         )
+from datetime import datetime
+
+from .alerting import AlertManager
+from .classifiers import FailureClassifier
+from .models import FailureType, RecoveryStrategy, TaskFailure
+from .statistics import RecoveryStatistics
+from .strategies import StrategyFactory
+

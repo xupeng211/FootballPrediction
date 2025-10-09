@@ -1,17 +1,13 @@
 """
+            from src.data.collectors.scores_collector import ScoresCollector
+
 历史数据采集任务
 Historical Data Collection Task
 
 负责采集历史比赛数据。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from ..celery_app import app
-from .base import DataCollectionTask, CollectionTaskMixin
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +60,10 @@ def collect_historical_data_task(
         """内部异步收集函数"""
         try:
             # 动态导入以避免循环导入问题
-            from src.data.collectors.scores_collector import ScoresCollector
 
             collector = ScoresCollector()
+
+
 
             logger.info(
                 f"收集历史数据: 球队={team_id}, "

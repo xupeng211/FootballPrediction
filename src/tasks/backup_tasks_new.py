@@ -23,7 +23,12 @@
     result = daily_full_backup_task.apply_async()
 """
 
+from .backup.cleanup.backup_cleaner import BackupCleaner
+from .backup.core.backup_config import BackupConfig
+from .backup.executor.backup_executor import BackupExecutor
 from .backup.tasks import (
+from .backup.validation.backup_validator import BackupValidator
+
     DatabaseBackupTask,
     RedisBackupTask,
     LogsBackupTask,
@@ -44,14 +49,8 @@ from .backup.tasks import (
 )
 
 # 导出核心组件
-from .backup.core.backup_config import BackupConfig
-from .backup.executor.backup_executor import BackupExecutor
-from .backup.validation.backup_validator import BackupValidator
-from .backup.cleanup.backup_cleaner import BackupCleaner
-from .backup.metrics.backup_metrics import get_backup_metrics
 
 # 为了向后兼容，保留一些常用的导入
-from .backup.tasks.backup_tasks import DatabaseBackupTask as BackupTask
 
 __all__ = [
     # 主要任务类

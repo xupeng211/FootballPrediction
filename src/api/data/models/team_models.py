@@ -3,9 +3,7 @@
 Team Related Models
 """
 
-from typing import Optional
 
-from pydantic import BaseModel, Field
 
 
 class TeamQueryParams(BaseModel):
@@ -33,6 +31,8 @@ class TeamUpdateRequest(BaseModel):
 
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="球队名称")
     country: Optional[str] = Field(None, max_length=50, description="国家")
+
+
     founded_year: Optional[int] = Field(None, ge=1800, le=2030, description="成立年份")
     stadium: Optional[str] = Field(None, max_length=100, description="球场名称")
     logo_url: Optional[str] = Field(None, max_length=255, description="队徽URL")

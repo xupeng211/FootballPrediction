@@ -5,10 +5,11 @@ Prediction Service Module
 提供模型预测相关的功能，包括模型加载、预测执行、结果存储等。
 """
 
-from .models import PredictionResult
-from .service import PredictionService
 from .cache import PredictionCache
 from .metrics import (
+from .models import PredictionResult
+from .service import PredictionService
+
     predictions_total,
     prediction_duration_seconds,
     prediction_accuracy,

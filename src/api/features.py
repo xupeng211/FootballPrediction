@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .api.features.endpoints import *  # type: ignore
+from .api.features.features_api import *  # type: ignore
+from .api.features.models import *  # type: ignore
+from .api.features.services import *  # type: ignore
 
 warnings.warn(
     "直接从 features 导入已弃用。" "请从 api.features 导入相关类。",
@@ -18,10 +24,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .api.features.features_api import *  # type: ignore
-from .api.features.endpoints import *  # type: ignore
-from .api.features.models import *  # type: ignore
-from .api.features.services import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

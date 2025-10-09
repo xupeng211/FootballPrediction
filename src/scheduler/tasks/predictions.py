@@ -1,20 +1,14 @@
 """
+        from sqlalchemy import text
+
 预测任务
 Prediction Tasks
 
 包含预测生成任务。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import List, Optional
 
-from src.database.connection import get_async_session
-from src.models.prediction_service import PredictionService
 
-from .base import BaseDataTask
-from ..celery_config import app
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +24,6 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
     try:
         logger.info("开始执行预测生成任务")
 
-        from sqlalchemy import text
 
         async def _generate_predictions():
             """异步生成预测"""
@@ -68,6 +61,8 @@ def generate_predictions(self, match_ids: Optional[List[int]] = None):
                 if not matches:
                     logger.info("没有找到需要预测的比赛")
                     return 0
+
+
 
                 # 2. 初始化预测服务
                 prediction_service = PredictionService()

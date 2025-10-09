@@ -1,29 +1,22 @@
 """
+from .schemas import (
+from src.database.connection import get_async_session
+
 预测API路由器 / Predictions API Router
 
 整合所有预测相关的API端点。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Path, Query, Request
 
-from src.database.connection import get_async_session
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from .batch_handlers import batch_predict_matches_handler
-from .history_handlers import (
     get_match_prediction_history_handler,
     get_recent_predictions_handler,
 )
-from .prediction_handlers import (
     get_match_prediction_handler,
     predict_match_handler,
     verify_prediction_handler,
 )
-from .rate_limiter import get_rate_limiter
-from .schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     PredictionHistoryResponse,

@@ -4,8 +4,6 @@
 负责记录数据清洗相关的各项指标。
 """
 
-import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +116,4 @@ class DataCleaningMetrics:
         """
         for record in cleaning_records:
             self.record_cleaning(**record)
+

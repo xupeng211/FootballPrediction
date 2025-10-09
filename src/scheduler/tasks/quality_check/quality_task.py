@@ -4,14 +4,7 @@
 负责数据质量检查和生成质量报告。
 """
 
-import asyncio
-import logging
-from datetime import datetime
 
-from src.database.connection import get_async_session
-from src.data.quality.data_quality_monitor import DataQualityMonitor
-from ...celery_config import app
-from ..base.base_task import BaseDataTask
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +123,8 @@ def run_quality_checks():
             monitor = DataQualityMonitor()
 
             async with get_async_session() as session:
+
+
                 # 生成质量报告
                 quality_report = await _generate_quality_report(session, monitor)
 

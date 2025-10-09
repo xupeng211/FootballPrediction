@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from ............src.data.quality.stats import provider
+from ............src.data.quality.stats import quality_metrics
+from ............src.data.quality.stats import reporter
+from ............src.data.quality.stats import trend_analyzer
 
 warnings.warn(
     "直接从 statistics_provider 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from ............src.data.quality.stats import quality_metrics
-from ............src.data.quality.stats import trend_analyzer
-from ............src.data.quality.stats import reporter
-from ............src.data.quality.stats import provider
 
 # 导出所有类
 __all__ = [

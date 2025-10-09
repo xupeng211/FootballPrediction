@@ -4,11 +4,7 @@
 负责处理不同类型的数据消息并写入数据库。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict
 
-from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
 
 class DataProcessor:
@@ -121,6 +117,8 @@ class DataProcessor:
             # 提取实际的比分数据
             scores_data = message_data.get("data", {})
             data_source = message_data.get("source", "kafka_stream")
+
+
 
             # 创建RawScoresData对象
             raw_scores = RawScoresData(

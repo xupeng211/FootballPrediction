@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 数据质量监控模块
@@ -14,16 +13,18 @@ from typing import cast, Any, Optional, Union
 - AdvancedAnomalyDetector: 高级异常检测器（统计学+机器学习）
 """
 
+    AdvancedAnomalyDetector, Any, Optional, Union
+
 from .anomaly_detector import (
-    AdvancedAnomalyDetector,
-    AnomalyDetectionResult,
-    MachineLearningAnomalyDetector,
-    StatisticalAnomalyDetector,
-)
 from .data_quality_monitor import DataQualityMonitor
 from .exception_handler import DataQualityExceptionHandler
 from .ge_prometheus_exporter import GEPrometheusExporter
 from .great_expectations_config import GreatExpectationsConfig
+
+    AnomalyDetectionResult,
+    MachineLearningAnomalyDetector,
+    StatisticalAnomalyDetector,
+)
 
 __all__ = [
     "DataQualityMonitor",

@@ -3,11 +3,7 @@
 Feature Store Dataset Management Module
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional
-import pandas as pd
 
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -143,7 +139,10 @@ class FeatureDatasetManager:
         try:
             # 首先创建完整的数据集
             full_dataset = self.create_training_dataset(
-                start_date=start_date,
+                start_date=start_date, timedelta
+
+
+
                 end_date=end_date,
             )
 

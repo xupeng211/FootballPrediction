@@ -5,7 +5,6 @@ Audit Context
 管理审计过程中的上下文信息。
 """
 
-from typing import Any, Dict, Optional
 
 
 class AuditContext:
@@ -183,3 +182,4 @@ class AuditContext:
             str: 日志字符串 / Log string
         """
         return f"user_id={self.user_id}, username={self.username}, ip={self.ip_address}, session={self.session_id}"
+

@@ -1,4 +1,6 @@
 """
+            from .metrics import PrometheusMetrics
+
 告警渠道
 Alert Channels
 
@@ -9,7 +11,6 @@ This file maintains backward compatibility by re-exporting the split modules.
 """
 
 # 导入所有拆分后的类以保持向后兼容性
-from ..alerts.channels import (
     BaseAlertChannel,
     LogChannel,
     WebhookChannel,
@@ -22,9 +23,6 @@ from ..alerts.channels import (
 
 # 为了保持完全的向后兼容性，也需要重新导出原始的PrometheusChannel
 # 因为这个依赖于具体的metrics模块
-from ..alerts.channels.base_channel import BaseAlertChannel as _BaseAlertChannel
-from ...alert_manager_mod.models import Alert, AlertChannel as OriginalAlertChannel
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +50,6 @@ class PrometheusChannel(_BaseAlertChannel):
 
         # 延迟初始化指标
         try:
-            from .metrics import PrometheusMetrics
             self.metrics = PrometheusMetrics()
         except ImportError:
             logger.warning("PrometheusMetrics not available, PrometheusChannel will be disabled")
@@ -71,6 +68,8 @@ class PrometheusChannel(_BaseAlertChannel):
         try:
             if not self.metrics:
                 return False
+
+
 
             # 记录告警创建
             self.metrics.record_alert_created(

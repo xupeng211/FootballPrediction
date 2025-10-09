@@ -4,10 +4,6 @@
 提供服务创建和配置的工厂模式实现。
 """
 
-from typing import Type, Dict, Any, Optional, Callable
-from src.core import logger
-from src.core.config import get_settings
-from ..base import BaseService
 
 
 class ServiceFactory:
@@ -86,3 +82,9 @@ class ServiceFactory:
     def get_registered_services(self) -> list:
         """获取所有注册的服务"""
         return list(self._builders.keys())
+from typing import Dict, Any, Callable
+
+from ..base import BaseService
+from src.core import logger
+from src.core.config import get_settings
+

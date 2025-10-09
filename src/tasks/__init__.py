@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统任务调度模块
@@ -17,14 +16,16 @@ from typing import cast, Any, Optional, Union
 - Prometheus指标导出
 """
 
+    collect_fixtures_task, Any, Optional, Union
+
 from .celery_app import app as celery_app
 from .data_collection_tasks import (
-    collect_fixtures_task,
+from .error_logger import TaskErrorLogger
+from .monitoring import TaskMonitor
+
     collect_odds_task,
     collect_scores_task,
 )
-from .error_logger import TaskErrorLogger
-from .monitoring import TaskMonitor
 
 __all__ = [
     "celery_app",

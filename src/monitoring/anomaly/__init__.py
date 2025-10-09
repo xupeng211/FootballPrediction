@@ -5,9 +5,12 @@ Anomaly Detection Module
 提供各种异常检测功能。
 """
 
-from .models import AnomalyType, AnomalySeverity, AnomalyResult
+from .analyzers import TableAnalyzer, ColumnAnalyzer
 from .detector import AnomalyDetector
 from .methods import (
+from .models import AnomalyType, AnomalySeverity, AnomalyResult
+from .summary import AnomalySummarizer
+
     ThreeSigmaDetector,
     IQRDetector,
     ZScoreDetector,
@@ -15,8 +18,6 @@ from .methods import (
     FrequencyDetector,
     TimeGapDetector,
 )
-from .analyzers import TableAnalyzer, ColumnAnalyzer
-from .summary import AnomalySummarizer
 
 __all__ = [
     # Models

@@ -4,14 +4,8 @@
 处理原始比赛数据的清洗、转换和标准化。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
 
-import pandas as pd
 
-from src.data.processing.football_data_cleaner import FootballDataCleaner
-from src.database.models.raw_data import RawMatchData
 
 
 class MatchProcessor:
@@ -342,6 +336,9 @@ class MatchProcessor:
         for match in matches:
             # 创建唯一标识
             identifier = (
+
+
+
                 match.get("home_team", ""),
                 match.get("away_team", ""),
                 match.get("match_date"),

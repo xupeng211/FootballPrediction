@@ -5,9 +5,7 @@ Feature Entity Definitions
 定义 Feast 特征存储的实体。
 """
 
-from typing import Dict
 
-from .mock_feast import Entity, ValueType
 
 
 def get_entity_definitions() -> Dict[str, Entity]:
@@ -19,6 +17,10 @@ def get_entity_definitions() -> Dict[str, Entity]:
     """
     return {
         "match": Entity(
+from typing import Dict
+
+from .mock_feast import Entity, ValueType
+
             name="match",
             value_type=ValueType.INT64,
             description="比赛实体，用于比赛级别的特征",

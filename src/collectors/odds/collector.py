@@ -5,18 +5,8 @@ Odds Collector Core
 协调各个组件完成赔率收集任务
 """
 
-import asyncio
-import logging
-from datetime import timedelta
-from typing import Any, Dict, List, Optional
 
-from src.cache.redis_manager import RedisManager
-from .time_utils_compat import utc_now
 
-from .analyzer import OddsAnalyzer
-from .processor import OddsProcessor
-from .sources import OddsSourceManager
-from .storage import OddsStorage
 
 logger = logging.getLogger(__name__)
 
@@ -320,3 +310,12 @@ class OddsCollector:
                 else 0.0
             ),
         }
+from typing import Optional
+import asyncio
+
+from .analyzer import OddsAnalyzer
+from .processor import OddsProcessor
+from .sources import OddsSourceManager
+from .storage import OddsStorage
+from .time_utils_compat import utc_now
+

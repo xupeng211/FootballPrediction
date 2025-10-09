@@ -4,15 +4,7 @@
 负责执行实际的预测逻辑
 """
 
-import inspect
-import logging
-import numpy as np
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from src.features.feature_store import FootballFeatureStore
-from src.models.prediction.core import PredictionResult, PredictionConfig
-from src.models.metrics_exporter import ModelMetricsExporter
 
 logger = logging.getLogger(__name__)
 
@@ -192,3 +184,10 @@ class PredictionProcessor:
             feature_values.append(float(value))
 
         return np.array([feature_values])
+from datetime import datetime
+import inspect
+
+import numpy as np
+
+from src.models.prediction.core import PredictionResult
+

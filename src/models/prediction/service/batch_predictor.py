@@ -5,12 +5,8 @@ Batch Predictor Module
 处理批量比赛预测的逻辑。
 """
 
-import logging
-from typing import List, Any
 
-from src.core.logging import get_logger
 
-from .predictors import MatchPredictor
 
 logger = get_logger(__name__)
 
@@ -127,7 +123,9 @@ class BatchPredictor:
         # 这里可以添加性能统计逻辑
         return {
             "total_batches_processed": 0,  # 实现时添加计数器
-            "average_batch_size": 0,
+            "average_batch_size": 0, Any
+
+
             "average_batch_duration": 0,
             "peak_batch_size": 0
         }

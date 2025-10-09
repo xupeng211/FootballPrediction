@@ -4,12 +4,7 @@ Redis缓存管理器主类
 整合所有Redis功能模块，提供统一的接口
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from .core import CacheKeyManager, RedisConnectionManager
-from .operations import RedisAsyncOperations, RedisSyncOperations
-from .warmup import CacheWarmupManager
 
 
 logger = logging.getLogger(__name__)
@@ -228,3 +223,8 @@ class RedisManager:
     async def full_warmup(self) -> Dict[str, int]:
         """执行完整的缓存预热"""
         return await self.warmup_manager.full_warmup()
+
+from .core import CacheKeyManager, RedisConnectionManager
+from .operations import RedisAsyncOperations, RedisSyncOperations
+from .warmup import CacheWarmupManager
+

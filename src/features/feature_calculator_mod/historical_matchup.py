@@ -4,14 +4,8 @@
 负责计算两队之间的历史对战记录特征。
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import and_, desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.models.match import Match, MatchStatus
-from ..feature_definitions import HistoricalMatchupFeatures
 
 
 class HistoricalMatchupCalculator:
@@ -322,6 +316,9 @@ class HistoricalMatchupCalculator:
         recent_matches = h2h_matches[:recent_matches]
         home_wins = sum(1 for m in recent_matches if m.home_score > m.away_score)
         away_wins = sum(1 for m in recent_matches if m.away_score > m.home_score)
+
+
+
         draws = sum(1 for m in recent_matches if m.home_score == m.away_score)
 
         # 判断趋势

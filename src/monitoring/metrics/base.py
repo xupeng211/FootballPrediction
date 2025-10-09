@@ -5,16 +5,8 @@ Base Metrics Collector
 定义指标收集器的基类和通用功能。
 """
 
-import asyncio
-import logging
-import signal
-from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from src.core.config import get_settings
 
-from ...monitoring.metrics_exporter import MetricsExporter, get_metrics_exporter
 
 logger = logging.getLogger(__name__)
 
@@ -211,3 +203,11 @@ class BaseMetricsCollector(ABC):
             "collector_type": self.__class__.__name__,
             "tables_to_monitor": self.tables_to_monitor,
         }
+from datetime import datetime
+from typing import Optional
+import asyncio
+
+import signal
+
+from ...monitoring.metrics_exporter import get_metrics_exporter
+

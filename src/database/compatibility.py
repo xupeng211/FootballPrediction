@@ -4,15 +4,9 @@
 为了保持向后兼容性，重新定义全局函数。
 """
 
-import logging
-from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 # 从新的包结构导入
-from .connection.managers.database_manager import DatabaseManager
 
 # 创建单例实例
 _db_manager = DatabaseManager()
@@ -36,6 +30,9 @@ async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 # 导出所有兼容性函数
 __all__ = [
-    "get_async_db_session",
+    "get_async_db_session", contextmanager
+
+
+
     "get_db_session",
 ]

@@ -1,12 +1,12 @@
 """
+            import pandas as _pd
+
 Feast Mock 实现
 Feast Mock Implementation
 
 为测试环境提供轻量级的 Feast 替代实现。
 """
 
-import os
-from typing import Any, Dict, List
 
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
 
@@ -31,7 +31,6 @@ except ImportError:  # pragma: no cover
             self._rows = rows
 
         def to_df(self):
-            import pandas as _pd
 
             return _pd.DataFrame(self._rows)
 
@@ -68,6 +67,7 @@ except ImportError:  # pragma: no cover
 
         def __init__(self, *args, **kwargs):
             self.applied_objects: List[Any] = []
+
 
         def apply(self, obj: Any) -> None:
             self.applied_objects.append(obj)

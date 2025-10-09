@@ -1,18 +1,13 @@
 """
+                from feast import FeatureStore
+
+from src.core.logging_system import get_logger
+
 足球特征商店主类
 Football Feature Store Main Class
 """
 
-from typing import Any, Dict, List, Optional
-import pandas as pd
-from datetime import datetime
 
-from src.core.logging_system import get_logger
-from .config import FeatureStoreConfigManager, FeatureStoreConfig
-from .storage import FeatureStorageManager
-from .query import FeatureQueryManager
-from .computation import FeatureDatasetManager
-from .utils import (
     HAS_FEAST,
     match_entity,
     team_entity,
@@ -77,7 +72,6 @@ class FootballFeatureStore:
 
             # 初始化FeatureStore实例
             try:
-                from feast import FeatureStore
                 self._store = FeatureStore(repo_path=self.config_manager.repo_path)
             except ImportError:
                 logger.error("无法导入 FeatureStore，请确保 Feast 已正确安装")

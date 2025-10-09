@@ -3,17 +3,8 @@
 实时收集比赛比分和事件
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, cast
-import os
 
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.redis_manager import RedisManager
-from src.database.connection import DatabaseManager
-from src.database.models.match import Match
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -121,3 +112,12 @@ class ScoresCollectorFactory:
         db_session = DatabaseManager()
         redis_client = RedisManager()
         return ScoresCollector(db_session, redis_client)
+from datetime import datetime
+import os
+
+from sqlalchemy import or_, select
+
+from src.cache.redis_manager import RedisManager
+from src.database.connection import DatabaseManager
+from src.database.models.match import Match
+

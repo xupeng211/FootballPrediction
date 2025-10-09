@@ -1,18 +1,20 @@
 """
+        from datetime import timedelta
+
 模型加载器模块
 Model Loader Module
 
 负责从MLflow加载和管理预测模型。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Tuple
 
-from src.core.logging import get_logger
+
+# Import moved to top
+
+
+
 
 try:
-    from .mlflow_client import MLflowModelClient
 except ImportError:
     # 创建模拟的MLflow客户端
     class MLflowModelClient:
@@ -31,8 +33,9 @@ except ImportError:
             return [2]  # home win
 
 # 尝试导入指标
-try:
-    from .metrics import model_load_duration_seconds, model_usage_count
+# Import moved to top
+
+try: model_usage_count
 except ImportError:
     # 测试环境下的模拟实现
     class MockMetric:
@@ -124,7 +127,6 @@ class ModelLoader:
         if not self._current_model or not self._model_load_time:
             return False
 
-        from datetime import timedelta
         model_age = datetime.now() - self._model_load_time
         return model_age < timedelta(hours=1)  # 模型缓存1小时
 
@@ -198,6 +200,8 @@ class ModelLoader:
         self._current_model = None
         self._current_model_version = None
         self._model_load_time = None
+
+
 
         logger.info("强制刷新模型缓存")
         return await self.get_production_model()

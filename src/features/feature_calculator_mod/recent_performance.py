@@ -4,14 +4,8 @@
 负责计算球队的近期表现特征，包括胜负平统计、进球数等。
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import and_, desc, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.models.match import Match, MatchStatus
-from ..feature_definitions import RecentPerformanceFeatures
 
 
 class RecentPerformanceCalculator:
@@ -204,7 +198,10 @@ class RecentPerformanceCalculator:
             .where(
                 and_(
                     or_(Match.home_team_id == team_id, Match.away_team_id == team_id),
-                    Match.match_time < calculation_date,
+                    Match.match_time < calculation_date, Dict, List, Optional
+
+
+
                     Match.match_status == MatchStatus.FINISHED,
                 )
             )

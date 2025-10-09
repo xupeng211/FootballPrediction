@@ -4,8 +4,6 @@
 提供字符串操作和文本处理相关的工具函数。
 """
 
-import re
-from typing import List, cast
 
 
 class StringUtils:
@@ -49,4 +47,5 @@ class StringUtils:
         """从文本中提取数字"""
         pattern = r"-?\d+\.?\d*"
         numbers = re.findall(pattern, text)
+
         return [float(num) for num in numbers if num]

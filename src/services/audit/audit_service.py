@@ -4,22 +4,13 @@
 整合所有审计功能模块。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 
-from src.database.models.audit_log import (
     AuditAction,
     AuditLog,
     AuditLogSummary,
     AuditSeverity,
 )
 
-from .analyzers.data_analyzer import AuditAnalyzer
-from .context import AuditContext, audit_context
-from .loggers.audit_logger import AuditLogger
-from .reporters.report_generator import AuditReportGenerator
-from .sanitizer import DataSanitizer
 
 
 class AuditService:
@@ -188,8 +179,6 @@ class AuditService:
         Returns:
             List[AuditLog]: 审计日志列表
         """
-        from src.database.connection import get_async_session
-        from sqlalchemy import and_, desc
 
         try:
             start_time = datetime.utcnow() - timedelta(hours=hours)
@@ -233,8 +222,6 @@ class AuditService:
         Returns:
             List[AuditLog]: 审计日志列表
         """
-        from src.database.connection import get_async_session
-        from sqlalchemy import and_, desc, or_
 
         try:
             async with get_async_session() as session:

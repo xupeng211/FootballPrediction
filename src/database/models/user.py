@@ -1,14 +1,9 @@
-from __future__ import annotations
 
 """用户数据模型。"""
 
-from typing import cast, Any, Optional, Union
 
-from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String
 
-from src.database.base import BaseModel
 
 
 class User(BaseModel):
@@ -48,3 +43,6 @@ class User(BaseModel):
 
     def __repr__(self) -> str:  # pragma: no cover - 调试友好
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+from datetime import datetime
+
+from __future__ import annotations

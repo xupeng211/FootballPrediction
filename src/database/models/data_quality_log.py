@@ -10,13 +10,8 @@
 - 支持数据治理决策
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.sql import func
 
-from src.database.base import BaseModel
 
 
 class DataQualityLog(BaseModel):
@@ -148,7 +143,10 @@ class DataQualityLog(BaseModel):
             table_name=table_name,
             record_id=None,
             error_type="ge_validation_failed",
-            severity="medium",
+            severity="medium", Dict, Optional, cast
+
+
+
             error_data={
                 "validation_result": validation_result,
                 "failed_expectations": validation_result.get(

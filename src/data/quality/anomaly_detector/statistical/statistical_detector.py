@@ -1,20 +1,13 @@
 """
+from ..metrics.prometheus_metrics import (
+
 统计学异常检测器
 
 实现基于统计学的异常检测方法，包括3σ规则、IQR方法和分布偏移检测。
 """
 
-import logging
-import warnings
-from datetime import datetime
-from typing import Dict
 
-import numpy as np
-import pandas as pd
-from scipy import stats
 
-from ..core.result import AnomalyDetectionResult
-from ..metrics.prometheus_metrics import (
     anomaly_detection_duration_seconds,
     anomalies_detected_total,
     data_drift_score,
@@ -354,6 +347,9 @@ class StatisticalAnomalyDetector:
             IQR = Q3 - Q1
 
             # 计算异常值阈值
+
+
+
             lower_bound = Q1 - iqr_multiplier * IQR
             upper_bound = Q3 + iqr_multiplier * IQR
 

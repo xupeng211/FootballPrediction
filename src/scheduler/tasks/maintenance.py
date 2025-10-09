@@ -1,24 +1,20 @@
 """
+    from sqlalchemy import text
+    import tempfile
+
+from ..celery_config import app
+from .base import BaseDataTask
+from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
+from src.database.connection import get_async_session
+
 维护任务
 Maintenance Tasks
 
 包含数据清理和数据库备份任务。
 """
 
-import asyncio
-import logging
-import os
-import subprocess
-import gzip
-import shutil
-from datetime import datetime, timedelta
-from typing import Optional, Tuple
 
-from src.data.storage.data_lake_storage import DataLakeStorage, S3DataLakeStorage
-from src.database.connection import get_async_session
 
-from .base import BaseDataTask
-from ..celery_config import app
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +68,6 @@ async def _archive_data_to_lake(storage, archive_before):
 
 async def _cleanup_expired_database_data(archive_before):
     """清理过期的数据库数据"""
-    from sqlalchemy import text
 
     cleaned_records = 0
     async with get_async_session() as session:
@@ -144,7 +139,6 @@ async def _cleanup_expired_database_data(archive_before):
 
 async def _cleanup_temp_files(archive_before):
     """清理临时文件"""
-    import tempfile
 
     # 使用安全的临时目录获取方法
     temp_base = tempfile.gettempdir()
@@ -411,6 +405,9 @@ def backup_database():
 
             # 2. 上传到备份存储
             (
+
+
+
                 backup_location,
                 storage,
                 local_backup_dir,

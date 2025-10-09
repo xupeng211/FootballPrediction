@@ -1,17 +1,19 @@
 """
+            import time as sync_time
+        import sys
+    import hashlib
+
+            import signal
+            import threading
+        import psutil
+
 性能装饰器
 Performance Decorators
 
 提供性能监控和优化的装饰器。
 """
 
-import asyncio
-import functools
-import time
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
 
-from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -358,7 +360,6 @@ def retry_on_failure(
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
-            import time as sync_time
 
             last_exception = None
             current_delay = delay
@@ -416,8 +417,6 @@ def timeout(
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
-            import signal
-            import threading
 
             def timeout_handler(signum, frame):
                 raise TimeoutError(exception_message)
@@ -454,7 +453,6 @@ def _get_memory_usage() -> Optional[float]:
         Optional[float]: 内存使用量（MB）/ Memory usage (MB)
     """
     try:
-        import psutil
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024  # 转换为MB
     except ImportError:
@@ -475,7 +473,6 @@ def _get_object_size(obj: Any) -> int:
         int: 对象大小（字节）/ Object size (bytes)
     """
     try:
-        import sys
         return sys.getsizeof(obj)
     except Exception:
         return 0
@@ -577,7 +574,6 @@ def _generate_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
     Returns:
         str: 缓存键 / Cache key
     """
-    import hashlib
 
     # 创建键的字符串表示
     key_parts = [
@@ -611,6 +607,8 @@ def _generate_limit_key(func: Callable, args: tuple, kwargs: dict) -> str:
         if hasattr(first_arg, 'user_id'):
             return f"user:{first_arg.user_id}"
         elif hasattr(first_arg, 'session_id'):
+
+
             return f"session:{first_arg.session_id}"
 
     # 尝试从kwargs中提取

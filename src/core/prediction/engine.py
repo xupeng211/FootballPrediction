@@ -1,26 +1,19 @@
 """
+from .statistics import PredictionStatistics
+from src.cache.redis.core.key_manager import CacheKeyManager
+from src.cache.redis_manager import RedisManager
+from src.database.connection import DatabaseManager
+from src.features.feature_store import FootballFeatureStore
+from src.monitoring.metrics_exporter import MetricsExporter
+
 足球预测引擎
 Football Prediction Engine
 
 提供完整的比赛预测功能。
 """
 
-import asyncio
-import logging
-import time
-from typing import Any, Dict, List, Optional
 
-from src.cache.redis_manager import RedisManager
-from src.cache.redis.core.key_manager import CacheKeyManager
-from src.database.connection import DatabaseManager
-from src.features.feature_store import FootballFeatureStore
-from src.monitoring.metrics_exporter import MetricsExporter
 
-from .cache_manager import PredictionCacheManager
-from .config import PredictionConfig
-from .data_loader import PredictionDataLoader
-from .model_loader import ModelLoader
-from .statistics import PredictionStatistics
 
 logger = logging.getLogger(__name__)
 
@@ -372,6 +365,8 @@ class PredictionEngine:
         except Exception as e:
             health["checks"]["database"] = f"unhealthy: {e}"
             health["status"] = "degraded"
+
+
 
         try:
             # 检查Redis连接

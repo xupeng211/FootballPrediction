@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 缓存模块
@@ -9,6 +8,9 @@ from typing import cast, Any, Optional, Union
 - 缓存Key命名规范
 - TTL过期策略
 """
+
+
+from typing import cast, Any, Optional, Union
 
 from .redis_manager import CacheKeyManager, RedisManager
 

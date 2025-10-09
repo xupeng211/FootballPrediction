@@ -7,9 +7,6 @@ Provides backward-compatible interfaces while supporting new advanced features.
 """
 
 # 导入原有的服务类以保持兼容性
-from .service import AuditService as LegacyAuditService
-from .context import AuditContext
-from .models import (
     AuditAction,
     AuditSeverity,
     AuditLog,
@@ -17,7 +14,6 @@ from .models import (
 )
 
 # 导入新的高级审计服务
-from ..audit.advanced import (
     AuditService as AdvancedAuditService,
     DataAnalyzer,
     PatternAnalyzer,
@@ -50,6 +46,7 @@ def get_audit_service(use_advanced: bool = True, **kwargs):
         return AdvancedAuditService(**kwargs)
     else:
         return LegacyAuditService(**kwargs)
+
 
 # 为了向后兼容，默认导出原有的服务类
 AuditService = LegacyAuditService

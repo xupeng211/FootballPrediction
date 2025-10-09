@@ -4,9 +4,6 @@
 负责记录调度器相关的各项指标。
 """
 
-import logging
-from datetime import datetime
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -148,3 +145,5 @@ class SchedulerMetrics:
         """
         for task in tasks:
             self.record_task(**task)
+from datetime import datetime
+

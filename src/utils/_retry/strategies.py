@@ -1,11 +1,13 @@
 """
+        from src.utils.retry.strategies import ExponentialBackoffStrategy
+        from src.utils.retry.strategies import FixedBackoffStrategy
+        from src.utils.retry.strategies import LinearBackoffStrategy
+        from src.utils.retry.strategies import PolynomialBackoffStrategy
+
 重试策略和退避算法
 Retry Strategies and Backoff Algorithms
 """
 
-import random
-from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class BackoffStrategy(ABC):
@@ -39,7 +41,6 @@ class FixedBackoffStrategy(BackoffStrategy):
 
     Example:
         ```python
-        from src.utils.retry.strategies import FixedBackoffStrategy
 
         # 创建固定退避策略
         strategy = FixedBackoffStrategy(delay=2.0)
@@ -73,7 +74,6 @@ class LinearBackoffStrategy(BackoffStrategy):
 
     Example:
         ```python
-        from src.utils.retry.strategies import LinearBackoffStrategy
 
         # 创建线性退避策略
         strategy = LinearBackoffStrategy(base_delay=1.0, increment=0.5)
@@ -115,7 +115,6 @@ class ExponentialBackoffStrategy(BackoffStrategy):
 
     Example:
         ```python
-        from src.utils.retry.strategies import ExponentialBackoffStrategy
 
         # 创建指数退避策略
         strategy = ExponentialBackoffStrategy(
@@ -178,7 +177,6 @@ class PolynomialBackoffStrategy(BackoffStrategy):
 
     Example:
         ```python
-        from src.utils.retry.strategies import PolynomialBackoffStrategy
 
         # 创建多项式退避策略
         strategy = PolynomialBackoffStrategy(
@@ -219,6 +217,8 @@ class PolynomialBackoffStrategy(BackoffStrategy):
         """获取多项式增长的延迟时间 / Get polynomially increasing delay time"""
         # 计算基础延迟
         delay = self.base_delay * ((attempt + 1) ** self.power)
+
+
 
         # 限制最大延迟
         delay = min(delay, self.max_delay)

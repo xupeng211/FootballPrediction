@@ -3,8 +3,9 @@
 Module Exports
 """
 
-from .health_checker import *  # type: ignore
+
 from .checks import *  # type: ignore
+from .health_checker import *  # type: ignore
 from .reporters import *  # type: ignore
 from .utils import *  # type: ignore
 

@@ -2,19 +2,17 @@
 足球预测系统Kafka消费者
 """
 
-import asyncio
-import logging
-from typing import Any, Callable, List, Optional, Union
+
+# Import moved to top
+
+
 
 try:
-    from confluent_kafka import Consumer
     KAFKA_CONSUMER_AVAILABLE = True
 except ImportError:
     KAFKA_CONSUMER_AVAILABLE = False
     Consumer = None
 
-from src.streaming.kafka.config.stream_config import StreamConfig
-from src.streaming.kafka.serialization.message_serializer import MessageSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +143,8 @@ class FootballKafkaConsumer:
                 return False
             # 尝试获取集群元数据
             metadata = self.consumer.list_topics(timeout=5.0)
+
+
             return len(metadata.brokers) > 0
         except Exception as e:
             logger.error(f"Kafka消费者健康检查失败: {e}")

@@ -8,9 +8,10 @@ Kafka消费者模块
 - 工具函数
 """
 
+
 from .consumer import FootballKafkaConsumer
-from .message_processor import MessageProcessor
 from .data_processor import DataProcessor
+from .message_processor import MessageProcessor
 from .utils import get_session
 
 __all__ = [

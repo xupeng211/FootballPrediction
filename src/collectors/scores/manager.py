@@ -5,14 +5,9 @@ Manager
 管理多个比分收集器实例。
 """
 
-import asyncio
-from typing import Dict, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.cache.redis_manager import RedisManager
 
-from .collector import ScoresCollector
 
 
 class ScoresCollectorManager:
@@ -174,3 +169,10 @@ def get_scores_manager() -> ScoresCollectorManager:
     if _scores_manager is None:
         _scores_manager = ScoresCollectorManager()
     return _scores_manager
+from typing import Dict
+import asyncio
+
+
+from .collector import ScoresCollector
+from src.cache.redis_manager import RedisManager
+

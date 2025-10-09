@@ -7,8 +7,6 @@
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
-from datetime import timedelta
-from typing import Dict, List, Optional, cast
 
 
 class FeatureDefinitions:
@@ -166,7 +164,8 @@ class FeatureServices:
     """特征服务定义类"""
 
     MATCH_PREDICTION = {
-        "name": "match_prediction_v1",
+        "name": "match_prediction_v1", List, Optional, cast
+
         "features": [
             "match_features",
             "team_recent_stats",

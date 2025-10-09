@@ -3,16 +3,8 @@
 League Data Routes
 """
 
-from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, and_
 
-from src.api.dependencies import get_current_user
-from src.api.data.models.common import LeagueInfo
-from src.database.connection import get_async_session
-from src.database.models import League
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -81,5 +73,8 @@ def _convert_league_to_info(league: League) -> LeagueInfo:
         season=league.season,
         start_date=league.start_date,
         end_date=league.end_date,
-        is_active=league.is_active,
+        is_active=league.is_active, List, Optional
+
+
+
     )

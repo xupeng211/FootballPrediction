@@ -5,18 +5,8 @@ Core Prediction Service Module
 提供实时比赛预测的主要功能。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
 
-from src.database.connection import DatabaseManager
-from src.database.models import Match, Prediction
-from src.core.logging import get_logger
 
-from .cache_manager import PredictionCacheManager
-from .model_loader import ModelLoader
-from .predictors import MatchPredictor
-from .batch_predictor import BatchPredictor
 
 logger = get_logger(__name__)
 
@@ -132,3 +122,10 @@ class PredictionService:
             tuple: (模型对象, 版本号) / (Model object, version number)
         """
         return await self.model_loader.get_production_model()
+
+from .batch_predictor import BatchPredictor
+from .cache_manager import PredictionCacheManager
+from .model_loader import ModelLoader
+from .predictors import MatchPredictor
+from src.database.connection import DatabaseManager
+

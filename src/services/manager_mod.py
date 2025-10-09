@@ -5,8 +5,9 @@
 建议使用：from src.services.manager import ServiceManager
 """
 
-# 从新的模块化实现重新导出
 from .manager import (
+
+# 从新的模块化实现重新导出
     ServiceManager,
     ServiceRegistry,
     ServiceFactory,

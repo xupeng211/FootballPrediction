@@ -1,16 +1,13 @@
 """
+            from datetime import datetime
+
 审计工具函数
 Audit Utilities
 
 提供审计相关的工具函数。
 """
 
-import hashlib
-import json
-import time
-from typing import Any, Dict, Optional
 
-from .models import AuditLog
 
 
 def hash_sensitive_data(data: Any) -> str:
@@ -148,7 +145,6 @@ def format_audit_log_for_display(log: AuditLog) -> Dict[str, Any]:
     # 格式化时间戳
     if formatted.get("timestamp"):
         try:
-            from datetime import datetime
             if isinstance(formatted["timestamp"], str):
                 formatted["timestamp"] = datetime.fromisoformat(formatted["timestamp"])
             formatted["timestamp_formatted"] = formatted["timestamp"].strftime(
@@ -247,6 +243,8 @@ def validate_audit_compliance(log: AuditLog) -> Dict[str, Any]:
 
     # 检查必需字段
     if not log.user_id:
+
+
         issues.append("缺少用户ID")
 
     if not log.action:

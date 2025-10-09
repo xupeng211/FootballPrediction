@@ -4,11 +4,7 @@
 收集Redis和其他缓存系统的指标。
 """
 
-import logging
-from typing import Dict, Optional
 
-from src.cache.redis_manager import get_redis_manager
-from ..metrics.system_metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -168,6 +164,8 @@ class CacheCollector:
             redis_manager = get_redis_manager()
             if not redis_manager:
                 return False
+
+
 
             # 执行ping命令
             result = await redis_manager.ping()

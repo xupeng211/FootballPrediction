@@ -4,9 +4,6 @@ MLflow模型提供者
 负责从MLflow加载和管理模型
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, Tuple
 
 try:
     import mlflow
@@ -42,8 +39,6 @@ except ImportError:  # pragma: no cover - optional dependency path
 
     mlflow = _MockMlflowModule()
 
-from src.cache.ttl_cache import TTLCache
-from src.models.metrics_exporter import ModelMetricsExporter
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +140,8 @@ class MlflowModelProvider:
             raise MlflowException("MLflow is not installed")
 
         client = MlflowClient(tracking_uri=self.tracking_uri)
+
+
 
         # 获取生产阶段的最新模型
         production_versions = client.get_latest_versions(

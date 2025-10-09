@@ -1,24 +1,17 @@
 """
+from src.database.models.match import Match
+from src.database.models.odds import Odds
+from src.database.models.predictions import Predictions
+from src.database.models.team import Team
+
 数据新鲜度检查器 / Data Freshness Checker
 
 负责检查数据表的新鲜度，基于最后更新时间计算。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-import inspect
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models.match import Match
-from src.database.models.odds import Odds
-from src.database.models.predictions import Predictions
-from src.database.models.team import Team
-from src.database.connection import DatabaseManager
 
-from ..core.results import DataFreshnessResult
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +226,9 @@ class FreshnessChecker:
                             time_diff = datetime.now() - last_update_time
                             freshness_hours = time_diff.total_seconds() / 3600
                             is_fresh = freshness_hours <= threshold_hours
+
+
+
                         else:
                             freshness_hours = 999999
                             is_fresh = False

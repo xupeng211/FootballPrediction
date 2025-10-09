@@ -5,16 +5,8 @@ Async Logger
 提供高性能的异步审计日志记录功能。
 """
 
-import asyncio
-import queue
-import threading
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
 
-from src.core.logging import get_logger
-from src.database.connection import get_database_manager
 
-from ..models import AuditLog
 
 logger = get_logger(__name__)
 
@@ -464,3 +456,10 @@ class AsyncLogger:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口 / Async context manager exit"""
         await self.close()
+from datetime import datetime
+from typing import Optional
+import asyncio
+
+
+from src.core.logging import get_logger
+

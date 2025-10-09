@@ -6,10 +6,7 @@ Cache Factory
 Provides factory methods for creating different types of caches.
 """
 
-from typing import Optional, Union
 
-from .async_cache import AsyncTTLCache
-from .ttl_cache import TTLCache
 
 
 class CacheFactory:
@@ -178,7 +175,9 @@ class CacheFactory:
         """
         return {
             "prediction": {"max_size": 10000, "default_ttl": 1800},
-            "feature": {"max_size": 5000, "default_ttl": 3600},
+            "feature": {"max_size": 5000, "default_ttl": 3600}, Union
+
+
             "odds": {"max_size": 20000, "default_ttl": 300},
             "session": {"max_size": 1000, "default_ttl": 7200},
             "config": {"max_size": 500, "default_ttl": 86400},

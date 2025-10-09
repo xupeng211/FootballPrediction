@@ -1,4 +1,6 @@
 """
+            import aiosmtplib
+
 Jf S
 Email Alert Channel
 
@@ -6,11 +8,7 @@ Email Alert Channel
 Sends alerts via email.
 """
 
-import json
-from typing import Any, Dict, List
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 
 class EmailChannel(BaseAlertChannel):
@@ -60,7 +58,6 @@ class EmailChannel(BaseAlertChannel):
             return False
 
         try:
-            import aiosmtplib
 
             subject = f"[{alert.level.value.upper()}] {alert.title}"
             body = self._format_email_body(alert)
@@ -141,6 +138,8 @@ d1Jf / This email was sent automatically by the alert system
 
         # *M'
         for alert in alerts:
+
+
             results[alert.alert_id] = await self.send(alert)
 
         return results

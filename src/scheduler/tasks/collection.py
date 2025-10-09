@@ -1,23 +1,17 @@
 """
+from src.data.collectors.fixtures_collector import FixturesCollector
+from src.data.collectors.odds_collector import OddsCollector
+from src.data.collectors.scores_collector import ScoresCollector
+
 数据采集任务
 Data Collection Tasks
 
 包含赛程采集、赔率采集和实时比分采集任务。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
 
-from celery import Task
 
-from src.data.collectors.fixtures_collector import FixturesCollector
-from src.data.collectors.odds_collector import OddsCollector
-from src.data.collectors.scores_collector import ScoresCollector
 
-from .base import BaseDataTask
-from ..celery_config import app, should_collect_live_scores
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +143,9 @@ def collect_live_scores_conditional(self, match_ids: Optional[List[str]] = None)
             match_ids=match_ids, use_websocket=True
         )
         return result
+
+
+
 
     try:
         # 检查是否需要采集实时比分

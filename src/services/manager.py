@@ -12,8 +12,10 @@
 建议使用：from src.services.manager import ServiceManager
 """
 
-# 为了向后兼容，从新的模块化实现重新导出
 from .manager import (
+from .manager import (
+
+# 为了向后兼容，从新的模块化实现重新导出
     ServiceManager,
     service_manager as _service_manager,
     get_service_manager,
@@ -23,7 +25,6 @@ from .manager import (
 service_manager = _service_manager
 
 # 重新导出其他兼容性接口
-from .manager import (
     get_service,
     register_service,
     unregister_service,

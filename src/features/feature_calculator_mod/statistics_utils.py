@@ -1,11 +1,13 @@
 """
+            import numpy as np
+            import pandas as pd
+            import scipy.stats as stats
+
 统计工具模块
 
 提供各种统计计算的工具函数。
 """
 
-import statistics
-from typing import Any, Dict, List, Optional
 
 
 class StatisticsUtils:
@@ -116,7 +118,6 @@ class StatisticsUtils:
         try:
             if data is None or len(data) == 0:
                 return None
-            import numpy as np
             return float(np.percentile(data, percentile))
         except (TypeError, ValueError, ImportError):
             return None
@@ -135,7 +136,6 @@ class StatisticsUtils:
         try:
             if data is None or len(data) < 3:
                 return None
-            import scipy.stats as stats
             return float(stats.skew(data))
         except (TypeError, ValueError, ImportError):
             return None
@@ -154,7 +154,6 @@ class StatisticsUtils:
         try:
             if data is None or len(data) < 4:
                 return None
-            import scipy.stats as stats
             return float(stats.kurtosis(data))
         except (TypeError, ValueError, ImportError):
             return None
@@ -174,7 +173,6 @@ class StatisticsUtils:
         try:
             if x is None or y is None or len(x) != len(y) or len(x) < 2:
                 return None
-            import numpy as np
             return float(np.corrcoef(x, y)[0, 1])
         except (TypeError, ValueError, ImportError):
             return None
@@ -192,7 +190,6 @@ class StatisticsUtils:
             滚动均值Series
         """
         try:
-            import pandas as pd
 
             if hasattr(data, "rolling"):
                 # 如果是pandas Series
@@ -202,7 +199,6 @@ class StatisticsUtils:
                 series = pd.Series(data)
                 return series.rolling(window=window, min_periods=1).mean()
         except Exception:
-            import pandas as pd
             return pd.Series([None] * len(data))
 
     @staticmethod
@@ -218,7 +214,6 @@ class StatisticsUtils:
             滚动标准差Series
         """
         try:
-            import pandas as pd
 
             if hasattr(data, "rolling"):
                 return data.rolling(window=window, min_periods=1).std()
@@ -226,7 +221,6 @@ class StatisticsUtils:
                 series = pd.Series(data)
                 return series.rolling(window=window, min_periods=1).std()
         except Exception:
-            import pandas as pd
             return pd.Series([None] * len(data))
 
     @staticmethod
@@ -322,6 +316,7 @@ class StatisticsUtils:
         """
         if data is None or len(data) == 0:
             return {}
+
 
         stats = {
             "count": len(data),

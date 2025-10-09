@@ -4,16 +4,8 @@
 负责计算与赔率相关的各种特征，包括平均赔率、方差、隐含概率等。
 """
 
-import statistics
-from datetime import datetime
-from decimal import Decimal
-from typing import Any, List, Optional
 
-from sqlalchemy import and_, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.models.odds import Odds
-from ..feature_definitions import OddsFeatures
 
 
 class OddsFeaturesCalculator:
@@ -170,7 +162,6 @@ class OddsFeaturesCalculator:
     ) -> dict:
         """内部市场变动计算逻辑"""
 
-        from datetime import timedelta
 
         start_time = calculation_date - timedelta(hours=hours_before_match)
 
@@ -294,6 +285,9 @@ class OddsFeaturesCalculator:
         # 如果没有提供真实概率，使用隐含概率作为基准
         if true_probabilities is None:
             true_probabilities = {
+
+
+
                 "home": odds_features.home_implied_probability,
                 "draw": odds_features.draw_implied_probability,
                 "away": odds_features.away_implied_probability,

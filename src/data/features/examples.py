@@ -13,15 +13,8 @@
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
-import asyncio
-import logging
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, cast
 
-import pandas as pd
 
-from .feature_store import (
     FootballFeatureStore,
     get_feature_store,
     initialize_feature_store,
@@ -435,6 +428,9 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
         # 构建预测请求
         prediction_entities = pd.DataFrame([{"match_id": 3001}, {"match_id": 3002}])
+
+
+
 
         # 获取实时特征
         features_df = feature_store.get_online_features(

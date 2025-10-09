@@ -2,10 +2,7 @@
 Kafka流处理配置
 """
 
-import time
-from typing import Any, Dict, Optional
 
-from src.core.config import get_settings
 
 _settings = get_settings()
 
@@ -61,7 +58,9 @@ class StreamConfig:
         """转换为消费者配置"""
         return {
             "bootstrap.servers": self.bootstrap_servers,
-            "group.id": self.group_id,
+            "group.id": self.group_id, Dict, Optional
+
+
             "auto.offset.reset": self.auto_offset_reset,
             "enable.auto.commit": self.enable_auto_commit,
             "session.timeout.ms": self.session_timeout_ms,

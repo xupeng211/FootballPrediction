@@ -5,16 +5,8 @@ Odds Data Storage
 管理赔率数据的存储和检索
 """
 
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import Match, Odds, RawOddsData
-from src.database.models.match import MatchStatus
 
 # Market type mapping
 class MarketType:
@@ -23,7 +15,6 @@ class MarketType:
     HANDICAP = "handicap"
     BOTH_TEAMS_SCORE = "both_teams_score"
     CORRECT_SCORE = "correct_score"
-from .time_utils_compat import utc_now, parse_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -309,3 +300,13 @@ class OddsStorage:
         self.odds_cache.clear()
         self.last_update_cache.clear()
         logger.info("赔率缓存已清空")
+from datetime import datetime, timedelta
+from typing import Any, Dict
+import json
+
+from sqlalchemy import select, and_
+
+from .time_utils_compat import utc_now, parse_datetime
+from src.database.models import Match, Odds, RawOddsData
+from src.database.models.match import MatchStatus
+

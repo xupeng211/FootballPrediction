@@ -1,15 +1,12 @@
 """
+        from src.utils.retry.decorators import retry_async, RetryConfig
+        from src.utils.retry.decorators import retry_sync, RetryConfig
+
 重试装饰器
 Retry Decorators
 """
 
-import asyncio
-import functools
-import logging
-import time
-from typing import Any, Callable, Optional
 
-from .config import RetryConfig
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +31,6 @@ def retry(
 
     Example:
         ```python
-        from src.utils.retry import retry, RetryConfig
 
         # 配置重试策略
         config = RetryConfig(
@@ -178,7 +174,6 @@ def retry_async(config: RetryConfig, on_retry: Optional[Callable[[int, Exception
 
     Example:
         ```python
-        from src.utils.retry.decorators import retry_async, RetryConfig
 
         config = RetryConfig(max_attempts=3)
 
@@ -235,7 +230,6 @@ def retry_sync(config: RetryConfig, on_retry: Optional[Callable[[int, Exception]
 
     Example:
         ```python
-        from src.utils.retry.decorators import retry_sync, RetryConfig
 
         config = RetryConfig(max_attempts=3)
 
@@ -251,6 +245,8 @@ def retry_sync(config: RetryConfig, on_retry: Optional[Callable[[int, Exception]
             last_exception = None
 
             for attempt in range(config.max_attempts):
+
+
                 try:
                     return func(*args, **kwargs)
                 except config.retryable_exceptions as e:

@@ -24,8 +24,9 @@ Advanced Data Quality Anomaly Detection Module
 基于 DATA_DESIGN.md 中的数据治理与质量控制架构设计。
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有内容
 from .detectors import (
+
+# 为了向后兼容性，从新的模块化结构中导入所有内容
     # 基础类
     AnomalyDetectionResult,
 

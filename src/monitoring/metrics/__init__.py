@@ -5,17 +5,18 @@ Monitoring Metrics Module
 提供各种指标收集器、聚合器和导出器。
 """
 
-from .types import MetricType, MetricUnit
 from .aggregator import MetricsAggregator
-from .exporters import StatsdExporter
 from .base import BaseMetricsCollector
 from .collectors import (
+from .exporters import StatsdExporter
+from .global_collector import (
+from .types import MetricType, MetricUnit
+
     MetricsCollector,
     SystemMetricsCollector,
     DatabaseMetricsCollector,
     ApplicationMetricsCollector,
 )
-from .global_collector import (
     get_metrics_collector,
     start_metrics_collection,
     stop_metrics_collection,

@@ -1,4 +1,6 @@
 """
+            from sqlalchemy import text
+
 任务工具函数
 
 提供任务调度相关的工具函数，包括：
@@ -7,12 +9,8 @@
 - 任务状态管理
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional, cast
 
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
 
 
 async def should_collect_live_scores() -> bool:
@@ -28,7 +26,6 @@ async def should_collect_live_scores() -> bool:
         db_manager = DatabaseManager()
 
         async with db_manager.get_async_session() as session:
-            from sqlalchemy import text
 
             # 查询当前时间前后2小时内的比赛
             now = datetime.now()
@@ -247,6 +244,9 @@ def get_task_priority(task_name: str) -> int:
         "collect_scores_task": 1,  # 实时比分优先级最高
         "collect_odds_task": 2,  # 赔率采集优先级中等
         "collect_fixtures_task": 3,  # 赛程采集优先级较低
+
+
+
     }
 
     return priorities.get(str(task_name), 5)  # 默认优先级为5

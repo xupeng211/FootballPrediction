@@ -1,10 +1,6 @@
 """数据库配置模块"""
 
-from __future__ import annotations
 
-import os
-from dataclasses import dataclass
-from typing import Optional, cast
 
 
 @dataclass
@@ -145,3 +141,6 @@ def get_production_database_config() -> DatabaseConfig:
     """返回生产环境数据库配置。"""
 
     return get_database_config("production")
+import os
+
+from __future__ import annotations

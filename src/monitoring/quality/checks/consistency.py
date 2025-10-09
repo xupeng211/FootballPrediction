@@ -4,14 +4,8 @@
 负责检查数据的一致性，包括外键一致性、赔率数据一致性、比赛状态一致性等。
 """
 
-import inspect
-import logging
-from typing import Any, Dict
 
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +204,9 @@ class ConsistencyChecker:
             try:
                 if inspect.isawaitable(scheduled_row):
                     scheduled_row = await scheduled_row
+
+
+
             except Exception:
                 pass
             results["scheduled_matches_with_score"] = (

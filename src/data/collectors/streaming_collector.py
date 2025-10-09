@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .........src.data.collectors.streaming import kafka_collector
+from .........src.data.collectors.streaming import manager
+from .........src.data.collectors.streaming import processor
+from .........src.data.collectors.streaming import websocket_collector
 
 warnings.warn(
     "直接从 streaming_collector 导入已弃用。"
@@ -19,10 +25,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.data.collectors.streaming import kafka_collector
-from .........src.data.collectors.streaming import websocket_collector
-from .........src.data.collectors.streaming import processor
-from .........src.data.collectors.streaming import manager
 
 # 导出所有类
 __all__ = [

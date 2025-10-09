@@ -1,23 +1,16 @@
 """
+from .statistical import StatisticalAnomalyDetector
+from src.database.connection import DatabaseManager
+
 高级异常检测器
 Advanced Anomaly Detector
 
 整合统计学和机器学习方法的高级异常检测器。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
-import pandas as pd
-from sqlalchemy import text
 
-from src.database.connection import DatabaseManager
 
-from .base import AnomalyDetectionResult
-from .statistical import StatisticalAnomalyDetector
-from .machine_learning import MachineLearningAnomalyDetector
-from .metrics import (
     anomaly_detection_coverage,
     anomaly_detection_duration_seconds,
 )
@@ -419,6 +412,9 @@ class AdvancedAnomalyDetector:
             # 生成摘要
             summary = {
                 "detection_period": {
+
+
+
                     "hours": hours,
                     "start_time": (datetime.now() - timedelta(hours=hours)).isoformat(),
                     "end_time": datetime.now().isoformat(),

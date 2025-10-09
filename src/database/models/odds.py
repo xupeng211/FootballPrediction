@@ -1,20 +1,13 @@
 """
+from src.database.base import BaseModel
+
 足球比赛赔率数据模型
 
 存储不同博彩公司的赔率信息，包括胜平负、大小球、让球等市场。
 """
 
-from datetime import datetime
-from decimal import Decimal
-from enum import Enum
-from typing import Any, Dict, Optional, cast
 
-from sqlalchemy import DECIMAL, CheckConstraint, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, String, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.base import BaseModel
 
 
 class MarketType(Enum):
@@ -321,7 +314,10 @@ class Odds(BaseModel):
                     func.avg(cls.away_odds).label("avg_away"),
                 )
                 .filter(cls.match_id == match_id, cls.market_type == market_type)
-                .first()
+                    func.avg(cls.away_odds).label("avg_away"),)
+
+
+
             )
 
             return {

@@ -5,15 +5,8 @@ Global Metrics Collector Management
 管理全局的指标收集器实例和生命周期。
 """
 
-import asyncio
-import logging
-import os
-import sys
-from typing import Any, Dict, Optional
 
-from src.core.config import get_settings
 
-from .collectors import MetricsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -165,3 +158,7 @@ def get_metrics_manager() -> MetricsCollectorManager:
     if _metrics_manager is None:
         _metrics_manager = MetricsCollectorManager()
     return _metrics_manager
+from typing import Dict
+
+from .collectors import MetricsCollector
+

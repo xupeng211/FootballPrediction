@@ -5,11 +5,7 @@ Statistics
 负责收集和分析恢复相关的统计数据。
 """
 
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
-from .models import FailureType, TaskFailure
 
 logger = logging.getLogger(__name__)
 
@@ -314,4 +310,6 @@ class RecoveryStatistics:
             return None
 
         peak = max(time_series, key=lambda x: x["count"])
+
+
         return peak["timestamp"] if peak["count"] > 0 else None

@@ -1,22 +1,13 @@
 """
+            from sqlalchemy import delete
+
 数据质量日志模块
 
 负责记录和管理数据质量相关的日志。
 """
 
-from datetime import timedelta
-from typing import Dict
-from typing import List
-from typing import Optional
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.connection import DatabaseManager
-from ...database.models.data_quality_log import DataQualityLog
-from .exceptions import QualityLogException
 
 
 class QualityLogger:
@@ -195,8 +186,9 @@ class QualityLogger:
         Returns:
             List[Dict]: 待审核的问题列表
         """
-        try:
-            from sqlalchemy import select, desc
+        # Import moved to top
+
+        try: desc
 
             async with self.db_manager.get_async_session() as session:
                 query = (
@@ -244,8 +236,9 @@ class QualityLogger:
             reviewer: 审核人
             notes: 审核备注
         """
-        try:
-            from sqlalchemy import select, update
+        # Import moved to top
+
+        try: update
 
             async with self.db_manager.get_async_session() as session:
                 # 更新日志状态
@@ -282,7 +275,6 @@ class QualityLogger:
             Dict: 清理结果
         """
         try:
-            from sqlalchemy import delete
 
             cutoff_date = datetime.now() - timedelta(days=days_to_keep)
 
@@ -290,29 +282,78 @@ class QualityLogger:
                 # 删除旧的已审核日志
                 delete_stmt = delete(DataQualityLog).where(
                     DataQualityLog.detected_at < cutoff_date,
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
+                    DataQualityLog.status == "reviewed",)
                     DataQualityLog.status == "reviewed",
-                    DataQualityLog.requires_manual_review is False,
-                )
-
-                result = await session.execute(delete_stmt)
-                deleted_count = result.rowcount
-                await session.commit()
-
-                cleanup_result = {
-                    "deleted_count": deleted_count,
-                    "cutoff_date": cutoff_date.isoformat(),
-                    "days_kept": days_to_keep,
-                    "timestamp": datetime.now().isoformat(),
-                }
-
-                self.logger.info(
-                    f"清理旧质量日志完成：删除 {deleted_count} 条记录（保留 {days_to_keep} 天）"
-                )
-
-                return cleanup_result
-
-        except Exception as e:
-            self.logger.error(f"清理旧日志失败: {str(e)}")
-            raise QualityLogException(
-                f"清理旧日志失败: {str(e)}", log_data={"days_to_keep": days_to_keep}
-            )

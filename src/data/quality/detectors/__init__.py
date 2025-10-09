@@ -5,11 +5,12 @@ Anomaly Detection Module
 提供基于统计学和机器学习的数据异常检测功能。
 """
 
-from .base import AnomalyDetectionResult
-from .statistical import StatisticalAnomalyDetector
-from .machine_learning import MachineLearningAnomalyDetector
 from .advanced import AdvancedAnomalyDetector
+from .base import AnomalyDetectionResult
+from .machine_learning import MachineLearningAnomalyDetector
 from .metrics import (
+from .statistical import StatisticalAnomalyDetector
+
     anomalies_detected_total,
     data_drift_score,
     anomaly_detection_duration_seconds,

@@ -4,18 +4,7 @@
 主收集器类，整合所有指标收集功能。
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 
-from .metric_types import MetricPoint
-from .aggregator import MetricsAggregator
-from .prometheus_metrics import PrometheusMetricsManager
-from .business_metrics import BusinessMetricsCollector
-from .system_metrics import SystemMetricsCollector
-from .alerting import AlertManager, DefaultAlertHandlers
-from .decorators import track_prediction_performance, track_cache_performance
 
 logger = logging.getLogger(__name__)
 
@@ -325,3 +314,13 @@ def set_metrics_collector(collector: EnhancedMetricsCollector):
     """
     global _metrics_collector
     _metrics_collector = collector
+from datetime import datetime
+from typing import Optional
+import asyncio
+
+from .aggregator import MetricsAggregator
+from .alerting import AlertManager, DefaultAlertHandlers
+from .business_metrics import BusinessMetricsCollector
+from .prometheus_metrics import PrometheusMetricsManager
+from .system_metrics import SystemMetricsCollector
+

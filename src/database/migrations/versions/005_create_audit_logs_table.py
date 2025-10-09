@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 from datetime import datetime, timezone
@@ -11,10 +10,6 @@ from datetime import datetime, timezone
 创建时间: 2025-09-12
 """
 
-import sqlalchemy as sa
-from alembic import context, op
-from sqlalchemy import text
-from sqlalchemy.dialects import postgresql
 
 # 版本标识
 revision = "005"
@@ -277,6 +272,8 @@ def downgrade():
         except Exception as e:
             # 如果permission_audit_log表不存在，忽略错误但记录日志
             print(f"Warning: Could not drop permission_audit_log table: {e}")
+                VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',)
+
 
         # 删除清理函数
         connection.execute(

@@ -1,16 +1,16 @@
 """
+            import asyncio
+
+            from src.monitoring.alert_manager import AlertManager
+        from ..celery_config import TaskRetryConfig
+
 基础任务类
 Base Task Classes
 
 提供所有调度任务的基类，包含失败处理和告警功能。
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Any, Dict
 
-from celery import Task
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +53,7 @@ class BaseDataTask(Task):
             kwargs: 任务关键字参数
         """
         try:
-            import asyncio
 
-            from src.monitoring.alert_manager import AlertManager
 
             async def _send_alert():
                 alert_manager = AlertManager()
@@ -106,11 +104,12 @@ class BaseDataTask(Task):
         Returns:
             重试配置字典
         """
-        from ..celery_config import TaskRetryConfig
 
         return TaskRetryConfig.RETRY_CONFIGS.get(
             task_name,
             {
+
+
                 "max_retries": TaskRetryConfig.MAX_RETRIES,
                 "retry_delay": TaskRetryConfig.DEFAULT_RETRY_DELAY,
             }

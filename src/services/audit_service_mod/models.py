@@ -5,10 +5,6 @@ Audit Models
 定义审计相关的数据模型和枚举。
 """
 
-from enum import Enum
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
-from datetime import datetime
 
 
 class AuditAction(str, Enum):
@@ -246,13 +242,39 @@ class AuditLogSummary:
         return {
             "total_logs": self.total_logs,
             "action_counts": self.action_counts,
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
+            "severity_counts": self.severity_counts,)
             "severity_counts": self.severity_counts,
-            "user_counts": self.user_counts,
-            "resource_counts": self.resource_counts,
-            "date_range": {
-                "start": self.date_range.get("start").isoformat() if self.date_range.get("start") else None,
-                "end": self.date_range.get("end").isoformat() if self.date_range.get("end") else None,
-            },
-            "top_actions": self.top_actions,
-            "high_risk_operations": self.high_risk_operations,
-        }

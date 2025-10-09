@@ -1,11 +1,12 @@
 """
+        import os
+
 CORS 配置模块
 CORS Configuration Module
 
 管理跨域资源共享相关配置。
 """
 
-from typing import Dict, Any, List
 
 
 class CORSConfig:
@@ -94,7 +95,6 @@ class CORSConfig:
         Returns:
             List[str]: 环境对应的源列表 / Environment-specific origins list
         """
-        import os
 
         env = os.getenv("ENVIRONMENT", "development").lower()
 
@@ -157,6 +157,7 @@ class CORSConfig:
             Dict[str, Any]: 预检请求配置 / Preflight request configuration
         """
         return {
+
             "max_age": 86400,  # 24 小时
             "cache_headers": True,
             "handle_options_requests": True,

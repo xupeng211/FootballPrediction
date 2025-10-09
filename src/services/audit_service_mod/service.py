@@ -1,22 +1,22 @@
 """
+            import json
+
+                from sqlalchemy import insert
+                from sqlalchemy import select
+                from sqlalchemy import select, func
+
+                from src.database.models.audit_log import AuditLog as AuditLogModel
+
+from src.database.connection import DatabaseManager
+
 审计服务
 Audit Service
 
 提供核心的审计功能实现。
 """
 
-import asyncio
-import hashlib
-import logging
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
-from src.core.logging import get_logger
-from src.database.connection import DatabaseManager
 
-from .context import AuditContext
-from .models import (
     AuditAction,
     AuditLog,
     AuditSeverity,
@@ -118,7 +118,6 @@ class AuditService:
         """
         try:
             # 尝试解析为JSON
-            import json
 
             parsed_data = json.loads(data)
             # 递归处理嵌套结构
@@ -479,8 +478,6 @@ class AuditService:
                 return False
 
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import insert
-                from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 创建审计日志记录
                 audit_record = AuditLogModel(
@@ -662,8 +659,6 @@ class AuditService:
                 return None
 
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import select, func, desc
-                from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 计算日期范围
                 end_date = datetime.now()
@@ -749,8 +744,6 @@ class AuditService:
                 return []
 
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import select
-                from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 计算时间范围
                 end_time = datetime.now()
@@ -828,8 +821,6 @@ class AuditService:
                 return []
 
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import select
-                from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 query = (
                     select(AuditLogModel)
@@ -886,8 +877,6 @@ class AuditService:
                 return {"error": "数据库管理器未初始化"}
 
             async with self.db_manager.get_async_session() as session:
-                from sqlalchemy import select, func
-                from src.database.models.audit_log import AuditLog as AuditLogModel
 
                 # 计算日期范围
                 end_date = datetime.now()

@@ -1,9 +1,3 @@
-from typing import cast, Any, Optional, Union
-from .base import BaseService
-from .content_analysis import ContentAnalysisService
-from .data_processing import DataProcessingService
-from .manager import ServiceManager, service_manager
-from .user_profile import UserProfileService
 
 """
 足球预测系统业务服务模块
@@ -20,7 +14,14 @@ __all__ = [
     "BaseService",
     # 具体服务
     "ContentAnalysisService",
-    "UserProfileService",
+    "UserProfileService", Any, Optional, Union
+
+from .base import BaseService
+from .content_analysis import ContentAnalysisService
+from .data_processing import DataProcessingService
+from .manager import ServiceManager, service_manager
+from .user_profile import UserProfileService
+
     "DataProcessingService",
     # 服务管理
     "ServiceManager",

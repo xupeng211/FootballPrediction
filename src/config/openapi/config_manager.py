@@ -1,17 +1,16 @@
 """
+        import os
+
+            from fastapi.openapi.utils import get_openapi
+        from fastapi.middleware.cors import CORSMiddleware
+
 配置管理器模块
 Configuration Manager Module
 
 统一管理 OpenAPI 配置的主类。
 """
 
-from typing import Dict, Any, List
-from fastapi import FastAPI
 
-from .auth_config import AuthConfig
-from .rate_limit_config import RateLimitConfig
-from .cors_config import CORSConfig
-from .docs_config import DocsConfig
 
 
 class OpenAPIConfig:
@@ -43,7 +42,6 @@ class OpenAPIConfig:
                 return app.openapi_schema
 
             # 先获取基础 schema
-            from fastapi.openapi.utils import get_openapi
 
             openapi_schema = get_openapi(
                 title=info["title"],
@@ -123,7 +121,6 @@ class OpenAPIConfig:
         Returns:
             Dict[str, Any]: 环境特定配置 / Environment-specific configuration
         """
-        import os
 
         env = os.getenv("ENVIRONMENT", "development").lower()
 
@@ -158,7 +155,6 @@ class OpenAPIConfig:
             app (FastAPI): FastAPI 应用实例 / FastAPI application instance
         """
         # 设置 CORS 中间件
-        from fastapi.middleware.cors import CORSMiddleware
 
         cors_config = CORSConfig.get_cors_middleware_config()
         app.add_middleware(
@@ -180,6 +176,9 @@ class OpenAPIConfig:
             required_fields = ["title", "version", "description"]
 
             for field in required_fields:
+
+
+
                 if field not in info or not info[field]:
                     return False
 

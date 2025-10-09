@@ -4,10 +4,7 @@
 清理和哈希敏感信息，保护用户隐私。
 """
 
-import hashlib
-from typing import Any, Dict
 
-from src.database.models.audit_log import AuditAction
 
 
 class DataSanitizer:
@@ -100,6 +97,8 @@ class DataSanitizer:
         """过滤特定表的敏感字段"""
         if not self.is_sensitive_table(table_name):
             return data
+
+
 
         filtered = {}
         for key, value in data.items():

@@ -4,15 +4,8 @@
 提供预测相关的工具函数和辅助方法
 """
 
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
-import pandas as pd
 
-from src.models.prediction.core import PredictionResult
 
 logger = logging.getLogger(__name__)
 
@@ -449,6 +442,9 @@ class PredictionUtils:
             if pred.created_at and pred.created_at >= cutoff_time
         ]
         
+
+
+
         logger.info(
             f"获取最近 {hours} 小时的预测：{len(recent)}/{len(predictions)} 个结果"
         )

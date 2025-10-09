@@ -6,15 +6,8 @@ HTTP webhookJf
 Sends alerts via HTTP webhook.
 """
 
-import asyncio
-import json
-from datetime import datetime
-from typing import Any, Dict, List
 
-import aiohttp
 
-from .base_channel import BaseAlertChannel
-from ...alert_manager_mod.models import Alert
 
 
 class WebhookChannel(BaseAlertChannel):
@@ -120,7 +113,10 @@ class WebhookChannel(BaseAlertChannel):
         payload = {
             "alerts": [
                 {
-                    "alert_id": alert.alert_id,
+                    "alert_id": alert.alert_id, Dict, List
+
+
+
                     "title": alert.title,
                     "message": alert.message,
                     "level": alert.level.value,

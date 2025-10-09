@@ -15,11 +15,8 @@ Anomaly Detector - Backward Compatibility Wrapper
 此文件保留用于向后兼容性，建议新代码直接导入新的模块。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
 # 从新的模块化结构导入所有功能
-from .anomaly import (
     AnomalyType,
     AnomalySeverity,
     AnomalyResult,
@@ -60,7 +57,9 @@ def get_module_info() -> Dict[str, Any]:
     """获取模块信息"""
     return {
         "module": "anomaly_detector",
-        "status": "refactored",
+        "status": "refactored", Dict, List, Optional
+
+
         "message": "This module has been refactored into a modular structure",
         "new_location": "src.monitoring.anomaly",
         "components": [

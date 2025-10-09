@@ -4,14 +4,7 @@ Redis连接管理器
 管理Redis同步和异步连接池的创建、维护和健康检查
 """
 
-import logging
-import os
-import re
-from contextlib import asynccontextmanager, contextmanager
-from typing import Optional
 
-import redis
-import redis.asyncio as redis_async
 
 # 兼容性处理：支持不同版本的redis包
 try:
@@ -263,3 +256,9 @@ class RedisConnectionManager:
             yield self
         finally:
             pass  # 连接池会自动管理连接
+from typing import Optional
+import os
+import re
+import redis
+import redis.asyncio as redis_async
+

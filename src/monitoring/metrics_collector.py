@@ -1,4 +1,6 @@
 """
+from .metrics_exporter import MetricsExporter
+
 监控指标收集器 - 向后兼容性包装器
 Monitoring Metrics Collector - Backward Compatibility Wrapper
 
@@ -16,11 +18,8 @@ Monitoring Metrics Collector - Backward Compatibility Wrapper
 此文件保留用于向后兼容性，建议新代码直接导入新的模块。
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
 # 从新的模块化结构导入所有功能
-from .metrics import (
     # Types
     MetricType,
     MetricUnit,
@@ -41,7 +40,6 @@ from .metrics import (
 )
 
 # 从配置中导入常量
-from src.core.config import get_settings
 
 _settings = get_settings()
 
@@ -73,7 +71,6 @@ logger = logging.getLogger(__name__)
 MetricsCollector = OriginalMetricsCollector
 
 # PrometheusExporter 的别名
-from .metrics_exporter import MetricsExporter
 PrometheusExporter = MetricsExporter
 
 # 保持原有的 __all__ 导出
@@ -144,10 +141,11 @@ if __name__ == "__main__":
     独立运行指标收集器
     """
 
-    import asyncio
 
     async def main():
         collector = MetricsCollector(collection_interval=10)  # 10秒间隔用于测试
+
+
 
         try:
             await collector.start()

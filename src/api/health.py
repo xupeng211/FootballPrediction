@@ -9,7 +9,13 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
+
 import warnings
+
+from .api.health.checks import *  # type: ignore
+from .api.health.health_checker import *  # type: ignore
+from .api.health.models import *  # type: ignore
+from .api.health.utils import *  # type: ignore
 
 warnings.warn(
     "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
@@ -18,10 +24,6 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .api.health.health_checker import *  # type: ignore
-from .api.health.checks import *  # type: ignore
-from .api.health.models import *  # type: ignore
-from .api.health.utils import *  # type: ignore
 
 # 导出所有类
 __all__ = [  # type: ignore

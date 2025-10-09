@@ -3,10 +3,6 @@
 Circuit Breaker Implementation
 """
 
-import asyncio
-import time
-from enum import Enum
-from typing import Callable, Optional
 
 
 class CircuitState(Enum):
@@ -223,3 +219,6 @@ class CircuitBreaker:
         """
         async with self.lock:
             self.reset()
+import asyncio
+import time
+

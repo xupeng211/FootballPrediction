@@ -1,4 +1,3 @@
-from typing import cast, Any, Optional, Union
 
 """
 足球预测系统 FastAPI 主应用
@@ -6,9 +5,6 @@ from typing import cast, Any, Optional, Union
 基于机器学习的足球比赛结果预测API服务
 """
 
-import logging
-import os
-from contextlib import asynccontextmanager
 
 # 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
 try:
@@ -27,9 +23,6 @@ except ImportError:
         category=DeprecationWarning,
     )
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 # 可选的速率限制功能
 try:
@@ -44,10 +37,6 @@ except ImportError:
     _rate_limit_exceeded_handler = None
     RateLimitExceeded = None
 
-from src.api.health import router as health_router
-from src.api.schemas import RootResponse
-from src.config.openapi_config import setup_openapi
-from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import (
     start_metrics_collection,
@@ -222,6 +211,12 @@ async def general_exception_handler(request, exc: Exception):
         },
     )
 
+
+import os
+
+from fastapi.responses import JSONResponse
+
+from src.database.connection import initialize_database
 
 if __name__ == "__main__":
     import uvicorn
