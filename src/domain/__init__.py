@@ -47,6 +47,20 @@ from .events import (
     PredictionExpiredEvent,
     PredictionPointsAdjustedEvent,
 )
+from .strategies import (
+    PredictionStrategy,
+    PredictionContext,
+    PredictionInput,
+    PredictionOutput,
+    StrategyType,
+    StrategyMetrics,
+    MLModelStrategy,
+    StatisticalStrategy,
+    HistoricalStrategy,
+    EnsembleStrategy,
+    PredictionStrategyFactory,
+    StrategyConfig,
+)
 
 __all__ = [
     # 领域模型
@@ -80,4 +94,17 @@ __all__ = [
     "PredictionCancelledEvent",
     "PredictionExpiredEvent",
     "PredictionPointsAdjustedEvent",
+    # 预测策略
+    "PredictionStrategy",
+    "PredictionContext",
+    "PredictionInput",
+    "PredictionOutput",
+    "StrategyType",
+    "StrategyMetrics",
+    "MLModelStrategy",
+    "StatisticalStrategy",
+    "HistoricalStrategy",
+    "EnsembleStrategy",
+    "PredictionStrategyFactory",
+    "StrategyConfig",
 ]
