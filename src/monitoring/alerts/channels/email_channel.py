@@ -24,12 +24,13 @@ class EmailChannel(BaseAlertChannel):
 
     def __init__(self, name: str = "email", config: Dict[str, Any] | None = None):
         """
-         S
-        Initialize Email Channel
+                S
+               Initialize Email Channel
 
-        Args:
-            name:  S / Channel name
-            config:  SMn / Channel configuration
+               Args:
+                   name:  S
+        / Channel name
+                   config:  SMn / Channel configuration
         """
         super().__init__(name, config)
         self.smtp_host = self.config.get("smtp_host")

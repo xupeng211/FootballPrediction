@@ -25,7 +25,7 @@ class AlertChannelManager:
     """
 
     def __init__(self):
-        """ Sh"""
+        """Sh"""
         self.channels: Dict[str, BaseAlertChannel] = {}
         self.logger = logging.getLogger(__name__)
 
@@ -42,11 +42,12 @@ class AlertChannelManager:
 
     def unregister_channel(self, name: str):
         """
-        Jf S
-        Unregister Alert Channel
+               Jf S
+               Unregister Alert Channel
 
-        Args:
-            name:  S / Channel name
+               Args:
+                   name:  S
+        / Channel name
         """
         if name in self.channels:
             del self.channels[name]
@@ -54,14 +55,15 @@ class AlertChannelManager:
 
     def get_channel(self, name: str) -> BaseAlertChannel | None:
         """
-        Jf S
-        Get Alert Channel
+               Jf S
+               Get Alert Channel
 
-        Args:
-            name:  S / Channel name
+               Args:
+                   name:  S
+        / Channel name
 
-        Returns:
-            Optional[BaseAlertChannel]: Jf Sa / Alert channel object
+               Returns:
+                   Optional[BaseAlertChannel]: Jf Sa / Alert channel object
         """
         return self.channels.get(name)
 
@@ -75,17 +77,20 @@ class AlertChannelManager:
         """
         return [channel for channel in self.channels.values() if channel.is_enabled()]
 
-    async def send_to_all(self, alert: Alert, channel_names: List[str] | None = None) -> Dict[str, bool]:
+    async def send_to_all(
+        self, alert: Alert, channel_names: List[str] | None = None
+    ) -> Dict[str, bool]:
         """
-        Jf0@	 S
-        Send Alert to All Channels
+                Jf0@	 S
+                Send Alert to All Channels
 
-        Args:
-            alert: Jfa / Alert object
-            channel_names:  Sh / Specific channel names list
+                Args:
+                    alert: Jfa / Alert object
+                    channel_names:  S
+        h / Specific channel names list
 
-        Returns:
-            Dict[str, bool]: Ӝ / Send results
+                Returns:
+                    Dict[str, bool]: Ӝ / Send results
         """
         results = {}
 
@@ -105,20 +110,19 @@ class AlertChannelManager:
         return results
 
     async def send_batch_to_all(
-        self,
-        alerts: List[Alert],
-        channel_names: List[str] | None = None
+        self, alerts: List[Alert], channel_names: List[str] | None = None
     ) -> Dict[str, Dict[str, bool]]:
         """
-        yJf0@	 S
-        Send Batch Alerts to All Channels
+                yJf0@	 S
+                Send Batch Alerts to All Channels
 
-        Args:
-            alerts: Jfh / List of alerts
-            channel_names:  Sh / Specific channel names list
+                Args:
+                    alerts: Jfh / List of alerts
+                    channel_names:  S
+        h / Specific channel names list
 
-        Returns:
-            Dict[str, Dict[str, bool]]: Ӝ / Send results
+                Returns:
+                    Dict[str, Dict[str, bool]]: Ӝ / Send results
         """
         results = {}
 
@@ -156,14 +160,15 @@ class AlertChannelManager:
 
     def enable_channel(self, name: str) -> bool:
         """
-        /( S
-        Enable Channel
+               /( S
+               Enable Channel
 
-        Args:
-            name:  S / Channel name
+               Args:
+                   name:  S
+        / Channel name
 
-        Returns:
-            bool: /& / Whether successful
+               Returns:
+                   bool: /& / Whether successful
         """
         if name in self.channels:
             self.channels[name].enable()
@@ -173,14 +178,15 @@ class AlertChannelManager:
 
     def disable_channel(self, name: str) -> bool:
         """
-        ( S
-        Disable Channel
+               ( S
+               Disable Channel
 
-        Args:
-            name:  S / Channel name
+               Args:
+                   name:  S
+        / Channel name
 
-        Returns:
-            bool: /& / Whether successful
+               Returns:
+                   bool: /& / Whether successful
         """
         if name in self.channels:
             self.channels[name].disable()
@@ -196,7 +202,9 @@ class AlertChannelManager:
         Returns:
             Dict[str, int]:  Sߡo / Channel statistics
         """
-        enabled_count = sum(1 for channel in self.channels.values() if channel.is_enabled())
+        enabled_count = sum(
+            1 for channel in self.channels.values() if channel.is_enabled()
+        )
         return {
             "total": len(self.channels),
             "enabled": enabled_count,
@@ -220,7 +228,7 @@ class AlertChannelManager:
                     title="Test Alert",
                     message="This is a test alert",
                     level=Alert.objects.level.INFO,
-                    source="channel_manager"
+                    source="channel_manager",
                 )
                 results[name] = await channel.send(test_alert)
             except Exception as e:

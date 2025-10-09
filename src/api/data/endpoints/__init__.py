@@ -3,18 +3,13 @@
 Module Exports
 """
 
-from .matches import *
-from .teams import *
-from .leagues import *
-from .odds import *
-from .statistics import *
-from .dependencies import *
+from .matches import *  # type: ignore
+from .teams import *  # type: ignore
+from .leagues import *  # type: ignore
+from .odds import *  # type: ignore
+from .statistics import *  # type: ignore
+from .dependencies import *  # type: ignore
 
-__all__ = [
-    "Matches"
-    "Teams"
-    "Leagues"
-    "Odds"
-    "Statistics"
-    "Dependencies"
+__all__ = [  # type: ignore
+    "Matches" "Teams" "Leagues" "Odds" "Statistics" "Dependencies"
 ]

@@ -12,26 +12,20 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 data 导入已弃用。"
-    "请从 api.data.endpoints 导入相关类。",
+    "直接从 data 导入已弃用。" "请从 api.data.endpoints 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .api.data.endpoints.matches import *
-from .api.data.endpoints.teams import *
-from .api.data.endpoints.leagues import *
-from .api.data.endpoints.odds import *
-from .api.data.endpoints.statistics import *
-from .api.data.endpoints.dependencies import *
+from .data.endpoints.matches import *  # type: ignore
+from .data.endpoints.teams import *  # type: ignore
+from .data.endpoints.leagues import *  # type: ignore
+from .data.endpoints.odds import *  # type: ignore
+from .data.endpoints.statistics import *  # type: ignore
+from .data.endpoints.dependencies import *  # type: ignore
 
 # 导出所有类
-__all__ = [
-    "Matches"
-    "Teams"
-    "Leagues"
-    "Odds"
-    "Statistics"
-    "Dependencies"
+__all__ = [  # type: ignore
+    "Matches" "Teams" "Leagues" "Odds" "Statistics" "Dependencies"
 ]

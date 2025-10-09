@@ -25,12 +25,13 @@ class SlackChannel(BaseAlertChannel):
 
     def __init__(self, name: str = "slack", config: Dict[str, Any] | None = None):
         """
-        Slack S
-        Initialize Slack Channel
+               Slack S
+               Initialize Slack Channel
 
-        Args:
-            name:  S / Channel name
-            config:  SMn / Channel configuration
+               Args:
+                   name:  S
+        / Channel name
+                   config:  SMn / Channel configuration
         """
         super().__init__(name, config)
         self.webhook_url = self.config.get("webhook_url")
@@ -87,7 +88,9 @@ class SlackChannel(BaseAlertChannel):
                             },
                             {
                                 "title": "Created At",
-                                "value": alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC'),
+                                "value": alert.created_at.strftime(
+                                    "%Y-%m-%d %H:%M:%S UTC"
+                                ),
                                 "short": True,
                             },
                         ],
@@ -100,9 +103,7 @@ class SlackChannel(BaseAlertChannel):
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.webhook_url,
-                    json=payload,
-                    timeout=10
+                    self.webhook_url, json=payload, timeout=10
                 ) as response:
                     success = response.status == 200
                     if success:
@@ -127,9 +128,9 @@ class SlackChannel(BaseAlertChannel):
             str: r / Color code
         """
         colors = {
-            "info": "#36a64f",      # r
-            "warning": "#ff9500",   # Yr
-            "error": "#ff0000",     # r
+            "info": "#36a64f",  # r
+            "warning": "#ff9500",  # Yr
+            "error": "#ff0000",  # r
             "critical": "#8b0000",  # r
         }
         return colors.get(level, "#808080")  # ؤpr

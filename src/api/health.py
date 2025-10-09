@@ -12,22 +12,18 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 health 导入已弃用。"
-    "请从 api.health 导入相关类。",
+    "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .api.health.health_checker import *
-from .api.health.checks import *
-from .api.health.models import *
-from .api.health.utils import *
+from .api.health.health_checker import *  # type: ignore
+from .api.health.checks import *  # type: ignore
+from .api.health.models import *  # type: ignore
+from .api.health.utils import *  # type: ignore
 
 # 导出所有类
-__all__ = [
-    "HealthChecker"
-    "Checks"
-    "Models"
-    "Utils"
+__all__ = [  # type: ignore
+    "HealthChecker" "Checks" "Models" "Utils"
 ]

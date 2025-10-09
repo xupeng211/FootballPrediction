@@ -25,12 +25,13 @@ class TeamsChannel(BaseAlertChannel):
 
     def __init__(self, name: str = "teams", config: Dict[str, Any] | None = None):
         """
-        Teams S
-        Initialize Teams Channel
+               Teams S
+               Initialize Teams Channel
 
-        Args:
-            name:  S / Channel name
-            config:  SMn / Channel configuration
+               Args:
+                   name:  S
+        / Channel name
+                   config:  SMn / Channel configuration
         """
         super().__init__(name, config)
         self.webhook_url = self.config.get("webhook_url")
@@ -71,33 +72,38 @@ class TeamsChannel(BaseAlertChannel):
                             {"name": "Source", "value": alert.source},
                             {"name": "Severity", "value": alert.severity.value},
                             {"name": "Status", "value": alert.status.value},
-                            {"name": "Created At", "value": alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')},
+                            {
+                                "name": "Created At",
+                                "value": alert.created_at.strftime(
+                                    "%Y-%m-%d %H:%M:%S UTC"
+                                ),
+                            },
                         ],
                         "markdown": True,
                     }
                 ],
             }
 
-            # ~		
+            # ~
             if alert.labels:
-                labels_text = "\n".join([f"" **{k}**: {v}" for k, v in alert.labels.items()])
-                payload["sections"][0]["facts"].append({
-                    "name": "Labels",
-                    "value": labels_text
-                })
+                labels_text = "\n".join(
+                    [f"**{k}**: {v}" for k, v in alert.labels.items()]
+                )
+                payload["sections"][0]["facts"].append(
+                    {"name": "Labels", "value": labels_text}
+                )
 
             if alert.annotations:
-                annotations_text = "\n".join([f"" **{k}**: {v}" for k, v in alert.annotations.items()])
-                payload["sections"][0]["facts"].append({
-                    "name": "Annotations",
-                    "value": annotations_text
-                })
+                annotations_text = "\n".join(
+                    [f"**{k}**: {v}" for k, v in alert.annotations.items()]
+                )
+                payload["sections"][0]["facts"].append(
+                    {"name": "Annotations", "value": annotations_text}
+                )
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.webhook_url,
-                    json=payload,
-                    timeout=10
+                    self.webhook_url, json=payload, timeout=10
                 ) as response:
                     success = response.status == 200
                     if success:
@@ -122,9 +128,9 @@ class TeamsChannel(BaseAlertChannel):
             str: rAm6	 / Hex color code
         """
         colors = {
-            "info": "00FF00",      # r
-            "warning": "FF9500",   # Yr
-            "error": "FF0000",     # r
+            "info": "00FF00",  # r
+            "warning": "FF9500",  # Yr
+            "error": "FF0000",  # r
             "critical": "8B0000",  # r
         }
 
@@ -155,7 +161,7 @@ class TeamsChannel(BaseAlertChannel):
                 "@context": "http://schema.org/extensions",
                 "themeColor": "FF9500",  # Yr\:yJfr
                 "summary": f"{self.title_prefix}: Batch Alert ({len(alerts)} alerts)",
-                "sections": []
+                "sections": [],
             }
 
             for alert in alerts:
@@ -166,7 +172,10 @@ class TeamsChannel(BaseAlertChannel):
                         {"name": "Message", "value": alert.message},
                         {"name": "Source", "value": alert.source},
                         {"name": "Severity", "value": alert.severity.value},
-                        {"name": "Created At", "value": alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')},
+                        {
+                            "name": "Created At",
+                            "value": alert.created_at.strftime("%Y-%m-%d %H:%M:%S UTC"),
+                        },
                     ],
                     "markdown": True,
                 }
@@ -174,9 +183,7 @@ class TeamsChannel(BaseAlertChannel):
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.webhook_url,
-                    json=payload,
-                    timeout=10
+                    self.webhook_url, json=payload, timeout=10
                 ) as response:
                     success = response.status == 200
                     return {alert.alert_id: success for alert in alerts}

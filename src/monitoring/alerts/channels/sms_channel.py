@@ -181,7 +181,7 @@ class SMSChannel(BaseAlertChannel):
         Returns:
             bool: /& / Whether sent successfully
         """
-        # ?̑APIH	
+        # ?̑APIH
         import hashlib
         import hmac
         import base64
@@ -232,7 +232,7 @@ class SMSChannel(BaseAlertChannel):
         Returns:
             bool: /& / Whether sent successfully
         """
-        # ~APIH	
+        # ~APIH
         payload = {
             "PhoneNumberSet": [phone_number],
             "TemplateID": self.config.get("template_id"),

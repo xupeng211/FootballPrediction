@@ -33,7 +33,9 @@ class PrometheusAlertChannel(BaseAlertChannel):
         # 使用提供的指标管理器或创建新的
         self.metrics = metrics or PrometheusMetrics(registry or REGISTRY)
 
-    async def send_alert(self, alert: Alert, rule_id: Optional[str] = None, **kwargs) -> bool:
+    async def send_alert(
+        self, alert: Alert, rule_id: Optional[str] = None, **kwargs
+    ) -> bool:
         """
         通过Prometheus记录告警
 

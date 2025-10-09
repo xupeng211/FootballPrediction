@@ -12,22 +12,18 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 task_scheduler 导入已弃用。"
-    "请从 scheduler.core 导入相关类。",
+    "直接从 task_scheduler 导入已弃用。" "请从 scheduler.core 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
-from .scheduler.core.task_scheduler import *
-from .scheduler.core.executor import *
-from .scheduler.core.queue import *
-from .scheduler.core.monitor import *
+from .scheduler.core.task_scheduler import *  # type: ignore
+from .scheduler.core.executor import *  # type: ignore
+from .scheduler.core.queue import *  # type: ignore
+from .scheduler.core.monitor import *  # type: ignore
 
 # 导出所有类
-__all__ = [
-    "TaskScheduler"
-    "Executor"
-    "Queue"
-    "Monitor"
+__all__ = [  # type: ignore
+    "TaskScheduler" "Executor" "Queue" "Monitor"
 ]

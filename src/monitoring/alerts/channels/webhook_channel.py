@@ -28,12 +28,13 @@ class WebhookChannel(BaseAlertChannel):
 
     def __init__(self, name: str = "webhook", config: Dict[str, Any] | None = None):
         """
-        Webhook S
-        Initialize Webhook Channel
+               Webhook S
+               Initialize Webhook Channel
 
-        Args:
-            name:  S / Channel name
-            config:  SMn / Channel configuration
+               Args:
+                   name:  S
+        / Channel name
+                   config:  SMn / Channel configuration
         """
         super().__init__(name, config)
         self.url = self.config.get("url")
@@ -82,10 +83,12 @@ class WebhookChannel(BaseAlertChannel):
                         url=self.url,
                         headers=self.headers,
                         json=payload,
-                        timeout=self.timeout
+                        timeout=self.timeout,
                     ) as response:
                         if 200 <= response.status < 300:
-                            self.logger.info(f"Webhook sent successfully: {alert.alert_id}")
+                            self.logger.info(
+                                f"Webhook sent successfully: {alert.alert_id}"
+                            )
                             return True
                         else:
                             self.logger.warning(
@@ -93,9 +96,7 @@ class WebhookChannel(BaseAlertChannel):
                             )
 
             except Exception as e:
-                self.logger.error(
-                    f"Webhook attempt {attempt + 1} failed: {e}"
-                )
+                self.logger.error(f"Webhook attempt {attempt + 1} failed: {e}")
 
             if attempt < self.retry_count - 1:
                 await asyncio.sleep(self.retry_delay)
@@ -143,7 +144,7 @@ class WebhookChannel(BaseAlertChannel):
                     url=self.url,
                     headers=self.headers,
                     json=payload,
-                    timeout=self.timeout
+                    timeout=self.timeout,
                 ) as response:
                     success = 200 <= response.status < 300
                     return {alert.alert_id: success for alert in alerts}
