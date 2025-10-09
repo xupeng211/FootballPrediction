@@ -194,6 +194,7 @@ else:
     from src.api.events import router as events_router
     from src.api.observers import router as observers_router
     from src.api.cqrs import router as cqrs_router
+    from src.api.repositories import router as repositories_router
 
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
@@ -202,6 +203,7 @@ else:
     app.include_router(events_router, prefix="/api/v1")
     app.include_router(observers_router, prefix="/api/v1")
     app.include_router(cqrs_router, prefix="/api/v1")
+    app.include_router(repositories_router, prefix="/api/v1")
 
 
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
