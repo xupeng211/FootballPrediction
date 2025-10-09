@@ -1,0 +1,108 @@
+# 依赖注入配置示例
+# Dependency Injection Configuration Example
+
+# 服务注册配置
+services:
+  # 核心服务
+  database_service:
+    implementation: src.services.database.DatabaseService
+    lifetime: singleton
+    enabled: true
+
+  cache_service:
+    implementation: src.services.cache.CacheService
+    lifetime: singleton
+    parameters:
+      redis_url: ${REDIS_URL}
+      default_ttl: 3600
+
+  # 仓储服务
+  match_repository:
+    implementation: src.database.repositories.MatchRepository
+    lifetime: scoped
+
+  prediction_repository:
+    implementation: src.database.repositories.PredictionRepository
+    lifetime: scoped
+
+  user_repository:
+    implementation: src.database.repositories.UserRepository
+    lifetime: scoped
+
+  # 领域服务
+  match_domain_service:
+    implementation: src.domain.services.MatchDomainService
+    lifetime: scoped
+
+  prediction_domain_service:
+    implementation: src.domain.services.PredictionDomainService
+    lifetime: scoped
+
+  scoring_service:
+    implementation: src.domain.services.ScoringService
+    lifetime: scoped
+    parameters:
+      exact_score_points: 10
+      outcome_points: 3
+
+  # 应用服务
+  prediction_service:
+    implementation: src.services.prediction.PredictionService
+    lifetime: scoped
+    dependencies:
+      - prediction_repository
+      - match_repository
+      - prediction_domain_service
+      - scoring_service
+
+  # API服务
+  api_service:
+    implementation: src.api.APIService
+    lifetime: transient
+    dependencies:
+      - prediction_service
+
+  # 使用工厂创建的服务
+  external_api_client:
+    factory: src.factories.create_external_api_client
+    lifetime: singleton
+    parameters:
+      api_key: ${EXTERNAL_API_KEY}
+      base_url: https://api.football-data.org
+
+  # 测试环境专用服务
+  mock_service:
+    implementation: src.test.mocks.MockService
+    lifetime: singleton
+    condition: "profile == 'testing'"
+    enabled: false
+
+# 自动扫描的模块
+auto_scan:
+  - src/services
+  - src.domain.services
+  - src.database.repositories
+
+# 绑定约定
+conventions:
+  - default      # IInterface -> Interface
+  - repository   # IRepository -> Repository (scoped)
+  - service      # IService -> Service (scoped)
+
+# 配置文件
+profiles:
+  - development
+  - testing
+  - staging
+  - production
+
+# 导入其他配置文件
+imports:
+  - configs/di-services.yaml
+  - configs/di-repositories.yaml
+
+# 全局参数
+parameters:
+  app_name: "Football Prediction System"
+  version: "1.0.0"
+  debug: false
