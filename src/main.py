@@ -195,6 +195,9 @@ else:
     from src.api.observers import router as observers_router
     from src.api.cqrs import router as cqrs_router
     from src.api.repositories import router as repositories_router
+    from src.api.decorators import router as decorators_router
+    from src.api.adapters import router as adapters_router
+    from src.api.facades import router as facades_router
 
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
@@ -204,6 +207,9 @@ else:
     app.include_router(observers_router, prefix="/api/v1")
     app.include_router(cqrs_router, prefix="/api/v1")
     app.include_router(repositories_router, prefix="/api/v1")
+    app.include_router(decorators_router, prefix="/api/v1")
+    app.include_router(adapters_router, prefix="/api/v1")
+    app.include_router(facades_router, prefix="/api/v1")
 
 
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
