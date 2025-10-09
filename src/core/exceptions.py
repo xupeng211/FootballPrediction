@@ -49,6 +49,14 @@ class PipelineError(FootballPredictionError):
     """数据管道异常"""
 
 
+class ServiceLifecycleError(FootballPredictionError):
+    """服务生命周期异常"""
+
+
+class DependencyInjectionError(FootballPredictionError):
+    """依赖注入异常"""
+
+
 class LineageError(FootballPredictionError):
     """数据血缘追踪异常"""
 

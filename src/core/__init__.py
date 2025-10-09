@@ -17,8 +17,19 @@ from .exceptions import (
     FootballPredictionError,
     ModelError,
     PredictionError,
+    DependencyInjectionError,
 )
 from .logger import Logger, logger
+from .di import (
+    DIContainer,
+    ServiceCollection,
+    ServiceLifetime,
+    configure_services,
+    resolve,
+    inject,
+)
+from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
+from .config_di import ConfigurationBinder
 
 __all__ = [
     # 配置管理
@@ -35,4 +46,15 @@ __all__ = [
     "DataError",
     "ModelError",
     "PredictionError",
+    "DependencyInjectionError",
+    # 依赖注入
+    "DIContainer",
+    "ServiceCollection",
+    "ServiceLifetime",
+    "configure_services",
+    "resolve",
+    "inject",
+    "ServiceLifecycleManager",
+    "get_lifecycle_manager",
+    "ConfigurationBinder",
 ]
