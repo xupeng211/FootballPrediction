@@ -53,6 +53,16 @@ from src.monitoring.metrics_collector import (
     start_metrics_collection,
     stop_metrics_collection,
 )
+from src.core.event_application import (
+    initialize_event_system,
+    shutdown_event_system,
+)
+from src.observers import (
+    initialize_observer_system,
+    start_observer_system,
+    stop_observer_system,
+)
+from src.cqrs.application import initialize_cqrs
 
 # 配置日志
 logging.basicConfig(
@@ -95,6 +105,19 @@ async def lifespan(app: FastAPI):
         logger.info("📈 启动监控指标收集...")
         await start_metrics_collection()
 
+        # 初始化事件系统
+        logger.info("🔌 初始化事件系统...")
+        await initialize_event_system()
+
+        # 初始化观察者系统
+        logger.info("👁️ 初始化观察者系统...")
+        await initialize_observer_system()
+        await start_observer_system()
+
+        # 初始化CQRS系统
+        logger.info("⚡ 初始化CQRS系统...")
+        await initialize_cqrs()
+
         logger.info("✅ 服务启动成功")
 
     except Exception as e:
@@ -109,6 +132,14 @@ async def lifespan(app: FastAPI):
     # 停止监控指标收集
     logger.info("📉 停止监控指标收集...")
     await stop_metrics_collection()
+
+    # 关闭事件系统
+    logger.info("🔌 关闭事件系统...")
+    await shutdown_event_system()
+
+    # 关闭观察者系统
+    logger.info("👁️ 关闭观察者系统...")
+    await stop_observer_system()
 
 
 # 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
@@ -160,11 +191,17 @@ else:
     from src.api.features import router as features_router
     from src.api.monitoring import router as monitoring_router
     from src.api.predictions import router as predictions_router
+    from src.api.events import router as events_router
+    from src.api.observers import router as observers_router
+    from src.api.cqrs import router as cqrs_router
 
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
     app.include_router(data_router, prefix="/api/v1")
     app.include_router(predictions_router, prefix="/api/v1")
+    app.include_router(events_router, prefix="/api/v1")
+    app.include_router(observers_router, prefix="/api/v1")
+    app.include_router(cqrs_router, prefix="/api/v1")
 
 
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
