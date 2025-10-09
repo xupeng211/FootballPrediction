@@ -14,6 +14,7 @@ TEST_CONFIG = {
     "api_base_url": "http://localhost:8000",
 }
 
+
 class BaseTestCase:
     """基础测试类"""
 
@@ -40,6 +41,7 @@ class BaseTestCase:
         assert "status" in response
         assert "data" in response or "error" in response
 
+
 class ServiceTestCase(BaseTestCase):
     """服务层测试基类"""
 
@@ -56,10 +58,12 @@ class ServiceTestCase(BaseTestCase):
     def patch_service(self, service_path: str, **kwargs) -> Mock:
         """patch 服务"""
         import unittest.mock
+
         patch = unittest.mock.patch(service_path, **kwargs)
         mock = patch.start()
         self.service_patches.append(patch)
         return mock
+
 
 class APITestCase(BaseTestCase):
     """API 测试基类"""
@@ -68,8 +72,10 @@ class APITestCase(BaseTestCase):
     def client(self):
         """FastAPI 测试客户端"""
         from fastapi.testclient import TestClient
+
         # 延迟导入避免循环依赖
         from src.api.app import app
+
         return TestClient(app)
 
     def assert_valid_api_response(self, response, expected_status: int = 200):
@@ -77,6 +83,7 @@ class APITestCase(BaseTestCase):
         assert response.status_code == expected_status
         assert response.json() is not None
         return response.json()
+
 
 class DatabaseTestCase(BaseTestCase):
     """数据库测试基类"""

@@ -1,4 +1,5 @@
 """预测服务测试"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
@@ -6,6 +7,7 @@ from src.models.prediction_service import PredictionService
 from src.database.models.match import Match
 from src.database.models.team import Team
 from src.database.models.prediction import Prediction
+
 
 class TestPredictionService:
     """预测服务测试"""
@@ -22,17 +24,14 @@ class TestPredictionService:
         mock_model.predict.return_value = {
             "home_win": 0.65,
             "draw": 0.20,
-            "away_win": 0.15
+            "away_win": 0.15,
         }
         return mock_model
 
     @pytest.fixture
     def service(self, mock_repository, mock_model):
         """创建预测服务"""
-        return PredictionService(
-            repository=mock_repository,
-            model=mock_model
-        )
+        return PredictionService(repository=mock_repository, model=mock_model)
 
     def test_predict_match(self, service, mock_repository, mock_model):
         """测试比赛预测"""
@@ -43,14 +42,14 @@ class TestPredictionService:
             id=1,
             home_team=home_team,
             away_team=away_team,
-            date=datetime(2024, 1, 1, 15, 0)
+            date=datetime(2024, 1, 1, 15, 0),
         )
 
         # 设置模拟返回
         mock_repository.get_match_features.return_value = {
             "home_form": [1, 1, 0],
             "away_form": [0, 0, 1],
-            "head_to_head": {"home_wins": 2, "away_wins": 1}
+            "head_to_head": {"home_wins": 2, "away_wins": 1},
         }
 
         # 调用方法
@@ -69,7 +68,9 @@ class TestPredictionService:
 
         # 设置模拟返回
         mock_repository.get_matches_by_ids.return_value = [
-            Mock(id=1), Mock(id=2), Mock(id=3)
+            Mock(id=1),
+            Mock(id=2),
+            Mock(id=3),
         ]
 
         # 调用方法
@@ -86,7 +87,7 @@ class TestPredictionService:
             Mock(is_correct=True),
             Mock(is_correct=True),
             Mock(is_correct=False),
-            Mock(is_correct=True)
+            Mock(is_correct=True),
         ]
 
         # 调用方法
@@ -98,10 +99,7 @@ class TestPredictionService:
     def test_update_prediction(self, service, mock_repository):
         """测试更新预测"""
         prediction_id = 1
-        update_data = {
-            "confidence": 0.90,
-            "notes": "Updated prediction"
-        }
+        update_data = {"confidence": 0.90, "notes": "Updated prediction"}
 
         # 设置模拟返回
         mock_prediction = Mock(spec=Prediction)
@@ -119,17 +117,12 @@ class TestPredictionService:
         # 有效输入
         valid_input = {
             "match_id": 1,
-            "features": {
-                "home_form": [1, 1, 0],
-                "away_form": [0, 1, 1]
-            }
+            "features": {"home_form": [1, 1, 0], "away_form": [0, 1, 1]},
         }
         assert service.validate_input(valid_input) is True
 
         # 无效输入（缺少必要字段）
-        invalid_input = {
-            "features": {}
-        }
+        invalid_input = {"features": {}}
         assert service.validate_input(invalid_input) is False
 
     def test_get_feature_importance(self, service, mock_model):
@@ -140,7 +133,7 @@ class TestPredictionService:
             "away_form": 0.25,
             "head_to_head": 0.20,
             "goals_average": 0.15,
-            "injuries": 0.10
+            "injuries": 0.10,
         }
 
         # 调用方法
@@ -152,11 +145,7 @@ class TestPredictionService:
 
     def test_calculate_confidence(self, service):
         """测试计算置信度"""
-        probabilities = {
-            "home_win": 0.65,
-            "draw": 0.20,
-            "away_win": 0.15
-        }
+        probabilities = {"home_win": 0.65, "draw": 0.20, "away_win": 0.15}
 
         # 计算置信度（最高概率）
         confidence = service.calculate_confidence(probabilities)
@@ -170,9 +159,7 @@ class TestPredictionService:
 
         # 设置模拟返回
         mock_prediction = Mock(
-            predicted_winner="home",
-            confidence=0.70,
-            is_correct=True
+            predicted_winner="home", confidence=0.70, is_correct=True
         )
         mock_repository.get_prediction_by_match.return_value = mock_prediction
 
@@ -190,7 +177,7 @@ class TestPredictionService:
             "accuracy": 0.75,
             "precision": 0.80,
             "recall": 0.70,
-            "f1_score": 0.75
+            "f1_score": 0.75,
         }
 
         # 调用方法

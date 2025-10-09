@@ -1,9 +1,7 @@
-
 """
 缓存一致性管理器
 负责协调Redis缓存和PostgreSQL数据库之间的数据一致性
 """
-
 
 
 class CacheConsistencyManager:
@@ -41,5 +39,3 @@ class CacheConsistencyManager:
         :param ids: 实体ID列表
         """
         # Placeholder implementation
-
-

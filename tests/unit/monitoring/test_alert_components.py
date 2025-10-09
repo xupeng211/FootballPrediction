@@ -224,7 +224,7 @@ class TestLogAlertChannel:
             source="test",
         )
 
-        with patch.object(channel.logger, 'log') as mock_log:
+        with patch.object(channel.logger, "log") as mock_log:
             result = await channel.send_alert(alert)
             assert result is True
             mock_log.assert_called_once()
@@ -232,7 +232,7 @@ class TestLogAlertChannel:
     @pytest.mark.asyncio
     async def test_test_connection(self, channel):
         """测试连接测试"""
-        with patch.object(channel.logger, 'info') as mock_info:
+        with patch.object(channel.logger, "info") as mock_info:
             result = await channel.test_connection()
             assert result is True
             mock_info.assert_called_once_with("日志告警渠道测试成功")
@@ -293,6 +293,7 @@ class TestPrometheusMetrics:
 
     def test_update_anomaly_metrics(self, metrics):
         """测试更新异常指标"""
+
         # 模拟异常对象
         class MockAnomaly:
             def __init__(self):
@@ -437,6 +438,7 @@ class TestAlertManager:
 
     def test_update_anomaly_metrics(self, manager):
         """测试更新异常指标"""
+
         # 模拟异常对象
         class MockAnomaly:
             def __init__(self, score):

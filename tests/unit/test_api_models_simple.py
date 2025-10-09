@@ -10,9 +10,11 @@ except ImportError:
         def __init__(self, match_id=1):
             self.match_id = match_id
 
+
 def test_api_response():
     response = APIResponse(success=True)
     assert response.success is True
+
 
 def test_prediction_request():
     request = PredictionRequest(match_id=1)

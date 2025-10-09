@@ -1,4 +1,5 @@
 """文件工具测试"""
+
 import os
 import pytest
 import tempfile
@@ -6,6 +7,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from src.utils.file_utils import FileUtils
+
 
 class TestFileUtils:
     """文件工具测试"""
@@ -20,7 +22,7 @@ class TestFileUtils:
 
     def test_read_json(self):
         """测试读取JSON文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"key": "value", "number": 42}, f)
             f.flush()
 
@@ -47,7 +49,7 @@ class TestFileUtils:
 
     def test_get_file_hash(self):
         """测试获取文件哈希值"""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
             f.flush()
 
@@ -59,7 +61,7 @@ class TestFileUtils:
 
     def test_get_file_size(self):
         """测试获取文件大小"""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
             f.flush()
 
@@ -83,7 +85,7 @@ class TestFileUtils:
 
     def test_read_json_file_success(self):
         """测试read_json_file成功读取"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"test": "data"}, f)
             f.flush()
 

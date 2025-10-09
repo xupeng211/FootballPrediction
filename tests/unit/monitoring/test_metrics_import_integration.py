@@ -14,6 +14,7 @@ def test_import_metric_types():
             MetricSummary,
             AlertInfo,
         )
+
         assert MetricPoint is not None
         assert MetricSummary is not None
         assert AlertInfo is not None
@@ -27,6 +28,7 @@ def test_import_aggregator():
         from src.monitoring.metrics_collector_enhanced_mod.aggregator import (
             MetricsAggregator,
         )
+
         assert MetricsAggregator is not None
     except ImportError as e:
         pytest.skip(f"Cannot import aggregator: {e}")
@@ -39,6 +41,7 @@ def test_import_alerting():
             AlertManager,
             DefaultAlertHandlers,
         )
+
         assert AlertManager is not None
         assert DefaultAlertHandlers is not None
     except ImportError as e:
@@ -51,6 +54,7 @@ def test_import_business_metrics():
         from src.monitoring.metrics_collector_enhanced_mod.business_metrics import (
             BusinessMetricsCollector,
         )
+
         assert BusinessMetricsCollector is not None
     except ImportError as e:
         pytest.skip(f"Cannot import business metrics: {e}")
@@ -62,6 +66,7 @@ def test_import_system_metrics():
         from src.monitoring.metrics_collector_enhanced_mod.system_metrics import (
             SystemMetricsCollector,
         )
+
         assert SystemMetricsCollector is not None
     except ImportError as e:
         pytest.skip(f"Cannot import system metrics: {e}")
@@ -76,6 +81,7 @@ def test_import_decorators():
             track_prediction_performance,
             track_database_performance,
         )
+
         assert track_performance is not None
         assert track_cache_performance is not None
         assert track_prediction_performance is not None
@@ -90,6 +96,7 @@ def test_import_collector():
         from src.monitoring.metrics_collector_enhanced_mod.collector import (
             EnhancedMetricsCollector,
         )
+
         assert EnhancedMetricsCollector is not None
     except ImportError as e:
         pytest.skip(f"Cannot import collector (prometheus dependency issue): {e}")
@@ -102,6 +109,7 @@ def test_import_prometheus_metrics():
             PrometheusMetricsManager,
             PROMETHEUS_AVAILABLE,
         )
+
         assert PrometheusMetricsManager is not None
         # 检查prometheus是否可用
         # 如果不可用，PROMETHEUS_AVAILABLE应该是False
@@ -115,7 +123,10 @@ def test_import_from_init():
     try:
         # 尝试导入，但不实际使用
         import importlib
-        module = importlib.import_module("src.monitoring.metrics_collector_enhanced_mod")
+
+        module = importlib.import_module(
+            "src.monitoring.metrics_collector_enhanced_mod"
+        )
         assert module is not None
     except ImportError as e:
         pytest.skip(f"Cannot import module package: {e}")
@@ -125,9 +136,10 @@ def test_backward_compatibility_import():
     """测试向后兼容性导入"""
     # 原始模块应该仍然可以导入
     try:
-        from src.monitoring.metrics_collector_enhanced import (
+        from src.monitoring.metrics_collector_enhanced_mod import (
             EnhancedMetricsCollector,
         )
+
         assert EnhancedMetricsCollector is not None
     except ImportError as e:
         pytest.skip(f"Cannot import from original location: {e}")

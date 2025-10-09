@@ -5,8 +5,6 @@
 """
 
 
-
-
 class ProcessingCache:
     """数据处理缓存管理器"""
 
@@ -20,10 +18,10 @@ class ProcessingCache:
         # 缓存配置
         self.cache_ttl = {
             "match_processing": 3600,  # 1小时
-            "odds_processing": 1800,   # 30分钟
+            "odds_processing": 1800,  # 30分钟
             "features_processing": 7200,  # 2小时
-            "validation": 900,        # 15分钟
-            "statistics": 1800,       # 30分钟
+            "validation": 900,  # 15分钟
+            "statistics": 1800,  # 30分钟
         }
 
         # 缓存统计
@@ -282,9 +280,7 @@ class ProcessingCache:
         """
         total_requests = self.stats["hits"] + self.stats["misses"]
         hit_rate = (
-            self.stats["hits"] / total_requests * 100
-            if total_requests > 0
-            else 0
+            self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
         )
 
         cache_stats = {
@@ -391,8 +387,6 @@ class ProcessingCache:
             return
 
         self.logger.info(f"开始缓存预热，共 {len(operations)} 个操作")
-
-
 
         for operation in operations:
             for i, data in enumerate(sample_data[:5]):  # 每个操作预热5个样本

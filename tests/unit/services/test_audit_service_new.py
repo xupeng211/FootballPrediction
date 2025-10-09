@@ -1,8 +1,10 @@
 """审计服务测试"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
-from src.services.audit_service import AuditService
+from src.services.audit_service_mod import AuditService
+
 
 class TestAuditService:
     """审计服务测试"""
@@ -20,20 +22,14 @@ class TestAuditService:
     @pytest.fixture
     def service(self, mock_repository, mock_logger):
         """创建审计服务"""
-        return AuditService(
-            repository=mock_repository,
-            logger=mock_logger
-        )
+        return AuditService(repository=mock_repository, logger=mock_logger)
 
     def test_log_user_action(self, service, mock_repository, mock_logger):
         """测试记录用户操作"""
         # 准备测试数据
         user_id = 123
         action = "create_prediction"
-        details = {
-            "match_id": 456,
-            "prediction": "home_win"
-        }
+        details = {"match_id": 456, "prediction": "home_win"}
 
         # 设置模拟返回
         mock_repository.save_audit_log.return_value = True
@@ -50,11 +46,7 @@ class TestAuditService:
         """测试记录系统事件"""
         # 准备测试数据
         event_type = "model_training"
-        details = {
-            "model_version": "v1.0.0",
-            "accuracy": 0.85,
-            "duration": 3600
-        }
+        details = {"model_version": "v1.0.0", "accuracy": 0.85, "duration": 3600}
 
         # 调用方法
         result = service.log_system_event(event_type, details)
@@ -72,7 +64,7 @@ class TestAuditService:
             "user_id": 123,
             "ip_address": "192.168.1.1",
             "status_code": 200,
-            "response_time": 150
+            "response_time": 150,
         }
 
         # 调用方法
@@ -90,7 +82,7 @@ class TestAuditService:
             "operation": "SELECT",
             "user_id": 123,
             "query": "SELECT * FROM matches WHERE date > '2024-01-01'",
-            "records_affected": 50
+            "records_affected": 50,
         }
 
         # 调用方法
@@ -107,7 +99,7 @@ class TestAuditService:
             "event_type": "failed_login",
             "user_id": 123,
             "ip_address": "192.168.1.1",
-            "details": "Invalid password attempt"
+            "details": "Invalid password attempt",
         }
 
         # 调用方法
@@ -130,14 +122,14 @@ class TestAuditService:
                 "id": 1,
                 "user_id": user_id,
                 "action": "login",
-                "timestamp": datetime(2024, 1, 15, 10, 0)
+                "timestamp": datetime(2024, 1, 15, 10, 0),
             },
             {
                 "id": 2,
                 "user_id": user_id,
                 "action": "create_prediction",
-                "timestamp": datetime(2024, 1, 15, 11, 0)
-            }
+                "timestamp": datetime(2024, 1, 15, 11, 0),
+            },
         ]
         mock_repository.get_user_activities.return_value = mock_activities
 
@@ -160,7 +152,7 @@ class TestAuditService:
             "user_actions": 800,
             "system_events": 150,
             "api_accesses": 400,
-            "security_events": 5
+            "security_events": 5,
         }
 
         # 调用方法
@@ -192,7 +184,7 @@ class TestAuditService:
             "user_id": 123,
             "email": "user@example.com",
             "ip_address": "192.168.1.1",
-            "credit_card": "4111-1111-1111-1111"
+            "credit_card": "4111-1111-1111-1111",
         }
 
         # 调用方法
@@ -231,14 +223,14 @@ class TestAuditService:
                 "id": 1,
                 "action": "login",
                 "user_id": 123,
-                "timestamp": datetime(2024, 1, 15)
+                "timestamp": datetime(2024, 1, 15),
             },
             {
                 "id": 2,
                 "action": "logout",
                 "user_id": 123,
-                "timestamp": datetime(2024, 1, 15)
-            }
+                "timestamp": datetime(2024, 1, 15),
+            },
         ]
         mock_repository.get_logs_for_export.return_value = mock_logs
 

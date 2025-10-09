@@ -2,6 +2,7 @@ try:
     from src.collectors.fixtures_collector import FixturesCollector
     from src.collectors.odds_collector import OddsCollector
     from src.collectors.scores_collector import ScoresCollector
+
     # 如果导入成功但需要参数，创建包装类
     class FixturesCollectorWrapper:
         def __init__(self):
@@ -14,6 +15,7 @@ try:
     class ScoresCollectorWrapper:
         def __init__(self):
             self.instance = None
+
     # 替换原始类
     FixturesCollector = FixturesCollectorWrapper
     OddsCollector = OddsCollectorWrapper
@@ -29,6 +31,7 @@ except ImportError:
     class ScoresCollector:
         pass
 
+
 try:
     from src.data.collectors.base_collector import BaseCollector
 except ImportError:
@@ -36,6 +39,7 @@ except ImportError:
     class BaseCollector:
         def collect(self):
             pass
+
 
 def test_all_collectors():
     fixtures = FixturesCollector()
@@ -46,7 +50,8 @@ def test_all_collectors():
     assert odds is not None
     assert scores is not None
 
+
 def test_base_collector():
     collector = BaseCollector()
     assert collector is not None
-    assert hasattr(collector, 'collect')
+    assert hasattr(collector, "collect")

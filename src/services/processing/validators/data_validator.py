@@ -7,9 +7,6 @@ from src.data.processing.missing_data_handler import MissingDataHandler
 """
 
 
-
-
-
 class DataValidator:
     """数据验证器"""
 
@@ -428,9 +425,6 @@ class DataValidator:
                 "total_records": sum(len(batch) for batch in batches),
             },
         }
-
-
-
 
         if not batches:
             result["consistent"] = False

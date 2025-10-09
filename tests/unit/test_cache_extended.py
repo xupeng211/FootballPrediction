@@ -1,6 +1,7 @@
 from src.cache.ttl_cache import TTLCache
 from src.cache.redis_manager import RedisManager
 
+
 def test_ttl_cache_extended():
     cache = TTLCache(maxsize=100, ttl=60)
 
@@ -18,6 +19,7 @@ def test_ttl_cache_extended():
     # 测试删除
     cache.delete("key1")
     assert cache.get("key1") is None
+
 
 def test_cache_size_limit():
     cache = TTLCache(maxsize=2, ttl=60)

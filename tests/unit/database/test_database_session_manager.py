@@ -84,7 +84,9 @@ class TestDatabaseSessionManager:
         mock_session.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_async_session_success(self, session_manager, mock_engine_manager):
+    async def test_get_async_session_success(
+        self, session_manager, mock_engine_manager
+    ):
         """测试成功获取异步会话"""
         # 设置模拟会话
         mock_session = AsyncMock(spec=AsyncSession)
@@ -100,7 +102,9 @@ class TestDatabaseSessionManager:
         mock_session.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_async_session_exception(self, session_manager, mock_engine_manager):
+    async def test_get_async_session_exception(
+        self, session_manager, mock_engine_manager
+    ):
         """测试异步会话异常处理"""
         # 设置模拟会话
         mock_session = AsyncMock(spec=AsyncSession)
@@ -142,8 +146,10 @@ class TestDatabaseSessionManager:
         assert session == mock_session
         mock_engine_manager.create_async_session.assert_called_once()
 
-    @patch('src.utils.retry.retry')
-    def test_execute_with_retry_success(self, mock_retry, session_manager, mock_engine_manager):
+    @patch("src.utils.retry.retry")
+    def test_execute_with_retry_success(
+        self, mock_retry, session_manager, mock_engine_manager
+    ):
         """测试带重试机制执行操作成功"""
         # 设置模拟
         mock_session = MagicMock()
@@ -159,8 +165,10 @@ class TestDatabaseSessionManager:
         assert result == "result"
         mock_operation.assert_called_once_with(mock_session)
 
-    @patch('src.utils.retry.retry')
-    def test_execute_with_retry_failure(self, mock_retry, session_manager, mock_engine_manager):
+    @patch("src.utils.retry.retry")
+    def test_execute_with_retry_failure(
+        self, mock_retry, session_manager, mock_engine_manager
+    ):
         """测试带重试机制执行操作失败"""
         # 设置模拟
         mock_session = MagicMock()
@@ -173,8 +181,10 @@ class TestDatabaseSessionManager:
             session_manager.execute_with_retry(mock_session, mock_operation)
 
     @pytest.mark.asyncio
-    @patch('src.utils.retry.retry')
-    async def test_execute_async_with_retry_success(self, mock_retry, session_manager, mock_engine_manager):
+    @patch("src.utils.retry.retry")
+    async def test_execute_async_with_retry_success(
+        self, mock_retry, session_manager, mock_engine_manager
+    ):
         """测试异步带重试机制执行操作成功"""
         # 设置模拟
         mock_session = AsyncMock()
@@ -184,15 +194,19 @@ class TestDatabaseSessionManager:
         mock_retry.return_value = mock_retry_decorator
 
         # 执行操作
-        result = await session_manager.execute_async_with_retry(mock_session, mock_operation)
+        result = await session_manager.execute_async_with_retry(
+            mock_session, mock_operation
+        )
 
         # 验证
         assert result == "result"
         mock_operation.assert_called_once_with(mock_session)
 
     @pytest.mark.asyncio
-    @patch('src.utils.retry.retry')
-    async def test_execute_async_with_retry_failure(self, mock_retry, session_manager, mock_engine_manager):
+    @patch("src.utils.retry.retry")
+    async def test_execute_async_with_retry_failure(
+        self, mock_retry, session_manager, mock_engine_manager
+    ):
         """测试异步带重试机制执行操作失败"""
         # 设置模拟
         mock_session = AsyncMock()

@@ -1,4 +1,3 @@
-
 """
 FastAPI主应用
 FastAPI Main Application
@@ -6,9 +5,6 @@ FastAPI Main Application
 整合所有API路由和中间件。
 Integrates all API routes and middleware.
 """
-
-
-
 
 logger = get_logger(__name__)
 

@@ -14,6 +14,7 @@ class TestBaseModule:
     def test_database_backup_task_import(self):
         """测试数据库备份任务基类导入"""
         from src.tasks.backup.base import DatabaseBackupTask
+
         assert DatabaseBackupTask is not None
 
     def test_backup_metrics_import(self):
@@ -24,8 +25,9 @@ class TestBaseModule:
             backup_last_success,
             backup_size_bytes,
             backup_failures_total,
-            get_backup_metrics
+            get_backup_metrics,
         )
+
         assert backup_tasks_total is not None
         assert backup_task_duration is not None
         assert backup_last_success is not None
@@ -37,7 +39,7 @@ class TestBaseModule:
         """测试获取备份指标"""
         from src.tasks.backup.base import get_backup_metrics
 
-        with patch('src.tasks.backup.base.REGISTRY') as mock_registry:
+        with patch("src.tasks.backup.base.REGISTRY") as mock_registry:
             mock_registry._collector_to_names = {}
             result = get_backup_metrics()
 
@@ -56,17 +58,18 @@ class TestDatabaseModule:
             hourly_incremental_backup_task,
             weekly_wal_archive_task,
             backup_database_task,
-            verify_backup_task
+            verify_backup_task,
         )
+
         assert daily_full_backup_task is not None
         assert hourly_incremental_backup_task is not None
         assert weekly_wal_archive_task is not None
         assert backup_database_task is not None
         assert verify_backup_task is not None
 
-    @patch('src.tasks.backup.database.subprocess.run')
-    @patch('src.tasks.backup.database.Path')
-    @patch('src.tasks.backup.database.get_config')
+    @patch("src.tasks.backup.database.subprocess.run")
+    @patch("src.tasks.backup.database.Path")
+    @patch("src.tasks.backup.database.get_config")
     def test_daily_full_backup_task(self, mock_get_config, mock_path, mock_subprocess):
         """测试每日完整备份任务"""
         from src.tasks.backup.database import daily_full_backup_task
@@ -91,7 +94,7 @@ class TestDatabaseModule:
         mock_backup_dir.mkdir.return_value = None
         mock_backup_dir.__truediv__.return_value = mock_backup_file
         mock_backup_file.with_suffix.return_value = mock_backup_file
-        mock_backup_file.stat.return_value = st_size=1024
+        mock_backup_file.stat.return_value = st_size = 1024
         mock_backup_file.__str__ = lambda x: "/tmp/backups/test.sql.gz"
         mock_path.return_value = mock_backup_dir
 
@@ -106,8 +109,9 @@ class TestMaintenanceModule:
         from src.tasks.backup.maintenance import (
             cleanup_old_backups_task,
             verify_backup_integrity_task,
-            check_backup_storage_task
+            check_backup_storage_task,
         )
+
         assert cleanup_old_backups_task is not None
         assert verify_backup_integrity_task is not None
         assert check_backup_storage_task is not None
@@ -115,16 +119,19 @@ class TestMaintenanceModule:
     def test_cleanup_old_backups_task(self):
         """测试清理旧备份任务"""
         from src.tasks.backup.maintenance import cleanup_old_backups_task
+
         assert cleanup_old_backups_task is not None
 
     def test_verify_backup_integrity_task(self):
         """测试验证备份完整性任务"""
         from src.tasks.backup.maintenance import verify_backup_integrity_task
+
         assert verify_backup_integrity_task is not None
 
     def test_check_backup_storage_task(self):
         """测试检查备份存储空间任务"""
         from src.tasks.backup.maintenance import check_backup_storage_task
+
         assert check_backup_storage_task is not None
 
 
@@ -136,8 +143,9 @@ class TestServicesModule:
         from src.tasks.backup.services import (
             backup_redis_task,
             backup_logs_task,
-            backup_config_task
+            backup_config_task,
         )
+
         assert backup_redis_task is not None
         assert backup_logs_task is not None
         assert backup_config_task is not None
@@ -145,16 +153,19 @@ class TestServicesModule:
     def test_backup_redis_task(self):
         """测试Redis备份任务"""
         from src.tasks.backup.services import backup_redis_task
+
         assert backup_redis_task is not None
 
     def test_backup_logs_task(self):
         """测试日志备份任务"""
         from src.tasks.backup.services import backup_logs_task
+
         assert backup_logs_task is not None
 
     def test_backup_config_task(self):
         """测试配置备份任务"""
         from src.tasks.backup.services import backup_config_task
+
         assert backup_config_task is not None
 
 
@@ -167,8 +178,9 @@ class TestManualModule:
             manual_backup_task,
             get_backup_status,
             list_backup_files,
-            restore_backup
+            restore_backup,
         )
+
         assert manual_backup_task is not None
         assert get_backup_status is not None
         assert list_backup_files is not None
@@ -177,16 +189,19 @@ class TestManualModule:
     def test_get_backup_status(self):
         """测试获取备份状态"""
         from src.tasks.backup.manual import get_backup_status
+
         assert get_backup_status is not None
 
     def test_list_backup_files(self):
         """测试列出备份文件"""
         from src.tasks.backup.manual import list_backup_files
+
         assert list_backup_files is not None
 
     def test_restore_backup(self):
         """测试恢复备份"""
         from src.tasks.backup.manual import restore_backup
+
         assert restore_backup is not None
 
 
@@ -200,8 +215,9 @@ class TestModularStructure:
             daily_full_backup_task,
             backup_redis_task,
             manual_backup_task,
-            get_backup_metrics
+            get_backup_metrics,
         )
+
         assert DatabaseBackupTask is not None
         assert daily_full_backup_task is not None
         assert backup_redis_task is not None
@@ -215,8 +231,9 @@ class TestModularStructure:
             DatabaseBackupTask as old_task,
             daily_full_backup_task as old_daily,
             backup_redis_task as old_redis,
-            get_backup_metrics as old_metrics
+            get_backup_metrics as old_metrics,
         )
+
         assert old_task is not None
         assert old_daily is not None
         assert old_redis is not None
@@ -235,24 +252,20 @@ class TestModularStructure:
             "backup_last_success",
             "backup_size_bytes",
             "backup_failures_total",
-
             # 数据库备份任务
             "daily_full_backup_task",
             "hourly_incremental_backup_task",
             "weekly_wal_archive_task",
             "backup_database_task",
             "verify_backup_task",
-
             # 维护任务
             "cleanup_old_backups_task",
             "verify_backup_integrity_task",
             "check_backup_storage_task",
-
             # 服务备份任务
             "backup_redis_task",
             "backup_logs_task",
             "backup_config_task",
-
             # 手动任务
             "manual_backup_task",
             "get_backup_status",
@@ -268,11 +281,11 @@ class TestModularStructure:
         import src.tasks.backup as backup_module
 
         # 验证子模块存在
-        assert hasattr(backup_module, 'base')
-        assert hasattr(backup_module, 'database')
-        assert hasattr(backup_module, 'maintenance')
-        assert hasattr(backup_module, 'services')
-        assert hasattr(backup_module, 'manual')
+        assert hasattr(backup_module, "base")
+        assert hasattr(backup_module, "database")
+        assert hasattr(backup_module, "maintenance")
+        assert hasattr(backup_module, "services")
+        assert hasattr(backup_module, "manual")
 
 
 @pytest.mark.asyncio
@@ -282,14 +295,18 @@ async def test_integration_example():
 
     # 验证DatabaseBackupTask可以正常使用
     task = DatabaseBackupTask()
-    assert hasattr(task, 'on_success')
-    assert hasattr(task, 'on_failure')
-    assert hasattr(task, '_send_alert_notification')
+    assert hasattr(task, "on_success")
+    assert hasattr(task, "on_failure")
+    assert hasattr(task, "_send_alert_notification")
 
     # 验证get_backup_metrics可以正常调用
-    with patch('src.tasks.backup.base.REGISTRY') as mock_registry:
+    with patch("src.tasks.backup.base.REGISTRY") as mock_registry:
         mock_registry._collector_to_names = {}
-        metrics = await get_backup_metrics() if hasattr(get_backup_metrics, '__await__') else get_backup_metrics()
+        metrics = (
+            await get_backup_metrics()
+            if hasattr(get_backup_metrics, "__await__")
+            else get_backup_metrics()
+        )
         assert isinstance(metrics, dict)
 
 
@@ -303,9 +320,9 @@ class TestTaskDecorators:
         from src.tasks.backup.manual import manual_backup_task
 
         # 验证任务都有delay方法
-        assert hasattr(daily_full_backup_task, 'delay')
-        assert hasattr(backup_redis_task, 'delay')
-        assert hasattr(manual_backup_task, 'delay')
+        assert hasattr(daily_full_backup_task, "delay")
+        assert hasattr(backup_redis_task, "delay")
+        assert hasattr(manual_backup_task, "delay")
 
     def test_task_base_class(self):
         """测试任务基类"""
@@ -313,5 +330,6 @@ class TestTaskDecorators:
         from src.tasks.backup.database import daily_full_backup_task
 
         # 验证任务使用了正确的基类
-        assert isinstance(daily_full_backup_task, DatabaseBackupTask.__class__) or \
-               hasattr(daily_full_backup_task, '__bases__')
+        assert isinstance(
+            daily_full_backup_task, DatabaseBackupTask.__class__
+        ) or hasattr(daily_full_backup_task, "__bases__")

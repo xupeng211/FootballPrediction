@@ -73,24 +73,20 @@ from .backup import (
     backup_last_success,
     backup_size_bytes,
     backup_failures_total,
-
     # 数据库备份任务
     daily_full_backup_task,
     hourly_incremental_backup_task,
     weekly_wal_archive_task,
     backup_database_task,
     verify_backup_task,
-
     # 维护任务
     cleanup_old_backups_task,
     verify_backup_integrity_task,
     check_backup_storage_task,
-
     # 服务备份任务
     backup_redis_task,
     backup_logs_task,
     backup_config_task,
-
     # 手动任务
     manual_backup_task,
     get_backup_status,
@@ -108,24 +104,20 @@ __all__ = [
     "backup_last_success",
     "backup_size_bytes",
     "backup_failures_total",
-
     # 数据库备份任务
     "daily_full_backup_task",
     "hourly_incremental_backup_task",
     "weekly_wal_archive_task",
     "backup_database_task",
     "verify_backup_task",
-
     # 维护任务
     "cleanup_old_backups_task",
     "verify_backup_integrity_task",
     "check_backup_storage_task",
-
     # 服务备份任务
     "backup_redis_task",
     "backup_logs_task",
     "backup_config_task",
-
     # 手动任务
     "manual_backup_task",
     "get_backup_status",

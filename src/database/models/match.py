@@ -9,9 +9,6 @@ from src.database.base import BaseModel
 """
 
 
-
-
-
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
@@ -331,8 +328,5 @@ class Match(BaseModel):
 
         if season:
             query = query.filter(cls.season == season)
-
-
-
 
         return query.order_by(cls.match_time.desc()).all()

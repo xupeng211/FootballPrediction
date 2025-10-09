@@ -33,10 +33,11 @@ try:
 except ImportError:
     # 如果导入失败，提供错误信息
     import logging
+
     logger = logging.getLogger(__name__)
     logger.error(
         "无法导入TTL缓存模块。请确保所有子模块都已正确安装。",
-        "Failed to import TTL cache module. Please ensure all submodules are properly installed."
+        "Failed to import TTL cache module. Please ensure all submodules are properly installed.",
     )
     raise
 

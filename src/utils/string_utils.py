@@ -4,6 +4,10 @@
 提供字符串操作和文本处理相关的工具函数。
 """
 
+import re
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+import json
 
 
 class StringUtils:

@@ -70,18 +70,15 @@ Integrates retry mechanisms to improve connection reliability.
 from .connection_mod import (
     # 角色定义
     DatabaseRole,
-
     # 核心管理器
     DatabaseManager,
     MultiUserDatabaseManager,
-
     # 工厂函数
     get_database_manager,
     get_multi_user_database_manager,
     initialize_database,
     initialize_multi_user_database,
     initialize_test_database,
-
     # 会话获取
     get_db_session,
     get_reader_session,
@@ -98,18 +95,15 @@ from .connection_mod import (
 __all__ = [
     # 角色定义
     "DatabaseRole",
-
     # 核心管理器
     "DatabaseManager",
     "MultiUserDatabaseManager",
-
     # 工厂函数
     "get_database_manager",
     "get_multi_user_database_manager",
     "initialize_database",
     "initialize_multi_user_database",
     "initialize_test_database",
-
     # 会话获取
     "get_db_session",
     "get_reader_session",

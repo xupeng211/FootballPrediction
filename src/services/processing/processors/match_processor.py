@@ -5,9 +5,6 @@
 """
 
 
-
-
-
 class MatchProcessor:
     """比赛数据处理器"""
 
@@ -305,7 +302,9 @@ class MatchProcessor:
             batch = matches[i : i + batch_size]
             batch_num = i // batch_size + 1
 
-            self.logger.info(f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}")
+            self.logger.info(
+                f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}"
+            )
 
             batch_results = []
             for match in batch:
@@ -315,7 +314,9 @@ class MatchProcessor:
 
             processed_matches.extend(batch_results)
 
-        self.logger.info(f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛")
+        self.logger.info(
+            f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛"
+        )
         return processed_matches
 
     async def detect_duplicate_matches(
@@ -336,9 +337,6 @@ class MatchProcessor:
         for match in matches:
             # 创建唯一标识
             identifier = (
-
-
-
                 match.get("home_team", ""),
                 match.get("away_team", ""),
                 match.get("match_date"),

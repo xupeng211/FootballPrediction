@@ -27,7 +27,7 @@ def sample_predictions():
             confidence_score=0.5 + i * 0.05,
             features_used={"feature1": 1.0},
             prediction_metadata={},
-            created_at=datetime.now() - timedelta(hours=i)
+            created_at=datetime.now() - timedelta(hours=i),
         )
         predictions.append(pred)
     return predictions
@@ -83,16 +83,24 @@ class TestPredictionUtils:
         """测试计算投注价值"""
         # 有价值的投注
         value = PredictionUtils.calculate_betting_value(
-            0.5, 0.3, 0.2,  # 预测概率
-            2.1, 3.2, 4.5   # 赔率
+            0.5,
+            0.3,
+            0.2,  # 预测概率
+            2.1,
+            3.2,
+            4.5,  # 赔率
         )
         assert value["home_value"] > 0  # 主胜有价值
         assert value["max_value"] > 0
 
         # 无价值的投注
         value = PredictionUtils.calculate_betting_value(
-            0.4, 0.3, 0.3,  # 预测概率
-            2.0, 3.0, 3.0   # 赔率（隐含概率等于预测概率）
+            0.4,
+            0.3,
+            0.3,  # 预测概率
+            2.0,
+            3.0,
+            3.0,  # 赔率（隐含概率等于预测概率）
         )
         assert abs(value["max_value"]) < 0.1
 
@@ -166,7 +174,7 @@ class TestPredictionUtils:
             1002: "away",  # 错误
             1003: "draw",  # 正确
             1004: "draw",  # 正确
-            1005: "home"   # 不在预测中
+            1005: "home",  # 不在预测中
         }
 
         metrics = PredictionUtils.calculate_prediction_metrics(

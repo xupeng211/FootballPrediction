@@ -1,4 +1,3 @@
-
 """
 from datetime import datetime, timezone
         from datetime import date
@@ -19,8 +18,6 @@ Celery调度器配置
 
 基于 DATA_DESIGN.md 第3节设计。
 """
-
-
 
 # Celery应用配置
 app = Celery("football_data_scheduler")
@@ -144,7 +141,6 @@ def is_match_day() -> bool:
         # 实现检查今日是否有比赛的逻辑
         # 查询数据库中今日的比赛安排
 
-
         DatabaseManager()
         date.today()
 
@@ -169,7 +165,6 @@ def get_upcoming_matches(hours: int = 24) -> list:
     try:
         # 实现获取即将开始比赛的逻辑
         # 查询数据库中未来N小时内的比赛
-
 
         DatabaseManager()
         now = datetime.now()
@@ -248,8 +243,6 @@ class MonitoringConfig:
         "collect_fixtures": 180,  # 3分钟
         "collect_odds": 120,  # 2分钟
         "collect_live_scores": 60,  # 1分钟
-
-
         "calculate_features": 300,  # 5分钟
     }
 

@@ -14,6 +14,7 @@ class TestBaseModule:
     def test_base_data_task_import(self):
         """测试基础任务类导入"""
         from src.scheduler.tasks.base import BaseDataTask
+
         assert BaseDataTask is not None
 
     def test_base_data_task_methods(self):
@@ -24,9 +25,9 @@ class TestBaseModule:
         task = BaseDataTask()
 
         # 测试方法存在
-        assert hasattr(task, 'on_failure')
-        assert hasattr(task, 'on_success')
-        assert hasattr(task, 'get_retry_config')
+        assert hasattr(task, "on_failure")
+        assert hasattr(task, "on_success")
+        assert hasattr(task, "get_retry_config")
         assert callable(task.get_retry_config)
 
 
@@ -38,8 +39,9 @@ class TestCollectionModule:
         from src.scheduler.tasks.collection import (
             collect_fixtures,
             collect_odds,
-            collect_live_scores_conditional
+            collect_live_scores_conditional,
         )
+
         assert collect_fixtures is not None
         assert collect_odds is not None
         assert collect_live_scores_conditional is not None
@@ -50,7 +52,7 @@ class TestCollectionModule:
         from src.scheduler.tasks.collection import (
             collect_fixtures,
             collect_odds,
-            collect_live_scores_conditional
+            collect_live_scores_conditional,
         )
 
         assert isinstance(collect_fixtures, Task)
@@ -64,6 +66,7 @@ class TestFeaturesModule:
     def test_features_import(self):
         """测试特征计算任务导入"""
         from src.scheduler.tasks.features import calculate_features_batch
+
         assert calculate_features_batch is not None
 
     def test_features_task_is_celery_task(self):
@@ -80,6 +83,7 @@ class TestMaintenanceModule:
     def test_maintenance_imports(self):
         """测试维护任务导入"""
         from src.scheduler.tasks.maintenance import cleanup_data, backup_database
+
         assert cleanup_data is not None
         assert backup_database is not None
 
@@ -98,6 +102,7 @@ class TestQualityModule:
     def test_quality_import(self):
         """测试质量检查任务导入"""
         from src.scheduler.tasks.quality import run_quality_checks
+
         assert run_quality_checks is not None
 
     def test_quality_task_is_celery_task(self):
@@ -114,6 +119,7 @@ class TestPredictionsModule:
     def test_predictions_import(self):
         """测试预测任务导入"""
         from src.scheduler.tasks.predictions import generate_predictions
+
         assert generate_predictions is not None
 
     def test_predictions_task_is_celery_task(self):
@@ -130,6 +136,7 @@ class TestProcessingModule:
     def test_processing_import(self):
         """测试数据处理任务导入"""
         from src.scheduler.tasks.processing import process_bronze_to_silver
+
         assert process_bronze_to_silver is not None
 
     def test_processing_task_is_celery_task(self):
@@ -155,7 +162,7 @@ class TestModularStructure:
             backup_database,
             run_quality_checks,
             generate_predictions,
-            process_bronze_to_silver
+            process_bronze_to_silver,
         )
 
         assert BaseDataTask is not None
@@ -175,7 +182,7 @@ class TestModularStructure:
         from src.scheduler.tasks import (
             BaseDataTask as old_base,
             collect_fixtures as old_fixtures,
-            calculate_features_batch as old_features
+            calculate_features_batch as old_features,
         )
 
         assert old_base is not None
@@ -189,7 +196,7 @@ class TestModularStructure:
             collect_fixtures_task,
             collect_odds_task,
             generate_predictions_task,
-            process_data_task
+            process_data_task,
         )
 
         assert calculate_features_task is not None
@@ -204,7 +211,7 @@ class TestModularStructure:
             calculate_features_batch,
             calculate_features_task,
             collect_fixtures,
-            collect_fixtures_task
+            collect_fixtures_task,
         )
 
         # 别名应该指向相同的任务
@@ -241,13 +248,13 @@ class TestModularStructure:
         import src.scheduler.tasks as tasks_module
 
         # 验证模块有正确的属性
-        assert hasattr(tasks_module, 'BaseDataTask')
-        assert hasattr(tasks_module, 'collect_fixtures')
-        assert hasattr(tasks_module, 'calculate_features_batch')
-        assert hasattr(tasks_module, 'cleanup_data')
-        assert hasattr(tasks_module, 'run_quality_checks')
-        assert hasattr(tasks_module, 'generate_predictions')
-        assert hasattr(tasks_module, 'process_bronze_to_silver')
+        assert hasattr(tasks_module, "BaseDataTask")
+        assert hasattr(tasks_module, "collect_fixtures")
+        assert hasattr(tasks_module, "calculate_features_batch")
+        assert hasattr(tasks_module, "cleanup_data")
+        assert hasattr(tasks_module, "run_quality_checks")
+        assert hasattr(tasks_module, "generate_predictions")
+        assert hasattr(tasks_module, "process_bronze_to_silver")
 
 
 @pytest.mark.asyncio

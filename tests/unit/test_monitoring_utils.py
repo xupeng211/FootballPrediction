@@ -1,8 +1,9 @@
 """监控工具测试"""
+
 import pytest
 from unittest.mock import Mock
 from src.monitoring.metrics_collector import MetricsCollector
-from src.monitoring.system_monitor import SystemMonitor
+from src.monitoring.system_monitor_mod import SystemMonitor
 
 
 class TestMonitoringUtils:
@@ -53,13 +54,13 @@ class TestMonitoringUtils:
         monitor.record_prediction("v1.0", "premier_league")
 
         # 验证指标对象存在
-        assert hasattr(monitor, 'app_requests_total')
-        assert hasattr(monitor, 'db_query_duration_seconds')
-        assert hasattr(monitor, 'cache_operations_total')
-        assert hasattr(monitor, 'business_predictions_total')
+        assert hasattr(monitor, "app_requests_total")
+        assert hasattr(monitor, "db_query_duration_seconds")
+        assert hasattr(monitor, "cache_operations_total")
+        assert hasattr(monitor, "business_predictions_total")
 
         # 测试获取健康状态方法存在
-        assert hasattr(monitor, 'get_health_status')
+        assert hasattr(monitor, "get_health_status")
         assert callable(monitor.get_health_status)
 
     def test_metrics_export(self):

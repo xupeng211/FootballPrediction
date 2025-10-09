@@ -9,7 +9,6 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 
-
 import warnings
 
 from ......src.database.compatibility import compatibility
@@ -21,12 +20,10 @@ warnings.warn(
     "直接从 sql_compatibility 导入已弃用。"
     "请从 src/database/compatibility 导入相关类。",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 从新模块导入所有内容
 
 # 导出所有类
-__all__ = [
-    "sqlite_compat", "postgres_compat", "dialects", "compatibility"
-]
+__all__ = ["sqlite_compat", "postgres_compat", "dialects", "compatibility"]

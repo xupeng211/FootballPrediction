@@ -1,11 +1,15 @@
 """
-        import time
-
 足球预测系统文件处理工具模块
 
 提供文件操作相关的工具函数。
 """
 
+import hashlib
+import json
+import os
+from pathlib import Path
+from typing import Union, Dict, Any, List, Optional
+import time
 
 
 class FileUtils:
@@ -89,7 +93,6 @@ class FileUtils:
         directory = Path(directory)
         if not directory.exists():
             return 0
-
 
         cutoff_time = time.time() - (days * 24 * 60 * 60)
         removed_count = 0

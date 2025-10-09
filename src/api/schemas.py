@@ -5,8 +5,6 @@ API响应模型定义
 """
 
 
-
-
 class ServiceCheck(BaseModel):
     """服务检查结果模型"""
 
@@ -61,7 +59,6 @@ class ErrorResponse(BaseModel):
 
     error: bool = Field(..., description="是否为错误")
     status_code: int = Field(..., description="HTTP状态码")
-
 
     message: str = Field(..., description="错误消息")
     path: str = Field(..., description="请求路径")

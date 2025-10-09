@@ -5,7 +5,7 @@ import psutil
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
 from src.core.logging import get_logger
-from src.database.connection import get_db_session
+from src.database.connection_mod import get_db_session
 
 监控API路由
 
@@ -15,8 +15,6 @@ from src.database.connection import get_db_session
 - /metrics/prometheus: 返回Prometheus指标文本
 - /collector/*: 指标收集器控制与状态
 """
-
-
 
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
@@ -286,8 +284,6 @@ async def collector_health() -> Dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
-
-
 
         return {
             "status": "healthy",

@@ -8,8 +8,7 @@ Provides backward compatible exports for the modular stream processor.
 """
 
 from .stream_processor import (
-
-# 重新导出主要类和函数
+    # 重新导出主要类和函数
     StreamProcessor,
     StreamProcessorManager,
     ProcessingStatistics,

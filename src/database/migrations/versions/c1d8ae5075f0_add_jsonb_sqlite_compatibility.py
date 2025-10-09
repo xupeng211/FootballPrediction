@@ -16,8 +16,6 @@ Create Date: 2025-09-12 12:41:21.259691
 
 """
 
-
-
 # revision identifiers, used by Alembic.
 revision: str = "c1d8ae5075f0"
 down_revision: Union[str, None] = "006_missing_indexes"
@@ -156,7 +154,6 @@ def downgrade() -> None:
     # 检查是否在离线模式
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过JSONB兼容性降级")
-
 
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped JSONB compatibility downgrade")

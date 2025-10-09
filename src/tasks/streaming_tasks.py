@@ -10,9 +10,6 @@
 """
 
 
-
-
-
 class StreamingTask(Task):
     """
     流处理任务基类
@@ -382,13 +379,9 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
     async def _kafka_topic_management():
         try:
-
             config = StreamConfig()
 
             if action == "list":
-
-
-
                 # 列出所有配置的Topic
                 topics = config.get_all_topics()
 

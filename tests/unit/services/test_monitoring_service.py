@@ -1,10 +1,12 @@
 """监控服务测试"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import time
 from datetime import datetime, timedelta
-from src.monitoring.system_monitor import SystemMonitor
+from src.monitoring.system_monitor_mod import SystemMonitor
 from src.monitoring.metrics_collector import MetricsCollector
+
 
 class TestSystemMonitor:
     """系统监控测试"""
@@ -37,7 +39,10 @@ class TestSystemMonitor:
     def test_health_check(self, monitor):
         """测试健康检查"""
         # 设置模拟返回
-        with patch('monitor.database_check') as mock_db,              patch('monitor.redis_check') as mock_redis:
+        with (
+            patch("monitor.database_check") as mock_db,
+            patch("monitor.redis_check") as mock_redis,
+        ):
             mock_db.return_value = {"status": "healthy", "response_time": 10}
             mock_redis.return_value = {"status": "healthy", "response_time": 5}
 
@@ -81,7 +86,7 @@ class TestSystemMonitor:
         logs = [
             {"level": "ERROR", "message": "Database connection failed"},
             {"level": "ERROR", "message": "Database connection failed"},
-            {"level": "ERROR", "message": "Database connection failed"}
+            {"level": "ERROR", "message": "Database connection failed"},
         ]
 
         # 调用方法
@@ -98,13 +103,9 @@ class TestSystemMonitor:
             "/api/predictions": {
                 "requests": 1000,
                 "errors": 10,
-                "avg_response_time": 120
+                "avg_response_time": 120,
             },
-            "/api/matches": {
-                "requests": 500,
-                "errors": 5,
-                "avg_response_time": 80
-            }
+            "/api/matches": {"requests": 500, "errors": 5, "avg_response_time": 80},
         }
 
         # 调用方法
@@ -112,7 +113,11 @@ class TestSystemMonitor:
 
         # 验证
         assert "/api/predictions" in health
-        assert health["/api/predictions"]["status"] in ["healthy", "degraded", "unhealthy"]
+        assert health["/api/predictions"]["status"] in [
+            "healthy",
+            "degraded",
+            "unhealthy",
+        ]
 
     def test_resource_usage_trend(self, monitor):
         """测试资源使用趋势"""
@@ -120,7 +125,7 @@ class TestSystemMonitor:
         historical_data = [
             {"timestamp": datetime.now() - timedelta(hours=1), "cpu": 30},
             {"timestamp": datetime.now() - timedelta(minutes=30), "cpu": 45},
-            {"timestamp": datetime.now(), "cpu": 60}
+            {"timestamp": datetime.now(), "cpu": 60},
         ]
 
         # 调用方法
@@ -134,7 +139,10 @@ class TestSystemMonitor:
     def test_generate_monitoring_report(self, monitor):
         """测试生成监控报告"""
         # 设置模拟数据
-        with patch.object(monitor, 'get_system_metrics') as mock_metrics,              patch.object(monitor, 'check_health') as mock_health:
+        with (
+            patch.object(monitor, "get_system_metrics") as mock_metrics,
+            patch.object(monitor, "check_health") as mock_health,
+        ):
             mock_metrics.return_value = {"cpu": 50, "memory": 60}
             mock_health.return_value = {"status": "healthy"}
 
@@ -158,7 +166,7 @@ class TestMetricsCollector:
 
     def test_collect_cpu_usage(self, collector):
         """测试收集CPU使用率"""
-        with patch('psutil.cpu_percent') as mock_cpu:
+        with patch("psutil.cpu_percent") as mock_cpu:
             mock_cpu.return_value = 45.5
 
             # 调用方法
@@ -170,7 +178,7 @@ class TestMetricsCollector:
 
     def test_collect_memory_usage(self, collector):
         """测试收集内存使用率"""
-        with patch('psutil.virtual_memory') as mock_memory:
+        with patch("psutil.virtual_memory") as mock_memory:
             mock_memory_obj = Mock()
             mock_memory_obj.percent = 68.2
             mock_memory.return_value = mock_memory_obj
@@ -184,7 +192,7 @@ class TestMetricsCollector:
 
     def test_collect_disk_usage(self, collector):
         """测试收集磁盘使用率"""
-        with patch('psutil.disk_usage') as mock_disk:
+        with patch("psutil.disk_usage") as mock_disk:
             mock_disk_obj = Mock()
             mock_disk_obj.percent = 32.1
             mock_disk.return_value = mock_disk_obj
@@ -198,7 +206,7 @@ class TestMetricsCollector:
 
     def test_collect_network_stats(self, collector):
         """测试收集网络统计"""
-        with patch('psutil.net_io_counters') as mock_net:
+        with patch("psutil.net_io_counters") as mock_net:
             mock_net_obj = Mock()
             mock_net_obj.bytes_sent = 1000000
             mock_net_obj.bytes_recv = 2000000
@@ -214,7 +222,7 @@ class TestMetricsCollector:
 
     def test_collect_process_count(self, collector):
         """测试收集进程数量"""
-        with patch('psutil.pids') as mock_pids:
+        with patch("psutil.pids") as mock_pids:
             mock_pids.return_value = [1, 2, 3, 4, 5]
 
             # 调用方法
@@ -225,7 +233,7 @@ class TestMetricsCollector:
 
     def test_collect_active_connections(self, collector):
         """测试收集活动连接数"""
-        with patch('psutil.net_connections') as mock_connections:
+        with patch("psutil.net_connections") as mock_connections:
             mock_connections.return_value = [Mock() for _ in range(10)]
 
             # 调用方法
@@ -236,7 +244,7 @@ class TestMetricsCollector:
 
     def test_collect_system_load(self, collector):
         """测试收集系统负载"""
-        with patch('os.getloadavg') as mock_loadavg:
+        with patch("os.getloadavg") as mock_loadavg:
             mock_loadavg.return_value = (1.0, 1.5, 2.0)
 
             # 调用方法
@@ -250,8 +258,11 @@ class TestMetricsCollector:
 
     def test_collect_all_metrics(self, collector):
         """测试收集所有指标"""
-        with patch.object(collector, 'collect_cpu_usage', return_value=50),              patch.object(collector, 'collect_memory_usage', return_value=60),              patch.object(collector, 'collect_disk_usage', return_value=30):
-
+        with (
+            patch.object(collector, "collect_cpu_usage", return_value=50),
+            patch.object(collector, "collect_memory_usage", return_value=60),
+            patch.object(collector, "collect_disk_usage", return_value=30),
+        ):
             # 调用方法
             metrics = collector.collect_all()
 

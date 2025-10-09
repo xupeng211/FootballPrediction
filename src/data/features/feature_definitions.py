@@ -1,48 +1,26 @@
 """
+足球预测系统特征定义
 
+定义用于机器学习模型的实体和特征视图。
+包括比赛特征、球队统计特征、赔率衍生特征等。
 
+基于 DATA_DESIGN.md 第6.1节特征仓库设计。
 """
 
+from datetime import timedelta
+from typing import Dict, List, Optional, cast
 
 
-    """特征定义类,包含所有特征相关的定义"""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    """特征服务定义类"""
-
-
-
-
-足球预测系统特征定义
-定义用于机器学习模型的实体和特征视图.
-包括比赛特征、球队统计特征、赔率衍生特征等.
-基于 DATA_DESIGN.md 第6.1节特征仓库设计.
 class FeatureDefinitions:
+    """特征定义类，包含所有特征相关的定义"""
+
     # 实体定义
     ENTITIES = {
         "match_id": "比赛唯一标识符",
         "team_id": "球队唯一标识符",
         "league_id": "联赛唯一标识符",
     }
+
     # 特征视图定义
     FEATURE_VIEWS = {
         "match_features": {
@@ -84,12 +62,16 @@ class FeatureDefinitions:
             ],
         },
     }
-# 为了兼容性,提供简化的模拟对象
+
+
+# 为了兼容性，提供简化的模拟对象
 class MockEntity:
     def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
         self.name = name
         self.description = description
         self.join_keys = join_keys
+
+
 class MockFeatureView:
     def __init__(
         self,
@@ -104,37 +86,47 @@ class MockFeatureView:
         self.ttl = ttl
         self.source = source
         self.tags = tags or {}
+
+
 class MockFileSource:
     def __init__(self, name: str, path: str, timestamp_field: str) -> None:
         self.name = name
         self.path = path
         self.timestamp_field = timestamp_field
+
+
 # 实体定义
 match_entity = MockEntity(
     name="match_id", description="比赛唯一标识符", join_keys=["match_id"]
 )
+
 team_entity = MockEntity(
     name="team_id", description="球队唯一标识符", join_keys=["team_id"]
 )
+
 league_entity = MockEntity(
     name="league_id", description="联赛唯一标识符", join_keys=["league_id"]
 )
+
 # 数据源定义
 match_features_source = MockFileSource(
     name="match_features_source",
     path="data/match_features.parquet",
     timestamp_field="event_timestamp",
 )
+
 team_stats_source = MockFileSource(
     name="team_recent_stats_source",
     path="data/team_stats.parquet",
     timestamp_field="event_timestamp",
 )
+
 odds_features_source = MockFileSource(
     name="odds_features_source",
     path="data/odds_features.parquet",
     timestamp_field="event_timestamp",
 )
+
 # 特征视图定义
 match_features_view = MockFeatureView(
     name="match_features",
@@ -143,6 +135,7 @@ match_features_view = MockFeatureView(
     source=match_features_source,
     tags={"team": "data", "type": "match_context"},
 )
+
 team_recent_stats_view = MockFeatureView(
     name="team_recent_stats",
     entities=[team_entity],
@@ -150,6 +143,7 @@ team_recent_stats_view = MockFeatureView(
     source=team_stats_source,
     tags={"team": "data", "type": "team_performance"},
 )
+
 odds_features_view = MockFeatureView(
     name="odds_features",
     entities=[match_entity],
@@ -157,6 +151,7 @@ odds_features_view = MockFeatureView(
     source=odds_features_source,
     tags={"team": "data", "type": "betting_odds"},
 )
+
 head_to_head_features_view = MockFeatureView(
     name="head_to_head_features",
     entities=[match_entity],
@@ -164,10 +159,14 @@ head_to_head_features_view = MockFeatureView(
     source=odds_features_source,  # 复用数据源
     tags={"team": "data", "type": "historical_matchup"},
 )
-# 特征服务定义(简化版本)
+
+
+# 特征服务定义（简化版本）
 class FeatureServices:
+    """特征服务定义类"""
+
     MATCH_PREDICTION = {
-        "name": "match_prediction_v1", List, Optional, cast
+        "name": "match_prediction_v1",
         "features": [
             "match_features",
             "team_recent_stats",
@@ -176,11 +175,13 @@ class FeatureServices:
         ],
         "tags": {"model": "match_outcome", "version": "v1"},
     }
+
     GOALS_PREDICTION = {
         "name": "goals_prediction_v1",
         "features": ["team_recent_stats", "odds_features", "head_to_head_features"],
         "tags": {"model": "goals_total", "version": "v1"},
     }
+
     REAL_TIME_PREDICTION = {
         "name": "real_time_prediction_v1",
         "features": ["odds_features", "team_recent_stats"],

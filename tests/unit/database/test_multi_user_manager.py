@@ -26,7 +26,7 @@ def role_configs():
             database="test_db",
             username="reader_user",
             password="reader_pass",
-            echo=False
+            echo=False,
         ),
         DatabaseRole.WRITER: DatabaseConfig(
             host="localhost",
@@ -34,7 +34,7 @@ def role_configs():
             database="test_db",
             username="writer_user",
             password="writer_pass",
-            echo=False
+            echo=False,
         ),
         DatabaseRole.ADMIN: DatabaseConfig(
             host="localhost",
@@ -42,8 +42,8 @@ def role_configs():
             database="test_db",
             username="admin_user",
             password="admin_pass",
-            echo=False
-        )
+            echo=False,
+        ),
     }
 
 
@@ -59,7 +59,9 @@ class TestMultiUserDatabaseManager:
     @pytest.mark.asyncio
     async def test_initialize_role_connections(self, multi_user_manager, role_configs):
         """测试初始化角色连接"""
-        with patch('src.database.connection.managers.database_manager.DatabaseManager') as mock_db_manager_class:
+        with patch(
+            "src.database.connection.managers.database_manager.DatabaseManager"
+        ) as mock_db_manager_class:
             # 设置模拟
             mock_manager = MagicMock()
             mock_manager.health_check.return_value = {"status": "healthy"}
@@ -118,7 +120,9 @@ class TestMultiUserDatabaseManager:
         # 设置模拟管理器和会话
         mock_manager = MagicMock()
         mock_session = AsyncMock()
-        mock_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
         multi_user_manager._managers[DatabaseRole.READER] = mock_manager
 
         # 获取会话
@@ -159,11 +163,17 @@ class TestMultiUserDatabaseManager:
         multi_user_manager._managers[DatabaseRole.READER] = mock_manager
 
         # 检查权限
-        assert multi_user_manager.check_permission(DatabaseRole.READER, "select") is True
-        assert multi_user_manager.check_permission(DatabaseRole.READER, "insert") is False
+        assert (
+            multi_user_manager.check_permission(DatabaseRole.READER, "select") is True
+        )
+        assert (
+            multi_user_manager.check_permission(DatabaseRole.READER, "insert") is False
+        )
 
         # 角色未初始化
-        assert multi_user_manager.check_permission(DatabaseRole.WRITER, "select") is False
+        assert (
+            multi_user_manager.check_permission(DatabaseRole.WRITER, "select") is False
+        )
 
     def test_get_role_config(self, multi_user_manager, role_configs):
         """测试获取角色配置"""
@@ -200,7 +210,7 @@ class TestMultiUserDatabaseManager:
         mock_manager2 = MagicMock()
         multi_user_manager._managers = {
             DatabaseRole.READER: mock_manager1,
-            DatabaseRole.WRITER: mock_manager2
+            DatabaseRole.WRITER: mock_manager2,
         }
 
         # 关闭连接
@@ -222,7 +232,7 @@ class TestMultiUserDatabaseManager:
 
         multi_user_manager._managers = {
             DatabaseRole.READER: mock_manager1,
-            DatabaseRole.WRITER: mock_manager2
+            DatabaseRole.WRITER: mock_manager2,
         }
 
         # 获取健康状态
@@ -241,7 +251,7 @@ class TestMultiUserDatabaseManager:
         mock_manager = MagicMock()
         mock_manager.get_pool_status.return_value = {
             "sync": {"size": 5},
-            "async": {"size": 10}
+            "async": {"size": 10},
         }
         multi_user_manager._managers[DatabaseRole.READER] = mock_manager
 

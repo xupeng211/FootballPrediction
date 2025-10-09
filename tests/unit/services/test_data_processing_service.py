@@ -1,9 +1,11 @@
 """数据处理服务测试"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import pandas as pd
 from datetime import datetime
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
+
 
 class TestDataProcessingService:
     """数据处理服务测试"""
@@ -21,10 +23,7 @@ class TestDataProcessingService:
     @pytest.fixture
     def service(self, mock_repository, mock_cache):
         """创建数据处理服务"""
-        return DataProcessingService(
-            repository=mock_repository,
-            cache=mock_cache
-        )
+        return DataProcessingService(repository=mock_repository, cache=mock_cache)
 
     def test_process_match_data(self, service, mock_repository):
         """测试处理比赛数据"""
@@ -34,7 +33,7 @@ class TestDataProcessingService:
             "home_team": "Team A",
             "away_team": "Team B",
             "date": "2024-01-01",
-            "score": "2-1"
+            "score": "2-1",
         }
 
         # 设置模拟返回
@@ -54,7 +53,7 @@ class TestDataProcessingService:
             "name": "John Doe ",
             "age": " 25",
             "position": "  MIDFIELDER  ",
-            "salary": "50000.00"
+            "salary": "50000.00",
         }
 
         # 调用方法
@@ -74,15 +73,12 @@ class TestDataProcessingService:
             "home_team_id": 1,
             "away_team_id": 2,
             "date": datetime(2024, 1, 1),
-            "league": "Premier League"
+            "league": "Premier League",
         }
         assert service.validate_match_data(valid_data) is True
 
         # 无效数据（缺少字段）
-        invalid_data = {
-            "match_id": 1,
-            "home_team_id": 1
-        }
+        invalid_data = {"match_id": 1, "home_team_id": 1}
         assert service.validate_match_data(invalid_data) is False
 
     def test_aggregate_team_stats(self, service, mock_repository):
@@ -91,7 +87,7 @@ class TestDataProcessingService:
         mock_repository.get_team_matches.return_value = [
             {"team_id": 1, "goals_scored": 2, "goals_conceded": 1},
             {"team_id": 1, "goals_scored": 3, "goals_conceded": 2},
-            {"team_id": 1, "goals_scored": 1, "goals_conceded": 1}
+            {"team_id": 1, "goals_scored": 1, "goals_conceded": 1},
         ]
 
         # 调用方法
@@ -108,7 +104,7 @@ class TestDataProcessingService:
         # 准备测试数据
         data_list = [
             {"match_id": 1, "team": "A", "score": 2},
-            {"match_id": 1, "team": "B", "score": 1}
+            {"match_id": 1, "team": "B", "score": 1},
         ]
 
         # 调用方法
@@ -122,11 +118,9 @@ class TestDataProcessingService:
     def test_handle_missing_data(self, service):
         """测试处理缺失数据"""
         # 准备带缺失值的数据
-        data = pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["Team A", None, "Team C"],
-            "score": [2, None, 1]
-        })
+        data = pd.DataFrame(
+            {"id": [1, 2, 3], "name": ["Team A", None, "Team C"], "score": [2, None, 1]}
+        )
 
         # 调用方法
         cleaned_data = service.handle_missing_data(data)
@@ -142,7 +136,7 @@ class TestDataProcessingService:
             "home_goals": 2,
             "away_goals": 1,
             "home_shots": 10,
-            "away_shots": 5
+            "away_shots": 5,
         }
 
         # 调用方法
@@ -159,7 +153,7 @@ class TestDataProcessingService:
         # 准备测试数据
         matches = [
             {"id": 1, "home": "A", "away": "B"},
-            {"id": 2, "home": "C", "away": "D"}
+            {"id": 2, "home": "C", "away": "D"},
         ]
 
         # 设置模拟返回
@@ -179,7 +173,7 @@ class TestDataProcessingService:
             "total_records": 1000,
             "null_values": 50,
             "duplicates": 10,
-            "invalid_dates": 5
+            "invalid_dates": 5,
         }
 
         # 调用方法

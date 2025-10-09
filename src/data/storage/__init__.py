@@ -1,4 +1,3 @@
-
 """
 数据存储模块
 
@@ -7,7 +6,6 @@
 
 基于 DATA_DESIGN.md 第2节数据存储设计。
 """
-
 
 from typing import cast, Any, Optional, Union
 

@@ -6,10 +6,8 @@ Redis缓存管理器
 
 from .redis import RedisManager, CacheKeyManager, get_redis_manager
 from .redis.utils import (
-
-# 导入重构后的Redis管理器
-
-# 向后兼容：导出原有的便捷函数
+    # 导入重构后的Redis管理器
+    # 向后兼容：导出原有的便捷函数
     adelete_cache,
     aexists_cache,
     aget_cache,
@@ -33,7 +31,6 @@ __all__ = [
     "RedisManager",
     "CacheKeyManager",
     "get_redis_manager",
-
     # 便捷函数
     "get_cache",
     "set_cache",

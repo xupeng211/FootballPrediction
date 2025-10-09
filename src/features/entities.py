@@ -7,7 +7,6 @@
 """
 
 
-
 @dataclass
 class MatchEntity:
     """
@@ -89,7 +88,6 @@ class FeatureKey:
     entity_type: str  # "match" 或 "team"
     entity_id: int  # match_id 或 team_id
     feature_timestamp: datetime
-
 
     def __hash__(self) -> int:
         return hash((self.entity_type, self.entity_id, self.feature_timestamp))

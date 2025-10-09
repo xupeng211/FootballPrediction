@@ -31,7 +31,9 @@ class TestPartitionManager:
         base_path = Path("/tmp/test")
         partition_date = datetime(2024, 1, 15)
 
-        partition_path = partition_manager.create_partition_path(base_path, partition_date)
+        partition_path = partition_manager.create_partition_path(
+            base_path, partition_date
+        )
 
         expected = Path("/tmp/test/year=2024/month=01/day=15")
         assert partition_path == expected
@@ -52,12 +54,9 @@ class TestPartitionManager:
 
     def test_remove_partition_columns(self, partition_manager):
         """测试移除分区列"""
-        df = pd.DataFrame({
-            "id": [1, 2],
-            "year": [2024, 2024],
-            "month": [1, 1],
-            "day": [15, 16]
-        })
+        df = pd.DataFrame(
+            {"id": [1, 2], "year": [2024, 2024], "month": [1, 1], "day": [15, 16]}
+        )
 
         result = partition_manager.remove_partition_columns(df)
 
@@ -98,17 +97,17 @@ class TestLocalDataLakeStorage:
     @pytest.mark.asyncio
     async def test_save_historical_data(self, storage):
         """测试保存历史数据"""
-        data = pd.DataFrame({
-            "match_id": [1, 2, 3],
-            "home_team": ["A", "B", "C"],
-            "away_team": ["X", "Y", "Z"],
-            "score": [2, 1, 0]
-        })
+        data = pd.DataFrame(
+            {
+                "match_id": [1, 2, 3],
+                "home_team": ["A", "B", "C"],
+                "away_team": ["X", "Y", "Z"],
+                "score": [2, 1, 0],
+            }
+        )
 
         result_path = await storage.save_historical_data(
-            "raw_matches",
-            data,
-            datetime(2024, 1, 15)
+            "raw_matches", data, datetime(2024, 1, 15)
         )
 
         assert result_path != ""
@@ -128,7 +127,7 @@ class TestLocalDataLakeStorage:
         """测试保存列表数据"""
         data = [
             {"match_id": 1, "home_team": "A", "away_team": "X"},
-            {"match_id": 2, "home_team": "B", "away_team": "Y"}
+            {"match_id": 2, "home_team": "B", "away_team": "Y"},
         ]
 
         result = await storage.save_historical_data("raw_matches", data)
@@ -148,10 +147,9 @@ class TestLocalDataLakeStorage:
     async def test_load_historical_data(self, storage):
         """测试加载历史数据"""
         # 先保存数据
-        data = pd.DataFrame({
-            "match_id": [1, 2, 3],
-            "date": ["2024-01-15", "2024-01-16", "2024-01-17"]
-        })
+        data = pd.DataFrame(
+            {"match_id": [1, 2, 3], "date": ["2024-01-15", "2024-01-16", "2024-01-17"]}
+        )
         await storage.save_historical_data("raw_matches", data, datetime(2024, 1, 15))
 
         # 加载数据
@@ -185,10 +183,7 @@ class TestLocalDataLakeStorage:
 
         # 归档数据
         archive_before = datetime(2023, 6, 1)
-        archived_count = await storage.archive_old_data(
-            "raw_matches",
-            archive_before
-        )
+        archived_count = await storage.archive_old_data("raw_matches", archive_before)
 
         assert archived_count > 0
 
@@ -213,27 +208,22 @@ class TestS3DataLakeStorage:
 
     @pytest.fixture
     def storage(self, mock_s3_client):
-        with patch('src.data.storage.lake.s3_storage.S3_AVAILABLE', True):
-            with patch('boto3.client', return_value=mock_s3_client):
+        with patch("src.data.storage.lake.s3_storage.S3_AVAILABLE", True):
+            with patch("boto3.client", return_value=mock_s3_client):
                 return S3DataLakeStorage(
                     bucket_name="test-bucket",
                     endpoint_url="http://localhost:9000",
                     access_key="test_key",
-                    secret_key="test_secret"
+                    secret_key="test_secret",
                 )
 
     @pytest.mark.asyncio
     async def test_save_historical_data(self, storage, mock_s3_client):
         """测试保存数据到S3"""
-        data = pd.DataFrame({
-            "match_id": [1, 2, 3],
-            "home_team": ["A", "B", "C"]
-        })
+        data = pd.DataFrame({"match_id": [1, 2, 3], "home_team": ["A", "B", "C"]})
 
         result = await storage.save_historical_data(
-            "raw_matches",
-            data,
-            datetime(2024, 1, 15)
+            "raw_matches", data, datetime(2024, 1, 15)
         )
 
         assert result.startswith("s3://")
@@ -243,19 +233,19 @@ class TestS3DataLakeStorage:
     async def test_load_historical_data(self, storage, mock_s3_client):
         """测试从S3加载数据"""
         # 模拟S3响应
-        mock_response = {
-            "Body": MagicMock()
-        }
+        mock_response = {"Body": MagicMock()}
         mock_response["Body"].read.return_value = b"mock_parquet_data"
         mock_s3_client.get_object.return_value = mock_response
 
         # 模拟分页器
         mock_paginator = MagicMock()
-        mock_page = {"Contents": [{"Key": "test.parquet", "LastModified": datetime.now()}]}
+        mock_page = {
+            "Contents": [{"Key": "test.parquet", "LastModified": datetime.now()}]
+        }
         mock_paginator.paginate.return_value = [mock_page]
         mock_s3_client.get_paginator.return_value = mock_paginator
 
-        with patch('pyarrow.parquet.read_table') as mock_read:
+        with patch("pyarrow.parquet.read_table") as mock_read:
             mock_table = MagicMock()
             mock_table.to_pandas.return_value = pd.DataFrame({"test": [1, 2, 3]})
             mock_read.return_value = mock_table
@@ -286,7 +276,7 @@ class TestS3DataLakeStorage:
         mock_page = {
             "Contents": [
                 {"Key": "test.parquet", "Size": 1024, "LastModified": datetime.now()},
-                {"Key": "test2.parquet", "Size": 2048, "LastModified": datetime.now()}
+                {"Key": "test2.parquet", "Size": 2048, "LastModified": datetime.now()},
             ]
         }
         mock_paginator.paginate.return_value = [mock_page]
@@ -321,7 +311,7 @@ class TestMetadataManager:
             100,
             1024,
             datetime(2024, 1, 15),
-            {"columns": ["id", "value"]}
+            {"columns": ["id", "value"]},
         )
 
         metadata = await metadata_manager.get_table_metadata("test_table")
@@ -377,7 +367,9 @@ class TestLakeStorageUtils:
         """测试分区DataFrame"""
         df = pd.DataFrame({"id": range(10), "value": range(10, 20)})
 
-        partitions = LakeStorageUtils.partition_dataframe(df, ["year"], max_records_per_file=5)
+        partitions = LakeStorageUtils.partition_dataframe(
+            df, ["year"], max_records_per_file=5
+        )
 
         assert len(partitions) == 2
         assert len(partitions[0]) == 5
@@ -395,11 +387,9 @@ class TestLakeStorageUtils:
 
     def test_infer_schema_from_dataframe(self):
         """测试从DataFrame推断模式"""
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "name": ["A", "B", "C"],
-            "value": [10.5, None, 30.5]
-        })
+        df = pd.DataFrame(
+            {"id": [1, 2, 3], "name": ["A", "B", "C"], "value": [10.5, None, 30.5]}
+        )
 
         schema = LakeStorageUtils.infer_schema_from_dataframe(df)
 
@@ -411,11 +401,9 @@ class TestLakeStorageUtils:
 
     def test_calculate_data_quality_score(self):
         """测试计算数据质量分数"""
-        df = pd.DataFrame({
-            "id": [1, 2, 3, 4],
-            "value": [10, None, 30, 40],
-            "duplicate": [1, 2, 2, 4]
-        })
+        df = pd.DataFrame(
+            {"id": [1, 2, 3, 4], "value": [10, None, 30, 40], "duplicate": [1, 2, 2, 4]}
+        )
 
         quality = LakeStorageUtils.calculate_data_quality_score(df)
 
@@ -441,9 +429,7 @@ class TestLakeStorageUtils:
     def test_create_compression_stats(self):
         """测试创建压缩统计"""
         stats = LakeStorageUtils.create_compression_stats(
-            original_size=1000,
-            compressed_size=250,
-            compression_type="snappy"
+            original_size=1000, compressed_size=250, compression_type="snappy"
         )
 
         assert abs(stats["compression_ratio"] - 4.0) < 0.01
@@ -452,13 +438,17 @@ class TestLakeStorageUtils:
 
     def test_optimize_dtypes(self):
         """测试优化数据类型"""
-        df = pd.DataFrame({
-            "small_int": [1, 2, 3],
-            "large_int": [100000, 200000, 300000],
-            "float_val": [1.1, 2.2, 3.3]
-        })
+        df = pd.DataFrame(
+            {
+                "small_int": [1, 2, 3],
+                "large_int": [100000, 200000, 300000],
+                "float_val": [1.1, 2.2, 3.3],
+            }
+        )
 
         optimized = LakeStorageUtils.optimize_dtypes(df)
 
         # 验证优化后的类型占用更少内存
-        assert optimized.memory_usage(deep=True).sum() < df.memory_usage(deep=True).sum()
+        assert (
+            optimized.memory_usage(deep=True).sum() < df.memory_usage(deep=True).sum()
+        )

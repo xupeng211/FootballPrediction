@@ -35,25 +35,31 @@ except ImportError:
         def __init__(self, username="test"):
             self.username = username
 
+
 def test_league_model():
     league = League(name="Test League")
     assert league.name == "Test League"
+
 
 def test_team_model():
     team = Team(name="Test Team")
     assert team.name == "Test Team"
 
+
 def test_match_model():
     match = Match(home_team_id=1, away_team_id=2)
     assert match.home_team_id == 1
+
 
 def test_odds_model():
     odds = Odds(match_id=1, home_win=2.0)
     assert odds.match_id == 1
 
+
 def test_prediction_model():
     pred = Prediction(match_id=1)
     assert pred.match_id == 1
+
 
 def test_user_model():
     user = User(username="test")

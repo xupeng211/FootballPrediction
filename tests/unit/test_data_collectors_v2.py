@@ -6,6 +6,7 @@ except ImportError:
         def collect(self):
             pass
 
+
 try:
     from src.data.collectors.fixtures_collector import FixturesCollector
 except ImportError:
@@ -14,9 +15,11 @@ except ImportError:
         def collect(self):
             pass
 
+
 def test_base_collector():
     collector = BaseCollector()
     assert collector is not None
+
 
 def test_fixtures_collector():
     collector = FixturesCollector()

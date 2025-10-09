@@ -33,7 +33,7 @@ def test_module_has_correct_imports():
 
     # 检查 __init__.py 的导入
     init_file = os.path.join(base_path, "__init__.py")
-    with open(init_file, 'r', encoding='utf-8') as f:
+    with open(init_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证关键导入存在
@@ -54,7 +54,7 @@ def test_module_has_correct_imports():
 def test_base_module_structure():
     """测试基础模块结构"""
     base_path = "src/scheduler/tasks/base.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read())
 
     # 检查是否有 BaseDataTask 类
@@ -76,7 +76,7 @@ def test_base_module_structure():
 def test_collection_module_structure():
     """测试数据采集模块结构"""
     base_path = "src/scheduler/tasks/collection.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
@@ -93,17 +93,19 @@ def test_collection_module_structure():
 def test_features_module_structure():
     """测试特征计算模块结构"""
     base_path = "src/scheduler/tasks/features.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
-    assert "def calculate_features_batch(" in content, "calculate_features_batch 函数不在 features.py 中"
+    assert (
+        "def calculate_features_batch(" in content
+    ), "calculate_features_batch 函数不在 features.py 中"
 
 
 def test_maintenance_module_structure():
     """测试维护模块结构"""
     base_path = "src/scheduler/tasks/maintenance.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
@@ -119,37 +121,43 @@ def test_maintenance_module_structure():
 def test_quality_module_structure():
     """测试质量检查模块结构"""
     base_path = "src/scheduler/tasks/quality.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
-    assert "def run_quality_checks(" in content, "run_quality_checks 函数不在 quality.py 中"
+    assert (
+        "def run_quality_checks(" in content
+    ), "run_quality_checks 函数不在 quality.py 中"
 
 
 def test_predictions_module_structure():
     """测试预测模块结构"""
     base_path = "src/scheduler/tasks/predictions.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
-    assert "def generate_predictions(" in content, "generate_predictions 函数不在 predictions.py 中"
+    assert (
+        "def generate_predictions(" in content
+    ), "generate_predictions 函数不在 predictions.py 中"
 
 
 def test_processing_module_structure():
     """测试数据处理模块结构"""
     base_path = "src/scheduler/tasks/processing.py"
-    with open(base_path, 'r', encoding='utf-8') as f:
+    with open(base_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证任务函数存在
-    assert "def process_bronze_to_silver(" in content, "process_bronze_to_silver 函数不在 processing.py 中"
+    assert (
+        "def process_bronze_to_silver(" in content
+    ), "process_bronze_to_silver 函数不在 processing.py 中"
 
 
 def test_original_file_updated():
     """测试原始文件已更新为向后兼容"""
     original_file = "src/scheduler/tasks.py"
-    with open(original_file, 'r', encoding='utf-8') as f:
+    with open(original_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 验证文件包含向后兼容性说明
@@ -165,9 +173,9 @@ def test_module_sizes():
 
     file_sizes = {}
     for file_name in os.listdir(base_path):
-        if file_name.endswith('.py') and file_name != '__pycache__':
+        if file_name.endswith(".py") and file_name != "__pycache__":
             file_path = os.path.join(base_path, file_name)
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = len(f.readlines())
                 file_sizes[file_name] = lines
 

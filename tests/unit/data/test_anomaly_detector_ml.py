@@ -9,7 +9,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from src.data.quality.anomaly_detector.machine_learning.ml_detector import MachineLearningAnomalyDetector
+from src.data.quality.anomaly_detector.machine_learning.ml_detector import (
+    MachineLearningAnomalyDetector,
+)
 
 
 class TestMachineLearningAnomalyDetector:
@@ -31,7 +33,9 @@ class TestMachineLearningAnomalyDetector:
         # 创建包含异常值的数据
         normal_data = np.random.normal(0, 1, (100, 2))
         anomaly_data = np.array([[10, 10], [-10, -10]])  # 明显的异常值
-        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.vstack([normal_data, anomaly_data]), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_isolation_forest(data, "test_table")
 
@@ -49,7 +53,9 @@ class TestMachineLearningAnomalyDetector:
         detector = MachineLearningAnomalyDetector()
 
         # 创建正常数据
-        data = pd.DataFrame(np.random.normal(0, 1, (100, 2)), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.random.normal(0, 1, (100, 2)), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_isolation_forest(data, "test_table")
 
@@ -60,7 +66,9 @@ class TestMachineLearningAnomalyDetector:
         """测试Isolation Forest使用不同的contamination参数"""
         detector = MachineLearningAnomalyDetector()
 
-        data = pd.DataFrame(np.random.normal(0, 1, (100, 2)), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.random.normal(0, 1, (100, 2)), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_isolation_forest(
             data, "test_table", contamination=0.05
@@ -73,9 +81,7 @@ class TestMachineLearningAnomalyDetector:
         detector = MachineLearningAnomalyDetector()
 
         # 创建只有字符串列的数据
-        data = pd.DataFrame({
-            'text_col': ['a', 'b', 'c', 'd']
-        })
+        data = pd.DataFrame({"text_col": ["a", "b", "c", "d"]})
 
         with pytest.raises(ValueError, match="没有可用的数值列进行异常检测"):
             detector.detect_anomalies_isolation_forest(data, "test_table")
@@ -85,10 +91,9 @@ class TestMachineLearningAnomalyDetector:
         detector = MachineLearningAnomalyDetector()
 
         # 创建包含NaN的数据
-        data = pd.DataFrame({
-            'feature1': [1, 2, np.nan, 4, 100],
-            'feature2': [1, 2, 3, np.nan, 100]
-        })
+        data = pd.DataFrame(
+            {"feature1": [1, 2, np.nan, 4, 100], "feature2": [1, 2, 3, np.nan, 100]}
+        )
 
         result = detector.detect_anomalies_isolation_forest(data, "test_table")
 
@@ -104,7 +109,9 @@ class TestMachineLearningAnomalyDetector:
         cluster1 = np.random.normal([0, 0], 0.5, (50, 2))
         cluster2 = np.random.normal([5, 5], 0.5, (50, 2))
         anomalies = np.array([[10, 10], [-10, -10]])
-        data = pd.DataFrame(np.vstack([cluster1, cluster2, anomalies]), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.vstack([cluster1, cluster2, anomalies]), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_clustering(data, "test_table")
 
@@ -119,7 +126,9 @@ class TestMachineLearningAnomalyDetector:
         """测试DBSCAN使用自定义参数"""
         detector = MachineLearningAnomalyDetector()
 
-        data = pd.DataFrame(np.random.normal(0, 1, (50, 2)), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.random.normal(0, 1, (50, 2)), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_clustering(
             data, "test_table", eps=0.3, min_samples=3
@@ -132,9 +141,7 @@ class TestMachineLearningAnomalyDetector:
         """测试DBSCAN处理无数值列"""
         detector = MachineLearningAnomalyDetector()
 
-        data = pd.DataFrame({
-            'text_col': ['a', 'b', 'c', 'd']
-        })
+        data = pd.DataFrame({"text_col": ["a", "b", "c", "d"]})
 
         with pytest.raises(ValueError, match="没有可用的数值列进行聚类异常检测"):
             detector.detect_anomalies_clustering(data, "test_table")
@@ -144,14 +151,18 @@ class TestMachineLearningAnomalyDetector:
         detector = MachineLearningAnomalyDetector()
 
         # 创建有明显漂移的数据
-        baseline_data = pd.DataFrame({
-            'feature1': np.random.normal(0, 1, 100),
-            'feature2': np.random.normal(0, 1, 100)
-        })
-        current_data = pd.DataFrame({
-            'feature1': np.random.normal(5, 1, 100),  # 均值漂移
-            'feature2': np.random.normal(0, 1, 100)
-        })
+        baseline_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(0, 1, 100),
+                "feature2": np.random.normal(0, 1, 100),
+            }
+        )
+        current_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(5, 1, 100),  # 均值漂移
+                "feature2": np.random.normal(0, 1, 100),
+            }
+        )
 
         results = detector.detect_data_drift(baseline_data, current_data, "test_table")
 
@@ -166,14 +177,18 @@ class TestMachineLearningAnomalyDetector:
         detector = MachineLearningAnomalyDetector()
 
         # 创建无漂移的数据
-        baseline_data = pd.DataFrame({
-            'feature1': np.random.normal(0, 1, 100),
-            'feature2': np.random.normal(0, 1, 100)
-        })
-        current_data = pd.DataFrame({
-            'feature1': np.random.normal(0, 1, 100),
-            'feature2': np.random.normal(0, 1, 100)
-        })
+        baseline_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(0, 1, 100),
+                "feature2": np.random.normal(0, 1, 100),
+            }
+        )
+        current_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(0, 1, 100),
+                "feature2": np.random.normal(0, 1, 100),
+            }
+        )
 
         results = detector.detect_data_drift(baseline_data, current_data, "test_table")
 
@@ -184,12 +199,12 @@ class TestMachineLearningAnomalyDetector:
         """测试数据漂移使用自定义阈值"""
         detector = MachineLearningAnomalyDetector()
 
-        baseline_data = pd.DataFrame({
-            'feature1': np.random.normal(0, 1, 100)
-        })
-        current_data = pd.DataFrame({
-            'feature1': np.random.normal(1, 1, 100)  # 小漂移
-        })
+        baseline_data = pd.DataFrame({"feature1": np.random.normal(0, 1, 100)})
+        current_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(1, 1, 100)  # 小漂移
+            }
+        )
 
         results = detector.detect_data_drift(
             baseline_data, current_data, "test_table", drift_threshold=0.01
@@ -203,12 +218,8 @@ class TestMachineLearningAnomalyDetector:
         """测试数据漂移检测无共同列"""
         detector = MachineLearningAnomalyDetector()
 
-        baseline_data = pd.DataFrame({
-            'feature1': np.random.normal(0, 1, 100)
-        })
-        current_data = pd.DataFrame({
-            'feature2': np.random.normal(0, 1, 100)
-        })
+        baseline_data = pd.DataFrame({"feature1": np.random.normal(0, 1, 100)})
+        current_data = pd.DataFrame({"feature2": np.random.normal(0, 1, 100)})
 
         results = detector.detect_data_drift(baseline_data, current_data, "test_table")
 
@@ -222,7 +233,9 @@ class TestMachineLearningAnomalyDetector:
         # 创建不同异常率的数据
         normal_data = np.random.normal(0, 1, (95, 2))
         anomaly_data = np.random.normal(10, 1, (5, 2))
-        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.vstack([normal_data, anomaly_data]), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_isolation_forest(data, "test_table")
 
@@ -236,7 +249,9 @@ class TestMachineLearningAnomalyDetector:
         # 创建不同异常率的数据
         normal_data = np.random.normal(0, 1, (90, 2))
         anomaly_data = np.random.normal(10, 1, (10, 2))
-        data = pd.DataFrame(np.vstack([normal_data, anomaly_data]), columns=['feature1', 'feature2'])
+        data = pd.DataFrame(
+            np.vstack([normal_data, anomaly_data]), columns=["feature1", "feature2"]
+        )
 
         result = detector.detect_anomalies_clustering(data, "test_table")
 
@@ -247,10 +262,7 @@ class TestMachineLearningAnomalyDetector:
         """测试Isolation Forest异常记录结构"""
         detector = MachineLearningAnomalyDetector()
 
-        data = pd.DataFrame({
-            'feature1': [1, 2, 3, 100],
-            'feature2': [1, 2, 3, 100]
-        })
+        data = pd.DataFrame({"feature1": [1, 2, 3, 100], "feature2": [1, 2, 3, 100]})
 
         result = detector.detect_anomalies_isolation_forest(data, "test_table")
 
@@ -266,10 +278,7 @@ class TestMachineLearningAnomalyDetector:
         """测试DBSCAN聚类异常记录结构"""
         detector = MachineLearningAnomalyDetector()
 
-        data = pd.DataFrame({
-            'feature1': [1, 2, 3, 100],
-            'feature2': [1, 2, 3, 100]
-        })
+        data = pd.DataFrame({"feature1": [1, 2, 3, 100], "feature2": [1, 2, 3, 100]})
 
         result = detector.detect_anomalies_clustering(data, "test_table")
 

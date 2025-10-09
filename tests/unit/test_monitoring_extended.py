@@ -1,6 +1,7 @@
 from src.monitoring.metrics_collector import MetricsCollector
-from src.monitoring.system_monitor import SystemMonitor
+from src.monitoring.system_monitor_mod import SystemMonitor
 from src.monitoring.alert_manager import AlertManager
+
 
 def test_metrics_collector_extended():
     collector = MetricsCollector()
@@ -14,16 +15,18 @@ def test_metrics_collector_extended():
     metrics = collector.get_metrics()
     assert metrics is not None
 
+
 def test_system_monitor():
     monitor = SystemMonitor()
     assert monitor is not None
 
     # 测试方法存在
-    assert hasattr(monitor, 'get_cpu_usage')
-    assert hasattr(monitor, 'get_memory_usage')
-    assert hasattr(monitor, 'get_disk_usage')
+    assert hasattr(monitor, "get_cpu_usage")
+    assert hasattr(monitor, "get_memory_usage")
+    assert hasattr(monitor, "get_disk_usage")
+
 
 def test_alert_manager():
     manager = AlertManager()
     assert manager is not None
-    assert hasattr(manager, 'send_alert')
+    assert hasattr(manager, "send_alert")

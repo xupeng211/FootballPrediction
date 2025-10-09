@@ -16,7 +16,7 @@ def validator():
     config = {
         "confidence_threshold": 0.3,
         "probability_tolerance": 0.01,
-        "max_confidence": 0.95
+        "max_confidence": 0.95,
     }
     return PredictionValidator(config)
 
@@ -35,7 +35,7 @@ def valid_prediction():
         confidence_score=0.5,
         features_used={"feature1": 1.0},
         prediction_metadata={},
-        created_at=datetime.now()
+        created_at=datetime.now(),
     )
 
 
@@ -52,7 +52,7 @@ class TestPredictionValidator:
             match_id=None,  # 缺少match_id
             model_version="1",
             model_name="football_baseline_model",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -62,7 +62,7 @@ class TestPredictionValidator:
             match_id=-1,  # 负数ID
             model_version="1",
             model_name="football_baseline_model",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -73,7 +73,7 @@ class TestPredictionValidator:
             model_version="1",
             model_name="football_baseline_model",
             predicted_result="invalid",  # 无效结果
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -87,7 +87,7 @@ class TestPredictionValidator:
             draw_probability=0.3,
             away_win_probability=0.2,
             predicted_result="home",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -101,7 +101,7 @@ class TestPredictionValidator:
             draw_probability=0.6,
             away_win_probability=0.2,
             predicted_result="home",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         # 概率和为1.4，超出容差
         assert validator.validate_prediction_result(prediction) is False
@@ -117,7 +117,7 @@ class TestPredictionValidator:
             away_win_probability=0.2,
             predicted_result="home",
             confidence_score=1.5,  # 超出范围
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -132,7 +132,7 @@ class TestPredictionValidator:
             away_win_probability=0.33,
             predicted_result="home",
             confidence_score=0.34,  # 低于阈值0.3但接近
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         # 低置信度不是错误，应该通过
         assert validator.validate_prediction_result(prediction) is True
@@ -147,7 +147,7 @@ class TestPredictionValidator:
             draw_probability=0.3,
             away_win_probability=0.5,
             predicted_result="home",  # 最高概率是away，但预测是home
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -161,7 +161,7 @@ class TestPredictionValidator:
             draw_probability=0.3,
             away_win_probability=0.2,
             predicted_result="home",
-            created_at=datetime.now() + timedelta(days=1)  # 未来时间
+            created_at=datetime.now() + timedelta(days=1),  # 未来时间
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -176,7 +176,7 @@ class TestPredictionValidator:
             away_win_probability=0.2,
             predicted_result="home",
             features_used={},  # 空特征
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         assert validator.validate_prediction_result(prediction) is False
 
@@ -190,7 +190,7 @@ class TestPredictionValidator:
             match_id=None,  # 无效
             model_version="1",
             model_name="football_baseline_model",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
         predictions.append(invalid_prediction)
 
@@ -200,7 +200,7 @@ class TestPredictionValidator:
         assert stats["total"] == 6
         assert stats["valid"] == 5
         assert stats["invalid"] == 1
-        assert stats["pass_rate"] == 5/6
+        assert stats["pass_rate"] == 5 / 6
         assert len(stats["errors"]) == 1
 
     def test_get_validation_summary(self, validator):
@@ -211,7 +211,7 @@ class TestPredictionValidator:
             "invalid": 2,
             "pass_rate": 0.8,
             "errors": ["Error 1", "Error 2", "Error 3"],
-            "warnings": ["Warning 1", "Warning 2"]
+            "warnings": ["Warning 1", "Warning 2"],
         }
 
         summary = validator.get_validation_summary(stats)

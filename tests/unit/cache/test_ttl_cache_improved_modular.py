@@ -310,7 +310,7 @@ def test_module_import():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 应该能从原始位置导入
-    from src.cache.ttl_cache_improved import TTLCache, CacheFactory
+    from src.cache.ttl_cache_improved_mod import TTLCache, CacheFactory
 
     cache = TTLCache(max_size=100)
     cache.set("test", "value")

@@ -42,7 +42,7 @@ class TestAuditContext:
             username="testuser",
             user_role="admin",
             ip_address="192.168.1.1",
-            user_agent="Mozilla/5.0"
+            user_agent="Mozilla/5.0",
         )
 
         assert context.user_id == "user123"
@@ -54,9 +54,7 @@ class TestAuditContext:
     def test_audit_context_to_dict(self):
         """测试上下文转换为字典"""
         context = AuditContext(
-            user_id="user123",
-            username="testuser",
-            user_role="admin"
+            user_id="user123", username="testuser", user_role="admin"
         )
 
         result = context.to_dict()
@@ -76,9 +74,7 @@ class TestAuditContext:
         """测试合并上下文"""
         context1 = AuditContext(user_id="user123", username="user1")
         context2 = AuditContext(
-            user_id="user456",
-            user_role="admin",
-            ip_address="192.168.1.1"
+            user_id="user456", user_role="admin", ip_address="192.168.1.1"
         )
 
         merged = context1.merge(context2)
@@ -95,14 +91,14 @@ class TestAuditContext:
         request.headers = {
             "user-agent": "Mozilla/5.0",
             "x-request-id": "req123",
-            "x-correlation-id": "corr456"
+            "x-correlation-id": "corr456",
         }
 
         user_info = {
             "user_id": "user123",
             "username": "testuser",
             "role": "admin",
-            "session_id": "sess789"
+            "session_id": "sess789",
         }
 
         context = AuditContext.from_request(request, user_info)
@@ -132,7 +128,7 @@ class TestAuditModels:
             description="创建用户",
             severity=AuditSeverity.MEDIUM,
             old_values={"status": "inactive"},
-            new_values={"status": "active"}
+            new_values={"status": "active"},
         )
 
         assert log.timestamp == timestamp
@@ -152,7 +148,7 @@ class TestAuditModels:
             timestamp=timestamp,
             user_id="user123",
             action=AuditAction.CREATE,
-            description="测试操作"
+            description="测试操作",
         )
 
         result = log.to_dict()
@@ -171,7 +167,7 @@ class TestAuditModels:
             "severity": "medium",
             "description": "测试操作",
             "old_values": {"key": "old"},
-            "new_values": {"key": "new"}
+            "new_values": {"key": "new"},
         }
 
         log = AuditLog.from_dict(data)
@@ -202,7 +198,7 @@ class TestAuditModels:
             action_counts={"create": 50, "update": 30, "delete": 20},
             severity_counts={"low": 30, "medium": 50, "high": 20},
             user_counts={"user1": 60, "user2": 40},
-            resource_counts={"users": 50, "posts": 30, "comments": 20}
+            resource_counts={"users": 50, "posts": 30, "comments": 20},
         )
 
         assert summary.total_logs == 100
@@ -235,7 +231,7 @@ class TestAuditUtilities:
             "password": "secret123",
             "email": "test@example.com",
             "phone": "1234567890",
-            "age": 25
+            "age": 25,
         }
 
         sensitive_fields = {"password", "email", "phone"}
@@ -274,7 +270,7 @@ class TestAuditUtilities:
             action=AuditAction.CREATE,
             description="创建用户",
             severity=AuditSeverity.MEDIUM,
-            metadata={"duration_ms": 1500}
+            metadata={"duration_ms": 1500},
         )
 
         formatted = format_audit_log_for_display(log)
@@ -315,7 +311,7 @@ class TestAuditUtilities:
             resource_id="resource456",
             description="创建用户",
             ip_address="192.168.1.1",
-            new_values={"status": "active"}
+            new_values={"status": "active"},
         )
 
         result = validate_audit_compliance(log)
@@ -325,9 +321,7 @@ class TestAuditUtilities:
 
         # 不合规的日志
         log_bad = AuditLog(
-            user_id="user123",
-            action=AuditAction.DELETE,
-            severity=AuditSeverity.LOW
+            user_id="user123", action=AuditAction.DELETE, severity=AuditSeverity.LOW
         )
 
         result = validate_audit_compliance(log_bad)
@@ -344,7 +338,9 @@ class TestAuditDecorators:
     async def test_audit_action_decorator(self):
         """测试审计动作装饰器"""
         # 模拟审计服务
-        with patch('src.services.audit_service_mod.service.AuditService') as mock_service_class:
+        with patch(
+            "src.services.audit_service_mod.service.AuditService"
+        ) as mock_service_class:
             mock_service = AsyncMock()
             mock_service_class.return_value = mock_service
             mock_service.initialize.return_value = None
@@ -358,6 +354,7 @@ class TestAuditDecorators:
 
             # 设置上下文变量
             from src.services.audit_service_mod.decorators import audit_context
+
             audit_context.set(context)
 
             # 执行函数
@@ -369,7 +366,9 @@ class TestAuditDecorators:
     @pytest.mark.asyncio
     async def test_audit_api_operation_decorator(self):
         """测试API操作审计装饰器"""
-        with patch('src.services.audit_service_mod.service.AuditService') as mock_service_class:
+        with patch(
+            "src.services.audit_service_mod.service.AuditService"
+        ) as mock_service_class:
             mock_service = AsyncMock()
             mock_service_class.return_value = mock_service
 
@@ -379,6 +378,7 @@ class TestAuditDecorators:
 
             context = AuditContext(user_id="user123")
             from src.services.audit_service_mod.decorators import audit_context
+
             audit_context.set(context)
 
             result = await api_function()
@@ -387,7 +387,9 @@ class TestAuditDecorators:
     @pytest.mark.asyncio
     async def test_audit_database_operation_decorator(self):
         """测试数据库操作审计装饰器"""
-        with patch('src.services.audit_service_mod.service.AuditService') as mock_service_class:
+        with patch(
+            "src.services.audit_service_mod.service.AuditService"
+        ) as mock_service_class:
             mock_service = AsyncMock()
             mock_service_class.return_value = mock_service
 
@@ -397,6 +399,7 @@ class TestAuditDecorators:
 
             context = AuditContext(user_id="user123")
             from src.services.audit_service_mod.decorators import audit_context
+
             audit_context.set(context)
 
             result = await db_function()
@@ -405,7 +408,9 @@ class TestAuditDecorators:
     @pytest.mark.asyncio
     async def test_audit_sensitive_operation_decorator(self):
         """测试敏感操作审计装饰器"""
-        with patch('src.services.audit_service_mod.service.AuditService') as mock_service_class:
+        with patch(
+            "src.services.audit_service_mod.service.AuditService"
+        ) as mock_service_class:
             mock_service = AsyncMock()
             mock_service_class.return_value = mock_service
 
@@ -415,6 +420,7 @@ class TestAuditDecorators:
 
             context = AuditContext(user_id="user123")
             from src.services.audit_service_mod.decorators import audit_context
+
             audit_context.set(context)
 
             result = await sensitive_function()
@@ -427,18 +433,18 @@ class TestAuditStorage:
     @pytest.mark.asyncio
     async def test_save_log(self):
         """测试保存审计日志"""
-        with patch('src.services.audit_service_mod.storage.DatabaseManager') as mock_db:
+        with patch("src.services.audit_service_mod.storage.DatabaseManager") as mock_db:
             mock_session = AsyncMock()
             mock_db_manager = AsyncMock()
-            mock_db.return_value.get_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value.get_session.return_value.__aexit__.return_value = None
 
             storage = AuditStorage(mock_db_manager)
 
             log = AuditLog(
-                user_id="user123",
-                action=AuditAction.CREATE,
-                description="测试操作"
+                user_id="user123", action=AuditAction.CREATE, description="测试操作"
             )
 
             # 模拟数据库操作
@@ -458,10 +464,12 @@ class TestAuditStorage:
     @pytest.mark.asyncio
     async def test_get_logs(self):
         """测试获取审计日志"""
-        with patch('src.services.audit_service_mod.storage.DatabaseManager') as mock_db:
+        with patch("src.services.audit_service_mod.storage.DatabaseManager") as mock_db:
             mock_session = AsyncMock()
             mock_db_manager = AsyncMock()
-            mock_db.return_value.get_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value.get_session.return_value.__aexit__.return_value = None
 
             storage = AuditStorage(mock_db_manager)
@@ -502,10 +510,12 @@ class TestAuditStorage:
     @pytest.mark.asyncio
     async def test_get_logs_summary(self):
         """测试获取审计日志摘要"""
-        with patch('src.services.audit_service_mod.storage.DatabaseManager') as mock_db:
+        with patch("src.services.audit_service_mod.storage.DatabaseManager") as mock_db:
             mock_session = AsyncMock()
             mock_db_manager = AsyncMock()
-            mock_db.return_value.get_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value.get_session.return_value.__aexit__.return_value = None
 
             storage = AuditStorage(mock_db_manager)
@@ -519,7 +529,7 @@ class TestAuditStorage:
                 [("users", 50), ("posts", 30), ("comments", 20)],  # 资源统计
                 [(datetime.utcnow(), datetime.utcnow())],  # 日期范围
                 [("create", 50), ("update", 30)],  # 热门操作
-                []  # 高风险操作
+                [],  # 高风险操作
             ]
 
             summary = await storage.get_logs_summary()
@@ -533,10 +543,12 @@ class TestAuditStorage:
     @pytest.mark.asyncio
     async def test_archive_old_logs(self):
         """测试归档旧日志"""
-        with patch('src.services.audit_service_mod.storage.DatabaseManager') as mock_db:
+        with patch("src.services.audit_service_mod.storage.DatabaseManager") as mock_db:
             mock_session = AsyncMock()
             mock_db_manager = AsyncMock()
-            mock_db.return_value.get_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value.get_session.return_value.__aexit__.return_value = None
 
             storage = AuditStorage(mock_db_manager)
@@ -556,17 +568,21 @@ class TestAuditStorage:
     @pytest.mark.asyncio
     async def test_cleanup_old_logs(self):
         """测试清理旧日志"""
-        with patch('src.services.audit_service_mod.storage.DatabaseManager') as mock_db:
+        with patch("src.services.audit_service_mod.storage.DatabaseManager") as mock_db:
             mock_session = AsyncMock()
             mock_db_manager = AsyncMock()
-            mock_db.return_value.get_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value.get_session.return_value.__aexit__.return_value = None
 
             storage = AuditStorage(mock_db_manager)
 
             # 模拟清理操作
             mock_result = MagicMock()
-            mock_result.scalars.return_value.all.return_value = [MagicMock() for _ in range(10)]
+            mock_result.scalars.return_value.all.return_value = [
+                MagicMock() for _ in range(10)
+            ]
             mock_session.execute.return_value = mock_result
             mock_session.delete.return_value = None
             mock_session.commit.return_value = None
@@ -585,13 +601,15 @@ class TestAuditService:
         """测试审计服务初始化"""
         service = AuditService()
         assert service is not None
-        assert hasattr(service, 'storage')
-        assert hasattr(service, 'logger')
+        assert hasattr(service, "storage")
+        assert hasattr(service, "logger")
 
     @pytest.mark.asyncio
     async def test_log_operation(self):
         """测试记录操作"""
-        with patch.object(AuditStorage, 'save_log', new_callable=AsyncMock) as mock_save:
+        with patch.object(
+            AuditStorage, "save_log", new_callable=AsyncMock
+        ) as mock_save:
             mock_save.return_value = 1
 
             service = AuditService()
@@ -601,7 +619,7 @@ class TestAuditService:
                 context=context,
                 action=AuditAction.CREATE,
                 resource_type="user",
-                description="创建用户"
+                description="创建用户",
             )
 
             assert log_id == 1
@@ -610,7 +628,9 @@ class TestAuditService:
     @pytest.mark.asyncio
     async def test_log_action(self):
         """测试记录动作"""
-        with patch.object(AuditStorage, 'save_log', new_callable=AsyncMock) as mock_save:
+        with patch.object(
+            AuditStorage, "save_log", new_callable=AsyncMock
+        ) as mock_save:
             mock_save.return_value = 1
 
             service = AuditService()
@@ -620,7 +640,7 @@ class TestAuditService:
                 context=context,
                 action="create_user",
                 resource_type="user",
-                description="创建用户"
+                description="创建用户",
             )
 
             assert log_id == 1
@@ -629,21 +649,18 @@ class TestAuditService:
     @pytest.mark.asyncio
     async def test_get_operation_history(self):
         """测试获取操作历史"""
-        with patch.object(AuditStorage, 'get_logs', new_callable=AsyncMock) as mock_get:
+        with patch.object(AuditStorage, "get_logs", new_callable=AsyncMock) as mock_get:
             mock_log = AuditLog(
                 id=1,
                 user_id="user123",
                 action=AuditAction.CREATE,
                 description="测试操作",
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
             mock_get.return_value = [mock_log]
 
             service = AuditService()
-            logs = await service.get_operation_history(
-                user_id="user123",
-                limit=10
-            )
+            logs = await service.get_operation_history(user_id="user123", limit=10)
 
             assert len(logs) == 1
             assert logs[0].user_id == "user123"
@@ -652,7 +669,9 @@ class TestAuditService:
     @pytest.mark.asyncio
     async def test_get_compliance_report(self):
         """测试获取合规报告"""
-        with patch.object(AuditStorage, 'get_logs_summary', new_callable=AsyncMock) as mock_summary:
+        with patch.object(
+            AuditStorage, "get_logs_summary", new_callable=AsyncMock
+        ) as mock_summary:
             mock_summary.return_value = AuditLogSummary(
                 total_logs=100,
                 action_counts={"create": 50, "update": 30},
@@ -662,9 +681,9 @@ class TestAuditService:
                         "timestamp": datetime.utcnow(),
                         "user_id": "user123",
                         "action": "delete",
-                        "severity": "high"
+                        "severity": "high",
                     }
-                ]
+                ],
             )
 
             service = AuditService()

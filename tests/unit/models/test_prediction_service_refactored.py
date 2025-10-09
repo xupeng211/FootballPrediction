@@ -28,7 +28,7 @@ def mock_match_info():
         "home_team_id": 1,
         "away_team_id": 2,
         "league_id": 1,
-        "match_date": "2024-01-01T20:00:00"
+        "match_date": "2024-01-01T20:00:00",
     }
 
 
@@ -46,7 +46,7 @@ def mock_prediction_result():
         confidence_score=0.5,
         features_used={"feature1": 1.0},
         prediction_metadata={},
-        created_at=datetime.now()
+        created_at=datetime.now(),
     )
 
 
@@ -63,27 +63,24 @@ class TestPredictionServiceRefactored:
 
         with patch.object(
             prediction_service.model_provider,
-            'get_production_model',
-            new_callable=AsyncMock
+            "get_production_model",
+            new_callable=AsyncMock,
         ) as mock_get_model:
             mock_get_model.return_value = (mock_model, "1")
 
             with patch.object(
-                prediction_service.prediction_cache,
-                'get_async',
-                new_callable=AsyncMock
+                prediction_service.prediction_cache, "get_async", new_callable=AsyncMock
             ) as mock_cache_get:
                 mock_cache_get.return_value = None  # 缓存未命中
 
                 with patch.object(
                     prediction_service.prediction_cache,
-                    'set_async',
-                    new_callable=AsyncMock
+                    "set_async",
+                    new_callable=AsyncMock,
                 ) as mock_cache_set:
                     # 执行预测
                     result = await prediction_service.predict_match(
-                        match_id=12345,
-                        match_info=mock_match_info
+                        match_id=12345, match_info=mock_match_info
                     )
 
                     # 验证结果
@@ -97,19 +94,18 @@ class TestPredictionServiceRefactored:
                     mock_cache_set.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_predict_match_cache_hit(self, prediction_service, mock_match_info, mock_prediction_result):
+    async def test_predict_match_cache_hit(
+        self, prediction_service, mock_match_info, mock_prediction_result
+    ):
         """测试预测缓存命中"""
         with patch.object(
-            prediction_service.prediction_cache,
-            'get_async',
-            new_callable=AsyncMock
+            prediction_service.prediction_cache, "get_async", new_callable=AsyncMock
         ) as mock_cache_get:
             mock_cache_get.return_value = mock_prediction_result
 
             # 执行预测
             result = await prediction_service.predict_match(
-                match_id=12345,
-                match_info=mock_match_info
+                match_id=12345, match_info=mock_match_info
             )
 
             # 验证返回缓存结果
@@ -117,7 +113,9 @@ class TestPredictionServiceRefactored:
 
             # 验证模型提供者未被调用
             mock_model_provider = prediction_service.model_provider
-            with patch.object(mock_model_provider, 'get_production_model') as mock_get_model:
+            with patch.object(
+                mock_model_provider, "get_production_model"
+            ) as mock_get_model:
                 mock_get_model.assert_not_called()
 
     @pytest.mark.asyncio
@@ -126,34 +124,34 @@ class TestPredictionServiceRefactored:
         matches = [
             {"match_id": 1, "home_team_id": 1, "away_team_id": 2},
             {"match_id": 2, "home_team_id": 3, "away_team_id": 4},
-            {"match_id": 3, "home_team_id": 5, "away_team_id": 6}
+            {"match_id": 3, "home_team_id": 5, "away_team_id": 6},
         ]
 
         mock_model = MagicMock()
         mock_model.predict_proba.return_value = [
             [0.4, 0.3, 0.3],
             [0.6, 0.2, 0.2],
-            [0.3, 0.4, 0.3]
+            [0.3, 0.4, 0.3],
         ]
         mock_model.predict.return_value = ["home", "home", "draw"]
 
         with patch.object(
             prediction_service.model_provider,
-            'get_production_model',
-            new_callable=AsyncMock
+            "get_production_model",
+            new_callable=AsyncMock,
         ) as mock_get_model:
             mock_get_model.return_value = (mock_model, "1")
 
             with patch.object(
                 prediction_service.prediction_cache,
-                'get_async',
+                "get_async",
                 new_callable=AsyncMock,
-                return_value=None
+                return_value=None,
             ):
                 with patch.object(
                     prediction_service.prediction_cache,
-                    'set_async',
-                    new_callable=AsyncMock
+                    "set_async",
+                    new_callable=AsyncMock,
                 ):
                     # 执行批量预测
                     results = await prediction_service.batch_predict_matches(matches)
@@ -168,13 +166,15 @@ class TestPredictionServiceRefactored:
                     mock_get_model.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_prediction_history(self, prediction_service, mock_prediction_result):
+    async def test_get_prediction_history(
+        self, prediction_service, mock_prediction_result
+    ):
         """测试获取预测历史"""
         # 添加一些历史记录
         prediction_service.prediction_history = [
             mock_prediction_result,
             mock_prediction_result,
-            mock_prediction_result
+            mock_prediction_result,
         ]
 
         # 获取所有历史
@@ -190,16 +190,18 @@ class TestPredictionServiceRefactored:
         assert len(history) == 3
 
     @pytest.mark.asyncio
-    async def test_get_prediction_stats(self, prediction_service, mock_prediction_result):
+    async def test_get_prediction_stats(
+        self, prediction_service, mock_prediction_result
+    ):
         """测试获取预测统计"""
         # 添加历史记录
         prediction_service.prediction_history = [mock_prediction_result]
 
         with patch.object(
             prediction_service,
-            'get_prediction_history',
+            "get_prediction_history",
             new_callable=AsyncMock,
-            return_value=[mock_prediction_result]
+            return_value=[mock_prediction_result],
         ):
             stats = await prediction_service.get_prediction_stats(hours=24)
 
@@ -213,8 +215,8 @@ class TestPredictionServiceRefactored:
         """测试健康检查"""
         with patch.object(
             prediction_service.model_provider,
-            'get_production_model',
-            new_callable=AsyncMock
+            "get_production_model",
+            new_callable=AsyncMock,
         ) as mock_get_model:
             mock_get_model.return_value = (MagicMock(), "1")
 
@@ -229,14 +231,12 @@ class TestPredictionServiceRefactored:
     async def test_cleanup_cache(self, prediction_service):
         """测试清理缓存"""
         with patch.object(
-            prediction_service.prediction_cache,
-            'clear',
-            new_callable=AsyncMock
+            prediction_service.prediction_cache, "clear", new_callable=AsyncMock
         ) as mock_clear_cache:
             with patch.object(
                 prediction_service.model_provider.model_cache,
-                'clear',
-                new_callable=AsyncMock
+                "clear",
+                new_callable=AsyncMock,
             ) as mock_clear_model_cache:
                 await prediction_service.cleanup_cache()
 

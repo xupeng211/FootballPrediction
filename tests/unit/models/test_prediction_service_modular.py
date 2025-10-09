@@ -14,6 +14,7 @@ class TestPredictionModels:
     def test_prediction_result_import(self):
         """测试预测结果类导入"""
         from src.models.prediction.models import PredictionResult
+
         assert PredictionResult is not None
 
     def test_prediction_result_creation(self):
@@ -28,7 +29,7 @@ class TestPredictionModels:
             draw_probability=0.3,
             away_win_probability=0.2,
             predicted_result="home",
-            confidence_score=0.75
+            confidence_score=0.75,
         )
 
         assert result.match_id == 12345
@@ -50,7 +51,7 @@ class TestPredictionModels:
             away_win_probability=0.2,
             predicted_result="home",
             confidence_score=0.75,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         result_dict = result.to_dict()
@@ -73,7 +74,7 @@ class TestPredictionModels:
             "away_win_probability": 0.2,
             "predicted_result": "home",
             "confidence_score": 0.75,
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
         result = PredictionResult.from_dict(data)
@@ -92,7 +93,7 @@ class TestPredictionModels:
             draw_probability=0.3,
             away_win_probability=0.2,
             predicted_result="home",
-            confidence_score=0.75
+            confidence_score=0.75,
         )
 
         assert result.is_probabilities_valid()
@@ -114,7 +115,7 @@ class TestPredictionModels:
             draw_probability=0.3,
             away_win_probability=0.1,
             predicted_result="home",
-            confidence_score=0.75
+            confidence_score=0.75,
         )
 
         highest_result, highest_prob = result.get_highest_probability()
@@ -129,7 +130,7 @@ class TestPredictionModels:
             match_id=12345,
             model_version="v1.0.0",
             predicted_result="home",
-            confidence_score=0.75
+            confidence_score=0.75,
         )
 
         result.update_actual_result(2, 1)
@@ -150,6 +151,7 @@ class TestPredictionMetrics:
             model_load_duration_seconds,
             cache_hit_ratio,
         )
+
         assert predictions_total is not None
         assert prediction_duration_seconds is not None
         assert prediction_accuracy is not None
@@ -164,8 +166,8 @@ class TestPredictionMetrics:
         )
 
         # 测试指标有labels方法
-        assert hasattr(predictions_total, 'labels')
-        assert hasattr(prediction_accuracy, 'labels')
+        assert hasattr(predictions_total, "labels")
+        assert hasattr(prediction_accuracy, "labels")
 
 
 class TestPredictionCache:
@@ -174,6 +176,7 @@ class TestPredictionCache:
     def test_cache_import(self):
         """测试缓存导入"""
         from src.models.prediction.cache import PredictionCache
+
         assert PredictionCache is not None
 
     def test_cache_init(self):
@@ -181,8 +184,7 @@ class TestPredictionCache:
         from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache(
-            model_cache_ttl_hours=2,
-            prediction_cache_ttl_minutes=15
+            model_cache_ttl_hours=2, prediction_cache_ttl_minutes=15
         )
         assert cache.model_cache is not None
         assert cache.prediction_cache is not None
@@ -241,6 +243,7 @@ class TestMLflowClient:
     def test_mlflow_client_import(self):
         """测试MLflow客户端导入"""
         from src.models.prediction.mlflow_client import MLflowModelClient
+
         assert MLflowModelClient is not None
 
     def test_mlflow_client_init(self):
@@ -258,7 +261,7 @@ class TestMLflowClient:
 
         client = MLflowModelClient()
 
-        with patch.object(client, 'client') as mock_client:
+        with patch.object(client, "client") as mock_client:
             mock_version = MagicMock()
             mock_version.version = "v1.0.0"
             mock_client.get_latest_versions.return_value = [mock_version]
@@ -274,8 +277,8 @@ class TestMLflowClient:
         client = MLflowModelClient()
         mock_model = MagicMock()
 
-        with patch('src.models.prediction.mlflow_client.mlflow') as mock_mlflow:
-            with patch.object(client, 'get_latest_model_version') as mock_get_version:
+        with patch("src.models.prediction.mlflow_client.mlflow") as mock_mlflow:
+            with patch.object(client, "get_latest_model_version") as mock_get_version:
                 mock_get_version.return_value = "v1.0.0"
                 mock_mlflow.sklearn.load_model.return_value = mock_model
 
@@ -290,7 +293,7 @@ class TestMLflowClient:
 
         client = MLflowModelClient()
 
-        with patch.object(client, 'client') as mock_client:
+        with patch.object(client, "client") as mock_client:
             mock_details = MagicMock()
             mock_details.name = "football_model"
             mock_details.version = "v1.0.0"
@@ -313,6 +316,7 @@ class TestFeatureProcessor:
     def test_feature_processor_import(self):
         """测试特征处理器导入"""
         from src.models.prediction.feature_processor import FeatureProcessor
+
         assert FeatureProcessor is not None
 
     def test_feature_processor_init(self):
@@ -320,7 +324,7 @@ class TestFeatureProcessor:
         from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
-        assert hasattr(processor, 'feature_names')
+        assert hasattr(processor, "feature_names")
         assert len(processor.feature_names) > 0
 
     def test_get_default_features(self):
@@ -360,14 +364,14 @@ class TestFeatureProcessor:
                 "strength": 0.7,
                 "form": 1.5,
                 "goals_scored_avg": 2.0,
-                "goals_conceded_avg": 0.5
+                "goals_conceded_avg": 0.5,
             },
             "away_team": {
                 "strength": 0.5,
                 "form": 0.5,
                 "goals_scored_avg": 1.0,
-                "goals_conceded_avg": 1.5
-            }
+                "goals_conceded_avg": 1.5,
+            },
         }
 
         features = processor.extract_features_from_match_data(match_data)
@@ -396,6 +400,7 @@ class TestPredictionService:
     def test_prediction_service_import(self):
         """测试预测服务导入"""
         from src.models.prediction.service import PredictionService
+
         assert PredictionService is not None
 
     def test_prediction_service_init(self):
@@ -415,7 +420,9 @@ class TestPredictionService:
         service = PredictionService()
         mock_model = MagicMock()
 
-        with patch.object(service.mlflow_client, 'get_production_model') as mock_get_model:
+        with patch.object(
+            service.mlflow_client, "get_production_model"
+        ) as mock_get_model:
             mock_get_model.return_value = (mock_model, "v1.0.0")
 
             model, version = await service.get_production_model()
@@ -433,20 +440,20 @@ class TestPredictionService:
         mock_model.predict_proba.return_value = [[0.1, 0.3, 0.6]]
         mock_model.predict.return_value = ["home"]
 
-        with patch.object(service, 'get_production_model') as mock_get_model:
-            with patch.object(service, '_get_match_info') as mock_get_match:
-                with patch.object(service, '_get_features') as mock_get_features:
-                    with patch.object(service, '_store_prediction') as mock_store:
+        with patch.object(service, "get_production_model") as mock_get_model:
+            with patch.object(service, "_get_match_info") as mock_get_match:
+                with patch.object(service, "_get_features") as mock_get_features:
+                    with patch.object(service, "_store_prediction") as mock_store:
                         mock_get_model.return_value = (mock_model, "v1.0.0")
                         mock_get_match.return_value = {
                             "id": 12345,
                             "home_team_id": 1,
                             "away_team_id": 2,
-                            "match_status": "SCHEDULED"
+                            "match_status": "SCHEDULED",
                         }
                         mock_get_features.return_value = {
                             "home_team_strength": 0.7,
-                            "away_team_strength": 0.5
+                            "away_team_strength": 0.5,
                         }
 
                         result = await service.predict_match(12345)
@@ -462,7 +469,7 @@ class TestPredictionService:
         service = PredictionService()
         mock_result = MagicMock()
 
-        with patch.object(service, 'predict_match') as mock_predict:
+        with patch.object(service, "predict_match") as mock_predict:
             mock_predict.return_value = mock_result
 
             results = await service.batch_predict_matches([12345, 12346])
@@ -476,9 +483,11 @@ class TestPredictionService:
 
         service = PredictionService()
 
-        with patch.object(service.db_manager, 'get_async_session') as mock_session:
+        with patch.object(service.db_manager, "get_async_session") as mock_session:
             mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = (
-                2, 1, "home"  # home_score, away_score, predicted_result
+                2,
+                1,
+                "home",  # home_score, away_score, predicted_result
             )
 
             result = await service.verify_prediction(12345)
@@ -491,7 +500,7 @@ class TestPredictionService:
 
         service = PredictionService()
 
-        with patch.object(service.db_manager, 'get_async_session') as mock_session:
+        with patch.object(service.db_manager, "get_async_session") as mock_session:
             mock_row = MagicMock()
             mock_row.total_predictions = 100
             mock_row.correct_predictions = 60
@@ -515,6 +524,7 @@ class TestModularStructure:
             PredictionCache,
             predictions_total,
         )
+
         assert PredictionResult is not None
         assert PredictionService is not None
         assert PredictionCache is not None
@@ -527,6 +537,7 @@ class TestModularStructure:
             PredictionResult as old_result,
             PredictionService as old_service,
         )
+
         assert old_result is not None
         assert old_service is not None
 
@@ -553,12 +564,12 @@ class TestModularStructure:
         import src.models.prediction as prediction_module
 
         # 验证子模块存在
-        assert hasattr(prediction_module, 'models')
-        assert hasattr(prediction_module, 'service')
-        assert hasattr(prediction_module, 'cache')
-        assert hasattr(prediction_module, 'metrics')
-        assert hasattr(prediction_module, 'mlflow_client')
-        assert hasattr(prediction_module, 'feature_processor')
+        assert hasattr(prediction_module, "models")
+        assert hasattr(prediction_module, "service")
+        assert hasattr(prediction_module, "cache")
+        assert hasattr(prediction_module, "metrics")
+        assert hasattr(prediction_module, "mlflow_client")
+        assert hasattr(prediction_module, "feature_processor")
 
 
 @pytest.mark.asyncio
@@ -568,9 +579,9 @@ async def test_integration_example():
 
     # 验证PredictionService可以正常使用
     service = PredictionService()
-    assert hasattr(service, 'predict_match')
-    assert hasattr(service, 'batch_predict_matches')
-    assert hasattr(service, 'verify_prediction')
+    assert hasattr(service, "predict_match")
+    assert hasattr(service, "batch_predict_matches")
+    assert hasattr(service, "verify_prediction")
 
     # 验证PredictionResult可以正常使用
     result = PredictionResult(
@@ -580,7 +591,7 @@ async def test_integration_example():
         draw_probability=0.3,
         away_win_probability=0.2,
         predicted_result="home",
-        confidence_score=0.75
+        confidence_score=0.75,
     )
 
     assert result.match_id == 12345

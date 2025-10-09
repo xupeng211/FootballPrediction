@@ -1,4 +1,5 @@
 """数据收集器测试"""
+
 import pytest
 from unittest.mock import Mock, AsyncMock
 from src.collectors.fixtures_collector import FixturesCollector
@@ -47,9 +48,9 @@ class TestDataCollectors:
         collector = FixturesCollector(db_session, redis_client)
 
         # 验证基本属性存在
-        assert hasattr(collector, 'api_endpoints')
-        assert hasattr(collector, 'cache_timeout')
-        assert hasattr(collector, 'headers')
+        assert hasattr(collector, "api_endpoints")
+        assert hasattr(collector, "cache_timeout")
+        assert hasattr(collector, "headers")
         # 缓存超时时间可能是60或3600
         assert collector.cache_timeout in [60, 3600]
 
@@ -77,10 +78,10 @@ class TestDataCollectors:
         collector = ScoresCollector(db_session, redis_client)
 
         # 验证logger存在
-        assert hasattr(collector, 'db_session')
-        assert hasattr(collector, 'redis_client')
+        assert hasattr(collector, "db_session")
+        assert hasattr(collector, "redis_client")
         # 缓存超时时间可能是60或3600，取决于具体实现
-        assert hasattr(collector, 'cache_timeout')
+        assert hasattr(collector, "cache_timeout")
         assert collector.cache_timeout in [60, 3600]
 
     def test_collector_metrics(self):
@@ -91,6 +92,6 @@ class TestDataCollectors:
         collector = FixturesCollector(db_session, redis_client)
 
         # 验证基本属性
-        assert hasattr(collector, 'api_endpoints')
-        assert hasattr(collector, 'cache_timeout')
-        assert hasattr(collector, 'headers')
+        assert hasattr(collector, "api_endpoints")
+        assert hasattr(collector, "cache_timeout")
+        assert hasattr(collector, "headers")

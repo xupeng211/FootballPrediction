@@ -6,8 +6,7 @@ Kafka组件模块 - 兼容性包装器
 """
 
 from .kafka import (
-
-# 从新模块化结构导入所有组件
+    # 从新模块化结构导入所有组件
     KafkaAdmin,
     FootballKafkaProducer,
     FootballKafkaConsumer,

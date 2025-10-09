@@ -12,6 +12,7 @@ from .training import BaselineModelTrainer
 # 处理可选依赖（保持向后兼容）
 try:
     import xgboost as xgb
+
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
@@ -21,9 +22,11 @@ try:
     import mlflow
     import mlflow.sklearn
     from mlflow import MlflowClient
+
     HAS_MLFLOW = True
 except ImportError:
     HAS_MLFLOW = False
+
     # 创建一个模拟的 mlflow 对象
     class MockMLflow:
         def start_run(self, **kwargs):

@@ -119,22 +119,24 @@ class TestOddsProcessor:
     async def test_detect_arbitrage_opportunities(self, processor):
         """测试套利机会检测"""
         # 创建包含套利机会的数据
-        df = pd.DataFrame([
-            {
-                "match_id": "123",
-                "bookmaker": "BookmakerA",
-                "home_win": 2.1,
-                "draw": 3.4,
-                "away_win": 4.0,
-            },
-            {
-                "match_id": "123",
-                "bookmaker": "BookmakerB",
-                "home_win": 2.0,
-                "draw": 3.3,
-                "away_win": 4.2,
-            },
-        ])
+        df = pd.DataFrame(
+            [
+                {
+                    "match_id": "123",
+                    "bookmaker": "BookmakerA",
+                    "home_win": 2.1,
+                    "draw": 3.4,
+                    "away_win": 4.0,
+                },
+                {
+                    "match_id": "123",
+                    "bookmaker": "BookmakerB",
+                    "home_win": 2.0,
+                    "draw": 3.3,
+                    "away_win": 4.2,
+                },
+            ]
+        )
 
         opportunities = await processor.detect_arbitrage_opportunities(df)
 
@@ -183,13 +185,15 @@ class TestFeaturesProcessor:
     async def test_select_top_features(self, processor):
         """测试选择重要特征"""
         # 创建测试数据
-        df = pd.DataFrame({
-            "match_id": ["1", "2", "3"],
-            "feature1": [0.1, 0.2, 0.3],
-            "feature2": [0.4, 0.5, 0.6],
-            "feature3": [0.7, 0.8, 0.9],
-            "target": [1, 0, 1],
-        })
+        df = pd.DataFrame(
+            {
+                "match_id": ["1", "2", "3"],
+                "feature1": [0.1, 0.2, 0.3],
+                "feature2": [0.4, 0.5, 0.6],
+                "feature3": [0.7, 0.8, 0.9],
+                "target": [1, 0, 1],
+            }
+        )
 
         top_features = await processor.select_top_features(df, "target", k=2)
 
@@ -256,17 +260,21 @@ class TestDataValidator:
     async def test_validate_batch_consistency(self, validator):
         """测试批次数据一致性验证"""
         # 创建一致的批次数据
-        batch1 = pd.DataFrame({
-            "match_id": ["1", "2"],
-            "home_team": ["A", "B"],
-            "away_team": ["C", "D"],
-        })
+        batch1 = pd.DataFrame(
+            {
+                "match_id": ["1", "2"],
+                "home_team": ["A", "B"],
+                "away_team": ["C", "D"],
+            }
+        )
 
-        batch2 = pd.DataFrame({
-            "match_id": ["3", "4"],
-            "home_team": ["E", "F"],
-            "away_team": ["G", "H"],
-        })
+        batch2 = pd.DataFrame(
+            {
+                "match_id": ["3", "4"],
+                "home_team": ["E", "F"],
+                "away_team": ["G", "H"],
+            }
+        )
 
         result = await validator.validate_batch_consistency([batch1, batch2])
 
@@ -337,7 +345,9 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_initialize_service(self, service):
         """测试服务初始化"""
-        with patch.object(service.processing_cache, "initialize", new_callable=AsyncMock) as mock_init:
+        with patch.object(
+            service.processing_cache, "initialize", new_callable=AsyncMock
+        ) as mock_init:
             await service.initialize()
             mock_init.assert_called_once()
 

@@ -1,7 +1,7 @@
 """改进的TTL缓存测试"""
 
 import pytest
-from src.cache.ttl_cache_improved import TTLCache, CacheFactory
+from src.cache.ttl_cache_improved_mod import TTLCache, CacheFactory
 
 
 class TestTTLCache:
@@ -10,7 +10,7 @@ class TestTTLCache:
     def test_cache_import(self):
         """测试缓存模块导入"""
         try:
-            from src.cache.ttl_cache_improved import TTLCache
+            from src.cache.ttl_cache_improved_mod import TTLCache
 
             assert TTLCache is not None
         except ImportError:

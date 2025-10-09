@@ -199,10 +199,12 @@ class TestColumnAnalyzer:
     async def test_analyze_numeric_column(self):
         """测试分析数值列"""
         analyzer = ColumnAnalyzer()
-        data = pd.DataFrame({
-            "value": [1, 2, 3, 4, 5, 6, 7, 8, 9, 100],  # 包含异常值
-            "category": ["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"],
-        })
+        data = pd.DataFrame(
+            {
+                "value": [1, 2, 3, 4, 5, 6, 7, 8, 9, 100],  # 包含异常值
+                "category": ["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"],
+            }
+        )
 
         anomalies = await analyzer.analyze_column(
             data=data,
@@ -218,9 +220,11 @@ class TestColumnAnalyzer:
     async def test_analyze_categorical_column(self):
         """测试分析分类列"""
         analyzer = ColumnAnalyzer()
-        data = pd.DataFrame({
-            "category": ["A", "A", "A", "A", "A", "A", "B", "C"],  # A频率异常高
-        })
+        data = pd.DataFrame(
+            {
+                "category": ["A", "A", "A", "A", "A", "A", "B", "C"],  # A频率异常高
+            }
+        )
 
         anomalies = await analyzer.analyze_column(
             data=data,
@@ -251,11 +255,13 @@ class TestTableAnalyzer:
         mock_session = AsyncMock()
 
         # Mock _get_table_data
-        with patch.object(analyzer, '_get_table_data') as mock_get_data:
-            mock_get_data.return_value = pd.DataFrame({
-                "value": [1, 2, 3, 4, 5, 60],  # 60超出范围
-                "category": ["A", "B", "A", "B", "A", "B"],
-            })
+        with patch.object(analyzer, "_get_table_data") as mock_get_data:
+            mock_get_data.return_value = pd.DataFrame(
+                {
+                    "value": [1, 2, 3, 4, 5, 60],  # 60超出范围
+                    "category": ["A", "B", "A", "B", "A", "B"],
+                }
+            )
 
             anomalies = await analyzer.analyze_table(
                 session=mock_session,
@@ -265,7 +271,9 @@ class TestTableAnalyzer:
             )
 
             # 应该检测到范围异常
-            range_anomalies = [a for a in anomalies if a.detection_method == "range_check"]
+            range_anomalies = [
+                a for a in anomalies if a.detection_method == "range_check"
+            ]
             assert len(range_anomalies) >= 1
 
 
@@ -350,11 +358,11 @@ class TestAnomalyDetector:
         mock_session_manager.__aenter__.return_value = mock_session
         mock_session_manager.__aexit__.return_value = None
 
-        with patch.object(detector.db_manager, 'get_async_session') as mock_get_session:
+        with patch.object(detector.db_manager, "get_async_session") as mock_get_session:
             mock_get_session.return_value = mock_session_manager
 
             # Mock table analyzer
-            with patch.object(detector.table_analyzer, 'analyze_table') as mock_analyze:
+            with patch.object(detector.table_analyzer, "analyze_table") as mock_analyze:
                 mock_analyze.return_value = [
                     AnomalyResult(
                         table_name="test_table",
@@ -369,8 +377,7 @@ class TestAnomalyDetector:
                 ]
 
                 anomalies = await detector.detect_anomalies(
-                    table_names=["test_table"],
-                    methods=["test_method"]
+                    table_names=["test_table"], methods=["test_method"]
                 )
 
                 assert len(anomalies) == 1
@@ -396,7 +403,7 @@ class TestAnomalyDetector:
         ]
 
         # Mock summarizer
-        with patch.object(detector.summarizer, 'generate_summary') as mock_summary:
+        with patch.object(detector.summarizer, "generate_summary") as mock_summary:
             mock_summary.return_value = {"total_anomalies": 1}
 
             summary = await detector.get_anomaly_summary(anomalies)

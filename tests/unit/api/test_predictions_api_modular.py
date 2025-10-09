@@ -35,9 +35,7 @@ class TestModels:
     def test_prediction_request_model(self):
         """测试预测请求模型"""
         request = PredictionRequest(
-            match_id=123,
-            force_refresh=True,
-            include_features=False
+            match_id=123, force_refresh=True, include_features=False
         )
         assert request.match_id == 123
         assert request.force_refresh is True
@@ -46,9 +44,7 @@ class TestModels:
     def test_batch_prediction_request_model(self):
         """测试批量预测请求模型"""
         request = BatchPredictionRequest(
-            match_ids=[1, 2, 3],
-            force_refresh=False,
-            include_features=True
+            match_ids=[1, 2, 3], force_refresh=False, include_features=True
         )
         assert len(request.match_ids) == 3
         assert request.force_refresh is False
@@ -63,7 +59,7 @@ class TestModels:
             confidence=0.85,
             model_version="v1.0.0",
             model_name="football_predictor",
-            prediction_time="2024-01-01T15:00:00Z"
+            prediction_time="2024-01-01T15:00:00Z",
         )
         assert response.match_id == 123
         assert response.prediction == "home_win"
@@ -73,9 +69,7 @@ class TestModels:
     def test_upcoming_matches_request_model(self):
         """测试即将开始比赛请求模型"""
         request = UpcomingMatchesRequest(
-            hours_ahead=48,
-            league_ids=[1, 2, 3],
-            force_refresh=True
+            hours_ahead=48, league_ids=[1, 2, 3], force_refresh=True
         )
         assert request.hours_ahead == 48
         assert len(request.league_ids) == 3
@@ -91,7 +85,7 @@ class TestModels:
             accuracy=0.75,
             avg_confidence=0.82,
             predictions_by_result={"home_win": 40, "draw": 20, "away_win": 20},
-            last_updated="2024-01-01T15:00:00Z"
+            last_updated="2024-01-01T15:00:00Z",
         )
         assert response.model_name == "test_model"
         assert response.accuracy == 0.75
@@ -100,11 +94,7 @@ class TestModels:
     def test_verification_response_model(self):
         """测试验证响应模型"""
         response = VerificationResponse(
-            match_id=123,
-            verified=True,
-            correct=1,
-            accuracy=0.85,
-            message="验证完成"
+            match_id=123, verified=True, correct=1, accuracy=0.85, message="验证完成"
         )
         assert response.match_id == 123
         assert response.verified is True
@@ -245,7 +235,7 @@ class TestModularStructure:
         # 收集所有路由路径
         all_paths = set()
         for route in router.routes:
-            if hasattr(route, 'path'):
+            if hasattr(route, "path"):
                 all_paths.add(route.path)
 
         # 验证至少包含所有期望的路径模式
@@ -257,7 +247,7 @@ class TestModularStructure:
             "/verify/",
             "/stream/",
             "/cache",
-            "/health"
+            "/health",
         ]
 
         # 验证每个模式都存在

@@ -18,6 +18,7 @@ supported_languages = {
 # 翻译文件目录
 LOCALE_DIR = Path(__file__).parent / "locales"
 
+
 def init_i18n():
     """初始化国际化"""
     # 确保翻译目录存在
@@ -36,6 +37,7 @@ def init_i18n():
     except Exception:
         # 如果初始化失败，使用默认语言
         pass
+
 
 # 初始化
 init_i18n()

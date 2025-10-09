@@ -12,32 +12,24 @@ Celery Scheduler Tasks
 """
 
 from .tasks import (
-
-# 为了向后兼容性，从新的模块化结构中导入所有任务
+    # 为了向后兼容性，从新的模块化结构中导入所有任务
     # 基础类
     BaseDataTask,
-
     # 数据采集任务
     collect_fixtures,
     collect_odds,
     collect_live_scores_conditional,
-
     # 特征计算任务
     calculate_features_batch,
-
     # 维护任务
     cleanup_data,
     backup_database,
-
     # 质量检查任务
     run_quality_checks,
-
     # 预测任务
     generate_predictions,
-
     # 数据处理任务
     process_bronze_to_silver,
-
     # 任务别名（向后兼容）
     calculate_features_task,
     collect_fixtures_task,
@@ -50,28 +42,21 @@ from .tasks import (
 __all__ = [
     # 基础类
     "BaseDataTask",
-
     # 数据采集任务
     "collect_fixtures",
     "collect_odds",
     "collect_live_scores_conditional",
-
     # 特征计算任务
     "calculate_features_batch",
-
     # 维护任务
     "cleanup_data",
     "backup_database",
-
     # 质量检查任务
     "run_quality_checks",
-
     # 预测任务
     "generate_predictions",
-
     # 数据处理任务
     "process_bronze_to_silver",
-
     # 任务别名（向后兼容）
     "calculate_features_task",
     "collect_fixtures_task",

@@ -1,6 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 import pytest
-from src.data.processing.football_data_cleaner import FootballDataCleaner
+from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
 """
 足球数据清洗器测试

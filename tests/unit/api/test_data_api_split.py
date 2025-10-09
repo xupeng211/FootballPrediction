@@ -6,6 +6,7 @@ Test Split Data API
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
+
 # 测试导入是否正常
 def test_import_data_api():
     """测试能否正常导入data_api模块"""
@@ -91,7 +92,7 @@ def test_create_team_info():
         founded_year=2000,
         stadium="Test Stadium",
         logo_url="http://test.com/logo.png",
-        is_active=True
+        is_active=True,
     )
 
     assert team.id == 1
@@ -111,7 +112,7 @@ def test_create_league_info():
         season="2023-2024",
         start_date=datetime(2023, 8, 1),
         end_date=datetime(2024, 5, 31),
-        is_active=True
+        is_active=True,
     )
 
     assert league.id == 1
@@ -131,7 +132,7 @@ def test_create_match_info():
         founded_year=2000,
         stadium="Home Stadium",
         logo_url="http://test.com/home.png",
-        is_active=True
+        is_active=True,
     )
     away_team = TeamInfo(
         id=2,
@@ -140,7 +141,7 @@ def test_create_match_info():
         founded_year=2001,
         stadium="Away Stadium",
         logo_url="http://test.com/away.png",
-        is_active=True
+        is_active=True,
     )
     league = LeagueInfo(
         id=1,
@@ -149,7 +150,7 @@ def test_create_match_info():
         season="2023",
         start_date=datetime(2023, 8, 1),
         end_date=datetime(2024, 5, 31),
-        is_active=True
+        is_active=True,
     )
 
     match = MatchInfo(
@@ -163,7 +164,7 @@ def test_create_match_info():
         home_score=None,
         away_score=None,
         home_half_score=None,
-        away_half_score=None
+        away_half_score=None,
     )
 
     assert match.id == 1

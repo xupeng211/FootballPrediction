@@ -5,17 +5,21 @@ except ImportError:
     class PredictionModel:
         def predict(self, data):
             pass
+
         def train(self, data):
             pass
+
         def evaluate(self, data):
             pass
+
 
 def test_prediction_model():
     model = PredictionModel()
     assert model is not None
 
+
 def test_model_methods():
     model = PredictionModel()
-    assert hasattr(model, 'predict')
-    assert hasattr(model, 'train')
-    assert hasattr(model, 'evaluate')
+    assert hasattr(model, "predict")
+    assert hasattr(model, "train")
+    assert hasattr(model, "evaluate")

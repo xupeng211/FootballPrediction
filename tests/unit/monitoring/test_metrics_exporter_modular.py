@@ -44,8 +44,12 @@ def test_metric_definitions():
 
 def test_data_collection_metrics():
     """测试数据采集指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import MetricsDefinitions
-    from src.monitoring.metrics_exporter_mod.data_collection_metrics import DataCollectionMetrics
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
+    )
+    from src.monitoring.metrics_exporter_mod.data_collection_metrics import (
+        DataCollectionMetrics,
+    )
 
     registry = CollectorRegistry()
     defs = MetricsDefinitions(registry=registry)
@@ -63,7 +67,7 @@ def test_data_collection_metrics():
         collection_type="odds",
         success=True,
         duration=0.5,
-        records_count=5
+        records_count=5,
     )
 
     # 批量记录
@@ -73,23 +77,27 @@ def test_data_collection_metrics():
             "collection_type": "fixtures",
             "success": True,
             "duration": 1.0,
-            "records_count": 3
+            "records_count": 3,
         },
         {
             "data_source": "source2",
             "collection_type": "odds",
             "success": False,
             "duration": 2.0,
-            "error_type": "network_error"
-        }
+            "error_type": "network_error",
+        },
     ]
     metrics.record_batch(collections)
 
 
 def test_data_cleaning_metrics():
     """测试数据清洗指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import MetricsDefinitions
-    from src.monitoring.metrics_exporter_mod.data_cleaning_metrics import DataCleaningMetrics
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
+    )
+    from src.monitoring.metrics_exporter_mod.data_cleaning_metrics import (
+        DataCleaningMetrics,
+    )
 
     registry = CollectorRegistry()
     defs = MetricsDefinitions(registry=registry)
@@ -103,16 +111,15 @@ def test_data_cleaning_metrics():
 
     # 记录详细的清洗
     metrics.record_cleaning(
-        data_type="odds",
-        success=True,
-        duration=0.3,
-        records_processed=50
+        data_type="odds", success=True, duration=0.3, records_processed=50
     )
 
 
 def test_scheduler_metrics():
     """测试调度器指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import MetricsDefinitions
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
+    )
     from src.monitoring.metrics_exporter_mod.scheduler_metrics import SchedulerMetrics
 
     registry = CollectorRegistry()
@@ -129,7 +136,7 @@ def test_scheduler_metrics():
         scheduled_time=scheduled_time,
         actual_start_time=start_time,
         duration=duration,
-        success=True
+        success=True,
     )
 
     # 记录失败的任务
@@ -139,7 +146,7 @@ def test_scheduler_metrics():
         actual_start_time=start_time,
         duration=2.0,
         success=False,
-        failure_reason="memory_error"
+        failure_reason="memory_error",
     )
 
     # 使用简化接口
@@ -155,7 +162,9 @@ def test_scheduler_metrics():
 
 def test_database_metrics():
     """测试数据库指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import MetricsDefinitions
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
+    )
     from src.monitoring.metrics_exporter_mod.database_metrics import DatabaseMetrics
 
     registry = CollectorRegistry()
@@ -172,14 +181,10 @@ def test_database_metrics():
     assert metrics._is_safe_table_name("valid_table_name")  # 有效名称
 
     # 测试更新表行数（测试模式）
-    table_counts = {
-        "matches": 100,
-        "teams": 20,
-        "odds": 500
-    }
+    table_counts = {"matches": 100, "teams": 20, "odds": 500}
 
     # 使用mock避免实际数据库操作
-    with patch.object(defs.table_row_count, 'labels') as mock_labels:
+    with patch.object(defs.table_row_count, "labels") as mock_labels:
         mock_gauge = MagicMock()
         mock_labels.return_value = mock_gauge
         import asyncio
@@ -212,16 +217,13 @@ def test_metrics_exporter():
         collection_type="fixtures",
         success=True,
         duration=1.0,
-        records_count=10
+        records_count=10,
     )
 
     # 测试数据清洗接口
     exporter.record_data_cleaning_success(50)
     exporter.record_data_cleaning(
-        data_type="matches",
-        success=True,
-        duration=0.5,
-        records_processed=20
+        data_type="matches", success=True, duration=0.5, records_processed=20
     )
 
     # 测试调度器接口
@@ -232,7 +234,7 @@ def test_metrics_exporter():
         actual_start_time=datetime.now(),
         duration=10.0,
         success=False,
-        failure_reason="timeout"
+        failure_reason="timeout",
     )
 
     # 测试数据库接口

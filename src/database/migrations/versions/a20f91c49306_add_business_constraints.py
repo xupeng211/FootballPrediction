@@ -12,8 +12,6 @@ Create Date: 2025-09-11 23:59:32.853716
 4. 外键引用一致性触发器
 """
 
-
-
 # revision identifiers, used by Alembic.
 revision: str = "a20f91c49306"
 down_revision: Union[str, None] = "d82ea26f05d0"
@@ -187,8 +185,6 @@ def downgrade() -> None:
     # 移除触发器
     op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")
     op.execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;")
-
-
 
     # 移除触发器函数
     op.execute("DROP FUNCTION IF EXISTS check_odds_consistency();")

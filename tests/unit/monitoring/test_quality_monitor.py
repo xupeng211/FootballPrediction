@@ -5,7 +5,11 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.monitoring.quality_monitor import QualityMonitor, DataFreshnessResult, DataCompletenessResult
+from src.monitoring.quality_monitor import (
+    QualityMonitor,
+    DataFreshnessResult,
+    DataCompletenessResult,
+)
 
 
 @pytest.fixture
@@ -28,7 +32,9 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_check_data_freshness(self, quality_monitor):
         """测试检查数据新鲜度"""
-        with patch.object(quality_monitor.freshness_checker, 'check_data_freshness') as mock_check:
+        with patch.object(
+            quality_monitor.freshness_checker, "check_data_freshness"
+        ) as mock_check:
             mock_check.return_value = {
                 "matches": DataFreshnessResult(
                     table_name="matches",
@@ -36,7 +42,7 @@ class TestQualityMonitor:
                     records_count=100,
                     freshness_hours=1.0,
                     is_fresh=True,
-                    threshold_hours=24
+                    threshold_hours=24,
                 )
             }
 
@@ -49,14 +55,16 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_check_data_completeness(self, quality_monitor):
         """测试检查数据完整性"""
-        with patch.object(quality_monitor.completeness_checker, 'check_data_completeness') as mock_check:
+        with patch.object(
+            quality_monitor.completeness_checker, "check_data_completeness"
+        ) as mock_check:
             mock_check.return_value = {
                 "matches": DataCompletenessResult(
                     table_name="matches",
                     total_records=100,
                     missing_critical_fields={},
                     missing_rate=0.0,
-                    completeness_score=100.0
+                    completeness_score=100.0,
                 )
             }
 
@@ -69,11 +77,13 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_check_data_consistency(self, quality_monitor):
         """测试检查数据一致性"""
-        with patch.object(quality_monitor.consistency_checker, 'check_data_consistency') as mock_check:
+        with patch.object(
+            quality_monitor.consistency_checker, "check_data_consistency"
+        ) as mock_check:
             mock_check.return_value = {
                 "foreign_key_consistency": {"orphaned_home_teams": 0},
                 "odds_consistency": {"invalid_odds_range": 0},
-                "match_status_consistency": {"finished_matches_without_score": 0}
+                "match_status_consistency": {"finished_matches_without_score": 0},
             }
 
             results = await quality_monitor.check_data_consistency()
@@ -86,13 +96,15 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_calculate_overall_quality_score(self, quality_monitor):
         """测试计算总体质量评分"""
-        with patch.object(quality_monitor.score_calculator, 'calculate_overall_quality_score') as mock_calculate:
+        with patch.object(
+            quality_monitor.score_calculator, "calculate_overall_quality_score"
+        ) as mock_calculate:
             mock_calculate.return_value = {
                 "overall_score": 95.0,
                 "freshness_score": 100.0,
                 "completeness_score": 90.0,
                 "consistency_score": 95.0,
-                "quality_level": "优秀"
+                "quality_level": "优秀",
             }
 
             results = await quality_monitor.calculate_overall_quality_score()
@@ -104,12 +116,14 @@ class TestQualityMonitor:
     @pytest.mark.asyncio
     async def test_get_quality_trends(self, quality_monitor):
         """测试获取质量趋势"""
-        with patch.object(quality_monitor.trend_analyzer, 'get_quality_trends') as mock_trends:
+        with patch.object(
+            quality_monitor.trend_analyzer, "get_quality_trends"
+        ) as mock_trends:
             mock_trends.return_value = {
                 "current_quality": {"overall_score": 90.0},
                 "trend_period_days": 7,
                 "trend_data": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
             results = await quality_monitor.get_quality_trends(days=7)
@@ -133,7 +147,7 @@ class TestDataFreshnessResult:
             records_count=100,
             freshness_hours=1.5,
             is_fresh=True,
-            threshold_hours=24
+            threshold_hours=24,
         )
 
         dict_result = result.to_dict()
@@ -155,7 +169,7 @@ class TestDataCompletenessResult:
             total_records=100,
             missing_critical_fields={"home_team_id": 0, "away_team_id": 0},
             missing_rate=0.0,
-            completeness_score=100.0
+            completeness_score=100.0,
         )
 
         dict_result = result.to_dict()

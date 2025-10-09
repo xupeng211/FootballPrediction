@@ -5,14 +5,17 @@ except ImportError:
     class LineageReporter:
         def track_data_flow(self, data):
             pass
+
         def generate_report(self):
             pass
+
 
 def test_lineage_reporter():
     reporter = LineageReporter()
     assert reporter is not None
 
+
 def test_lineage_methods():
     reporter = LineageReporter()
-    assert hasattr(reporter, 'track_data_flow')
-    assert hasattr(reporter, 'generate_report')
+    assert hasattr(reporter, "track_data_flow")
+    assert hasattr(reporter, "generate_report")

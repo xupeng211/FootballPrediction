@@ -1,4 +1,3 @@
-
 """配置数据库权限
 
 配置三类数据库用户的权限：
@@ -12,8 +11,6 @@ Revision ID: 004_configure_permissions
 Revises: f48d412852cc
 Create Date: 2025-09-10 16:40:00.000000
 """
-
-
 
 # revision identifiers, used by Alembic.
 revision = "004_configure_permissions"
@@ -363,7 +360,6 @@ def downgrade() -> None:
     if context.is_offline_mode():
         print("⚠️  离线模式：跳过数据库权限回滚")
         # 在离线模式下执行注释，确保 SQL 生成正常
-
 
         op.execute("-- offline mode: skipped database permission rollback")
         op.execute("-- offline mode: skipped database user deletion")

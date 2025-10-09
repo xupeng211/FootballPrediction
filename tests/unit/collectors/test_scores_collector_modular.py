@@ -94,7 +94,11 @@ class TestDataSources:
         """测试API-Sports数据转换"""
         source = ApiSportsSource()
         data = {
-            "fixture": {"id": 456, "date": "2024-01-01T15:00:00Z", "status": {"long": "LIVE"}},
+            "fixture": {
+                "id": 456,
+                "date": "2024-01-01T15:00:00Z",
+                "status": {"long": "LIVE"},
+            },
             "goals": {"home": 3, "away": 1},
             "score": {"halftime": {"home": 2, "away": 0}},
             "events": [{"type": "goal"}],
@@ -287,7 +291,9 @@ class TestScoresCollector:
         assert isinstance(collector.publisher, ScoreUpdatePublisher)
 
     @pytest.mark.asyncio
-    async def test_collect_match_score_with_cache(self, mock_db_session, mock_redis_manager):
+    async def test_collect_match_score_with_cache(
+        self, mock_db_session, mock_redis_manager
+    ):
         """测试从缓存收集比分"""
         collector = ScoresCollector(mock_db_session, mock_redis_manager)
 
@@ -300,7 +306,9 @@ class TestScoresCollector:
         assert result == cached_data
 
     @pytest.mark.asyncio
-    async def test_collect_match_score_force_update(self, mock_db_session, mock_redis_manager):
+    async def test_collect_match_score_force_update(
+        self, mock_db_session, mock_redis_manager
+    ):
         """测试强制更新比分"""
         collector = ScoresCollector(mock_db_session, mock_redis_manager)
 
@@ -357,7 +365,7 @@ class TestScoresCollectorManager:
         """测试获取收集器"""
         manager = ScoresCollectorManager()
 
-        with patch('src.database.connection.DatabaseManager') as mock_db_manager:
+        with patch("src.database.connection.DatabaseManager") as mock_db_manager:
             mock_db_manager.return_value.get_async_session.return_value = MagicMock()
 
             collector = await manager.get_collector(1)
@@ -490,6 +498,7 @@ def test_get_scores_manager():
 
     # 重置全局变量
     import src.collectors.scores.manager as manager_module
+
     manager_module._scores_manager = None
 
     manager1 = get_scores_manager()

@@ -22,8 +22,7 @@
 """
 
 from .football_data_cleaner_mod import (
-
-# 为了向后兼容，从新的模块化实现重新导出所有类
+    # 为了向后兼容，从新的模块化实现重新导出所有类
     FootballDataCleaner,
 )
 

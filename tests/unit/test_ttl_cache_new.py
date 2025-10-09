@@ -1,8 +1,10 @@
 """TTL缓存测试"""
+
 import pytest
 import time
 from unittest.mock import MagicMock, patch
 from src.cache.ttl_cache import TTLCache
+
 
 class TestTTLCache:
     """TTL缓存测试"""

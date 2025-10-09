@@ -45,12 +45,12 @@ class TestOddsSourceManager:
                             "outcomes": [
                                 {"name": "Home", "price": 2.0},
                                 {"name": "Draw", "price": 3.2},
-                                {"name": "Away", "price": 3.8}
-                            ]
+                                {"name": "Away", "price": 3.8},
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         result = source_manager._transform_odds_api_data(mock_data)
@@ -79,9 +79,9 @@ class TestOddsProcessor:
                             "match_winner": {
                                 "home_win": 2.0,
                                 "draw": 3.2,
-                                "away_win": 3.8
+                                "away_win": 3.8,
                             }
-                        }
+                        },
                     }
                 ]
             }
@@ -100,13 +100,8 @@ class TestOddsProcessor:
         valid_data = {
             "match_id": 123,
             "bookmakers": [
-                {
-                    "name": "bet365",
-                    "home_win": 2.0,
-                    "draw": 3.2,
-                    "away_win": 3.8
-                }
-            ]
+                {"name": "bet365", "home_win": 2.0, "draw": 3.2, "away_win": 3.8}
+            ],
         }
 
         assert processor.validate_odds_data(valid_data) is True
@@ -140,16 +135,11 @@ class TestOddsAnalyzer:
         odds_data = {
             "match_id": 123,
             "bookmakers": [
-                {
-                    "name": "bet365",
-                    "home_win": 2.0,
-                    "draw": 3.2,
-                    "away_win": 3.8
-                }
-            ]
+                {"name": "bet365", "home_win": 2.0, "draw": 3.2, "away_win": 3.8}
+            ],
         }
 
-        with patch.object(analyzer, '_get_model_prediction', return_value=None):
+        with patch.object(analyzer, "_get_model_prediction", return_value=None):
             value_bets = await analyzer.identify_value_bets(odds_data)
             assert value_bets == []
 
@@ -159,18 +149,15 @@ class TestOddsAnalyzer:
         odds_data = {
             "match_id": 123,
             "bookmakers": [
-                {
-                    "name": "bet365",
-                    "home_win": 2.5,
-                    "draw": 3.2,
-                    "away_win": 3.0
-                }
-            ]
+                {"name": "bet365", "home_win": 2.5, "draw": 3.2, "away_win": 3.0}
+            ],
         }
 
         mock_prediction = {"home": 0.5, "draw": 0.3, "away": 0.2}
 
-        with patch.object(analyzer, '_get_model_prediction', return_value=mock_prediction):
+        with patch.object(
+            analyzer, "_get_model_prediction", return_value=mock_prediction
+        ):
             value_bets = await analyzer.identify_value_bets(odds_data)
             assert len(value_bets) > 0
             assert value_bets[0]["bookmaker"] == "bet365"
@@ -179,27 +166,11 @@ class TestOddsAnalyzer:
         """测试市场效率分析"""
         odds_data = {
             "bookmakers": [
-                {
-                    "home_win": 2.0,
-                    "draw": 3.2,
-                    "away_win": 3.8
-                },
-                {
-                    "home_win": 2.1,
-                    "draw": 3.1,
-                    "away_win": 3.7
-                }
+                {"home_win": 2.0, "draw": 3.2, "away_win": 3.8},
+                {"home_win": 2.1, "draw": 3.1, "away_win": 3.7},
             ],
-            "best_odds": {
-                "home_win": 2.1,
-                "draw": 3.2,
-                "away_win": 3.8
-            },
-            "average_odds": {
-                "home_win": 2.05,
-                "draw": 3.15,
-                "away_win": 3.75
-            }
+            "best_odds": {"home_win": 2.1, "draw": 3.2, "away_win": 3.8},
+            "average_odds": {"home_win": 2.05, "draw": 3.15, "away_win": 3.75},
         }
 
         analysis = analyzer.analyze_market_efficiency(odds_data)
@@ -212,18 +183,13 @@ class TestOddsAnalyzer:
         """测试套利机会计算"""
         odds_data = {
             "bookmakers": [
-                {
-                    "name": "bet365",
-                    "home_win": 2.1,
-                    "draw": 3.3,
-                    "away_win": 3.9
-                },
+                {"name": "bet365", "home_win": 2.1, "draw": 3.3, "away_win": 3.9},
                 {
                     "name": "william_hill",
                     "home_win": 2.05,
                     "draw": 3.4,
-                    "away_win": 3.8
-                }
+                    "away_win": 3.8,
+                },
             ]
         }
 
@@ -323,7 +289,7 @@ class TestOddsCollectorManager:
     @pytest.mark.asyncio
     async def test_get_collector(self, manager):
         """测试获取收集器"""
-        with patch('src.collectors.odds.manager.get_async_session'):
+        with patch("src.collectors.odds.manager.get_async_session"):
             collector = await manager.get_collector(1)
             assert isinstance(collector, OddsCollector)
             assert 1 in manager.collectors

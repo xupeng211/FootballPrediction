@@ -1,6 +1,8 @@
 """球队模型测试"""
+
 import pytest
 from src.database.models.team import Team, TeamForm
+
 
 class TestTeamModel:
     """球队模型测试"""
@@ -13,7 +15,7 @@ class TestTeamModel:
             code="TA",
             league="Premier League",
             country="England",
-            founded=1886
+            founded=1886,
         )
 
         assert team.id == 1
@@ -24,12 +26,7 @@ class TestTeamModel:
 
     def test_team_properties(self):
         """测试球队属性"""
-        team = Team(
-            id=1,
-            name="Manchester United",
-            code="MUN",
-            league="Premier League"
-        )
+        team = Team(id=1, name="Manchester United", code="MUN", league="Premier League")
 
         assert team.short_name == "MUN"
         assert team.display_name == "Manchester United"
@@ -44,7 +41,7 @@ class TestTeamModel:
             {"result": "D", "score": "0-0"},
             {"result": "W", "score": "3-0"},
             {"result": "L", "score": "1-2"},
-            {"result": "W", "score": "2-0"}
+            {"result": "W", "score": "2-0"},
         ]
 
         form = team.calculate_form()
@@ -57,11 +54,7 @@ class TestTeamModel:
     def test_team_statistics(self):
         """测试球队统计"""
         team = Team(
-            id=1,
-            name="Team A",
-            goals_scored=45,
-            goals_conceded=20,
-            matches_played=25
+            id=1, name="Team A", goals_scored=45, goals_conceded=20, matches_played=25
         )
 
         stats = team.get_statistics()
@@ -78,7 +71,7 @@ class TestTeamModel:
                 id=1,
                 name="Team A",
                 code="",  # 空代码
-                league="Premier League"
+                league="Premier League",
             )
 
         # 测试过长的代码
@@ -87,7 +80,7 @@ class TestTeamModel:
                 id=1,
                 name="Team A",
                 code="TOOLONGCODE",  # 超过3个字符
-                league="Premier League"
+                league="Premier League",
             )
 
     def test_team_form_string(self):
@@ -106,7 +99,7 @@ class TestTeamModel:
             home_matches_played=15,
             home_matches_won=10,
             away_matches_played=15,
-            away_matches_won=5
+            away_matches_won=5,
         )
 
         home_advantage = team.calculate_home_advantage()
@@ -125,7 +118,7 @@ class TestTeamModel:
                 "drawn": 2,
                 "lost": 2,
                 "goals_for": 20,
-                "goals_against": 10
+                "goals_against": 10,
             }
         }
 

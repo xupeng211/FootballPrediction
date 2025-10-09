@@ -13,9 +13,6 @@ from src.database.base import BaseModel
 """
 
 
-
-
-
 class PredictedResult(Enum):
     """预测结果枚举"""
 
@@ -396,8 +393,6 @@ class Predictions(BaseModel):
             Dict[str, Any]: 准确性统计
         """
 
-
-
         # 获取指定天数内已结束比赛的预测
         cutoff_date = datetime.utcnow() - timedelta(days=days)
 
@@ -405,9 +400,6 @@ class Predictions(BaseModel):
             session.query(cls)
             .join(Match)
             .filter(
-
-
-
                 and_(
                     cls.model_name == model_name,
                     cls.predicted_at >= cutoff_date,

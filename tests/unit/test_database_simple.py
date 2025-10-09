@@ -18,7 +18,7 @@ def test_database_import():
 
 def test_database_connection():
     try:
-        from src.database.connection import DatabaseManager
+        from src.database.connection_mod import DatabaseManager
 
         manager = DatabaseManager()
         assert manager is not None

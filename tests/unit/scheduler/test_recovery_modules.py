@@ -256,7 +256,9 @@ class TestFailureClassifier:
         classifier = FailureClassifier()
 
         # 英文错误消息
-        failure_type = classifier.classify_failure("Connection timeout after 30 seconds")
+        failure_type = classifier.classify_failure(
+            "Connection timeout after 30 seconds"
+        )
         assert failure_type == FailureType.TIMEOUT
 
         # 中文错误消息
@@ -501,7 +503,9 @@ class TestRecoveryStatistics:
             failure = TaskFailure(
                 task_id=f"task_{i % 2}",
                 failure_time=datetime.now() - timedelta(hours=i),
-                failure_type=FailureType.TIMEOUT if i % 2 == 0 else FailureType.CONNECTION_ERROR,
+                failure_type=FailureType.TIMEOUT
+                if i % 2 == 0
+                else FailureType.CONNECTION_ERROR,
                 error_message=f"Error {i}",
             )
             stats.add_failure(failure)
@@ -517,7 +521,7 @@ class TestRecoveryStatistics:
         assert statistics["total_failures"] == 3
         assert statistics["successful_recoveries"] == 2
         assert statistics["failed_recoveries"] == 1
-        assert statistics["recovery_success_rate"] == 2/3 * 100
+        assert statistics["recovery_success_rate"] == 2 / 3 * 100
         assert "timeout" in statistics["failure_by_type"]
         assert "connection_error" in statistics["failure_by_type"]
         assert "recent_24h" in statistics
@@ -577,8 +581,7 @@ class TestRecoveryHandler:
 
         # 处理失败
         result = handler.handle_task_failure(
-            task,
-            "Connection timeout after 30 seconds"
+            task, "Connection timeout after 30 seconds"
         )
 
         assert result is True  # 应该成功安排重试
@@ -630,8 +633,7 @@ class TestRecoveryHandler:
         handler = RecoveryHandler()
 
         handler.add_custom_keywords(
-            FailureType.TIMEOUT,
-            ["custom_timeout", "自定义超时"]
+            FailureType.TIMEOUT, ["custom_timeout", "自定义超时"]
         )
 
         # 测试分类器是否包含了新关键词

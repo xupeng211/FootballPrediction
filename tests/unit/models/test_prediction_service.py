@@ -30,10 +30,11 @@ class TestPredictionService:
     @pytest.fixture
     def mock_service(self):
         """创建模拟的PredictionService实例"""
-        with patch("src.models.prediction_service.DatabaseManager"), patch(
-            "src.models.prediction_service.FootballFeatureStore"
-        ), patch("src.models.prediction_service.ModelMetricsExporter"), patch(
-            "src.models.prediction_service.mlflow"
+        with (
+            patch("src.models.prediction_service.DatabaseManager"),
+            patch("src.models.prediction_service.FootballFeatureStore"),
+            patch("src.models.prediction_service.ModelMetricsExporter"),
+            patch("src.models.prediction_service.mlflow"),
         ):
             service = PredictionService(mlflow_tracking_uri="http://test:5002")
             return service
@@ -233,13 +234,14 @@ class TestPredictionService:
     async def test_predict_match_success(self, mock_service, mock_model):
         """测试预测比赛结果 - 成功"""
         # Mock依赖
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "_get_match_info"
-        ) as mock_match_info, patch.object(
-            mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "_get_match_info") as mock_match_info,
+            patch.object(
+                mock_service.feature_store, "get_match_features_for_prediction"
+            ) as mock_features,
+            patch.object(mock_service, "_store_prediction"),
+        ):
             # 设置mock返回值
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
@@ -282,13 +284,14 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match_using_default_features(self, mock_service, mock_model):
         """测试特征获取失败时使用默认特征"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "_get_match_info"
-        ) as mock_match_info, patch.object(
-            mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "_get_match_info") as mock_match_info,
+            patch.object(
+                mock_service.feature_store, "get_match_features_for_prediction"
+            ) as mock_features,
+            patch.object(mock_service, "_store_prediction"),
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,
@@ -307,11 +310,10 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match_match_not_found(self, mock_service, mock_model):
         """测试预测不存在的比赛"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "_get_match_info"
-        ) as mock_match_info:
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "_get_match_info") as mock_match_info,
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = None  # 比赛不存在
 
@@ -321,11 +323,10 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_batch_predict_matches_success(self, mock_service, mock_model):
         """测试批量预测 - 成功"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "predict_match"
-        ) as mock_predict:
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "predict_match") as mock_predict,
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
 
             # Mock单个预测结果
@@ -350,11 +351,10 @@ class TestPredictionService:
         cached_result = PredictionResult(match_id=12345, model_version="1.0")
         await mock_service.prediction_cache.set("prediction:12345", cached_result)
 
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "predict_match"
-        ) as mock_predict:
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "predict_match") as mock_predict,
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             result2 = PredictionResult(match_id=12346, model_version="1.0")
             mock_predict.return_value = result2
@@ -371,11 +371,10 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_batch_predict_partial_failure(self, mock_service, mock_model):
         """测试批量预测部分失败"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "predict_match"
-        ) as mock_predict:
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "predict_match") as mock_predict,
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
 
             # 第一个成功，第二个失败
@@ -523,13 +522,14 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_prediction_result_metadata(self, mock_service, mock_model):
         """测试预测结果元数据"""
-        with patch.object(
-            mock_service, "get_production_model"
-        ) as mock_get_model, patch.object(
-            mock_service, "_get_match_info"
-        ) as mock_match_info, patch.object(
-            mock_service.feature_store, "get_match_features_for_prediction"
-        ) as mock_features, patch.object(mock_service, "_store_prediction"):
+        with (
+            patch.object(mock_service, "get_production_model") as mock_get_model,
+            patch.object(mock_service, "_get_match_info") as mock_match_info,
+            patch.object(
+                mock_service.feature_store, "get_match_features_for_prediction"
+            ) as mock_features,
+            patch.object(mock_service, "_store_prediction"),
+        ):
             mock_get_model.return_value = (mock_model, "1.0")
             mock_match_info.return_value = {
                 "id": 12345,

@@ -1,10 +1,12 @@
 """预测模型测试"""
+
 import pytest
 from datetime import datetime
 from decimal import Decimal
 from src.database.models.predictions import Prediction, PredictionStatus
 from src.database.models.match import Match
 from src.database.models.team import Team
+
 
 class TestPredictionModel:
     """预测模型测试"""
@@ -25,7 +27,7 @@ class TestPredictionModel:
             predicted_home_score=2,
             predicted_away_score=1,
             confidence_score=Decimal("0.85"),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         assert prediction.id == 1
@@ -48,10 +50,14 @@ class TestPredictionModel:
             draw_probability=Decimal("0.30"),
             away_win_probability=Decimal("0.20"),
             predicted_home_score=1,
-            predicted_away_score=1
+            predicted_away_score=1,
         )
 
-        total = prediction.home_win_probability + prediction.draw_probability + prediction.away_win_probability
+        total = (
+            prediction.home_win_probability
+            + prediction.draw_probability
+            + prediction.away_win_probability
+        )
         assert total == Decimal("1.0")
 
         # 无效概率（总和不为1）
@@ -64,7 +70,7 @@ class TestPredictionModel:
                 draw_probability=Decimal("0.60"),
                 away_win_probability=Decimal("0.10"),
                 predicted_home_score=1,
-                predicted_away_score=1
+                predicted_away_score=1,
             )
 
     def test_prediction_accuracy(self):
@@ -77,7 +83,7 @@ class TestPredictionModel:
             away_team=away_team,
             home_score=2,
             away_score=1,
-            status="completed"
+            status="completed",
         )
 
         prediction = Prediction(
@@ -87,7 +93,7 @@ class TestPredictionModel:
             predicted_home_score=2,
             predicted_away_score=1,
             home_win_probability=Decimal("0.60"),
-            confidence_score=Decimal("0.80")
+            confidence_score=Decimal("0.80"),
         )
 
         # 验证预测正确
@@ -107,10 +113,7 @@ class TestPredictionModel:
         match = Match(id=1, home_team=home_team, away_team=away_team)
 
         prediction = Prediction(
-            id=1,
-            match=match,
-            predicted_winner="home",
-            status=PredictionStatus.PENDING
+            id=1, match=match, predicted_winner="home", status=PredictionStatus.PENDING
         )
 
         # 从待处理到已处理
@@ -131,8 +134,8 @@ class TestPredictionModel:
                 "home_goals_avg": 2.5,
                 "away_goals_avg": 0.8,
                 "head_to_head_home_wins": 3,
-                "head_to_head_away_wins": 1
-            }
+                "head_to_head_away_wins": 1,
+            },
         )
 
         # 验证特征存在
@@ -150,7 +153,7 @@ class TestPredictionModel:
             model_version="v1.0.0",
             model_type="gradient_boosting",
             training_data_size=10000,
-            features_count=25
+            features_count=25,
         )
 
         assert prediction.model_version == "v1.0.0"
@@ -183,7 +186,7 @@ class TestPredictionModel:
             predicted_winner="home",
             home_win_probability=Decimal("0.60"),
             confidence_score=Decimal("0.85"),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         pred_dict = prediction.to_dict()

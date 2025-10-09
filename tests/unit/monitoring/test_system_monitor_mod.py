@@ -23,12 +23,12 @@ class TestPrometheusMetrics:
         metrics = PrometheusMetrics()
 
         # 验证所有指标都已创建
-        assert hasattr(metrics, 'system_cpu_percent')
-        assert hasattr(metrics, 'system_memory_percent')
-        assert hasattr(metrics, 'app_requests_total')
-        assert hasattr(metrics, 'db_query_duration_seconds')
-        assert hasattr(metrics, 'cache_operations_total')
-        assert hasattr(metrics, 'business_predictions_total')
+        assert hasattr(metrics, "system_cpu_percent")
+        assert hasattr(metrics, "system_memory_percent")
+        assert hasattr(metrics, "app_requests_total")
+        assert hasattr(metrics, "db_query_duration_seconds")
+        assert hasattr(metrics, "cache_operations_total")
+        assert hasattr(metrics, "business_predictions_total")
 
     def test_get_all_metrics(self):
         """测试获取所有指标"""
@@ -37,12 +37,12 @@ class TestPrometheusMetrics:
 
         # 验证返回的指标字典包含所有预期的指标
         expected_keys = [
-            'system_cpu_percent',
-            'system_memory_percent',
-            'app_requests_total',
-            'db_query_duration_seconds',
-            'cache_operations_total',
-            'business_predictions_total',
+            "system_cpu_percent",
+            "system_memory_percent",
+            "app_requests_total",
+            "db_query_duration_seconds",
+            "cache_operations_total",
+            "business_predictions_total",
         ]
 
         for key in expected_keys:
@@ -85,10 +85,10 @@ class TestSystemMonitor:
         metrics = await monitor.collect_metrics()
 
         # 验证返回的指标包含预期的组件
-        assert 'system' in metrics
-        assert 'database' in metrics
-        assert 'cache' in metrics
-        assert 'application' in metrics
+        assert "system" in metrics
+        assert "database" in metrics
+        assert "cache" in metrics
+        assert "application" in metrics
 
     @pytest.mark.asyncio
     async def test_get_health_status(self):
@@ -99,51 +99,51 @@ class TestSystemMonitor:
         health = await monitor.get_health_status()
 
         # 验证健康状态结构
-        assert 'status' in health
-        assert 'timestamp' in health
-        assert 'components' in health
-        assert 'metrics' in health
-        assert 'uptime_seconds' in health
-        assert 'version' in health
+        assert "status" in health
+        assert "timestamp" in health
+        assert "components" in health
+        assert "metrics" in health
+        assert "uptime_seconds" in health
+        assert "version" in health
 
     def test_record_request(self):
         """测试记录HTTP请求"""
         monitor = SystemMonitor()
 
         # 记录请求（应该不会抛出异常）
-        monitor.record_request('GET', '/api/v1/test', 200, 0.123)
+        monitor.record_request("GET", "/api/v1/test", 200, 0.123)
 
     def test_record_database_query(self):
         """测试记录数据库查询"""
         monitor = SystemMonitor()
 
         # 记录普通查询
-        monitor.record_database_query('SELECT', 'matches', 0.045)
+        monitor.record_database_query("SELECT", "matches", 0.045)
 
         # 记录慢查询
-        monitor.record_database_query('SELECT', 'matches', 2.5, is_slow=True)
+        monitor.record_database_query("SELECT", "matches", 2.5, is_slow=True)
 
     def test_record_cache_operation(self):
         """测试记录缓存操作"""
         monitor = SystemMonitor()
 
         # 记录缓存命中
-        monitor.record_cache_operation('get', 'redis', 'hit')
+        monitor.record_cache_operation("get", "redis", "hit")
 
         # 记录缓存未命中
-        monitor.record_cache_operation('get', 'redis', 'miss')
+        monitor.record_cache_operation("get", "redis", "miss")
 
     def test_record_prediction(self):
         """测试记录预测操作"""
         monitor = SystemMonitor()
 
-        monitor.record_prediction('v1.0.0', 'premier_league')
+        monitor.record_prediction("v1.0.0", "premier_league")
 
     def test_record_model_inference(self):
         """测试记录模型推理"""
         monitor = SystemMonitor()
 
-        monitor.record_model_inference('football_predictor', 'v2.1.0', 0.234)
+        monitor.record_model_inference("football_predictor", "v2.1.0", 0.234)
 
     def test_get_monitoring_status(self):
         """测试获取监控状态"""
@@ -151,10 +151,10 @@ class TestSystemMonitor:
 
         status = monitor.get_monitoring_status()
 
-        assert 'is_monitoring' in status
-        assert 'uptime_seconds' in status
-        assert 'collectors' in status
-        assert 'health_checkers' in status
+        assert "is_monitoring" in status
+        assert "uptime_seconds" in status
+        assert "collectors" in status
+        assert "health_checkers" in status
 
 
 class TestGlobalInstance:
@@ -184,9 +184,9 @@ class TestIntegration:
         await asyncio.sleep(0.3)
 
         # 记录一些指标
-        monitor.record_request('POST', '/api/v1/predict', 201, 0.567)
-        monitor.record_database_query('INSERT', 'predictions', 0.123)
-        monitor.record_cache_operation('set', 'redis', 'success')
+        monitor.record_request("POST", "/api/v1/predict", 201, 0.567)
+        monitor.record_database_query("INSERT", "predictions", 0.123)
+        monitor.record_cache_operation("set", "redis", "success")
 
         # 收集指标
         metrics = await monitor.collect_metrics()
@@ -205,18 +205,18 @@ class TestIntegration:
 @pytest.mark.asyncio
 async def test_backward_compatibility():
     """测试向后兼容性"""
-    from src.monitoring.system_monitor import SystemMonitor as LegacySystemMonitor
+    from src.monitoring.system_monitor_mod import SystemMonitor as LegacySystemMonitor
 
     # 使用旧的导入应该能正常工作
     monitor = LegacySystemMonitor()
 
     # 所有方法都应该可用
-    assert hasattr(monitor, 'start_monitoring')
-    assert hasattr(monitor, 'stop_monitoring')
-    assert hasattr(monitor, 'record_request')
-    assert hasattr(monitor, 'get_health_status')
+    assert hasattr(monitor, "start_monitoring")
+    assert hasattr(monitor, "stop_monitoring")
+    assert hasattr(monitor, "record_request")
+    assert hasattr(monitor, "get_health_status")
 
     # 测试基本功能
-    monitor.record_request('GET', '/test', 200, 0.1)
+    monitor.record_request("GET", "/test", 200, 0.1)
     health = await monitor.get_health_status()
     assert health is not None

@@ -36,7 +36,7 @@ class TestMonitoring:
     def test_system_monitor_import(self):
         """测试系统监控器导入"""
         try:
-            from src.monitoring.system_monitor import SystemMonitor
+            from src.monitoring.system_monitor_mod import SystemMonitor
 
             assert SystemMonitor is not None
         except ImportError:

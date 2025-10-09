@@ -1,6 +1,3 @@
-
-
-
 """
 足球预测系统内容分析服务模块
 
@@ -216,7 +213,6 @@ class ContentAnalysisService(BaseService):
             return text or ""
 
         # 简单的摘要生成：取前面部分加上省略号
-
 
         sentences = text.split("。")
         summary = ""

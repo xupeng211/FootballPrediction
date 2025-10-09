@@ -1,8 +1,10 @@
 """比赛模型测试"""
+
 import pytest
 from datetime import datetime
 from src.database.models.match import Match, MatchStatus, MatchResult
 from src.database.models.team import Team
+
 
 class TestMatchModel:
     """比赛模型测试"""
@@ -19,7 +21,7 @@ class TestMatchModel:
             date=datetime(2024, 1, 1, 15, 0),
             status=MatchStatus.SCHEDULED,
             league="Premier League",
-            season="2023-24"
+            season="2023-24",
         )
 
         assert match.id == 1
@@ -34,7 +36,7 @@ class TestMatchModel:
             home_team=Team(id=1, name="Team A"),
             away_team=Team(id=2, name="Team B"),
             date=datetime(2024, 1, 1),
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
 
         # 从预定到进行中
@@ -60,7 +62,7 @@ class TestMatchModel:
             away_team=away_team,
             home_score=2,
             away_score=1,
-            status=MatchStatus.COMPLETED
+            status=MatchStatus.COMPLETED,
         )
 
         assert match.result == MatchResult.HOME_WIN
@@ -82,7 +84,7 @@ class TestMatchModel:
             date=datetime(2024, 1, 1, 15, 0),
             home_score=2,
             away_score=1,
-            status=MatchStatus.COMPLETED
+            status=MatchStatus.COMPLETED,
         )
 
         assert match.goal_difference == 1
@@ -103,7 +105,7 @@ class TestMatchModel:
             home_score=3,
             away_score=0,
             status=MatchStatus.COMPLETED,
-            league="Premier League"
+            league="Premier League",
         )
 
         match_dict = match.to_dict()
@@ -123,7 +125,7 @@ class TestMatchModel:
                 away_team=Team(id=2, name="Team B"),
                 home_score=-1,  # 无效的比分
                 away_score=1,
-                status=MatchStatus.COMPLETED
+                status=MatchStatus.COMPLETED,
             )
 
         # 测试取消的比赛没有比分
@@ -131,7 +133,7 @@ class TestMatchModel:
             id=1,
             home_team=Team(id=1, name="Team A"),
             away_team=Team(id=2, name="Team B"),
-            status=MatchStatus.CANCELLED
+            status=MatchStatus.CANCELLED,
         )
         assert match.home_score is None
         assert match.away_score is None
@@ -142,6 +144,6 @@ class TestMatchModel:
             id=1,
             home_team=Team(id=1, name="Team A"),
             away_team=Team(id=2, name="Team B"),
-            date=datetime(2024, 1, 1)
+            date=datetime(2024, 1, 1),
         )
         assert "Team A vs Team B" in str(match)

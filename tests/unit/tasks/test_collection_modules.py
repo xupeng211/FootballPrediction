@@ -26,7 +26,7 @@ class TestDataCollectionTask:
     def test_data_collection_task_initialization(self):
         """测试DataCollectionTask初始化"""
         task = DataCollectionTask()
-        assert hasattr(task, 'error_logger')
+        assert hasattr(task, "error_logger")
 
     def test_on_failure(self):
         """测试任务失败处理"""
@@ -41,7 +41,7 @@ class TestDataCollectionTask:
         task.error_logger = AsyncMock()
 
         # 调用on_failure
-        with patch('src.tasks.collection.base.asyncio') as mock_asyncio:
+        with patch("src.tasks.collection.base.asyncio") as mock_asyncio:
             mock_loop = MagicMock()
             mock_asyncio.get_event_loop.return_value = mock_loop
 
@@ -56,6 +56,7 @@ class TestCollectionTaskMixin:
 
     def test_handle_retry(self):
         """测试重试处理"""
+
         class TestTask(CollectionTaskMixin):
             request = MagicMock()
             request.retries = 2
@@ -72,18 +73,19 @@ class TestCollectionTaskMixin:
 
     def test_log_data_collection_error(self):
         """测试数据采集错误日志"""
+
         class TestTask(CollectionTaskMixin):
             error_logger = AsyncMock()
 
         task = TestTask()
         exc = Exception("Test error")
 
-        with patch('src.tasks.collection.base.asyncio.run') as mock_run:
+        with patch("src.tasks.collection.base.asyncio.run") as mock_run:
             CollectionTaskMixin.log_data_collection_error(
                 task,
                 data_source="test_api",
                 collection_type="test_collection",
-                error=exc
+                error=exc,
             )
             mock_run.assert_called_once()
 
@@ -91,7 +93,7 @@ class TestCollectionTaskMixin:
 class TestFixturesCollection:
     """测试赛程数据采集"""
 
-    @patch('src.tasks.collection.fixtures.asyncio.run')
+    @patch("src.tasks.collection.fixtures.asyncio.run")
     def test_collect_fixtures_success(self, mock_run):
         """测试成功采集赛程数据"""
         # 模拟异步执行结果
@@ -116,7 +118,7 @@ class TestFixturesCollection:
         assert result["leagues"] == ["Premier League"]
         assert result["days_ahead"] == 7
 
-    @patch('src.tasks.collection.fixtures.asyncio.run')
+    @patch("src.tasks.collection.fixtures.asyncio.run")
     def test_collect_fixtures_failure(self, mock_run):
         """测试赛程采集失败"""
         mock_run.side_effect = Exception("API error")
@@ -126,7 +128,7 @@ class TestFixturesCollection:
         task.request.retries = 0
         task.error_logger = AsyncMock()
 
-        with patch.object(task, 'retry') as mock_retry:
+        with patch.object(task, "retry") as mock_retry:
             with pytest.raises(Exception):
                 task.run()
             mock_retry.assert_called_once()
@@ -145,7 +147,7 @@ class TestOddsCollection:
 class TestScoresCollection:
     """测试比分数据采集"""
 
-    @patch('src.tasks.collection.scores.should_collect_live_scores')
+    @patch("src.tasks.collection.scores.should_collect_live_scores")
     def test_skip_when_no_live_matches(self, mock_should):
         """测试无实时比赛时跳过采集"""
         mock_should.return_value = False
@@ -168,11 +170,8 @@ class TestHistoricalDataCollection:
         task = collect_historical_data_task
 
         # 模拟执行
-        with patch('src.tasks.collection.historical.asyncio.run') as mock_run:
-            mock_result = {
-                "matches_collected": 20,
-                "data_summary": {"matches": 20}
-            }
+        with patch("src.tasks.collection.historical.asyncio.run") as mock_run:
+            mock_result = {"matches_collected": 20, "data_summary": {"matches": 20}}
             mock_run.return_value = mock_result
 
             task_instance = task
@@ -198,13 +197,23 @@ class TestEmergencyCollection:
         task.request.retries = 0
         task.error_logger = AsyncMock()
 
-        with patch('src.tasks.collection.emergency.collect_fixtures_task') as mock_fixtures:
-            with patch('src.tasks.collection.emergency.collect_odds_task') as mock_odds:
-                with patch('src.tasks.collection.emergency.collect_scores_task') as mock_scores:
+        with patch(
+            "src.tasks.collection.emergency.collect_fixtures_task"
+        ) as mock_fixtures:
+            with patch("src.tasks.collection.emergency.collect_odds_task") as mock_odds:
+                with patch(
+                    "src.tasks.collection.emergency.collect_scores_task"
+                ) as mock_scores:
                     # 模拟任务结果
-                    mock_fixtures.apply_async.return_value.get.return_value = {"status": "success"}
-                    mock_odds.apply_async.return_value.get.return_value = {"status": "success"}
-                    mock_scores.apply_async.return_value.get.return_value = {"status": "success"}
+                    mock_fixtures.apply_async.return_value.get.return_value = {
+                        "status": "success"
+                    }
+                    mock_odds.apply_async.return_value.get.return_value = {
+                        "status": "success"
+                    }
+                    mock_scores.apply_async.return_value.get.return_value = {
+                        "status": "success"
+                    }
 
                     result = task.run(match_id=None)
 
@@ -218,13 +227,23 @@ class TestManualCollection:
 
     def test_manual_collect_all_data(self):
         """测试手动采集所有数据"""
-        with patch('src.tasks.collection.emergency.collect_fixtures_task') as mock_fixtures:
-            with patch('src.tasks.collection.emergency.collect_odds_task') as mock_odds:
-                with patch('src.tasks.collection.emergency.collect_scores_task') as mock_scores:
+        with patch(
+            "src.tasks.collection.emergency.collect_fixtures_task"
+        ) as mock_fixtures:
+            with patch("src.tasks.collection.emergency.collect_odds_task") as mock_odds:
+                with patch(
+                    "src.tasks.collection.emergency.collect_scores_task"
+                ) as mock_scores:
                     # 模拟延迟任务
-                    mock_fixtures.delay.return_value.get.return_value = {"status": "success"}
-                    mock_odds.delay.return_value.get.return_value = {"status": "success"}
-                    mock_scores.delay.return_value.get.return_value = {"status": "success"}
+                    mock_fixtures.delay.return_value.get.return_value = {
+                        "status": "success"
+                    }
+                    mock_odds.delay.return_value.get.return_value = {
+                        "status": "success"
+                    }
+                    mock_scores.delay.return_value.get.return_value = {
+                        "status": "success"
+                    }
 
                     result = manual_collect_all_data()
 
@@ -247,7 +266,7 @@ class TestDataValidation:
                 "home_team": "Team A",
                 "away_team": "Team B",
                 "date": "2024-01-01T15:00:00",
-                "league": "Premier League"
+                "league": "Premier League",
             }
         ]
 
@@ -273,7 +292,7 @@ class TestDataValidation:
             {
                 "match_id": "123",
                 "bookmaker": "Bet365",
-                "odds": {"home_win": 2.5, "draw": 3.2, "away_win": 2.8}
+                "odds": {"home_win": 2.5, "draw": 3.2, "away_win": 2.8},
             }
         ]
 
@@ -287,11 +306,7 @@ class TestDataValidation:
 
         # 测试有效数据
         valid_data = [
-            {
-                "match_id": "123",
-                "status": "FT",
-                "score": {"home": 2, "away": 1}
-            }
+            {"match_id": "123", "status": "FT", "score": {"home": 2, "away": 1}}
         ]
 
         result = validator.validate_scores_data(valid_data)
@@ -311,7 +326,7 @@ class TestDataValidation:
                 "home_team": "Team A",
                 "away_team": "Team B",
                 "date": "2024-01-01T15:00:00",
-                "league": "Premier League"
+                "league": "Premier League",
             }
         ]
 

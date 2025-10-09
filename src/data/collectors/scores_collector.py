@@ -14,9 +14,6 @@
 """
 
 
-
-
-
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
@@ -455,8 +452,6 @@ class ScoresCollector(DataCollector):
                 # 获取当前需要监控的比赛
                 if not match_ids:
                     current_matches = await self._get_live_matches()
-
-
 
                 else:
                     current_matches = match_ids

@@ -1,10 +1,12 @@
 """赔率模型测试"""
+
 import pytest
 from datetime import datetime
 from decimal import Decimal
 from src.database.models.odds import Odds, MarketType
 from src.database.models.match import Match
 from src.database.models.team import Team
+
 
 class TestOddsModel:
     """赔率模型测试"""
@@ -23,7 +25,7 @@ class TestOddsModel:
             home_odds=Decimal("2.10"),
             draw_odds=Decimal("3.20"),
             away_odds=Decimal("3.40"),
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         assert odds.id == 1
@@ -37,7 +39,7 @@ class TestOddsModel:
         odds = Odds(
             home_odds=Decimal("2.00"),
             draw_odds=Decimal("3.00"),
-            away_odds=Decimal("4.00")
+            away_odds=Decimal("4.00"),
         )
 
         # 计算隐含概率
@@ -58,7 +60,7 @@ class TestOddsModel:
         odds = Odds(
             home_odds=Decimal("2.00"),
             draw_odds=Decimal("3.00"),
-            away_odds=Decimal("4.00")
+            away_odds=Decimal("4.00"),
         )
 
         overround = odds.calculate_overround()
@@ -69,7 +71,7 @@ class TestOddsModel:
         odds = Odds(
             home_odds=Decimal("2.50"),
             draw_odds=Decimal("3.20"),
-            away_odds=Decimal("2.80")
+            away_odds=Decimal("2.80"),
         )
 
         # 如果我们认为主队胜率是50%，那么2.50的赔率有价值
@@ -101,7 +103,7 @@ class TestOddsModel:
             home_odds=Decimal("2.00"),
             draw_odds=Decimal("3.20"),
             away_odds=Decimal("3.40"),
-            timestamp=datetime(2024, 1, 1, 10, 0)
+            timestamp=datetime(2024, 1, 1, 10, 0),
         )
 
         updated_odds = Odds(
@@ -109,7 +111,7 @@ class TestOddsModel:
             home_odds=Decimal("1.90"),
             draw_odds=Decimal("3.30"),
             away_odds=Decimal("3.60"),
-            timestamp=datetime(2024, 1, 1, 12, 0)
+            timestamp=datetime(2024, 1, 1, 12, 0),
         )
 
         # 主队赔率下降（变得更被看好）
@@ -128,7 +130,7 @@ class TestOddsModel:
             match=match,
             market_type=MarketType.ASIAN_HANDICAP,
             home_odds=Decimal("1.95"),
-            handicap="-0.5"
+            handicap="-0.5",
         )
         assert asian_odds.handicap == "-0.5"
 
@@ -138,7 +140,7 @@ class TestOddsModel:
             market_type=MarketType.TOTAL_GOALS,
             over_odds=Decimal("1.90"),
             under_odds=Decimal("1.95"),
-            line=2.5
+            line=2.5,
         )
         assert total_odds.line == 2.5
 
@@ -163,7 +165,7 @@ class TestOddsModel:
             "bookmaker": "William Hill",
             "home_odds": "2.10",
             "draw_odds": "3.20",
-            "away_odds": "3.40"
+            "away_odds": "3.40",
         }
 
         odds = Odds.from_json(json_data)
@@ -177,7 +179,7 @@ class TestOddsModel:
             id=1,
             home_odds=Decimal("2.10"),
             draw_odds=Decimal("3.20"),
-            away_odds=Decimal("3.40")
+            away_odds=Decimal("3.40"),
         )
 
         odds_dict = odds.to_dict()

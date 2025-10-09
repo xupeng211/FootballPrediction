@@ -16,10 +16,7 @@ def test_metric_types():
 
     # 测试MetricPoint
     point = MetricPoint(
-        name="test_metric",
-        value=100.5,
-        labels={"env": "test"},
-        unit="ms"
+        name="test_metric", value=100.5, labels={"env": "test"}, unit="ms"
     )
     assert point.name == "test_metric"
     assert point.value == 100.5
@@ -29,12 +26,7 @@ def test_metric_types():
 
     # 测试MetricSummary
     summary = MetricSummary(
-        count=10,
-        sum=1000.0,
-        avg=100.0,
-        min=50.0,
-        max=150.0,
-        last=95.0
+        count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0
     )
     assert summary.count == 10
     assert summary.avg == 100.0
@@ -46,7 +38,7 @@ def test_metric_types():
         name="test_alert",
         message="Test alert message",
         severity="high",
-        component="test_component"
+        component="test_component",
     )
     assert alert.name == "test_alert"
     assert alert.message == "Test alert message"
@@ -56,24 +48,18 @@ def test_metric_types():
 
 def test_metrics_aggregator():
     """测试指标聚合器"""
-    from src.monitoring.metrics_collector_enhanced_mod.aggregator import MetricsAggregator
+    from src.monitoring.metrics_collector_enhanced_mod.aggregator import (
+        MetricsAggregator,
+    )
     from src.monitoring.metrics_collector_enhanced_mod.metric_types import MetricPoint
 
     aggregator = MetricsAggregator(window_size=60)
 
     # 添加指标点
-    point1 = MetricPoint(
-        name="test_metric",
-        value=100.0,
-        labels={"env": "test"}
-    )
+    point1 = MetricPoint(name="test_metric", value=100.0, labels={"env": "test"})
     aggregator.add_metric(point1)
 
-    point2 = MetricPoint(
-        name="test_metric",
-        value=200.0,
-        labels={"env": "test"}
-    )
+    point2 = MetricPoint(name="test_metric", value=200.0, labels={"env": "test"})
     aggregator.add_metric(point2)
 
     # 获取指标聚合
@@ -108,7 +94,7 @@ def test_alert_manager():
         name="high_error_rate",
         condition=high_error_rate,
         severity="high",
-        description="Error rate is too high"
+        description="Error rate is too high",
     )
 
     # 检查告警（不应触发）
@@ -135,7 +121,9 @@ def test_alert_manager():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod.system_metrics import SystemMetricsCollector
+    from src.monitoring.metrics_collector_enhanced_mod.system_metrics import (
+        SystemMetricsCollector,
+    )
     from unittest.mock import Mock
 
     prometheus_manager = Mock()
@@ -152,20 +140,14 @@ def test_system_metrics_collector():
 
     # 记录缓存操作
     collector.record_cache_operation(
-        cache_type="redis",
-        operation="get",
-        hit=True,
-        size=1000
+        cache_type="redis", operation="get", hit=True, size=1000
     )
     assert "redis" in collector.cache_stats
     assert collector.cache_stats["redis"]["hits"] == 1
     assert collector.cache_stats["redis"]["last_size"] == 1000
 
     # 更新连接指标
-    collector.update_connection_metrics({
-        "database": 10,
-        "redis": 5
-    })
+    collector.update_connection_metrics({"database": 10, "redis": 5})
     # 验证prometheus.set_gauge被调用
     assert prometheus_manager.set_gauge.called
 
@@ -178,7 +160,9 @@ def test_system_metrics_collector():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod.business_metrics import BusinessMetricsCollector
+    from src.monitoring.metrics_collector_enhanced_mod.business_metrics import (
+        BusinessMetricsCollector,
+    )
     from unittest.mock import Mock
 
     prometheus_manager = Mock()
@@ -193,7 +177,7 @@ def test_business_metrics_collector():
         predicted_result="home",
         confidence=0.85,
         duration=0.5,
-        success=True
+        success=True,
     )
 
     # 验证统计更新
@@ -227,7 +211,7 @@ def test_business_metrics_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.monitoring.metrics_collector_enhanced import (
+    from src.monitoring.metrics_collector_enhanced_mod import (
         EnhancedMetricsCollector,
         MetricsAggregator,
         MetricPoint,
@@ -290,12 +274,14 @@ def test_alert_handlers():
     )
 
     # 测试日志处理器
-    with patch('src.monitoring.metrics_collector_enhanced_mod.alerting.logger') as mock_logger:
+    with patch(
+        "src.monitoring.metrics_collector_enhanced_mod.alerting.logger"
+    ) as mock_logger:
         DefaultAlertHandlers.log_handler(alert)
         assert mock_logger.error.called
 
     # 测试控制台处理器
-    with patch('builtins.print') as mock_print:
+    with patch("builtins.print") as mock_print:
         DefaultAlertHandlers.console_handler(alert)
         assert mock_print.called
 
@@ -317,7 +303,7 @@ def test_metric_summary():
         last=95.0,
         p50=98.0,
         p95=150.0,
-        p99=190.0
+        p99=190.0,
     )
 
     # 转换为字典
@@ -338,7 +324,7 @@ def test_alert_info():
         message="Test alert message",
         severity="critical",
         component="test_module",
-        labels={"env": "production"}
+        labels={"env": "production"},
     )
 
     # 转换为字典

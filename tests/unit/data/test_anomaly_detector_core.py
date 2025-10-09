@@ -10,7 +10,9 @@ import pandas as pd
 from datetime import datetime
 
 from src.data.quality.anomaly_detector.core.result import AnomalyDetectionResult
-from src.data.quality.anomaly_detector.core.anomaly_detector import AdvancedAnomalyDetector
+from src.data.quality.anomaly_detector.core.anomaly_detector import (
+    AdvancedAnomalyDetector,
+)
 
 
 class TestAnomalyDetectionResult:
@@ -22,7 +24,7 @@ class TestAnomalyDetectionResult:
             table_name="test_table",
             detection_method="3sigma",
             anomaly_type="statistical_outlier",
-            severity="high"
+            severity="high",
         )
 
         assert result.table_name == "test_table"
@@ -39,7 +41,7 @@ class TestAnomalyDetectionResult:
         result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
-            anomaly_type="statistical_outlier"
+            anomaly_type="statistical_outlier",
         )
 
         # 添加异常记录
@@ -54,7 +56,7 @@ class TestAnomalyDetectionResult:
         result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
-            anomaly_type="statistical_outlier"
+            anomaly_type="statistical_outlier",
         )
 
         stats = {"mean": 50.0, "std": 10.0, "outliers_count": 5}
@@ -67,7 +69,7 @@ class TestAnomalyDetectionResult:
         result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
-            anomaly_type="statistical_outlier"
+            anomaly_type="statistical_outlier",
         )
 
         metadata = {"detector_version": "1.0", "config": {"threshold": 3.0}}
@@ -81,7 +83,7 @@ class TestAnomalyDetectionResult:
             table_name="test_table",
             detection_method="3sigma",
             anomaly_type="statistical_outlier",
-            severity="medium"
+            severity="medium",
         )
 
         # 添加数据
@@ -117,7 +119,7 @@ class TestAdvancedAnomalyDetector:
         assert "odds" in detector.detection_config
         assert "predictions" in detector.detection_config
 
-    @patch('src.data.quality.anomaly_detector.core.anomaly_detector.DatabaseManager')
+    @patch("src.data.quality.anomaly_detector.core.anomaly_detector.DatabaseManager")
     def test_get_table_data_matches(self, mock_db_manager):
         """测试获取比赛数据"""
         # 设置mock
@@ -127,8 +129,14 @@ class TestAdvancedAnomalyDetector:
             (1, 2, 0, 0, 90, "2024-01-01 15:00", "2024-01-01 15:00", "2024-01-01 15:05")
         ]
         mock_result.keys.return_value = [
-            "home_score", "away_score", "home_ht_score", "away_ht_score",
-            "minute", "match_time", "created_at", "updated_at"
+            "home_score",
+            "away_score",
+            "home_ht_score",
+            "away_ht_score",
+            "minute",
+            "match_time",
+            "created_at",
+            "updated_at",
         ]
         mock_session.execute.return_value = mock_result
         mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
@@ -138,13 +146,14 @@ class TestAdvancedAnomalyDetector:
 
         # 测试
         import asyncio
+
         data = asyncio.run(detector._get_table_data("matches", 24))
 
         assert isinstance(data, pd.DataFrame)
         assert len(data) == 1
         assert "home_score" in data.columns
 
-    @patch('src.data.quality.anomaly_detector.core.anomaly_detector.DatabaseManager')
+    @patch("src.data.quality.anomaly_detector.core.anomaly_detector.DatabaseManager")
     def test_get_total_records(self, mock_db_manager):
         """测试获取总记录数"""
         # 设置mock
@@ -159,6 +168,7 @@ class TestAdvancedAnomalyDetector:
 
         # 测试
         import asyncio
+
         count = asyncio.run(detector._get_total_records("matches"))
 
         assert count == 1000
@@ -168,18 +178,21 @@ class TestAdvancedAnomalyDetector:
         detector = AdvancedAnomalyDetector()
 
         # 创建测试数据
-        data = pd.DataFrame({
-            "home_score": [1, 2, 3, 100, 2, 1, 3],  # 包含异常值
-            "away_score": [0, 1, 2, 0, 1, 0, 2]
-        })
+        data = pd.DataFrame(
+            {
+                "home_score": [1, 2, 3, 100, 2, 1, 3],  # 包含异常值
+                "away_score": [0, 1, 2, 0, 1, 0, 2],
+            }
+        )
 
-        config = {
-            "key_columns": ["home_score", "away_score"]
-        }
+        config = {"key_columns": ["home_score", "away_score"]}
 
         # 测试
         import asyncio
-        results = asyncio.run(detector._run_3sigma_detection("test_table", data, config))
+
+        results = asyncio.run(
+            detector._run_3sigma_detection("test_table", data, config)
+        )
 
         assert len(results) > 0
         assert all(isinstance(r, AnomalyDetectionResult) for r in results)
@@ -190,17 +203,18 @@ class TestAdvancedAnomalyDetector:
         detector = AdvancedAnomalyDetector()
 
         # 创建测试数据
-        data = pd.DataFrame({
-            "home_score": [1, 2, 3, 100, 2, 1, 3],  # 包含异常值
-            "away_score": [0, 1, 2, 0, 1, 0, 2]
-        })
+        data = pd.DataFrame(
+            {
+                "home_score": [1, 2, 3, 100, 2, 1, 3],  # 包含异常值
+                "away_score": [0, 1, 2, 0, 1, 0, 2],
+            }
+        )
 
-        config = {
-            "key_columns": ["home_score", "away_score"]
-        }
+        config = {"key_columns": ["home_score", "away_score"]}
 
         # 测试
         import asyncio
+
         results = asyncio.run(detector._run_iqr_detection("test_table", data, config))
 
         assert len(results) > 0
@@ -213,17 +227,20 @@ class TestAdvancedAnomalyDetector:
 
         # Mock run_comprehensive_detection
         async def mock_run_comprehensive_detection(table_name, hours):
-            return [AnomalyDetectionResult(
-                table_name=table_name,
-                detection_method="3sigma",
-                anomaly_type="statistical_outlier",
-                severity="high"
-            )]
+            return [
+                AnomalyDetectionResult(
+                    table_name=table_name,
+                    detection_method="3sigma",
+                    anomaly_type="statistical_outlier",
+                    severity="high",
+                )
+            ]
 
         detector.run_comprehensive_detection = mock_run_comprehensive_detection
 
         # 测试
         import asyncio
+
         summary = asyncio.run(detector.get_anomaly_summary(24))
 
         assert isinstance(summary, dict)

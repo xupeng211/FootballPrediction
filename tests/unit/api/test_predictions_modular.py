@@ -97,13 +97,15 @@ async def test_get_match_prediction_handler():
     mock_prediction.actual_result = None
 
     # Mock数据库查询
-    with patch('src.api.predictions_mod.prediction_handlers.select') as mock_select:
+    with patch("src.api.predictions_mod.prediction_handlers.select") as mock_select:
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = mock_match
         mock_session.execute.return_value = mock_result
 
         # Mock预测查询
-        with patch('src.api.predictions_mod.prediction_handlers.Prediction') as mock_pred_class:
+        with patch(
+            "src.api.predictions_mod.prediction_handlers.Prediction"
+        ) as mock_pred_class:
             mock_pred_result = AsyncMock()
             mock_pred_result.scalar_one_or_none.return_value = mock_prediction
             mock_session.execute.return_value = mock_pred_result
@@ -130,16 +132,14 @@ async def test_get_match_prediction_not_found():
     mock_session = AsyncMock()
 
     # Mock数据库查询返回None
-    with patch('src.api.predictions_mod.prediction_handlers.select') as mock_select:
+    with patch("src.api.predictions_mod.prediction_handlers.select") as mock_select:
         mock_result = AsyncMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
 
         # 执行处理器并期望抛出HTTPException
         with pytest.raises(HTTPException) as exc_info:
-            await get_match_prediction_handler(
-                mock_request, 999, session=mock_session
-            )
+            await get_match_prediction_handler(mock_request, 999, session=mock_session)
 
         assert exc_info.value.status_code == 404
 
@@ -155,21 +155,31 @@ async def test_batch_predict_matches_handler():
     match_ids = [1, 2, 3]
 
     # Mock有效比赛查询
-    with patch('src.api.predictions_mod.batch_handlers.select') as mock_select:
+    with patch("src.api.predictions_mod.batch_handlers.select") as mock_select:
         # 创建mock比赛对象
         class MockMatchRow:
             def __init__(self, id):
                 self.id = id
 
         mock_result = AsyncMock()
-        mock_result.fetchall.return_value = [MockMatchRow(1), MockMatchRow(2), MockMatchRow(3)]
+        mock_result.fetchall.return_value = [
+            MockMatchRow(1),
+            MockMatchRow(2),
+            MockMatchRow(3),
+        ]
         mock_session.execute.return_value = mock_result
 
         # Mock预测服务
-        with patch('src.api.predictions_mod.batch_handlers.prediction_service') as mock_service:
+        with patch(
+            "src.api.predictions_mod.batch_handlers.prediction_service"
+        ) as mock_service:
             mock_prediction = Mock()
             mock_prediction.to_dict.return_value = {"test": "prediction"}
-            mock_service.batch_predict_matches.return_value = [mock_prediction, mock_prediction, mock_prediction]
+            mock_service.batch_predict_matches.return_value = [
+                mock_prediction,
+                mock_prediction,
+                mock_prediction,
+            ]
 
             # 执行处理器
             result = await batch_predict_matches_handler(
@@ -208,7 +218,9 @@ async def test_batch_predict_too_many_matches():
 @pytest.mark.asyncio
 async def test_get_match_prediction_history_handler():
     """测试获取比赛历史预测处理器"""
-    from src.api.predictions_mod.history_handlers import get_match_prediction_history_handler
+    from src.api.predictions_mod.history_handlers import (
+        get_match_prediction_history_handler,
+    )
     from src.database.models import Match, Predictions
 
     mock_session = AsyncMock()
@@ -233,7 +245,7 @@ async def test_get_match_prediction_history_handler():
     mock_prediction.verified_at = datetime.now(timezone.utc)
 
     # Mock数据库查询
-    with patch('src.api.predictions_mod.history_handlers.select') as mock_select:
+    with patch("src.api.predictions_mod.history_handlers.select") as mock_select:
         # Mock比赛查询
         mock_match_result = AsyncMock()
         mock_match_result.scalar_one_or_none.return_value = mock_match
@@ -283,7 +295,7 @@ async def test_get_recent_predictions_handler():
             self.match_status = "finished"
 
     # Mock数据库查询
-    with patch('src.api.predictions_mod.history_handlers.select') as mock_select:
+    with patch("src.api.predictions_mod.history_handlers.select") as mock_select:
         mock_result = AsyncMock()
         mock_result.fetchall.return_value = [MockPredictionRow()]
         mock_session.execute.return_value = mock_result
@@ -308,7 +320,7 @@ def test_backward_compatibility():
 
     # 验证路由器可以导入
     assert router is not None
-    assert hasattr(router, 'routes')
+    assert hasattr(router, "routes")
     assert len(router.routes) > 0
 
 

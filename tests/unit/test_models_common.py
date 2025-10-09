@@ -9,15 +9,13 @@ except ImportError:
             self.message = message
 
         def dict(self):
-            return {
-                "data": self.data,
-                "success": self.success,
-                "message": self.message
-            }
+            return {"data": self.data, "success": self.success, "message": self.message}
+
 
 def test_base_response():
     response = BaseResponse(data={"test": "data"})
     assert response.data == {"test": "data"}
+
 
 def test_response_serialization():
     response = BaseResponse(success=True, message="OK")

@@ -3,9 +3,9 @@ import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.services.data_processing import DataProcessingService
+from src.services.data_processing_mod import DataProcessingService
 from src.data.collectors.base_collector import DataCollector
-from src.data.processing.football_data_cleaner import FootballDataCleaner
+from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 from src.database.models.team import Team
 from src.database.base import Base
 from src.cache.redis_manager import RedisManager

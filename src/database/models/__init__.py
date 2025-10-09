@@ -1,10 +1,8 @@
-
 """
 足球预测系统数据模型
 
 包含所有SQLAlchemy数据模型定义。
 """
-
 
 from typing import cast, Any, Optional, Union
 

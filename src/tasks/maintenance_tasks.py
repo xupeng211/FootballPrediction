@@ -4,7 +4,7 @@
 
             import shutil
 
-from src.database.connection import DatabaseManager
+from src.database.connection_mod import DatabaseManager
 
 维护任务模块
 
@@ -14,10 +14,6 @@ from src.database.connection import DatabaseManager
 - 系统健康监控
 - 数据库维护
 """
-
-
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +247,6 @@ def system_health_check_task() -> Dict[str, Any]:
         try:
             # 2. 检查Redis连接
 
-
             redis_client = redis.from_url(
                 os.getenv("REDIS_URL", "redis://localhost:6379/0")
             )
@@ -387,9 +382,6 @@ def database_maintenance_task() -> Dict[str, Any]:
                     {"table": row.table_name, "size": row.size} for row in rows
                 ]
                 maintenance_results["table_sizes"] = table_sizes
-
-
-
 
                 await session.commit()
 

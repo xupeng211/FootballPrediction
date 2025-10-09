@@ -1,12 +1,12 @@
 # API模块导入测试
 def test_api_imports():
     modules = [
-        'src.api.app',
-        'src.api.health',
-        'src.api.predictions',
-        'src.api.data',
-        'src.api.features',
-        'src.api.monitoring'
+        "src.api.app",
+        "src.api.health",
+        "src.api.predictions",
+        "src.api.data",
+        "src.api.features",
+        "src.api.monitoring",
     ]
 
     for module in modules:

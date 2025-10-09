@@ -8,8 +8,6 @@
 """
 
 
-
-
 @dataclass
 class RecentPerformanceFeatures:
     """
@@ -291,5 +289,3 @@ class AllTeamFeatures:
             "team_entity": self.team_entity.to_dict(),
             "recent_performance": self.recent_performance.to_dict(),
         }
-
-

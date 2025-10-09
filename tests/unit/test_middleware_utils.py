@@ -1,4 +1,5 @@
 """中间件工具测试"""
+
 import pytest
 from unittest.mock import Mock
 from src.middleware.i18n import I18nMiddleware
@@ -67,11 +68,13 @@ class TestMiddlewareUtils:
         middleware = PerformanceMonitoringMiddleware()
 
         # Mock指标
-        middleware.get_metrics = Mock(return_value={
-            "total_requests": 1000,
-            "average_response_time": 0.05,
-            "error_rate": 0.01
-        })
+        middleware.get_metrics = Mock(
+            return_value={
+                "total_requests": 1000,
+                "average_response_time": 0.05,
+                "error_rate": 0.01,
+            }
+        )
 
         metrics = middleware.get_metrics()
 

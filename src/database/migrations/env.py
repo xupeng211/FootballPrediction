@@ -1,4 +1,3 @@
-
 """
 import asyncio
     from sqlalchemy.ext.asyncio import create_async_engine
@@ -11,8 +10,6 @@ Alembic环境配置
 
 配置数据库迁移环境，使用我们的数据库配置和模型。
 """
-
-
 
 # 导入我们的数据库配置和模型
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -145,9 +142,6 @@ def run_migrations_online() -> None:
     except RuntimeError:
         # 没有运行中的事件循环，使用同步方式
         pass
-
-
-
 
     # 同步方式运行迁移
     connectable = engine_from_config(

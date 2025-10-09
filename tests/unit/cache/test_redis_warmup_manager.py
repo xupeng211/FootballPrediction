@@ -31,13 +31,18 @@ class TestCacheWarmupManager:
         mock_match.match_status.value = "scheduled"
         mock_match.venue = "Stadium"
 
-        with patch('src.cache.redis.warmup.warmup_manager.select') as mock_select, \
-             patch('src.cache.redis.warmup.warmup_manager.get_async_session') as mock_session:
-
+        with (
+            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch(
+                "src.cache.redis.warmup.warmup_manager.get_async_session"
+            ) as mock_session,
+        ):
             # 设置mock返回值
             mock_result = Mock()
             mock_result.scalar_one_or_none.return_value = mock_match
-            mock_session.return_value.__aenter__.return_value.execute.return_value = mock_result
+            mock_session.return_value.__aenter__.return_value.execute.return_value = (
+                mock_result
+            )
 
             result = await self.warmup_manager.warmup_match_cache(123)
 
@@ -48,13 +53,18 @@ class TestCacheWarmupManager:
     @pytest.mark.asyncio
     async def test_warmup_match_cache_not_found(self):
         """测试预热不存在的比赛缓存"""
-        with patch('src.cache.redis.warmup.warmup_manager.select') as mock_select, \
-             patch('src.cache.redis.warmup.warmup_manager.get_async_session') as mock_session:
-
+        with (
+            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch(
+                "src.cache.redis.warmup.warmup_manager.get_async_session"
+            ) as mock_session,
+        ):
             # 设置mock返回值
             mock_result = Mock()
             mock_result.scalar_one_or_none.return_value = None
-            mock_session.return_value.__aenter__.return_value.execute.return_value = mock_result
+            mock_session.return_value.__aenter__.return_value.execute.return_value = (
+                mock_result
+            )
 
             result = await self.warmup_manager.warmup_match_cache(999)
 
@@ -73,13 +83,18 @@ class TestCacheWarmupManager:
         mock_team.founded_year = 1900
         mock_team.stadium = "Home Stadium"
 
-        with patch('src.cache.redis.warmup.warmup_manager.select') as mock_select, \
-             patch('src.cache.redis.warmup.warmup_manager.get_async_session') as mock_session:
-
+        with (
+            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch(
+                "src.cache.redis.warmup.warmup_manager.get_async_session"
+            ) as mock_session,
+        ):
             # 设置mock返回值
             mock_result = Mock()
             mock_result.scalar_one_or_none.return_value = mock_team
-            mock_session.return_value.__aenter__.return_value.execute.return_value = mock_result
+            mock_session.return_value.__aenter__.return_value.execute.return_value = (
+                mock_result
+            )
 
             result = await self.warmup_manager.warmup_team_cache(456)
 
@@ -100,13 +115,21 @@ class TestCacheWarmupManager:
         mock_match2.home_team_id = 30
         mock_match2.away_team_id = 40
 
-        with patch('src.cache.redis.warmup.warmup_manager.select') as mock_select, \
-             patch('src.cache.redis.warmup.warmup_manager.get_async_session') as mock_session:
-
+        with (
+            patch("src.cache.redis.warmup.warmup_manager.select") as mock_select,
+            patch(
+                "src.cache.redis.warmup.warmup_manager.get_async_session"
+            ) as mock_session,
+        ):
             # 设置mock返回值
             mock_result = Mock()
-            mock_result.scalars.return_value.all.return_value = [mock_match1, mock_match2]
-            mock_session.return_value.__aenter__.return_value.execute.return_value = mock_result
+            mock_result.scalars.return_value.all.return_value = [
+                mock_match1,
+                mock_match2,
+            ]
+            mock_session.return_value.__aenter__.return_value.execute.return_value = (
+                mock_result
+            )
 
             # Mock warmup_match_cache 和 warmup_team_cache
             self.warmup_manager.warmup_match_cache = AsyncMock(return_value=True)
@@ -137,11 +160,7 @@ class TestCacheWarmupManager:
 
         result = await self.warmup_manager.full_warmup()
 
-        assert result == {
-            "upcoming_matches": 5,
-            "historical_stats": 1,
-            "total": 6
-        }
+        assert result == {"upcoming_matches": 5, "historical_stats": 1, "total": 6}
 
     @pytest.mark.asyncio
     async def test_warmup_on_startup(self):
@@ -152,7 +171,9 @@ class TestCacheWarmupManager:
         mock_warmup_manager = Mock()
         mock_warmup_manager.full_warmup = AsyncMock(return_value={"total": 10})
 
-        with patch('src.cache.redis.warmup.warmup_manager.CacheWarmupManager') as mock_warmup_class:
+        with patch(
+            "src.cache.redis.warmup.warmup_manager.CacheWarmupManager"
+        ) as mock_warmup_class:
             mock_warmup_class.return_value = mock_warmup_manager
 
             result = await warmup_cache_on_startup(mock_manager)

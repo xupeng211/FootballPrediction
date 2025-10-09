@@ -1,10 +1,12 @@
 """数据库仓库测试"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from sqlalchemy.orm import Session
 from src.database.repositories import MatchRepository, TeamRepository
 from src.database.models.match import Match, MatchStatus
 from src.database.models.team import Team
+
 
 class TestMatchRepository:
     """比赛仓库测试"""
@@ -23,7 +25,9 @@ class TestMatchRepository:
         """测试根据ID获取比赛"""
         # 设置模拟返回
         mock_match = Mock(spec=Match)
-        mock_session.query.return_value.filter.return_value.first.return_value = mock_match
+        mock_session.query.return_value.filter.return_value.first.return_value = (
+            mock_match
+        )
 
         # 调用方法
         result = repository.get_by_id(1)
@@ -36,7 +40,9 @@ class TestMatchRepository:
         """测试根据联赛获取比赛"""
         # 设置模拟返回
         mock_matches = [Mock(spec=Match), Mock(spec=Match)]
-        mock_session.query.return_value.filter.return_value.all.return_value = mock_matches
+        mock_session.query.return_value.filter.return_value.all.return_value = (
+            mock_matches
+        )
 
         # 调用方法
         result = repository.get_by_league("Premier League")
@@ -53,7 +59,9 @@ class TestMatchRepository:
 
         # 设置模拟返回
         mock_matches = [Mock(spec=Match)]
-        mock_session.query.return_value.filter.return_value.all.return_value = mock_matches
+        mock_session.query.return_value.filter.return_value.all.return_value = (
+            mock_matches
+        )
 
         # 调用方法
         result = repository.get_by_date_range(start_date, end_date)
@@ -67,7 +75,7 @@ class TestMatchRepository:
             "home_team_id": 1,
             "away_team_id": 2,
             "date": datetime(2024, 1, 1, 15, 0),
-            "league": "Premier League"
+            "league": "Premier League",
         }
 
         # 创建新比赛
@@ -88,7 +96,9 @@ class TestMatchRepository:
         """测试更新比赛比分"""
         # 设置模拟
         mock_match = Mock(spec=Match)
-        mock_session.query.return_value.filter.return_value.first.return_value = mock_match
+        mock_session.query.return_value.filter.return_value.first.return_value = (
+            mock_match
+        )
 
         # 调用方法
         result = repository.update_score(1, 2, 1)
@@ -103,7 +113,9 @@ class TestMatchRepository:
         """测试获取进行中的比赛"""
         # 设置模拟返回
         mock_matches = [Mock(spec=Match), Mock(spec=Match)]
-        mock_session.query.return_value.filter.return_value.all.return_value = mock_matches
+        mock_session.query.return_value.filter.return_value.all.return_value = (
+            mock_matches
+        )
 
         # 调用方法
         result = repository.get_live_matches()
@@ -116,7 +128,9 @@ class TestMatchRepository:
         """测试删除比赛"""
         # 设置模拟
         mock_match = Mock(spec=Match)
-        mock_session.query.return_value.filter.return_value.first.return_value = mock_match
+        mock_session.query.return_value.filter.return_value.first.return_value = (
+            mock_match
+        )
 
         # 调用方法
         result = repository.delete(1)
@@ -144,7 +158,9 @@ class TestTeamRepository:
         """测试根据名称获取球队"""
         # 设置模拟返回
         mock_team = Mock(spec=Team)
-        mock_session.query.return_value.filter.return_value.first.return_value = mock_team
+        mock_session.query.return_value.filter.return_value.first.return_value = (
+            mock_team
+        )
 
         # 调用方法
         result = repository.get_by_name("Team A")
@@ -157,7 +173,9 @@ class TestTeamRepository:
         """测试根据联赛获取球队"""
         # 设置模拟返回
         mock_teams = [Mock(spec=Team), Mock(spec=Team)]
-        mock_session.query.return_value.filter.return_value.all.return_value = mock_teams
+        mock_session.query.return_value.filter.return_value.all.return_value = (
+            mock_teams
+        )
 
         # 调用方法
         result = repository.get_by_league("Premier League")
@@ -171,7 +189,7 @@ class TestTeamRepository:
         mock_teams = [
             Mock(spec=Team, points=30, goal_diff=20),
             Mock(spec=Team, points=28, goal_diff=15),
-            Mock(spec=Team, points=25, goal_diff=10)
+            Mock(spec=Team, points=25, goal_diff=10),
         ]
         mock_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = mock_teams
 
@@ -186,13 +204,11 @@ class TestTeamRepository:
         """测试更新球队统计"""
         # 设置模拟
         mock_team = Mock(spec=Team)
-        mock_session.query.return_value.filter.return_value.first.return_value = mock_team
+        mock_session.query.return_value.filter.return_value.first.return_value = (
+            mock_team
+        )
 
-        stats_data = {
-            "goals_scored": 5,
-            "goals_conceded": 2,
-            "matches_played": 3
-        }
+        stats_data = {"goals_scored": 5, "goals_conceded": 2, "matches_played": 3}
 
         # 调用方法
         result = repository.update_stats(1, stats_data)
@@ -208,7 +224,9 @@ class TestTeamRepository:
         """测试搜索球队"""
         # 设置模拟返回
         mock_teams = [Mock(spec=Team)]
-        mock_session.query.return_value.filter.return_value.all.return_value = mock_teams
+        mock_session.query.return_value.filter.return_value.all.return_value = (
+            mock_teams
+        )
 
         # 调用方法
         result = repository.search("United")

@@ -6,6 +6,7 @@ except ImportError:
         def handle_error(self, error):
             pass
 
+
 try:
     from src.core.exceptions import ServiceError
 except ImportError:
@@ -16,9 +17,11 @@ except ImportError:
             self.service_name = service_name
             self.error_code = error_code
 
+
 def test_error_handler_creation():
     handler = ErrorHandler()
     assert handler is not None
+
 
 def test_service_error():
     error = ServiceError("Test error", "test_service", "ERR_001")

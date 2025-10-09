@@ -1,7 +1,9 @@
 """健康检查API测试"""
+
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
+
 
 class TestHealthAPI:
     """健康检查API测试"""
@@ -10,6 +12,7 @@ class TestHealthAPI:
     def client(self):
         """创建测试客户端"""
         from src.api.app import app
+
         return TestClient(app)
 
     def test_health_check_basic(self, client):

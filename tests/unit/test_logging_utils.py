@@ -7,15 +7,20 @@ except ImportError:
         class MockLogger:
             def info(self, msg, **kwargs):
                 pass
+
             def warning(self, msg, **kwargs):
                 pass
+
             def error(self, msg, **kwargs):
                 pass
+
         return MockLogger()
+
 
 def test_logger_creation():
     logger = get_logger("test")
     assert logger is not None
+
 
 def test_logger_methods():
     logger = get_logger("test")

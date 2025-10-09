@@ -4,6 +4,7 @@ from src.utils.string_utils import StringUtils
 from src.utils.time_utils import TimeUtils
 from src.utils.file_utils import FileUtils
 
+
 def test_crypto_utils_extended():
     # 测试加密功能
     password = "test123"
@@ -25,6 +26,7 @@ def test_crypto_utils_extended():
     hashed = CryptoUtils.hash_string(text)
     assert len(hashed) == 32  # MD5长度
 
+
 def test_dict_utils_extended():
     # 测试字典扁平化
     data = {"a": {"b": {"c": 1}}}
@@ -43,6 +45,7 @@ def test_dict_utils_extended():
     filtered = DictUtils.filter_none_values(data_with_none)
     assert filtered == {"a": 1, "c": 3}
 
+
 def test_string_utils_extended():
     # 测试字符串操作
     text = "This is a very long string"
@@ -54,16 +57,20 @@ def test_string_utils_extended():
     snake = StringUtils.camel_to_snake(camel)
     assert snake == "test_string"
 
+
 def test_time_utils_extended():
     # 测试时间格式化
     from datetime import datetime
+
     now = datetime.now()
     formatted = TimeUtils.format_datetime(now)
     assert formatted is not None
 
+
 def test_file_utils_extended():
     # 测试确保目录存在
     from pathlib import Path
+
     test_dir = Path("/tmp/test_football")
     result = FileUtils.ensure_dir(test_dir)
     assert result.exists()

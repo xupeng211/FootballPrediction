@@ -14,6 +14,7 @@ class TestBaseModule:
     def test_anomaly_detection_result_import(self):
         """测试异常检测结果类导入"""
         from src.data.quality.detectors.base import AnomalyDetectionResult
+
         assert AnomalyDetectionResult is not None
 
     def test_anomaly_detection_result_creation(self):
@@ -24,7 +25,7 @@ class TestBaseModule:
             table_name="test_table",
             detection_method="3sigma",
             anomaly_type="statistical_outlier",
-            severity="high"
+            severity="high",
         )
 
         assert result.table_name == "test_table"
@@ -42,15 +43,11 @@ class TestBaseModule:
         result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
-            anomaly_type="statistical_outlier"
+            anomaly_type="statistical_outlier",
         )
 
         # 测试添加异常记录
-        result.add_anomalous_record({
-            "index": 1,
-            "value": 100.0,
-            "z_score": 3.5
-        })
+        result.add_anomalous_record({"index": 1, "value": 100.0, "z_score": 3.5})
         assert len(result.anomalous_records) == 1
         assert result.anomalous_records[0]["index"] == 1
 
@@ -72,6 +69,7 @@ class TestStatisticalDetector:
     def test_statistical_detector_import(self):
         """测试统计学检测器导入"""
         from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+
         assert StatisticalAnomalyDetector is not None
 
     def test_statistical_detector_init(self):
@@ -80,7 +78,7 @@ class TestStatisticalDetector:
 
         detector = StatisticalAnomalyDetector(sigma_threshold=2.5)
         assert detector.sigma_threshold == 2.5
-        assert hasattr(detector, 'logger')
+        assert hasattr(detector, "logger")
 
     def test_detect_outliers_3sigma(self):
         """测试3σ异常检测"""
@@ -142,21 +140,28 @@ class TestMachineLearningDetector:
 
     def test_ml_detector_import(self):
         """测试机器学习检测器导入"""
-        from src.data.quality.detectors.machine_learning import MachineLearningAnomalyDetector
+        from src.data.quality.detectors.machine_learning import (
+            MachineLearningAnomalyDetector,
+        )
+
         assert MachineLearningAnomalyDetector is not None
 
     def test_ml_detector_init(self):
         """测试机器学习检测器初始化"""
-        from src.data.quality.detectors.machine_learning import MachineLearningAnomalyDetector
+        from src.data.quality.detectors.machine_learning import (
+            MachineLearningAnomalyDetector,
+        )
 
         detector = MachineLearningAnomalyDetector()
-        assert hasattr(detector, 'scaler')
+        assert hasattr(detector, "scaler")
         assert detector.isolation_forest is None
         assert detector.dbscan is None
 
     def test_detect_anomalies_isolation_forest(self):
         """测试Isolation Forest异常检测"""
-        from src.data.quality.detectors.machine_learning import MachineLearningAnomalyDetector
+        from src.data.quality.detectors.machine_learning import (
+            MachineLearningAnomalyDetector,
+        )
         import numpy as np
 
         detector = MachineLearningAnomalyDetector()
@@ -165,8 +170,10 @@ class TestMachineLearningDetector:
         np.random.seed(42)
         normal_data = np.random.normal(0, 1, (100, 3))
         anomalies = np.array([[5, 5, 5], [-5, -5, -5]])  # 明显的异常
-        test_data = pd.DataFrame(np.vstack([normal_data, anomalies]),
-                                columns=['feature1', 'feature2', 'feature3'])
+        test_data = pd.DataFrame(
+            np.vstack([normal_data, anomalies]),
+            columns=["feature1", "feature2", "feature3"],
+        )
 
         result = detector.detect_anomalies_isolation_forest(test_data, "test_table")
 
@@ -177,7 +184,9 @@ class TestMachineLearningDetector:
 
     def test_detect_anomalies_clustering(self):
         """测试DBSCAN聚类异常检测"""
-        from src.data.quality.detectors.machine_learning import MachineLearningAnomalyDetector
+        from src.data.quality.detectors.machine_learning import (
+            MachineLearningAnomalyDetector,
+        )
         import numpy as np
 
         detector = MachineLearningAnomalyDetector()
@@ -186,8 +195,7 @@ class TestMachineLearningDetector:
         np.random.seed(42)
         cluster_data = np.random.normal(0, 1, (50, 2))
         noise = np.random.uniform(-5, 5, (10, 2))  # 噪声点
-        test_data = pd.DataFrame(np.vstack([cluster_data, noise]),
-                                columns=['x', 'y'])
+        test_data = pd.DataFrame(np.vstack([cluster_data, noise]), columns=["x", "y"])
 
         result = detector.detect_anomalies_clustering(test_data, "test_table", eps=0.5)
 
@@ -202,6 +210,7 @@ class TestAdvancedDetector:
     def test_advanced_detector_import(self):
         """测试高级检测器导入"""
         from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
+
         assert AdvancedAnomalyDetector is not None
 
     def test_advanced_detector_init(self):
@@ -209,8 +218,8 @@ class TestAdvancedDetector:
         from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
 
         detector = AdvancedAnomalyDetector()
-        assert hasattr(detector, 'statistical_detector')
-        assert hasattr(detector, 'ml_detector')
+        assert hasattr(detector, "statistical_detector")
+        assert hasattr(detector, "ml_detector")
         assert isinstance(detector.detection_config, dict)
 
     def test_detection_config_structure(self):
@@ -256,8 +265,8 @@ class TestMetricsModule:
         )
 
         # 测试指标有labels方法
-        assert hasattr(anomalies_detected_total, 'labels')
-        assert hasattr(data_drift_score, 'labels')
+        assert hasattr(anomalies_detected_total, "labels")
+        assert hasattr(data_drift_score, "labels")
         assert callable(anomalies_detected_total.labels)
         assert callable(data_drift_score.labels)
 

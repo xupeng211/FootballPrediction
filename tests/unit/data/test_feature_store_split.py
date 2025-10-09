@@ -7,6 +7,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
+
 # 测试导入
 def test_import_feature_store():
     """测试能否正常导入特征仓库模块"""
@@ -17,7 +18,10 @@ def test_import_feature_store():
 
 def test_import_config_manager():
     """测试能否正常导入配置管理器"""
-    from src.data.features.feature_store.config import FeatureStoreConfig, FeatureStoreConfigManager
+    from src.data.features.feature_store.config import (
+        FeatureStoreConfig,
+        FeatureStoreConfigManager,
+    )
 
     assert FeatureStoreConfig is not None
     assert FeatureStoreConfigManager is not None
@@ -68,10 +72,7 @@ def test_feature_store_config():
     """测试特征仓库配置"""
     from src.data.features.feature_store.config import FeatureStoreConfig
 
-    config = FeatureStoreConfig(
-        project_name="test_project",
-        repo_path="/tmp/test_repo"
-    )
+    config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
 
     assert config.project_name == "test_project"
     assert config.repo_path == "/tmp/test_repo"
@@ -105,7 +106,7 @@ def test_create_temp_repo():
 
 
 # 测试主类
-@patch('src.data.features.feature_store.feature_store.HAS_FEAST', False)
+@patch("src.data.features.feature_store.feature_store.HAS_FEAST", False)
 def test_football_feature_store_without_feast():
     """测试没有Feast时的特征仓库初始化"""
     from src.data.features.feature_store import FootballFeatureStore
@@ -121,8 +122,8 @@ def test_football_feature_store_without_feast():
     assert not store.is_initialized
 
 
-@patch('src.data.features.feature_store.feature_store.HAS_FEAST', True)
-@patch('src.data.features.feature_store.feature_store.FeatureStore')
+@patch("src.data.features.feature_store.feature_store.HAS_FEAST", True)
+@patch("src.data.features.feature_store.feature_store.FeatureStore")
 def test_football_feature_store_with_feast(mock_feature_store):
     """测试有Feast时的特征仓库初始化"""
     from src.data.features.feature_store import FootballFeatureStore
@@ -147,7 +148,7 @@ def test_get_feature_store():
     """测试获取全局特征仓库"""
     from src.data.features.feature_store import get_feature_store
 
-    with patch('src.data.features.feature_store.feature_store.HAS_FEAST', False):
+    with patch("src.data.features.feature_store.feature_store.HAS_FEAST", False):
         store = get_feature_store()
 
         assert store is not None
@@ -158,10 +159,9 @@ def test_initialize_feature_store():
     """测试初始化全局特征仓库"""
     from src.data.features.feature_store import initialize_feature_store
 
-    with patch('src.data.features.feature_store.feature_store.HAS_FEAST', False):
+    with patch("src.data.features.feature_store.feature_store.HAS_FEAST", False):
         store = initialize_feature_store(
-            project_name="test_init",
-            repo_path="/tmp/test_init"
+            project_name="test_init", repo_path="/tmp/test_init"
         )
 
         assert store is not None
@@ -179,11 +179,13 @@ def test_write_features():
     storage_manager = FeatureStorageManager(mock_store)
 
     # 创建测试数据
-    df = pd.DataFrame({
-        "match_id": [1, 2, 3],
-        "feature_1": [0.1, 0.2, 0.3],
-        "feature_2": [1, 2, 3],
-    })
+    df = pd.DataFrame(
+        {
+            "match_id": [1, 2, 3],
+            "feature_1": [0.1, 0.2, 0.3],
+            "feature_2": [1, 2, 3],
+        }
+    )
 
     # 写入特征
     storage_manager.write_features("test_view", df)
@@ -213,9 +215,11 @@ def test_get_online_features():
     mock_store.get_online_features.return_value = mock_feature_vector
 
     # 创建实体数据
-    entity_df = pd.DataFrame({
-        "match_id": [1, 2, 3],
-    })
+    entity_df = pd.DataFrame(
+        {
+            "match_id": [1, 2, 3],
+        }
+    )
 
     # 获取在线特征
     result = query_manager.get_online_features("test_service", entity_df)
@@ -232,10 +236,12 @@ def test_create_training_dataset():
 
     # 创建模拟的query_manager
     mock_query_manager = MagicMock()
-    mock_query_manager.get_historical_features.return_value = pd.DataFrame({
-        "feature_1": [0.1, 0.2, 0.3],
-        "feature_2": [1, 2, 3],
-    })
+    mock_query_manager.get_historical_features.return_value = pd.DataFrame(
+        {
+            "feature_1": [0.1, 0.2, 0.3],
+            "feature_2": [1, 2, 3],
+        }
+    )
 
     dataset_manager = FeatureDatasetManager(mock_query_manager)
 
@@ -244,9 +250,7 @@ def test_create_training_dataset():
     end_date = datetime(2023, 12, 31)
 
     result = dataset_manager.create_training_dataset(
-        start_date=start_date,
-        end_date=end_date,
-        match_ids=[1, 2, 3]
+        start_date=start_date, end_date=end_date, match_ids=[1, 2, 3]
     )
 
     assert isinstance(result, pd.DataFrame)

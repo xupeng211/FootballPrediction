@@ -16,9 +16,9 @@ class TestBaseDataTask:
         from src.scheduler.tasks.base.base_task import BaseDataTask
 
         # 基础任务类应该可以被继承
-        assert hasattr(BaseDataTask, 'on_failure')
-        assert hasattr(BaseDataTask, 'on_success')
-        assert hasattr(BaseDataTask, '_send_alert_notification')
+        assert hasattr(BaseDataTask, "on_failure")
+        assert hasattr(BaseDataTask, "on_success")
+        assert hasattr(BaseDataTask, "_send_alert_notification")
 
 
 class TestDataCollectionTasks:
@@ -29,7 +29,7 @@ class TestDataCollectionTasks:
         from src.scheduler.tasks.data_collection import (
             collect_fixtures,
             collect_odds,
-            collect_live_scores_conditional
+            collect_live_scores_conditional,
         )
 
         # 任务应该可以被导入
@@ -37,7 +37,7 @@ class TestDataCollectionTasks:
         assert collect_odds is not None
         assert collect_live_scores_conditional is not None
 
-    @patch('src.scheduler.tasks.data_collection.fixtures_task.FixturesCollector')
+    @patch("src.scheduler.tasks.data_collection.fixtures_task.FixturesCollector")
     def test_collect_fixtures_task(self, mock_collector_class):
         """测试赛程采集任务"""
         from src.scheduler.tasks.data_collection.fixtures_task import collect_fixtures
@@ -46,13 +46,13 @@ class TestDataCollectionTasks:
         mock_collector = Mock()
         mock_collector.collect_fixtures.return_value = {
             "status": "success",
-            "fixtures_count": 10
+            "fixtures_count": 10,
         }
         mock_collector_class.return_value = mock_collector
 
         # 任务应该存在
         assert collect_fixtures is not None
-        assert hasattr(collect_fixtures, 'run')
+        assert hasattr(collect_fixtures, "run")
 
 
 class TestFeatureCalculationTask:
@@ -136,7 +136,7 @@ class TestTasksModule:
             run_quality_checks,
             backup_database,
             generate_predictions,
-            process_bronze_to_silver
+            process_bronze_to_silver,
         )
 
         # 所有任务都应该可以被导入
@@ -160,8 +160,8 @@ class TestModuleStructure:
         import src.scheduler.tasks
 
         # 模块应该有版本信息
-        assert hasattr(src.scheduler.tasks, '__version__')
-        assert hasattr(src.scheduler.tasks, '__description__')
+        assert hasattr(src.scheduler.tasks, "__version__")
+        assert hasattr(src.scheduler.tasks, "__description__")
         assert src.scheduler.tasks.__version__ == "2.0.0"
 
 

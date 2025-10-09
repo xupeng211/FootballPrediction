@@ -6,7 +6,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, AsyncMock
 
-from src.services.manager import (
+from src.services.manager_mod import (
     ServiceManager,
     ServiceRegistry,
     ServiceFactory,
@@ -272,7 +272,7 @@ class TestServiceHealthChecker:
         service = MockService()
 
         # 注册会抛出异常的检查函数
-        checker.register_check("test", lambda: 1/0)
+        checker.register_check("test", lambda: 1 / 0)
         status = await checker.check_service("test", service)
 
         assert status.healthy is False
@@ -285,6 +285,7 @@ class TestServiceHealthChecker:
 
         # 添加一些状态
         from src.services.manager.health_checker import HealthStatus
+
         checker._health_status["service1"] = HealthStatus(
             "service1", True, "OK", datetime.now()
         )

@@ -41,7 +41,11 @@ from collections import namedtuple
 # 重试连接
 # 记录性能指标
 # 检查指标
-from src.streaming.kafka_components import MessageSerializer, FootballKafkaProducer, FootballKafkaConsumer
+from src.streaming.kafka_components import (
+    MessageSerializer,
+    FootballKafkaProducer,
+    FootballKafkaConsumer,
+)
 from src.streaming.kafka_producer import FootballKafkaProducer as LegacyKafkaProducer
 from src.streaming.stream_processor import StreamProcessor
 from unittest.mock import AsyncMock
@@ -75,7 +79,7 @@ class TestKafkaProducer:
         config = StreamConfig(
             bootstrap_servers="localhost:9092",
             topic="test_topic",
-            group_id="test_group"
+            group_id="test_group",
         )
         producer = FootballKafkaProducer(config=config)
         producer.producer = MagicMock()
@@ -737,7 +741,7 @@ class TestKafkaIntegration:
         config = StreamConfig(
             bootstrap_servers="localhost:9092",
             topic="test_topic",
-            group_id="test_group"
+            group_id="test_group",
         )
         producer = FootballKafkaProducer(config=config)
         producer.producer = MagicMock()
@@ -778,7 +782,7 @@ class TestKafkaIntegration:
         config = StreamConfig(
             bootstrap_servers="localhost:9092",
             topic="test_topic",
-            group_id="test_group"
+            group_id="test_group",
         )
         producer = FootballKafkaProducer(config=config)
 

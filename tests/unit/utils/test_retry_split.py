@@ -7,6 +7,7 @@ import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
 
+
 # 测试导入
 def test_import_retry_config():
     """测试能否正常导入重试配置"""
@@ -80,10 +81,7 @@ def test_exponential_backoff_strategy():
     from src.utils.retry.strategies import ExponentialBackoffStrategy
 
     strategy = ExponentialBackoffStrategy(
-        base_delay=1.0,
-        exponential_base=2.0,
-        max_delay=10.0,
-        jitter=False
+        base_delay=1.0, exponential_base=2.0, max_delay=10.0, jitter=False
     )
 
     assert strategy.get_delay(attempt=0) == 1.0
@@ -98,10 +96,7 @@ def test_polynomial_backoff_strategy():
     from src.utils.retry.strategies import PolynomialBackoffStrategy
 
     strategy = PolynomialBackoffStrategy(
-        base_delay=1.0,
-        power=2.0,
-        max_delay=10.0,
-        jitter=False
+        base_delay=1.0, power=2.0, max_delay=10.0, jitter=False
     )
 
     assert strategy.get_delay(attempt=0) == 1.0
@@ -121,7 +116,7 @@ def test_retry_config_creation():
         max_delay=30.0,
         exponential_base=3.0,
         jitter=False,
-        retryable_exceptions=(ValueError, TypeError)
+        retryable_exceptions=(ValueError, TypeError),
     )
 
     assert config.max_attempts == 5

@@ -1,4 +1,3 @@
-
 """Phase 3 改进迁移
 Phase 3 improvements migration
 
@@ -273,8 +272,6 @@ def downgrade():
     # 删除触发器
     tables_with_updated_at = ["matches", "teams", "leagues", "predictions"]
     for table in tables_with_updated_at:
-
-
         op.execute(f"DROP TRIGGER IF EXISTS update_{table}_updated_at ON {table};")
 
     # 删除函数

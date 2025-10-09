@@ -1,7 +1,9 @@
 """基础服务测试"""
+
 import pytest
 from unittest.mock import MagicMock, patch
 from src.services.base import BaseService
+
 
 class TestBaseService:
     """基础服务测试"""

@@ -23,8 +23,7 @@ Provides complete prediction-related API endpoints, including:
 """
 
 from .predictions import (
-
-# 为了向后兼容性，从新的模块化结构中导入所有内容
+    # 为了向后兼容性，从新的模块化结构中导入所有内容
     router,
     PredictionRequest,
     PredictionResponse,

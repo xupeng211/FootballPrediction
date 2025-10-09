@@ -21,7 +21,7 @@ Integrates football data cleaner and missing data handler.
 
 使用示例 / Usage Example:
     ```python
-    from src.services.data_processing import DataProcessingService
+    from src.services.data_processing_mod import DataProcessingService
 
     # 创建服务实例
     service = DataProcessingService()
@@ -46,22 +46,18 @@ Integrates football data cleaner and missing data handler.
 """
 
 from .data_processing_mod import (
-
-# 为了向后兼容性，从新的模块化结构中导入所有内容
+    # 为了向后兼容性，从新的模块化结构中导入所有内容
     # 核心服务
     DataProcessingService,
-
     # 数据处理器
     MatchDataProcessor,
     OddsDataProcessor,
     ScoresDataProcessor,
     FeaturesDataProcessor,
-
     # 数据管道
     BronzeToSilverProcessor,
     DataQualityValidator,
     AnomalyDetector,
-
     # 处理器
     MissingDataHandler,
     MissingScoresHandler,
@@ -72,18 +68,15 @@ from .data_processing_mod import (
 __all__ = [
     # 核心服务
     "DataProcessingService",
-
     # 数据处理器
     "MatchDataProcessor",
     "OddsDataProcessor",
     "ScoresDataProcessor",
     "FeaturesDataProcessor",
-
     # 数据管道
     "BronzeToSilverProcessor",
     "DataQualityValidator",
     "AnomalyDetector",
-
     # 处理器
     "MissingDataHandler",
     "MissingScoresHandler",

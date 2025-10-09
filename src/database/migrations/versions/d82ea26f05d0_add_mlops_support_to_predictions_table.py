@@ -1,4 +1,3 @@
-
 """Add MLOps support to predictions table
 
 Revision ID: d82ea26f05d0
@@ -6,7 +5,6 @@ Revises: d6d814cc1078
 Create Date: 2025-09-10 23:15:00.000000
 
 """
-
 
 # revision identifiers, used by Alembic.
 revision = "d82ea26f05d0"
@@ -61,8 +59,6 @@ def downgrade() -> None:
     # 删除索引
     op.drop_index("idx_predictions_actual_result", table_name="predictions")
     op.drop_index("idx_predictions_verification", table_name="predictions")
-
-
 
     # 删除字段
     op.drop_column("predictions", "prediction_metadata")

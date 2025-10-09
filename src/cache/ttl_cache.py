@@ -1,7 +1,6 @@
 """Lightweight TTL cache with sync and async helpers."""
 
 
-
 @dataclass
 class CacheItem:
     """Simple cache entry storing value, creation time and ttl in seconds."""
@@ -42,7 +41,6 @@ class TTLCache:
     ) -> None:
         if maxsize is not None:
             max_size = maxsize
-
 
         self._max_size = max_size
         self._default_ttl = self._normalize_ttl(ttl)

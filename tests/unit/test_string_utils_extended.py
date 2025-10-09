@@ -1,6 +1,8 @@
 """字符串工具测试"""
+
 import pytest
 from src.utils.string_utils import StringUtils
+
 
 class TestStringUtils:
     """字符串工具测试"""
@@ -65,6 +67,7 @@ class TestStringUtils:
     def test_string_imports(self):
         """测试字符串工具导入"""
         from src.utils.string_utils import StringUtils
-        assert hasattr(StringUtils, 'truncate')
-        assert hasattr(StringUtils, 'slugify')
-        assert hasattr(StringUtils, 'camel_to_snake')
+
+        assert hasattr(StringUtils, "truncate")
+        assert hasattr(StringUtils, "slugify")
+        assert hasattr(StringUtils, "camel_to_snake")

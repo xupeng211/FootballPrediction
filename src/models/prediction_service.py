@@ -73,13 +73,10 @@ Provides real-time match prediction functionality, including:
 from .prediction import (
     # 数据模型
     PredictionResult,
-
     # 核心服务
     PredictionService,
-
     # 缓存
     PredictionCache,
-
     # 监控指标
     predictions_total,
     prediction_duration_seconds,
@@ -92,13 +89,10 @@ from .prediction import (
 __all__ = [
     # 数据模型
     "PredictionResult",
-
     # 核心服务
     "PredictionService",
-
     # 缓存
     "PredictionCache",
-
     # 监控指标
     "predictions_total",
     "prediction_duration_seconds",

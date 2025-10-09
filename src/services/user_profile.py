@@ -1,6 +1,3 @@
-
-
-
 """
         from src.models import UserProfile
 
@@ -152,6 +149,4 @@ class UserProfileService(BaseService):
         return {
             user_id: profile.to_dict() if hasattr(profile, "to_dict") else profile
             for user_id, profile in self._user_profiles.items()
-
-
         }

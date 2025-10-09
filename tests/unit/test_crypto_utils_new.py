@@ -1,6 +1,8 @@
 """加密工具测试"""
+
 import pytest
 from src.utils.crypto_utils import CryptoUtils
+
 
 class TestCryptoUtils:
     """加密工具测试"""

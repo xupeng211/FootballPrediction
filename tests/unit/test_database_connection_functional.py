@@ -3,12 +3,12 @@ import pytest
 import os
 from unittest.mock import patch
 from sqlalchemy import text
-from src.database.connection import DatabaseManager, get_engine
-from src.database.connection import create_session_factory, get_session
-from src.database.connection import get_engine_with_pool
-from src.database.connection import check_database_health
-from src.database.connection import DatabaseError
-from src.database.connection import parse_database_url
+from src.database.connection_mod import DatabaseManager, get_engine
+from src.database.connection_mod import create_session_factory, get_session
+from src.database.connection_mod import get_engine_with_pool
+from src.database.connection_mod import check_database_health
+from src.database.connection_mod import DatabaseError
+from src.database.connection_mod import parse_database_url
 import threading
 
 """
@@ -48,7 +48,7 @@ class TestDatabaseConnectionFunctional:
     def test_sqlite_memory_connection(self):
         """测试SQLite内存数据库连接"""
         try:
-            from src.database.connection import create_sqlite_engine
+            from src.database.connection_mod import create_sqlite_engine
 
             # 创建内存数据库引擎
             engine = create_sqlite_engine("sqlite:///:memory:")
@@ -106,7 +106,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_transaction(self):
         """测试数据库事务"""
         try:
-            from src.database.connection import DatabaseManager
+            from src.database.connection_mod import DatabaseManager
 
             db_manager = DatabaseManager()
 
@@ -166,7 +166,10 @@ class TestDatabaseConnectionFunctional:
         """测试异步数据库连接"""
         try:
             import asyncio
-            from src.database.connection import AsyncDatabaseManager, get_async_engine
+            from src.database.connection_mod import (
+                AsyncDatabaseManager,
+                get_async_engine,
+            )
 
             async def test_async():
                 # 创建异步引擎
@@ -207,7 +210,10 @@ class TestDatabaseConnectionFunctional:
     def test_database_migration_check(self):
         """测试数据库迁移检查"""
         try:
-            from src.database.connection import check_migrations, get_migration_status
+            from src.database.connection_mod import (
+                check_migrations,
+                get_migration_status,
+            )
 
             # 检查迁移状态
             status = get_migration_status()
@@ -241,7 +247,10 @@ class TestDatabaseConnectionFunctional:
     def test_database_configuration(self):
         """测试数据库配置"""
         try:
-            from src.database.connection import get_database_config, configure_database
+            from src.database.connection_mod import (
+                get_database_config,
+                configure_database,
+            )
 
             # 获取配置
             config = get_database_config()
@@ -273,7 +282,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_closing(self):
         """测试数据库关闭"""
         try:
-            from src.database.connection import DatabaseManager
+            from src.database.connection_mod import DatabaseManager
 
             db_manager = DatabaseManager()
 
@@ -310,7 +319,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_logging(self):
         """测试数据库日志记录"""
         try:
-            from src.database.connection import DatabaseManager
+            from src.database.connection_mod import DatabaseManager
             import logging
 
             # 设置日志捕获

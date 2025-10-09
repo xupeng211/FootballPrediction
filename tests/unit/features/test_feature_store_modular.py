@@ -31,7 +31,7 @@ class TestFeatureStoreModular:
     @pytest.fixture
     def feature_store(self, mock_store):
         """创建特征存储实例"""
-        with patch('src.features.store.client.FeatureStore', return_value=mock_store):
+        with patch("src.features.store.client.FeatureStore", return_value=mock_store):
             store = FootballFeatureStore()
             return store
 
@@ -88,7 +88,9 @@ class TestFeatureStoreModular:
 
         assert success
         # 验证特征视图被应用
-        assert any(obj.name == "team_recent_performance" for obj in mock_store.applied_objects)
+        assert any(
+            obj.name == "team_recent_performance" for obj in mock_store.applied_objects
+        )
 
     @pytest.mark.asyncio
     async def test_feature_repository_get_online_features(self, mock_store):
@@ -97,7 +99,7 @@ class TestFeatureStoreModular:
 
         features = await repository.get_online_features(
             feature_refs=["team_recent_performance:recent_5_wins"],
-            entity_rows=[{"team_id": 1}]
+            entity_rows=[{"team_id": 1}],
         )
 
         assert not features.empty
@@ -110,14 +112,13 @@ class TestFeatureStoreModular:
         repository = FeatureRepository(mock_store)
 
         import pandas as pd
-        entity_df = pd.DataFrame({
-            "team_id": [1, 2],
-            "event_timestamp": [datetime.now(), datetime.now()]
-        })
+
+        entity_df = pd.DataFrame(
+            {"team_id": [1, 2], "event_timestamp": [datetime.now(), datetime.now()]}
+        )
 
         features = await repository.get_historical_features(
-            entity_df=entity_df,
-            feature_refs=["team_recent_performance:recent_5_wins"]
+            entity_df=entity_df, feature_refs=["team_recent_performance:recent_5_wins"]
         )
 
         # Mock 返回空 DataFrame
@@ -129,11 +130,10 @@ class TestFeatureStoreModular:
         repository = FeatureRepository(mock_store)
 
         import pandas as pd
-        df = pd.DataFrame({
-            "team_id": [1],
-            "recent_5_wins": [3],
-            "event_timestamp": [datetime.now()]
-        })
+
+        df = pd.DataFrame(
+            {"team_id": [1], "recent_5_wins": [3], "event_timestamp": [datetime.now()]}
+        )
 
         success = await repository.push_features_to_online_store(
             "team_recent_performance", df
@@ -144,7 +144,7 @@ class TestFeatureStoreModular:
     @pytest.mark.asyncio
     async def test_feature_store_initialization(self):
         """测试特征存储初始化"""
-        with patch('src.features.store.client.FeatureStore') as mock_fs:
+        with patch("src.features.store.client.FeatureStore") as mock_fs:
             mock_fs.return_value = MagicMock()
 
             store = FootballFeatureStore()
@@ -165,7 +165,7 @@ class TestFeatureStoreModular:
         """测试特征存储获取在线特征"""
         features = await feature_store.get_online_features(
             feature_refs=["team_recent_performance:recent_5_wins"],
-            entity_rows=[{"team_id": 1}]
+            entity_rows=[{"team_id": 1}],
         )
 
         assert not features.empty
@@ -174,14 +174,11 @@ class TestFeatureStoreModular:
     async def test_feature_store_get_historical_features(self, feature_store):
         """测试特征存储获取历史特征"""
         import pandas as pd
-        entity_df = pd.DataFrame({
-            "team_id": [1],
-            "event_timestamp": [datetime.now()]
-        })
+
+        entity_df = pd.DataFrame({"team_id": [1], "event_timestamp": [datetime.now()]})
 
         features = await feature_store.get_historical_features(
-            entity_df=entity_df,
-            feature_refs=["team_recent_performance:recent_5_wins"]
+            entity_df=entity_df, feature_refs=["team_recent_performance:recent_5_wins"]
         )
 
         assert isinstance(features, pd.DataFrame)
@@ -190,11 +187,10 @@ class TestFeatureStoreModular:
     async def test_feature_store_push_features(self, feature_store):
         """测试特征存储推送特征"""
         import pandas as pd
-        df = pd.DataFrame({
-            "team_id": [1],
-            "recent_5_wins": [3],
-            "event_timestamp": [datetime.now()]
-        })
+
+        df = pd.DataFrame(
+            {"team_id": [1], "recent_5_wins": [3], "event_timestamp": [datetime.now()]}
+        )
 
         success = await feature_store.push_features_to_online_store(
             "team_recent_performance", df
@@ -205,11 +201,13 @@ class TestFeatureStoreModular:
     @pytest.mark.asyncio
     async def test_feature_store_get_match_features(self, feature_store):
         """测试获取比赛特征"""
-        with patch.object(feature_store.repository, 'get_match_features_for_prediction') as mock_get:
+        with patch.object(
+            feature_store.repository, "get_match_features_for_prediction"
+        ) as mock_get:
             mock_get.return_value = {
                 "team_features": [{"team_id": 1}],
                 "h2h_features": {"h2h_total_matches": 5},
-                "odds_features": {"home_implied_probability": 0.5}
+                "odds_features": {"home_implied_probability": 0.5},
             }
 
             features = await feature_store.get_match_features_for_prediction(1, 1, 2)
@@ -225,12 +223,14 @@ class TestFeatureStoreModular:
         start_date = datetime(2024, 1, 1)
         end_date = datetime(2024, 1, 7)
 
-        with patch.object(feature_store.repository, 'batch_calculate_features') as mock_batch:
+        with patch.object(
+            feature_store.repository, "batch_calculate_features"
+        ) as mock_batch:
             mock_batch.return_value = {
                 "matches_processed": 10,
                 "teams_processed": 20,
                 "features_stored": 30,
-                "errors": 0
+                "errors": 0,
             }
 
             stats = await feature_store.batch_calculate_features(start_date, end_date)
@@ -269,6 +269,7 @@ class TestFeatureStoreModular:
 
         # 推送特征应该返回 False
         import pandas as pd
+
         df = pd.DataFrame({"team_id": [1]})
         success = await repository.push_features_to_online_store("test", df)
         assert not success

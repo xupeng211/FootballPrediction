@@ -9,7 +9,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from src.data.quality.anomaly_detector.statistical.statistical_detector import StatisticalAnomalyDetector
+from src.data.quality.anomaly_detector.statistical.statistical_detector import (
+    StatisticalAnomalyDetector,
+)
 
 
 class TestStatisticalAnomalyDetector:

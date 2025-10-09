@@ -8,8 +8,7 @@ Provides backward compatible exports for the modular odds collector.
 """
 
 from .odds import (
-
-# 重新导出主要类和函数
+    # 重新导出主要类和函数
     OddsCollector,
     OddsCollectorManager,
     OddsSourceManager,

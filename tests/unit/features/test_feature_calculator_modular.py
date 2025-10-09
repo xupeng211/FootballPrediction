@@ -6,6 +6,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
@@ -19,7 +20,9 @@ def test_module_import():
     )
 
     # 测试导入兼容模块
-    from src.features.feature_calculator import FeatureCalculator as LegacyFeatureCalculator
+    from src.features.feature_calculator import (
+        FeatureCalculator as LegacyFeatureCalculator,
+    )
 
     assert FeatureCalculator is not None
     assert RecentPerformanceCalculator is not None
@@ -115,9 +118,17 @@ def test_odds_features_calculator():
 
     # 测试市场趋势判断
     assert calculator._determine_market_trend({}) == "unknown"
-    assert calculator._determine_market_trend({"avg_home_odds_change": 0.02}) == "stable"
-    assert calculator._determine_market_trend({"avg_home_odds_change": 0.15}) == "home_drifting"
-    assert calculator._determine_market_trend({"avg_home_odds_change": -0.15}) == "home_steam"
+    assert (
+        calculator._determine_market_trend({"avg_home_odds_change": 0.02}) == "stable"
+    )
+    assert (
+        calculator._determine_market_trend({"avg_home_odds_change": 0.15})
+        == "home_drifting"
+    )
+    assert (
+        calculator._determine_market_trend({"avg_home_odds_change": -0.15})
+        == "home_steam"
+    )
 
 
 def test_batch_calculator():
@@ -176,7 +187,9 @@ def test_outlier_detection():
     assert 100 in outliers_iqr["outliers"]
 
     # Z-score方法
-    outliers_zscore = StatisticsUtils.detect_outliers(data, method="zscore", multiplier=2)
+    outliers_zscore = StatisticsUtils.detect_outliers(
+        data, method="zscore", multiplier=2
+    )
     assert "count" in outliers_zscore
     assert "method" in outliers_zscore
 
@@ -200,9 +213,9 @@ def test_backward_compatibility():
 
     # 测试特征计算器
     calculator = FeatureCalculator()
-    assert hasattr(calculator, 'calculate_recent_performance_features')
-    assert hasattr(calculator, 'calculate_historical_matchup_features')
-    assert hasattr(calculator, 'calculate_odds_features')
+    assert hasattr(calculator, "calculate_recent_performance_features")
+    assert hasattr(calculator, "calculate_historical_matchup_features")
+    assert hasattr(calculator, "calculate_odds_features")
 
 
 @pytest.mark.asyncio
@@ -211,13 +224,13 @@ async def test_feature_calculator_async_methods():
     from src.features.feature_calculator_mod import FeatureCalculator
 
     # Mock数据库会话 - 使用局部patch
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         calculator = FeatureCalculator()
 
         # 测试方法存在（不执行实际查询）
-        assert hasattr(calculator, 'calculate_recent_performance_features')
-        assert hasattr(calculator, 'calculate_historical_matchup_features')
-        assert hasattr(calculator, 'calculate_odds_features')
-        assert hasattr(calculator, 'calculate_all_match_features')
-        assert hasattr(calculator, 'calculate_all_team_features')
-        assert hasattr(calculator, 'batch_calculate_team_features')
+        assert hasattr(calculator, "calculate_recent_performance_features")
+        assert hasattr(calculator, "calculate_historical_matchup_features")
+        assert hasattr(calculator, "calculate_odds_features")
+        assert hasattr(calculator, "calculate_all_match_features")
+        assert hasattr(calculator, "calculate_all_team_features")
+        assert hasattr(calculator, "batch_calculate_team_features")

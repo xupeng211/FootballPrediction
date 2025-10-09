@@ -68,15 +68,19 @@ class TestPredictionWorkflow:
         }
 
         # 5. 执行工作流
-        with patch(
-            "src.services.prediction_workflow.MatchService",
-            return_value=mock_services["match_service"],
-        ), patch(
-            "src.services.prediction_workflow.FeatureService",
-            return_value=mock_services["feature_service"],
-        ), patch(
-            "src.services.prediction_workflow.PredictionService",
-            return_value=mock_services["prediction_service"],
+        with (
+            patch(
+                "src.services.prediction_workflow.MatchService",
+                return_value=mock_services["match_service"],
+            ),
+            patch(
+                "src.services.prediction_workflow.FeatureService",
+                return_value=mock_services["feature_service"],
+            ),
+            patch(
+                "src.services.prediction_workflow.PredictionService",
+                return_value=mock_services["prediction_service"],
+            ),
         ):
             # 模拟 PredictionWorkflow 类，因为实际模块不存在
             class PredictionWorkflow:
@@ -117,12 +121,15 @@ class TestPredictionWorkflow:
             ]
         }
 
-        with patch(
-            "src.services.prediction_workflow.FeatureService",
-            return_value=mock_services["feature_service"],
-        ), patch(
-            "src.services.prediction_workflow.PredictionService",
-            return_value=mock_services["prediction_service"],
+        with (
+            patch(
+                "src.services.prediction_workflow.FeatureService",
+                return_value=mock_services["feature_service"],
+            ),
+            patch(
+                "src.services.prediction_workflow.PredictionService",
+                return_value=mock_services["prediction_service"],
+            ),
         ):
             workflow = PredictionWorkflow()
             results = await workflow.run_batch_predictions(match_ids)
@@ -252,12 +259,15 @@ class TestPredictionWorkflow:
             "confidence": 0.90,
         }
 
-        with patch(
-            "src.services.prediction_workflow.FeatureService",
-            return_value=mock_services["feature_service"],
-        ), patch(
-            "src.services.prediction_workflow.PredictionService",
-            return_value=mock_services["prediction_service"],
+        with (
+            patch(
+                "src.services.prediction_workflow.FeatureService",
+                return_value=mock_services["feature_service"],
+            ),
+            patch(
+                "src.services.prediction_workflow.PredictionService",
+                return_value=mock_services["prediction_service"],
+            ),
         ):
             workflow = PredictionWorkflow()
             result = await workflow.update_live_prediction(12345, live_match_data)
@@ -280,12 +290,15 @@ class TestPredictionWorkflow:
             "prediction": "home_win"
         }
 
-        with patch(
-            "src.services.prediction_workflow.FeatureService",
-            return_value=mock_services["feature_service"],
-        ), patch(
-            "src.services.prediction_workflow.PredictionService",
-            return_value=mock_services["prediction_service"],
+        with (
+            patch(
+                "src.services.prediction_workflow.FeatureService",
+                return_value=mock_services["feature_service"],
+            ),
+            patch(
+                "src.services.prediction_workflow.PredictionService",
+                return_value=mock_services["prediction_service"],
+            ),
         ):
             # 模拟 PredictionWorkflow 类，因为实际模块不存在
             class PredictionWorkflow:

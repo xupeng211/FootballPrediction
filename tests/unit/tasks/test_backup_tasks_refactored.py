@@ -16,7 +16,7 @@ from src.tasks.backup.tasks.backup_tasks import (
     RedisBackupTask,
     LogsBackupTask,
     BackupValidationTask,
-    BackupCleanupTask
+    BackupCleanupTask,
 )
 
 
@@ -61,30 +61,27 @@ class TestBackupExecutor:
         self.config = BackupConfig()
         self.executor = BackupExecutor(self.config)
 
-    @patch('src.tasks.backup.executor.backup_executor.subprocess.run')
+    @patch("src.tasks.backup.executor.backup_executor.subprocess.run")
     def test_backup_database_full(self, mock_subprocess):
         """测试全量数据库备份"""
         # Mock成功的子进程执行
         mock_subprocess.return_value = Mock(returncode=0)
 
-        with patch.object(self.executor, '_verify_backup', return_value=True):
+        with patch.object(self.executor, "_verify_backup", return_value=True):
             result = self.executor.backup_database(
-                backup_type="full",
-                compress=True,
-                verify=True
+                backup_type="full", compress=True, verify=True
             )
 
         assert result["status"] == "success"
         assert "backup_file_path" in result
         assert result["backup_type"] == "full"
 
-    @patch('src.tasks.backup.executor.backup_executor.subprocess.run')
+    @patch("src.tasks.backup.executor.backup_executor.subprocess.run")
     def test_backup_redis(self, mock_subprocess):
         """测试Redis备份"""
         mock_subprocess.return_value = Mock(returncode=0)
 
-        with patch('os.path.exists', return_value=True), \
-             patch('shutil.copy2'):
+        with patch("os.path.exists", return_value=True), patch("shutil.copy2"):
             result = self.executor.backup_redis(compress=True)
 
         assert result["status"] == "success"
@@ -92,16 +89,14 @@ class TestBackupExecutor:
 
     def test_backup_logs(self):
         """测试日志备份"""
-        with patch('os.path.exists', return_value=True), \
-             patch('tarfile.open') as mock_tar, \
-             patch('os.listdir', return_value=['app.log']):
-
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("tarfile.open") as mock_tar,
+            patch("os.listdir", return_value=["app.log"]),
+        ):
             mock_tar.return_value.__enter__.return_value = Mock()
 
-            result = self.executor.backup_logs(
-                log_dirs=['/tmp/logs'],
-                compress=True
-            )
+            result = self.executor.backup_logs(log_dirs=["/tmp/logs"], compress=True)
 
         assert result["status"] == "success"
         assert "backup_file_path" in result
@@ -115,42 +110,40 @@ class TestBackupValidator:
         self.config = BackupConfig()
         self.validator = BackupValidator(self.config)
 
-    @patch('os.path.exists')
-    @patch('os.path.getsize')
+    @patch("os.path.exists")
+    @patch("os.path.getsize")
     def test_verify_database_backup_success(self, mock_getsize, mock_exists):
         """测试数据库备份验证成功"""
         mock_exists.return_value = True
         mock_getsize.return_value = 1024
 
-        with patch.object(self.validator, '_verify_sql_file', return_value=True):
+        with patch.object(self.validator, "_verify_sql_file", return_value=True):
             result = self.validator.verify_database_backup(
-                "/path/to/backup.sql",
-                database_name="test_db"
+                "/path/to/backup.sql", database_name="test_db"
             )
 
         assert result is True
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_verify_database_backup_not_found(self, mock_exists):
         """测试数据库备份文件不存在"""
         mock_exists.return_value = False
 
         result = self.validator.verify_database_backup(
-            "/path/to/nonexistent.sql",
-            database_name="test_db"
+            "/path/to/nonexistent.sql", database_name="test_db"
         )
 
         assert result is False
 
-    @patch('builtins.open', create=True)
-    @patch('os.path.exists')
-    @patch('os.path.getsize')
+    @patch("builtins.open", create=True)
+    @patch("os.path.exists")
+    @patch("os.path.getsize")
     def test_verify_redis_backup_success(self, mock_getsize, mock_exists, mock_open):
         """测试Redis备份验证成功"""
         mock_exists.return_value = True
         mock_getsize.return_value = 1024
         mock_file = MagicMock()
-        mock_file.read.return_value = b'REDIS0009'
+        mock_file.read.return_value = b"REDIS0009"
         mock_open.return_value.__enter__.return_value = mock_file
 
         result = self.validator.verify_redis_backup("/path/to/redis.rdb")
@@ -159,15 +152,14 @@ class TestBackupValidator:
 
     def test_get_backup_status_report(self):
         """测试获取备份状态报告"""
-        with patch('os.listdir', return_value=['backup_20240101_full.sql']), \
-             patch('os.path.isfile', return_value=True), \
-             patch('os.path.getsize', return_value=1024), \
-             patch('os.path.getmtime', return_value=1704067200), \
-             patch.object(self.validator, 'verify_database_backup', return_value=True):
-
-            report = self.validator.get_backup_status_report(
-                database_name="test_db"
-            )
+        with (
+            patch("os.listdir", return_value=["backup_20240101_full.sql"]),
+            patch("os.path.isfile", return_value=True),
+            patch("os.path.getsize", return_value=1024),
+            patch("os.path.getmtime", return_value=1704067200),
+            patch.object(self.validator, "verify_database_backup", return_value=True),
+        ):
+            report = self.validator.get_backup_status_report(database_name="test_db")
 
         assert "database_name" in report
         assert "timestamp" in report
@@ -184,39 +176,42 @@ class TestBackupCleaner:
         self.config = BackupConfig()
         self.cleaner = BackupCleaner(self.config)
 
-    @patch('os.listdir')
-    @patch('os.path.getmtime')
-    @patch('os.path.getsize')
-    @patch('os.path.exists')
-    def test_cleanup_old_backups(self, mock_exists, mock_getsize, mock_getmtime, mock_listdir):
+    @patch("os.listdir")
+    @patch("os.path.getmtime")
+    @patch("os.path.getsize")
+    @patch("os.path.exists")
+    def test_cleanup_old_backups(
+        self, mock_exists, mock_getsize, mock_getmtime, mock_listdir
+    ):
         """测试清理过期备份"""
         mock_exists.return_value = True
-        mock_listdir.return_value = ['backup_20230101_full.sql']
+        mock_listdir.return_value = ["backup_20230101_full.sql"]
         mock_getsize.return_value = 1024
         mock_getmtime.return_value = 1672531200  # 2023-01-01
 
-        with patch.object(self.cleaner, '_delete_file', return_value=True):
+        with patch.object(self.cleaner, "_delete_file", return_value=True):
             result = self.cleaner.cleanup_old_backups(
-                database_name="test_db",
-                dry_run=True
+                database_name="test_db", dry_run=True
             )
 
         assert result["database_name"] == "test_db"
         assert result["dry_run"] is True
         assert "summary" in result
 
-    @patch('os.listdir')
-    @patch('os.path.getmtime')
-    @patch('os.path.getsize')
-    @patch('os.path.exists')
-    def test_cleanup_redis_backups(self, mock_exists, mock_getsize, mock_getmtime, mock_listdir):
+    @patch("os.listdir")
+    @patch("os.path.getmtime")
+    @patch("os.path.getsize")
+    @patch("os.path.exists")
+    def test_cleanup_redis_backups(
+        self, mock_exists, mock_getsize, mock_getmtime, mock_listdir
+    ):
         """测试清理Redis备份"""
         mock_exists.return_value = True
-        mock_listdir.return_value = ['redis_backup_20230101.rdb']
+        mock_listdir.return_value = ["redis_backup_20230101.rdb"]
         mock_getsize.return_value = 1024
         mock_getmtime.return_value = 1672531200
 
-        with patch('os.remove'):
+        with patch("os.remove"):
             result = self.cleaner.cleanup_redis_backups(dry_run=False)
 
         assert result["type"] == "redis"
@@ -238,13 +233,13 @@ class TestDatabaseBackupTask:
         assert self.task.cleaner is not None
         assert self.task.metrics is not None
 
-    @patch.object(DatabaseBackupTask, 'run')
+    @patch.object(DatabaseBackupTask, "run")
     def test_run_full_backup(self, mock_run):
         """测试运行全量备份"""
         mock_run.return_value = {
             "status": "success",
             "backup_type": "full",
-            "result": {"backup_file_path": "/path/to/backup.sql"}
+            "result": {"backup_file_path": "/path/to/backup.sql"},
         }
 
         result = self.task.run(backup_type="full")
@@ -276,13 +271,13 @@ class TestRedisBackupTask:
         assert self.task.validator is not None
         assert self.task.metrics is not None
 
-    @patch.object(RedisBackupTask, 'run')
+    @patch.object(RedisBackupTask, "run")
     def test_run_redis_backup(self, mock_run):
         """测试运行Redis备份"""
         mock_run.return_value = {
             "status": "success",
             "backup_type": "redis",
-            "result": {"backup_file_path": "/path/to/redis.rdb"}
+            "result": {"backup_file_path": "/path/to/redis.rdb"},
         }
 
         result = self.task.run()
@@ -304,18 +299,17 @@ class TestBackupValidationTask:
         assert self.task.validator is not None
         assert self.task.metrics is not None
 
-    @patch.object(BackupValidationTask, 'run')
+    @patch.object(BackupValidationTask, "run")
     def test_run_validation(self, mock_run):
         """测试运行备份验证"""
         mock_run.return_value = {
             "status": "success",
             "backup_file_path": "/path/to/backup.sql",
-            "is_valid": True
+            "is_valid": True,
         }
 
         result = self.task.run(
-            backup_file_path="/path/to/backup.sql",
-            backup_type="database"
+            backup_file_path="/path/to/backup.sql", backup_type="database"
         )
 
         assert result["status"] == "success"
@@ -335,13 +329,13 @@ class TestBackupCleanupTask:
         assert self.task.cleaner is not None
         assert self.task.metrics is not None
 
-    @patch.object(BackupCleanupTask, 'run')
+    @patch.object(BackupCleanupTask, "run")
     def test_run_cleanup(self, mock_run):
         """测试运行备份清理"""
         mock_run.return_value = {
             "status": "success",
             "cleanup_type": "database",
-            "result": {"summary": {"total_files_deleted": 5}}
+            "result": {"summary": {"total_files_deleted": 5}},
         }
 
         result = self.task.run(cleanup_type="database", dry_run=False)

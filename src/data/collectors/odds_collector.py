@@ -14,8 +14,6 @@
 """
 
 
-
-
 class OddsCollector(DataCollector):
     """
     赔率数据采集器
@@ -386,8 +384,6 @@ class OddsCollector(DataCollector):
             required_fields = ["match_id", "bookmaker", "market_type", "outcomes"]
             if not all(field in raw_odds for field in required_fields):
                 return None
-
-
 
             # 赔率值验证和标准化
             cleaned_outcomes = []

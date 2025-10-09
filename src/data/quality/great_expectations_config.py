@@ -11,8 +11,6 @@ Great Expectations 配置模块
 - 比分必须在 [0, 99] 范围内
 """
 
-
-
 # Temporarily commented out for pytest testing
 try:
     import great_expectations as gx
@@ -507,8 +505,6 @@ class GreatExpectationsConfig:
             "kwargs": {"min_value": 3, "max_value": 10},
             "meta": {
                 "notes": {
-
-
                     "format": "markdown",
                     "content": "检查赔率表列数合理性，确保包含基本的home_odds, draw_odds, away_odds字段",
                 }

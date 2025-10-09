@@ -1,6 +1,8 @@
 """数据验证器测试"""
+
 import pytest
 from src.utils.data_validator import DataValidator
+
 
 class TestDataValidator:
     """数据验证器测试"""
@@ -26,6 +28,7 @@ class TestDataValidator:
     def test_validate_date_range(self):
         """测试日期范围验证"""
         from datetime import datetime
+
         start = datetime(2023, 1, 1)
         end = datetime(2023, 12, 31)
         assert DataValidator.validate_date_range(start, end) is True

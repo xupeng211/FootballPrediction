@@ -27,7 +27,7 @@ def database_config():
         database="test_db",
         user="test_user",
         password="test_password",
-        echo=False
+        echo=False,
     )
 
 
@@ -42,10 +42,10 @@ class TestDatabaseEngineManager:
         assert engine_manager._async_session_factory is None
         assert engine_manager._config is None
 
-    @patch('src.database.connection.pools.engine_manager.create_engine')
-    @patch('src.database.connection.pools.engine_manager.create_async_engine')
-    @patch('src.database.connection.pools.engine_manager.sessionmaker')
-    @patch('src.database.connection.pools.engine_manager.async_sessionmaker')
+    @patch("src.database.connection.pools.engine_manager.create_engine")
+    @patch("src.database.connection.pools.engine_manager.create_async_engine")
+    @patch("src.database.connection.pools.engine_manager.sessionmaker")
+    @patch("src.database.connection.pools.engine_manager.async_sessionmaker")
     def test_initialize_engines_postgresql(
         self,
         mock_async_sessionmaker,
@@ -53,7 +53,7 @@ class TestDatabaseEngineManager:
         mock_create_async_engine,
         mock_create_engine,
         engine_manager,
-        database_config
+        database_config,
     ):
         """测试初始化PostgreSQL引擎"""
         # 设置模拟
@@ -74,7 +74,9 @@ class TestDatabaseEngineManager:
         assert engine_manager._sync_engine == mock_sync_engine
         assert engine_manager._async_engine == mock_async_engine
         assert engine_manager._session_factory == mock_session_factory
-        assert engine_manager._async_session_factory == mock_async_session_factory_instance
+        assert (
+            engine_manager._async_session_factory == mock_async_session_factory_instance
+        )
         assert engine_manager._config == database_config
 
         # 验证调用
@@ -83,20 +85,14 @@ class TestDatabaseEngineManager:
         mock_sessionmaker.assert_called_once()
         mock_async_sessionmaker.assert_called_once()
 
-    @patch('src.database.connection.pools.engine_manager.create_engine')
-    @patch('src.database.connection.pools.engine_manager.create_async_engine')
+    @patch("src.database.connection.pools.engine_manager.create_engine")
+    @patch("src.database.connection.pools.engine_manager.create_async_engine")
     def test_initialize_engines_sqlite(
-        self,
-        mock_create_async_engine,
-        mock_create_engine,
-        engine_manager
+        self, mock_create_async_engine, mock_create_engine, engine_manager
     ):
         """测试初始化SQLite引擎"""
         # SQLite配置
-        sqlite_config = DatabaseConfig(
-            database="test.db",
-            echo=False
-        )
+        sqlite_config = DatabaseConfig(database="test.db", echo=False)
 
         # 设置模拟
         mock_sync_engine = MagicMock()

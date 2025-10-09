@@ -58,7 +58,7 @@ def test_time_processor():
     # 从日期构建赛季
     season_data = {
         "startDate": "2023-08-01T00:00:00Z",
-        "endDate": "2024-05-31T23:59:59Z"
+        "endDate": "2024-05-31T23:59:59Z",
     }
     season = processor.extract_season(season_data)
     assert season == "2023-2024"
@@ -79,7 +79,7 @@ def test_data_validator():
         "id": 123,
         "homeTeam": {"id": 1, "name": "Team A"},
         "awayTeam": {"id": 2, "name": "Team B"},
-        "utcDate": "2024-01-01T12:00:00Z"
+        "utcDate": "2024-01-01T12:00:00Z",
     }
     assert validator.validate_match_data(valid_match) is True
 
@@ -122,7 +122,7 @@ def test_data_validator():
     # 测试裁判姓名清洗
     referees = [
         {"role": "REFEREE", "name": "  Michael   Oliver  "},
-        {"role": "ASSISTANT", "name": "Assistant 1"}
+        {"role": "ASSISTANT", "name": "Assistant 1"},
     ]
     referee_name = validator.clean_referee_name(referees)
     assert referee_name == "Michael Oliver"
@@ -169,7 +169,7 @@ def test_odds_processor():
     consistent_outcomes = [
         {"name": "home", "price": 2.5},
         {"name": "draw", "price": 3.2},
-        {"name": "away", "price": 2.8}
+        {"name": "away", "price": 2.8},
     ]
     assert processor.validate_odds_consistency(consistent_outcomes) is True
 
@@ -188,7 +188,7 @@ def test_odds_processor():
     raw_outcomes = [
         {"name": "1", "price": 2.5},
         {"name": "X", "price": 3.2},
-        {"name": "invalid", "price": 0.5}  # 无效赔率
+        {"name": "invalid", "price": 0.5},  # 无效赔率
     ]
     cleaned = processor.process_outcomes(raw_outcomes)
     assert len(cleaned) == 2  # 只有两个有效结果
@@ -200,7 +200,7 @@ def test_odds_processor():
 async def test_id_mapper():
     """测试ID映射器"""
     from src.data.processing.football_data_cleaner_mod import IDMapper
-    from src.database.connection import DatabaseManager
+    from src.database.connection_mod import DatabaseManager
 
     # Mock数据库管理器
     db_manager = Mock(spec=DatabaseManager)
@@ -240,7 +240,7 @@ def test_football_data_cleaner_initialization():
     """测试足球数据清洗器初始化"""
     from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
 
         assert cleaner.time_processor is not None
@@ -254,14 +254,16 @@ async def test_football_data_cleaner_methods():
     """测试足球数据清洗器方法"""
     from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
 
         # Mock子处理器
         cleaner.data_validator.validate_match_data = Mock(return_value=True)
         cleaner.id_mapper.map_league_id = AsyncMock(return_value=1)
         cleaner.id_mapper.map_team_id = AsyncMock(return_value=2)
-        cleaner.time_processor.to_utc_time = Mock(return_value="2024-01-01T12:00:00+00:00")
+        cleaner.time_processor.to_utc_time = Mock(
+            return_value="2024-01-01T12:00:00+00:00"
+        )
         cleaner.data_validator.standardize_match_status = Mock(return_value="scheduled")
         cleaner.data_validator.validate_score = Mock(side_effect=[1, 0, 0, 0])
         cleaner.time_processor.extract_season = Mock(return_value="2023-2024")
@@ -278,12 +280,12 @@ async def test_football_data_cleaner_methods():
             "status": "SCHEDULED",
             "score": {
                 "fullTime": {"home": 1, "away": 0},
-                "halfTime": {"home": 0, "away": 0}
+                "halfTime": {"home": 0, "away": 0},
             },
             "season": {"id": 2023},
             "matchday": 1,
             "venue": "Stadium",
-            "referees": [{"role": "REFEREE", "name": "Referee"}]
+            "referees": [{"role": "REFEREE", "name": "Referee"}],
         }
 
         cleaned = await cleaner.clean_match_data(raw_data)
@@ -298,8 +300,17 @@ async def test_football_data_cleaner_methods():
         assert cleaned["season"] == "2023-2024"
 
         # 测试清洗赔率数据
-        cleaner.odds_processor.clean_odds_data = AsyncMock(return_value=[{"test": "odds"}])
-        raw_odds = [{"match_id": "123", "bookmaker": "Test", "market_type": "h2h", "outcomes": []}]
+        cleaner.odds_processor.clean_odds_data = AsyncMock(
+            return_value=[{"test": "odds"}]
+        )
+        raw_odds = [
+            {
+                "match_id": "123",
+                "bookmaker": "Test",
+                "market_type": "h2h",
+                "outcomes": [],
+            }
+        ]
 
         cleaned_odds = await cleaner.clean_odds_data(raw_odds)
         assert len(cleaned_odds) == 1
@@ -309,16 +320,16 @@ async def test_football_data_cleaner_methods():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.data.processing.football_data_cleaner import FootballDataCleaner
+    from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
     # 验证类可以实例化
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
-        assert hasattr(cleaner, 'clean_match_data')
-        assert hasattr(cleaner, 'clean_odds_data')
-        assert hasattr(cleaner, '_validate_match_data')
-        assert hasattr(cleaner, '_validate_score')
-        assert hasattr(cleaner, '_to_utc_time')
+        assert hasattr(cleaner, "clean_match_data")
+        assert hasattr(cleaner, "clean_odds_data")
+        assert hasattr(cleaner, "_validate_match_data")
+        assert hasattr(cleaner, "_validate_score")
+        assert hasattr(cleaner, "_to_utc_time")
 
 
 @pytest.mark.asyncio
@@ -326,7 +337,7 @@ async def test_error_handling():
     """测试错误处理"""
     from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
 
         # 测试无效比赛数据
@@ -340,6 +351,8 @@ async def test_error_handling():
         assert result is None
 
         # 测试异常处理
-        cleaner.data_validator.validate_match_data = Mock(side_effect=Exception("Test error"))
+        cleaner.data_validator.validate_match_data = Mock(
+            side_effect=Exception("Test error")
+        )
         result = await cleaner.clean_match_data({"id": "123"})
         assert result is None

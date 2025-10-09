@@ -6,6 +6,7 @@ Test Split Logging System
 import pytest
 from unittest.mock import MagicMock, patch
 
+
 # 测试导入
 def test_import_logging_types():
     """测试能否正常导入日志类型"""
@@ -62,7 +63,7 @@ def test_structured_logger_creation():
 
     logger = StructuredLogger(
         name="test_logger",
-        category=LogCategory.TEST if hasattr(LogCategory, 'TEST') else LogCategory.API,
+        category=LogCategory.TEST if hasattr(LogCategory, "TEST") else LogCategory.API,
         level=LogLevel.DEBUG,
         enable_json=False,
         enable_console=False,
@@ -79,9 +80,7 @@ def test_logger_manager_configure():
     from src.core.logging import LoggerManager, LogLevel
 
     LoggerManager.configure(
-        level=LogLevel.WARNING,
-        enable_json=False,
-        log_dir="/tmp/test_logs"
+        level=LogLevel.WARNING, enable_json=False, log_dir="/tmp/test_logs"
     )
 
     assert LoggerManager._config["level"] == LogLevel.WARNING
@@ -190,7 +189,7 @@ def test_log_handler_manager():
 
 
 # 测试日志方法
-@patch('os.getenv')
+@patch("os.getenv")
 def test_logger_methods(mock_getenv):
     """测试日志器的各种方法"""
     mock_getenv.return_value = "test"

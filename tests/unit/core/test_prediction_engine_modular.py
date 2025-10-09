@@ -54,7 +54,7 @@ class TestPredictionEngineModular:
     @pytest.fixture
     def mock_engine(self, mock_config, mock_db_manager, mock_redis_manager):
         """创建预测引擎实例"""
-        with patch('src.core.prediction.engine.MetricsExporter'):
+        with patch("src.core.prediction.engine.MetricsExporter"):
             engine = PredictionEngine(mock_config, mock_db_manager, mock_redis_manager)
             return engine
 
@@ -69,8 +69,7 @@ class TestPredictionEngineModular:
 
         # 测试自定义配置
         config = PredictionConfig.create(
-            mlflow_tracking_uri="http://custom:5000",
-            max_concurrent_predictions=20
+            mlflow_tracking_uri="http://custom:5000", max_concurrent_predictions=20
         )
         assert config.mlflow_tracking_uri == "http://custom:5000"
         assert config.max_concurrent_predictions == 20
@@ -120,9 +119,7 @@ class TestPredictionEngineModular:
         """测试缓存管理器"""
         from src.cache.redis.core.key_manager import CacheKeyManager
 
-        cache_manager = PredictionCacheManager(
-            mock_redis_manager, CacheKeyManager()
-        )
+        cache_manager = PredictionCacheManager(mock_redis_manager, CacheKeyManager())
 
         # 测试获取和设置预测
         match_id = 123
@@ -146,7 +143,9 @@ class TestPredictionEngineModular:
         """测试数据加载器"""
         # 模拟数据库查询结果
         mock_session = AsyncMock()
-        mock_db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         data_loader = PredictionDataLoader(mock_db_manager)
 
@@ -183,7 +182,9 @@ class TestPredictionEngineModular:
     @pytest.mark.asyncio
     async def test_model_loader(self):
         """测试模型加载器"""
-        with patch('src.core.prediction.model_loader.PredictionService') as mock_service:
+        with patch(
+            "src.core.prediction.model_loader.PredictionService"
+        ) as mock_service:
             mock_service_instance = mock_service.return_value
             mock_service_instance.mlflow_client.get_latest_versions.return_value = [
                 MagicMock(version="1")
@@ -242,14 +243,16 @@ class TestPredictionEngineModular:
         mock_prediction.created_at.isoformat.return_value = "2024-01-01"
         mock_engine.model_loader.predict_match.return_value = mock_prediction
 
-        mock_engine.data_loader.get_match_info = AsyncMock(return_value={
-            "id": 123,
-            "home_team": {"id": 1, "name": "Team A"},
-            "away_team": {"id": 2, "name": "Team B"},
-            "league": {"id": 3, "name": "League"},
-            "match_date": "2024-01-01",
-            "status": "scheduled"
-        })
+        mock_engine.data_loader.get_match_info = AsyncMock(
+            return_value={
+                "id": 123,
+                "home_team": {"id": 1, "name": "Team A"},
+                "away_team": {"id": 2, "name": "Team B"},
+                "league": {"id": 3, "name": "League"},
+                "match_date": "2024-01-01",
+                "status": "scheduled",
+            }
+        )
         mock_engine.data_loader.get_match_odds = AsyncMock(return_value=None)
         mock_engine._get_match_features = AsyncMock(return_value=None)
 
@@ -267,11 +270,13 @@ class TestPredictionEngineModular:
     async def test_batch_predict(self, mock_engine):
         """测试批量预测"""
         # 设置模拟
-        mock_engine.predict_match = AsyncMock(side_effect=[
-            {"match_id": 123, "prediction": "home_win"},
-            {"match_id": 124, "prediction": "draw"},
-            {"match_id": 125, "prediction": "away_win"},
-        ])
+        mock_engine.predict_match = AsyncMock(
+            side_effect=[
+                {"match_id": 123, "prediction": "home_win"},
+                {"match_id": 124, "prediction": "draw"},
+                {"match_id": 125, "prediction": "away_win"},
+            ]
+        )
 
         # 执行批量预测
         results = await mock_engine.batch_predict([123, 124, 125])

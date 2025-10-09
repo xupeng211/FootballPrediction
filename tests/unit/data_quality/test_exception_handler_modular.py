@@ -6,6 +6,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
+
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
@@ -26,7 +27,7 @@ def test_module_import():
     )
 
     # 测试导入兼容模块
-    from src.data.quality.exception_handler import (
+    from src.data.quality.exception_handler_mod import (
         DataQualityExceptionHandler as LegacyDataQualityExceptionHandler,
     )
 
@@ -137,7 +138,7 @@ def test_invalid_data_handler():
 async def test_quality_logger():
     """测试质量日志记录器"""
     from src.data.quality.exception_handler_mod import QualityLogger
-    from src.database.connection import DatabaseManager
+    from src.database.connection_mod import DatabaseManager
 
     # Mock database manager
     db_manager = Mock(spec=DatabaseManager)
@@ -183,7 +184,7 @@ def test_exception_handler_initialization():
     """测试异常处理器初始化"""
     from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
 
         assert handler.db_manager is not None
@@ -203,7 +204,7 @@ def test_exception_handler_initialization():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.data.quality.exception_handler import (
+    from src.data.quality.exception_handler_mod import (
         DataQualityExceptionHandler,
         MissingValueHandler,
         SuspiciousOddsHandler,
@@ -211,12 +212,12 @@ def test_backward_compatibility():
     )
 
     # 验证类可以实例化
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
-        assert hasattr(handler, 'handle_missing_values')
-        assert hasattr(handler, 'handle_suspicious_odds')
-        assert hasattr(handler, 'handle_invalid_data')
-        assert hasattr(handler, 'get_handling_statistics')
+        assert hasattr(handler, "handle_missing_values")
+        assert hasattr(handler, "handle_suspicious_odds")
+        assert hasattr(handler, "handle_invalid_data")
+        assert hasattr(handler, "get_handling_statistics")
 
 
 @pytest.mark.asyncio
@@ -224,14 +225,22 @@ async def test_exception_handler_methods():
     """测试异常处理器的方法"""
     from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
 
         # Mock 子处理器
-        handler.missing_value_handler.handle_missing_values = AsyncMock(return_value=[{"id": 1}])
-        handler.suspicious_odds_handler.handle_suspicious_odds = AsyncMock(return_value={"total_processed": 1})
-        handler.invalid_data_handler.handle_invalid_data = AsyncMock(return_value={"logged_count": 1})
-        handler.statistics_provider.get_handling_statistics = AsyncMock(return_value={"total_issues": 0})
+        handler.missing_value_handler.handle_missing_values = AsyncMock(
+            return_value=[{"id": 1}]
+        )
+        handler.suspicious_odds_handler.handle_suspicious_odds = AsyncMock(
+            return_value={"total_processed": 1}
+        )
+        handler.invalid_data_handler.handle_invalid_data = AsyncMock(
+            return_value={"logged_count": 1}
+        )
+        handler.statistics_provider.get_handling_statistics = AsyncMock(
+            return_value={"total_issues": 0}
+        )
 
         # 测试方法调用
         result = await handler.handle_missing_values("matches", [{}])
@@ -276,7 +285,7 @@ async def test_quality_dashboard():
     """测试质量仪表板"""
     from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
-    with patch('src.database.connection.DatabaseManager'):
+    with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
 
         # Mock 统计提供器
@@ -286,11 +295,17 @@ async def test_quality_dashboard():
         mock_score = {"quality_score": 0.9}
         mock_reviews = []
 
-        handler.statistics_provider.get_handling_statistics = AsyncMock(return_value=mock_stats)
+        handler.statistics_provider.get_handling_statistics = AsyncMock(
+            return_value=mock_stats
+        )
         handler.statistics_provider.get_daily_trend = AsyncMock(return_value=mock_trend)
         handler.statistics_provider.get_top_issues = AsyncMock(return_value=mock_issues)
-        handler.statistics_provider.get_quality_score = AsyncMock(return_value=mock_score)
-        handler.quality_logger.get_pending_reviews = AsyncMock(return_value=mock_reviews)
+        handler.statistics_provider.get_quality_score = AsyncMock(
+            return_value=mock_score
+        )
+        handler.quality_logger.get_pending_reviews = AsyncMock(
+            return_value=mock_reviews
+        )
 
         # 获取仪表板数据
         dashboard = await handler.get_quality_dashboard("matches")

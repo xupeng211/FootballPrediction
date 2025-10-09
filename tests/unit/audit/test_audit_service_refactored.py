@@ -37,10 +37,10 @@ class TestAuditServiceRefactored:
     def test_audit_service_creation(self, audit_service):
         """测试审计服务创建"""
         assert audit_service is not None
-        assert hasattr(audit_service, 'sanitizer')
-        assert hasattr(audit_service, 'audit_logger')
-        assert hasattr(audit_service, 'analyzer')
-        assert hasattr(audit_service, 'report_generator')
+        assert hasattr(audit_service, "sanitizer")
+        assert hasattr(audit_service, "audit_logger")
+        assert hasattr(audit_service, "analyzer")
+        assert hasattr(audit_service, "report_generator")
         assert isinstance(audit_service.sanitizer, DataSanitizer)
         assert isinstance(audit_service.audit_logger, AuditLogger)
         assert isinstance(audit_service.analyzer, AuditAnalyzer)
@@ -67,10 +67,7 @@ class TestAuditServiceRefactored:
             "name": "John",
             "password": "secret123",
             "email": "john@example.com",
-            "nested": {
-                "token": "abc123",
-                "value": 42
-            }
+            "nested": {"token": "abc123", "value": 42},
         }
         cleaned = sanitizer.sanitize_data(data)
         assert cleaned["name"] == "John"
@@ -83,9 +80,7 @@ class TestAuditServiceRefactored:
     def test_audit_context(self):
         """测试审计上下文"""
         context = AuditContext(
-            user_id="user123",
-            username="testuser",
-            user_role="admin"
+            user_id="user123", username="testuser", user_role="admin"
         )
 
         # 测试转换为字典
@@ -97,13 +92,16 @@ class TestAuditServiceRefactored:
         # 测试上下文管理器
         with context:
             from src.services.audit.context import audit_context
+
             current_context = audit_context.get()
             assert current_context["user_id"] == "user123"
 
     @pytest.mark.asyncio
     async def test_log_operation(self, audit_service, sample_context):
         """测试记录操作"""
-        with patch.object(audit_service.audit_logger, 'log_operation', new_callable=AsyncMock) as mock_log:
+        with patch.object(
+            audit_service.audit_logger, "log_operation", new_callable=AsyncMock
+        ) as mock_log:
             mock_log.return_value = 123
 
             log_id = await audit_service.log_operation(
@@ -111,7 +109,7 @@ class TestAuditServiceRefactored:
                 table_name="test_table",
                 record_id=1,
                 new_values={"name": "test"},
-                context=sample_context
+                context=sample_context,
             )
 
             assert log_id == 123
@@ -124,7 +122,9 @@ class TestAuditServiceRefactored:
     @pytest.mark.asyncio
     async def test_get_audit_summary(self, audit_service):
         """测试获取审计摘要"""
-        with patch.object(audit_service.analyzer, 'get_audit_summary', new_callable=AsyncMock) as mock_summary:
+        with patch.object(
+            audit_service.analyzer, "get_audit_summary", new_callable=AsyncMock
+        ) as mock_summary:
             from src.database.models.audit_log import AuditLogSummary
 
             mock_summary.return_value = AuditLogSummary(
@@ -135,7 +135,7 @@ class TestAuditServiceRefactored:
                 unique_tables=5,
                 high_risk_operations=2,
                 failed_operations=3,
-                avg_execution_time_ms=50.5
+                avg_execution_time_ms=50.5,
             )
 
             summary = await audit_service.get_audit_summary()
@@ -155,7 +155,7 @@ class TestAuditServiceRefactored:
             unique_tables=5,
             high_risk_operations=2,
             failed_operations=3,
-            avg_execution_time_ms=50.5
+            avg_execution_time_ms=50.5,
         )
 
         # 测试JSON格式
@@ -173,13 +173,15 @@ class TestAuditServiceRefactored:
     @pytest.mark.asyncio
     async def test_detect_anomalies(self, audit_service):
         """测试检测异常"""
-        with patch.object(audit_service.analyzer, 'detect_anomalies', new_callable=AsyncMock) as mock_detect:
+        with patch.object(
+            audit_service.analyzer, "detect_anomalies", new_callable=AsyncMock
+        ) as mock_detect:
             mock_detect.return_value = [
                 {
                     "type": "high_failure_rate",
                     "user_id": "user123",
                     "failed_operations": 15,
-                    "time_window_hours": 24
+                    "time_window_hours": 24,
                 }
             ]
 
@@ -208,10 +210,14 @@ class TestAuditServiceRefactored:
     @pytest.mark.asyncio
     async def test_get_recent_activity(self, audit_service):
         """测试获取最近活动"""
-        with patch('src.services.audit.audit_service.get_async_session') as mock_session:
+        with patch(
+            "src.services.audit.audit_service.get_async_session"
+        ) as mock_session:
             # Mock session and query
             mock_query = Mock()
-            mock_session.return_value.__aenter__.return_value.query.return_value = mock_query
+            mock_session.return_value.__aenter__.return_value.query.return_value = (
+                mock_query
+            )
             mock_query.filter.return_value = mock_query
             mock_query.order_by.return_value = mock_query
             mock_query.limit.return_value = mock_query

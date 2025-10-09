@@ -69,7 +69,7 @@ class TestAlertModels:
             title="Test Alert 2",
             message="Another test alert",
             level=AlertLevel.ERROR,
-            source="test-service"
+            source="test-service",
         )
 
         alert_dict = alert.to_dict()
@@ -111,7 +111,7 @@ class TestAlertModels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
 
         assert alert.is_active()
@@ -130,7 +130,7 @@ class TestAlertModels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
 
         alert.silence()
@@ -143,13 +143,11 @@ class TestAlertModels:
             title="Old Title",
             message="Old message",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
 
         alert.update(
-            title="New Title",
-            message="New message",
-            labels={"new_label": "value"}
+            title="New Title", message="New message", labels={"new_label": "value"}
         )
 
         assert alert.title == "New Title"
@@ -166,7 +164,7 @@ class TestAlertModels:
             message="Test message",
             level=AlertLevel.WARNING,
             source="test",
-            created_at=created_time
+            created_at=created_time,
         )
 
         age = alert.get_age()
@@ -192,7 +190,7 @@ class TestAlertModels:
             channels=[AlertChannel.LOG, AlertChannel.WEBHOOK],
             throttle_seconds=600,
             enabled=True,
-            labels={"team": "infra"}
+            labels={"team": "infra"},
         )
 
         assert rule.rule_id == "rule-001"
@@ -213,7 +211,7 @@ class TestAlertModels:
             condition="error_rate > 0.1",
             level=AlertLevel.WARNING,
             channels=[AlertChannel.LOG],
-            throttle_seconds=300
+            throttle_seconds=300,
         )
 
         # 首次触发
@@ -239,8 +237,7 @@ class TestAlertChannels:
     async def test_log_channel(self):
         """测试日志渠道"""
         channel = LogChannel(
-            name="test_log",
-            config={"log_level": "error", "include_details": True}
+            name="test_log", config={"log_level": "error", "include_details": True}
         )
 
         alert = Alert(
@@ -248,7 +245,7 @@ class TestAlertChannels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.ERROR,
-            source="test-service"
+            source="test-service",
         )
 
         result = await channel.send(alert)
@@ -261,7 +258,7 @@ class TestAlertChannels:
             "url": "https://example.com/webhook",
             "method": "POST",
             "timeout": 5,
-            "retry_count": 2
+            "retry_count": 2,
         }
         channel = WebhookChannel(name="test_webhook", config=config)
 
@@ -270,11 +267,11 @@ class TestAlertChannels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test-service"
+            source="test-service",
         )
 
         # 模拟成功响应
-        with patch('aiohttp.ClientSession.request') as mock_request:
+        with patch("aiohttp.ClientSession.request") as mock_request:
             mock_response = MagicMock()
             mock_response.status = 200
             mock_request.return_value.__aenter__.return_value = mock_response
@@ -292,7 +289,7 @@ class TestAlertChannels:
             "password": "password",
             "from_address": "alerts@example.com",
             "to_addresses": ["admin@example.com"],
-            "use_tls": True
+            "use_tls": True,
         }
         channel = EmailChannel(name="test_email", config=config)
 
@@ -301,11 +298,11 @@ class TestAlertChannels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.CRITICAL,
-            source="test-service"
+            source="test-service",
         )
 
         # 模拟邮件发送成功
-        with patch('aiosmtplib.SMTP') as mock_smtp:
+        with patch("aiosmtplib.SMTP") as mock_smtp:
             mock_smtp_instance = AsyncMock()
             mock_smtp.return_value = mock_smtp_instance
 
@@ -320,7 +317,7 @@ class TestAlertChannels:
         config = {
             "webhook_url": "https://hooks.slack.com/test/webhook",
             "channel": "#alerts",
-            "username": "AlertBot"
+            "username": "AlertBot",
         }
         channel = SlackChannel(name="test_slack", config=config)
 
@@ -329,11 +326,11 @@ class TestAlertChannels:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.ERROR,
-            source="test-service"
+            source="test-service",
         )
 
         # 模拟Slack API响应
-        with patch('aiohttp.ClientSession.post') as mock_post:
+        with patch("aiohttp.ClientSession.post") as mock_post:
             mock_response = MagicMock()
             mock_response.status = 200
             mock_post.return_value.__aenter__.return_value = mock_response
@@ -401,7 +398,7 @@ class TestAlertRuleEngine:
             name="High CPU Usage",
             condition="cpu_usage > 90",
             level=AlertLevel.WARNING,
-            channels=[AlertChannel.LOG]
+            channels=[AlertChannel.LOG],
         )
         engine.register_rule(rule)
 
@@ -427,7 +424,7 @@ class TestAlertRuleEngine:
             name="Low Memory",
             condition="memory_usage < 20",
             level=AlertLevel.ERROR,
-            channels=[AlertChannel.LOG]
+            channels=[AlertChannel.LOG],
         )
         engine.register_rule(rule)
 
@@ -451,7 +448,7 @@ class TestAlertRuleEngine:
             name="Test Rule",
             condition="test > 0",
             level=AlertLevel.INFO,
-            channels=[AlertChannel.LOG]
+            channels=[AlertChannel.LOG],
         )
         engine.register_rule(rule)
 
@@ -490,7 +487,7 @@ class TestAlertAggregator:
         group = AlertGroup(
             group_id="group-001",
             name="CPU High Alerts",
-            labels={"service": "api", "severity": "high"}
+            labels={"service": "api", "severity": "high"},
         )
 
         assert group.group_id == "group-001"
@@ -500,10 +497,7 @@ class TestAlertAggregator:
 
     def test_alert_group_operations(self):
         """测试告警组操作"""
-        group = AlertGroup(
-            group_id="group-002",
-            name="Test Group"
-        )
+        group = AlertGroup(group_id="group-002", name="Test Group")
 
         # 添加告警
         alert1 = Alert(
@@ -511,14 +505,14 @@ class TestAlertAggregator:
             title="Alert 1",
             message="Message 1",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
         alert2 = Alert(
             alert_id="alert-002",
             title="Alert 2",
             message="Message 2",
             level=AlertLevel.ERROR,
-            source="test"
+            source="test",
         )
 
         group.add_alert(alert1)
@@ -544,10 +538,7 @@ class TestAlertAggregator:
 
     def test_alert_group_highest_severity(self):
         """测试告警组最高严重级别"""
-        group = AlertGroup(
-            group_id="group-003",
-            name="Test Group"
-        )
+        group = AlertGroup(group_id="group-003", name="Test Group")
 
         # 没有告警时
         assert group.get_highest_severity() is None
@@ -574,18 +565,20 @@ class TestAlertAggregator:
         aggregator = AlertAggregator()
 
         # 添加抑制规则
-        aggregator.add_suppression_rule({
-            "name": "suppress_test",
-            "condition": {"source": "test-service"},
-            "reason": "Test service alerts are suppressed"
-        })
+        aggregator.add_suppression_rule(
+            {
+                "name": "suppress_test",
+                "condition": {"source": "test-service"},
+                "reason": "Test service alerts are suppressed",
+            }
+        )
 
         alert = Alert(
             alert_id="test-001",
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test-service"
+            source="test-service",
         )
 
         suppressed, reason = aggregator.is_suppressed(alert)
@@ -598,7 +591,7 @@ class TestAlertAggregator:
             title="Another Alert",
             message="Another message",
             level=AlertLevel.ERROR,
-            source="other-service"
+            source="other-service",
         )
 
         suppressed, reason = aggregator.is_suppressed(alert2)
@@ -614,7 +607,7 @@ class TestAlertAggregator:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
 
         # 首次告警
@@ -626,7 +619,7 @@ class TestAlertAggregator:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.WARNING,
-            source="test"
+            source="test",
         )
         alert2.fingerprint = alert.fingerprint  # 强制相同指纹
 
@@ -637,16 +630,17 @@ class TestAlertAggregator:
         aggregator = AlertAggregator()
 
         # 添加一些规则
-        aggregator.add_suppression_rule({
-            "name": "test_suppression",
-            "condition": {"source": "test"}
-        })
-        aggregator.add_aggregation_rule({
-            "name": "by_source",
-            "group_by": ["source"],
-            "window": timedelta(minutes=10),
-            "threshold": 3
-        })
+        aggregator.add_suppression_rule(
+            {"name": "test_suppression", "condition": {"source": "test"}}
+        )
+        aggregator.add_aggregation_rule(
+            {
+                "name": "by_source",
+                "group_by": ["source"],
+                "window": timedelta(minutes=10),
+                "threshold": 3,
+            }
+        )
 
         stats = aggregator.get_statistics()
         assert stats["suppression_rules"] == 1
@@ -690,9 +684,7 @@ class TestAlertManager:
             "deduplication_minutes": 10,
             "rule_evaluation_interval": 30,
             "enable_prometheus": True,
-            "webhook_channel": {
-                "url": "https://example.com/webhook"
-            }
+            "webhook_channel": {"url": "https://example.com/webhook"},
         }
 
         manager = AlertManager(config)
@@ -716,7 +708,7 @@ class TestAlertManager:
             level=AlertLevel.WARNING,
             source="test-service",
             labels={"service": "test"},
-            annotations={"runbook": "https://example.com"}
+            annotations={"runbook": "https://example.com"},
         )
 
         assert alert is not None
@@ -735,7 +727,7 @@ class TestAlertManager:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.ERROR,
-            source="test-service"
+            source="test-service",
         )
 
         assert alert.is_active()
@@ -754,7 +746,7 @@ class TestAlertManager:
             title="Test Alert",
             message="Test message",
             level=AlertLevel.ERROR,
-            source="test-service"
+            source="test-service",
         )
 
         success = await manager.silence_alert(alert.alert_id)
@@ -771,19 +763,19 @@ class TestAlertManager:
             title="CPU High",
             message="CPU usage is high",
             level=AlertLevel.WARNING,
-            source="api-service"
+            source="api-service",
         )
         await manager.create_alert(
             title="Memory Low",
             message="Memory is low",
             level=AlertLevel.ERROR,
-            source="db-service"
+            source="db-service",
         )
         await manager.create_alert(
             title="Disk Full",
             message="Disk is full",
             level=AlertLevel.CRITICAL,
-            source="api-service"
+            source="api-service",
         )
 
         # 搜索所有告警
@@ -840,10 +832,12 @@ class TestAlertManager:
     @pytest.mark.asyncio
     async def test_background_tasks(self):
         """测试后台任务"""
-        manager = AlertManager(config={
-            "rule_evaluation_interval": 1,  # 1秒
-            "cleanup_interval": 2  # 2秒
-        })
+        manager = AlertManager(
+            config={
+                "rule_evaluation_interval": 1,  # 1秒
+                "cleanup_interval": 2,  # 2秒
+            }
+        )
 
         # 启动管理器
         await manager.start()

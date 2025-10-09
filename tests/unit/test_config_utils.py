@@ -1,4 +1,5 @@
 """配置工具测试"""
+
 import pytest
 from unittest.mock import Mock, patch
 from src.core.config import Config
@@ -18,7 +19,7 @@ class TestConfigUtils:
         config = FastAPIConfig()
         assert config is not None
 
-    @patch.dict(os.environ, {'DATABASE_URL': 'sqlite:///test.db'})
+    @patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"})
     def test_environment_variables(self):
         """测试环境变量"""
         config = Config()
@@ -45,12 +46,13 @@ class TestConfigUtils:
         result = config.to_dict()
         assert result == {"key": "value"}
 
-    @patch('src.core.config.load_config')
+    @patch("src.core.config.load_config")
     def test_config_loading(self, mock_load):
         """测试配置加载"""
         mock_load.return_value = {"test": "value"}
 
         from src.core.config import load_config
+
         config = load_config()
 
         assert config == {"test": "value"}
@@ -61,6 +63,6 @@ class TestConfigUtils:
         config = FastAPIConfig()
 
         # 测试默认值
-        assert hasattr(config, 'host')
-        assert hasattr(config, 'port')
-        assert hasattr(config, 'debug')
+        assert hasattr(config, "host")
+        assert hasattr(config, "port")
+        assert hasattr(config, "debug")

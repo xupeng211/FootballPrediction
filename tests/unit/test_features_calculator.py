@@ -1,12 +1,14 @@
 from src.features.feature_calculator import FeatureCalculator
 
+
 def test_calculator_creation():
     calc = FeatureCalculator()
     assert calc is not None
 
+
 def test_calculator_features():
     calc = FeatureCalculator()
     # 测试特征计算方法
-    assert hasattr(calc, 'calculate_team_form')
-    assert hasattr(calc, 'calculate_head_to_head')
-    assert hasattr(calc, 'calculate_home_advantage')
+    assert hasattr(calc, "calculate_team_form")
+    assert hasattr(calc, "calculate_head_to_head")
+    assert hasattr(calc, "calculate_home_advantage")

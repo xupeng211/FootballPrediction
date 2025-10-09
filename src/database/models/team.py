@@ -5,8 +5,6 @@
 """
 
 
-
-
 # Match model imported locally to avoid circular imports
 
 
@@ -307,6 +305,3 @@ class Team(BaseModel):
             List[Team]: 所有活跃状态的球队列表。
         """
         return session.query(cls).filter(cls.is_active is True).all()
-
-
-

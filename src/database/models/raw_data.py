@@ -8,9 +8,6 @@ Bronze层原始数据模型
 """
 
 
-
-
-
 class RawMatchData(BaseModel):
     """
     Bronze层原始比赛数据模型
@@ -292,9 +289,6 @@ class RawScoresData(BaseModel):
             f"id={self.id}, "
             f"source={self.data_source}, "
             f"match_id={self.external_match_id}, "
-
-
-
             f"score={self.home_score}-{self.away_score}, "
             f"status={self.match_status}, "
             f"processed={self.processed}"

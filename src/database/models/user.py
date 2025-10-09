@@ -1,25 +1,21 @@
-
-"""用户数据模型."""
-
-
-
-
-
-
-    """平台用户表,满足测试所需的基本字段."""
-
-
-
-        """更新最近登录时间."""
-
-
-
-
-from datetime import datetime
 from __future__ import annotations
 
+"""用户数据模型。"""
+
+from typing import cast, Any, Optional, Union
+
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String
+
+from src.database.base import BaseModel
+
+
 class User(BaseModel):
+    """平台用户表，满足测试所需的基本字段。"""
+
     __tablename__ = "users"
+
     username = Column(String(64), unique=True, nullable=False, comment="用户名")
     email = Column(String(128), unique=True, nullable=False, comment="邮箱")
     full_name = Column(String(128), nullable=True, comment="全名")
@@ -45,7 +41,10 @@ class User(BaseModel):
     avatar_url = Column(String(256), nullable=True, comment="头像地址")
     specialization = Column(String(128), nullable=True, comment="分析师专长")
     experience_years = Column(Integer, nullable=True, comment="相关经验年限")
+
     def touch_login(self) -> None:
+        """更新最近登录时间。"""
         self.last_login = datetime.utcnow()  # type: ignore[assignment]
+
     def __repr__(self) -> str:  # pragma: no cover - 调试友好
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

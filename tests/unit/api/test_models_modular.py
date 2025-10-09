@@ -104,7 +104,7 @@ class TestModelsModular:
         mock_session.execute.return_value.__aiter__.return_value = [mock_trend_row]
 
         # 调用模块化函数
-        with patch('src.api.models.metrics.text'):
+        with patch("src.api.models.metrics.text"):
             result = await get_model_metrics("test_model", "7d", mock_session)
 
         # 验证结果
@@ -163,7 +163,10 @@ class TestModelsModular:
         mock_mlflow_client.get_model_version.return_value = mock_old_version
         mock_mlflow_client.transition_model_version_stage.return_value = None
         # 第二次调用应该返回更新后的版本
-        mock_mlflow_client.get_model_version.side_effect = [mock_old_version, mock_new_version]
+        mock_mlflow_client.get_model_version.side_effect = [
+            mock_old_version,
+            mock_new_version,
+        ]
 
         # 调用模块化函数
         result = await promote_model_version(
@@ -227,7 +230,7 @@ class TestModelsModular:
         mock_session.execute.return_value = mock_result
 
         # 调用模块化函数
-        with patch('src.api.models.performance.text'):
+        with patch("src.api.models.performance.text"):
             result = await get_model_performance(
                 "test_model", "1", mock_session, mock_mlflow_client
             )

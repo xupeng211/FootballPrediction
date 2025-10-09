@@ -45,14 +45,15 @@ def test_module_imports():
 
 def test_metric_types():
     """测试指标数据类型"""
-    from src.monitoring.metrics_collector_enhanced_mod import MetricPoint, MetricSummary, AlertInfo
+    from src.monitoring.metrics_collector_enhanced_mod import (
+        MetricPoint,
+        MetricSummary,
+        AlertInfo,
+    )
 
     # 测试MetricPoint
     point = MetricPoint(
-        name="test_metric",
-        value=100.5,
-        labels={"env": "test"},
-        unit="ms"
+        name="test_metric", value=100.5, labels={"env": "test"}, unit="ms"
     )
     assert point.name == "test_metric"
     assert point.value == 100.5
@@ -62,12 +63,7 @@ def test_metric_types():
 
     # 测试MetricSummary
     summary = MetricSummary(
-        count=10,
-        sum=1000.0,
-        avg=100.0,
-        min=50.0,
-        max=150.0,
-        last=95.0
+        count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0
     )
     assert summary.count == 10
     assert summary.avg == 100.0
@@ -79,7 +75,7 @@ def test_metric_types():
         name="test_alert",
         message="Test alert message",
         severity="high",
-        component="test_component"
+        component="test_component",
     )
     assert alert.name == "test_alert"
     assert alert.message == "Test alert message"
@@ -89,23 +85,18 @@ def test_metric_types():
 
 def test_metrics_aggregator():
     """测试指标聚合器"""
-    from src.monitoring.metrics_collector_enhanced_mod import MetricsAggregator, MetricPoint
+    from src.monitoring.metrics_collector_enhanced_mod import (
+        MetricsAggregator,
+        MetricPoint,
+    )
 
     aggregator = MetricsAggregator(window_size=60)
 
     # 添加指标点
-    point1 = MetricPoint(
-        name="test_metric",
-        value=100.0,
-        labels={"env": "test"}
-    )
+    point1 = MetricPoint(name="test_metric", value=100.0, labels={"env": "test"})
     aggregator.add_metric(point1)
 
-    point2 = MetricPoint(
-        name="test_metric",
-        value=200.0,
-        labels={"env": "test"}
-    )
+    point2 = MetricPoint(name="test_metric", value=200.0, labels={"env": "test"})
     aggregator.add_metric(point2)
 
     # 获取指标聚合
@@ -139,7 +130,7 @@ def test_business_metrics_collector():
         predicted_result="home",
         confidence=0.85,
         duration=0.5,
-        success=True
+        success=True,
     )
 
     # 验证统计更新
@@ -178,20 +169,14 @@ def test_system_metrics_collector():
 
     # 记录缓存操作
     collector.record_cache_operation(
-        cache_type="redis",
-        operation="get",
-        hit=True,
-        size=1000
+        cache_type="redis", operation="get", hit=True, size=1000
     )
     assert "redis" in collector.cache_stats
     assert collector.cache_stats["redis"]["hits"] == 1
     assert collector.cache_stats["redis"]["last_size"] == 1000
 
     # 更新连接指标
-    collector.update_connection_metrics({
-        "database": 10,
-        "redis": 5
-    })
+    collector.update_connection_metrics({"database": 10, "redis": 5})
     # 验证prometheus.set_gauge被调用
     assert prometheus_manager.set_gauge.called
 
@@ -210,7 +195,7 @@ def test_alert_manager():
         name="high_error_rate",
         condition=high_error_rate,
         severity="high",
-        description="Error rate is too high"
+        description="Error rate is too high",
     )
 
     # 检查告警（不应触发）
@@ -242,18 +227,14 @@ def test_enhanced_metrics_collector():
         predicted_result="home",
         confidence=0.85,
         duration=0.5,
-        success=True
+        success=True,
     )
 
     # 记录错误
     collector.record_error("timeout", "database", "high")
 
     # 记录缓存操作
-    collector.record_cache_operation(
-        cache_type="redis",
-        operation="get",
-        hit=True
-    )
+    collector.record_cache_operation(cache_type="redis", operation="get", hit=True)
 
     # 获取指标摘要
     summary = collector.get_metrics_summary()
@@ -286,10 +267,7 @@ async def test_aggregation_task():
 
     # 记录一些指标
     collector.record_prediction(
-        model_version="v1.0",
-        predicted_result="home",
-        confidence=0.85,
-        duration=0.5
+        model_version="v1.0", predicted_result="home", confidence=0.85, duration=0.5
     )
 
     # 等待任务执行
@@ -301,7 +279,10 @@ async def test_aggregation_task():
 
 def test_global_collector():
     """测试全局收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod import get_metrics_collector, set_metrics_collector
+    from src.monitoring.metrics_collector_enhanced_mod import (
+        get_metrics_collector,
+        set_metrics_collector,
+    )
 
     # 获取全局收集器
     collector1 = get_metrics_collector()
@@ -324,7 +305,7 @@ def test_global_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.monitoring.metrics_collector_enhanced import (
+    from src.monitoring.metrics_collector_enhanced_mod import (
         EnhancedMetricsCollector,
         MetricsAggregator,
         MetricPoint,
@@ -342,7 +323,7 @@ def test_backward_compatibility():
     # 验证可以实例化
     collector = EnhancedMetricsCollector()
     assert collector is not None
-    assert hasattr(collector, 'record_prediction')
+    assert hasattr(collector, "record_prediction")
 
 
 def test_decorators():
@@ -377,15 +358,19 @@ def test_decorators():
 @pytest.mark.asyncio
 async def test_async_decorators():
     """测试异步装饰器"""
-    from src.monitoring.metrics_collector_enhanced_mod import track_prediction_performance
+    from src.monitoring.metrics_collector_enhanced_mod import (
+        track_prediction_performance,
+    )
 
     @track_prediction_performance()
     async def predict_match(match_id: int, model_version: str = "v1.0"):
         # 模拟预测
         await asyncio.sleep(0.01)
+
         class Result:
             predicted_result = "home"
             confidence_score = 0.85
+
         return Result()
 
     result = await predict_match(123)

@@ -1,7 +1,9 @@
 """API数据端点测试"""
+
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
+
 
 class TestAPIData:
     """API数据端点测试"""
@@ -10,6 +12,7 @@ class TestAPIData:
     def client(self):
         """创建测试客户端"""
         from src.api.app import app
+
         return TestClient(app)
 
     def test_get_root(self, client):
@@ -35,6 +38,7 @@ class TestAPIData:
     def test_health_response_time(self, client):
         """测试健康检查响应时间"""
         import time
+
         start = time.time()
         response = client.get("/api/health")
         end = time.time()

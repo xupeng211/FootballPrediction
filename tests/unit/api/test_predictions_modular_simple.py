@@ -94,7 +94,7 @@ def test_backward_compatibility():
 
     # 验证路由器可以导入
     assert router is not None
-    assert hasattr(router, 'routes')
+    assert hasattr(router, "routes")
     assert len(router.routes) > 0
 
 
@@ -103,7 +103,7 @@ def test_router_endpoints():
     from src.api.predictions_mod import router
 
     # 验证路由器有路由
-    assert hasattr(router, 'routes')
+    assert hasattr(router, "routes")
     assert len(router.routes) > 0
 
     # 验证路由器有正确的prefix
