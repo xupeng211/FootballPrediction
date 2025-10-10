@@ -318,6 +318,11 @@ class Settings(SettingsClass):
 config = Config()
 
 
+def get_config() -> Config:
+    """获取配置实例"""
+    return config
+
+
 # 创建全局设置实例
 def get_settings() -> Settings:
     """获取应用程序设置实例"""

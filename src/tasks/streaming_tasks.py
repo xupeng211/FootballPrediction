@@ -1,6 +1,4 @@
 """
-            from src.streaming import StreamConfig
-
 实时数据流任务
 
 处理实时数据流，包括：
@@ -8,6 +6,20 @@
 - 实时数据处理
 - 流数据持久化
 """
+
+import asyncio
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from celery import Task
+from celery.app.app import Celery
+
+from src.core.logging import get_logger
+from src.tasks.celery_app import app
+from src.tasks.error_handlers import TaskErrorLogger
+
+logger = get_logger(__name__)
 
 
 class StreamingTask(Task):

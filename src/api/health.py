@@ -11,10 +11,10 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from .api.health.checks import *  # type: ignore
-from .api.health.health_checker import *  # type: ignore
-from .api.health.models import *  # type: ignore
-from .api.health.utils import *  # type: ignore
+from .health.checks import *  # type: ignore
+from .health.health_checker import *  # type: ignore
+from .health.models import *  # type: ignore
+from .health.utils import *  # type: ignore
 
 warnings.warn(
     "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
