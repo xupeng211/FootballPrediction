@@ -8,11 +8,24 @@ Football Prediction Engine Core Module
 注意：此文件已重构为模块化结构，具体实现请查看 src/core/prediction/ 目录。
 """
 
-from src.core.prediction import PredictionEngine
-from src.core.prediction.config import PredictionConfig
-from src.core.prediction.statistics import PredictionStatistics
+# 延迟导入以避免循环导入
+PredictionEngine = None
+PredictionConfig = None
+PredictionStatistics = None
 
-# 为了向后兼容，从新模块导入所有内容
+
+def _lazy_import():
+    """延迟导入以避免循环导入"""
+    global PredictionEngine, PredictionConfig, PredictionStatistics
+    if PredictionEngine is None:
+        from .prediction import PredictionEngine as _PE
+        from .prediction.config import PredictionConfig as _PC
+        from .prediction.statistics import PredictionStatistics as _PS
+
+        PredictionEngine = _PE
+        PredictionConfig = _PC
+        PredictionStatistics = _PS
+
 
 # 保持原有的导入方式
 __all__ = [

@@ -3,7 +3,7 @@ API Module
 """
 
 from .data_api import router as data_router
-from .health_api import router as health_router
+from .health import router as health_router
 from .predictions_api import router as predictions_router
 from .events import router as events_router
 from .observers import router as observers_router

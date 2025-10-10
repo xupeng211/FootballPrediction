@@ -1,11 +1,4 @@
 """
-            import os
-            import redis
-
-            import shutil
-
-from src.database.connection_mod import DatabaseManager
-
 维护任务模块
 
 包含系统维护相关的任务：
@@ -14,6 +7,16 @@ from src.database.connection_mod import DatabaseManager
 - 系统健康监控
 - 数据库维护
 """
+
+import asyncio
+import logging
+import os
+import shutil
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from src.database.connection_mod import DatabaseManager
+from src.tasks.celery_app import app
 
 logger = logging.getLogger(__name__)
 
