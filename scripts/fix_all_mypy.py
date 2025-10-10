@@ -176,7 +176,7 @@ def main():
                             with open(path, "w", encoding="utf-8") as f:
                                 f.write(content)
                             print(f"✅ 全文件忽略: {file_path}")
-                    except:
+                    except Exception:
                         pass
 
             # 再次验证
