@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Dict
 
+
 class MaintainabilityImprover:
     """可维护性改进助手"""
 
@@ -32,7 +33,7 @@ class MaintainabilityImprover:
             "tests/unit/streaming/test_kafka_components.py",
             "tests/unit/streaming/test_stream_config.py",
             "tests/unit/test_core_config_functional.py",
-            "tests/unit/test_database_connection_functional.py"
+            "tests/unit/test_database_connection_functional.py",
         ]
 
         fixed_files = []
@@ -46,32 +47,30 @@ class MaintainabilityImprover:
 
             try:
                 # 读取文件内容
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
                 original = content
 
                 # 修复常见的导入问题
                 # 1. 相对导入问题
-                content = re.sub(
-                    r'from \.\.',
-                    'from src.',
-                    content
-                )
+                content = re.sub(r"from \.\.", "from src.", content)
 
                 # 2. 添加缺失的导入
-                if 'pytest' not in content and 'def test_' in content:
-                    content = 'import pytest\n' + content
+                if "pytest" not in content and "def test_" in content:
+                    content = "import pytest\n" + content
 
                 # 3. 修复 conftest 导入
-                if 'conftest' in content and 'import' not in content:
-                    content = content.replace('conftest', 'from tests.conftest import *')
+                if "conftest" in content and "import" not in content:
+                    content = content.replace(
+                        "conftest", "from tests.conftest import *"
+                    )
 
                 # 4. 添加缺失的类型导入
-                if 'List[' in content and 'from typing' not in content:
-                    content = 'from typing import List, Dict, Any, Optional\n' + content
+                if "List[" in content and "from typing" not in content:
+                    content = "from typing import List, Dict, Any, Optional\n" + content
 
                 # 写回文件
                 if content != original:
-                    file_path.write_text(content, encoding='utf-8')
+                    file_path.write_text(content, encoding="utf-8")
                     fixed_files.append(test_file)
                     print(f"  ✅ 修复: {test_file}")
 
@@ -188,7 +187,7 @@ class DatabaseTestCase(BaseTestCase):
         engine.dispose()
 '''
 
-        base_test_path.write_text(base_test_content, encoding='utf-8')
+        base_test_path.write_text(base_test_content, encoding="utf-8")
         print("  ✅ 创建: tests/base/__init__.py")
 
         # 创建测试工具模块
@@ -269,7 +268,7 @@ class MockResponse:
             raise Exception(f"HTTP {self.status_code}")
 '''
 
-        utils_path.write_text(utils_content, encoding='utf-8')
+        utils_path.write_text(utils_content, encoding="utf-8")
         print("  ✅ 创建: tests/utils/__init__.py")
 
     def create_simple_tests(self):
@@ -309,7 +308,7 @@ class TestServicesQuick(ServiceTestCase):
 '''
 
         test_file = self.test_dir / "unit" / "test_services_quick.py"
-        test_file.write_text(test_content, encoding='utf-8')
+        test_file.write_text(test_content, encoding="utf-8")
         print("  ✅ 创建: tests/unit/test_services_quick.py")
 
         # utils 测试
@@ -357,7 +356,7 @@ class TestUtilsQuick(BaseTestCase):
 '''
 
         test_file = self.test_dir / "unit" / "test_utils_quick2.py"
-        test_file.write_text(test_content, encoding='utf-8')
+        test_file.write_text(test_content, encoding="utf-8")
         print("  ✅ 创建: tests/unit/test_utils_quick2.py")
 
     def generate_complexity_report(self):
@@ -386,8 +385,8 @@ class TestUtilsQuick(BaseTestCase):
 
         report_path = self.root_dir / "docs" / "complexity_report.md"
         report_path.parent.mkdir(exist_ok=True)
-        report_path.write_text("\n".join(report), encoding='utf-8')
-        print(f"  ✅ 生成: docs/complexity_report.md")
+        report_path.write_text("\n".join(report), encoding="utf-8")
+        print("  ✅ 生成: docs/complexity_report.md")
 
     def run_initial_tests(self):
         """运行初始测试"""
@@ -400,7 +399,7 @@ class TestUtilsQuick(BaseTestCase):
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -444,6 +443,7 @@ class TestUtilsQuick(BaseTestCase):
         print("1. 运行: make test-quick")
         print("2. 查看覆盖率: make coverage-local")
         print("3. 查看 MAINTAINABILITY_IMPROVEMENT_BOARD.md 继续其他任务")
+
 
 if __name__ == "__main__":
     improver = MaintainabilityImprover()

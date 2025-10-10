@@ -160,7 +160,7 @@ class KafkaMessageConsumer:
         try:
             # 尝试解析为JSON
             return json.loads(value.decode("utf-8"))
-        except:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             # 返回原始字符串
             return value.decode("utf-8")
 
