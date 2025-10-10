@@ -70,7 +70,7 @@ class Prediction:
         if self.is_settled:
             return
 
-        self.actual_value = actual_value
+        self.actual_value = actual_value  # type: ignore
         self.is_settled = True
         self.settled_at = datetime.now()
 

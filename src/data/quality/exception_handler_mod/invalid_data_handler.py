@@ -180,8 +180,8 @@ class InvalidDataHandler:
 
             # 计算验证统计
             validation_result["validity_rate"] = (
-                validation_result["valid_records"] / validation_result["total_records"]
-                if validation_result["total_records"] > 0
+                validation_result["valid_records"] / validation_result["total_records"]  # type: ignore
+                if validation_result["total_records"] > 0  # type: ignore
                 else 0
             )
 

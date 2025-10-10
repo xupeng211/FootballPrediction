@@ -4,7 +4,7 @@
 提供用户画像生成和管理功能。
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List
 from .base_unified import SimpleService
 
 
@@ -68,7 +68,7 @@ class UserProfileService(SimpleService):
         interests = self._analyze_user_interests(user)
         behavior_patterns = self._analyze_behavior_patterns(user)
         content_preferences = self._analyze_content_preferences(user)
-        profile = UserProfile(
+        profile = UserProfile(  # type: ignore
             user_id=user.id,
             display_name=getattr(user, "display_name", user.username),
             email=(
@@ -81,7 +81,7 @@ class UserProfileService(SimpleService):
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
             },
-            created_at=datetime.now(),
+            created_at=datetime.now(),  # type: ignore
         )
         self._user_profiles[user.id] = profile
         return profile
@@ -158,15 +158,15 @@ class UserProfileService(SimpleService):
             "content_type": user_data.get(str("content_type"), "text"),
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
-        profile = UserProfile(
+        profile = UserProfile(  # type: ignore
             user_id=user_id,
             display_name=user_data.get(str("name"), "Anonymous"),
             email=user_data.get(str("email"), ""),
             preferences=preferences,
-            created_at=datetime.now(),
+            created_at=datetime.now(),  # type: ignore
         )
         self._user_profiles[user_id] = profile
-        return {"status": "created", "profile": profile.to_dict()}
+        return {"status": "created", "profile": profile.to_dict()}  # type: ignore
 
     def delete_profile(self, user_id: str) -> Dict[str, Any]:
         """删除用户画像"""

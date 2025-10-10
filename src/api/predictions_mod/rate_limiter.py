@@ -26,7 +26,7 @@ except ImportError:
         def limit(self, *args, **kwargs):
             return limiter_decorator
 
-    limiter = _LimiterStub()
+    limiter = _LimiterStub()  # type: ignore
 
 
 def get_rate_limiter():

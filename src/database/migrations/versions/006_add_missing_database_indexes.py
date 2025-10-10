@@ -17,23 +17,23 @@ Create Date: 2025-09-12 01:35:00.000000
 
 # revision identifiers, used by Alembic.
 revision: str = "006_missing_indexes"
-down_revision: Union[str, None] = "d6d814cc1078"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: Union[str, None] = "d6d814cc1078"  # type: ignore
+branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
+depends_on: Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:
     """添加缺失的数据库索引"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():
+    if context.is_offline_mode():  # type: ignore
         print("⚠️  离线模式：跳过索引创建")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database indexes creation")
+        op.execute("-- offline mode: skipped database indexes creation")  # type: ignore
         return
 
     # 获取数据库连接以执行原生SQL
-    conn = op.get_bind()
+    conn = op.get_bind()  # type: ignore
 
     print("开始添加缺失的数据库索引...")
 
@@ -44,7 +44,7 @@ def upgrade() -> None:
     print("1. 创建 idx_recent_matches 索引...")
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_recent_matches
             ON matches (match_time DESC, league_id)
@@ -63,7 +63,7 @@ def upgrade() -> None:
     print("2. 创建 idx_team_matches 索引...")
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_team_matches
             ON matches (home_team_id, away_team_id, match_time DESC);
@@ -81,7 +81,7 @@ def upgrade() -> None:
     print("3. 创建 idx_predictions_lookup 索引...")
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_predictions_lookup
             ON predictions (match_id, model_name, created_at DESC);
@@ -99,7 +99,7 @@ def upgrade() -> None:
     print("4. 创建 idx_odds_match_collected 索引...")
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_odds_match_collected
             ON odds (match_id, collected_at DESC);
@@ -119,7 +119,7 @@ def upgrade() -> None:
     # matches 表的复合状态索引
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_matches_status_time
             ON matches (match_status, match_time DESC)
@@ -134,7 +134,7 @@ def upgrade() -> None:
     # teams 表查询优化（如果表存在）
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_teams_league
             ON teams (league_id, team_name);
@@ -148,7 +148,7 @@ def upgrade() -> None:
     # odds 表的博彩商索引
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_odds_bookmaker_time
             ON odds (bookmaker, collected_at DESC);
@@ -162,7 +162,7 @@ def upgrade() -> None:
     # features 表的时间索引（如果表存在）
     try:
         conn.execute(
-            text(
+            text(  # type: ignore
                 """
             CREATE INDEX IF NOT EXISTS idx_features_created_at
             ON features (created_at DESC);
@@ -180,7 +180,7 @@ def upgrade() -> None:
     print("6. 验证索引创建结果...")
     try:
         result = conn.execute(
-            text(
+            text(  # type: ignore
                 """
             SELECT
                 schemaname,
@@ -217,15 +217,15 @@ def downgrade() -> None:
     """回滚索引创建（删除添加的索引）"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():
+    if context.is_offline_mode():  # type: ignore
         print("⚠️  离线模式：跳过索引回滚")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database indexes rollback")
+        op.execute("-- offline mode: skipped database indexes rollback")  # type: ignore
         return
 
     # 获取数据库连接
-    conn = op.get_bind()
+    conn = op.get_bind()  # type: ignore
 
     print("开始回滚数据库索引...")
 
@@ -243,7 +243,7 @@ def downgrade() -> None:
 
     for index_name in indexes_to_drop:
         try:
-            conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))
+            conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))  # type: ignore
             print(f"   ✅ 删除索引: {index_name}")
         except Exception as e:
             print(f"   ❌ 删除索引失败 {index_name}: {e}")

@@ -6,7 +6,54 @@ FastAPI Main Application
 Integrates all API routes and middleware.
 """
 
+import time
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Union
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
+from pydantic import ValidationError
+from fastapi.exceptions import RequestValidationError
+
+from src.core.logging import get_logger
+from src.core.prediction import PredictionEngine
+from src.config.openapi_config import setup_openapi
+from src.api.health import router as health_router
+from src.api.predictions_mod import router as predictions_router
+from src.api.data_router import router as data_router
+
 logger = get_logger(__name__)
+
+# 全局预测引擎实例
+prediction_engine: Union[PredictionEngine, None] = None  # type: ignore
+
+
+async def init_prediction_engine():
+    """初始化预测引擎"""
+    global prediction_engine
+    try:
+        prediction_engine = PredictionEngine()
+        logger.info("预测引擎初始化成功")
+    except Exception as e:
+        logger.error(f"预测引擎初始化失败: {e}")
+        # 不抛出异常，允许应用继续启动
+
+
+async def close_prediction_engine():
+    """关闭预测引擎"""
+    global prediction_engine
+    if prediction_engine:
+        try:
+            # 如果预测引擎有清理方法，在这里调用
+            prediction_engine = None
+            logger.info("预测引擎已关闭")
+        except Exception as e:
+            logger.error(f"关闭预测引擎时出错: {e}")
 
 
 @asynccontextmanager
@@ -184,6 +231,28 @@ async def health_check():
         "timestamp": time.time(),
         "service": "football-prediction-api",
     }
+
+
+# Metrics 端点
+@app.get("/metrics")
+async def metrics_endpoint():
+    """Prometheus 格式的指标端点"""
+    # 简单的占位符指标
+    metrics_data = """# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",endpoint="/api/health"} 1
+
+# HELP request_duration_seconds Request duration in seconds
+# TYPE request_duration_seconds histogram
+request_duration_seconds_bucket{le="0.1"} 1
+request_duration_seconds_bucket{le="1.0"} 1
+request_duration_seconds_bucket{le="+Inf"} 1
+
+# HELP api_health_status API health status
+# TYPE api_health_status gauge
+api_health_status 1
+"""
+    return Response(content=metrics_data, media_type="text/plain")
 
 
 # 测试端点

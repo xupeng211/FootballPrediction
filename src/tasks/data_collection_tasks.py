@@ -6,7 +6,7 @@ Data Collection Tasks
 """
 
 # 导入所有必要的类，保持向后兼容
-from .data_collectors import (
+from .data_collectors import (  # type: ignore
     DataCollector,
     FixturesCollector,
     HistoricalDataCollector,

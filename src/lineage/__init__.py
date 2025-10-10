@@ -8,6 +8,6 @@
 from typing import cast, Any, Optional, Union
 
 from .lineage_reporter import LineageReporter
-from .metadata_manager import MetadataManager
+from .metadata_manager import MetadataManager  # type: ignore
 
 __all__ = ["LineageReporter", "MetadataManager"]

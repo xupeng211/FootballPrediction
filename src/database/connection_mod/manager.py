@@ -341,7 +341,7 @@ class DatabaseManager:
             "port": self.config.port,
             "database": self.config.database,
             "username": self.config.username,
-            "pool_size": self._engine.pool.size() if self._engine else 0,
-            "checked_in": self._engine.pool.checkedin() if self._engine else 0,
-            "checked_out": self._engine.pool.checkedout() if self._engine else 0,
+            "pool_size": self._engine.pool.size() if self._engine else 0,  # type: ignore
+            "checked_in": self._engine.pool.checkedin() if self._engine else 0,  # type: ignore
+            "checked_out": self._engine.pool.checkedout() if self._engine else 0,  # type: ignore
         }

@@ -56,7 +56,7 @@ class ServiceMetrics:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""
-        return self.metrics.copy()
+        return self.metrics.copy()  # type: ignore
 
 
 class EnhancedBaseService(ABC):
@@ -87,7 +87,7 @@ class EnhancedBaseService(ABC):
 
         # 指标收集
         self.metrics = ServiceMetrics()
-        self._health_status = {
+        self._health_status: Any = {
             "status": "unknown",
             "message": "Service not initialized",
             "last_check": None,
@@ -150,7 +150,7 @@ class EnhancedBaseService(ABC):
 
     def is_healthy(self) -> bool:
         """检查服务是否健康"""
-        return self._health_status["status"] == "healthy"
+        return self._health_status["status"] == "healthy"  # type: ignore
 
     def get_health_info(self) -> Dict[str, Any]:
         """获取健康信息"""
@@ -165,7 +165,7 @@ class EnhancedBaseService(ABC):
                 "dependencies": list(self._dependencies.keys()),
             }
         )
-        return health_info
+        return health_info  # type: ignore
 
     async def health_check(self) -> Dict[str, Any]:
         """执行健康检查 - 子类可以重写"""

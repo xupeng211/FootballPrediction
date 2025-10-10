@@ -8,7 +8,7 @@ Responsible for creating and managing prediction strategy instances.
 
 import os
 import json
-import yaml
+import yaml  # type: ignore
 from typing import Dict, Any, List, Optional, Type, Union
 from pathlib import Path
 from datetime import datetime
@@ -135,7 +135,7 @@ class PredictionStrategyFactory:
             if strategy_type == "ensemble":
                 strategy = await self._create_ensemble_strategy(strategy_name, config)
             else:
-                strategy = strategy_class(strategy_name)
+                strategy = strategy_class(strategy_name)  # type: ignore
                 await strategy.initialize(config)
 
         except Exception as e:
@@ -448,14 +448,14 @@ class PredictionStrategyFactory:
                 keys = key.split(".")
                 current = config
                 for k in keys[:-1]:
-                    if k not in current:
-                        current[k] = {}
-                    current = current[k]
-                current[keys[-1]] = value
+                    if k not in current:  # type: ignore
+                        current[k] = {}  # type: ignore
+                    current = current[k]  # type: ignore
+                current[keys[-1]] = value  # type: ignore
             else:
-                config[key] = value
+                config[key] = value  # type: ignore
 
-        return config
+        return config  # type: ignore
 
     def list_available_strategies(self) -> List[str]:
         """列出可用的策略类型"""

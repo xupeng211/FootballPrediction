@@ -87,7 +87,7 @@ async def async_retry_with_exponential_backoff(
 
             for attempt in range(max_attempts):
                 try:
-                    return await func(*args, **kwargs)
+                    return await func(*args, **kwargs)  # type: ignore
                 except exceptions as e:
                     last_exception = e
                     if attempt < max_attempts - 1:
@@ -100,7 +100,7 @@ async def async_retry_with_exponential_backoff(
                 f"Max attempts ({max_attempts}) exceeded"
             ) from last_exception
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return decorator
 

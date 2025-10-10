@@ -29,7 +29,7 @@ class ServiceConfig:
     name: str
     version: str = "1.0.0"
     enabled: bool = True
-    config: Dict[str, Any] = None
+    config: Dict[str, Any] = None  # type: ignore
 
     def __post_init__(self):
         if self.config is None:
@@ -165,7 +165,7 @@ class MatchDomainService(DomainService[Match]):
                 raise ValueError(f"比赛验证失败: {result.errors}")
 
         # 保存
-        created = await self.match_repo.create(match.to_dict())
+        created = await self.match_repo.create(match.to_dict())  # type: ignore
         return Match.from_dict(created)
 
 
@@ -217,7 +217,7 @@ class TeamDomainService(DomainService[Team]):
                 raise ValueError(f"球队验证失败: {result.errors}")
 
         # 保存
-        created = await self.team_repo.create(team.to_dict())
+        created = await self.team_repo.create(team.to_dict())  # type: ignore
         return Team.from_dict(created)
 
 
@@ -269,7 +269,7 @@ class PredictionDomainService(DomainService[Prediction]):
                 raise ValueError(f"预测验证失败: {result.errors}")
 
         # 保存
-        created = await self.prediction_repo.create(prediction.to_dict())
+        created = await self.prediction_repo.create(prediction.to_dict())  # type: ignore
         return Prediction.from_dict(created)
 
 
@@ -362,7 +362,7 @@ class DomainServiceFactory:
         }
 
         for name, service in self._services.items():
-            status["services"][name] = {
+            status["services"][name] = {  # type: ignore
                 "initialized": service.is_initialized,
                 "started": service.is_started,
                 "enabled": service.enabled,

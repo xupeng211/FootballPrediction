@@ -45,9 +45,9 @@ def get_or_create_counter(
         # 尝试从注册表获取现有指标
         for collector in registry._collector_to_names:
             if hasattr(collector, "_name") and collector._name == name:
-                return collector
+                return collector  # type: ignore
         # 如果找不到，返回一个 mock counter
-        return _create_mock_counter()
+        return _create_mock_counter()  # type: ignore
 
 
 def get_or_create_gauge(
@@ -75,9 +75,9 @@ def get_or_create_gauge(
         # 尝试从注册表获取现有指标
         for collector in registry._collector_to_names:
             if hasattr(collector, "_name") and collector._name == name:
-                return collector
+                return collector  # type: ignore
         # 如果找不到，返回一个 mock gauge
-        return _create_mock_gauge()
+        return _create_mock_gauge()  # type: ignore
 
 
 def _create_mock_counter():
@@ -217,20 +217,20 @@ def get_metric_summary(registry: CollectorRegistry) -> dict:
         for collector in registry._collector_to_names:
             metric_type = type(collector).__name__.lower()
             if "counter" in metric_type:
-                summary["metrics_by_type"]["counter"] += 1
+                summary["metrics_by_type"]["counter"] += 1  # type: ignore
             elif "gauge" in metric_type:
-                summary["metrics_by_type"]["gauge"] += 1
+                summary["metrics_by_type"]["gauge"] += 1  # type: ignore
             elif "histogram" in metric_type:
-                summary["metrics_by_type"]["histogram"] += 1
+                summary["metrics_by_type"]["histogram"] += 1  # type: ignore
             elif "summary" in metric_type:
-                summary["metrics_by_type"]["summary"] += 1
+                summary["metrics_by_type"]["summary"] += 1  # type: ignore
             elif "info" in metric_type:
-                summary["metrics_by_type"]["info"] += 1
+                summary["metrics_by_type"]["info"] += 1  # type: ignore
 
             if hasattr(collector, "_name"):
-                summary["metric_names"].append(collector._name)
+                summary["metric_names"].append(collector._name)  # type: ignore
 
-            summary["total_metrics"] += 1
+            summary["total_metrics"] += 1  # type: ignore
 
     except Exception as e:
         logger.error(f"获取指标摘要失败: {e}")

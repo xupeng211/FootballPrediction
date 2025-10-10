@@ -96,8 +96,8 @@ class DatabaseMetricsCollector(BaseMetricsCollector):
 
             # 获取连接池状态
             pool_status = {}
-            if db_manager._sync_engine and db_manager._sync_engine.pool:
-                pool = db_manager._sync_engine.pool
+            if db_manager._sync_engine and db_manager._sync_engine.pool:  # type: ignore
+                pool = db_manager._sync_engine.pool  # type: ignore
                 pool_status = {
                     "size": pool.size(),
                     "checked_in": pool.checkedin(),
@@ -115,7 +115,7 @@ class DatabaseMetricsCollector(BaseMetricsCollector):
             async with get_async_session() as session:
                 try:
                     # 检查数据库连接状态
-                    result = await session.execute(text("SELECT 1"))
+                    result = await session.execute(text("SELECT 1"))  # type: ignore
                     connection_status = 1 if result.scalar() == 1 else 0
 
                 except Exception as e:
@@ -144,7 +144,7 @@ class CacheMetricsCollector(BaseMetricsCollector):
 
             # 尝试获取Redis信息
             try:
-                info = redis_manager.get_info()
+                info = redis_manager.get_info()  # type: ignore
                 if info:
                     cache_info.update(info)
 

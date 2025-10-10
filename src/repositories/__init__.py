@@ -11,6 +11,7 @@ from .base import (
     Repository,
     ReadOnlyRepository,
     WriteOnlyRepository,
+    QuerySpec,
 )
 from .prediction import (
     PredictionRepository,

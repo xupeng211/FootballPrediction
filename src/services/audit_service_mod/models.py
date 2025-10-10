@@ -93,7 +93,7 @@ class AuditLog:
     """
 
     id: Optional[int] = None
-    timestamp: datetime = None
+    timestamp: datetime = None  # type: ignore
     user_id: str = ""
     username: Optional[str] = None
     user_role: Optional[str] = None
@@ -170,7 +170,7 @@ class AuditLog:
 
         return cls(
             id=data.get("id"),
-            timestamp=timestamp,
+            timestamp=timestamp,  # type: ignore
             user_id=data.get("user_id", ""),
             username=data.get("username"),
             user_role=data.get("user_role"),
@@ -212,13 +212,13 @@ class AuditLogSummary:
     """
 
     total_logs: int = 0
-    action_counts: Dict[str, int] = None
-    severity_counts: Dict[str, int] = None
-    user_counts: Dict[str, int] = None
-    resource_counts: Dict[str, int] = None
-    date_range: Dict[str, datetime] = None
-    top_actions: List[Dict[str, Any]] = None
-    high_risk_operations: List[Dict[str, Any]] = None
+    action_counts: Dict[str, int] = None  # type: ignore
+    severity_counts: Dict[str, int] = None  # type: ignore
+    user_counts: Dict[str, int] = None  # type: ignore
+    resource_counts: Dict[str, int] = None  # type: ignore
+    date_range: Dict[str, datetime] = None  # type: ignore
+    top_actions: List[Dict[str, Any]] = None  # type: ignore
+    high_risk_operations: List[Dict[str, Any]] = None  # type: ignore
 
     def __post_init__(self):
         if self.action_counts is None:
@@ -250,10 +250,10 @@ class AuditLogSummary:
             "user_counts": self.user_counts,
             "resource_counts": self.resource_counts,
             "date_range": {
-                "start": self.date_range.get("start").isoformat()
+                "start": self.date_range.get("start").isoformat()  # type: ignore
                 if self.date_range.get("start")
                 else None,
-                "end": self.date_range.get("end").isoformat()
+                "end": self.date_range.get("end").isoformat()  # type: ignore
                 if self.date_range.get("end")
                 else None,
             },

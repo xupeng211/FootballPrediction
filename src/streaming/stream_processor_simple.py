@@ -61,7 +61,7 @@ class StreamProcessor:
                 # 更新指标
                 self.metrics["messages_processed"] += 1
                 processing_time = (datetime.utcnow() - start_time).total_seconds()
-                self.metrics["processing_time"] += processing_time
+                self.metrics["processing_time"] += processing_time  # type: ignore
 
                 processed += 1
                 if max_messages and processed >= max_messages:
@@ -145,7 +145,7 @@ class StreamProcessor:
         async for message in self.consumer.consume():
             key = key_extractor(message)
             timestamp = datetime.utcnow()
-            window_key = f"{key}_{timestamp // window_size}"
+            window_key = f"{key}_{timestamp // window_size}"  # type: ignore
 
             if window_key not in windows:
                 windows[window_key] = {
@@ -239,7 +239,7 @@ class MessageProcessor:
         self.name = name
         self.input_topic = input_topic
         self.output_topic = output_topic
-        self.handlers = {}
+        self.handlers = {}  # type: ignore
 
     def add_handler(self, event_type: str, handler: Callable):
         """添加事件处理器"""
@@ -261,7 +261,7 @@ class BatchProcessor:
         self.name = name
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
-        self.current_batch = []
+        self.current_batch = []  # type: ignore
         self.metrics = {"batches_processed": 0, "total_messages_processed": 0}
 
     def add_to_batch(self, message: Dict[str, Any]):

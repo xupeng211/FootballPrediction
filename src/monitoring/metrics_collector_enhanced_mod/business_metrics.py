@@ -71,12 +71,12 @@ class BusinessMetricsCollector:
         self.model_stats[model_version]["last_prediction"] = datetime.now()
 
         # 更新Prometheus指标
-        self.prometheus.increment_counter(
+        self.prometheus.increment_counter(  # type: ignore
             "prediction_counter",
             labels={"model_version": model_version, "result": predicted_result},
         )
 
-        self.prometheus.observe_histogram(
+        self.prometheus.observe_histogram(  # type: ignore
             "request_duration",
             duration,
             labels={"endpoint": "/predict", "method": "POST"},
@@ -120,7 +120,7 @@ class BusinessMetricsCollector:
             accuracy = self.predictions_correct / self.predictions_verified
 
             # 更新Prometheus
-            self.prometheus.set_gauge(
+            self.prometheus.set_gauge(  # type: ignore
                 "prediction_accuracy",
                 accuracy,
                 labels={"model_version": model_version, "time_window": time_window},
@@ -155,7 +155,7 @@ class BusinessMetricsCollector:
         self.model_loads += 1
 
         # 更新Prometheus
-        self.prometheus.increment_counter(
+        self.prometheus.increment_counter(  # type: ignore
             "model_load_counter", labels={"model_name": model_name, "status": status}
         )
 
@@ -188,7 +188,7 @@ class BusinessMetricsCollector:
         status = "success" if success else "failed"
 
         # 更新Prometheus
-        self.prometheus.increment_counter(
+        self.prometheus.increment_counter(  # type: ignore
             "data_collection_counter", labels={"source": source, "status": status}
         )
 
@@ -224,7 +224,7 @@ class BusinessMetricsCollector:
             expected_value: 期望值
         """
         # 更新Prometheus
-        self.prometheus.increment_counter(
+        self.prometheus.increment_counter(  # type: ignore
             "value_bets_counter", labels={"confidence_level": confidence_level}
         )
 

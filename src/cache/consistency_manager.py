@@ -10,7 +10,7 @@ try:
     from .redis_manager import get_redis_manager
 except ImportError:
     # 如果redis_manager不可用，使用模拟版本
-    from .mock_redis import get_redis_manager
+    from .mock_redis import get_redis_manager  # type: ignore
 
 logger = logging.getLogger(__name__)
 

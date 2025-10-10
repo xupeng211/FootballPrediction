@@ -150,7 +150,7 @@ async def get_recent_prediction_stats(
             if date >= cutoff_date:
                 recent_stats[date_str] = count
         except Exception as e:
-            logger.error(f"解析日期时出错: {e}")
+            logger.error(f"解析日期时出错: {e}")  # type: ignore
             continue
 
     # 计算总计

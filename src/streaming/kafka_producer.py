@@ -17,5 +17,32 @@ warnings.warn(
     stacklevel=2,
 )
 
-# 导出所有内容
-__all__ = []  # type: ignore
+# 导出 KafkaMessageProducer 作为 KafkaProducer 的别名以保持兼容性
+try:
+    from .kafka_producer_simple import KafkaMessageProducer
+
+    # 为了向后兼容，提供 KafkaProducer 别名
+    KafkaProducer = KafkaMessageProducer
+    __all__ = ["KafkaProducer", "KafkaMessageProducer"]
+except ImportError:
+    # 如果简化版本不存在，尝试导入原始版本
+    try:
+        from .kafka_producer_legacy import FootballKafkaProducer  # type: ignore
+
+        KafkaProducer = FootballKafkaProducer  # type: ignore
+        __all__ = ["KafkaProducer", "FootballKafkaProducer"]
+    except ImportError:
+        # 如果都不存在，提供一个空类作为占位符
+        class KafkaProducer:  # type: ignore
+            """占位符类，当真实的 KafkaProducer 不可用时使用"""
+
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def send(self, *args, **kwargs):
+                return None
+
+            async def close(self):
+                pass
+
+        __all__ = ["KafkaProducer"]

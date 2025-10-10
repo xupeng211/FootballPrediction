@@ -17,7 +17,7 @@ class AdapterFactory:
         """注册适配器"""
         if name in self._adapters:
             raise AdapterError(f"Adapter '{name}' already registered")
-        self._adapters[name] = {
+        self._adapters[name] = {  # type: ignore
             "class": adapter_class,
             "singleton": kwargs.get("singleton", False),
             **kwargs,

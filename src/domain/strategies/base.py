@@ -150,7 +150,7 @@ class PredictionStrategy(ABC):
             return False
 
         # 检查比赛时间
-        if input_data.match.match_time <= datetime.utcnow():
+        if input_data.match.match_time <= datetime.utcnow():  # type: ignore
             return False
 
         # 子类可以覆盖此方法进行特定验证

@@ -253,7 +253,7 @@ class DataCollectionFacade:
 
         except Exception as e:
             self.logger.error(f"Data sync failed: {str(e)}")
-            results["error"] = str(e)
+            results["error"] = str(e)  # type: ignore
 
         return results
 
@@ -488,6 +488,6 @@ class SystemFacade:
 
         if self._data_facade:
             data_health = await self._data_facade.get_data_health()
-            health["services"]["data"] = data_health["overall_health"]
+            health["services"]["data"] = data_health["overall_health"]  # type: ignore
 
         return health

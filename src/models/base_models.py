@@ -5,9 +5,10 @@ Base models
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
+import types
 
 
-class BaseModel(BaseModel):
+class BaseModel(BaseModel):  # type: ignore
     """Base model class"""
 
     id: Optional[int] = None
@@ -45,3 +46,13 @@ class MetadataModel(BaseModel):
 
     metadata: Dict[str, Any] = {}
     tags: List[str] = []
+
+
+# 创建一个简单的模块对象以保持向后兼容
+base_models = types.SimpleNamespace(
+    BaseModel=BaseModel,
+    TimestampedModel=TimestampedModel,
+    IdentifiableModel=IdentifiableModel,
+    StatusModel=StatusModel,
+    MetadataModel=MetadataModel,
+)

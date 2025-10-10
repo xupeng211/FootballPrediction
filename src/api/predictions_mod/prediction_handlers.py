@@ -13,7 +13,7 @@ from sqlalchemy import select
 
 from src.database.models import Match, MatchStatus
 from src.database.models import Predictions as Prediction
-from src.models.prediction_service_mod import PredictionService
+from src.models.prediction_service import PredictionService
 from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ async def get_match_prediction_handler(
 
         # 查询比赛信息
         match_query = select(Match).where(Match.id == match_id)
-        match_result = await session.execute(match_query)
+        match_result = await session.execute(match_query)  # type: ignore
         match = match_result.scalar_one_or_none()
 
         if not match:
@@ -71,7 +71,7 @@ async def get_match_prediction_handler(
                 .order_by(Prediction.created_at.desc())
             )
 
-            prediction_result = await session.execute(prediction_query)
+            prediction_result = await session.execute(prediction_query)  # type: ignore
             prediction = prediction_result.scalar_one_or_none()
 
         if prediction and not force_predict:

@@ -3,6 +3,9 @@ Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
 """
 
+import logging
+from typing import Any, Callable, Dict, List, Optional
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +34,7 @@ class MockMessage:
             return self._value.encode("utf-8")
         if isinstance(self._value, bytes):
             return self._value
-        return cast(Optional[bytes], self._value)
+        return cast(Optional[bytes], self._value)  # type: ignore
 
     def key(self) -> Optional[bytes]:
         """获取消息键"""
@@ -41,7 +44,7 @@ class MockMessage:
             return self._key.encode("utf-8")
         if isinstance(self._key, bytes):
             return self._key
-        return cast(Optional[bytes], self._key)
+        return cast(Optional[bytes], self._key)  # type: ignore
 
     def topic(self) -> str:
         """获取主题"""
@@ -70,8 +73,8 @@ class MockConsumer:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._topics: set[str] = set()
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
-        self._current_offset: Dict[str, int] = defaultdict(int)
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
+        self._current_offset: Dict[str, int] = defaultdict(int)  # type: ignore
         self._subscribed = False
         self._running = False
         self._assignment: List[Any] = []
@@ -141,7 +144,7 @@ class MockProducer:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
         self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
         self._running = True
@@ -164,10 +167,10 @@ class MockProducer:
             try:
                 # 简单的延迟模拟
                 if (
-                    hasattr(asyncio, "get_event_loop")
-                    and asyncio.get_event_loop().is_running()
+                    hasattr(asyncio, "get_event_loop")  # type: ignore
+                    and asyncio.get_event_loop().is_running()  # type: ignore
                 ):
-                    asyncio.get_event_loop().call_soon(on_delivery, None, message)
+                    asyncio.get_event_loop().call_soon(on_delivery, None, message)  # type: ignore
                 else:
                     on_delivery(None, message)
             except Exception as e:
@@ -218,7 +221,7 @@ class MockAdminClient:
         results: Dict[str, Any] = {}
         for topic in new_topics:
             topic_name = getattr(topic, "topic", str(topic))
-            self._metadata["topics"][topic_name] = {
+            self._metadata["topics"][topic_name] = {  # type: ignore
                 "partitions": 1,
                 "replication_factor": 1,
             }

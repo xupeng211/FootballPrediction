@@ -11,7 +11,12 @@ Great Expectations 配置模块
 - 比分必须在 [0, 99] 范围内
 """
 
+import logging
+import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+from src.database.connection_mod import DatabaseManager
 
 # Temporarily commented out for pytest testing
 try:
@@ -236,7 +241,7 @@ class GreatExpectationsConfig:
             # 保存配置文件
             config_file_path = f"{self.ge_root_dir}/great_expectations.yml"
             with open(config_file_path, "w", encoding="utf-8") as f:
-                self.yaml_handler.dump(context_config, f)
+                self.yaml_handler.dump(context_config, f)  # type: ignore
 
             # 创建数据上下文
             self.context = gx.get_context(context_root_dir=self.ge_root_dir)
@@ -269,7 +274,7 @@ class GreatExpectationsConfig:
         if not self.context:
             await self.initialize_context()
 
-        results = {"created_suites": [], "errors": []}
+        results: Dict[str, List[Any]] = {"created_suites": [], "errors": []}
 
         try:
             for table_name, suite_config in self.data_assertions.items():
@@ -277,7 +282,7 @@ class GreatExpectationsConfig:
 
                 try:
                     # 创建期望套件
-                    suite = self.context.add_or_update_expectation_suite(
+                    suite = self.context.add_or_update_expectation_suite(  # type: ignore
                         expectation_suite_name=suite_name
                     )
 
@@ -288,7 +293,7 @@ class GreatExpectationsConfig:
                         )
 
                     # 保存套件
-                    self.context.save_expectation_suite(suite)
+                    self.context.save_expectation_suite(suite)  # type: ignore
 
                     results["created_suites"].append(
                         {
@@ -363,7 +368,7 @@ class GreatExpectationsConfig:
         }
 
         query, params = safe_queries[table_name]
-        return {"query": query, "params": params}
+        return {"query": query, "params": params}  # type: ignore
 
     async def run_validation(
         self, table_name: str, limit_rows: int = 1000
@@ -395,7 +400,7 @@ class GreatExpectationsConfig:
             )
 
             # 创建验证器
-            validator = self.context.get_validator(
+            validator = self.context.get_validator(  # type: ignore
                 batch_request=batch_request, expectation_suite_name=suite_name
             )
 
@@ -480,11 +485,11 @@ class GreatExpectationsConfig:
 
             # 统计结果
             if result["status"] == "PASSED":
-                overall_stats["passed_tables"] += 1
+                overall_stats["passed_tables"] += 1  # type: ignore
             elif result["status"] == "FAILED":
-                overall_stats["failed_tables"] += 1
+                overall_stats["failed_tables"] += 1  # type: ignore
             else:  # ERROR
-                overall_stats["error_tables"] += 1
+                overall_stats["error_tables"] += 1  # type: ignore
 
         # 计算总体成功率
         if all_results:

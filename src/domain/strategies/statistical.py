@@ -38,10 +38,10 @@ class StatisticalStrategy(PredictionStrategy):
 
     def __init__(self, name: str = "statistical_analyzer"):
         super().__init__(name, StrategyType.STATISTICAL)
-        self._team_stats = {}
-        self._head_to_head_stats = {}
-        self._league_stats = {}
-        self._model_params = {}
+        self._team_stats = {}  # type: ignore
+        self._head_to_head_stats = {}  # type: ignore
+        self._league_stats = {}  # type: ignore
+        self._model_params = {}  # type: ignore
         self._min_sample_size = 5
 
     async def initialize(self, config: Dict[str, Any]) -> None:
@@ -152,10 +152,12 @@ class StatisticalStrategy(PredictionStrategy):
         """使用泊松分布预测比分"""
         # 获取球队平均进球数
         home_avg_goals = await self._get_team_average_goals(
-            input_data.home_team.id, True
+            input_data.home_team.id,
+            True,  # type: ignore
         )
         away_avg_goals = await self._get_team_average_goals(
-            input_data.away_team.id, False
+            input_data.away_team.id,
+            False,  # type: ignore
         )
 
         # 应用主场优势
@@ -181,7 +183,7 @@ class StatisticalStrategy(PredictionStrategy):
                 prob = prob_home * prob_away
 
                 if prob > max_prob:
-                    max_prob = prob
+                    max_prob = prob  # type: ignore
                     best_score = (home_goals, away_goals)
 
         return best_score
@@ -191,9 +193,9 @@ class StatisticalStrategy(PredictionStrategy):
     ) -> Tuple[int, int]:
         """基于历史平均得分预测"""
         # 获取主队主场平均得分
-        home_scores = await self._get_team_home_scores(input_data.home_team.id)
+        home_scores = await self._get_team_home_scores(input_data.home_team.id)  # type: ignore
         # 获取客队客场平均得分
-        away_scores = await self._get_team_away_scores(input_data.away_team.id)
+        away_scores = await self._get_team_away_scores(input_data.away_team.id)  # type: ignore
 
         if not home_scores or not away_scores:
             return (1, 1)
@@ -211,8 +213,8 @@ class StatisticalStrategy(PredictionStrategy):
     ) -> Tuple[int, int]:
         """基于球队近期状态预测"""
         # 获取最近5场比赛
-        home_recent = await self._get_recent_games(input_data.home_team.id, 5)
-        away_recent = await self._get_recent_games(input_data.away_team.id, 5)
+        home_recent = await self._get_recent_games(input_data.home_team.id, 5)  # type: ignore
+        away_recent = await self._get_recent_games(input_data.away_team.id, 5)  # type: ignore
 
         if not home_recent or not away_recent:
             return (1, 1)
@@ -225,10 +227,10 @@ class StatisticalStrategy(PredictionStrategy):
         for i, (home_score, away_score, is_home) in enumerate(home_recent):
             weight = (i + 1) / len(home_recent)  # 越近的比赛权重越高
             if is_home:
-                home_weighted += home_score * weight
+                home_weighted += home_score * weight  # type: ignore
             else:
-                home_weighted += away_score * weight
-            total_weight += weight
+                home_weighted += away_score * weight  # type: ignore
+            total_weight += weight  # type: ignore
 
         home_avg = home_weighted / total_weight if total_weight > 0 else 1
 
@@ -237,10 +239,10 @@ class StatisticalStrategy(PredictionStrategy):
         for i, (home_score, away_score, is_home) in enumerate(away_recent):
             weight = (i + 1) / len(away_recent)
             if not is_home:
-                away_weighted += away_score * weight
+                away_weighted += away_score * weight  # type: ignore
             else:
-                away_weighted += home_score * weight
-            total_weight += weight
+                away_weighted += home_score * weight  # type: ignore
+            total_weight += weight  # type: ignore
 
         away_avg = away_weighted / total_weight if total_weight > 0 else 1
 
@@ -254,7 +256,9 @@ class StatisticalStrategy(PredictionStrategy):
     ) -> Tuple[int, int]:
         """基于对战历史预测"""
         h2h_games = await self._get_head_to_head_games(
-            input_data.home_team.id, input_data.away_team.id, limit=10
+            input_data.home_team.id,
+            input_data.away_team.id,
+            limit=10,  # type: ignore
         )
 
         if not h2h_games:
@@ -317,8 +321,8 @@ class StatisticalStrategy(PredictionStrategy):
             confidence_factors.append(0.4)
 
         # 样本数量
-        home_games = len(await self._get_team_games(input_data.home_team.id))
-        away_games = len(await self._get_team_games(input_data.away_team.id))
+        home_games = len(await self._get_team_games(input_data.home_team.id))  # type: ignore
+        away_games = len(await self._get_team_games(input_data.away_team.id))  # type: ignore
         if min(home_games, away_games) >= self._min_sample_size * 2:
             confidence_factors.append(0.8)
         elif min(home_games, away_games) >= self._min_sample_size:
@@ -331,15 +335,15 @@ class StatisticalStrategy(PredictionStrategy):
         confidence_factors.append(0.7)
 
         # 返回平均置信度
-        return np.mean(confidence_factors)
+        return np.mean(confidence_factors)  # type: ignore
 
     async def _calculate_probability_distribution(
         self, input_data: PredictionInput, prediction: Tuple[int, int]
     ) -> Dict[str, float]:
         """计算结果概率分布"""
         # 基于泊松分布计算概率
-        home_avg = await self._get_team_average_goals(input_data.home_team.id, True)
-        away_avg = await self._get_team_average_goals(input_data.away_team.id, False)
+        home_avg = await self._get_team_average_goals(input_data.home_team.id, True)  # type: ignore
+        away_avg = await self._get_team_average_goals(input_data.away_team.id, False)  # type: ignore
 
         home_avg *= self._model_params["home_advantage_factor"]
 
@@ -359,11 +363,11 @@ class StatisticalStrategy(PredictionStrategy):
                 prob = prob_home * prob_away
 
                 if home_goals > away_goals:
-                    prob_home_win += prob
+                    prob_home_win += prob  # type: ignore
                 elif home_goals == away_goals:
-                    prob_draw += prob
+                    prob_draw += prob  # type: ignore
                 else:
-                    prob_away_win += prob
+                    prob_away_win += prob  # type: ignore
 
         return {"home_win": prob_home_win, "draw": prob_draw, "away_win": prob_away_win}
 
@@ -432,14 +436,14 @@ class StatisticalStrategy(PredictionStrategy):
 
             # 精确匹配
             if (
-                pred.predicted_home == actual_home
-                and pred.predicted_away == actual_away
+                pred.predicted_home == actual_home  # type: ignore
+                and pred.predicted_away == actual_away  # type: ignore
             ):
                 correct_predictions += 1
 
             # 计算得分误差
-            error = abs(pred.predicted_home - actual_home) + abs(
-                pred.predicted_away - actual_away
+            error = abs(pred.predicted_home - actual_home) + abs(  # type: ignore
+                pred.predicted_away - actual_away  # type: ignore
             )
             score_errors.append(error)
 

@@ -197,7 +197,7 @@ class QualityLogger:
             async with self.db_manager.get_async_session() as session:
                 query = (
                     select(DataQualityLog)
-                    .where(DataQualityLog.requires_manual_review is True)
+                    .where(DataQualityLog.requires_manual_review is True)  # type: ignore
                     .order_by(desc(DataQualityLog.detected_at))
                 )
 
@@ -280,14 +280,14 @@ class QualityLogger:
         try:
             from sqlalchemy import delete
 
-            cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+            cutoff_date = datetime.now() - timedelta(days=days_to_keep)  # type: ignore
 
             async with self.db_manager.get_async_session() as session:
                 # 删除旧的已审核日志
                 delete_stmt = delete(DataQualityLog).where(
                     DataQualityLog.detected_at < cutoff_date,
                     DataQualityLog.status == "reviewed",
-                    DataQualityLog.requires_manual_review is False,
+                    DataQualityLog.requires_manual_review is False,  # type: ignore
                 )
 
                 result = await session.execute(delete_stmt)

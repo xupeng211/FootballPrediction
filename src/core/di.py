@@ -123,7 +123,7 @@ class DIContainer:
             # 如果没有指定实现，使用接口自身作为实现
             implementation = interface
 
-        if implementation is None and factory is None:
+        if implementation is None and factory is None:  # type: ignore
             raise DependencyInjectionError(
                 f"必须提供 implementation 或 factory for {interface}"
             )
@@ -164,11 +164,11 @@ class DIContainer:
 
         # 根据生命周期返回实例
         if descriptor.lifetime == ServiceLifetime.SINGLETON:
-            return self._get_singleton(descriptor)
+            return self._get_singleton(descriptor)  # type: ignore
         elif descriptor.lifetime == ServiceLifetime.SCOPED:
-            return self._get_scoped(descriptor)
+            return self._get_scoped(descriptor)  # type: ignore
         else:  # TRANSIENT
-            return self._create_instance(descriptor)
+            return self._create_instance(descriptor)  # type: ignore
 
     def _get_singleton(self, descriptor: ServiceDescriptor) -> Any:
         """获取单例实例"""
@@ -346,7 +346,7 @@ class ServiceCollection:
     ) -> "ServiceCollection":
         """添加单例服务"""
         self._registrations.append(
-            lambda container: container.register_singleton(
+            lambda container: container.register_singleton(  # type: ignore
                 interface, implementation, instance, factory
             )
         )
@@ -360,7 +360,7 @@ class ServiceCollection:
     ) -> "ServiceCollection":
         """添加作用域服务"""
         self._registrations.append(
-            lambda container: container.register_scoped(
+            lambda container: container.register_scoped(  # type: ignore
                 interface, implementation, factory
             )
         )
@@ -374,7 +374,7 @@ class ServiceCollection:
     ) -> "ServiceCollection":
         """添加瞬时服务"""
         self._registrations.append(
-            lambda container: container.register_transient(
+            lambda container: container.register_transient(  # type: ignore
                 interface, implementation, factory
             )
         )

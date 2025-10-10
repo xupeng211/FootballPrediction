@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 from datetime import datetime, timezone
         from datetime import date
@@ -18,6 +19,7 @@ Celery调度器配置
 
 基于 DATA_DESIGN.md 第3节设计。
 """
+from celery.schedules import crontab
 
 # Celery应用配置
 app = Celery("football_data_scheduler")

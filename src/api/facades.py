@@ -106,7 +106,7 @@ async def get_facade_status(
 
         facade = global_facades[facade_name]
         status = facade.get_status()
-        return status
+        return status  # type: ignore
     else:
         # 返回所有门面的状态
         all_status = {}
@@ -130,7 +130,7 @@ async def health_check_facade(
 
         facade = global_facades[facade_name]
         health = await facade.health_check()
-        return health
+        return health  # type: ignore
     else:
         # 检查所有门面
         all_health = {}

@@ -61,7 +61,7 @@ class IDMapper:
         api_team_id: Optional[int] = None
         if external_id not in (None, ""):
             try:
-                api_team_id = int(external_id)
+                api_team_id = int(external_id)  # type: ignore
             except (TypeError, ValueError):
                 api_team_id = None
 
@@ -102,7 +102,7 @@ class IDMapper:
                         result = await session.execute(lookup_stmt)
                         team_id = result.scalar_one_or_none()
                     else:
-                        team_id = team_record.id
+                        team_id = team_record.id  # type: ignore
 
                 if team_id is not None:
                     self._team_id_cache[cache_key] = team_id
@@ -148,7 +148,7 @@ class IDMapper:
         api_league_id: Optional[int] = None
         if external_id not in (None, ""):
             try:
-                api_league_id = int(external_id)
+                api_league_id = int(external_id)  # type: ignore
             except (TypeError, ValueError):
                 api_league_id = None
 
@@ -195,7 +195,7 @@ class IDMapper:
                         result = await session.execute(lookup_stmt)
                         league_id = result.scalar_one_or_none()
                     else:
-                        league_id = league_record.id
+                        league_id = league_record.id  # type: ignore
 
                 if league_id is not None:
                     self._league_id_cache[cache_key] = league_id

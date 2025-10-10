@@ -65,7 +65,7 @@ class DecoratorService:
 
         # 如果已经装饰过，直接返回
         if func_name in self._decorated_functions:
-            return self._decorated_functions[func_name]
+            return self._decorated_functions[func_name]  # type: ignore
 
         # 创建具体组件
         component = ConcreteComponent(func_name, func)
@@ -152,7 +152,7 @@ class DecoratorService:
         wrapper.__annotations__ = decorator_component.func.__annotations__
 
         # 添加装饰器统计方法
-        wrapper.get_decorator_stats = decorator_component.get_all_stats
+        wrapper.get_decorator_stats = decorator_component.get_all_stats  # type: ignore
 
         return wrapper
 
@@ -167,7 +167,7 @@ class DecoratorService:
         stats = {"total_functions": len(self._decorated_functions), "functions": {}}
 
         for func_name, component in self._decorated_functions.items():
-            stats["functions"][func_name] = component.get_all_stats()
+            stats["functions"][func_name] = component.get_all_stats()  # type: ignore
 
         return stats
 

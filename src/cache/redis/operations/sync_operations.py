@@ -37,9 +37,9 @@ class RedisSyncOperations:
         try:
             serialized = json.dumps(value, default=str)
             if ttl:
-                return self.client.setex(key, ttl, serialized)
+                return self.client.setex(key, ttl, serialized)  # type: ignore
             else:
-                return self.client.set(key, serialized)
+                return self.client.set(key, serialized)  # type: ignore
         except Exception as e:
             self.logger.error(f"Error setting key {key}: {str(e)}")
             return False

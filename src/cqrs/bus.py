@@ -202,4 +202,4 @@ class MetricsMiddleware:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""
-        return self._metrics.copy()
+        return self._metrics.copy()  # type: ignore

@@ -224,7 +224,7 @@ async def cleanup_stale_tasks() -> int:
 
             # For DELETE queries, we need to check if the result has rowcount
             if hasattr(result, "rowcount") and result.rowcount is not None:
-                return result.rowcount
+                return result.rowcount  # type: ignore
             return 0
 
     except Exception:

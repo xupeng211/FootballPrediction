@@ -239,7 +239,7 @@ class BusinessRules:
             )
         )
 
-        return rules
+        return rules  # type: ignore
 
     @staticmethod
     def create_prediction_rules() -> List[Rule]:
@@ -276,7 +276,7 @@ class BusinessRules:
             )
         )
 
-        return rules
+        return rules  # type: ignore
 
     @staticmethod
     def create_team_rules() -> List[Rule]:
@@ -316,7 +316,7 @@ class BusinessRules:
             )
         )
 
-        return rules
+        return rules  # type: ignore
 
 
 # 全局验证引擎实例

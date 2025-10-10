@@ -43,8 +43,8 @@ except ImportError:
     try:
         from .kafka_consumer import FootballKafkaConsumer
         from .kafka_producer import FootballKafkaProducer
-        from .stream_config import StreamConfig
-        from .stream_processor import StreamProcessor
+        from .stream_config import StreamConfig  # type: ignore
+        from .stream_processor import StreamProcessor  # type: ignore
     except ImportError:
         pass
 

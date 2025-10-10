@@ -96,7 +96,7 @@ async def get_async_db_session() -> AsyncGenerator[Session, None]:
     """
     manager = get_database_manager()
     async with manager.get_async_session() as session:
-        yield session
+        yield session  # type: ignore
 
 
 @asynccontextmanager
@@ -109,7 +109,7 @@ async def get_async_reader_session() -> AsyncGenerator[Session, None]:
     """
     manager = get_multi_user_database_manager()
     async with manager.get_async_session(role=DatabaseRole.READER) as session:
-        yield session
+        yield session  # type: ignore
 
 
 @asynccontextmanager
@@ -122,7 +122,7 @@ async def get_async_writer_session() -> AsyncGenerator[Session, None]:
     """
     manager = get_multi_user_database_manager()
     async with manager.get_async_session(role=DatabaseRole.WRITER) as session:
-        yield session
+        yield session  # type: ignore
 
 
 @asynccontextmanager
@@ -135,7 +135,7 @@ async def get_async_admin_session() -> AsyncGenerator[Session, None]:
     """
     manager = get_multi_user_database_manager()
     async with manager.get_async_session(role=DatabaseRole.ADMIN) as session:
-        yield session
+        yield session  # type: ignore
 
 
 @asynccontextmanager
@@ -154,8 +154,8 @@ async def get_async_session(
     if role is None:
         manager = get_database_manager()
         async with manager.get_async_session() as session:
-            yield session
+            yield session  # type: ignore
     else:
-        manager = get_multi_user_database_manager()
-        async with manager.get_async_session(role=role) as session:
-            yield session
+        manager = get_multi_user_database_manager()  # type: ignore
+        async with manager.get_async_session(role=role) as session:  # type: ignore
+            yield session  # type: ignore

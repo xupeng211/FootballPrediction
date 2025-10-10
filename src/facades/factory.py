@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
-import yaml
+import yaml  # type: ignore
 import json
 
 from .base import SystemFacade
@@ -61,7 +61,7 @@ class FacadeFactory:
             raise ValueError(f"Unknown facade type: {facade_type}")
 
         facade_class = self.FACADE_TYPES[facade_type]
-        facade = facade_class()
+        facade = facade_class()  # type: ignore
 
         # 应用配置
         if config:

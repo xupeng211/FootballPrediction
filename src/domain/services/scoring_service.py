@@ -70,7 +70,7 @@ class ScoringService:
             + difficulty_bonus
         )
 
-        return PredictionPoints(
+        return PredictionPoints(  # type: ignore
             exact_score=exact_score_points,
             outcome_diff=outcome_points,
             goals_diff=goal_diff_points,
@@ -149,7 +149,7 @@ class ScoringService:
         max_bonus = self.config["streak_bonus"]["max_bonus"]
 
         if streak > 0:
-            return min(streak * bonus_per_streak, max_bonus)
+            return min(streak * bonus_per_streak, max_bonus)  # type: ignore
         return 0
 
     def _calculate_difficulty_bonus(

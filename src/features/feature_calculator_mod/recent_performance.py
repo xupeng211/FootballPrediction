@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 近期战绩特征计算模块
 

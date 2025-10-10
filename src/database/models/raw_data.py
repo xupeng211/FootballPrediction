@@ -28,7 +28,7 @@ class RawMatchData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -110,7 +110,7 @@ class RawOddsData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -136,11 +136,11 @@ class RawOddsData(BaseModel):
     @property
     def is_processed(self) -> bool:
         """是否已处理"""
-        return self.processed
+        return self.processed  # type: ignore
 
     def mark_processed(self) -> None:
         """标记为已处理"""
-        self.processed = True
+        self.processed = True  # type: ignore
 
     def get_odds_values(self) -> Optional[Dict[str, float]]:
         """
@@ -192,7 +192,7 @@ class RawScoresData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -227,11 +227,11 @@ class RawScoresData(BaseModel):
     @property
     def is_processed(self) -> bool:
         """是否已处理"""
-        return self.processed
+        return self.processed  # type: ignore
 
     def mark_processed(self) -> None:
         """标记为已处理"""
-        self.processed = True
+        self.processed = True  # type: ignore
 
     @property
     def is_live(self) -> bool:

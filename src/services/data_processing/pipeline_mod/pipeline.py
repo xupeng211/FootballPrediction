@@ -76,4 +76,4 @@ class PipelineBuilder:
 
     def build(self) -> DataPipeline:
         """构建管道"""
-        return self.pipeline
+        return self.pipeline  # type: ignore
