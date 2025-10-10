@@ -17,7 +17,7 @@ from .models import (
 )
 
 # 导入新的高级审计服务
-from ..audit.advanced import (
+from ..audit.advanced import (  # type: ignore
     AuditService as AdvancedAuditService,
     DataAnalyzer,
     PatternAnalyzer,

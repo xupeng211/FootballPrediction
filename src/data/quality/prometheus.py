@@ -1,4 +1,5 @@
 """
+from typing import Dict, List, Optional
 Prometheus 导出器模块
 Prometheus Exporter Module
 """
@@ -26,7 +27,7 @@ class PrometheusCollector:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取所有指标"""
-        return self.metrics
+        return self.metrics  # type: ignore
 
 
 class PrometheusExporter:
@@ -38,7 +39,7 @@ class PrometheusExporter:
 
     def export(self) -> str:
         """导出指标格式"""
-        output = []
+        output: List[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
             output.append(f"# TYPE {name} {metric['type']}")
@@ -49,7 +50,7 @@ class PrometheusExporter:
 # 创建默认实例
 collector = PrometheusCollector()
 exporter = PrometheusExporter(collector)
-metrics = {}
-utils = {}
+metrics = {}  # type: ignore
+utils = {}  # type: ignore
 
 __all__ = ["collector", "exporter", "metrics", "utils"]

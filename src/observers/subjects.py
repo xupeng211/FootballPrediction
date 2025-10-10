@@ -59,9 +59,9 @@ class SystemMetricsSubject(Subject):
             direction: 方向（above/below）
         """
         self._thresholds[metric_name] = {
-            "warning": warning,
-            "critical": critical,
-            "direction": direction,
+            "warning": warning,  # type: ignore
+            "critical": critical,  # type: ignore
+            "direction": direction,  # type: ignore
         }
 
     async def _check_thresholds(
@@ -81,7 +81,9 @@ class SystemMetricsSubject(Subject):
         # 检查严重阈值
         if threshold["critical"] is not None:
             if self._is_threshold_exceeded(
-                new_value, threshold["critical"], threshold["direction"]
+                new_value,
+                threshold["critical"],
+                threshold["direction"],  # type: ignore
             ):
                 event = ObservableEvent(
                     event_type=ObservableEventType.SYSTEM_ALERT,
@@ -102,7 +104,9 @@ class SystemMetricsSubject(Subject):
         # 检查警告阈值
         if threshold["warning"] is not None:
             if self._is_threshold_exceeded(
-                new_value, threshold["warning"], threshold["direction"]
+                new_value,
+                threshold["warning"],
+                threshold["direction"],  # type: ignore
             ):
                 event = ObservableEvent(
                     event_type=ObservableEventType.THRESHOLD_EXCEEDED,

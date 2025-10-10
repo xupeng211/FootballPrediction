@@ -39,19 +39,19 @@ class TeamStatistics:
         """获取胜率"""
         if self.matches_played == 0:
             return 0.0
-        return self.wins / self.matches_played
+        return self.wins / self.matches_played  # type: ignore
 
     def get_avg_goals(self) -> float:
         """获取场均进球"""
         if self.matches_played == 0:
             return 0.0
-        return self.goals_for / self.matches_played
+        return self.goals_for / self.matches_played  # type: ignore
 
     def get_avg_conceded(self) -> float:
         """获取场均失球"""
         if self.matches_played == 0:
             return 0.0
-        return self.goals_against / self.matches_played
+        return self.goals_against / self.matches_played  # type: ignore
 
 
 class Team:

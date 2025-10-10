@@ -1,10 +1,21 @@
-import warnings
+"""
+数据处理管道模块
+Data Processing Pipeline Module
+"""
 
-warnings.warn(
-    "此模块已弃用，请使用新的模块结构。",
-    DeprecationWarning,
-    stacklevel=2,
+from .pipeline import DataPipeline, PipelineBuilder
+from .stages import (
+    BronzeToSilverProcessor,
+    SilverToGoldProcessor,
+    DataValidator,
+    DataTransformer,
 )
 
-# Compatibility module
-__all__ = []  # type: ignore
+__all__ = [
+    "DataPipeline",
+    "PipelineBuilder",
+    "BronzeToSilverProcessor",
+    "SilverToGoldProcessor",
+    "DataValidator",
+    "DataTransformer",
+]

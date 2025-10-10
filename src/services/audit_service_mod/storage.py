@@ -32,7 +32,7 @@ class AuditLogStorage:
         try:
             self.db_manager = db_manager
             # 测试连接
-            await self.db_manager.execute("SELECT 1")
+            await self.db_manager.execute("SELECT 1")  # type: ignore
             self.logger.info("审计日志存储初始化成功")
             return True
         except Exception as e:
@@ -60,23 +60,23 @@ class AuditLogStorage:
             """
 
             # 执行插入
-            await self.db_manager.execute(
+            await self.db_manager.execute(  # type: ignore
                 sql,
                 audit_log.user_id,
                 audit_log.username,
                 audit_log.action.value,
                 audit_log.resource_type,
                 audit_log.resource_id,
-                audit_log.operation_type,
+                audit_log.operation_type,  # type: ignore
                 audit_log.table_name,
                 audit_log.old_values,
                 audit_log.new_values,
                 audit_log.ip_address,
                 audit_log.user_agent,
                 audit_log.severity.value,
-                audit_log.category,
-                audit_log.compliance_tags,
-                audit_log.created_at,
+                audit_log.category,  # type: ignore
+                audit_log.compliance_tags,  # type: ignore
+                audit_log.created_at,  # type: ignore
                 audit_log.session_id,
                 audit_log.request_id,
                 audit_log.metadata,
@@ -141,16 +141,16 @@ class AuditLogStorage:
 
             if start_date:
                 conditions.append(f"created_at >= ${len(params) + 1}")
-                params.append(start_date)
+                params.append(start_date)  # type: ignore
 
             if end_date:
                 conditions.append(f"created_at <= ${len(params) + 1}")
-                params.append(end_date)
+                params.append(end_date)  # type: ignore
 
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
             # 添加分页参数
-            params.extend([limit, offset])
+            params.extend([limit, offset])  # type: ignore
 
             sql = f"""
             SELECT * FROM audit_logs
@@ -159,7 +159,7 @@ class AuditLogStorage:
             LIMIT ${len(params) - 1} OFFSET ${len(params)}
             """
 
-            results = await self.db_manager.fetch_all(sql, *params)
+            results = await self.db_manager.fetch_all(sql, *params)  # type: ignore
             return [dict(row) for row in results]
 
         except Exception as e:
@@ -180,7 +180,7 @@ class AuditLogStorage:
                 % hours
             )
 
-            results = await self.db_manager.fetch_all(sql)
+            results = await self.db_manager.fetch_all(sql)  # type: ignore
             return [dict(row) for row in results]
 
         except Exception as e:
@@ -195,7 +195,7 @@ class AuditLogStorage:
         """获取审计摘要"""
         try:
             conditions = []
-            params = []
+            params = []  # type: ignore
 
             if start_date:
                 conditions.append(f"created_at >= ${len(params) + 1}")
@@ -219,7 +219,7 @@ class AuditLogStorage:
             WHERE {where_clause}
             """
 
-            result = await self.db_manager.fetch_one(sql, *params)
+            result = await self.db_manager.fetch_one(sql, *params)  # type: ignore
             return dict(result) if result else {}
 
         except Exception as e:

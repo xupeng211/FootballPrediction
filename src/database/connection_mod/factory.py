@@ -68,7 +68,7 @@ def initialize_multi_user_database(config: Optional[DatabaseConfig] = None) -> N
         config (Optional[DatabaseConfig]): 数据库配置 / Database configuration
     """
     manager = get_multi_user_database_manager()
-    manager.initialize(config=config)
+    manager.initialize(config=config)  # type: ignore
     logger.info("多用户数据库已初始化")
 
 

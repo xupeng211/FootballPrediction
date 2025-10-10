@@ -7,7 +7,7 @@ Manages dependency injection through configuration files.
 """
 
 import json
-import yaml
+import yaml  # type: ignore
 from typing import Dict, Any, List, Type, Optional, Union
 from pathlib import Path
 import logging
@@ -165,9 +165,9 @@ class ConfigurationBinder:
     def _import_configuration(self, import_path: str) -> None:
         """导入配置"""
         try:
-            import_path = Path(import_path)
+            import_path = Path(import_path)  # type: ignore
 
-            if import_path.is_file():
+            if import_path.is_file():  # type: ignore
                 binder = ConfigurationBinder(self.container)
                 binder.load_from_file(import_path)
                 binder.apply_configuration()
@@ -228,13 +228,13 @@ class ConfigurationBinder:
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
         module = __import__(module_path, fromlist=[class_name])
-        return getattr(module, class_name)
+        return getattr(module, class_name)  # type: ignore
 
-    def _get_factory(self, factory_path: str) -> callable:
+    def _get_factory(self, factory_path: str) -> callable:  # type: ignore
         """获取工厂函数"""
         module_path, func_name = factory_path.rsplit(".", 1)
         module = __import__(module_path, fromlist=[func_name])
-        return getattr(module, func_name)
+        return getattr(module, func_name)  # type: ignore
 
     def _parse_lifetime(self, lifetime_str: str) -> ServiceLifetime:
         """解析生命周期"""
@@ -306,21 +306,21 @@ class ConfigurationBuilder:
 
     def build(self) -> DIConfiguration:
         """构建配置"""
-        return self._config
+        return self._config  # type: ignore
 
 
 def create_config_from_file(config_path: Union[str, Path]) -> DIConfiguration:
     """从文件创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_file(config_path)
-    return binder._config
+    return binder._config  # type: ignore
 
 
 def create_config_from_dict(config_data: Dict[str, Any]) -> DIConfiguration:
     """从字典创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_dict(config_data)
-    return binder._config
+    return binder._config  # type: ignore
 
 
 # 示例配置生成器

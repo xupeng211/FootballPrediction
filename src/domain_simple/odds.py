@@ -220,11 +220,11 @@ class Odds:
 
         elif target_format == OddsFormat.FRACTIONAL:
             if self.home_odds:
-                result["home"] = self._decimal_to_fractional(self.home_odds)
+                result["home"] = self._decimal_to_fractional(self.home_odds)  # type: ignore
             if self.draw_odds:
-                result["draw"] = self._decimal_to_fractional(self.draw_odds)
+                result["draw"] = self._decimal_to_fractional(self.draw_odds)  # type: ignore
             if self.away_odds:
-                result["away"] = self._decimal_to_fractional(self.away_odds)
+                result["away"] = self._decimal_to_fractional(self.away_odds)  # type: ignore
 
         elif target_format == OddsFormat.AMERICAN:
             if self.home_odds:

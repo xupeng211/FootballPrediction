@@ -124,7 +124,7 @@ class MetricsObserver(Observer):
                 continue
 
             recent_values = [v for _, v in values]
-            result["aggregations"][metric_name] = {
+            result["aggregations"][metric_name] = {  # type: ignore
                 "count": len(recent_values),
                 "min": min(recent_values),
                 "max": max(recent_values),
@@ -133,13 +133,13 @@ class MetricsObserver(Observer):
             }
 
         # 计算直方图统计
-        for metric_name, values in self._histograms.items():
+        for metric_name, values in self._histograms.items():  # type: ignore
             if not values:
                 continue
 
             sorted_values = sorted(values)
             count = len(sorted_values)
-            result["aggregations"][f"{metric_name}_histogram"] = {
+            result["aggregations"][f"{metric_name}_histogram"] = {  # type: ignore
                 "count": count,
                 "sum": sum(sorted_values),
                 "min": sorted_values[0],

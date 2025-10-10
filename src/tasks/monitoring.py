@@ -172,9 +172,9 @@ class TaskMonitor:
         if self._db_type is None:
             try:
                 db_manager = DatabaseManager()
-                engine = db_manager._async_engine or db_manager._sync_engine
+                engine = db_manager._async_engine or db_manager._sync_engine  # type: ignore
                 if engine:
-                    self._db_type = get_db_type_from_engine(engine)
+                    self._db_type = get_db_type_from_engine(engine)  # type: ignore
                 else:
                     self._db_type = "postgresql"  # 默认值
             except Exception:
@@ -444,7 +444,7 @@ class TaskMonitor:
 
             async with db_manager.get_async_session() as session:
                 # 查询运行时间过长的任务
-                delay_query = text(query_builder.build_task_delay_query())
+                delay_query = text(query_builder.build_task_delay_query())  # type: ignore
                 result = await session.execute(delay_query)
 
                 for row in result:

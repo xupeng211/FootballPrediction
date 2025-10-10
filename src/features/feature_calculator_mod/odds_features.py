@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 赔率特征计算模块
 

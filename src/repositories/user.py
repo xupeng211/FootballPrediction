@@ -13,7 +13,7 @@ from decimal import Decimal
 from sqlalchemy import select, func, and_, or_, update
 from sqlalchemy.orm import selectinload
 
-from .base import Repository, QuerySpec
+from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import User
 
 
@@ -56,7 +56,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
                 query = self._apply_includes(query, query_spec.include)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[User]:
         """根据ID获取用户"""
@@ -80,7 +80,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
         result = await self.session.execute(query)
-        return result.scalar() > 0
+        return result.scalar() > 0  # type: ignore
 
     async def get_by_username(self, username: str) -> Optional[User]:
         """根据用户名获取用户"""
@@ -149,7 +149,7 @@ class UserRepository(UserRepositoryInterface):
                 query = self._apply_includes(query, query_spec.include)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[User]:
         """查找单个用户"""
@@ -171,9 +171,9 @@ class UserRepository(UserRepositoryInterface):
     async def save(self, entity: User) -> User:
         """保存用户"""
         if entity.id is None:
-            self.session.add(entity)
+            self.session.add(entity)  # type: ignore
         else:
-            entity.updated_at = datetime.utcnow()
+            entity.updated_at = datetime.utcnow()  # type: ignore
 
         await self.session.commit()
         await self.session.refresh(entity)
@@ -193,7 +193,7 @@ class UserRepository(UserRepositoryInterface):
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
         result = await self.session.execute(query)
-        return result.scalar() > 0
+        return result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> User:
         """创建新用户"""
@@ -278,10 +278,10 @@ class UserRepository(UserRepositoryInterface):
         # 获取预测统计
         prediction_query = select(
             func.count(Prediction.id).label("total_predictions"),
-            func.sum(Prediction.points_earned).label("total_points"),
-            func.avg(Prediction.confidence).label("avg_confidence"),
+            func.sum(Prediction.points_earned).label("total_points"),  # type: ignore
+            func.avg(Prediction.confidence).label("avg_confidence"),  # type: ignore
             func.max(Prediction.created_at).label("last_prediction_at"),
-        ).where(Prediction.user_id == user_id)
+        ).where(Prediction.user_id == user_id)  # type: ignore
 
         prediction_result = await self.session.execute(prediction_query)
         prediction_stats = prediction_result.first()

@@ -312,7 +312,7 @@ class Match(BaseModel):
         """获取未来几天的比赛"""
 
         start_date = datetime.utcnow()
-        end_date = start_date + timedelta(days=days)
+        end_date = start_date + timedelta(days=days)  # type: ignore
 
         return (
             session.query(cls)
@@ -343,7 +343,7 @@ class Match(BaseModel):
         """获取某个球队的所有比赛"""
 
         query = session.query(cls).filter(
-            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)
+            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)  # type: ignore
         )
 
         if season:

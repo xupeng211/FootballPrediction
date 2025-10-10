@@ -328,8 +328,8 @@ class MultiUserDatabaseManager:
         for engine in self._engines.values():
             engine.dispose()
 
-        for engine in self._async_engines.values():
-            await engine.dispose()
+        for engine in self._async_engines.values():  # type: ignore
+            await engine.dispose()  # type: ignore
 
         self._engines.clear()
         self._async_engines.clear()
@@ -357,7 +357,7 @@ class MultiUserDatabaseManager:
             "host": self.config.host,
             "port": self.config.port,
             "database": self.config.database,
-            "pool_size": engine.pool.size(),
-            "checked_in": engine.pool.checkedin(),
-            "checked_out": engine.pool.checkedout(),
+            "pool_size": engine.pool.size(),  # type: ignore
+            "checked_in": engine.pool.checkedin(),  # type: ignore
+            "checked_out": engine.pool.checkedout(),  # type: ignore
         }

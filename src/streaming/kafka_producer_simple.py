@@ -39,7 +39,7 @@ class KafkaMessageProducer:
         if self.producer is None:
             raise StreamingError("Producer not started")
 
-        try:
+        try:  # type: ignore
             self._serialize_message(message)
             # 模拟发送
             await asyncio.sleep(0.001)

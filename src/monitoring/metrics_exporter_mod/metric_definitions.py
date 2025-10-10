@@ -20,7 +20,7 @@ try:
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
-    REGISTRY = None
+    REGISTRY = None  # type: ignore
 
 
 class MetricsDefinitions:

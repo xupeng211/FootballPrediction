@@ -19,7 +19,7 @@ from typing import Dict, cast
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore
 from src.core.prediction_engine import PredictionEngine
 from src.core.logging_system import get_logger
 
@@ -89,16 +89,16 @@ async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict
     return current_user
 
 
-async def get_prediction_engine() -> PredictionEngine:
+async def get_prediction_engine() -> PredictionEngine:  # type: ignore
     """
     获取预测引擎实例
 
     Returns:
         PredictionEngine: 预测引擎
     """
-    from src.core.prediction_engine import get_prediction_engine
+    from src.core.prediction_engine import get_prediction_engine  # type: ignore
 
-    return await get_prediction_engine()
+    return await get_prediction_engine()  # type: ignore
 
 
 async def get_redis_manager():

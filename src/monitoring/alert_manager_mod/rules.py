@@ -134,18 +134,18 @@ class AlertRuleEngine:
         if ">" in condition:
             metric_name, threshold = condition.split(">", 1)
             metric_name = metric_name.strip()
-            threshold = float(threshold.strip())
+            threshold = float(threshold.strip())  # type: ignore
 
             value = self._get_metric_value(metrics, metric_name)
-            return value > threshold if value is not None else False
+            return value > threshold if value is not None else False  # type: ignore
 
         elif "<" in condition:
             metric_name, threshold = condition.split("<", 1)
             metric_name = metric_name.strip()
-            threshold = float(threshold.strip())
+            threshold = float(threshold.strip())  # type: ignore
 
             value = self._get_metric_value(metrics, metric_name)
-            return value < threshold if value is not None else False
+            return value < threshold if value is not None else False  # type: ignore
 
         return False
 
@@ -189,7 +189,7 @@ class AlertRuleEngine:
                 return None
 
         try:
-            return float(value)
+            return float(value)  # type: ignore
         except (TypeError, ValueError):
             return None
 

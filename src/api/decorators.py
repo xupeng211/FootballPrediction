@@ -12,7 +12,7 @@ from datetime import datetime
 import asyncio
 
 from ..decorators import DecoratorService
-from ..decorators.service import decorator_service
+from ..decorators.service import decorator_service  # type: ignore
 from ..decorators.base import DecoratorContext
 
 router = APIRouter(prefix="/decorators", tags=["装饰器模式"])
@@ -93,7 +93,7 @@ async def demo_logging_decorator(
     result = await decorated(input_value, input_value * 2)
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()  # type: ignore
 
     return {
         "input": input_value,
@@ -116,7 +116,7 @@ async def demo_retry_decorator() -> Dict[str, Any]:
     end_time = datetime.utcnow()
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()  # type: ignore
 
     return {
         "result": result,
@@ -230,7 +230,7 @@ async def demo_metrics_decorator(
         results.append(result)
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()  # type: ignore
 
     return {
         "iterations": iterations,
@@ -268,7 +268,7 @@ async def demo_combo_decorators(
     second_time = (datetime.utcnow() - start_time).total_seconds()
 
     # 获取所有装饰器的统计信息
-    all_stats = decorated.get_decorator_stats()
+    all_stats = decorated.get_decorator_stats()  # type: ignore
 
     return {
         "input": input_value,

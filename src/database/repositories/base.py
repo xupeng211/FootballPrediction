@@ -87,7 +87,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = select(self.model_class).where(self.model_class.id == obj_id)
+            stmt = select(self.model_class).where(self.model_class.id == obj_id)  # type: ignore
             result = await sess.execute(stmt)
             return result.scalar_one_or_none()
 
@@ -120,7 +120,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             result = await sess.execute(stmt)
-            return result.scalars().all()
+            return result.scalars().all()  # type: ignore
 
     async def update(
         self,
@@ -145,7 +145,7 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = (
                 update(self.model_class)
-                .where(self.model_class.id == obj_id)
+                .where(self.model_class.id == obj_id)  # type: ignore
                 .values(**obj_data)
                 .returning(self.model_class)
             )
@@ -172,7 +172,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(self.model_class.id == obj_id)
+            stmt = delete(self.model_class).where(self.model_class.id == obj_id)  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -225,7 +225,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             result = await sess.execute(stmt)
-            return result.scalars().all()
+            return result.scalars().all()  # type: ignore
 
     async def find_one_by(
         self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
@@ -344,7 +344,7 @@ class BaseRepository(ABC, Generic[T]):
                     obj_id = update_data.pop("id")
                     stmt = (
                         update(self.model_class)
-                        .where(self.model_class.id == obj_id)
+                        .where(self.model_class.id == obj_id)  # type: ignore
                         .values(**update_data)
                     )
                     result = await sess.execute(stmt)
@@ -370,7 +370,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(self.model_class.id.in_(ids))
+            stmt = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -381,7 +381,9 @@ class BaseRepository(ABC, Generic[T]):
     # ========================================
 
     async def execute_in_transaction(
-        self, operations: List[callable], session: Optional[AsyncSession] = None
+        self,
+        operations: List[callable],
+        session: Optional[AsyncSession] = None,  # type: ignore
     ) -> Any:
         """
         在事务中执行多个操作
@@ -400,7 +402,7 @@ class BaseRepository(ABC, Generic[T]):
             try:
                 results = []
                 for operation in operations:
-                    result = await operation(sess)
+                    result = await operation(sess)  # type: ignore
                     results.append(result)
 
                 await sess.commit()

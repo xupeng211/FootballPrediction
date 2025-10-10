@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Optional, Dict, Any, List
 from decimal import Decimal
 
-from ...core.exceptions import DomainError
+from ...core.exceptions import DomainError  # type: ignore
 
 
 class MatchStatus(Enum):
@@ -161,7 +161,7 @@ class Match:
 
         self._add_domain_event(
             MatchFinishedEvent(
-                match_id=self.id,
+                match_id=self.id,  # type: ignore
                 home_team_id=self.home_team_id,
                 away_team_id=self.away_team_id,
                 final_score=self.score,

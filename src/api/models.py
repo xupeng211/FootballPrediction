@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection_mod import get_async_session
-from src.models.prediction_service_mod import PredictionService
+from src.models.prediction_service import PredictionService
 from src.utils.response import APIResponse
 
 logger = logging.getLogger(__name__)
@@ -548,7 +548,8 @@ async def get_model_performance(
         # 获取模型版本信息
         try:
             model_version = mlflow_client.get_model_version(
-                name=model_name, version=version
+                name=model_name,
+                version=version,  # type: ignore
             )
         except Exception as e:
             if "RESOURCE_DOES_NOT_EXIST" in str(e):

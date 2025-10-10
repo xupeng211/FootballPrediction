@@ -47,7 +47,7 @@ def utc_now() -> datetime:
 def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
     """解析日期时间字符串（向后兼容性函数）"""
     if date_str is None:
-        return None
+        return None  # type: ignore
 
     try:
         return datetime.strptime(date_str, format_str)
@@ -64,4 +64,4 @@ def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> date
                 return datetime.strptime(date_str, fmt)
             except ValueError:
                 continue
-        return None
+        return None  # type: ignore

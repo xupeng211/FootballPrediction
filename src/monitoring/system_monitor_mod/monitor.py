@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from .metrics import get_prometheus_metrics
 from .collectors import MetricsCollectorManager
-from .health_checks import HealthChecker
+from .health_checks import HealthChecker  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class SystemMonitor:
         Returns:
             Dict[str, Any]: 收集的指标数据
         """
-        return await self.collector_manager.collect_all()
+        return await self.collector_manager.collect_all()  # type: ignore
 
     async def get_health_status(self) -> Dict[str, Any]:
         """
@@ -105,7 +105,7 @@ class SystemMonitor:
         health_status = await self.health_checker.check_all()
         health_status["uptime_seconds"] = time.time() - self.start_time
         health_status["version"] = "1.0.0"
-        return health_status
+        return health_status  # type: ignore
 
     # 便捷方法 - 委托给指标管理器
     def record_request(

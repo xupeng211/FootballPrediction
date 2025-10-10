@@ -17,22 +17,22 @@ except ImportError:
     # 如果模型文件不存在，创建基本的占位符类
     from pydantic import BaseModel
 
-    class LeagueInfo(BaseModel):
+    class LeagueInfo(BaseModel):  # type: ignore
         id: int
         name: str
         country: str
 
-    class MatchInfo(BaseModel):
+    class MatchInfo(BaseModel):  # type: ignore
         id: int
         home_team: str
         away_team: str
 
-    class OddsInfo(BaseModel):
+    class OddsInfo(BaseModel):  # type: ignore
         id: int
         match_id: int
         home_win: float
 
-    class TeamInfo(BaseModel):
+    class TeamInfo(BaseModel):  # type: ignore
         id: int
         name: str
 

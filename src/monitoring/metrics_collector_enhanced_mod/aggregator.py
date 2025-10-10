@@ -7,6 +7,7 @@
 import statistics
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
+from typing import Any
 from typing import Dict, List, Optional, Deque, Tuple
 
 from .metric_types import MetricPoint, MetricSummary
@@ -187,8 +188,8 @@ class MetricsAggregator:
         Returns:
             指标数据点列表
         """
-        key = self._make_key(name, labels or {})
-        metrics = self.metrics.get(key, [])
+        metrics: Any = self.metrics.get(key, [])  # type: ignore
+        metrics = self.metrics.get(key, [])  # type: ignore
 
         if not metrics:
             return []

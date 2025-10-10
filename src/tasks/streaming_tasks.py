@@ -17,7 +17,7 @@ from celery.app.app import Celery
 
 from src.core.logging import get_logger
 from src.tasks.celery_app import app
-from src.tasks.error_handlers import TaskErrorLogger
+from src.tasks.error_handlers import TaskErrorLogger  # type: ignore
 
 logger = get_logger(__name__)
 

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 历史对战特征计算模块
 

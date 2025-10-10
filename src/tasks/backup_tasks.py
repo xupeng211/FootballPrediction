@@ -64,7 +64,7 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 """
 
 # 为了向后兼容性，从新的模块化结构中导入所有内容
-from .backup import (
+from .backup import (  # type: ignore
     # 基础类和指标
     DatabaseBackupTask,
     get_backup_metrics,

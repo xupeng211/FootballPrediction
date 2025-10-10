@@ -29,7 +29,7 @@ class AnomalyDetector:
 
         z_scores = np.abs((data - data.mean()) / data.std())
         outlier_indices = z_scores[z_scores > threshold].index.tolist()
-        return outlier_indices
+        return outlier_indices  # type: ignore
 
     def detect_missing_values(
         self, df: pd.DataFrame, threshold: float = 0.1
@@ -37,7 +37,7 @@ class AnomalyDetector:
         """Detect columns with missing values above threshold"""
         missing_ratios = df.isnull().sum() / len(df)
         problematic_cols = missing_ratios[missing_ratios > threshold]
-        return problematic_cols.to_dict()
+        return problematic_cols.to_dict()  # type: ignore
 
     def detect_duplicates(
         self, df: pd.DataFrame, subset: Optional[List[str]] = None

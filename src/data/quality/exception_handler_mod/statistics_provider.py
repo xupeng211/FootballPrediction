@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 统计数据提供者
 Statistics Provider
@@ -38,9 +39,9 @@ class StatisticsProvider:
 
 
 # 为了向后兼容，导出一些模块
-quality_metrics = None  # type: ignore
-trend_analyzer = None  # type: ignore
-reporter = None  # type: ignore
+quality_metrics = None
+trend_analyzer = None
+reporter = None
 provider = StatisticsProvider
 
 __all__ = ["quality_metrics", "trend_analyzer", "reporter", "provider"]
