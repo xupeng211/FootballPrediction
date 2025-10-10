@@ -521,7 +521,7 @@ class MyPyFixer:
                             f.write(content)
                         stats["fixed_errors"] += len(other_errors[:3])
                         self.fixed_files.add(str(path))
-                except:
+                except Exception:
                     pass
 
             if file_fixed:
