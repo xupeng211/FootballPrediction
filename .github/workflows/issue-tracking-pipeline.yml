@@ -1,15 +1,11 @@
 name: 问题跟踪流水线
 
 on:
-  # CI Pipeline 完成时触发
+  # CI/CD 统一流水线完成时触发
   workflow_run:
-    workflows: ["CI Pipeline"]
+    workflows: ["CI/CD 统一流水线", "MLOps"]
     types: [completed]
     branches: [ main, develop ]
-  # MLOps 检测到问题时触发
-  workflow_run:
-    workflows: ["MLOps"]
-    types: [completed]
   # 手动创建Issue
   workflow_dispatch:
     inputs:
