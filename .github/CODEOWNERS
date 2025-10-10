@@ -1,0 +1,8 @@
+# Default reviewers for all paths
+* @xupeng211
+
+# Focused domains
+src/** @xupeng211
+tests/** @xupeng211
+docs/** @xupeng211
+.github/workflows/** @xupeng211

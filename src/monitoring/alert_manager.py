@@ -2,49 +2,44 @@
 告警管理器
 Alert Manager
 
-实现数据质量监控和异常检测的告警机制。
+统一告警管理入口，向后兼容原有接口。
 """
 
-# 导入所有必要的类，保持向后兼容
-from .alert_models import (
+# 为了向后兼容，从模块化实现重新导出核心类
+from .alert_manager_mod import (
+    AlertManager,
+    Alert,
+    AlertRule,
     AlertSeverity,
     AlertType,
     AlertLevel,
     AlertStatus,
     AlertChannel,
-    Alert,
-    AlertRule,
-)
-
-from .alert_handlers import (
     PrometheusMetrics,
-    AlertHandler,
+    AlertChannelManager,
+    AlertRuleEngine,
+    AlertAggregator,
     LogHandler,
     PrometheusHandler,
     WebhookHandler,
     EmailHandler,
 )
 
-from .alert_manager_core import AlertManager
-
-# 导出所有公共接口
 __all__ = [
-    # 枚举
+    "AlertManager",
+    "Alert",
+    "AlertRule",
     "AlertSeverity",
     "AlertType",
     "AlertLevel",
     "AlertStatus",
     "AlertChannel",
-    # 模型
-    "Alert",
-    "AlertRule",
-    # 处理器
-    "AlertHandler",
+    "PrometheusMetrics",
+    "AlertChannelManager",
+    "AlertRuleEngine",
+    "AlertAggregator",
     "LogHandler",
     "PrometheusHandler",
     "WebhookHandler",
     "EmailHandler",
-    "PrometheusMetrics",
-    # 主要类
-    "AlertManager",
 ]

@@ -11,10 +11,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from .health.checks import *  # type: ignore
-from .health.health_checker import *  # type: ignore
-from .health.models import *  # type: ignore
-from .health.utils import *  # type: ignore
+from .health import router
 
 warnings.warn(
     "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
@@ -22,9 +19,7 @@ warnings.warn(
     stacklevel=2,
 )
 
-# 从新模块导入所有内容
-
 # 导出所有类
 __all__ = [  # type: ignore
-    "HealthChecker" "Checks" "Models" "Utils"
+    "router",
 ]

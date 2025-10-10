@@ -11,6 +11,8 @@ Great Expectations 配置模块
 - 比分必须在 [0, 99] 范围内
 """
 
+from typing import Any, Dict, List, Optional
+
 # Temporarily commented out for pytest testing
 try:
     import great_expectations as gx
