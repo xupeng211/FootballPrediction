@@ -24,22 +24,17 @@ def get_passed_test_files():
         "tests/unit/test_common_models_new.py",
         "tests/unit/test_time_utils_functional.py",
         "tests/unit/test_simple_functional.py",
-
         # 服务层测试
         "tests/unit/test_base_service_new.py",
         "tests/unit/test_health_api_new.py",
-
         # API测试
         "tests/unit/api/test_api_simple.py",
-
         # Streaming测试
         "tests/unit/streaming/test_stream_config.py",
-
         # 基础组件测试
         "tests/unit/test_cache_utils.py",
         "tests/unit/test_monitoring_utils.py",
         "tests/unit/test_data_collectors.py",
-
         # 已修复的测试文件（15个）
         "tests/unit/test_error_handlers.py",
         "tests/unit/test_logging_utils.py",
@@ -56,7 +51,6 @@ def get_passed_test_files():
         "tests/unit/test_collectors_all.py",
         "tests/unit/test_data_quality_extended.py",
         "tests/unit/test_core_config_extended.py",
-
         # 覆盖率提升测试
         "tests/unit/test_api_imports_all.py",
         "tests/unit/test_services_all.py",
@@ -65,7 +59,6 @@ def get_passed_test_files():
         "tests/unit/test_data_processing_all.py",
         "tests/unit/test_cache_extended.py",
         "tests/unit/test_utils_extended_final.py",
-
         # 最终冲刺测试（21个简单测试）
         "tests/unit/test_api_only_imports.py",
         "tests/unit/test_api_models_import.py",
@@ -105,25 +98,27 @@ def run_tests_with_coverage(test_files):
     """运行测试并检查覆盖率"""
 
     print(f"🏃 运行 {len(test_files)} 个通过了的测试文件...")
-    print(f"这些测试已经验证可以正常运行，不会有导入错误")
+    print("这些测试已经验证可以正常运行，不会有导入错误")
 
     # 构建pytest命令
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "--cov=src",
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov_passed",
         "-v",
-        "--tb=short"
+        "--tb=short",
     ] + test_files
 
     # 运行测试
     try:
         result = subprocess.run(cmd, capture_output=False, text=True, timeout=600)
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("测试完成！")
-        print("="*60)
+        print("=" * 60)
 
         # 生成一个总结报告
         print("\n📊 生成了以下文件：")

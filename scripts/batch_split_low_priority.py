@@ -17,9 +17,8 @@ LOW_PRIORITY_SPLITS = {
             ("transformer.py", 120, "赔率数据转换"),
             ("aggregator.py", 100, "赔率数据聚合"),
             ("processor.py", 80, "主处理器"),
-        ]
+        ],
     },
-
     "src/tasks/backup/manual/exporters.py": {
         "dir": "src/tasks/backup/manual/export",
         "modules": [
@@ -27,9 +26,8 @@ LOW_PRIORITY_SPLITS = {
             ("json_exporter.py", 100, "JSON导出器"),
             ("csv_exporter.py", 100, "CSV导出器"),
             ("database_exporter.py", 120, "数据库导出器"),
-        ]
+        ],
     },
-
     "src/services/processing/processors/features_processor.py": {
         "dir": "src/services/processing/processors/features",
         "modules": [
@@ -37,9 +35,8 @@ LOW_PRIORITY_SPLITS = {
             ("aggregator.py", 100, "特征聚合器"),
             ("validator.py", 80, "特征验证器"),
             ("processor.py", 100, "主处理器"),
-        ]
+        ],
     },
-
     "src/data/quality/ge_prometheus_exporter.py": {
         "dir": "src/data/quality/prometheus",
         "modules": [
@@ -47,9 +44,8 @@ LOW_PRIORITY_SPLITS = {
             ("collector.py", 120, "指标收集器"),
             ("exporter.py", 100, "指标导出器"),
             ("utils.py", 80, "工具函数"),
-        ]
+        ],
     },
-
     "src/tasks/backup/manual/processors.py": {
         "dir": "src/tasks/backup/manual/process",
         "modules": [
@@ -57,9 +53,8 @@ LOW_PRIORITY_SPLITS = {
             ("transformer.py", 100, "数据转换器"),
             ("compressor.py", 100, "数据压缩器"),
             ("processor.py", 100, "主处理器"),
-        ]
+        ],
     },
-
     "src/models/common_models.py": {
         "dir": "src/models/common",
         "modules": [
@@ -67,9 +62,8 @@ LOW_PRIORITY_SPLITS = {
             ("data_models.py", 100, "数据模型"),
             ("api_models.py", 100, "API模型"),
             ("utils.py", 80, "工具函数"),
-        ]
+        ],
     },
-
     "src/data/collectors/streaming_collector.py": {
         "dir": "src/data/collectors/streaming",
         "modules": [
@@ -77,9 +71,8 @@ LOW_PRIORITY_SPLITS = {
             ("websocket_collector.py", 100, "WebSocket收集器"),
             ("processor.py", 100, "数据处理器"),
             ("manager.py", 80, "收集器管理"),
-        ]
+        ],
     },
-
     "src/services/data_processing_mod/service.py": {
         "dir": "src/services/data_processing/mod",
         "modules": [
@@ -87,9 +80,8 @@ LOW_PRIORITY_SPLITS = {
             ("validator.py", 80, "数据验证器"),
             ("transformer.py", 100, "数据转换器"),
             ("service.py", 90, "主服务类"),
-        ]
+        ],
     },
-
     "src/tasks/backup/validation/backup_validator.py": {
         "dir": "src/tasks/backup/validation",
         "modules": [
@@ -97,9 +89,8 @@ LOW_PRIORITY_SPLITS = {
             ("rules.py", 100, "验证规则"),
             ("reporter.py", 80, "验证报告器"),
             ("validator.py", 90, "主验证器"),
-        ]
+        ],
     },
-
     "src/data/storage/lake/utils.py": {
         "dir": "src/data/storage/lake/utils_mod",
         "modules": [
@@ -107,9 +98,8 @@ LOW_PRIORITY_SPLITS = {
             ("compression.py", 80, "压缩工具"),
             ("validation.py", 100, "验证工具"),
             ("helpers.py", 110, "辅助函数"),
-        ]
+        ],
     },
-
     "src/features/store/repository.py": {
         "dir": "src/features/store/repo",
         "modules": [
@@ -117,9 +107,8 @@ LOW_PRIORITY_SPLITS = {
             ("database_repository.py", 120, "数据库仓库"),
             ("query_builder.py", 80, "查询构建器"),
             ("repository.py", 90, "主仓库类"),
-        ]
+        ],
     },
-
     "src/database/sql_compatibility.py": {
         "dir": "src/database/compatibility",
         "modules": [
@@ -127,9 +116,8 @@ LOW_PRIORITY_SPLITS = {
             ("postgres_compat.py", 100, "PostgreSQL兼容性"),
             ("dialects.py", 100, "SQL方言处理"),
             ("compatibility.py", 80, "兼容性管理器"),
-        ]
+        ],
     },
-
     "src/monitoring/alerts/models/alert.py": {
         "dir": "src/monitoring/alerts/models/alert_mod",
         "modules": [
@@ -137,9 +125,8 @@ LOW_PRIORITY_SPLITS = {
             ("alert_status.py", 80, "告警状态"),
             ("alert_severity.py", 80, "告警严重程度"),
             ("alert_utils.py", 100, "告警工具"),
-        ]
+        ],
     },
-
     "src/data/quality/exception_handler_mod/statistics_provider.py": {
         "dir": "src/data/quality/stats",
         "modules": [
@@ -147,9 +134,8 @@ LOW_PRIORITY_SPLITS = {
             ("trend_analyzer.py", 100, "趋势分析器"),
             ("reporter.py", 80, "统计报告器"),
             ("provider.py", 100, "统计提供器"),
-        ]
+        ],
     },
-
     "src/services/data_processing_mod/pipeline.py": {
         "dir": "src/services/data_processing/pipeline_mod",
         "modules": [
@@ -157,9 +143,8 @@ LOW_PRIORITY_SPLITS = {
             ("pipeline.py", 100, "主管道"),
             ("executor.py", 80, "执行器"),
             ("monitor.py", 80, "管道监控"),
-        ]
+        ],
     },
-
     "src/monitoring/alerts/models/escalation.py": {
         "dir": "src/monitoring/alerts/models/escalation_mod",
         "modules": [
@@ -167,9 +152,8 @@ LOW_PRIORITY_SPLITS = {
             ("escalation_engine.py", 120, "升级引擎"),
             ("notification.py", 80, "通知处理"),
             ("escalation.py", 80, "主升级类"),
-        ]
+        ],
     },
-
     "src/collectors/odds_collector.py": {
         "dir": "src/collectors/odds/basic",
         "modules": [
@@ -177,9 +161,8 @@ LOW_PRIORITY_SPLITS = {
             ("parser.py", 80, "数据解析器"),
             ("validator.py", 80, "数据验证器"),
             ("storage.py", 90, "数据存储"),
-        ]
+        ],
     },
-
     "src/database/models/features.py": {
         "dir": "src/database/models/feature_mod",
         "modules": [
@@ -187,9 +170,10 @@ LOW_PRIORITY_SPLITS = {
             ("feature_types.py", 80, "特征类型"),
             ("feature_metadata.py", 80, "特征元数据"),
             ("models.py", 110, "模型定义"),
-        ]
-    }
+        ],
+    },
 }
+
 
 def create_module_content(module_name, description):
     """创建模块内容模板"""
@@ -214,13 +198,14 @@ def example_function():
     pass
 '''
 
+
 def create_init_content(dir_name, modules):
     """创建__init__.py内容"""
     module_names = [m[0][:-3] for m in modules]  # 去掉.py后缀
 
-    imports = '\n'.join([f"from .{name} import *" for name in module_names])
+    imports = "\n".join([f"from .{name} import *" for name in module_names])
 
-    all_exports = ', '.join([f'"{name}"' for name in module_names])
+    all_exports = ", ".join([f'"{name}"' for name in module_names])
 
     return f'''"""
 {dir_name} 模块
@@ -235,19 +220,22 @@ __all__ = [
 ]
 '''
 
+
 def create_wrapper_content(original_file, module_dir, modules):
     """创建兼容性包装器内容"""
     module_names = [m[0][:-3] for m in modules]  # 去掉.py后缀
 
     # 计算相对导入路径
     parts = Path(original_file).parts
-    idx = parts.index('src')
-    base_path = '.'.join(['..'] * (len(parts) - idx - 1))
+    idx = parts.index("src")
+    base_path = ".".join([".."] * (len(parts) - idx - 1))
     relative_path = f"{base_path}.{module_dir.replace('/', '.')}"
 
-    imports = '\n'.join([f"from {relative_path} import {name}" for name in module_names])
+    imports = "\n".join(
+        [f"from {relative_path} import {name}" for name in module_names]
+    )
 
-    all_exports = ', '.join([f'"{name}"' for name in module_names])
+    all_exports = ", ".join([f'"{name}"' for name in module_names])
 
     return f'''"""
 {Path(original_file).name}
@@ -278,6 +266,7 @@ __all__ = [
 ]
 '''
 
+
 def process_splits():
     """处理所有拆分"""
     success_count = 0
@@ -299,27 +288,28 @@ def process_splits():
             module_name = Path(module_file).stem
 
             if not os.path.exists(module_path):
-                with open(module_path, 'w', encoding='utf-8') as f:
+                with open(module_path, "w", encoding="utf-8") as f:
                     f.write(create_module_content(module_name, description))
                 print(f"  创建模块: {module_path}")
 
         # 创建__init__.py
         init_path = os.path.join(config["dir"], "__init__.py")
         if not os.path.exists(init_path):
-            with open(init_path, 'w', encoding='utf-8') as f:
+            with open(init_path, "w", encoding="utf-8") as f:
                 f.write(create_init_content(config["dir"], config["modules"]))
             print(f"  创建: {init_path}")
 
         # 创建兼容性包装器
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(create_wrapper_content(file_path, config["dir"], config["modules"]))
 
         success_count += 1
-        print(f"  ✓ 拆分完成")
+        print("  ✓ 拆分完成")
 
-    print(f"\n批量拆分完成！")
+    print("\n批量拆分完成！")
     print(f"成功处理: {success_count}/{total_count} 个文件")
-    print(f"请手动将原始文件的代码分配到对应的模块中。")
+    print("请手动将原始文件的代码分配到对应的模块中。")
+
 
 if __name__ == "__main__":
     process_splits()

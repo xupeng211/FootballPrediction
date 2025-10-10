@@ -17,12 +17,8 @@ try:
     from src.api.data import DataRouter
     from src.api.health import HealthRouter
     from src.api.models import PredictionRequest, PredictionResponse
-    from src.api.schemas import (
-        MatchSchema,
-        TeamSchema,
-        PredictionSchema,
-        UserSchema
-    )
+    from src.api.schemas import MatchSchema, TeamSchema, PredictionSchema, UserSchema
+
     API_AVAILABLE = True
 except ImportError:
     API_AVAILABLE = False
@@ -72,7 +68,7 @@ class TestHealthEndpoint:
         assert response.status_code == 200
         assert response.json()["status"] == "ready"
 
-    @patch('src.api.health.check_database_health')
+    @patch("src.api.health.check_database_health")
     def test_health_check_database_failure(self, mock_db_check, client):
         """测试数据库健康检查失败"""
         mock_db_check.return_value = {"status": "unhealthy"}
@@ -97,28 +93,22 @@ class TestPredictionEndpoints:
     def mock_prediction_service(self):
         """模拟预测服务"""
         service = AsyncMock()
-        service.predict = AsyncMock(return_value={
-            "match_id": 123,
-            "prediction": {
-                "home_win": 0.6,
-                "draw": 0.25,
-                "away_win": 0.15
-            },
-            "confidence": 0.85,
-            "model_version": "v2.0.0"
-        })
+        service.predict = AsyncMock(
+            return_value={
+                "match_id": 123,
+                "prediction": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
+                "confidence": 0.85,
+                "model_version": "v2.0.0",
+            }
+        )
         return service
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_create_prediction(self, mock_get_service, client, mock_prediction_service):
         """测试创建预测"""
         mock_get_service.return_value = mock_prediction_service
 
-        request_data = {
-            "match_id": 123,
-            "user_id": 456,
-            "algorithm": "ensemble"
-        }
+        request_data = {"match_id": 123, "user_id": 456, "algorithm": "ensemble"}
 
         response = client.post("/api/v1/predictions", json=request_data)
         assert response.status_code == 201
@@ -132,23 +122,25 @@ class TestPredictionEndpoints:
         """测试创建预测 - 无效数据"""
         request_data = {
             "match_id": "invalid",  # 应该是数字
-            "user_id": 456
+            "user_id": 456,
         }
 
         response = client.post("/api/v1/predictions", json=request_data)
         assert response.status_code == 422
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_get_prediction(self, mock_get_service, client):
         """测试获取预测"""
         service = AsyncMock()
-        service.get_prediction = AsyncMock(return_value={
-            "id": 1,
-            "match_id": 123,
-            "user_id": 456,
-            "prediction": {"home_win": 0.6},
-            "created_at": datetime.now()
-        })
+        service.get_prediction = AsyncMock(
+            return_value={
+                "id": 1,
+                "match_id": 123,
+                "user_id": 456,
+                "prediction": {"home_win": 0.6},
+                "created_at": datetime.now(),
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/predictions/1")
@@ -160,7 +152,7 @@ class TestPredictionEndpoints:
 
     def test_get_prediction_not_found(self, client):
         """测试获取不存在的预测"""
-        with patch('src.api.predictions.get_prediction_service') as mock_get:
+        with patch("src.api.predictions.get_prediction_service") as mock_get:
             service = AsyncMock()
             service.get_prediction = AsyncMock(return_value=None)
             mock_get.return_value = service
@@ -168,14 +160,13 @@ class TestPredictionEndpoints:
             response = client.get("/api/v1/predictions/999")
             assert response.status_code == 404
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_list_predictions(self, mock_get_service, client):
         """测试获取预测列表"""
         service = AsyncMock()
-        service.get_user_predictions = AsyncMock(return_value=[
-            {"id": 1, "match_id": 123},
-            {"id": 2, "match_id": 124}
-        ])
+        service.get_user_predictions = AsyncMock(
+            return_value=[{"id": 1, "match_id": 123}, {"id": 2, "match_id": 124}]
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/predictions?user_id=456&limit=10")
@@ -185,24 +176,21 @@ class TestPredictionEndpoints:
         assert len(data) == 2
         assert data[0]["match_id"] == 123
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_update_prediction(self, mock_get_service, client):
         """测试更新预测"""
         service = AsyncMock()
-        service.update_prediction = AsyncMock(return_value={
-            "id": 1,
-            "status": "updated"
-        })
+        service.update_prediction = AsyncMock(
+            return_value={"id": 1, "status": "updated"}
+        )
         mock_get_service.return_value = service
 
-        update_data = {
-            "algorithm": "neural_network"
-        }
+        update_data = {"algorithm": "neural_network"}
 
         response = client.put("/api/v1/predictions/1", json=update_data)
         assert response.status_code == 200
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_delete_prediction(self, mock_get_service, client):
         """测试删除预测"""
         service = AsyncMock()
@@ -212,20 +200,22 @@ class TestPredictionEndpoints:
         response = client.delete("/api/v1/predictions/1")
         assert response.status_code == 204
 
-    @patch('src.api.predictions.get_prediction_service')
+    @patch("src.api.predictions.get_prediction_service")
     def test_batch_predictions(self, mock_get_service, client):
         """测试批量预测"""
         service = AsyncMock()
-        service.batch_predict = AsyncMock(return_value=[
-            {"match_id": 123, "prediction": {"home_win": 0.6}},
-            {"match_id": 124, "prediction": {"home_win": 0.4}}
-        ])
+        service.batch_predict = AsyncMock(
+            return_value=[
+                {"match_id": 123, "prediction": {"home_win": 0.6}},
+                {"match_id": 124, "prediction": {"home_win": 0.4}},
+            ]
+        )
         mock_get_service.return_value = service
 
         request_data = {
             "matches": [
                 {"match_id": 123, "home_team": 1, "away_team": 2},
-                {"match_id": 124, "home_team": 3, "away_team": 4}
+                {"match_id": 124, "home_team": 3, "away_team": 4},
             ]
         }
 
@@ -245,14 +235,16 @@ class TestDataEndpoints:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.data.get_match_service')
+    @patch("src.api.data.get_match_service")
     def test_get_matches(self, mock_get_service, client):
         """测试获取比赛列表"""
         service = AsyncMock()
-        service.get_matches = AsyncMock(return_value=[
-            {"id": 123, "home_team": "Team A", "away_team": "Team B"},
-            {"id": 124, "home_team": "Team C", "away_team": "Team D"}
-        ])
+        service.get_matches = AsyncMock(
+            return_value=[
+                {"id": 123, "home_team": "Team A", "away_team": "Team B"},
+                {"id": 124, "home_team": "Team C", "away_team": "Team D"},
+            ]
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/matches?limit=10&offset=0")
@@ -263,17 +255,19 @@ class TestDataEndpoints:
         assert "total" in data
         assert len(data["matches"]) == 2
 
-    @patch('src.api.data.get_match_service')
+    @patch("src.api.data.get_match_service")
     def test_get_match(self, mock_get_service, client):
         """测试获取单个比赛"""
         service = AsyncMock()
-        service.get_match = AsyncMock(return_value={
-            "id": 123,
-            "home_team": {"id": 1, "name": "Team A"},
-            "away_team": {"id": 2, "name": "Team B"},
-            "league": {"id": 10, "name": "Premier League"},
-            "kickoff_time": datetime.now() + timedelta(days=1)
-        })
+        service.get_match = AsyncMock(
+            return_value={
+                "id": 123,
+                "home_team": {"id": 1, "name": "Team A"},
+                "away_team": {"id": 2, "name": "Team B"},
+                "league": {"id": 10, "name": "Premier League"},
+                "kickoff_time": datetime.now() + timedelta(days=1),
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/matches/123")
@@ -283,14 +277,16 @@ class TestDataEndpoints:
         assert data["id"] == 123
         assert data["home_team"]["name"] == "Team A"
 
-    @patch('src.api.data.get_team_service')
+    @patch("src.api.data.get_team_service")
     def test_get_teams(self, mock_get_service, client):
         """测试获取球队列表"""
         service = AsyncMock()
-        service.get_teams = AsyncMock(return_value=[
-            {"id": 1, "name": "Team A", "league": 10},
-            {"id": 2, "name": "Team B", "league": 10}
-        ])
+        service.get_teams = AsyncMock(
+            return_value=[
+                {"id": 1, "name": "Team A", "league": 10},
+                {"id": 2, "name": "Team B", "league": 10},
+            ]
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/teams?league_id=10")
@@ -299,20 +295,22 @@ class TestDataEndpoints:
         data = response.json()
         assert len(data) == 2
 
-    @patch('src.api.data.get_team_service')
+    @patch("src.api.data.get_team_service")
     def test_get_team_statistics(self, mock_get_service, client):
         """测试获取球队统计"""
         service = AsyncMock()
-        service.get_team_stats = AsyncMock(return_value={
-            "team_id": 1,
-            "matches_played": 38,
-            "wins": 20,
-            "draws": 10,
-            "losses": 8,
-            "goals_for": 60,
-            "goals_against": 35,
-            "points": 70
-        })
+        service.get_team_stats = AsyncMock(
+            return_value={
+                "team_id": 1,
+                "matches_played": 38,
+                "wins": 20,
+                "draws": 10,
+                "losses": 8,
+                "goals_for": 60,
+                "goals_against": 35,
+                "points": 70,
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/teams/1/statistics")
@@ -322,14 +320,16 @@ class TestDataEndpoints:
         assert data["team_id"] == 1
         assert data["wins"] == 20
 
-    @patch('src.api.data.get_league_service')
+    @patch("src.api.data.get_league_service")
     def test_get_league_standings(self, mock_get_service, client):
         """测试获取联赛排名"""
         service = AsyncMock()
-        service.get_standings = AsyncMock(return_value=[
-            {"position": 1, "team": "Team A", "points": 70, "played": 38},
-            {"position": 2, "team": "Team B", "points": 65, "played": 38}
-        ])
+        service.get_standings = AsyncMock(
+            return_value=[
+                {"position": 1, "team": "Team A", "points": 70, "played": 38},
+                {"position": 2, "team": "Team B", "points": 65, "played": 38},
+            ]
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/leagues/10/standings")
@@ -339,16 +339,18 @@ class TestDataEndpoints:
         assert len(data) == 2
         assert data[0]["position"] == 1
 
-    @patch('src.api.data.get_data_sync_service')
+    @patch("src.api.data.get_data_sync_service")
     def test_sync_data(self, mock_get_service, client):
         """测试数据同步"""
         service = AsyncMock()
-        service.sync_all = AsyncMock(return_value={
-            "status": "success",
-            "synced_matches": 100,
-            "synced_teams": 20,
-            "duration": 30.5
-        })
+        service.sync_all = AsyncMock(
+            return_value={
+                "status": "success",
+                "synced_matches": 100,
+                "synced_teams": 20,
+                "duration": 30.5,
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.post("/api/v1/data/sync")
@@ -370,17 +372,14 @@ class TestAuthentication:
 
     def test_login_success(self, client):
         """测试成功登录"""
-        with patch('src.api.auth.authenticate_user') as mock_auth:
+        with patch("src.api.auth.authenticate_user") as mock_auth:
             mock_auth.return_value = {
                 "user_id": 123,
                 "username": "testuser",
-                "token": "jwt_token_here"
+                "token": "jwt_token_here",
             }
 
-            login_data = {
-                "username": "testuser",
-                "password": "password123"
-            }
+            login_data = {"username": "testuser", "password": "password123"}
 
             response = client.post("/api/v1/auth/login", json=login_data)
             assert response.status_code == 200
@@ -391,13 +390,10 @@ class TestAuthentication:
 
     def test_login_invalid_credentials(self, client):
         """测试无效凭据登录"""
-        with patch('src.api.auth.authenticate_user') as mock_auth:
+        with patch("src.api.auth.authenticate_user") as mock_auth:
             mock_auth.return_value = None
 
-            login_data = {
-                "username": "testuser",
-                "password": "wrongpassword"
-            }
+            login_data = {"username": "testuser", "password": "wrongpassword"}
 
             response = client.post("/api/v1/auth/login", json=login_data)
             assert response.status_code == 401
@@ -409,7 +405,7 @@ class TestAuthentication:
 
     def test_protected_endpoint_with_valid_token(self, client):
         """测试有效令牌访问受保护端点"""
-        with patch('src.api.auth.verify_token') as mock_verify:
+        with patch("src.api.auth.verify_token") as mock_verify:
             mock_verify.return_value = {"user_id": 123, "username": "testuser"}
 
             headers = {"Authorization": "Bearer valid_jwt_token"}
@@ -418,7 +414,7 @@ class TestAuthentication:
 
     def test_protected_endpoint_with_invalid_token(self, client):
         """测试无效令牌访问受保护端点"""
-        with patch('src.api.auth.verify_token') as mock_verify:
+        with patch("src.api.auth.verify_token") as mock_verify:
             mock_verify.return_value = None
 
             headers = {"Authorization": "Bearer invalid_token"}
@@ -435,7 +431,7 @@ class TestRateLimiting:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.check_rate_limit')
+    @patch("src.api.middleware.check_rate_limit")
     def test_rate_limit_within_limit(self, mock_check, client):
         """测试速率限制内请求"""
         mock_check.return_value = True
@@ -444,7 +440,7 @@ class TestRateLimiting:
             response = client.get("/api/v1/matches")
             assert response.status_code == 200
 
-    @patch('src.api.middleware.check_rate_limit')
+    @patch("src.api.middleware.check_rate_limit")
     def test_rate_limit_exceeded(self, mock_check, client):
         """测试超出速率限制"""
         mock_check.return_value = False
@@ -478,13 +474,9 @@ class TestValidation:
     def test_prediction_request_validation(self, client):
         """测试预测请求验证"""
         # 测试有效请求
-        valid_request = {
-            "match_id": 123,
-            "user_id": 456,
-            "algorithm": "ensemble"
-        }
+        valid_request = {"match_id": 123, "user_id": 456, "algorithm": "ensemble"}
 
-        with patch('src.api.predictions.get_prediction_service') as mock_get:
+        with patch("src.api.predictions.get_prediction_service") as mock_get:
             service = AsyncMock()
             service.predict = AsyncMock(return_value={"prediction": {}})
             mock_get.return_value = service
@@ -502,10 +494,7 @@ class TestValidation:
         assert response.status_code == 422
 
         # 测试无效请求 - 错误的数据类型
-        invalid_request2 = {
-            "match_id": "not_a_number",
-            "user_id": 456
-        }
+        invalid_request2 = {"match_id": "not_a_number", "user_id": 456}
 
         response = client.post("/api/v1/predictions", json=invalid_request2)
         assert response.status_code == 422
@@ -556,15 +545,12 @@ class TestErrorHandling:
 
     def test_500_error(self, client):
         """测试500错误"""
-        with patch('src.api.predictions.get_prediction_service') as mock_get:
+        with patch("src.api.predictions.get_prediction_service") as mock_get:
             service = AsyncMock()
             service.predict = AsyncMock(side_effect=Exception("Database error"))
             mock_get.return_value = service
 
-            request_data = {
-                "match_id": 123,
-                "user_id": 456
-            }
+            request_data = {"match_id": 123, "user_id": 456}
 
             response = client.post("/api/v1/predictions", json=request_data)
             assert response.status_code == 500
@@ -574,9 +560,7 @@ class TestErrorHandling:
 
     def test_validation_error_format(self, client):
         """测试验证错误格式"""
-        request_data = {
-            "invalid_field": "value"
-        }
+        request_data = {"invalid_field": "value"}
 
         response = client.post("/api/v1/predictions", json=request_data)
         assert response.status_code == 422
@@ -603,16 +587,18 @@ class TestPagination:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.data.get_match_service')
+    @patch("src.api.data.get_match_service")
     def test_pagination_first_page(self, mock_get_service, client):
         """测试第一页分页"""
         service = AsyncMock()
-        service.get_matches = AsyncMock(return_value={
-            "matches": [{"id": i} for i in range(1, 11)],
-            "total": 100,
-            "limit": 10,
-            "offset": 0
-        })
+        service.get_matches = AsyncMock(
+            return_value={
+                "matches": [{"id": i} for i in range(1, 11)],
+                "total": 100,
+                "limit": 10,
+                "offset": 0,
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/matches?limit=10&offset=0")
@@ -622,16 +608,18 @@ class TestPagination:
         assert len(data["matches"]) == 10
         assert data["total"] == 100
 
-    @patch('src.api.data.get_match_service')
+    @patch("src.api.data.get_match_service")
     def test_pagination_last_page(self, mock_get_service, client):
         """测试最后一页分页"""
         service = AsyncMock()
-        service.get_matches = AsyncMock(return_value={
-            "matches": [{"id": i} for i in range(91, 101)],
-            "total": 100,
-            "limit": 10,
-            "offset": 90
-        })
+        service.get_matches = AsyncMock(
+            return_value={
+                "matches": [{"id": i} for i in range(91, 101)],
+                "total": 100,
+                "limit": 10,
+                "offset": 90,
+            }
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/matches?limit=10&offset=90")
@@ -641,16 +629,13 @@ class TestPagination:
         assert len(data["matches"]) == 10
         assert data["matches"][0]["id"] == 91
 
-    @patch('src.api.data.get_match_service')
+    @patch("src.api.data.get_match_service")
     def test_pagination_exceeded(self, mock_get_service, client):
         """测试超出范围的分页"""
         service = AsyncMock()
-        service.get_matches = AsyncMock(return_value={
-            "matches": [],
-            "total": 100,
-            "limit": 10,
-            "offset": 100
-        })
+        service.get_matches = AsyncMock(
+            return_value={"matches": [], "total": 100, "limit": 10, "offset": 100}
+        )
         mock_get_service.return_value = service
 
         response = client.get("/api/v1/matches?limit=10&offset=100")
@@ -661,14 +646,16 @@ class TestPagination:
 
     def test_pagination_links(self, client):
         """测试分页链接"""
-        with patch('src.api.data.get_match_service') as mock_get:
+        with patch("src.api.data.get_match_service") as mock_get:
             service = AsyncMock()
-            service.get_matches = AsyncMock(return_value={
-                "matches": [{"id": i} for i in range(1, 11)],
-                "total": 100,
-                "limit": 10,
-                "offset": 10
-            })
+            service.get_matches = AsyncMock(
+                return_value={
+                    "matches": [{"id": i} for i in range(1, 11)],
+                    "total": 100,
+                    "limit": 10,
+                    "offset": 10,
+                }
+            )
             mock_get.return_value = service
 
             response = client.get("/api/v1/matches?limit=10&offset=10")
@@ -692,13 +679,10 @@ class TestCaching:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.get_from_cache')
+    @patch("src.api.middleware.get_from_cache")
     def test_cache_hit(self, mock_get_cache, client):
         """测试缓存命中"""
-        mock_get_cache.return_value = {
-            "id": 123,
-            "data": "cached_data"
-        }
+        mock_get_cache.return_value = {"id": 123, "data": "cached_data"}
 
         response = client.get("/api/v1/matches/123")
         assert response.status_code == 200
@@ -706,18 +690,17 @@ class TestCaching:
         # 验证缓存头部
         assert response.headers.get("X-Cache") == "HIT"
 
-    @patch('src.api.middleware.get_from_cache')
-    @patch('src.api.middleware.set_cache')
+    @patch("src.api.middleware.get_from_cache")
+    @patch("src.api.middleware.set_cache")
     def test_cache_miss(self, mock_set_cache, mock_get_cache, client):
         """测试缓存未命中"""
         mock_get_cache.return_value = None
 
-        with patch('src.api.data.get_match_service') as mock_get:
+        with patch("src.api.data.get_match_service") as mock_get:
             service = AsyncMock()
-            service.get_match = AsyncMock(return_value={
-                "id": 123,
-                "data": "fresh_data"
-            })
+            service.get_match = AsyncMock(
+                return_value={"id": 123, "data": "fresh_data"}
+            )
             mock_get.return_value = service
 
             response = client.get("/api/v1/matches/123")
@@ -740,12 +723,9 @@ class TestCaching:
 
     def test_etag_header(self, client):
         """测试ETag头部"""
-        with patch('src.api.data.get_match_service') as mock_get:
+        with patch("src.api.data.get_match_service") as mock_get:
             service = AsyncMock()
-            service.get_match = AsyncMock(return_value={
-                "id": 123,
-                "version": 1
-            })
+            service.get_match = AsyncMock(return_value={"id": 123, "version": 1})
             mock_get.return_value = service
 
             response = client.get("/api/v1/matches/123")

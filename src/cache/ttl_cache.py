@@ -3,7 +3,8 @@
 import time
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any, Optional, Iterable, Dict
+from pathlib import Path
+from typing import Any, Optional, Iterable, Dict, Union
 
 
 @dataclass

@@ -201,258 +201,31 @@ class DataTransformer(ABC):
         pass
 
 
-class CompositeAdapter(Adapter):
-    """复合适配器，组合多个适配器"""
-
-    def __init__(self, name: Optional[str] = None):
-        super().__init__(None, name)  # 不需要adaptee
-        self.adapters: Dict[str, Adapter] = {}
-        self.fallback_order: List[str] = []
-        self.load_balancer: Optional[str] = None
-
-    def add_adapter(self, name: str, adapter: Adapter, priority: int = 0) -> None:
-        """添加适配器"""
-        self.adapters[name] = adapter
-        # 按优先级排序
-        self.fallback_order = sorted(
-            self.fallback_order + [name],
-            key=lambda x: getattr(self.adapters[x], "priority", 0),
-            reverse=True,
-        )
-
-    def remove_adapter(self, name: str) -> None:
-        """移除适配器"""
-        if name in self.adapters:
-            del self.adapters[name]
-            self.fallback_order.remove(name)
-
-    async def _initialize(self) -> None:
-        """初始化所有适配器"""
-        for adapter in self.adapters.values():
-            await adapter.initialize()
-
-    async def _cleanup(self) -> None:
-        """清理所有适配器"""
-        for adapter in self.adapters.values():
-            await adapter.cleanup()
-
-    async def _request(self, *args, **kwargs) -> Any:
-        """使用第一个可用的适配器处理请求"""
-        errors = []
-
-        for adapter_name in self.fallback_order:
-            adapter = self.adapters[adapter_name]
-            if adapter.status == AdapterStatus.ACTIVE:
-                try:
-                    return await adapter.request(*args, **kwargs)
-                except Exception as e:
-                    errors.append(f"{adapter_name}: {str(e)}")
-                    continue
-
-        # 所有适配器都失败
-        raise RuntimeError(f"All adapters failed. Errors: {'; '.join(errors)}")
-
-    async def _health_check(self) -> None:
-        """检查所有适配器的健康状态"""
-        for adapter in self.adapters.values():
-            await adapter.health_check()
-
-    def get_all_metrics(self) -> Dict[str, Any]:
-        """获取所有适配器的指标"""
-        return {
-            "composite_adapter": self.name,
-            "total_adapters": len(self.adapters),
-            "active_adapters": sum(
-                1 for a in self.adapters.values() if a.status == AdapterStatus.ACTIVE
-            ),
-            "adapters": {
-                name: adapter.get_metrics() for name, adapter in self.adapters.items()
-            },
-        }
-
-
-class AsyncAdapter(Adapter):
-    """异步适配器，支持异步操作的适配器"""
-
-    def __init__(
-        self,
-        adaptee: Adaptee,
-        name: Optional[str] = None,
-        max_concurrent_requests: int = 10,
-        timeout: float = 30.0,
-    ):
-        super().__init__(adaptee, name)
-        self.semaphore = asyncio.Semaphore(max_concurrent_requests)
-        self.timeout = timeout
-        self.request_queue = asyncio.Queue()
-        self._worker_task: Optional[asyncio.Task] = None
-
-    async def _initialize(self) -> None:
-        """启动工作队列"""
-        self._worker_task = asyncio.create_task(self._worker())
-
-    async def _cleanup(self) -> None:
-        """停止工作队列"""
-        if self._worker_task:
-            self._worker_task.cancel()
-            try:
-                await self._worker_task
-            except asyncio.CancelledError:
-                pass
-
-    async def _worker(self) -> None:
-        """工作队列处理器"""
-        while True:
-            try:
-                future, args, kwargs = await self.request_queue.get()
-                try:
-                    result = await self._process_request(*args, **kwargs)
-                    future.set_result(result)
-                except Exception as e:
-                    future.set_exception(e)
-                finally:
-                    self.request_queue.task_done()
-            except asyncio.CancelledError:
-                break
-
-    async def _request(self, *args, **kwargs) -> Any:
-        """将请求放入队列"""
-        future = asyncio.Future()
-        await self.request_queue.put((future, args, kwargs))
-        return await asyncio.wait_for(future, timeout=self.timeout)
-
-    async def _process_request(self, *args, **kwargs) -> Any:
-        """处理单个请求"""
-        async with self.semaphore:
-            return await super()._request(*args, **kwargs)
-
-
-class RetryableAdapter(Adapter):
-    """可重试的适配器"""
-
-    def __init__(
-        self,
-        adaptee: Adaptee,
-        name: Optional[str] = None,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-        backoff_factor: float = 2.0,
-    ):
-        super().__init__(adaptee, name)
-        self.max_retries = max_retries
-        self.retry_delay = retry_delay
-        self.backoff_factor = backoff_factor
-
-    async def _request(self, *args, **kwargs) -> Any:
-        """带重试的请求"""
-        last_exception = None
-        current_delay = self.retry_delay
-
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                return await super()._request(*args, **kwargs)
-            except Exception as e:
-                last_exception = e
-                if attempt == self.max_retries:
-                    break
-
-                await asyncio.sleep(current_delay)
-                current_delay *= self.backoff_factor
-
-        raise last_exception
-
-
-class CachedAdapter(Adapter):
-    """带缓存的适配器"""
-
-    def __init__(
-        self,
-        adaptee: Adaptee,
-        name: Optional[str] = None,
-        cache_ttl: int = 300,
-        cache_size: int = 1000,
-    ):
-        super().__init__(adaptee, name)
-        self.cache_ttl = cache_ttl
-        self.cache_size = cache_size
-        self._cache: Dict[str, Any] = {}
-        self._cache_timestamps: Dict[str, datetime] = {}
-
-    async def _request(self, *args, **kwargs) -> Any:
-        """带缓存的请求"""
-        cache_key = self._generate_cache_key(*args, **kwargs)
-
-        # 检查缓存
-        if self._is_cache_valid(cache_key):
-            return self._cache[cache_key]
-
-        # 执行请求
-        result = await super()._request(*args, **kwargs)
-
-        # 更新缓存
-        self._update_cache(cache_key, result)
-
-        return result
-
-    def _generate_cache_key(self, *args, **kwargs) -> str:
-        """生成缓存键"""
-        import hashlib
-        import json
-
-        key_data = {
-            "args": args,
-            "kwargs": sorted(kwargs.items()),
-        }
-        key_str = json.dumps(key_data, sort_keys=True, default=str)
-        return hashlib.md5(key_str.encode()).hexdigest()
-
-    def _is_cache_valid(self, cache_key: str) -> bool:
-        """检查缓存是否有效"""
-        if cache_key not in self._cache:
-            return False
-
-        if cache_key not in self._cache_timestamps:
-            return False
-
-        age = (datetime.utcnow() - self._cache_timestamps[cache_key]).total_seconds()
-        return age < self.cache_ttl
-
-    def _update_cache(self, cache_key: str, data: Any) -> None:
-        """更新缓存"""
-        # 如果缓存满了，删除最旧的条目
-        if len(self._cache) >= self.cache_size:
-            oldest_key = min(
-                self._cache_timestamps.keys(), key=lambda k: self._cache_timestamps[k]
-            )
-            del self._cache[oldest_key]
-            del self._cache_timestamps[oldest_key]
-
-        self._cache[cache_key] = data
-        self._cache_timestamps[cache_key] = datetime.utcnow()
-
-    def clear_cache(self) -> None:
-        """清空缓存"""
-        self._cache.clear()
-        self._cache_timestamps.clear()
-
-
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    def __init__(self):
-        self.initialized = False
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {}
+        self.is_initialized = False
 
-    @abstractmethod
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化适配器"""
+        if not self.is_initialized:
+            await self._setup()
+            self.is_initialized = True
+
+    async def cleanup(self) -> None:
+        """清理适配器"""
+        if self.is_initialized:
+            await self._teardown()
+            self.is_initialized = False
+
+    @abstractmethod
+    async def _setup(self) -> None:
+        """设置适配器"""
         pass
 
     @abstractmethod
-    async def get_data(self, query: str, params: Optional[Dict] = None) -> Dict:
-        """获取数据"""
-        pass
-
-    @abstractmethod
-    async def close(self):
-        """关闭适配器"""
+    async def _teardown(self) -> None:
+        """清理适配器"""
         pass

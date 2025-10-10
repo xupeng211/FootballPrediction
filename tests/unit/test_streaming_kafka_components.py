@@ -378,7 +378,7 @@ class TestKafkaHealthChecker:
         health_checker.get_consumer_lag = AsyncMock(return_value=lag_metrics)
 
         lag = await health_checker.check_consumer_lag("group1")
-        assert sum(l["lag"] for l in lag) == 150
+        assert sum(lag_item["lag"] for lag_item in lag) == 150
 
 
 class TestKafkaMetricsCollector:

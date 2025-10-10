@@ -32,11 +32,13 @@ def fix_duplicate_imports(filepath):
                 # 提取导入的名称
                 if stripped.startswith("from "):
                     # from x import y, z
-                    match = re.match(r'from\s+[^\s]+\s+import\s+(.+)', stripped)
+                    match = re.match(r"from\s+[^\s]+\s+import\s+(.+)", stripped)
                     if match:
                         imports = match.group(1)
                         # 处理多个导入
-                        names = [name.strip().split(' as ')[0] for name in imports.split(',')]
+                        names = [
+                            name.strip().split(" as ")[0] for name in imports.split(",")
+                        ]
                         duplicate_found = False
 
                         for name in names:
@@ -44,7 +46,15 @@ def fix_duplicate_imports(filepath):
                                 # 找到重复导入
                                 duplicate_found = True
                                 # 检查是否在 ignore 列表中
-                                if name in ["Dict", "List", "Optional", "Union", "Tuple", "Set", "Any"]:
+                                if name in [
+                                    "Dict",
+                                    "List",
+                                    "Optional",
+                                    "Union",
+                                    "Tuple",
+                                    "Set",
+                                    "Any",
+                                ]:
                                     # 删除这行
                                     print(f"  删除重复导入: {stripped}")
                                     break
@@ -58,10 +68,12 @@ def fix_duplicate_imports(filepath):
                             new_lines.append(line)
                 else:
                     # import x, y
-                    match = re.match(r'import\s+(.+)', stripped)
+                    match = re.match(r"import\s+(.+)", stripped)
                     if match:
                         imports = match.group(1)
-                        names = [name.strip().split(' as ')[0] for name in imports.split(',')]
+                        names = [
+                            name.strip().split(" as ")[0] for name in imports.split(",")
+                        ]
                         duplicate_found = False
 
                         for name in names:
@@ -84,10 +96,10 @@ def fix_duplicate_imports(filepath):
         if content != original_content:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
-            print(f"  ✅ 已修复")
+            print("  ✅ 已修复")
             return True
         else:
-            print(f"  - 无需修复")
+            print("  - 无需修复")
             return False
 
     except Exception as e:
@@ -125,9 +137,7 @@ def main():
     # 验证修复结果
     print("\n验证修复结果...")
     result = subprocess.run(
-        ["ruff", "check", "--select=F811"],
-        capture_output=True,
-        text=True
+        ["ruff", "check", "--select=F811"], capture_output=True, text=True
     )
 
     remaining = len(result.stdout.split("\n")) if result.stdout.strip() else 0
