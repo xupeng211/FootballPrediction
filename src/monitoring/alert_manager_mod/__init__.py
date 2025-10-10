@@ -17,15 +17,22 @@ from .models import (
 
 from .metrics import PrometheusMetrics
 
+from .manager import (
+    AlertManager,
+    AlertHandler,
+    LogHandler,
+    PrometheusHandler,
+    WebhookHandler,
+    EmailHandler,
+)
+
 from .channels import (
+    AlertChannelManager,
     LogChannel,
     PrometheusChannel,
     WebhookChannel,
     EmailChannel,
-    AlertChannelManager,
 )
-
-from .manager import AlertManager
 
 from .rules import AlertRuleEngine
 
@@ -42,12 +49,18 @@ __all__ = [
     "AlertChannel",
     # 指标
     "PrometheusMetrics",
+    # 处理器
+    "AlertHandler",
+    "LogHandler",
+    "PrometheusHandler",
+    "WebhookHandler",
+    "EmailHandler",
     # 渠道
+    "AlertChannelManager",
     "LogChannel",
     "PrometheusChannel",
     "WebhookChannel",
     "EmailChannel",
-    "AlertChannelManager",
     # 管理器
     "AlertManager",
     # 规则引擎

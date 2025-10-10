@@ -214,12 +214,12 @@ class TestModularStructure:
 
     def test_backward_compatibility(self):
         """测试向后兼容性"""
-        # 从原始文件导入应该仍然有效
-        from src.api.predictions_api import router as old_router
-        from src.api.predictions_api import PredictionRequest as old_model
+        # 从主要文件导入
+        from src.api.predictions import router as main_router
+        from src.api.predictions import PredictionRequest as main_model
 
-        assert old_router is not None
-        assert old_model is not None
+        assert main_router is not None
+        assert main_model is not None
 
     def test_router_prefix_and_tags(self):
         """测试路由器前缀和标签"""

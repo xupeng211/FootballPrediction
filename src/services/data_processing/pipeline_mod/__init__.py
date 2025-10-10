@@ -1,12 +1,10 @@
-"""
-src/services/data_processing/pipeline_mod 模块
-统一导出接口
-"""
+import warnings
 
-from .stages import *
-from .pipeline import *
-from .executor import *
-from .monitor import *
+warnings.warn(
+    "此模块已弃用，请使用新的模块结构。",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-# 导出所有类
-__all__ = ["stages", "pipeline", "executor", "monitor"]
+# Compatibility module
+__all__ = []  # type: ignore

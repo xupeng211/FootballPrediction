@@ -1,103 +1,148 @@
 """
-告警渠道
-Alert Channels
+告警渠道管理
+Alert Channel Management
 
-定义各种告警通知渠道的实现。
-这个文件保持向后兼容性，重新导出新拆分的模块。
-Defines various alert notification channels implementations.
-This file maintains backward compatibility by re-exporting the split modules.
+统一管理不同的告警渠道。
 """
 
-# 导入所有拆分后的类以保持向后兼容性
-from ..alerts.channels import (
-    BaseAlertChannel,
-    LogChannel,
-    WebhookChannel,
-    EmailChannel,
-    SlackChannel,
-    TeamsChannel,
-    SMSChannel,
-    AlertChannelManager,
-)
-
-# 为了保持完全的向后兼容性，也需要重新导出原始的PrometheusChannel
-# 因为这个依赖于具体的metrics模块
-from ..alerts.channels.base_channel import BaseAlertChannel as _BaseAlertChannel
-from ...alert_manager_mod.models import Alert, AlertChannel as OriginalAlertChannel
 import logging
+from typing import Any, Dict, List, Optional
+
+from .models import Alert, AlertChannel
+from .manager import (
+    AlertHandler,
+    LogHandler,
+    PrometheusHandler,
+    WebhookHandler,
+    EmailHandler,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class PrometheusChannel(_BaseAlertChannel):
-    """
-    Prometheus告警渠道
-    Prometheus Alert Channel
+class AlertChannelManager:
+    """告警渠道管理器"""
 
-    通过Prometheus指标暴露告警信息。
-    Exposes alert information through Prometheus metrics.
-    """
+    def __init__(self):
+        """初始化渠道管理器"""
+        self.channels: Dict[AlertChannel, List[AlertHandler]] = {}
+        self.channel_configs: Dict[AlertChannel, Dict[str, Any]] = {}
 
-    def __init__(self, name: str = "prometheus", config=None):
+    def add_channel(
+        self,
+        channel: AlertChannel,
+        handler: AlertHandler,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
-        初始化Prometheus渠道
-        Initialize Prometheus Channel
+        添加告警渠道
 
         Args:
-            name: 渠道名称 / Channel name
-            config: 渠道配置 / Channel configuration
+            channel: 渠道类型
+            handler: 处理器实例
+            config: 渠道配置
         """
-        super().__init__(name, config)
-        self.metrics = None
+        if channel not in self.channels:
+            self.channels[channel] = []
+        self.channels[channel].append(handler)
 
-        # 延迟初始化指标
+        if config:
+            self.channel_configs[channel] = config
+
+    def remove_channel(
+        self, channel: AlertChannel, handler: Optional[AlertHandler] = None
+    ) -> bool:
+        """
+        移除告警渠道
+
+        Args:
+            channel: 渠道类型
+            handler: 特定处理器（可选）
+
+        Returns:
+            bool: 是否成功移除
+        """
+        if channel not in self.channels:
+            return False
+
+        if handler:
+            if handler in self.channels[channel]:
+                self.channels[channel].remove(handler)
+                if not self.channels[channel]:
+                    del self.channels[channel]
+                return True
+            return False
+        else:
+            del self.channels[channel]
+            return True
+
+    def send_alert(
+        self, alert: Alert, channels: Optional[List[AlertChannel]] = None
+    ) -> None:
+        """
+        发送告警到指定渠道
+
+        Args:
+            alert: 告警对象
+            channels: 指定渠道列表（可选，默认使用所有渠道）
+        """
+        target_channels = channels or list(self.channels.keys())
+
+        for channel in target_channels:
+            if channel in self.channels:
+                for handler in self.channels[channel]:
+                    try:
+                        handler.handle(alert)
+                    except Exception as e:
+                        logger.error(f"Failed to send alert via {channel.value}: {e}")
+
+    def get_channel_status(self) -> Dict[str, Any]:
+        """
+        获取渠道状态
+
+        Returns:
+            Dict[str, Any]: 渠道状态信息
+        """
+        return {
+            "total_channels": len(self.channels),
+            "channels": {
+                channel.value: {
+                    "handlers": len(handlers),
+                    "config": self.channel_configs.get(channel, {}),
+                }
+                for channel, handlers in self.channels.items()
+            },
+        }
+
+    @staticmethod
+    def create_default_channels() -> "AlertChannelManager":
+        """
+        创建默认的渠道配置
+
+        Returns:
+            AlertChannelManager: 配置好的渠道管理器
+        """
+        manager = AlertChannelManager()
+
+        # 添加日志渠道
+        manager.add_channel(AlertChannel.LOG, LogHandler())
+
+        # 添加 Prometheus 渠道
         try:
             from .metrics import PrometheusMetrics
 
-            self.metrics = PrometheusMetrics()
-        except ImportError:
-            logger.warning(
-                "PrometheusMetrics not available, PrometheusChannel will be disabled"
+            prometheus_metrics = PrometheusMetrics()
+            manager.add_channel(
+                AlertChannel.PROMETHEUS, PrometheusHandler(prometheus_metrics)
             )
-
-    async def send(self, alert: Alert) -> bool:
-        """
-        更新Prometheus指标
-        Update Prometheus Metrics
-
-        Args:
-            alert: 告警对象 / Alert object
-
-        Returns:
-            bool: 是否更新成功 / Whether updated successfully
-        """
-        try:
-            if not self.metrics:
-                return False
-
-            # 记录告警创建
-            self.metrics.record_alert_created(
-                level=alert.level.value,
-                alert_type=alert.type.value,
-                source=alert.source,
-            )
-
-            return True
-
         except Exception as e:
-            logger.error(f"Failed to update Prometheus metrics: {e}")
-            return False
+            logger.warning(f"Failed to initialize Prometheus channel: {e}")
+
+        return manager
 
 
-# 导出所有类以保持向后兼容性
-__all__ = [
-    "BaseAlertChannel",
-    "LogChannel",
-    "PrometheusChannel",
-    "WebhookChannel",
-    "EmailChannel",
-    "SlackChannel",
-    "TeamsChannel",
-    "SMSChannel",
-    "AlertChannelManager",
-]
+# 为了向后兼容，导出原有的处理器类
+LogChannel = LogHandler
+PrometheusChannel = PrometheusHandler
+WebhookChannel = WebhookHandler
+EmailChannel = EmailHandler

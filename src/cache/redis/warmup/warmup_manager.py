@@ -38,3 +38,9 @@ class WarmupManager:
 
 # 别名以保持向后兼容
 CacheWarmupManager = WarmupManager
+
+
+async def startup_warmup(patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+    """启动时预热缓存的便捷函数"""
+    manager = WarmupManager()
+    return await manager.warmup_cache(patterns)

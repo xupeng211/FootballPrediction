@@ -129,6 +129,7 @@ make sync-issues  # GitHub Issues 同步 🔄
 
 ## 📚 文档入口
 
+- [Repository Guidelines](AGENTS.md) — 面向贡献者的结构、流程与安全基线快速上手手册。
 - [测试改进机制指南](docs/TEST_IMPROVEMENT_GUIDE.md) — 了解 Kanban、CI Hook 与周报机制，快速上手测试优化流程。
 
 

@@ -11,20 +11,11 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from .streaming.producer.kafka_producer import *  # type: ignore
-from .streaming.producer.message_builder import *  # type: ignore
-from .streaming.producer.partitioner import *  # type: ignore
-from .streaming.producer.retry_handler import *  # type: ignore
-
 warnings.warn(
     "直接从 kafka_producer 导入已弃用。" "请从 streaming.producer 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )
 
-# 从新模块导入所有内容
-
-# 导出所有类
-__all__ = [  # type: ignore
-    "KafkaProducer" "MessageBuilder" "Partitioner" "RetryHandler"
-]
+# 导出所有内容
+__all__ = []  # type: ignore

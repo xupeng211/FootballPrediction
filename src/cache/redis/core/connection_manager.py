@@ -3,9 +3,9 @@ Redis connection manager
 """
 
 import asyncio
+import os
 import redis.asyncio as aioredis
 from typing import Optional
-from src.core.config import get_config
 
 
 class RedisConnectionManager:
@@ -18,9 +18,10 @@ class RedisConnectionManager:
     async def connect(self) -> aioredis.Redis:
         """建立Redis连接"""
         if self._redis is None:
-            config = get_config()
+            # 使用环境变量或默认URL
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
             self._pool = aioredis.ConnectionPool.from_url(
-                config.REDIS_URL, encoding="utf-8", decode_responses=True
+                redis_url, encoding="utf-8", decode_responses=True
             )
             self._redis = aioredis.Redis(connection_pool=self._pool)
         return self._redis

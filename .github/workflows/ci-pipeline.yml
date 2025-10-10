@@ -20,19 +20,25 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Check for relevant changes
         id: changes
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
           else
-            # For push events, check if relevant files changed
-            if git diff --name-only HEAD~1 | grep -E "^(src/|tests/|requirements|pyproject|setup\.py|Makefile)"; then
-              echo "should-run=true" >> $GITHUB_OUTPUT
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              changed_files=$(git ls-files)
             else
-              echo "should-run=false" >> $GITHUB_OUTPUT
+              changed_files=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+            fi
+
+            if printf '%s' "$changed_files" | grep -E "^(src/|tests/|requirements|pyproject|setup\\.py|Makefile)" >/dev/null; then
+              echo "should-run=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "should-run=false" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -45,15 +51,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: "3.11"
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v3.3.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
@@ -97,15 +103,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: "3.11"
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v3.3.2
         with:
           path: |
             ~/.cache/pip
@@ -159,15 +165,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: "3.11"
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v3.3.2
         with:
           path: |
             ~/.cache/pip
@@ -203,7 +209,7 @@ jobs:
           pytest --cov=src --cov-report=xml --cov-report=json -v
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v3.1.4
         with:
           file: ./coverage.xml
           flags: unittests
@@ -242,14 +248,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.3.0
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v5.5.1
         with:
           images: football-prediction
           tags: |
@@ -258,7 +264,7 @@ jobs:
             type=sha,prefix={{branch}}-
 
       - name: Build and test image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.4.0
         id: build
         with:
           context: .
@@ -275,14 +281,14 @@ jobs:
 
       - name: Login to Docker Hub
         if: github.event_name == 'push'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push image
         if: github.event_name == 'push'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.4.0
         with:
           context: .
           target: production
@@ -300,14 +306,14 @@ jobs:
 
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.20.0
         with:
           image-ref: ${{ needs.build.outputs.image-tag }}
           format: "sarif"
           output: "trivy-results.sarif"
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results.sarif"
 
