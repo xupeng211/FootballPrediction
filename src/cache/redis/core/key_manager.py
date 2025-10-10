@@ -51,3 +51,43 @@ class RedisKeyManager:
     def get_all_keys(self, pattern: str = "*") -> str:
         """获取所有匹配的键"""
         return self._make_key(pattern)
+
+    # 静态方法用于构建键
+    @staticmethod
+    def build_key(*args, **kwargs) -> str:
+        """构建键"""
+        parts = [str(arg) for arg in args if arg is not None and arg != ""]
+        if kwargs:
+            for key, value in kwargs.items():
+                parts.append(f"{key}:{value}")
+        return ":".join(parts)
+
+    @staticmethod
+    def get_ttl(key_type: str) -> int:
+        """获取TTL"""
+        ttl_map = {"match_info": 3600, "odds_data": 900, "default": 3600}
+        return ttl_map.get(key_type, 3600)
+
+    @staticmethod
+    def match_features_key(match_id: int) -> str:
+        """比赛特征键"""
+        return f"match:{match_id}:features"
+
+    @staticmethod
+    def team_stats_key(team_id: int, stat_type: str) -> str:
+        """球队统计键"""
+        return f"team:{team_id}:stats:type:{stat_type}"
+
+    @staticmethod
+    def odds_key(match_id: int, odds_type: str) -> str:
+        """赔率键"""
+        return f"odds:{match_id}:{odds_type}"
+
+    @staticmethod
+    def prediction_key(match_id: int, version: str) -> str:
+        """预测结果键"""
+        return f"predictions:{match_id}:{version}"
+
+
+# 别名以保持向后兼容
+CacheKeyManager = RedisKeyManager
