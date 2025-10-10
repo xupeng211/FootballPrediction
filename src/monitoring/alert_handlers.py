@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
-from .alert_models import Alert, AlertChannel
+from .alert_manager_mod.models import Alert, AlertChannel
 
 
 class PrometheusMetrics:

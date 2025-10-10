@@ -11,7 +11,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ..api.data.models import api_models
+# from ..api.data.models import api_models  # 已重构，移除此导入
 from ..base_models import base_models as base_models_mod
 from ..common import data_models
 from ..common import utils
@@ -28,4 +28,4 @@ warnings.warn(
 # 从新模块导入所有内容
 
 # 导出所有类
-__all__ = ["base_models", "data_models", "api_models", "utils"]
+__all__ = ["base_models", "data_models", "utils"]

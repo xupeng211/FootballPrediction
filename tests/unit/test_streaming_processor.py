@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import json
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, AsyncGenerator
 from datetime import datetime, timedelta
 
 from src.streaming.stream_processor_simple import (
@@ -15,6 +15,27 @@ from src.streaming.stream_processor_simple import (
     BatchProcessor,
 )
 from src.core.exceptions import StreamingError
+
+
+class AsyncIterator:
+    """模拟异步迭代器"""
+
+    def __init__(self, items):
+        self.items = items
+        self.index = 0
+
+    def __call__(self):
+        return self
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.index >= len(self.items):
+            raise StopAsyncIteration
+        item = self.items[self.index]
+        self.index += 1
+        return item
 
 
 class TestStreamProcessor:

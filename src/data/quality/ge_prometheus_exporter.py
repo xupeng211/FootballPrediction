@@ -11,10 +11,10 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from .........src.data.quality.prometheus import collector
-from .........src.data.quality.prometheus import exporter
-from .........src.data.quality.prometheus import metrics
-from .........src.data.quality.prometheus import utils
+from .prometheus import collector
+from .prometheus import exporter
+from .prometheus import metrics
+from .prometheus import utils
 
 warnings.warn(
     "直接从 ge_prometheus_exporter 导入已弃用。"
@@ -25,5 +25,8 @@ warnings.warn(
 
 # 从新模块导入所有内容
 
+# 为了向后兼容，创建别名
+from .prometheus import PrometheusExporter as GEPrometheusExporter
+
 # 导出所有类
-__all__ = ["metrics", "collector", "exporter", "utils"]
+__all__ = ["GEPrometheusExporter", "metrics", "collector", "exporter", "utils"]

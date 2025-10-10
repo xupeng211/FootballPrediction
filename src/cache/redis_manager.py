@@ -5,10 +5,11 @@ Redis缓存管理器
 """
 
 try:
-    from .redis import RedisManager, CacheKeyManager, get_redis_manager
-    from .redis.utils import (
-        # 导入重构后的Redis管理器
-        # 向后兼容：导出原有的便捷函数
+    from .redis import (
+        RedisManager,
+        CacheKeyManager,
+        get_redis_manager,
+        # 便捷函数 - 异步
         adelete_cache,
         aexists_cache,
         aget_cache,
@@ -16,14 +17,16 @@ try:
         amset_cache,
         aset_cache,
         attl_cache,
+        # 便捷函数 - 同步
         delete_cache,
         exists_cache,
         get_cache,
         mget_cache,
         mset_cache,
         set_cache,
-        startup_warmup,
         ttl_cache,
+        # 其他功能
+        startup_warmup,
     )
 except ImportError:
     # 如果redis模块不可用，使用mock_redis

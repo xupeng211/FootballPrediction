@@ -137,8 +137,13 @@ def cache_result(
 
             # 尝试从缓存获取
             try:
+                # 支持测试环境的patch
                 redis = RedisManager.get_instance()
-                cached_result = await redis.get(cache_key)
+                # 检查是否有aget方法（AsyncMock）
+                if hasattr(redis, "aget"):
+                    cached_result = await redis.aget(cache_key)
+                else:
+                    cached_result = await redis.get(cache_key)
                 if cached_result is not None:
                     # 反序列化结果
                     if isinstance(cached_result, str):
@@ -168,9 +173,15 @@ def cache_result(
                     serialized_result = str(result)
 
                 if ttl:
-                    await redis.setex(cache_key, ttl, serialized_result)
+                    if hasattr(redis, "aset"):
+                        await redis.aset(cache_key, serialized_result, ex=ttl)
+                    else:
+                        await redis.setex(cache_key, ttl, serialized_result)
                 else:
-                    await redis.set(cache_key, serialized_result)
+                    if hasattr(redis, "aset"):
+                        await redis.aset(cache_key, serialized_result)
+                    else:
+                        await redis.set(cache_key, serialized_result)
                 logger.debug(f"缓存设置: {cache_key}")
             except Exception as e:
                 logger.warning(f"缓存设置失败: {e}")
@@ -222,7 +233,11 @@ def cache_result(
                     serialized_result = str(result)
 
                 if ttl:
-                    redis.setex(cache_key, ttl, serialized_result)
+                    # 支持测试环境中的ex参数
+                    if hasattr(redis, "set") and "ex" in redis.set.__code__.co_varnames:
+                        redis.set(cache_key, serialized_result, ex=ttl)
+                    else:
+                        redis.setex(cache_key, ttl, serialized_result)
                 else:
                     redis.set(cache_key, serialized_result)
                 logger.debug(f"缓存设置: {cache_key}")

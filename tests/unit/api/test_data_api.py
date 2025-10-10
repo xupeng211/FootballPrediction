@@ -9,7 +9,7 @@ class TestDataAPI:
     def test_data_api_import(self):
         """测试数据API模块导入"""
         try:
-            from src.api.data_api import router
+            from src.api.data_router import router
 
             assert router is not None
         except ImportError:
@@ -18,7 +18,7 @@ class TestDataAPI:
     def test_data_api_router_exists(self):
         """测试数据API路由器存在"""
         try:
-            from src.api.data_api import router
+            from src.api.data_router import router
 
             # 检查是否是FastAPI路由器
             assert hasattr(router, "routes")
@@ -28,7 +28,7 @@ class TestDataAPI:
     def test_data_api_endpoints(self):
         """测试数据API端点"""
         try:
-            from src.api.data_api import router
+            from src.api.data_router import router
 
             # 检查是否有路由
             routes = list(router.routes)

@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.connection import DatabaseManager
-from ...database.models.data_quality_log import DataQualityLog
+from ....database.connection_mod import DatabaseManager
+from ....database.models.data_quality_log import DataQualityLog
 from .exceptions import QualityLogException
 
 
