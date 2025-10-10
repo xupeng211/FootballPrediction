@@ -2,6 +2,8 @@
 API依赖注入模块测试
 """
 
+pytest_plugins = "asyncio"
+
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from datetime import datetime, timedelta

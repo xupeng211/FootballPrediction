@@ -7,7 +7,6 @@ from .base import BaseService  # type: ignore
 from .content_analysis import ContentAnalysisService  # type: ignore
 from .data_processing import DataProcessingService  # type: ignore
 from .user_profile import UserProfileService  # type: ignore
-from src.services.base_service import BaseService
 
 """
 足球预测系统服务管理器模块
