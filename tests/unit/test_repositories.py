@@ -38,9 +38,9 @@ class TestBaseRepository:
         mock_obj = MagicMock()
         mock_obj.id = 1
 
-        with patch.object(base_repo.db_manager, 'add', return_value=None):
-            with patch.object(base_repo.db_manager, 'commit', return_value=None):
-                with patch.object(base_repo.db_manager, 'refresh', return_value=None):
+        with patch.object(base_repo.db_manager, "add", return_value=None):
+            with patch.object(base_repo.db_manager, "commit", return_value=None):
+                with patch.object(base_repo.db_manager, "refresh", return_value=None):
                     result = await base_repo.create(mock_obj)
                     assert result == mock_obj
 
@@ -50,7 +50,7 @@ class TestBaseRepository:
         mock_obj = MagicMock()
         mock_obj.id = 1
 
-        with patch.object(base_repo, 'find_one', return_value=mock_obj):
+        with patch.object(base_repo, "find_one", return_value=mock_obj):
             result = await base_repo.get_by_id(1)
             assert result == mock_obj
 
@@ -60,8 +60,8 @@ class TestBaseRepository:
         mock_obj = MagicMock()
         mock_obj.id = 1
 
-        with patch.object(base_repo.db_manager, 'merge', return_value=mock_obj):
-            with patch.object(base_repo.db_manager, 'commit', return_value=None):
+        with patch.object(base_repo.db_manager, "merge", return_value=mock_obj):
+            with patch.object(base_repo.db_manager, "commit", return_value=None):
                 result = await base_repo.update(mock_obj)
                 assert result == mock_obj
 
@@ -70,8 +70,8 @@ class TestBaseRepository:
         """测试删除记录"""
         mock_obj = MagicMock()
 
-        with patch.object(base_repo.db_manager, 'delete', return_value=None):
-            with patch.object(base_repo.db_manager, 'commit', return_value=None):
+        with patch.object(base_repo.db_manager, "delete", return_value=None):
+            with patch.object(base_repo.db_manager, "commit", return_value=None):
                 await base_repo.delete(mock_obj)
                 base_repo.db_manager.delete.assert_called_once_with(mock_obj)
 
@@ -94,10 +94,12 @@ class TestMatchRepository:
         """测试获取即将到来的比赛"""
         mock_matches = [MagicMock(), MagicMock()]
 
-        with patch('sqlalchemy.select') as mock_select:
+        with patch("sqlalchemy.select") as mock_select:
             mock_execute = MagicMock()
             mock_execute.scalars.return_value.all.return_value = mock_matches
-            with patch.object(match_repo.db_manager, 'execute', return_value=mock_execute):
+            with patch.object(
+                match_repo.db_manager, "execute", return_value=mock_execute
+            ):
                 mock_execute.scalars.return_value.all.return_value = mock_matches
 
                 result = await match_repo.get_upcoming_matches(days=7)
@@ -109,10 +111,12 @@ class TestMatchRepository:
         """测试根据球队获取比赛"""
         mock_matches = [MagicMock()]
 
-        with patch('sqlalchemy.select') as mock_select:
+        with patch("sqlalchemy.select") as mock_select:
             mock_execute = MagicMock()
             mock_execute.scalars.return_value.all.return_value = mock_matches
-            with patch.object(match_repo.db_manager, 'execute', return_value=mock_execute):
+            with patch.object(
+                match_repo.db_manager, "execute", return_value=mock_execute
+            ):
                 mock_execute.scalars.return_value.all.return_value = mock_matches
 
                 result = await match_repo.get_matches_by_team(team_id=1, limit=10)
@@ -124,10 +128,12 @@ class TestMatchRepository:
         """测试获取正在进行的比赛"""
         mock_matches = [MagicMock(), MagicMock(), MagicMock()]
 
-        with patch('sqlalchemy.select') as mock_select:
+        with patch("sqlalchemy.select") as mock_select:
             mock_execute = MagicMock()
             mock_execute.scalars.return_value.all.return_value = mock_matches
-            with patch.object(match_repo.db_manager, 'execute', return_value=mock_execute):
+            with patch.object(
+                match_repo.db_manager, "execute", return_value=mock_execute
+            ):
                 mock_execute.scalars.return_value.all.return_value = mock_matches
 
                 result = await match_repo.get_live_matches()
@@ -137,10 +143,12 @@ class TestMatchRepository:
     @pytest.mark.asyncio
     async def test_get_match_statistics(self, match_repo):
         """测试获取比赛统计"""
-        with patch('sqlalchemy.select') as mock_select:
+        with patch("sqlalchemy.select"):
             mock_execute = MagicMock()
             mock_execute.scalars.return_value.all.return_value = mock_matches
-            with patch.object(match_repo.db_manager, 'execute', return_value=mock_execute):
+            with patch.object(
+                match_repo.db_manager, "execute", return_value=mock_execute
+            ):
                 mock_execute.return_value.first.return_value = (100, 50, 20)
 
                 result = await match_repo.get_match_statistics()
@@ -167,8 +175,10 @@ class TestTeamRepository:
         """测试根据联赛获取球队"""
         mock_teams = [MagicMock(), MagicMock()]
 
-        with patch('sqlalchemy.select') as mock_select:
-            with patch.object(team_repo.db_manager, 'execute', return_value=MagicMock()) as mock_execute:
+        with patch("sqlalchemy.select") as mock_select:
+            with patch.object(
+                team_repo.db_manager, "execute", return_value=MagicMock()
+            ) as mock_execute:
                 mock_execute.scalars.return_value.all.return_value = mock_teams
 
                 result = await team_repo.get_teams_by_league(league_id=1)
@@ -180,8 +190,10 @@ class TestTeamRepository:
         """测试搜索球队"""
         mock_teams = [MagicMock()]
 
-        with patch('sqlalchemy.select') as mock_select:
-            with patch.object(team_repo.db_manager, 'execute', return_value=MagicMock()) as mock_execute:
+        with patch("sqlalchemy.select") as mock_select:
+            with patch.object(
+                team_repo.db_manager, "execute", return_value=MagicMock()
+            ) as mock_execute:
                 mock_execute.scalars.return_value.all.return_value = mock_teams
 
                 result = await team_repo.search_teams("Test Team")
@@ -193,8 +205,10 @@ class TestTeamRepository:
         """测试获取球队排名"""
         mock_standings = [{"position": 1, "points": 30}]
 
-        with patch('sqlalchemy.select') as mock_select:
-            with patch.object(team_repo.db_manager, 'execute', return_value=MagicMock()) as mock_execute:
+        with patch("sqlalchemy.select"):
+            with patch.object(
+                team_repo.db_manager, "execute", return_value=MagicMock()
+            ) as mock_execute:
                 mock_execute.all.return_value = mock_standings
 
                 result = await team_repo.get_team_standings(league_id=1)
@@ -220,7 +234,7 @@ class TestPredictionRepository:
         """测试获取用户预测"""
         mock_predictions = [MagicMock(), MagicMock()]
 
-        with patch.object(prediction_repo, 'find', return_value=mock_predictions):
+        with patch.object(prediction_repo, "find", return_value=mock_predictions):
             result = await prediction_repo.get_user_predictions(user_id=1, limit=10)
             assert len(result) == 2
 
@@ -229,14 +243,14 @@ class TestPredictionRepository:
         """测试获取比赛预测"""
         mock_predictions = [MagicMock()]
 
-        with patch.object(prediction_repo, 'find', return_value=mock_predictions):
+        with patch.object(prediction_repo, "find", return_value=mock_predictions):
             result = await prediction_repo.get_match_predictions(match_id=123)
             assert len(result) == 1
 
     @pytest.mark.asyncio
     async def test_get_prediction_accuracy(self, prediction_repo):
         """测试获取预测准确率"""
-        with patch.object(prediction_repo, 'count', side_effect=[100, 65]):
+        with patch.object(prediction_repo, "count", side_effect=[100, 65]):
             result = await prediction_repo.get_prediction_accuracy(user_id=1, days=30)
             assert result == 65.0
 
@@ -245,7 +259,7 @@ class TestPredictionRepository:
         """测试获取待结算预测"""
         mock_predictions = [MagicMock(), MagicMock(), MagicMock()]
 
-        with patch.object(prediction_repo, 'find', return_value=mock_predictions):
+        with patch.object(prediction_repo, "find", return_value=mock_predictions):
             result = await prediction_repo.get_pending_predictions(user_id=1)
             assert len(result) == 3
 
@@ -254,6 +268,6 @@ class TestPredictionRepository:
         """测试批量更新预测"""
         mock_predictions = [MagicMock(id=1), MagicMock(id=2)]
 
-        with patch.object(prediction_repo.db_manager, 'commit', return_value=None):
+        with patch.object(prediction_repo.db_manager, "commit", return_value=None):
             result = await prediction_repo.batch_update_predictions(mock_predictions)
             assert result == 2

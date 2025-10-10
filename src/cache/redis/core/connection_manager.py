@@ -3,7 +3,7 @@ Redis connection manager
 """
 
 import asyncio
-import aioredis
+import redis.asyncio as aioredis
 from typing import Optional
 from src.core.config import get_config
 
@@ -20,9 +20,7 @@ class RedisConnectionManager:
         if self._redis is None:
             config = get_config()
             self._pool = aioredis.ConnectionPool.from_url(
-                config.REDIS_URL,
-                encoding="utf-8",
-                decode_responses=True
+                config.REDIS_URL, encoding="utf-8", decode_responses=True
             )
             self._redis = aioredis.Redis(connection_pool=self._pool)
         return self._redis

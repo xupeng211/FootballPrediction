@@ -14,6 +14,7 @@ try:
     from src.core.config_di import ConfigDI
     from src.core.auto_binding import AutoBinding
     from src.core.service_lifecycle import ServiceLifecycle, ServiceState
+
     DI_AVAILABLE = True
 except ImportError:
     DI_AVAILABLE = False
@@ -83,7 +84,7 @@ class TestDIContainer:
         container = DIContainer()
 
         class ServiceA:
-            def __init__(self, b: 'ServiceB'):
+            def __init__(self, b: "ServiceB"):
                 self.b = b
 
         class ServiceB:
@@ -142,7 +143,7 @@ class TestDIContainer:
         container.register_conditional(
             Mock,
             lambda: True,  # 条件
-            lambda: Mock(value="conditional")
+            lambda: Mock(value="conditional"),
         )
 
         service = container.get(Mock)
@@ -183,7 +184,7 @@ class TestDISetup:
         """测试注册数据库服务"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.DatabaseManager') as mock_db:
+        with patch("src.core.di_setup.DatabaseManager") as mock_db:
             setup.register_database_services("sqlite:///:memory:")
             mock_db.assert_called_once()
 
@@ -191,7 +192,7 @@ class TestDISetup:
         """测试注册缓存服务"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.CacheManager') as mock_cache:
+        with patch("src.core.di_setup.CacheManager") as mock_cache:
             setup.register_cache_services(redis_url="redis://localhost")
             mock_cache.assert_called_once()
 
@@ -203,7 +204,7 @@ class TestDISetup:
         config = {
             "database": {"url": "sqlite:///:memory:"},
             "cache": {"redis_url": "redis://localhost"},
-            "logging": {"level": "INFO"}
+            "logging": {"level": "INFO"},
         }
 
         setup.setup_all(config)
@@ -258,9 +259,9 @@ class TestConfigDI:
             "type": "object",
             "properties": {
                 "host": {"type": "string"},
-                "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+                "port": {"type": "integer", "minimum": 1, "maximum": 65535},
             },
-            "required": ["host", "port"]
+            "required": ["host", "port"],
         }
 
         # 有效配置
@@ -326,8 +327,7 @@ class TestAutoBinding:
 
         # 按命名规则绑定
         bindings = auto_binding.bind_by_naming(
-            {"UserService": UserService},
-            {"UserServiceImpl": UserServiceImpl}
+            {"UserService": UserService}, {"UserServiceImpl": UserServiceImpl}
         )
 
         assert UserService in bindings
@@ -542,19 +542,12 @@ class TestDIIntegration:
     def test_di_with_configuration(self):
         """测试DI与配置集成"""
         config_di = ConfigDI()
-        container = DIContainer()
+        DIContainer()
 
         # 注册配置
         app_config = {
-            "database": {
-                "host": "localhost",
-                "port": 5432,
-                "pool_size": 10
-            },
-            "cache": {
-                "type": "redis",
-                "ttl": 3600
-            }
+            "database": {"host": "localhost", "port": 5432, "pool_size": 10},
+            "cache": {"type": "redis", "ttl": 3600},
         }
 
         config_di.register_config("app", app_config)

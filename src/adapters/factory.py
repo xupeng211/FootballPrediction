@@ -170,7 +170,7 @@ class AdapterFactory:
                     "adapter_type": config.adapter_type,
                     "enabled": config.enabled,
                     "priority": config.priority,
-                    "parameters": config._mask_sensitive_parameters(config.parameters),
+                    "parameters": self._mask_sensitive_parameters(config.parameters),
                     "rate_limits": config.rate_limits,
                     "cache_config": config.cache_config,
                     "retry_config": config.retry_config,
@@ -279,73 +279,6 @@ class AdapterFactory:
             pass
 
         return errors
-
-
-class AdapterBuilder:
-    """适配器构建器，使用构建器模式创建适配器"""
-
-    def __init__(self, adapter_type: str):
-        self.adapter_type = adapter_type
-        self.name: Optional[str] = None
-        self.enabled: bool = True
-        self.priority: int = 0
-        self.parameters: Dict[str, Any] = {}
-        self.rate_limits: Optional[Dict[str, int]] = None
-        self.cache_config: Optional[Dict[str, Any]] = None
-        self.retry_config: Optional[Dict[str, Any]] = None
-
-    def with_name(self, name: str) -> "AdapterBuilder":
-        """设置适配器名称"""
-        self.name = name
-        return self
-
-    def with_parameter(self, key: str, value: Any) -> "AdapterBuilder":
-        """设置参数"""
-        self.parameters[key] = value
-        return self
-
-    def with_parameters(self, **kwargs) -> "AdapterBuilder":
-        """批量设置参数"""
-        self.parameters.update(kwargs)
-        return self
-
-    def with_priority(self, priority: int) -> "AdapterBuilder":
-        """设置优先级"""
-        self.priority = priority
-        return self
-
-    def with_rate_limits(self, **limits) -> "AdapterBuilder":
-        """设置速率限制"""
-        self.rate_limits = limits
-        return self
-
-    def with_cache(self, ttl: int = 300, size: int = 1000) -> "AdapterBuilder":
-        """设置缓存配置"""
-        self.cache_config = {"ttl": ttl, "size": size}
-        return self
-
-    def with_retry(self, max_retries: int = 3, delay: float = 1.0) -> "AdapterBuilder":
-        """设置重试配置"""
-        self.retry_config = {"max_retries": max_retries, "delay": delay}
-        return self
-
-    def build(self) -> AdapterConfig:
-        """构建配置"""
-        if not self.name:
-            self.name = f"{self.adapter_type}_adapter"
-
-        config = AdapterConfig(
-            name=self.name,
-            adapter_type=self.adapter_type,
-            enabled=self.enabled,
-            priority=self.priority,
-            parameters=self.parameters,
-            rate_limits=self.rate_limits,
-            cache_config=self.cache_config,
-            retry_config=self.retry_config,
-        )
-
-        return config
 
 
 # 全局适配器工厂实例

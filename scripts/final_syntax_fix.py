@@ -11,12 +11,15 @@ import json
 from pathlib import Path
 from typing import List, Dict, Set
 
+
 def get_syntax_errors() -> Dict[str, List[Dict]]:
     """获取所有语法错误的详细信息"""
     cmd = [
-        "ruff", "check", "src/",
+        "ruff",
+        "check",
+        "src/",
         "--select=E902,E701,E702,E703,E721,E722,E741",
-        "--output-format=json"
+        "--output-format=json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -34,9 +37,10 @@ def get_syntax_errors() -> Dict[str, List[Dict]]:
 
     return errors_by_file
 
+
 def fix_docstring_issues(content: str) -> str:
     """修复文档字符串相关问题"""
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
     i = 0
 
@@ -44,7 +48,7 @@ def fix_docstring_issues(content: str) -> str:
         line = lines[i]
 
         # 跳过空行和注释
-        if not line.strip() or line.strip().startswith('#'):
+        if not line.strip() or line.strip().startswith("#"):
             fixed_lines.append(line)
             i += 1
             continue
@@ -60,19 +64,22 @@ def fix_docstring_issues(content: str) -> str:
                 # 检查下一行是否是代码
                 if i + 1 < len(lines):
                     next_line = lines[i + 1]
-                    if next_line.strip() and not next_line.strip().startswith('#'):
+                    if next_line.strip() and not next_line.strip().startswith("#"):
                         # 这可能是未闭合的文档字符串，添加闭合引号
-                        if not line.rstrip().endswith('"""') and not line.rstrip().endswith("'''"):
+                        if not line.rstrip().endswith(
+                            '"""'
+                        ) and not line.rstrip().endswith("'''"):
                             line = line.rstrip() + ('"""' if '"""' in line else "'''")
 
         fixed_lines.append(line)
         i += 1
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
+
 
 def fix_import_placement(content: str) -> str:
     """修复导入语句位置问题"""
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
 
     # 分离导入语句和代码
@@ -99,65 +106,88 @@ def fix_import_placement(content: str) -> str:
                     docstring_char = None
 
         # 收集导入语句（不在文档字符串内）
-        if not in_docstring and (stripped.startswith('import ') or stripped.startswith('from ')):
+        if not in_docstring and (
+            stripped.startswith("import ") or stripped.startswith("from ")
+        ):
             imports.append(line)
-        elif not in_docstring and stripped and not stripped.startswith('#') and not stripped.startswith('"""') and not stripped.startswith("'''"):
+        elif (
+            not in_docstring
+            and stripped
+            and not stripped.startswith("#")
+            and not stripped.startswith('"""')
+            and not stripped.startswith("'''")
+        ):
             # 代码开始
-            code.extend(lines[lines.index(line):])
+            code.extend(lines[lines.index(line) :])
             break
         else:
-            if in_docstring or not stripped or stripped.startswith('#') or stripped.startswith('"""') or stripped.startswith("'''"):
+            if (
+                in_docstring
+                or not stripped
+                or stripped.startswith("#")
+                or stripped.startswith('"""')
+                or stripped.startswith("'''")
+            ):
                 fixed_lines.append(line)
 
     # 添加导入语句
     if imports:
         # 确保导入语句前有空行
         if fixed_lines and fixed_lines[-1].strip():
-            fixed_lines.append('')
+            fixed_lines.append("")
         fixed_lines.extend(imports)
         if code:
-            fixed_lines.append('')
+            fixed_lines.append("")
 
     # 添加剩余代码
     fixed_lines.extend(code)
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
+
 
 def fix_colon_issues(content: str) -> str:
     """修复冒号相关的问题"""
     # 修复函数定义后的冒号
-    content = re.sub(r'def\s+(\w+)\s*\([^)]*\)\s*->\s*[^:]+\n\s*\n',
-                     lambda m: m.group(0).rstrip() + ':\n', content)
+    content = re.sub(
+        r"def\s+(\w+)\s*\([^)]*\)\s*->\s*[^:]+\n\s*\n",
+        lambda m: m.group(0).rstrip() + ":\n",
+        content,
+    )
 
     # 修复类定义后的冒号
-    content = re.sub(r'class\s+(\w+)\s*(\([^)]*\))?\s*\n\s*\n',
-                     lambda m: m.group(0).rstrip() + ':\n', content)
+    content = re.sub(
+        r"class\s+(\w+)\s*(\([^)]*\))?\s*\n\s*\n",
+        lambda m: m.group(0).rstrip() + ":\n",
+        content,
+    )
 
     return content
+
 
 def fix_tuple_annotation(content: str) -> str:
     """修复元组类型注解问题"""
     # 修复 Only single target (not tuple) can be annotated
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
 
     for line in lines:
         # 检查是否有错误的元组注解
-        if '->' in line and '(' in line and ')' in line:
+        if "->" in line and "(" in line and ")" in line:
             # 简单的启发式检查
-            if re.search(r'->\s*\([^)]+\)\s*:', line):
+            if re.search(r"->\s*\([^)]+\)\s*:", line):
                 # 这可能是需要修复的元组注解
                 # 转换为正确的形式
-                line = re.sub(r'->\s*\(([^)]+)\)\s*:', r' -> \1:', line)
+                line = re.sub(r"->\s*\(([^)]+)\)\s*:", r" -> \1:", line)
 
         fixed_lines.append(line)
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
+
 
 def fix_file_errors(file_path: str, errors: List[Dict]) -> bool:
     """修复单个文件的错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -172,7 +202,7 @@ def fix_file_errors(file_path: str, errors: List[Dict]) -> bool:
         if content.count('"""') > 10 or content.count("'''") > 10:
             # 文档字符串太多，可能是损坏的
             # 简单清理：移除孤立的文档字符串标记
-            lines = content.split('\n')
+            lines = content.split("\n")
             cleaned_lines = []
             for line in lines:
                 stripped = line.strip()
@@ -180,11 +210,11 @@ def fix_file_errors(file_path: str, errors: List[Dict]) -> bool:
                 if stripped in ['"""', "'''", '"""', "'''"]:
                     continue
                 cleaned_lines.append(line)
-            content = '\n'.join(cleaned_lines)
+            content = "\n".join(cleaned_lines)
 
         # 写回文件
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -192,6 +222,7 @@ def fix_file_errors(file_path: str, errors: List[Dict]) -> bool:
     except Exception as e:
         print(f"  修复 {file_path} 失败: {e}")
         return False
+
 
 def main():
     print("🔧 开始最终语法错误修复...")
@@ -212,9 +243,17 @@ def main():
     other_files = []
 
     for filename in errors_by_file.keys():
-        if any(x in filename for x in [
-            'api/', 'services/', 'models/', 'database/', 'cache/', 'monitoring/'
-        ]):
+        if any(
+            x in filename
+            for x in [
+                "api/",
+                "services/",
+                "models/",
+                "database/",
+                "cache/",
+                "monitoring/",
+            ]
+        ):
             priority_files.append(filename)
         else:
             other_files.append(filename)
@@ -229,22 +268,30 @@ def main():
 
         if fix_file_errors(file_path, errors):
             fixed_count += 1
-            print(f"  ✓ 已修复")
+            print("  ✓ 已修复")
         else:
-            print(f"  - 无需修复或修复失败")
+            print("  - 无需修复或修复失败")
 
     # 运行 ruff 的自动修复
     print("\n🔧 运行 ruff 自动修复...")
-    subprocess.run(["ruff", "check", "src/", "--select=E701,E702,E703,E722", "--fix"],
-                   capture_output=True)
+    subprocess.run(
+        ["ruff", "check", "src/", "--select=E701,E702,E703,E722", "--fix"],
+        capture_output=True,
+    )
 
     # 检查最终结果
     print("\n📊 检查最终结果...")
-    cmd = ["ruff", "check", "src/", "--select=E902,E701,E702,E703,E721,E722,E741", "--output-format=concise"]
+    cmd = [
+        "ruff",
+        "check",
+        "src/",
+        "--select=E902,E701,E702,E703,E721,E722,E741",
+        "--output-format=concise",
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.stdout:
-        errors = result.stdout.strip().split('\n')
+        errors = result.stdout.strip().split("\n")
         remaining = len([e for e in errors if e])
         print(f"\n✅ 已修复部分错误，剩余 {remaining} 个语法错误")
 
@@ -252,8 +299,8 @@ def main():
         print("\n📋 错误最多的文件（前10个）:")
         error_counts = {}
         for line in errors:
-            if ':' in line:
-                filename = line.split(':')[0]
+            if ":" in line:
+                filename = line.split(":")[0]
                 error_counts[filename] = error_counts.get(filename, 0) + 1
 
         sorted_files = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)
@@ -263,6 +310,7 @@ def main():
         print("\n✅ 所有语法错误已修复！")
 
     print(f"\n📈 本次修复了 {fixed_count} 个文件")
+
 
 if __name__ == "__main__":
     main()

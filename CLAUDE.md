@@ -40,6 +40,9 @@ make env-check        # 检查开发环境是否健康
 make context          # 加载项目上下文供 AI 开发使用
 make dev-setup        # 一键设置开发环境
 make clean            # 清理缓存和虚拟环境
+make clean-env        # 清理虚拟环境和旧依赖文件
+make lock-deps        # 锁定依赖以保证可重现构建
+make verify-deps      # 验证依赖是否与锁定文件匹配
 ```
 
 ### 测试
@@ -50,9 +53,32 @@ make test-unit        # 只运行单元测试（标记为 'unit' 的）
 make test-phase1      # 运行第一阶段核心 API 测试
 make test-api         # 运行所有 API 测试
 make test.containers  # 运行需要 Docker 容器的测试
-make coverage         # 运行测试并检查覆盖率（默认80%）
+make coverage         # 运行测试并检查覆盖率（默认30%）
 make coverage-fast    # 快速覆盖率检查（仅单元测试）
-make coverage-local   # 本地覆盖率检查（16%阈值）
+make coverage-local   # 本地覆盖率检查（20%阈值）
+```
+
+### 单个测试运行
+```bash
+# 运行特定测试文件
+pytest tests/unit/test_specific.py -v
+
+# 运行特定测试函数
+pytest tests/unit/test_specific.py::test_function -v
+
+# 运行带特定标记的测试
+pytest -m "unit" -v
+pytest -m "integration" -v
+pytest -m "not slow" -v
+
+# 调试模式
+pytest tests/unit/test_specific.py -v -s --pdb
+
+# 只运行失败的测试
+pytest --lf -v
+
+# 在第一个失败时停止
+pytest -x -v
 ```
 
 ### 代码质量
@@ -62,6 +88,9 @@ make fmt              # 使用 ruff 格式化代码（已替换 black 和 isort�
 make quality          # 完整质量检查（lint + format + test）
 make prepush          # 完整的提交前验证（ruff + mypy + pytest）
 make ci               # 模拟 GitHub Actions CI 流程
+make ruff-check       # 仅运行 ruff 检查
+make ruff-format      # 仅运行 ruff 格式化
+make mypy-check       # 仅运行 mypy 类型检查
 ```
 
 ### 本地 CI 验证
@@ -113,6 +142,8 @@ make best-practices-status      # 查看当前状态
 
 ### 当前架构状态
 - **代码质量评分**：6.2/10（目标 8.5/10）
+- **测试覆盖率**：16.51%（逐步提升中）
+- **CI 覆盖率门槛**：30%（已从 20% 提升）
 - **主要问题**：
   - 存在重复的基础服务类（`src/services/base.py` 和 `src/services/base_service.py`）
   - 仓储模式未完全实现

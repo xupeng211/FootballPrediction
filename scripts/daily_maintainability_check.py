@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 
+
 class DailyMaintainabilityChecker:
     """每日可维护性检查器"""
 
@@ -21,18 +22,25 @@ class DailyMaintainabilityChecker:
         """获取测试覆盖率"""
         try:
             result = subprocess.run(
-                ["python", "-m", "pytest", "--cov=src", "--cov-report=json", "--tb=short"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "--cov=src",
+                    "--cov-report=json",
+                    "--tb=short",
+                ],
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
                 # 读取覆盖率报告
                 coverage_file = self.root_dir / "coverage.json"
                 if coverage_file.exists():
-                    with open(coverage_file, 'r') as f:
+                    with open(coverage_file, "r") as f:
                         data = json.load(f)
                         return data["totals"]["percent_covered"]
             return 0.0
@@ -47,7 +55,7 @@ class DailyMaintainabilityChecker:
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # 计算错误数量
@@ -64,7 +72,7 @@ class DailyMaintainabilityChecker:
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -72,7 +80,13 @@ class DailyMaintainabilityChecker:
                 count = 0
                 for file_data in data.values():
                     for item in file_data:
-                        if item["type"] == "function" and item["rank"] in ["B", "C", "D", "E", "F"]:
+                        if item["type"] == "function" and item["rank"] in [
+                            "B",
+                            "C",
+                            "D",
+                            "E",
+                            "F",
+                        ]:
                             count += 1
                 return count
             return 0
@@ -86,7 +100,7 @@ class DailyMaintainabilityChecker:
         large_files = []
 
         for py_file in (self.root_dir / "src").rglob("*.py"):
-            lines = len(py_file.read_text(encoding='utf-8').splitlines())
+            lines = len(py_file.read_text(encoding="utf-8").splitlines())
             if lines > threshold:
                 count += 1
                 large_files.append((str(py_file.relative_to(self.root_dir)), lines))
@@ -101,7 +115,7 @@ class DailyMaintainabilityChecker:
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             errors = result.stdout.count("error:")
@@ -129,7 +143,7 @@ class DailyMaintainabilityChecker:
                 "large_files": 20,
                 "mypy_errors": 0,
             },
-            "maintainability_score": self.calculate_score()
+            "maintainability_score": self.calculate_score(),
         }
 
         return report
@@ -162,7 +176,7 @@ class DailyMaintainabilityChecker:
         # 读取历史报告
         history = []
         if self.report_file.exists():
-            with open(self.report_file, 'r') as f:
+            with open(self.report_file, "r") as f:
                 history = json.load(f).get("history", [])
 
         # 添加今日报告
@@ -175,10 +189,10 @@ class DailyMaintainabilityChecker:
         full_report = {
             "current": report,
             "history": history,
-            "trend": self.calculate_trend(history)
+            "trend": self.calculate_trend(history),
         }
 
-        with open(self.report_file, 'w') as f:
+        with open(self.report_file, "w") as f:
             json.dump(full_report, f, indent=2, ensure_ascii=False)
 
     def calculate_trend(self, history: List[Dict]) -> Dict:
@@ -202,7 +216,9 @@ class DailyMaintainabilityChecker:
         # 评分趋势
         if history[-1]["maintainability_score"] > history[-2]["maintainability_score"]:
             trends["score"] = "📈 上升"
-        elif history[-1]["maintainability_score"] < history[-2]["maintainability_score"]:
+        elif (
+            history[-1]["maintainability_score"] < history[-2]["maintainability_score"]
+        ):
             trends["score"] = "📉 下降"
         else:
             trends["score"] = "➡️ 稳定"
@@ -221,28 +237,38 @@ class DailyMaintainabilityChecker:
 
         # 测试覆盖率
         coverage_status = "✅" if metrics["test_coverage"] >= 20 else "❌"
-        print(f"  {coverage_status} 测试覆盖率: {metrics['test_coverage']:.1f}% (目标: {goals['test_coverage']}%)")
+        print(
+            f"  {coverage_status} 测试覆盖率: {metrics['test_coverage']:.1f}% (目标: {goals['test_coverage']}%)"
+        )
 
         # 测试错误
         error_status = "✅" if metrics["test_errors"] == 0 else "❌"
-        print(f"  {error_status} 测试错误数: {metrics['test_errors']} (目标: {goals['test_errors']})")
+        print(
+            f"  {error_status} 测试错误数: {metrics['test_errors']} (目标: {goals['test_errors']})"
+        )
 
         # 复杂函数
         complex_status = "✅" if metrics["complex_functions"] <= 10 else "❌"
-        print(f"  {complex_status} 高复杂度函数: {metrics['complex_functions']} (目标: {goals['complex_functions']})")
+        print(
+            f"  {complex_status} 高复杂度函数: {metrics['complex_functions']} (目标: {goals['complex_functions']})"
+        )
 
         # 大文件
         large_status = "✅" if metrics["large_files"] <= 30 else "❌"
-        print(f"  {large_status} 大文件数: {metrics['large_files']} (目标: {goals['large_files']})")
+        print(
+            f"  {large_status} 大文件数: {metrics['large_files']} (目标: {goals['large_files']})"
+        )
 
         # MyPy错误
         mypy_status = "✅" if metrics["mypy_errors"] <= 100 else "❌"
-        print(f"  {mypy_status} MyPy错误: {metrics['mypy_errors']} (目标: {goals['mypy_errors']})")
+        print(
+            f"  {mypy_status} MyPy错误: {metrics['mypy_errors']} (目标: {goals['mypy_errors']})"
+        )
 
         print(f"\n🎯 可维护性评分: {report['maintainability_score']:.1f}/10.0")
 
         if "trend" in report:
-            print(f"\n📊 趋势:")
+            print("\n📊 趋势:")
             print(f"  覆盖率: {report['trend'].get('coverage', '未知')}")
             print(f"  评分: {report['trend'].get('score', '未知')}")
 
@@ -263,6 +289,7 @@ class DailyMaintainabilityChecker:
         report = self.generate_report()
         self.save_report(report)
         self.print_report(report)
+
 
 if __name__ == "__main__":
     checker = DailyMaintainabilityChecker()

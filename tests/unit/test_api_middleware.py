@@ -22,8 +22,9 @@ try:
         CORSMiddleware,
         SecurityHeadersMiddleware,
         CacheMiddleware,
-        ErrorHandlingMiddleware
+        ErrorHandlingMiddleware,
     )
+
     MIDDLEWARE_AVAILABLE = True
 except ImportError:
     MIDDLEWARE_AVAILABLE = False
@@ -129,7 +130,7 @@ class TestLoggingMiddleware:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.logger')
+    @patch("src.api.middleware.logger")
     def test_request_logging(self, mock_logger, client):
         """测试请求日志记录"""
         response = client.get("/test")
@@ -143,7 +144,7 @@ class TestLoggingMiddleware:
         assert any("GET /test" in log for log in log_calls)
         assert any("200" in log for log in log_calls)
 
-    @patch('src.api.middleware.logger')
+    @patch("src.api.middleware.logger")
     def test_error_logging(self, mock_logger, client):
         """测试错误日志记录"""
         response = client.get("/error")
@@ -156,7 +157,7 @@ class TestLoggingMiddleware:
         error_calls = [call.args[0] for call in mock_logger.error.call_args_list]
         assert any("Test error" in log for log in error_calls)
 
-    @patch('src.api.middleware.logger')
+    @patch("src.api.middleware.logger")
     def test_request_id_logging(self, mock_logger, client):
         """测试请求ID日志"""
         response = client.get("/test", headers={"X-Request-ID": "test-123"})
@@ -196,7 +197,7 @@ class TestRateLimitMiddleware:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.RateLimiter')
+    @patch("src.api.middleware.RateLimiter")
     def test_rate_limit_allowed(self, mock_rate_limiter, client):
         """测试允许的请求"""
         mock_limiter = Mock()
@@ -211,7 +212,7 @@ class TestRateLimitMiddleware:
         assert response.headers.get("X-RateLimit-Limit") == "60"
         assert response.headers.get("X-RateLimit-Remaining") == "59"
 
-    @patch('src.api.middleware.RateLimiter')
+    @patch("src.api.middleware.RateLimiter")
     def test_rate_limit_exceeded(self, mock_rate_limiter, client):
         """测试超出速率限制"""
         mock_limiter = Mock()
@@ -228,7 +229,7 @@ class TestRateLimitMiddleware:
         # 检查重试头部
         assert response.headers.get("Retry-After") == "60"
 
-    @patch('src.api.middleware.RateLimiter')
+    @patch("src.api.middleware.RateLimiter")
     def test_rate_limit_per_ip(self, mock_rate_limiter, client):
         """测试基于IP的速率限制"""
         mock_limiter = Mock()
@@ -272,7 +273,7 @@ class TestAuthenticationMiddleware:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.verify_token')
+    @patch("src.api.middleware.verify_token")
     def test_public_endpoint_access(self, mock_verify, client):
         """测试公开端点访问"""
         response = client.get("/health")
@@ -281,21 +282,20 @@ class TestAuthenticationMiddleware:
         # 验证令牌验证未被调用
         mock_verify.assert_not_called()
 
-    @patch('src.api.middleware.verify_token')
+    @patch("src.api.middleware.verify_token")
     def test_protected_endpoint_with_token(self, mock_verify, client):
         """测试带令牌访问受保护端点"""
         mock_verify.return_value = {"user_id": 123, "username": "testuser"}
 
         response = client.get(
-            "/protected",
-            headers={"Authorization": "Bearer valid_token"}
+            "/protected", headers={"Authorization": "Bearer valid_token"}
         )
         assert response.status_code == 200
 
         # 验证令牌被验证
         mock_verify.assert_called_once_with("valid_token")
 
-    @patch('src.api.middleware.verify_token')
+    @patch("src.api.middleware.verify_token")
     def test_protected_endpoint_without_token(self, mock_verify, client):
         """测试无令牌访问受保护端点"""
         response = client.get("/protected")
@@ -304,20 +304,19 @@ class TestAuthenticationMiddleware:
         data = response.json()
         assert "authentication" in data["detail"].lower()
 
-    @patch('src.api.middleware.verify_token')
+    @patch("src.api.middleware.verify_token")
     def test_protected_endpoint_with_invalid_token(self, mock_verify, client):
         """测试无效令牌访问受保护端点"""
         mock_verify.return_value = None
 
         response = client.get(
-            "/protected",
-            headers={"Authorization": "Bearer invalid_token"}
+            "/protected", headers={"Authorization": "Bearer invalid_token"}
         )
         assert response.status_code == 401
 
     def test_user_attached_to_request(self, client):
         """测试用户信息附加到请求"""
-        with patch('src.api.middleware.verify_token') as mock_verify:
+        with patch("src.api.middleware.verify_token") as mock_verify:
             mock_verify.return_value = {"user_id": 123, "username": "testuser"}
 
             # 使用TestRequest来验证state
@@ -325,8 +324,7 @@ class TestAuthenticationMiddleware:
 
             # 这个测试需要更复杂的设置来检查request.state.user
             response = client.get(
-                "/protected",
-                headers={"Authorization": "Bearer valid_token"}
+                "/protected", headers={"Authorization": "Bearer valid_token"}
             )
             assert response.status_code == 200
 
@@ -339,11 +337,13 @@ class TestCORSMiddleware:
     def app(self):
         """创建带有CORS中间件的应用"""
         app = FastAPI()
-        app.add_middleware(CORSMiddleware,
-                          allow_origins=["http://localhost:3000"],
-                          allow_methods=["GET", "POST"],
-                          allow_headers=["*"],
-                          expose_headers=["X-Custom"])
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["http://localhost:3000"],
+            allow_methods=["GET", "POST"],
+            allow_headers=["*"],
+            expose_headers=["X-Custom"],
+        )
 
         @app.get("/test")
         async def test_endpoint():
@@ -361,22 +361,27 @@ class TestCORSMiddleware:
         headers = {
             "Origin": "http://localhost:3000",
             "Access-Control-Request-Method": "POST",
-            "Access-Control-Request-Headers": "Authorization"
+            "Access-Control-Request-Headers": "Authorization",
         }
 
         response = client.options("/test", headers=headers)
         assert response.status_code == 200
 
         # 检查CORS头部
-        assert response.headers.get("Access-Control-Allow-Origin") == "http://localhost:3000"
+        assert (
+            response.headers.get("Access-Control-Allow-Origin")
+            == "http://localhost:3000"
+        )
         assert response.headers.get("Access-Control-Allow-Methods") == "GET, POST"
-        assert "Authorization" in response.headers.get("Access-Control-Allow-Headers", "")
+        assert "Authorization" in response.headers.get(
+            "Access-Control-Allow-Headers", ""
+        )
 
     def test_cors_preflight_denied(self, client):
         """测试CORS预检请求被拒绝"""
         headers = {
             "Origin": "http://evil-site.com",
-            "Access-Control-Request-Method": "POST"
+            "Access-Control-Request-Method": "POST",
         }
 
         response = client.options("/test", headers=headers)
@@ -390,14 +395,17 @@ class TestCORSMiddleware:
         assert response.status_code == 200
 
         # 检查CORS头部
-        assert response.headers.get("Access-Control-Allow-Origin") == "http://localhost:3000"
+        assert (
+            response.headers.get("Access-Control-Allow-Origin")
+            == "http://localhost:3000"
+        )
         assert response.headers.get("Access-Control-Expose-Headers") == "X-Custom"
 
     def test_cors_wildcard_origin(self, client):
         """测试通配符源"""
         headers = {"Origin": "http://localhost:8080"}
 
-        response = client.get("/test", headers=headers)
+        client.get("/test", headers=headers)
         # 根据配置，可能允许或拒绝
 
 
@@ -455,7 +463,7 @@ class TestSecurityHeadersMiddleware:
             "X-Content-Type-Options",
             "X-Frame-Options",
             "X-XSS-Protection",
-            "Referrer-Policy"
+            "Referrer-Policy",
         ]
 
         for header in security_headers:
@@ -470,10 +478,12 @@ class TestCacheMiddleware:
     def app(self):
         """创建带有缓存中间件的应用"""
         app = FastAPI()
-        app.add_middleware(CacheMiddleware,
-                          default_ttl=300,
-                          cacheable_methods=["GET"],
-                          cacheable_status_codes=[200])
+        app.add_middleware(
+            CacheMiddleware,
+            default_ttl=300,
+            cacheable_methods=["GET"],
+            cacheable_status_codes=[200],
+        )
 
         @app.get("/test")
         async def test_endpoint():
@@ -490,7 +500,7 @@ class TestCacheMiddleware:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.middleware.Cache')
+    @patch("src.api.middleware.Cache")
     def test_cache_get_miss(self, mock_cache, client):
         """测试缓存未命中"""
         mock_cache_instance = Mock()
@@ -505,7 +515,7 @@ class TestCacheMiddleware:
         mock_cache_instance.get.assert_called_once()
         mock_cache_instance.set.assert_called_once()
 
-    @patch('src.api.middleware.Cache')
+    @patch("src.api.middleware.Cache")
     def test_cache_get_hit(self, mock_cache, client):
         """测试缓存命中"""
         cached_response = {"message": "cached"}
@@ -533,7 +543,7 @@ class TestCacheMiddleware:
 
     def test_non_cacheable_method(self, client):
         """测试不可缓存的方法"""
-        with patch('src.api.middleware.Cache') as mock_cache:
+        with patch("src.api.middleware.Cache") as mock_cache:
             mock_cache_instance = Mock()
             mock_cache.return_value = mock_cache_instance
 
@@ -622,7 +632,7 @@ class TestErrorHandlingMiddleware:
 
     def test_error_logging(self, client):
         """测试错误日志记录"""
-        with patch('src.api.middleware.logger') as mock_logger:
+        with patch("src.api.middleware.logger") as mock_logger:
             response = client.get("/error")
             assert response.status_code == 500
 
@@ -632,7 +642,7 @@ class TestErrorHandlingMiddleware:
     def test_error_in_production(self, client):
         """测试生产环境错误处理"""
         # 在生产环境中，可能需要隐藏详细的错误信息
-        with patch('src.api.middleware.settings') as mock_settings:
+        with patch("src.api.middleware.settings") as mock_settings:
             mock_settings.DEBUG = False
 
             response = client.get("/error")
@@ -685,12 +695,13 @@ class TestMiddlewareOrder:
             "middleware2_before",  # 后添加的先执行
             "middleware1_before",
             "endpoint",
-            "middleware1_after",   # 后添加的后结束
-            "middleware2_after"
+            "middleware1_after",  # 后添加的后结束
+            "middleware2_after",
         ]
 
     def test_middleware_short_circuit(self):
         """测试中间件短路"""
+
         class ShortCircuitMiddleware(BaseHTTPMiddleware):
             async def dispatch(self, request, call_next):
                 if request.url.path == "/short-circuit":

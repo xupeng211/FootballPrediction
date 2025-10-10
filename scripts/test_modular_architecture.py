@@ -24,6 +24,7 @@ def test_imports():
     # 测试audit_service_mod
     try:
         from src.services.audit_service_mod import AuditService, AuditContext, AuditLog
+
         tests.append(("audit_service_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("audit_service_mod", False, f"✗ 导入失败: {e}"))
@@ -31,6 +32,7 @@ def test_imports():
     # 测试manager_mod
     try:
         from src.services.manager_mod import ServiceManager
+
         tests.append(("manager_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("manager_mod", False, f"✗ 导入失败: {e}"))
@@ -38,6 +40,7 @@ def test_imports():
     # 测试data_processing_mod
     try:
         from src.services.data_processing_mod import DataProcessingService
+
         tests.append(("data_processing_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("data_processing_mod", False, f"✗ 导入失败: {e}"))
@@ -46,6 +49,7 @@ def test_imports():
     try:
         from src.services.audit_service import AuditService as AuditServiceOld
         from src.services.manager import ServiceManager as ServiceManagerOld
+
         tests.append(("backward_compatibility", True, "✓ 兼容性正常"))
     except Exception as e:
         tests.append(("backward_compatibility", False, f"✗ 兼容性失败: {e}"))
@@ -53,6 +57,7 @@ def test_imports():
     # 测试retry模块
     try:
         from src.utils._retry import RetryConfig, retry
+
         tests.append(("retry_module", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("retry_module", False, f"✗ 导入失败: {e}"))
@@ -60,6 +65,7 @@ def test_imports():
     # 测试connection_mod
     try:
         from src.database.connection_mod import DatabaseManager
+
         tests.append(("connection_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("connection_mod", False, f"✗ 导入失败: {e}"))
@@ -78,7 +84,12 @@ def test_audit_service_functionality():
     print("=" * 60)
 
     try:
-        from src.services.audit_service_mod import AuditService, AuditContext, AuditAction, AuditSeverity
+        from src.services.audit_service_mod import (
+            AuditService,
+            AuditContext,
+            AuditAction,
+            AuditSeverity,
+        )
 
         # 创建上下文
         context = AuditContext(
@@ -87,7 +98,7 @@ def test_audit_service_functionality():
             user_role="admin",
             session_id="session_456",
             ip_address="127.0.0.1",
-            user_agent="Test-Agent/1.0"
+            user_agent="Test-Agent/1.0",
         )
 
         # 创建服务实例
@@ -99,7 +110,7 @@ def test_audit_service_functionality():
             action=AuditAction.LOGIN,
             resource_type="auth",
             description="测试登录",
-            severity=AuditSeverity.LOW
+            severity=AuditSeverity.LOW,
         )
 
         print("✓ AuditContext 创建成功")
@@ -114,6 +125,7 @@ def test_audit_service_functionality():
     except Exception as e:
         print(f"✗ 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -142,7 +154,7 @@ def test_retry_functionality():
             return "成功!"
 
         result = failing_function()
-        print(f"✓ 重试机制正常工作")
+        print("✓ 重试机制正常工作")
         print(f"  - 尝试次数: {attempt_count}")
         print(f"  - 最终结果: {result}")
 
@@ -160,16 +172,20 @@ def test_content_analysis():
     print("=" * 60)
 
     try:
-        from src.services.content_analysis import ContentAnalysisService, Content, AnalysisResult
+        from src.services.content_analysis import (
+            ContentAnalysisService,
+            Content,
+            AnalysisResult,
+        )
 
         # 创建服务
-        service = ContentAnalysisService()
+        ContentAnalysisService()
 
         # 创建测试内容
         content = Content(
             content_id="test_001",
             content_type="text",
-            data={"text": "这是一场精彩的足球比赛！"}
+            data={"text": "这是一场精彩的足球比赛！"},
         )
 
         print("✓ ContentAnalysisService 创建成功")
