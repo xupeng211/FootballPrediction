@@ -2,6 +2,8 @@
 API中间件测试
 """
 
+pytest_plugins = "asyncio"
+
 import pytest
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi import FastAPI, Request, Response

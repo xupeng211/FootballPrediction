@@ -2,6 +2,8 @@
 API模块简单测试
 """
 
+pytest_plugins = "asyncio"
+
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
@@ -40,8 +42,11 @@ class TestAPIBasics:
         def test_endpoint():
             return {"message": "test"}
 
-        assert len(app.routes) == 1
-        assert "/test" in str(app.routes[0].path)
+        # FastAPI会自动添加文档路由，所以总路由数会大于1
+        # 我们只检查自定义的路由是否被添加
+        api_routes = [r for r in app.routes if hasattr(r, "path") and r.path == "/test"]
+        assert len(api_routes) == 1
+        assert api_routes[0].path == "/test"
 
     @pytest.mark.asyncio
     async def test_async_api_endpoint(self):
@@ -55,8 +60,13 @@ class TestAPIBasics:
             await asyncio.sleep(0.01)
             return {"message": "async test"}
 
-        # 由于是测试，我们只需要确保端点可以定义
-        assert len(app.routes) == 1
+        # FastAPI会自动添加文档路由，所以总路由数会大于1
+        # 我们只检查自定义的路由是否被添加
+        api_routes = [
+            r for r in app.routes if hasattr(r, "path") and r.path == "/async-test"
+        ]
+        assert len(api_routes) == 1
+        assert api_routes[0].path == "/async-test"
 
     def test_api_status_response(self):
         """测试API状态响应"""
