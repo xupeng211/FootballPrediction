@@ -1,6 +1,4 @@
 """
-            from sqlalchemy import text
-
 任务工具函数
 
 提供任务调度相关的工具函数，包括：
@@ -8,6 +6,13 @@
 - 数据采集条件判断
 - 任务状态管理
 """
+
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+from sqlalchemy import text
+
+from src.database.connection_mod import DatabaseManager
 
 
 async def should_collect_live_scores() -> bool:

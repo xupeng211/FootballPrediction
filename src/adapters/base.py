@@ -434,3 +434,25 @@ class CachedAdapter(Adapter):
         """清空缓存"""
         self._cache.clear()
         self._cache_timestamps.clear()
+
+
+class BaseAdapter(ABC):
+    """基础适配器抽象类"""
+
+    def __init__(self):
+        self.initialized = False
+
+    @abstractmethod
+    async def initialize(self):
+        """初始化适配器"""
+        pass
+
+    @abstractmethod
+    async def get_data(self, query: str, params: Optional[Dict] = None) -> Dict:
+        """获取数据"""
+        pass
+
+    @abstractmethod
+    async def close(self):
+        """关闭适配器"""
+        pass
