@@ -766,7 +766,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
     try:
         if not data:
             result["is_valid"] = False
-            result["errors"].append("数据为空")
+            result["errors"].append("数据为空")  # type: ignore
             return result
 
         if data_type == "match":
@@ -774,7 +774,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
             required_fields = ["id", "home_team_id", "away_team_id", "start_time"]
             for field in required_fields:
                 if field not in data:
-                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["errors"].append(f"缺少必填字段: {field}")  # type: ignore
                     result["is_valid"] = False
 
         elif data_type == "team":
@@ -782,7 +782,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
             required_fields = ["id", "name"]
             for field in required_fields:
                 if field not in data:
-                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["errors"].append(f"缺少必填字段: {field}")  # type: ignore
                     result["is_valid"] = False
 
         elif data_type == "odds":
@@ -790,16 +790,16 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
             required_fields = ["match_id", "home_win", "draw", "away_win"]
             for field in required_fields:
                 if field not in data:
-                    result["errors"].append(f"缺少必填字段: {field}")
+                    result["errors"].append(f"缺少必填字段: {field}")  # type: ignore
                     result["is_valid"] = False
                 else:
                     # 检查赔率值是否为正数
                     if field != "match_id" and data[field] <= 0:
-                        result["errors"].append(f"赔率值必须为正数: {field}")
+                        result["errors"].append(f"赔率值必须为正数: {field}")  # type: ignore
                         result["is_valid"] = False
 
     except Exception as e:
         result["is_valid"] = False
-        result["errors"].append(f"验证过程出错: {str(e)}")
+        result["errors"].append(f"验证过程出错: {str(e)}")  # type: ignore
 
     return result

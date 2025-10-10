@@ -233,7 +233,7 @@ class BaseService(ABC):
         """检查数据库连接"""
         try:
             with self.db_manager.get_session() as session:
-                session.execute("SELECT 1")
+                session.execute("SELECT 1")  # type: ignore
             return True
         except Exception:
             return False

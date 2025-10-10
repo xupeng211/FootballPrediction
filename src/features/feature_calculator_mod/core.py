@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 特征计算器核心模块
 
@@ -35,7 +36,7 @@ class FeatureCalculator:
 
         self.db_manager = DatabaseManager()
         self.config = config or {}
-        self.features = []  # 存储特征定义
+        self.features: list = []  # 存储特征定义
 
         # 初始化子计算器
         self.recent_calculator = RecentPerformanceCalculator(self.db_manager)

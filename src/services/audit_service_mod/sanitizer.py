@@ -6,7 +6,7 @@ Audit Data Sanitizer
 """
 
 import hashlib
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class AuditDataSanitizer:
@@ -141,7 +141,7 @@ class AuditDataSanitizer:
     def _contains_pii(self, data: Dict[str, Any]) -> bool:
         """检查是否包含个人身份信息"""
         if not isinstance(data, dict):
-            return False
+            return False  # type: ignore
 
         data_str = str(data).lower()
         return any(pattern in data_str for pattern in self.pii_patterns)

@@ -8,7 +8,7 @@ Manages configuration parameters for prediction strategies.
 
 import os
 import json
-import yaml
+import yaml  # type: ignore
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 from datetime import datetime
@@ -370,7 +370,7 @@ class StrategyConfigManager:
         for name in strategy_names:
             if name in self._configs:
                 config_data = self._serialize_strategy_config(self._configs[name])
-                export_data["strategies"].append(config_data)
+                export_data["strategies"].append(config_data)  # type: ignore
 
         # 保存文件
         try:

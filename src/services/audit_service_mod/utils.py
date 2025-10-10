@@ -59,11 +59,11 @@ def sanitize_data(
             if isinstance(value, str):
                 sanitized[key] = mask_char * len(value) if len(value) > 0 else mask_char
             elif isinstance(value, (int, float)):
-                sanitized[key] = 0
+                sanitized[key] = 0  # type: ignore
             elif isinstance(value, dict):
-                sanitized[key] = sanitize_data(value, sensitive_fields, mask_char)
+                sanitized[key] = sanitize_data(value, sensitive_fields, mask_char)  # type: ignore
             elif isinstance(value, list):
-                sanitized[key] = [mask_char] * len(value)
+                sanitized[key] = [mask_char] * len(value)  # type: ignore
             else:
                 sanitized[key] = mask_char
         else:

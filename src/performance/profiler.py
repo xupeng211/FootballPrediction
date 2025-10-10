@@ -115,7 +115,7 @@ class PerformanceProfiler:
     def _parse_function_stats(self, ps: pstats.Stats) -> List[FunctionProfile]:
         """解析函数统计信息"""
         profiles = []
-        stats_dict = ps.stats
+        stats_dict = ps.stats  # type: ignore
 
         for func_info, (cc, nc, tt, ct, callers) in stats_dict.items():
             filename, line, func_name = func_info
@@ -237,7 +237,7 @@ class PerformanceProfiler:
             return {}
 
         # 按名称分组指标
-        grouped_metrics = {}
+        grouped_metrics = {}  # type: ignore
         for metric in self.metrics:
             if metric.name not in grouped_metrics:
                 grouped_metrics[metric.name] = []
@@ -527,7 +527,7 @@ class MemoryProfiler:
         first_rss = self.snapshots[0]["rss"] / 1024 / 1024
         last_rss = self.snapshots[-1]["rss"] / 1024 / 1024
 
-        return (last_rss - first_rss) > threshold
+        return (last_rss - first_rss) > threshold  # type: ignore
 
 
 # 创建性能分析器的便捷函数

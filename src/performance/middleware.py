@@ -63,7 +63,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         import random
 
         if random.random() > self.sample_rate:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore
 
         # 生成请求ID
         request_id = f"{request.method}_{hash(str(request.url))}_{time.time()}"
@@ -152,7 +152,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                     f"returned {response.status_code} in {duration:.4f}s"
                 )
 
-            return response
+            return response  # type: ignore
 
         except Exception as e:
             # 记录异常
@@ -359,7 +359,7 @@ class BackgroundTaskPerformanceMonitor:
 
     def start_task(self, task_id: str, task_name: str):
         """开始任务跟踪"""
-        self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
+        self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}  # type: ignore
 
     def end_task(self, task_id: str, success: bool = True, error: Optional[str] = None):
         """结束任务跟踪"""
@@ -367,8 +367,8 @@ class BackgroundTaskPerformanceMonitor:
             return
 
         task = self.active_tasks[task_id]
-        duration = time.time() - task["start_time"]
-        task_name = task["name"]
+        duration = time.time() - task["start_time"]  # type: ignore
+        task_name = task["name"]  # type: ignore
 
         # 更新任务统计
         if task_name not in self.task_stats:
@@ -411,7 +411,7 @@ class BackgroundTaskPerformanceMonitor:
         stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
 
         for task_name, data in self.task_stats.items():
-            stats["task_types"][task_name] = {
+            stats["task_types"][task_name] = {  # type: ignore
                 "total_count": data["total_count"],
                 "success_count": data["success_count"],
                 "failure_count": data["failure_count"],

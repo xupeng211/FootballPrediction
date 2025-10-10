@@ -4,6 +4,10 @@ API响应模型定义
 为所有API端点提供标准化的响应模型，确保API文档的一致性和完整性。
 """
 
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
+
 
 class ServiceCheck(BaseModel):
     """服务检查结果模型"""

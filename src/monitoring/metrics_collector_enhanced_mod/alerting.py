@@ -132,7 +132,7 @@ class AlertManager:
             self.alert_history = self.alert_history[-500:]
 
         # 记录日志
-        logger.warning(
+        logger.warning(  # type: ignore
             f"ALERT: {name}",
             alert_name=name,
             message=message,
@@ -158,7 +158,7 @@ class AlertManager:
         """
         if name in self.active_alerts:
             alert = self.active_alerts[name]
-            logger.info(
+            logger.info(  # type: ignore
                 f"ALERT RESOLVED: {name}",
                 alert_name=name,
                 message=message or f"Alert {name} resolved",
@@ -223,7 +223,7 @@ class AlertManager:
             告警摘要字典
         """
         # 统计各严重程度的告警数
-        severity_counts = {}
+        severity_counts = {}  # type: ignore
         for alert in self.active_alerts.values():
             severity_counts[alert.severity] = severity_counts.get(alert.severity, 0) + 1
 
@@ -233,7 +233,7 @@ class AlertManager:
         recent_alerts = [a for a in self.alert_history if a.timestamp >= day_ago]
 
         # 按小时统计
-        hourly_counts = {}
+        hourly_counts = {}  # type: ignore
         for alert in recent_alerts:
             hour = alert.timestamp.strftime("%Y-%m-%d %H:00")
             hourly_counts[hour] = hourly_counts.get(hour, 0) + 1

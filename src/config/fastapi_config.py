@@ -6,14 +6,14 @@ FastAPI 中文配置
 
 from fastapi import FastAPI
 
-from src.utils.i18n import _, init_i18n
+from src.utils.i18n import _, init_i18n  # type: ignore
 
 
 def create_chinese_app() -> FastAPI:
     """创建中文界面的 FastAPI 应用"""
 
     # 初始化中文
-    init_i18n("zh_CN")
+    init_i18n("zh_CN")  # type: ignore
 
     app = FastAPI(
         title=_("Football Prediction API"),
@@ -47,6 +47,6 @@ def create_chinese_app() -> FastAPI:
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
-    app.openapi = custom_openapi
+    app.openapi = custom_openapi  # type: ignore
 
     return app

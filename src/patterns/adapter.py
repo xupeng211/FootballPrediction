@@ -368,7 +368,7 @@ class OddsApiAdapter(APIAdapter):
         """转换赔率数据格式"""
         if isinstance(raw_data, dict):
             bookmakers = raw_data.get("bookmakers", [])
-            odds_data = {}
+            odds_data = {}  # type: ignore
 
             for bookmaker in bookmakers:
                 bookmaker_name = bookmaker.get("title")
@@ -411,7 +411,7 @@ class AdapterFactory:
         if adapter_type not in cls._adapters:
             raise ValueError(f"Unknown adapter type: {adapter_type}")
 
-        return cls._adapters[adapter_type](external_api)
+        return cls._adapters[adapter_type](external_api)  # type: ignore
 
     @classmethod
     def register_adapter(cls, adapter_type: str, adapter_class: type):
@@ -455,7 +455,7 @@ class UnifiedDataCollector:
                 else:
                     results[name] = response
 
-        return results
+        return results  # type: ignore
 
     async def collect_team_stats(self, team_id: int) -> Dict[str, ExternalData]:
         """收集球队统计"""

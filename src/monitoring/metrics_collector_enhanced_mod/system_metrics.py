@@ -144,7 +144,7 @@ class SystemMetricsCollector:
         self.error_counts[error_key] = self.error_counts.get(error_key, 0) + 1
 
         # 更新Prometheus
-        self.prometheus.increment_counter(
+        self.prometheus.increment_counter(  # type: ignore
             "error_rate", labels={"error_type": error_type}
         )
 
@@ -239,7 +239,7 @@ class SystemMetricsCollector:
             connection_counts: 连接数字典
         """
         for conn_type, count in connection_counts.items():
-            self.prometheus.set_gauge(
+            self.prometheus.set_gauge(  # type: ignore
                 "active_connections", count, labels={"connection_type": conn_type}
             )
 

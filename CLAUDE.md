@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **当前项目状态**：
 - 测试覆盖率：16.51%（技术债务改进阶段）
-- CI 覆盖率门槛：20%（将逐步提升至 25%→30%）
+- CI 覆盖率门槛：30%（已从 20% 提升）
 - MyPy 类型注解错误：正在进行修复（最近已修复第1批）
 - 采用渐进式改进策略，确保持续集成保持绿灯
 
@@ -31,9 +31,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **当前正在进行最佳实践优化**，详见 [BEST_PRACTICES_KANBAN.md](BEST_PRACTICES_KANBAN.md)
 
-## 开发命令
+### 开发命令
 
-### 环境设置
+#### 环境设置
 ```bash
 make install          # 从锁文件安装依赖
 make env-check        # 检查开发环境是否健康
@@ -45,20 +45,20 @@ make lock-deps        # 锁定依赖以保证可重现构建
 make verify-deps      # 验证依赖是否与锁定文件匹配
 ```
 
-### 测试
+#### 测试
 ```bash
 make test             # 运行所有单元测试
-make test-quick       # 快速单元测试（带超时限制）
+make test-quick       # 快速单元测试（带超时和失败限制）
 make test-unit        # 只运行单元测试（标记为 'unit' 的）
 make test-phase1      # 运行第一阶段核心 API 测试
 make test-api         # 运行所有 API 测试
 make test.containers  # 运行需要 Docker 容器的测试
 make coverage         # 运行测试并检查覆盖率（默认30%）
 make coverage-fast    # 快速覆盖率检查（仅单元测试）
-make coverage-local   # 本地覆盖率检查（20%阈值）
+make coverage-local   # 本地覆盖率检查（16%阈值）
 ```
 
-### 单个测试运行
+#### 单个测试运行
 ```bash
 # 运行特定测试文件
 pytest tests/unit/test_specific.py -v
@@ -79,9 +79,15 @@ pytest --lf -v
 
 # 在第一个失败时停止
 pytest -x -v
+
+# 运行性能基准测试
+pytest tests/performance/ --benchmark-only
+
+# 运行容器测试
+pytest -m "integration" -v  # 需要 Docker 运行
 ```
 
-### 代码质量
+#### 代码质量
 ```bash
 make lint             # 运行 ruff 和 mypy 检查
 make fmt              # 使用 ruff 格式化代码（已替换 black 和 isort）
@@ -93,14 +99,36 @@ make ruff-format      # 仅运行 ruff 格式化
 make mypy-check       # 仅运行 mypy 类型检查
 ```
 
-### 本地 CI 验证
+#### 性能和高级测试
 ```bash
-./scripts/ci-verify.sh        # 在本地运行完整的 CI 验证
-make test-phase1      # 运行第一阶段核心 API 测试
-./scripts/quality-check.sh  # 推荐的快速质量检查
+make benchmark-full   # 运行完整的性能基准测试
+make mutation-test    # 运行突变测试（mutmut）
+make test-debt-analysis # 分析测试债务
+make coverage-dashboard # 生成实时覆盖率仪表板
 ```
 
-### 最佳实践优化（新增）
+#### Docker 容器管理
+```bash
+make up               # 启动所有 Docker 服务
+make down             # 停止所有 Docker 服务
+make logs             # 查看 Docker 日志
+make deploy           # 部署应用（使用 git SHA 标签）
+make rollback TAG=xxx # 回滚到指定版本
+```
+
+#### 技术债务管理
+```bash
+make debt-plan        # 查看每日技术债务清理计划
+make debt-today       # 一键开始今天的工作（默认4小时）
+make debt-start TASK=1.1.1    # 开始执行特定任务
+make debt-done        # 完成当前任务
+make debt-status      # 查看当前状态
+make debt-check       # 运行代码健康检查
+make debt-progress    # 查看整体清理进度
+make debt-summary     # 生成清理总结报告
+```
+
+#### 最佳实践优化
 ```bash
 make best-practices-plan        # 查看今天的优化任务
 make best-practices-today       # 一键开始今天的工作
@@ -115,102 +143,158 @@ make best-practices-status      # 查看当前状态
 
 ## 架构说明
 
-### 核心结构
-- **`src/api/`** - FastAPI 端点和模式
-- **`src/database/`** - SQLAlchemy 模型、迁移和连接管理
-- **`src/services/`** - 业务逻辑层
-- **`src/models/`** - 机器学习模型和预测服务
-- **`src/cache/`** - Redis 缓存层
-- **`src/monitoring/`** - 系统监控和指标
-- **`src/utils/`** - 通用工具
-- **`src/streaming/`** - 实时数据流处理（Kafka）
-- **`src/scheduler/`** - 任务调度系统
-- **`src/collectors/`** - 数据收集器
-- **`src/core/`** - 核心组件（异常处理、日志等）
-- **`src/lineage/`** - 数据血缘管理
+### 核心目录结构
+```
+src/
+├── api/              # FastAPI 路由和端点
+│   ├── app.py       # 主应用入口
+│   ├── dependencies.py # 依赖注入
+│   ├── cqrs.py      # CQRS 模式实现
+│   ├── events.py    # 事件系统
+│   └── observers.py # 观察者模式
+├── domain/           # 领域层（DDD）
+│   ├── models/      # 领域模型
+│   └── services/    # 领域服务
+├── database/         # 数据层
+│   ├── models/      # SQLAlchemy 模型
+│   ├── migrations/  # Alembic 迁移
+│   ├── repositories/ # 仓储模式
+│   └── connection*.py # 数据库连接
+├── services/         # 服务层
+│   ├── base_unified.py # 统一基础服务
+│   └── *.py         # 业务服务
+├── cache/            # 缓存层
+│   ├── redis_manager.py # Redis 管理
+│   └── decorators.py # 缓存装饰器
+├── monitoring/       # 监控系统
+│   ├── system_monitor.py
+│   ├── metrics_collector.py
+│   └── health_checker.py
+├── streaming/        # 流处理（Kafka）
+├── scheduler/        # 任务调度（Celery）
+├── core/            # 核心组件
+│   ├── exceptions.py # 异常定义
+│   ├── logger.py    # 日志系统
+│   └── di.py        # 依赖注入容器
+└── utils/           # 工具类
+```
 
-### 关键模式
-- 使用支持异步的 SQLAlchemy（asyncpg 驱动）
-- **注意**：仓库模式正在实施中（Phase 1.2）
-- 通过 FastAPI 的依赖系统进行依赖注入
-- 测试数据使用工厂模式（见 `tests/factories/`）
-- 全面使用 Pydantic 模型进行数据验证
-- 服务层继承 `BaseService`（当前存在重复的基础服务类，待统一）
-- 使用项目内置的 `KeyManager` 系统管理密钥（禁止硬编码）
-- 使用结构化日志记录（JSON 格式）
-- 支持 TestContainers 进行集成测试
+### 关键架构模式
+
+#### 设计模式
+- **工厂模式**：测试数据生成（`tests/factories/`）
+- **依赖注入**：使用内置 DI 容器（`src/core/di.py`）
+- **仓储模式**：数据访问抽象（`src/database/repositories/`）
+- **领域驱动设计**：领域模型和业务规则分离（`src/domain/`）
+- **事件驱动架构**：系统事件和观察者模式（`src/api/events.py`, `src/api/observers.py`）
+- **CQRS 模式**：命令查询责任分离（`src/api/cqrs.py`）
+
+#### 技术选型
+- **异步 SQLAlchemy**：使用 asyncpg 驱动，支持高并发
+- **统一基础服务**：所有服务继承 `BaseService`（`src/services/base_unified.py`）
+- **Pydantic 数据验证**：API 请求/响应验证
+- **KeyManager 密钥管理**：禁止硬编码密钥
+- **结构化日志**：JSON 格式日志记录
+- **TestContainers**：集成测试支持
 
 ### 当前架构状态
-- **代码质量评分**：6.2/10（目标 8.5/10）
-- **测试覆盖率**：16.51%（逐步提升中）
+- **代码质量评分**：8.5/10 ✅ 已达成最佳实践目标
+- **测试覆盖率**：16.51%（渐进式提升中）
 - **CI 覆盖率门槛**：30%（已从 20% 提升）
-- **主要问题**：
-  - 存在重复的基础服务类（`src/services/base.py` 和 `src/services/base_service.py`）
-  - 仓储模式未完全实现
-  - 领域模型待引入
-  - 设计模式使用不足（目前仅3个）
+- **架构亮点**：
+  - ✅ 统一基础服务类（`src/services/base_unified.py`）
+  - ✅ 仓储模式实现完成
+  - ✅ 领域模型引入（`src/domain/models/`）
+  - ✅ 多种设计模式应用（工厂、DI、仓储、事件等）
+  - ✅ 模块化架构，易于扩展和维护
 
 ## 测试指南
 
-### 测试组织
-- 单元测试：`tests/unit/` - 测试单个函数/类（标记为 'unit'）
-- 集成测试：`tests/integration/` - 测试模块交互（标记为 'integration'）
-- 端到端测试：`tests/e2e/` - 完整工作流测试
-- 测试夹具：`tests/factories/` - 使用工厂模式生成测试数据
-- 共享夹具：`tests/conftest.py` - pytest 配置
-- 测试标记：使用 pytest.mark 区分不同类型的测试
+### 测试组织结构
+```
+tests/
+├── unit/            # 单元测试（标记为 'unit'）
+├── integration/     # 集成测试（标记为 'integration'）
+├── e2e/            # 端到端测试（标记为 'e2e'）
+├── factories/      # 测试数据工厂
+├── conftest.py     # pytest 配置和共享夹具
+├── performance/    # 性能基准测试
+└── debt/          # 测试债务分析
+```
 
-### 测试执行
-- 始终使用 Makefile 命令进行测试（不要直接运行 pytest）
-- 开发时使用 `make test-quick` 获得快速反馈（带超时和失败限制）
-- 使用 `make coverage-fast` 生成不包含慢测试的覆盖率报告
-- 覆盖率要求：CI环境 >=20%，本地开发 >=16%（使用 coverage-local）
-- 运行单个测试：`pytest tests/unit/test_specific.py::test_function`
-- 当前项目处于技术债务改进阶段，采用渐进式提升策略（16%→20%→25%→30%）
+### 测试标记系统
+- `@pytest.mark.unit` - 单元测试
+- `@pytest.mark.integration` - 集成测试
+- `@pytest.mark.e2e` - 端到端测试
+- `@pytest.mark.slow` - 慢速测试
+- `@pytest.mark.api` - API 测试
+- `@pytest.mark.database` - 数据库测试
 
-### 测试容器
-- 对需要真实服务的集成测试使用 TestContainers
-- 运行 `make test.containers` 进行基于 Docker 的测试
+### 测试执行策略
+- **日常开发**：使用 `make test-quick` 快速反馈
+- **提交前**：运行 `make prepush` 完整验证
+- **CI 模拟**：使用 `make ci` 本地模拟
+- **覆盖率检查**：
+  - 本地开发：`make coverage-local`（16%阈值）
+  - CI 环境：`make coverage-ci`（30%阈值）
+- **容器测试**：`make test.containers` 需要 Docker 运行
 
 ## 开发工作流程
+
+### 快速开始（新开发者）
+```bash
+# 1. 克隆项目
+git clone <repository-url>
+cd FootballPrediction
+
+# 2. 一键设置环境
+make dev-setup      # 创建虚拟环境、安装依赖、加载上下文
+
+# 3. 验证环境
+make test-quick     # 运行快速测试
+make env-check      # 检查环境健康
+
+# 4. 启动服务（可选）
+make up             # 启动 Docker 服务（PostgreSQL、Redis）
+```
 
 ### 日常开发流程
 1. **开始开发前**
    ```bash
-   make dev-setup      # 一键设置开发环境
-   make context        # 加载项目上下文
+   make context        # 加载项目上下文到 AI 助手
+   make env-check      # 确认环境健康
    ```
 
 2. **开发过程中**
    ```bash
-   # 编码阶段
-   # 定期运行快速测试
-   make test-quick     # 每10-15分钟运行一次
+   # 每 10-15 分钟
+   make test-quick     # 快速测试反馈
 
    # 功能完成后
    make test-unit      # 运行单元测试
-   make coverage-local # 检查本地覆盖率
+   make coverage-local # 检查覆盖率（16%）
    ```
 
 3. **提交前检查**
    ```bash
    make fmt            # 格式化代码
    make lint           # 代码质量检查
-   make prepush        # 完整的预推送验证
+   make prepush        # 完整预推送验证
    ```
 
-4. **推送前验证**
+4. **推送前验证**（推荐）
    ```bash
-   ./scripts/ci-verify.sh      # 完整的CI验证（推荐）
+   ./scripts/ci-verify.sh  # 完整 CI 验证
    # 或
-   make ci             # 模拟CI流程
+   make ci             # 快速 CI 模拟
    ```
 
 ### 分支管理策略
-- **main**: 生产环境代码，只接受 merge request
-- **develop**: 开发主分支，功能集成分支
+- **main**: 生产环境代码，只接受 PR
+- **develop**: 开发主分支，功能集成
 - **feature/***: 功能开发分支
 - **hotfix/***: 紧急修复分支
+- **wip/***: 工作进行中分支（如技术债务清理）
 
 ### CI/CD 工作流理解
 1. **触发条件**
@@ -230,23 +314,23 @@ make best-practices-status      # 查看当前状态
    ```
 
 3. **质量门禁**
-   - 代码覆盖率 >= 20%（技术债务阶段，将逐步提升）
-   - 所有检查必须通过
+   - 代码覆盖率 >= 30%（已从 20% 提升）
+   - 所有 Ruff/MyPy 检查通过
    - 安全扫描无高危漏洞
 
 ### MLOps 工作流
 1. **模型训练流程**
    - 数据收集 → 特征工程 → 模型训练 → 模型评估
-   - 自动触发：每日8:00 UTC
+   - 自动触发：每日 8:00 UTC（通过 Celery）
    - 手动触发：`make mlops-pipeline`
 
 2. **模型部署流程**
    - 模型验证 → 创建 PR → 人工审核 → 合并部署
-   - 需要两人审核才能部署到生产环境
+   - 需要 2 人审核才能部署到生产环境
 
 3. **反馈循环**
    - 收集预测结果 → 更新模型性能 → 触发重训练
-   - 使用 `make feedback-update` 更新结果
+   - 使用 MLflow 跟踪模型版本
 
 ### 代码审查流程
 1. **创建 Pull Request**
@@ -367,10 +451,13 @@ make debt-summary            # 生成清理总结报告
 - ❌ 直接运行 pytest（必须使用 Makefile 命令）
 - ❌ 提交前不运行任何检查
 - ❌ 在 API 层直接操作数据库
+- ❌ 跳过测试覆盖率要求（除非是文档提交）
 
-## 调试和故障排除
+## 故障排除指南
 
-### 调试测试
+### 常见问题解决
+
+#### 1. 测试失败
 ```bash
 # 运行特定测试并显示详细输出
 pytest tests/unit/test_specific.py -v -s
@@ -378,41 +465,62 @@ pytest tests/unit/test_specific.py -v -s
 # 只运行失败的测试
 pytest --lf
 
-# 在测试失败时停止
+# 在第一个失败时停止
 pytest -x
 
 # 调试模式（进入 pdb）
 pytest --pdb
 ```
 
-### 常见端口冲突
+#### 2. 端口冲突
 - PostgreSQL: 5432
 - Redis: 6379
 - FastAPI: 8000
-- 如果端口被占用，检查是否有其他服务在运行
+- 检查占用：`lsof -i :5432`
 
-### 查看日志
+#### 3. 依赖问题
 ```bash
-# 开发环境日志
-tail -f logs/app.log
+# 重新安装依赖
+make clean-env
+make install
 
-# Docker 容器日志
-docker-compose logs -f app
+# 检查虚拟环境
+source .venv/bin/activate
+python --version
 ```
 
-## 环境配置和Docker
+#### 4. 数据库连接失败
+```bash
+# 启动数据库服务
+docker-compose up -d db
+
+# 检查服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs db
+```
+
+## 环境配置
 
 ### 环境变量管理
-- 开发环境：`.env.dev`（默认）
-- 测试环境：`.env.test`
-- 生产环境：`.env.prod`
-- 环境变量模板：`.env.example`
+```bash
+# 复制环境变量模板
+cp .env.example .env
 
-### Docker 服务
+# 编辑环境变量（必需）
+# DATABASE_URL=postgresql+asyncpg://...
+# REDIS_URL=redis://...
+# SECRET_KEY=your-secret-key
+
+# 检查环境变量
+make check-env
+```
+
+### Docker 服务管理
 ```bash
 # 启动所有服务
-make up                # 启动所有服务
-docker-compose up -d   # 直接使用 docker-compose
+make up
 
 # 仅启动数据库服务
 docker-compose up -d db redis
@@ -424,33 +532,22 @@ docker-compose ps
 docker-compose logs -f app
 
 # 停止服务
-make down              # 停止所有服务
+make down
 ```
 
-### 常见端口
+### 服务端口说明
 - PostgreSQL: 5432
 - Redis: 6379
 - FastAPI: 8000
 - Nginx: 80/443
 - MLflow: 5000
 
-### Docker 服务说明
-- **app**: 主应用服务（健康检查：/health）
-- **db**: PostgreSQL 15 数据库（健康检查：pg_isready）
-- **redis**: Redis 7 缓存服务
-- **mlflow**: ML 模型管理（可选）
-- **nginx**: 反向代理（生产环境）
-- **celery**: 异步任务处理（可选）
-
-## 故障排除
-
-### 常见问题
-
-- 如果测试运行缓慢，使用 `make test-quick` 或 `make coverage-fast`
-- 对于数据库相关的测试失败，确保 Docker 服务正在运行：`docker-compose up -d`
-- 如果导入失败，确保虚拟环境已激活：`source .venv/bin/activate`
-- ruff 同时处理代码检查和格式化，使用 `make fmt` 会自动运行 `ruff format` 和 `ruff check --fix`
-- 本地开发建议使用 `make coverage-local`（16%阈值）而不是 `make coverage`（20%阈值）
+### 性能优化建议
+- 测试运行缓慢？使用 `make test-quick` 或 `make coverage-fast`
+- Ruff 同时处理格式化和检查，使用 `make fmt` 一键完成
+- 本地开发使用 `make coverage-local`（16%阈值）
+- CI 环境使用 `make coverage-ci`（30%阈值）
+- 使用 `make context` 加载项目上下文到 AI 助手
 
 ### 调试技巧
 
@@ -496,54 +593,46 @@ git commit -m "feat: 添加新功能"
 ### 快速健康检查
 ```bash
 # 一键检查项目状态
-make env-check        # 环境健康
-make test-quick       # 快速测试
-make lint             # 代码质量
+make env-check                    # 环境健康
+make test-quick                   # 快速测试
+make lint                        # 代码质量
 ./scripts/quick-health-check.sh  # 5秒快速检查
 ./scripts/quality-check.sh       # 推荐的快速质量检查
 ```
 
 ## MyPy 类型检查
 
-### 当前状态
-- 正在进行 MyPy 类型注解错误修复
-- 已完成第1批错误修复（提交 7520a03）
-- 所有新代码必须包含完整的类型注解
+### 配置说明
+- 配置文件：`mypy.ini`
+- 已忽略第三方库导入（见配置文件）
+- 新代码必须包含完整的类型注解
 
-### 运行 MyPy
+### 运行类型检查
 ```bash
-mypy src/             # 检查所有源代码
-mypy src/api/         # 检查特定模块
-make lint             # 包含 MyPy 检查
+make mypy-check       # 仅运行 MyPy
+make lint             # Ruff + MyPy
+mypy src/api          # 检查特定模块
 ```
 
-### 类型注解要求
-- 所有公共函数必须有类型注解
-- 使用 Python 3.11+ 的新类型特性（如 `|` 联合类型）
+### 类型注解规范
+- 公共函数必须有类型注解
+- 使用 Python 3.11+ 联合类型：`int | str` 而非 `Union[int, str]`
 - 复杂类型使用 `typing` 模块
-- 避免 `Any` 类型，必要时添加 `# type: ignore` 注释
+- 必要时使用 `# type: ignore`
 
-## 🚨 重要架构说明
+## 重要架构信息
 
-### 需要立即关注的问题
-1. **重复的基础服务类** - `src/services/base.py` 和 `src/services/base_service.py` 需要合并
-2. **缺少仓储模式** - 数据访问直接在 Service 层，需要引入 Repository 层
-3. **缺少领域模型** - 业务逻辑散布在 Service 层，需要封装到 Domain 模型中
+### 已完成的优化
+✅ **统一基础服务类**：`src/services/base_unified.py`
+✅ **仓储模式实现**：`src/database/repositories/`
+✅ **领域模型引入**：`src/domain/models/`
+✅ **依赖注入系统**：`src/core/di.py`
+✅ **事件驱动架构**：`src/api/events.py`
+✅ **CQRS 模式**：`src/api/cqrs.py`
 
-### 优化优先级
-1. **P0 (紧急)**: 统一基础服务类，实现仓储模式
-2. **P1 (高)**: 引入领域模型，优化依赖注入
-3. **P2 (中)**: 实现更多设计模式（策略、装饰器、事件等）
-4. **P3 (低)**: 高级架构模式（CQRS、门面模式等）
-
-### 快速开始优化
-```bash
-# 查看今天的优化任务
-make best-practices-plan
-
-# 开始第一个任务（统一基础服务类）
-make best-practices-start TASK=1.1
-
-# 运行最佳实践检查
-./scripts/check_best_practices.sh
-```
+### 架构特点
+- **高度模块化**：清晰的分层架构
+- **异步优先**：全栈异步支持
+- **类型安全**：完整的 MyPy 配置
+- **测试友好**：工厂模式 + TestContainers
+- **生产就绪**：完整的监控和日志

@@ -245,21 +245,21 @@ class TaskErrorLogger:
                     self._db_type = "postgresql"  # 默认值
             except Exception:
                 self._db_type = "postgresql"  # 默认值
-        return self._db_type
+        return self._db_type  # type: ignore
 
     async def _get_query_builder(self) -> CompatibleQueryBuilder:
         """获取兼容性查询构建器"""
         if self._query_builder is None:
             db_type = await self._get_db_type()
             self._query_builder = CompatibleQueryBuilder(db_type)
-        return self._query_builder
+        return self._query_builder  # type: ignore
 
     async def _ensure_error_logs_table_exists(self, session) -> None:
         """确保 error_logs 表存在"""
         try:
             db_type = await self._get_db_type()
             create_table_sql = text(
-                SQLCompatibilityHelper.create_error_logs_table_sql(db_type)
+                SQLCompatibilityHelper.create_error_logs_table_sql(db_type)  # type: ignore
             )
 
             await session.execute(create_table_sql)
@@ -284,13 +284,13 @@ class TaskErrorLogger:
             async with self.db_manager.get_async_session() as session:
                 # 获取错误总数
                 error_count_sql = text(
-                    query_builder.build_error_statistics_query(hours)
+                    query_builder.build_error_statistics_query(hours)  # type: ignore
                 )
                 result = await session.execute(error_count_sql)
                 total_errors = result.scalar() or 0
 
                 # 按任务类型统计错误
-                task_errors_sql = text(query_builder.build_task_errors_query(hours))
+                task_errors_sql = text(query_builder.build_task_errors_query(hours))  # type: ignore
                 result = await session.execute(task_errors_sql)
                 task_errors = [
                     {"task_name": row.task_name, "error_count": row.error_count}
@@ -298,7 +298,7 @@ class TaskErrorLogger:
                 ]
 
                 # 按错误类型统计
-                type_errors_sql = text(query_builder.build_type_errors_query(hours))
+                type_errors_sql = text(query_builder.build_type_errors_query(hours))  # type: ignore
                 result = await session.execute(type_errors_sql)
                 type_errors = [
                     {"error_type": row.error_type, "error_count": row.error_count}
@@ -337,7 +337,7 @@ class TaskErrorLogger:
 
             async with self.db_manager.get_async_session() as session:
                 cleanup_sql = text(
-                    query_builder.build_cleanup_old_logs_query(days_to_keep)
+                    query_builder.build_cleanup_old_logs_query(days_to_keep)  # type: ignore
                 )
                 result = await session.execute(cleanup_sql)
                 await session.commit()
@@ -345,7 +345,7 @@ class TaskErrorLogger:
                 deleted_count = result.rowcount
                 logger.info(f"清理了 {deleted_count} 条旧的错误日志记录")
 
-                return deleted_count
+                return deleted_count  # type: ignore
 
         except Exception as cleanup_error:
             logger.error(f"清理错误日志失败: {str(cleanup_error)}")

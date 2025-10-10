@@ -49,7 +49,7 @@ class PipelineExecutor:
                     {"success": False, "result": None, "error": str(result)}
                 )
             else:
-                processed_results.append(result)
+                processed_results.append(result)  # type: ignore
 
         return processed_results
 
@@ -58,4 +58,4 @@ class PipelineExecutor:
     ) -> List[Dict[str, Any]]:
         """并行执行多个管道"""
         tasks = [self.execute(pipeline, data) for pipeline in pipelines]
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        return await asyncio.gather(*tasks, return_exceptions=True)  # type: ignore

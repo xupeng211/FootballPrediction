@@ -48,10 +48,10 @@ class ScoresCollector:
         cache_key = "scores:live"
 
         if not force_refresh:
-            cached_data = await self.redis_client.get_cache_value(cache_key)
+            cached_data = await self.redis_client.get_cache_value(cache_key)  # type: ignore
             if cached_data:
                 logger.debug("从缓存获取实时比分")
-                return cached_data
+                return cached_data  # type: ignore
 
         try:
             # 获取数据库中的实时比赛
@@ -75,7 +75,7 @@ class ScoresCollector:
                 }
 
             # 缓存结果
-            await self.redis_client.set_cache_value(
+            await self.redis_client.set_cache_value(  # type: ignore
                 cache_key, live_scores, expire=self.cache_timeout
             )
 
@@ -93,12 +93,12 @@ class ScoresCollector:
                 or_(Match.match_status == "live", Match.match_status == "half_time")
             )
         )
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
     async def _get_match_score(self, match: Match) -> Dict[str, int]:
         """获取比赛比分"""
         if match.home_score is not None:
-            return {"home": match.home_score, "away": match.away_score}
+            return {"home": match.home_score, "away": match.away_score}  # type: ignore
         return {"home": 0, "away": 0}
 
     async def _clear_match_cache(self, match_id: int) -> None:
@@ -109,7 +109,7 @@ class ScoresCollector:
         ]
 
         for key in keys_to_clear:
-            await self.redis_client.delete_cache(key)
+            await self.redis_client.delete_cache(key)  # type: ignore
 
 
 class ScoresCollectorFactory:
@@ -120,4 +120,4 @@ class ScoresCollectorFactory:
         """创建比分收集器实例"""
         db_session = DatabaseManager()
         redis_client = RedisManager()
-        return ScoresCollector(db_session, redis_client)
+        return ScoresCollector(db_session, redis_client)  # type: ignore

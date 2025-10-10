@@ -9,7 +9,7 @@ import time
 from typing import Optional, List, Dict
 
 from sqlalchemy import text
-from src.database import get_async_db_session as get_async_session
+from src.database import get_async_db_session as get_async_session  # type: ignore
 
 logger = logging.getLogger(__name__)
 

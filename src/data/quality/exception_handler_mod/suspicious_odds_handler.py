@@ -138,7 +138,8 @@ class SuspiciousOddsHandler:
             # 检查隐含概率总和
             try:
                 total_probability = sum(
-                    1 / odds for odds in [home_odds, draw_odds, away_odds]
+                    1 / odds
+                    for odds in [home_odds, draw_odds, away_odds]  # type: ignore
                 )
                 prob_range = self.config["probability_range"]
 
@@ -209,7 +210,7 @@ class SuspiciousOddsHandler:
                 suspicious_rate = (
                     stats["suspicious"] / stats["total"] if stats["total"] > 0 else 0
                 )
-                analysis["suspicious_by_bookmaker"][bookmaker] = {
+                analysis["suspicious_by_bookmaker"][bookmaker] = {  # type: ignore
                     "total": stats["total"],
                     "suspicious": stats["suspicious"],
                     "suspicious_rate": suspicious_rate,
@@ -218,7 +219,7 @@ class SuspiciousOddsHandler:
             # 识别高风险博彩商
             high_risk_bookmakers = [
                 bm
-                for bm, data in analysis["suspicious_by_bookmaker"].items()
+                for bm, data in analysis["suspicious_by_bookmaker"].items()  # type: ignore
                 if data["suspicious_rate"] > 0.1  # 可疑率超过10%
             ]
             analysis["high_risk_bookmakers"] = high_risk_bookmakers

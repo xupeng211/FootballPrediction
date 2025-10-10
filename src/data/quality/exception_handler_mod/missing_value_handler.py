@@ -100,7 +100,8 @@ class MissingValueHandler:
                 if record.get("home_score") is None:
                     # 使用历史平均比分填充
                     avg_score = await self._get_historical_average_score(
-                        "home", record.get("home_team_id")
+                        "home",
+                        record.get("home_team_id"),  # type: ignore
                     )
                     record["home_score"] = (
                         round(avg_score) if avg_score is not None else 0
@@ -108,7 +109,8 @@ class MissingValueHandler:
 
                 if record.get("away_score") is None:
                     avg_score = await self._get_historical_average_score(
-                        "away", record.get("away_team_id")
+                        "away",
+                        record.get("away_team_id"),  # type: ignore
                     )
                     record["away_score"] = (
                         round(avg_score) if avg_score is not None else 0
@@ -147,21 +149,27 @@ class MissingValueHandler:
             # 处理缺失的主胜赔率
             if record.get("home_odds") is None:
                 avg_odds = await self._get_historical_average_odds(
-                    "home_odds", match_id, bookmaker
+                    "home_odds",
+                    match_id,
+                    bookmaker,  # type: ignore
                 )
                 record["home_odds"] = avg_odds
 
             # 处理缺失的平局赔率
             if record.get("draw_odds") is None:
                 avg_odds = await self._get_historical_average_odds(
-                    "draw_odds", match_id, bookmaker
+                    "draw_odds",
+                    match_id,
+                    bookmaker,  # type: ignore
                 )
                 record["draw_odds"] = avg_odds
 
             # 处理缺失的客胜赔率
             if record.get("away_odds") is None:
                 avg_odds = await self._get_historical_average_odds(
-                    "away_odds", match_id, bookmaker
+                    "away_odds",
+                    match_id,
+                    bookmaker,  # type: ignore
                 )
                 record["away_odds"] = avg_odds
 

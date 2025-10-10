@@ -365,7 +365,7 @@ class TTLCache:
         entry = self._cache.pop(key, None)
         if entry:
             # 从过期堆中移除（标记为已删除）
-            entry.key = None
+            entry.key = None  # type: ignore
 
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""

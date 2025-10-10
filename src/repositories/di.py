@@ -11,7 +11,7 @@ from typing import AsyncGenerator, Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_async_session
+from ..database.connection_mod.sessions import get_async_session
 from .base import Repository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import UserRepository, ReadOnlyUserRepository
@@ -32,7 +32,7 @@ async def get_prediction_repository(
 ) -> PredictionRepository:
     """获取预测仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_prediction_repository(session, read_only=False)
+    return provider.get_prediction_repository(session, read_only=False)  # type: ignore
 
 
 async def get_read_only_prediction_repository(
@@ -40,7 +40,7 @@ async def get_read_only_prediction_repository(
 ) -> ReadOnlyPredictionRepository:
     """获取只读预测仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_prediction_repository(session, read_only=True)
+    return provider.get_prediction_repository(session, read_only=True)  # type: ignore
 
 
 # 用户仓储依赖
@@ -49,7 +49,7 @@ async def get_user_repository(
 ) -> UserRepository:
     """获取用户仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_user_repository(session, read_only=False)
+    return provider.get_user_repository(session, read_only=False)  # type: ignore
 
 
 async def get_read_only_user_repository(
@@ -57,7 +57,7 @@ async def get_read_only_user_repository(
 ) -> ReadOnlyUserRepository:
     """获取只读用户仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_user_repository(session, read_only=True)
+    return provider.get_user_repository(session, read_only=True)  # type: ignore
 
 
 # 比赛仓储依赖
@@ -66,7 +66,7 @@ async def get_match_repository(
 ) -> MatchRepository:
     """获取比赛仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_match_repository(session, read_only=False)
+    return provider.get_match_repository(session, read_only=False)  # type: ignore
 
 
 async def get_read_only_match_repository(
@@ -74,7 +74,7 @@ async def get_read_only_match_repository(
 ) -> ReadOnlyMatchRepository:
     """获取只读比赛仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_match_repository(session, read_only=True)
+    return provider.get_match_repository(session, read_only=True)  # type: ignore
 
 
 # 类型化依赖别名（更好的IDE支持和类型检查）

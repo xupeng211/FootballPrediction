@@ -78,7 +78,7 @@ class DatabaseRole(str, Enum):
             },
         }
 
-        return permissions.get(role, {})
+        return permissions.get(role, {})  # type: ignore
 
     @classmethod
     def can_perform(cls, role: str, action: str) -> bool:

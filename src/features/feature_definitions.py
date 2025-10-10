@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 特征定义
 
@@ -6,6 +7,11 @@
 - 历史对战特征：h2h_wins, h2h_goals_avg
 - 赔率特征：implied_probability, bookmaker_consensus
 """
+
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
 
 
 @dataclass

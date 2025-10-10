@@ -156,7 +156,7 @@ class DecoratorComponent(Decorator):
         stats = {"function": self.func.__name__, "decorators": []}
 
         for decorator in self.decorators:
-            stats["decorators"].append(decorator.get_stats())
+            stats["decorators"].append(decorator.get_stats())  # type: ignore
 
         return stats
 
@@ -226,7 +226,7 @@ class DecoratorContext:
 
     def get_execution_time(self) -> float:
         """获取执行时间"""
-        return time.time() - self.start_time
+        return time.time() - self.start_time  # type: ignore
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""

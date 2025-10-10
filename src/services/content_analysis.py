@@ -6,7 +6,27 @@
 
 from .base_unified import SimpleService
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+
+
+class ContentType(Enum):
+    """内容类型枚举"""
+
+    TEXT = "text"
+    IMAGE = "image"
+    VIDEO = "video"
+    AUDIO = "audio"
+    DOCUMENT = "document"
+
+
+class UserRole(Enum):
+    """用户角色枚举"""
+
+    ADMIN = "admin"
+    USER = "user"
+    GUEST = "guest"
+    MODERATOR = "moderator"
 
 
 class Content:
@@ -16,6 +36,14 @@ class Content:
         self.id = content_id
         self.content_type = content_type
         self.data = data
+
+
+class UserProfile:
+    """用户配置文件类"""
+
+    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
+        self.user_id = user_id
+        self.preferences = preferences or {}
 
 
 class AnalysisResult:
@@ -210,7 +238,7 @@ class ContentAnalysisService(SimpleService):
                 scores[category] = score
 
         if scores:
-            best_category = max(scores, key=scores.get)
+            best_category = max(scores, key=scores.get)  # type: ignore
             confidence = min(scores[best_category] / 5, 1.0)  # 归一化到0-1
             return {
                 "category": best_category,

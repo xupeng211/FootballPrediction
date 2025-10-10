@@ -41,7 +41,7 @@ async def get_match_prediction_history_handler(
     try:
         # 验证比赛存在
         match_query = select(Match).where(Match.id == match_id)
-        match_result = await session.execute(match_query)
+        match_result = await session.execute(match_query)  # type: ignore
         match = match_result.scalar_one_or_none()
 
         if not match:
@@ -56,7 +56,7 @@ async def get_match_prediction_history_handler(
             .limit(limit_value)
         )
 
-        history_result = await session.execute(history_query)
+        history_result = await session.execute(history_query)  # type: ignore
         predictions = history_result.scalars().all()
 
         prediction_list = []
@@ -162,7 +162,7 @@ async def get_recent_predictions_handler(
             .limit(limit_value)
         )
 
-        result = await session.execute(recent_query)
+        result = await session.execute(recent_query)  # type: ignore
         predictions = result.fetchall()
 
         prediction_list = []

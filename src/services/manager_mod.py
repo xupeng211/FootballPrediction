@@ -6,7 +6,7 @@
 """
 
 # 从新的模块化实现重新导出
-from .manager import (
+from .manager import (  # type: ignore
     ServiceManager,
     ServiceRegistry,
     ServiceFactory,

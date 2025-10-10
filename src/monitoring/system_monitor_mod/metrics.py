@@ -15,24 +15,24 @@ try:
     )
 except ImportError:
     # 提供mock实现用于测试环境
-    REGISTRY = None
+    REGISTRY = None  # type: ignore
 
-    class CollectorRegistry:
+    class CollectorRegistry:  # type: ignore
         pass
 
-    class Counter:
+    class Counter:  # type: ignore
         def __init__(self, *args, **kwargs):
             self.labels = lambda *args, **kwargs: self
             self.inc = lambda: None
 
-    class Gauge:
+    class Gauge:  # type: ignore
         def __init__(self, *args, **kwargs):
             self.labels = lambda *args, **kwargs: self
             self.set = lambda x: None
             self.inc = lambda: None
             self.dec = lambda: None
 
-    class Histogram:
+    class Histogram:  # type: ignore
         def __init__(self, *args, **kwargs):
             self.labels = lambda *args, **kwargs: self
             self.observe = lambda x: None
@@ -175,7 +175,7 @@ class PrometheusMetrics:
             return Counter(name, description, labels or [], registry=self.registry)
         except ValueError:
             logger.warning(f"Failed to create counter {name}, using mock")
-            mock = Counter()
+            mock = Counter()  # type: ignore
             return mock
 
     def _create_gauge(
@@ -196,7 +196,7 @@ class PrometheusMetrics:
             return Gauge(name, description, labels or [], registry=self.registry)
         except ValueError:
             logger.warning(f"Failed to create gauge {name}, using mock")
-            mock = Gauge()
+            mock = Gauge()  # type: ignore
             return mock
 
     def _create_histogram(
@@ -217,7 +217,7 @@ class PrometheusMetrics:
             return Histogram(name, description, labels or [], registry=self.registry)
         except ValueError:
             logger.warning(f"Failed to create histogram {name}, using mock")
-            mock = Histogram()
+            mock = Histogram()  # type: ignore
             return mock
 
     def get_all_metrics(self) -> Dict[str, Any]:

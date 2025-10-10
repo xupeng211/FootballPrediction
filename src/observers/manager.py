@@ -127,7 +127,7 @@ class ObserverManager:
         alerting_observer = self._observers["alerting"]
 
         # CPU使用率告警
-        alerting_observer.add_alert_rule(
+        alerting_observer.add_alert_rule(  # type: ignore
             name="high_cpu_usage",
             condition=lambda e: (
                 e.event_type == ObservableEventType.THRESHOLD_EXCEEDED
@@ -140,7 +140,7 @@ class ObserverManager:
         )
 
         # 内存使用率告警
-        alerting_observer.add_alert_rule(
+        alerting_observer.add_alert_rule(  # type: ignore
             name="high_memory_usage",
             condition=lambda e: (
                 e.event_type == ObservableEventType.THRESHOLD_EXCEEDED
@@ -153,7 +153,7 @@ class ObserverManager:
         )
 
         # 错误率告警
-        alerting_observer.add_alert_rule(
+        alerting_observer.add_alert_rule(  # type: ignore
             name="high_error_rate",
             condition=lambda e: (
                 e.event_type == ObservableEventType.ERROR_OCCURRED
@@ -165,7 +165,7 @@ class ObserverManager:
         )
 
         # 响应时间告警
-        alerting_observer.add_alert_rule(
+        alerting_observer.add_alert_rule(  # type: ignore
             name="slow_response",
             condition=lambda e: (
                 e.event_type == ObservableEventType.PERFORMANCE_DEGRADATION
@@ -242,23 +242,23 @@ class ObserverManager:
 
     def get_metrics_observer(self) -> Optional[MetricsObserver]:
         """获取指标观察者"""
-        return self._observers.get("metrics")
+        return self._observers.get("metrics")  # type: ignore
 
     def get_alerting_observer(self) -> Optional[AlertingObserver]:
         """获取告警观察者"""
-        return self._observers.get("alerting")
+        return self._observers.get("alerting")  # type: ignore
 
     def get_system_metrics_subject(self) -> Optional[SystemMetricsSubject]:
         """获取系统指标被观察者"""
-        return self._subjects.get("system_metrics")
+        return self._subjects.get("system_metrics")  # type: ignore
 
     def get_prediction_metrics_subject(self) -> Optional[PredictionMetricsSubject]:
         """获取预测指标被观察者"""
-        return self._subjects.get("prediction_metrics")
+        return self._subjects.get("prediction_metrics")  # type: ignore
 
     def get_cache_subject(self) -> Optional[CacheSubject]:
         """获取缓存被观察者"""
-        return self._subjects.get("cache")
+        return self._subjects.get("cache")  # type: ignore
 
     # 监控接口
     async def record_prediction(

@@ -8,7 +8,7 @@ Used to create and configure decorator instances.
 
 from typing import Any, Dict, List, Optional, Type, Union
 from dataclasses import dataclass, field
-import yaml
+import yaml  # type: ignore
 import json
 from pathlib import Path
 

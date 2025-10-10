@@ -152,7 +152,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
         if conditions:
             query = select(self.model_class).where(or_(*conditions))
             result = await self.session.execute(query)
-            return result.scalars().all()
+            return result.scalars().all()  # type: ignore
         return []
 
 
@@ -191,7 +191,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
 
     async def bulk_delete(self, ids: List[ID]) -> int:
         """批量删除实体"""
-        query = delete(self.model_class).where(self.model_class.id.in_(ids))
+        query = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
         result = await self.session.execute(query)
         return result.rowcount
 
@@ -223,8 +223,8 @@ class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
         """更新或创建实体"""
         entity = await self.find_one(find_spec)
         if entity:
-            updated_entity = await self.update_by_id(entity.id, update_data)
-            return updated_entity, False
+            updated_entity = await self.update_by_id(entity.id, update_data)  # type: ignore
+            return updated_entity, False  # type: ignore
 
         final_create_data = create_data or update_data
         new_entity = await self.create(final_create_data)

@@ -11,10 +11,10 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ............src.services.processing.processors.features import aggregator
-from ............src.services.processing.processors.features import calculator
-from ............src.services.processing.processors.features import processor
-from ............src.services.processing.processors.features import validator
+from ............src.services.processing.processors.features import aggregator  # type: ignore
+from ............src.services.processing.processors.features import calculator  # type: ignore
+from ............src.services.processing.processors.features import processor  # type: ignore
+from ............src.services.processing.processors.features import validator  # type: ignore
 
 warnings.warn(
     "直接从 features_processor 导入已弃用。"

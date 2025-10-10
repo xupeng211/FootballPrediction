@@ -21,14 +21,14 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # 创建空的替代类
-    class CollectorRegistry:
+    class CollectorRegistry:  # type: ignore
         def __init__(self):
             self._metrics = []
 
         def register(self, metric):
             self._metrics.append(metric)
 
-    def generate_latest(registry):
+    def generate_latest(registry):  # type: ignore
         return b"# Prometheus metrics not available"
 
     class _MockMetric:
@@ -65,9 +65,9 @@ except ImportError:
             return func
 
     # 创建空的指标类
-    Counter = _MockMetric
-    Histogram = _MockMetric
-    Gauge = _MockMetric
+    Counter = _MockMetric  # type: ignore
+    Histogram = _MockMetric  # type: ignore
+    Gauge = _MockMetric  # type: ignore
 
 
 class PrometheusMetricsManager:

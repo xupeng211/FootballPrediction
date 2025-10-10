@@ -51,7 +51,7 @@ class EventBus:
             for event_type, handlers in self._subscribers.items():
                 for handler in handlers:
                     if not handler.is_subscribed_to(event_type):
-                        queue = asyncio.Queue()
+                        queue: Any = asyncio.Queue()
                         self._queues[event_type] = queue
                         handler.add_subscription(event_type, queue)
 
@@ -123,7 +123,7 @@ class EventBus:
 
                 # 如果总线已经在运行，立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
-                    queue = asyncio.Queue()
+                    queue: Any = asyncio.Queue()
                     self._queues[event_type] = queue
                     handler.add_subscription(event_type, queue)
 
@@ -258,7 +258,7 @@ class EventBus:
                     await handler.handle(event)
                 else:
                     loop = asyncio.get_event_loop()
-                    await loop.run_in_executor(self._executor, handler.handle, event)
+                    await loop.run_in_executor(self._executor, handler.handle, event)  # type: ignore
             else:
                 await handler.handle(event)
 
@@ -382,14 +382,14 @@ def event_handler(event_types: List[str]):
             for event_type in event_types:
                 asyncio.create_task(bus.subscribe(event_type, self))
 
-        cls.__init__ = __init__
-        cls._handled_events = event_types
+        cls.__init__ = __init__  # type: ignore
+        cls._handled_events = event_types  # type: ignore
 
         # 重写get_handled_events方法
         def get_handled_events(self) -> list[str]:
             return event_types
 
-        cls.get_handled_events = get_handled_events
+        cls.get_handled_events = get_handled_events  # type: ignore
 
         return cls
 

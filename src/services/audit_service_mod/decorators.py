@@ -14,15 +14,15 @@ from .context import AuditContext
 from .service import AuditService
 
 # 上下文变量，用于在请求处理过程中传递审计信息
-audit_context: ContextVar[AuditContext] = ContextVar("audit_context", default=None)
+audit_context: ContextVar[AuditContext] = ContextVar("audit_context", default=None)  # type: ignore
 
 F = TypeVar("F", bound=Callable[..., Any])
 
 
 def audit_action(
     action: str,
-    resource_type: Optional[str] = None,
-    description: Optional[str] = None,
+    resource_type: Optional[str] = None,  # type: ignore
+    description: Optional[str] = None,  # type: ignore
     severity: str = "medium",
 ):
     """
@@ -155,8 +155,8 @@ def audit_action(
 
 
 def audit_api_operation(
-    resource_type: Optional[str] = None,
-    description: Optional[str] = None,
+    resource_type: Optional[str] = None,  # type: ignore
+    description: Optional[str] = None,  # type: ignore
     severity: str = "medium",
 ):
     """
@@ -182,8 +182,8 @@ def audit_api_operation(
 
 
 def audit_database_operation(
-    table_name: Optional[str] = None,
-    description: Optional[str] = None,
+    table_name: Optional[str] = None,  # type: ignore
+    description: Optional[str] = None,  # type: ignore
     severity: str = "medium",
 ):
     """
@@ -200,7 +200,7 @@ def audit_database_operation(
     Returns:
         装饰后的函数 / Decorated function
     """
-    return audit_action(
+    return audit_action(  # type: ignore
         action="database_operation",
         resource_type="database",
         description=description,
@@ -210,7 +210,7 @@ def audit_database_operation(
 
 
 def audit_sensitive_operation(
-    description: Optional[str] = None,
+    description: Optional[str] = None,  # type: ignore
     severity: str = "high",
 ):
     """
@@ -234,7 +234,7 @@ def audit_sensitive_operation(
     )
 
 
-def _extract_context_from_args(args: tuple, kwargs: dict) -> Optional[AuditContext]:
+def _extract_context_from_args(args: tuple, kwargs: dict) -> Optional[AuditContext]:  # type: ignore
     """
     从参数中提取审计上下文 / Extract Audit Context from Arguments
 
@@ -268,7 +268,7 @@ def _extract_context_from_args(args: tuple, kwargs: dict) -> Optional[AuditConte
     return None
 
 
-def _extract_resource_id(args: tuple, kwargs: dict) -> Optional[str]:
+def _extract_resource_id(args: tuple, kwargs: dict) -> Optional[str]:  # type: ignore
     """
     从参数中提取资源ID / Extract Resource ID from Arguments
 

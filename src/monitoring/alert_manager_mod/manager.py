@@ -375,12 +375,12 @@ class AlertManager:
         ]
 
         # 按严重程度统计
-        severity_counts = defaultdict(int)
+        severity_counts: Any = defaultdict(int)
         for alert in active_alerts:
             severity_counts[alert.severity.value] += 1
 
         # 按来源统计
-        source_counts = defaultdict(int)
+        source_counts: Any = defaultdict(int)
         for alert in active_alerts:
             source_counts[alert.source] += 1
 

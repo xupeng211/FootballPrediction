@@ -287,8 +287,8 @@ class StatisticsUtils:
             iqr = q3 - q1 if q1 and q3 else 0
 
             if iqr > 0:
-                lower_bound = q1 - multiplier * iqr
-                upper_bound = q3 + multiplier * iqr
+                lower_bound = q1 - multiplier * iqr  # type: ignore
+                upper_bound = q3 + multiplier * iqr  # type: ignore
 
                 for i, value in enumerate(data_list):
                     if value < lower_bound or value > upper_bound:

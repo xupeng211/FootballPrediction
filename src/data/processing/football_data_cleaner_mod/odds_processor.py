@@ -126,7 +126,7 @@ class OddsProcessor:
             total_prob = sum(1.0 / outcome["price"] for outcome in outcomes)
 
             # 总概率应该在95%-120%之间（考虑博彩公司抽水）
-            return 0.95 <= total_prob <= 1.20
+            return 0.95 <= total_prob <= 1.20  # type: ignore
 
         except (KeyError, ZeroDivisionError, TypeError):
             return False

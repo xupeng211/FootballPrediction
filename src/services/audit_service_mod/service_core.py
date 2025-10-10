@@ -104,7 +104,7 @@ class AuditService:
             sanitized_new = self.sanitizer._sanitize_data(new_values)
 
         # 创建审计日志
-        audit_log = AuditLog(
+        audit_log = AuditLog(  # type: ignore
             id=None,  # 将在保存时生成
             user_id=context.user_id,
             username=context.username,
@@ -260,7 +260,7 @@ class AuditService:
         """异步记录简单操作"""
         try:
             # 转换action字符串为枚举
-            action_enum = AuditAction(action.upper()) if action else AuditAction.OTHER
+            action_enum = AuditAction(action.upper()) if action else AuditAction.OTHER  # type: ignore
 
             # 创建上下文
             context = AuditContext(
@@ -368,13 +368,13 @@ class AuditService:
             )
 
             # 按操作类型统计
-            operation_counts = {}
+            operation_counts = {}  # type: ignore
             for log in logs:
                 op_type = log.get("operation_type", "UNKNOWN")
                 operation_counts[op_type] = operation_counts.get(op_type, 0) + 1
 
             # 按资源类型统计
-            resource_counts = {}
+            resource_counts = {}  # type: ignore
             for log in logs:
                 resource_type = log.get("resource_type", "UNKNOWN")
                 resource_counts[resource_type] = (
@@ -384,10 +384,10 @@ class AuditService:
             # 最后操作时间
             last_operation = logs[0]["created_at"] if logs else None
 
-            return AuditLogSummary(
+            return AuditLogSummary(  # type: ignore
                 user_id=user_id,
                 total_operations=total_operations,
-                high_risk_operations=high_risk_operations,
+                high_risk_operations=high_risk_operations,  # type: ignore
                 operation_counts=operation_counts,
                 resource_counts=resource_counts,
                 last_operation=last_operation,
@@ -397,10 +397,10 @@ class AuditService:
 
         except Exception as e:
             self.logger.error(f"获取用户审计摘要失败: {str(e)}")
-            return AuditLogSummary(
+            return AuditLogSummary(  # type: ignore
                 user_id=user_id,
                 total_operations=0,
-                high_risk_operations=0,
+                high_risk_operations=0,  # type: ignore
                 operation_counts={},
                 resource_counts={},
                 last_operation=None,

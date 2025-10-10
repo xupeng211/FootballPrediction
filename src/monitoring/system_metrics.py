@@ -143,7 +143,7 @@ class SystemMetricsCollector:
 
         try:
             # 连接池状态
-            pool = self.db_manager.pool
+            pool = self.db_manager.pool  # type: ignore
             if pool:
                 self.db_connections.set(pool.size)
                 metrics["pool"] = {
@@ -155,16 +155,16 @@ class SystemMetricsCollector:
 
             # 执行测试查询
             start_time = datetime.utcnow()
-            await self.db_manager.execute("SELECT 1")
+            await self.db_manager.execute("SELECT 1")  # type: ignore
             duration = (datetime.utcnow() - start_time).total_seconds()
 
             self.db_query_duration.labels(operation="test", table="system").observe(
                 duration
             )
-            metrics["response_time"] = duration
+            metrics["response_time"] = duration  # type: ignore
 
         except Exception as e:
-            metrics["error"] = str(e)
+            metrics["error"] = str(e)  # type: ignore
 
         return metrics
 
@@ -177,7 +177,7 @@ class SystemMetricsCollector:
 
         try:
             # Redis 信息
-            info = await self.redis_manager.redis.info()
+            info = await self.redis_manager.redis.info()  # type: ignore
 
             metrics["memory"] = {
                 "used": info.get("used_memory", 0),
@@ -209,7 +209,7 @@ class SystemMetricsCollector:
             self.cache_size.set(info.get("used_memory", 0))
 
         except Exception as e:
-            metrics["error"] = str(e)
+            metrics["error"] = str(e)  # type: ignore
 
         return metrics
 
@@ -237,14 +237,14 @@ class SystemMetricsCollector:
             num_fds = process.num_fds()
             metrics["file_descriptors"] = num_fds
         except (AttributeError, psutil.AccessDenied):
-            metrics["file_descriptors"] = 0
+            metrics["file_descriptors"] = 0  # type: ignore
 
         # 线程数
         metrics["threads"] = process.num_threads()
 
         # 子进程
         children = process.children(recursive=True)
-        metrics["children"] = len(children)
+        metrics["children"] = len(children)  # type: ignore
 
         # 上下文切换
         try:

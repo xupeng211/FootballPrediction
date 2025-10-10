@@ -218,7 +218,7 @@ class FootballFeatureStore:
             df[timestamp_column] = pd.to_datetime(df[timestamp_column])
 
             # 写入特征数据
-            self._store.push(
+            self._store.push(  # type: ignore
                 df,
                 feature_view_name,
                 feature_view_name,
@@ -420,10 +420,10 @@ class FootballFeatureStore:
                         }
                     )
 
-            return features_list if isinstance(features_list, dict) else {}
+            return features_list if isinstance(features_list, dict) else {}  # type: ignore
         except Exception as e:
             self.logger.error(f"列出特征失败: {str(e)}")
-            return [] if isinstance([], dict) else {}
+            return [] if isinstance([], dict) else {}  # type: ignore
 
     def cleanup_old_features(self, older_than_days: int = 30) -> None:
         """
@@ -458,7 +458,7 @@ def get_feature_store() -> FootballFeatureStore:
     if _feature_store is None:
         _feature_store = FootballFeatureStore()
         _feature_store.initialize()
-    return _feature_store if isinstance(_feature_store, dict) else {}
+    return _feature_store if isinstance(_feature_store, dict) else {}  # type: ignore
 
 
 def initialize_feature_store(
@@ -488,4 +488,4 @@ def initialize_feature_store(
     )
     _feature_store.initialize()
     _feature_store.apply_features()
-    return _feature_store if isinstance(_feature_store, dict) else {}
+    return _feature_store if isinstance(_feature_store, dict) else {}  # type: ignore

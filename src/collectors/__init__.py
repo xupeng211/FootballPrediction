@@ -6,7 +6,7 @@
 from typing import cast, Any, Optional, Union
 
 from .fixtures_collector import FixturesCollector, FixturesCollectorFactory
-from .odds_collector import OddsCollector, OddsCollectorFactory
+from .odds_collector import OddsCollector, OddsCollectorFactory  # type: ignore
 from .scores_collector import ScoresCollector, ScoresCollectorFactory
 
 __all__ = [

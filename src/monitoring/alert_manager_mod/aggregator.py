@@ -178,7 +178,7 @@ class AlertAggregator:
             if key in self.active_groups and alerts
         }
 
-    def get_aggregation_statistics(self) -> Dict[str, any]:
+    def get_aggregation_statistics(self) -> Dict[str, any]:  # type: ignore
         """
         获取聚合统计信息
 

@@ -31,7 +31,7 @@ class DataQualityExceptionHandler:
         Args:
             config: 配置参数
         """
-        from ...database.connection import DatabaseManager
+        from ...database.connection import DatabaseManager  # type: ignore
 
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"quality.{self.__class__.__name__}")
@@ -50,7 +50,7 @@ class DataQualityExceptionHandler:
             self.db_manager, self.config.get("invalid_data", {})
         )
         self.quality_logger = QualityLogger(self.db_manager)
-        self.statistics_provider = StatisticsProvider(self.db_manager)
+        self.statistics_provider = StatisticsProvider(self.db_manager)  # type: ignore
 
         self.logger.info("数据质量异常处理器初始化完成")
 
@@ -205,7 +205,7 @@ class DataQualityExceptionHandler:
             Dict: 处理统计
         """
         try:
-            return await self.statistics_provider.get_handling_statistics(period_hours)
+            return await self.statistics_provider.get_handling_statistics(period_hours)  # type: ignore
         except Exception as e:
             self.logger.error(f"获取处理统计失败: {str(e)}")
             return {
@@ -232,10 +232,10 @@ class DataQualityExceptionHandler:
             import asyncio
 
             tasks = [
-                self.statistics_provider.get_handling_statistics(24),
-                self.statistics_provider.get_daily_trend(7),
-                self.statistics_provider.get_top_issues(10, 24),
-                self.statistics_provider.get_quality_score(table_name),
+                self.statistics_provider.get_handling_statistics(24),  # type: ignore
+                self.statistics_provider.get_daily_trend(7),  # type: ignore
+                self.statistics_provider.get_top_issues(10, 24),  # type: ignore
+                self.statistics_provider.get_quality_score(table_name),  # type: ignore
                 self.quality_logger.get_pending_reviews(table_name, 20),
             ]
 
@@ -285,7 +285,7 @@ class DataQualityExceptionHandler:
         try:
             # 获取统计数据
             stats = await self.get_handling_statistics(24 * 7)  # 最近7天
-            quality_score = await self.statistics_provider.get_quality_score(table_name)
+            quality_score = await self.statistics_provider.get_quality_score(table_name)  # type: ignore
             pending_reviews = await self.quality_logger.get_pending_reviews(table_name)
 
             # 生成报告

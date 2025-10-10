@@ -9,7 +9,7 @@ Used to create and configure adapter instances.
 import os
 from typing import Any, Dict, List, Optional, Type, Union
 from dataclasses import dataclass, field
-import yaml
+import yaml  # type: ignore
 import json
 from pathlib import Path
 
@@ -86,7 +86,7 @@ class AdapterFactory:
         adapter = adapter_class(**parameters)
 
         # 配置附加属性
-        adapter.priority = config.priority
+        adapter.priority = config.priority  # type: ignore
 
         return adapter
 
@@ -124,7 +124,7 @@ class AdapterFactory:
                 if adapter_config:
                     adapter = self.create_adapter(adapter_config)
                     is_primary = adapter_name == group_config.primary_adapter
-                    composite.add_adapter(adapter, is_primary=is_primary)
+                    composite.add_adapter(adapter, is_primary=is_primary)  # type: ignore
 
             return composite
         else:

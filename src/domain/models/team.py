@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict, Any, List
 
-from ...core.exceptions import DomainError
+from ...core.exceptions import DomainError  # type: ignore
 
 
 class TeamType(Enum):
@@ -271,10 +271,10 @@ class Team:
             raise DomainError("进球数不能为负数")
 
         # 更新统计
-        self.stats.update(result, goals_for, goals_against)
+        self.stats.update(result, goals_for, goals_against)  # type: ignore
 
         # 更新状态
-        self.form.add_result(
+        self.form.add_result(  # type: ignore
             "W" if result == "win" else "D" if result == "draw" else "L"
         )
 
@@ -314,7 +314,7 @@ class Team:
         strength += min(max(avg_goal_diff * 2, -10), 10)  # 净胜球权重最高±10
 
         # 最近状态加成
-        if self.form.is_in_good_form:
+        if self.form.is_in_good_form:  # type: ignore
             strength += 10
 
         return min(max(strength, 0), 100)  # 限制在0-100

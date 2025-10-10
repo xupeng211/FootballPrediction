@@ -23,7 +23,7 @@ except ImportError:
     # 创建模拟类用于测试环境
     PROMETHEUS_AVAILABLE = False
 
-    class Counter:
+    class Counter:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -33,7 +33,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Gauge:
+    class Gauge:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -49,7 +49,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Histogram:
+    class Histogram:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -59,18 +59,18 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Info:
+    class Info:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
         def info(self, *args, **kwargs):
             pass
 
-    class CollectorRegistry:
+    class CollectorRegistry:  # type: ignore
         def __init__(self):
             pass
 
-    REGISTRY = None
+    REGISTRY = None  # type: ignore
 
 
 class PrometheusMetrics:

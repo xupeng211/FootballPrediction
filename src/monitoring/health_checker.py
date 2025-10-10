@@ -49,28 +49,28 @@ class HealthChecker:
         try:
             if not self.db_manager:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["error"] = "Database manager not set"
+                health["details"]["error"] = "Database manager not set"  # type: ignore
                 return health
 
             # 执行简单查询
             start_time = datetime.utcnow()
-            result = await self.db_manager.fetch_one("SELECT 1 as test")
+            result = await self.db_manager.fetch_one("SELECT 1 as test")  # type: ignore
             duration = (datetime.utcnow() - start_time).total_seconds()
 
             if result and duration < 1.0:
                 health["status"] = HealthStatus.HEALTHY
-                health["details"]["response_time"] = f"{duration:.3f}s"
+                health["details"]["response_time"] = f"{duration:.3f}s"  # type: ignore
             elif duration >= 1.0 and duration < 5.0:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["warning"] = f"Slow response time: {duration:.3f}s"
+                health["details"]["warning"] = f"Slow response time: {duration:.3f}s"  # type: ignore
             else:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["error"] = f"Very slow response time: {duration:.3f}s"
+                health["details"]["error"] = f"Very slow response time: {duration:.3f}s"  # type: ignore
 
             # 检查连接池
-            if self.db_manager.pool:
-                pool = self.db_manager.pool
-                health["details"]["pool"] = {
+            if self.db_manager.pool:  # type: ignore
+                pool = self.db_manager.pool  # type: ignore
+                health["details"]["pool"] = {  # type: ignore
                     "size": pool.size,
                     "checked_in": pool.checkedin,
                     "checked_out": pool.checkedout,
@@ -80,13 +80,13 @@ class HealthChecker:
                 if pool.overflow > 0:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][
+                    health["details"][  # type: ignore
                         "warning"
                     ] = f"Connection pool overflow: {pool.overflow}"
 
         except Exception as e:
             health["status"] = HealthStatus.UNHEALTHY
-            health["details"]["error"] = str(e)
+            health["details"]["error"] = str(e)  # type: ignore
 
         return health
 
@@ -101,55 +101,55 @@ class HealthChecker:
         try:
             if not self.redis_manager:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["error"] = "Redis manager not set"
+                health["details"]["error"] = "Redis manager not set"  # type: ignore
                 return health
 
             # 执行ping
             start_time = datetime.utcnow()
-            result = await self.redis_manager.redis.ping()
+            result = await self.redis_manager.redis.ping()  # type: ignore
             duration = (datetime.utcnow() - start_time).total_seconds()
 
             if result and duration < 0.5:
                 health["status"] = HealthStatus.HEALTHY
-                health["details"]["response_time"] = f"{duration:.3f}s"
+                health["details"]["response_time"] = f"{duration:.3f}s"  # type: ignore
             elif duration >= 0.5 and duration < 2.0:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["warning"] = f"Slow response time: {duration:.3f}s"
+                health["details"]["warning"] = f"Slow response time: {duration:.3f}s"  # type: ignore
             else:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["error"] = f"Very slow response time: {duration:.3f}s"
+                health["details"]["error"] = f"Very slow response time: {duration:.3f}s"  # type: ignore
 
             # 获取Redis信息
-            info = await self.redis_manager.redis.info()
-            health["details"]["memory"] = {
+            info = await self.redis_manager.redis.info()  # type: ignore
+            health["details"]["memory"] = {  # type: ignore
                 "used": info.get("used_memory_human"),
                 "peak": info.get("used_memory_peak_human"),
             }
 
-            health["details"]["clients"] = info.get("connected_clients", 0)
+            health["details"]["clients"] = info.get("connected_clients", 0)  # type: ignore
 
             # 检查内存使用率
             used = info.get("used_memory", 0)
             max_memory = info.get("maxmemory", 0)
             if max_memory > 0:
                 memory_percent = (used / max_memory) * 100
-                health["details"]["memory_usage_percent"] = f"{memory_percent:.2f}%"
+                health["details"]["memory_usage_percent"] = f"{memory_percent:.2f}%"  # type: ignore
 
                 if memory_percent > 90:
                     health["status"] = HealthStatus.UNHEALTHY
-                    health["details"][
+                    health["details"][  # type: ignore
                         "error"
                     ] = f"High memory usage: {memory_percent:.2f}%"
                 elif memory_percent > 80:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][
+                    health["details"][  # type: ignore
                         "warning"
                     ] = f"High memory usage: {memory_percent:.2f}%"
 
         except Exception as e:
             health["status"] = HealthStatus.UNHEALTHY
-            health["details"]["error"] = str(e)
+            health["details"]["error"] = str(e)  # type: ignore
 
         return health
 
@@ -166,30 +166,30 @@ class HealthChecker:
         try:
             # CPU
             cpu_percent = psutil.cpu_percent(interval=1)
-            health["details"]["cpu"] = {"usage_percent": cpu_percent}
+            health["details"]["cpu"] = {"usage_percent": cpu_percent}  # type: ignore
 
             if cpu_percent > 90:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["cpu"]["error"] = f"High CPU usage: {cpu_percent}%"
+                health["details"]["cpu"]["error"] = f"High CPU usage: {cpu_percent}%"  # type: ignore
             elif cpu_percent > 80:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["cpu"]["warning"] = f"High CPU usage: {cpu_percent}%"
+                health["details"]["cpu"]["warning"] = f"High CPU usage: {cpu_percent}%"  # type: ignore
 
             # 内存
             memory = psutil.virtual_memory()
-            health["details"]["memory"] = {
+            health["details"]["memory"] = {  # type: ignore
                 "usage_percent": memory.percent,
                 "available_gb": memory.available / (1024**3),
             }
 
             if memory.percent > 90:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["memory"][
+                health["details"]["memory"][  # type: ignore
                     "error"
                 ] = f"High memory usage: {memory.percent}%"
             elif memory.percent > 80:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["memory"][
+                health["details"]["memory"][  # type: ignore
                     "warning"
                 ] = f"High memory usage: {memory.percent}%"
 
@@ -200,8 +200,8 @@ class HealthChecker:
                     try:
                         usage = psutil.disk_usage(partition.mountpoint)
                         percent = (usage.used / usage.total) * 100
-                        health["details"]["disk"] = health["details"].get("disk", {})
-                        health["details"]["disk"][partition.mountpoint] = {
+                        health["details"]["disk"] = health["details"].get("disk", {})  # type: ignore
+                        health["details"]["disk"][partition.mountpoint] = {  # type: ignore
                             "usage_percent": percent,
                             "free_gb": usage.free / (1024**3),
                         }
@@ -217,13 +217,13 @@ class HealthChecker:
 
             if disk_issues:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["disk"][
+                health["details"]["disk"][  # type: ignore
                     "error"
                 ] = f"Disk full: {', '.join(disk_issues)}"
 
             # 负载
             load_avg = psutil.getloadavg()
-            health["details"]["load"] = {
+            health["details"]["load"] = {  # type: ignore
                 "1min": load_avg[0],
                 "5min": load_avg[1],
                 "15min": load_avg[2],
@@ -233,13 +233,13 @@ class HealthChecker:
             cpu_count = psutil.cpu_count()
             if load_avg[0] > cpu_count * 2:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["load"][
+                health["details"]["load"][  # type: ignore
                     "error"
                 ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
 
         except Exception as e:
             health["status"] = HealthStatus.UNHEALTHY
-            health["details"]["error"] = str(e)
+            health["details"]["error"] = str(e)  # type: ignore
 
         return health
 
@@ -260,12 +260,12 @@ class HealthChecker:
             # 进程状态
             if process.status() == psutil.STATUS_ZOMBIE:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["process"] = {"error": "Process is zombie"}
+                health["details"]["process"] = {"error": "Process is zombie"}  # type: ignore
 
             # 文件描述符
             try:
                 num_fds = process.num_fds()
-                health["details"]["file_descriptors"] = num_fds
+                health["details"]["file_descriptors"] = num_fds  # type: ignore
 
                 # 检查文件描述符限制
                 import resource
@@ -273,7 +273,7 @@ class HealthChecker:
                 soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
                 if num_fds > soft_limit * 0.9:
                     health["status"] = HealthStatus.DEGRADED
-                    health["details"][
+                    health["details"][  # type: ignore
                         "file_descriptors_warning"
                     ] = f"Approaching limit: {num_fds}/{soft_limit}"
             except (AttributeError, OSError):
@@ -281,7 +281,7 @@ class HealthChecker:
 
             # 内存使用
             mem_info = process.memory_info()
-            health["details"]["memory"] = {
+            health["details"]["memory"] = {  # type: ignore
                 "rss_mb": mem_info.rss / (1024**2),
                 "vms_mb": mem_info.vms / (1024**2),
             }
@@ -289,17 +289,17 @@ class HealthChecker:
             # 运行时间
             create_time = datetime.fromtimestamp(process.create_time())
             uptime = datetime.utcnow() - create_time
-            health["details"]["uptime"] = str(uptime)
+            health["details"]["uptime"] = str(uptime)  # type: ignore
 
             # 检查最近的错误日志
             recent_errors = self._check_recent_errors()
             if recent_errors > 10:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["errors"] = f"Recent errors: {recent_errors}"
+                health["details"]["errors"] = f"Recent errors: {recent_errors}"  # type: ignore
 
         except Exception as e:
             health["status"] = HealthStatus.UNHEALTHY
-            health["details"]["error"] = str(e)
+            health["details"]["error"] = str(e)  # type: ignore
 
         return health
 

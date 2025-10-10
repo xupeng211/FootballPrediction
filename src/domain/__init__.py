@@ -47,7 +47,7 @@ from .events import (
     PredictionExpiredEvent,
     PredictionPointsAdjustedEvent,
 )
-from .strategies import (
+from .strategies import (  # type: ignore
     PredictionStrategy,
     PredictionContext,
     PredictionInput,

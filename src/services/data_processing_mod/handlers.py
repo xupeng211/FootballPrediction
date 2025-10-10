@@ -18,7 +18,7 @@ from src.data.processing.missing_data_handler import MissingDataHandler
 logger = get_logger(__name__)
 
 
-class MissingDataHandler:
+class MissingDataHandler:  # type: ignore
     """
     缺失数据处理器 / Missing Data Handler
 

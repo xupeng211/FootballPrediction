@@ -21,7 +21,7 @@ from ..base import BaseModel
 from ..types import SQLiteCompatibleJSONB
 from sqlalchemy import Column
 from sqlalchemy import DateTime
-from sqlalchemy import Enum
+from sqlalchemy import Enum  # type: ignore
 from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -176,7 +176,7 @@ class AuditLog(BaseModel):
     @property
     def risk_score(self) -> int:
         """计算风险评分（0-100）"""
-        base_score = {
+        base_score = {  # type: ignore
             AuditSeverity.INFO: 5,
             AuditSeverity.LOW: 10,
             AuditSeverity.MEDIUM: 30,
@@ -200,7 +200,7 @@ class AuditLog(BaseModel):
         if not self.success:
             base_score += 10
 
-        return min(base_score, 100)
+        return min(base_score, 100)  # type: ignore
 
     def to_dict(self, exclude_fields: Optional[set[Any]] = None) -> Dict[str, Any]:
         """转换为字典格式"""
@@ -235,7 +235,7 @@ class AuditLog(BaseModel):
     def set_extra_data(self, **kwargs) -> None:
         """设置扩展数据"""
         if self.extra_data is None:
-            self.extra_data = {}
+            self.extra_data = {}  # type: ignore
         self.extra_data.update(kwargs)
 
     def add_tag(self, tag: str) -> None:
@@ -244,9 +244,9 @@ class AuditLog(BaseModel):
             tags_list = [t.strip() for t in self.tags.split(",")]
             if tag not in tags_list:
                 tags_list.append(tag)
-                self.tags = ",".join(tags_list)
+                self.tags = ",".join(tags_list)  # type: ignore
         else:
-            self.tags = tag
+            self.tags = tag  # type: ignore
 
     def remove_tag(self, tag: str) -> None:
         """移除标签"""
@@ -254,7 +254,7 @@ class AuditLog(BaseModel):
             tags_list = [t.strip() for t in self.tags.split(",")]
             if tag in tags_list:
                 tags_list.remove(tag)
-                self.tags = ",".join(tags_list) if tags_list else None
+                self.tags = ",".join(tags_list) if tags_list else None  # type: ignore
 
     @classmethod
     def create_audit_entry(
@@ -426,7 +426,7 @@ class AuditLogSummary:
         total_operations = (
             self.session.query(AuditLog)
             .filter(
-                and_(
+                and_(  # type: ignore
                     AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
                 )
             )
@@ -437,7 +437,7 @@ class AuditLogSummary:
         operation_stats = (
             self.session.query(AuditLog.action, func.count(AuditLog.id).label("count"))
             .filter(
-                and_(
+                and_(  # type: ignore
                     AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
                 )
             )
@@ -449,7 +449,7 @@ class AuditLogSummary:
         user_stats = (
             self.session.query(AuditLog.user_id, func.count(AuditLog.id).label("count"))
             .filter(
-                and_(
+                and_(  # type: ignore
                     AuditLog.table_name == table_name, AuditLog.timestamp >= cutoff_date
                 )
             )

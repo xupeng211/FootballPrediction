@@ -183,7 +183,7 @@ class MissingDataHandler:
 
     def _fallback_average(self, feature_name: str) -> float:
         """提供默认平均值作为数据库不可用时的回退策略"""
-        return self._fallback_defaults.get(str(feature_name), 0.0)
+        return self._fallback_defaults.get(str(feature_name), 0.0)  # type: ignore
 
     def register_fallback_average(self, feature_name: str, value: float) -> None:
         """在运行时注册或覆盖指定特征的默认均值。"""

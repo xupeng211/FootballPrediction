@@ -109,7 +109,7 @@ class EventDrivenApplication:
 
     def get_event_stats(self) -> dict:
         """获取事件统计信息"""
-        return self._event_bus.get_stats()
+        return self._event_bus.get_stats()  # type: ignore
 
     async def health_check(self) -> dict:
         """事件系统健康检查"""

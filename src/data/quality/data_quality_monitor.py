@@ -1,4 +1,5 @@
 """
+from typing import Dict, List
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
@@ -49,7 +50,7 @@ class DataQualityMonitor:
             Dict: 新鲜度检查结果
         """
         try:
-            freshness_report = {
+            freshness_report: Dict[str, Any] = {
                 "check_time": datetime.now().isoformat(),
                 "status": "healthy",
                 "issues": [],
@@ -106,7 +107,7 @@ class DataQualityMonitor:
         Returns:
             List[Dict]: 检测到的异常列表
         """
-        anomalies = []
+        anomalies: List[Any] = []
 
         try:
             async with self.db_manager.get_async_session() as session:
@@ -220,12 +221,12 @@ class DataQualityMonitor:
 
     async def _find_suspicious_odds(self, session) -> List[Dict[str, Any]]:
         """查找可疑赔率"""
-        suspicious_odds = []
+        suspicious_odds: List[Any] = []
 
         try:
             # 查找异常的赔率值
             abnormal_odds = await session.execute(
-                text(
+                text(  # type: ignore
                     """
                 SELECT id, match_id, bookmaker, home_odds, draw_odds, away_odds, collected_at
                 FROM odds
@@ -272,12 +273,12 @@ class DataQualityMonitor:
 
     async def _find_unusual_scores(self, session) -> List[Dict[str, Any]]:
         """查找异常比分"""
-        unusual_scores = []
+        unusual_scores: List[Any] = []
 
         try:
             # 查找异常高的比分
             high_scores = await session.execute(
-                text(
+                text(  # type: ignore
                     """
                 SELECT id, home_team_id, away_team_id, home_score, away_score, match_time
                 FROM matches
@@ -311,7 +312,7 @@ class DataQualityMonitor:
 
     async def _check_data_consistency(self, session) -> List[Dict[str, Any]]:
         """检查数据一致性"""
-        consistency_issues = []
+        consistency_issues: List[Any] = []
 
         try:
             # 检查比赛时间一致性
@@ -359,7 +360,7 @@ class DataQualityMonitor:
             # 计算总体质量评分
             quality_score = self._calculate_quality_score(freshness_check, anomalies)
 
-            report = {
+            report: Dict[str, Any] = {
                 "report_time": datetime.now().isoformat(),
                 "overall_status": self._determine_overall_status(
                     freshness_check, anomalies
@@ -435,7 +436,7 @@ class DataQualityMonitor:
         self, freshness_check: Dict, anomalies: List
     ) -> List[str]:
         """生成改进建议"""
-        recommendations = []
+        recommendations: List[Any] = []
 
         if freshness_check.get("status") in ["warning", "error"]:
             recommendations.append("检查数据采集调度器是否正常运行")

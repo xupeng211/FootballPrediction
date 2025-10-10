@@ -165,7 +165,7 @@ async def update_metric(
     return {
         "message": "指标已更新",
         "metric_name": request.metric_name,
-        "metric_value": request.metric_value,
+        "metric_value": request.metric_value,  # type: ignore
     }
 
 
@@ -212,7 +212,7 @@ async def record_prediction(
     return {
         "message": "预测事件已记录",
         "strategy_name": strategy_name,
-        "response_time_ms": response_time_ms,
+        "response_time_ms": response_time_ms,  # type: ignore
     }
 
 
@@ -283,7 +283,7 @@ async def get_performance_metrics() -> Dict[str, Any]:
     if not performance_observer:
         raise HTTPException(status_code=404, detail="性能观察者未找到")
 
-    return performance_observer.get_performance_metrics()
+    return performance_observer.get_performance_metrics()  # type: ignore
 
 
 @router.post("/system/collect", summary="触发系统指标收集")

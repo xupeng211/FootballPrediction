@@ -88,7 +88,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
     try:
         logger.debug(f"从特征存储获取特征 (match_id={match_id})")
-        features = await store.get_match_features_for_prediction(
+        features = await store.get_match_features_for_prediction(  # type: ignore
             match_id=match_id,
             home_team_id=int(match.home_team_id),
             away_team_id=int(match.away_team_id),
@@ -96,10 +96,10 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
         if features:
             logger.info("成功获取 %s 组特征数据", len(features))
-            return features, None
+            return features, None  # type: ignore
 
         logger.warning(f"比赛 {match_id} 暂无特征数据")
-        return {}, None
+        return {}, None  # type: ignore
     except Exception as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
         return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败

@@ -1,4 +1,5 @@
 """
+from typing import Dict, List, Optional, Union
 数据湖存储模块
 Data Lake Storage Module
 """
@@ -59,7 +60,7 @@ class LocalDataLakeStorage:
 
     def list_keys(self, prefix: str = "") -> List[str]:
         """列出所有键"""
-        keys = []
+        keys: List[Any] = []
         try:
             for file_path in self.base_path.glob(f"{prefix}*"):
                 if file_path.is_file():
@@ -113,12 +114,12 @@ class MetadataManager:
     def save_metadata(self, key: str, metadata: Dict[str, Any]) -> bool:
         """保存元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.save(metadata_key, metadata, format="json")
+        return self.storage.save(metadata_key, metadata, format="json")  # type: ignore
 
     def load_metadata(self, key: str) -> Optional[Dict[str, Any]]:
         """加载元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.load(metadata_key, format="json")
+        return self.storage.load(metadata_key, format="json")  # type: ignore
 
     def list_datasets(self) -> List[str]:
         """列出所有数据集"""
@@ -140,7 +141,7 @@ class PartitionManager:
         self, base_key: str, partition_values: Dict[str, Any]
     ) -> str:
         """获取分区路径"""
-        partition_parts = []
+        partition_parts: List[Any] = []
         for key, value in sorted(partition_values.items()):
             partition_parts.append(f"{key}={value}")
 
@@ -157,7 +158,7 @@ class PartitionManager:
     ) -> bool:
         """按分区保存数据"""
         partition_key = self.get_partition_path(key, partition_values)
-        return self.storage.save(partition_key, data, format)
+        return self.storage.save(partition_key, data, format)  # type: ignore
 
     def list_partitions(self, base_key: str) -> List[str]:
         """列出所有分区"""
@@ -199,7 +200,7 @@ class LakeStorageUtils:
         """解析存储键"""
         parts = key.split("/")
 
-        result = {
+        result: Dict[str, Any] = {
             "prefix": parts[0] if len(parts) > 0 else "",
             "date": parts[1] if len(parts) > 1 else "",
             "identifier": parts[2]

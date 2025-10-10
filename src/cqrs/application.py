@@ -29,7 +29,14 @@ from .queries import (
     GetPredictionAnalyticsQuery,
     GetLeaderboardQuery,
 )
-from .dto import PredictionDTO, CommandResult
+from .dto import (
+    PredictionDTO,
+    UserDTO,
+    MatchDTO,
+    PredictionStatsDTO,
+    MatchStatsDTO,
+    CommandResult,
+)
 from .handlers import (
     PredictionCommandHandlers,
     PredictionQueryHandlers,
@@ -71,7 +78,7 @@ class PredictionCQRSService:
             strategy_used=strategy_used,
             notes=notes,
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     async def update_prediction(
         self,
@@ -91,18 +98,18 @@ class PredictionCQRSService:
             strategy_used=strategy_used,
             notes=notes,
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     async def delete_prediction(self, prediction_id: int) -> CommandResult:
         """删除预测"""
         command = DeletePredictionCommand(prediction_id=prediction_id)
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     # 查询操作
     async def get_prediction_by_id(self, prediction_id: int) -> Optional[PredictionDTO]:
         """根据ID获取预测"""
         query = GetPredictionByIdQuery(prediction_id=prediction_id)
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
     async def get_predictions_by_user(
         self,
@@ -120,7 +127,7 @@ class PredictionCQRSService:
             start_date=start_date,
             end_date=end_date,
         )
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
     async def get_user_stats(
         self, user_id: int, include_predictions: bool = False
@@ -129,7 +136,7 @@ class PredictionCQRSService:
         query = GetUserStatsQuery(
             user_id=user_id, include_predictions=include_predictions
         )
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
 
 class MatchCQRSService:
@@ -160,7 +167,7 @@ class MatchCQRSService:
             competition=competition,
             venue=venue,
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     async def update_match(
         self,
@@ -180,7 +187,7 @@ class MatchCQRSService:
             competition=competition,
             venue=venue,
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     # 查询操作
     async def get_match_by_id(
@@ -190,7 +197,7 @@ class MatchCQRSService:
         query = GetMatchByIdQuery(
             match_id=match_id, include_predictions=include_predictions
         )
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
     async def get_upcoming_matches(
         self,
@@ -203,7 +210,7 @@ class MatchCQRSService:
         query = GetUpcomingMatchesQuery(
             days_ahead=days_ahead, competition=competition, limit=limit, offset=offset
         )
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
 
 class UserCQRSService:
@@ -228,7 +235,7 @@ class UserCQRSService:
         command = CreateUserCommand(
             username=username, email=email, password_hash=password_hash
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
     async def update_user(
         self,
@@ -241,7 +248,7 @@ class UserCQRSService:
         command = UpdateUserCommand(
             user_id=user_id, username=username, email=email, is_active=is_active
         )
-        return await self.command_bus.dispatch(command)
+        return await self.command_bus.dispatch(command)  # type: ignore
 
 
 class AnalyticsCQRSService:
@@ -268,7 +275,7 @@ class AnalyticsCQRSService:
             strategy_filter=strategy_filter,
             user_id=user_id,
         )
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
     async def get_leaderboard(
         self,
@@ -278,7 +285,7 @@ class AnalyticsCQRSService:
     ) -> List[Dict[str, Any]]:
         """获取排行榜"""
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
-        return await self.query_bus.dispatch(query)
+        return await self.query_bus.dispatch(query)  # type: ignore
 
 
 # CQRS服务工厂

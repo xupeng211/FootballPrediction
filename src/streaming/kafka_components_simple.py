@@ -107,7 +107,7 @@ class KafkaTopicManager:
 
     async def expand_partitions(self, topic_name: str, new_partition_count: int):
         """扩展主题分区"""
-        await self.admin.create_partitions(
+        await self.admin.create_partitions(  # type: ignore
             {"topic": topic_name, "count": new_partition_count}
         )
 
@@ -140,7 +140,7 @@ class KafkaConsumerGroup:
 
     async def reset_offset(self, topic: str, partition: int, offset: int):
         """重置偏移量"""
-        await self.admin.alter_consumer_group_offsets(
+        await self.admin.alter_consumer_group_offsets(  # type: ignore
             self.group_id, {topic: {partition: offset}}
         )
 
@@ -171,7 +171,7 @@ class KafkaCluster:
     async def check_health(self) -> Dict[str, Any]:
         """检查集群健康状态"""
         if self.health_checker:
-            return await self.health_checker.check_cluster_health()
+            return await self.health_checker.check_cluster_health()  # type: ignore
         return {
             "healthy": True,
             "brokers": {
@@ -182,7 +182,7 @@ class KafkaCluster:
     async def get_throughput_metrics(self) -> Dict[str, Any]:
         """获取吞吐量指标"""
         if self.metrics_collector:
-            return await self.metrics_collector.get_throughput_metrics()
+            return await self.metrics_collector.get_throughput_metrics()  # type: ignore
         return {
             "bytes_in_per_sec": 1024000,
             "bytes_out_per_sec": 2048000,

@@ -270,14 +270,14 @@ class AdapterRegistry:
 
         # 获取各适配器状态
         for name, adapter in self.adapters.items():
-            health_status["adapters"][name] = {
+            health_status["adapters"][name] = {  # type: ignore
                 "status": adapter.status.value,
                 "metrics": adapter.get_metrics(),
             }
 
         # 获取各组状态
         for name, group in self.groups.items():
-            health_status["groups"][name] = {
+            health_status["groups"][name] = {  # type: ignore
                 "status": group.status.value,
                 "metrics": group.get_metrics(),
             }

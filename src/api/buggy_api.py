@@ -1,10 +1,10 @@
-router = APIRouter()
+router = APIRouter()  # type: ignore
 
 
 # 1. ✅ 修复后的 FastAPI Query 参数
 @router.get("/fixed_query")
 async def fixed_query(
-    limit: int = Query(default=10, ge=1, le=100, description="返回记录数量限制"),
+    limit: int = Query(default=10, ge=1, le=100, description="返回记录数量限制"),  # type: ignore
 ):
     """
     修复后的 Query 参数：
@@ -19,7 +19,7 @@ async def fixed_query(
 # ✅ 修复后的版本 - 原来的 buggy_query
 @router.get("/buggy_query")
 async def buggy_query(
-    limit: int = Query(default=10, ge=1, le=100, description="返回记录数量限制"),
+    limit: int = Query(default=10, ge=1, le=100, description="返回记录数量限制"),  # type: ignore
 ):
     """
     修复后的 Query 参数：
