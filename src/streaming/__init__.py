@@ -15,14 +15,53 @@
 
 from typing import cast, Any, Optional, Union
 
-from .kafka_consumer import FootballKafkaConsumer
-from .kafka_producer import FootballKafkaProducer
-from .stream_config import StreamConfig
-from .stream_processor import StreamProcessor
+# 尝试导入简化版本
+try:
+    from .kafka_producer_simple import KafkaMessageProducer
+    from .kafka_consumer_simple import KafkaMessageConsumer
+    from .stream_config_simple import (
+        StreamConfig,
+        KafkaConfig,
+        ConsumerConfig,
+        ProducerConfig,
+    )
+    from .stream_processor_simple import (
+        StreamProcessor,
+        MessageProcessor,
+        BatchProcessor,
+    )
+    from .kafka_components_simple import (
+        KafkaAdminClient,
+        KafkaTopicManager,
+        KafkaConsumerGroup,
+        KafkaCluster,
+        KafkaHealthChecker,
+        KafkaMetricsCollector,
+    )
+except ImportError:
+    # 如果简化版本不存在，使用原始版本
+    try:
+        from .kafka_consumer import FootballKafkaConsumer
+        from .kafka_producer import FootballKafkaProducer
+        from .stream_config import StreamConfig
+        from .stream_processor import StreamProcessor
+    except ImportError:
+        pass
 
 __all__ = [
-    "FootballKafkaProducer",
-    "FootballKafkaConsumer",
+    "KafkaMessageProducer",
+    "KafkaMessageConsumer",
     "StreamConfig",
+    "KafkaConfig",
+    "ConsumerConfig",
+    "ProducerConfig",
     "StreamProcessor",
+    "MessageProcessor",
+    "BatchProcessor",
+    "KafkaAdminClient",
+    "KafkaTopicManager",
+    "KafkaConsumerGroup",
+    "KafkaCluster",
+    "KafkaHealthChecker",
+    "KafkaMetricsCollector",
 ]

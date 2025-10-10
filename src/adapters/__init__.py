@@ -6,46 +6,31 @@ Adapter Pattern Implementation
 Used to integrate external systems and APIs.
 """
 
-from .base import Adapter, Adaptee, Target
+from .base import Adapter, Adaptee, Target, BaseAdapter
 from .football import (
     FootballApiAdapter,
     FootballDataAdapter,
     ApiFootballAdapter,
     OptaDataAdapter,
 )
-from .weather import (
-    WeatherApiAdapter,
-    OpenWeatherMapAdapter,
-    WeatherStackAdapter,
-)
-from .odds import (
-    OddsApiAdapter,
-    Bet365Adapter,
-    WilliamHillAdapter,
-)
-from .factory import AdapterFactory
-from .registry import AdapterRegistry
+from .factory_simple import AdapterFactory, get_adapter
+from .registry_simple import AdapterRegistry, register_adapter
 
 __all__ = [
     # Base classes
     "Adapter",
     "Adaptee",
     "Target",
+    "BaseAdapter",
     # Football adapters
     "FootballApiAdapter",
     "FootballDataAdapter",
     "ApiFootballAdapter",
     "OptaDataAdapter",
-    # Weather adapters
-    "WeatherApiAdapter",
-    "OpenWeatherMapAdapter",
-    "WeatherStackAdapter",
-    # Odds adapters
-    "OddsApiAdapter",
-    "Bet365Adapter",
-    "WilliamHillAdapter",
     # Factory
     "AdapterFactory",
+    "get_adapter",
     # Registry
     "AdapterRegistry",
+    "register_adapter",
 ]

@@ -1,5 +1,10 @@
 """Lightweight TTL cache with sync and async helpers."""
 
+import time
+from dataclasses import dataclass, field
+from datetime import timedelta
+from typing import Any, Optional, Iterable, Dict
+
 
 @dataclass
 class CacheItem:

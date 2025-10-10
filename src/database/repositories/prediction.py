@@ -14,10 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .base import BaseRepository
-from ..models.predictions import Prediction, PredictionStatus
+from ..models.predictions import Predictions, PredictedResult
+
+# 类型别名
+Prediction = Predictions
+PredictionStatus = PredictedResult
 
 
-class PredictionRepository(BaseRepository[Prediction]):
+class PredictionRepository(BaseRepository[Predictions]):
     """
     预测仓储类
     Prediction Repository Class
@@ -27,7 +31,7 @@ class PredictionRepository(BaseRepository[Prediction]):
     """
 
     def __init__(self, db_manager=None):
-        super().__init__(Prediction, db_manager)
+        super().__init__(Predictions, db_manager)
 
     # ========================================
     # 预测特定的查询方法

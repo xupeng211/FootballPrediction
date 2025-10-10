@@ -19,14 +19,6 @@ from .football import (
     OptaDataAdapter,
     CompositeFootballAdapter,
 )
-from .weather import (
-    OpenWeatherMapAdapter,
-    WeatherStackAdapter,
-)
-from .odds import (
-    Bet365Adapter,
-    WilliamHillAdapter,
-)
 
 
 @dataclass
@@ -69,10 +61,6 @@ class AdapterFactory:
         self.register_adapter_type("api-football", ApiFootballAdapter)
         self.register_adapter_type("opta-data", OptaDataAdapter)
         self.register_adapter_type("composite-football", CompositeFootballAdapter)
-        self.register_adapter_type("openweathermap", OpenWeatherMapAdapter)
-        self.register_adapter_type("weatherstack", WeatherStackAdapter)
-        self.register_adapter_type("bet365", Bet365Adapter)
-        self.register_adapter_type("william-hill", WilliamHillAdapter)
 
     def register_adapter_type(self, name: str, adapter_class: Type[Adapter]) -> None:
         """注册适配器类型"""
