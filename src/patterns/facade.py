@@ -5,12 +5,19 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import logging
 
 from src.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from src.database.repositories import (
+        MatchRepository,
+        PredictionRepository,
+        TeamRepository,
+    )
 
 # 移除具体的导入，避免循环依赖
 # from src.database.repositories import (

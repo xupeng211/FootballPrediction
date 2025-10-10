@@ -2,6 +2,8 @@
 门面模式单元测试
 """
 
+pytest_plugins = "asyncio"
+
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
