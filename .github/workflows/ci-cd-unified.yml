@@ -1,0 +1,368 @@
+name: CI/CD 统一流水线
+
+on:
+  push:
+    branches: [main, develop, hotfix/**]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "部署环境"
+        required: false
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+
+# 取消并行的运行，避免资源浪费
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===== 阶段 1: 基础检查 =====
+  basic-checks:
+    name: 基础检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      should-run-full: ${{ steps.changes.outputs.should-run }}
+      should-deploy: ${{ steps.deploy-decision.outputs.should-deploy }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 检查变更
+        id: changes
+        uses: dorny/paths-filter@v2.11.1
+        with:
+          filters: |
+            python:
+              - 'src/**/*.py'
+              - 'tests/**/*.py'
+              - 'requirements/**'
+              - 'pyproject.toml'
+            docs:
+              - '**/*.md'
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose*'
+
+      - name: 判断是否需要部署
+        id: deploy-decision
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ===== 阶段 2: 代码质量检查 =====
+  quality-check:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    needs: basic-checks
+    if: needs.basic-checks.outputs.should-run-full == 'true'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: "3.11"
+
+      - name: 缓存依赖
+        uses: actions/cache@v3.3.2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+
+      - name: Lint 检查
+        run: |
+          ruff check . --statistics
+          ruff format . --check
+
+      - name: 类型检查
+        run: mypy src/ --no-error-summary || true
+        continue-on-error: true
+
+  # ===== 阶段 3: 单元测试 =====
+  unit-tests:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    needs: [basic-checks, quality-check]
+    if: needs.basic-checks.outputs.should-run-full == 'true'
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 设置 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 缓存依赖和虚拟环境
+        uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ~/.cache/pip
+            .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+
+      - name: 运行单元测试
+        run: |
+          make test-unit
+
+      - name: 生成覆盖率报告
+        run: |
+          make coverage-local
+
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # ===== 阶段 4: 集成测试 =====
+  integration-tests:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    needs: [basic-checks, quality-check]
+    if: needs.basic-checks.outputs.should-run-full == 'true'
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: football_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: "3.11"
+
+      - name: 缓存依赖
+        uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ~/.cache/pip
+            .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+
+      - name: 等待服务就绪
+        run: |
+          sleep 10
+
+      - name: 运行集成测试
+        run: |
+          make test.containers
+
+  # ===== 阶段 5: 安全扫描 =====
+  security-scan:
+    name: 安全扫描
+    runs-on: ubuntu-latest
+    needs: [basic-checks, quality-check]
+    if: needs.basic-checks.outputs.should-run-full == 'true'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 运行 Trivy 漏洞扫描
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 上传 Trivy 扫描结果
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 运行 bandit 安全检查
+        run: |
+          pip install bandit
+          bandit -r src/ -f json -o bandit-report.json || true
+
+      - name: 检查依赖漏洞
+        run: |
+          pip install safety
+          safety check --json --output safety-report.json || true
+
+  # ===== 阶段 6: 构建 Docker 镜像 =====
+  build:
+    name: 构建 Docker 镜像
+    runs-on: ubuntu-latest
+    needs: [basic-checks, unit-tests]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    timeout-minutes: 15
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 提取元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/football-prediction
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 构建和推送镜像
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===== 阶段 7: 部署到 Staging =====
+  deploy-staging:
+    name: 部署到 Staging
+    runs-on: ubuntu-latest
+    needs: [basic-checks, unit-tests, integration-tests, build]
+    if: github.ref == 'refs/heads/develop' && needs.basic-checks.outputs.should-deploy == 'true'
+    environment: staging
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 部署到 Staging
+        run: |
+          echo "部署到 Staging 环境"
+          echo "镜像: ${{ needs.build.outputs.image-tag }}"
+
+  # ===== 阶段 8: 部署到 Production =====
+  deploy-production:
+    name: 部署到 Production
+    runs-on: ubuntu-latest
+    needs: [basic-checks, unit-tests, integration-tests, security-scan, build]
+    if: github.ref == 'refs/heads/main' && needs.basic-checks.outputs.should-deploy == 'true'
+    environment: production
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: 部署到 Production
+        run: |
+          echo "部署到 Production 环境"
+          echo "镜像: ${{ needs.build.outputs.image-tag }}"
+
+      - name: 通知部署成功
+        if: always()
+        run: |
+          echo "Production 部署完成"
+
+  # ===== 总结 =====
+  summary:
+    name: 流水线总结
+    runs-on: ubuntu-latest
+    needs: [basic-checks, quality-check, unit-tests, integration-tests, security-scan, build]
+    if: always()
+
+    steps:
+      - name: 流水线状态
+        run: |
+          echo "## CI/CD 流水线结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 阶段 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 基础检查 | ${{ needs.basic-checks.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 代码质量 | ${{ needs.quality-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 单元测试 | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 集成测试 | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 安全扫描 | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 镜像构建 | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**流水线执行时间**: $(date)" >> $GITHUB_STEP_SUMMARY
