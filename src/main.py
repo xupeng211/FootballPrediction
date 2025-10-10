@@ -63,6 +63,7 @@ from src.observers import (
     stop_observer_system,
 )
 from src.cqrs.application import initialize_cqrs
+from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
 logging.basicConfig(
@@ -118,6 +119,10 @@ async def lifespan(app: FastAPI):
         logger.info("⚡ 初始化CQRS系统...")
         await initialize_cqrs()
 
+        # 初始化性能监控系统
+        logger.info("📊 初始化性能监控系统...")
+        setup_performance_monitoring(app)
+
         logger.info("✅ 服务启动成功")
 
     except Exception as e:
@@ -140,6 +145,13 @@ async def lifespan(app: FastAPI):
     # 关闭观察者系统
     logger.info("👁️ 关闭观察者系统...")
     await stop_observer_system()
+
+    # 清理性能监控系统
+    logger.info("📊 清理性能监控系统...")
+    from src.performance.integration import get_performance_integration
+
+    performance_integration = get_performance_integration()
+    performance_integration.cleanup()
 
 
 # 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
