@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .base import Adapter, Adaptee, DataTransformer, AdapterStatus
+from src.core.exceptions import AdapterError
 
 
 class MatchStatus(Enum):
@@ -33,9 +34,9 @@ class FootballMatch:
     id: str
     home_team: str
     away_team: str
+    competition: str
     home_team_id: Optional[str] = None
     away_team_id: Optional[str] = None
-    competition: str
     competition_id: Optional[str] = None
     match_date: Optional[datetime] = None
     status: Optional[MatchStatus] = None
@@ -489,3 +490,129 @@ class CompositeFootballAdapter(Adapter):
                 results[name] = f"Error: {str(e)}"
 
         return results
+
+
+class FootballDataAdapter:
+    """足球数据适配器（简化版用于测试）"""
+
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.initialized = False
+        self.client = None
+
+    async def initialize(self):
+        """初始化适配器"""
+        self.initialized = True
+
+    async def get_match_data(self, match_id: int, **kwargs) -> Dict[str, Any]:
+        """获取比赛数据"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/matches/{match_id}")
+        return {"matches": [{"id": match_id}]}
+
+    async def get_team_data(self, team_id: int, **kwargs) -> Dict[str, Any]:
+        """获取队伍数据"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/teams/{team_id}")
+        return {"id": team_id, "name": f"Team {team_id}"}
+
+    async def get_league_data(self, league_id: int, **kwargs) -> Dict[str, Any]:
+        """获取联赛数据"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/competitions/{league_id}")
+        return {"id": league_id, "name": f"League {league_id}"}
+
+    async def get_player_data(self, player_id: int, **kwargs) -> Dict[str, Any]:
+        """获取球员数据"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/players/{player_id}")
+        return {"id": player_id, "name": f"Player {player_id}"}
+
+    async def search_teams(self, name: str, **kwargs) -> Dict[str, Any]:
+        """搜索队伍"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/teams?name={name}")
+        return {"teams": [{"name": f"{name} Team"}]}
+
+    async def get_upcoming_matches(self, team_id: int, **kwargs) -> Dict[str, Any]:
+        """获取即将到来的比赛"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(f"/teams/{team_id}/matches?status=SCHEDULED")
+        return {"matches": [{"status": "SCHEDULED"}]}
+
+    async def get_historical_matches(
+        self, team_id: int, limit: int = 10, **kwargs
+    ) -> Dict[str, Any]:
+        """获取历史比赛"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(
+                f"/teams/{team_id}/matches?status=FINISHED&limit={limit}"
+            )
+        return {"matches": [{"status": "FINISHED"}]}
+
+    async def get_standings(
+        self, league_id: int, season: int, **kwargs
+    ) -> Dict[str, Any]:
+        """获取积分榜"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(
+                f"/competitions/{league_id}/standings?season={season}"
+            )
+        return {"standings": [{"table": []}]}
+
+    async def get_top_scorers(
+        self, league_id: int, season: int, limit: int = 10, **kwargs
+    ) -> Dict[str, Any]:
+        """获取射手榜"""
+        if not self.initialized:
+            raise AdapterError("Adapter not initialized")
+        if self.client:
+            return await self.client.get(
+                f"/competitions/{league_id}/scorers?season={season}&limit={limit}"
+            )
+        return {"scorers": []}
+
+    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+        """批量获取比赛"""
+        results = []
+        for match_id in match_ids:
+            result = await self.get_match_data(match_id)
+            results.append(result)
+        return results
+
+    async def close(self):
+        """关闭适配器"""
+        self.initialized = False
+        if self.client:
+            await self.client.close()
+
+    def _build_url(self, path: str, params: Optional[Dict] = None) -> str:
+        """构建URL"""
+        if params:
+            query_str = "&".join([f"{k}={v}" for k, v in params.items()])
+            return f"{path}?{query_str}"
+        return path
+
+    def _parse_date(self, date_str: str) -> datetime:
+        """解析日期"""
+        return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+
+    def _validate_response(self, response: Dict[str, Any]) -> bool:
+        """验证响应"""
+        return "status" in response or "data" in response or "matches" in response

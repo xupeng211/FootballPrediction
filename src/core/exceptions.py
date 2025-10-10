@@ -95,3 +95,11 @@ class RateLimitError(FootballPredictionError):
 
 class TimeoutError(FootballPredictionError):
     """超时异常"""
+
+
+class AdapterError(FootballPredictionError):
+    """适配器相关异常"""
+
+
+class StreamingError(FootballPredictionError):
+    """流式处理相关异常"""
