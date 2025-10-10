@@ -239,6 +239,24 @@ class TestCollectorMock:
     def test_collector_factory_pattern(self):
         """测试收集器工厂模式"""
 
+        # MockCollector类定义
+        class MockCollector:
+            def __init__(self, config=None):
+                self.config = config or {}
+                self.collected_data = []
+
+            def collect(self, source):
+                return {"data": f"mock_data_from_{source}", "timestamp": datetime.now()}
+
+            def validate(self, data):
+                return data is not None and "data" in data
+
+            def process(self, data):
+                if self.validate(data):
+                    self.collected_data.append(data)
+                    return True
+                return False
+
         class CollectorFactory:
             """模拟收集器工厂"""
 

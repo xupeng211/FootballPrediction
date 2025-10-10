@@ -19,10 +19,10 @@ warnings.warn(
 )
 
 # 从新模块导入所有内容
-from .........src.services.data_processing.pipeline_mod import stages
-from .........src.services.data_processing.pipeline_mod import pipeline
-from .........src.services.data_processing.pipeline_mod import executor
-from .........src.services.data_processing.pipeline_mod import monitor
+from src.services.data_processing.pipeline_mod import stages
+from src.services.data_processing.pipeline_mod import pipeline
+from src.services.data_processing.pipeline_mod import executor
+from src.services.data_processing.pipeline_mod import monitor
 
 # 导出所有类
 __all__ = ["stages", "pipeline", "executor", "monitor"]
