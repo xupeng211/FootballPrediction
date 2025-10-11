@@ -209,10 +209,12 @@ class HistoricalStrategy(PredictionStrategy):
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(
-                        input_data.home_team.id,
-                        input_data.away_team.id,  # type: ignore
+                        input_data.home_team.id or 0,
+                        input_data.away_team.id or 0,
                     )
-                ),
+                )
+                if input_data.home_team.id and input_data.away_team.id
+                else 0,
                 "similar_scenarios": await self._count_similar_scenarios(
                     processed_input
                 ),
@@ -244,9 +246,13 @@ class HistoricalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Optional[Tuple[int, int]]:
         """基于直接对战历史预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return None
+
         h2h_matches = await self._get_head_to_head_matches(
             input_data.home_team.id,
-            input_data.away_team.id,  # type: ignore
+            input_data.away_team.id,
         )
 
         if len(h2h_matches) < self._min_historical_matches:
@@ -286,6 +292,10 @@ class HistoricalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Optional[Tuple[int, int]]:
         """基于相似比分模式预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return None
+
         # 获取主队最近的主场比分
         home_recent_home = await self._get_recent_home_games(
             input_data.home_team.id,
@@ -335,6 +345,10 @@ class HistoricalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Optional[Tuple[int, int]]:
         """基于赛季表现模式预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None:
+            return None
+
         current_month = input_data.match.match_time.month  # type: ignore
 
         # 获取相同球队在历史上同期的表现
@@ -370,6 +384,10 @@ class HistoricalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Optional[Tuple[int, int]]:
         """基于时间模式预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None:
+            return None
+
         # 分析特定时间段的比赛模式
         match_day = input_data.match.match_time.weekday()  # type: ignore
         match_hour = input_data.match.match_time.hour  # type: ignore
@@ -451,12 +469,15 @@ class HistoricalStrategy(PredictionStrategy):
         confidence_factors = []
 
         # 检查历史数据充足性
-        h2h_count = len(
-            await self._get_head_to_head_matches(
-                input_data.home_team.id,
-                input_data.away_team.id,  # type: ignore
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            confidence_factors.append(0.1)
+        else:
+            h2h_count = len(
+                await self._get_head_to_head_matches(
+                    input_data.home_team.id,
+                    input_data.away_team.id,
+                )
             )
-        )
         if h2h_count >= 10:
             confidence_factors.append(0.9)
         elif h2h_count >= 5:
@@ -485,9 +506,12 @@ class HistoricalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Dict[str, float]:
         """估计结果概率"""
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}
+
         h2h_matches = await self._get_head_to_head_matches(
             input_data.home_team.id,
-            input_data.away_team.id,  # type: ignore
+            input_data.away_team.id,
         )
 
         if not h2h_matches:
@@ -563,22 +587,30 @@ class HistoricalStrategy(PredictionStrategy):
     async def _count_similar_scenarios(self, input_data: PredictionInput) -> int:
         """计算相似场景数量"""
         count = 0
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return count
+
         # 简化计算
         count += len(
             await self._get_head_to_head_matches(
                 input_data.home_team.id,
-                input_data.away_team.id,  # type: ignore
+                input_data.away_team.id,
             )
         )
-        count += len(await self._get_recent_home_games(input_data.home_team.id, 10))  # type: ignore
-        count += len(await self._get_recent_away_games(input_data.away_team.id, 10))  # type: ignore
+        count += len(await self._get_recent_home_games(input_data.home_team.id, 10))
+        count += len(await self._get_recent_away_games(input_data.away_team.id, 10))
         return count
 
     async def _calculate_historical_coverage(
         self, input_data: PredictionInput
     ) -> float:
         """计算历史数据覆盖率"""
-        total_matches = len(self._historical_matches.get(input_data.home_team.id, []))  # type: ignore
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None:
+            return 0.0
+
+        total_matches = len(self._historical_matches.get(input_data.home_team.id, []))
         if total_matches == 0:
             return 0.0
         return min(1.0, total_matches / 100)  # 假设100场为完整覆盖

@@ -8,6 +8,7 @@
 from src.cache.redis import RedisManager, CacheKeyManager
 from typing import Dict, List, Optional, Any
 import logging
+from redis.exceptions import RedisError
 
 
 class ProcessingCache:
