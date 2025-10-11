@@ -11,10 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
 
-**当前项目状态**：
+**当前项目状态**（2025-01-11）：
 - 测试覆盖率：21.78%（已完成技术债务改进）
 - CI 覆盖率门槛：30%（已从 20% 提升）
 - MyPy 类型注解错误：正在进行修复（最近已修复第1批）
+- 代码质量评分：8.5/10 ✅ 已达成最佳实践目标
 - 采用渐进式改进策略，确保持续集成保持绿灯
 
 ## 🌏 语言设置
@@ -85,6 +86,13 @@ pytest tests/performance/ --benchmark-only
 
 # 运行容器测试
 pytest -m "integration" -v  # 需要 Docker 运行
+
+# 快速测试（日常开发）
+make test-quick          # 60秒超时，最多5个失败
+
+# 覆盖率测试
+make coverage-local      # 本地覆盖率检查（16%阈值）
+make coverage            # CI覆盖率检查（30%阈值）
 ```
 
 #### 代码质量
@@ -101,10 +109,13 @@ make mypy-check       # 仅运行 mypy 类型检查
 
 #### 性能和高级测试
 ```bash
-make benchmark-full   # 运行完整的性能基准测试
-make mutation-test    # 运行突变测试（mutmut）
-make test-debt-analysis # 分析测试债务
-make coverage-dashboard # 生成实时覆盖率仪表板
+make benchmark-full       # 运行完整的性能基准测试
+make mutation-test        # 运行突变测试（mutmut）
+make test-debt-analysis   # 分析测试债务
+make coverage-dashboard   # 生成实时覆盖率仪表板
+make test-quick           # 快速单元测试（60秒超时）
+make test-unit            # 只运行单元测试（标记为 'unit'）
+make test-phase1          # 运行第一阶段核心 API 测试
 ```
 
 #### Docker 容器管理
@@ -200,14 +211,17 @@ src/
 - **结构化日志**：JSON 格式日志记录
 - **TestContainers**：集成测试支持
 
-### 当前架构状态
+### 当前架构状态（2025-01-11）
 - **代码质量评分**：8.5/10 ✅ 已达成最佳实践目标
 - **测试覆盖率**：21.78%（已超出目标）
 - **CI 覆盖率门槛**：30%（已从 20% 提升）
 - **架构亮点**：
   - ✅ 统一基础服务类（`src/services/base_unified.py`）
-  - ✅ 仓储模式实现完成
+  - ✅ 仓储模式实现完成（`src/database/repositories/`）
   - ✅ 领域模型引入（`src/domain/models/`）
+  - ✅ 依赖注入系统（`src/core/di.py`）
+  - ✅ 事件驱动架构（`src/api/events.py`）
+  - ✅ CQRS 模式（`src/api/cqrs.py`）
   - ✅ 多种设计模式应用（工厂、DI、仓储、事件等）
   - ✅ 模块化架构，易于扩展和维护
 
@@ -246,13 +260,17 @@ tests/
 - `@pytest.mark.database` - 数据库测试
 
 ### 测试执行策略
-- **日常开发**：使用 `make test-quick` 快速反馈
+- **日常开发**：使用 `make test-quick` 快速反馈（60秒超时）
 - **提交前**：运行 `make prepush` 完整验证
 - **CI 模拟**：使用 `make ci` 本地模拟
 - **覆盖率检查**：
   - 本地开发：`make coverage-local`（16%阈值）
-  - CI 环境：`make coverage-ci`（30%阈值）
-- **容器测试**：`make test.containers` 需要 Docker 运行
+  - CI 环境：`make coverage`（30%阈值）
+- **容器测试**：`pytest -m "integration"` 需要 Docker 运行
+- **分阶段测试**：
+  - Phase 1: `make test-phase1`（核心API测试）
+  - API测试: `make test-api`（所有API端点）
+  - 单元测试: `make test-unit`（仅单元测试）
 
 ## 开发工作流程
 
@@ -415,9 +433,15 @@ make debt-summary            # 生成清理总结报告
 
 ## 最佳实践优化
 
-### 当前状态
-- 正在进行 Phase 1：架构基础优化
-- 目标：将代码质量评分从 6.2/10 提升到 8.5/10
+### 当前状态（2025-01-11）
+- ✅ **已完成 Phase 4**：代码质量评分达到 8.5/10
+- **主要成就**：
+  - 统一基础服务类实现
+  - 仓储模式完整实现
+  - 领域模型引入
+  - 依赖注入系统建立
+  - 事件驱动架构
+  - CQRS 模式应用
 - 详情请查看：[BEST_PRACTICES_KANBAN.md](BEST_PRACTICES_KANBAN.md)
 
 ## 重要说明
@@ -637,17 +661,37 @@ mypy src/api          # 检查特定模块
 
 ## 重要架构信息
 
-### 已完成的优化
-✅ **统一基础服务类**：`src/services/base_unified.py`
-✅ **仓储模式实现**：`src/database/repositories/`
-✅ **领域模型引入**：`src/domain/models/`
-✅ **依赖注入系统**：`src/core/di.py`
-✅ **事件驱动架构**：`src/api/events.py`
-✅ **CQRS 模式**：`src/api/cqrs.py`
+### 已完成的优化（截至 2025-01-11）
+✅ **统一基础服务类**：`src/services/base_unified.py` - 所有服务的基础类
+✅ **仓储模式实现**：`src/database/repositories/` - 数据访问抽象层
+✅ **领域模型引入**：`src/domain/models/` - 业务领域模型
+✅ **依赖注入系统**：`src/core/di.py` - IoC容器实现
+✅ **事件驱动架构**：`src/api/events.py` - 系统事件和观察者
+✅ **CQRS 模式**：`src/api/cqrs.py` - 命令查询责任分离
+✅ **工厂模式**：`tests/factories/` - 测试数据生成
+✅ **异步架构**：全栈使用 async/await
 
 ### 架构特点
-- **高度模块化**：清晰的分层架构
-- **异步优先**：全栈异步支持
-- **类型安全**：完整的 MyPy 配置
-- **测试友好**：工厂模式 + TestContainers
-- **生产就绪**：完整的监控和日志
+- **高度模块化**：清晰的分层架构（API→Service→Domain→Database）
+- **异步优先**：FastAPI + SQLAlchemy 2.0 + asyncpg
+- **类型安全**：完整的 MyPy 配置和类型注解
+- **测试友好**：工厂模式 + TestContainers + pytest标记
+- **生产就绪**：完整的监控、日志和健康检查
+
+### 技术栈详情
+- **Python 3.11+**：使用现代Python特性
+- **FastAPI 0.115.6**：现代异步Web框架
+- **SQLAlchemy 2.0.36**：异步ORM，支持asyncpg驱动
+- **Pydantic 2.10.4**：数据验证和序列化
+- **PostgreSQL 15**：主数据库
+- **Redis 7**：缓存和会话存储
+- **Ruff**：代码格式化和检查（替代black/flake8/isort）
+- **MyPy**：静态类型检查
+- **pytest**：测试框架，支持标记和覆盖率
+
+### 关键配置文件
+- `pyproject.toml`：Ruff配置和项目元数据
+- `pytest.ini`：测试配置和标记定义
+- `mypy.ini`：类型检查配置
+- `coverage_local.ini`：本地覆盖率配置
+- `docker-compose.yml`：容器编排配置
