@@ -156,7 +156,7 @@ def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
         module = __import__(parts[0])
         for part in parts[1:]:
             module = getattr(module, part)
-        return module
+        return module  # type: ignore[return-value]
     except (ImportError, AttributeError):
         return default
 
