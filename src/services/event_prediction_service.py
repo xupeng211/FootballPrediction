@@ -164,9 +164,15 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=prediction.predicted_home,
-                predicted_away=prediction.predicted_away,
-                confidence=prediction.confidence,
+                predicted_home=float(prediction.predicted_home_score)
+                if prediction.predicted_home_score
+                else None,
+                predicted_away=float(prediction.predicted_away_score)
+                if prediction.predicted_away_score
+                else None,
+                confidence=float(prediction.confidence_score)
+                if prediction.confidence_score
+                else None,
                 strategy_used=strategy_name,
                 source=self._event_source,
                 metadata={
@@ -205,9 +211,15 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=prediction.predicted_home,
-                predicted_away=prediction.predicted_away,
-                confidence=prediction.confidence,
+                predicted_home=float(prediction.predicted_home_score)
+                if prediction.predicted_home_score
+                else None,
+                predicted_away=float(prediction.predicted_away_score)
+                if prediction.predicted_away_score
+                else None,
+                confidence=float(prediction.confidence_score)
+                if prediction.confidence_score
+                else None,
                 strategy_used=None,  # 更新时可能没有策略信息
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,
@@ -279,9 +291,8 @@ class EventDrivenMatchService:
             home_team_id=home_team_id,
             away_team_id=away_team_id,
             league_id=league_id,
-            match_time=match_time,
+            match_date=match_time,
             venue=venue,
-            status="upcoming",
         )
 
         # 保存到数据库
