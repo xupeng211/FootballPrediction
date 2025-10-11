@@ -42,11 +42,8 @@ class MatchDomainService:
         match = Match(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_team_name=home_team.name,
-            away_team_name=away_team.name,
-            match_time=match_time,
-            venue=venue or home_team.stadium,
-            round_number=round_number,
+            match_date=match_time,
+            venue=venue,
         )
 
         return match
@@ -56,7 +53,7 @@ class MatchDomainService:
         if match.status != MatchStatus.SCHEDULED:
             raise ValueError(f"比赛状态为 {match.status.value}，无法开始")
 
-        if datetime.utcnow() < match.match_time:
+        if datetime.utcnow() < match.match_date:
             raise ValueError("比赛时间还未到")
 
         match.start_match()
@@ -77,7 +74,7 @@ class MatchDomainService:
         minute: Optional[int] = None,
     ) -> None:
         """更新比赛比分"""
-        if match.status != MatchStatus.IN_PROGRESS:
+        if match.status != MatchStatus.LIVE:
             raise ValueError("只有进行中的比赛才能更新比分")
 
         if home_score < 0 or away_score < 0:
@@ -91,19 +88,19 @@ class MatchDomainService:
 
     def finish_match(self, match: Match) -> None:
         """结束比赛"""
-        if match.status != MatchStatus.IN_PROGRESS:
+        if match.status != MatchStatus.LIVE:
             raise ValueError("只有进行中的比赛才能结束")
 
         match.finish_match()
 
         # 记录领域事件
-        if match.final_score and match.result:
+        if match.score:
             event = MatchFinishedEvent(
                 match_id=match.id,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
-                final_score=match.final_score,
-                result=match.result,
+                final_score=str(match.score),
+                result=match.score.result if match.score else None,
             )
             self._events.append(event)
 
@@ -124,7 +121,7 @@ class MatchDomainService:
             raise ValueError(f"比赛状态为 {match.status.value}，无法延期")
 
         match.status = MatchStatus.POSTPONED
-        match.match_time = new_date
+        match.match_date = new_date
 
         # 记录领域事件
         event = MatchPostponedEvent(
