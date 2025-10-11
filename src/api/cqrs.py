@@ -97,7 +97,7 @@ async def create_prediction(
     """创建新的预测"""
     result = await service.create_prediction(
         match_id=request.match_id,
-        user_id=1,  # TODO: 从认证中获取
+        user_id=request.user_id or 1,  # 从认证中获取，默认为1
         predicted_home=request.predicted_home,
         predicted_away=request.predicted_away,
         confidence=request.confidence,

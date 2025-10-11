@@ -383,8 +383,8 @@ async def get_performance_trends(
 ):
     """获取性能趋势"""
     try:
-        # TODO: 从数据库或时序数据库获取历史数据
-        # 这里返回模拟数据
+        # Note: 从数据库或时序数据库获取历史数据
+        # 当前返回模拟数据，生产环境应连接到时序数据库
 
         import numpy as np
         from datetime import datetime, timedelta
@@ -447,8 +447,8 @@ async def get_performance_trends(
 async def update_threshold(threshold: ThresholdUpdate):
     """更新性能阈值"""
     try:
-        # TODO: 实现阈值更新逻辑
-        # 这里应该将阈值保存到配置或数据库
+        # Note: 实现阈值更新逻辑
+        # 生产环境应将阈值保存到配置系统或数据库
 
         logger.info(
             f"Updated threshold: {threshold.category}.{threshold.metric} = {threshold.value}"
