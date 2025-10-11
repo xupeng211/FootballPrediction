@@ -16,7 +16,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 # Temporarily commented out for pytest testing
 try:

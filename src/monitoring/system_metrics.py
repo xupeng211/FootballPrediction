@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 
 
