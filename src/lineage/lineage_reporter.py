@@ -92,7 +92,15 @@ class LineageReporter:
 
         # 构建运行信息
         run_facets: Dict[str, Any] = {}
-        # TODO: Implement parent_run functionality with proper UUID handling
+        # 实现parent_run功能
+        if parent_run_id:
+            from openlineage.client.facet_v2 import parent_run
+
+            run_facets["parentRun"] = parent_run.ParentRunFacet(
+                run=parent_run.ParentRun(
+                    runId=parent_run_id, namespace=self.namespace, name=job_name
+                )
+            )
 
         # 构建输入数据集
         input_datasets = []
