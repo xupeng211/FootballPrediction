@@ -8,6 +8,8 @@ Handles complex business logic related to matches.
 
 from typing import List, Optional, Any
 from datetime import datetime
+
+from ..models.match import MatchScore, MatchResult
 from ..models.match import Match, MatchStatus
 from ..models.team import Team
 from ..events.match_events import (
@@ -136,22 +138,24 @@ class MatchDomainService:
         errors = []
 
         # 检查比赛时间
-        if match.match_time <= datetime.utcnow():
+        if match.match_date <= datetime.utcnow():
             errors.append("比赛时间必须是未来时间")
 
-        # 检查比赛时长（通常90分钟）
-        if match.match_time and match.expected_end_time:
-            duration = match.expected_end_time - match.match_time
-            if duration.total_seconds() < 5400:  # 90分钟
-                errors.append("比赛时长不能少于90分钟")
+        # Note: expected_end_time 属性在当前模型中不存在
+        # # 检查比赛时长（通常90分钟）
+        # if match.match_date and match.expected_end_time:
+        #     duration = match.expected_end_time - match.match_date
+        #     if duration.total_seconds() < 5400:  # 90分钟
+        #         errors.append("比赛时长不能少于90分钟")
 
         # 检查场地
         if not match.venue:
             errors.append("必须指定比赛场地")
 
-        # 检查轮次
-        if match.round_number and match.round_number < 1:
-            errors.append("比赛轮次必须大于0")
+        # Note: round_number 属性在当前模型中不存在
+        # # 检查轮次
+        # if match.round_number and match.round_number < 1:
+        #     errors.append("比赛轮次必须大于0")
 
         return errors
 
@@ -165,11 +169,12 @@ class MatchDomainService:
         """计算比赛重要性"""
         importance = 0.5  # 基础重要性
 
-        # 根据比赛类型调整
-        if match.is_knockout:
-            importance += 0.3
-        if match.is_final:
-            importance += 0.2
+        # Note: is_knockout 和 is_final 属性在当前模型中不存在
+        # # 根据比赛类型调整
+        # if match.is_knockout:
+        #     importance += 0.3
+        # if match.is_final:
+        #     importance += 0.2
 
         # 根据球队排名调整
         if home_team_position and away_team_position and total_teams:
