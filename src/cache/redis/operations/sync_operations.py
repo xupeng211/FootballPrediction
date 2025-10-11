@@ -1,3 +1,5 @@
+from redis.exceptions import RedisError
+
 """
 Redis synchronous operations
 """

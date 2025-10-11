@@ -1,3 +1,6 @@
+import sqlalchemy as sa
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 # mypy: ignore-errors
 """add_data_collection_logs_and_bronze_layer_tables
 

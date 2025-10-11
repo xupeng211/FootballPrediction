@@ -1,3 +1,6 @@
+# TODO: 此文件过长（718行），需要拆分为更小的模块
+# TODO: This file is too long (718 lines), needs to be split into smaller modules
+
 """Feast 特征存储集成及其测试环境替身实现。"""
 
 import os
@@ -91,14 +94,14 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
         def push(self, *args, **kwargs) -> None:
             return None
 
-    Entity = MockEntity  # type: ignore
+    Entity = MockEntity
     FeatureStore = MockFeatureStore  # type: ignore[assignment]
-    FeatureView = MockFeatureView  # type: ignore
-    Field = MockField  # type: ignore
-    Float64 = MockFloat64  # type: ignore
-    Int64 = MockInt64  # type: ignore
-    PostgreSQLSource = MockPostgreSQLSource  # type: ignore
-    ValueType = MockValueType  # type: ignore
+    FeatureView = MockFeatureView
+    Field = MockField
+    Float64 = MockFloat64
+    Int64 = MockInt64
+    PostgreSQLSource = MockPostgreSQLSource
+    ValueType = MockValueType
 
 
 import pandas as pd  # noqa: E402
@@ -577,7 +580,7 @@ class FootballFeatureStore:
             cached_features = await self.cache_manager.aget(cache_key)
             if cached_features:
                 print(f"从缓存获取比赛 {match_id} 的预测特征")
-                return cached_features  # type: ignore
+                return cached_features
 
             # 获取球队近期表现特征
             team_features = await self.get_online_features(

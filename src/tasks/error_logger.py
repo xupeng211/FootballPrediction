@@ -85,7 +85,7 @@ class TaskErrorLogger:
                 },
             )
 
-        except Exception as log_error:
+        except (RuntimeError, ValueError, ConnectionError) as log_error:
             # 如果记录日志失败，只能记录到应用日志
             logger.error(f"记录错误日志失败: {str(log_error)}")
 
@@ -134,7 +134,7 @@ class TaskErrorLogger:
                 },
             )
 
-        except Exception as log_error:
+        except (RuntimeError, ValueError, ConnectionError) as log_error:
             logger.error(f"记录API错误日志失败: {str(log_error)}")
 
     async def log_data_collection_error(
@@ -186,7 +186,7 @@ class TaskErrorLogger:
 
                 return int(log_entry.id) if log_entry.id is not None else None
 
-        except Exception as log_error:
+        except (RuntimeError, ValueError, ConnectionError) as log_error:
             logger.error(f"记录数据采集错误失败: {str(log_error)}")
             return None
 
@@ -230,7 +230,7 @@ class TaskErrorLogger:
 
                 await session.commit()
 
-        except Exception as db_error:
+        except (RuntimeError, ValueError, ConnectionError) as db_error:
             logger.error(f"保存错误到数据库失败: {str(db_error)}")
 
     async def _get_db_type(self) -> str:
@@ -243,7 +243,7 @@ class TaskErrorLogger:
                     self._db_type = get_db_type_from_engine(engine)
                 else:
                     self._db_type = "postgresql"  # 默认值
-            except Exception:
+            except (ValueError, KeyError, RuntimeError):
                 self._db_type = "postgresql"  # 默认值
         return self._db_type  # type: ignore
 
@@ -265,7 +265,7 @@ class TaskErrorLogger:
             await session.execute(create_table_sql)
             await session.commit()
 
-        except Exception as create_error:
+        except (RuntimeError, ValueError, ConnectionError) as create_error:
             logger.warning(f"创建 error_logs 表失败: {str(create_error)}")
 
     async def get_error_statistics(self, hours: int = 24) -> Dict[str, Any]:
@@ -313,7 +313,7 @@ class TaskErrorLogger:
                     "timestamp": datetime.now().isoformat(),
                 }
 
-        except Exception as stats_error:
+        except (RuntimeError, ValueError, ConnectionError) as stats_error:
             logger.error(f"获取错误统计失败: {str(stats_error)}")
             return {
                 "total_errors": 0,
@@ -347,7 +347,7 @@ class TaskErrorLogger:
 
                 return deleted_count  # type: ignore
 
-        except Exception as cleanup_error:
+        except (RuntimeError, ValueError, ConnectionError) as cleanup_error:
             logger.error(f"清理错误日志失败: {str(cleanup_error)}")
             return 0
 

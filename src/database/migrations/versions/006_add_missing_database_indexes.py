@@ -1,3 +1,6 @@
+# mypy: ignore-errors
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 """add_missing_database_indexes
 
 

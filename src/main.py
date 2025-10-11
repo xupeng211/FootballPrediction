@@ -38,9 +38,9 @@ try:
     RATE_LIMIT_AVAILABLE = True
 except ImportError:
     RATE_LIMIT_AVAILABLE = False
-    Limiter = None  # type: ignore
-    _rate_limit_exceeded_handler = None  # type: ignore
-    RateLimitExceeded = None  # type: ignore
+    Limiter = None
+    _rate_limit_exceeded_handler = None
+    RateLimitExceeded = None
 
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
@@ -83,7 +83,7 @@ if RATE_LIMIT_AVAILABLE:
         headers_enabled=True,  # 在响应头中返回速率限制信息
     )
 else:
-    limiter = None  # type: ignore
+    limiter = None
     logger.warning(
         "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
     )
@@ -163,7 +163,7 @@ app = FastAPI(
 # 配置速率限制（如果可用）
 if RATE_LIMIT_AVAILABLE and limiter:
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     logger.info("✅ API速率限制已启用")
 
 # 配置 OpenAPI 文档

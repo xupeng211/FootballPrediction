@@ -12,7 +12,7 @@ from datetime import datetime
 
 from .strategy_prediction_service import StrategyPredictionService
 from ..domain.models import Match, Prediction
-from ..events import (  # type: ignore
+from ..events import (
     PredictionMadeEvent,
     PredictionUpdatedEvent,
     PredictionMadeEventData,
@@ -99,33 +99,33 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
         # 保存原有数据用于事件
         previous_prediction = {
-            "predicted_home": original_prediction.predicted_home,  # type: ignore
-            "predicted_away": original_prediction.predicted_away,  # type: ignore
-            "confidence": original_prediction.confidence,  # type: ignore
-            "notes": original_prediction.notes,  # type: ignore
+            "predicted_home": original_prediction.predicted_home,
+            "predicted_away": original_prediction.predicted_away,
+            "confidence": original_prediction.confidence,
+            "notes": original_prediction.notes,
         }
 
         # 更新预测
         if new_predicted_home is not None:
-            original_prediction.predicted_home = new_predicted_home  # type: ignore
+            original_prediction.predicted_home = new_predicted_home
         if new_predicted_away is not None:
-            original_prediction.predicted_away = new_predicted_away  # type: ignore
+            original_prediction.predicted_away = new_predicted_away
         if new_confidence is not None:
-            original_prediction.confidence = new_confidence  # type: ignore
+            original_prediction.confidence = new_confidence
         if new_notes is not None:
-            original_prediction.notes = new_notes  # type: ignore
+            original_prediction.notes = new_notes
 
-        original_prediction.updated_at = datetime.utcnow()  # type: ignore
-        await self._prediction_repository.update(original_prediction)  # type: ignore
+        original_prediction.updated_at = datetime.utcnow()
+        await self._prediction_repository.update(original_prediction)
 
         # 发布预测更新事件
         await self._publish_prediction_updated_event(
             original_prediction,
             previous_prediction,
-            update_reason,  # type: ignore
+            update_reason,
         )
 
-        return original_prediction  # type: ignore
+        return original_prediction
 
     async def batch_predict(
         self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
@@ -164,14 +164,14 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=prediction.predicted_home,  # type: ignore
-                predicted_away=prediction.predicted_away,  # type: ignore
+                predicted_home=prediction.predicted_home,
+                predicted_away=prediction.predicted_away,
                 confidence=prediction.confidence,
                 strategy_used=strategy_name,
                 source=self._event_source,
                 metadata={
                     "prediction_time": prediction.created_at.isoformat(),
-                    "notes": prediction.notes,  # type: ignore
+                    "notes": prediction.notes,
                 },
             )
 
@@ -205,16 +205,16 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=prediction.predicted_home,  # type: ignore
-                predicted_away=prediction.predicted_away,  # type: ignore
+                predicted_home=prediction.predicted_home,
+                predicted_away=prediction.predicted_away,
                 confidence=prediction.confidence,
                 strategy_used=None,  # 更新时可能没有策略信息
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,
                 source=self._event_source,
                 metadata={
-                    "update_time": prediction.updated_at.isoformat(),  # type: ignore
-                    "notes": prediction.notes,  # type: ignore
+                    "update_time": prediction.updated_at.isoformat(),
+                    "notes": prediction.notes,
                 },
             )
 
@@ -275,13 +275,13 @@ class EventDrivenMatchService:
             Match: 创建的比赛
         """
         # 创建比赛
-        match = Match(  # type: ignore
+        match = Match(
             home_team_id=home_team_id,
             away_team_id=away_team_id,
             league_id=league_id,
             match_time=match_time,
             venue=venue,
-            status="upcoming",  # type: ignore
+            status="upcoming",
         )
 
         # 保存到数据库
@@ -305,11 +305,11 @@ class EventDrivenMatchService:
         try:
             # 创建事件数据
             event_data = MatchCreatedEventData(
-                match_id=match.id,  # type: ignore
+                match_id=match.id,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
                 league_id=match.league_id,
-                match_time=match.match_time,  # type: ignore
+                match_time=match.match_time,
                 status=match.status,
                 venue=match.venue,
                 weather=weather,

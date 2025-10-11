@@ -177,7 +177,7 @@ class TaskMonitor:
                     self._db_type = get_db_type_from_engine(engine)  # type: ignore
                 else:
                     self._db_type = "postgresql"  # 默认值
-            except Exception:
+            except (ValueError, KeyError, RuntimeError):
                 self._db_type = "postgresql"  # 默认值
         return self._db_type
 
@@ -242,7 +242,7 @@ class TaskMonitor:
 
                 return error_rates
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.error(f"计算错误率失败: {str(e)}")
             return {}
 
@@ -318,7 +318,7 @@ class TaskMonitor:
                     "generated_at": datetime.now().isoformat(),
                 }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.error(f"获取任务统计失败: {str(e)}")
             return {"error": str(e), "statistics": []}
 
@@ -398,7 +398,7 @@ class TaskMonitor:
 
             return health_status
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.error(f"检查任务健康状态失败: {str(e)}")
             return {
                 "overall_status": "unknown",
@@ -431,7 +431,7 @@ class TaskMonitor:
 
             return queue_sizes
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.warning(f"获取队列大小失败: {str(e)}")
             return {}
 
@@ -452,7 +452,7 @@ class TaskMonitor:
 
                 return task_delays
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.warning(f"检查任务延迟失败: {str(e)}")
             return {}
 

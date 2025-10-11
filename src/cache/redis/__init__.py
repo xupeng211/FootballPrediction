@@ -5,10 +5,11 @@ Redis cache module - 提供完整的Redis缓存管理功能
 # import asyncio
 import json
 import logging
-from typing import Optional, Any, List, Dict, Union, Tuple
+from typing import Optional, Any, List, Dict
 
 import redis
 import redis.asyncio as aioredis
+from redis.exceptions import RedisError
 
 from .core.connection_manager import RedisConnectionManager
 from .core.key_manager import RedisKeyManager, CacheKeyManager

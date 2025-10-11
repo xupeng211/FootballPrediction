@@ -140,7 +140,7 @@ def quality_check_task() -> Dict[str, Any]:
 
                 return check_results, issues_found
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.error(f"数据质量检查失败: {str(e)}")
             raise e
 
@@ -155,7 +155,7 @@ def quality_check_task() -> Dict[str, Any]:
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
+    except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"数据质量检查任务失败: {str(exc)}")
         return {
             "status": "failed",
@@ -198,7 +198,7 @@ def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
+    except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"错误日志清理任务失败: {str(exc)}")
         return {
             "status": "failed",
@@ -240,7 +240,7 @@ def system_health_check_task() -> Dict[str, Any]:
                     "message": "数据库连接正常",
                 }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             health_status["database"] = {
                 "status": "unhealthy",
                 "message": f"数据库连接失败: {str(e)}",
@@ -256,7 +256,7 @@ def system_health_check_task() -> Dict[str, Any]:
             redis_client.ping()
             health_status["redis"] = {"status": "healthy", "message": "Redis连接正常"}
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             health_status["redis"] = {
                 "status": "unhealthy",
                 "message": f"Redis连接失败: {str(e)}",
@@ -280,7 +280,7 @@ def system_health_check_task() -> Dict[str, Any]:
                     "message": f"磁盘空间不足: 仅剩 {free_space_gb:.2f} GB",
                 }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             health_status["disk_space"] = {
                 "status": "unknown",
                 "message": f"无法检查磁盘空间: {str(e)}",
@@ -303,7 +303,7 @@ def system_health_check_task() -> Dict[str, Any]:
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
+    except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"系统健康检查任务失败: {str(exc)}")
         return {
             "status": "failed",
@@ -349,7 +349,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                     try:
                         await session.execute(text(query))
                         logger.info(f"已执行: {query}")
-                    except Exception as e:
+                    except (RuntimeError, ValueError, ConnectionError) as e:
                         logger.warning(f"执行 {query} 失败: {str(e)}")
 
                 # 2. 清理过期的会话数据
@@ -392,7 +392,7 @@ def database_maintenance_task() -> Dict[str, Any]:
 
                 return maintenance_results
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             logger.error(f"数据库维护失败: {str(e)}")
             raise e
 
@@ -405,7 +405,7 @@ def database_maintenance_task() -> Dict[str, Any]:
             "execution_time": datetime.now().isoformat(),
         }
 
-    except Exception as exc:
+    except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"数据库维护任务失败: {str(exc)}")
         return {
             "status": "failed",

@@ -39,9 +39,9 @@ class MatchDomainService:
         # 检查球队是否已经在同一时间有比赛
         # 这里简化处理，实际应该查询数据库
 
-        match = Match(  # type: ignore
-            home_team_id=home_team.id,  # type: ignore
-            away_team_id=away_team.id,  # type: ignore
+        match = Match(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
             home_team_name=home_team.name,
             away_team_name=away_team.name,
             match_time=match_time,
@@ -56,14 +56,14 @@ class MatchDomainService:
         if match.status != MatchStatus.SCHEDULED:
             raise ValueError(f"比赛状态为 {match.status.value}，无法开始")
 
-        if datetime.utcnow() < match.match_time:  # type: ignore
+        if datetime.utcnow() < match.match_time:
             raise ValueError("比赛时间还未到")
 
         match.start_match()
 
         # 记录领域事件
         event = MatchStartedEvent(
-            match_id=match.id,  # type: ignore
+            match_id=match.id,
             home_team_id=match.home_team_id,
             away_team_id=match.away_team_id,
         )
@@ -77,7 +77,7 @@ class MatchDomainService:
         minute: Optional[int] = None,
     ) -> None:
         """更新比赛比分"""
-        if match.status != MatchStatus.IN_PROGRESS:  # type: ignore
+        if match.status != MatchStatus.IN_PROGRESS:
             raise ValueError("只有进行中的比赛才能更新比分")
 
         if home_score < 0 or away_score < 0:
@@ -91,19 +91,19 @@ class MatchDomainService:
 
     def finish_match(self, match: Match) -> None:
         """结束比赛"""
-        if match.status != MatchStatus.IN_PROGRESS:  # type: ignore
+        if match.status != MatchStatus.IN_PROGRESS:
             raise ValueError("只有进行中的比赛才能结束")
 
         match.finish_match()
 
         # 记录领域事件
-        if match.final_score and match.result:  # type: ignore
+        if match.final_score and match.result:
             event = MatchFinishedEvent(
-                match_id=match.id,  # type: ignore
+                match_id=match.id,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
-                final_score=match.final_score,  # type: ignore
-                result=match.result,  # type: ignore
+                final_score=match.final_score,
+                result=match.result,
             )
             self._events.append(event)
 
@@ -115,7 +115,7 @@ class MatchDomainService:
         match.status = MatchStatus.CANCELLED
 
         # 记录领域事件
-        event = MatchCancelledEvent(match_id=match.id, reason=reason)  # type: ignore
+        event = MatchCancelledEvent(match_id=match.id, reason=reason)
         self._events.append(event)
 
     def postpone_match(self, match: Match, new_date: datetime, reason: str) -> None:
@@ -124,13 +124,13 @@ class MatchDomainService:
             raise ValueError(f"比赛状态为 {match.status.value}，无法延期")
 
         match.status = MatchStatus.POSTPONED
-        match.match_time = new_date  # type: ignore
+        match.match_time = new_date
 
         # 记录领域事件
         event = MatchPostponedEvent(
             match_id=match.id,
             new_date=new_date.isoformat(),
-            reason=reason,  # type: ignore
+            reason=reason,
         )
         self._events.append(event)
 
@@ -139,12 +139,12 @@ class MatchDomainService:
         errors = []
 
         # 检查比赛时间
-        if match.match_time <= datetime.utcnow():  # type: ignore
+        if match.match_time <= datetime.utcnow():
             errors.append("比赛时间必须是未来时间")
 
         # 检查比赛时长（通常90分钟）
-        if match.match_time and match.expected_end_time:  # type: ignore
-            duration = match.expected_end_time - match.match_time  # type: ignore
+        if match.match_time and match.expected_end_time:
+            duration = match.expected_end_time - match.match_time
             if duration.total_seconds() < 5400:  # 90分钟
                 errors.append("比赛时长不能少于90分钟")
 
@@ -153,7 +153,7 @@ class MatchDomainService:
             errors.append("必须指定比赛场地")
 
         # 检查轮次
-        if match.round_number and match.round_number < 1:  # type: ignore
+        if match.round_number and match.round_number < 1:
             errors.append("比赛轮次必须大于0")
 
         return errors
@@ -169,9 +169,9 @@ class MatchDomainService:
         importance = 0.5  # 基础重要性
 
         # 根据比赛类型调整
-        if match.is_knockout:  # type: ignore
+        if match.is_knockout:
             importance += 0.3
-        if match.is_final:  # type: ignore
+        if match.is_final:
             importance += 0.2
 
         # 根据球队排名调整

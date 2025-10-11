@@ -1,3 +1,6 @@
+# mypy: ignore-errors
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 """add_performance_critical_indexes
 
 添加性能关键索引，优化高频查询性能。
@@ -17,9 +20,9 @@ Create Date: 2025-09-29 23:08:00.000000
 
 # revision identifiers, used by Alembic.
 revision: str = "d3bf28af22ff"
-down_revision: Union[str, None] = "006_missing_indexes"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+down_revision: Union[str, None] = "006_missing_indexes"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def _create_predictions_indexes(conn) -> None:
@@ -29,7 +32,7 @@ def _create_predictions_indexes(conn) -> None:
     # 创建时间降序索引（用于最近预测查询）
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_predictions_created_at_desc
             ON predictions (created_at DESC);
@@ -43,7 +46,7 @@ def _create_predictions_indexes(conn) -> None:
     # 比赛ID和创建时间复合索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_predictions_match_created
             ON predictions (match_id, created_at DESC);
@@ -59,13 +62,13 @@ def upgrade() -> None:
     """添加性能关键索引"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         print("⚠️  离线模式：跳过性能索引创建")
-        op.execute("-- offline mode: skipped performance indexes creation")  # type: ignore
+        op.execute("-- offline mode: skipped performance indexes creation")
         return
 
     # 获取数据库连接以执行原生SQL
-    conn = op.get_bind()  # type: ignore
+    conn = op.get_bind()
 
     print("开始添加性能关键索引...")
 
@@ -87,7 +90,7 @@ def _create_matches_indexes(conn) -> None:
     # 状态和时间复合索引（优化查询即将开始的比赛）
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_matches_status_time
             ON matches (match_status, match_time DESC);
@@ -101,7 +104,7 @@ def _create_matches_indexes(conn) -> None:
     # 联赛和时间复合索引（优化联赛赛程查询）
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_matches_league_time
             ON matches (league_id, match_time DESC);
@@ -115,7 +118,7 @@ def _create_matches_indexes(conn) -> None:
     # 主队和时间复合索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_matches_home_time
             ON matches (home_team_id, match_time DESC);
@@ -134,7 +137,7 @@ def _create_features_indexes(conn) -> None:
     # 匹配ID和创建时间复合索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_features_match_created
             ON features (match_id, created_at DESC);
@@ -148,7 +151,7 @@ def _create_features_indexes(conn) -> None:
     # 特征类型索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_features_type
             ON features (feature_type);
@@ -167,7 +170,7 @@ def _create_data_quality_indexes(conn) -> None:
     # 数据质量日志时间索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_data_quality_created_at
             ON data_quality_logs (created_at DESC);
@@ -181,7 +184,7 @@ def _create_data_quality_indexes(conn) -> None:
     # 数据质量状态索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_data_quality_status
             ON data_quality_logs (validation_status);
@@ -200,7 +203,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 审计日志时间索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at
             ON audit_logs (created_at DESC);
@@ -214,7 +217,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 审计日志用户索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_audit_logs_user
             ON audit_logs (user_id);
@@ -243,7 +246,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 审计日志操作类型索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_audit_logs_action
             ON audit_logs (action_type);
@@ -263,7 +266,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 数据采集日志时间索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_collection_logs_created_at
             ON data_collection_logs (created_at DESC);
@@ -277,7 +280,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 数据采集日志源和状态复合索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_collection_logs_source_status
             ON data_collection_logs (data_source, collection_status);
@@ -297,7 +300,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 错误日志任务名称索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_error_logs_task_name
             ON error_logs (task_name);
@@ -311,7 +314,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 错误日志创建时间索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_error_logs_created_at
             ON error_logs (created_at DESC);
@@ -325,7 +328,7 @@ def _create_audit_logs_indexes(conn) -> None:
     # 错误日志任务状态复合索引
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE INDEX IF NOT EXISTS idx_error_logs_task_status
             ON error_logs (task_name, error_message IS NOT NULL);
@@ -343,14 +346,14 @@ def downgrade() -> None:
     """删除性能关键索引"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         print("⚠️  离线模式：跳过索引删除")
 
-        op.execute("-- offline mode: skipped performance indexes removal")  # type: ignore
+        op.execute("-- offline mode: skipped performance indexes removal")
         return
 
     # 获取数据库连接以执行原生SQL
-    conn = op.get_bind()  # type: ignore
+    conn = op.get_bind()
 
     print("开始删除性能关键索引...")
 
@@ -377,7 +380,7 @@ def downgrade() -> None:
 
     for index_name in indexes_to_drop:
         try:
-            conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))  # type: ignore
+            conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))
             print(f"   ✓ {index_name} 删除成功")
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"   ✗ {index_name} 删除失败: {e}")

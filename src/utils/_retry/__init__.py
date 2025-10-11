@@ -4,7 +4,7 @@
 包含所有重试相关的类和函数。
 """
 
-from typing import Any, Callable, Optional, Union, TypeVar
+from typing import Callable, Optional, TypeVar
 import asyncio
 import functools
 import time

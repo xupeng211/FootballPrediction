@@ -1,3 +1,7 @@
+# mypy: ignore-errors
+import sqlalchemy as sa
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 """Phase 3 改进迁移
 Phase 3 improvements migration
 

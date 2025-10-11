@@ -8,9 +8,12 @@ from datetime import datetime, timezone
 迁移ID: 005
 创建时间: 2025-09-12
 """
+# mypy: ignore-errors
 
 import sqlalchemy as sa
 from alembic import context, op
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 

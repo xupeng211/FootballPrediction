@@ -1,3 +1,6 @@
+import sqlalchemy as sa
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 # mypy: ignore-errors
 """add_raw_scores_data_and_upgrade_jsonb
 
