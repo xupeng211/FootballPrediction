@@ -142,7 +142,7 @@ class FootballFeatureStore:
         try:
             self.store = FeatureStore(repo_path=self.feature_store_path)
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"Feast 存储初始化失败: {e}")
+            logger.info(f"Feast 存储初始化失败: {e}")
             self.store = None
 
     def get_entity_definitions(self) -> Dict[str, Entity]:
@@ -298,7 +298,7 @@ class FootballFeatureStore:
             bool: 注册是否成功
         """
         if not self.store:
-            print("Feast 存储未初始化")
+            logger.info("Feast 存储未初始化")
             return False
 
         try:
@@ -312,11 +312,11 @@ class FootballFeatureStore:
             for fv in feature_views.values():
                 self.store.apply(fv)
 
-            print("特征注册成功")
+            logger.info("特征注册成功")
             return True
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"特征注册失败: {e}")
+            logger.info(f"特征注册失败: {e}")
             return False
 
     async def get_online_features(
@@ -344,7 +344,7 @@ class FootballFeatureStore:
             return result.to_df()
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"获取在线特征失败: {e}")
+            logger.info(f"获取在线特征失败: {e}")
             return pd.DataFrame()
 
     async def get_historical_features(
@@ -378,7 +378,7 @@ class FootballFeatureStore:
             return training_df
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"获取历史特征失败: {e}")
+            logger.info(f"获取历史特征失败: {e}")
             return pd.DataFrame()
 
     async def push_features_to_online_store(
@@ -395,24 +395,24 @@ class FootballFeatureStore:
             bool: 推送是否成功
         """
         if not self.store:
-            print("Feast 存储未初始化")
+            logger.info("Feast 存储未初始化")
             return False
 
         try:
             # 获取特征视图
             feature_views = self.get_feature_view_definitions()
             if feature_view_name not in feature_views:
-                print(f"特征视图 {feature_view_name} 不存在")
+                logger.info(f"特征视图 {feature_view_name} 不存在")
                 return False
 
             # 推送到在线存储
             self.store.push(push_source_name=f"{feature_view_name}_push_source", df=df)
 
-            print(f"特征推送到在线存储成功: {feature_view_name}")
+            logger.info(f"特征推送到在线存储成功: {feature_view_name}")
             return True
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"推送特征失败: {e}")
+            logger.info(f"推送特征失败: {e}")
             return False
 
     async def calculate_and_store_team_features(
@@ -463,7 +463,7 @@ class FootballFeatureStore:
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"计算并存储球队特征失败: {e}")
+            logger.info(f"计算并存储球队特征失败: {e}")
             return False
 
     async def calculate_and_store_match_features(
@@ -552,7 +552,7 @@ class FootballFeatureStore:
             return h2h_success and odds_success
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"计算并存储比赛特征失败: {e}")
+            logger.info(f"计算并存储比赛特征失败: {e}")
             return False
 
     async def get_match_features_for_prediction(
@@ -576,7 +576,7 @@ class FootballFeatureStore:
             # 尝试从缓存获取特征数据
             cached_features = await self.cache_manager.aget(cache_key)
             if cached_features:
-                print(f"从缓存获取比赛 {match_id} 的预测特征")
+                logger.info(f"从缓存获取比赛 {match_id} 的预测特征")
                 return cached_features
 
             # 获取球队近期表现特征
@@ -635,7 +635,7 @@ class FootballFeatureStore:
             return features
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"获取预测特征失败: {e}")
+            logger.info(f"获取预测特征失败: {e}")
             return None
 
     async def batch_calculate_features(
@@ -706,13 +706,13 @@ class FootballFeatureStore:
                         KeyError,
                         RuntimeError,
                     ) as e:
-                        print(f"处理比赛 {match.id} 失败: {e}")
+                        logger.info(f"处理比赛 {match.id} 失败: {e}")
                         stats["errors"] += 1
                         continue
 
             return stats
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"批量计算特征失败: {e}")
+            logger.info(f"批量计算特征失败: {e}")
             stats["errors"] += 1
             return stats

@@ -36,7 +36,7 @@ Provides real-time match prediction functionality, including:
 
     service = PredictionService(mlflow_tracking_uri="http://localhost:5002")
     result = await service.predict_match(12345)
-    print(f"预测结果: {result.predicted_result}")
+    logger.info(f"预测结果: {result.predicted_result}")
     ```
 
 环境变量 / Environment Variables:

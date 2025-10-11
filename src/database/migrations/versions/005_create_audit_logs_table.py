@@ -249,7 +249,7 @@ def upgrade():
             )
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             # 如果permission_audit_log表不存在，忽略错误但记录日志
-            print(f"Warning: Could not drop permission_audit_log table: {e}")
+            logger.info(f"Warning: Could not drop permission_audit_log table: {e}")
     else:
         # 离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped audit_logs permission grants")
@@ -277,7 +277,7 @@ def downgrade():
             )
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             # 如果permission_audit_log表不存在，忽略错误但记录日志
-            print(f"Warning: Could not drop permission_audit_log table: {e}")
+            logger.info(f"Warning: Could not drop permission_audit_log table: {e}")
 
         # 删除清理函数
         connection.execute(

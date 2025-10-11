@@ -138,7 +138,7 @@ class EnsembleStrategy(PredictionStrategy):
                 # 初始化性能历史
                 self._performance_history[strategy_name] = []
 
-                print(f"子策略 '{strategy_name}' ({strategy_type}) 初始化成功")
+                logger.info(f"子策略 '{strategy_name}' ({strategy_type}) 初始化成功")
 
     async def _initialize_strategy_weights(
         self, weights_config: Dict[str, float]
@@ -273,7 +273,7 @@ class EnsembleStrategy(PredictionStrategy):
         predictions = {}
         for name, result in zip(strategy_names, results):
             if isinstance(result, Exception):
-                print(f"策略 '{name}' 预测失败: {result}")
+                logger.info(f"策略 '{name}' 预测失败: {result}")
             else:
                 predictions[name] = result
 
@@ -640,7 +640,7 @@ class EnsembleStrategy(PredictionStrategy):
             strategy_name=strategy.name, base_weight=weight
         )
         self._performance_history[strategy.name] = []
-        print(f"动态添加子策略: {strategy.name}")
+        logger.info(f"动态添加子策略: {strategy.name}")
 
     def remove_strategy(self, strategy_name: str) -> None:
         """移除子策略"""
@@ -650,7 +650,7 @@ class EnsembleStrategy(PredictionStrategy):
             del self._strategy_weights[strategy_name]
         if strategy_name in self._performance_history:
             del self._performance_history[strategy_name]
-        print(f"移除子策略: {strategy_name}")
+        logger.info(f"移除子策略: {strategy_name}")
 
     def update_strategy_weight(self, strategy_name: str, new_weight: float) -> None:
         """更新策略权重"""

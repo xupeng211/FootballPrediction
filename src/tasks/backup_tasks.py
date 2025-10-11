@@ -39,7 +39,7 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 
     # 获取任务执行结果
     backup_result = result.get()
-    print(f"备份状态: {'成功' if backup_result['success'] else '失败'}")
+    logger.info(f"备份状态: {'成功' if backup_result['success'] else '失败'}")
     ```
 
 环境变量 / Environment Variables:

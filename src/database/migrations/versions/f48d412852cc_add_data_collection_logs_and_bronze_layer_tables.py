@@ -217,11 +217,11 @@ def upgrade() -> None:
                 )
             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 # 如果字段已存在，忽略错误
-                print(f"Warning: Column {column_name} already exists: {e}")
+                logger.info(f"Warning: Column {column_name} already exists: {e}")
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志
-        print(f"Warning: Could not add columns to features table: {e}")
+        logger.info(f"Warning: Could not add columns to features table: {e}")
 
 
 def downgrade() -> None:
@@ -247,10 +247,10 @@ def downgrade() -> None:
                 op.drop_column("features", column_name)
             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 # 忽略字段不存在的错误但记录日志
-                print(f"Warning: Could not drop column {column_name}: {e}")
+                logger.info(f"Warning: Could not drop column {column_name}: {e}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 忽略字段不存在的错误但记录日志
-        print(f"Warning: Could not drop columns from features table: {e}")
+        logger.info(f"Warning: Could not drop columns from features table: {e}")
 
     # 删除Bronze层赔率数据表
     op.drop_index("idx_raw_odds_data_market_type", table_name="raw_odds_data")

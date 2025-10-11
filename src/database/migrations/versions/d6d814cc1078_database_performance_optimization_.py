@@ -29,7 +29,7 @@ def upgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过性能优化迁移")
+        logger.info("⚠️  离线模式：跳过性能优化迁移")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database performance optimization")  # type: ignore
         op.execute("-- offline mode: skipped materialized views creation")  # type: ignore
@@ -44,7 +44,7 @@ def upgrade() -> None:
     # 1. 为 matches 表添加按月分区策略
     # ========================================
 
-    print("1. 开始为 matches 表添加分区策略...")
+    logger.info("1. 开始为 matches 表添加分区策略...")
 
     # 备份现有数据
     conn.execute(
@@ -159,13 +159,13 @@ def upgrade() -> None:
     # 删除备份表
     conn.execute(text("DROP TABLE matches_backup;"))  # type: ignore
 
-    print("   ✅ matches 表分区策略创建完成")
+    logger.info("   ✅ matches 表分区策略创建完成")
 
     # ========================================
     # 2. 为 odds 表添加按月分区策略
     # ========================================
 
-    print("2. 开始为 odds 表添加分区策略...")
+    logger.info("2. 开始为 odds 表添加分区策略...")
 
     # 备份现有数据
     conn.execute(text("CREATE TABLE odds_backup AS SELECT * FROM odds;"))  # type: ignore
@@ -231,13 +231,13 @@ def upgrade() -> None:
     # 删除备份表
     conn.execute(text("DROP TABLE odds_backup;"))  # type: ignore
 
-    print("   ✅ odds 表分区策略创建完成")
+    logger.info("   ✅ odds 表分区策略创建完成")
 
     # ========================================
     # 3. 添加关键索引
     # ========================================
 
-    print("3. 开始创建关键索引...")
+    logger.info("3. 开始创建关键索引...")
 
     # matches 表索引
     conn.execute(
@@ -332,13 +332,13 @@ def upgrade() -> None:
         )
     )
 
-    print("   ✅ 关键索引创建完成")
+    logger.info("   ✅ 关键索引创建完成")
 
     # ========================================
     # 4. 创建物化视图
     # ========================================
 
-    print("4. 开始创建物化视图...")
+    logger.info("4. 开始创建物化视图...")
 
     # 物化视图1: 球队近期战绩统计
     conn.execute(
@@ -487,13 +487,13 @@ def upgrade() -> None:
         )
     )
 
-    print("   ✅ 物化视图创建完成")
+    logger.info("   ✅ 物化视图创建完成")
 
     # ========================================
     # 5. 验证基础表存在并重新创建外键约束
     # ========================================
 
-    print("5. 验证基础表存在并重新创建外键约束...")
+    logger.info("5. 验证基础表存在并重新创建外键约束...")
 
     # 首先验证基础表是否存在
     result = conn.execute(
@@ -509,11 +509,11 @@ def upgrade() -> None:
     )
 
     existing_tables = [row[0] for row in result.fetchall()]
-    print(f"   现有基础表: {existing_tables}")
+    logger.info(f"   现有基础表: {existing_tables}")
 
     # 如果基础表不存在，需要重新创建它们
     if "leagues" not in existing_tables:
-        print("   ⚠️  leagues 表不存在，重新创建...")
+        logger.info("   ⚠️  leagues 表不存在，重新创建...")
         conn.execute(
             text(  # type: ignore
                 """
@@ -538,7 +538,7 @@ def upgrade() -> None:
         )
 
     if "teams" not in existing_tables:
-        print("   ⚠️  teams 表不存在，重新创建...")
+        logger.info("   ⚠️  teams 表不存在，重新创建...")
         conn.execute(
             text(  # type: ignore
                 """
@@ -573,9 +573,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ matches -> teams 外键创建成功")
+        logger.info("   ✅ matches -> teams 外键创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ⚠️  matches -> teams 外键创建失败: {e}")
+        logger.info(f"   ⚠️  matches -> teams 外键创建失败: {e}")
 
     try:
         conn.execute(
@@ -586,9 +586,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ matches -> teams (away) 外键创建成功")
+        logger.info("   ✅ matches -> teams (away) 外键创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ⚠️  matches -> teams (away) 外键创建失败: {e}")
+        logger.info(f"   ⚠️  matches -> teams (away) 外键创建失败: {e}")
 
     try:
         conn.execute(
@@ -599,9 +599,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ matches -> leagues 外键创建成功")
+        logger.info("   ✅ matches -> leagues 外键创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ⚠️  matches -> leagues 外键创建失败: {e}")
+        logger.info(f"   ⚠️  matches -> leagues 外键创建失败: {e}")
 
     # 注意：在PostgreSQL分区表中，外键约束有限制
     # 我们将使用应用程序级别的约束来保证数据完整性
@@ -614,13 +614,13 @@ def upgrade() -> None:
         )
     )
 
-    print("   ✅ 外键约束重新创建完成")
+    logger.info("   ✅ 外键约束重新创建完成")
 
-    print("🎉 数据库性能优化迁移全部完成！")
-    print("   - matches 表按月分区 ✅")
-    print("   - odds 表按月分区 ✅")
-    print("   - 关键索引优化 ✅")
-    print("   - 物化视图支持 ✅")
+    logger.info("🎉 数据库性能优化迁移全部完成！")
+    logger.info("   - matches 表按月分区 ✅")
+    logger.info("   - odds 表按月分区 ✅")
+    logger.info("   - 关键索引优化 ✅")
+    logger.info("   - 物化视图支持 ✅")
 
 
 def downgrade() -> None:
@@ -628,7 +628,7 @@ def downgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过性能优化回滚")
+        logger.info("⚠️  离线模式：跳过性能优化回滚")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute(  # type: ignore
@@ -641,7 +641,7 @@ def downgrade() -> None:
 
     conn = op.get_bind()
 
-    print("开始回滚数据库性能优化...")
+    logger.info("开始回滚数据库性能优化...")
 
     # 删除物化视图
     conn.execute(
@@ -653,7 +653,7 @@ def downgrade() -> None:
 
     # 恢复原始表结构 - 这里需要重新创建原始的非分区表
     # 为了简化，这里提供基本的回滚逻辑
-    print("⚠️  注意: 完整回滚需要手动处理分区表数据迁移")
-    print("   建议执行完整的数据备份和恢复流程")
+    logger.info("⚠️  注意: 完整回滚需要手动处理分区表数据迁移")
+    logger.info("   建议执行完整的数据备份和恢复流程")
 
-    print("回滚完成")
+    logger.info("回滚完成")
