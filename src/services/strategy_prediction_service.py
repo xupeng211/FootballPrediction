@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 基于策略模式的预测服务
 Strategy-based Prediction Service

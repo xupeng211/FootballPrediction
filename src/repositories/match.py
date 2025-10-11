@@ -440,19 +440,19 @@ class MatchRepository(MatchRepositoryInterface):
             func.avg(Prediction.confidence).label("avg_confidence"),  # type: ignore
             func.sum(
                 func.case(
-                    (Prediction.predicted_home > Prediction.predicted_away, 1),
+                    (Prediction.predicted_home_score > Prediction.predicted_away_score, 1),
                     else_=0,  # type: ignore
                 )
             ).label("home_win_predictions"),
             func.sum(
                 func.case(
-                    (Prediction.predicted_home < Prediction.predicted_away, 1),
+                    (Prediction.predicted_home_score < Prediction.predicted_away_score, 1),
                     else_=0,  # type: ignore
                 )
             ).label("away_win_predictions"),
             func.sum(
                 func.case(
-                    (Prediction.predicted_home == Prediction.predicted_away, 1),
+                    (Prediction.predicted_home_score == Prediction.predicted_away_score, 1),
                     else_=0,  # type: ignore
                 )
             ).label("draw_predictions"),

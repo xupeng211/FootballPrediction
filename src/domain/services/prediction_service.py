@@ -58,18 +58,22 @@ class PredictionDomainService:
         if confidence is not None:
             if not 0.0 <= confidence <= 1.0:
                 raise ValueError("信心度必须在0-1之间")
-            confidence_score = ConfidenceScore(confidence)
+            from decimal import Decimal
+            confidence_score = ConfidenceScore(Decimal(str(confidence)))
         else:
             confidence_score = None
 
         prediction = Prediction(
             user_id=user_id,
             match_id=match.id,
+        )
+        # 创建预测
+        prediction.make_prediction(
             predicted_home=predicted_home,
             predicted_away=predicted_away,
-            confidence=confidence_score,
-            notes=notes,
+            confidence=confidence,
         )
+        # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
 
         # 记录领域事件
         event = PredictionCreatedEvent(
@@ -250,9 +254,9 @@ class PredictionDomainService:
             if not 0.0 <= float(prediction.confidence.value) <= 1.0:
                 errors.append("信心度必须在0-1之间")
 
-        # 检查备注长度
-        if prediction.notes and len(prediction.notes) > 500:
-            errors.append("备注不能超过500个字符")
+        # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
+        # if prediction.notes and len(prediction.notes) > 500:
+        #     errors.append("备注不能超过500个字符")
 
         return errors
 

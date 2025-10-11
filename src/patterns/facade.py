@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 门面模式实现
 

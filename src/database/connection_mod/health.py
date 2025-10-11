@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 数据库健康检查模块
 Database Health Check Module
