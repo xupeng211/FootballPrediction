@@ -270,7 +270,7 @@ def main():
     print("=" * 60)
 
     test_modules = [
-        ("src.services.audit_service_mod", "AuditService"),
+        ("src.services.audit_service", "AuditService"),
         ("src.services.manager_mod", "ServiceManager"),
     ]
 

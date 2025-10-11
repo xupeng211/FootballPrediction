@@ -23,7 +23,7 @@ def fix_specific_imports(file_path: Path):
             "from src.monitoring.metrics_collector import": "from src.monitoring.metrics_collector import",
             # 服务相关
             "from src.services.audit_service import": "from src.services.audit_service import",
-            "from src.services.audit_service_mod import": "from src.services.audit_service_mod import",
+            "from src.services.audit_service import": "from src.services.audit_service import",
             "from src.services.audit_service_new import": "from src.services.audit_service_new import",
             "from src.services.audit_service_real import": "from src.services.audit_service_real import",
             "from src.services.audit_service_refactored import": "from src.services.audit_service_refactored import",

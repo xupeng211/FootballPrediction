@@ -1,4 +1,5 @@
 import logging
+
 """
 统计分析策略
 Statistical Strategy

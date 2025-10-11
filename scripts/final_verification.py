@@ -109,15 +109,15 @@ def create_import_mapping():
 
     mapping = {
         "原始路径": "拆分后路径",
-        "src.services.audit_service": "src.services.audit_service_mod",
+        "src.services.audit_service": "src.services.audit_service",
         "src.services.manager": "src.services.manager_mod",
-        "src.services.data_processing": "src.services.data_processing_mod",
+        "src.services.data_processing": "src.services.data_processing",
         "src.database.connection": "src.database.connection_mod",
         "src.cache.ttl_cache_improved": "src.cache.ttl_cache_improved_mod",
         "src.data.processing.football_data_cleaner": "src.data.processing.football_data_cleaner_mod",
         "src.data.quality.exception_handler": "src.data.quality.exception_handler_mod",
         "src.monitoring.system_monitor": "src.monitoring.system_monitor_mod",
-        "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced_mod",
+        "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced",
     }
 
     print("\n建议的导入路径更新:")

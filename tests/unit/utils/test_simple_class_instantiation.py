@@ -128,7 +128,7 @@ class TestSimpleClassInstantiation:
     def test_audit_service_instantiation(self):
         """测试审计服务实例化"""
         try:
-            from src.services.audit_service_mod import AuditService
+            from src.audit.service import AuditService
 
             service = AuditService()
             assert service is not None
@@ -140,7 +140,7 @@ class TestSimpleClassInstantiation:
     def test_data_processing_instantiation(self):
         """测试数据处理服务实例化"""
         try:
-            from src.services.data_processing_mod import DataProcessingService
+            from src.data.processing import DataProcessingService
 
             service = DataProcessingService()
             assert service is not None

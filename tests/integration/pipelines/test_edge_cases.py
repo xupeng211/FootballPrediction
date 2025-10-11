@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from sqlalchemy.exc import DatabaseError
 from fastapi import HTTPException, FastAPI, Request
 from fastapi.testclient import TestClient
-from src.services.data_processing_mod import DataProcessingService
+from src.data.processing import DataProcessingService
 from src.streaming.kafka_producer import KafkaProducer
 from src.api.health import router
 from src.database.connection import DatabaseManager

@@ -7,8 +7,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
+
 class DatabaseRole(Enum):
     """数据库用户角色"""
+
     READER = "reader"
     WRITER = "writer"
     ADMIN = "admin"
@@ -29,7 +31,7 @@ class DatabaseManager:
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, 'initialized'):
+        if not hasattr(self, "initialized"):
             self.initialized = False
 
     def initialize(self, database_url: Optional[str] = None):
@@ -38,7 +40,10 @@ class DatabaseManager:
             return
 
         import os
-        db_url = database_url or os.getenv("DATABASE_URL", "postgresql://localhost/football_prediction")
+
+        db_url = database_url or os.getenv(
+            "DATABASE_URL", "postgresql://localhost/football_prediction"
+        )
         if db_url is None:
             raise ValueError("Database URL is required")
         async_db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
@@ -134,20 +139,26 @@ def get_async_session() -> AsyncSession:
 def get_reader_session() -> Session:
     return get_db_session()
 
+
 def get_writer_session() -> Session:
     return get_db_session()
+
 
 def get_admin_session() -> Session:
     return get_db_session()
 
+
 def get_async_reader_session() -> AsyncSession:
     return get_async_session()
+
 
 def get_async_writer_session() -> AsyncSession:
     return get_async_session()
 
+
 def get_async_admin_session() -> AsyncSession:
     return get_async_session()
+
 
 # 兼容性别名
 get_session = get_db_session

@@ -16,7 +16,7 @@ class TestServicesQuick(ServiceTestCase):
     def test_data_processing_service(self):
         """测试数据处理服务"""
         try:
-            from src.services.data_processing_mod import DataProcessingService
+            from src.data.processing import DataProcessingService
 
             service = DataProcessingService()
             assert service is not None
@@ -26,7 +26,7 @@ class TestServicesQuick(ServiceTestCase):
     def test_audit_service_import(self):
         """测试审计服务导入"""
         try:
-            from src.services.audit_service_mod import audit_operation
+            from src.audit.service import audit_operation
 
             assert callable(audit_operation)
         except ImportError:

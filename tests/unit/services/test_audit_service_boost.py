@@ -4,8 +4,7 @@
 
 import pytest
 from unittest.mock import Mock, AsyncMock
-from src.services.audit_service_mod import AuditService, DataSanitizer, SeverityAnalyzer
-from src.services.audit_service_mod.models import AuditAction, AuditSeverity
+from src.services.audit_service import AuditService, AuditSeverity
 
 
 class TestAuditServiceCoverage:

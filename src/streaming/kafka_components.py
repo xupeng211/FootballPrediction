@@ -18,23 +18,31 @@ except ImportError:
     # 创建一个占位符类
     class FootballKafkaConsumer:
         """占位符类 - Kafka消费者"""
+
         def __init__(self, *args, **kwargs):
             pass
+
     FootballKafkaConsumer = FootballKafkaConsumer
 
 # 创建占位符类以避免类型错误
 if StreamConfig is None:
+
     class StreamConfig:
         """占位符类 - 流配置"""
+
         def __init__(self, *args, **kwargs):
             pass
+
     StreamConfig: Type = StreamConfig
 
 if StreamProcessor is None:
+
     class StreamProcessor:
         """占位符类 - 流处理器"""
+
         def __init__(self, *args, **kwargs):
             pass
+
     StreamProcessor: Type = StreamProcessor
 
 # Kafka可用性标志

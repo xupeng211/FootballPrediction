@@ -208,12 +208,15 @@ class Prediction:
         from ..events import PredictionCreatedEvent
 
         self._add_domain_event(
-            PredictionCreatedEvent(  # type: ignore
-                prediction_id=self.id,  # type: ignore
+            PredictionCreatedEvent(
+                prediction_id=self.id or 0,
                 user_id=self.user_id,
                 match_id=self.match_id,
-                predicted_score=self.score,
-                confidence=self.confidence,  # type: ignore
+                predicted_home=self.score.predicted_home,
+                predicted_away=self.score.predicted_away,
+                confidence=float(self.confidence.value)
+                if self.confidence
+                else None,
             )
         )
 
@@ -232,7 +235,7 @@ class Prediction:
 
         # 更新实际比分
         self.score.actual_home = actual_home
-        self.score.actual_away = actual_home
+        self.score.actual_away = actual_away
         self.status = PredictionStatus.EVALUATED
         self.evaluated_at = datetime.utcnow()
 
@@ -245,14 +248,15 @@ class Prediction:
         from ..events import PredictionEvaluatedEvent
 
         self._add_domain_event(
-            PredictionEvaluatedEvent(  # type: ignore
-                prediction_id=self.id,  # type: ignore
-                user_id=self.user_id,
-                match_id=self.match_id,
-                predicted_score=self.score,
-                points_earned=self.points.total,  # type: ignore
-                is_correct_score=self.score.is_correct_score,
-                is_correct_result=self.score.is_correct_result,
+            PredictionEvaluatedEvent(
+                prediction_id=self.id or 0,
+                actual_home=actual_home,
+                actual_away=actual_away,
+                is_correct=self.score.is_correct_score,
+                points_earned=int(self.points.total)
+                if self.points is not None
+                else None,
+                accuracy_score=self.accuracy_score,
             )
         )
 

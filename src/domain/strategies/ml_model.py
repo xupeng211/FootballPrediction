@@ -152,6 +152,7 @@ class MLModelStrategy(PredictionStrategy):
         if self._model is None:
             # 使用模拟预测
             import random
+
             possible_results = ["HOME_WIN", "DRAW", "AWAY_WIN"]
             prediction_result = random.choice(possible_results)
             prediction_proba = [0.33, 0.34, 0.33]
@@ -211,14 +212,19 @@ class MLModelStrategy(PredictionStrategy):
             if self._model is None:
                 # 使用模拟预测
                 import random
+
                 possible_results = ["HOME_WIN", "DRAW", "AWAY_WIN"]
-                prediction_results = [random.choice(possible_results) for _ in range(len(features_list))]
+                prediction_results = [
+                    random.choice(possible_results) for _ in range(len(features_list))
+                ]
             else:
                 features_array = np.vstack(features_list)
                 prediction_results = self._model.predict(features_array)
 
             if self._model is None:
-                prediction_probas = [[0.33, 0.34, 0.33] for _ in range(len(features_list))]
+                prediction_probas = [
+                    [0.33, 0.34, 0.33] for _ in range(len(features_list))
+                ]
             else:
                 try:
                     prediction_probas = self._model.predict_proba(features_array)

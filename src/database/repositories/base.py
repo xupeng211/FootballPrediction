@@ -85,7 +85,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = select(self.model_class).where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
+            stmt = select(self.model_class).where(
+                getattr(self.model_class, "id") == obj_id
+            )  # type: ignore
             result = await sess.execute(stmt)
             return result.scalar_one_or_none()
 
@@ -143,7 +145,7 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = (
                 update(self.model_class)
-                .where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
+                .where(getattr(self.model_class, "id") == obj_id)  # type: ignore
                 .values(**obj_data)
                 .returning(self.model_class)
             )
@@ -170,7 +172,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
+            stmt = delete(self.model_class).where(
+                getattr(self.model_class, "id") == obj_id
+            )  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -342,7 +346,7 @@ class BaseRepository(ABC, Generic[T]):
                     obj_id = update_data.pop("id")
                     stmt = (
                         update(self.model_class)
-                        .where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
+                        .where(getattr(self.model_class, "id") == obj_id)  # type: ignore
                         .values(**update_data)
                     )
                     result = await sess.execute(stmt)
@@ -368,7 +372,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(getattr(self.model_class, 'id').in_(ids))  # type: ignore
+            stmt = delete(self.model_class).where(
+                getattr(self.model_class, "id").in_(ids)
+            )  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -405,7 +411,12 @@ class BaseRepository(ABC, Generic[T]):
 
                 await sess.commit()
                 return results
-            except (SQLAlchemyExc.SQLAlchemyError, SQLAlchemyExc.DatabaseError, ConnectionError, TimeoutError):
+            except (
+                SQLAlchemyExc.SQLAlchemyError,
+                SQLAlchemyExc.DatabaseError,
+                ConnectionError,
+                TimeoutError,
+            ):
                 await sess.rollback()
                 raise
 

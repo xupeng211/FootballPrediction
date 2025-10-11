@@ -6,7 +6,7 @@ System Monitor
 """
 
 # 为了向后兼容，从模块化实现重新导出
-from .system_monitor_mod import (
+from .system_monitor import (
     SystemMonitor,
     get_system_monitor,
 )

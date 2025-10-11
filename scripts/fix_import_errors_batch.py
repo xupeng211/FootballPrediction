@@ -59,7 +59,7 @@ IMPORT_FIXES = {
     "from src.utils.ttl_cache_improved import": "# from src.utils.ttl_cache_improved import",
     # 服务相关
     "from src.services.audit_service import": "# from src.services.audit_service import",
-    "from src.services.audit_service_mod import": "# from src.services.audit_service_mod import",
+    "from src.services.audit_service import": "# from src.services.audit_service import",
     "from src.services.audit_service_new import": "# from src.services.audit_service_new import",
     "from src.services.audit_service_real import": "# from src.services.audit_service_real import",
     "from src.services.audit_service_refactored import": "# from src.services.audit_service_refactored import",

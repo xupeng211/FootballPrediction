@@ -191,10 +191,10 @@ Update all files that import `service_legacy.py`:
 
 ```python
 # Old import
-from src.services.audit_service_mod.service_legacy import AuditService
+from src.services.audit_service.service_legacy import AuditService
 
 # New import
-from src.services.audit_service_mod import AuditService
+from src.services.audit_service import AuditService
 ```
 
 ### Step 4: Run tests

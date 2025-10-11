@@ -1,4 +1,5 @@
 import logging
+
 """
 历史数据策略
 Historical Strategy

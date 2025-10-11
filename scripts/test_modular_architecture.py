@@ -70,7 +70,7 @@ def test_audit_service_functionality():
     print("=" * 60)
 
     try:
-        from src.services.audit_service_mod import (
+        from src.services.audit_service import (
             AuditService,
             AuditContext,
             AuditAction,

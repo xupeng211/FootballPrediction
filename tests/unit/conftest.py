@@ -1,20 +1,18 @@
-"""Unit测试全局配置和fixtures"""
+import os
+import sys
+import types
+from pathlib import Path
 
-import pytest
+os.environ.setdefault("MINIMAL_API_MODE", "true")
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-@pytest.fixture
-def auth_headers():
-    """提供认证头部"""
-    return {"Authorization": "Bearer test-token"}
+if "src" not in sys.modules:
+    src_module = types.ModuleType("src")
+    src_module.__path__ = [str(PROJECT_ROOT / "src")]
+    sys.modules["src"] = src_module
 
-
-@pytest.fixture
-def sample_prediction_data():
-    """提供示例预测数据"""
-    return {
-        "home_team": "Team A",
-        "away_team": "Team B",
-        "match_date": "2024-01-01",
-        "league": "Premier League",
-    }
+if "src.domain" not in sys.modules:
+    domain_module = types.ModuleType("src.domain")
+    domain_module.__path__ = [str(PROJECT_ROOT / "src" / "domain")]
+    sys.modules["src.domain"] = domain_module

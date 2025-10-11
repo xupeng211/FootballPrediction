@@ -424,6 +424,7 @@ class League:
         season_data = data.pop("current_season", None)
         current_season = None
         if season_data:
+            season_data.pop("progress", None)
             if season_data.get("start_date"):
                 season_data["start_date"] = datetime.fromisoformat(
                     season_data["start_date"]
@@ -440,6 +441,7 @@ class League:
         settings = LeagueSettings(**settings_data) if settings_data else None
 
         # 处理类型枚举
+        data.pop("prestige", None)
         if data.get("type"):
             data["type"] = LeagueType(data["type"])
 
