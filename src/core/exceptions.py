@@ -49,6 +49,18 @@ class PipelineError(FootballPredictionError):
     """数据管道异常"""
 
 
+class DomainError(FootballPredictionError):
+    """领域层异常"""
+
+    pass
+
+
+class BusinessRuleError(DomainError):
+    """业务规则异常"""
+
+    pass
+
+
 class ServiceLifecycleError(FootballPredictionError):
     """服务生命周期异常"""
 
