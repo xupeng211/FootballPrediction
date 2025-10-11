@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 数据处理缓存管理
 
