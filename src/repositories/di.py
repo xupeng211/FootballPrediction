@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database.connection_mod.sessions import get_async_session
+from ..database.connection import get_async_session
 from .base import Repository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import UserRepository, ReadOnlyUserRepository
