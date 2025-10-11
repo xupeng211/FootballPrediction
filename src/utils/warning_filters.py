@@ -3,8 +3,11 @@
 Warning Filters Setup
 """
 
-import warnings
+import logging
 import sys
+import warnings
+
+logger = logging.getLogger(__name__)
 
 
 def setup_warning_filters():

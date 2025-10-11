@@ -49,7 +49,7 @@ Provides API endpoints for match prediction:
 """
 
 # 为了向后兼容，从新的模块化实现重新导出路由器
-from .predictions_mod import router
+from .predictions.router import router
 
 # 保持原有的导出
 __all__ = [

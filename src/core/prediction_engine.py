@@ -27,9 +27,36 @@ def _lazy_import():
         PredictionStatistics = _PS
 
 
+# 单例实例
+_prediction_engine_instance = None
+
+
+async def get_prediction_engine():
+    """
+    获取预测引擎单例实例
+
+    Returns:
+        PredictionEngine: 预测引擎实例
+    """
+    global _prediction_engine_instance
+
+    # 确保类已加载
+    _lazy_import()
+
+    if _prediction_engine_instance is None:
+        # 创建预测引擎实例
+        from .prediction.config import PredictionConfig
+
+        config = PredictionConfig()
+        _prediction_engine_instance = PredictionEngine(config)
+
+    return _prediction_engine_instance
+
+
 # 保持原有的导入方式
 __all__ = [
     "PredictionEngine",
     "PredictionConfig",
     "PredictionStatistics",
+    "get_prediction_engine",
 ]

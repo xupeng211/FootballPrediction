@@ -1,0 +1,56 @@
+{
+  "current_coverage": 22.77,
+  "target_coverage": 55,
+  "gap": 32.230000000000004,
+  "total_routes": 93,
+  "tested_endpoints": 97,
+  "untested_endpoints": 92,
+  "untested_routes": [
+    [
+      "src/api/features.py",
+      "health"
+    ],
+    [
+      "src/api/monitoring.py",
+      "metrics"
+    ],
+    [
+      "src/api/monitoring.py",
+      "status"
+    ],
+    [
+      "src/api/monitoring.py",
+      "collector/health"
+    ],
+    [
+      "src/api/monitoring.py",
+      "collector/collect"
+    ],
+    [
+      "src/api/monitoring.py",
+      "collector/status"
+    ],
+    [
+      "src/api/monitoring.py",
+      "collector/start"
+    ],
+    [
+      "src/api/monitoring.py",
+      "collector/stop"
+    ],
+    [
+      "src/api/events.py",
+      "stats"
+    ],
+    [
+      "src/api/events.py",
+      "types"
+    ]
+  ],
+  "suggestions": [
+    "需要为 92 个未测试的端点编写测试",
+    "优先级：核心API端点（/api/v1/*）",
+    "每日提升1-2%的覆盖率",
+    "专注于API和业务逻辑的测试"
+  ]
+}
