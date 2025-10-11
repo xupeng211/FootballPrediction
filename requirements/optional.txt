@@ -1,0 +1,21 @@
+# 可选依赖
+# Optional dependencies for specific features
+
+# 机器学习
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.5.2
+joblib==1.4.2
+mlflow==2.18.0
+
+# 流处理
+aiokafka==0.12.0
+aio-pika==9.4.3
+
+# 监控增强
+grafana-api==1.0.3
+statsd==4.0.1
+
+# 其他可选
+sentry-sdk==2.19.2
+newrelic==9.4.0
