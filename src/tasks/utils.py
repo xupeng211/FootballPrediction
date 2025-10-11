@@ -49,7 +49,7 @@ async def should_collect_live_scores() -> bool:
             match_count = result.scalar() or 0
             return match_count > 0
 
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         # 如果查询失败，返回 False（避免在测试中无谓的数据采集）
         return False
 
@@ -104,7 +104,7 @@ async def get_upcoming_matches(hours: int = 24) -> List[dict]:
 
             return matches
 
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         return []
 
 
@@ -153,7 +153,7 @@ async def get_active_leagues() -> List[str]:
 
             return leagues
 
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         # 返回一些常见的联赛作为默认值
         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
 
@@ -227,7 +227,7 @@ async def cleanup_stale_tasks() -> int:
                 return result.rowcount  # type: ignore
             return 0
 
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         return 0
 
 

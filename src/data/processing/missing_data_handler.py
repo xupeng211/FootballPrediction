@@ -221,7 +221,7 @@ class MissingDataHandler:
                 try:
                     content = path.read_text(encoding="utf-8")
                     self._merge_default_source(defaults, content, source=str(path))
-                except Exception as exc:
+                except (ValueError, KeyError, RuntimeError) as exc:
                     self.logger.warning("读取缺失值默认配置失败: %s (%s)", path, exc)
 
                 # 找到第一个有效文件即可

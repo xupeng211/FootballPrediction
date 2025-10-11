@@ -1,3 +1,6 @@
+# TODO: 此文件过长（747行），需要拆分为更小的模块
+# TODO: This file is too long (747 lines), needs to be split into smaller modules
+
 """
 恢复处理器
 

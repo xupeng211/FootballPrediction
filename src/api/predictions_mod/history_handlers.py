@@ -8,6 +8,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+from requests.exceptions import HTTPError, RequestException
+
 from fastapi import HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession

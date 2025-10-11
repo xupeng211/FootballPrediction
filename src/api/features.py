@@ -3,6 +3,7 @@
 
 提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
 """
+from requests.exceptions import HTTPError, RequestException
 
 import logging
 from typing import Any, Dict, Optional
@@ -33,7 +34,12 @@ def get_feature_store() -> Optional[FootballFeatureStore]:
     try:
         feature_store = FootballFeatureStore()
         logger.info("特征存储初始化成功")
-    except Exception as exc:  # pragma: no cover - 初始化失败只记录日志
+    except (
+        HTTPError,
+        RequestException,
+        ValueError,
+        KeyError,
+    ) as exc:  # pragma: no cover - 初始化失败只记录日志
         logger.error("特征存储初始化失败: %s", exc)
         feature_store = None
     return feature_store
@@ -75,7 +81,14 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     except SQLAlchemyError as db_error:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
         raise HTTPException(status_code=500, detail="数据库查询失败，请稍后重试")
-    except Exception as query_error:
+    except (
+        ValueError,
+        KeyError,
+        AttributeError,
+        TypeError,
+        HTTPError,
+        RequestException,
+    ) as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(status_code=500, detail="查询比赛信息失败")
 
@@ -88,7 +101,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
     try:
         logger.debug(f"从特征存储获取特征 (match_id={match_id})")
-        features = await store.get_match_features_for_prediction(  # type: ignore
+        features = await store.get_match_features_for_prediction(
             match_id=match_id,
             home_team_id=int(match.home_team_id),
             away_team_id=int(match.away_team_id),
@@ -96,11 +109,18 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
         if features:
             logger.info("成功获取 %s 组特征数据", len(features))
-            return features, None  # type: ignore
+            return features, None
 
         logger.warning(f"比赛 {match_id} 暂无特征数据")
-        return {}, None  # type: ignore
-    except Exception as feature_error:
+        return {}, None
+    except (
+        ValueError,
+        KeyError,
+        AttributeError,
+        TypeError,
+        HTTPError,
+        RequestException,
+    ) as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
         return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败
 

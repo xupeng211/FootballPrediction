@@ -9,7 +9,7 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 import logging
 from typing import Dict, Any, List, Optional
 
-from ..domain.strategies import (  # type: ignore
+from ..domain.strategies import (
     PredictionStrategy,
     PredictionStrategyFactory,
     PredictionInput,
@@ -106,7 +106,7 @@ class StrategyPredictionService:
             match=match,
             home_team=home_team,
             away_team=away_team,
-            user_id=user_id,  # type: ignore
+            user_id=user_id,
         )
 
         # 准备预测输入
@@ -118,7 +118,7 @@ class StrategyPredictionService:
         # 使用领域服务创建预测
         prediction = self._prediction_domain_service.create_prediction(
             user_id=user_id,
-            match=match,  # type: ignore
+            match=match,
             predicted_home=prediction_output.predicted_home_score,
             predicted_away=prediction_output.predicted_away_score,
             confidence=prediction_output.confidence,
@@ -126,7 +126,7 @@ class StrategyPredictionService:
         )
 
         # 保存预测
-        await self._prediction_repository.create(prediction)  # type: ignore
+        await self._prediction_repository.create(prediction)
 
         # 记录预测详情
         await self._log_prediction_details(prediction, prediction_output, strategy_name)
@@ -155,7 +155,7 @@ class StrategyPredictionService:
         strategy = await self._get_or_create_strategy(strategy_name)
 
         # 批量获取比赛信息
-        matches = await self._match_repository.get_by_ids(match_ids)  # type: ignore
+        matches = await self._match_repository.get_by_ids(match_ids)
         if not matches:
             raise ValueError("没有找到有效的比赛")
 
@@ -191,7 +191,7 @@ class StrategyPredictionService:
             predictions.append(prediction)
 
         # 批量保存
-        await self._prediction_repository.create_many(predictions)  # type: ignore
+        await self._prediction_repository.create_many(predictions)
 
         logger.info(f"用户 {user_id} 完成批量预测 {len(predictions)} 场比赛")
 
@@ -222,7 +222,7 @@ class StrategyPredictionService:
         context = PredictionContext(
             match=match,
             home_team=home_team,
-            away_team=away_team,  # type: ignore
+            away_team=away_team,
         )
         prediction_input = await self._prepare_prediction_input(context)
 
@@ -242,7 +242,7 @@ class StrategyPredictionService:
                 )
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"策略 {strategy_name} 预测失败: {e}")
-                results[strategy_name] = None  # type: ignore
+                results[strategy_name] = None
 
         return results
 
@@ -267,7 +267,7 @@ class StrategyPredictionService:
             return None
 
         # 获取最近的预测进行对比
-        recent_predictions = await self._prediction_repository.get_recent_predictions(  # type: ignore
+        recent_predictions = await self._prediction_repository.get_recent_predictions(
             strategy_name=strategy_name, days=days
         )
 
@@ -300,7 +300,7 @@ class StrategyPredictionService:
         ensemble_strategy = self._strategy_factory.get_strategy("ensemble_predictor")
         if ensemble_strategy:
             for strategy_name, weight in strategy_weights.items():
-                ensemble_strategy.update_strategy_weight(strategy_name, weight)  # type: ignore
+                ensemble_strategy.update_strategy_weight(strategy_name, weight)
             logger.info("更新集成策略权重")
 
     async def switch_default_strategy(self, strategy_name: str) -> None:
@@ -350,7 +350,7 @@ class StrategyPredictionService:
         """获取球队信息（简化实现）"""
         # 实际应该从team repository获取
         # 这里返回模拟数据
-        return Team(id=team_id, name=f"Team_{team_id}", league_id=1)  # type: ignore
+        return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
 
     async def _prepare_prediction_input(
         self, context: PredictionContext
@@ -438,13 +438,13 @@ class StrategyPredictionService:
             actual_away = 1
 
             if (
-                pred.predicted_home == actual_home  # type: ignore
-                and pred.predicted_away == actual_away  # type: ignore
+                pred.predicted_home == actual_home
+                and pred.predicted_away == actual_away
             ):
                 correct_predictions += 1
 
-            score_diff = abs(pred.predicted_home - actual_home) + abs(  # type: ignore
-                pred.predicted_away - actual_away  # type: ignore
+            score_diff = abs(pred.predicted_home - actual_home) + abs(
+                pred.predicted_away - actual_away
             )
             score_differences.append(score_diff)
 

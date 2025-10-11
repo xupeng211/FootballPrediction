@@ -67,7 +67,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         else:
             return {"error": "Fixtures collector not found"}
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect fixtures: {str(e)}")
         raise
 
@@ -92,7 +92,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
         else:
             return {"error": "Odds collector not found"}
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect odds: {str(e)}")
         raise
 
@@ -117,7 +117,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
         else:
             return {"error": "Scores collector not found"}
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect scores: {str(e)}")
         raise
 
@@ -143,7 +143,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
         results = await task.orchestrator.collect_all_data()  # type: ignore
         return results  # type: ignore
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect all data: {str(e)}")
         return {"error": str(e), "collected_at": datetime.utcnow().isoformat()}
 
@@ -180,7 +180,7 @@ def emergency_data_collection_task(
 
         return results  # type: ignore
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Emergency data collection failed: {str(e)}")
         return {
             "error": str(e),
@@ -217,7 +217,7 @@ def collect_historical_data_task():
 
         return {"error": "Historical collector not found"}
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect historical data: {str(e)}")
         raise
 
@@ -257,7 +257,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
         elif data_type == "matches":
             validation_result.update(_validate_matches_data(data))
 
-    except Exception as e:
+    except (RuntimeError, ValueError, ConnectionError) as e:
         validation_result["is_valid"] = False
         validation_result["validation_errors"].append(f"Validation error: {str(e)}")  # type: ignore
 

@@ -54,10 +54,10 @@ class FixturesCollector:
 
         # 尝试从缓存获取
         if not force_refresh:
-            cached_data = await self.redis_client.get_cache_value(cache_key)  # type: ignore
+            cached_data = await self.redis_client.get_cache_value(cache_key)
             if cached_data:
                 logger.debug(f"从缓存获取球队 {team_id} 的赛程")
-                return cached_data  # type: ignore
+                return cached_data
 
         try:
             # 从数据库查询
@@ -72,7 +72,7 @@ class FixturesCollector:
                     await self._save_fixtures_to_db(fixtures)
 
             # 缓存结果
-            await self.redis_client.set_cache_value(  # type: ignore
+            await self.redis_client.set_cache_value(
                 cache_key, fixtures, expire=self.cache_timeout
             )
 
@@ -103,9 +103,9 @@ class FixturesCollector:
         cache_key = f"fixtures:league:{league_id}:{matchday or 'all'}"
 
         if not force_refresh:
-            cached_data = await self.redis_client.get_cache_value(cache_key)  # type: ignore
+            cached_data = await self.redis_client.get_cache_value(cache_key)
             if cached_data:
-                return cached_data  # type: ignore
+                return cached_data
 
         try:
             # 从API获取联赛赛程
@@ -113,7 +113,7 @@ class FixturesCollector:
 
             # 缓存结果
             if fixtures:
-                await self.redis_client.set_cache_value(  # type: ignore
+                await self.redis_client.set_cache_value(
                     cache_key, fixtures, expire=self.cache_timeout
                 )
 
@@ -133,11 +133,11 @@ class FixturesCollector:
         query = (
             select(Match)
             .where(
-                Match.start_time >= start_date,  # type: ignore
-                Match.start_time <= end_date,  # type: ignore
+                Match.start_time >= start_date,
+                Match.start_time <= end_date,
                 (Match.home_team_id == team_id) | (Match.away_team_id == team_id),
             )
-            .order_by(Match.start_time)  # type: ignore
+            .order_by(Match.start_time)
         )
 
         result = await self.db_session.execute(query)
@@ -151,7 +151,7 @@ class FixturesCollector:
                     "home_team_id": match.home_team_id,
                     "away_team_id": match.away_team_id,
                     "league_id": match.league_id,
-                    "start_time": match.start_time,  # type: ignore
+                    "start_time": match.start_time,
                     "venue": match.venue,
                     "match_status": match.match_status,
                 }
@@ -177,7 +177,7 @@ class FixturesCollector:
         """保存比赛信息到数据库"""
         for fixture_data in fixtures:
             # 检查是否已存在
-            existing_match = await self.db_session.execute(  # type: ignore
+            existing_match = await self.db_session.execute(
                 select(Match).where(Match.id == fixture_data["id"])
             ).scalar_one_or_none()
 
@@ -275,7 +275,7 @@ class FixturesCollector:
         try:
             # 获取所有活跃的球队
             result = await self.db_session.execute(
-                select(Team).where(Team.is_active is True)  # type: ignore
+                select(Team).where(Team.is_active is True)
             )
             teams = result.scalars().all()
 
@@ -284,7 +284,7 @@ class FixturesCollector:
                 fixtures = await self.collect_team_fixtures(
                     team.id,
                     days_ahead=90,
-                    force_refresh=True,  # type: ignore
+                    force_refresh=True,
                 )
 
                 stats["total_fixtures"] += len(fixtures)
@@ -307,4 +307,4 @@ class FixturesCollectorFactory:
         """创建赛程收集器实例"""
         db_session = DatabaseManager()
         redis_client = RedisManager()
-        return FixturesCollector(db_session, redis_client)  # type: ignore
+        return FixturesCollector(db_session, redis_client)

@@ -11,6 +11,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Union
 
+from requests.exceptions import HTTPError
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -29,7 +31,7 @@ from src.api.data_router import router as data_router
 logger = get_logger(__name__)
 
 # 全局预测引擎实例
-prediction_engine: Union[PredictionEngine, None] = None  # type: ignore
+prediction_engine: Union[PredictionEngine, None] = None
 
 
 async def init_prediction_engine():

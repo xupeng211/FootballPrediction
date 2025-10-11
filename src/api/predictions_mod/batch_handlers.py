@@ -7,6 +7,8 @@
 import logging
 from typing import Any, Dict, List
 
+from requests.exceptions import HTTPError, RequestException
+
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

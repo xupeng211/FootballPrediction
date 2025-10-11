@@ -34,7 +34,7 @@ def init_i18n():
 
         # 安装gettext
         gettext.install("football_prediction", localedir=str(LOCALE_DIR))
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         # 如果初始化失败，使用默认语言
         pass
 
