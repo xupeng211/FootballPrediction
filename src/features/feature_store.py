@@ -111,8 +111,8 @@ from .entities import MatchEntity  # noqa: E402
 from .feature_calculator import FeatureCalculator  # noqa: E402
 
 
-
 logger = logging.getLogger(__name__)
+
 
 class FootballFeatureStore:
     """

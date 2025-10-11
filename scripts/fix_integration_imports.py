@@ -37,7 +37,7 @@ def fix_fixture_imports():
         "from src.database.models.predictions import Predictions",
         "from src.database.models.team import Team",
         "from src.database.models.user import User",
-        "from src.services.data_processing_mod import DataProcessingService",
+        "from src.services.data_processing import DataProcessingService",
         "from src.services.manager_mod import ServiceManager",
     ]
 
@@ -59,9 +59,9 @@ def fix_test_imports():
     ]
 
     import_mappings = {
-        "from src.services.data_processing import DataProcessingService": "from src.services.data_processing_mod import DataProcessingService",
+        "from src.services.data_processing import DataProcessingService": "from src.services.data_processing import DataProcessingService",
         "from src.services.manager import ServiceManager": "from src.services.manager_mod import ServiceManager",
-        "from src.services.audit_service import AuditService": "from src.services.audit_service_mod import AuditService",
+        "from src.services.audit_service import AuditService": "from src.services.audit_service import AuditService",
         "from src.api.predictions import router as predictions_router": "from src.api.predictions_mod import router as predictions_router",
         "from src.api.features import router as features_router": "from src.api.features_mod import router as features_router",
     }

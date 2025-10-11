@@ -15,7 +15,7 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

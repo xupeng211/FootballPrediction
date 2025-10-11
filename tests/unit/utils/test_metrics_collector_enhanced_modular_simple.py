@@ -8,7 +8,7 @@ from datetime import datetime
 
 def test_metric_types():
     """测试指标数据类型"""
-    from src.monitoring.metrics_collector_enhanced_mod.metric_types import (
+    from src.monitoring.metrics_collector_enhanced.metric_types import (
         MetricPoint,
         MetricSummary,
         AlertInfo,
@@ -48,10 +48,10 @@ def test_metric_types():
 
 def test_metrics_aggregator():
     """测试指标聚合器"""
-    from src.monitoring.metrics_collector_enhanced_mod.aggregator import (
+    from src.monitoring.metrics_collector_enhanced.aggregator import (
         MetricsAggregator,
     )
-    from src.monitoring.metrics_collector_enhanced_mod.metric_types import MetricPoint
+    from src.monitoring.metrics_collector_enhanced.metric_types import MetricPoint
 
     aggregator = MetricsAggregator(window_size=60)
 
@@ -82,7 +82,7 @@ def test_metrics_aggregator():
 
 def test_alert_manager():
     """测试告警管理器"""
-    from src.monitoring.metrics_collector_enhanced_mod.alerting import AlertManager
+    from src.monitoring.metrics_collector_enhanced.alerting import AlertManager
 
     alert_manager = AlertManager()
 
@@ -121,7 +121,7 @@ def test_alert_manager():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod.system_metrics import (
+    from src.monitoring.metrics_collector_enhanced.system_metrics import (
         SystemMetricsCollector,
     )
     from unittest.mock import Mock
@@ -160,7 +160,7 @@ def test_system_metrics_collector():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod.business_metrics import (
+    from src.monitoring.metrics_collector_enhanced.business_metrics import (
         BusinessMetricsCollector,
     )
     from unittest.mock import Mock
@@ -211,7 +211,7 @@ def test_business_metrics_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         EnhancedMetricsCollector,
         MetricsAggregator,
         MetricPoint,
@@ -230,7 +230,7 @@ def test_backward_compatibility():
 
 def test_decorators():
     """测试装饰器"""
-    from src.monitoring.metrics_collector_enhanced_mod.decorators import (
+    from src.monitoring.metrics_collector_enhanced.decorators import (
         track_cache_performance,
         track_performance,
     )
@@ -259,7 +259,7 @@ def test_decorators():
 
 def test_alert_handlers():
     """测试告警处理器"""
-    from src.monitoring.metrics_collector_enhanced_mod.alerting import (
+    from src.monitoring.metrics_collector_enhanced.alerting import (
         DefaultAlertHandlers,
         AlertInfo,
     )
@@ -275,7 +275,7 @@ def test_alert_handlers():
 
     # 测试日志处理器
     with patch(
-        "src.monitoring.metrics_collector_enhanced_mod.alerting.logger"
+        "src.monitoring.metrics_collector_enhanced.alerting.logger"
     ) as mock_logger:
         DefaultAlertHandlers.log_handler(alert)
         assert mock_logger.error.called
@@ -292,7 +292,7 @@ def test_alert_handlers():
 
 def test_metric_summary():
     """测试指标摘要"""
-    from src.monitoring.metrics_collector_enhanced_mod.metric_types import MetricSummary
+    from src.monitoring.metrics_collector_enhanced.metric_types import MetricSummary
 
     summary = MetricSummary(
         count=100,
@@ -316,7 +316,7 @@ def test_metric_summary():
 
 def test_alert_info():
     """测试告警信息"""
-    from src.monitoring.metrics_collector_enhanced_mod.metric_types import AlertInfo
+    from src.monitoring.metrics_collector_enhanced.metric_types import AlertInfo
     from datetime import datetime
 
     alert = AlertInfo(

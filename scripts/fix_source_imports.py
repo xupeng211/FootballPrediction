@@ -29,7 +29,7 @@ def fix_source_file_imports(file_path: Path):
             # Database 模块
             "from src.database.repositories import TeamRepository": "# from src.database.repositories import TeamRepository  # 不存在",
             # Audit 服务
-            "from src.services.audit_service_mod import AuditService": "# from src.services.audit_service_mod import AuditService  # 不存在",
+            "from src.services.audit_service import AuditService": "# from src.services.audit_service import AuditService  # 不存在",
             "from src.services.audit_service_new import AuditService": "# from src.services.audit_service_new import AuditService  # 不存在",
             "from src.services.audit_service_refactored import AuditService": "# from src.services.audit_service_refactored import AuditService  # 不存在",
         }

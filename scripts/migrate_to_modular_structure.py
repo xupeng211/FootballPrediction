@@ -12,9 +12,9 @@ from typing import Dict, List
 # 导入路径映射表
 IMPORT_MAPPINGS = {
     # 服务模块
-    "src.services.audit_service": "src.services.audit_service_mod",
+    "src.services.audit_service": "src.services.audit_service",
     "src.services.manager": "src.services.manager_mod",
-    "src.services.data_processing": "src.services.data_processing_mod",
+    "src.services.data_processing": "src.services.data_processing",
     # 数据库模块
     "src.database.connection": "src.database.connection_mod",
     # 缓存模块
@@ -24,7 +24,7 @@ IMPORT_MAPPINGS = {
     "src.data.quality.exception_handler": "src.data.quality.exception_handler_mod",
     # 监控模块
     "src.monitoring.system_monitor": "src.monitoring.system_monitor_mod",
-    "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced_mod",
+    "src.monitoring.metrics_collector_enhanced": "src.monitoring.metrics_collector_enhanced",
     # 其他模块
     "src.features.feature_calculator": "src.features.feature_calculator_mod",
     "src.models.prediction_service": "src.models.prediction_service_mod",

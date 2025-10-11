@@ -52,7 +52,7 @@ class TestMonitoringEndpoints:
         assert "health" in data or "status" in data
 
     @patch(
-        "src.monitoring.metrics_collector_enhanced_mod.EnhancedMetricsCollector.collect_metrics"
+        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.collect_metrics"
     )
     def test_collect_metrics(self, mock_collect, client):
         """测试收集指标"""
@@ -86,7 +86,7 @@ class TestMonitoringEndpoints:
         assert "status" in data or "collector" in data
 
     @patch(
-        "src.monitoring.metrics_collector_enhanced_mod.EnhancedMetricsCollector.start_collection"
+        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.start_collection"
     )
     def test_start_collection(self, mock_start, client):
         """测试开始收集"""
@@ -102,7 +102,7 @@ class TestMonitoringEndpoints:
         assert "success" in data or "status" in data
 
     @patch(
-        "src.monitoring.metrics_collector_enhanced_mod.EnhancedMetricsCollector.stop_collection"
+        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.stop_collection"
     )
     def test_stop_collection(self, mock_stop, client):
         """测试停止收集"""
@@ -139,7 +139,7 @@ class TestMonitoringEndpoints:
         data = response.json()
         assert "status" in data or "health" in data
 
-    @patch("src.monitoring.alert_manager_mod.AlertManager.get_active_alerts")
+    @patch("src.monitoring.alert_manager.AlertManager.get_active_alerts")
     def test_get_alerts(self, mock_alerts, client):
         """测试获取告警"""
         mock_alerts.return_value = [
@@ -161,7 +161,7 @@ class TestMonitoringEndpoints:
         data = response.json()
         assert isinstance(data, list) or "alerts" in data
 
-    @patch("src.monitoring.alert_manager_mod.AlertManager.create_alert")
+    @patch("src.monitoring.alert_manager.AlertManager.create_alert")
     def test_create_alert(self, mock_create, client):
         """测试创建告警"""
         mock_create.return_value = {"alert_id": "alert_002", "success": True}
