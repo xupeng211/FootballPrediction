@@ -1,7 +1,7 @@
 
 """Audit Service - 简化版本"""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
 

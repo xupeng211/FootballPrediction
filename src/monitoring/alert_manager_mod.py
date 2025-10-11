@@ -44,3 +44,13 @@ class AlertManager:
     def get_active_alerts(self) -> List[Alert]:
         """获取活跃警报"""
         return self.alerts[-10:]  # 返回最近10个
+
+
+class AlertRule:
+    """警报规则"""
+
+    def __init__(self, name: str, condition: str, severity: AlertSeverity):
+        self.name = name
+        self.condition = condition
+        self.severity = severity
+        self.enabled = True
