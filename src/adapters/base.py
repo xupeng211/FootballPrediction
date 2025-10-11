@@ -167,7 +167,8 @@ class Adapter(Target):
                 self.metrics["successful_requests"] / self.metrics["total_requests"]
                 if self.metrics["total_requests"] > 0
                 else 0
-            )
+            ),
+        }
 
 
 class CompositeAdapter(Adapter):
@@ -245,8 +246,7 @@ class CompositeAdapter(Adapter):
 
         # 过滤异常结果
         successful_results = [
-            result for result in results
-            if not isinstance(result, Exception)
+            result for result in results if not isinstance(result, Exception)
         ]
 
         return {
@@ -265,10 +265,7 @@ class CompositeAdapter(Adapter):
         health_results = {}
 
         # 并行检查所有适配器的健康状态
-        tasks = [
-            (adapter.name, adapter.health_check())
-            for adapter in self.adapters
-        ]
+        tasks = [(adapter.name, adapter.health_check()) for adapter in self.adapters]
 
         if tasks:
             for name, task in tasks:
@@ -283,8 +280,7 @@ class CompositeAdapter(Adapter):
 
         # 计算整体健康状态
         healthy_count = sum(
-            1 for result in health_results.values()
-            if result.get("status") == "healthy"
+            1 for result in health_results.values() if result.get("status") == "healthy"
         )
 
         return {
