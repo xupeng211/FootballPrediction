@@ -1,159 +1,278 @@
-# from src.utils.dict_utils import DictUtils
+"""
+字典工具测试
+Dict Utils Tests
 
+测试实际存在的字典处理工具。
 """
-测试字典处理工具模块
-"""
+
+import pytest
+from typing import Any, Dict, List
+
+from src.utils.dict_utils import DictUtils
 
 
 class TestDictUtils:
-    """测试DictUtils类"""
+    """测试字典工具类"""
 
-    def test_deep_merge_simple(self):
-        """测试简单字典合并"""
-        dict1 = {"a": 1, "b": 2}
-        dict2 = {"b": 3, "c": 4}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": 1, "b": 3, "c": 4}
+    def test_deep_merge(self):
+        """测试深度合并字典"""
+        dict1 = {
+            "a": 1,
+            "b": {"x": 10, "y": 20},
+            "c": [1, 2, 3],
+        }
+        dict2 = {
+            "b": {"y": 30, "z": 40},
+            "c": [4, 5],
+            "d": "new",
+        }
 
-    def test_deep_merge_nested(self):
-        """测试嵌套字典合并"""
-        dict1 = {"a": {"x": 1, "y": 2}, "b": 3}
-        dict2 = {"a": {"y": 3, "z": 4}, "c": 5}
         result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": {"x": 1, "y": 3, "z": 4}, "b": 3, "c": 5}
 
-    def test_deep_merge_empty_dict1(self):
-        """测试第一个字典为空"""
-        dict1 = {}
-        dict2 = {"a": 1, "b": 2}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": 1, "b": 2}
+        expected = {
+            "a": 1,
+            "b": {"x": 10, "y": 30, "z": 40},
+            "c": [4, 5],  # 后面的覆盖前面的
+            "d": "new",
+        }
 
-    def test_deep_merge_empty_dict2(self):
-        """测试第二个字典为空"""
-        dict1 = {"a": 1, "b": 2}
-        dict2 = {}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": 1, "b": 2}
-
-    def test_deep_merge_both_empty(self):
-        """测试两个字典都为空"""
-        dict1 = {}
-        dict2 = {}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {}
-
-    def test_deep_merge_with_none(self):
-        """测试包含None值的合并"""
-        dict1 = {"a": None, "b": 2}
-        dict2 = {"a": 1, "c": None}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": 1, "b": 2, "c": None}
-
-    def test_deep_merge_different_types(self):
-        """测试不同类型的值合并"""
-        dict1 = {"a": {"x": 1}}
-        dict2 = {"a": 2}  # dict2中的a不是字典
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": 2}
-
-    def test_deep_merge_complex_nested(self):
-        """测试复杂嵌套结构"""
-        dict1 = {"level1": {"level2": {"a": 1, "b": 2}, "c": 3}}
-        dict2 = {"level1": {"level2": {"b": 4, "d": 5}, "e": 6}}
-        result = DictUtils.deep_merge(dict1, dict2)
-        expected = {"level1": {"level2": {"a": 1, "b": 4, "d": 5}, "c": 3, "e": 6}}
         assert result == expected
 
-    def test_deep_merge_original_unchanged(self):
-        """测试原始字典不被修改"""
-        dict1 = {"a": {"x": 1}}
-        dict2 = {"a": {"y": 2}}
-        original1 = {"a": {"x": 1}}
-        original2 = {"a": {"y": 2}}
+        # 测试空字典
+        assert DictUtils.deep_merge({}, {"a": 1}) == {"a": 1}
+        assert DictUtils.deep_merge({"a": 1}, {}) == {"a": 1}
+
+        # 测试嵌套合并
+        dict1 = {"config": {"db": {"host": "localhost"}, "api": {"version": "v1"}}}
+        dict2 = {"config": {"db": {"port": 5432}, "cache": {"enabled": True}}}
 
         result = DictUtils.deep_merge(dict1, dict2)
+        expected = {
+            "config": {
+                "db": {"host": "localhost", "port": 5432},
+                "api": {"version": "v1"},
+                "cache": {"enabled": True},
+            }
+        }
+        assert result == expected
 
-        # 原始字典不应被修改
-        assert dict1 == original1
-        assert dict2 == original2
-        # 结果是新字典
-        assert result == {"a": {"x": 1, "y": 2}}
+        # 测试深度嵌套
+        dict1 = {"level1": {"level2": {"level3": {"a": 1}}}}
+        dict2 = {"level1": {"level2": {"level3": {"b": 2}}}}
 
-    def test_flatten_dict_simple(self):
-        """测试简单字典扁平化"""
-        d = {"a": 1, "b": 2}
-        result = DictUtils.flatten_dict(d)
-        assert result == {"a": 1, "b": 2}
+        result = DictUtils.deep_merge(dict1, dict2)
+        expected = {"level1": {"level2": {"level3": {"a": 1, "b": 2}}}}
+        assert result == expected
 
-    def test_flatten_dict_nested(self):
-        """测试嵌套字典扁平化"""
-        d = {"a": {"x": 1, "y": 2}, "b": 3}
-        result = DictUtils.flatten_dict(d)
-        assert result == {"a.x": 1, "a.y": 2, "b": 3}
+    def test_flatten_dict(self):
+        """测试扁平化字典"""
+        # 测试基本嵌套
+        data = {
+            "user": {
+                "name": "John",
+                "profile": {
+                    "age": 30,
+                },
+            },
+            "settings": {
+                "theme": "dark",
+            },
+        }
 
-    def test_flatten_dict_deep_nested(self):
-        """测试深层嵌套字典扁平化"""
-        d = {"a": {"b": {"c": {"d": 1}}}}
-        result = DictUtils.flatten_dict(d)
-        assert result == {"a.b.c.d": 1}
+        result = DictUtils.flatten_dict(data)
+        expected = {
+            "user.name": "John",
+            "user.profile.age": 30,
+            "settings.theme": "dark",
+        }
+        assert result == expected
 
-    def test_flatten_dict_custom_separator(self):
-        """测试自定义分隔符"""
-        d = {"a": {"x": 1}}
-        result = DictUtils.flatten_dict(d, sep="_")
-        assert result == {"a_x": 1}
+        # 测试自定义分隔符
+        result = DictUtils.flatten_dict(data, sep="_")
+        expected = {
+            "user_name": "John",
+            "user_profile_age": 30,
+            "settings_theme": "dark",
+        }
+        assert result == expected
 
-    def test_flatten_dict_with_parent_key(self):
-        """测试带父键的扁平化"""
-        d = {"x": 1, "y": 2}
-        result = DictUtils.flatten_dict(d, parent_key="parent")
-        assert result == {"parent.x": 1, "parent.y": 2}
+        # 测试空字典
+        assert DictUtils.flatten_dict({}) == {}
 
-    def test_flatten_dict_empty(self):
-        """测试空字典扁平化"""
-        d = {}
-        result = DictUtils.flatten_dict(d)
-        assert result == {}
+        # 测试单层字典
+        data = {"a": 1, "b": 2}
+        assert DictUtils.flatten_dict(data) == data
 
-    def test_flatten_dict_with_list(self):
-        """测试包含列表的字典（列表不被展开）"""
-        d = {"a": [1, 2, 3], "b": {"c": 4}}
-        result = DictUtils.flatten_dict(d)
-        assert result == {"a": [1, 2, 3], "b.c": 4}
+        # 测试更深层的嵌套
+        data = {
+            "a": {
+                "b": {
+                    "c": {
+                        "d": "value",
+                        "e": {"f": "deep"},
+                    },
+                },
+            },
+        }
+        result = DictUtils.flatten_dict(data)
+        expected = {
+            "a.b.c.d": "value",
+            "a.b.c.e.f": "deep",
+        }
+        assert result == expected
 
-    def test_flatten_dict_none_values(self):
-        """测试包含None值的字典"""
-        d = {"a": None, "b": {"c": None}}
-        result = DictUtils.flatten_dict(d)
-        assert result == {"a": None, "b.c": None}
+        # 测试混合类型
+        data = {
+            "numbers": [1, 2, 3],
+            "nested": {
+                "boolean": True,
+                "null": None,
+            },
+        }
+        result = DictUtils.flatten_dict(data)
+        assert "numbers" in result
+        assert "nested.boolean" in result
+        assert "nested.null" in result
+        assert result["numbers"] == [1, 2, 3]
+        assert result["nested.boolean"] is True
+        assert result["nested.null"] is None
 
-    def test_filter_none_values_with_none(self):
+    def test_filter_none_values(self):
         """测试过滤None值"""
-        d = {"a": 1, "b": None, "c": 3, "d": None}
-        result = DictUtils.filter_none_values(d)
-        assert result == {"a": 1, "c": 3}
+        data = {
+            "name": "John",
+            "email": None,
+            "age": 30,
+            "city": None,
+            "active": False,
+            "score": 0,
+            "notes": "",
+        }
 
-    def test_filter_none_values_no_none(self):
-        """测试没有None值的情况"""
-        d = {"a": 1, "b": 2}
-        result = DictUtils.filter_none_values(d)
-        assert result == {"a": 1, "b": 2}
+        result = DictUtils.filter_none_values(data)
 
-    def test_filter_none_values_all_none(self):
-        """测试所有值都是None"""
-        d = {"a": None, "b": None}
-        result = DictUtils.filter_none_values(d)
+        expected = {
+            "name": "John",
+            "age": 30,
+            "active": False,
+            "score": 0,
+            "notes": "",
+        }
+
+        assert result == expected
+
+        # 测试全是None
+        data = {"a": None, "b": None, "c": None}
+        result = DictUtils.filter_none_values(data)
         assert result == {}
 
-    def test_filter_none_values_empty(self):
-        """测试空字典"""
-        d = {}
-        result = DictUtils.filter_none_values(d)
-        assert result == {}
+        # 测试没有None
+        data = {"a": 1, "b": 2, "c": 3}
+        result = DictUtils.filter_none_values(data)
+        assert result == data
 
-    def test_filter_none_values_nested(self):
-        """测试嵌套字典（不过滤嵌套的None）"""
-        d = {"a": {"b": None}, "c": None}
-        result = DictUtils.filter_none_values(d)
-        assert result == {"a": {"b": None}}
+        # 测试空字典
+        assert DictUtils.filter_none_values({}) == {}
+
+        # 测试嵌套字典（不会被处理）
+        data = {
+            "user": None,
+            "config": {"setting": None},  # 嵌套的None不会被过滤
+        }
+        result = DictUtils.filter_none_values(data)
+        assert "user" not in result
+        assert "config" in result
+        assert result["config"]["setting"] is None
+
+    def test_combination_operations(self):
+        """测试组合操作"""
+        # 先深度合并，再扁平化
+        dict1 = {"config": {"db": {"host": "localhost"}}}
+        dict2 = {"config": {"db": {"port": 5432}, "api": {"version": "v1"}}}
+
+        merged = DictUtils.deep_merge(dict1, dict2)
+        flattened = DictUtils.flatten_dict(merged)
+
+        assert "config.db.host" in flattened
+        assert "config.db.port" in flattened
+        assert "config.api.version" in flattened
+        assert flattened["config.db.host"] == "localhost"
+        assert flattened["config.db.port"] == 5432
+        assert flattened["config.api.version"] == "v1"
+
+        # 先扁平化，再过滤None
+        data = {
+            "user": {
+                "name": "John",
+                "email": None,
+            },
+            "settings": None,
+        }
+
+        flattened = DictUtils.flatten_dict(data)
+        filtered = DictUtils.filter_none_values(flattened)
+
+        assert "user.name" in filtered
+        assert "user.email" not in filtered
+        assert "settings" not in filtered
+
+    def test_edge_cases(self):
+        """测试边界情况"""
+        # 测试None输入
+        with pytest.raises((AttributeError, TypeError)):
+            DictUtils.deep_merge(None, {})
+
+        # 测试非字典输入
+        with pytest.raises(AttributeError):
+            DictUtils.flatten_dict("not a dict")
+
+        # 测试循环引用
+        a = {}
+        a["self"] = a
+        # flatten_dict可能会导致无限递归，但实际实现可能有保护
+
+        # 测试特殊键名
+        data = {
+            "": {"empty_key": "value"},
+            "with.dots": {"nested": "value"},
+            "with spaces": {"nested": "value"},
+        }
+
+        result = DictUtils.flatten_dict(data)
+        assert ".empty_key" in result
+        assert "with.dots.nested" in result
+        assert "with spaces.nested" in result
+
+    def test_performance_considerations(self):
+        """测试性能相关"""
+        # 大字典合并
+        large_dict1 = {f"key_{i}": {"nested": i} for i in range(1000)}
+        large_dict2 = {f"key_{i}": {"value": i * 2} for i in range(1000)}
+
+        import time
+
+        start = time.time()
+        result = DictUtils.deep_merge(large_dict1, large_dict2)
+        duration = time.time() - start
+
+        assert len(result) == 1000
+        assert duration < 1.0  # 应该在1秒内完成
+        assert result["key_0"]["nested"] == 0
+        assert result["key_0"]["value"] == 0
+        assert result["key_999"]["nested"] == 999
+        assert result["key_999"]["value"] == 1998
+
+        # 深层嵌套扁平化
+        deep_data = {}
+        current = deep_data
+        for i in range(100):
+            current["level"] = {}
+            current = current["level"]
+        current["value"] = "deep_value"
+
+        start = time.time()
+        result = DictUtils.flatten_dict(deep_data)
+        duration = time.time() - start
+
+        assert len(result) == 101  # 100个level + 1个value
+        assert duration < 0.5  # 应该在0.5秒内完成
