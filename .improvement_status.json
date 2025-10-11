@@ -1,0 +1,17 @@
+{
+  "start_date": "2025-10-12T00:32:54.219983",
+  "current_week": 1,
+  "tasks": {
+    "1.1": {
+      "status": "in_progress",
+      "started_at": "2025-10-12T00:32:54.245739"
+    }
+  },
+  "metrics": {
+    "legacy_dirs": 17,
+    "backup_files": 11,
+    "type_ignores": 1851,
+    "print_statements": 300,
+    "collected_at": "2025-10-12T00:32:54.245709"
+  }
+}
