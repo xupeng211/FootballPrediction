@@ -3,8 +3,8 @@
 批量添加 type: ignore 到所有 star import
 """
 
-import subprocess
 import os
+import subprocess
 
 
 def main():
@@ -66,7 +66,9 @@ def main():
     )
 
     remaining = (
-        len([l for l in result.stdout.split("\n") if l]) if result.stdout.strip() else 0
+        len([line for line in result.stdout.split("\n") if line])
+        if result.stdout.strip()
+        else 0
     )
     print(f"\n剩余 F403/F405 错误: {remaining}")
 

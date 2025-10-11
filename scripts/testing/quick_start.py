@@ -4,9 +4,9 @@
 执行第一阶段的自动化改进任务
 """
 
-import sys
-import subprocess
 import json
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -327,7 +327,7 @@ def main():
     print(f"项目根目录: {project_root}")
 
     # 1. 检查环境
-    env_results = check_environment()
+    _ = check_environment()
 
     # 2. 创建测试环境配置
     create_test_env_file()

@@ -5,10 +5,9 @@
 安全地从原始代码迁移到模块化代码。
 """
 
-import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 import subprocess
 
 

@@ -3,9 +3,7 @@
 最终验证拆分代码的质量并提供建议
 """
 
-import os
 from pathlib import Path
-from typing import Dict, List, Any
 
 
 def analyze_code_quality():

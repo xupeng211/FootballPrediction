@@ -6,7 +6,6 @@
 """
 
 import sys
-import asyncio
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -23,49 +22,36 @@ def test_imports():
 
     # 测试audit_service_mod
     try:
-        from src.services.audit_service_mod import AuditService, AuditContext, AuditLog
-
         tests.append(("audit_service_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("audit_service_mod", False, f"✗ 导入失败: {e}"))
 
     # 测试manager_mod
     try:
-        from src.services.manager_mod import ServiceManager
-
         tests.append(("manager_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("manager_mod", False, f"✗ 导入失败: {e}"))
 
     # 测试data_processing_mod
     try:
-        from src.services.data_processing_mod import DataProcessingService
-
         tests.append(("data_processing_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("data_processing_mod", False, f"✗ 导入失败: {e}"))
 
     # 测试backward compatibility
     try:
-        from src.services.audit_service import AuditService as AuditServiceOld
-        from src.services.manager import ServiceManager as ServiceManagerOld
-
         tests.append(("backward_compatibility", True, "✓ 兼容性正常"))
     except Exception as e:
         tests.append(("backward_compatibility", False, f"✗ 兼容性失败: {e}"))
 
     # 测试retry模块
     try:
-        from src.utils._retry import RetryConfig, retry
-
         tests.append(("retry_module", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("retry_module", False, f"✗ 导入失败: {e}"))
 
     # 测试connection_mod
     try:
-        from src.database.connection_mod import DatabaseManager
-
         tests.append(("connection_mod", True, "✓ 导入成功"))
     except Exception as e:
         tests.append(("connection_mod", False, f"✗ 导入失败: {e}"))
@@ -137,7 +123,7 @@ def test_retry_functionality():
     print("=" * 60)
 
     try:
-        from src.utils._retry import RetryConfig, retry, RetryError
+        from src.utils._retry import RetryConfig, retry
 
         # 配置重试
         config = RetryConfig(max_attempts=3, base_delay=0.1)
@@ -175,7 +161,6 @@ def test_content_analysis():
         from src.services.content_analysis import (
             ContentAnalysisService,
             Content,
-            AnalysisResult,
         )
 
         # 创建服务

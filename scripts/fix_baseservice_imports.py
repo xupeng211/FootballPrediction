@@ -3,9 +3,7 @@
 修复拆分模块中BaseService的导入问题
 """
 
-import os
 from pathlib import Path
-from typing import List, Tuple
 
 
 def fix_baseservice_in_file(file_path: Path) -> bool:

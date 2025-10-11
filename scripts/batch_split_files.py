@@ -4,8 +4,6 @@
 Batch File Splitting Script
 """
 
-import os
-import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -20,7 +18,7 @@ SPLIT_CONFIGS = {
             ("odds.py", 90, "赔率API端点"),
             ("statistics.py", 150, "统计API端点"),
             ("dependencies.py", 80, "依赖注入"),
-        ]
+        ],
     },
     "src/core/error_handler.py": {
         "dir": "src/core/error_handling",
@@ -30,7 +28,7 @@ SPLIT_CONFIGS = {
             ("serializers.py", 100, "错误序列化"),
             ("middleware.py", 120, "中间件"),
             ("handlers.py", 80, "处理器集合"),
-        ]
+        ],
     },
     "src/api/health.py": {
         "dir": "src/api/health",
@@ -39,7 +37,7 @@ SPLIT_CONFIGS = {
             ("checks.py", 180, "检查项目"),
             ("models.py", 100, "响应模型"),
             ("utils.py", 80, "工具函数"),
-        ]
+        ],
     },
     "src/scheduler/task_scheduler.py": {
         "dir": "src/scheduler/core",
@@ -48,7 +46,7 @@ SPLIT_CONFIGS = {
             ("executor.py", 150, "执行器"),
             ("queue.py", 100, "队列管理"),
             ("monitor.py", 80, "监控器"),
-        ]
+        ],
     },
     "src/lineage/metadata_manager.py": {
         "dir": "src/lineage/metadata",
@@ -57,7 +55,7 @@ SPLIT_CONFIGS = {
             ("storage.py", 150, "存储管理"),
             ("query.py", 100, "查询器"),
             ("serializer.py", 80, "序列化器"),
-        ]
+        ],
     },
     "src/streaming/kafka_producer.py": {
         "dir": "src/streaming/producer",
@@ -66,7 +64,7 @@ SPLIT_CONFIGS = {
             ("message_builder.py", 150, "消息构建器"),
             ("partitioner.py", 100, "分区器"),
             ("retry_handler.py", 80, "重试处理"),
-        ]
+        ],
     },
     "src/api/features.py": {
         "dir": "src/api/features",
@@ -75,7 +73,7 @@ SPLIT_CONFIGS = {
             ("endpoints.py", 150, "端点定义"),
             ("models.py", 100, "数据模型"),
             ("services.py", 80, "服务层"),
-        ]
+        ],
     },
     "src/models/prediction_service_refactored.py": {
         "dir": "src/models/prediction/refactored",
@@ -84,7 +82,7 @@ SPLIT_CONFIGS = {
             ("predictors.py", 150, "预测器"),
             ("validators.py", 100, "验证器"),
             ("cache.py", 80, "缓存管理"),
-        ]
+        ],
     },
     "src/monitoring/alert_manager_mod/aggregator.py": {
         "dir": "src/monitoring/alerts/aggregation",
@@ -93,7 +91,7 @@ SPLIT_CONFIGS = {
             ("deduplicator.py", 150, "去重器"),
             ("grouping.py", 120, "分组器"),
             ("silence.py", 100, "静默管理"),
-        ]
+        ],
     },
     "src/services/audit_service_mod/storage.py": {
         "dir": "src/services/audit/storage",
@@ -102,7 +100,7 @@ SPLIT_CONFIGS = {
             ("database.py", 150, "数据库存储"),
             ("file_storage.py", 120, "文件存储"),
             ("cache.py", 100, "缓存管理"),
-        ]
+        ],
     },
     "src/monitoring/alert_manager_mod/rules.py": {
         "dir": "src/monitoring/alerts/rules",
@@ -111,7 +109,7 @@ SPLIT_CONFIGS = {
             ("conditions.py", 150, "条件评估"),
             ("actions.py", 100, "动作执行"),
             ("evaluation.py", 100, "评估引擎"),
-        ]
+        ],
     },
     "src/monitoring/system_monitor_mod/health_checks.py": {
         "dir": "src/monitoring/system/health",
@@ -120,7 +118,7 @@ SPLIT_CONFIGS = {
             ("checks.py", 180, "检查项"),
             ("reporters.py", 100, "报告器"),
             ("utils.py", 80, "工具函数"),
-        ]
+        ],
     },
     "src/scheduler/dependency_resolver.py": {
         "dir": "src/scheduler/dependency",
@@ -129,9 +127,10 @@ SPLIT_CONFIGS = {
             ("graph.py", 150, "依赖图"),
             ("analyzer.py", 100, "分析器"),
             ("validator.py", 80, "验证器"),
-        ]
-    }
+        ],
+    },
 }
+
 
 def create_module_template(module_name: str, description: str) -> str:
     """创建模块模板"""
@@ -147,13 +146,14 @@ from typing import Any, Dict, List, Optional
 
 '''
 
+
 def create_init_file(modules: List[Tuple[str, int, str]]) -> str:
     """创建__init__.py文件"""
     imports = []
     exports = []
 
     for module_name, _, description in modules:
-        class_name = module_name.replace('.py', '').title().replace('_', '')
+        class_name = module_name.replace(".py", "").title().replace("_", "")
         imports.append(f"from .{module_name.replace('.py', '')} import *")
         exports.append(f'"{class_name}"')
 
@@ -169,19 +169,22 @@ __all__ = [
 ]
 '''
 
-def create_compatibility_file(original_file: str, new_dir: str, modules: List[Tuple[str, int, str]]) -> str:
+
+def create_compatibility_file(
+    original_file: str, new_dir: str, modules: List[Tuple[str, int, str]]
+) -> str:
     """创建向后兼容文件"""
-    module_path = new_dir.replace('src/', '').replace('/', '.')
+    module_path = new_dir.replace("src/", "").replace("/", ".")
 
     imports = []
     exports = []
 
     for module_name, _, _ in modules:
-        base_name = module_name.replace('.py', '')
+        base_name = module_name.replace(".py", "")
         # 尝试猜测可能的类名
-        class_name = base_name.title().replace('_', '')
-        if 'Api' in base_name:
-            class_name = class_name.replace('Api', 'API')
+        class_name = base_name.title().replace("_", "")
+        if "Api" in base_name:
+            class_name = class_name.replace("Api", "API")
         imports.append(f"from .{module_path}.{base_name} import *")
         exports.append(f'"{class_name}"')
 
@@ -214,6 +217,7 @@ __all__ = [
 ]
 '''
 
+
 def split_file(file_path: str, config: Dict):
     """拆分单个文件"""
     print(f"\n处理文件: {file_path}")
@@ -224,19 +228,22 @@ def split_file(file_path: str, config: Dict):
 
     # 创建__init__.py
     init_content = create_init_file(config["modules"])
-    (dir_path / "__init__.py").write_text(init_content, encoding='utf-8')
+    (dir_path / "__init__.py").write_text(init_content, encoding="utf-8")
 
     # 创建模块文件
     for module_name, _, description in config["modules"]:
         module_path = dir_path / module_name
         template = create_module_template(module_name, description)
-        module_path.write_text(template, encoding='utf-8')
+        module_path.write_text(template, encoding="utf-8")
         print(f"  创建模块: {module_path}")
 
     # 创建向后兼容文件
-    compat_content = create_compatibility_file(file_path, config["dir"], config["modules"])
-    Path(file_path).write_text(compat_content, encoding='utf-8')
+    compat_content = create_compatibility_file(
+        file_path, config["dir"], config["modules"]
+    )
+    Path(file_path).write_text(compat_content, encoding="utf-8")
     print(f"  更新兼容文件: {file_path}")
+
 
 def main():
     """主函数"""
@@ -250,6 +257,7 @@ def main():
 
     print("\n批量拆分完成！")
     print("请手动将原始文件的代码分配到对应的模块中。")
+
 
 if __name__ == "__main__":
     main()

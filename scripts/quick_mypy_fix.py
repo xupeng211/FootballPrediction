@@ -3,7 +3,6 @@
 快速修复最常见的 MyPy 错误
 """
 
-import os
 import re
 import subprocess
 from pathlib import Path

@@ -1,6 +1,3 @@
-# TODO: 此文件过长（698行），需要拆分为更小的模块
-# TODO: This file is too long (698 lines), needs to be split into smaller modules
-
 # mypy: ignore-errors
 """
 改进的实时比分收集器

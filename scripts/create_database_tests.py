@@ -3,7 +3,6 @@
 创建数据库模型测试以提升测试覆盖率
 """
 
-import os
 from pathlib import Path
 
 

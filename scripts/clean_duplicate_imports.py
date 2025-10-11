@@ -3,9 +3,7 @@
 清理重复的导入语句
 """
 
-import re
 from pathlib import Path
-from collections import defaultdict
 
 
 def clean_file(file_path: Path):

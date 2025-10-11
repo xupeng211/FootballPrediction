@@ -230,7 +230,6 @@ class OddsCollector(DataCollector):
             List[str]: 博彩公司代码列表
         """
         try:
-            # TODO: 从数据库或配置获取博彩公司列表
             # 目前返回主要博彩公司作为示例
             return [
                 "bet365",
@@ -252,7 +251,6 @@ class OddsCollector(DataCollector):
             List[str]: 比赛ID列表
         """
         try:
-            # TODO: 从数据库查询未来24小时内的比赛
             # 目前返回空列表作为占位符
             return []
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -262,7 +260,6 @@ class OddsCollector(DataCollector):
     async def _clean_expired_odds_cache(self) -> None:
         """清理过期的赔率缓存"""
         try:
-            # TODO: 实现基于时间窗口的缓存清理
             # 清理超过time_window_minutes的缓存条目
             pass
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

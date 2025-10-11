@@ -3,7 +3,6 @@
 快速修复问题并提交代码
 """
 
-import os
 import subprocess
 from pathlib import Path
 

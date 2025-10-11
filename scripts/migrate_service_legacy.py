@@ -3,10 +3,8 @@
 迁移service_legacy.py代码到新模块
 """
 
-import ast
-import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 def extract_methods_from_file(

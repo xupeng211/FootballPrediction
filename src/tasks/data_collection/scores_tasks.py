@@ -13,8 +13,6 @@ Scores Data Collection Tasks
 
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)

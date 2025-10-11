@@ -3,7 +3,6 @@
 修复__init__.py文件中的F401错误
 """
 
-import os
 from pathlib import Path
 import subprocess
 

@@ -4,8 +4,8 @@
 Fix remaining syntax errors
 """
 
-import os
 from pathlib import Path
+
 
 def fix_specific_files():
     """修复特定的文件"""
@@ -100,8 +100,9 @@ init_i18n()
         path = Path(file_path)
         if path.exists():
             print(f"修复 {file_path}")
-            with open(path, 'w', encoding='utf-8') as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
+
 
 def fix_indentation_errors():
     """修复缩进错误"""
@@ -119,7 +120,7 @@ def fix_indentation_errors():
         if not path.exists():
             continue
 
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # 移除文件末尾的import语句
@@ -127,17 +128,20 @@ def fix_indentation_errors():
         for line in lines:
             stripped = line.strip()
             # 如果是import语句且在文件末尾（后几行），跳过
-            if (stripped.startswith('import ') or stripped.startswith('from ')) and len(new_lines) > 10:
+            if (stripped.startswith("import ") or stripped.startswith("from ")) and len(
+                new_lines
+            ) > 10:
                 # 检查是否在文件末尾的10行内
                 if len(lines) - lines.index(line) < 10:
                     continue
             new_lines.append(line)
 
         # 写回文件
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
         print(f"清理 {file_path}")
+
 
 def main():
     """主函数"""
@@ -147,6 +151,7 @@ def main():
     fix_indentation_errors()
 
     print("\n✅ 完成！")
+
 
 if __name__ == "__main__":
     main()

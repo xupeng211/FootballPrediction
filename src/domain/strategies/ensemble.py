@@ -1,6 +1,3 @@
-# TODO: 此文件过长（663行），需要拆分为更小的模块
-# TODO: This file is too long (663 lines), needs to be split into smaller modules
-
 # mypy: ignore-errors
 """
 集成策略

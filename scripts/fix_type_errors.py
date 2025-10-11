@@ -2,7 +2,6 @@
 """自动修复 MyPy 类型错误的脚本"""
 
 import re
-import os
 from pathlib import Path
 
 

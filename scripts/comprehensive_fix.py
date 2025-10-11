@@ -5,10 +5,8 @@ Comprehensive syntax fix
 """
 
 import ast
-import os
 import re
 from pathlib import Path
-from typing import List, Dict, Set
 
 
 def fix_syntax_errors(content: str) -> str:

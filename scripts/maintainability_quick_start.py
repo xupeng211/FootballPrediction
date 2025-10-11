@@ -4,7 +4,6 @@
 执行 Phase 1 的紧急修复任务
 """
 
-import os
 import re
 import subprocess
 from pathlib import Path

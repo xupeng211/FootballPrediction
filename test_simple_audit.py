@@ -5,7 +5,9 @@ Simple Test Audit Service Module
 """
 
 import sys
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
+
 
 def test_basic_imports():
     """测试基础导入"""
@@ -14,15 +16,15 @@ def test_basic_imports():
     try:
         # 测试基础模块
         from src.services.audit.advanced.context import AuditContext
-        from src.services.audit.advanced.models import AuditAction, AuditSeverity
         from src.services.audit.advanced.sanitizer import DataSanitizer
+
         print("✅ 基础模块导入成功")
 
         # 测试功能
-        context = AuditContext(user_id="test_user")
+        _ = AuditContext(user_id="test_user")
         sanitizer = DataSanitizer()
         test_data = {"test": "value"}
-        result = sanitizer.sanitize_data(test_data)
+        _ = sanitizer.sanitize_data(test_data)
         print("✅ 基础功能正常")
 
         return True
@@ -30,6 +32,7 @@ def test_basic_imports():
     except Exception as e:
         print(f"❌ 错误: {e}")
         return False
+
 
 def test_directory_structure():
     """测试目录结构"""
@@ -55,6 +58,7 @@ def test_directory_structure():
 
     return all_exist
 
+
 def test_file_count():
     """测试文件数量"""
     print("\n📄 测试文件创建...")
@@ -62,11 +66,21 @@ def test_file_count():
     import glob
 
     # 计算主要文件
-    main_files = glob.glob("/home/user/projects/FootballPrediction/src/services/audit/advanced/*.py")
-    analyzer_files = glob.glob("/home/user/projects/FootballPrediction/src/services/audit/advanced/analyzers/*.py")
-    logger_files = glob.glob("/home/user/projects/FootballPrediction/src/services/audit/advanced/loggers/*.py")
-    reporter_files = glob.glob("/home/user/projects/FootballPrediction/src/services/audit/advanced/reporters/*.py")
-    decorator_files = glob.glob("/home/user/projects/FootballPrediction/src/services/audit/advanced/decorators/*.py")
+    main_files = glob.glob(
+        "/home/user/projects/FootballPrediction/src/services/audit/advanced/*.py"
+    )
+    analyzer_files = glob.glob(
+        "/home/user/projects/FootballPrediction/src/services/audit/advanced/analyzers/*.py"
+    )
+    logger_files = glob.glob(
+        "/home/user/projects/FootballPrediction/src/services/audit/advanced/loggers/*.py"
+    )
+    reporter_files = glob.glob(
+        "/home/user/projects/FootballPrediction/src/services/audit/advanced/reporters/*.py"
+    )
+    decorator_files = glob.glob(
+        "/home/user/projects/FootballPrediction/src/services/audit/advanced/decorators/*.py"
+    )
 
     print(f"✅ 主文件: {len(main_files)} 个")
     print(f"✅ 分析器文件: {len(analyzer_files)} 个")
@@ -74,10 +88,17 @@ def test_file_count():
     print(f"✅ 报告器文件: {len(reporter_files)} 个")
     print(f"✅ 装饰器文件: {len(decorator_files)} 个")
 
-    total_files = len(main_files) + len(analyzer_files) + len(logger_files) + len(reporter_files) + len(decorator_files)
+    total_files = (
+        len(main_files)
+        + len(analyzer_files)
+        + len(logger_files)
+        + len(reporter_files)
+        + len(decorator_files)
+    )
     print(f"✅ 总计: {total_files} 个Python文件")
 
     return total_files >= 15  # 至少应该有15个文件
+
 
 def main():
     """主测试函数"""
@@ -104,6 +125,7 @@ def main():
     else:
         print("⚠️ 部分测试失败")
         return False
+
 
 if __name__ == "__main__":
     success = main()

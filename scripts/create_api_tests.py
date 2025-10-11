@@ -3,8 +3,8 @@
 创建API端点测试以提升测试覆盖率
 """
 
-import os
 from pathlib import Path
+
 
 def create_api_health_test():
     """创建API健康检查测试"""

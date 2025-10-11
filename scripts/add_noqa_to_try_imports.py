@@ -3,7 +3,6 @@
 为 try 块中的条件导入添加 noqa 注释
 """
 
-import re
 from pathlib import Path
 
 

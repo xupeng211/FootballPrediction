@@ -4,7 +4,7 @@
 """
 
 from pathlib import Path
-import sys
+
 
 def create_string_utils_test():
     """创建字符串工具测试"""
@@ -46,8 +46,9 @@ class TestStringUtils:
 '''
 
     test_path = Path("tests/unit/test_string_utils_extended.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def create_time_utils_test():
     """创建时间工具测试"""
@@ -96,8 +97,9 @@ class TestTimeUtils:
 '''
 
     test_path = Path("tests/unit/test_time_utils_extended.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def create_data_validator_test():
     """创建数据验证器测试"""
@@ -143,8 +145,9 @@ class TestDataValidator:
 '''
 
     test_path = Path("tests/unit/test_data_validator_extended.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def create_file_utils_test():
     """创建文件工具测试"""
@@ -190,8 +193,9 @@ class TestFileUtils:
 '''
 
     test_path = Path("tests/unit/test_file_utils_extended.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def create_response_utils_test():
     """创建响应工具测试"""
@@ -244,8 +248,9 @@ class TestResponseUtils:
 '''
 
     test_path = Path("tests/unit/test_response_utils_extended.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def create_api_tests():
     """创建API测试"""
@@ -296,8 +301,9 @@ class TestAPIData:
 '''
 
     test_path = Path("tests/unit/test_api_data_endpoints.py")
-    test_path.write_text(content, encoding='utf-8')
+    test_path.write_text(content, encoding="utf-8")
     print(f"✅ 创建 {test_path}")
+
 
 def main():
     """主函数"""
@@ -328,6 +334,7 @@ def main():
     print("  make coverage-local")
     print("\n或运行新测试:")
     print("  python -m pytest tests/unit/test_*_extended.py -v")
+
 
 if __name__ == "__main__":
     main()

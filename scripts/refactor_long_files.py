@@ -3,7 +3,6 @@
 重构长文件脚本
 """
 
-import os
 from pathlib import Path
 from datetime import datetime
 

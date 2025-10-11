@@ -3,9 +3,9 @@
 清理拆分过程中创建的损坏文件
 """
 
-import os
 import shutil
 from pathlib import Path
+
 
 def remove_broken_split_files():
     """删除拆分过程中创建的损坏文件"""
@@ -19,23 +19,18 @@ def remove_broken_split_files():
         "src/api/models",
         "src/api/predictions",
         "src/api/predictions_mod",
-
         # src/cache 拆分目录
         "src/cache/redis",
         "src/cache/ttl_cache_improved_mod",
-
         # src/collectors 拆分目录
         "src/collectors/odds",
         "src/collectors/scores",
-
         # src/config 拆分目录
         "src/config/openapi",
-
         # src/core 拆分目录
         "src/core/error_handling",
         "src/core/logging",
         "src/core/prediction",
-
         # src/data 拆分目录
         "src/data/collectors/streaming",
         "src/data/features/feature_store",
@@ -46,26 +41,21 @@ def remove_broken_split_files():
         "src/data/quality/prometheus",
         "src/data/quality/stats",
         "src/data/storage/lake",
-
         # src/database 拆分目录
         "src/database/compatibility",
         "src/database/connection",
         "src/database/connection_mod",
         "src/database/models/feature_mod",
-
         # src/features 拆分目录
         "src/features/feature_calculator_mod",
         "src/features/store",
-
         # src/lineage 拆分目录
         "src/lineage/metadata",
-
         # src/models 拆分目录
         "src/models/common",
         "src/models/prediction",
         "src/models/prediction_service",
         "src/models/training",
-
         # src/monitoring 拆分目录
         "src/monitoring/alert_manager_mod",
         "src/monitoring/alerts",
@@ -76,30 +66,25 @@ def remove_broken_split_files():
         "src/monitoring/quality",
         "src/monitoring/system",
         "src/monitoring/system_monitor_mod",
-
         # src/scheduler 拆分目录
         "src/scheduler/core",
         "src/scheduler/dependency",
         "src/scheduler/recovery",
         "src/scheduler/tasks",
-
         # src/services 拆分目录
         "src/services/audit",
         "src/services/audit_service_mod",
         "src/services/data_processing",
         "src/services/data_processing_mod",
         "src/services/manager",
-
         # src/streaming 拆分目录
         "src/streaming/consumer",
         "src/streaming/kafka",
         "src/streaming/producer",
         "src/streaming/stream_processor",
-
         # src/tasks 拆分目录
         "src/tasks/backup_tasks_new",
         "src/tasks/collection",
-
         # src/utils 拆分目录
         "src/utils/_retry",
     ]
@@ -142,6 +127,7 @@ def remove_broken_split_files():
                 print(f"删除空的 __pycache__: {pycache}")
             except OSError:
                 pass  # 目录不为空，跳过
+
 
 if __name__ == "__main__":
     remove_broken_split_files()

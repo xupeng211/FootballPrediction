@@ -5,7 +5,6 @@
 
 import os
 import re
-from pathlib import Path
 
 
 def analyze_exceptions_in_file(file_path):

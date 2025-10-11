@@ -4,11 +4,10 @@
 专门处理最常见的导入和类型注解问题
 """
 
-import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Tuple, Set
+from typing import List, Tuple
 
 
 def get_files_with_most_errors(limit: int = 20) -> List[Tuple[str, int]]:
@@ -183,7 +182,7 @@ def verify_fix(file_path: Path) -> bool:
             text=True,
         )
         return result.returncode == 0
-    except:
+    except Exception:
         return False
 
 
