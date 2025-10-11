@@ -5,9 +5,12 @@
 如果某个依赖不存在，会提供一个安全的替代实现或None值。
 """
 
+import logging
 import sys
-from typing import Any, Optional, TypeVar, Union
 import warnings
+from typing import Any, Optional, TypeVar, Union
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 

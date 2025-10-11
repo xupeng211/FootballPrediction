@@ -2,9 +2,9 @@
 pytest配置文件
 """
 
-import warnings
 import os
 import sys
+import warnings
 
 
 # 配置警告过滤器 - 必须在其他导入之前
@@ -45,11 +45,12 @@ def configure_warnings():
 # 立即配置警告
 configure_warnings()
 
-import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from typing import Generator, Any
 import tempfile
+from typing import Any, Generator
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 # 设置异步测试模式
@@ -132,9 +133,21 @@ def sample_prediction_data() -> dict:
 def api_client():
     """API客户端fixture"""
     from fastapi.testclient import TestClient
+
     from src.api.app import app
 
     return TestClient(app)
+
+
+@pytest.fixture
+def api_client_full(test_db, test_redis_client):
+    """完整API客户端fixture（包含数据库和Redis）"""
+    from fastapi.testclient import TestClient
+
+    from src.main import app
+
+    with TestClient(app) as client:
+        yield client
 
 
 # === Database Fixtures ===
@@ -143,6 +156,7 @@ def test_db():
     """测试数据库fixture"""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
+
     from src.database.base import Base
 
     # 创建内存数据库
