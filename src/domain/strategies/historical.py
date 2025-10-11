@@ -289,12 +289,12 @@ class HistoricalStrategy(PredictionStrategy):
         # 获取主队最近的主场比分
         home_recent_home = await self._get_recent_home_games(
             input_data.home_team.id,
-            10,  # type: ignore
+            10,
         )
         # 获取客队最近的客场比分
         away_recent_away = await self._get_recent_away_games(
             input_data.away_team.id,
-            10,  # type: ignore
+            10,
         )
 
         if not home_recent_home or not away_recent_away:

@@ -131,7 +131,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         return await self.get_by_status(
             status=PredictionStatus.PENDING,
             limit=limit,
-            session=session,  # type: ignore
+            session=session,
         )
 
     async def get_completed_predictions(

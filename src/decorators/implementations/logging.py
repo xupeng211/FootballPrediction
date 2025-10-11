@@ -7,7 +7,7 @@ Logging Decorator Implementation
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, List, Dict
 
 from ...core.logging import get_logger
 from ..base import Decorator, DecoratorContext
@@ -107,52 +107,52 @@ class LoggingDecorator(Decorator):
 
             raise
 
-    def _sanitize_args(self, args: tuple) -> list:
+    def _sanitize_args(self, args: tuple) -> List[Any]:
         """清理参数，移除敏感信息"""
-        sanitized = []
+        sanitized: List[Any] = []
 
         for arg in args:
             if isinstance(arg, dict):
                 sanitized.append(self._sanitize_dict(arg))
             elif isinstance(arg, (list, tuple)):
-                sanitized.append(self._sanitize_sequence(arg))  # type: ignore
+                sanitized.append(self._sanitize_sequence(arg))
             else:
-                sanitized.append(str(arg)[:100])  # 限制长度  # type: ignore
+                sanitized.append(str(arg)[:100])  # 限制长度
 
         return sanitized
 
-    def _sanitize_kwargs(self, kwargs: dict) -> dict:
+    def _sanitize_kwargs(self, kwargs: dict) -> Dict[str, Any]:
         """清理关键字参数，移除敏感信息"""
         return self._sanitize_dict(kwargs)
 
-    def _sanitize_dict(self, data: dict) -> dict:
+    def _sanitize_dict(self, data: dict) -> Dict[str, Any]:
         """清理字典，移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
-        sanitized = {}
+        sanitized: Dict[str, Any] = {}
 
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "***"
             elif isinstance(value, dict):
-                sanitized[key] = self._sanitize_dict(value)  # type: ignore
+                sanitized[key] = self._sanitize_dict(value)
             elif isinstance(value, (list, tuple)):
-                sanitized[key] = self._sanitize_sequence(value)  # type: ignore
+                sanitized[key] = self._sanitize_sequence(value)
             else:
                 sanitized[key] = str(value)[:100]
 
         return sanitized
 
-    def _sanitize_sequence(self, seq) -> list:
+    def _sanitize_sequence(self, seq) -> List[Any]:
         """清理序列，移除敏感信息"""
-        sanitized = []
+        sanitized: List[Any] = []
 
         for item in seq:
             if isinstance(item, dict):
                 sanitized.append(self._sanitize_dict(item))
             elif isinstance(item, (list, tuple)):
-                sanitized.append(self._sanitize_sequence(item))  # type: ignore
+                sanitized.append(self._sanitize_sequence(item))
             else:
-                sanitized.append(str(item)[:100])  # type: ignore
+                sanitized.append(str(item)[:100])
 
         return sanitized
 

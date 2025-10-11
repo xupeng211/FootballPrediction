@@ -3,7 +3,7 @@
 Cache Configuration
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 
@@ -15,7 +15,7 @@ class CacheConfig:
     default_ttl: int = 3600
 
     # 各类型数据的TTL配置
-    ttl_config: Dict[str, int] = None
+    ttl_config: Optional[Dict[str, int]] = None
 
     # 缓存大小限制
     max_size: int = 10000
@@ -31,10 +31,10 @@ class CacheConfig:
         if self.ttl_config is None:
             self.ttl_config = {
                 "match_processing": 3600,  # 1小时
-                "odds_processing": 1800,    # 30分钟
-                "features_processing": 7200, # 2小时
-                "validation": 900,          # 15分钟
-                "statistics": 1800,        # 30分钟
+                "odds_processing": 1800,  # 30分钟
+                "features_processing": 7200,  # 2小时
+                "validation": 900,  # 15分钟
+                "statistics": 1800,  # 30分钟
             }
 
 
@@ -51,4 +51,6 @@ def get_cache_ttl(cache_type: str) -> int:
     Returns:
         TTL秒数
     """
+    if CACHE_CONFIG.ttl_config is None:
+        return CACHE_CONFIG.default_ttl
     return CACHE_CONFIG.ttl_config.get(cache_type, CACHE_CONFIG.default_ttl)
