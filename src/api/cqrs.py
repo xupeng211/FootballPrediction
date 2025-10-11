@@ -42,7 +42,7 @@ class CreateUserRequest(BaseModel):
     """创建用户请求"""
 
     username: str = Field(..., min_length=3, description="用户名")
-    email: str = Field(..., regex=r"^[^@]+@[^@]+\.[^@]+$", description="邮箱")  # type: ignore
+    email: str = Field(..., pattern=r"^[^@]+@[^@]+\.[^@]+$", description="邮箱")  # type: ignore
     password_hash: str = Field(..., description="密码哈希")
 
 
