@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional, Set
 import logging
 from datetime import datetime
 from enum import Enum
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class Subsystem(ABC):
             # 默认健康检查逻辑
             self.last_check = datetime.utcnow()
             return self.status == SubsystemStatus.ACTIVE
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.status = SubsystemStatus.ERROR
             self.error_message = str(e)
             logger.error(f"Subsystem {self.name} health check failed: {e}")
@@ -138,7 +137,7 @@ class SubsystemManager:
                 await subsystem.initialize()
                 subsystem.status = SubsystemStatus.ACTIVE
                 logger.info(f"Subsystem {name} initialized successfully")
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 subsystem.status = SubsystemStatus.ERROR
                 subsystem.error_message = str(e)
                 logger.error(f"Failed to initialize subsystem {name}: {e}")
@@ -155,7 +154,7 @@ class SubsystemManager:
                 await subsystem.shutdown()
                 subsystem.status = SubsystemStatus.INACTIVE
                 logger.info(f"Subsystem {name} shut down successfully")
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Failed to shutdown subsystem {name}: {e}")
 
     async def health_check_all(self) -> Dict[str, bool]:
@@ -253,7 +252,7 @@ class SystemFacade(ABC):
             )
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 记录错误指标
             self.metrics["errors_count"] += 1
             logger.error(f"Operation {operation_name} failed: {e}")

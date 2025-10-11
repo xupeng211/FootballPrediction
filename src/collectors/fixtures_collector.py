@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 import os
 
 from sqlalchemy import select
@@ -79,7 +79,7 @@ class FixturesCollector:
             logger.info(f"收集到球队 {team_id} 的 {len(fixtures)} 场比赛")
             return fixtures
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"收集球队 {team_id} 赛程失败: {e}")
             return []
 
@@ -119,7 +119,7 @@ class FixturesCollector:
 
             return fixtures
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"收集联赛 {league_id} 赛程失败: {e}")
             return []
 
@@ -292,7 +292,7 @@ class FixturesCollector:
 
             logger.info(f"刷新完成，总共收集 {stats['total_fixtures']} 场比赛")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"刷新所有赛程失败: {e}")
             stats["errors"] += 1
 

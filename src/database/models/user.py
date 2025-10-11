@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Optional, Union
 from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String
 from ..base import BaseModel
 
 """用户数据模型。"""
 
-from typing import cast, Any, Optional, Union
 from src.database.base import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import DateTime

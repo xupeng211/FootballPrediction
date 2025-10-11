@@ -48,7 +48,7 @@ async def check_database_health(
                     result = await conn.execute(text("SELECT version()"))
                     version = (await result.fetchone())[0]
                     health_info["database_info"] = {"version": version}
-                except Exception:
+                except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
                     pass
         else:
             with engine.connect() as conn:
@@ -60,7 +60,7 @@ async def check_database_health(
                     result = conn.execute(text("SELECT version()"))
                     version = result.fetchone()[0]
                     health_info["database_info"] = {"version": version}
-                except Exception:
+                except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
                     pass
 
         # 计算响应时间
@@ -77,7 +77,7 @@ async def check_database_health(
         health_info["status"] = "timeout"
         logger.error(health_info["error"])
 
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         health_info["error"] = str(e)
         health_info["status"] = "unhealthy"
         logger.error(f"Database health check failed: {e}")
@@ -108,6 +108,6 @@ async def check_database_connection(
             with engine.connect() as conn:
                 conn.execute(text(query))
         return True
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.error(f"Database connection check failed: {e}")
         return False

@@ -205,7 +205,7 @@ class StatisticsUtils:
                 # 如果是列表，转换为Series
                 series = pd.Series(data)
                 return series.rolling(window=window, min_periods=1).mean()
-        except Exception:
+        except (ValueError, TypeError, OSError, IOError):
             import pandas as pd
 
             return pd.Series([None] * len(data))
@@ -230,7 +230,7 @@ class StatisticsUtils:
             else:
                 series = pd.Series(data)
                 return series.rolling(window=window, min_periods=1).std()
-        except Exception:
+        except (ValueError, TypeError, OSError, IOError):
             import pandas as pd
 
             return pd.Series([None] * len(data))

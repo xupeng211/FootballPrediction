@@ -8,7 +8,7 @@ This module was split from the original file.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from src.core.logging import get_logger
 
@@ -30,7 +30,7 @@ class PipelineExecutor:
             try:
                 result = await pipeline.process(data)
                 return {"success": True, "result": result, "error": None}
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(f"Pipeline execution failed: {str(e)}")
                 return {"success": False, "result": None, "error": str(e)}
 

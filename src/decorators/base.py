@@ -7,20 +7,11 @@ Define core interfaces and abstract classes for the decorator pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional, Union, Awaitable
-import functools
+from typing import Any, Callable, Dict, Optional, Awaitable
 import inspect
 import time
 import uuid
-from datetime import datetime, timedelta
-
-from ..core.exceptions import (
-    ValidationError,
-    AuthenticationError,
-    AuthorizationError,
-    RateLimitError,
-    TimeoutError,
-)
+from datetime import datetime
 
 
 class Component(ABC):
@@ -84,7 +75,7 @@ class Decorator(Component):
             # 调用具体装饰器的实现
             result = await self._execute(*args, **kwargs)
             return result
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             self.error_count += 1
             # 错误处理装饰器可能会重写此行为
             raise

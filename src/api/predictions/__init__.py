@@ -19,6 +19,7 @@ from .models import (
     HistoryPrediction,
     RecentPrediction,
 )
+from .router import router
 
 __all__ = [
     "PredictionRequest",
@@ -36,4 +37,5 @@ __all__ = [
     "PredictionData",
     "HistoryPrediction",
     "RecentPrediction",
+    "router",
 ]

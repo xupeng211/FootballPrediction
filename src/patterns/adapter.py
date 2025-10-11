@@ -5,13 +5,11 @@
 """
 
 import asyncio
-import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 from datetime import datetime
 from dataclasses import dataclass
 import aiohttp
-import logging
 
 from src.core.logging import get_logger
 
@@ -93,7 +91,7 @@ class FootballAPIImpl(ExternalAPI):
                 else:
                     raise Exception(f"API error: {response.status}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to fetch data from {url}: {str(e)}")
             raise
 
@@ -109,7 +107,7 @@ class FootballAPIImpl(ExternalAPI):
                 else:
                     raise Exception(f"API error: {response.status}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to send data to {url}: {str(e)}")
             raise
 
@@ -149,7 +147,7 @@ class WeatherAPIImpl(ExternalAPI):
                 else:
                     raise Exception(f"Weather API error: {response.status}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to fetch weather data: {str(e)}")
             raise
 
@@ -193,7 +191,7 @@ class OddsAPIImpl(ExternalAPI):
                 else:
                     raise Exception(f"Odds API error: {response.status}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to fetch odds data: {str(e)}")
             raise
 
@@ -209,7 +207,7 @@ class OddsAPIImpl(ExternalAPI):
                 else:
                     raise Exception(f"Odds API error: {response.status}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to send odds data: {str(e)}")
             raise
 
@@ -235,7 +233,7 @@ class FootballApiAdapter(APIAdapter):
                 metadata={"match_id": match_id, "original_format": "json"},
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get match data for {match_id}: {str(e)}")
             raise
 
@@ -254,7 +252,7 @@ class FootballApiAdapter(APIAdapter):
                 metadata={"team_id": team_id, "original_format": "json"},
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get team stats for {team_id}: {str(e)}")
             raise
 
@@ -295,7 +293,7 @@ class WeatherApiAdapter(APIAdapter):
                 metadata={"location": location, "date": date.isoformat()},
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get weather data for {location}: {str(e)}")
             raise
 
@@ -352,7 +350,7 @@ class OddsApiAdapter(APIAdapter):
                 metadata={"match_id": match_id, "original_format": "json"},
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get match odds for {match_id}: {str(e)}")
             raise
 
@@ -466,7 +464,13 @@ class UnifiedDataCollector:
                 try:
                     data = await adapter.get_team_stats(team_id)
                     results[name] = data
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     self.logger.error(
                         f"Failed to collect team stats from {name}: {str(e)}"
                     )
@@ -481,7 +485,13 @@ class UnifiedDataCollector:
             if isinstance(adapter, WeatherApiAdapter):
                 try:
                     return await adapter.get_weather_data(location, date)
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     self.logger.error(
                         f"Failed to collect weather from {name}: {str(e)}"
                     )

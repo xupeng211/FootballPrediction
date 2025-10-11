@@ -8,11 +8,10 @@ Defines base interfaces and implementations for repository pattern.
 
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, List, Optional, Dict, Any
-from datetime import datetime
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_, or_
+from sqlalchemy import select, delete, or_
 from sqlalchemy.orm import selectinload
 
 # 泛型类型

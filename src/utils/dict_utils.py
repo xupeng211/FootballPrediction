@@ -4,7 +4,7 @@
 提供字典操作相关的工具函数。
 """
 
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 
 class DictUtils:

@@ -235,12 +235,18 @@ class EventBus:
                 except asyncio.TimeoutError:
                     # 超时继续，保持运行
                     continue
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     logger.error(f"Error in handler {handler.name}: {e}")
 
         except asyncio.CancelledError:
             logger.debug(f"Handler {handler.name} task cancelled")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Fatal error in handler {handler.name}: {e}")
 
     async def _handle_event(self, handler: EventHandler, event: Event) -> None:
@@ -262,7 +268,7 @@ class EventBus:
             else:
                 await handler.handle(event)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(
                 f"Handler {handler.name} failed to process event {event.get_event_type()}: {e}",
                 exc_info=True,

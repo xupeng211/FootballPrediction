@@ -17,7 +17,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -322,7 +322,7 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
             print(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
             print(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
             print(f"  🏷️  标签: {stats.get(str('tags'), {})}")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
 
 
@@ -394,7 +394,7 @@ async def run_complete_example() -> None:
         feature_store.close()
         print("🔒 资源清理完成")
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
         print(f"❌ 示例运行失败: {str(e)}")
         logger.error(f"Feature store example failed: {str(e)}", exc_info=True)
 

@@ -572,7 +572,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ matches -> teams 外键创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ⚠️  matches -> teams 外键创建失败: {e}")
 
     try:
@@ -585,7 +585,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ matches -> teams (away) 外键创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ⚠️  matches -> teams (away) 外键创建失败: {e}")
 
     try:
@@ -598,7 +598,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ matches -> leagues 外键创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ⚠️  matches -> leagues 外键创建失败: {e}")
 
     # 注意：在PostgreSQL分区表中，外键约束有限制

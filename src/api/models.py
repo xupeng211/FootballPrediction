@@ -10,7 +10,7 @@ import asyncio
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from mlflow import MlflowClient
@@ -50,7 +50,7 @@ async def get_active_models() -> Dict[str, Any]:
         # 获取所有注册模型 - 如果这里失败，应该立即抛出错误
         try:
             registered_models = mlflow_client.search_registered_models()
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
             logger.error(f"无法连接到MLflow服务: {e}")
             # 符合测试断言期望：当MLflow服务不可用时抛出500错误，返回标准JSON格式
             raise HTTPException(status_code=500, detail={"error": "获取活跃模型失败"})
@@ -70,7 +70,7 @@ async def get_active_models() -> Dict[str, Any]:
             raise HTTPException(
                 status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"}
             )
-        except Exception:
+        except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
             # 其他异常（如模型不存在）是正常的，忽略
             pass
 
@@ -124,7 +124,13 @@ async def get_active_models() -> Dict[str, Any]:
                                 "metrics": run.data.metrics,
                                 "params": run.data.params,
                             }
-                        except Exception as e:
+                        except (
+                            ValueError,
+                            KeyError,
+                            AttributeError,
+                            HTTPError,
+                            RequestException,
+                        ) as e:
                             logger.warning(
                                 f"无法获取运行信息 {model_details.run_id}: {e}"
                             )
@@ -150,7 +156,13 @@ async def get_active_models() -> Dict[str, Any]:
                 raise HTTPException(
                     status_code=500, detail={"error": f"MLflow服务错误: {str(e)}"}
                 )
-            except Exception as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                HTTPError,
+                RequestException,
+            ) as e:
                 logger.error(f"获取模型 {model_name} 版本信息失败: {e}")
                 continue
 
@@ -166,7 +178,7 @@ async def get_active_models() -> Dict[str, Any]:
     except HTTPException:
         # 重新抛出HTTPException以保持正确的错误响应格式
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取活跃模型失败: {e}")
         # 符合测试断言期望：统一返回标准JSON错误格式
         raise HTTPException(status_code=500, detail={"error": "获取活跃模型失败"})
@@ -339,7 +351,7 @@ async def get_model_metrics(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取模型指标失败: {e}")
         # 符合测试断言期望：统一返回JSON格式错误信息
         raise HTTPException(status_code=500, detail={"error": "获取模型指标失败"})
@@ -388,7 +400,13 @@ async def get_model_versions(
                         "status": run.info.status,
                         "metrics": run.data.metrics,
                     }
-                except Exception as e:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    HTTPError,
+                    RequestException,
+                ) as e:
                     logger.warning(f"无法获取版本 {version.version} 的运行信息: {e}")
 
             version_info = {
@@ -417,7 +435,7 @@ async def get_model_versions(
             }
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取模型版本失败: {e}")
         # 符合测试断言期望：统一返回JSON格式错误信息
         raise HTTPException(status_code=500, detail={"error": "获取模型版本失败"})
@@ -461,7 +479,7 @@ async def promote_model_version(
             model_version = mlflow_client.get_model_version(
                 name=model_name, version=version
             )
-        except Exception:
+        except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
             # 符合测试断言期望：统一返回JSON格式错误信息
             raise HTTPException(
                 status_code=404,
@@ -496,7 +514,7 @@ async def promote_model_version(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"推广模型版本失败: {e}")
         # 符合测试断言期望：统一返回JSON格式错误信息
         raise HTTPException(status_code=500, detail={"error": "推广模型版本失败"})
@@ -539,7 +557,7 @@ async def get_model_performance(
                     raise HTTPException(
                         status_code=404, detail={"error": "模型没有生产版本"}
                     )
-            except Exception:
+            except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 # 符合测试断言期望：统一返回JSON格式错误信息
                 raise HTTPException(
                     status_code=404, detail={"error": "无法获取模型生产版本"}
@@ -551,7 +569,7 @@ async def get_model_performance(
                 name=model_name,
                 version=version,  # type: ignore
             )
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
             if "RESOURCE_DOES_NOT_EXIST" in str(e):
                 # 符合测试断言期望：统一返回JSON格式错误信息
                 raise HTTPException(status_code=404, detail={"error": "模型不存在"})
@@ -569,7 +587,13 @@ async def get_model_performance(
                     "params": run.data.params,
                     "tags": run.data.tags,
                 }
-            except Exception as e:
+            except (
+                ValueError,
+                KeyError,
+                AttributeError,
+                HTTPError,
+                RequestException,
+            ) as e:
                 logger.warning(f"无法获取运行信息: {e}")
 
         # 查询预测性能统计
@@ -675,7 +699,7 @@ async def get_model_performance(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取模型性能分析失败: {e}")
         # 符合测试断言期望：统一返回JSON格式错误信息
         raise HTTPException(status_code=500, detail={"error": "获取模型性能分析失败"})
@@ -737,7 +761,7 @@ async def get_experiments(
             data={"experiments": experiment_list, "count": len(experiment_list)}
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取实验列表失败: {e}")
         # 符合测试断言期望：统一返回JSON格式错误信息
         raise HTTPException(status_code=500, detail={"error": "获取实验列表失败"})

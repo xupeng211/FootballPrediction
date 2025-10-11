@@ -11,7 +11,7 @@ Z-score分析等多种异常检测算法。
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -186,7 +186,7 @@ class AnomalyDetector:
                     logger.debug(
                         f"表 {table_name} 异常检测完成，发现 {len(table_anomalies)} 个异常"
                     )
-                except Exception as e:
+                except (ValueError, RuntimeError, TimeoutError) as e:
                     logger.error(f"检测表 {table_name} 异常失败: {e}")
 
         logger.info(f"异常检测完成，总共发现 {len(all_anomalies)} 个异常")
@@ -282,7 +282,7 @@ class AnomalyDetector:
             data = pd.DataFrame([dict(row._mapping) for row in rows])
             return data
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"获取表 {table_name} 数据失败: {e}")
             return pd.DataFrame()
 
@@ -403,7 +403,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"3σ规则检测失败 {table_name}.{column_name}: {e}")
             return []
 
@@ -455,7 +455,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"IQR方法检测失败 {table_name}.{column_name}: {e}")
             return []
 
@@ -507,7 +507,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Z-score检测失败 {table_name}.{column_name}: {e}")
             return []
 
@@ -563,7 +563,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"范围检查失败 {table_name}.{column_name}: {e}")
             return []
 
@@ -614,7 +614,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"频率检测失败 {table_name}.{column_name}: {e}")
             return []
 
@@ -677,7 +677,7 @@ class AnomalyDetector:
 
             return []
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"时间间隔检测失败 {table_name}.{column_name}: {e}")
             return []
 

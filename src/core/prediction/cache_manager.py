@@ -2,9 +2,8 @@
 Prediction cache manager
 """
 
-import json
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from src.core.logging import get_logger
 

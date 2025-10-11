@@ -11,7 +11,6 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional, Type, TypeVar
-from dataclasses import dataclass, field
 
 T = TypeVar("T", bound="Event")
 
@@ -213,7 +212,7 @@ class EventHandler(ABC):
                     break
                 await self.handle(event)
                 queue.task_done()
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 处理错误但继续处理其他事件
                 print(f"Error handling event {event_type}: {e}")
 

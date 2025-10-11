@@ -6,7 +6,7 @@ Event System API Endpoints
 Provides management and monitoring interfaces for the event system.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 
@@ -14,10 +14,8 @@ from ..core.event_application import get_event_application
 from ..events import get_event_bus
 from ..events.handlers import (
     MetricsEventHandler,
-    LoggingEventHandler,
     AnalyticsEventHandler,
 )
-from ..core.di import inject
 
 router = APIRouter(prefix="/events", tags=["事件系统"])
 
@@ -93,7 +91,7 @@ async def restart_event_system() -> Dict[str, str]:
         await app.shutdown()
         await app.initialize()
         return {"message": "事件系统已成功重启"}
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError) as e:
         raise HTTPException(status_code=500, detail=f"重启失败: {str(e)}")
 
 
@@ -149,7 +147,7 @@ async def get_recent_prediction_stats(
             date = datetime.fromisoformat(date_str).date()
             if date >= cutoff_date:
                 recent_stats[date_str] = count
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, HTTPError) as e:
             logger.error(f"解析日期时出错: {e}")  # type: ignore
             continue
 

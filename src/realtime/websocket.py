@@ -7,7 +7,6 @@ WebSocket Module - Stub Implementation
 Temporary implementation to resolve import errors.
 """
 
-import asyncio
 import json
 import logging
 from typing import Any, Callable, Dict, List, Optional, Set, Union
@@ -196,7 +195,7 @@ class WebSocketManager:
         for handler in self.message_handlers:
             try:
                 await handler(connection_id, message)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(f"Error in message handler: {e}")
 
     def get_connection_count(self) -> int:

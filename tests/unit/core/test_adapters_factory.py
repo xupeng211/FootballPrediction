@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Any, Dict, Optional, Type
 from src.core.exceptions import AdapterError
-from src.adapters.factory_simple import AdapterFactory, get_adapter
+# from src.adapters.factory_simple import AdapterFactory, get_adapter
 
 
 class TestAdapterFactory:

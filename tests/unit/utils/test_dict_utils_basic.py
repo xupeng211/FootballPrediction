@@ -1,6 +1,6 @@
 """字典工具基础测试"""
 
-from src.utils.dict_utils import DictUtils
+# from src.utils.dict_utils import DictUtils
 
 
 class TestDictUtilsBasic:

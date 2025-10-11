@@ -96,7 +96,7 @@ async def get_match_prediction_handler(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取比赛 {match_id} 预测失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"获取预测结果失败: {e}")
 
@@ -136,7 +136,7 @@ async def predict_match_handler(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"预测比赛 {match_id} 失败: {e}")
         raise HTTPException(status_code=500, detail="预测失败")
 
@@ -173,7 +173,7 @@ async def verify_prediction_handler(
                 data={"match_id": match_id, "verified": False},
             )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"验证预测结果失败: {e}")
         raise HTTPException(status_code=500, detail="验证预测结果失败")
 

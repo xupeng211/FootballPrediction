@@ -11,11 +11,10 @@ Performance Analyzer
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 from pydantic import BaseModel
 
 from src.core.logging import get_logger

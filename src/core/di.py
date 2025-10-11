@@ -14,15 +14,11 @@ from typing import (
     Callable,
     Optional,
     List,
-    Union,
-    get_type_hints,
 )
-from abc import ABC, abstractmethod
 from enum import Enum
 import inspect
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime
 import logging
 
 from ..core.exceptions import DependencyInjectionError
@@ -289,7 +285,7 @@ class DIContainer:
                 ):
                     try:
                         instance.cleanup()
-                    except Exception as e:
+                    except (ValueError, TypeError, AttributeError, KeyError) as e:
                         logger.error(f"清理资源失败: {e}")
 
             del self._scoped_instances[scope_name]

@@ -37,17 +37,17 @@ except ImportError:
     EventPredictionService = Mock
 
 try:
-    from src.services.data_service import DataService
+    from src.services.data_service import DataService  # type: ignore
 except ImportError:
     DataService = Mock
 
 try:
-    from src.services.audit_service import AuditService
+    from src.services.audit_service import AuditService  # type: ignore
 except ImportError:
     AuditService = Mock
 
 try:
-    from src.services.service_manager import ServiceManager
+    from src.services.service_manager import ServiceManager  # type: ignore
 except ImportError:
     ServiceManager = Mock
 

@@ -39,7 +39,7 @@ class ProcessingCache:
             self.redis_manager = RedisManager()  # type: ignore
             self.logger.info("数据处理缓存管理器初始化完成")
             return True
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"初始化缓存管理器失败: {e}")
             self.cache_enabled = False
             return False
@@ -52,7 +52,7 @@ class ProcessingCache:
                     await self.redis_manager.close()
                 else:
                     self.redis_manager.close()
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 self.logger.error(f"关闭缓存管理器失败: {e}")
             self.redis_manager = None
 
@@ -114,7 +114,7 @@ class ProcessingCache:
                 data_str = str(data)
 
             return hashlib.md5(data_str.encode()).hexdigest()  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"计算数据哈希失败: {e}")
             return "error_hash"
 
@@ -163,7 +163,7 @@ class ProcessingCache:
             self.stats["misses"] += 1
             return None
 
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"获取缓存结果失败: {e}")
             self.stats["errors"] += 1
             return None
@@ -217,7 +217,7 @@ class ProcessingCache:
 
             return success  # type: ignore
 
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"缓存结果失败: {e}")
             self.stats["errors"] += 1
             return False
@@ -266,7 +266,7 @@ class ProcessingCache:
             self.logger.info(f"使缓存失效: {invalidated_count} 个键")
             return invalidated_count
 
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"使缓存失效失败: {e}")
             self.stats["errors"] += 1
             return 0
@@ -301,7 +301,7 @@ class ProcessingCache:
                         "keyspace_hits": info.get("keyspace_hits", 0),
                         "keyspace_misses": info.get("keyspace_misses", 0),
                     }
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 self.logger.error(f"获取Redis信息失败: {e}")
 
         return cache_stats
@@ -342,7 +342,7 @@ class ProcessingCache:
             self.logger.info(f"清理过期缓存完成，处理了 {len(keys)} 个键")
             return cleaned_count
 
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"清理过期缓存失败: {e}")
             self.stats["errors"] += 1
             return 0
@@ -400,7 +400,7 @@ class ProcessingCache:
                         result = await process_func(data)  # type: ignore
                         await self.cache_result(operation, data, result)
 
-                except Exception as e:
+                except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                     self.logger.error(f"预热 {operation} 失败: {e}")
 
         self.logger.info("缓存预热完成")

@@ -7,7 +7,7 @@ Define core interfaces and abstract classes for the adapter pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -66,7 +66,7 @@ class Adapter(Target):
         try:
             await self._initialize()
             self.status = AdapterStatus.ACTIVE
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.status = AdapterStatus.ERROR
             self.last_error = str(e)
             raise
@@ -76,7 +76,7 @@ class Adapter(Target):
         try:
             await self._cleanup()
             self.status = AdapterStatus.INACTIVE
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.status = AdapterStatus.ERROR
             self.last_error = str(e)
             raise
@@ -109,7 +109,7 @@ class Adapter(Target):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 更新失败指标
             self.metrics["failed_requests"] += 1
             self.last_error = str(e)
@@ -142,7 +142,7 @@ class Adapter(Target):
                 "response_time": response_time,
                 "metrics": self.get_metrics(),
             }
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             return {
                 "adapter": self.name,
                 "status": "unhealthy",
@@ -271,7 +271,13 @@ class CompositeAdapter(Adapter):
             for name, task in tasks:
                 try:
                     health_results[name] = await task
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     health_results[name] = {
                         "adapter": name,
                         "status": "unhealthy",

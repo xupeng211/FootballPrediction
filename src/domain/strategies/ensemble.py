@@ -9,7 +9,7 @@ Combines multiple prediction strategies through weighted voting or other ensembl
 
 import asyncio
 import time
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
@@ -21,9 +21,7 @@ from .base import (
     PredictionOutput,
     StrategyType,
     StrategyMetrics,
-    PredictionContext,
 )
-from ..models.match import Match
 from ..models.prediction import Prediction
 
 

@@ -173,7 +173,7 @@ class MockProducer:
                     asyncio.get_event_loop().call_soon(on_delivery, None, message)  # type: ignore
                 else:
                     on_delivery(None, message)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Delivery callback error: {e}")
 
         self._flushed = False
@@ -261,14 +261,14 @@ class MockDeserializingConsumer(MockConsumer):
             try:
                 if isinstance(message._value, bytes):
                     message._value = self._value_deserializer(message._value)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Value deserialization error: {e}")
 
         if message and self._key_deserializer:
             try:
                 if isinstance(message._key, bytes):
                     message._key = self._key_deserializer(message._key)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Key deserialization error: {e}")
 
         return message
@@ -298,13 +298,13 @@ class MockSerializingProducer(MockProducer):
         if self._key_serializer and key is not None:
             try:
                 serialized_key = self._key_serializer(key, None)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Key serialization error: {e}")
 
         if self._value_serializer and value is not None:
             try:
                 serialized_value = self._value_serializer(value, None)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"Value serialization error: {e}")
 
         super().produce(

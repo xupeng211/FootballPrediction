@@ -4,7 +4,7 @@ Data formatters
 
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:

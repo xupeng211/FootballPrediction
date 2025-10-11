@@ -10,7 +10,6 @@ Performance Monitoring Integration Module
 - 性能监控初始化
 """
 
-import logging
 from typing import Optional
 
 from fastapi import FastAPI
@@ -64,7 +63,7 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Performance monitoring middleware integrated successfully")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to integrate performance monitoring: {str(e)}")
 
     def initialize_database_monitoring(self) -> None:
@@ -73,7 +72,6 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            from .middleware import DatabasePerformanceMiddleware
             from .profiler import get_profiler, DatabaseQueryProfiler
 
             # 创建数据库查询分析器
@@ -84,7 +82,7 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Database monitoring initialized")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to initialize database monitoring: {str(e)}")
 
     def initialize_cache_monitoring(self) -> None:
@@ -93,13 +91,11 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            from .middleware import CachePerformanceMiddleware
-
             # self._cache_monitor = CachePerformanceMiddleware()
 
             logger.info("Cache monitoring initialized")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to initialize cache monitoring: {str(e)}")
 
     def initialize_task_monitoring(self) -> None:
@@ -108,13 +104,11 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            from .middleware import BackgroundTaskPerformanceMonitor
-
             # self._task_monitor = BackgroundTaskPerformanceMonitor()
 
             logger.info("Task monitoring initialized")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to initialize task monitoring: {str(e)}")
 
     def start_profiling(self) -> None:
@@ -129,7 +123,7 @@ class PerformanceMonitoringIntegration:
             start_profiling()
             logger.info("Performance profiling started")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to start profiling: {str(e)}")
 
     def stop_profiling(self) -> None:
@@ -142,7 +136,7 @@ class PerformanceMonitoringIntegration:
                 f"Performance profiling stopped: {results.get('function_count', 0)} functions profiled"
             )
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to stop profiling: {str(e)}")
 
     def get_performance_config(self) -> dict:
@@ -191,7 +185,7 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Performance monitoring configuration updated")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to update performance monitoring config: {str(e)}")
 
     def create_performance_report(self) -> Optional[str]:
@@ -222,7 +216,7 @@ class PerformanceMonitoringIntegration:
 
             return analyzer.export_report(report)
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to create performance report: {str(e)}")
             return None
 
@@ -239,7 +233,7 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Performance alerting setup completed")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to setup performance alerting: {str(e)}")
 
     def cleanup(self) -> None:
@@ -257,7 +251,7 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Performance monitoring cleanup completed")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to cleanup performance monitoring: {str(e)}")
 
 

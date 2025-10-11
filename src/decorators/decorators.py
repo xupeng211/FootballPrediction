@@ -8,7 +8,6 @@ Implements various decorators for functionality enhancement and cross-cutting co
 """
 
 import asyncio
-import functools
 import time
 import json
 from typing import Any, Callable, Dict, List, Optional, Union, Type
@@ -121,7 +120,7 @@ class LoggingDecorator(Decorator):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 记录函数执行失败
             if self.log_exception:
                 error_log = {
@@ -296,7 +295,7 @@ class MetricsDecorator(Decorator):
             success = True
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             error_type = type(e).__name__
             raise
 

@@ -6,7 +6,7 @@ Repository Dependency Injection Configuration
 Provides dependency injection for repository instances in FastAPI.
 """
 
-from typing import AsyncGenerator, Annotated
+from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +16,6 @@ from .base import Repository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
-from ..database.models import Prediction, User, Match
 from .provider import get_repository_provider, RepositoryProvider
 
 

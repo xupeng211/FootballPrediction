@@ -5,8 +5,7 @@ Prometheus Exporter Module
 """
 
 import logging
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List
 
 
 class PrometheusCollector:

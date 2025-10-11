@@ -6,19 +6,11 @@ Facade Pattern API Endpoints
 Demonstrates the usage and effects of the facade pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-import asyncio
 
-from ..facades import (
-    MainSystemFacade,
-    PredictionFacade,
-    DataCollectionFacade,
-    AnalyticsFacade,
-    NotificationFacade,
-)
-from ..facades.factory import FacadeFactory, FacadeConfig, facade_factory
+from ..facades.factory import facade_factory
 
 router = APIRouter(prefix="/facades", tags=["门面模式"])
 
@@ -72,7 +64,7 @@ async def initialize_facade(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"初始化失败: {str(e)}")
 
 
@@ -91,7 +83,7 @@ async def shutdown_facade(
 
         return {"message": f"门面 {facade_name} 已成功关闭"}
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"关闭失败: {str(e)}")
 
 
@@ -608,7 +600,7 @@ async def demo_complete_workflow(
             },
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         end_time = datetime.utcnow()
         total_time = (end_time - start_time).total_seconds()
 

@@ -7,7 +7,7 @@
 import hashlib
 import secrets
 import uuid
-from typing import Optional, cast
+from typing import Optional
 
 try:
     import bcrypt

@@ -6,7 +6,7 @@
 
 import re
 from datetime import datetime
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 
 class DataValidator:

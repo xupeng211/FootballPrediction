@@ -242,7 +242,7 @@ class OddsProcessor:
 
                 cleaned_odds.append(cleaned_data)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(f"Failed to clean odds data: {str(e)}")
                 continue
 

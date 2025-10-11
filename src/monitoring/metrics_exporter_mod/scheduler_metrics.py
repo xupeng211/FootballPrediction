@@ -64,7 +64,7 @@ class SchedulerMetrics:
                     task_name=task_name, failure_reason=failure_reason
                 ).inc()
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"记录调度任务指标失败: {e}")
 
     def record_task_simple(
@@ -112,7 +112,7 @@ class SchedulerMetrics:
             self.metrics.scheduler_task_delay.labels(task_name=task_name).set(
                 delay_seconds
             )
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"记录调度延迟指标失败: {e}")
 
     def record_failure(
@@ -131,7 +131,7 @@ class SchedulerMetrics:
             self.metrics.scheduler_task_failures.labels(
                 task_name=task_name, failure_reason=failure_reason
             ).inc()
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"记录调度失败指标失败: {e}")
 
     def record_batch(

@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, Path, Query, Request
 
@@ -23,14 +23,6 @@ from .prediction_handlers import (
     verify_prediction_handler,
 )
 from .rate_limiter import get_rate_limiter
-from .schemas import (
-    BatchPredictionRequest,
-    BatchPredictionResponse,
-    PredictionHistoryResponse,
-    PredictionResponse,
-    RecentPredictionsResponse,
-    VerificationResponse,
-)
 
 logger = logging.getLogger(__name__)
 

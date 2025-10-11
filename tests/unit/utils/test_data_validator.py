@@ -4,7 +4,7 @@
 
 import pytest
 from datetime import datetime
-from src.utils.data_validator import DataValidator
+# from src.utils.data_validator import DataValidator
 
 
 class TestDataValidator:

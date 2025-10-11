@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import psutil
 
@@ -79,7 +79,7 @@ class SystemMetricsCollector(BaseMetricsCollector):
                 "uptime_seconds": uptime,
             }
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"收集系统指标失败: {e}")
             return {"error": str(e)}
 
@@ -118,7 +118,7 @@ class DatabaseMetricsCollector(BaseMetricsCollector):
                     result = await session.execute(text("SELECT 1"))  # type: ignore
                     connection_status = 1 if result.scalar() == 1 else 0
 
-                except Exception as e:
+                except (ValueError, RuntimeError, TimeoutError) as e:
                     self.logger.error(f"数据库健康检查失败: {e}")
 
             return {
@@ -126,7 +126,7 @@ class DatabaseMetricsCollector(BaseMetricsCollector):
                 "pool_status": pool_status,
             }
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"收集数据库指标失败: {e}")
             return {"error": str(e)}
 
@@ -158,12 +158,12 @@ class CacheMetricsCollector(BaseMetricsCollector):
                     if "connected_clients" in info:
                         cache_info["connected_clients"] = info["connected_clients"]
 
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 self.logger.warning(f"Redis信息获取失败: {e}")
 
             return cache_info
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"收集缓存指标失败: {e}")
             return {"error": str(e)}
 
@@ -186,7 +186,7 @@ class ApplicationMetricsCollector(BaseMetricsCollector):
 
             return app_metrics
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"收集应用指标失败: {e}")
             return {"error": str(e)}
 
@@ -236,7 +236,7 @@ class MetricsCollectorManager:
             try:
                 result = await task
                 results[name] = result
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 self.logger.error(f"收集器 {name} 执行失败: {e}")
                 results[name] = {"error": str(e)}
 
@@ -257,7 +257,7 @@ class MetricsCollectorManager:
         """
         try:
             return await collector.collect()
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"收集器 {name} 失败: {e}")
             return {"error": str(e)}
 

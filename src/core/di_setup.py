@@ -8,15 +8,14 @@ Provides initialization and configuration for dependency injection.
 
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional
 import logging
 
 from .di import DIContainer, ServiceCollection, ServiceLifetime
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
 from .config_di import ConfigurationBinder
-from .auto_binding import AutoBinder, auto_bind
+from .auto_binding import AutoBinder
 from ..database.repositories.base import BaseRepository
-from ..services.base_unified import BaseService
 
 logger = logging.getLogger(__name__)
 

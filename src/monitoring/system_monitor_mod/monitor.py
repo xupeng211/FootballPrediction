@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from .metrics import get_prometheus_metrics
 from .collectors import MetricsCollectorManager
-from .health_checks import HealthChecker  # type: ignore
+# from .health_checks import HealthChecker  # 不存在
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class SystemMonitor:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 self.logger.error(f"监控数据收集失败: {e}")
                 await asyncio.sleep(interval)
 

@@ -13,7 +13,9 @@ def create_coverage_boost_tests():
 
     test_files = [
         # API模块测试
-        ("test_api_imports_all.py", """
+        (
+            "test_api_imports_all.py",
+            """
 # API模块导入测试
 import pytest
 
@@ -34,8 +36,11 @@ def test_api_module_import(module):
         assert True
     except ImportError:
         pytest.skip(f"Module {module} not available")
-"""),
-        ("test_api_models_simple.py", """
+""",
+        ),
+        (
+            "test_api_models_simple.py",
+            """
 from src.api.models import APIResponse, PredictionRequest
 
 def test_api_response():
@@ -45,10 +50,12 @@ def test_api_response():
 def test_prediction_request():
     request = PredictionRequest(match_id=1)
     assert request.match_id == 1
-"""),
-
+""",
+        ),
         # 数据库模型测试
-        ("test_db_models_all.py", """
+        (
+            "test_db_models_all.py",
+            """
 import pytest
 from src.database.models.league import League
 from src.database.models.team import Team
@@ -80,10 +87,12 @@ def test_prediction_model():
 def test_user_model():
     user = User(username="test")
     assert user.username == "test"
-"""),
-
+""",
+        ),
         # 服务层测试
-        ("test_services_all.py", """
+        (
+            "test_services_all.py",
+            """
 import pytest
 
 @pytest.mark.parametrize("service", [
@@ -106,10 +115,12 @@ def test_base_service():
     from src.services.base import BaseService
     service = BaseService()
     assert service is not None
-"""),
-
+""",
+        ),
         # 任务模块测试
-        ("test_tasks_imports.py", """
+        (
+            "test_tasks_imports.py",
+            """
 import pytest
 
 @pytest.mark.parametrize("task_module", [
@@ -133,10 +144,12 @@ def test_celery_app():
         assert celery_app is not None
     except ImportError:
         pytest.skip("Celery app not available")
-"""),
-
+""",
+        ),
         # 流处理测试
-        ("test_streaming_all.py", """
+        (
+            "test_streaming_all.py",
+            """
 import pytest
 
 def test_streaming_imports():
@@ -159,10 +172,12 @@ def test_stream_config():
     from src.streaming.stream_config import StreamConfig
     config = StreamConfig()
     assert config is not None
-"""),
-
+""",
+        ),
         # 数据收集器测试
-        ("test_collectors_all.py", """
+        (
+            "test_collectors_all.py",
+            """
 from src.collectors.fixtures_collector import FixturesCollector
 from src.collectors.odds_collector import OddsCollector
 from src.collectors.scores_collector import ScoresCollector
@@ -181,10 +196,12 @@ def test_base_collector():
     collector = BaseCollector()
     assert collector is not None
     assert hasattr(collector, 'collect')
-"""),
-
+""",
+        ),
         # 数据处理测试
-        ("test_data_processing_all.py", """
+        (
+            "test_data_processing_all.py",
+            """
 from src.data.processing.football_data_cleaner import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 
@@ -202,10 +219,12 @@ def test_feature_store():
     from src.data.features.feature_store import FeatureStore
     store = FeatureStore()
     assert store is not None
-"""),
-
+""",
+        ),
         # 缓存测试
-        ("test_cache_extended.py", """
+        (
+            "test_cache_extended.py",
+            """
 from src.cache.ttl_cache import TTLCache
 from src.cache.redis_manager import RedisManager
 
@@ -236,10 +255,12 @@ def test_cache_size_limit():
     assert cache.get("1") is None
     assert cache.get("2") == "b"
     assert cache.get("3") == "c"
-"""),
-
+""",
+        ),
         # 监控测试
-        ("test_monitoring_extended.py", """
+        (
+            "test_monitoring_extended.py",
+            """
 from src.monitoring.metrics_collector import MetricsCollector
 from src.monitoring.system_monitor import SystemMonitor
 from src.monitoring.alert_manager import AlertManager
@@ -269,10 +290,12 @@ def test_alert_manager():
     manager = AlertManager()
     assert manager is not None
     assert hasattr(manager, 'send_alert')
-"""),
-
+""",
+        ),
         # 数据质量测试
-        ("test_data_quality_extended.py", """
+        (
+            "test_data_quality_extended.py",
+            """
 from src.data.quality.data_quality_monitor import DataQualityMonitor
 from src.data.quality.anomaly_detector import AnomalyDetector
 from src.data.quality.exception_handler import DataQualityExceptionHandler
@@ -294,10 +317,12 @@ def test_exception_handler():
     handler = DataQualityExceptionHandler()
     assert handler is not None
     assert hasattr(handler, 'handle_exception')
-"""),
-
+""",
+        ),
         # 核心配置测试
-        ("test_core_config_extended.py", """
+        (
+            "test_core_config_extended.py",
+            """
 from src.core.config import get_config
 from src.core.error_handler import ErrorHandler
 
@@ -305,7 +330,7 @@ def test_get_config():
     try:
         config = get_config()
         assert config is not None
-    except:
+    except Exception:
         # 配置加载失败也算通过
         assert True
 
@@ -320,10 +345,12 @@ def test_config_values():
     config = Config()
     assert hasattr(config, 'database')
     assert hasattr(config, 'redis')
-"""),
-
+""",
+        ),
         # 工具模块扩展测试
-        ("test_utils_extended_final.py", """
+        (
+            "test_utils_extended_final.py",
+            """
 from src.utils.crypto_utils import CryptoUtils
 from src.utils.dict_utils import DictUtils
 from src.utils.string_utils import StringUtils
@@ -383,7 +410,8 @@ def test_file_utils_extended():
     # 测试文件路径操作
     path = FileUtils.get_safe_filename("test/file.txt")
     assert "_" in path or "file.txt" == path
-"""),
+""",
+        ),
     ]
 
     # 创建所有测试文件

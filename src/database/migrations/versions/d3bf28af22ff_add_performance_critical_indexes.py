@@ -37,7 +37,7 @@ def _create_predictions_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_predictions_created_at_desc 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_predictions_created_at_desc 创建失败: {e}")
 
     # 比赛ID和创建时间复合索引
@@ -51,7 +51,7 @@ def _create_predictions_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_predictions_match_created 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_predictions_match_created 创建失败: {e}")
 
 
@@ -95,7 +95,7 @@ def _create_matches_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_matches_status_time 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_matches_status_time 创建失败: {e}")
 
     # 联赛和时间复合索引（优化联赛赛程查询）
@@ -109,7 +109,7 @@ def _create_matches_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_matches_league_time 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_matches_league_time 创建失败: {e}")
 
     # 主队和时间复合索引
@@ -123,7 +123,7 @@ def _create_matches_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_matches_home_time 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_matches_home_time 创建失败: {e}")
 
 
@@ -142,7 +142,7 @@ def _create_features_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_features_match_created 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_features_match_created 创建失败: {e}")
 
     # 特征类型索引
@@ -156,7 +156,7 @@ def _create_features_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_features_type 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_features_type 创建失败: {e}")
 
 
@@ -175,7 +175,7 @@ def _create_data_quality_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_data_quality_created_at 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_data_quality_created_at 创建失败: {e}")
 
     # 数据质量状态索引
@@ -189,7 +189,7 @@ def _create_data_quality_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_data_quality_status 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_data_quality_status 创建失败: {e}")
 
 
@@ -208,7 +208,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_audit_logs_created_at 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_audit_logs_created_at 创建失败: {e}")
 
     # 审计日志用户索引
@@ -222,7 +222,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_audit_logs_user 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_audit_logs_user 创建失败: {e}")
 
     # ========================================
@@ -251,7 +251,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_audit_logs_action 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_audit_logs_action 创建失败: {e}")
 
     # ========================================
@@ -271,7 +271,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_collection_logs_created_at 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_collection_logs_created_at 创建失败: {e}")
 
     # 数据采集日志源和状态复合索引
@@ -285,7 +285,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_collection_logs_source_status 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_collection_logs_source_status 创建失败: {e}")
 
     # ========================================
@@ -305,7 +305,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_error_logs_task_name 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_error_logs_task_name 创建失败: {e}")
 
     # 错误日志创建时间索引
@@ -319,7 +319,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_error_logs_created_at 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_error_logs_created_at 创建失败: {e}")
 
     # 错误日志任务状态复合索引
@@ -333,7 +333,7 @@ def _create_audit_logs_indexes(conn) -> None:
             )
         )
         print("   ✓ idx_error_logs_task_status 创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ✗ idx_error_logs_task_status 创建失败: {e}")
 
     print("✅ 性能关键索引创建完成！")
@@ -379,7 +379,7 @@ def downgrade() -> None:
         try:
             conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))  # type: ignore
             print(f"   ✓ {index_name} 删除成功")
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"   ✗ {index_name} 删除失败: {e}")
 
     print("✅ 性能关键索引删除完成！")

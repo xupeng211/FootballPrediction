@@ -14,7 +14,7 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 基于 DATA_DESIGN.md 第1.3节设计。
 """
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 from sqlalchemy.orm import validates
 from src.database.base import BaseModel
 from sqlalchemy import DateTime

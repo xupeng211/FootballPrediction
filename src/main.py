@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 足球预测系统 FastAPI 主应用
 
@@ -125,7 +123,7 @@ async def lifespan(app: FastAPI):
 
         logger.info("✅ 服务启动成功")
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
         logger.error(f"❌ 启动失败: {e}")
         raise
 

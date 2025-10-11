@@ -13,12 +13,10 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
 import asyncio
-import logging
 
 from .base_collector import DataCollector, CollectionResult
 
@@ -165,7 +163,13 @@ class ScoresCollector(DataCollector):
                     collected_data.extend(scores_data)
                     success_count = len(scores_data)
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     error_count += 1
                     error_messages.append(f"WebSocket failed: {str(e)}")
                     self.logger.warning(
@@ -213,7 +217,7 @@ class ScoresCollector(DataCollector):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Live scores collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
@@ -250,7 +254,7 @@ class ScoresCollector(DataCollector):
             # TODO: 从数据库查询当前进行中的比赛
             # 目前返回空列表作为占位符
             return []
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get live matches: {str(e)}")
             return []
 
@@ -308,7 +312,7 @@ class ScoresCollector(DataCollector):
                         await websocket.ping()
                         continue
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"WebSocket collection failed: {str(e)}")
             self._websocket_connected = False
             raise
@@ -340,12 +344,18 @@ class ScoresCollector(DataCollector):
                         if cleaned_data:
                             collected_data.append(cleaned_data)
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     self.logger.error(
                         f"Failed to collect live data for match {match_id}: {str(e)}"
                     )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Polling collection failed: {str(e)}")
             raise
 
@@ -368,7 +378,7 @@ class ScoresCollector(DataCollector):
             response = await self._make_request(url=url, headers=headers)
             return response
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get live data for match {match_id}: {str(e)}")
             return None
 
@@ -427,7 +437,7 @@ class ScoresCollector(DataCollector):
 
             return cleaned_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean live data: {str(e)}")
             return None
 
@@ -476,6 +486,6 @@ class ScoresCollector(DataCollector):
                 # 等待下一次轮询
                 await asyncio.sleep(self.polling_interval)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(f"Continuous monitoring error: {str(e)}")
                 await asyncio.sleep(self.polling_interval)

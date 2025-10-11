@@ -3,7 +3,7 @@ Database connection pools
 """
 
 import logging
-from typing import Any, Dict, Optional
+# from typing import Any, Dict, Optional
 
 from src.core.logging import get_logger
 

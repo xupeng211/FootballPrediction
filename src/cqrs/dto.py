@@ -9,7 +9,6 @@ Defines DTOs used in CQRS pattern.
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from decimal import Decimal
 
 
 @dataclass

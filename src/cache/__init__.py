@@ -17,7 +17,6 @@
 - consistency_manager: 缓存一致性
 """
 
-from typing import Any, Optional, Union
 
 # Redis缓存管理
 from .redis_manager import (

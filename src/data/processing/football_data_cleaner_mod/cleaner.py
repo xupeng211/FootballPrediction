@@ -108,7 +108,7 @@ class FootballDataCleaner:
 
             return cleaned_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean match data: {str(e)}")
             return None
 

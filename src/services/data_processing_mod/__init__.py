@@ -16,9 +16,9 @@ from .processors import (
 # 从新的模块结构导入
 from ..data_processing.pipeline_mod.stages import (
     BronzeToSilverProcessor,
-    SilverToGoldProcessor,
+    # SilverToGoldProcessor,  # 未使用
 )
-from ..data_processing.pipeline_mod.pipeline import DataPipeline
+# from ..data_processing.pipeline_mod.pipeline import DataPipeline  # 未使用
 
 
 # 创建兼容的类别名

@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 FootballPrediction - 基于机器学习的足球比赛结果预测系统
 

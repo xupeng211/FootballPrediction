@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表
@@ -246,7 +244,7 @@ def upgrade():
         """
                 )
             )
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             # 如果permission_audit_log表不存在，忽略错误但记录日志
             print(f"Warning: Could not drop permission_audit_log table: {e}")
     else:
@@ -274,7 +272,7 @@ def downgrade():
             """
                 )
             )
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             # 如果permission_audit_log表不存在，忽略错误但记录日志
             print(f"Warning: Could not drop permission_audit_log table: {e}")
 

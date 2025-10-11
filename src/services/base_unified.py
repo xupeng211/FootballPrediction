@@ -10,7 +10,6 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 
 from src.database.connection_mod import DatabaseManager
-from src.core import logger
 
 
 class BaseService(ABC):
@@ -68,7 +67,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 初始化失败")
             return success
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 初始化异常: {e}")
             return False
 
@@ -89,7 +88,7 @@ class BaseService(ABC):
             await self._on_shutdown()
             self._initialized = False
             self.logger.info(f"服务 {self.name} 已关闭")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 关闭异常: {e}")
 
     def start(self) -> bool:
@@ -117,7 +116,7 @@ class BaseService(ABC):
             else:
                 self.logger.error(f"服务 {self.name} 启动失败")
             return success
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 启动异常: {e}")
             return False
 
@@ -132,7 +131,7 @@ class BaseService(ABC):
             await self._on_stop()
             self._running = False
             self.logger.info(f"服务 {self.name} 已停止")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             self.logger.error(f"服务 {self.name} 停止异常: {e}")
 
     # ========================================
@@ -235,7 +234,7 @@ class BaseService(ABC):
             with self.db_manager.get_session() as session:
                 session.execute("SELECT 1")  # type: ignore
             return True
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             return False
 
     # ========================================

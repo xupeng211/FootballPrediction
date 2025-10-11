@@ -109,7 +109,7 @@ class LogHandler(AlertHandler):
             self.logger.log(log_level, message, extra={"alert": alert.to_dict()})
             return True
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             self.logger.error(f"Failed to log alert: {str(e)}")
             return False
 
@@ -128,7 +128,7 @@ class PrometheusHandler(AlertHandler):
             self.metrics.increment_counter(alert)
             return True
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logging.error(f"Failed to update Prometheus metrics: {str(e)}")
             return False
 
@@ -160,7 +160,7 @@ class WebhookHandler(AlertHandler):
                 ) as response:
                     return response.status == 200
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logging.error(f"Failed to send webhook alert: {str(e)}")
             return False
 
@@ -216,6 +216,6 @@ class EmailHandler(AlertHandler):
 
             return True
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logging.error(f"Failed to send email alert: {str(e)}")
             return False

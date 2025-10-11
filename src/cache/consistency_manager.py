@@ -4,7 +4,7 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 try:
     from .redis_manager import get_redis_manager
@@ -47,7 +47,7 @@ class CacheConsistencyManager:
 
             self.logger.debug(f"同步缓存: {cache_key}")
             return True
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"同步缓存失败: {e}")
             return False
 
@@ -75,7 +75,7 @@ class CacheConsistencyManager:
 
             self.logger.info(f"缓存失效: {success_count}/{len(keys)} 个键")
             return success_count == len(keys)
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"缓存失效失败: {e}")
             return False
 
@@ -97,7 +97,7 @@ class CacheConsistencyManager:
 
             self.logger.info(f"缓存预热: {success_count}/{len(ids)} 个实体")
             return success_count == len(ids)
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"缓存预热失败: {e}")
             return False
 
@@ -112,7 +112,7 @@ class CacheConsistencyManager:
                 "status": "active",
                 "manager_type": "consistency_manager",
             }
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"获取缓存统计失败: {e}")
             return {"status": "error", "error": str(e)}
 

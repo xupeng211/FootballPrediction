@@ -13,7 +13,7 @@ import yaml  # type: ignore
 import json
 from pathlib import Path
 
-from .base import Adapter, Adaptee, AdapterStatus
+from .base import Adapter
 from .football import (
     ApiFootballAdapter,
     OptaDataAdapter,
