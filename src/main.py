@@ -169,28 +169,14 @@ if RATE_LIMIT_AVAILABLE and limiter:
 # 配置 OpenAPI 文档
 setup_openapi(app)
 
-# 配置CORS（如果需要）
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# 配置CORS（使用统一配置）
+from src.config.cors_config import get_cors_config
 
 # 添加国际化中间件
 app.add_middleware(I18nMiddleware)
 
-# 添加CORS中间件
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
+# 添加CORS中间件（统一配置）
+app.add_middleware(CORSMiddleware, **get_cors_config())
 
 # 注册路由
 app.include_router(health_router, prefix="/api/health")
