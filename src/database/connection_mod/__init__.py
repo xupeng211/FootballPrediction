@@ -25,7 +25,11 @@ from .sessions import (
     get_async_reader_session,
     get_async_writer_session,
     get_async_admin_session,
+    create_session_factory,
 )
+from .engine import get_engine, get_engine_with_pool
+from .health import check_database_health
+from .exceptions import DatabaseError
 
 __all__ = [
     # 核心管理器
@@ -49,4 +53,11 @@ __all__ = [
     "get_async_reader_session",
     "get_async_writer_session",
     "get_async_admin_session",
+    "create_session_factory",
+    # 引擎和健康检查
+    "get_engine",
+    "get_engine_with_pool",
+    "check_database_health",
+    # 异常
+    "DatabaseError",
 ]
