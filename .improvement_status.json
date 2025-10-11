@@ -51,14 +51,22 @@
       }
     },
     "2.2": {
-      "status": "in_progress",
-      "started_at": "2025-10-12T00:47:11.080291"
+      "status": "completed",
+      "started_at": "2025-10-12T00:47:11.080291",
+      "completed_at": "2025-10-12T00:50:57.403536",
+      "notes": null,
+      "metrics_after": {
+        "legacy_dirs": 13,
+        "backup_files": 0,
+        "type_ignores": 1633,
+        "collected_at": "2025-10-12T00:50:57.403521"
+      }
     }
   },
   "metrics": {
     "legacy_dirs": 13,
     "backup_files": 0,
     "type_ignores": 1633,
-    "collected_at": "2025-10-12T00:47:05.970749"
+    "collected_at": "2025-10-12T00:50:57.403521"
   }
 }
