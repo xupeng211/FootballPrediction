@@ -18,7 +18,12 @@ from ..models.predictions import Predictions, PredictedResult
 
 # 类型别名
 Prediction = Predictions
-PredictionStatus = PredictedResult
+
+# 预测状态常量
+class PredictionStatus:
+    PENDING = "pending"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
 
 class PredictionRepository(BaseRepository[Predictions]):
@@ -58,7 +63,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"match_id": match_id}
         if status:
-            filters["status"] = status.value
+            filters["status"] = status if isinstance(status, str) else str(status)
 
         return await self.find_by(
             filters=filters, limit=limit, order_by="created_at", session=session
@@ -85,7 +90,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"user_id": user_id}
         if status:
-            filters["status"] = status.value
+            filters["status"] = status if isinstance(status, str) else str(status)
 
         return await self.find_by(
             filters=filters, limit=limit, order_by="created_at", session=session
@@ -109,7 +114,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             预测列表
         """
         return await self.find_by(
-            filters={"status": status.value},
+            filters={"status": status if isinstance(status, str) else str(status)},
             limit=limit,
             order_by="created_at",
             session=session,
@@ -161,18 +166,18 @@ class PredictionRepository(BaseRepository[Predictions]):
                 select(Prediction)
                 .where(
                     and_(
-                        Prediction.created_at >= start_date,
-                        Prediction.status == PredictionStatus.COMPLETED.value,  # type: ignore
+                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
-                .order_by(desc(Prediction.created_at))
+                .order_by(desc(Prediction.predicted_at))  # type: ignore
             )
 
             if limit:
                 stmt = stmt.limit(limit)
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return result.scalars().all()
 
     async def get_user_prediction_for_match(
         self,
@@ -225,12 +230,12 @@ class PredictionRepository(BaseRepository[Predictions]):
             "match_id": match_id,
             "predicted_home_score": predicted_home_score,
             "predicted_away_score": predicted_away_score,
-            "status": PredictionStatus.PENDING.value,  # type: ignore
+            "status": PredictionStatus.PENDING,
             "created_at": datetime.utcnow(),
         }
 
         if confidence is not None:
-            prediction_data["confidence"] = confidence
+            prediction_data["confidence"] = float(confidence)  # type: ignore
         if model_version:
             prediction_data["model_version"] = model_version
 
@@ -263,7 +268,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             "actual_home_score": actual_home_score,
             "actual_away_score": actual_away_score,
             "is_correct": is_correct,
-            "status": PredictionStatus.COMPLETED.value,  # type: ignore
+            "status": PredictionStatus.COMPLETED,
             "evaluated_at": datetime.utcnow(),
         }
 
@@ -292,7 +297,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             更新后的预测对象
         """
         update_data = {
-            "status": PredictionStatus.CANCELLED.value,  # type: ignore
+            "status": PredictionStatus.CANCELLED,
             "cancelled_at": datetime.utcnow(),
         }
 
@@ -329,7 +334,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 sess = session
 
             # 构建查询
-            query = select(Prediction).where(Prediction.user_id == user_id)  # type: ignore
+            query = select(Prediction).where(Prediction.user_id == user_id)
 
             if days:
                 start_date = datetime.utcnow() - timedelta(days=days)
@@ -357,11 +362,11 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             for pred in predictions:
                 # 状态统计
-                if pred.status == PredictionStatus.PENDING.value:  # type: ignore
+                if pred.status == PredictionStatus.PENDING:
                     stats["pending"] += 1
-                elif pred.status == PredictionStatus.COMPLETED.value:  # type: ignore
+                elif pred.status == PredictionStatus.COMPLETED:
                     stats["completed"] += 1
-                elif pred.status == PredictionStatus.CANCELLED.value:  # type: ignore
+                elif pred.status == PredictionStatus.CANCELLED:
                     stats["cancelled"] += 1
 
                 # 准确性统计
@@ -372,12 +377,12 @@ class PredictionRepository(BaseRepository[Predictions]):
                         stats["wrong"] += 1
 
                 # 积分统计
-                if pred.points_earned:  # type: ignore
-                    stats["total_points"] += pred.points_earned  # type: ignore
+                if pred.points_earned:
+                    stats["total_points"] += pred.points_earned
 
                 # 置信度统计
-                if pred.confidence is not None:  # type: ignore
-                    total_confidence += pred.confidence  # type: ignore
+                if pred.confidence is not None:
+                    total_confidence += float(pred.confidence)  # type: ignore
                     confidence_count += 1
 
             # 计算准确率
@@ -432,16 +437,16 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             for pred in predictions:
                 # 状态统计
-                if pred.status == PredictionStatus.PENDING.value:  # type: ignore
+                if pred.status == PredictionStatus.PENDING:
                     summary["pending"] += 1
-                elif pred.status == PredictionStatus.COMPLETED.value:  # type: ignore
+                elif pred.status == PredictionStatus.COMPLETED:
                     summary["completed"] += 1
 
                 # 比分预测统计
                 if pred.predicted_home_score is not None:
-                    total_home_score += pred.predicted_home_score  # type: ignore
+                    total_home_score += float(pred.predicted_home_score)
                 if pred.predicted_away_score is not None:
-                    total_away_score += pred.predicted_away_score  # type: ignore
+                    total_away_score += float(pred.predicted_away_score)
 
                 # 结果分布统计
                 if pred.predicted_home_score and pred.predicted_away_score:
@@ -453,8 +458,8 @@ class PredictionRepository(BaseRepository[Predictions]):
                         summary["draw_predictions"] += 1
 
                 # 置信度统计
-                if pred.confidence is not None:  # type: ignore
-                    total_confidence += pred.confidence  # type: ignore
+                if pred.confidence is not None:
+                    total_confidence += float(pred.confidence)  # type: ignore
                     confidence_count += 1
 
             # 计算平均值
@@ -494,21 +499,21 @@ class PredictionRepository(BaseRepository[Predictions]):
             # 使用SQL查询计算每个用户的统计数据
             stmt = (
                 select(
-                    Prediction.user_id,  # type: ignore
+                    Prediction.user_id,
                     func.count(Prediction.id).label("total_predictions"),
                     func.sum(
                         func.case([(Prediction.is_correct is True, 1)], else_=0)
                     ).label("correct_predictions"),
-                    func.sum(Prediction.points_earned).label("total_points"),  # type: ignore
-                    func.avg(Prediction.confidence).label("avg_confidence"),  # type: ignore
+                    func.sum(Prediction.points_earned).label("total_points"),
+                    func.avg(Prediction.confidence).label("avg_confidence"),
                 )
                 .where(
                     and_(
-                        Prediction.created_at >= start_date,
-                        Prediction.status == PredictionStatus.COMPLETED.value,  # type: ignore
+                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
-                .group_by(Prediction.user_id)  # type: ignore
+                .group_by(Prediction.user_id)
                 .order_by(desc("total_points"))
                 .limit(limit)
             )
@@ -565,7 +570,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             if relation_name == "user":
                 stmt = (
                     select(Prediction)
-                    .options(selectinload(Prediction.user))  # type: ignore
+                    .options(selectinload(Prediction.user))
                     .where(Prediction.id == obj_id)
                 )
             elif relation_name == "match":

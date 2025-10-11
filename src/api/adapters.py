@@ -9,6 +9,7 @@ Demonstrates the usage and effects of the adapter pattern.
 from fastapi import APIRouter, HTTPException, Query, Path
 from typing import Dict, Any, Optional
 from datetime import datetime, date, timedelta
+from requests.exceptions import HTTPError, RequestException
 
 from ..adapters import AdapterFactory, AdapterRegistry
 
@@ -25,11 +26,11 @@ adapter_registry = AdapterRegistry()
 @router.get("/registry/status", summary="获取适配器注册表状态")
 async def get_registry_status() -> Dict[str, Any]:
     """获取适配器注册表的整体状态"""
-    if adapter_registry.status.value == "inactive":  # type: ignore
-        await adapter_registry.initialize()  # type: ignore
+    if adapter_registry.status.value == "inactive":
+        await adapter_registry.initialize()
 
-    health_status = await adapter_registry.get_health_status()  # type: ignore
-    metrics_summary = adapter_registry.get_metrics_summary()  # type: ignore
+    health_status = await adapter_registry.get_health_status()
+    metrics_summary = adapter_registry.get_metrics_summary()
 
     return {
         "registry": health_status,
@@ -40,14 +41,14 @@ async def get_registry_status() -> Dict[str, Any]:
 @router.post("/registry/initialize", summary="初始化适配器注册表")
 async def initialize_registry() -> Dict[str, str]:
     """初始化适配器注册表"""
-    await adapter_registry.initialize()  # type: ignore
+    await adapter_registry.initialize()
     return {"message": "适配器注册表已初始化"}
 
 
 @router.post("/registry/shutdown", summary="关闭适配器注册表")
 async def shutdown_registry() -> Dict[str, str]:
     """关闭适配器注册表"""
-    await adapter_registry.shutdown()  # type: ignore
+    await adapter_registry.shutdown()
     return {"message": "适配器注册表已关闭"}
 
 
@@ -58,8 +59,8 @@ async def shutdown_registry() -> Dict[str, str]:
 async def get_adapter_configs() -> Dict[str, Any]:
     """获取所有适配器配置"""
     configs = {}
-    for name in adapter_factory.list_configs():  # type: ignore
-        config = adapter_factory.get_config(name)  # type: ignore
+    for name in adapter_factory.list_configs():
+        config = adapter_factory.get_config(name)
         if config:
             configs[name] = {
                 "type": config.adapter_type,
@@ -70,8 +71,8 @@ async def get_adapter_configs() -> Dict[str, Any]:
             }
 
     groups = {}
-    for name in adapter_factory.list_group_configs():  # type: ignore
-        group = adapter_factory.get_group_config(name)  # type: ignore
+    for name in adapter_factory.list_group_configs():
+        group = adapter_factory.get_group_config(name)
         if group:
             groups[name] = {
                 "adapters": group.adapters,
@@ -99,7 +100,7 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
             enabled=config_data.get("enabled", True),
             parameters=config_data.get("parameters", {}),
         )
-        adapter_factory._configs[config.name] = config  # type: ignore
+        adapter_factory._configs[config.name] = config
         return {"message": f"适配器配置 {config.name} 已加载"}
 
     return {"error": "缺少adapter_name"}
@@ -122,11 +123,11 @@ async def get_football_matches(
     演示适配器模式如何统一不同API的数据格式。
     """
     # 确保注册表已初始化
-    if adapter_registry.status.value == "inactive":  # type: ignore
-        await adapter_registry.initialize()  # type: ignore
+    if adapter_registry.status.value == "inactive":
+        await adapter_registry.initialize()
 
     # 尝试获取可用的足球适配器
-    adapter = adapter_registry.get_adapter("api_football_main")  # type: ignore
+    adapter = adapter_registry.get_adapter("api_football_main")
     if not adapter:
         # 尝试创建一个模拟适配器
         from ..adapters.football import ApiFootballAdapter
@@ -232,10 +233,10 @@ async def get_football_match(
     match_id: str = Path(..., description="比赛ID"),
 ) -> Dict[str, Any]:
     """获取单个足球比赛的详细信息"""
-    if adapter_registry.status.value == "inactive":  # type: ignore
-        await adapter_registry.initialize()  # type: ignore
+    if adapter_registry.status.value == "inactive":
+        await adapter_registry.initialize()
 
-    adapter = adapter_registry.get_adapter("api_football_main")  # type: ignore
+    adapter = adapter_registry.get_adapter("api_football_main")
     if not adapter:
         # 返回模拟数据
         return {
@@ -296,10 +297,10 @@ async def get_football_teams(
     search: Optional[str] = Query(None, description="搜索关键词"),
 ) -> Dict[str, Any]:
     """获取足球队数据"""
-    if adapter_registry.status.value == "inactive":  # type: ignore
-        await adapter_registry.initialize()  # type: ignore
+    if adapter_registry.status.value == "inactive":
+        await adapter_registry.initialize()
 
-    adapter = adapter_registry.get_adapter("api_football_main")  # type: ignore
+    adapter = adapter_registry.get_adapter("api_football_main")
     if not adapter:
         # 返回模拟数据
         mock_teams = [
@@ -323,7 +324,7 @@ async def get_football_teams(
 
         # 如果有搜索关键词，过滤结果
         if search:
-            mock_teams = [t for t in mock_teams if search.lower() in t["name"].lower()]  # type: ignore
+            mock_teams = [t for t in mock_teams if search.lower() in t["name"].lower()]
 
         return {
             "source": "demo_adapter",
@@ -377,10 +378,10 @@ async def get_team_players(
     season: Optional[str] = Query(None, description="赛季"),
 ) -> Dict[str, Any]:
     """获取球队的球员列表"""
-    if adapter_registry.status.value == "inactive":  # type: ignore
-        await adapter_registry.initialize()  # type: ignore
+    if adapter_registry.status.value == "inactive":
+        await adapter_registry.initialize()
 
-    adapter = adapter_registry.get_adapter("api_football_main")  # type: ignore
+    adapter = adapter_registry.get_adapter("api_football_main")
     if not adapter:
         # 返回模拟数据
         mock_players = [

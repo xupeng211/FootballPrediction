@@ -1,3 +1,4 @@
+import logging
 """
 域服务工厂
 
@@ -25,7 +26,7 @@ class ServiceConfig:
     name: str
     version: str = "1.0.0"
     enabled: bool = True
-    config: Dict[str, Any] = None  # type: ignore
+    config: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
         if self.config is None:
@@ -106,6 +107,7 @@ class MatchDomainService(DomainService[Match]):
         super().__init__(config or ServiceConfig("MatchDomainService"))
         self.match_repo: Optional[BaseRepository] = None
         self.team_repo: Optional[BaseRepository] = None
+        self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
         """初始化服务"""
@@ -161,7 +163,7 @@ class MatchDomainService(DomainService[Match]):
                 raise ValueError(f"比赛验证失败: {result.errors}")
 
         # 保存
-        created = await self.match_repo.create(match.to_dict())  # type: ignore
+        created = await self.match_repo.create(match.to_dict())
         return Match.from_dict(created)
 
 
@@ -171,6 +173,7 @@ class TeamDomainService(DomainService[Team]):
     def __init__(self, config: Optional[ServiceConfig] = None):
         super().__init__(config or ServiceConfig("TeamDomainService"))
         self.team_repo: Optional[BaseRepository] = None
+        self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
         """初始化服务"""
@@ -213,7 +216,7 @@ class TeamDomainService(DomainService[Team]):
                 raise ValueError(f"球队验证失败: {result.errors}")
 
         # 保存
-        created = await self.team_repo.create(team.to_dict())  # type: ignore
+        created = await self.team_repo.create(team.to_dict())
         return Team.from_dict(created)
 
 
@@ -223,6 +226,7 @@ class PredictionDomainService(DomainService[Prediction]):
     def __init__(self, config: Optional[ServiceConfig] = None):
         super().__init__(config or ServiceConfig("PredictionDomainService"))
         self.prediction_repo: Optional[BaseRepository] = None
+        self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
         """初始化服务"""
@@ -265,7 +269,7 @@ class PredictionDomainService(DomainService[Prediction]):
                 raise ValueError(f"预测验证失败: {result.errors}")
 
         # 保存
-        created = await self.prediction_repo.create(prediction.to_dict())  # type: ignore
+        created = await self.prediction_repo.create(prediction.to_dict())
         return Prediction.from_dict(created)
 
 
@@ -279,6 +283,7 @@ class DomainServiceFactory:
         self._services: Dict[str, DomainService] = {}
         self._repositories: Dict[str, BaseRepository] = {}
         self._validation_engine = get_validation_engine()
+        self.logger = logging.getLogger(__name__)
 
     def register_repository(self, name: str, repository: BaseRepository):
         """注册仓储"""
@@ -350,7 +355,7 @@ class DomainServiceFactory:
 
     async def health_check(self) -> Dict[str, Any]:
         """健康检查"""
-        status = {
+        status: Dict[str, Any] = {
             "factory": "healthy",
             "services": {},
             "repositories": len(self._repositories),
@@ -358,7 +363,7 @@ class DomainServiceFactory:
         }
 
         for name, service in self._services.items():
-            status["services"][name] = {  # type: ignore
+            status["services"][name] = {
                 "initialized": service.is_initialized,
                 "started": service.is_started,
                 "enabled": service.enabled,

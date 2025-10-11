@@ -1,3 +1,4 @@
+import logging
 """
 历史数据策略
 Historical Strategy
@@ -64,6 +65,7 @@ class HistoricalStrategy(PredictionStrategy):
         self._season_patterns: Dict[str, List[HistoricalMatch]] = {}
         self._min_historical_matches = 3
         self._similarity_threshold = 0.7
+        self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
         """初始化历史策略
@@ -139,8 +141,8 @@ class HistoricalStrategy(PredictionStrategy):
                     # 更新对战记录
                     key = tuple(sorted([team_id, opponent_id]))
                     if key not in self._team_vs_team:
-                        self._team_vs_team[key] = []  # type: ignore
-                    self._team_vs_team[key].append(match)  # type: ignore
+                        self._team_vs_team[key] = []
+                    self._team_vs_team[key].append(match)
 
                     # 更新比分模式
                     score_key = (home_score, away_score)
@@ -349,7 +351,7 @@ class HistoricalStrategy(PredictionStrategy):
         if input_data.home_team.id is None:
             return None
 
-        current_month = input_data.match.match_time.month  # type: ignore
+        current_month = input_data.match.scheduled_time.month
 
         # 获取相同球队在历史上同期的表现
         seasonal_matches = []
@@ -389,8 +391,8 @@ class HistoricalStrategy(PredictionStrategy):
             return None
 
         # 分析特定时间段的比赛模式
-        match_day = input_data.match.match_time.weekday()  # type: ignore
-        match_hour = input_data.match.match_time.hour  # type: ignore
+        match_day = input_data.match.scheduled_time.weekday()
+        match_hour = input_data.match.scheduled_time.hour
 
         # 查找相似时间的历史比赛
         time_similar_matches = []
@@ -500,7 +502,7 @@ class HistoricalStrategy(PredictionStrategy):
         # 简化处理，假设有一定一致性
         confidence_factors.append(0.7)
 
-        return np.mean(confidence_factors)  # type: ignore
+        return np.mean(confidence_factors)
 
     async def _estimate_probabilities(
         self, input_data: PredictionInput
@@ -553,7 +555,7 @@ class HistoricalStrategy(PredictionStrategy):
     ) -> List[HistoricalMatch]:
         """获取对战历史"""
         key = tuple(sorted([team1_id, team2_id]))
-        return self._team_vs_team.get(key, [])  # type: ignore
+        return self._team_vs_team.get(key, [])
 
     async def _get_recent_home_games(
         self, team_id: int, limit: int
@@ -632,14 +634,14 @@ class HistoricalStrategy(PredictionStrategy):
 
             # 精确匹配
             if (
-                pred.predicted_home == actual_home  # type: ignore
-                and pred.predicted_away == actual_away  # type: ignore
+                pred.predicted_home == actual_home
+                and pred.predicted_away == actual_away
             ):
                 correct_predictions += 1
 
             # 计算得分误差
-            error = abs(pred.predicted_home - actual_home) + abs(  # type: ignore
-                pred.predicted_away - actual_away  # type: ignore
+            error = abs(pred.predicted_home - actual_home) + abs(
+                pred.predicted_away - actual_away
             )
             score_errors.append(error)
 

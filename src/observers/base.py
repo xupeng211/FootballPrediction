@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, TypeVar, Callable
 from enum import Enum
 from dataclasses import dataclass, field
+import logging
+
 
 T = TypeVar("T")
 
@@ -206,6 +208,7 @@ class Subject(ABC):
             await observer.update(event)
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 观察者处理失败不应影响其他观察者
+            logger = logging.getLogger(__name__)
             logger.info(f"Observer {observer.name} failed to handle event: {e}")
 
     def _record_event(self, event: ObservableEvent) -> None:

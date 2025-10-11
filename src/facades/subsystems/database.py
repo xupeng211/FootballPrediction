@@ -54,8 +54,21 @@ class DatabaseSubsystem(Subsystem):
         await asyncio.sleep(0.01)
         return {"query": query, "params": params, "result": "success"}
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> bool:
         """健康检查"""
+        try:
+            # 更新状态
+            if self.status == SubsystemStatus.ACTIVE:
+                self.last_check = datetime.utcnow()
+                return True
+            return False
+        except Exception as e:
+            self.status = SubsystemStatus.ERROR
+            self.error_message = str(e)
+            return False
+
+    async def get_detailed_status(self) -> Dict[str, Any]:
+        """获取详细状态"""
         return {
             "status": self.status.value,
             "connection_pool": self.connection_pool is not None,

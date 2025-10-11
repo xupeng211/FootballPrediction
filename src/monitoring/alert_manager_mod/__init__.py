@@ -4,7 +4,7 @@ Alert Manager Module (Compatibility Version)
 """
 
 from enum import Enum
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
@@ -126,7 +126,7 @@ class AlertAggregator:
         aggregated = []
 
         # 按告警名称分组
-        grouped = {}
+        grouped: Dict[str, List[Alert]] = {}
         for alert in alerts:
             if alert.name not in grouped:
                 grouped[alert.name] = []
@@ -198,7 +198,7 @@ class AlertRuleEngine:
         self.rules = []
         self.rule_results = {}
 
-    def add_rule(self, name: str, condition: callable, level: AlertLevel):
+    def add_rule(self, name: str, condition: Callable, level: AlertLevel):
         """添加规则"""
         rule = {"name": name, "condition": condition, "level": level, "enabled": True}
         self.rules.append(rule)
@@ -245,7 +245,7 @@ class AlertRuleEngine:
 
     def get_rule_results(self) -> Dict[str, Any]:
         """获取规则执行结果"""
-        return self.rule_results
+        return self.rule_results  # type: ignore
 
 
 class AlertChannelManager:
@@ -254,7 +254,7 @@ class AlertChannelManager:
     def __init__(self):
         self.channels = {}
 
-    def register_channel(self, channel_type: AlertChannel, handler: callable):
+    def register_channel(self, channel_type: AlertChannel, handler: Callable):
         """注册通道处理器"""
         self.channels[channel_type] = handler
 

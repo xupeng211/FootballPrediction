@@ -3,7 +3,7 @@
 Data Quality Exception Handler (Compatibility Version)
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 import logging
 
@@ -62,10 +62,10 @@ class DataQualityExceptionHandler:
     """数据质量异常处理器"""
 
     def __init__(self):
-        self.handlers: Dict[str, callable] = {}
+        self.handlers: Dict[str, Callable] = {}
         self.exceptions: List[DataQualityException] = []
 
-    def register_handler(self, error_code: str, handler: callable):
+    def register_handler(self, error_code: str, handler: Callable):
         """注册异常处理器"""
         self.handlers[error_code] = handler
 
@@ -197,7 +197,7 @@ class QualityLogger:
 
     def __init__(self, name: str = "data_quality"):
         self.logger = logging.getLogger(name)
-        self.quality_issues = []
+        self.quality_issues: List[Dict[str, Any]] = []
 
     def log_issue(self, issue_type: str, message: str, data: Dict[str, Any] = None):
         """记录质量问题"""
@@ -228,7 +228,7 @@ class InvalidDataHandler:
         self.invalid_records = []
         self.validation_rules = {}
 
-    def add_validation_rule(self, field: str, rule: callable):
+    def add_validation_rule(self, field: str, rule: Callable):
         """添加验证规则"""
         self.validation_rules[field] = rule
 
@@ -253,7 +253,7 @@ class InvalidDataHandler:
 
     def get_invalid_records(self) -> List[Dict[str, Any]]:
         """获取无效记录"""
-        return self.invalid_records
+        return self.invalid_records  # type: ignore
 
 
 class SuspiciousOddsHandler:
@@ -297,7 +297,7 @@ class SuspiciousOddsHandler:
 class DataQualityRule:
     """数据质量规则"""
 
-    def __init__(self, name: str, validator: callable, error_message: str):
+    def __init__(self, name: str, validator: Callable, error_message: str):
         self.name = name
         self.validator = validator
         self.error_message = error_message
@@ -305,6 +305,7 @@ class DataQualityRule:
     def validate(self, data: Any) -> bool:
         """验证数据"""
         try:
-            return self.validator(data)
+            result = self.validator(data)
+            return bool(result)
         except Exception:
             return False

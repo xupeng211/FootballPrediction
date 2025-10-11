@@ -11,6 +11,8 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from ..facades.factory import facade_factory
+from requests.exceptions import HTTPError
+from requests.exceptions import RequestException
 
 router = APIRouter(prefix="/facades", tags=["门面模式"])
 

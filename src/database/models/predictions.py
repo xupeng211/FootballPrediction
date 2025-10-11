@@ -68,6 +68,33 @@ class Predictions(BaseModel):
         comment="比赛ID",
     )
 
+    # 用户关联
+    user_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        comment="用户ID"
+    )
+
+    # 用户关系
+    user = relationship("User", back_populates="predictions")
+
+    # 预测状态
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="pending",
+        comment="预测状态"
+    )
+
+    # 得分
+    points_earned: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        default=0,
+        comment="获得积分"
+    )
+
     model_name: Mapped[str] = mapped_column(
         String(100), nullable=False, comment="模型名称"
     )
@@ -154,6 +181,13 @@ class Predictions(BaseModel):
     def get_created_at(self) -> datetime:
         """兼容性方法：获取预测创建时间"""
         return self.predicted_at  # type: ignore
+
+    @property
+    def confidence(self) -> Optional[float]:
+        """兼容性属性：获取置信度"""
+        if self.confidence_score:
+            return float(self.confidence_score)
+        return None
 
     # 索引定义
     __table_args__ = (

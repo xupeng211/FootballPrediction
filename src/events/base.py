@@ -11,6 +11,8 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional, Type, TypeVar
+import logging
+
 
 T = TypeVar("T", bound="Event")
 
@@ -214,6 +216,7 @@ class EventHandler(ABC):
                 queue.task_done()
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 处理错误但继续处理其他事件
+                logger = logging.getLogger(__name__)
                 logger.info(f"Error handling event {event_type}: {e}")
 
 

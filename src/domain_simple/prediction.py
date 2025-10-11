@@ -65,6 +65,19 @@ class Prediction:
         self.reasoning: str = ""
         self.analysis_data: Dict[str, Any] = {}
 
+        # 兼容性属性
+        self.predicted_home: Optional[int] = None
+        self.predicted_away: Optional[int] = None
+
+        # 如果 predicted_value 包含比分，解析它
+        if ':' in predicted_value:
+            try:
+                home, away = predicted_value.split(':')
+                self.predicted_home = int(home.strip())
+                self.predicted_away = int(away.strip())
+            except (ValueError, AttributeError):
+                pass
+
     def settle(self, actual_value: str) -> None:
         """结算预测"""
         if self.is_settled:

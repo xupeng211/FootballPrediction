@@ -38,10 +38,10 @@ try:
 
     HAS_FEAST = True
 except ImportError:  # pragma: no cover - optional dependency path
-    FeatureStore = None  # type: ignore[assignment]
-    PostgreSQLOfflineStoreConfig = None  # type: ignore[assignment]
-    RedisOnlineStoreConfig = None  # type: ignore[assignment]
-    RepoConfig = None  # type: ignore[assignment]
+    FeatureStore = None
+    PostgreSQLOfflineStoreConfig = None
+    RedisOnlineStoreConfig = None
+    RepoConfig = None
     HAS_FEAST = False
 
 from .feature_definitions import (  # noqa: E402

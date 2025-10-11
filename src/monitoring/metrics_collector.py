@@ -17,9 +17,10 @@ from .metrics_collector_enhanced import (
 
 # 为了向后兼容，也导出一些原有的类名
 try:
-    from .metrics_collector_enhanced_mod.collector import EnhancedMetricsCollector
-    from .metrics_collector_enhanced_mod.aggregator import MetricsAggregator
-    from .metrics_collector_enhanced_mod.metric_types import MetricPoint
+    # from .metrics_collector_enhanced_mod.collector import EnhancedMetricsCollector
+    # from .metrics_collector_enhanced_mod.aggregator import MetricsAggregator
+    # from .metrics_collector_enhanced_mod.metric_types import MetricPoint
+    pass
 except ImportError:
     # 如果模块化实现有问题，使用基础实现
     pass
@@ -44,7 +45,7 @@ def stop_metrics_collection():
 
 __all__ = [
     "MetricsCollector",
-    "EnhancedMetricsCollector",
+    # "EnhancedMetricsCollector",  # 模块不存在，暂时注释
     "MetricsAggregator",
     "MetricPoint",
     "get_metrics_collector",
