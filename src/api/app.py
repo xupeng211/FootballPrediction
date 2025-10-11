@@ -25,7 +25,7 @@ from src.core.logging import get_logger
 from src.core.prediction import PredictionEngine
 from src.config.openapi_config import setup_openapi
 from src.api.health import router as health_router
-from src.api.predictions_mod import router as predictions_router
+from src.api.predictions import router as predictions_router
 from src.api.data_router import router as data_router
 
 logger = get_logger(__name__)
