@@ -1,35 +1,53 @@
-# 分层依赖管理方案
+# Requirements 文件说明
 
-## 策略概述
+## 文件结构
 
-采用分层依赖管理，将依赖分为多个层次，确保生产环境稳定：
+- `base.txt` - 生产环境核心依赖
+- `dev.txt` - 开发环境依赖（包含 base.txt）
+- `test.txt` - 测试依赖（包含 base.txt）
+- `optional.txt` - 可选功能依赖（ML、Streaming等）
+- `requirements.lock` - 完整的依赖锁定文件
+- `README.md` - 本说明文档
 
-1. **core** - 核心运行时依赖
-2. **ml** - 机器学习依赖
-3. **api** - API服务依赖
-4. **dev** - 开发工具依赖
-5. **test** - 测试依赖
-6. **lint** - 代码质量工具
+## 使用方式
 
-## 目录结构
-
-```
-requirements/
-├── base.txt          # Python基础版本
-├── core.txt           # 核心依赖（FastAPI等）
-├── ml.txt             # 机器学习依赖
-├── api.txt            # API相关依赖
-├── dev.txt            # 开发工具
-├── test.txt           # 测试工具
-├── lint.txt           # 代码检查工具
-├── production.txt     # 生产环境（core + ml + api）
-├── development.txt     # 开发环境（production + dev + test + lint）
-└── minimum.txt        # 最小运行环境
+### 生产环境
+```bash
+pip install -r base.txt
 ```
 
-## 冲突解决原则
+### 开发环境
+```bash
+pip install -r dev.txt
+```
 
-1. **生产环境优先** - 生产环境不包含开发工具
-2. **版本锁定** - 所有版本精确锁定
-3. **环境隔离** - 不同环境使用不同依赖集
-4. **最小化原则** - 生产环境只安装必需的包
+### 测试环境
+```bash
+pip install -r test.txt
+```
+
+### 安装可选依赖
+```bash
+pip install -r optional.txt
+```
+
+### 完整环境（包含所有依赖）
+```bash
+pip install -r requirements.lock
+```
+
+## 依赖管理
+
+使用 pip-tools 管理依赖：
+
+```bash
+# 更新锁定文件
+pip-compile requirements.in
+
+# 同步环境
+pip-sync requirements.txt
+```
+
+## 历史变更
+
+- 2025-10-12: 从18个文件简化为6个核心文件
