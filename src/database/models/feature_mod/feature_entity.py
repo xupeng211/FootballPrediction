@@ -6,8 +6,6 @@ feature_entity
 This module was split from the original file.
 """
 
-# TODO: 迁移完成后删除此注释
-
 
 # 示例代码结构
 class ExampleClass:
