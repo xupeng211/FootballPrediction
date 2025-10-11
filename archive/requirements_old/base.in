@@ -1,0 +1,60 @@
+# =============================================================================
+# Football Prediction System - Base Production Dependencies
+# =============================================================================
+# Core framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+
+# Database
+sqlalchemy==2.0.36
+alembic==1.16.5
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+aiosqlite==0.21.0  # SQLite async driver for testing
+
+# Cache
+redis==5.0.1
+aioredis==2.0.1
+
+# Authentication and security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.18
+
+# Data processing
+pandas>=2.2.3
+numpy>=1.26.4,<3.0.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+
+# HTTP client
+httpx==0.28.1
+requests==2.32.3
+aiohttp==3.12.15  # Async HTTP client for data collectors
+
+# Task queue
+celery==5.4.0
+kombu==5.4.2
+
+# Monitoring and logging
+prometheus-client==0.21.1
+structlog==25.1.0
+
+# Utilities
+python-dateutil==2.9.0.post0
+pytz==2024.2
+click==8.1.8
+
+# Machine learning (production)
+mlflow==2.18.0
+scikit-learn==1.6.0
+joblib==1.4.2
+
+# Other dependencies
+typer==0.15.1
+rich==13.9.4
+email-validator==2.2.0
+
+# Feature store
+feast==0.54.0
