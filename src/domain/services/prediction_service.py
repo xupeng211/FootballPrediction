@@ -47,7 +47,7 @@ class PredictionDomainService:
             raise ValueError("只能对未开始的比赛进行预测")
 
         # 验证预测时间
-        if datetime.utcnow() >= match.match_time:
+        if datetime.utcnow() >= match.match_date:
             raise ValueError("预测必须在比赛开始前提交")
 
         # 验证比分
@@ -102,12 +102,12 @@ class PredictionDomainService:
             raise ValueError("预测比分不能为负数")
 
         # 记录旧值
-        old_home = prediction.predicted_home
-        old_away = prediction.predicted_away
+        old_home = prediction.score.predicted_home if prediction.score else None
+        old_away = prediction.score.predicted_away if prediction.score else None
 
         # 更新预测
-        prediction.update_prediction(
-            new_predicted_home, new_predicted_away, new_confidence, new_notes
+        prediction.make_prediction(
+            new_predicted_home, new_predicted_away, new_confidence
         )
 
         # 记录领域事件
@@ -139,11 +139,9 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
-            is_correct=prediction.is_correct,
-            points_earned=prediction.points.total_points if prediction.points else None,
-            accuracy_score=prediction.accuracy_score.value
-            if prediction.accuracy_score
-            else None,
+            is_correct=prediction.score.is_correct_result if prediction.score else False,
+            points_earned=prediction.points.total if prediction.points else None,
+            accuracy_score=None,  # 需要实现
         )
         self._events.append(event)
 
@@ -169,7 +167,8 @@ class PredictionDomainService:
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能使待处理的预测过期")
 
-        prediction.expire()
+        prediction.status = PredictionStatus.EXPIRED
+        prediction.cancelled_at = datetime.utcnow()
 
         # 记录领域事件
         event = PredictionExpiredEvent(
@@ -186,14 +185,12 @@ class PredictionDomainService:
         if prediction.status != PredictionStatus.EVALUATED:
             raise ValueError("只能调整已评估的预测积分")
 
-        old_points = prediction.points.total_points if prediction.points else 0
+        old_points = float(prediction.points.total) if prediction.points else 0.0
 
         # 创建新的积分对象
+        from decimal import Decimal
         prediction.points = PredictionPoints(
-            exact_score=new_points,
-            outcome_diff=0,
-            goals_diff=0,
-            total_points=new_points,
+            total=Decimal(str(new_points))
         )
 
         # 记录领域事件
@@ -244,12 +241,14 @@ class PredictionDomainService:
             errors.append(f"每日预测次数不能超过{max_predictions_per_day}次")
 
         # 检查预测内容
-        if prediction.predicted_home < 0 or prediction.predicted_away < 0:
-            errors.append("预测比分不能为负数")
+        if prediction.score:
+            if prediction.score.predicted_home < 0 or prediction.score.predicted_away < 0:
+                errors.append("预测比分不能为负数")
 
         # 检查信心度
-        if prediction.confidence and not 0.0 <= prediction.confidence.value <= 1.0:
-            errors.append("信心度必须在0-1之间")
+        if prediction.confidence:
+            if not 0.0 <= float(prediction.confidence.value) <= 1.0:
+                errors.append("信心度必须在0-1之间")
 
         # 检查备注长度
         if prediction.notes and len(prediction.notes) > 500:
