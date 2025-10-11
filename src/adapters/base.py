@@ -167,8 +167,133 @@ class Adapter(Target):
                 self.metrics["successful_requests"] / self.metrics["total_requests"]
                 if self.metrics["total_requests"] > 0
                 else 0
-            ),
-            "average_response_time": self.metrics["average_response_time"],
+            )
+
+
+class CompositeAdapter(Adapter):
+    """组合适配器，可以管理多个子适配器"""
+
+    def __init__(self, name: str, adapters: List[Adapter] = None):
+        """初始化组合适配器
+
+        Args:
+            name: 适配器名称
+            adapters: 子适配器列表
+        """
+        super().__init__(name)
+        self.adapters: List[Adapter] = adapters or []
+        self.adapter_registry: Dict[str, Adapter] = {}
+        self._register_adapters()
+
+    def _register_adapters(self):
+        """注册所有子适配器"""
+        for adapter in self.adapters:
+            self.adapter_registry[adapter.name] = adapter
+
+    def add_adapter(self, adapter: Adapter):
+        """添加子适配器
+
+        Args:
+            adapter: 要添加的适配器
+        """
+        self.adapters.append(adapter)
+        self.adapter_registry[adapter.name] = adapter
+
+    def remove_adapter(self, adapter_name: str) -> bool:
+        """移除子适配器
+
+        Args:
+            adapter_name: 适配器名称
+
+        Returns:
+            bool: 是否成功移除
+        """
+        if adapter_name in self.adapter_registry:
+            adapter = self.adapter_registry[adapter_name]
+            self.adapters.remove(adapter)
+            del self.adapter_registry[adapter_name]
+            return True
+        return False
+
+    def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
+        """获取子适配器
+
+        Args:
+            adapter_name: 适配器名称
+
+        Returns:
+            Adapter: 子适配器，如果不存在则返回None
+        """
+        return self.adapter_registry.get(adapter_name)
+
+    async def request(self, *args, **kwargs) -> Any:
+        """并行请求所有适配器并合并结果
+
+        Args:
+            *args: 位置参数
+            **kwargs: 关键字参数
+
+        Returns:
+            Any: 合并后的结果
+        """
+        results = []
+
+        # 并行请求所有适配器
+        tasks = [adapter.request(*args, **kwargs) for adapter in self.adapters]
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # 过滤异常结果
+        successful_results = [
+            result for result in results
+            if not isinstance(result, Exception)
+        ]
+
+        return {
+            "adapter_name": self.name,
+            "results": successful_results,
+            "total_adapters": len(self.adapters),
+            "successful_adapters": len(successful_results),
+        }
+
+    async def _request(self, *args, **kwargs) -> Any:
+        """具体的请求处理逻辑（Composite使用并行请求）"""
+        return await self.request(*args, **kwargs)
+
+    async def health_check(self) -> Dict[str, Any]:
+        """检查所有子适配器的健康状态"""
+        health_results = {}
+
+        # 并行检查所有适配器的健康状态
+        tasks = [
+            (adapter.name, adapter.health_check())
+            for adapter in self.adapters
+        ]
+
+        if tasks:
+            for name, task in tasks:
+                try:
+                    health_results[name] = await task
+                except Exception as e:
+                    health_results[name] = {
+                        "adapter": name,
+                        "status": "unhealthy",
+                        "error": str(e),
+                    }
+
+        # 计算整体健康状态
+        healthy_count = sum(
+            1 for result in health_results.values()
+            if result.get("status") == "healthy"
+        )
+
+        return {
+            "adapter": self.name,
+            "status": "healthy" if healthy_count == len(self.adapters) else "degraded",
+            "total_adapters": len(self.adapters),
+            "healthy_adapters": healthy_count,
+            "adapter_health": health_results,
+            "metrics": self.get_metrics(),
         }
 
     def reset_metrics(self) -> None:
