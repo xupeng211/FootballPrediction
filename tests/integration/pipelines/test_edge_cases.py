@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from src.services.data_processing_mod import DataProcessingService
 from src.streaming.kafka_producer import KafkaProducer
 from src.api.health import router
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 """
 边界测试和异常场景测试
