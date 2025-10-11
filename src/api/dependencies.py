@@ -89,7 +89,7 @@ async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict
     return current_user
 
 
-async def get_prediction_engine() -> PredictionEngine:
+async def get_prediction_engine() -> Optional["PredictionEngine"]:
     """
     获取预测引擎实例
 
@@ -98,7 +98,7 @@ async def get_prediction_engine() -> PredictionEngine:
     """
     from src.core.prediction_engine import get_prediction_engine
 
-    return await get_prediction_engine()
+    return await get_prediction_engine()  # type: ignore
 
 
 async def get_redis_manager():

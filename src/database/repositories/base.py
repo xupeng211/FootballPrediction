@@ -7,9 +7,9 @@ Defines the base interface for the Repository pattern, providing standard CRUD o
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union, Callable
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, exc as SQLAlchemyExc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import DatabaseManager
@@ -85,7 +85,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = select(self.model_class).where(self.model_class.id == obj_id)  # type: ignore
+            stmt = select(self.model_class).where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
             result = await sess.execute(stmt)
             return result.scalar_one_or_none()
 
@@ -118,7 +118,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return list(result.scalars().all())  # type: ignore
 
     async def update(
         self,
@@ -143,7 +143,7 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = (
                 update(self.model_class)
-                .where(self.model_class.id == obj_id)  # type: ignore
+                .where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
                 .values(**obj_data)
                 .returning(self.model_class)
             )
@@ -170,7 +170,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(self.model_class.id == obj_id)  # type: ignore
+            stmt = delete(self.model_class).where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -223,7 +223,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return list(result.scalars().all())  # type: ignore
 
     async def find_one_by(
         self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
@@ -342,7 +342,7 @@ class BaseRepository(ABC, Generic[T]):
                     obj_id = update_data.pop("id")
                     stmt = (
                         update(self.model_class)
-                        .where(self.model_class.id == obj_id)  # type: ignore
+                        .where(getattr(self.model_class, 'id') == obj_id)  # type: ignore
                         .values(**update_data)
                     )
                     result = await sess.execute(stmt)
@@ -368,7 +368,7 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
+            stmt = delete(self.model_class).where(getattr(self.model_class, 'id').in_(ids))  # type: ignore
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -380,7 +380,7 @@ class BaseRepository(ABC, Generic[T]):
 
     async def execute_in_transaction(
         self,
-        operations: List[callable],
+        operations: List[Callable],
         session: Optional[AsyncSession] = None,
     ) -> Any:
         """
@@ -400,12 +400,12 @@ class BaseRepository(ABC, Generic[T]):
             try:
                 results = []
                 for operation in operations:
-                    result = await operation(sess)  # type: ignore
+                    result = await operation(sess)
                     results.append(result)
 
                 await sess.commit()
                 return results
-            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
+            except (SQLAlchemyExc.SQLAlchemyError, SQLAlchemyExc.DatabaseError, ConnectionError, TimeoutError):
                 await sess.rollback()
                 raise
 

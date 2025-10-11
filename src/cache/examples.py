@@ -7,6 +7,7 @@ Cache Decorators Usage Examples
 
 import asyncio
 from typing import Any, Dict, List, Optional
+import logging
 
 from .decorators import (
     cache_result,

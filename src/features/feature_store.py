@@ -3,6 +3,7 @@
 import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+import logging
 
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
 
@@ -92,7 +93,7 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
             return None
 
     Entity = MockEntity
-    FeatureStore = MockFeatureStore  # type: ignore[assignment]
+    FeatureStore = MockFeatureStore
     FeatureView = MockFeatureView
     Field = MockField
     Float64 = MockFloat64
@@ -109,6 +110,9 @@ from src.database.connection import DatabaseManager  # noqa: E402
 from .entities import MatchEntity  # noqa: E402
 from .feature_calculator import FeatureCalculator  # noqa: E402
 
+
+
+logger = logging.getLogger(__name__)
 
 class FootballFeatureStore:
     """

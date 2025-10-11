@@ -1,3 +1,4 @@
+import logging
 """
 统计分析策略
 Statistical Strategy
@@ -35,11 +36,12 @@ class StatisticalStrategy(PredictionStrategy):
 
     def __init__(self, name: str = "statistical_analyzer"):
         super().__init__(name, StrategyType.STATISTICAL)
-        self._team_stats = {}  # type: ignore
-        self._head_to_head_stats = {}  # type: ignore
-        self._league_stats = {}  # type: ignore
-        self._model_params = {}  # type: ignore
+        self._team_stats = {}
+        self._head_to_head_stats = {}
+        self._league_stats = {}
+        self._model_params = {}
         self._min_sample_size = 5
+        self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
         """初始化统计策略
@@ -168,6 +170,10 @@ class StatisticalStrategy(PredictionStrategy):
         lambda_home = max(0.1, home_avg_goals)
         lambda_away = max(0.1, away_avg_goals)
 
+        # 转换为整数，保持合理范围
+        lambda_home = float(lambda_home)
+        lambda_away = float(lambda_away)
+
         # 计算最可能的比分
         max_prob = 0
         best_score = (1, 1)
@@ -184,7 +190,7 @@ class StatisticalStrategy(PredictionStrategy):
                 prob = prob_home * prob_away
 
                 if prob > max_prob:
-                    max_prob = prob  # type: ignore
+                    max_prob = prob
                     best_score = (home_goals, away_goals)
 
         return best_score
@@ -236,24 +242,24 @@ class StatisticalStrategy(PredictionStrategy):
         for i, (home_score, away_score, is_home) in enumerate(home_recent):
             weight = (i + 1) / len(home_recent)  # 越近的比赛权重越高
             if is_home:
-                home_weighted += home_score * weight  # type: ignore
+                home_weighted += home_score * weight
             else:
-                home_weighted += away_score * weight  # type: ignore
-            total_weight += weight  # type: ignore
+                home_weighted += away_score * weight
+            total_weight += weight
 
-        home_avg = home_weighted / total_weight if total_weight > 0 else 1
+        home_avg = home_weighted / total_weight if total_weight > 0 else 1.0
 
         away_weighted = 0
         total_weight = 0
         for i, (home_score, away_score, is_home) in enumerate(away_recent):
             weight = (i + 1) / len(away_recent)
             if not is_home:
-                away_weighted += away_score * weight  # type: ignore
+                away_weighted += away_score * weight
             else:
-                away_weighted += home_score * weight  # type: ignore
-            total_weight += weight  # type: ignore
+                away_weighted += home_score * weight
+            total_weight += weight
 
-        away_avg = away_weighted / total_weight if total_weight > 0 else 1
+        away_avg = away_weighted / total_weight if total_weight > 0 else 1.0
 
         # 应用主场优势
         home_avg *= self._model_params["home_advantage_factor"]
@@ -351,7 +357,7 @@ class StatisticalStrategy(PredictionStrategy):
         confidence_factors.append(0.7)
 
         # 返回平均置信度
-        return np.mean(confidence_factors)  # type: ignore
+        return np.mean(confidence_factors)
 
     async def _calculate_probability_distribution(
         self, input_data: PredictionInput, prediction: Tuple[int, int]
@@ -382,11 +388,11 @@ class StatisticalStrategy(PredictionStrategy):
                 prob = prob_home * prob_away
 
                 if home_goals > away_goals:
-                    prob_home_win += prob  # type: ignore
+                    prob_home_win += prob
                 elif home_goals == away_goals:
-                    prob_draw += prob  # type: ignore
+                    prob_draw += prob
                 else:
-                    prob_away_win += prob  # type: ignore
+                    prob_away_win += prob
 
         return {"home_win": prob_home_win, "draw": prob_draw, "away_win": prob_away_win}
 
@@ -455,14 +461,14 @@ class StatisticalStrategy(PredictionStrategy):
 
             # 精确匹配
             if (
-                pred.predicted_home == actual_home  # type: ignore
-                and pred.predicted_away == actual_away  # type: ignore
+                pred.predicted_home == actual_home
+                and pred.predicted_away == actual_away
             ):
                 correct_predictions += 1
 
             # 计算得分误差
-            error = abs(pred.predicted_home - actual_home) + abs(  # type: ignore
-                pred.predicted_away - actual_away  # type: ignore
+            error = abs(pred.predicted_home - actual_home) + abs(
+                pred.predicted_away - actual_away
             )
             score_errors.append(error)
 

@@ -51,7 +51,7 @@ class ScoresCollector:
             cached_data = await self.redis_client.get_cache_value(cache_key)
             if cached_data:
                 logger.debug("从缓存获取实时比分")
-                return cached_data  # type: ignore[no-any-return]
+                return cached_data
 
         try:
             # 获取数据库中的实时比赛
