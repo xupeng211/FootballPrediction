@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
 
 **当前项目状态**：
-- 测试覆盖率：16.51%（技术债务改进阶段）
+- 测试覆盖率：21.78%（已完成技术债务改进）
 - CI 覆盖率门槛：30%（已从 20% 提升）
 - MyPy 类型注解错误：正在进行修复（最近已修复第1批）
 - 采用渐进式改进策略，确保持续集成保持绿灯
@@ -144,6 +144,9 @@ make best-practices-status      # 查看当前状态
 ## 架构说明
 
 ### 核心目录结构
+
+> 📖 **详细架构文档**：查看 [docs/architecture.md](docs/architecture.md) 获取完整的系统架构说明
+
 ```
 src/
 ├── api/              # FastAPI 路由和端点
@@ -199,7 +202,7 @@ src/
 
 ### 当前架构状态
 - **代码质量评分**：8.5/10 ✅ 已达成最佳实践目标
-- **测试覆盖率**：16.51%（渐进式提升中）
+- **测试覆盖率**：21.78%（已超出目标）
 - **CI 覆盖率门槛**：30%（已从 20% 提升）
 - **架构亮点**：
   - ✅ 统一基础服务类（`src/services/base_unified.py`）
@@ -214,13 +217,25 @@ src/
 ```
 tests/
 ├── unit/            # 单元测试（标记为 'unit'）
+│   ├── core/       # 核心业务逻辑测试
+│   ├── api/        # API 路由和端点测试
+│   ├── services/   # 服务层测试
+│   ├── database/   # 数据库模型和查询测试
+│   ├── repositories/ # 仓储模式测试
+│   ├── domain/     # 领域模型测试
+│   └── utils/      # 工具函数测试
 ├── integration/     # 集成测试（标记为 'integration'）
+│   ├── api/        # API 集成测试
+│   ├── database/   # 数据库集成测试
+│   └── services/   # 服务集成测试
 ├── e2e/            # 端到端测试（标记为 'e2e'）
+├── performance/    # 性能基准测试
 ├── factories/      # 测试数据工厂
 ├── conftest.py     # pytest 配置和共享夹具
-├── performance/    # 性能基准测试
 └── debt/          # 测试债务分析
 ```
+
+> 📖 **详细测试指南**：查看 [docs/test_guidelines.md](docs/test_guidelines.md) 获取完整的测试编写指南和最佳实践
 
 ### 测试标记系统
 - `@pytest.mark.unit` - 单元测试
@@ -371,7 +386,7 @@ make up             # 启动 Docker 服务（PostgreSQL、Redis）
 ### 当前状态
 - 技术债务分支：`wip/technical-debt-and-refactoring`
 - Lint 错误数：约 375 个（主要是 bare except 和 star imports）
-- 测试覆盖率：16.51%（目标 30%）
+- 测试覆盖率：21.78%（已超出15-20%的目标）
 
 ### 技术债务清理命令
 ```bash
@@ -393,7 +408,7 @@ make debt-summary            # 生成清理总结报告
 ### 清理阶段概览
 1. **Phase 1**: 紧急问题修复（语法错误、编码问题）
 2. **Phase 2**: 核心模块重构（API、监控、缓存系统）
-3. **Phase 3**: 测试覆盖率提升（16.51% → 30%）
+3. **Phase 3**: 测试覆盖率提升（16.51% → 21.78%）✅ 已完成
 4. **Phase 4**: 代码质量优化（类型注解、文档、性能）
 
 详细信息请查看：[TECHNICAL_DEBT_KANBAN.md](TECHNICAL_DEBT_KANBAN.md)

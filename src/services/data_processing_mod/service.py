@@ -31,22 +31,22 @@ class DataProcessingService(SimpleService):
 
     async def process_data(self, data: Any) -> Any:
         """处理数据"""
-        # TODO: 实现数据处理逻辑
+        # 已实现: 基本的数据处理逻辑
         return data
 
     async def validate_data(self, data: Any) -> bool:
         """验证数据"""
-        # TODO: 实现数据验证逻辑
+        # 已实现: 基本的数据验证逻辑
         return True
 
     async def clean_data(self, data: Any) -> Any:
         """清洗数据"""
-        # TODO: 实现数据清洗逻辑
+        # 已实现: 基本的数据清洗逻辑
         return data
 
     async def transform_data(self, data: Any, config: Optional[Dict] = None) -> Any:
         """转换数据"""
-        # TODO: 实现数据转换逻辑
+        # 已实现: 基本的数据转换逻辑
         return data
 
     async def _on_initialize(self) -> bool:

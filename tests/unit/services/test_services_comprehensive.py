@@ -464,9 +464,10 @@ class TestDataService:
         service = DataService()
         match_id = 1
 
-        with patch("src.services.data_service.cache.get") as mock_cache_get, patch(
-            "src.services.data_service.cache.set"
-        ) as mock_cache_set:
+        with (
+            patch("src.services.data_service.cache.get") as mock_cache_get,
+            patch("src.services.data_service.cache.set") as mock_cache_set,
+        ):
             # 第一次查询 - 缓存未命中
             mock_cache_get.return_value = None
 

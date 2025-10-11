@@ -19,6 +19,7 @@ Celery调度器配置
 
 基于 DATA_DESIGN.md 第3节设计。
 """
+
 from celery.schedules import crontab
 
 # Celery应用配置

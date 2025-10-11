@@ -21,7 +21,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt  # type: ignore
 from src.core.prediction_engine import PredictionEngine
-from src.core.logging_system import get_logger
+from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,4 +1,4 @@
-from src.services.base import BaseService
+from src.services.base_unified import BaseService
 
 
 def test_base_service():

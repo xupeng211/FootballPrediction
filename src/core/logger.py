@@ -29,5 +29,10 @@ class Logger:
         return logger
 
 
+def get_logger(name: str, level: str = "INFO") -> logging.Logger:
+    """获取日志器 - 全局函数，方便使用"""
+    return Logger.setup_logger(name, level)
+
+
 # 默认日志器
 logger = Logger.setup_logger("footballprediction")
