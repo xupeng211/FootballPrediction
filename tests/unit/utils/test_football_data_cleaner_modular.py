@@ -200,7 +200,7 @@ def test_odds_processor():
 async def test_id_mapper():
     """测试ID映射器"""
     from src.data.processing.football_data_cleaner_mod import IDMapper
-    from src.database.connection_mod import DatabaseManager
+    # from src.database.connection_mod import DatabaseManager
 
     # Mock数据库管理器
     db_manager = Mock(spec=DatabaseManager)

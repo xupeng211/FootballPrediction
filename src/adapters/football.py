@@ -8,8 +8,8 @@ Integrate various football data APIs.
 
 import asyncio
 import aiohttp
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 
@@ -450,7 +450,7 @@ class CompositeFootballAdapter(Adapter):
         if self.primary_source and self.primary_source.status == AdapterStatus.ACTIVE:
             try:
                 return await self.primary_source._request(*args, **kwargs)
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 pass
 
         # 尝试其他数据源
@@ -461,7 +461,7 @@ class CompositeFootballAdapter(Adapter):
             ):
                 try:
                     return await adapter._request(*args, **kwargs)
-                except Exception:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     continue
 
         raise RuntimeError("All football data sources failed")
@@ -486,7 +486,7 @@ class CompositeFootballAdapter(Adapter):
             try:
                 matches = await task
                 results[name] = matches
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 results[name] = f"Error: {str(e)}"  # type: ignore
 
         return results

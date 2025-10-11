@@ -6,13 +6,12 @@ Decorator Pattern API Endpoints
 Demonstrates the usage and effects of the decorator pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, Query
+from typing import Dict, Any, Optional
 from datetime import datetime
 import asyncio
 
 from ..decorators import DecoratorService
-from ..decorators.service import decorator_service  # type: ignore
 from ..decorators.base import DecoratorContext
 
 router = APIRouter(prefix="/decorators", tags=["装饰器模式"])
@@ -194,7 +193,7 @@ async def demo_timeout_decorator(
         result = await decorated(delay)
         success = True
         error_message = None
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError) as e:
         result = None
         success = False
         error_message = str(e)

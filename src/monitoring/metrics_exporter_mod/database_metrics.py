@@ -48,7 +48,12 @@ class DatabaseMetrics:
                     self.metrics.table_row_count.labels(table_name=table_name).set(
                         float(count)
                     )
-                except Exception as e:
+                except (
+                    SQLAlchemyError,
+                    DatabaseError,
+                    ConnectionError,
+                    TimeoutError,
+                ) as e:
                     logger.error(f"更新表 {table_name} 行数失败: {e}")
         else:
             # 生产模式：从数据库查询
@@ -85,11 +90,16 @@ class DatabaseMetrics:
                             float(row_count) if row_count is not None else 0.0
                         )
 
-                    except Exception as e:
+                    except (
+                        SQLAlchemyError,
+                        DatabaseError,
+                        ConnectionError,
+                        TimeoutError,
+                    ) as e:
                         logger.error(f"获取表 {table_name} 行数失败: {e}")
                         continue
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"查询表行数统计失败: {e}")
 
     def _is_safe_table_name(self, table_name: str) -> bool:
@@ -127,7 +137,7 @@ class DatabaseMetrics:
                             connection_state=state
                         ).set(count)
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"更新数据库连接指标失败: {e}")
 
     async def update_all_metrics(self) -> None:
@@ -144,7 +154,7 @@ class DatabaseMetrics:
             # 更新最后更新时间戳
             self.metrics.last_update_timestamp.set(time.time())
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"更新数据库指标失败: {e}")
 
         duration = time.time() - start_time
@@ -166,7 +176,7 @@ class DatabaseMetrics:
             self.metrics.database_query_duration.labels(query_type=query_type).observe(
                 duration
             )
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"记录查询耗时失败: {e}")
 
     def set_tables_to_monitor(self, tables: List[str]) -> None:

@@ -10,10 +10,9 @@ Temporary implementation to resolve import errors.
 import logging
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
-import json
 import pickle
 
 
@@ -198,7 +197,7 @@ class PredictionModel:
 
             self.logger.info(f"Model saved to: {file_path}")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to save model: {e}")
             return False
 
@@ -224,7 +223,7 @@ class PredictionModel:
 
             self.logger.info(f"Model loaded from: {file_path}")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to load model: {e}")
             return False
 

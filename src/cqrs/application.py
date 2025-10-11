@@ -31,10 +31,8 @@ from .queries import (
 )
 from .dto import (
     PredictionDTO,
-    UserDTO,
     MatchDTO,
     PredictionStatsDTO,
-    MatchStatsDTO,
     CommandResult,
 )
 from .handlers import (

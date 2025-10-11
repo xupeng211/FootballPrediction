@@ -138,7 +138,7 @@ class PredictionStrategyFactory:
                 strategy = strategy_class(strategy_name)  # type: ignore
                 await strategy.initialize(config)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise StrategyCreationError(f"创建策略 '{strategy_name}' 失败: {e}")
 
         # 缓存策略实例
@@ -171,7 +171,13 @@ class PredictionStrategyFactory:
                         overwrite=True,
                     )
                     created_sub_strategies[sub_name] = sub_strategy
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     logger.error(f"创建子策略 '{sub_name}' 失败: {e}")
                     continue
 
@@ -236,7 +242,7 @@ class PredictionStrategyFactory:
                     strategy_name=strategy_name, config=config
                 )
                 created_strategies[strategy_name] = strategy
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"创建策略 '{strategy_name}' 失败: {e}")
 
         return created_strategies
@@ -252,7 +258,13 @@ class PredictionStrategyFactory:
                     await self.create_strategy(
                         strategy_name=strategy_name, config=config
                     )
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     logger.error(f"初始化默认策略 '{strategy_name}' 失败: {e}")
 
     def remove_strategy(self, strategy_name: str) -> None:
@@ -296,7 +308,7 @@ class PredictionStrategyFactory:
 
             logger.info(f"成功加载策略配置: {config_path}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载策略配置失败: {e}")
             self._create_default_config()
 
@@ -392,7 +404,7 @@ class PredictionStrategyFactory:
                     default_config, f, default_flow_style=False, allow_unicode=True
                 )
             logger.info(f"创建默认策略配置文件: {config_path}")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存默认配置失败: {e}")
 
     def _apply_environment_overrides(self) -> None:

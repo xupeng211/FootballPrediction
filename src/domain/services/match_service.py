@@ -6,9 +6,9 @@ Match Domain Service
 Handles complex business logic related to matches.
 """
 
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-from ..models.match import Match, MatchStatus, MatchResult, MatchScore
+from typing import List, Optional, Any
+from datetime import datetime
+from ..models.match import Match, MatchStatus
 from ..models.team import Team
 from ..events.match_events import (
     MatchStartedEvent,

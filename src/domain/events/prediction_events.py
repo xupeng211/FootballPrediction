@@ -8,7 +8,6 @@ Defines domain events related to predictions.
 
 from typing import Dict, Any, Optional
 from .base import DomainEvent
-from ..models.prediction import ConfidenceScore, PredictionScore, PredictionPoints
 
 
 class PredictionCreatedEvent(DomainEvent):

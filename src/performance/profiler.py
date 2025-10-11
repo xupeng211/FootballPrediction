@@ -15,17 +15,15 @@ import cProfile
 import io
 import json
 import pstats
-import sys
 import time
 import tracemalloc
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
-from pydantic import BaseModel
 
 from src.core.logging import get_logger
 
@@ -378,7 +376,7 @@ class DatabaseQueryProfiler:
 
             return result
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             execution_time = time.perf_counter() - start_time
 
             # 记录失败的查询

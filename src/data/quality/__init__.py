@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 数据质量监控模块
 
@@ -19,7 +17,7 @@ from .anomaly_detector import (
     AnomalyDetectionResult,
     MachineLearningAnomalyDetector,
     StatisticalAnomalyDetector,
-    AnomalyDetector,  # Simple version
+    # AnomalyDetector,  # Simple version  # 未使用
 )
 
 # 如果 AdvancedAnomalyDetector 不存在，创建一个简单的实现

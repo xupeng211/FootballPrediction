@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import HTTPException, Request
 from sqlalchemy import select
@@ -80,6 +80,6 @@ async def batch_predict_matches_handler(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail="批量预测失败")

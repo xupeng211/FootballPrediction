@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 # Pydantic compatibility logic
 try:
@@ -47,7 +47,7 @@ class Config:
             try:
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self._config = json.load(f)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 配置文件损坏时记录警告，但不中断程序执行
                 logging.warning(f"配置文件加载失败: {e}")
 
@@ -211,7 +211,7 @@ class Settings(SettingsClass):
                 "case_sensitive": False,
                 "extra": "allow",  # Allow extra fields from environment
             }
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
             class Config:
                 env_file = ".env"

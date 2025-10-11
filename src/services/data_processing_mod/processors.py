@@ -5,9 +5,7 @@ Data Processors
 提供各类数据的处理功能。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -82,7 +80,7 @@ class MatchDataProcessor(BaseDataProcessor):
             self.logger.info(f"处理了 {len(df)} 条比赛数据")
             return df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理比赛数据失败: {e}")
             return None
 
@@ -198,7 +196,7 @@ class OddsDataProcessor(BaseDataProcessor):
             self.logger.info(f"处理了 {len(df)} 条赔率数据")
             return df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理赔率数据失败: {e}")
             return None
 
@@ -291,7 +289,7 @@ class ScoresDataProcessor(BaseDataProcessor):
             self.logger.info(f"处理了 {len(df)} 条比分数据")
             return df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理比分数据失败: {e}")
             return None
 
@@ -382,7 +380,7 @@ class FeaturesDataProcessor(BaseDataProcessor):
             self.logger.info(f"处理了 {len(df)} 条特征数据")
             return df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理特征数据失败: {e}")
             return None
 

@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 import os
 
 from sqlalchemy import or_, select
@@ -82,7 +82,7 @@ class ScoresCollector:
             logger.info(f"收集到 {len(live_scores)} 场实时比分")
             return {"live_matches_count": len(live_scores), "scores": live_scores}
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"收集实时比分失败: {e}")
             return {"error": str(e)}
 

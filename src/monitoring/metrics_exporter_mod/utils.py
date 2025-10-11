@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional, List
 from datetime import datetime
 
 from prometheus_client import (
@@ -14,7 +13,6 @@ from prometheus_client import (
     CollectorRegistry,
     Counter,
     Gauge,
-    Histogram,
 )
 
 logger = logging.getLogger(__name__)
@@ -129,7 +127,7 @@ def format_metrics_for_prometheus(registry: CollectorRegistry) -> tuple[str, str
     try:
         metrics_data = generate_latest(registry)
         return CONTENT_TYPE_LATEST, metrics_data.decode("utf-8")
-    except Exception as e:
+    except (ValueError, TypeError, OSError, IOError) as e:
         logger.error(f"生成 Prometheus 格式指标失败: {e}")
         return CONTENT_TYPE_LATEST, "# Error generating metrics\n"
 
@@ -232,7 +230,7 @@ def get_metric_summary(registry: CollectorRegistry) -> dict:
 
             summary["total_metrics"] += 1  # type: ignore
 
-    except Exception as e:
+    except (ValueError, TypeError, OSError, IOError) as e:
         logger.error(f"获取指标摘要失败: {e}")
 
     return summary

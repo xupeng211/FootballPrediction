@@ -2,7 +2,7 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
 
@@ -141,7 +141,7 @@ class FootballFeatureStore:
         """初始化 Feast 特征存储"""
         try:
             self.store = FeatureStore(repo_path=self.feature_store_path)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"Feast 存储初始化失败: {e}")
             self.store = None
 
@@ -315,7 +315,7 @@ class FootballFeatureStore:
             print("特征注册成功")
             return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"特征注册失败: {e}")
             return False
 
@@ -343,7 +343,7 @@ class FootballFeatureStore:
 
             return result.to_df()
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"获取在线特征失败: {e}")
             return pd.DataFrame()
 
@@ -377,7 +377,7 @@ class FootballFeatureStore:
 
             return training_df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"获取历史特征失败: {e}")
             return pd.DataFrame()
 
@@ -411,7 +411,7 @@ class FootballFeatureStore:
             print(f"特征推送到在线存储成功: {feature_view_name}")
             return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"推送特征失败: {e}")
             return False
 
@@ -462,7 +462,7 @@ class FootballFeatureStore:
                 "team_recent_performance", df
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"计算并存储球队特征失败: {e}")
             return False
 
@@ -551,7 +551,7 @@ class FootballFeatureStore:
 
             return h2h_success and odds_success
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"计算并存储比赛特征失败: {e}")
             return False
 
@@ -634,7 +634,7 @@ class FootballFeatureStore:
 
             return features
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"获取预测特征失败: {e}")
             return None
 
@@ -699,14 +699,20 @@ class FootballFeatureStore:
                             if team_success:
                                 stats["teams_processed"] += 1
 
-                    except Exception as e:
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ) as e:
                         print(f"处理比赛 {match.id} 失败: {e}")
                         stats["errors"] += 1
                         continue
 
             return stats
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"批量计算特征失败: {e}")
             stats["errors"] += 1
             return stats

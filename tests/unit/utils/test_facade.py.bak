@@ -1,0 +1,435 @@
+"""
+门面模式单元测试
+"""
+
+pytest_plugins = "asyncio"
+
+# 可选依赖导入
+try:
+    from src.dependencies.optional import *
+except ImportError:
+    pass
+
+import pytest
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
+
+# 使用try-except导入，如果模块不存在则跳过测试
+try:
+    from src.patterns.facade import (
+        PredictionFacade,
+        DataCollectionFacade,
+        AnalyticsFacade,
+        FacadeFactory,
+        PredictionRequest,
+        PredictionResult,
+        DataCollectionConfig,
+    )
+
+    FACADE_AVAILABLE = True
+except ImportError:
+    FACADE_AVAILABLE = False
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestPredictionFacade:
+    """预测门面测试"""
+
+    @pytest.fixture
+    def mock_repos(self):
+        """模拟仓储"""
+        match_repo = MagicMock()
+        prediction_repo = MagicMock()
+        team_repo = MagicMock()
+        return match_repo, prediction_repo, team_repo
+
+    @pytest.fixture
+    def mock_data_collector(self):
+        """模拟数据收集器"""
+        collector = MagicMock()
+        collector.collect_match_data = AsyncMock(
+            return_value={
+                "football": {"data": "match_data"},
+                "odds": {"data": {"home_win": 2.10}},
+            }
+        )
+        return collector
+
+    @pytest.fixture
+    def prediction_facade(self, mock_repos, mock_data_collector):
+        """创建预测门面实例"""
+        match_repo, prediction_repo, team_repo = mock_repos
+        return PredictionFacade(
+            match_repo=match_repo,
+            prediction_repo=prediction_repo,
+            team_repo=team_repo,
+            data_collector=mock_data_collector,
+        )
+
+    @pytest.mark.asyncio
+    async def test_make_prediction(self, prediction_facade, mock_repos):
+        """测试执行预测"""
+        match_repo, prediction_repo, team_repo = mock_repos
+
+        # 模拟比赛数据
+        match_repo.get_by_id = AsyncMock(return_value=MagicMock())
+        prediction_repo.create = AsyncMock()
+
+        # 创建预测请求
+        request = PredictionRequest(match_id=123, user_id=456, algorithm="ensemble")
+
+        # 执行预测
+        result = await prediction_facade.make_prediction(request)
+
+        # 验证结果
+        assert isinstance(result, PredictionResult)
+        assert result.prediction["match_id"] == 123
+        assert result.prediction["algorithm"] == "ensemble"
+        assert result.confidence > 0
+        assert len(result.recommendations) > 0
+
+        # 验证调用
+        match_repo.get_by_id.assert_called_once_with(123)
+        prediction_repo.create.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_make_prediction_with_value_assessment(
+        self, prediction_facade, mock_repos
+    ):
+        """测试带价值评估的预测"""
+        match_repo, prediction_repo, team_repo = mock_repos
+        match_repo.get_by_id = AsyncMock(return_value=MagicMock())
+        prediction_repo.create = AsyncMock()
+
+        request = PredictionRequest(match_id=123, user_id=456)
+        result = await prediction_facade.make_prediction(request)
+
+        # 验证价值评估
+        assert result.value_assessment is not None
+        assert "is_value" in result.value_assessment
+        assert "value" in result.value_assessment
+
+    @pytest.mark.asyncio
+    async def test_get_prediction_history(self, prediction_facade, mock_repos):
+        """测试获取预测历史"""
+        match_repo, prediction_repo, team_repo = mock_repos
+
+        # 模拟预测数据
+        mock_prediction = MagicMock()
+        mock_prediction.to_dict = MagicMock(return_value={"id": 1})
+        prediction_repo.find = AsyncMock(return_value=[mock_prediction])
+
+        # 获取历史
+        history = await prediction_facade.get_prediction_history(user_id=456)
+
+        # 验证
+        assert len(history) == 1
+        assert history[0]["id"] == 1
+        prediction_repo.find.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_prediction_stats(self, prediction_facade, mock_repos):
+        """测试获取预测统计"""
+        match_repo, prediction_repo, team_repo = mock_repos
+
+        # 模拟统计数据
+        prediction_repo.count = AsyncMock(side_effect=[100, 65])
+
+        # 获取统计
+        stats = await prediction_facade.get_prediction_stats(days=30)
+
+        # 验证
+        assert stats["period_days"] == 30
+        assert stats["total_predictions"] == 100
+        assert stats["correct_predictions"] == 65
+        assert stats["accuracy"] == 65.0
+        assert "profit_loss" in stats
+        assert "roi" in stats
+
+    @pytest.mark.asyncio
+    async def test_make_prediction_match_not_found(self, prediction_facade, mock_repos):
+        """测试比赛不存在的情况"""
+        match_repo, prediction_repo, team_repo = mock_repos
+        match_repo.get_by_id = AsyncMock(return_value=None)
+
+        request = PredictionRequest(match_id=999, user_id=456)
+
+        # 验证抛出异常
+        with pytest.raises(ValueError, match="Match 999 not found"):
+            await prediction_facade.make_prediction(request)
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestDataCollectionFacade:
+    """数据收集门面测试"""
+
+    @pytest.fixture
+    def mock_repos(self):
+        """模拟仓储"""
+        match_repo = MagicMock()
+        team_repo = MagicMock()
+        league_repo = MagicMock()
+        return match_repo, team_repo, league_repo
+
+    @pytest.fixture
+    def mock_data_collector(self):
+        """模拟数据收集器"""
+        return MagicMock()
+
+    @pytest.fixture
+    def data_facade(self, mock_repos, mock_data_collector):
+        """创建数据收集门面实例"""
+        match_repo, team_repo, league_repo = mock_repos
+        return DataCollectionFacade(
+            match_repo=match_repo,
+            team_repo=team_repo,
+            league_repo=league_repo,
+            data_collector=mock_data_collector,
+        )
+
+    @pytest.mark.asyncio
+    async def test_sync_all_data(self, data_facade, mock_repos):
+        """测试同步所有数据"""
+        match_repo, team_repo, league_repo = mock_repos
+
+        # 创建配置
+        config = DataCollectionConfig(
+            sources=["football", "odds"],
+            refresh_interval=timedelta(hours=1),
+            batch_size=50,
+        )
+
+        # 执行同步
+        result = await data_facade.sync_all_data(config)
+
+        # 验证结果
+        assert "matches" in result
+        assert "teams" in result
+        assert "leagues" in result
+        assert "external" in result
+        assert result["matches"]["updated"] == 50
+        assert result["teams"]["updated"] == 20
+        assert result["leagues"]["updated"] == 5
+        assert result["external"]["updated"] == 100
+
+    @pytest.mark.asyncio
+    async def test_get_data_health(self, data_facade, mock_repos):
+        """测试获取数据健康状态"""
+        match_repo, team_repo, league_repo = mock_repos
+
+        # 模拟计数
+        match_repo.count = AsyncMock(side_effect=[1000, 50, 200, 10])
+
+        # 获取健康状态
+        health = await data_facade.get_data_health()
+
+        # 验证结果
+        assert health["total_matches"] == 1000
+        assert health["stale_matches"] == 50
+        assert health["total_teams"] == 200
+        assert health["teams_without_stats"] == 10
+        assert health["overall_health"] in ["good", "warning", "poor", "error"]
+        assert health["last_sync"] is not None
+
+    @pytest.mark.asyncio
+    async def test_get_data_health_poor(self, data_facade, mock_repos):
+        """测试数据健康状态差的情况"""
+        match_repo, team_repo, league_repo = mock_repos
+        # 400个过期 / 1000个总数 = 40% > 30%阈值
+        match_repo.count = AsyncMock(side_effect=[1000, 400, 200, 10])
+
+        health = await data_facade.get_data_health()
+        assert health["overall_health"] == "poor"
+
+    @pytest.mark.asyncio
+    async def test_get_data_health_warning(self, data_facade, mock_repos):
+        """测试数据健康状态警告的情况"""
+        match_repo, team_repo, league_repo = mock_repos
+        # 150个过期 / 1000个总数 = 15% > 10%但 < 30%
+        match_repo.count = AsyncMock(side_effect=[1000, 150, 200, 10])
+
+        health = await data_facade.get_data_health()
+        assert health["overall_health"] == "warning"
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestAnalyticsFacade:
+    """分析门面测试"""
+
+    @pytest.fixture
+    def mock_repos(self):
+        """模拟仓储"""
+        match_repo = MagicMock()
+        prediction_repo = MagicMock()
+        user_repo = MagicMock()
+        return match_repo, prediction_repo, user_repo
+
+    @pytest.fixture
+    def analytics_facade(self, mock_repos):
+        """创建分析门面实例"""
+        match_repo, prediction_repo, user_repo = mock_repos
+        return AnalyticsFacade(
+            match_repo=match_repo, prediction_repo=prediction_repo, user_repo=user_repo
+        )
+
+    @pytest.mark.asyncio
+    async def test_generate_dashboard_data(self, analytics_facade, mock_repos):
+        """测试生成仪表板数据"""
+        match_repo, prediction_repo, user_repo = mock_repos
+
+        # 模拟数据
+        prediction_repo.count = AsyncMock(side_effect=[100, 65, 50])
+        user_repo.count = AsyncMock(return_value=25)
+
+        # 生成仪表板数据
+        dashboard = await analytics_facade.generate_dashboard_data(days=30)
+
+        # 验证结果
+        assert "overview" in dashboard
+        assert "predictions" in dashboard
+        assert "performance" in dashboard
+        assert "trends" in dashboard
+        assert "insights" in dashboard
+
+        # 验证概览数据
+        overview = dashboard["overview"]
+        assert overview["total_predictions"] == 100
+        assert overview["accuracy"] == 65.0
+        assert overview["active_users"] == 25
+
+        # 验证洞察
+        insights = dashboard["insights"]
+        assert len(insights) > 0
+        assert isinstance(insights, list)
+
+    @pytest.mark.asyncio
+    async def test_generate_performance_report(self, analytics_facade):
+        """测试生成性能报告"""
+        report = await analytics_facade.generate_report(
+            "performance", {"period": "30d"}
+        )
+
+        assert report["report_type"] == "performance"
+        assert report["period"] == "30d"
+        assert "data" in report
+
+    @pytest.mark.asyncio
+    async def test_generate_accuracy_report(self, analytics_facade):
+        """测试生成准确率报告"""
+        report = await analytics_facade.generate_report("accuracy", {"period": "7d"})
+
+        assert report["report_type"] == "accuracy"
+        assert report["period"] == "7d"
+
+    @pytest.mark.asyncio
+    async def test_generate_profitability_report(self, analytics_facade):
+        """测试生成盈利报告"""
+        report = await analytics_facade.generate_report(
+            "profitability", {"period": "90d"}
+        )
+
+        assert report["report_type"] == "profitability"
+        assert report["period"] == "90d"
+
+    @pytest.mark.asyncio
+    async def test_generate_report_invalid_type(self, analytics_facade):
+        """测试生成无效类型的报告"""
+        with pytest.raises(ValueError, match="Unknown report type"):
+            await analytics_facade.generate_report("invalid", {})
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestFacadeFactory:
+    """门面工厂测试"""
+
+    @pytest.mark.asyncio
+    async def test_create_prediction_facade(self):
+        """测试创建预测门面"""
+        mock_repos = [MagicMock() for _ in range(3)]
+        mock_collector = MagicMock()
+
+        facade = FacadeFactory.create_prediction_facade(*mock_repos, mock_collector)
+
+        assert isinstance(facade, PredictionFacade)
+
+    @pytest.mark.asyncio
+    async def test_create_data_collection_facade(self):
+        """测试创建数据收集门面"""
+        mock_repos = [MagicMock() for _ in range(3)]
+        mock_collector = MagicMock()
+
+        facade = FacadeFactory.create_data_collection_facade(
+            *mock_repos, mock_collector
+        )
+
+        assert isinstance(facade, DataCollectionFacade)
+
+    @pytest.mark.asyncio
+    async def test_create_analytics_facade(self):
+        """测试创建分析门面"""
+        mock_repos = [MagicMock() for _ in range(3)]
+
+        facade = FacadeFactory.create_analytics_facade(*mock_repos)
+
+        assert isinstance(facade, AnalyticsFacade)
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestPredictionRequestAndResult:
+    """测试请求和结果类"""
+
+    def test_prediction_request_creation(self):
+        """测试预测请求创建"""
+        request = PredictionRequest(match_id=123, user_id=456, algorithm="ensemble")
+
+        assert request.match_id == 123
+        assert request.user_id == 456
+        assert request.algorithm == "ensemble"
+        assert request.features is None
+
+    def test_prediction_request_with_features(self):
+        """测试带特征的预测请求"""
+        features = {"team_form": 0.8, "weather": "sunny"}
+        request = PredictionRequest(match_id=123, user_id=456, features=features)
+
+        assert request.features == features
+
+    def test_prediction_result_creation(self):
+        """测试预测结果创建"""
+        prediction = {"match_id": 123, "prediction": "home_win"}
+        result = PredictionResult(
+            prediction=prediction,
+            confidence=0.75,
+            value_assessment={"is_value": True},
+            recommendations=["建议投注"],
+        )
+
+        assert result.prediction == prediction
+        assert result.confidence == 0.75
+        assert result.value_assessment["is_value"] is True
+        assert len(result.recommendations) == 1
+
+
+@pytest.mark.skipif(not FACADE_AVAILABLE, reason="Facade module not available")
+class TestDataCollectionConfig:
+    """测试数据收集配置"""
+
+    def test_config_creation(self):
+        """测试配置创建"""
+        config = DataCollectionConfig(
+            sources=["football", "odds"],
+            refresh_interval=timedelta(hours=1),
+            batch_size=50,
+        )
+
+        assert config.sources == ["football", "odds"]
+        assert config.refresh_interval == timedelta(hours=1)
+        assert config.batch_size == 50
+
+    def test_config_defaults(self):
+        """测试配置默认值"""
+        config = DataCollectionConfig(
+            sources=["test"], refresh_interval=timedelta(days=1)
+        )
+
+        assert config.batch_size == 100

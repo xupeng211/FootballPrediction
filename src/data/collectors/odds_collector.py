@@ -13,11 +13,8 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-import asyncio
-import logging
 
 from .base_collector import DataCollector, CollectionResult
 
@@ -147,12 +144,24 @@ class OddsCollector(DataCollector):
                             else:
                                 self.logger.debug(f"No odds change for: {odds_key}")
 
-                        except Exception as e:
+                        except (
+                            ValueError,
+                            TypeError,
+                            AttributeError,
+                            KeyError,
+                            RuntimeError,
+                        ) as e:
                             error_count += 1
                             error_messages.append(f"Error processing odds: {str(e)}")
                             self.logger.error(f"Error processing odds: {str(e)}")
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     error_count += 1
                     error_messages.append(
                         f"Error collecting match {match_id}: {str(e)}"
@@ -190,7 +199,7 @@ class OddsCollector(DataCollector):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Odds collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
@@ -231,7 +240,7 @@ class OddsCollector(DataCollector):
                 "unibet",
                 "marathonbet",
             ]
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get active bookmakers: {str(e)}")
             return ["bet365", "pinnacle"]  # 默认返回主要的两家
 
@@ -246,7 +255,7 @@ class OddsCollector(DataCollector):
             # TODO: 从数据库查询未来24小时内的比赛
             # 目前返回空列表作为占位符
             return []
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get upcoming matches: {str(e)}")
             return []
 
@@ -256,7 +265,7 @@ class OddsCollector(DataCollector):
             # TODO: 实现基于时间窗口的缓存清理
             # 清理超过time_window_minutes的缓存条目
             pass
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean odds cache: {str(e)}")
 
     async def _collect_match_odds(
@@ -301,7 +310,7 @@ class OddsCollector(DataCollector):
                             }
                             all_odds.append(odds_data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to collect odds for match {match_id}: {str(e)}")
 
         return all_odds
@@ -371,7 +380,7 @@ class OddsCollector(DataCollector):
                 self._last_odds_values[odds_id] = current_odds
                 return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to check odds change: {str(e)}")
             return True  # 出错时默认认为有变化
 
@@ -421,6 +430,6 @@ class OddsCollector(DataCollector):
 
             return cleaned_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean odds data: {str(e)}")
             return None

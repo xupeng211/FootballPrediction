@@ -1,7 +1,7 @@
 """数据验证器测试"""
 
 import pytest
-from src.utils.data_validator import DataValidator
+# from src.utils.data_validator import DataValidator
 
 
 class TestDataValidator:

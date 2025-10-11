@@ -5,7 +5,7 @@ Kafka消费者模块 - 兼容性包装器
 实际的实现已经拆分到 src/streaming/consumer/ 目录下。
 """
 
-from .consumer import FootballKafkaConsumer  # type: ignore
+# from .consumer import FootballKafkaConsumer  # 不存在
 from .data_processor import DataProcessor  # type: ignore
 from .message_processor import MessageProcessor  # type: ignore
 from .utils import get_session  # type: ignore
@@ -14,11 +14,11 @@ from .utils import get_session  # type: ignore
 
 # 重新导出以保持向后兼容性
 __all__ = [
-    "FootballKafkaConsumer",
+    # "FootballKafkaConsumer",  # 暂时注释掉，因为模块不存在
     "MessageProcessor",
     "DataProcessor",
     "get_session",
 ]
 
 # 为了兼容性保留一些别名
-KafkaConsumer = FootballKafkaConsumer
+# KafkaConsumer = FootballKafkaConsumer  # 暂时注释掉

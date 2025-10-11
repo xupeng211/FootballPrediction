@@ -7,7 +7,6 @@ Audit Utilities
 
 import hashlib
 import json
-import time
 from typing import Any, Dict, Optional
 
 from .models import AuditLog
@@ -161,7 +160,7 @@ def format_audit_log_for_display(log: AuditLog) -> Dict[str, Any]:
             formatted["timestamp_formatted"] = formatted["timestamp"].strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
-        except Exception:
+        except (ValueError, TypeError, OSError, IOError):
             formatted["timestamp_formatted"] = formatted.get("timestamp")
 
     # 格式化持续时间

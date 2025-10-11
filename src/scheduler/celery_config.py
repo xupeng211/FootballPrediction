@@ -159,7 +159,7 @@ def is_match_day() -> bool:
 
         # 当前返回True以确保任务调度正常运行
         return True
-    except Exception:
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False
 
 
@@ -192,7 +192,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
 
         # 当前返回空列表，生产环境需要实现数据库查询
         return []
-    except Exception:
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return []
 
 
@@ -206,7 +206,7 @@ def should_collect_live_scores() -> bool:
         # 如果有比赛，则需要采集实时比分
         return len(matches) > 0
 
-    except Exception:
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False
 
 

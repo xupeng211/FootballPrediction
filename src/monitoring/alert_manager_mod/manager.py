@@ -8,7 +8,7 @@ Alert Manager
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .models import Alert, AlertRule, AlertSeverity, AlertChannel, AlertStatus
 from .metrics import PrometheusMetrics
@@ -85,7 +85,7 @@ class WebhookHandler(AlertHandler):
                             logger.debug(
                                 f"Webhook sent successfully for alert {alert.id}"
                             )
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 logger.error(f"Failed to send webhook for alert {alert.id}: {e}")
 
         # 在后台运行
@@ -253,7 +253,7 @@ class AlertManager:
             logger.info(f"Alert fired: {alert.id} - {title}")
             return alert
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to fire alert: {str(e)}")
             return None
 
@@ -306,7 +306,7 @@ class AlertManager:
                         else:
                             # 同步处理器
                             handler.handle(alert)
-                    except Exception as e:
+                    except (ValueError, RuntimeError, TimeoutError) as e:
                         logger.error(f"Handler error: {str(e)}")
 
     def _update_alert_metrics(self, alert: Alert, rule_id: Optional[str]) -> None:
@@ -323,7 +323,7 @@ class AlertManager:
             [a for a in self.alert_history if a.status == AlertStatus.ACTIVE]
             # 简化实现，实际应该调用 metrics.set_active_alerts_count
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to update metrics: {str(e)}")
 
     def _cleanup_old_alerts(self) -> None:

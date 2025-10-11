@@ -13,7 +13,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.database.connection_mod import DatabaseManager
 
@@ -116,7 +116,13 @@ class ResourceMonitor:
 
                     time.sleep(1)  # 每秒采样一次
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     logger.warning(f"资源监控异常: {e}")
                     break
 
@@ -256,7 +262,7 @@ class JobManager:
             self._handle_job_failure(task_id, start_time, resource_monitor, error_msg)
             return False
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             error_msg = f"作业执行异常: {task_id} - {str(e)}"
             logger.error(error_msg, exc_info=True)
             self._handle_job_failure(task_id, start_time, resource_monitor, error_msg)
@@ -291,7 +297,7 @@ class JobManager:
         future = self.executor.submit(task_function, *args, **kwargs)
         try:
             return future.result(timeout=timeout)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             future.cancel()
             raise e
 
@@ -399,7 +405,7 @@ class JobManager:
             # 当前仅记录日志
             logger.debug(f"执行结果已记录: {result.job_id}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存执行结果到数据库失败: {e}")
 
     def kill_job(self, task_id: str) -> bool:
@@ -424,7 +430,7 @@ class JobManager:
             logger.info(f"作业已标记终止: {task_id}")
             return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"终止作业失败: {task_id} - {e}")
             return False
 
@@ -501,7 +507,7 @@ class JobManager:
 
             logger.info("作业管理器资源清理完成")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"作业管理器资源清理失败: {e}")
 
     def __del__(self):

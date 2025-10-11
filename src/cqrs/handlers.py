@@ -9,37 +9,29 @@ Implements handlers for all commands and queries.
 
 import logging
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 
 from ..database.connection_mod import get_session
-from ..database.models import User, Match, Prediction
+from ..database.models import User, Prediction
 from .base import CommandHandler, QueryHandler
 from .commands import (
     CreatePredictionCommand,
     UpdatePredictionCommand,
     DeletePredictionCommand,
     CreateUserCommand,
-    UpdateUserCommand,
-    CreateMatchCommand,
-    UpdateMatchCommand,
 )
 from .queries import (
     GetPredictionByIdQuery,
     GetPredictionsByUserQuery,
-    GetMatchPredictionsQuery,
     GetUserStatsQuery,
-    GetMatchByIdQuery,
     GetUpcomingMatchesQuery,
-    GetPredictionAnalyticsQuery,
-    GetLeaderboardQuery,
 )
 from .dto import (
     PredictionDTO,
     UserDTO,
     MatchDTO,
     PredictionStatsDTO,
-    MatchStatsDTO,
     CommandResult,
 )
 
@@ -101,7 +93,7 @@ class CreatePredictionHandler(CommandHandler):
                     message="预测创建成功",
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"创建预测失败: {e}")
             return CommandResult.failure_result([str(e)], "创建预测失败")
 
@@ -156,7 +148,7 @@ class UpdatePredictionHandler(CommandHandler):
                     message="预测更新成功",
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"更新预测失败: {e}")
             return CommandResult.failure_result([str(e)], "更新预测失败")
 
@@ -185,7 +177,7 @@ class DeletePredictionHandler(CommandHandler):
                     data={"deleted_id": command.prediction_id}, message="预测删除成功"
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"删除预测失败: {e}")
             return CommandResult.failure_result([str(e)], "删除预测失败")
 
@@ -231,7 +223,7 @@ class CreateUserHandler(CommandHandler):
                     message="用户创建成功",
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"创建用户失败: {e}")
             return CommandResult.failure_result([str(e)], "创建用户失败")
 
@@ -267,7 +259,7 @@ class GetPredictionByIdHandler(QueryHandler):
                     updated_at=prediction.updated_at,
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取预测失败: {e}")
             return None
 
@@ -330,7 +322,7 @@ class GetPredictionsByUserHandler(QueryHandler):
                     for p in predictions
                 ]
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取用户预测列表失败: {e}")
             return []
 
@@ -447,7 +439,7 @@ class GetUserStatsHandler(QueryHandler):
                     recent_performance=recent_performance,
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取用户统计失败: {e}")
             return None
 
@@ -505,7 +497,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
                     for m in matches
                 ]
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取即将到来的比赛失败: {e}")
             return []
 

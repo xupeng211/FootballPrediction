@@ -7,7 +7,7 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from openlineage.client import OpenLineageClient
@@ -137,7 +137,7 @@ class LineageReporter:
             self.client.emit(event)
             logger.info(f"Started job run: {job_name} with run_id: {run_id}")
             return run_id
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Failed to emit start event for job {job_name}: {e}")
             raise
 
@@ -224,7 +224,7 @@ class LineageReporter:
             self.client.emit(event)
             logger.info(f"Completed job run: {job_name} with run_id: {run_id}")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Failed to emit complete event for job {job_name}: {e}")
             return False
 
@@ -278,7 +278,7 @@ class LineageReporter:
                 del self._active_runs[job_name]
 
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Failed to emit fail event for job {job_name}: {e}")
             return False
 

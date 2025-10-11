@@ -8,11 +8,9 @@ Defines the base interface for the Repository pattern, providing standard CRUD o
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
-from datetime import datetime
 
-from sqlalchemy import select, update, delete, and_, or_
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.database.connection_mod import DatabaseManager
 
@@ -407,7 +405,7 @@ class BaseRepository(ABC, Generic[T]):
 
                 await sess.commit()
                 return results
-            except Exception:
+            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
                 await sess.rollback()
                 raise
 

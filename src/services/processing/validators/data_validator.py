@@ -7,7 +7,7 @@
 from datetime import datetime, timedelta
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 
@@ -128,7 +128,7 @@ class DataValidator:
 
             return validation_results
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"数据验证失败: {e}", exc_info=True)
             return {
                 "valid": False,
@@ -167,7 +167,13 @@ class DataValidator:
                 if not pd.api.types.is_datetime64_any_dtype(df[field]):
                     try:
                         pd.to_datetime(df[field])
-                    except Exception:
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ):
                         result["errors"].append(f"字段 {field} 不是有效的日期格式")
 
         numeric_fields = rules.get("numeric_fields", [])
@@ -176,7 +182,13 @@ class DataValidator:
                 if not pd.api.types.is_numeric_dtype(df[field]):
                     try:
                         pd.to_numeric(df[field])
-                    except Exception:
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ):
                         result["warnings"].append(f"字段 {field} 包含非数值数据")
 
         return result

@@ -6,11 +6,9 @@ ML Model Strategy
 Strategy implementation using machine learning models for prediction.
 """
 
-import asyncio
 import time
 from typing import Dict, Any, List, Optional, Tuple
 import numpy as np
-import pandas as pd
 from datetime import datetime
 
 from .base import (
@@ -20,7 +18,6 @@ from .base import (
     StrategyType,
     StrategyMetrics,
 )
-from ..models.match import Match
 from ..models.prediction import Prediction
 
 
@@ -92,7 +89,7 @@ class MLModelStrategy(PredictionStrategy):
 
             print(f"成功加载模型: {model_name} 版本: {model_version}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise RuntimeError(f"加载ML模型失败: {e}")
 
     async def _initialize_feature_processor(self, config: Dict[str, Any]) -> None:

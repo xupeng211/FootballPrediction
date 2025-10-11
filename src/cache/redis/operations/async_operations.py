@@ -2,10 +2,9 @@
 Redis asynchronous operations
 """
 
-import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 import redis.asyncio as aioredis
 
@@ -43,7 +42,7 @@ class RedisAsyncOperations:
             if value:
                 return json.loads(value)
             return None
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error getting key {key}: {str(e)}")
             return None
 
@@ -57,7 +56,7 @@ class RedisAsyncOperations:
                 return await self.client.setex(key, ttl, serialized)  # type: ignore
             else:
                 return await self.client.set(key, serialized)  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error setting key {key}: {str(e)}")
             return False
 
@@ -67,7 +66,7 @@ class RedisAsyncOperations:
             await self.connect()
         try:
             return bool(await self.client.delete(key))  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error deleting key {key}: {str(e)}")
             return False
 
@@ -77,7 +76,7 @@ class RedisAsyncOperations:
             await self.connect()
         try:
             return bool(await self.client.exists(key))  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error checking key {key}: {str(e)}")
             return False
 
@@ -87,6 +86,6 @@ class RedisAsyncOperations:
             await self.connect()
         try:
             return bool(await self.client.expire(key, ttl))  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error setting TTL for key {key}: {str(e)}")
             return False

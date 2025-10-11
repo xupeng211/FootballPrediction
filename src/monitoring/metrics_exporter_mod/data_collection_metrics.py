@@ -64,7 +64,7 @@ class DataCollectionMetrics:
                     error_type=error_type,
                 ).inc()
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"记录数据采集指标失败: {e}")
 
     def record_success(

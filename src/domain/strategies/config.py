@@ -6,7 +6,6 @@ Strategy Configuration Management
 Manages configuration parameters for prediction strategies.
 """
 
-import os
 import json
 import yaml  # type: ignore
 from typing import Dict, Any, Optional, Union, List
@@ -158,7 +157,7 @@ class StrategyConfigManager:
 
             logger.info(f"加载了 {len(self._configs)} 个策略配置")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载策略配置失败: {e}")
             self._create_default_strategies_config()
 
@@ -174,7 +173,7 @@ class StrategyConfigManager:
 
             logger.info(f"加载了 {len(self._profiles)} 个配置档案")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载配置档案失败: {e}")
             self._create_default_profiles()
 
@@ -190,7 +189,7 @@ class StrategyConfigManager:
 
             logger.info(f"加载了 {len(self._environments)} 个环境配置")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"加载环境配置失败: {e}")
             self._create_default_environments()
 
@@ -210,7 +209,7 @@ class StrategyConfigManager:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
             logger.info(f"保存策略配置到: {self._strategies_file}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存策略配置失败: {e}")
 
     def get_config(self, strategy_name: str) -> Optional[StrategyConfig]:
@@ -384,7 +383,7 @@ class StrategyConfigManager:
 
             logger.info(f"导出配置到: {output_path}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出配置失败: {e}")
 
     def import_config(
@@ -428,7 +427,7 @@ class StrategyConfigManager:
             logger.info(f"导入了 {imported_count} 个策略配置")
             return imported_count
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导入配置失败: {e}")
             return 0
 
@@ -468,7 +467,7 @@ class StrategyConfigManager:
 
             return config
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"解析策略配置失败: {e}")
             return None
 
@@ -620,7 +619,7 @@ class StrategyConfigManager:
                 yaml.dump(
                     self._profiles, f, default_flow_style=False, allow_unicode=True
                 )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存配置档案失败: {e}")
 
     def _create_default_environments(self) -> None:
@@ -654,5 +653,5 @@ class StrategyConfigManager:
                 yaml.dump(
                     self._environments, f, default_flow_style=False, allow_unicode=True
                 )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存环境配置失败: {e}")

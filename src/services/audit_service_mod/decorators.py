@@ -79,7 +79,7 @@ def audit_action(
                 else:
                     result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 error = str(e)
                 raise
             finally:
@@ -121,7 +121,7 @@ def audit_action(
                 start_time = time.time()
                 result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 error = str(e)
                 raise
             finally:

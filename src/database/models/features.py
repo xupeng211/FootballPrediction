@@ -1,3 +1,19 @@
+"""
+Features - 数据库模块
+
+提供 features 相关的数据库功能。
+
+主要功能：
+- [待补充 - Features的主要功能]
+
+使用示例：
+    from database.models import Features
+    # 使用示例代码
+
+注意事项：
+- [待补充 - 使用注意事项]
+"""
+
 from typing import Optional
 from decimal import Decimal
 from enum import Enum
@@ -6,7 +22,6 @@ from sqlalchemy import (
     DECIMAL,
     Enum as SQLEnum,
     ForeignKey,
-    Index,
     Integer,
     String,
 )
@@ -26,14 +41,13 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 from sqlalchemy import DECIMAL, Boolean
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String
+from sqlalchemy import ForeignKey, Integer, String
 from ..base import BaseModel
 from .feature_mod import feature_entity
 from .feature_mod import feature_metadata
 from .feature_mod import feature_types
 from .feature_mod import models
 from sqlalchemy import Boolean
-from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.orm import mapped_column

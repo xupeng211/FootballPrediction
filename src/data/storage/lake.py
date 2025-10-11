@@ -4,10 +4,9 @@ from typing import Dict, List, Optional, Union
 Data Lake Storage Module
 """
 
-import os
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from pathlib import Path
 
@@ -36,7 +35,7 @@ class LocalDataLakeStorage:
 
             self.logger.info(f"数据已保存到: {file_path}")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"保存数据失败: {e}")
             return False
 
@@ -54,7 +53,7 @@ class LocalDataLakeStorage:
             else:
                 with open(file_path, "r", encoding="utf-8") as f:
                     return f.read()
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"加载数据失败: {e}")
             return None
 
@@ -66,7 +65,7 @@ class LocalDataLakeStorage:
                 if file_path.is_file():
                     keys.append(file_path.stem)
             return sorted(keys)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"列出键失败: {e}")
             return []
 
@@ -78,7 +77,7 @@ class LocalDataLakeStorage:
                 file_path.unlink()
                 return True
             return False
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"删除数据失败: {e}")
             return False
 

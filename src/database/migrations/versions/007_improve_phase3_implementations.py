@@ -261,7 +261,7 @@ def upgrade():
                 EXECUTE FUNCTION update_updated_at_column();
             """
             )
-        except Exception:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
             # 触发器可能已存在，忽略错误
             pass
 

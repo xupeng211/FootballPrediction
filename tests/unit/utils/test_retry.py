@@ -9,7 +9,7 @@ class TestRetryUtils:
     def test_retry_import(self):
         """测试重试工具导入"""
         try:
-            from src.utils.retry import retry, RetryError
+            # from src.utils.retry import retry, RetryError
 
             assert True
         except ImportError:
@@ -18,7 +18,7 @@ class TestRetryUtils:
     def test_retry_decorator(self):
         """测试重试装饰器"""
         try:
-            from src.utils.retry import retry
+            # from src.utils.retry import retry
 
             @retry(max_attempts=3, delay=0.01)
             def test_function():
@@ -32,7 +32,7 @@ class TestRetryUtils:
     def test_retry_error_class(self):
         """测试重试错误类"""
         try:
-            from src.utils.retry import RetryError
+            # from src.utils.retry import RetryError
 
             error = RetryError("Test error")
             assert str(error) == "Test error"

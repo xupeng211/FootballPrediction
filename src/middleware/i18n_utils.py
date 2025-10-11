@@ -2,7 +2,6 @@
 i18n utilities
 """
 
-from typing import Optional
 from fastapi import Request
 
 

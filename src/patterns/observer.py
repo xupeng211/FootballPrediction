@@ -82,7 +82,7 @@ class Subject(ABC):
         """安全地通知单个观察者"""
         try:
             await observer.update(self, event_type, data)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Error notifying observer {observer.get_name()}: {e}")
 
     def get_observers(self) -> List[str]:
@@ -308,7 +308,7 @@ class PredictionService(ObservableService):
             await self.on_operation_complete("predict_match", prediction, 0.1)
             return prediction
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             await self.on_service_error(e)
             raise
 

@@ -6,15 +6,14 @@ Prediction Repository
 Implements data access logic for predictions.
 """
 
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 from decimal import Decimal
 
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func
 
 from .base import Repository, ReadOnlyRepository, QuerySpec
-from ..database.models import Prediction, Match, User
+from ..database.models import Prediction
 
 
 class PredictionRepositoryInterface(Repository[Prediction, int]):
@@ -265,7 +264,7 @@ class PredictionRepository(PredictionRepositoryInterface):
             await self.session.delete(entity)
             await self.session.commit()
             return True
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             await self.session.rollback()
             return False
 

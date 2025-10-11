@@ -8,7 +8,7 @@ Database Engine Module
 from typing import Optional, Dict, Any
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy.pool import StaticPool, QueuePool
+from sqlalchemy.pool import StaticPool
 import logging
 
 logger = logging.getLogger(__name__)

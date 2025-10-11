@@ -4,7 +4,7 @@ Configuration loader utilities
 
 import json
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 def load_config_from_file(file_path: str) -> Dict[str, Any]:

@@ -40,7 +40,7 @@ class AdapterFactory:
                 return self._instances[name]
             else:
                 return adapter_class(config)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
     def get_instance(self):

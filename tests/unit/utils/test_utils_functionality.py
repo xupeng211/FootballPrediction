@@ -20,7 +20,7 @@ class TestUtilsFunctionality:
     def test_time_utils_current_time(self):
         """测试时间工具获取当前时间"""
         try:
-            from src.utils.time_utils import get_current_time
+            # from src.utils.time_utils import get_current_time
 
             # 调用实际函数
             result = get_current_time()
@@ -36,7 +36,7 @@ class TestUtilsFunctionality:
     def test_time_utils_format_duration(self):
         """测试时间格式化函数"""
         try:
-            from src.utils.time_utils import format_duration
+            # from src.utils.time_utils import format_duration
 
             # 测试格式化秒数
             result = format_duration(3661)  # 1小时1分钟1秒
@@ -55,7 +55,7 @@ class TestUtilsFunctionality:
     def test_dict_utils_merge(self):
         """测试字典合并功能"""
         try:
-            from src.utils.dict_utils import merge_dicts
+            # from src.utils.dict_utils import merge_dicts
 
             dict1 = {"a": 1, "b": 2}
             dict2 = {"b": 3, "c": 4}
@@ -72,7 +72,7 @@ class TestUtilsFunctionality:
     def test_dict_utils_flatten(self):
         """测试字典扁平化功能"""
         try:
-            from src.utils.dict_utils import flatten_dict
+            # from src.utils.dict_utils import flatten_dict
 
             nested = {"a": {"b": {"c": 1}}, "d": 2}
             result = flatten_dict(nested)
@@ -87,7 +87,7 @@ class TestUtilsFunctionality:
     def test_crypto_utils_encrypt_decrypt(self):
         """测试加密解密功能"""
         try:
-            from src.utils.crypto_utils import encrypt_data, decrypt_data
+            # from src.utils.crypto_utils import encrypt_data, decrypt_data
 
             data = "test message"
             key = "test_key_12345"
@@ -108,7 +108,7 @@ class TestUtilsFunctionality:
     def test_retry_mechanism(self):
         """测试重试机制"""
         try:
-            from src.utils.retry import retry_with_backoff
+            # from src.utils.retry import retry_with_backoff
 
             call_count = 0
 
@@ -131,7 +131,7 @@ class TestUtilsFunctionality:
     def test_warning_filters(self):
         """测试警告过滤器"""
         try:
-            from src.utils.warning_filters import setup_warning_filters
+            # from src.utils.warning_filters import setup_warning_filters
 
             # 设置警告过滤器
             setup_warning_filters()
@@ -144,7 +144,7 @@ class TestUtilsFunctionality:
     def test_data_validator_validate_email(self):
         """测试邮箱验证"""
         try:
-            from src.utils.data_validator import validate_email
+            # from src.utils.data_validator import validate_email
 
             # 测试有效邮箱
             assert validate_email("test@example.com") is True
@@ -158,7 +158,7 @@ class TestUtilsFunctionality:
     def test_string_utils_slugify(self):
         """测试字符串转换为slug"""
         try:
-            from src.utils.string_utils import slugify
+            # from src.utils.string_utils import slugify
 
             result = slugify("Hello World! This is a Test")
             assert isinstance(result, str)

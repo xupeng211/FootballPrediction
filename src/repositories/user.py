@@ -6,12 +6,10 @@ User Repository
 Implements data access logic for users.
 """
 
-from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, date, timedelta
-from decimal import Decimal
+from typing import List, Optional, Dict, Any
+from datetime import datetime, date
 
-from sqlalchemy import select, func, and_, or_, update
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, update
 
 from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import User
@@ -185,7 +183,7 @@ class UserRepository(UserRepositoryInterface):
             await self.session.delete(entity)
             await self.session.commit()
             return True
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             await self.session.rollback()
             return False
 

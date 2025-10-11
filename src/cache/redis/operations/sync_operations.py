@@ -4,7 +4,7 @@ Redis synchronous operations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class RedisSyncOperations:
             if value:
                 return json.loads(value)
             return None
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error getting key {key}: {str(e)}")
             return None
 
@@ -40,7 +40,7 @@ class RedisSyncOperations:
                 return self.client.setex(key, ttl, serialized)  # type: ignore
             else:
                 return self.client.set(key, serialized)  # type: ignore
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error setting key {key}: {str(e)}")
             return False
 
@@ -50,7 +50,7 @@ class RedisSyncOperations:
             return False
         try:
             return bool(self.client.delete(key))
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error deleting key {key}: {str(e)}")
             return False
 
@@ -60,6 +60,6 @@ class RedisSyncOperations:
             return False
         try:
             return bool(self.client.exists(key))
-        except Exception as e:
+        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error checking key {key}: {str(e)}")
             return False

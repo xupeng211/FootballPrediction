@@ -1,4 +1,20 @@
-from typing import Dict, Optional, cast
+"""
+Manager - 服务模块
+
+提供 manager 相关的服务功能。
+
+主要功能：
+- [待补充 - Manager的主要功能]
+
+使用示例：
+    from services.manager import Manager
+    # 使用示例代码
+
+注意事项：
+- [待补充 - 使用注意事项]
+"""
+
+from typing import Dict, Optional
 
 from src.core import logger
 from src.core.config import get_settings
@@ -64,7 +80,7 @@ class ServiceManager:
                 if not result:
                     success = False
                     self.logger.error(f"服务初始化失败: {service.name}")
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 捕获异常避免整个初始化流程中断
                 success = False
                 self.logger.error(f"服务初始化异常: {service.name}, {e}")
@@ -76,7 +92,7 @@ class ServiceManager:
         for service in self._services.values():
             try:
                 await service.shutdown()
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 关闭失败不应阻止其他服务的正常关闭
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
 

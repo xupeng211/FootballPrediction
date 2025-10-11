@@ -15,7 +15,7 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, f
 - 支持数据治理决策
 """
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 from src.database.base import BaseModel

@@ -244,7 +244,7 @@ class MetricsExporter:
             else:
                 # 如果没有事件循环，运行新的
                 asyncio.run(self.database_metrics.update_table_row_counts(table_counts))
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"更新表行数失败: {e}")
 
     async def update_table_row_counts_async(self) -> None:
@@ -271,7 +271,7 @@ class MetricsExporter:
 
             logger.info("监控指标收集完成")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"收集监控指标失败: {e}")
 
         duration = time.time() - start_time

@@ -11,7 +11,7 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .base import BaseRepository, Repository, ReadOnlyRepository
+from .base import BaseRepository, Repository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository

@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from .strategy_prediction_service import StrategyPredictionService
-from ..domain.models import Match, Team, Prediction
+from ..domain.models import Match, Prediction
 from ..events import (  # type: ignore
     PredictionMadeEvent,
     PredictionUpdatedEvent,
@@ -183,7 +183,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
             logger.debug(f"发布预测创建事件: prediction_id={prediction.id}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测创建事件失败: {e}")
 
     async def _publish_prediction_updated_event(
@@ -226,7 +226,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
             logger.debug(f"发布预测更新事件: prediction_id={prediction.id}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测更新事件失败: {e}")
 
 
@@ -331,7 +331,7 @@ class EventDrivenMatchService:
 
             logger.debug(f"发布比赛创建事件: match_id={match.id}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比赛创建事件失败: {e}")
 
 
@@ -428,7 +428,7 @@ class EventDrivenUserService:
 
             logger.debug(f"发布用户注册事件: user_id={user['id']}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布用户注册事件失败: {e}")
 
 

@@ -7,7 +7,7 @@ This module was split from the original file.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from src.core.logging import get_logger
 

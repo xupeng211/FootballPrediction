@@ -128,7 +128,7 @@ class SystemMetricsCollector:
 
         except ImportError:
             logger.warning("psutil not available, system metrics disabled")
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to update system metrics: {e}")
 
     def record_error(self, error_type: str, component: str, severity: str = "medium"):

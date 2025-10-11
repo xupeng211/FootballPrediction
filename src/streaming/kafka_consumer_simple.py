@@ -2,9 +2,8 @@
 简化的Kafka消费者实现
 """
 
-import asyncio
 import json
-from typing import Any, Dict, Optional, List, Callable, AsyncIterator
+from typing import Any, Dict, Optional, Callable, AsyncIterator
 from datetime import datetime
 
 from src.core.exceptions import StreamingError
@@ -152,7 +151,7 @@ class KafkaMessageConsumer:
                 }
 
             return deserialized
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise StreamingError(f"Failed to deserialize message: {str(e)}")
 
     def _deserialize_value(self, value: bytes) -> Any:

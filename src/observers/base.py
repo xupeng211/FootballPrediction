@@ -204,7 +204,7 @@ class Subject(ABC):
         """
         try:
             await observer.update(event)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 观察者处理失败不应影响其他观察者
             print(f"Observer {observer.name} failed to handle event: {e}")
 

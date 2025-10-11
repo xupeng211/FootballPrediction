@@ -6,7 +6,6 @@ Multi-User Database Manager
 """
 
 import asyncio
-import logging
 import os
 from contextlib import asynccontextmanager, contextmanager
 from typing import Any, AsyncGenerator, Dict, Generator, Optional
@@ -22,7 +21,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 from src.core.logging import get_logger
-from src.utils.retry import RetryConfig, retry
+from src.utils.retry import RetryConfig
 
 from .config import DatabaseConfig, get_database_config
 from .roles import DatabaseRole
@@ -126,7 +125,7 @@ class MultiUserDatabaseManager:
 
             logger.info("多用户数据库连接初始化成功")
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"多用户数据库连接初始化失败: {e}")
             raise
 
@@ -203,7 +202,7 @@ class MultiUserDatabaseManager:
 
             logger.info(f"角色 {role} 的数据库连接已初始化")
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"初始化角色 {role} 的连接失败: {e}")
             raise
 
@@ -230,7 +229,7 @@ class MultiUserDatabaseManager:
         try:
             yield session
             session.commit()
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             session.rollback()
             logger.error(f"角色 {role} 的数据库会话错误: {e}")
             raise
@@ -260,7 +259,7 @@ class MultiUserDatabaseManager:
         try:
             yield session
             await session.commit()
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             await session.rollback()
             logger.error(f"角色 {role} 的异步数据库会话错误: {e}")
             raise

@@ -4,7 +4,7 @@
 提供API速率限制功能，支持可选的slowapi集成。
 """
 
-from typing import Any, Callable
+from typing import Callable
 
 try:
     from slowapi import Limiter
