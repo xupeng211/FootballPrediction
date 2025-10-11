@@ -45,7 +45,7 @@ except ImportError:
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
-from src.database.connection_mod import initialize_database
+from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import (
     start_metrics_collection,

@@ -12,7 +12,7 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 # 类型变量
 T = TypeVar("T")

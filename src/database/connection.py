@@ -11,7 +11,7 @@ Integrates retry mechanisms to improve connection reliability.
 
 ⚠️ 注意：此文件已重构为模块化结构。
 为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.database.connection_mod import <class_name>
+建议使用：from src.database.connection import <class_name>
 
 主要类 / Main Classes:
     DatabaseManager: 单例数据库连接管理器 / Singleton database connection manager
@@ -24,7 +24,7 @@ Integrates retry mechanisms to improve connection reliability.
 
 使用示例 / Usage Example:
     ```python
-    from src.database.connection_mod import DatabaseManager
+    from src.database.connection import DatabaseManager
 
     # 初始化数据库连接
     db_manager = DatabaseManager()

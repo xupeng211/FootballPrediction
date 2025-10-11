@@ -4,7 +4,7 @@ from datetime import datetime, timezone
         from datetime import date
         from datetime import datetime, timedelta
 
-        from src.database.connection_mod import DatabaseManager
+        from src.database.connection import DatabaseManager
 
 Celery调度器配置
 

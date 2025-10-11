@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from celery import Celery
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 from src.core.logging import get_logger
 from .data_collectors import DataCollectionOrchestrator  # type: ignore
 
@@ -54,7 +54,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager  # type: ignore
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -79,7 +79,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager  # type: ignore
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -104,7 +104,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager  # type: ignore
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -134,7 +134,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager  # type: ignore
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -161,7 +161,7 @@ def emergency_data_collection_task(
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager  # type: ignore
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -197,7 +197,7 @@ def collect_historical_data_task():
 
     try:
         # 获取数据库连接
-        from src.database.connection_mod import get_db_manager
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)

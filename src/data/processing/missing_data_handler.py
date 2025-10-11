@@ -23,7 +23,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.core.config import get_settings
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 from src.database.models.features import Features
 
 

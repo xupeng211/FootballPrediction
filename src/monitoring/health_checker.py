@@ -8,7 +8,7 @@ Health Checker
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 
 

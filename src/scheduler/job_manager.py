@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 

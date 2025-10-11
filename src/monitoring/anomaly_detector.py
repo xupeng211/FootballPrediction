@@ -18,7 +18,7 @@ import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
