@@ -5,7 +5,6 @@ System Metrics Collector
 负责收集系统、数据库、缓存等各项指标。
 """
 
-import asyncio
 import psutil
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -163,7 +162,7 @@ class SystemMetricsCollector:
             )
             metrics["response_time"] = duration  # type: ignore
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             metrics["error"] = str(e)  # type: ignore
 
         return metrics
@@ -208,7 +207,7 @@ class SystemMetricsCollector:
             # 缓存大小
             self.cache_size.set(info.get("used_memory", 0))
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             metrics["error"] = str(e)  # type: ignore
 
         return metrics

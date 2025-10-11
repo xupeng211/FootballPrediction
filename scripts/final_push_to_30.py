@@ -14,7 +14,9 @@ def create_simple_max_coverage_tests():
     # 专注于最简单的测试策略：只测试导入和实例化
     simple_tests = [
         # API模块 - 只测试导入
-        ("test_api_only_imports.py", """
+        (
+            "test_api_only_imports.py",
+            """
 # API模块导入测试
 def test_api_imports():
     modules = [
@@ -32,8 +34,11 @@ def test_api_imports():
             assert True
         except ImportError:
             assert True  # 导入失败也算测试通过
-"""),
-        ("test_api_models_import.py", """
+""",
+        ),
+        (
+            "test_api_models_import.py",
+            """
 # API模型导入测试
 def test_api_models_import():
     try:
@@ -48,12 +53,14 @@ def test_api_models_creation():
         from src.api.models import APIResponse
         response = APIResponse(success=True)
         assert response.success is True
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 数据库模型 - 只测试基本功能
-        ("test_db_models_basic.py", """
+        (
+            "test_db_models_basic.py",
+            """
 # 数据库模型基本测试
 def test_db_models():
     try:
@@ -78,12 +85,14 @@ def test_db_model_creation():
         from src.database.models.league import League
         league = League(name="Test League")
         assert league.name == "Test League"
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 服务层 - 只测试导入和基本方法
-        ("test_services_basic.py", """
+        (
+            "test_services_basic.py",
+            """
 # 服务层基本测试
 def test_services_import():
     services = [
@@ -108,12 +117,14 @@ def test_base_service_methods():
         service = BaseService()
         assert service is not None
         assert hasattr(service, 'execute')
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 任务模块 - 只测试导入
-        ("test_tasks_simple.py", """
+        (
+            "test_tasks_simple.py",
+            """
 # 任务模块简单测试
 def test_tasks_import():
     tasks = [
@@ -133,10 +144,12 @@ def test_tasks_import():
             assert True
         except ImportError:
             assert True
-"""),
-
+""",
+        ),
         # 流处理 - 只测试导入
-        ("test_streaming_simple.py", """
+        (
+            "test_streaming_simple.py",
+            """
 # 流处理简单测试
 def test_streaming_import():
     streaming = [
@@ -159,12 +172,14 @@ def test_stream_config():
         from src.streaming.stream_config import StreamConfig
         config = StreamConfig()
         assert config is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 缓存 - 简单功能测试
-        ("test_cache_simple.py", """
+        (
+            "test_cache_simple.py",
+            """
 # 缓存简单测试
 def test_cache_import():
     try:
@@ -184,12 +199,14 @@ def test_ttl_cache_basic():
         result = cache.get("key")
 
         assert result == "value"
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 监控 - 简单测试
-        ("test_monitoring_simple.py", """
+        (
+            "test_monitoring_simple.py",
+            """
 # 监控简单测试
 def test_monitoring_import():
     monitoring = [
@@ -213,12 +230,14 @@ def test_monitoring_creation():
         from src.monitoring.metrics_collector import MetricsCollector
         collector = MetricsCollector()
         assert collector is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 数据处理 - 简单测试
-        ("test_data_processing_simple.py", """
+        (
+            "test_data_processing_simple.py",
+            """
 # 数据处理简单测试
 def test_data_processing_import():
     processing = [
@@ -245,10 +264,12 @@ def test_data_processing_import():
             assert True
         except ImportError:
             assert True
-"""),
-
+""",
+        ),
         # 数据库连接和配置
-        ("test_database_simple.py", """
+        (
+            "test_database_simple.py",
+            """
 # 数据库简单测试
 def test_database_import():
     db_modules = [
@@ -271,12 +292,14 @@ def test_database_connection():
         from src.database.connection import DatabaseManager
         manager = DatabaseManager()
         assert manager is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 模型和预测
-        ("test_models_simple.py", """
+        (
+            "test_models_simple.py",
+            """
 # 模型和预测简单测试
 def test_models_import():
     models = [
@@ -298,12 +321,14 @@ def test_prediction_service():
         from src.models.prediction_service import PredictionService
         service = PredictionService()
         assert service is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 工具模块 - 扩展测试
-        ("test_utils_complete.py", """
+        (
+            "test_utils_complete.py",
+            """
 # 工具模块完整测试
 def test_utils_import():
     utils = [
@@ -332,14 +357,14 @@ def test_utils_functionality():
         from src.utils.string_utils import StringUtils
         result = StringUtils.truncate("Hello World", 5)
         assert "Hello" in result
-    except:
+    except Exception:
         assert True
 
     try:
         from src.utils.crypto_utils import CryptoUtils
         token = CryptoUtils.generate_id()
         assert isinstance(token, str)
-    except:
+    except Exception:
         assert True
 
     try:
@@ -347,12 +372,14 @@ def test_utils_functionality():
         from datetime import datetime
         formatted = TimeUtils.format_datetime(datetime.now())
         assert formatted is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 核心模块
-        ("test_core_simple.py", """
+        (
+            "test_core_simple.py",
+            """
 # 核心模块简单测试
 def test_core_import():
     core = [
@@ -376,19 +403,21 @@ def test_core_functionality():
         from src.core.error_handler import ErrorHandler
         handler = ErrorHandler()
         assert handler is not None
-    except:
+    except Exception:
         assert True
 
     try:
         from src.core.logging_system import get_logger
         logger = get_logger("test")
         assert logger is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 收集器
-        ("test_collectors_simple.py", """
+        (
+            "test_collectors_simple.py",
+            """
 # 收集器简单测试
 def test_collectors_import():
     collectors = [
@@ -409,12 +438,14 @@ def test_collector_creation():
         from src.collectors.fixtures_collector import FixturesCollector
         collector = FixturesCollector()
         assert collector is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 数据质量
-        ("test_data_quality_simple.py", """
+        (
+            "test_data_quality_simple.py",
+            """
 # 数据质量简单测试
 def test_data_quality_import():
     quality = [
@@ -437,12 +468,14 @@ def test_quality_creation():
         from src.data.quality.data_quality_monitor import DataQualityMonitor
         monitor = DataQualityMonitor()
         assert monitor is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 特征工程
-        ("test_features_simple.py", """
+        (
+            "test_features_simple.py",
+            """
 # 特征工程简单测试
 def test_features_import():
     features = [
@@ -464,12 +497,14 @@ def test_feature_creation():
         from src.features.entities import FeatureEntity
         entity = FeatureEntity(entity_id="test", entity_type="team")
         assert entity.entity_id == "test"
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 中间件
-        ("test_middleware_simple.py", """
+        (
+            "test_middleware_simple.py",
+            """
 # 中间件简单测试
 def test_middleware_import():
     middleware = [
@@ -489,12 +524,14 @@ def test_middleware_creation():
         from src.middleware.i18n import I18nMiddleware
         middleware = I18nMiddleware()
         assert middleware is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 配置
-        ("test_config_simple.py", """
+        (
+            "test_config_simple.py",
+            """
 # 配置简单测试
 def test_config_import():
     config = [
@@ -515,12 +552,14 @@ def test_config_creation():
         from src.core.config import get_config
         config = get_config()
         assert config is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 安全
-        ("test_security_simple.py", """
+        (
+            "test_security_simple.py",
+            """
 # 安全简单测试
 def test_security_import():
     security = [
@@ -541,12 +580,14 @@ def test_key_manager():
         from src.security.key_manager import KeyManager
         manager = KeyManager()
         assert manager is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 机器学习
-        ("test_ml_simple.py", """
+        (
+            "test_ml_simple.py",
+            """
 # 机器学习简单测试
 def test_ml_import():
     ml = [
@@ -568,12 +609,14 @@ def test_ml_training():
         from src.ml.model_training import ModelTrainer
         trainer = ModelTrainer()
         assert trainer is not None
-    except:
+    except Exception:
         assert True
-"""),
-
+""",
+        ),
         # 实时数据处理
-        ("test_realtime_simple.py", """
+        (
+            "test_realtime_simple.py",
+            """
 # 实时数据处理简单测试
 def test_realtime_import():
     realtime = [
@@ -594,9 +637,10 @@ def test_websocket():
         from src.realtime.websocket import WebSocketHandler
         handler = WebSocketHandler()
         assert handler is not None
-    except:
+    except Exception:
         assert True
-"""),
+""",
+        ),
     ]
 
     # 创建所有简单测试文件

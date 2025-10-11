@@ -140,7 +140,7 @@ def _verify_postgresql_jsonb_config():
             else:
                 print(f"  ⚠ 表 {table_name} 不存在")
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  ❌ 检查表 {table_name} 时出错: {e}")
 
 

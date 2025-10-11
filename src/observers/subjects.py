@@ -9,7 +9,7 @@ Provides concrete implementations for various subjects.
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 from collections import defaultdict
 
 from .base import Subject, ObservableEvent, ObservableEventType

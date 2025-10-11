@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 国际化中间件
 """

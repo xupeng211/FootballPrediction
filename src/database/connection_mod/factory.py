@@ -5,13 +5,12 @@ Database Manager Factory
 提供数据库管理器的创建和初始化功能。
 """
 
-import logging
 import os
 from typing import Optional
 
 from src.core.logging import get_logger
 
-from .config import DatabaseConfig, get_database_config
+from .config import DatabaseConfig
 from .manager import DatabaseManager
 from .multi_user_manager import MultiUserDatabaseManager
 

@@ -5,7 +5,7 @@ Stream Data Processor
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from src.core.logging import get_logger
 
@@ -38,7 +38,7 @@ class StreamProcessor:
             self.stats["processed_count"] += 1
             self.stats["last_processed"] = message
             return {"status": "processed", "data": message}
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.stats["error_count"] += 1
             self.logger.error(f"Error processing message: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -135,7 +135,7 @@ class HealthChecker:
             self.is_healthy = True
             self.last_check = asyncio.get_event_loop().time()
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Health check failed: {str(e)}")
             self.is_healthy = False
             return False

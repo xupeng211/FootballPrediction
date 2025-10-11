@@ -5,7 +5,7 @@
 """
 
 import json
-from typing import Any, Union, cast
+from typing import Any, Union
 
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB

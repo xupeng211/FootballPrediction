@@ -5,7 +5,6 @@
 """
 
 import logging
-import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, Callable, Any, List, Optional
 
@@ -96,7 +95,7 @@ class AlertManager:
                     )
                     rule["last_triggered"] = now
 
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 logger.error(f"Error checking alert rule {name}: {e}")
 
     def _trigger_alert(
@@ -145,7 +144,7 @@ class AlertManager:
         for handler in self.alert_handlers:
             try:
                 handler(alert)
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 logger.error(f"Error in alert handler: {e}")
 
     def resolve_alert(self, name: str, message: str = ""):
@@ -320,7 +319,7 @@ class DefaultAlertHandlers:
                 }
 
                 requests.post(webhook_url, json=payload, timeout=5)
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 logger.error(f"Failed to send webhook alert: {e}")
 
         return handler

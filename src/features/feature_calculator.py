@@ -599,7 +599,7 @@ class FeatureCalculator:
                 # 如果是列表，转换为Series
                 series = pd.Series(data)
                 return series.rolling(window=window, min_periods=1).mean()
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             import pandas as pd
 
             return pd.Series([None] * len(data))

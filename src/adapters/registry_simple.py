@@ -38,7 +38,7 @@ class AdapterRegistry:
                 return adapter_class(config)
             else:
                 return adapter_class()
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
     def get_info(self, name: str) -> Dict:

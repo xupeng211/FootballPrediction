@@ -13,7 +13,6 @@
 - stream_processor.py: 流数据处理器
 """
 
-from typing import cast, Any, Optional, Union
 
 # 尝试导入简化版本
 try:
@@ -41,8 +40,8 @@ try:
 except ImportError:
     # 如果简化版本不存在，使用原始版本
     try:
-        from .kafka_consumer import FootballKafkaConsumer
-        from .kafka_producer import FootballKafkaProducer
+        # from .kafka_consumer import FootballKafkaConsumer  # 未使用
+        # from .kafka_producer import FootballKafkaProducer  # 未使用
         from .stream_config import StreamConfig  # type: ignore
         from .stream_processor import StreamProcessor  # type: ignore
     except ImportError:

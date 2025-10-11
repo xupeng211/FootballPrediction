@@ -122,7 +122,7 @@ def upgrade() -> None:
             postgresql_using="gin",
         )
 
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果升级失败，记录警告但不中断迁移
         print(f"Warning: Failed to upgrade JSON to JSONB: {e}")
 
@@ -223,7 +223,7 @@ def downgrade() -> None:
     try:
         op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")  # type: ignore
         op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")  # type: ignore
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 忽略索引不存在的错误，但记录日志
         print(f"Warning: Could not drop indexes during downgrade: {e}")
 

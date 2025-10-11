@@ -6,9 +6,8 @@ Data Processing Service Module
 Provides data cleaning, validation, and transformation functionality.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 import logging
-from datetime import datetime
 
 from ..base_unified import SimpleService
 # from ..data_processing import DataProcessingService as OriginalService  # 避免循环导入
@@ -56,7 +55,7 @@ class DataProcessingService(SimpleService):
         try:
             # 这里可以加载处理模型、配置等
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 

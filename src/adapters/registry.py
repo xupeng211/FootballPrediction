@@ -7,8 +7,8 @@ Manages adapter registration, discovery, and lifecycle.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Set
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from datetime import datetime
 from enum import Enum
 
 from .base import Adapter, AdapterStatus
@@ -174,7 +174,7 @@ class AdapterRegistry:
             try:
                 await adapter.initialize()
                 return True
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 return False
         return False
 
@@ -186,7 +186,7 @@ class AdapterRegistry:
                 await adapter.cleanup()
                 adapter.status = AdapterStatus.INACTIVE
                 return True
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 return False
         return False
 
@@ -198,7 +198,7 @@ class AdapterRegistry:
                 await adapter.cleanup()
                 await adapter.initialize()
                 return True
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 return False
         return False
 
@@ -210,7 +210,7 @@ class AdapterRegistry:
                 await asyncio.sleep(self.health_check_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 健康检查失败不应中断循环
                 print(f"Health check error: {e}")
                 await asyncio.sleep(self.health_check_interval)
@@ -224,7 +224,7 @@ class AdapterRegistry:
             try:
                 result = await adapter.health_check()
                 health_results[name] = result
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[name] = {
                     "adapter": name,
                     "status": "error",
@@ -236,7 +236,7 @@ class AdapterRegistry:
             try:
                 result = await group.health_check()
                 health_results[f"group:{name}"] = result
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[f"group:{name}"] = {
                     "adapter": f"group:{name}",
                     "status": "error",

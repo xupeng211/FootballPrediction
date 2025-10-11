@@ -4,7 +4,7 @@ API响应模式定义 / API Response Schemas
 定义预测API的请求和响应模式。
 """
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 

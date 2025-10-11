@@ -22,7 +22,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import websockets
@@ -196,7 +196,7 @@ class ScoresCollector:
 
             return None
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"收集比赛 {match_id} 比分失败: {e}")
             return None
 
@@ -228,7 +228,7 @@ class ScoresCollector:
 
             return scores  # type: ignore
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"收集进行中比赛比分失败: {e}")
             return []
 
@@ -261,13 +261,19 @@ class ScoresCollector:
                             self.stats["websocket_messages"] += 1
                         except json.JSONDecodeError:
                             logger.warning(f"无效的WebSocket消息: {message}")
-                        except Exception as e:
+                        except (
+                            ValueError,
+                            TypeError,
+                            AttributeError,
+                            KeyError,
+                            RuntimeError,
+                        ) as e:
                             logger.error(f"处理WebSocket消息失败: {e}")
 
             except websockets.exceptions.ConnectionClosed:
                 logger.warning("WebSocket连接已关闭，尝试重连...")
                 await asyncio.sleep(5)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"WebSocket连接失败: {e}")
                 await asyncio.sleep(10)
 
@@ -286,7 +292,7 @@ class ScoresCollector:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"HTTP轮询失败: {e}")
                 await asyncio.sleep(5)
 
@@ -313,7 +319,7 @@ class ScoresCollector:
                     # 处理比赛事件（进球、红牌等）
                     await self._handle_match_event(data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"处理WebSocket消息失败: {e}")
 
     async def _fetch_match_score_from_api(
@@ -326,7 +332,7 @@ class ScoresCollector:
                 score_data = await self._fetch_from_source(source_name, match_id)
                 if score_data:
                     return score_data  # type: ignore
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.warning(f"从 {source_name} 获取比赛 {match_id} 比分失败: {e}")
                 continue
 
@@ -456,7 +462,7 @@ class ScoresCollector:
 
             return None
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"处理比赛 {match_id} 比分数据失败: {e}")
             return None
 
@@ -543,7 +549,7 @@ class ScoresCollector:
 
             logger.debug(f"保存比赛 {score_data['match_id']} 比分数据成功")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             await self.db_session.rollback()
             self.stats["failed_updates"] += 1
             logger.error(f"保存比分数据失败: {e}")
@@ -569,7 +575,7 @@ class ScoresCollector:
                 "scores:global_updates", json.dumps(message)
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比分更新失败: {e}")
 
     async def _handle_match_event(self, event_data: Dict[str, Any]):
@@ -629,7 +635,7 @@ class ScoresCollector:
 
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"清理缓存失败: {e}")
                 await asyncio.sleep(300)
 

@@ -1,0 +1,259 @@
+"""
+预测服务测试
+
+测试重构后的预测服务功能
+"""
+
+# 可选依赖导入
+try:
+    from src.dependencies.optional import *
+except ImportError:
+    pass
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime
+
+from src.models.prediction_service_refactored import PredictionServiceRefactored
+from src.models.prediction.core import PredictionConfig, PredictionResult
+
+
+@pytest.fixture
+def prediction_service():
+    """创建预测服务实例"""
+    config = PredictionConfig()
+    service = PredictionServiceRefactored(config)
+    return service
+
+
+@pytest.fixture
+def mock_match_info():
+    """模拟比赛信息"""
+    return {
+        "match_id": 12345,
+        "home_team_id": 1,
+        "away_team_id": 2,
+        "league_id": 1,
+        "match_date": "2024-01-01T20:00:00",
+    }
+
+
+@pytest.fixture
+def mock_prediction_result():
+    """模拟预测结果"""
+    return PredictionResult(
+        match_id=12345,
+        model_version="1",
+        model_name="football_baseline_model",
+        home_win_probability=0.5,
+        draw_probability=0.3,
+        away_win_probability=0.2,
+        predicted_result="home",
+        confidence_score=0.5,
+        features_used={"feature1": 1.0},
+        prediction_metadata={},
+        created_at=datetime.now(),
+    )
+
+
+class TestPredictionServiceRefactored:
+    """测试重构后的预测服务"""
+
+    @pytest.mark.asyncio
+    async def test_predict_match_success(self, prediction_service, mock_match_info):
+        """测试成功预测比赛"""
+        # 模拟模型提供者
+        mock_model = MagicMock()
+        mock_model.predict_proba.return_value = [[0.5, 0.3, 0.2]]
+        mock_model.predict.return_value = ["home"]
+
+        with patch.object(
+            prediction_service.model_provider,
+            "get_production_model",
+            new_callable=AsyncMock,
+        ) as mock_get_model:
+            mock_get_model.return_value = (mock_model, "1")
+
+            with patch.object(
+                prediction_service.prediction_cache, "get_async", new_callable=AsyncMock
+            ) as mock_cache_get:
+                mock_cache_get.return_value = None  # 缓存未命中
+
+                with patch.object(
+                    prediction_service.prediction_cache,
+                    "set_async",
+                    new_callable=AsyncMock,
+                ) as mock_cache_set:
+                    # 执行预测
+                    result = await prediction_service.predict_match(
+                        match_id=12345, match_info=mock_match_info
+                    )
+
+                    # 验证结果
+                    assert result.match_id == 12345
+                    assert result.predicted_result == "home"
+                    assert result.confidence_score == 0.5
+                    assert result.model_version == "1"
+
+                    # 验证缓存被调用
+                    mock_cache_get.assert_called_once()
+                    mock_cache_set.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_predict_match_cache_hit(
+        self, prediction_service, mock_match_info, mock_prediction_result
+    ):
+        """测试预测缓存命中"""
+        with patch.object(
+            prediction_service.prediction_cache, "get_async", new_callable=AsyncMock
+        ) as mock_cache_get:
+            mock_cache_get.return_value = mock_prediction_result
+
+            # 执行预测
+            result = await prediction_service.predict_match(
+                match_id=12345, match_info=mock_match_info
+            )
+
+            # 验证返回缓存结果
+            assert result == mock_prediction_result
+
+            # 验证模型提供者未被调用
+            mock_model_provider = prediction_service.model_provider
+            with patch.object(
+                mock_model_provider, "get_production_model"
+            ) as mock_get_model:
+                mock_get_model.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_batch_predict_matches(self, prediction_service):
+        """测试批量预测比赛"""
+        matches = [
+            {"match_id": 1, "home_team_id": 1, "away_team_id": 2},
+            {"match_id": 2, "home_team_id": 3, "away_team_id": 4},
+            {"match_id": 3, "home_team_id": 5, "away_team_id": 6},
+        ]
+
+        mock_model = MagicMock()
+        mock_model.predict_proba.return_value = [
+            [0.4, 0.3, 0.3],
+            [0.6, 0.2, 0.2],
+            [0.3, 0.4, 0.3],
+        ]
+        mock_model.predict.return_value = ["home", "home", "draw"]
+
+        with patch.object(
+            prediction_service.model_provider,
+            "get_production_model",
+            new_callable=AsyncMock,
+        ) as mock_get_model:
+            mock_get_model.return_value = (mock_model, "1")
+
+            with patch.object(
+                prediction_service.prediction_cache,
+                "get_async",
+                new_callable=AsyncMock,
+                return_value=None,
+            ):
+                with patch.object(
+                    prediction_service.prediction_cache,
+                    "set_async",
+                    new_callable=AsyncMock,
+                ):
+                    # 执行批量预测
+                    results = await prediction_service.batch_predict_matches(matches)
+
+                    # 验证结果
+                    assert len(results) == 3
+                    assert results[0].match_id == 1
+                    assert results[1].match_id == 2
+                    assert results[2].match_id == 3
+
+                    # 验证模型只加载一次
+                    mock_get_model.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_prediction_history(
+        self, prediction_service, mock_prediction_result
+    ):
+        """测试获取预测历史"""
+        # 添加一些历史记录
+        prediction_service.prediction_history = [
+            mock_prediction_result,
+            mock_prediction_result,
+            mock_prediction_result,
+        ]
+
+        # 获取所有历史
+        history = await prediction_service.get_prediction_history()
+        assert len(history) == 3
+
+        # 限制数量
+        history = await prediction_service.get_prediction_history(limit=2)
+        assert len(history) == 2
+
+        # 时间过滤
+        history = await prediction_service.get_prediction_history(hours=24)
+        assert len(history) == 3
+
+    @pytest.mark.asyncio
+    async def test_get_prediction_stats(
+        self, prediction_service, mock_prediction_result
+    ):
+        """测试获取预测统计"""
+        # 添加历史记录
+        prediction_service.prediction_history = [mock_prediction_result]
+
+        with patch.object(
+            prediction_service,
+            "get_prediction_history",
+            new_callable=AsyncMock,
+            return_value=[mock_prediction_result],
+        ):
+            stats = await prediction_service.get_prediction_stats(hours=24)
+
+            assert stats["total_predictions"] == 1
+            assert stats["period_hours"] == 24
+            assert "avg_confidence" in stats
+            assert "result_distribution" in stats
+
+    @pytest.mark.asyncio
+    async def test_health_check(self, prediction_service):
+        """测试健康检查"""
+        with patch.object(
+            prediction_service.model_provider,
+            "get_production_model",
+            new_callable=AsyncMock,
+        ) as mock_get_model:
+            mock_get_model.return_value = (MagicMock(), "1")
+
+            health = await prediction_service.health_check()
+
+            assert health["service"] == "prediction_service"
+            assert "status" in health
+            assert "components" in health
+            assert "stats" in health
+
+    @pytest.mark.asyncio
+    async def test_cleanup_cache(self, prediction_service):
+        """测试清理缓存"""
+        with patch.object(
+            prediction_service.prediction_cache, "clear", new_callable=AsyncMock
+        ) as mock_clear_cache:
+            with patch.object(
+                prediction_service.model_provider.model_cache,
+                "clear",
+                new_callable=AsyncMock,
+            ) as mock_clear_model_cache:
+                await prediction_service.cleanup_cache()
+
+                mock_clear_cache.assert_called_once()
+                mock_clear_model_cache.assert_called_once()
+
+    def test_backward_compatibility_predict(self, prediction_service, mock_match_info):
+        """测试向后兼容的预测方法"""
+        with pytest.warns(DeprecationWarning):
+            result = prediction_service.predict(mock_match_info)
+
+            assert "match_id" in result
+            assert "predicted_result" in result
+            assert "probabilities" in result

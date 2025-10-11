@@ -6,11 +6,10 @@ Alert Aggregator
 """
 
 import logging
-from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set
 
-from .models import Alert, AlertStatus
+from .models import Alert
 
 logger = logging.getLogger(__name__)
 

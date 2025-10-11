@@ -6,13 +6,11 @@ Statistical Strategy
 Strategy implementation using statistical methods and mathematical models for prediction.
 """
 
-import asyncio
 import time
 import math
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Tuple
 import numpy as np
-from datetime import datetime, timedelta
-from collections import defaultdict
+from datetime import datetime
 
 from .base import (
     PredictionStrategy,
@@ -21,7 +19,6 @@ from .base import (
     StrategyType,
     StrategyMetrics,
 )
-from ..models.match import Match
 from ..models.prediction import Prediction
 
 

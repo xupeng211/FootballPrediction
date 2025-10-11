@@ -6,11 +6,9 @@ Historical Strategy
 Strategy based on historical match data and similar scenarios.
 """
 
-import asyncio
 import time
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
-from collections import defaultdict, Counter
+from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
 
@@ -21,7 +19,6 @@ from .base import (
     StrategyType,
     StrategyMetrics,
 )
-from ..models.match import Match
 from ..models.prediction import Prediction
 
 

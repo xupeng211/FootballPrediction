@@ -5,11 +5,9 @@
 """
 
 import logging
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .exceptions import MissingValueException
 
@@ -84,7 +82,7 @@ class MissingValueHandler:
             )
             return processed_records
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理缺失值失败 {table_name}: {str(e)}")
             raise MissingValueException(
                 f"处理缺失值失败: {str(e)}", table_name=table_name
@@ -130,7 +128,7 @@ class MissingValueHandler:
 
             return record
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理比赛缺失值失败: {str(e)}")
             raise MissingValueException(
                 f"处理比赛缺失值失败: {str(e)}",
@@ -175,7 +173,7 @@ class MissingValueHandler:
 
             return record
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理赔率缺失值失败: {str(e)}")
             raise MissingValueException(
                 f"处理赔率缺失值失败: {str(e)}",
@@ -223,7 +221,7 @@ class MissingValueHandler:
 
                 return float(row.avg_score) if row and row.avg_score else None
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取历史平均进球数失败: {str(e)}")
             return None
 
@@ -285,7 +283,7 @@ class MissingValueHandler:
 
                 return float(row.avg_odds) if row and row.avg_odds else None
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取历史平均赔率失败: {str(e)}")
             return None
 
@@ -301,7 +299,7 @@ class MissingValueHandler:
                 table_name, missing_counts, self.config
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录缺失值处理日志失败: {str(e)}")
 
     def update_config(self, new_config: Dict[str, Any]) -> None:

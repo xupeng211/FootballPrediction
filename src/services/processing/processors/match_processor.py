@@ -61,7 +61,7 @@ class MatchProcessor:
                 # 单个处理
                 return await self._process_single_match_data(raw_data)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理原始比赛数据失败: {e}", exc_info=True)
             return None
 
@@ -94,7 +94,7 @@ class MatchProcessor:
 
             return enriched_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理单个比赛数据失败: {e}", exc_info=True)
             return None
 

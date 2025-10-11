@@ -5,10 +5,9 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from datetime import datetime, timedelta
 from dataclasses import dataclass
-import logging
 
 from src.core.logging import get_logger
 
@@ -29,7 +28,6 @@ if TYPE_CHECKING:
 # )
 # from src.domain_simple import Match, Prediction, Team, League, User
 from src.patterns.adapter import UnifiedDataCollector
-from src.services.enhanced_core import EnhancedBaseService, ServiceConfig
 
 
 @dataclass
@@ -114,7 +112,7 @@ class PredictionFacade:
                 recommendations=recommendations,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Prediction failed: {str(e)}")
             raise
 
@@ -171,7 +169,7 @@ class PredictionFacade:
             # 收集比赛相关数据
             match_data = await self.data_collector.collect_match_data(match_id)
             data["external"] = match_data
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.warning(f"Failed to collect external data: {str(e)}")
 
         return data
@@ -314,7 +312,7 @@ class DataCollectionFacade:
 
             self.logger.info(f"Data sync completed: {results}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Data sync failed: {str(e)}")
             results["error"] = str(e)  # type: ignore
 
@@ -354,7 +352,7 @@ class DataCollectionFacade:
 
             health["last_sync"] = datetime.now()  # type: ignore
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get data health: {str(e)}")
             health["overall_health"] = "error"
             health["error"] = str(e)

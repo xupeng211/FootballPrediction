@@ -5,7 +5,7 @@ API响应工具类
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 

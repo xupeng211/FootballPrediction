@@ -5,10 +5,9 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
-import logging
 
 from src.core.logging import get_logger
 
@@ -86,7 +85,7 @@ class PredictionFacade:
                 recommendations=recommendations,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Prediction failed: {str(e)}")
             raise
 
@@ -251,7 +250,7 @@ class DataCollectionFacade:
 
             self.logger.info(f"Data sync completed: {results}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Data sync failed: {str(e)}")
             results["error"] = str(e)  # type: ignore
 

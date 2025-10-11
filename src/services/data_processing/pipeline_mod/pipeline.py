@@ -8,7 +8,7 @@ This module was split from the original file.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .stages import BronzeToSilverProcessor, SilverToGoldProcessor
 from src.core.logging import get_logger

@@ -9,7 +9,7 @@ Provides automatic binding from interfaces to implementations.
 
 import inspect
 import importlib
-from typing import Dict, List, Type, TypeVar, Optional, Any, get_type_hints
+from typing import Dict, List, Type, TypeVar, Optional
 from pathlib import Path
 import logging
 from dataclasses import dataclass
@@ -151,7 +151,7 @@ class AutoBinder:
                 module = importlib.import_module(module_name)
                 self._scan_module(module)
                 self._scanned_modules.append(module_name)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"扫描模块失败 {module_name}: {e}")
 
         if recursive:
@@ -229,7 +229,7 @@ class AutoBinder:
 
                     if self._is_implementation(obj, interface):
                         implementations.append(obj)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"查找实现失败 {module_name}: {e}")
 
         # 缓存结果

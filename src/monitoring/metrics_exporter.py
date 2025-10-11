@@ -8,7 +8,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -413,11 +413,11 @@ class MetricsExporter:
                             float(row_count) if row_count is not None else 0.0
                         )
 
-                    except Exception as e:
+                    except (ValueError, RuntimeError, TimeoutError) as e:
                         logger.error(f"获取表 {table_name} 行数失败: {e}")
                         continue
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"更新表行数统计失败: {e}")
 
     async def update_table_row_counts_async(self) -> None:
@@ -450,7 +450,7 @@ class MetricsExporter:
                             count
                         )
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"更新数据库指标失败: {e}")
 
     async def collect_all_metrics(self) -> None:
@@ -471,7 +471,7 @@ class MetricsExporter:
 
             logger.info("监控指标收集完成")
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"收集监控指标失败: {e}")
 
         duration = time.time() - start_time

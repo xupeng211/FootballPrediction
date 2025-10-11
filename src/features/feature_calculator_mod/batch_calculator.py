@@ -8,7 +8,6 @@ import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .recent_performance import RecentPerformanceCalculator
 

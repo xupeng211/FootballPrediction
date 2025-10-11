@@ -5,9 +5,8 @@ Health Checker
 检查各个系统的健康状态。
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 from src.database.connection_mod import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
@@ -84,7 +83,7 @@ class HealthChecker:
                         "warning"
                     ] = f"Connection pool overflow: {pool.overflow}"
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
             health["details"]["error"] = str(e)  # type: ignore
 
@@ -147,7 +146,7 @@ class HealthChecker:
                         "warning"
                     ] = f"High memory usage: {memory_percent:.2f}%"
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
             health["details"]["error"] = str(e)  # type: ignore
 
@@ -237,7 +236,7 @@ class HealthChecker:
                     "error"
                 ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
             health["details"]["error"] = str(e)  # type: ignore
 
@@ -297,7 +296,7 @@ class HealthChecker:
                 health["status"] = HealthStatus.DEGRADED
                 health["details"]["errors"] = f"Recent errors: {recent_errors}"  # type: ignore
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
             health["details"]["error"] = str(e)  # type: ignore
 
@@ -306,11 +305,8 @@ class HealthChecker:
     def _check_recent_errors(self, minutes: int = 5) -> int:
         """检查最近的错误日志数量"""
         try:
-            import logging
-            from datetime import timedelta
-
             # 这里应该实现实际的日志检查逻辑
             # 暂时返回0
             return 0
-        except Exception:
+        except (ValueError, RuntimeError, TimeoutError):
             return 0

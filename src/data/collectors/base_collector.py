@@ -14,7 +14,7 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -234,7 +234,7 @@ class DataCollector(ABC):
                     params=params,
                     json_data=json_data,
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(
                     f"Request failed for {url}, attempt {attempt + 1}: {str(e)}"
                 )
@@ -336,7 +336,13 @@ class DataCollector(ABC):
                         session.add(bronze_record)
                         saved_count += 1
 
-                    except Exception as e:
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ) as e:
                         self.logger.error(f"Failed to create Bronze record: {str(e)}")
                         continue
 
@@ -347,7 +353,7 @@ class DataCollector(ABC):
                     f"Successfully saved {saved_count}/{len(raw_data)} records to {table_name}"
                 )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"{e}")
             return None
 
@@ -401,7 +407,7 @@ class DataCollector(ABC):
                 await session.refresh(log_entry)
                 return log_entry.id  # type: ignore
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to create collection log: {str(e)}")
             return 0
 
@@ -447,7 +453,7 @@ class DataCollector(ABC):
                     )
                     await session.commit()
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to update collection log: {str(e)}")
 
     async def collect_all_data(self) -> Dict[str, CollectionResult]:
@@ -481,7 +487,7 @@ class DataCollector(ABC):
                 # 更新采集日志
                 await self._update_collection_log(log_id, result)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(f"Failed to collect {data_type}: {str(e)}")
                 error_result = CollectionResult(
                     data_source=self.data_source,

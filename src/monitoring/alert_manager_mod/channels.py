@@ -93,7 +93,7 @@ class AlertChannelManager:
                 for handler in self.channels[channel]:
                     try:
                         handler.handle(alert)
-                    except Exception as e:
+                    except (ValueError, RuntimeError, TimeoutError) as e:
                         logger.error(f"Failed to send alert via {channel.value}: {e}")
 
     def get_channel_status(self) -> Dict[str, Any]:
@@ -135,7 +135,7 @@ class AlertChannelManager:
             manager.add_channel(
                 AlertChannel.PROMETHEUS, PrometheusHandler(prometheus_metrics)
             )
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.warning(f"Failed to initialize Prometheus channel: {e}")
 
         return manager

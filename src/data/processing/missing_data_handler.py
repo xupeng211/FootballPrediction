@@ -16,7 +16,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from sqlalchemy import func, select
@@ -131,7 +131,7 @@ class MissingDataHandler:
 
             return features_df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
                 f"Failed to handle missing features for match {match_id}: {str(e)}"
             )
@@ -269,7 +269,7 @@ class MissingDataHandler:
         try:
             # 使用线性插值
             return data.interpolate(method="linear")
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to interpolate time series data: {str(e)}")
             return data
 
@@ -298,7 +298,7 @@ class MissingDataHandler:
 
             return cleaned_df
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to remove rows with missing data: {str(e)}")
             return df
 

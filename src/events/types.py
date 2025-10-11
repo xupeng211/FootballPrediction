@@ -9,8 +9,7 @@ Defines core event types in the system.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional, Type, Union
-from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
 from .base import Event, EventData
 

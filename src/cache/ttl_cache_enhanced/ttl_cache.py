@@ -414,7 +414,7 @@ class TTLCache:
                 await asyncio.sleep(self.cleanup_interval)
             except asyncio.CancelledError:
                 break
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 logger.error(f"自动清理失败: {e}")
                 await asyncio.sleep(5)
 

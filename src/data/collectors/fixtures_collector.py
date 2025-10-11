@@ -13,11 +13,8 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-import asyncio
-import logging
 
 from .base_collector import DataCollector, CollectionResult
 
@@ -140,12 +137,24 @@ class FixturesCollector(DataCollector):
                                     f"Invalid fixture data: {fixture_data}"
                                 )
 
-                        except Exception as e:
+                        except (
+                            ValueError,
+                            TypeError,
+                            AttributeError,
+                            KeyError,
+                            RuntimeError,
+                        ) as e:
                             error_count += 1
                             error_messages.append(f"Error processing fixture: {str(e)}")
                             self.logger.error(f"Error processing fixture: {str(e)}")
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     error_count += 1
                     error_messages.append(
                         f"Error collecting league {league_code}: {str(e)}"
@@ -188,7 +197,7 @@ class FixturesCollector(DataCollector):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Fixtures collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
@@ -246,7 +255,7 @@ class FixturesCollector(DataCollector):
             # 可以通过配置文件或数据库动态调整
             self.logger.info(f"使用活跃联赛列表: {active_leagues}")
             return active_leagues
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get active leagues: {str(e)}")
             return ["PL", "PD"]  # 默认返回英超和西甲
 
@@ -276,7 +285,7 @@ class FixturesCollector(DataCollector):
             #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
             #     self._processed_matches = {row.match_id for row in result}
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to load existing matches: {str(e)}")
             self._processed_matches = set()
 
@@ -308,7 +317,7 @@ class FixturesCollector(DataCollector):
 
             return response.get(str("matches"), [])  # type: ignore
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
                 f"Failed to collect fixtures for league {league_code}: {str(e)}"
             )
@@ -377,7 +386,7 @@ class FixturesCollector(DataCollector):
 
             return cleaned_data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to clean fixture data: {str(e)}")
             return None
 
@@ -408,5 +417,5 @@ class FixturesCollector(DataCollector):
                 f"Found {len(self._missing_matches)} missing matches"
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to detect missing matches: {str(e)}")

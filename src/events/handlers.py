@@ -138,7 +138,13 @@ class CacheInvalidationHandler(EventHandler):
                 try:
                     # 这里应该调用实际的缓存失效方法
                     logger.info(f"Invalidating cache pattern: {pattern}")
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     logger.error(f"Failed to invalidate cache {pattern}: {e}")
 
     def get_handled_events(self) -> List[str]:

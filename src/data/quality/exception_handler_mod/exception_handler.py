@@ -96,7 +96,7 @@ class DataQualityExceptionHandler:
             return await self.missing_value_handler.handle_missing_values(
                 table_name, records
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理缺失值失败: {str(e)}")
             await self.quality_logger.log_exception(
                 "missing_value_handling", table_name, str(e)
@@ -119,7 +119,7 @@ class DataQualityExceptionHandler:
             return await self.suspicious_odds_handler.handle_suspicious_odds(
                 odds_records
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理可疑赔率失败: {str(e)}")
             await self.quality_logger.log_exception(
                 "suspicious_odds_handling", "odds", str(e)
@@ -149,7 +149,7 @@ class DataQualityExceptionHandler:
             return await self.invalid_data_handler.handle_invalid_data(
                 table_name, invalid_records, error_type
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理无效数据失败: {str(e)}")
             await self.quality_logger.log_exception(
                 "invalid_data_handling", table_name, str(e)
@@ -206,7 +206,7 @@ class DataQualityExceptionHandler:
         """
         try:
             return await self.statistics_provider.get_handling_statistics(period_hours)  # type: ignore
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取处理统计失败: {str(e)}")
             return {
                 "period_hours": period_hours,
@@ -263,7 +263,7 @@ class DataQualityExceptionHandler:
 
             return dashboard
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取质量仪表板失败: {str(e)}")
             return {
                 "error": str(e),
@@ -306,7 +306,7 @@ class DataQualityExceptionHandler:
 
             return report
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"生成质量报告失败: {str(e)}")
             raise DataQualityException(
                 f"生成质量报告失败: {str(e)}", error_code="QUALITY_REPORT_ERROR"

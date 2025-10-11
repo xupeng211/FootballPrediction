@@ -9,7 +9,7 @@ from typing import List
 # 导入RedisManager和DatabaseManager
 try:
     from src.cache.redis_manager import RedisManager
-    from src.database.connection_mod import DatabaseManager
+    # from src.database.connection_mod import DatabaseManager
 except ImportError:
     RedisManager = None
     DatabaseManager = None

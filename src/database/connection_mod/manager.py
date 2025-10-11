@@ -6,10 +6,9 @@ Database Connection Manager
 """
 
 import asyncio
-import logging
 import os
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncGenerator, Dict, Generator, Optional, cast
+from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.ext.asyncio import (
@@ -163,7 +162,7 @@ class DatabaseManager:
 
             logger.info("数据库连接初始化成功")
 
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.error(f"数据库连接初始化失败: {e}")
             raise
 
@@ -231,7 +230,7 @@ class DatabaseManager:
         try:
             yield session
             session.commit()
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             session.rollback()
             logger.error(f"数据库会话错误: {e}")
             raise
@@ -261,7 +260,7 @@ class DatabaseManager:
         try:
             yield session
             await session.commit()
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             await session.rollback()
             logger.error(f"异步数据库会话错误: {e}")
             raise

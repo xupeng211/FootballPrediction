@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type, TypeVar, Generic
 from src.core.exceptions import AdapterError
-from src.adapters.base import BaseAdapter
+# from src.adapters.base import BaseAdapter
 
 
 class TestBaseAdapter:

@@ -6,7 +6,6 @@ Event-Driven Application Initialization
 Provides event system initialization and lifecycle management.
 """
 
-import asyncio
 import logging
 from typing import Optional
 
@@ -50,7 +49,7 @@ class EventDrivenApplication:
             self._initialized = True
             logger.info("事件驱动应用程序初始化完成")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"事件系统初始化失败: {e}")
             raise
 
@@ -68,7 +67,7 @@ class EventDrivenApplication:
             self._initialized = False
             logger.info("事件驱动应用程序已关闭")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"事件系统关闭失败: {e}")
 
     async def _register_custom_handlers(self) -> None:

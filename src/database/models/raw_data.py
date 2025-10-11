@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, JSON, func
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 from sqlalchemy.orm import validates
 from ..base import BaseModel
 from ..types import JsonbType
@@ -82,7 +82,7 @@ class RawMatchData(BaseModel):
                 else:
                     return None
             return value
-        except Exception:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
             return None
 
     def __repr__(self) -> str:
@@ -163,7 +163,7 @@ class RawOddsData(BaseModel):
                     odds_dict[name] = float(price)
 
             return odds_dict if odds_dict else None
-        except Exception:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
             return None
 
     def __repr__(self) -> str:
@@ -266,7 +266,7 @@ class RawScoresData(BaseModel):
                 "half_time_away": self.raw_data.get("half_time_away"),
                 "events": self.raw_data.get(str("events"), []),  # 进球、黄牌等事件
             }
-        except Exception:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError):
             return None
 
     def get_latest_events(self, event_type: Optional[str] = None) -> list:

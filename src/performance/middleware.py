@@ -10,7 +10,6 @@ Performance Monitoring Middleware
 - 端点性能分析
 """
 
-import asyncio
 import time
 from typing import Callable, Dict, List, Optional
 
@@ -90,7 +89,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         try:
             body = await request.body()
             request_size = len(body)
-        except Exception:
+        except (ValueError, RuntimeError, TimeoutError):
             pass
 
         try:
@@ -106,7 +105,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             if hasattr(response, "body"):
                 try:
                     response_size = len(response.body)
-                except Exception:
+                except (ValueError, RuntimeError, TimeoutError):
                     pass
 
             # 记录端点性能
@@ -154,7 +153,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
             return response  # type: ignore
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             # 记录异常
             end_time = time.perf_counter()
             duration = end_time - start_time

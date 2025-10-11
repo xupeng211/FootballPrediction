@@ -8,10 +8,10 @@ Manages observers and subjects centrally.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional
 from datetime import datetime
 
-from .base import Observer, Subject, ObservableEvent, ObservableEventType
+from .base import Observer, Subject, ObservableEventType
 from .observers import (
     MetricsObserver,
     LoggingObserver,
@@ -211,7 +211,7 @@ class ObserverManager:
                 # 等待30秒
                 await asyncio.sleep(30)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"收集系统指标失败: {e}")
                 await asyncio.sleep(5)
 
@@ -227,7 +227,7 @@ class ObserverManager:
                 # 等待60秒
                 await asyncio.sleep(60)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"性能检查失败: {e}")
                 await asyncio.sleep(5)
 

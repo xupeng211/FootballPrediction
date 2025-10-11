@@ -15,7 +15,7 @@ Create Date: 2025-09-12 12:48:23.849021
 
 """
 
-from typing import Sequence, Union, cast
+from typing import Sequence, Union
 
 from alembic import context, op
 from sqlalchemy import text
@@ -163,7 +163,7 @@ def _implement_postgresql_partitioning_and_indexes():
             print("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
             # 在实际部署中，需要先创建分区表，再迁移数据
 
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"  分区检查失败: {e}")
 
     # 4. 创建年度分区（示例）
@@ -171,7 +171,7 @@ def _implement_postgresql_partitioning_and_indexes():
     for year in range(2020, current_year + 2):
         try:
             op.execute(text(f"SELECT create_match_partition({year})"))
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  创建分区 {year} 失败: {e}")
 
     # 5. 创建月度分区（最近12个月）
@@ -181,7 +181,7 @@ def _implement_postgresql_partitioning_and_indexes():
                 continue
             try:
                 op.execute(text(f"SELECT create_prediction_partition({year}, {month})"))
-            except Exception as e:
+            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 print(f"  创建预测分区 {year}-{month:02d} 失败: {e}")
 
     # 6. 实现PostgreSQL高级索引
@@ -242,7 +242,7 @@ def _create_postgresql_advanced_indexes():
     for idx in advanced_indexes:
         try:
             _create_index_if_not_exists(**idx)
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  创建索引 {idx['name']} 失败: {e}")
 
 
@@ -293,7 +293,7 @@ def _implement_sqlite_optimized_indexes():
     for idx in sqlite_indexes:
         try:
             _create_simple_index(**idx)
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  创建SQLite索引 {idx['name']} 失败: {e}")
 
 
@@ -316,7 +316,7 @@ def _implement_basic_indexes():
     for idx in basic_indexes:
         try:
             _create_simple_index(**idx)
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  创建基础索引 {idx['name']} 失败: {e}")
 
 
@@ -362,7 +362,7 @@ def _create_simple_index(name, table, columns):
     try:
         op.create_index(name, table, columns)
         print(f"  ✓ 已创建索引: {name}")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         if "already exists" in str(e).lower():
             print(f"  索引 {name} 已存在，跳过创建")
         else:
@@ -416,7 +416,7 @@ def _downgrade_postgresql_features():
         try:
             op.execute(text(f"DROP INDEX IF EXISTS {idx_name}"))
             print(f"  ✓ 已删除索引: {idx_name}")
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  删除索引 {idx_name} 失败: {e}")
 
 
@@ -437,5 +437,5 @@ def _downgrade_sqlite_features():
         try:
             op.drop_index(idx_name)
             print(f"  ✓ 已删除索引: {idx_name}")
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"  删除索引 {idx_name} 失败: {e}")

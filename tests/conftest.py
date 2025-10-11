@@ -2,12 +2,54 @@
 pytest配置文件
 """
 
+import warnings
+import os
+import sys
+
+
+# 配置警告过滤器 - 必须在其他导入之前
+def configure_warnings():
+    """配置测试期间的警告过滤器"""
+
+    # 过滤 MonkeyPatchWarning (来自 locust/gevent)
+    try:
+        from gevent import monkey
+
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message=".*Monkey-patching ssl after ssl has already been imported.*",
+        )
+    except ImportError:
+        pass
+
+    # 过滤 DeprecationWarning
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        message=".*直接从 error_handler 导入已弃用.*",
+    )
+
+    # 过滤 RuntimeWarning 来自 optional.py
+    warnings.filterwarnings(
+        "ignore",
+        category=RuntimeWarning,
+        message=".*导入.*时发生意外错误.*",
+        module=r"src\.dependencies\.optional",
+    )
+
+    # 设置环境变量
+    os.environ["GEVENT_SUPPRESS_RAGWARN"] = "1"
+
+
+# 立即配置警告
+configure_warnings()
+
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from typing import Generator, Any
 import tempfile
-import os
 
 
 # 设置异步测试模式

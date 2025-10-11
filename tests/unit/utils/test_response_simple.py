@@ -1,6 +1,6 @@
 """API响应工具简单测试"""
 
-from src.utils.response import APIResponse
+# from src.utils.response import APIResponse
 
 
 class TestResponseSimple:

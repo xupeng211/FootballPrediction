@@ -6,7 +6,7 @@ Audit Service Core
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.core.logging import get_logger
@@ -55,7 +55,7 @@ class AuditService:
 
             self.logger.info("审计服务初始化成功")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"审计服务初始化失败: {str(e)}")
             return False
 
@@ -234,7 +234,7 @@ class AuditService:
 
             return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录审计日志失败: {str(e)}")
             return False
 
@@ -290,7 +290,7 @@ class AuditService:
                 async_save=True,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"异步记录操作失败: {str(e)}")
             return False
 
@@ -332,7 +332,7 @@ class AuditService:
                 )
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录操作失败: {str(e)}")
             return False
 
@@ -395,7 +395,7 @@ class AuditService:
                 end_date=end_date,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取用户审计摘要失败: {str(e)}")
             return AuditLogSummary(  # type: ignore
                 user_id=user_id,

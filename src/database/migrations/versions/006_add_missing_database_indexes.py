@@ -53,7 +53,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_recent_matches 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_recent_matches 索引创建失败: {e}")
 
     # ========================================
@@ -71,7 +71,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_team_matches 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_team_matches 索引创建失败: {e}")
 
     # ========================================
@@ -89,7 +89,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_predictions_lookup 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
 
     # ========================================
@@ -107,7 +107,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_odds_match_collected 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_odds_match_collected 索引创建失败: {e}")
 
     # ========================================
@@ -128,7 +128,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_matches_status_time 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_matches_status_time 索引创建失败: {e}")
 
     # teams 表查询优化（如果表存在）
@@ -142,7 +142,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_teams_league 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_teams_league 索引创建失败 (可能表不存在): {e}")
 
     # odds 表的博彩商索引
@@ -156,7 +156,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_odds_bookmaker_time 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_odds_bookmaker_time 索引创建失败: {e}")
 
     # features 表的时间索引（如果表存在）
@@ -170,7 +170,7 @@ def upgrade() -> None:
             )
         )
         print("   ✅ idx_features_created_at 索引创建成功")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ idx_features_created_at 索引创建失败 (可能表不存在): {e}")
 
     # ========================================
@@ -207,7 +207,7 @@ def upgrade() -> None:
         for row in result:
             print(f"   - {row[2]} on {row[1]}")
 
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         print(f"   ❌ 验证索引失败: {e}")
 
     print("✅ 数据库索引优化迁移完成！")
@@ -245,7 +245,7 @@ def downgrade() -> None:
         try:
             conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))  # type: ignore
             print(f"   ✅ 删除索引: {index_name}")
-        except Exception as e:
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             print(f"   ❌ 删除索引失败 {index_name}: {e}")
 
     print("✅ 数据库索引回滚完成！")

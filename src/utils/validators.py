@@ -3,7 +3,7 @@ Data validators
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 def is_valid_email(email: str) -> bool:

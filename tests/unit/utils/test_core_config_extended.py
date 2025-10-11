@@ -7,12 +7,21 @@ except ImportError:
 
 
 try:
-    from src.core.error_handler import ErrorHandler
+    # 使用新的导入路径避免 DeprecationWarning
+    from src.core.error_handling import ErrorHandler
 except ImportError:
-    # 如果导入失败，创建简单的mock类用于测试
-    class ErrorHandler:
-        def handle_error(self, error):
-            pass
+    try:
+        # 向后兼容
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from src.core.error_handler import ErrorHandler
+    except ImportError:
+        # 如果导入失败，创建简单的mock类用于测试
+        class ErrorHandler:
+            def handle_error(self, error):
+                pass
 
 
 def test_get_config():

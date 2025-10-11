@@ -94,7 +94,7 @@ class AlertRuleEngine:
                     rule.last_triggered = datetime.utcnow()
                     rule.trigger_count += 1
 
-            except Exception as e:
+            except (ValueError, RuntimeError, TimeoutError) as e:
                 logger.error(f"Failed to evaluate rule {rule.id}: {e}")
 
         return alerts
@@ -165,7 +165,7 @@ class AlertRuleEngine:
             # 这里应该实现安全的表达式评估
             # 为了安全，使用受限的评估环境
             return False
-        except Exception:
+        except (ValueError, RuntimeError, TimeoutError):
             return False
 
     def _get_metric_value(self, metrics: Dict[str, Any], path: str) -> Optional[float]:

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, date
 from typing import Any, Dict, List, Optional
 from src.core.exceptions import AdapterError
-from src.adapters.football import FootballDataAdapter
+# from src.adapters.football import FootballDataAdapter
 
 
 class TestFootballDataAdapter:

@@ -6,10 +6,8 @@ Strategy-based Prediction Service
 Refactored prediction service using strategy pattern for flexible algorithm selection.
 """
 
-import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime
+from typing import Dict, Any, List, Optional
 
 from ..domain.strategies import (  # type: ignore
     PredictionStrategy,
@@ -17,12 +15,11 @@ from ..domain.strategies import (  # type: ignore
     PredictionInput,
     PredictionOutput,
     PredictionContext,
-    StrategyConfig,
 )
-from ..domain.models import Match, Team, Prediction
+from ..domain.models import Team, Prediction
 from ..domain.services import PredictionDomainService
 from ..database.repositories import MatchRepository, PredictionRepository
-from ..core.di import inject, DIContainer
+from ..core.di import DIContainer
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +240,7 @@ class StrategyPredictionService:
                 logger.info(
                     f"策略 {strategy_name} 预测结果: {output.predicted_home_score}:{output.predicted_away_score}"
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"策略 {strategy_name} 预测失败: {e}")
                 results[strategy_name] = None  # type: ignore
 

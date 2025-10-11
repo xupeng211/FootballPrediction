@@ -75,7 +75,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
                     return 0
                 # row 可能是列表或元组
                 return int(row[0])
-            except Exception:
+            except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return 0
 
         stats["statistics"]["teams_count"] = _val(teams)
@@ -83,7 +83,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
         stats["statistics"]["predictions_count"] = _val(predictions)
         stats["statistics"]["active_connections"] = _val(active)
         stats["healthy"] = True
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"数据库指标查询失败: {e}")
         stats["healthy"] = False
         stats["error"] = str(e)
@@ -139,9 +139,15 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
                     return None
                 try:
                     return float(v)
-                except Exception:
+                except (
+                    ValueError,
+                    KeyError,
+                    AttributeError,
+                    HTTPError,
+                    RequestException,
+                ):
                     return None
-            except Exception:
+            except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return None
 
         # 执行查询
@@ -156,7 +162,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
         result["24h_predictions"] = int(rp_v) if rp_v is not None else None
         result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
         result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"业务指标查询失败: {e}")
         # 异常时保持None，并更新时间戳
         result["last_updated"] = datetime.utcnow().isoformat()  # type: ignore
@@ -183,7 +189,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]: 
         disk = psutil.disk_usage("/")  # type: ignore
         try:
             load1, load5, load15 = os.getloadavg()  # type: ignore
-        except Exception:
+        except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
             load1, load5, load15 = 0.0, 0.0, 0.0
 
         response["system"] = {
@@ -223,7 +229,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]: 
             "python_version": os.getenv("PYTHON_VERSION", "unknown"),  # type: ignore
             "env": os.getenv("ENVIRONMENT", "development"),  # type: ignore
         }
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取应用指标失败: {e}", exc_info=True)
         response["status"] = "error"
     finally:
@@ -241,7 +247,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     try:
         db.execute(text("SELECT 1"))
         db_health = True
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"数据库健康检查失败: {e}")
         db_health = False
 
@@ -250,7 +256,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     try:
         r = redis.from_url(redis_url)
         cache_health = bool(r.ping())
-    except Exception:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
         cache_health = False
 
     overall = (
@@ -277,7 +283,7 @@ async def prometheus_metrics():
         metrics_exporter = get_metrics_exporter()
         content_type, metrics_data = metrics_exporter.get_metrics()
         return Response(content=metrics_data, media_type=content_type)
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取Prometheus指标失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取监控指标失败")
 
@@ -295,7 +301,7 @@ async def collector_health() -> Dict[str, Any]:  # type: ignore
             "metrics_collector": collector_status,
             "message": "监控收集器运行正常",
         }
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)
         return {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
 
@@ -306,7 +312,7 @@ async def manual_collect() -> Dict[str, Any]:  # type: ignore
         collector = get_metrics_collector()  # type: ignore
         result = await collector.collect_once()
         return result
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"指标收集失败: {str(e)}")  # type: ignore
 
@@ -316,7 +322,7 @@ async def collector_status() -> Dict[str, Any]:  # type: ignore
     try:
         collector = get_metrics_collector()  # type: ignore
         return collector.get_status()
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取收集器状态失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取状态失败")  # type: ignore
 
@@ -327,7 +333,7 @@ async def start_collector() -> Dict[str, str]:  # type: ignore
         collector = get_metrics_collector()  # type: ignore
         await collector.start()
         return {"message": "指标收集器启动成功"}
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"启动失败: {str(e)}")  # type: ignore
 
@@ -338,6 +344,6 @@ async def stop_collector() -> Dict[str, str]:  # type: ignore
         collector = get_metrics_collector()  # type: ignore
         await collector.stop()
         return {"message": "指标收集器停止成功"}
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"停止失败: {str(e)}")  # type: ignore

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String
+from sqlalchemy import Boolean, Column, Index, Integer, String
 from sqlalchemy.orm import relationship
 
 """
@@ -7,10 +7,9 @@ from sqlalchemy.orm import relationship
 存储足球联赛的基础信息，如英超、西甲等。
 """
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String
 from ..base import BaseModel
 from sqlalchemy import Boolean
-from sqlalchemy import DateTime
 from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String

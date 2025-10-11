@@ -24,8 +24,8 @@ from .queries import (
     GetUserStatsQuery,
     GetMatchByIdQuery,
     GetUpcomingMatchesQuery,
-    GetPredictionAnalyticsQuery,
-    GetLeaderboardQuery,
+    # GetPredictionAnalyticsQuery,  # 未使用
+    # GetLeaderboardQuery,  # 未使用
 )
 from .handlers import (
     PredictionCommandHandlers,
@@ -41,7 +41,7 @@ from .dto import (
     MatchDTO,
     PredictionStatsDTO,
     MatchStatsDTO,
-    CommandResult,
+    # CommandResult,  # 未使用
 )
 
 __all__ = [

@@ -249,7 +249,7 @@ class GreatExpectationsConfig:
 
             return self.context
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化GE数据上下文失败: {str(e)}")
             raise DataContextError(f"GE上下文初始化失败: {str(e)}")
 
@@ -306,14 +306,20 @@ class GreatExpectationsConfig:
 
                     self.logger.info(f"成功创建期望套件: {suite_name}")
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     error_msg = f"创建套件 {suite_name} 失败: {str(e)}"
                     self.logger.error(error_msg)
                     results["errors"].append(error_msg)
 
             return results
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"创建期望套件失败: {str(e)}")
             results["errors"].append(str(e))
             return results
@@ -450,7 +456,7 @@ class GreatExpectationsConfig:
 
             return validation_summary
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"运行数据验证失败 {table_name}: {str(e)}")
             return {
                 "table_name": table_name,

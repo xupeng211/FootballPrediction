@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .exceptions import InvalidDataException
 
@@ -84,7 +84,7 @@ class InvalidDataHandler:
 
             return total_result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理无效数据失败: {str(e)}")
             raise InvalidDataException(
                 f"处理无效数据失败: {str(e)}", table_name=table_name
@@ -126,7 +126,13 @@ class InvalidDataHandler:
                     )
                     logged_count += 1
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     self.logger.error(
                         f"记录无效数据失败（记录ID: {record.get('id')}）: {str(e)}"
                     )
@@ -139,7 +145,7 @@ class InvalidDataHandler:
                 "success_rate": logged_count / len(batch) if batch else 0,
             }
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"批处理无效数据失败: {str(e)}")
             raise InvalidDataException(
                 f"批处理无效数据失败: {str(e)}", table_name=table_name
@@ -193,7 +199,7 @@ class InvalidDataHandler:
 
             return validation_result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"验证数据完整性失败: {str(e)}")
             raise InvalidDataException(
                 f"验证数据完整性失败: {str(e)}", table_name=table_name

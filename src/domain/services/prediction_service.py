@@ -8,13 +8,11 @@ Handles complex business logic related to predictions.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from decimal import Decimal
 
 from ..models.prediction import (
     Prediction,
     PredictionStatus,
     ConfidenceScore,
-    PredictionScore,
     PredictionPoints,
 )
 from ..models.match import Match, MatchStatus

@@ -213,11 +213,11 @@ def upgrade() -> None:
                         column_name, column_type, nullable=True, comment=column_comment
                     ),
                 )
-            except Exception as e:
+            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 # 如果字段已存在，忽略错误
                 print(f"Warning: Column {column_name} already exists: {e}")
 
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志
         print(f"Warning: Could not add columns to features table: {e}")
 
@@ -243,10 +243,10 @@ def downgrade() -> None:
         for column_name in columns_to_drop:
             try:
                 op.drop_column("features", column_name)
-            except Exception as e:
+            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 # 忽略字段不存在的错误但记录日志
                 print(f"Warning: Could not drop column {column_name}: {e}")
-    except Exception as e:
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 忽略字段不存在的错误但记录日志
         print(f"Warning: Could not drop columns from features table: {e}")
 

@@ -9,11 +9,9 @@
 
 import asyncio
 import logging
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from celery import Task
-from celery.app.app import Celery
 
 from src.core.logging import get_logger
 from src.tasks.celery_app import app

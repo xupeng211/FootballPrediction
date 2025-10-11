@@ -6,10 +6,8 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Callable
-import asyncio
+from typing import Any, Dict, List, Optional, Callable
 import time
-import logging
 
 from src.core.logging import get_logger
 
@@ -120,7 +118,7 @@ class EnhancedBaseService(ABC):
             self._update_health_status("healthy", "Service started successfully")
             self.logger.info(f"Service {self.name} started successfully")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self._update_health_status("unhealthy", f"Failed to start: {str(e)}")
             self.logger.error(f"Failed to start service {self.name}: {e}")
             return False
@@ -138,7 +136,7 @@ class EnhancedBaseService(ABC):
             self._update_health_status("stopped", "Service stopped successfully")
             self.logger.info(f"Service {self.name} stopped successfully")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to stop service {self.name}: {e}")
             return False
 
@@ -195,7 +193,7 @@ class EnhancedBaseService(ABC):
             self.logger.debug(f"Executing operation: {operation_name}")
             result = await func(*args, **kwargs)
             return result
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             success = False
             self.logger.error(f"Operation {operation_name} failed: {e}")
             raise

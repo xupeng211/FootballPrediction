@@ -7,16 +7,14 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, Optional
 
-from .metric_types import MetricPoint
 from .aggregator import MetricsAggregator
 from .prometheus_metrics import PrometheusMetricsManager
 from .business_metrics import BusinessMetricsCollector
 from .system_metrics import SystemMetricsCollector
 from .alerting import AlertManager, DefaultAlertHandlers
-from .decorators import track_prediction_performance, track_cache_performance
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +257,7 @@ class EnhancedMetricsCollector:
                     self.aggregator.clear_expired_metrics(max_age=3600)
 
                     await asyncio.sleep(interval)
-                except Exception as e:
+                except (ValueError, RuntimeError, TimeoutError) as e:
                     logger.error(f"Aggregation task error: {e}")
                     await asyncio.sleep(5)
 

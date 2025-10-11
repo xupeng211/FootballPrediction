@@ -13,7 +13,7 @@ import logging
 import os
 import shutil
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from src.database.connection_mod import DatabaseManager
 from src.tasks.celery_app import app

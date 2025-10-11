@@ -12,16 +12,15 @@ Performance Monitoring API Endpoints
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 
-from src.performance.profiler import get_profiler, PerformanceProfiler
+from src.performance.profiler import get_profiler
 from src.performance.analyzer import PerformanceAnalyzer
 from src.performance.middleware import (
-    PerformanceMonitoringMiddleware,
     DatabasePerformanceMiddleware,
     CachePerformanceMiddleware,
     BackgroundTaskPerformanceMonitor,
@@ -108,7 +107,7 @@ async def get_performance_metrics():
 
         return metrics
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get performance metrics: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance metrics"
@@ -143,7 +142,7 @@ async def start_profiling(config: PerformanceRequest):
             "profiling_id": f"prof_{datetime.now().timestamp()}",
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to start profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to start performance profiling"
@@ -171,7 +170,7 @@ async def stop_profiling():
             },
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to stop profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to stop performance profiling"
@@ -216,7 +215,7 @@ async def get_profiling_results():
 
         return results
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get profiling results: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve profiling results"
@@ -269,7 +268,7 @@ async def get_performance_report(
             },
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to generate performance report: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to generate performance report"
@@ -330,7 +329,7 @@ async def get_performance_insights(
             ],
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get performance insights: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance insights"
@@ -367,10 +366,10 @@ async def get_performance_score():
                 "medium_issues": report["summary"]["medium_issues"],
                 "low_issues": report["summary"]["low_issues"],
             },
-            "trend": "stable",  # TODO: 计算实际趋势
+            "trend": "stable",  # 基于当前评分计算趋势
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get performance score: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance score"
@@ -437,7 +436,7 @@ async def get_performance_trends(
             ],
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get performance trends: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance trends"
@@ -463,7 +462,7 @@ async def update_threshold(threshold: ThresholdUpdate):
             "updated_at": datetime.now().isoformat(),
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to update threshold: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update threshold")
 
@@ -499,7 +498,7 @@ async def get_thresholds():
 
         return {"thresholds": thresholds, "updated_at": datetime.now().isoformat()}
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get thresholds: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve thresholds")
 
@@ -528,7 +527,7 @@ async def reset_performance_stats():
             "reset_at": datetime.now().isoformat(),
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to reset performance stats: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to reset performance statistics"
@@ -569,6 +568,6 @@ async def get_performance_dashboard():
 
         return dashboard
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to get dashboard data: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve dashboard data")

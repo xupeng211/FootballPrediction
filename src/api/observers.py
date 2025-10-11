@@ -6,7 +6,7 @@ Observer System API Endpoints
 Provides management and monitoring interfaces for the observer system.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel

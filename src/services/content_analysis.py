@@ -7,7 +7,7 @@
 from .base_unified import SimpleService
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class ContentType(Enum):
@@ -82,7 +82,7 @@ class ContentAnalysisService(SimpleService):
             # 这里可以加载ML模型
             self._models_loaded = True
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 

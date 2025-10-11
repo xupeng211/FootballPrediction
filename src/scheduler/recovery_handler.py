@@ -10,7 +10,7 @@
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class RecoveryHandler:
             )
             return recovery_success
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"处理任务失败时发生异常: {task.task_id} - {e}")
             return False
 
@@ -376,7 +376,7 @@ class RecoveryHandler:
                 logger.warning(f"未知的恢复策略: {strategy}")
                 return False
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"执行恢复策略失败: {task.task_id} - {e}")
             failure.add_recovery_attempt(
                 strategy, False, datetime.now(), f"策略执行异常: {str(e)}"
@@ -651,7 +651,7 @@ class RecoveryHandler:
         for handler in self.alert_handlers:
             try:
                 handler(alert_data)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"告警处理器执行失败: {e}")
 
     def register_alert_handler(self, handler: Callable[[Dict[str, Any]], None]) -> None:

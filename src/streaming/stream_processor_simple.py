@@ -2,12 +2,8 @@
 简化的流处理器实现
 """
 
-import asyncio
 from typing import Any, Dict, List, Optional, Callable, AsyncIterator
 from datetime import datetime, timedelta
-from dataclasses import dataclass
-
-from src.core.exceptions import StreamingError
 
 
 class StreamProcessor:
@@ -69,7 +65,7 @@ class StreamProcessor:
 
                 yield result
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.metrics["messages_failed"] += 1
                 if error_handler:
                     await error_handler(e, message)
@@ -103,7 +99,7 @@ class StreamProcessor:
                     self.metrics["messages_processed"] += len(batch)
                     yield result
                     batch = []
-                except Exception:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch)
                     batch = []
 
@@ -113,7 +109,7 @@ class StreamProcessor:
                 result = await batch_func(batch)
                 self.metrics["messages_processed"] += len(batch)
                 yield result
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 self.metrics["messages_failed"] += len(batch)
 
     async def transform_message(
@@ -162,7 +158,7 @@ class StreamProcessor:
                 try:
                     result = await aggregate_func(batch["key"], batch["messages"])
                     yield result
-                except Exception:
+                except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch["messages"])
 
     async def filter(self, filter_func: Callable) -> AsyncIterator[Dict[str, Any]]:

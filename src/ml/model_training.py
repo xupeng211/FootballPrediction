@@ -10,11 +10,10 @@ Temporary implementation to resolve import errors.
 import logging
 import os
 import json
-import pickle
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
-from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
 from enum import Enum
 import asyncio
 from pathlib import Path
@@ -234,7 +233,7 @@ class ModelTrainer:
             self.logger.info(f"Training completed in {training_time:.2f} seconds")
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.status = TrainingStatus.FAILED
             self.logger.error(f"Training failed: {e}")
             return {

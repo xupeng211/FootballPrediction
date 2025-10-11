@@ -41,7 +41,7 @@ class UserProfileService(SimpleService):
         try:
             # 这里可以加载用户数据
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"初始化失败: {e}")
             return False
 

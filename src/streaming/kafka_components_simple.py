@@ -2,10 +2,7 @@
 简化的Kafka组件实现
 """
 
-import asyncio
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
-from dataclasses import dataclass
+from typing import Any, Dict, List
 
 from src.core.exceptions import StreamingError
 
@@ -77,7 +74,7 @@ class KafkaTopicManager:
 
         try:
             await self.admin.create_topic(topic_spec)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             if "already exists" in str(e).lower():
                 return  # 主题已存在
             raise

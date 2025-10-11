@@ -5,8 +5,8 @@ Statistics Provider
 """
 
 import logging
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
+from typing import Any, Dict, List
+from datetime import datetime
 
 
 class StatisticsProvider:

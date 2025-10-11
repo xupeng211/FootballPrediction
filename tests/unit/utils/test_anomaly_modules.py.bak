@@ -1,0 +1,481 @@
+"""
+测试拆分后的异常检测模块
+"""
+
+# 可选依赖导入
+try:
+    from src.dependencies.optional import *
+except ImportError:
+    pass
+
+import pytest
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pandas as pd
+
+from src.monitoring.anomaly import (
+    AnomalyType,
+    AnomalySeverity,
+    AnomalyResult,
+    AnomalyDetector,
+    ThreeSigmaDetector,
+    IQRDetector,
+    ZScoreDetector,
+    RangeDetector,
+    FrequencyDetector,
+    TimeGapDetector,
+    TableAnalyzer,
+    ColumnAnalyzer,
+    AnomalySummarizer,
+)
+
+
+class TestAnomalyModels:
+    """测试异常模型"""
+
+    def test_anomaly_result_creation(self):
+        """测试异常结果创建"""
+        result = AnomalyResult(
+            table_name="test_table",
+            column_name="test_column",
+            anomaly_type=AnomalyType.OUTLIER,
+            severity=AnomalySeverity.HIGH,
+            anomalous_values=[1, 2, 3],
+            anomaly_score=0.15,
+            detection_method="test",
+            description="Test anomaly",
+        )
+
+        assert result.table_name == "test_table"
+        assert result.column_name == "test_column"
+        assert result.anomaly_type == AnomalyType.OUTLIER
+        assert result.severity == AnomalySeverity.HIGH
+        assert result.anomalous_values == [1, 2, 3]
+        assert result.anomaly_score == 0.15
+        assert result.detection_method == "test"
+        assert result.description == "Test anomaly"
+        assert isinstance(result.detected_at, datetime)
+
+    def test_anomaly_result_to_dict(self):
+        """测试异常结果转换为字典"""
+        result = AnomalyResult(
+            table_name="test_table",
+            column_name="test_column",
+            anomaly_type=AnomalyType.OUTLIER,
+            severity=AnomalySeverity.HIGH,
+            anomalous_values=[1, 2, 3],
+            anomaly_score=0.15,
+            detection_method="test",
+            description="Test anomaly",
+        )
+
+        result_dict = result.to_dict()
+
+        assert result_dict["table_name"] == "test_table"
+        assert result_dict["column_name"] == "test_column"
+        assert result_dict["anomaly_type"] == "outlier"
+        assert result_dict["severity"] == "high"
+        assert result_dict["anomalous_values"] == [1, 2, 3]
+        assert result_dict["anomaly_score"] == 0.15
+        assert result_dict["detection_method"] == "test"
+        assert result_dict["description"] == "Test anomaly"
+        assert "detected_at" in result_dict
+
+    def test_anomaly_result_repr(self):
+        """测试异常结果字符串表示"""
+        result = AnomalyResult(
+            table_name="test_table",
+            column_name="test_column",
+            anomaly_type=AnomalyType.OUTLIER,
+            severity=AnomalySeverity.HIGH,
+            anomalous_values=[1, 2, 3],
+            anomaly_score=0.15,
+            detection_method="test",
+            description="Test anomaly",
+        )
+
+        repr_str = repr(result)
+        assert "AnomalyResult" in repr_str
+        assert "test_table.test_column" in repr_str
+        assert "outlier" in repr_str
+        assert "high" in repr_str
+
+
+class TestDetectionMethods:
+    """测试检测方法"""
+
+    def test_three_sigma_detector(self):
+        """测试3σ检测器"""
+        detector = ThreeSigmaDetector()
+
+        # 正常数据
+        normal_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        anomalies = detector.detect(normal_data, "test", "value")
+        assert len(anomalies) == 0
+
+        # 包含异常值的数据
+        outlier_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 100])
+        anomalies = detector.detect(outlier_data, "test", "value")
+        assert len(anomalies) == 1
+        assert anomalies[0].detection_method == "3sigma"
+        assert anomalies[0].anomaly_type == AnomalyType.OUTLIER
+
+    def test_iqr_detector(self):
+        """测试IQR检测器"""
+        detector = IQRDetector()
+
+        # 正常数据
+        normal_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        anomalies = detector.detect(normal_data, "test", "value")
+        assert len(anomalies) == 0
+
+        # 包含异常值的数据
+        outlier_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 50])
+        anomalies = detector.detect(outlier_data, "test", "value")
+        assert len(anomalies) >= 0  # IQR可能检测到也可能检测不到，取决于计算结果
+
+    def test_z_score_detector(self):
+        """测试Z-score检测器"""
+        detector = ZScoreDetector(threshold=2.0)
+
+        # 正常数据
+        normal_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        anomalies = detector.detect(normal_data, "test", "value")
+        assert len(anomalies) == 0
+
+        # 包含异常值的数据
+        outlier_data = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 30])
+        anomalies = detector.detect(outlier_data, "test", "value")
+        assert len(anomalies) == 1
+        assert anomalies[0].detection_method == "z_score"
+
+    def test_range_detector(self):
+        """测试范围检测器"""
+        thresholds = {"min": 0, "max": 100}
+        detector = RangeDetector(thresholds)
+
+        # 正常范围内的数据
+        normal_data = pd.Series([10, 20, 30, 40, 50])
+        anomalies = detector.detect(normal_data, "test", "value")
+        assert len(anomalies) == 0
+
+        # 超出范围的数据
+        out_of_range_data = pd.Series([-10, 20, 30, 150])
+        anomalies = detector.detect(out_of_range_data, "test", "value")
+        assert len(anomalies) == 2
+        assert anomalies[0].anomaly_type == AnomalyType.VALUE_RANGE
+
+    def test_frequency_detector(self):
+        """测试频率检测器"""
+        detector = FrequencyDetector()
+
+        # 正常频率分布
+        normal_data = pd.Series(["A", "B", "C", "A", "B", "C"])
+        anomalies = detector.detect(normal_data, "test", "value")
+        assert len(anomalies) == 0
+
+        # 频率异常的数据
+        freq_data = pd.Series(["A", "A", "A", "A", "A", "B", "C"])
+        anomalies = detector.detect(freq_data, "test", "value")
+        assert len(anomalies) >= 1
+        assert anomalies[0].anomaly_type == AnomalyType.FREQUENCY
+
+    def test_time_gap_detector(self):
+        """测试时间间隔检测器"""
+        detector = TimeGapDetector()
+
+        # 规则间隔的时间数据
+        regular_times = pd.date_range("2024-01-01", periods=10, freq="H")
+        anomalies = detector.detect(regular_times, "test", "timestamp")
+        assert len(anomalies) == 0
+
+        # 包含异常间隔的时间数据
+        irregular_times = list(pd.date_range("2024-01-01", periods=5, freq="H"))
+        irregular_times.append(pd.Timestamp("2024-01-01 10:00:00"))  # 大间隔
+        time_data = pd.Series(irregular_times)
+        anomalies = detector.detect(time_data, "test", "timestamp")
+        assert len(anomalies) >= 1
+
+
+class TestColumnAnalyzer:
+    """测试列分析器"""
+
+    @pytest.mark.asyncio
+    async def test_analyze_numeric_column(self):
+        """测试分析数值列"""
+        analyzer = ColumnAnalyzer()
+        data = pd.DataFrame(
+            {
+                "value": [1, 2, 3, 4, 5, 6, 7, 8, 9, 100],  # 包含异常值
+                "category": ["A", "B", "A", "B", "A", "B", "A", "B", "A", "B"],
+            }
+        )
+
+        anomalies = await analyzer.analyze_column(
+            data=data,
+            table_name="test_table",
+            column_name="value",
+            methods=["three_sigma"],
+            column_type="numeric",
+        )
+
+        assert len(anomalies) >= 0  # 可能检测到异常
+
+    @pytest.mark.asyncio
+    async def test_analyze_categorical_column(self):
+        """测试分析分类列"""
+        analyzer = ColumnAnalyzer()
+        data = pd.DataFrame(
+            {
+                "category": ["A", "A", "A", "A", "A", "A", "B", "C"],  # A频率异常高
+            }
+        )
+
+        anomalies = await analyzer.analyze_column(
+            data=data,
+            table_name="test_table",
+            column_name="category",
+            methods=["frequency"],
+            column_type="categorical",
+        )
+
+        assert len(anomalies) >= 1
+        assert anomalies[0].anomaly_type == AnomalyType.FREQUENCY
+
+
+class TestTableAnalyzer:
+    """测试表分析器"""
+
+    @pytest.mark.asyncio
+    async def test_analyze_table(self):
+        """测试分析表"""
+        analyzer = TableAnalyzer()
+        config = {
+            "numeric_columns": ["value"],
+            "categorical_columns": ["category"],
+            "thresholds": {"value": {"min": 0, "max": 50}},
+        }
+
+        # Mock session
+        mock_session = AsyncMock()
+
+        # Mock _get_table_data
+        with patch.object(analyzer, "_get_table_data") as mock_get_data:
+            mock_get_data.return_value = pd.DataFrame(
+                {
+                    "value": [1, 2, 3, 4, 5, 60],  # 60超出范围
+                    "category": ["A", "B", "A", "B", "A", "B"],
+                }
+            )
+
+            anomalies = await analyzer.analyze_table(
+                session=mock_session,
+                table_name="test_table",
+                config=config,
+                methods=["range_check"],
+            )
+
+            # 应该检测到范围异常
+            range_anomalies = [
+                a for a in anomalies if a.detection_method == "range_check"
+            ]
+            assert len(range_anomalies) >= 1
+
+
+class TestAnomalySummarizer:
+    """测试异常摘要生成器"""
+
+    @pytest.mark.asyncio
+    async def test_generate_summary_empty(self):
+        """测试生成空异常列表的摘要"""
+        summarizer = AnomalySummarizer()
+        summary = await summarizer.generate_summary([])
+
+        assert summary["total_anomalies"] == 0
+        assert summary["by_severity"] == {}
+        assert summary["by_type"] == {}
+        assert summary["by_table"] == {}
+        assert summary["health_score"] == 100
+        assert "继续监控" in summary["recommendations"][0]
+
+    @pytest.mark.asyncio
+    async def test_generate_summary_with_anomalies(self):
+        """测试生成包含异常的摘要"""
+        summarizer = AnomalySummarizer()
+
+        # 创建测试异常
+        anomalies = [
+            AnomalyResult(
+                table_name="table1",
+                column_name="col1",
+                anomaly_type=AnomalyType.OUTLIER,
+                severity=AnomalySeverity.CRITICAL,
+                anomalous_values=[100],
+                anomaly_score=0.3,
+                detection_method="3sigma",
+                description="Critical outlier",
+            ),
+            AnomalyResult(
+                table_name="table2",
+                column_name="col2",
+                anomaly_type=AnomalyType.FREQUENCY,
+                severity=AnomalySeverity.HIGH,
+                anomalous_values=["A"],
+                anomaly_score=0.15,
+                detection_method="frequency",
+                description="Frequency anomaly",
+            ),
+        ]
+
+        summary = await summarizer.generate_summary(anomalies)
+
+        assert summary["total_anomalies"] == 2
+        assert summary["critical_anomalies"] == 1
+        assert summary["high_priority_anomalies"] == 2
+        assert summary["most_affected_table"] == "table1"
+        assert summary["avg_anomaly_score"] == 0.225
+        assert summary["health_score"] == 98
+        assert "严重异常" in summary["recommendations"][0]
+        assert summary["most_critical_anomaly"] is not None
+
+
+class TestAnomalyDetector:
+    """测试主异常检测器"""
+
+    def test_detector_initialization(self):
+        """测试检测器初始化"""
+        detector = AnomalyDetector()
+        assert detector.db_manager is not None
+        assert detector.table_analyzer is not None
+        assert detector.summarizer is not None
+        assert "matches" in detector.detection_config
+        assert "odds" in detector.detection_config
+        assert "predictions" in detector.detection_config
+
+    @pytest.mark.asyncio
+    async def test_detect_anomalies(self):
+        """测试异常检测"""
+        detector = AnomalyDetector()
+
+        # Mock database session
+        mock_session = AsyncMock()
+        mock_session_manager = AsyncMock()
+        mock_session_manager.__aenter__.return_value = mock_session
+        mock_session_manager.__aexit__.return_value = None
+
+        with patch.object(detector.db_manager, "get_async_session") as mock_get_session:
+            mock_get_session.return_value = mock_session_manager
+
+            # Mock table analyzer
+            with patch.object(detector.table_analyzer, "analyze_table") as mock_analyze:
+                mock_analyze.return_value = [
+                    AnomalyResult(
+                        table_name="test_table",
+                        column_name="test_column",
+                        anomaly_type=AnomalyType.OUTLIER,
+                        severity=AnomalySeverity.MEDIUM,
+                        anomalous_values=[100],
+                        anomaly_score=0.1,
+                        detection_method="test",
+                        description="Test anomaly",
+                    )
+                ]
+
+                anomalies = await detector.detect_anomalies(
+                    table_names=["test_table"], methods=["test_method"]
+                )
+
+                assert len(anomalies) == 1
+                assert anomalies[0].table_name == "test_table"
+                mock_analyze.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_anomaly_summary(self):
+        """测试获取异常摘要"""
+        detector = AnomalyDetector()
+
+        anomalies = [
+            AnomalyResult(
+                table_name="test_table",
+                column_name="test_column",
+                anomaly_type=AnomalyType.OUTLIER,
+                severity=AnomalySeverity.HIGH,
+                anomalous_values=[100],
+                anomaly_score=0.15,
+                detection_method="test",
+                description="Test anomaly",
+            )
+        ]
+
+        # Mock summarizer
+        with patch.object(detector.summarizer, "generate_summary") as mock_summary:
+            mock_summary.return_value = {"total_anomalies": 1}
+
+            summary = await detector.get_anomaly_summary(anomalies)
+
+            assert summary["total_anomalies"] == 1
+            mock_summary.assert_called_once_with(anomalies)
+
+
+class TestModuleIntegration:
+    """测试模块集成"""
+
+    def test_import_from_anomaly_module(self):
+        """测试从anomaly模块导入"""
+        from src.monitoring.anomaly import (
+            AnomalyType,
+            AnomalySeverity,
+            AnomalyResult,
+            AnomalyDetector,
+            ThreeSigmaDetector,
+            IQRDetector,
+            ZScoreDetector,
+            RangeDetector,
+            FrequencyDetector,
+            TimeGapDetector,
+            TableAnalyzer,
+            ColumnAnalyzer,
+            AnomalySummarizer,
+        )
+
+        assert AnomalyType is not None
+        assert AnomalySeverity is not None
+        assert AnomalyResult is not None
+        assert AnomalyDetector is not None
+        assert ThreeSigmaDetector is not None
+        assert IQRDetector is not None
+        assert ZScoreDetector is not None
+        assert RangeDetector is not None
+        assert FrequencyDetector is not None
+        assert TimeGapDetector is not None
+        assert TableAnalyzer is not None
+        assert ColumnAnalyzer is not None
+        assert AnomalySummarizer is not None
+
+    def test_backward_compatibility_import(self):
+        """测试向后兼容性导入"""
+        from src.monitoring.anomaly_detector import (
+            AnomalyType,
+            AnomalySeverity,
+            AnomalyResult,
+            AnomalyDetector,
+        )
+
+        assert AnomalyType is not None
+        assert AnomalySeverity is not None
+        assert AnomalyResult is not None
+        assert AnomalyDetector is not None
+
+    def test_module_info(self):
+        """测试模块信息"""
+        from src.monitoring.anomaly_detector import get_module_info
+
+        info = get_module_info()
+
+        assert info["module"] == "anomaly_detector"
+        assert info["status"] == "refactored"
+        assert "new_location" in info
+        assert "components" in info
+        assert "migration_guide" in info
+        assert "enhanced_features" in info

@@ -7,13 +7,12 @@ Manages service creation, initialization, running and destruction.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any
 from enum import Enum
 from datetime import datetime
 import asyncio
 import logging
 import threading
-import weakref
 from dataclasses import dataclass, field
 
 from ..core.exceptions import ServiceLifecycleError
@@ -191,7 +190,7 @@ class ServiceLifecycleManager:
                 service_info.state = ServiceState.READY
                 logger.info(f"服务初始化完成: {name}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -239,7 +238,7 @@ class ServiceLifecycleManager:
                 service_info.started_at = datetime.utcnow()
                 logger.info(f"服务启动完成: {name}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -285,7 +284,7 @@ class ServiceLifecycleManager:
                 service_info.stopped_at = datetime.utcnow()
                 logger.info(f"服务停止完成: {name}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -303,7 +302,7 @@ class ServiceLifecycleManager:
         for service_name in self._start_order:
             try:
                 await self.start_service(service_name)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"启动服务失败 {service_name}: {e}")
                 # 继续启动其他服务
                 continue
@@ -320,7 +319,7 @@ class ServiceLifecycleManager:
         for service_name in self._stop_order:
             try:
                 await self.stop_service(service_name)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"停止服务失败 {service_name}: {e}")
                 continue
 
@@ -386,7 +385,7 @@ class ServiceLifecycleManager:
 
                 results[service_name] = healthy
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"健康检查失败 {service_name}: {e}")
                 results[service_name] = False
 
@@ -431,7 +430,7 @@ class ServiceLifecycleManager:
                 except asyncio.TimeoutError:
                     continue  # 继续循环
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"监控循环错误: {e}")
                 await asyncio.sleep(interval)
 
@@ -455,7 +454,13 @@ class ServiceLifecycleManager:
                             await service_info.instance.cleanup()
                         else:
                             service_info.instance.cleanup()
-                    except Exception as e:
+                    except (
+                        ValueError,
+                        TypeError,
+                        AttributeError,
+                        KeyError,
+                        RuntimeError,
+                    ) as e:
                         logger.error(f"清理服务资源失败 {service_info.name}: {e}")
 
         logger.info("服务生命周期管理器已关闭")

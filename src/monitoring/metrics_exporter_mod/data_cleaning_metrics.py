@@ -60,7 +60,7 @@ class DataCleaningMetrics:
                     data_type=data_type, error_type=error_type
                 ).inc()
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"记录数据清洗指标失败: {e}")
 
     def record_success(

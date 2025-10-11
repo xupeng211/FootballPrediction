@@ -14,7 +14,7 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, 
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.sql import func
 from ..base import BaseModel

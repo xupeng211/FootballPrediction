@@ -5,7 +5,6 @@
 import asyncio
 import json
 from typing import Any, Dict, Optional, List
-from datetime import datetime
 
 from src.core.exceptions import StreamingError
 
@@ -49,7 +48,7 @@ class KafkaMessageProducer:
                 "partition": 0,
                 "offset": self.stats["messages_sent"],
             }
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.stats["errors"] += 1
             raise StreamingError(f"Failed to send message: {str(e)}")
 

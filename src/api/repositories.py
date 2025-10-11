@@ -7,9 +7,9 @@ Repository Pattern API Endpoints
 Demonstrates query and management features of the repository pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Dict, Any, List, Optional
-from datetime import datetime, date, timedelta
+from fastapi import APIRouter, HTTPException, Query
+from typing import Dict, Any, Optional
+from datetime import date
 
 from ..repositories import (
     PredictionRepoDep,
@@ -20,7 +20,6 @@ from ..repositories import (
     ReadOnlyMatchRepoDep,
     QuerySpec,
 )
-from ..database.models import Prediction, User, Match
 
 router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 
@@ -128,7 +127,7 @@ async def create_prediction(
                 "created_at": prediction.created_at,
             },
         }
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -268,7 +267,7 @@ async def create_user(user_data: Dict[str, Any], repo: UserRepoDep) -> Dict[str,
                 "created_at": user.created_at,
             },
         }
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -535,7 +534,7 @@ async def demo_read_only_vs_write(
         await read_only_repo.save(prediction)  # type: ignore
     except NotImplementedError as e:
         error_message = str(e)
-    except Exception:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
         can_write = True
 
     return {

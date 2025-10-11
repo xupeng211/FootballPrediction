@@ -17,7 +17,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import ValidationError
 from fastapi.exceptions import RequestValidationError
 
 from src.core.logging import get_logger
@@ -39,7 +38,7 @@ async def init_prediction_engine():
     try:
         prediction_engine = PredictionEngine()
         logger.info("预测引擎初始化成功")
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError) as e:
         logger.error(f"预测引擎初始化失败: {e}")
         # 不抛出异常，允许应用继续启动
 
@@ -52,7 +51,7 @@ async def close_prediction_engine():
             # 如果预测引擎有清理方法，在这里调用
             prediction_engine = None
             logger.info("预测引擎已关闭")
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, HTTPError) as e:
             logger.error(f"关闭预测引擎时出错: {e}")
 
 
@@ -128,7 +127,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError, HTTPError) as e:
             # 记录错误
             process_time = time.time() - start_time if start_time else 0
             logger.error(

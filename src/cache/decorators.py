@@ -10,14 +10,12 @@ Cache Decorators Module
 - @cache_invalidate: 缓存失效
 """
 
-import asyncio
 import functools
 import hashlib
 import inspect
 import json
 import logging
 from typing import Any, Callable, Dict, Optional, Union, TypeVar, Tuple
-from datetime import timedelta
 
 try:
     from .redis_manager import RedisManager
@@ -154,7 +152,7 @@ def cache_result(
                             result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 logger.warning(f"缓存获取失败: {e}")
                 if not use_cache_when_unavailable:
                     raise
@@ -184,7 +182,7 @@ def cache_result(
                     else:
                         await redis.set(cache_key, serialized_result)
                 logger.debug(f"缓存设置: {cache_key}")
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 logger.warning(f"缓存设置失败: {e}")
 
             return result
@@ -214,7 +212,7 @@ def cache_result(
                             result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 logger.warning(f"缓存获取失败: {e}")
                 if not use_cache_when_unavailable:
                     raise
@@ -242,7 +240,7 @@ def cache_result(
                 else:
                     redis.set(cache_key, serialized_result)
                 logger.debug(f"缓存设置: {cache_key}")
-            except Exception as e:
+            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 logger.warning(f"缓存设置失败: {e}")
 
             return result
@@ -395,7 +393,7 @@ async def _cache_with_key(
                     result = cached_result
             logger.debug(f"用户缓存命中: {cache_key}")
             return result
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.warning(f"用户缓存获取失败: {e}")
 
     # 执行原函数
@@ -422,7 +420,7 @@ async def _cache_with_key(
             else:
                 redis.set(cache_key, serialized_result)
         logger.debug(f"用户缓存设置: {cache_key}")
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.warning(f"用户缓存设置失败: {e}")
 
     return result
@@ -469,7 +467,7 @@ def cache_invalidate(
                         redis = RedisManager.get_instance()
                         keys_found = await redis.keys(pattern)
                         invalidate_keys.extend(keys_found)
-                    except Exception as e:
+                    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                         logger.error(f"扫描缓存键失败: {e}")
                 else:
                     invalidate_keys.append(pattern)
@@ -496,7 +494,7 @@ def cache_invalidate(
                     else:
                         await redis.delete(*invalidate_keys)
                     logger.info(f"缓存失效: {len(invalidate_keys)} 个键")
-                except Exception as e:
+                except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                     logger.error(f"缓存失效失败: {e}")
 
             return result
@@ -517,7 +515,7 @@ def cache_invalidate(
                         redis = RedisManager.get_instance()
                         keys_found = redis.keys(pattern)
                         invalidate_keys.extend(keys_found)
-                    except Exception as e:
+                    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                         logger.error(f"扫描缓存键失败: {e}")
                 else:
                     invalidate_keys.append(pattern)
@@ -544,7 +542,7 @@ def cache_invalidate(
                     else:
                         redis.delete(*invalidate_keys)
                     logger.info(f"缓存失效: {len(invalidate_keys)} 个键")
-                except Exception as e:
+                except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                     logger.error(f"缓存失效失败: {e}")
 
             return result

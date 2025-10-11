@@ -2,7 +2,6 @@
 Redis connection manager
 """
 
-import asyncio
 import os
 import redis.asyncio as aioredis
 from typing import Optional
@@ -38,5 +37,5 @@ class RedisConnectionManager:
             redis = await self.connect()
             await redis.ping()
             return True
-        except Exception:
+        except (RedisError, ConnectionError, TimeoutError, ValueError):
             return False

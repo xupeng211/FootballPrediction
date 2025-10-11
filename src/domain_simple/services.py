@@ -4,19 +4,15 @@
 提供领域服务的工厂模式实现，管理服务依赖和生命周期。
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional, Any, Type, TypeVar, Generic
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import asyncio
 
 from ..database.repositories.base import BaseRepository
 from .match import Match
 from .team import Team
 from .prediction import Prediction
-from .league import League
-from .user import User, UserProfile
-from .odds import Odds
 from .rules import ValidationEngine, get_validation_engine
 
 T = TypeVar("T")
@@ -122,7 +118,7 @@ class MatchDomainService(DomainService[Match]):
 
             self._initialized = True
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"MatchDomainService 初始化失败: {e}")
             return False
 
@@ -134,7 +130,7 @@ class MatchDomainService(DomainService[Match]):
         try:
             self._started = True
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"MatchDomainService 启动失败: {e}")
             return False
 
@@ -186,7 +182,7 @@ class TeamDomainService(DomainService[Team]):
 
             self._initialized = True
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"TeamDomainService 初始化失败: {e}")
             return False
 
@@ -238,7 +234,7 @@ class PredictionDomainService(DomainService[Prediction]):
 
             self._initialized = True
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             print(f"PredictionDomainService 初始化失败: {e}")
             return False
 

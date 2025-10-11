@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 FastAPI 中文配置
 """

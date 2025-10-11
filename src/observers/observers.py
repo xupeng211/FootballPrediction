@@ -6,13 +6,11 @@ Concrete Observer Implementations
 Provides concrete implementations for various observers.
 """
 
-import asyncio
 import logging
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Callable
-from dataclasses import dataclass, field
 
 from .base import Observer, ObservableEvent, ObservableEventType
 

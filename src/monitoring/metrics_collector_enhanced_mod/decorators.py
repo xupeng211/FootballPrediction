@@ -6,7 +6,7 @@
 
 import time
 import functools
-from typing import Callable, Any, Optional
+from typing import Callable, Optional
 
 
 # 延迟导入以避免循环依赖
@@ -43,7 +43,7 @@ def track_prediction_performance(
             try:
                 result = await func(*args, **kwargs)
                 return result
-            except Exception:
+            except (ValueError, RuntimeError, TimeoutError):
                 success = False
                 raise
             finally:
@@ -90,7 +90,7 @@ def track_prediction_performance(
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception:
+            except (ValueError, RuntimeError, TimeoutError):
                 success = False
                 raise
             finally:
@@ -203,7 +203,7 @@ def track_database_performance(
             try:
                 result = await func(*args, **kwargs)
                 return result
-            except Exception:
+            except (ValueError, RuntimeError, TimeoutError):
                 success = False
                 raise
             finally:
@@ -238,7 +238,7 @@ def track_database_performance(
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception:
+            except (ValueError, RuntimeError, TimeoutError):
                 success = False
                 raise
             finally:
@@ -301,7 +301,7 @@ def track_performance(
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception:
+            except (ValueError, RuntimeError, TimeoutError):
                 success = False
                 raise
             finally:

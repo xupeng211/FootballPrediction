@@ -5,7 +5,6 @@ Prometheus Metrics Management
 管理告警相关的Prometheus指标。
 """
 
-import time
 from typing import Optional, Dict, Any
 
 try:

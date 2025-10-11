@@ -5,14 +5,13 @@ Audit Log Storage
 负责将审计日志保存到数据库。
 """
 
-import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.core.logging import get_logger
 from src.database.connection_mod import DatabaseManager
 
-from .models import AuditLog, AuditSeverity
+from .models import AuditLog
 
 
 class AuditLogStorage:
@@ -35,7 +34,7 @@ class AuditLogStorage:
             await self.db_manager.execute("SELECT 1")  # type: ignore
             self.logger.info("审计日志存储初始化成功")
             return True
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"审计日志存储初始化失败: {str(e)}")
             return False
 
@@ -85,7 +84,7 @@ class AuditLogStorage:
             self.logger.debug(f"审计日志已保存: {audit_log.id}")
             return True
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"保存审计日志失败: {str(e)}")
             return False
 
@@ -118,7 +117,7 @@ class AuditLogStorage:
             self.logger.debug(f"批量保存了 {len(self._batch_buffer)} 条审计日志")
             self._batch_buffer.clear()
             self._last_flush = datetime.utcnow()
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"批量保存审计日志失败: {str(e)}")
 
     async def get_user_audit_logs(
@@ -162,7 +161,7 @@ class AuditLogStorage:
             results = await self.db_manager.fetch_all(sql, *params)  # type: ignore
             return [dict(row) for row in results]
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取用户审计日志失败: {str(e)}")
             return []
 
@@ -183,7 +182,7 @@ class AuditLogStorage:
             results = await self.db_manager.fetch_all(sql)  # type: ignore
             return [dict(row) for row in results]
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取高风险操作失败: {str(e)}")
             return []
 
@@ -222,6 +221,6 @@ class AuditLogStorage:
             result = await self.db_manager.fetch_one(sql, *params)  # type: ignore
             return dict(result) if result else {}
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取审计摘要失败: {str(e)}")
             return {}

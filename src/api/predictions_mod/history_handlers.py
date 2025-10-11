@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, Query
 from sqlalchemy import desc, select
@@ -111,7 +111,7 @@ async def get_match_prediction_history_handler(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取比赛 {match_id} 历史预测失败: {e}")
         raise HTTPException(status_code=500, detail="获取历史预测失败")
 
@@ -198,6 +198,6 @@ async def get_recent_predictions_handler(
             }
         )
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取最近预测失败: {e}")
         raise HTTPException(status_code=500, detail="获取最近预测失败")

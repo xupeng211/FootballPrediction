@@ -6,13 +6,11 @@ Match Repository
 Implements data access logic for matches.
 """
 
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
-from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import select, func, and_, or_, update
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, update
 
 from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import Match
@@ -259,7 +257,7 @@ class MatchRepository(MatchRepositoryInterface):
             await self.session.delete(entity)
             await self.session.commit()
             return True
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             await self.session.rollback()
             return False
 

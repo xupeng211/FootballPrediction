@@ -1,5 +1,3 @@
-from typing import cast, Any, Optional, Union
-
 """
 特征仓库模块
 

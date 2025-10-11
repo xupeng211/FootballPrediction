@@ -6,13 +6,11 @@ Adapter Pattern API Endpoints
 Demonstrates the usage and effects of the adapter pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from typing import Dict, Any, List, Optional
+from fastapi import APIRouter, HTTPException, Query, Path
+from typing import Dict, Any, Optional
 from datetime import datetime, date, timedelta
 
 from ..adapters import AdapterFactory, AdapterRegistry
-from ..adapters.base import AdapterStatus
-from ..adapters.football import FootballMatch, FootballTeam
 
 router = APIRouter(prefix="/adapters", tags=["适配器模式"])
 
@@ -225,7 +223,7 @@ async def get_football_matches(
             },
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取比赛数据失败: {str(e)}")
 
 
@@ -288,7 +286,7 @@ async def get_football_match(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取比赛详情失败: {str(e)}")
 
 
@@ -369,7 +367,7 @@ async def get_football_teams(
             },
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取球队数据失败: {str(e)}")
 
 
@@ -442,7 +440,7 @@ async def get_team_players(
             "players": player_dicts,
         }
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取球员数据失败: {str(e)}")
 
 
@@ -508,7 +506,6 @@ async def demo_adapter_fallback() -> Dict[str, Any]:
 
     当主数据源失败时，自动切换到备用源。
     """
-    import asyncio
 
     # 模拟三个适配器
     adapters_status = {

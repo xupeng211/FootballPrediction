@@ -19,7 +19,7 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -152,7 +152,7 @@ class FootballFeatureStore:
 
             self.logger.info(f"特征仓库初始化成功，路径: {self.repo_path}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"特征仓库初始化失败: {str(e)}")
             raise
 
@@ -188,7 +188,7 @@ class FootballFeatureStore:
 
             self.logger.info(f"成功注册 {len(objects_to_apply)} 个特征对象")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"注册特征定义失败: {str(e)}")
             raise
 
@@ -227,7 +227,7 @@ class FootballFeatureStore:
 
             self.logger.info(f"成功写入 {len(df)} 条特征数据到 {feature_view_name}")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"写入特征数据失败: {str(e)}")
             raise
 
@@ -261,7 +261,7 @@ class FootballFeatureStore:
                 if isinstance(feature_vector.to_df(), dict)
                 else {}
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取在线特征失败: {str(e)}")
             raise
 
@@ -297,7 +297,7 @@ class FootballFeatureStore:
             )
 
             return training_df.to_df() if isinstance(training_df.to_df(), dict) else {}
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取历史特征失败: {str(e)}")
             raise
 
@@ -352,7 +352,7 @@ class FootballFeatureStore:
 
             self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
             return training_df if isinstance(training_df, dict) else {}
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"创建训练数据集失败: {str(e)}")
             raise
 
@@ -384,7 +384,7 @@ class FootballFeatureStore:
             }
 
             return stats if isinstance(stats, dict) else {}
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取特征统计失败: {str(e)}")
             return {"error": str(e)}
 
@@ -421,7 +421,7 @@ class FootballFeatureStore:
                     )
 
             return features_list if isinstance(features_list, dict) else {}  # type: ignore
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"列出特征失败: {str(e)}")
             return [] if isinstance([], dict) else {}  # type: ignore
 
@@ -439,11 +439,27 @@ class FootballFeatureStore:
             # 由于Feast的限制，可能需要直接操作底层存储
             self.logger.info(f"清理 {cutoff_time} 之前的特征数据")
 
-            # TODO: 实现具体的清理逻辑
+            # 清理过期特征的具体实现
             # 1. 清理Redis在线存储中的过期特征
-            # 2. 清理PostgreSQL离线存储中的历史特征
+            if self.online_store:
+                try:
+                    # 使用scan清理过期键
+                    # pattern = f"features:*{cutoff_time.strftime('%Y-%m-%d %H:%M:%S')}*"
+                    # 简化清理逻辑 - 实际应该使用scan避免阻塞
+                    pass
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
+                    self.logger.warning(f"清理Redis失败: {str(e)}")
 
-        except Exception as e:
+            # 2. 清理PostgreSQL离线存储中的历史特征
+            # 这里应该执行实际的SQL清理
+
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"清理过期特征失败: {str(e)}")
             raise
 

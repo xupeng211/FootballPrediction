@@ -95,7 +95,7 @@ class SuspiciousOddsHandler:
             )
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理可疑赔率失败: {str(e)}")
             raise SuspiciousOddsException(
                 f"处理可疑赔率失败: {str(e)}",
@@ -157,7 +157,7 @@ class SuspiciousOddsHandler:
 
             return False, "normal"
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"判断赔率可疑性失败: {str(e)}")
             return True, "analysis_error"  # 出错时保守处理，标记为可疑
 
@@ -171,7 +171,7 @@ class SuspiciousOddsHandler:
             logger = QualityLogger(self.db_manager)
             await logger.log_suspicious_odds(suspicious_details)
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录可疑赔率日志失败: {str(e)}")
 
     async def analyze_suspicious_patterns(
@@ -229,7 +229,7 @@ class SuspiciousOddsHandler:
             )
             return analysis
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"分析可疑赔率模式失败: {str(e)}")
             raise SuspiciousOddsException(
                 f"分析可疑赔率模式失败: {str(e)}", odds_data={"analysis_error": str(e)}

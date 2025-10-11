@@ -8,7 +8,7 @@ This module was split from the original file.
 
 import time
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from datetime import datetime
 
 from src.core.logging import get_logger

@@ -2,7 +2,7 @@
 OpenAPI 配置和文档增强
 """
 
-from typing import Dict, Any, List, cast
+from typing import Dict, Any, List
 from fastapi import FastAPI
 
 

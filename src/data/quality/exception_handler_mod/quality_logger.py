@@ -69,7 +69,7 @@ class QualityLogger:
                     session.add(quality_log)
                     await session.commit()
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"创建质量日志记录失败: {str(e)}")
             if session:
                 await session.rollback()
@@ -103,7 +103,7 @@ class QualityLogger:
                 requires_manual_review=False,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录缺失值处理日志失败: {str(e)}")
 
     async def log_suspicious_odds(
@@ -130,7 +130,7 @@ class QualityLogger:
                         session=session,
                     )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录可疑赔率日志失败: {str(e)}")
 
     async def log_exception(
@@ -152,7 +152,7 @@ class QualityLogger:
                 requires_manual_review=True,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录异常处理日志失败: {str(e)}")
 
     async def log_data_consistency_issue(
@@ -175,7 +175,7 @@ class QualityLogger:
                 requires_manual_review=True,
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"记录数据一致性问题日志失败: {str(e)}")
 
     async def get_pending_reviews(
@@ -222,7 +222,7 @@ class QualityLogger:
                     for log in logs
                 ]
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取待审核问题失败: {str(e)}")
             raise QualityLogException(
                 f"获取待审核问题失败: {str(e)}",
@@ -241,7 +241,7 @@ class QualityLogger:
             notes: 审核备注
         """
         try:
-            from sqlalchemy import select, update
+            from sqlalchemy import update
 
             async with self.db_manager.get_async_session() as session:
                 # 更新日志状态
@@ -260,7 +260,7 @@ class QualityLogger:
 
                 self.logger.info(f"质量日志 {log_id} 已由 {reviewer} 审核完成")
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"标记审核完成失败: {str(e)}")
             raise QualityLogException(
                 f"标记审核完成失败: {str(e)}",
@@ -307,7 +307,7 @@ class QualityLogger:
 
                 return cleanup_result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"清理旧日志失败: {str(e)}")
             raise QualityLogException(
                 f"清理旧日志失败: {str(e)}", log_data={"days_to_keep": days_to_keep}

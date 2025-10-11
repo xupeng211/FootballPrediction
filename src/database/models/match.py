@@ -1,6 +1,22 @@
+"""
+Match - 数据库模块
+
+提供 match 相关的数据库功能。
+
+主要功能：
+- [待补充 - Match的主要功能]
+
+使用示例：
+    from database.models import Match
+    # 使用示例代码
+
+注意事项：
+- [待补充 - 使用注意事项]
+"""
+
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from sqlalchemy import (
     CheckConstraint,
     DateTime,

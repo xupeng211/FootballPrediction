@@ -8,7 +8,7 @@ import asyncio
 import time
 import functools
 import logging
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 from abc import ABC, abstractmethod
 
 from src.core.logging import get_logger
@@ -65,7 +65,7 @@ class LoggingDecorator(BaseDecorator):
 
             return result
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             duration = time.time() - start_time
             self.logger.error(
                 f"Failed execution: {self._component.__class__.__name__} "
@@ -108,7 +108,7 @@ class RetryDecorator(BaseDecorator):
 
                 return await self._component.execute(*args, **kwargs)
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 last_exception = e
 
                 if not any(isinstance(e, exc) for exc in self.exceptions):  # type: ignore
@@ -153,7 +153,7 @@ class MetricsDecorator(BaseDecorator):
             result = await self._component.execute(*args, **kwargs)
             return result
 
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             success = False
             self.metrics["errors"] += 1
             raise
@@ -204,7 +204,7 @@ class ValidationDecorator(BaseDecorator):
         for validator in self.validators:
             try:
                 validator(*args, **kwargs)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(
                     f"Input validation failed for {self._component.__class__.__name__}: {str(e)}"
                 )
@@ -217,7 +217,7 @@ class ValidationDecorator(BaseDecorator):
         if self.validate_result:
             try:
                 self.validate_result(result)
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 self.logger.error(
                     f"Result validation failed for {self._component.__class__.__name__}: {str(e)}"
                 )
@@ -302,7 +302,13 @@ def async_retry(
 
                     return await func(*args, **kwargs)
 
-                except Exception as e:
+                except (
+                    ValueError,
+                    TypeError,
+                    AttributeError,
+                    KeyError,
+                    RuntimeError,
+                ) as e:
                     last_exception = e
 
                     if exceptions and not any(isinstance(e, exc) for exc in exceptions):
@@ -337,7 +343,7 @@ def async_log(log_level: int = logging.INFO):
                 logger.log(log_level, f"Completed {func.__name__} in {duration:.3f}s")
                 return result
 
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 duration = time.time() - start_time
                 logger.error(f"Failed {func.__name__} in {duration:.3f}s: {str(e)}")
                 raise
@@ -374,7 +380,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
                 result = await func(*args, **kwargs)
                 return result
 
-            except Exception:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                 metrics["errors"] += 1
                 raise
 

@@ -5,9 +5,7 @@ Data Handlers
 提供特殊数据的处理功能。
 """
 
-import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -64,7 +62,7 @@ class MissingDataHandler:  # type: ignore
             self.logger.info(f"使用 {strategy} 策略处理缺失数据完成")
             return data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理缺失数据失败: {e}")
             return None
 
@@ -212,7 +210,7 @@ class MissingScoresHandler:
             self.logger.info("缺失比分处理完成")
             return data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理缺失比分失败: {e}")
             return None
 
@@ -309,7 +307,7 @@ class MissingTeamDataHandler:
             self.logger.info(f"处理了 {processed_count} 条缺失队伍数据")
             return data
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"处理缺失队伍数据失败: {e}")
             return None
 

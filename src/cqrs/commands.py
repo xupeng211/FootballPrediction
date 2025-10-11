@@ -6,7 +6,7 @@ Command Definitions
 Defines all write operation commands.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from datetime import datetime
 from .base import ValidatableCommand, ValidationResult
 from ..database.models import User, Match, Prediction

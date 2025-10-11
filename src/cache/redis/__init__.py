@@ -2,10 +2,10 @@
 Redis cache module - 提供完整的Redis缓存管理功能
 """
 
-import asyncio
+# import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional, Any, List, Dict, Union, Tuple
 
 import redis
 import redis.asyncio as aioredis
@@ -94,7 +94,7 @@ async def attl_cache(key: str) -> Optional[int]:
     try:
         client = await get_redis_manager().get_async_client()
         return await client.ttl(key)
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error getting TTL for key {key}: {str(e)}")
         return None
 
@@ -105,7 +105,7 @@ async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
         client = await get_redis_manager().get_async_client()
         values = await client.mget(keys)
         return [json.loads(v) if v else None for v in values]
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mget: {str(e)}")
         return [None] * len(keys)
 
@@ -123,7 +123,7 @@ async def amset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> boo
                 pipe.set(key, serialized)
         await pipe.execute()
         return True
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mset: {str(e)}")
         return False
 
@@ -162,7 +162,7 @@ def ttl_cache(key: str) -> Optional[int]:
     try:
         client = get_redis_manager().get_sync_client()
         return client.ttl(key)
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error getting TTL for key {key}: {str(e)}")
         return None
 
@@ -173,7 +173,7 @@ def mget_cache(keys: List[str]) -> List[Optional[Any]]:
         client = get_redis_manager().get_sync_client()
         values = client.mget(keys)
         return [json.loads(v) if v else None for v in values]
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mget: {str(e)}")
         return [None] * len(keys)
 
@@ -191,7 +191,7 @@ def mset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
                 pipe.set(key, serialized)
         pipe.execute()
         return True
-    except Exception as e:
+    except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mset: {str(e)}")
         return False
 

@@ -6,7 +6,7 @@ Audit Data Sanitizer
 """
 
 import hashlib
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class AuditDataSanitizer:
@@ -96,7 +96,7 @@ class AuditDataSanitizer:
                     if len(data) > 50:  # 只哈希长文本
                         return self._hash_sensitive_value(data)
                     return data
-        except Exception:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # 如果解析失败，直接哈希
             return self._hash_sensitive_value(data) if len(data) > 20 else data
 
