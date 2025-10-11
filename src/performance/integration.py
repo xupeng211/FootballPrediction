@@ -226,7 +226,8 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            # TODO: 实现告警设置
+            # Note: 需要实现告警设置
+            # 实现内容：
             # 1. 配置告警规则
             # 2. 设置告警渠道（邮件、短信、Slack等）
             # 3. 启动告警检查任务
