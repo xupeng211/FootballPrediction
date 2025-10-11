@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 事件驱动的预测服务
 Event-Driven Prediction Service

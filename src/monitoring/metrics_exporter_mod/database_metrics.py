@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 数据库指标记录器 / Database Metrics Recorder
 

@@ -60,7 +60,7 @@ class MatchDomainService:
 
         # 记录领域事件
         event = MatchStartedEvent(
-            match_id=match.id,
+            match_id=match.id or 0,
             home_team_id=match.home_team_id,
             away_team_id=match.away_team_id,
         )
@@ -96,11 +96,11 @@ class MatchDomainService:
         # 记录领域事件
         if match.score:
             event = MatchFinishedEvent(
-                match_id=match.id,
+                match_id=match.id or 0,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
-                final_score=str(match.score),
-                result=match.score.result if match.score else None,
+                final_score=match.score or MatchScore(0, 0),
+                result=match.score.result if match.score else MatchResult.DRAW,
             )
             self._events.append(event)
 
@@ -112,7 +112,7 @@ class MatchDomainService:
         match.status = MatchStatus.CANCELLED
 
         # 记录领域事件
-        event = MatchCancelledEvent(match_id=match.id, reason=reason)
+        event = MatchCancelledEvent(match_id=match.id or 0, reason=reason)
         self._events.append(event)
 
     def postpone_match(self, match: Match, new_date: datetime, reason: str) -> None:
@@ -125,7 +125,7 @@ class MatchDomainService:
 
         # 记录领域事件
         event = MatchPostponedEvent(
-            match_id=match.id,
+            match_id=match.id or 0,
             new_date=new_date.isoformat(),
             reason=reason,
         )

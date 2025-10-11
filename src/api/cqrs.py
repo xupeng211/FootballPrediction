@@ -21,6 +21,7 @@ class CreatePredictionRequest(BaseModel):
     """创建预测请求"""
 
     match_id: int = Field(..., description="比赛ID")
+    user_id: Optional[int] = Field(None, description="用户ID")
     predicted_home: int = Field(..., ge=0, description="主队预测得分")
     predicted_away: int = Field(..., ge=0, description="客队预测得分")
     confidence: float = Field(..., ge=0, le=1, description="置信度")

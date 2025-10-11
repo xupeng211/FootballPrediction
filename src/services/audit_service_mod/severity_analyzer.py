@@ -80,7 +80,7 @@ class SeverityAnalyzer:
             合规类别
         """
         if table_name and table_name in self.compliance_mapping:
-            return self.compliance_mapping[table_name]
+            return self.compliance_mapping[table_name]  # type: ignore[no-any-return]
 
         if action and action in ["login", "logout", "access"]:
             return "authentication"
