@@ -93,11 +93,16 @@ class ModelTrainer:
             config: 训练配置
         """
         self.config = config or TrainingConfig()
+        import logging
+        from datetime import datetime
+        from typing import List, Dict, Any, Optional, Tuple
+
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None
-        self.training_history = []  # type: ignore
-        self.metrics_history = {}  # type: ignore
-        self.feature_importance = {}  # type: ignore
+
+        self.training_history: List[Dict[str, Any]] = []
+        self.metrics_history: Dict[str, Any] = {}
+        self.feature_importance: Dict[str, float] = {}
         self.status = TrainingStatus.PENDING
         self.start_time = None
         self.end_time = None
@@ -180,16 +185,16 @@ class ModelTrainer:
         """
         self.logger.info(f"Starting model training with {len(X_train)} samples...")
         self.status = TrainingStatus.TRAINING
-        self.start_time = datetime.now()  # type: ignore
+        self.start_time = datetime.now()
 
         try:
             # 创建模型
             if self.config.model_type == ModelType.RANDOM_FOREST:
-                self.model = FootballPredictionModel("random_forest_model")  # type: ignore
+                self.model = FootballPredictionModel("random_forest_model")
             else:
                 self.model = PredictionModel(
                     "generic_model", self.config.model_type.value
-                )  # type: ignore
+                )
 
             # 模拟训练过程
             for epoch in range(min(10, self.config.epochs)):
@@ -208,26 +213,26 @@ class ModelTrainer:
                 await asyncio.sleep(0.01)
 
             # 实际调用训练（桩实现）
-            metrics = self.model.train(X_train, y_train)  # type: ignore
+            metrics = self.model.train(X_train, y_train)
 
             # 计算特征重要性
-            self.feature_importance = self.model.get_feature_importance()  # type: ignore
+            self.feature_importance = self.model.get_feature_importance()
 
-            self.end_time = datetime.now()  # type: ignore
+            self.end_time = datetime.now()
             self.status = TrainingStatus.COMPLETED
 
-            training_time = (self.end_time - self.start_time).total_seconds()  # type: ignore
+            training_time = (self.end_time - self.start_time).total_seconds()
 
             result = {
                 "status": "completed",
-                "model_name": self.model.model_name,  # type: ignore
+                "model_name": self.model.model_name,
                 "training_time": training_time,
                 "metrics": metrics,
                 "feature_importance": self.feature_importance,
                 "training_samples": len(X_train),
                 "validation_samples": len(X_val) if X_val is not None else 0,
-                "start_time": self.start_time.isoformat(),  # type: ignore
-                "end_time": self.end_time.isoformat(),  # type: ignore
+                "start_time": self.start_time.isoformat(),
+                "end_time": self.end_time.isoformat(),
             }
 
             self.logger.info(f"Training completed in {training_time:.2f} seconds")
@@ -239,7 +244,7 @@ class ModelTrainer:
             return {
                 "status": "failed",
                 "error": str(e),
-                "start_time": self.start_time.isoformat() if self.start_time else None,  # type: ignore
+                "start_time": self.start_time.isoformat() if self.start_time else None,
             }
 
     async def evaluate(
@@ -262,7 +267,7 @@ class ModelTrainer:
             raise ValueError("Model must be trained before evaluation")
 
         # 桩实现：生成评估指标
-        metrics = {  # type: ignore
+        metrics = {
             "accuracy": np.random.uniform(0.6, 0.9),
             "precision": np.random.uniform(0.6, 0.9),
             "recall": np.random.uniform(0.6, 0.9),
@@ -290,7 +295,7 @@ class ModelTrainer:
             return False
 
         # 保存模型
-        success = self.model.save_model(file_path)  # type: ignore
+        success = self.model.save_model(file_path)
 
         if success:
             # 保存训练历史
@@ -324,8 +329,8 @@ class ModelTrainer:
         self.logger.info(f"Loading model from: {file_path}")
 
         # 加载模型
-        self.model = PredictionModel("loaded_model")  # type: ignore
-        success = self.model.load_model(file_path)  # type: ignore
+        self.model = PredictionModel("loaded_model")
+        success = self.model.load_model(file_path)
 
         if success:
             # 加载训练历史
@@ -340,7 +345,7 @@ class ModelTrainer:
                     }
                     self.feature_importance = history_data.get("feature_importance", {})
 
-        return success  # type: ignore
+        return success
 
     def get_training_summary(self) -> Dict[str, Any]:
         """
@@ -352,9 +357,9 @@ class ModelTrainer:
         return {
             "status": self.status.value,
             "model_type": self.config.model_type.value,
-            "model_name": self.model.model_name if self.model else None,  # type: ignore
-            "start_time": self.start_time.isoformat() if self.start_time else None,  # type: ignore
-            "end_time": self.end_time.isoformat() if self.end_time else None,  # type: ignore
+            "model_name": self.model.model_name if self.model else None,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
             "duration": (self.end_time - self.start_time).total_seconds()
             if self.start_time and self.end_time
             else None,
@@ -535,7 +540,7 @@ async def train_football_model(
     # 注册模型
     registry = get_model_registry()
     registry.register_model(
-        trainer.model,  # type: ignore
+        trainer.model,
         model_name,
         metadata={
             "training_result": training_result,
@@ -544,7 +549,7 @@ async def train_football_model(
         },
     )
 
-    return trainer.model, {  # type: ignore
+    return trainer.model, {
         "training": training_result,
         "evaluation": evaluation_metrics,
         "model_path": model_path,

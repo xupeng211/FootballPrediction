@@ -37,9 +37,10 @@ class DatabaseManager:
         if self.initialized:
             return
 
-        from src.config import settings
-
-        db_url = database_url or settings.DATABASE_URL
+        import os
+        db_url = database_url or os.getenv("DATABASE_URL", "postgresql://localhost/football_prediction")
+        if db_url is None:
+            raise ValueError("Database URL is required")
         async_db_url = db_url.replace("postgresql://", "postgresql+asyncpg://")
 
         # 同步引擎

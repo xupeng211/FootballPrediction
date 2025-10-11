@@ -405,7 +405,7 @@ class MetricsExporter:
                         from sqlalchemy import quoted_name
 
                         safe_table_name = quoted_name(table_name, quote=True)
-                        result = await session.execute(  # type: ignore
+                        result = await session.execute(
                             text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
                         )
                         row_count = result.scalar()
@@ -433,7 +433,7 @@ class MetricsExporter:
         try:
             async with get_async_session() as session:
                 # 获取数据库连接数
-                result = await session.execute(  # type: ignore
+                result = await session.execute(
                     text(
                         """
                         SELECT state, COUNT(*)

@@ -88,7 +88,7 @@ class UpdatePredictionCommand(ValidatableCommand):
         # 验证预测是否存在
         from ..database.connection_mod import get_session
 
-        async with get_session() as session:  # type: ignore
+        async with get_session() as session:
             prediction = await session.get(Prediction, self.prediction_id)
             if not prediction:
                 errors.append("指定的预测不存在")
@@ -130,7 +130,7 @@ class DeletePredictionCommand(ValidatableCommand):
         # 验证预测是否存在
         from ..database.connection_mod import get_session
 
-        async with get_session() as session:  # type: ignore
+        async with get_session() as session:
             prediction = await session.get(Prediction, self.prediction_id)
             if not prediction:
                 errors.append("指定的预测不存在")
@@ -178,7 +178,7 @@ class CreateUserCommand(ValidatableCommand):
         # 验证用户名唯一性
         from ..database.connection_mod import get_session
 
-        async with get_session() as session:  # type: ignore
+        async with get_session() as session:
             existing_user = await session.execute(
                 "SELECT id FROM users WHERE username = :username",
                 {"username": self.username},
@@ -217,7 +217,7 @@ class UpdateUserCommand(ValidatableCommand):
         # 验证用户是否存在
         from ..database.connection_mod import get_session
 
-        async with get_session() as session:  # type: ignore
+        async with get_session() as session:
             user = await session.get(User, self.user_id)
             if not user:
                 errors.append("指定的用户不存在")
@@ -299,7 +299,7 @@ class UpdateMatchCommand(ValidatableCommand):
         # 验证比赛是否存在
         from ..database.connection_mod import get_session
 
-        async with get_session() as session:  # type: ignore
+        async with get_session() as session:
             match = await session.get(Match, self.match_id)
             if not match:
                 errors.append("指定的比赛不存在")

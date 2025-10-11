@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any, Optional
 from datetime import datetime
 import asyncio
+from requests.exceptions import HTTPError
 
 from ..decorators import DecoratorService
 from ..decorators.base import DecoratorContext
@@ -92,7 +93,7 @@ async def demo_logging_decorator(
     result = await decorated(input_value, input_value * 2)
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()  # type: ignore
+    stats = decorated.get_decorator_stats()
 
     return {
         "input": input_value,
@@ -115,7 +116,7 @@ async def demo_retry_decorator() -> Dict[str, Any]:
     end_time = datetime.utcnow()
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()  # type: ignore
+    stats = decorated.get_decorator_stats()
 
     return {
         "result": result,
@@ -229,7 +230,7 @@ async def demo_metrics_decorator(
         results.append(result)
 
     # 获取统计信息
-    stats = decorated.get_decorator_stats()  # type: ignore
+    stats = decorated.get_decorator_stats()
 
     return {
         "iterations": iterations,
@@ -267,7 +268,7 @@ async def demo_combo_decorators(
     second_time = (datetime.utcnow() - start_time).total_seconds()
 
     # 获取所有装饰器的统计信息
-    all_stats = decorated.get_decorator_stats()  # type: ignore
+    all_stats = decorated.get_decorator_stats()
 
     return {
         "input": input_value,
