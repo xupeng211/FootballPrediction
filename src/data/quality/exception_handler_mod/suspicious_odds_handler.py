@@ -137,9 +137,9 @@ class SuspiciousOddsHandler:
 
             # 检查隐含概率总和
             try:
+                odds_list = [home_odds, draw_odds, away_odds]
                 total_probability = sum(
-                    1 / odds
-                    for odds in [home_odds, draw_odds, away_odds]  # type: ignore
+                    1 / odds if odds is not None else 0 for odds in odds_list
                 )
                 prob_range = self.config["probability_range"]
 
