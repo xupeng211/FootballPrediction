@@ -73,7 +73,7 @@ class Predictions(BaseModel):
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
-        comment="用户ID"
+        comment="用户ID",
     )
 
     # 用户关系
@@ -81,18 +81,12 @@ class Predictions(BaseModel):
 
     # 预测状态
     status: Mapped[str] = mapped_column(
-        String(20),
-        nullable=False,
-        default="pending",
-        comment="预测状态"
+        String(20), nullable=False, default="pending", comment="预测状态"
     )
 
     # 得分
     points_earned: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        nullable=True,
-        default=0,
-        comment="获得积分"
+        Integer, nullable=True, default=0, comment="获得积分"
     )
 
     model_name: Mapped[str] = mapped_column(

@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         MetricPoint,
         MetricSummary,
         AlertInfo,
@@ -45,7 +45,7 @@ def test_module_imports():
 
 def test_metric_types():
     """测试指标数据类型"""
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         MetricPoint,
         MetricSummary,
         AlertInfo,
@@ -85,7 +85,7 @@ def test_metric_types():
 
 def test_metrics_aggregator():
     """测试指标聚合器"""
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         MetricsAggregator,
         MetricPoint,
     )
@@ -115,7 +115,7 @@ def test_metrics_aggregator():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod import BusinessMetricsCollector
+    from src.metrics.collector.enhanced import BusinessMetricsCollector
     from unittest.mock import Mock
 
     prometheus_manager = Mock()
@@ -152,7 +152,7 @@ def test_business_metrics_collector():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod import SystemMetricsCollector
+    from src.metrics.collector.enhanced import SystemMetricsCollector
     from unittest.mock import Mock
 
     prometheus_manager = Mock()
@@ -183,7 +183,7 @@ def test_system_metrics_collector():
 
 def test_alert_manager():
     """测试告警管理器"""
-    from src.monitoring.metrics_collector_enhanced_mod import AlertManager
+    from src.metrics.collector.enhanced import AlertManager
 
     alert_manager = AlertManager()
 
@@ -216,7 +216,7 @@ def test_alert_manager():
 
 def test_enhanced_metrics_collector():
     """测试增强指标收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod import EnhancedMetricsCollector
+    from src.metrics.collector.enhanced import EnhancedMetricsCollector
 
     # 创建收集器（不启动任务）
     collector = EnhancedMetricsCollector()
@@ -258,7 +258,7 @@ def test_enhanced_metrics_collector():
 @pytest.mark.asyncio
 async def test_aggregation_task():
     """测试聚合任务"""
-    from src.monitoring.metrics_collector_enhanced_mod import EnhancedMetricsCollector
+    from src.metrics.collector.enhanced import EnhancedMetricsCollector
 
     collector = EnhancedMetricsCollector()
 
@@ -279,7 +279,7 @@ async def test_aggregation_task():
 
 def test_global_collector():
     """测试全局收集器"""
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         get_metrics_collector,
         set_metrics_collector,
     )
@@ -305,7 +305,7 @@ def test_global_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         EnhancedMetricsCollector,
         MetricsAggregator,
         MetricPoint,
@@ -328,7 +328,7 @@ def test_backward_compatibility():
 
 def test_decorators():
     """测试装饰器"""
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         track_cache_performance,
         track_performance,
     )
@@ -358,7 +358,7 @@ def test_decorators():
 @pytest.mark.asyncio
 async def test_async_decorators():
     """测试异步装饰器"""
-    from src.monitoring.metrics_collector_enhanced_mod import (
+    from src.metrics.collector.enhanced import (
         track_prediction_performance,
     )
 

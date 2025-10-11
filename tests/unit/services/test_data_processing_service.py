@@ -1,4 +1,4 @@
-from src.services.data_processing_mod import DataProcessingService
+from src.data.processing import DataProcessingService
 
 
 def test_data_processing():

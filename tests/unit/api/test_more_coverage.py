@@ -242,7 +242,7 @@ class TestMonitoringModuleWorking:
 
     def test_metrics_point_class(self):
         """测试指标点类"""
-        from src.monitoring.metrics_collector_enhanced_mod import MetricPoint
+        from src.metrics.collector.enhanced import MetricPoint
 
         point = MetricPoint(
             name="test_metric", value=100.5, timestamp=datetime.utcnow()
@@ -252,7 +252,7 @@ class TestMonitoringModuleWorking:
 
     def test_metrics_aggregator(self):
         """测试指标聚合器"""
-        from src.monitoring.metrics_collector_enhanced_mod import MetricsAggregator
+        from src.metrics.collector.enhanced import MetricsAggregator
 
         aggregator = MetricsAggregator()
         assert hasattr(aggregator, "add_metric")
@@ -261,7 +261,7 @@ class TestMonitoringModuleWorking:
 
     def test_enhanced_metrics_collector(self):
         """测试增强指标收集器"""
-        from src.monitoring.metrics_collector_enhanced_mod import (
+        from src.metrics.collector.enhanced import (
             EnhancedMetricsCollector,
         )
 
@@ -271,7 +271,7 @@ class TestMonitoringModuleWorking:
 
     def test_alert_manager(self):
         """测试告警管理器"""
-        from src.monitoring.alert_manager_mod import AlertManager
+        from src.alert.manager import AlertManager
 
         manager = AlertManager()
         assert hasattr(manager, "alerts")

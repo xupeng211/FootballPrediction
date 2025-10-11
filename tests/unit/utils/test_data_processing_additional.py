@@ -1,7 +1,7 @@
 # noqa: F401,F811,F821,E402
 from unittest.mock import AsyncMock, MagicMock
 import pytest
-from src.services.data_processing_mod import DataProcessingService
+from src.data.processing import DataProcessingService
 
 """
 数据处理服务补充测试 / Additional Data Processing Service Tests

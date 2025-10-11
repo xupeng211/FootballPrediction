@@ -433,14 +433,24 @@ class Team:
     def from_dict(cls, data: Dict[str, Any]) -> "Team":
         """从字典创建实例"""
         stats_data = data.pop("stats", None)
-        stats = TeamStats(**stats_data) if stats_data else None
+        stats = None
+        if stats_data:
+            for transient_key in ["points", "goal_difference", "win_rate"]:
+                stats_data.pop(transient_key, None)
+            stats = TeamStats(**stats_data)
 
         form_data = data.pop("form", None)
-        form = TeamForm(**form_data) if form_data else None
+        form = None
+        if form_data:
+            form_data.pop("recent_form_string", None)
+            form = TeamForm(**form_data)
 
         # 处理类型枚举
         if data.get("type"):
             data["type"] = TeamType(data["type"])
+
+        data.pop("strength", None)
+        data.pop("rank", None)
 
         # 处理日期
         if data.get("created_at"):

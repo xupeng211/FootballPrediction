@@ -209,7 +209,9 @@ class PredictionService:
         self, user_id: int, match_id: int, prediction: str
     ) -> Dict[str, Any]:
         """提交预测（会失效用户相关缓存）"""
-        logger.info(f"提交预测: user={user_id}, match={match_id}, prediction={prediction}")
+        logger.info(
+            f"提交预测: user={user_id}, match={match_id}, prediction={prediction}"
+        )
 
         # 保存预测到数据库...
 

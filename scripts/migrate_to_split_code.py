@@ -59,18 +59,18 @@ def update_imports_in_files():
 
     # 导入路径映射
     import_mappings = {
-        "from src.services.audit_service import": "from src.services.audit_service_mod import",
-        "import src.services.audit_service": "import src.services.audit_service_mod",
+        "from src.services.audit_service import": "from src.services.audit_service import",
+        "import src.services.audit_service": "import src.services.audit_service",
         "from src.services.manager import": "from src.services.manager_mod import",
         "import src.services.manager": "import src.services.manager_mod",
-        "from src.services.data_processing import": "from src.services.data_processing_mod import",
-        "import src.services.data_processing": "import src.services.data_processing_mod",
+        "from src.services.data_processing import": "from src.services.data_processing import",
+        "import src.services.data_processing": "import src.services.data_processing",
         "from src.database.connection import": "from src.database.connection_mod import",
         "from src.cache.ttl_cache_improved import": "from src.cache.ttl_cache_improved_mod import",
         "from src.data.processing.football_data_cleaner import": "from src.data.processing.football_data_cleaner_mod import",
         "from src.data.quality.exception_handler import": "from src.data.quality.exception_handler_mod import",
         "from src.monitoring.system_monitor import": "from src.monitoring.system_monitor_mod import",
-        "from src.monitoring.metrics_collector_enhanced import": "from src.monitoring.metrics_collector_enhanced_mod import",
+        "from src.monitoring.metrics_collector_enhanced import": "from src.monitoring.metrics_collector_enhanced import",
     }
 
     # 需要更新的目录
@@ -126,11 +126,11 @@ def create_compatibility_shims():
 audit_service - 兼容性垫片
 
 为了向后兼容，重新导出拆分后的模块。
-建议使用: from src.services.audit_service_mod import AuditService
+建议使用: from src.services.audit_service import AuditService
 """
 
 # 从新的模块化实现重新导出
-from .audit_service_mod import (
+from .audit_service import (
     AuditService,
     AuditContext,
     AuditAction,
@@ -195,7 +195,7 @@ def run_tests():
         [
             "python",
             "-c",
-            "from src.services.audit_service_mod import AuditService; print('✓ AuditService 导入成功')",
+            "from src.services.audit_service import AuditService; print('✓ AuditService 导入成功')",
         ],
         [
             "python",
@@ -205,7 +205,7 @@ def run_tests():
         [
             "python",
             "-c",
-            "from src.services.data_processing_mod import DataProcessingService; print('✓ DataProcessingService 导入成功')",
+            "from src.services.data_processing import DataProcessingService; print('✓ DataProcessingService 导入成功')",
         ],
     ]
 

@@ -34,7 +34,7 @@ class MyPyErrorFixer:
             "fixed_errors": 0,
             "skipped_errors": 0,
             "failed_fixes": 0,
-            "by_type": {}
+            "by_type": {},
         }
         self.start_time = time.time()
         self.dry_run = False
@@ -56,7 +56,7 @@ class MyPyErrorFixer:
                 ["mypy", module, "--show-error-codes", "--no-error-summary"],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
         except subprocess.TimeoutExpired:
             print("❌ MyPy 运行超时")
@@ -77,23 +77,27 @@ class MyPyErrorFixer:
                     # 提取错误代码
                     error_code = "unknown"
                     if "[" in error_msg and "]" in error_msg:
-                        code_match = re.search(r'\[([^\]]+)\]', error_msg)
+                        code_match = re.search(r"\[([^\]]+)\]", error_msg)
                         if code_match:
                             error_code = code_match.group(1)
 
-                    errors.append({
-                        "file": file_path,
-                        "line": line_num,
-                        "message": error_msg,
-                        "code": error_code,
-                        "raw_line": line
-                    })
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "line": line_num,
+                            "message": error_msg,
+                            "code": error_code,
+                            "raw_line": line,
+                        }
+                    )
 
         self.error_stats["total_errors"] = len(errors)
         print(f"📊 发现 {len(errors)} 个 MyPy 错误")
         return errors
 
-    def analyze_error_patterns(self, errors: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def analyze_error_patterns(
+        self, errors: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """
         分析错误模式并按类型分组
 
@@ -115,16 +119,16 @@ class MyPyErrorFixer:
             "arg_type": [],
             "valid_type": [],
             "misc": [],
-            "others": []
+            "others": [],
         }
 
         for error in errors:
             msg = error["message"].lower()
             code = error["code"]
 
-            if "function \"builtins.callable\" is not valid as a type" in msg:
+            if 'function "builtins.callable" is not valid as a type' in msg:
                 patterns["callable_to_typing"].append(error)
-            elif "name \"logger\" is not defined" in msg:
+            elif 'name "logger" is not defined' in msg:
                 patterns["missing_logger"].append(error)
             elif code == "var-annotated":
                 patterns["var_annotated"].append(error)
@@ -173,26 +177,26 @@ class MyPyErrorFixer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
                 original_line = lines[line_num - 1]
 
                 # 替换 callable 为 typing.Callable
-                fixed_line = re.sub(r'\bcallable\b', 'typing.Callable', original_line)
+                fixed_line = re.sub(r"\bcallable\b", "typing.Callable", original_line)
 
                 # 确保导入了 typing.Callable
-                if 'typing' not in fixed_line and 'Callable' not in fixed_line:
+                if "typing" not in fixed_line and "Callable" not in fixed_line:
                     # 检查文件顶部是否已有 typing 导入
                     typing_imported = False
                     for i, line in enumerate(lines[:10]):  # 检查前10行
-                        if 'import typing' in line or 'from typing import' in line:
-                            if 'Callable' in line:
+                        if "import typing" in line or "from typing import" in line:
+                            if "Callable" in line:
                                 typing_imported = True
                             else:
                                 # 在现有 typing 导入中添加 Callable
-                                lines[i] = line.rstrip() + ', Callable\n'
+                                lines[i] = line.rstrip() + ", Callable\n"
                                 typing_imported = True
                             break
 
@@ -201,16 +205,18 @@ class MyPyErrorFixer:
                         # 找到最后一个 import 语句
                         last_import = 0
                         for i, line in enumerate(lines[:15]):
-                            if line.strip().startswith('import') or line.strip().startswith('from'):
+                            if line.strip().startswith(
+                                "import"
+                            ) or line.strip().startswith("from"):
                                 last_import = i + 1
 
                         # 在最后一个 import 后添加 typing 导入
-                        lines.insert(last_import, 'from typing import Callable\n')
+                        lines.insert(last_import, "from typing import Callable\n")
 
                 lines[line_num - 1] = fixed_line
 
                 if not self.dry_run:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.writelines(lines)
 
                 print(f"✅ 修复 {file_path}:{line_num} callable → typing.Callable")
@@ -237,38 +243,38 @@ class MyPyErrorFixer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否已有 logger 导入
-            if 'import logging' in content or 'from logging' in content:
+            if "import logging" in content or "from logging" in content:
                 return False  # 已有导入，可能需要其他修复
 
             # 添加 logger 导入和初始化
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             # 找到最后一个 import 语句
             last_import = 0
             for i, line in enumerate(lines):
-                if line.strip().startswith('import') or line.strip().startswith('from'):
+                if line.strip().startswith("import") or line.strip().startswith("from"):
                     last_import = i + 1
 
             # 添加 logging 导入
-            lines.insert(last_import, 'import logging')
-            lines.insert(last_import + 1, '')
+            lines.insert(last_import, "import logging")
+            lines.insert(last_import + 1, "")
 
             # 在文件中找到第一个 logger 使用前添加初始化
             logger_added = False
             for i, line in enumerate(lines):
-                if 'logger' in line and 'logging' not in line and not logger_added:
-                    lines.insert(i, 'logger = logging.getLogger(__name__)')
-                    lines.insert(i + 1, '')
+                if "logger" in line and "logging" not in line and not logger_added:
+                    lines.insert(i, "logger = logging.getLogger(__name__)")
+                    lines.insert(i + 1, "")
                     logger_added = True
                     break
 
             if not self.dry_run:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write('\n'.join(lines))
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write("\n".join(lines))
 
             print(f"✅ 修复 {file_path} 添加 logger 导入和初始化")
             self.fixed_files.add(str(file_path))
@@ -295,36 +301,37 @@ class MyPyErrorFixer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
                 original_line = lines[line_num - 1]
 
                 # 尝试从错误信息中推断类型
-                var_name_match = re.search(r'\"([^\"]+)\"', error["message"])
+                var_name_match = re.search(r"\"([^\"]+)\"", error["message"])
                 if var_name_match:
                     var_name = var_name_match.group(1)
 
                     # 尝试分析变量类型
-                    if '=' in original_line:
+                    if "=" in original_line:
                         # 分析赋值表达式来推断类型
-                        value_part = original_line.split('=', 1)[1].strip()
+                        value_part = original_line.split("=", 1)[1].strip()
                         inferred_type = self.infer_type_from_value(value_part)
 
                         if inferred_type:
                             # 添加类型注解
                             fixed_line = original_line.replace(
-                                f"{var_name} =",
-                                f"{var_name}: {inferred_type} ="
+                                f"{var_name} =", f"{var_name}: {inferred_type} ="
                             )
                             lines[line_num - 1] = fixed_line
 
                             if not self.dry_run:
-                                with open(file_path, 'w', encoding='utf-8') as f:
+                                with open(file_path, "w", encoding="utf-8") as f:
                                     f.writelines(lines)
 
-                            print(f"✅ 修复 {file_path}:{line_num} 添加类型注解: {inferred_type}")
+                            print(
+                                f"✅ 修复 {file_path}:{line_num} 添加类型注解: {inferred_type}"
+                            )
                             self.fixed_files.add(str(file_path))
                             return True
 
@@ -344,29 +351,29 @@ class MyPyErrorFixer:
         """
         value = value.strip()
 
-        if value.startswith('[') and value.endswith(']'):
-            return 'list'
-        elif value.startswith('{') and value.endswith('}'):
-            if ':' in value:
-                return 'dict'
+        if value.startswith("[") and value.endswith("]"):
+            return "list"
+        elif value.startswith("{") and value.endswith("}"):
+            if ":" in value:
+                return "dict"
             else:
-                return 'set'
-        elif value.startswith('(') and value.endswith(')'):
-            return 'tuple'
+                return "set"
+        elif value.startswith("(") and value.endswith(")"):
+            return "tuple"
         elif value.startswith('"') or value.startswith("'"):
-            return 'str'
+            return "str"
         elif value.isdigit():
-            return 'int'
-        elif value.replace('.', '').isdigit():
-            return 'float'
-        elif value in ('True', 'False'):
-            return 'bool'
-        elif value.startswith('lambda'):
-            return 'Callable'
-        elif 'None' in value:
-            return 'Any'
+            return "int"
+        elif value.replace(".", "").isdigit():
+            return "float"
+        elif value in ("True", "False"):
+            return "bool"
+        elif value.startswith("lambda"):
+            return "Callable"
+        elif "None" in value:
+            return "Any"
         else:
-            return 'Any'
+            return "Any"
 
     def fix_unused_ignore(self, error: Dict[str, Any]) -> bool:
         """
@@ -385,20 +392,20 @@ class MyPyErrorFixer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
                 original_line = lines[line_num - 1]
 
                 # 移除 type: ignore 注释
-                fixed_line = re.sub(r'\s*#\s*type:\s*ignore.*$', '', original_line)
+                fixed_line = re.sub(r"\s*#\s*type:\s*ignore.*$", "", original_line)
 
                 if fixed_line != original_line:
                     lines[line_num - 1] = fixed_line
 
                     if not self.dry_run:
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.writelines(lines)
 
                     print(f"✅ 修复 {file_path}:{line_num} 移除未使用的 type: ignore")
@@ -426,7 +433,7 @@ class MyPyErrorFixer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             # 查找函数定义并添加 return 语句或类型注解
@@ -435,15 +442,17 @@ class MyPyErrorFixer:
                 original_line = lines[line_num - 1]
 
                 # 在函数行添加 type: ignore
-                if 'def ' in original_line:
-                    fixed_line = original_line.rstrip() + '  # type: ignore\n'
+                if "def " in original_line:
+                    fixed_line = original_line.rstrip() + "  # type: ignore\n"
                     lines[line_num - 1] = fixed_line
 
                     if not self.dry_run:
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.writelines(lines)
 
-                    print(f"✅ 修复 {file_path}:{line_num} 添加 type: ignore for no-any-return")
+                    print(
+                        f"✅ 修复 {file_path}:{line_num} 添加 type: ignore for no-any-return"
+                    )
                     self.fixed_files.add(str(file_path))
                     return True
 
@@ -462,7 +471,11 @@ class MyPyErrorFixer:
 
         # 定义修复策略和优先级
         fix_strategies = [
-            ("callable_to_typing", self.fix_callable_to_typing, "callable → typing.Callable"),
+            (
+                "callable_to_typing",
+                self.fix_callable_to_typing,
+                "callable → typing.Callable",
+            ),
             ("missing_logger", self.fix_missing_logger, "缺失 logger 导入"),
             ("var_annotated", self.fix_var_annotated, "变量类型注解"),
             ("unused_ignore", self.fix_unused_ignore, "未使用的 type: ignore"),
@@ -510,20 +523,24 @@ class MyPyErrorFixer:
         for error_type, count in self.error_stats["by_type"].items():
             report_lines.append(f"  • {error_type}: {count} 个")
 
-        report_lines.extend([
-            "",
-            f"📁 修复的文件数: {len(self.fixed_files)}",
-            "",
-            "📝 修复的文件列表:",
-        ])
+        report_lines.extend(
+            [
+                "",
+                f"📁 修复的文件数: {len(self.fixed_files)}",
+                "",
+                "📝 修复的文件列表:",
+            ]
+        )
 
         for file_path in sorted(self.fixed_files):
             report_lines.append(f"  • {file_path}")
 
-        report_lines.extend([
-            "",
-            "=" * 60,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "=" * 60,
+            ]
+        )
 
         return "\n".join(report_lines)
 
@@ -536,13 +553,13 @@ class MyPyErrorFixer:
             filename: 文件名，默认使用时间戳
         """
         if filename is None:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"mypy_fix_report_{timestamp}.md"
 
         report_path = self.project_root / "scripts" / "cleanup" / filename
         report_path.parent.mkdir(exist_ok=True)
 
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"\n📄 报告已保存到: {report_path}")
@@ -599,21 +616,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="系统性 MyPy 错误修复脚本")
-    parser.add_argument(
-        "--module",
-        default="src",
-        help="要修复的模块路径 (默认: src)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="试运行模式，不修改文件"
-    )
-    parser.add_argument(
-        "--project-root",
-        default=None,
-        help="项目根目录路径"
-    )
+    parser.add_argument("--module", default="src", help="要修复的模块路径 (默认: src)")
+    parser.add_argument("--dry-run", action="store_true", help="试运行模式，不修改文件")
+    parser.add_argument("--project-root", default=None, help="项目根目录路径")
 
     args = parser.parse_args()
 
