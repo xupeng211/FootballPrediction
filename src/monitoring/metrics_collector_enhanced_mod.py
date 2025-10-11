@@ -20,3 +20,23 @@ class EnhancedMetricsCollector:
     def add_metric(self, name: str, value: Any):
         """添加指标"""
         self.metrics[name] = value
+
+
+class MetricsAggregator:
+    """指标聚合器 - 简化版本"""
+
+    def __init__(self):
+        self.aggregated_metrics = {}
+
+    def aggregate(self, metrics: Dict[str, Any]):
+        """聚合指标"""
+        for key, value in metrics.items():
+            if key in self.aggregated_metrics:
+                # 简单的聚合逻辑：取平均值
+                self.aggregated_metrics[key] = (self.aggregated_metrics[key] + value) / 2
+            else:
+                self.aggregated_metrics[key] = value
+
+    def get_aggregated(self) -> Dict[str, Any]:
+        """获取聚合后的指标"""
+        return self.aggregated_metrics
