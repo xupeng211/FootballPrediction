@@ -1,0 +1,100 @@
+version: '3.8'
+
+# 本地开发环境覆盖配置
+# 此文件会在docker-compose up时自动加载
+# 仅用于本地开发，不会被生产环境使用
+
+services:
+  app:
+    # 开发模式：可写挂载，热重载
+    volumes:
+      - ../src:/app/src:rw
+      - ../tests:/app/tests:rw
+      - ../requirements:/app/requirements:ro
+    environment:
+      - RELOAD_FLAG=--reload
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # debugpy端口
+    # 开发时可以禁用健康检查以加快启动
+    healthcheck:
+      disable: true
+
+  db:
+    # 开发环境暴露端口
+    ports:
+      - "5432:5432"
+    # 开发环境可以使用更小的资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  redis:
+    # 开发环境暴露端口
+    ports:
+      - "6379:6379"
+
+  # 开发工具容器
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+    networks:
+      - backend
+    profiles:
+      - tools
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - backend
+    profiles:
+      - tools
+
+  # 测试数据库（独立实例）
+  test-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: football_prediction_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    profiles:
+      - test
+
+  # 邮件模拟器（开发测试用）
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    profiles:
+      - tools
+
+  # 开发环境性能监控
+  pyroscope:
+    image: pyroscope/pyroscope:latest
+    ports:
+      - "4040:4040"
+    command:
+      - server
+    profiles:
+      - profiling
