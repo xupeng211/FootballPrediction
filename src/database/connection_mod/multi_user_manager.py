@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import Any, AsyncGenerator, Dict, Generator, Optional
 
 from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
