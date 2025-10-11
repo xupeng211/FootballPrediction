@@ -150,11 +150,11 @@ class StatisticalStrategy(PredictionStrategy):
         # 获取球队平均进球数
         home_avg_goals = await self._get_team_average_goals(
             input_data.home_team.id,
-            True,  # type: ignore
+            True,
         )
         away_avg_goals = await self._get_team_average_goals(
             input_data.away_team.id,
-            False,  # type: ignore
+            False,
         )
 
         # 应用主场优势
@@ -255,7 +255,7 @@ class StatisticalStrategy(PredictionStrategy):
         h2h_games = await self._get_head_to_head_games(
             input_data.home_team.id,
             input_data.away_team.id,
-            limit=10,  # type: ignore
+            limit=10,
         )
 
         if not h2h_games:

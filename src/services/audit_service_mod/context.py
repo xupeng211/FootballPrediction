@@ -108,7 +108,7 @@ class AuditContext:
             session_id = user_info.get("session_id")
 
         return cls(
-            user_id=user_id or "anonymous",  # type: ignore[arg-type]
+            user_id=user_id or "anonymous",
             username=username,
             user_role=user_role,
             session_id=session_id,

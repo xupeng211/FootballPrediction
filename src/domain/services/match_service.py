@@ -41,6 +41,9 @@ class MatchDomainService:
         # 检查球队是否已经在同一时间有比赛
         # 这里简化处理，实际应该查询数据库
 
+        if home_team.id is None or away_team.id is None:
+            raise ValueError("球队ID不能为空")
+
         match = Match(
             home_team_id=home_team.id,
             away_team_id=away_team.id,

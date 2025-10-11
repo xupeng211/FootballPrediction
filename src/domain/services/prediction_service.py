@@ -8,6 +8,7 @@ Handles complex business logic related to predictions.
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from decimal import Decimal
 
 from ..models.prediction import (
     Prediction,
@@ -59,6 +60,9 @@ class PredictionDomainService:
             if not 0.0 <= confidence <= 1.0:
                 raise ValueError("信心度必须在0-1之间")
 
+        if match.id is None:
+            raise ValueError("比赛ID不能为空")
+
         prediction = Prediction(
             user_id=user_id,
             match_id=match.id,
@@ -72,6 +76,9 @@ class PredictionDomainService:
         # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
         event = PredictionCreatedEvent(
             prediction_id=prediction.id,
             user_id=user_id,
@@ -111,10 +118,13 @@ class PredictionDomainService:
         )
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
         event = PredictionUpdatedEvent(
             prediction_id=prediction.id,
-            old_predicted_home=old_home,
-            old_predicted_away=old_away,
+            old_predicted_home=old_home or 0,
+            old_predicted_away=old_away or 0,
             new_predicted_home=new_predicted_home,
             new_predicted_away=new_predicted_away,
         )
@@ -135,6 +145,14 @@ class PredictionDomainService:
         prediction.evaluate(actual_home, actual_away, scoring_rules)
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
+        points_earned = prediction.points.total if prediction.points else None
+        # Convert Decimal to int if needed
+        if isinstance(points_earned, Decimal):
+            points_earned = int(points_earned)
+
         event = PredictionEvaluatedEvent(
             prediction_id=prediction.id,
             actual_home=actual_home,
@@ -142,7 +160,7 @@ class PredictionDomainService:
             is_correct=prediction.score.is_correct_result
             if prediction.score
             else False,
-            points_earned=prediction.points.total if prediction.points else None,
+            points_earned=points_earned,
             accuracy_score=None,  # 需要实现
         )
         self._events.append(event)
@@ -157,6 +175,9 @@ class PredictionDomainService:
         prediction.cancel()
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
         event = PredictionCancelledEvent(
             prediction_id=prediction.id,
             reason=reason,
@@ -173,6 +194,9 @@ class PredictionDomainService:
         prediction.cancelled_at = datetime.utcnow()
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
         event = PredictionExpiredEvent(
             prediction_id=prediction.id,
             match_id=prediction.match_id,
@@ -187,7 +211,7 @@ class PredictionDomainService:
         if prediction.status != PredictionStatus.EVALUATED:
             raise ValueError("只能调整已评估的预测积分")
 
-        old_points = float(prediction.points.total) if prediction.points else 0.0
+        old_points = int(float(prediction.points.total)) if prediction.points else 0
 
         # 创建新的积分对象
         from decimal import Decimal
@@ -195,6 +219,9 @@ class PredictionDomainService:
         prediction.points = PredictionPoints(total=Decimal(str(new_points)))
 
         # 记录领域事件
+        if prediction.id is None:
+            raise ValueError("预测ID不能为空")
+
         event = PredictionPointsAdjustedEvent(
             prediction_id=prediction.id,
             user_id=prediction.user_id,
