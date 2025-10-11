@@ -381,7 +381,7 @@ class BaseRepository(ABC, Generic[T]):
     async def execute_in_transaction(
         self,
         operations: List[callable],
-        session: Optional[AsyncSession] = None,  # type: ignore
+        session: Optional[AsyncSession] = None,
     ) -> Any:
         """
         在事务中执行多个操作

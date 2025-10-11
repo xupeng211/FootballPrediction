@@ -12,7 +12,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Optional, Dict, Any, List
 
-from ...core.exceptions import DomainError  # type: ignore
+from ...core.exceptions import DomainError
 
 
 class PredictionStatus(Enum):

@@ -357,7 +357,7 @@ class ModelTrainer:
             "end_time": self.end_time.isoformat() if self.end_time else None,  # type: ignore
             "duration": (self.end_time - self.start_time).total_seconds()
             if self.start_time and self.end_time
-            else None,  # type: ignore
+            else None,
             "training_epochs": len(self.training_history),
             "best_accuracy": max([h.get("accuracy", 0) for h in self.training_history])
             if self.training_history
