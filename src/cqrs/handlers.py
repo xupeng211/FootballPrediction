@@ -12,7 +12,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
 
-from ..database.connection_mod import get_session
+from ..database.connection import get_session
 from ..database.models import User, Prediction
 from .base import CommandHandler, QueryHandler
 from .commands import (
