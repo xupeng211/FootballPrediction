@@ -331,7 +331,6 @@ class FootballFeatureStore:
                     )
             else:
                 # 如果没有指定比赛ID，从数据库获取时间范围内的比赛
-                # TODO: 实现从数据库查询比赛的逻辑
                 # 这里提供一个示例
                 for i in range(1, 100):  # 示例：100场比赛
                     entity_data.append(

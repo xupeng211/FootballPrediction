@@ -4,9 +4,9 @@
 目标：将覆盖率从当前的11%提升到30%
 """
 
-import os
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import List
+
 
 class TestCoverageBooster:
     """测试覆盖率提升器"""
@@ -357,7 +357,7 @@ class TestTTLCache:
     def _write_test_file(self, filename: str, content: str):
         """写入测试文件"""
         test_path = self.test_dir / filename
-        test_path.write_text(content, encoding='utf-8')
+        test_path.write_text(content, encoding="utf-8")
         print(f"✅ 创建测试文件: {filename}")
 
     def boost_coverage(self):
@@ -396,6 +396,7 @@ class TestTTLCache:
         print("  python -m pytest --cov=src --cov-report=term-missing tests/unit/")
 
         return total_files
+
 
 if __name__ == "__main__":
     booster = TestCoverageBooster()

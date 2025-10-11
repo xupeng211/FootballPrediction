@@ -4,9 +4,9 @@
 自动运行测试并生成覆盖率报告
 """
 
+import json
 import subprocess
 import sys
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -34,7 +34,6 @@ def parse_coverage_output(output):
     """解析覆盖率输出"""
     lines = output.split("\n")
     total_line = None
-    modules = {}
 
     for line in lines:
         if "TOTAL" in line:
@@ -111,7 +110,7 @@ def generate_coverage_report():
         print("✅ HTML报告已生成: htmlcov/index.html")
         if Path("coverage.json").exists():
             with open("coverage.json") as f:
-                data = json.load(f)
+                _ = json.load(f)
                 print("   JSON报告已生成: coverage.json")
     else:
         print("❌ HTML报告生成失败")

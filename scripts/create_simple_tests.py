@@ -4,7 +4,6 @@
 """
 
 import os
-import subprocess
 from pathlib import Path
 
 
@@ -13,7 +12,9 @@ def create_simple_utils_tests():
 
     # 测试文件列表
     test_files = [
-        ("test_cache_utils.py", """
+        (
+            "test_cache_utils.py",
+            """
 \"\"\"缓存工具测试\"\"\"
 import pytest
 from unittest.mock import Mock, patch
@@ -64,8 +65,11 @@ class TestCacheUtils:
         assert cache.get("key1") is None
         assert cache.get("key2") == "value2"
         assert cache.get("key3") == "value3"
-"""),
-        ("test_monitoring_utils.py", """
+""",
+        ),
+        (
+            "test_monitoring_utils.py",
+            """
 \"\"\"监控工具测试\"\"\"
 import pytest
 from unittest.mock import Mock
@@ -135,8 +139,11 @@ class TestMonitoringUtils:
 
         assert prometheus == "# Metrics"
         assert json_data == {"metrics": []}
-"""),
-        ("test_data_collectors.py", """
+""",
+        ),
+        (
+            "test_data_collectors.py",
+            """
 \"\"\"数据收集器测试\"\"\"
 import pytest
 from unittest.mock import Mock, AsyncMock
@@ -220,8 +227,11 @@ class TestDataCollectors:
         assert metrics["total_collected"] == 100
         assert metrics["success_rate"] == 0.95
         assert "last_collection" in metrics
-"""),
-        ("test_config_utils.py", """
+""",
+        ),
+        (
+            "test_config_utils.py",
+            """
 \"\"\"配置工具测试\"\"\"
 import pytest
 from unittest.mock import Mock, patch
@@ -288,8 +298,11 @@ class TestConfigUtils:
         assert hasattr(config, 'host')
         assert hasattr(config, 'port')
         assert hasattr(config, 'debug')
-"""),
-        ("test_middleware_utils.py", """
+""",
+        ),
+        (
+            "test_middleware_utils.py",
+            """
 \"\"\"中间件工具测试\"\"\"
 import pytest
 from unittest.mock import Mock
@@ -370,7 +383,8 @@ class TestMiddlewareUtils:
         assert metrics["total_requests"] == 1000
         assert metrics["average_response_time"] == 0.05
         assert metrics["error_rate"] == 0.01
-"""),
+""",
+        ),
     ]
 
     # 创建测试文件

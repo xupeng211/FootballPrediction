@@ -5,7 +5,7 @@
 
 import ast
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 
 def find_modules_missing_docs(directory: Path) -> List[Path]:

@@ -13,7 +13,6 @@ from decimal import Decimal
 from ..models.prediction import (
     Prediction,
     PredictionStatus,
-    ConfidenceScore,
     PredictionPoints,
 )
 from ..models.match import Match, MatchStatus

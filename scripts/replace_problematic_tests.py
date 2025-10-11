@@ -3,7 +3,6 @@
 将有导入错误的测试文件替换为占位符
 """
 
-import os
 import subprocess
 from pathlib import Path
 

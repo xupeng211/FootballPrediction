@@ -5,7 +5,7 @@ Severity and Compliance Analysis
 Provides severity and compliance analysis functionality.
 """
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from src.core.logging import get_logger
 

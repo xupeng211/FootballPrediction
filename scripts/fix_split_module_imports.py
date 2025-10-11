@@ -5,9 +5,7 @@
 修复恢复的拆分模块中缺失的导入。
 """
 
-import os
 from pathlib import Path
-from typing import Dict, List, Set
 
 
 def fix_audit_service_imports():

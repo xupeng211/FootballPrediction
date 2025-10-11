@@ -8,7 +8,7 @@
 import subprocess
 import os
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import List, Set
 
 
 def run_git_command(cmd: List[str]) -> str:

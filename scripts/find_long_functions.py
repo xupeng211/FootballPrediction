@@ -3,7 +3,6 @@
 查找超过50行的函数
 """
 
-import os
 import ast
 from pathlib import Path
 from typing import List, Tuple

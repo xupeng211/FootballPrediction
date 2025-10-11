@@ -2,8 +2,8 @@
 """分析项目测试文件分布情况"""
 
 import json
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
 def find_test_files():
@@ -104,7 +104,6 @@ def check_test_file_structure(test_files):
     # 检查目录结构
     api_test_files = [f for f in test_files if "api" in str(f)]
     unit_api_files = [f for f in api_test_files if "unit/api" in str(f)]
-    integration_api_files = [f for f in api_test_files if "integration/api" in str(f)]
 
     if len(api_test_files) > 0:
         unit_ratio = len(unit_api_files) / len(api_test_files)

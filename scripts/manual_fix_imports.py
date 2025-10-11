@@ -3,7 +3,6 @@
 手动修复数据库模型文件中的重复导入
 """
 
-import re
 from pathlib import Path
 
 

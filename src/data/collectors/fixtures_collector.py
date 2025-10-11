@@ -405,7 +405,6 @@ class FixturesCollector(DataCollector):
             date_to: 结束日期
         """
         try:
-            # TODO: 实现缺失比赛检测逻辑
             # 1. 从数据库查询应该存在的比赛
             # 2. 与本次采集结果比对
 

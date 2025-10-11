@@ -3,9 +3,7 @@
 批量修复 MyPy 错误的脚本
 """
 
-import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import List, Tuple
 
@@ -13,34 +11,31 @@ from typing import List, Tuple
 ERROR_PATTERNS = [
     # Unused type ignore
     (r'Unused "type: ignore" comment', lambda: None),
-
     # 模块导入问题（暂时忽略）
     (r'error: Module ".+" has no attribute ".+"', lambda: None),
-
     # 复杂的类型推断问题
-    (r'error: Returning Any from function', lambda: None),
-
+    (r"error: Returning Any from function", lambda: None),
     # 第三方库类型问题
     (r'error: .* has incompatible type .*"', lambda: None),
-
     # 动态属性访问
     (r'error: .* has no attribute .*"', lambda: None),
 ]
+
 
 def get_mypy_errors() -> List[Tuple[str, int, str]]:
     """获取 MyPy 错误列表"""
     try:
         result = subprocess.run(
-            ['mypy', 'src/', '--no-error-summary'],
+            ["mypy", "src/", "--no-error-summary"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         errors = []
-        for line in result.stdout.split('\n'):
-            if ': error: ' in line:
-                parts = line.split(':', 3)
+        for line in result.stdout.split("\n"):
+            if ": error: " in line:
+                parts = line.split(":", 3)
                 if len(parts) >= 4:
                     file_path = parts[0]
                     line_num = int(parts[1])
@@ -52,6 +47,7 @@ def get_mypy_errors() -> List[Tuple[str, int, str]]:
         print(f"获取 MyPy 错误失败: {e}")
         return []
 
+
 def fix_errors_in_file(file_path: str, errors: List[Tuple[int, str]]) -> bool:
     """修复文件中的错误"""
     path = Path(file_path)
@@ -59,8 +55,8 @@ def fix_errors_in_file(file_path: str, errors: List[Tuple[int, str]]) -> bool:
         return False
 
     try:
-        content = path.read_text(encoding='utf-8')
-        lines = content.split('\n')
+        content = path.read_text(encoding="utf-8")
+        lines = content.split("\n")
         modified = False
 
         # 按行号倒序处理，避免行号偏移
@@ -70,24 +66,25 @@ def fix_errors_in_file(file_path: str, errors: List[Tuple[int, str]]) -> bool:
                 line = lines[line_idx]
 
                 # 检查是否已经有 type: ignore
-                if '# type: ignore' in line:
+                if "# type: ignore" in line:
                     continue
 
                 # 添加 type: ignore
                 if line.strip():
-                    lines[line_idx] = line + '  # type: ignore'
+                    lines[line_idx] = line + "  # type: ignore"
                 else:
-                    lines[line_idx] = line + '# type: ignore'
+                    lines[line_idx] = line + "# type: ignore"
                 modified = True
 
         if modified:
-            path.write_text('\n'.join(lines), encoding='utf-8')
+            path.write_text("\n".join(lines), encoding="utf-8")
             print(f"修复了 {len(errors)} 个错误在 {file_path}")
 
         return modified
     except Exception as e:
         print(f"修复文件 {file_path} 失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -110,8 +107,9 @@ def main():
         if fix_errors_in_file(file_path, errors):
             fixed_files += 1
 
-    print(f"\n修复完成！")
+    print("\n修复完成！")
     print(f"处理了 {fixed_files} 个文件")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

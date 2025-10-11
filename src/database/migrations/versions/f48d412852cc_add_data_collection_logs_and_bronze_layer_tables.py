@@ -186,7 +186,6 @@ def upgrade() -> None:
     )
     op.create_index("idx_raw_odds_data_market_type", "raw_odds_data", ["market_type"])
 
-    # TODO: 后续优化可以考虑按时间分区
     # 这需要使用原生SQL来创建分区表结构
 
     # 创建Gold层特征表的扩展字段（对现有features表的增强）

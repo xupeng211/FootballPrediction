@@ -6,12 +6,10 @@ Comprehensive MyPy Error Fix Script
 专门设计用于批量修复各种类型的 MyPy 错误
 """
 
-import os
 import re
 import subprocess
-import json
 from pathlib import Path
-from typing import List, Dict, Set, Tuple, Optional, Any
+from typing import List, Dict, Set, Optional, Any
 import time
 
 

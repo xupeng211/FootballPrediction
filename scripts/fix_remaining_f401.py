@@ -4,8 +4,6 @@
 """
 
 import os
-import re
-from pathlib import Path
 
 
 def fix_specific_f401_errors():

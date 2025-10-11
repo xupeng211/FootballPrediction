@@ -4,10 +4,9 @@
 批量修复测试文件中的导入问题
 """
 
-import os
 import re
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List, Dict
 import subprocess
 
 

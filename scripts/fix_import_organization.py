@@ -4,15 +4,13 @@
 Fix module level import not at top of file errors
 """
 
-import os
-import re
 from pathlib import Path
-from typing import List, Tuple
+
 
 def fix_imports_in_file(file_path: Path) -> int:
     """修复单个文件的import组织"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
             lines = content.splitlines()
     except Exception as e:
@@ -53,7 +51,9 @@ def fix_imports_in_file(file_path: Path) -> int:
                     docstring_end = i
 
         # 检查import语句
-        if (stripped.startswith('import ') or stripped.startswith('from ')) and not in_docstring:
+        if (
+            stripped.startswith("import ") or stripped.startswith("from ")
+        ) and not in_docstring:
             # 检查是否在函数或类内部
             # 简单检查：看前面有多少空格
             indent = len(line) - len(stripped)
@@ -87,18 +87,58 @@ def fix_imports_in_file(file_path: Path) -> int:
         imp_stripped = imp.strip()
 
         # 判断import类型
-        if imp_stripped.startswith('from .'):
+        if imp_stripped.startswith("from ."):
             local_imports.append(imp)
-        elif any(imp_stripped.startswith(f'from {lib}') or imp_stripped.startswith(f'import {lib}')
-                for lib in ['os', 'sys', 'time', 'datetime', 'json', 'logging', 'asyncio',
-                           'pathlib', 're', 'collections', 'itertools', 'functools', 'typing',
-                           'uuid', 'hashlib', 'base64', 'urllib', 'http', 'socket', 'threading',
-                           'multiprocessing', 'subprocess', 'shutil', 'tempfile', 'glob',
-                           'math', 'random', 'statistics', 'decimal', 'fractions',
-                           'enum', 'dataclasses', 'contextlib', 'warnings', 'traceback',
-                           'inspect', 'importlib', 'pkgutil', 'types', 'copy']):
+        elif any(
+            imp_stripped.startswith(f"from {lib}")
+            or imp_stripped.startswith(f"import {lib}")
+            for lib in [
+                "os",
+                "sys",
+                "time",
+                "datetime",
+                "json",
+                "logging",
+                "asyncio",
+                "pathlib",
+                "re",
+                "collections",
+                "itertools",
+                "functools",
+                "typing",
+                "uuid",
+                "hashlib",
+                "base64",
+                "urllib",
+                "http",
+                "socket",
+                "threading",
+                "multiprocessing",
+                "subprocess",
+                "shutil",
+                "tempfile",
+                "glob",
+                "math",
+                "random",
+                "statistics",
+                "decimal",
+                "fractions",
+                "enum",
+                "dataclasses",
+                "contextlib",
+                "warnings",
+                "traceback",
+                "inspect",
+                "importlib",
+                "pkgutil",
+                "types",
+                "copy",
+            ]
+        ):
             stdlib_imports.append(imp)
-        elif imp_stripped.startswith('from src') or imp_stripped.startswith('import src'):
+        elif imp_stripped.startswith("from src") or imp_stripped.startswith(
+            "import src"
+        ):
             local_imports.append(imp)
         else:
             thirdparty_imports.append(imp)
@@ -109,17 +149,17 @@ def fix_imports_in_file(file_path: Path) -> int:
     # 添加标准库imports
     if stdlib_imports:
         new_imports.extend(sorted(stdlib_imports))
-        new_imports.append('')
+        new_imports.append("")
 
     # 添加第三方imports
     if thirdparty_imports:
         new_imports.extend(sorted(thirdparty_imports))
-        new_imports.append('')
+        new_imports.append("")
 
     # 添加本地imports
     if local_imports:
         new_imports.extend(sorted(local_imports))
-        new_imports.append('')
+        new_imports.append("")
 
     # 5. 重建文件内容
     # 先移除原来的top-level imports
@@ -132,7 +172,7 @@ def fix_imports_in_file(file_path: Path) -> int:
 
     # 在insert_pos插入新的imports
     # 先确保insert_pos后面有空行
-    while insert_pos < len(new_lines) and new_lines[insert_pos].strip() == '':
+    while insert_pos < len(new_lines) and new_lines[insert_pos].strip() == "":
         insert_pos += 1
 
     # 插入imports
@@ -141,8 +181,8 @@ def fix_imports_in_file(file_path: Path) -> int:
 
     # 6. 写回文件
     try:
-        new_content = '\n'.join(new_lines) + '\n'
-        with open(file_path, 'w', encoding='utf-8') as f:
+        new_content = "\n".join(new_lines) + "\n"
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_content)
 
         fixed_count = len(top_level_imports)
