@@ -471,8 +471,8 @@ async def update_threshold(threshold: ThresholdUpdate):
 async def get_thresholds():
     """获取当前性能阈值"""
     try:
-        # TODO: 从配置获取实际阈值
-        # 这里返回默认阈值
+        # Note: 生产环境应从配置系统获取实际阈值
+        # 当前返回默认阈值配置
 
         thresholds = {
             "response_time": {
