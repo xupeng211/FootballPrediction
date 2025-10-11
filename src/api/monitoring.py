@@ -18,7 +18,7 @@ from fastapi.responses import PlainTextResponse
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
 from src.core.logger import get_logger
-from src.database.connection_mod import get_db_session
+from src.database.connection import get_db_session
 
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）

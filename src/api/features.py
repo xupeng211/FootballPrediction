@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.features.feature_store import FootballFeatureStore
-from src.database.connection_mod import get_async_session
+from src.database.connection import get_async_session
 from src.database.models import Match
 
 logger = logging.getLogger(__name__)

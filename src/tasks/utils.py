@@ -12,7 +12,7 @@ from typing import List, Optional
 
 from sqlalchemy import text
 
-from src.database.connection_mod import DatabaseManager
+from src.database.connection import DatabaseManager
 
 
 async def should_collect_live_scores() -> bool:

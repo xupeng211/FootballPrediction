@@ -104,7 +104,7 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
 import pandas as pd  # noqa: E402
 
 from src.cache import CacheKeyManager, RedisManager  # noqa: E402
-from src.database.connection_mod import DatabaseManager  # noqa: E402
+from src.database.connection import DatabaseManager  # noqa: E402
 
 from .entities import MatchEntity  # noqa: E402
 from .feature_calculator import FeatureCalculator  # noqa: E402
