@@ -171,9 +171,10 @@ class TestAPIComprehensive:
     def test_async_lifecycle(self):
         """测试异步生命周期管理"""
         # 测试 lifespan 上下文管理器
-        with patch("src.api.app.init_prediction_engine") as mock_init, patch(
-            "src.api.app.close_prediction_engine"
-        ) as mock_close:
+        with (
+            patch("src.api.app.init_prediction_engine") as mock_init,
+            patch("src.api.app.close_prediction_engine") as mock_close,
+        ):
             # 创建应用实例会触发 lifespan
             with TestClient(app) as client:
                 response = client.get("/")

@@ -11,7 +11,7 @@ import inspect
 from typing import Any, Callable, Dict, List, Optional, Union, Awaitable
 from pathlib import Path
 
-from ..core.logging import get_logger
+from ..core.logger import get_logger
 from .base import (
     Component,
     Decorator,
@@ -282,3 +282,7 @@ def with_all(
         timeout_seconds=timeout_seconds,
         **kwargs,
     )
+
+
+# 创建全局装饰器服务实例
+decorator_service = DecoratorService()
