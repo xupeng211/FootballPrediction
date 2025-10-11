@@ -30,7 +30,7 @@ def upgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过索引创建")
+        logger.info("⚠️  离线模式：跳过索引创建")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database indexes creation")  # type: ignore
         return
@@ -38,13 +38,13 @@ def upgrade() -> None:
     # 获取数据库连接以执行原生SQL
     conn = op.get_bind()  # type: ignore
 
-    print("开始添加缺失的数据库索引...")
+    logger.info("开始添加缺失的数据库索引...")
 
     # ========================================
     # 1. idx_recent_matches - 最近比赛查询优化
     # ========================================
 
-    print("1. 创建 idx_recent_matches 索引...")
+    logger.info("1. 创建 idx_recent_matches 索引...")
     try:
         conn.execute(
             text(  # type: ignore
@@ -55,15 +55,15 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_recent_matches 索引创建成功")
+        logger.info("   ✅ idx_recent_matches 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_recent_matches 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_recent_matches 索引创建失败: {e}")
 
     # ========================================
     # 2. idx_team_matches - 球队对战查询优化
     # ========================================
 
-    print("2. 创建 idx_team_matches 索引...")
+    logger.info("2. 创建 idx_team_matches 索引...")
     try:
         conn.execute(
             text(  # type: ignore
@@ -73,15 +73,15 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_team_matches 索引创建成功")
+        logger.info("   ✅ idx_team_matches 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_team_matches 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_team_matches 索引创建失败: {e}")
 
     # ========================================
     # 3. idx_predictions_lookup - 预测数据查询优化
     # ========================================
 
-    print("3. 创建 idx_predictions_lookup 索引...")
+    logger.info("3. 创建 idx_predictions_lookup 索引...")
     try:
         conn.execute(
             text(  # type: ignore
@@ -91,15 +91,15 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_predictions_lookup 索引创建成功")
+        logger.info("   ✅ idx_predictions_lookup 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
 
     # ========================================
     # 4. idx_odds_match_collected - 赔率时间序列查询优化
     # ========================================
 
-    print("4. 创建 idx_odds_match_collected 索引...")
+    logger.info("4. 创建 idx_odds_match_collected 索引...")
     try:
         conn.execute(
             text(  # type: ignore
@@ -109,15 +109,15 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_odds_match_collected 索引创建成功")
+        logger.info("   ✅ idx_odds_match_collected 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_odds_match_collected 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_odds_match_collected 索引创建失败: {e}")
 
     # ========================================
     # 5. 额外的性能优化索引
     # ========================================
 
-    print("5. 创建额外的性能优化索引...")
+    logger.info("5. 创建额外的性能优化索引...")
 
     # matches 表的复合状态索引
     try:
@@ -130,9 +130,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_matches_status_time 索引创建成功")
+        logger.info("   ✅ idx_matches_status_time 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_matches_status_time 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_matches_status_time 索引创建失败: {e}")
 
     # teams 表查询优化（如果表存在）
     try:
@@ -144,9 +144,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_teams_league 索引创建成功")
+        logger.info("   ✅ idx_teams_league 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_teams_league 索引创建失败 (可能表不存在): {e}")
+        logger.info(f"   ❌ idx_teams_league 索引创建失败 (可能表不存在): {e}")
 
     # odds 表的博彩商索引
     try:
@@ -158,9 +158,9 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_odds_bookmaker_time 索引创建成功")
+        logger.info("   ✅ idx_odds_bookmaker_time 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_odds_bookmaker_time 索引创建失败: {e}")
+        logger.info(f"   ❌ idx_odds_bookmaker_time 索引创建失败: {e}")
 
     # features 表的时间索引（如果表存在）
     try:
@@ -172,15 +172,15 @@ def upgrade() -> None:
         """
             )
         )
-        print("   ✅ idx_features_created_at 索引创建成功")
+        logger.info("   ✅ idx_features_created_at 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ idx_features_created_at 索引创建失败 (可能表不存在): {e}")
+        logger.info(f"   ❌ idx_features_created_at 索引创建失败 (可能表不存在): {e}")
 
     # ========================================
     # 6. 验证索引创建结果
     # ========================================
 
-    print("6. 验证索引创建结果...")
+    logger.info("6. 验证索引创建结果...")
     try:
         result = conn.execute(
             text(  # type: ignore
@@ -206,14 +206,14 @@ def upgrade() -> None:
             )
         )
 
-        print("   创建的索引列表：")
+        logger.info("   创建的索引列表：")
         for row in result:
-            print(f"   - {row[2]} on {row[1]}")
+            logger.info(f"   - {row[2]} on {row[1]}")
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"   ❌ 验证索引失败: {e}")
+        logger.info(f"   ❌ 验证索引失败: {e}")
 
-    print("✅ 数据库索引优化迁移完成！")
+    logger.info("✅ 数据库索引优化迁移完成！")
 
 
 def downgrade() -> None:
@@ -221,7 +221,7 @@ def downgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过索引回滚")
+        logger.info("⚠️  离线模式：跳过索引回滚")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database indexes rollback")  # type: ignore
@@ -230,7 +230,7 @@ def downgrade() -> None:
     # 获取数据库连接
     conn = op.get_bind()  # type: ignore
 
-    print("开始回滚数据库索引...")
+    logger.info("开始回滚数据库索引...")
 
     # 删除创建的索引
     indexes_to_drop = [
@@ -247,8 +247,8 @@ def downgrade() -> None:
     for index_name in indexes_to_drop:
         try:
             conn.execute(text(f"DROP INDEX IF EXISTS {index_name};"))  # type: ignore
-            print(f"   ✅ 删除索引: {index_name}")
+            logger.info(f"   ✅ 删除索引: {index_name}")
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"   ❌ 删除索引失败 {index_name}: {e}")
+            logger.info(f"   ❌ 删除索引失败 {index_name}: {e}")
 
-    print("✅ 数据库索引回滚完成！")
+    logger.info("✅ 数据库索引回滚完成！")

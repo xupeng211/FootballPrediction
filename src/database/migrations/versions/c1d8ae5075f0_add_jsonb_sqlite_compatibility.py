@@ -52,25 +52,25 @@ def upgrade() -> None:
     """
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过JSONB兼容性检查")
+        logger.info("⚠️  离线模式：跳过JSONB兼容性检查")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped JSONB compatibility validation")  # type: ignore
         return
 
     bind = op.get_bind()  # type: ignore
 
-    print(f"当前数据库类型: {bind.dialect.name}")
+    logger.info(f"当前数据库类型: {bind.dialect.name}")
 
     if is_sqlite():
-        print("检测到SQLite数据库，执行SQLite兼容性配置...")
+        logger.info("检测到SQLite数据库，执行SQLite兼容性配置...")
         _configure_sqlite_compatibility()
     elif is_postgresql():
-        print("检测到PostgreSQL数据库，验证JSONB配置...")
+        logger.info("检测到PostgreSQL数据库，验证JSONB配置...")
         _verify_postgresql_jsonb_config()
     else:
-        print(f"检测到其他数据库类型: {bind.dialect.name}")
+        logger.info(f"检测到其他数据库类型: {bind.dialect.name}")
 
-    print("JSONB与SQLite兼容性配置完成")
+    logger.info("JSONB与SQLite兼容性配置完成")
 
 
 def _configure_sqlite_compatibility():
@@ -92,9 +92,9 @@ def _configure_sqlite_compatibility():
 
     for table_name in tables_to_check:
         if table_name in existing_tables:
-            print(f"  ✓ 表 {table_name} 存在，JSON字段将自动适配为TEXT")
+            logger.info(f"  ✓ 表 {table_name} 存在，JSON字段将自动适配为TEXT")
         else:
-            print(f"  ⚠ 表 {table_name} 不存在，跳过检查")
+            logger.info(f"  ⚠ 表 {table_name} 不存在，跳过检查")
 
 
 def _verify_postgresql_jsonb_config():
@@ -119,7 +119,7 @@ def _verify_postgresql_jsonb_config():
                 )
 
                 if jsonb_col:
-                    print(f"  ✓ 表 {table_name} 的 {jsonb_column} 字段配置正确")
+                    logger.info(f"  ✓ 表 {table_name} 的 {jsonb_column} 字段配置正确")
 
                     # 检查GIN索引是否存在（PostgreSQL特有）
                     indexes = inspector.get_indexes(table_name)
@@ -134,18 +134,18 @@ def _verify_postgresql_jsonb_config():
                     )
 
                     if gin_index:
-                        print(f"    ✓ GIN索引 {gin_index['name']} 存在")
+                        logger.info(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
                         print(
                             f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响"
                         )
                 else:
-                    print(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
+                    logger.info(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:
-                print(f"  ⚠ 表 {table_name} 不存在")
+                logger.info(f"  ⚠ 表 {table_name} 不存在")
 
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  ❌ 检查表 {table_name} 时出错: {e}")
+            logger.info(f"  ❌ 检查表 {table_name} 时出错: {e}")
 
 
 def downgrade() -> None:
@@ -157,10 +157,10 @@ def downgrade() -> None:
     """
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过JSONB兼容性降级")
+        logger.info("⚠️  离线模式：跳过JSONB兼容性降级")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped JSONB compatibility downgrade")  # type: ignore
         return
 
-    print("JSONB兼容性迁移降级 - 无需特殊操作")
+    logger.info("JSONB兼容性迁移降级 - 无需特殊操作")

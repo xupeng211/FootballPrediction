@@ -214,7 +214,7 @@ class EventHandler(ABC):
                 queue.task_done()
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 处理错误但继续处理其他事件
-                print(f"Error handling event {event_type}: {e}")
+                logger.info(f"Error handling event {event_type}: {e}")
 
 
 class EventFilter(ABC):

@@ -206,7 +206,7 @@ class Subject(ABC):
             await observer.update(event)
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 观察者处理失败不应影响其他观察者
-            print(f"Observer {observer.name} failed to handle event: {e}")
+            logger.info(f"Observer {observer.name} failed to handle event: {e}")
 
     def _record_event(self, event: ObservableEvent) -> None:
         """记录事件到历史

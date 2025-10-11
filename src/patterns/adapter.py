@@ -528,8 +528,8 @@ async def example_usage():
     match_data = await collector.collect_match_data(12345)
     weather_data = await collector.collect_weather_data("London", datetime.now())
 
-    print(f"Match data: {match_data}")
-    print(f"Weather data: {weather_data}")
+    logger.info(f"Match data: {match_data}")
+    logger.info(f"Weather data: {weather_data}")
 
     # 清理
     await collector.close_all()

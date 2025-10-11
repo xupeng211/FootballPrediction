@@ -55,7 +55,7 @@ def upgrade() -> None:
     """
     # 检查是否在离线模式
     if context.is_offline_mode():
-        print("⚠️  离线模式：跳过分区表实现")
+        logger.info("⚠️  离线模式：跳过分区表实现")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped partitioned tables implementation")
         op.execute("-- offline mode: skipped advanced indexes creation")
@@ -63,19 +63,19 @@ def upgrade() -> None:
 
     bind = op.get_bind()
 
-    print(f"当前数据库类型: {bind.dialect.name}")
+    logger.info(f"当前数据库类型: {bind.dialect.name}")
 
     if is_postgresql():
-        print("PostgreSQL环境：实现分区表和高级索引...")
+        logger.info("PostgreSQL环境：实现分区表和高级索引...")
         _implement_postgresql_partitioning_and_indexes()
     elif is_sqlite():
-        print("SQLite环境：实现优化索引（不支持分区表）...")
+        logger.info("SQLite环境：实现优化索引（不支持分区表）...")
         _implement_sqlite_optimized_indexes()
     else:
-        print(f"其他数据库类型 {bind.dialect.name}：实现基础索引...")
+        logger.info(f"其他数据库类型 {bind.dialect.name}：实现基础索引...")
         _implement_basic_indexes()
 
-    print("分区表和索引优化实施完成")
+    logger.info("分区表和索引优化实施完成")
 
 
 def _implement_postgresql_partitioning_and_indexes():
@@ -163,11 +163,11 @@ def _implement_postgresql_partitioning_and_indexes():
         )
 
         if result == 0:
-            print("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
+            logger.info("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
             # 在实际部署中，需要先创建分区表，再迁移数据
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        print(f"  分区检查失败: {e}")
+        logger.info(f"  分区检查失败: {e}")
 
     # 4. 创建年度分区（示例）
     current_year = 2025
@@ -175,7 +175,7 @@ def _implement_postgresql_partitioning_and_indexes():
         try:
             op.execute(text(f"SELECT create_match_partition({year})"))
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  创建分区 {year} 失败: {e}")
+            logger.info(f"  创建分区 {year} 失败: {e}")
 
     # 5. 创建月度分区（最近12个月）
     for year in [2024, 2025]:
@@ -185,7 +185,7 @@ def _implement_postgresql_partitioning_and_indexes():
             try:
                 op.execute(text(f"SELECT create_prediction_partition({year}, {month})"))
             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-                print(f"  创建预测分区 {year}-{month:02d} 失败: {e}")
+                logger.info(f"  创建预测分区 {year}-{month:02d} 失败: {e}")
 
     # 6. 实现PostgreSQL高级索引
     _create_postgresql_advanced_indexes()
@@ -246,7 +246,7 @@ def _create_postgresql_advanced_indexes():
         try:
             _create_index_if_not_exists(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  创建索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建索引 {idx['name']} 失败: {e}")
 
 
 def _implement_sqlite_optimized_indexes():
@@ -297,7 +297,7 @@ def _implement_sqlite_optimized_indexes():
         try:
             _create_simple_index(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  创建SQLite索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建SQLite索引 {idx['name']} 失败: {e}")
 
 
 def _implement_basic_indexes():
@@ -320,7 +320,7 @@ def _implement_basic_indexes():
         try:
             _create_simple_index(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  创建基础索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建基础索引 {idx['name']} 失败: {e}")
 
 
 def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
@@ -342,7 +342,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
     )
 
     if exists > 0:
-        print(f"  索引 {name} 已存在，跳过创建")
+        logger.info(f"  索引 {name} 已存在，跳过创建")
         return
 
     # 构建索引创建语句
@@ -357,17 +357,17 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
         index_sql += f" WHERE {condition}"
 
     op.execute(text(index_sql))
-    print(f"  ✓ 已创建索引: {name}")
+    logger.info(f"  ✓ 已创建索引: {name}")
 
 
 def _create_simple_index(name, table, columns):
     """创建简单索引"""
     try:
         op.create_index(name, table, columns)
-        print(f"  ✓ 已创建索引: {name}")
+        logger.info(f"  ✓ 已创建索引: {name}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         if "already exists" in str(e).lower():
-            print(f"  索引 {name} 已存在，跳过创建")
+            logger.info(f"  索引 {name} 已存在，跳过创建")
         else:
             raise
 
@@ -380,20 +380,20 @@ def downgrade() -> None:
     """
     # 检查是否在离线模式
     if context.is_offline_mode():
-        print("⚠️  离线模式：跳过分区表降级")
+        logger.info("⚠️  离线模式：跳过分区表降级")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped partitioned tables downgrade")
         op.execute("-- offline mode: skipped advanced indexes removal")
         return
 
-    print("开始降级分区表和索引优化...")
+    logger.info("开始降级分区表和索引优化...")
 
     if is_postgresql():
         _downgrade_postgresql_features()
     elif is_sqlite():
         _downgrade_sqlite_features()
 
-    print("分区表和索引降级完成")
+    logger.info("分区表和索引降级完成")
 
 
 def _downgrade_postgresql_features():
@@ -418,9 +418,9 @@ def _downgrade_postgresql_features():
     for idx_name in indexes_to_drop:
         try:
             op.execute(text(f"DROP INDEX IF EXISTS {idx_name}"))
-            print(f"  ✓ 已删除索引: {idx_name}")
+            logger.info(f"  ✓ 已删除索引: {idx_name}")
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  删除索引 {idx_name} 失败: {e}")
+            logger.info(f"  删除索引 {idx_name} 失败: {e}")
 
 
 def _downgrade_sqlite_features():
@@ -439,6 +439,6 @@ def _downgrade_sqlite_features():
     for idx_name in indexes_to_drop:
         try:
             op.drop_index(idx_name)
-            print(f"  ✓ 已删除索引: {idx_name}")
+            logger.info(f"  ✓ 已删除索引: {idx_name}")
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            print(f"  删除索引 {idx_name} 失败: {e}")
+            logger.info(f"  删除索引 {idx_name} 失败: {e}")

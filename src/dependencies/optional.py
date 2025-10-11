@@ -274,13 +274,13 @@ def has_celery() -> bool:
 if __name__ == "__main__":
     # 打印依赖状态
     status = check_optional_dependencies()
-    print("可选依赖状态:")
-    print(f"✅ 可用: {list(status['available'].keys())}")
-    print(f"❌ 缺失: {list(status['missing'].keys())}")
+    logger.info("可选依赖状态:")
+    logger.info(f"✅ 可用: {list(status['available'].keys())}")
+    logger.info(f"❌ 缺失: {list(status['missing'].keys())}")
     if status["versions"]:
-        print("\n版本信息:")
+        logger.info("\n版本信息:")
         for dep, version in status["versions"].items():
             if version:
-                print(f"  {dep}: {version}")
+                logger.info(f"  {dep}: {version}")
             else:
-                print(f"  {dep}: 未知版本")
+                logger.info(f"  {dep}: 未知版本")

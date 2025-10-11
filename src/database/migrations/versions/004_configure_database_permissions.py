@@ -25,7 +25,7 @@ def upgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过数据库权限配置")
+        logger.info("⚠️  离线模式：跳过数据库权限配置")
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database user creation")  # type: ignore
         op.execute("-- offline mode: skipped database permission configuration")  # type: ignore
@@ -359,7 +359,7 @@ def downgrade() -> None:
 
     # 检查是否在离线模式
     if context.is_offline_mode():  # type: ignore
-        print("⚠️  离线模式：跳过数据库权限回滚")
+        logger.info("⚠️  离线模式：跳过数据库权限回滚")
         # 在离线模式下执行注释，确保 SQL 生成正常
 
         op.execute("-- offline mode: skipped database permission rollback")
