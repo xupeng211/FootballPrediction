@@ -5,7 +5,6 @@
 集成 OpenLineage 标准，与 Marquez 系统配合使用。
 """
 
-
 from .lineage_reporter import LineageReporter
 from .metadata_manager import MetadataManager  # type: ignore
 
