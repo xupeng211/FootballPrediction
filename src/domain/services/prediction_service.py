@@ -58,10 +58,6 @@ class PredictionDomainService:
         if confidence is not None:
             if not 0.0 <= confidence <= 1.0:
                 raise ValueError("信心度必须在0-1之间")
-            from decimal import Decimal
-            confidence_score = ConfidenceScore(Decimal(str(confidence)))
-        else:
-            confidence_score = None
 
         prediction = Prediction(
             user_id=user_id,
@@ -143,7 +139,9 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
-            is_correct=prediction.score.is_correct_result if prediction.score else False,
+            is_correct=prediction.score.is_correct_result
+            if prediction.score
+            else False,
             points_earned=prediction.points.total if prediction.points else None,
             accuracy_score=None,  # 需要实现
         )
@@ -193,9 +191,8 @@ class PredictionDomainService:
 
         # 创建新的积分对象
         from decimal import Decimal
-        prediction.points = PredictionPoints(
-            total=Decimal(str(new_points))
-        )
+
+        prediction.points = PredictionPoints(total=Decimal(str(new_points)))
 
         # 记录领域事件
         event = PredictionPointsAdjustedEvent(
@@ -246,7 +243,10 @@ class PredictionDomainService:
 
         # 检查预测内容
         if prediction.score:
-            if prediction.score.predicted_home < 0 or prediction.score.predicted_away < 0:
+            if (
+                prediction.score.predicted_home < 0
+                or prediction.score.predicted_away < 0
+            ):
                 errors.append("预测比分不能为负数")
 
         # 检查信心度
