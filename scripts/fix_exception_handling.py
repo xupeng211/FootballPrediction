@@ -4,8 +4,6 @@
 """
 
 import os
-import re
-from pathlib import Path
 
 
 def fix_exceptions_in_critical_files():

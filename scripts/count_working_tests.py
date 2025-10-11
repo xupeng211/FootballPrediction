@@ -3,7 +3,6 @@
 统计可以运行的测试数量
 """
 
-import os
 import subprocess
 from pathlib import Path
 

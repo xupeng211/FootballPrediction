@@ -6,7 +6,6 @@
 
 import os
 import re
-from pathlib import Path
 
 
 def fix_unused_ignore_comments():

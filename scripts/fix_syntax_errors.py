@@ -4,11 +4,9 @@
 专门处理E902, E701, E702, E703, E721, E722, E741等错误
 """
 
-import os
 import re
 import subprocess
-from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 
 def get_files_with_syntax_errors() -> List[str]:

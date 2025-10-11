@@ -4,12 +4,10 @@
 处理剩余的1964个语法错误
 """
 
-import os
 import re
 import subprocess
 import json
-from pathlib import Path
-from typing import List, Dict, Set
+from typing import List, Dict
 
 
 def get_syntax_errors() -> Dict[str, List[Dict]]:

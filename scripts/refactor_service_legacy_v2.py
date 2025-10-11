@@ -3,7 +3,6 @@
 Refactor service_legacy.py - Split 975-line file into smaller modules
 """
 
-import os
 import shutil
 from pathlib import Path
 from datetime import datetime

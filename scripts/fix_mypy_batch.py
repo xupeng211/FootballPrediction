@@ -3,7 +3,6 @@
 批量修复MyPy类型错误
 """
 
-import os
 import re
 from pathlib import Path
 from datetime import datetime

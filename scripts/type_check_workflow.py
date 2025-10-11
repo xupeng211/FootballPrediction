@@ -11,7 +11,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 
 class TypeChecker:
@@ -41,19 +41,16 @@ class TypeChecker:
             cmd.append("--no-error-summary")
 
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=self.project_root
+            cmd, capture_output=True, text=True, cwd=self.project_root
         )
 
         # 解析输出
         errors = []
         warnings = []
-        for line in result.stdout.split('\n'):
-            if ': error:' in line:
+        for line in result.stdout.split("\n"):
+            if ": error:" in line:
                 errors.append(line)
-            elif ': note:' in line or ': warning:' in line:
+            elif ": note:" in line or ": warning:" in line:
                 warnings.append(line)
 
         return {
@@ -81,8 +78,8 @@ class TypeChecker:
         # 按文件分组错误
         errors_by_file = {}
         for error in results["errors"]:
-            if ':' in error:
-                file_path = error.split(':')[0]
+            if ":" in error:
+                file_path = error.split(":")[0]
                 if file_path not in errors_by_file:
                     errors_by_file[file_path] = []
                 errors_by_file[file_path].append(error)
@@ -99,13 +96,13 @@ class TypeChecker:
             "top_error_files": sorted(
                 [(f, len(e)) for f, e in errors_by_file.items()],
                 key=lambda x: x[1],
-                reverse=True
+                reverse=True,
             )[:10],
             "error_types": self._analyze_error_types(results["errors"]),
         }
 
         # 保存报告
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
         return str(report_file)
@@ -121,8 +118,8 @@ class TypeChecker:
         """
         error_types = {}
         for error in errors:
-            if '[' in error and ']' in error:
-                error_code = error.split('[')[1].split(']')[0]
+            if "[" in error and "]" in error:
+                error_code = error.split("[")[1].split("]")[0]
                 error_types[error_code] = error_types.get(error_code, 0) + 1
         return error_types
 
@@ -144,8 +141,12 @@ class TypeChecker:
             previous = json.load(f)
 
         # 计算改进
-        error_diff = previous["summary"]["total_errors"] - latest["summary"]["total_errors"]
-        warning_diff = previous["summary"]["total_warnings"] - latest["summary"]["total_warnings"]
+        error_diff = (
+            previous["summary"]["total_errors"] - latest["summary"]["total_errors"]
+        )
+        warning_diff = (
+            previous["summary"]["total_warnings"] - latest["summary"]["total_warnings"]
+        )
 
         return {
             "previous_timestamp": previous["timestamp"],
@@ -232,7 +233,7 @@ class TypeChecker:
 </html>
         """
 
-        with open(dashboard_file, 'w') as f:
+        with open(dashboard_file, "w") as f:
             f.write(html_content)
 
         return str(dashboard_file)

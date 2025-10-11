@@ -6,7 +6,6 @@
 import os
 import re
 import subprocess
-from pathlib import Path
 
 
 def fix_undefined_names(filepath):

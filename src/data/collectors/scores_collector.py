@@ -251,7 +251,6 @@ class ScoresCollector(DataCollector):
             List[str]: 进行中的比赛ID列表
         """
         try:
-            # TODO: 从数据库查询当前进行中的比赛
             # 目前返回空列表作为占位符
             return []
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

@@ -4,7 +4,6 @@
 """
 
 from pathlib import Path
-import re
 
 
 def clean_file_imports(file_path: Path):

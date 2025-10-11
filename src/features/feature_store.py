@@ -1,6 +1,3 @@
-# TODO: 此文件过长（718行），需要拆分为更小的模块
-# TODO: This file is too long (718 lines), needs to be split into smaller modules
-
 """Feast 特征存储集成及其测试环境替身实现。"""
 
 import os

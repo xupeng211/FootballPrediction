@@ -4,9 +4,6 @@
 """
 
 import subprocess
-import os
-from pathlib import Path
-import re
 
 
 def get_f401_files():

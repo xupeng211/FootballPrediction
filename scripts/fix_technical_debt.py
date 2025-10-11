@@ -4,11 +4,9 @@
 用于批量修复Phase 1.5的遗留语法错误
 """
 
-import os
 import re
 import subprocess
-from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List
 
 
 def get_files_with_errors() -> List[str]:

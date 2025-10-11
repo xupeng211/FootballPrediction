@@ -5,10 +5,9 @@
 将代码中的导入路径更新为新的模块化路径。
 """
 
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List
 
 # 导入路径映射表
 IMPORT_MAPPINGS = {

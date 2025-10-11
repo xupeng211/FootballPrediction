@@ -3,10 +3,8 @@
 批量修复lint错误的脚本
 """
 
-import os
 import re
 from pathlib import Path
-from typing import List, Tuple
 
 # 需要修复的文件列表
 FILES_TO_FIX = [

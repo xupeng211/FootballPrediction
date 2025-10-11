@@ -5,7 +5,7 @@
 
 import ast
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 
 def find_used_types(content: str) -> Dict[str, Set[str]]:
