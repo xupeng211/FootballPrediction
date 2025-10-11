@@ -66,8 +66,8 @@ Integrates retry mechanisms to improve connection reliability.
       - sessions.py: 会话获取辅助函数
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有内容
-from .connection_mod import (
+# 从definitions模块导入所有内容（替代connection_mod）
+from .definitions import (
     # 角色定义
     DatabaseRole,
     # 核心管理器
