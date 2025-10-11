@@ -8,6 +8,7 @@ from src.cache.redis import get_redis_manager
 
 import logging
 from typing import Any, Dict, List, Union
+from redis.exceptions import RedisError
 
 try:
     from .redis_manager import get_redis_manager

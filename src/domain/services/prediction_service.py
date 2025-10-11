@@ -148,10 +148,13 @@ class PredictionDomainService:
         if prediction.id is None:
             raise ValueError("预测ID不能为空")
 
-        points_earned = prediction.points.total if prediction.points else None
-        # Convert Decimal to int if needed
-        if isinstance(points_earned, Decimal):
-            points_earned = int(points_earned)
+        # Get points earned as int
+        points_earned = None
+        if prediction.points:
+            if isinstance(prediction.points.total, Decimal):
+                points_earned = int(prediction.points.total)
+            else:
+                points_earned = prediction.points.total
 
         event = PredictionEvaluatedEvent(
             prediction_id=prediction.id,
