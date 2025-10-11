@@ -1,154 +1,186 @@
 #!/usr/bin/env python3
 """
-修复剩余的37个MyPy错误
+修复剩余的MyPy类型错误
 """
 
-import os
 import re
+from pathlib import Path
+from datetime import datetime
 
 
-def fix_file():
-    """修复各个文件中的错误"""
+def fix_missing_imports():
+    """修复缺失的导入"""
+    print("\n🔧 修复缺失的导入...")
 
-    # 1. 修复 celery_config.py - 添加 crontab 导入
-    file_path = "src/scheduler/celery_config.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        if "from celery.schedules import" in content and "crontab" not in content:
-            content = content.replace(
-                "from celery.schedules import crontab_schedule",
-                "from celery.schedules import crontab_schedule, crontab",
-            )
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"✓ 修复 {file_path}: 添加 crontab 导入")
-
-    # 2. 修复 feature_definitions.py - 添加 Optional 导入
-    file_path = "src/features/feature_definitions.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        if "from typing import" in content and "Optional" not in content:
-            # 在第一个 typing import 中添加 Optional
-            content = re.sub(
-                r"(from typing import [^\n]+)", r"\1, Optional", content, count=1
-            )
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"✓ 修复 {file_path}: 添加 Optional 导入")
-
-    # 3. 修复 data_validator.py - 注释掉 missing_handler 的使用
-    file_path = "src/services/processing/validators/data_validator.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # 找到并注释掉 missing_handler.analyze_missing_data
-        content = content.replace(
-            "missing_report = self.missing_handler.analyze_missing_data(df)",
-            '# missing_report = self.missing_handler.analyze_missing_data(df)  # type: ignore\n            missing_report = {"missing_percentage": 0}',
-        )
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"✓ 修复 {file_path}: 注释掉 missing_handler 使用")
-
-    # 4. 修复 decorators.py - 修复 append 参数类型
-    file_path = "src/decorators/decorators.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-
-        # 找到第153行附近的错误
-        for i, line in enumerate(lines):
-            if "metrics.append(" in i and "metadata[" in line:
-                # 修复这个错误
-                if 'metadata["key"]' in line:
-                    lines[i] = line.replace(
-                        'metrics.append(metadata["key"])',
-                        'metrics.append({"key": metadata["key"]})',
-                    )
-                    break
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.writelines(lines)
-        print(f"✓ 修复 {file_path}: 修复 append 参数类型")
-
-    # 5. 修复 collector.py - 添加返回类型注解
-    file_path = "src/monitoring/metrics_collector_enhanced_mod/collector.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # 在107行和114行的方法中添加返回类型
-        content = re.sub(
-            r"def is_healthy\(self\) -> bool:\s*\n\s*return",
-            "def is_healthy(self) -> bool:\n        return bool",
-            content,
-        )
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"✓ 修复 {file_path}: 添加返回类型注解")
-
-    # 6. 修复 auto_binding.py - 为 lambda 添加类型注解
-    file_path = "src/core/auto_binding.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # 在 lambda 前添加类型注解
-        content = re.sub(
-            r"(lambda\s+[a-zA-Z_][a-zA-Z0-9_]*:\s*[^,\n]+)",
-            r"\1  # type: ignore",
-            content,
-        )
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"✓ 修复 {file_path}: 为 lambda 添加 type: ignore")
-
-    # 7. 修复 feature_calculator.py - 添加变量类型注解
-    file_path = "src/features/feature_calculator.py"
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        # 在 features = [] 后添加类型注解
-        content = content.replace("features = []", "features: list = []")
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        print(f"✓ 修复 {file_path}: 添加变量类型注解")
-
-    # 8. 批量移除未使用的 type: ignore 注释
-    files_to_clean = [
-        "src/data/quality/exception_handler_mod/statistics_provider.py",
-        "src/database/models/data_collection_log.py",
-        "src/cache/decorators.py",
+    # 修复文件列表
+    fixes = [
+        {
+            "file": "src/services/processing/caching/processing_cache.py",
+            "add_imports": [
+                "import logging",
+                "from typing import Dict, List, Optional, Any, Union",
+                "from src.cache.redis import RedisManager, CacheKeyManager",
+            ],
+        },
+        {
+            "file": "src/cache/consistency_manager.py",
+            "add_imports": [
+                "import logging",
+                "from typing import Dict, List, Optional, Any",
+                "import asyncio",
+                "from src.cache.redis import get_redis_manager",
+            ],
+        },
     ]
 
-    for file_path in files_to_clean:
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
+    for fix in fixes:
+        path = Path(fix["file"])
+        if not path.exists():
+            continue
+
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        modified = False
+        for import_line in fix["add_imports"]:
+            if import_line.split(" import ")[0] not in content:
+                # 在文档字符串后添加
+                if content.startswith('"""'):
+                    lines = content.split("\n")
+                    doc_end = 0
+                    for i, line in enumerate(lines[1:], 1):
+                        if line.strip() == '"""':
+                            doc_end = i + 1
+                            break
+                    lines.insert(doc_end, import_line)
+                    content = "\n".join(lines)
+                else:
+                    content = import_line + "\n\n" + content
+                modified = True
+
+        if modified:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"  ✅ 已修复: {fix['file']}")
+
+
+def fix_migration_file_imports():
+    """修复迁移文件中的sa别名问题"""
+    print("\n🔧 修复迁移文件sa别名...")
+
+    migrations_dir = Path("src/database/migrations/versions")
+    if not migrations_dir.exists:
+        return
+
+    for py_file in migrations_dir.glob("*.py"):
+        with open(py_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 检查是否使用了sa但没有定义
+        if "sa." in content and "import sqlalchemy as sa" not in content:
+            # 添加sa别名导入
+            lines = content.split("\n")
+
+            # 找到alembic导入位置
+            insert_idx = 0
+            for i, line in enumerate(lines):
+                if "from alembic import" in line:
+                    insert_idx = i + 1
+                    break
+
+            lines.insert(insert_idx, "import sqlalchemy as sa")
+
+            with open(py_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
+
+            print(f"  ✅ 已修复sa别名: {py_file.name}")
+
+
+def remove_unused_type_ignore():
+    """移除未使用的type: ignore"""
+    print("\n🔧 移除未使用的type: ignore...")
+
+    src_dir = Path("src")
+    count = 0
+
+    for py_file in src_dir.rglob("*.py"):
+        try:
+            with open(py_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # 移除未使用的 type: ignore 注释
-            content = re.sub(r"\s*#\s*type:\s*ignore\s*\n", "\n", content)
+            original = content
 
-            with open(file_path, "w", encoding="utf-8") as f:
+            # 移除特定的type: ignore
+            patterns = [
+                r"  # type: ignore\n",  # 独立的type: ignore
+                r"(\w+\s*:\s*\w+)  # type: ignore\b",  # 类型注解后的type: ignore
+            ]
+
+            for pattern in patterns:
+                content = re.sub(pattern, r"\1", content)
+
+            if content != original:
+                with open(py_file, "w", encoding="utf-8") as f:
+                    f.write(content)
+                count += 1
+
+        except Exception:
+            pass
+
+    print(f"  ✅ 已清理 {count} 个文件的 type: ignore")
+
+
+def fix_pytest_plugins():
+    """修复pytest_plugins类型注解"""
+    print("\n🔧 修复pytest_plugins类型注解...")
+
+    init_files = [
+        "tests/unit/repositories/__init__.py",
+        "tests/unit/domain/__init__.py",
+        "tests/unit/core/__init__.py",
+        "tests/integration/services/__init__.py",
+    ]
+
+    for file_path in init_files:
+        path = Path(file_path)
+        if not path.exists():
+            continue
+
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 添加类型注解
+        if "pytest_plugins = [" in content and ":" not in content:
+            content = content.replace(
+                "pytest_plugins = [", "pytest_plugins: list[str] = ["
+            )
+
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
-            print(f"✓ 清理 {file_path}: 移除未使用的 type: ignore")
+
+            print(f"  ✅ 已修复: {file_path}")
+
+
+def main():
+    """主函数"""
+    print("=" * 80)
+    print("🔧 修复剩余的MyPy类型错误")
+    print(f"⏰ 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 80)
+
+    # 执行修复
+    fix_missing_imports()
+    fix_migration_file_imports()
+    fix_pytest_plugins()
+    remove_unused_type_ignore()
+
+    print("\n" + "=" * 80)
+    print("✅ 修复完成！")
+    print("=" * 80)
+
+    print("\n📊 运行检查:")
+    print("mypy src/ --show-error-codes")
 
 
 if __name__ == "__main__":
-    print("开始修复剩余的37个MyPy错误...\n")
-    fix_file()
-    print("\n修复完成！")
-
-    # 验证修复结果
-    print("\n运行 MyPy 验证...")
-    os.system("mypy src/ 2>&1 | grep -E 'Found [0-9]+ errors|Success' | tail -5")
+    main()

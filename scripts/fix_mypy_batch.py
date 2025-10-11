@@ -1,221 +1,157 @@
 #!/usr/bin/env python3
 """
-批量修复 MyPy 错误的脚本
-用于自动化修复常见的导入和类型注解问题
+批量修复MyPy类型错误
 """
 
 import os
 import re
-import sys
 from pathlib import Path
-from typing import Set, Dict, List, Tuple
-
-# 需要修复的常见导入
-COMMON_IMPORTS = {
-    "Optional": "from typing import Optional",
-    "List": "from typing import List",
-    "Dict": "from typing import Dict",
-    "Tuple": "from typing import Tuple",
-    "Union": "from typing import Union",
-    "Any": "from typing import Any",
-    "Callable": "from typing import Callable",
-    "Iterator": "from typing import Iterator",
-    "Generator": "from typing import Generator",
-}
-
-# 标准库导入
-STANDARD_IMPORTS = {
-    "logging": "import logging",
-    "os": "import os",
-    "sys": "import sys",
-    "datetime": "import datetime",
-    "json": "import json",
-    "subprocess": "import subprocess",
-    "time": "import time",
-    "uuid": "import uuid",
-    "pathlib": "from pathlib import Path",
-    "collections": "import collections",
-    "itertools": "import itertools",
-    "functools": "import functools",
-    "operator": "import operator",
-    "re": "import re",
-    "math": "import math",
-    "random": "import random",
-    "hashlib": "import hashlib",
-    "base64": "import base64",
-    "urllib": "import urllib",
-    "http": "import http",
-}
-
-# 项目特定导入
-PROJECT_IMPORTS = {
-    "BaseService": "from src.services.base_unified import BaseService",
-    "BackupConfig": "from src.tasks.backup.core.backup_config import BackupConfig",
-    "get_backup_metrics": "from src.tasks.backup.metrics import get_backup_metrics",
-}
+from datetime import datetime
 
 
-def extract_existing_imports(content: str) -> Set[str]:
-    """提取文件中已存在的导入"""
-    imports = set()
-    # 匹配 from ... import ...
-    from_imports = re.findall(r"from\s+[\w.]+\s+import\s+([\w\s,]+)", content)
-    for match in from_imports:
-        imports.update(name.strip() for name in match.split(","))
+def fix_redis_errors():
+    """修复Redis相关错误"""
+    print("\n🔧 修复Redis相关类型错误...")
 
-    # 匹配 import ...
-    direct_imports = re.findall(r"import\s+([\w\s,]+)", content)
-    for match in direct_imports:
-        imports.update(name.strip() for name in match.split(","))
+    # 找到所有使用RedisError但没有导入的文件
+    files_with_redis_errors = [
+        "src/services/processing/caching/processing_cache.py",
+        "src/cache/consistency_manager.py",
+    ]
 
-    return imports
+    for file_path in files_with_redis_errors:
+        path = Path(file_path)
+        if not path.exists():
+            continue
 
-
-def find_needed_imports(content: str, existing_imports: Set[str]) -> List[str]:
-    """找出需要添加的导入"""
-    needed = []
-
-    # 检查 typing 导入
-    for name, import_stmt in COMMON_IMPORTS.items():
-        if re.search(rf"\b{name}\b", content) and name not in existing_imports:
-            needed.append(import_stmt)
-
-    # 检查标准库导入
-    for name, import_stmt in STANDARD_IMPORTS.items():
-        if re.search(rf"\b{name}\b", content) and name not in existing_imports:
-            # 避免匹配到作为属性的情况
-            if re.search(rf"\b{name}\s*[.\[]", content) or re.search(
-                rf"\b{name}\s*$", content, re.MULTILINE
-            ):
-                needed.append(import_stmt)
-
-    # 检查项目导入
-    for name, import_stmt in PROJECT_IMPORTS.items():
-        if re.search(rf"\b{name}\b", content) and name not in existing_imports:
-            needed.append(import_stmt)
-
-    return needed
-
-
-def fix_file_imports(file_path: Path) -> bool:
-    """修复单个文件的导入问题"""
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 检查是否已经是修复过的文件
-        if "# Auto-fixed imports" in content:
-            return False
+        # 检查是否需要添加导入
+        if (
+            "RedisError" in content
+            and "from redis.exceptions import RedisError" not in content
+        ):
+            # 查找导入位置
+            import_pattern = r"(import redis\n|import redis\.asyncio)"
+            if re.search(import_pattern, content):
+                # 在redis导入后添加RedisError导入
+                content = re.sub(
+                    import_pattern,
+                    r"\1from redis.exceptions import RedisError\n",
+                    content,
+                )
 
-        # 提取现有导入
-        existing_imports = extract_existing_imports(content)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
 
-        # 找出需要的导入
-        needed_imports = find_needed_imports(content, existing_imports)
+                print(f"  ✅ 已修复: {file_path}")
 
-        if needed_imports:
+
+def fix_sqlalchemy_errors():
+    """修复SQLAlchemy相关错误"""
+    print("\n🔧 修复SQLAlchemy相关类型错误...")
+
+    # 找到所有数据库迁移文件
+    migrations_dir = Path("src/database/migrations/versions")
+    if not migrations_dir.exists():
+        return
+
+    for py_file in migrations_dir.glob("*.py"):
+        with open(py_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 检查是否需要添加导入
+        if (
+            "SQLAlchemyError" in content
+            and "from sqlalchemy.exc import SQLAlchemyError" not in content
+        ):
             # 在文件开头添加导入
-            # 找到第一个非注释行
             lines = content.split("\n")
-            insert_idx = 0
 
-            # 跳过文件头注释
+            # 找到第一个导入位置
+            insert_idx = 0
             for i, line in enumerate(lines):
-                if line.strip().startswith("#") or line.strip() == "":
-                    insert_idx = i + 1
-                else:
+                if line.startswith("from sqlalchemy"):
+                    insert_idx = i
                     break
 
-            # 插入导入语句
-            import_lines = ["# Auto-fixed imports"] + needed_imports + [""]
-            lines[insert_idx:insert_idx] = import_lines
+            # 插入SQLAlchemy错误导入
+            lines.insert(
+                insert_idx,
+                "from sqlalchemy.exc import SQLAlchemyError, DatabaseError\n",
+            )
 
-            # 写回文件
-            new_content = "\n".join(lines)
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(new_content)
+            with open(py_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
 
-            print(f"✅ Fixed imports in {file_path}")
-            return True
-
-    except Exception as e:
-        print(f"❌ Error fixing {file_path}: {e}")
-        return False
+            print(f"  ✅ 已修复: {py_file}")
 
 
-def fix_function_signatures(file_path: Path) -> bool:
-    """修复函数签名中的类型注解问题"""
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
+def fix_http_errors():
+    """修复HTTP相关错误"""
+    print("\n🔧 修复HTTP相关类型错误...")
+
+    # API文件列表
+    api_files = [
+        "src/api/app.py",
+        "src/api/predictions_mod/prediction_handlers.py",
+        "src/api/predictions_mod/history_handlers.py",
+        "src/api/predictions_mod/batch_handlers.py",
+    ]
+
+    for file_path in api_files:
+        path = Path(file_path)
+        if not path.exists():
+            continue
+
+        with open(path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 修复缺少参数类型的函数
-        # 示例: def func(self, arg): -> def func(self, arg: Any):
-        modified = False
-        lines = content.split("\n")
+        # 检查是否需要添加导入
+        if (
+            "HTTPError" in content or "RequestException" in content
+        ) and "from requests.exceptions import" not in content:
+            # 查找导入位置
+            import_pattern = r"(from fastapi import|import fastapi)"
+            if re.search(import_pattern, content):
+                # 在FastAPI导入前添加requests导入
+                content = re.sub(
+                    import_pattern,
+                    "from requests.exceptions import HTTPError, RequestException\n\n\\1",
+                    content,
+                )
 
-        for i, line in enumerate(lines):
-            # 匹配函数定义
-            if re.match(r"^\s*def\s+\w+\s*\([^)]*\):\s*$", line):
-                # 检查是否有 Any 类型导入
-                if "Any" not in content and "from typing import Any" not in content:
-                    # 如果没有，先添加 Any 导入
-                    content = "from typing import Any\n\n" + content
-                    lines[0] = "from typing import Any"
-                    modified = True
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
 
-        if modified:
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("\n".join(lines))
-            print(f"✅ Fixed function signatures in {file_path}")
-            return True
-
-    except Exception as e:
-        print(f"❌ Error fixing signatures in {file_path}: {e}")
-        return False
+                print(f"  ✅ 已修复: {file_path}")
 
 
 def main():
     """主函数"""
-    if len(sys.argv) > 1:
-        # 指定文件或目录
-        path = Path(sys.argv[1])
-    else:
-        # 默认处理 src/tasks/backup 目录
-        path = Path("src/tasks/backup")
+    print("=" * 80)
+    print("🔧 批量修复MyPy类型错误")
+    print(f"⏰ 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 80)
 
-    if path.is_file():
-        files = [path]
-    else:
-        # 查找所有 Python 文件
-        files = list(path.rglob("*.py"))
+    # 1. 修复Redis错误
+    fix_redis_errors()
 
-    print(f"🔧 开始修复 {len(files)} 个文件...")
+    # 2. 修复SQLAlchemy错误
+    fix_sqlalchemy_errors()
 
-    fixed_count = 0
-    for file_path in files:
-        if fix_file_imports(file_path):
-            fixed_count += 1
+    # 3. 修复HTTP错误
+    fix_http_errors()
 
-    print(f"\n✨ 修复完成！共修复 {fixed_count} 个文件")
+    print("\n" + "=" * 80)
+    print("✅ 批量修复完成！")
+    print("=" * 80)
 
-    # 验证修复结果
-    print("\n🔍 验证修复结果...")
-    for file_path in files[:5]:  # 验证前5个文件
-        try:
-            import subprocess
-
-            result = subprocess.run(
-                ["python", "-m", "py_compile", str(file_path)],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode == 0:
-                print(f"✅ {file_path} 编译成功")
-            else:
-                print(f"❌ {file_path} 仍有错误")
-        except Exception as e:
-            print(f"⚠️ 无法验证 {file_path}: {e}")
+    print("\n📝 建议下一步:")
+    print("1. 运行 'make mypy-check' 验证修复效果")
+    print("2. 手动处理剩余的复杂类型错误")
+    print("3. 考虑在mypy.ini中添加忽略规则")
 
 
 if __name__ == "__main__":

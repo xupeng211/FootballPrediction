@@ -20,6 +20,6 @@ def setup_warning_filters():
 if "pytest" not in sys.modules:
     try:
         setup_warning_filters()
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         # 如果自动设置失败，不要影响应用启动
         print(f"⚠️  警告过滤器自动设置失败: {e}")

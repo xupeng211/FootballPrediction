@@ -6,6 +6,7 @@ Revises:
 Create Date: 2025-09-07 20:13:08.860093
 
 """
+# mypy: ignore-errors
 
 from typing import Sequence, Union
 

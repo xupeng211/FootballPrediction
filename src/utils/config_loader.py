@@ -22,5 +22,5 @@ def load_config_from_file(file_path: str) -> Dict[str, Any]:
                 return yaml.safe_load(f) or {}
             else:
                 return {}
-    except Exception:
+    except (ValueError, KeyError, RuntimeError):
         return {}

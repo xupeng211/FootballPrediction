@@ -90,7 +90,7 @@ def consume_kafka_streams_task(
                 "timeout": timeout,
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"Kafka流消费失败: {e}"
             self.logger.error(error_msg)
 
@@ -155,7 +155,7 @@ def start_continuous_consumer_task(
                 "consumer_group_id": consumer_group_id,
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"持续Kafka消费失败: {e}"
             self.logger.error(error_msg)
 
@@ -222,7 +222,7 @@ def produce_to_kafka_stream_task(
                 "statistics": stats,
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"发送数据到Kafka流失败: {e}"
             self.logger.error(error_msg)
 
@@ -274,7 +274,7 @@ def stream_health_check_task(self):
                 "timestamp": health_status.get("timestamp"),
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"流处理健康检查失败: {e}"
             self.logger.error(error_msg)
 
@@ -346,7 +346,7 @@ def stream_data_processing_task(
                 "statistics": stats,
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"流数据处理失败: {e}"
             self.logger.error(error_msg)
 
@@ -435,7 +435,7 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
                     "error": "不支持的操作或缺少参数",
                 }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, ConnectionError) as e:
             error_msg = f"Kafka Topic管理失败: {e}"
             self.logger.error(error_msg)
 

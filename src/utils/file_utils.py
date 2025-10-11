@@ -3,6 +3,7 @@
 
 提供文件操作相关的工具函数。
 """
+from typing import Any
 
 import hashlib
 import json
@@ -83,7 +84,7 @@ class FileUtils:
         try:
             FileUtils.write_json(data, file_path, ensure_dir)
             return True
-        except Exception:
+        except (ValueError, KeyError, RuntimeError):
             return False
 
     @staticmethod
@@ -102,7 +103,7 @@ class FileUtils:
                 if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
                     file_path.unlink()
                     removed_count += 1
-        except Exception:
+        except (ValueError, KeyError, RuntimeError):
             pass
 
         return removed_count

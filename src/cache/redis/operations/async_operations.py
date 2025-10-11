@@ -7,6 +7,7 @@ import logging
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
+from redis.exceptions import RedisError
 
 from src.core.logging import get_logger
 
