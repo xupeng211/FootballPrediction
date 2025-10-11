@@ -37,7 +37,7 @@ def example_initialize_feature_store() -> FootballFeatureStore:
     Returns:
         FootballFeatureStore: 特征仓库实例
     """
-    print("🚀 初始化特征仓库...")
+    logger.info("🚀 初始化特征仓库...")
 
     # 配置PostgreSQL离线存储 - 使用环境变量
     postgres_config = {
@@ -58,7 +58,7 @@ def example_initialize_feature_store() -> FootballFeatureStore:
         redis_config=redis_config,
     )
 
-    print("✅ 特征仓库初始化成功！")
+    logger.info("✅ 特征仓库初始化成功！")
     return feature_store
 
 
@@ -69,7 +69,7 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
     Args:
         feature_store: 特征仓库实例
     """
-    print("📝 写入球队近期统计特征...")
+    logger.info("📝 写入球队近期统计特征...")
 
     # 创建示例球队统计数据
     team_stats_data = [
@@ -132,7 +132,7 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
     # 写入特征数据
     feature_store.write_features(feature_view_name="team_recent_stats", df=df)
 
-    print(f"✅ 成功写入 {len(df)} 条球队统计特征！")
+    logger.info(f"✅ 成功写入 {len(df)} 条球队统计特征！")
 
 
 def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
@@ -142,7 +142,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
     Args:
         feature_store: 特征仓库实例
     """
-    print("📝 写入赔率特征数据...")
+    logger.info("📝 写入赔率特征数据...")
 
     # 创建示例赔率数据
     odds_data = [
@@ -201,7 +201,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
     # 写入赔率特征
     feature_store.write_features(feature_view_name="odds_features", df=df)
 
-    print(f"✅ 成功写入 {len(df)} 条赔率特征！")
+    logger.info(f"✅ 成功写入 {len(df)} 条赔率特征！")
 
 
 def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataFrame:
@@ -214,7 +214,7 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
     Returns:
         pd.DataFrame: 在线特征数据
     """
-    print("🔍 获取在线特征数据...")
+    logger.info("🔍 获取在线特征数据...")
 
     # 构建实体数据（要预测的比赛）
     entity_data = [{"match_id": 1001}, {"match_id": 1002}]
@@ -225,9 +225,9 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
         feature_service_name="real_time_prediction_v1", entity_df=entity_df
     )
 
-    print("✅ 成功获取在线特征！")
-    print("\n📊 在线特征数据预览：")
-    print(features_df.head())
+    logger.info("✅ 成功获取在线特征！")
+    logger.info("\n📊 在线特征数据预览：")
+    logger.info(features_df.head())
 
     return features_df
 
@@ -244,7 +244,7 @@ def example_get_historical_features(
     Returns:
         pd.DataFrame: 历史特征数据
     """
-    print("📈 获取历史特征数据...")
+    logger.info("📈 获取历史特征数据...")
 
     # 构建训练数据实体（历史比赛）
     training_entities = []
@@ -264,10 +264,10 @@ def example_get_historical_features(
         full_feature_names=True,
     )
 
-    print("✅ 成功获取历史特征！")
-    print(f"\n📊 训练数据集大小: {training_df.shape}")
-    print("\n🔍 特征列预览：")
-    print(list(training_df.columns))
+    logger.info("✅ 成功获取历史特征！")
+    logger.info(f"\n📊 训练数据集大小: {training_df.shape}")
+    logger.info("\n🔍 特征列预览：")
+    logger.info(list(training_df.columns))
 
     return training_df
 
@@ -284,7 +284,7 @@ def example_create_training_dataset(
     Returns:
         pd.DataFrame: 训练数据集
     """
-    print("🎯 创建机器学习训练数据集...")
+    logger.info("🎯 创建机器学习训练数据集...")
 
     # 指定训练数据的时间范围
     start_date = datetime(2025, 7, 1)
@@ -295,9 +295,9 @@ def example_create_training_dataset(
         start_date=start_date, end_date=end_date
     )
 
-    print("✅ 训练数据集创建成功！")
-    print(f"📊 数据集包含 {len(training_df)} 条记录")
-    print(f"🔢 特征数量: {len(training_df.columns)}")
+    logger.info("✅ 训练数据集创建成功！")
+    logger.info(f"📊 数据集包含 {len(training_df)} 条记录")
+    logger.info(f"🔢 特征数量: {len(training_df.columns)}")
 
     return training_df
 
@@ -309,7 +309,7 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
     Args:
         feature_store: 特征仓库实例
     """
-    print("📊 获取特征统计信息...")
+    logger.info("📊 获取特征统计信息...")
 
     # 获取不同特征视图的统计
     feature_views = ["team_recent_stats", "odds_features", "match_features"]
@@ -317,13 +317,13 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
     for fv_name in feature_views:
         try:
             stats = feature_store.get_feature_statistics(fv_name)
-            print(f"\n🔍 特征视图: {fv_name}")
-            print(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
-            print(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
-            print(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
-            print(f"  🏷️  标签: {stats.get(str('tags'), {})}")
+            logger.info(f"\n🔍 特征视图: {fv_name}")
+            logger.info(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
+            logger.info(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
+            logger.info(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
+            logger.info(f"  🏷️  标签: {stats.get(str('tags'), {})}")
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
+            logger.info(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
 
 
 def example_list_all_features(feature_store: FootballFeatureStore) -> None:
@@ -333,12 +333,12 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
     Args:
         feature_store: 特征仓库实例
     """
-    print("📋 列出所有特征...")
+    logger.info("📋 列出所有特征...")
 
     features_list = feature_store.list_features()
 
     if features_list:
-        print(f"✅ 发现 {len(features_list)} 个特征：\n")
+        logger.info(f"✅ 发现 {len(features_list)} 个特征：\n")
 
         for i, feature in enumerate(features_list[:10]):  # 只显示前10个
             print(
@@ -346,17 +346,17 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
             )
 
         if len(features_list) > 10:
-            print(f"    ... 还有 {len(features_list) - 10} 个特征")
+            logger.info(f"    ... 还有 {len(features_list) - 10} 个特征")
     else:
-        print("❌ 未找到任何特征")
+        logger.info("❌ 未找到任何特征")
 
 
 async def run_complete_example() -> None:
     """
     运行完整的特征仓库示例
     """
-    print("🌟 足球特征仓库完整示例")
-    print("=" * 50)
+    logger.info("🌟 足球特征仓库完整示例")
+    logger.info("=" * 50)
 
     try:
         # 1. 初始化特征仓库
@@ -366,36 +366,36 @@ async def run_complete_example() -> None:
         example_write_team_features(feature_store)
         example_write_odds_features(feature_store)
 
-        print("\n" + "=" * 50)
+        logger.info("\n" + "=" * 50)
 
         # 3. 获取在线特征（实时预测场景）
         example_get_online_features(feature_store)
 
-        print("\n" + "=" * 50)
+        logger.info("\n" + "=" * 50)
 
         # 4. 获取历史特征（模型训练场景）
         example_get_historical_features(feature_store)
 
-        print("\n" + "=" * 50)
+        logger.info("\n" + "=" * 50)
 
         # 5. 创建训练数据集
         example_create_training_dataset(feature_store)
 
-        print("\n" + "=" * 50)
+        logger.info("\n" + "=" * 50)
 
         # 6. 特征管理和统计
         example_feature_statistics(feature_store)
         example_list_all_features(feature_store)
 
-        print("\n" + "=" * 50)
-        print("✅ 所有示例运行成功！")
+        logger.info("\n" + "=" * 50)
+        logger.info("✅ 所有示例运行成功！")
 
         # 7. 清理资源
         feature_store.close()
-        print("🔒 资源清理完成")
+        logger.info("🔒 资源清理完成")
 
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-        print(f"❌ 示例运行失败: {str(e)}")
+        logger.info(f"❌ 示例运行失败: {str(e)}")
         logger.error(f"Feature store example failed: {str(e)}", exc_info=True)
 
 
@@ -408,12 +408,12 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
     Returns:
         Dict: 集成示例结果
     """
-    print("🤖 特征仓库与ML流水线集成示例...")
+    logger.info("🤖 特征仓库与ML流水线集成示例...")
 
     # 模拟ML训练流程
     def train_model_with_features():
         """模拟模型训练"""
-        print("  🎯 使用特征仓库数据训练模型...")
+        logger.info("  🎯 使用特征仓库数据训练模型...")
 
         # 获取特征仓库实例
         feature_store = get_feature_store()
@@ -423,13 +423,13 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
             start_date=datetime(2025, 6, 1), end_date=datetime(2025, 8, 31)
         )
 
-        print(f"  📊 训练数据: {len(training_df)} 条记录")
+        logger.info(f"  📊 训练数据: {len(training_df)} 条记录")
         return {"model_trained": True, "training_samples": len(training_df)}
 
     # 模拟实时预测流程
     def predict_with_online_features():
         """模拟实时预测"""
-        print("  🔮 使用在线特征进行实时预测...")
+        logger.info("  🔮 使用在线特征进行实时预测...")
 
         feature_store = get_feature_store()
 
@@ -442,7 +442,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
             entity_df=prediction_entities,
         )
 
-        print(f"  📈 预测特征: {len(features_df)} 条记录")
+        logger.info(f"  📈 预测特征: {len(features_df)} 条记录")
         return {"predictions_made": len(features_df)}
 
     # 执行集成示例
@@ -452,7 +452,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
         "integration_status": "success",
     }
 
-    print("✅ ML流水线集成示例完成！")
+    logger.info("✅ ML流水线集成示例完成！")
     return results
 
 
@@ -465,4 +465,4 @@ if __name__ == "__main__":
 
     # 运行ML集成示例
     ml_results = example_integration_with_ml_pipeline()
-    print(f"\n🎉 ML集成结果: {ml_results}")
+    logger.info(f"\n🎉 ML集成结果: {ml_results}")

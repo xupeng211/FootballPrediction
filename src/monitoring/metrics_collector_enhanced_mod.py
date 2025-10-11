@@ -40,3 +40,20 @@ class MetricsAggregator:
     def get_aggregated(self) -> Dict[str, Any]:
         """获取聚合后的指标"""
         return self.aggregated_metrics
+
+
+class MetricPoint:
+    """指标点 - 简化版本"""
+
+    def __init__(self, name: str, value: float, timestamp: Optional[datetime] = None):
+        self.name = name
+        self.value = value
+        self.timestamp = timestamp or datetime.utcnow()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "name": self.name,
+            "value": self.value,
+            "timestamp": self.timestamp
+        }

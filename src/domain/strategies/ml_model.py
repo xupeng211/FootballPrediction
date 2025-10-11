@@ -66,7 +66,7 @@ class MLModelStrategy(PredictionStrategy):
         await self._initialize_feature_processor(config)
 
         self._is_initialized = True
-        print(f"ML模型策略 '{self.name}' 初始化成功")
+        logger.info(f"ML模型策略 '{self.name}' 初始化成功")
 
     async def _load_model(self, config: Dict[str, Any]) -> None:
         """加载ML模型"""
@@ -87,7 +87,7 @@ class MLModelStrategy(PredictionStrategy):
             self._model_version = model_version
             self._model_loaded_at = datetime.utcnow()  # type: ignore
 
-            print(f"成功加载模型: {model_name} 版本: {model_version}")
+            logger.info(f"成功加载模型: {model_name} 版本: {model_version}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise RuntimeError(f"加载ML模型失败: {e}")
@@ -381,7 +381,7 @@ class MLModelStrategy(PredictionStrategy):
 
         # 检查是否有必需的特征数据
         if not input_data.historical_data and not input_data.additional_features:
-            print("警告: 缺少特征数据，可能影响预测准确性")
+            logger.info("警告: 缺少特征数据，可能影响预测准确性")
 
         return True
 

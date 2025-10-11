@@ -127,7 +127,7 @@ def upgrade() -> None:
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果升级失败，记录警告但不中断迁移
-        print(f"Warning: Failed to upgrade JSON to JSONB: {e}")
+        logger.info(f"Warning: Failed to upgrade JSON to JSONB: {e}")
 
     # 3. 为Bronze层表添加分区准备（按月分区）
     # 注意：实际的分区实现需要在数据库层面进行，这里只是准备工作
@@ -228,7 +228,7 @@ def downgrade() -> None:
         op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")  # type: ignore
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 忽略索引不存在的错误，但记录日志
-        print(f"Warning: Could not drop indexes during downgrade: {e}")
+        logger.info(f"Warning: Could not drop indexes during downgrade: {e}")
 
     # 注意：将JSONB降级回JSON需要谨慎处理，这里不自动执行
     # 如果需要，可以手动执行：

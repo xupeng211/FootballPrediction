@@ -119,7 +119,7 @@ class MatchDomainService(DomainService[Match]):
             self._initialized = True
             return True
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"MatchDomainService 初始化失败: {e}")
+            logger.info(f"MatchDomainService 初始化失败: {e}")
             return False
 
     async def start(self) -> bool:
@@ -131,7 +131,7 @@ class MatchDomainService(DomainService[Match]):
             self._started = True
             return True
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"MatchDomainService 启动失败: {e}")
+            logger.info(f"MatchDomainService 启动失败: {e}")
             return False
 
     async def stop(self) -> bool:
@@ -183,7 +183,7 @@ class TeamDomainService(DomainService[Team]):
             self._initialized = True
             return True
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"TeamDomainService 初始化失败: {e}")
+            logger.info(f"TeamDomainService 初始化失败: {e}")
             return False
 
     async def start(self) -> bool:
@@ -235,7 +235,7 @@ class PredictionDomainService(DomainService[Prediction]):
             self._initialized = True
             return True
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            print(f"PredictionDomainService 初始化失败: {e}")
+            logger.info(f"PredictionDomainService 初始化失败: {e}")
             return False
 
     async def start(self) -> bool:
@@ -315,29 +315,29 @@ class DomainServiceFactory:
         """初始化所有服务"""
         for name, service in self._services.items():
             if not await service.initialize():
-                print(f"服务 {name} 初始化失败")
+                logger.info(f"服务 {name} 初始化失败")
                 return False
 
-        print("所有域服务初始化成功")
+        logger.info("所有域服务初始化成功")
         return True
 
     async def start_all_services(self) -> bool:
         """启动所有服务"""
         for name, service in self._services.items():
             if not await service.start():
-                print(f"服务 {name} 启动失败")
+                logger.info(f"服务 {name} 启动失败")
                 return False
 
-        print("所有域服务启动成功")
+        logger.info("所有域服务启动成功")
         return True
 
     async def stop_all_services(self) -> bool:
         """停止所有服务"""
         for name, service in self._services.items():
             if not await service.stop():
-                print(f"服务 {name} 停止失败")
+                logger.info(f"服务 {name} 停止失败")
 
-        print("所有域服务已停止")
+        logger.info("所有域服务已停止")
         return True
 
     def get_service(self, name: str) -> Optional[DomainService]:

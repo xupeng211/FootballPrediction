@@ -93,7 +93,7 @@ class HistoricalStrategy(PredictionStrategy):
         await self._load_historical_data()
 
         self._is_initialized = True
-        print(f"历史策略 '{self.name}' 初始化成功")
+        logger.info(f"历史策略 '{self.name}' 初始化成功")
 
     async def _load_historical_data(self) -> None:
         """加载历史数据（模拟）"""

@@ -23,7 +23,7 @@ from .decorators import (
 @cache_result(ttl=3600, prefix="example")
 def expensive_computation(x: int, y: int) -> int:
     """模拟耗时的计算"""
-    print(f"执行计算: {x} + {y}")
+    logger.info(f"执行计算: {x} + {y}")
     return x + y
 
 
@@ -31,7 +31,7 @@ def expensive_computation(x: int, y: int) -> int:
 @cache_with_ttl(ttl_seconds=1800, prefix="api_calls")
 async def fetch_user_data(user_id: int) -> Dict[str, Any]:
     """模拟API调用获取用户数据"""
-    print(f"获取用户数据: {user_id}")
+    logger.info(f"获取用户数据: {user_id}")
     await asyncio.sleep(1)  # 模拟网络延迟
     return {"id": user_id, "name": f"User {user_id}", "age": 25}
 
@@ -40,7 +40,7 @@ async def fetch_user_data(user_id: int) -> Dict[str, Any]:
 @cache_by_user(ttl=7200, prefix="user_profile", user_param="user_id")
 def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str, Any]:
     """获取用户档案（基于用户缓存）"""
-    print(f"获取用户档案: {user_id}, 敏感信息: {include_sensitive}")
+    logger.info(f"获取用户档案: {user_id}, 敏感信息: {include_sensitive}")
     profile = {
         "user_id": user_id,
         "username": f"user_{user_id}",
@@ -61,7 +61,7 @@ def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str,
 )
 def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     """搜索文档（查询长度小于3时不缓存）"""
-    print(f"搜索文档: query='{query}', limit={limit}")
+    logger.info(f"搜索文档: query='{query}', limit={limit}")
     # 模拟搜索结果
     return [
         {"id": i, "title": f"Document {i} for {query}", "score": 0.9 - i * 0.1}
@@ -89,7 +89,7 @@ def generate_invalidation_keys(func, args, kwargs, result):
 )
 def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
     """更新用户档案（会失效相关缓存）"""
-    print(f"更新用户档案: {user_id}, 更新: {updates}")
+    logger.info(f"更新用户档案: {user_id}, 更新: {updates}")
     # 模拟更新操作
     return {"user_id": user_id, "updated_fields": list(updates.keys())}
 
@@ -98,7 +98,7 @@ def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
 @cache_user_predictions(ttl_seconds=3600)
 def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[Dict]:
     """获取用户预测（使用便捷装饰器）"""
-    print(f"获取用户预测: user_id={user_id}, match_id={match_id}")
+    logger.info(f"获取用户预测: user_id={user_id}, match_id={match_id}")
     return [
         {"match_id": i, "prediction": "2-1", "confidence": 0.85}
         for i in [1, 2, 3]
@@ -109,7 +109,7 @@ def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[D
 @cache_match_data(ttl_seconds=1800)
 async def get_match_details(match_id: int) -> Dict:
     """获取比赛详情（使用便捷装饰器）"""
-    print(f"获取比赛详情: {match_id}")
+    logger.info(f"获取比赛详情: {match_id}")
     await asyncio.sleep(0.5)
     return {
         "match_id": match_id,
@@ -122,7 +122,7 @@ async def get_match_details(match_id: int) -> Dict:
 @cache_team_stats(ttl_seconds=7200)
 def calculate_team_statistics(team_id: int, season: str) -> Dict:
     """计算球队统计（使用便捷装饰器）"""
-    print(f"计算球队统计: team_id={team_id}, season={season}")
+    logger.info(f"计算球队统计: team_id={team_id}, season={season}")
     return {
         "team_id": team_id,
         "season": season,
@@ -159,7 +159,7 @@ def custom_key_generator(func, args, kwargs, user_id=None):
 )
 def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict]:
     """获取球队近期表现（使用自定义键生成器）"""
-    print(f"获取球队表现: team_id={team_id}, season={season}, last_n={last_n}")
+    logger.info(f"获取球队表现: team_id={team_id}, season={season}, last_n={last_n}")
     return [
         {"result": "W", "goals_for": 2, "goals_against": 1},
         {"result": "D", "goals_for": 1, "goals_against": 1},
@@ -208,7 +208,7 @@ class PredictionService:
         self, user_id: int, match_id: int, prediction: str
     ) -> Dict[str, Any]:
         """提交预测（会失效用户相关缓存）"""
-        print(f"提交预测: user={user_id}, match={match_id}, prediction={prediction}")
+        logger.info(f"提交预测: user={user_id}, match={match_id}, prediction={prediction}")
 
         # 保存预测到数据库...
 
@@ -222,63 +222,63 @@ class PredictionService:
 # 运行示例的函数
 async def run_examples():
     """运行所有示例"""
-    print("=== 缓存装饰器示例 ===\n")
+    logger.info("=== 缓存装饰器示例 ===\n")
 
     # 示例1: 基础缓存
-    print("1. 基础结果缓存:")
+    logger.info("1. 基础结果缓存:")
     result1 = expensive_computation(10, 20)
-    print(f"结果: {result1}")
+    logger.info(f"结果: {result1}")
     result2 = expensive_computation(10, 20)  # 应该从缓存获取
-    print(f"结果: {result2}\n")
+    logger.info(f"结果: {result2}\n")
 
     # 示例2: 异步缓存
-    print("2. 异步函数缓存:")
+    logger.info("2. 异步函数缓存:")
     user_data = await fetch_user_data(100)
-    print(f"用户数据: {user_data}")
+    logger.info(f"用户数据: {user_data}")
     user_data2 = await fetch_user_data(100)  # 应该从缓存获取
-    print(f"用户数据: {user_data2}\n")
+    logger.info(f"用户数据: {user_data2}\n")
 
     # 示例3: 用户缓存
-    print("3. 基于用户的缓存:")
+    logger.info("3. 基于用户的缓存:")
     profile = get_user_profile(200)
-    print(f"用户档案: {profile}")
+    logger.info(f"用户档案: {profile}")
     profile2 = get_user_profile(200, include_sensitive=True)  # 不同的参数，新缓存
-    print(f"用户档案（含敏感信息）: {profile2}\n")
+    logger.info(f"用户档案（含敏感信息）: {profile2}\n")
 
     # 示例4: 条件缓存
-    print("4. 条件缓存:")
+    logger.info("4. 条件缓存:")
     docs1 = search_documents("test", limit=5)  # 会被缓存
-    print(f"搜索结果: {docs1}")
+    logger.info(f"搜索结果: {docs1}")
     docs2 = search_documents("test", limit=5)  # 从缓存获取
-    print(f"搜索结果: {docs2}")
+    logger.info(f"搜索结果: {docs2}")
     docs3 = search_documents("ab", limit=5)  # 查询太短，不会被缓存
-    print(f"搜索结果: {docs3}\n")
+    logger.info(f"搜索结果: {docs3}\n")
 
     # 示例5: 缓存失效
-    print("5. 缓存失效:")
+    logger.info("5. 缓存失效:")
     profile3 = get_user_profile(300)
-    print(f"更新前用户档案: {profile3}")
+    logger.info(f"更新前用户档案: {profile3}")
     updated = update_user_profile(300, email="newemail@example.com")
-    print(f"更新结果: {updated}")
+    logger.info(f"更新结果: {updated}")
     profile4 = get_user_profile(300)  # 应该重新计算
-    print(f"更新后用户档案: {profile4}\n")
+    logger.info(f"更新后用户档案: {profile4}\n")
 
     # 示例6: 便捷装饰器
-    print("6. 便捷装饰器:")
+    logger.info("6. 便捷装饰器:")
     predictions = get_user_predictions(400)
-    print(f"用户预测: {predictions}")
+    logger.info(f"用户预测: {predictions}")
     match_details = await get_match_details(501)
-    print(f"比赛详情: {match_details}")
+    logger.info(f"比赛详情: {match_details}")
     team_stats = calculate_team_statistics(10, "2023-2024")
-    print(f"球队统计: {team_stats}\n")
+    logger.info(f"球队统计: {team_stats}\n")
 
     # 示例7: 预测服务
-    print("7. 预测服务示例:")
+    logger.info("7. 预测服务示例:")
     service = PredictionService()
     pred = await service.calculate_user_prediction(500, 601)
-    print(f"用户预测: {pred}")
+    logger.info(f"用户预测: {pred}")
     submit = await service.submit_prediction(500, 601, "2-1")
-    print(f"提交结果: {submit}\n")
+    logger.info(f"提交结果: {submit}\n")
 
 
 if __name__ == "__main__":

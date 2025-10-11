@@ -212,7 +212,7 @@ class AdapterRegistry:
                 break
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 健康检查失败不应中断循环
-                print(f"Health check error: {e}")
+                logger.info(f"Health check error: {e}")
                 await asyncio.sleep(self.health_check_interval)
 
     async def _perform_health_checks(self) -> None:
