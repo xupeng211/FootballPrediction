@@ -159,3 +159,18 @@ async def get_async_session(
         manager = get_multi_user_database_manager()  # type: ignore
         async with manager.get_async_session(role=role) as session:  # type: ignore
             yield session  # type: ignore
+
+
+def create_session_factory(engine, **kwargs):
+    """创建会话工厂
+
+    Args:
+        engine: 数据库引擎
+        **kwargs: 会话参数
+
+    Returns:
+        sessionmaker: 会话工厂
+    """
+    from sqlalchemy.orm import sessionmaker
+
+    return sessionmaker(bind=engine, **kwargs)
