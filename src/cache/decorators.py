@@ -19,6 +19,7 @@ import inspect
 import json
 import logging
 from typing import Any, Callable, Dict, Optional, Union, TypeVar, Tuple
+from redis.exceptions import RedisError
 
 try:
     from .redis_manager import RedisManager

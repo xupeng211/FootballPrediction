@@ -147,6 +147,10 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _poisson_prediction(self, input_data: PredictionInput) -> Tuple[int, int]:
         """使用泊松分布预测比分"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return (1, 1)
+
         # 获取球队平均进球数
         home_avg_goals = await self._get_team_average_goals(
             input_data.home_team.id,
@@ -189,10 +193,14 @@ class StatisticalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Tuple[int, int]:
         """基于历史平均得分预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return (1, 1)
+
         # 获取主队主场平均得分
-        home_scores = await self._get_team_home_scores(input_data.home_team.id)  # type: ignore
+        home_scores = await self._get_team_home_scores(input_data.home_team.id)
         # 获取客队客场平均得分
-        away_scores = await self._get_team_away_scores(input_data.away_team.id)  # type: ignore
+        away_scores = await self._get_team_away_scores(input_data.away_team.id)
 
         if not home_scores or not away_scores:
             return (1, 1)
@@ -209,9 +217,13 @@ class StatisticalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Tuple[int, int]:
         """基于球队近期状态预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return (1, 1)
+
         # 获取最近5场比赛
-        home_recent = await self._get_recent_games(input_data.home_team.id, 5)  # type: ignore
-        away_recent = await self._get_recent_games(input_data.away_team.id, 5)  # type: ignore
+        home_recent = await self._get_recent_games(input_data.home_team.id, 5)
+        away_recent = await self._get_recent_games(input_data.away_team.id, 5)
 
         if not home_recent or not away_recent:
             return (1, 1)
@@ -252,6 +264,10 @@ class StatisticalStrategy(PredictionStrategy):
         self, input_data: PredictionInput
     ) -> Tuple[int, int]:
         """基于对战历史预测"""
+        # 检查球队ID是否为空
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return (1, 1)
+
         h2h_games = await self._get_head_to_head_games(
             input_data.home_team.id,
             input_data.away_team.id,
@@ -318,8 +334,11 @@ class StatisticalStrategy(PredictionStrategy):
             confidence_factors.append(0.4)
 
         # 样本数量
-        home_games = len(await self._get_team_games(input_data.home_team.id))  # type: ignore
-        away_games = len(await self._get_team_games(input_data.away_team.id))  # type: ignore
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            confidence_factors.append(0.1)
+        else:
+            home_games = len(await self._get_team_games(input_data.home_team.id))
+            away_games = len(await self._get_team_games(input_data.away_team.id))
         if min(home_games, away_games) >= self._min_sample_size * 2:
             confidence_factors.append(0.8)
         elif min(home_games, away_games) >= self._min_sample_size:
@@ -339,8 +358,11 @@ class StatisticalStrategy(PredictionStrategy):
     ) -> Dict[str, float]:
         """计算结果概率分布"""
         # 基于泊松分布计算概率
-        home_avg = await self._get_team_average_goals(input_data.home_team.id, True)  # type: ignore
-        away_avg = await self._get_team_average_goals(input_data.away_team.id, False)  # type: ignore
+        if input_data.home_team.id is None or input_data.away_team.id is None:
+            return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}
+
+        home_avg = await self._get_team_average_goals(input_data.home_team.id, True)
+        away_avg = await self._get_team_average_goals(input_data.away_team.id, False)
 
         home_avg *= self._model_params["home_advantage_factor"]
 

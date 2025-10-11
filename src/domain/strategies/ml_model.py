@@ -212,9 +212,13 @@ class MLModelStrategy(PredictionStrategy):
         """提取特征向量"""
         features = {}
 
-        # 基础特征
-        features["home_team_id"] = input_data.home_team.id
-        features["away_team_id"] = input_data.away_team.id
+        # 基础特征 - 检查ID是否为空
+        features["home_team_id"] = (
+            input_data.home_team.id if input_data.home_team.id is not None else 0
+        )
+        features["away_team_id"] = (
+            input_data.away_team.id if input_data.away_team.id is not None else 0
+        )
 
         # 从历史数据中提取特征
         if input_data.historical_data:

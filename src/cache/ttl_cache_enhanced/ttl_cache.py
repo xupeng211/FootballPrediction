@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from threading import RLock
 from typing import Any, Dict, List, Optional
+from redis.exceptions import RedisError
 
 from .cache_entry import CacheEntry
 
