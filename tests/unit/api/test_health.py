@@ -23,7 +23,7 @@ except ImportError as e:
     router = None
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health check module not available")
+@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
 class TestHealthChecker:
     """健康检查器测试"""
 
@@ -95,7 +95,7 @@ class TestHealthChecker:
             assert field in health_response
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health check module not available")
+@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
 class TestHealthEndpoints:
     """健康检查端点测试"""
 
@@ -167,7 +167,7 @@ class TestHealthEndpoints:
             assert "status" in data
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health check module not available")
+@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
 class TestHealthCheckerAdvanced:
     """健康检查器高级测试"""
 
@@ -253,7 +253,7 @@ class TestHealthCheckerAdvanced:
         assert isinstance(status, dict)
 
 
-@pytest.mark.skipif(HEALTH_AVAILABLE, reason="Health check module should be available")
+@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -284,7 +284,7 @@ def test_health_checker_class(self):
         assert hasattr(HealthChecker, "check_redis")
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health check module not available")
+@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
 class TestHealthCheckerErrorHandling:
     """健康检查器错误处理测试"""
 

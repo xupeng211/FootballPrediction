@@ -242,7 +242,7 @@ class TestModelsAndSchemas:
 
     def test_standard_response_model(self):
         """测试标准响应模型"""
-        from src.api.models import standard_response
+        from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         result = standard_response(True, "Test message", {"data": "test"})
         assert result["success"] is True
@@ -251,7 +251,7 @@ class TestModelsAndSchemas:
 
     def test_error_response_model(self):
         """测试错误响应模型"""
-        from src.api.models import error_response
+        from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         result = error_response("Test error", {"detail": "Error details"})
         assert result["error"]["type"] == "Test error"
