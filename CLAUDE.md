@@ -11,31 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
 
-**当前项目状态**（2025-01-12）：
-- 测试覆盖率：21.78%（已完成技术债务改进）
-- CI 覆盖率门槛：30%（已从 20% 提升）
-- MyPy 类型注解错误：正在进行修复（最近已修复第1批）
-- 代码质量评分：8.5/10 ✅ 已达成最佳实践目标
-- 采用渐进式改进策略，确保持续集成保持绿灯
-
-## 🌏 语言设置
-
-**重要规则：在与用户交流时，请使用简体中文回复。** 用户不懂英文，所以所有解释和说明都应该用中文。
-
-- 与用户的所有对话都使用简体中文
-- 代码注释可以使用英文，但解释要用中文
-- 错误信息和技术术语的解释也要用中文
-
-## 📖 重要提示
-
-**请先阅读 [.claude-preferences.md](/.claude-preferences.md)**
-- 该文件记录了用户的核心偏好和已选择的最佳实践
-- 包含用户的开发哲学和当前项目状态
-- 了解用户的渐进式改进理念
-
-**核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
-
-**当前项目状态**（2025-01-12）：
+**当前项目状态**（2025-01-13）：
 - 测试覆盖率：21.78%（已完成技术债务改进）
 - CI 覆盖率门槛：30%（已从 20% 提升）
 - MyPy 类型注解错误：正在进行修复（最近已修复第1批）
@@ -54,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 这是一个足球预测系统，使用 FastAPI、SQLAlchemy、Redis 和 PostgreSQL 构建。项目采用现代 Python 架构，具有完整的测试、CI/CD 和 MLOps 功能。
 
-**当前正在进行最佳实践优化**，详见 [BEST_PRACTICES_KANBAN.md](BEST_PRACTICES_KANBAN.md)
+**核心理念**：先让 CI 绿灯亮起，再逐步提高标准！采用渐进式改进策略。
 
 ### 开发命令
 
@@ -73,19 +49,21 @@ make verify-deps      # 验证依赖是否与锁定文件匹配
 **重要提示**：
 - 不要直接运行 `pytest`，必须使用 Makefile 命令
 - 推荐使用 `./scripts/ci-verify.sh` 进行完整的 CI 验证
-- 使用 `make test-quick` 进行日常快速测试（60秒超时）
+- 日常开发使用 `make test-quick`（60秒超时）或 `make coverage-fast`（快速覆盖率）
+- 推送前必须运行 `./scripts/ci-verify.sh` 确保 CI 能够通过
 
 #### 测试
 ```bash
 make test             # 运行所有单元测试
-make test-quick       # 快速单元测试（带超时和失败限制）
+make test-quick       # 快速单元测试（60秒超时，最多5个失败）
 make test-unit        # 只运行单元测试（标记为 'unit' 的）
 make test-phase1      # 运行第一阶段核心 API 测试
 make test-api         # 运行所有 API 测试
 make test.containers  # 运行需要 Docker 容器的测试
-make coverage         # 运行测试并检查覆盖率（默认30%）
-make coverage-fast    # 快速覆盖率检查（仅单元测试）
+make coverage         # 运行测试并检查覆盖率（CI默认30%）
+make coverage-fast    # 快速覆盖率检查（仅单元测试，推荐日常使用）
 make coverage-local   # 本地覆盖率检查（16%阈值）
+make prepush          # 完整的提交前验证（ruff + mypy + pytest）
 ```
 
 #### 单个测试运行（基于 Cursor 测试规范）
@@ -134,6 +112,8 @@ make ci               # 模拟 GitHub Actions CI 流程
 make ruff-check       # 仅运行 ruff 检查
 make ruff-format      # 仅运行 ruff 格式化
 make mypy-check       # 仅运行 mypy 类型检查
+./scripts/quality-check.sh  # 推荐的快速质量检查（5-10秒）
+./scripts/ci-verify.sh     # 完整的 CI 验证（推荐推送前运行）
 ```
 
 #### 性能和高级测试
@@ -529,6 +509,7 @@ make debt-summary            # 生成清理总结报告
   - 私有成员：前缀下划线
 - **类型注解**：所有公共接口必须有完整类型注解
 - **文档字符串**：使用 Google 风格 docstring，函数和类使用清晰的中文说明
+- **格式化工具**：使用 Ruff（已替代 black/flake8/isort）
 
 ### 数据库相关
 - 使用异步 SQLAlchemy 操作
@@ -547,6 +528,7 @@ make debt-summary            # 生成清理总结报告
 - ❌ 在 API 层直接操作数据库
 - ❌ 跳过测试覆盖率要求（除非是文档提交）
 - ❌ 使用 black/flake8/isort（项目已完全迁移到 Ruff）
+- ❌ 推送代码前不运行 `./scripts/ci-verify.sh`
 
 ## 故障排除指南
 
@@ -692,7 +674,8 @@ make env-check                    # 环境健康
 make test-quick                   # 快速测试
 make lint                        # 代码质量
 ./scripts/quick-health-check.sh  # 5秒快速检查
-./scripts/quality-check.sh       # 推荐的快速质量检查
+./scripts/quality-check.sh       # 推荐的快速质量检查（5-10秒）
+./scripts/ci-verify.sh          # 完整的CI验证（推送前必跑）
 ```
 
 ## MyPy 类型检查
@@ -762,3 +745,4 @@ mypy src/api          # 检查特定模块
 - `mypy.ini`：类型检查配置
 - `coverage_local.ini`：本地覆盖率配置
 - `docker-compose.yml`：容器编排配置
+- `.cursor/rules/`：Cursor AI 编码规范和最佳实践
