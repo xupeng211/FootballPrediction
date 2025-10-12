@@ -53,7 +53,7 @@ def main():
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=30  # 30秒超时
+                    timeout=30,  # 30秒超时
                 )
 
                 # 统计各种结果
@@ -71,18 +71,22 @@ def main():
 
                 skip_rate = (skipped / total * 100) if total > 0 else 0
 
-                results.append({
-                    'dir': test_dir,
-                    'total': total,
-                    'skipped': skipped,
-                    'run': run,
-                    'skip_rate': skip_rate
-                })
+                results.append(
+                    {
+                        "dir": test_dir,
+                        "total": total,
+                        "skipped": skipped,
+                        "run": run,
+                        "skip_rate": skip_rate,
+                    }
+                )
 
-                print(f"  总计: {total}, 跳过: {skipped}, 运行: {run}, 跳过率: {skip_rate:.1f}%")
+                print(
+                    f"  总计: {total}, 跳过: {skipped}, 运行: {run}, 跳过率: {skip_rate:.1f}%"
+                )
 
             except subprocess.TimeoutExpired:
-                print(f"  超时，跳过此目录")
+                print("  超时，跳过此目录")
             except Exception as e:
                 print(f"  错误: {e}")
 
@@ -102,16 +106,20 @@ def main():
     if total_run > 0:
         # 假设总测试数为 6919
         estimated_total_tests = 6919
-        estimated_skipped = int((total_skipped / (total_skipped + total_run)) * estimated_total_tests)
-        print(f"\n估算整个项目:")
+        estimated_skipped = int(
+            (total_skipped / (total_skipped + total_run)) * estimated_total_tests
+        )
+        print("\n估算整个项目:")
         print(f"  估算跳过数: {estimated_skipped}")
         print(f"  估算运行数: {estimated_total_tests - estimated_skipped}")
 
     # 按跳过率排序显示
     print("\n按跳过率排序:")
-    results.sort(key=lambda x: x['skip_rate'], reverse=True)
+    results.sort(key=lambda x: x["skip_rate"], reverse=True)
     for result in results[:5]:
-        print(f"  {result['dir']}: {result['skip_rate']:.1f}% ({result['skipped']}/{result['total']})")
+        print(
+            f"  {result['dir']}: {result['skip_rate']:.1f}% ({result['skipped']}/{result['total']})"
+        )
 
     print("\n" + "=" * 60)
     if total_skipped < 100:

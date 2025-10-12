@@ -22,14 +22,14 @@ def get_test_modules():
 def count_skipif_in_file(filepath):
     """统计文件中的 skipif 数量"""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 统计 @pytest.mark.skipif
-        skipif_count = len(re.findall(r'@pytest\.mark\.skipif', content))
+        skipif_count = len(re.findall(r"@pytest\.mark\.skipif", content))
 
         # 统计 pytest.mark.skipif(True) - 这些是永久跳过的
-        always_skip_count = len(re.findall(r'@pytest\.mark\.skipif\(True', content))
+        always_skip_count = len(re.findall(r"@pytest\.mark\.skipif\(True", content))
 
         return skipif_count, always_skip_count
     except Exception as e:
@@ -46,11 +46,13 @@ def analyze_skipif_reasons():
             if file.startswith("test_") and file.endswith(".py"):
                 filepath = os.path.join(root, file)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 查找所有 skipif 及其原因
-                    matches = re.findall(r'@pytest\.mark\.skipif\([^)]+, reason="([^"]+)"\)', content)
+                    matches = re.findall(
+                        r'@pytest\.mark\.skipif\([^)]+, reason="([^"]+)"\)', content
+                    )
                     for reason in matches:
                         reasons[reason] = reasons.get(reason, 0) + 1
                 except:
@@ -104,7 +106,7 @@ def main():
         "tests/unit/api/test_health.py",
         "tests/unit/api/test_features.py",
         "tests/unit/cache/test_ttl_cache_enhanced.py",
-        "tests/unit/core/test_logger.py"
+        "tests/unit/core/test_logger.py",
     ]
 
     actual_skipped = 0
@@ -116,7 +118,7 @@ def main():
             result = subprocess.run(
                 ["pytest", module, "-v", "--disable-warnings", "--tb=no"],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             skipped = len(re.findall(r"SKIPPED", result.stdout))
