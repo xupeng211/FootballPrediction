@@ -253,7 +253,7 @@ class TestHealthCheckerAdvanced:
         assert isinstance(status, dict)
 
 
-@pytest.mark.skipif(False, reason="临时禁用 - Phase 2 优化")
+@pytest.mark.skipif(HEALTH_AVAILABLE, reason="健康模块可用，跳过此测试")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -274,7 +274,7 @@ def test_module_imports():
         assert router is not None
 
 
-def test_health_checker_class(self):
+def test_health_checker_class():
     """测试：健康检查器类"""
     if HEALTH_AVAILABLE:
         from src.api.health.utils import HealthChecker
