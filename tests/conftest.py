@@ -183,6 +183,7 @@ def test_env(monkeypatch):
     monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/1")
     monkeypatch.setenv("SECRET_KEY", "test-secret-key")
     monkeypatch.setenv("DEBUG", "true")
+    monkeypatch.setenv("TESTING", "true")
 
 
 # === 自动应用Mock ===
@@ -190,6 +191,7 @@ def test_env(monkeypatch):
 def auto_mock_external_services(monkeypatch):
     """自动Mock外部服务"""
     import sys
+    from unittest.mock import MagicMock, AsyncMock
 
     # Mock requests
     mock_requests = MagicMock()
@@ -213,6 +215,97 @@ def auto_mock_external_services(monkeypatch):
         mock_httpx.get.return_value.json.return_value = {}
         mock_httpx.get.return_value.status_code = 200
         sys.modules["httpx"] = mock_httpx
+    except ImportError:
+        pass
+
+    # Mock 数据库连接
+    mock_db_connection = MagicMock()
+    mock_db_connection.engine = MagicMock()
+    mock_db_connection.engine.pool = MagicMock()
+    sys.modules["src.database.connection"] = MagicMock()
+    sys.modules["src.database.connection"].DatabaseManager = MagicMock
+    sys.modules["src.database.connection"].get_database_url = lambda: "sqlite:///:memory:"
+
+    # Mock Kafka producer
+    try:
+        mock_kafka_producer = MagicMock()
+        mock_kafka_producer.send = MagicMock()
+        mock_kafka_producer.flush = MagicMock()
+        mock_kafka_producer.close = MagicMock()
+
+        sys.modules["src.streaming.kafka_producer"] = MagicMock()
+        sys.modules["src.streaming.kafka_producer"].KafkaProducer = MagicMock
+        sys.modules["src.streaming.kafka_producer"].KafkaProducer.return_value = mock_kafka_producer
+    except ImportError:
+        pass
+
+    # Mock Kafka consumer
+    try:
+        mock_kafka_consumer = AsyncMock()
+        mock_kafka_consumer.poll = AsyncMock(return_value=[])
+        mock_kafka_consumer.commit = AsyncMock()
+        mock_kafka_consumer.close = AsyncMock()
+
+        sys.modules["src.streaming.kafka_consumer"] = MagicMock()
+        sys.modules["src.streaming.kafka_consumer"].KafkaConsumer = MagicMock
+        sys.modules["src.streaming.kafka_consumer"].KafkaConsumer.return_value = mock_kafka_consumer
+    except ImportError:
+        pass
+
+    # Mock MLflow
+    try:
+        mock_mlflow = MagicMock()
+        mock_mlflow.log_metric = MagicMock()
+        mock_mlflow.log_param = MagicMock()
+        mock_mlflow.log_artifact = MagicMock()
+        mock_mlflow.start_run = MagicMock(return_value="test-run-id")
+        mock_mlflow.end_run = MagicMock()
+
+        sys.modules["mlflow"] = mock_mlflow
+        sys.modules["mlflow.tracking"] = MagicMock()
+        sys.modules["mlflow.entities"] = MagicMock()
+    except ImportError:
+        pass
+
+    # Mock Redis 连接（避免真实连接）
+    try:
+        import redis
+        mock_redis_client = MagicMock()
+        mock_redis_client.ping.return_value = True
+        mock_redis_client.get.return_value = None
+        mock_redis_client.set.return_value = True
+        mock_redis_client.exists.return_value = False
+
+        # Mock redis.Redis 构造函数
+        original_redis = redis.Redis
+        def mock_redis_init(*args, **kwargs):
+            return mock_redis_client
+
+        redis.Redis = mock_redis_init
+    except ImportError:
+        pass
+
+    # Mock SQLAlchemy engine
+    try:
+        from sqlalchemy import create_engine
+        from sqlalchemy.pool import StaticPool
+
+        mock_engine = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock()
+        mock_engine.connect.return_value.__exit__ = MagicMock()
+
+        # 创建内存数据库引擎
+        def mock_create_engine(*args, **kwargs):
+            if "sqlite:///:memory:" in str(args) or kwargs.get("connect_args", {}).get("check_same_thread") is False:
+                # 测试时创建真实的内存数据库
+                kwargs.setdefault("poolclass", StaticPool)
+                kwargs.setdefault("connect_args", {"check_same_thread": False})
+                return original_create_engine(*args, **kwargs)
+            return mock_engine
+
+        # 替换 create_engine
+        import sqlalchemy
+        sqlalchemy.create_engine = mock_create_engine
     except ImportError:
         pass
 
