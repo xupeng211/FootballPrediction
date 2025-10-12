@@ -139,19 +139,16 @@ class TestDictUtilsComprehensive:
         data = {
             "user": {
                 "name": "John",
-                "address": {
-                    "street": "123 Main St",
-                    "city": "New York"
-                }
+                "address": {"street": "123 Main St", "city": "New York"},
             },
-            "active": True
+            "active": True,
         }
         result = DictUtils.flatten(data)
         expected = {
             "user.name": "John",
             "user.address.street": "123 Main St",
             "user.address.city": "New York",
-            "active": True
+            "active": True,
         }
         assert result == expected
 
@@ -250,7 +247,7 @@ class TestDictUtilsComprehensive:
     def test_filter_by_key(self):
         """测试：按键过滤"""
         data = {"apple": 1, "banana": 2, "apricot": 3}
-        result = DictUtils.filter_by_key(data, lambda k: k.startswith('a'))
+        result = DictUtils.filter_by_key(data, lambda k: k.startswith("a"))
         assert result == {"apple": 1, "apricot": 3}
 
     def test_invert_dict(self):

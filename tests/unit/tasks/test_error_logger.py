@@ -15,6 +15,7 @@ import asyncio
 try:
     from src.tasks.error_logger import TaskErrorLogger
     from src.database.models.data_collection_log import CollectionStatus
+
     ERROR_LOGGER_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -23,7 +24,9 @@ except ImportError as e:
     CollectionStatus = None
 
 
-@pytest.mark.skipif(not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available")
+@pytest.mark.skipif(
+    not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
+)
 class TestTaskErrorLogger:
     """任务错误日志记录器测试"""
 
@@ -31,11 +34,11 @@ class TestTaskErrorLogger:
         """测试：日志记录器创建"""
         logger = TaskErrorLogger()
         assert logger is not None
-        assert hasattr(logger, 'db_manager')
-        assert hasattr(logger, 'log_task_error')
-        assert hasattr(logger, 'log_api_failure')
-        assert hasattr(logger, 'log_retry_attempt')
-        assert hasattr(logger, 'log_system_exception')
+        assert hasattr(logger, "db_manager")
+        assert hasattr(logger, "log_task_error")
+        assert hasattr(logger, "log_api_failure")
+        assert hasattr(logger, "log_retry_attempt")
+        assert hasattr(logger, "log_system_exception")
 
     @pytest.mark.asyncio
     async def test_log_task_error(self):
@@ -43,7 +46,7 @@ class TestTaskErrorLogger:
         logger = TaskErrorLogger()
 
         # 模拟数据库管理器
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -64,7 +67,7 @@ class TestTaskErrorLogger:
         """测试：记录API失败"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -80,7 +83,7 @@ class TestTaskErrorLogger:
                 api_url=api_url,
                 response_code=response_code,
                 response_body=response_body,
-                request_data=request_data
+                request_data=request_data,
             )
 
             # 验证记录被保存
@@ -91,7 +94,7 @@ class TestTaskErrorLogger:
         """测试：记录重试尝试"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -105,7 +108,7 @@ class TestTaskErrorLogger:
                 task_id="task_789",
                 original_error=original_error,
                 retry_delay=retry_delay,
-                attempt_number=attempt_number
+                attempt_number=attempt_number,
             )
 
             # 验证重试记录
@@ -116,7 +119,7 @@ class TestTaskErrorLogger:
         """测试：记录系统异常"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -125,14 +128,14 @@ class TestTaskErrorLogger:
             system_info = {
                 "memory_usage": "95%",
                 "cpu_usage": "100%",
-                "disk_space": "10GB free"
+                "disk_space": "10GB free",
             }
 
             await logger.log_system_exception(
                 task_name="system_task",
                 task_id="task_abc",
                 system_error=system_error,
-                system_info=system_info
+                system_info=system_info,
             )
 
             # 验证异常记录
@@ -143,22 +146,21 @@ class TestTaskErrorLogger:
         """测试：获取错误统计"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.fetchall.return_value = [
                 ("task_error", 10),
                 ("api_failure", 5),
                 ("retry_attempt", 3),
-                ("system_exception", 2)
+                ("system_exception", 2),
             ]
             mock_session.execute.return_value = mock_result
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
             # 获取统计
             stats = await logger.get_error_statistics(
-                start_date=datetime.now().date(),
-                end_date=datetime.now().date()
+                start_date=datetime.now().date(), end_date=datetime.now().date()
             )
 
             # 验证统计结果
@@ -171,7 +173,7 @@ class TestTaskErrorLogger:
         """测试：批量记录错误"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -181,20 +183,22 @@ class TestTaskErrorLogger:
                     "task_name": "batch_task_1",
                     "task_id": "batch_1",
                     "error": ValueError("Error 1"),
-                    "timestamp": datetime.now()
+                    "timestamp": datetime.now(),
                 },
                 {
                     "task_name": "batch_task_2",
                     "task_id": "batch_2",
                     "error": RuntimeError("Error 2"),
-                    "timestamp": datetime.now()
-                }
+                    "timestamp": datetime.now(),
+                },
             ]
 
             await logger.log_batch_errors(errors)
 
             # 验证批量插入
-            assert mock_session.execute.call_count >= 1 or mock_session.add.call_count >= 1
+            assert (
+                mock_session.execute.call_count >= 1 or mock_session.add.call_count >= 1
+            )
 
     def test_error_context_serialization(self):
         """测试：错误上下文序列化"""
@@ -209,7 +213,7 @@ class TestTaskErrorLogger:
             "dict": {"nested": "value"},
             "datetime": datetime.now(),
             "none_value": None,
-            "exception": ValueError("Context error")
+            "exception": ValueError("Context error"),
         }
 
         # 序列化上下文
@@ -240,7 +244,7 @@ class TestTaskErrorLogger:
         """测试：清理旧错误日志"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -256,7 +260,7 @@ class TestTaskErrorLogger:
         """测试：记录带自定义字段的错误"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -266,14 +270,14 @@ class TestTaskErrorLogger:
                 "category": "data_quality",
                 "impact": "medium",
                 "assigned_to": "team_a",
-                "tags": ["urgent", "production"]
+                "tags": ["urgent", "production"],
             }
 
             await logger.log_task_error(
                 task_name="custom_task",
                 task_id="custom_123",
                 error=Exception("Custom error"),
-                custom_fields=custom_fields
+                custom_fields=custom_fields,
             )
 
             # 验证自定义字段被保存
@@ -284,13 +288,25 @@ class TestTaskErrorLogger:
         """测试：错误聚合"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.fetchall.return_value = [
-                {"error_type": "ValueError", "count": 15, "last_occurred": datetime.now()},
-                {"error_type": "ConnectionError", "count": 8, "last_occurred": datetime.now()},
-                {"error_type": "TimeoutError", "count": 5, "last_occurred": datetime.now()}
+                {
+                    "error_type": "ValueError",
+                    "count": 15,
+                    "last_occurred": datetime.now(),
+                },
+                {
+                    "error_type": "ConnectionError",
+                    "count": 8,
+                    "last_occurred": datetime.now(),
+                },
+                {
+                    "error_type": "TimeoutError",
+                    "count": 5,
+                    "last_occurred": datetime.now(),
+                },
             ]
             mock_session.execute.return_value = mock_result
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
@@ -298,7 +314,7 @@ class TestTaskErrorLogger:
             # 获取聚合数据
             aggregated = await logger.get_error_aggregation(
                 group_by="error_type",
-                date_range=7  # 最近7天
+                date_range=7,  # 最近7天
             )
 
             # 验证聚合结果
@@ -311,8 +327,8 @@ class TestTaskErrorLogger:
         """测试：错误通知"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
-            with patch.object(logger, '_send_notification') as mock_notify:
+        with patch.object(logger, "db_manager") as mock_db:
+            with patch.object(logger, "_send_notification") as mock_notify:
                 mock_session = AsyncMock()
                 mock_db.get_session.return_value.__aenter__.return_value = mock_session
                 mock_notify.return_value = True
@@ -324,16 +340,18 @@ class TestTaskErrorLogger:
                     task_name="critical_task",
                     task_id="critical_123",
                     error=critical_error,
-                    context={"severity": "critical"}
+                    context={"severity": "critical"},
                 )
 
                 # 验证通知被发送
-                if hasattr(logger, '_should_notify'):
+                if hasattr(logger, "_should_notify"):
                     if logger._should_notify(critical_error):
                         mock_notify.assert_called()
 
 
-@pytest.mark.skipif(ERROR_LOGGER_AVAILABLE, reason="Error logger module should be available")
+@pytest.mark.skipif(
+    ERROR_LOGGER_AVAILABLE, reason="Error logger module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -348,10 +366,13 @@ def test_module_imports():
     """测试：模块导入"""
     if ERROR_LOGGER_AVAILABLE:
         from src.tasks.error_logger import TaskErrorLogger
+
         assert TaskErrorLogger is not None
 
 
-@pytest.mark.skipif(not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available")
+@pytest.mark.skipif(
+    not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
+)
 class TestTaskErrorLoggerIntegration:
     """任务错误日志记录器集成测试"""
 
@@ -361,7 +382,7 @@ class TestTaskErrorLoggerIntegration:
         logger = TaskErrorLogger()
 
         # 模拟完整的错误处理流程
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -371,7 +392,7 @@ class TestTaskErrorLoggerIntegration:
                 task_name="workflow_task",
                 task_id="workflow_1",
                 error=error1,
-                context={"step": "initialization"}
+                context={"step": "initialization"},
             )
 
             # 2. 记录API失败
@@ -381,7 +402,7 @@ class TestTaskErrorLoggerIntegration:
                 api_url="https://api.test.com/endpoint",
                 response_code=500,
                 response_body={"error": "Service unavailable"},
-                request_data={"query": "data"}
+                request_data={"query": "data"},
             )
 
             # 3. 记录重试
@@ -390,7 +411,7 @@ class TestTaskErrorLoggerIntegration:
                 task_id="workflow_1",
                 original_error=error1,
                 retry_delay=2.0,
-                attempt_number=1
+                attempt_number=1,
             )
 
             # 4. 记录最终成功或失败
@@ -399,18 +420,20 @@ class TestTaskErrorLoggerIntegration:
                 task_name="workflow_task",
                 task_id="workflow_1",
                 error=final_error,
-                context={"final": True, "total_attempts": 3}
+                context={"final": True, "total_attempts": 3},
             )
 
             # 验证所有记录都被保存
-            assert mock_session.execute.call_count >= 3 or mock_session.add.call_count >= 3
+            assert (
+                mock_session.execute.call_count >= 3 or mock_session.add.call_count >= 3
+            )
 
     @pytest.mark.asyncio
     async def test_concurrent_error_logging(self):
         """测试：并发错误记录"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
@@ -422,7 +445,7 @@ class TestTaskErrorLoggerIntegration:
                     task = logger.log_task_error(
                         task_name=f"concurrent_task_{i}",
                         task_id=f"concurrent_{i}",
-                        error=error
+                        error=error,
                     )
                     tasks.append(task)
                 await asyncio.gather(*tasks)
@@ -430,11 +453,14 @@ class TestTaskErrorLoggerIntegration:
             await log_errors()
 
             # 验证并发操作处理
-            assert mock_session.execute.call_count >= 10 or mock_session.add.call_count >= 10
+            assert (
+                mock_session.execute.call_count >= 10
+                or mock_session.add.call_count >= 10
+            )
 
     def test_error_logging_performance(self):
         """测试：错误记录性能"""
-        logger = TaskErrorLogger()
+        TaskErrorLogger()
 
         # 性能测试：快速序列化大量错误
         import time
@@ -446,10 +472,7 @@ class TestTaskErrorLoggerIntegration:
                 "timestamp": datetime.now().isoformat(),
                 "error_type": f"ErrorType{i % 5}",
                 "message": f"Error message {i}",
-                "context": {
-                    "iteration": i,
-                    "data": list(range(10))
-                }
+                "context": {"iteration": i, "data": list(range(10))},
             }
             errors.append(error)
 
@@ -479,7 +502,7 @@ class TestTaskErrorLoggerIntegration:
         logger = TaskErrorLogger()
 
         # 模拟数据库失败
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_db.get_session.side_effect = Exception("Database connection failed")
 
             # 尝试记录错误
@@ -489,10 +512,9 @@ class TestTaskErrorLoggerIntegration:
             try:
                 await logger.log_task_error("test_task", "test_123", error)
                 # 如果成功，说明有备用机制
-                success = True
             except Exception:
                 # 如果失败，应该记录到文件日志
-                success = False
+                pass
 
             # 验证至少有一种记录方式工作
             assert True  # 只要程序没有崩溃就通过
@@ -509,11 +531,11 @@ class TestTaskErrorLoggerIntegration:
             (MemoryError("Out of memory"), "infrastructure"),
             (RuntimeError("Logic error"), "application"),
             (KeyError("Missing key"), "application"),
-            (AttributeError("Missing attribute"), "application")
+            (AttributeError("Missing attribute"), "application"),
         ]
 
         for error, expected_category in error_categories:
-            if hasattr(logger, '_categorize_error'):
+            if hasattr(logger, "_categorize_error"):
                 category = logger._categorize_error(error)
                 assert category in [expected_category, "unknown"]
 
@@ -526,11 +548,11 @@ class TestTaskErrorLoggerIntegration:
             (SystemError("Critical failure"), "critical"),
             (RuntimeError("Application error"), "high"),
             (ValueError("Invalid data"), "medium"),
-            (UserWarning("Warning message"), "low")
+            (UserWarning("Warning message"), "low"),
         ]
 
         for error, expected_priority in test_cases:
-            if hasattr(logger, '_get_error_priority'):
+            if hasattr(logger, "_get_error_priority"):
                 priority = logger._get_error_priority(error)
                 assert priority in [expected_priority, "normal"]
 
@@ -539,7 +561,7 @@ class TestTaskErrorLoggerIntegration:
         """测试：错误指标收集"""
         logger = TaskErrorLogger()
 
-        with patch.object(logger, 'db_manager') as mock_db:
+        with patch.object(logger, "db_manager") as mock_db:
             mock_session = AsyncMock()
             mock_result = Mock()
 
@@ -549,7 +571,7 @@ class TestTaskErrorLoggerIntegration:
                 "errors_last_hour": 5,
                 "most_common_error": "ValueError",
                 "error_rate": 0.05,
-                "avg_resolution_time": 300
+                "avg_resolution_time": 300,
             }
             mock_session.execute.return_value = mock_result
             mock_db.get_session.return_value.__aenter__.return_value = mock_session

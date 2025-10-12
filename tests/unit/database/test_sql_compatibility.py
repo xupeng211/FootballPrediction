@@ -28,8 +28,9 @@ def test_sql_compatibility_module_import():
             jsonb_build_object,
             jsonb_agg,
             to_jsonb,
-            cast_to_jsonb
+            cast_to_jsonb,
         )
+
         # 如果导入成功，至少说明模块存在
         assert True
     except ImportError as e:
@@ -43,6 +44,7 @@ class TestJSONBType:
         """测试：JSONB类型导入"""
         try:
             from src.database.sql_compatibility import JSONB
+
             assert JSONB is not None
         except ImportError:
             pytest.skip("JSONB类型不可用")
@@ -200,10 +202,10 @@ class TestJSONBAggregateFunctions:
             assert callable(jsonb_build_object)
 
             # 测试不同参数数量
-            result1 = jsonb_build_object('key', 'value')
+            result1 = jsonb_build_object("key", "value")
             assert result1 is not None
 
-            result2 = jsonb_build_object('k1', 'v1', 'k2', 'v2')
+            result2 = jsonb_build_object("k1", "v1", "k2", "v2")
             assert result2 is not None
         except ImportError:
             pytest.skip("jsonb_build_object函数不可用")
@@ -256,17 +258,17 @@ class TestSQLCompatibilityModule:
         try:
             import src.database.sql_compatibility as sql_compat
 
-            if hasattr(sql_compat, '__all__'):
+            if hasattr(sql_compat, "__all__"):
                 # 检查是否有导出的项目
                 assert len(sql_compat.__all__) > 0
 
                 # 检查一些预期的函数
                 expected_exports = [
-                    'JSONB',
-                    'get_jsonb_type',
-                    'jsonb_as_text',
-                    'jsonb_contains',
-                    'jsonb_exists'
+                    "JSONB",
+                    "get_jsonb_type",
+                    "jsonb_as_text",
+                    "jsonb_contains",
+                    "jsonb_exists",
                 ]
 
                 for export in expected_exports:
@@ -293,7 +295,7 @@ class TestSQLCompatibilityModule:
                 get_jsonb_type,
                 jsonb_as_text,
                 jsonb_contains,
-                jsonb_exists
+                jsonb_exists,
             )
 
             # 所有函数应该是可调用的
@@ -314,7 +316,7 @@ class TestPostgreSQLSpecificFeatures:
             from src.database.sql_compatibility import (
                 jsonb_contains,
                 jsonb_exists,
-                jsonb_extract_path
+                jsonb_extract_path,
             )
 
             # 这些是PostgreSQL特有的JSONB操作
@@ -328,10 +330,7 @@ class TestPostgreSQLSpecificFeatures:
     def test_postgresql_aggregate_functions(self):
         """测试：PostgreSQL聚合函数"""
         try:
-            from src.database.sql_compatibility import (
-                jsonb_agg,
-                jsonb_build_object
-            )
+            from src.database.sql_compatibility import jsonb_agg, jsonb_build_object
 
             # 聚合函数通常是PostgreSQL特有的
             assert callable(jsonb_agg)
@@ -348,10 +347,7 @@ class TestSQLiteCompatibility:
         # 在SQLite环境中，JSONB函数可能有不同的实现
         # 这里我们测试基本的函数可用性
         try:
-            from src.database.sql_compatibility import (
-                get_jsonb_type,
-                jsonb_as_text
-            )
+            from src.database.sql_compatibility import get_jsonb_type, jsonb_as_text
 
             # SQLite应该支持基本的JSON操作
             assert callable(get_jsonb_type)
@@ -370,7 +366,7 @@ class TestSQLiteCompatibility:
 
             # 可能需要模拟不同的方言
             mock_dialect = Mock()
-            mock_dialect.name = 'postgresql'
+            mock_dialect.name = "postgresql"
 
             try:
                 result = get_jsonb_type(mock_dialect)

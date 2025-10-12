@@ -57,7 +57,7 @@ class TestStrategyPredictionServiceSimple:
             prediction_domain_service=prediction_service,
             match_repository=match_repository,
             prediction_repository=prediction_repository,
-            default_strategy="default_strategy"
+            default_strategy="default_strategy",
         )
 
         # Then
@@ -101,9 +101,7 @@ class TestStrategyPredictionServiceSimple:
 
         # When
         await mock_service.predict_match(
-            match_id=123,
-            user_id=456,
-            strategy_name="custom_strategy"
+            match_id=123, user_id=456, strategy_name="custom_strategy"
         )
 
         # Then
@@ -119,11 +117,7 @@ class TestStrategyPredictionServiceSimple:
         mock_service.predict_match = AsyncMock()
 
         # When
-        await mock_service.predict_match(
-            match_id=123,
-            user_id=456,
-            confidence=0.85
-        )
+        await mock_service.predict_match(match_id=123, user_id=456, confidence=0.85)
 
         # Then
         mock_service.predict_match.assert_called_once()
@@ -138,9 +132,7 @@ class TestStrategyPredictionServiceSimple:
 
         # When
         await mock_service.predict_match(
-            match_id=123,
-            user_id=456,
-            notes="测试预测备注"
+            match_id=123, user_id=456, notes="测试预测备注"
         )
 
         # Then
@@ -183,9 +175,7 @@ class TestStrategyPredictionServiceSimple:
 
         # When
         await mock_service.batch_predict(
-            match_ids=[101, 102],
-            user_id=456,
-            strategy_name="batch_strategy"
+            match_ids=[101, 102], user_id=456, strategy_name="batch_strategy"
         )
 
         # Then
@@ -228,15 +218,13 @@ class TestStrategyPredictionServiceSimple:
 
         # When
         result = await mock_service.compare_strategies(
-            match_id=123,
-            strategy_names=strategies
+            match_id=123, strategy_names=strategies
         )
 
         # Then
         assert isinstance(result, dict)
         mock_service.compare_strategies.assert_called_once_with(
-            match_id=123,
-            strategy_names=strategies
+            match_id=123, strategy_names=strategies
         )
 
     @pytest.mark.asyncio
@@ -253,12 +241,12 @@ class TestStrategyPredictionServiceSimple:
     def test_service_attributes(self, mock_service):
         """测试：服务属性"""
         # Then
-        assert hasattr(mock_service, '_strategy_factory')
-        assert hasattr(mock_service, '_prediction_domain_service')
-        assert hasattr(mock_service, '_match_repository')
-        assert hasattr(mock_service, '_prediction_repository')
-        assert hasattr(mock_service, '_current_strategies')
-        assert hasattr(mock_service, '_default_strategy')
+        assert hasattr(mock_service, "_strategy_factory")
+        assert hasattr(mock_service, "_prediction_domain_service")
+        assert hasattr(mock_service, "_match_repository")
+        assert hasattr(mock_service, "_prediction_repository")
+        assert hasattr(mock_service, "_current_strategies")
+        assert hasattr(mock_service, "_default_strategy")
 
     def test_default_strategy_value(self):
         """测试：默认策略值"""
@@ -268,7 +256,7 @@ class TestStrategyPredictionServiceSimple:
             prediction_domain_service=Mock(),
             match_repository=Mock(),
             prediction_repository=Mock(),
-            default_strategy="custom_default"
+            default_strategy="custom_default",
         )
 
         # Then
@@ -281,7 +269,7 @@ class TestStrategyPredictionServiceSimple:
             strategy_factory=Mock(),
             prediction_domain_service=Mock(),
             match_repository=Mock(),
-            prediction_repository=Mock()
+            prediction_repository=Mock(),
         )
 
         # Then
@@ -300,7 +288,7 @@ class TestStrategyPredictionServiceSimple:
             strategy_factory=strategy_factory,
             prediction_domain_service=prediction_service,
             match_repository=match_repository,
-            prediction_repository=prediction_repository
+            prediction_repository=prediction_repository,
         )
 
         # Then
@@ -316,7 +304,7 @@ class TestStrategyPredictionServiceSimple:
             strategy_factory=Mock(),
             prediction_domain_service=Mock(),
             match_repository=Mock(),
-            prediction_repository=Mock()
+            prediction_repository=Mock(),
         )
 
         # Then
@@ -330,7 +318,7 @@ class TestStrategyPredictionServiceSimple:
             prediction_domain_service=Mock(),
             match_repository=Mock(),
             prediction_repository=Mock(),
-            default_strategy="config_test"
+            default_strategy="config_test",
         )
 
         # Then
@@ -357,7 +345,7 @@ class TestStrategyPredictionServiceSimple:
             strategy_factory=Mock(),
             prediction_domain_service=Mock(),
             match_repository=Mock(),
-            prediction_repository=Mock()
+            prediction_repository=Mock(),
         )
 
         # Then
@@ -370,6 +358,6 @@ class TestStrategyPredictionServiceSimple:
         service._strategy_factory = Mock()
         service.predict_match = AsyncMock()
         service.batch_predict = AsyncMock()
-        assert hasattr(service, '_strategy_factory')
-        assert hasattr(service, 'predict_match')
-        assert hasattr(service, 'batch_predict')
+        assert hasattr(service, "_strategy_factory")
+        assert hasattr(service, "predict_match")
+        assert hasattr(service, "batch_predict")

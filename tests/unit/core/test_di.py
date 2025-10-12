@@ -12,19 +12,24 @@ from src.core.di import (
     DIContainer,
     ServiceLifetime,
     ServiceDescriptor,
-    DependencyInjectionError
+    DependencyInjectionError,
 )
 
 
 # 测试用的服务类
 class IService(Protocol):
     """服务接口协议"""
-    def get_name(self) -> str: ...
-    def do_work(self) -> int: ...
+
+    def get_name(self) -> str:
+        ...
+
+    def do_work(self) -> int:
+        ...
 
 
 class ServiceA:
     """服务A实现"""
+
     def __init__(self):
         self.id = id(self)
         self.name = "ServiceA"
@@ -38,6 +43,7 @@ class ServiceA:
 
 class ServiceB:
     """服务B实现，依赖服务A"""
+
     def __init__(self, service_a: ServiceA):
         self.service_a = service_a
         self.name = "ServiceB"
@@ -51,6 +57,7 @@ class ServiceB:
 
 class ServiceC:
     """服务C实现，依赖服务B"""
+
     def __init__(self, service_b: ServiceB):
         self.service_b = service_b
         self.name = "ServiceC"
@@ -64,6 +71,7 @@ class ServiceC:
 
 class ServiceWithArgs:
     """带参数的服务"""
+
     def __init__(self, value: int, text: str):
         self.value = value
         self.text = text
@@ -83,7 +91,7 @@ class TestServiceDescriptor:
         descriptor = ServiceDescriptor(
             interface=IService,
             implementation=ServiceA,
-            lifetime=ServiceLifetime.SINGLETON
+            lifetime=ServiceLifetime.SINGLETON,
         )
 
         assert descriptor.interface == IService
@@ -95,6 +103,7 @@ class TestServiceDescriptor:
 
     def test_service_descriptor_with_factory(self):
         """测试：带工厂方法的服务描述符"""
+
         def factory():
             return ServiceA()
 
@@ -102,7 +111,7 @@ class TestServiceDescriptor:
             interface=IService,
             implementation=None,
             lifetime=ServiceLifetime.TRANSIENT,
-            factory=factory
+            factory=factory,
         )
 
         assert descriptor.factory == factory
@@ -115,7 +124,7 @@ class TestServiceDescriptor:
             interface=IService,
             implementation=None,
             lifetime=ServiceLifetime.SINGLETON,
-            instance=instance
+            instance=instance,
         )
 
         assert descriptor.instance is instance
@@ -126,7 +135,7 @@ class TestServiceDescriptor:
         descriptor = ServiceDescriptor(
             interface=IService,
             implementation=ServiceA,
-            lifetime=ServiceLifetime.SINGLETON
+            lifetime=ServiceLifetime.SINGLETON,
         )
 
         assert descriptor.dependencies is not None
@@ -174,6 +183,7 @@ class TestDIContainerBasic:
     def test_register_singleton_with_factory(self):
         """测试：注册单例服务（工厂方法）"""
         container = DIContainer()
+
         def factory():
             return ServiceA()
 
@@ -289,6 +299,7 @@ class TestDIContainerResolution:
         container = DIContainer()
 
         created_instances = []
+
         def factory():
             instance = ServiceA()
             created_instances.append(instance)
@@ -390,11 +401,11 @@ class TestDIContainerLifecycle:
         container.register_scoped(IService, ServiceA)
 
         # 第一个作用域
-        with container.create_scope("scope1") as scope1:
+        with container.create_scope("scope1"):
             instance1 = container.resolve(IService)
 
         # 第二个作用域
-        with container.create_scope("scope2") as scope2:
+        with container.create_scope("scope2"):
             instance2 = container.resolve(IService)
 
         # 不同作用域的实例应该不同
@@ -406,11 +417,11 @@ class TestDIContainerLifecycle:
         container.register_singleton(IService, ServiceA)
 
         # 第一个作用域
-        with container.create_scope("scope1") as scope1:
+        with container.create_scope("scope1"):
             instance1 = container.resolve(IService)
 
         # 第二个作用域
-        with container.create_scope("scope2") as scope2:
+        with container.create_scope("scope2"):
             instance2 = container.resolve(IService)
 
         # 单例应该在所有作用域中保持一致
@@ -458,7 +469,7 @@ class TestDIContainerAdvanced:
         assert IService in container._services
 
         # 清空容器（如果实现了clear方法）
-        if hasattr(container, 'clear'):
+        if hasattr(container, "clear"):
             container.clear()
             assert len(container._services) == 0
 
@@ -467,7 +478,7 @@ class TestDIContainerAdvanced:
         container = DIContainer()
 
         # 假设实现了is_registered方法
-        if hasattr(container, 'is_registered'):
+        if hasattr(container, "is_registered"):
             assert not container.is_registered(IService)
 
             container.register_singleton(IService, ServiceA)
@@ -483,7 +494,7 @@ class TestDIContainerAdvanced:
         container.register_transient(ServiceC)
 
         # 假设实现了resolve_all方法
-        if hasattr(container, 'resolve_all'):
+        if hasattr(container, "resolve_all"):
             services = container.resolve_all()
             assert len(services) >= 3
 
@@ -495,7 +506,7 @@ class TestDIContainerAdvanced:
         container.register_transient(ServiceB)
 
         # 假设可以获取依赖信息
-        if hasattr(container, 'get_dependencies'):
+        if hasattr(container, "get_dependencies"):
             deps = container.get_dependencies(ServiceB)
             assert ServiceA in deps
 
@@ -515,5 +526,5 @@ class TestDIContainerAdvanced:
         try:
             # 尝试一个可能失败的操作
             pass
-        except:
+        except Exception:
             pass

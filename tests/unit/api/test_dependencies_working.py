@@ -21,15 +21,18 @@ try:
         rate_limit_check,
         security,
         SECRET_KEY,
-        ALGORITHM
+        ALGORITHM,
     )
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     DEPENDENCIES_AVAILABLE = False
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestGetCurrentUser:
     """获取当前用户测试"""
 
@@ -39,11 +42,8 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "valid_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
-            mock_decode.return_value = {
-                "sub": "123",
-                "role": "user"
-            }
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
+            mock_decode.return_value = {"sub": "123", "role": "user"}
 
             result = await get_current_user(mock_credentials)
 
@@ -57,11 +57,8 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
-            mock_decode.return_value = {
-                "sub": "456",
-                "role": "admin"
-            }
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
+            mock_decode.return_value = {"sub": "456", "role": "admin"}
 
             result = await get_current_user(mock_credentials)
 
@@ -74,7 +71,7 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.side_effect = JWTError("Invalid token")
 
             with pytest.raises(HTTPException) as exc_info:
@@ -89,7 +86,7 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "token_without_sub"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.return_value = {"role": "user"}  # 缺少sub
 
             with pytest.raises(HTTPException) as exc_info:
@@ -103,7 +100,7 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "token_without_role"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.return_value = {"sub": "789"}  # 缺少role
 
             result = await get_current_user(mock_credentials)
@@ -112,7 +109,9 @@ class TestGetCurrentUser:
             assert result["role"] == "user"  # 默认角色
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestGetAdminUser:
     """获取管理员用户测试"""
 
@@ -148,7 +147,9 @@ class TestGetAdminUser:
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestGetPredictionEngine:
     """获取预测引擎测试"""
 
@@ -157,7 +158,9 @@ class TestGetPredictionEngine:
         """测试：成功获取预测引擎"""
         mock_engine = AsyncMock()
 
-        with patch('src.core.prediction_engine.get_prediction_engine') as mock_get_engine:
+        with patch(
+            "src.core.prediction_engine.get_prediction_engine"
+        ) as mock_get_engine:
             mock_get_engine.return_value = mock_engine
 
             engine = await get_prediction_engine()
@@ -168,7 +171,9 @@ class TestGetPredictionEngine:
     @pytest.mark.asyncio
     async def test_get_prediction_engine_none(self):
         """测试：预测引擎返回None"""
-        with patch('src.core.prediction_engine.get_prediction_engine') as mock_get_engine:
+        with patch(
+            "src.core.prediction_engine.get_prediction_engine"
+        ) as mock_get_engine:
             mock_get_engine.return_value = None
 
             engine = await get_prediction_engine()
@@ -176,7 +181,9 @@ class TestGetPredictionEngine:
             assert engine is None
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestGetRedisManager:
     """获取Redis管理器测试"""
 
@@ -185,7 +192,7 @@ class TestGetRedisManager:
         """测试：成功获取Redis管理器"""
         mock_redis = Mock()
 
-        with patch('src.cache.redis_manager.get_redis_manager') as mock_get_redis:
+        with patch("src.cache.redis_manager.get_redis_manager") as mock_get_redis:
             mock_get_redis.return_value = mock_redis
 
             redis_manager = await get_redis_manager()
@@ -194,7 +201,9 @@ class TestGetRedisManager:
             mock_get_redis.assert_called_once()
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestVerifyPredictionPermission:
     """验证预测权限测试"""
 
@@ -219,7 +228,9 @@ class TestVerifyPredictionPermission:
         assert result is True
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestRateLimitCheck:
     """速率限制检查测试"""
 
@@ -242,7 +253,9 @@ class TestRateLimitCheck:
         assert result is True
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestDependenciesIntegration:
     """依赖注入集成测试"""
 
@@ -252,11 +265,8 @@ class TestDependenciesIntegration:
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
-            mock_decode.return_value = {
-                "sub": "1",
-                "role": "admin"
-            }
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
+            mock_decode.return_value = {"sub": "1", "role": "admin"}
 
             # 1. 获取当前用户
             user = await get_current_user(mock_credentials)
@@ -272,11 +282,8 @@ class TestDependenciesIntegration:
         mock_credentials = Mock()
         mock_credentials.credentials = "user_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
-            mock_decode.return_value = {
-                "sub": "2",
-                "role": "user"
-            }
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
+            mock_decode.return_value = {"sub": "2", "role": "user"}
 
             # 1. 获取当前用户
             user = await get_current_user(mock_credentials)
@@ -307,10 +314,13 @@ class TestDependenciesIntegration:
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode, \
-             patch('src.core.prediction_engine.get_prediction_engine') as mock_get_engine, \
-             patch('src.cache.redis_manager.get_redis_manager') as mock_get_redis:
-
+        with (
+            patch("src.api.dependencies.jwt.decode") as mock_decode,
+            patch(
+                "src.core.prediction_engine.get_prediction_engine"
+            ) as mock_get_engine,
+            patch("src.cache.redis_manager.get_redis_manager") as mock_get_redis,
+        ):
             # 设置mock
             mock_decode.return_value = {"sub": "1", "role": "admin"}
             mock_engine = AsyncMock()
@@ -334,27 +344,21 @@ class TestDependenciesIntegration:
         assert SECRET_KEY is not None
         assert ALGORITHM == "HS256"
         assert security is not None
-        assert hasattr(security, 'scheme_name')
+        assert hasattr(security, "scheme_name")
 
     @pytest.mark.asyncio
     async def test_concurrent_user_requests(self):
         """测试：并发用户请求"""
         import asyncio
 
-        mock_credentials_list = [
-            Mock(credentials=f"token_{i}") for i in range(5)
-        ]
+        mock_credentials_list = [Mock(credentials=f"token_{i}") for i in range(5)]
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
-            mock_decode.return_value = {
-                "sub": "123",
-                "role": "user"
-            }
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
+            mock_decode.return_value = {"sub": "123", "role": "user"}
 
             # 并发获取用户信息
             tasks = [
-                get_current_user(credentials)
-                for credentials in mock_credentials_list
+                get_current_user(credentials) for credentials in mock_credentials_list
             ]
 
             results = await asyncio.gather(*tasks)
@@ -371,7 +375,7 @@ class TestDependenciesIntegration:
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_token"
 
-        with patch('src.api.dependencies.jwt.decode') as mock_decode:
+        with patch("src.api.dependencies.jwt.decode") as mock_decode:
             # 模拟JWT解码错误
             mock_decode.side_effect = JWTError("Token malformed")
 
@@ -382,7 +386,9 @@ class TestDependenciesIntegration:
 
             # 后续的依赖也应该失败
             with pytest.raises(HTTPException):
-                await get_admin_user({"id": 1, "role": "user"})  # 这个会通过，因为不需要token
+                await get_admin_user(
+                    {"id": 1, "role": "user"}
+                )  # 这个会通过，因为不需要token
 
     @pytest.mark.asyncio
     async def test_dependency_caching(self):

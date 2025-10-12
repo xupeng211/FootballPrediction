@@ -10,6 +10,7 @@ import pytest
 # 测试导入
 try:
     from src.api.predictions import router
+
     PREDICTIONS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -23,7 +24,7 @@ class TestPredictionsAPI:
         """测试：导入路由器"""
         if PREDICTIONS_AVAILABLE:
             assert router is not None
-            assert hasattr(router, 'routes')
+            assert hasattr(router, "routes")
         else:
             pytest.skip("Predictions module not available")
 
@@ -42,7 +43,7 @@ class TestPredictionsAPI:
             pytest.skip("Predictions module not available")
 
         # 验证是FastAPI路由器
-        assert 'APIRouter' in str(type(router))
+        assert "APIRouter" in str(type(router))
 
 
 # 运行测试的简单函数

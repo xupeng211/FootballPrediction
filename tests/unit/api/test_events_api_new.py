@@ -15,11 +15,12 @@ try:
         router,
         event_health_check,
         get_event_statistics,
-        _find_handler
+        _find_handler,
     )
     from src.core.event_application import EventApplication
     from src.events import EventBus
     from src.events.handlers import MetricsEventHandler, AnalyticsEventHandler
+
     EVENTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -37,10 +38,10 @@ class TestEventHealthCheck:
         mock_app.health_check.return_value = {
             "status": "healthy",
             "event_handlers": 5,
-            "uptime": "2h 30m"
+            "uptime": "2h 30m",
         }
 
-        with patch('src.api.events.get_event_application') as mock_get_app:
+        with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
             result = await event_health_check()
@@ -56,10 +57,10 @@ class TestEventHealthCheck:
         mock_app = AsyncMock()
         mock_app.health_check.return_value = {
             "status": "unhealthy",
-            "error": "Database connection failed"
+            "error": "Database connection failed",
         }
 
-        with patch('src.api.events.get_event_application') as mock_get_app:
+        with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
             result = await event_health_check()
@@ -73,7 +74,7 @@ class TestEventHealthCheck:
         mock_app = AsyncMock()
         mock_app.health_check.side_effect = RuntimeError("Service unavailable")
 
-        with patch('src.api.events.get_event_application') as mock_get_app:
+        with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
             with pytest.raises(RuntimeError, match="Service unavailable"):
@@ -91,12 +92,13 @@ class TestGetEventStatistics:
         mock_bus.get_stats.return_value = {
             "total_events": 1000,
             "events_per_second": 10.5,
-            "handlers": 5
+            "handlers": 5,
         }
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_bus.return_value = mock_bus
             mock_find_handler.side_effect = [None, None]  # 没有找到处理器
 
@@ -112,46 +114,51 @@ class TestGetEventStatistics:
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {
             "total_events": 500,
-            "events_per_second": 5.2
+            "events_per_second": 5.2,
         }
 
         mock_metrics_handler = Mock()
         mock_metrics_handler.get_metrics.return_value = {
             "cpu_usage": 45.5,
-            "memory_usage": 67.8
+            "memory_usage": 67.8,
         }
 
         mock_analytics_handler = Mock()
         mock_analytics_handler.get_analytics_data.return_value = {
             "top_events": ["prediction.created", "user.login"],
-            "event_trends": {"up": 10, "down": 5}
+            "event_trends": {"up": 10, "down": 5},
         }
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_bus.return_value = mock_bus
             # 第一次调用返回metrics处理器，第二次返回analytics处理器
-            mock_find_handler.side_effect = [mock_metrics_handler, mock_analytics_handler]
+            mock_find_handler.side_effect = [
+                mock_metrics_handler,
+                mock_analytics_handler,
+            ]
 
             result = await get_event_statistics()
 
             assert result["total_events"] == 500
             assert result["metrics"]["cpu_usage"] == 45.5
-            assert result["analytics"]["top_events"] == ["prediction.created", "user.login"]
+            assert result["analytics"]["top_events"] == [
+                "prediction.created",
+                "user.login",
+            ]
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_no_handlers(self):
         """测试：没有找到处理器"""
         mock_bus = Mock()
-        mock_bus.get_stats.return_value = {
-            "total_events": 100,
-            "handlers": 0
-        }
+        mock_bus.get_stats.return_value = {"total_events": 100, "handlers": 0}
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_bus.return_value = mock_bus
             mock_find_handler.return_value = None  # 没有找到任何处理器
 
@@ -167,7 +174,7 @@ class TestGetEventStatistics:
         mock_bus = Mock()
         mock_bus.get_stats.side_effect = Exception("Bus error")
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus:
+        with patch("src.api.events.get_event_bus") as mock_get_bus:
             mock_get_bus.return_value = mock_bus
 
             with pytest.raises(Exception, match="Bus error"):
@@ -180,27 +187,20 @@ class TestFindHandler:
 
     def test_find_handler_success(self):
         """测试：成功找到处理器"""
-        if '_find_handler' in globals():
-            mock_handler_list = [
-                Mock(spec=MetricsEventHandler),
-                Mock(spec=AnalyticsEventHandler),
-                Mock()
-            ]
+        if "_find_handler" in globals():
+            [Mock(spec=MetricsEventHandler), Mock(spec=AnalyticsEventHandler), Mock()]
 
-            with patch('src.api.events MetricsEventHandler') as mock_metrics_class:
-                handler = _find_handler(MetricsEventHandler)
+            with patch("src.api.events MetricsEventHandler"):
+                _find_handler(MetricsEventHandler)
                 # 测试逻辑取决于实际实现
 
     def test_find_handler_not_found(self):
         """测试：未找到处理器"""
-        if '_find_handler' in globals():
-            mock_handler_list = [
-                Mock(spec=AnalyticsEventHandler),
-                Mock()
-            ]
+        if "_find_handler" in globals():
+            [Mock(spec=AnalyticsEventHandler), Mock()]
 
-            with patch('src.api.events MetricsEventHandler') as mock_metrics_class:
-                handler = _find_handler(MetricsEventHandler)
+            with patch("src.api.events MetricsEventHandler"):
+                _find_handler(MetricsEventHandler)
                 # 测试逻辑取决于实际实现
 
 
@@ -224,7 +224,7 @@ class TestEventsAPIIntegration:
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {
             "total_events": 100,
-            "events_per_second": 5.0
+            "events_per_second": 5.0,
         }
 
         mock_metrics_handler = Mock()
@@ -233,13 +233,17 @@ class TestEventsAPIIntegration:
         mock_analytics_handler = Mock()
         mock_analytics_handler.get_analytics_data.return_value = {"trends": "up"}
 
-        with patch('src.api.events.get_event_application') as mock_get_app, \
-             patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_application") as mock_get_app,
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_app.return_value = mock_app
             mock_get_bus.return_value = mock_bus
-            mock_find_handler.side_effect = [mock_metrics_handler, mock_analytics_handler]
+            mock_find_handler.side_effect = [
+                mock_metrics_handler,
+                mock_analytics_handler,
+            ]
 
             # 1. 健康检查
             health_result = await event_health_check()
@@ -259,7 +263,7 @@ class TestEventsAPIIntegration:
         mock_app = AsyncMock()
         mock_app.health_check.return_value = {"status": "healthy"}
 
-        with patch('src.api.events.get_event_application') as mock_get_app:
+        with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
             # 并发调用健康检查
@@ -278,7 +282,7 @@ class TestEventsAPIIntegration:
         mock_app = AsyncMock()
         mock_app.health_check.side_effect = ValueError("Invalid configuration")
 
-        with patch('src.api.events.get_event_application') as mock_get_app:
+        with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
             with pytest.raises(ValueError, match="Invalid configuration"):
@@ -294,12 +298,13 @@ class TestEventsAPIIntegration:
         mock_metrics.get_metrics.side_effect = [
             {"requests": 100},
             {"requests": 200},
-            {"requests": 300}
+            {"requests": 300},
         ]
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_bus.return_value = mock_bus
             mock_find_handler.return_value = mock_metrics
 
@@ -311,13 +316,13 @@ class TestEventsAPIIntegration:
     def test_router_tags_and_metadata(self):
         """测试：路由标签和元数据"""
         # 验证路由配置
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
         # 检查路由信息
         for route in router.routes:
-            if hasattr(route, 'path'):
-                assert route.path.startswith('/events')
-            if hasattr(route, 'tags'):
+            if hasattr(route, "path"):
+                assert route.path.startswith("/events")
+            if hasattr(route, "tags"):
                 assert isinstance(route.tags, list)
 
     @pytest.mark.asyncio
@@ -330,7 +335,7 @@ class TestEventsAPIIntegration:
             "events_per_second": 25.5,
             "active_handlers": 8,
             "queue_size": 150,
-            "processing_time_avg": 0.05
+            "processing_time_avg": 0.05,
         }
 
         mock_metrics_handler = Mock()
@@ -339,13 +344,13 @@ class TestEventsAPIIntegration:
                 "MetricsEventHandler": {
                     "processed": 5000,
                     "failed": 10,
-                    "avg_processing_time": 0.02
+                    "avg_processing_time": 0.02,
                 },
                 "AnalyticsEventHandler": {
                     "processed": 3000,
                     "failed": 5,
-                    "avg_processing_time": 0.03
-                }
+                    "avg_processing_time": 0.03,
+                },
             }
         }
 
@@ -355,20 +360,24 @@ class TestEventsAPIIntegration:
                 "prediction.created": 4000,
                 "prediction.updated": 2000,
                 "user.login": 1500,
-                "user.logout": 1500
+                "user.logout": 1500,
             },
             "time_distribution": {
                 "last_hour": 1000,
                 "last_day": 8000,
-                "last_week": 50000
-            }
+                "last_week": 50000,
+            },
         }
 
-        with patch('src.api.events.get_event_bus') as mock_get_bus, \
-             patch('src.api.events._find_handler') as mock_find_handler:
-
+        with (
+            patch("src.api.events.get_event_bus") as mock_get_bus,
+            patch("src.api.events._find_handler") as mock_find_handler,
+        ):
             mock_get_bus.return_value = mock_bus
-            mock_find_handler.side_effect = [mock_metrics_handler, mock_analytics_handler]
+            mock_find_handler.side_effect = [
+                mock_metrics_handler,
+                mock_analytics_handler,
+            ]
 
             result = await get_event_statistics()
 
@@ -378,7 +387,10 @@ class TestEventsAPIIntegration:
 
             # 验证处理器指标
             assert "handler_metrics" in result["metrics"]
-            assert result["metrics"]["handler_metrics"]["MetricsEventHandler"]["processed"] == 5000
+            assert (
+                result["metrics"]["handler_metrics"]["MetricsEventHandler"]["processed"]
+                == 5000
+            )
 
             # 验证分析数据
             assert result["analytics"]["event_types"]["prediction.created"] == 4000

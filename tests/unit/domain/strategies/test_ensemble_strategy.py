@@ -29,33 +29,37 @@ def mock_sub_strategies():
     historical = MagicMock()
     historical.name = "historical"
     historical.type = StrategyType.HISTORICAL
-    historical.predict = AsyncMock(return_value=PredictionOutput(
-        prediction=(1, 0),
-        confidence=0.75,
-        reasoning="Historical analysis shows home advantage"
-    ))
+    historical.predict = AsyncMock(
+        return_value=PredictionOutput(
+            prediction=(1, 0),
+            confidence=0.75,
+            reasoning="Historical analysis shows home advantage",
+        )
+    )
     strategies["historical"] = historical
 
     # 统计策略 - 中等预测
     statistical = MagicMock()
     statistical.name = "statistical"
     statistical.type = StrategyType.STATISTICAL
-    statistical.predict = AsyncMock(return_value=PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.68,
-        reasoning="Statistical models predict moderate win"
-    ))
+    statistical.predict = AsyncMock(
+        return_value=PredictionOutput(
+            prediction=(2, 1),
+            confidence=0.68,
+            reasoning="Statistical models predict moderate win",
+        )
+    )
     strategies["statistical"] = statistical
 
     # ML模型策略 - 激进预测
     ml_model = MagicMock()
     ml_model.name = "ml_model"
     ml_model.type = StrategyType.ML_MODEL
-    ml_model.predict = AsyncMock(return_value=PredictionOutput(
-        prediction=(3, 1),
-        confidence=0.82,
-        reasoning="ML model predicts strong win"
-    ))
+    ml_model.predict = AsyncMock(
+        return_value=PredictionOutput(
+            prediction=(3, 1), confidence=0.82, reasoning="ML model predicts strong win"
+        )
+    )
     strategies["ml_model"] = ml_model
 
     return strategies
@@ -70,8 +74,7 @@ def ensemble_strategy(mock_sub_strategies):
     for name, sub_strategy in mock_sub_strategies.items():
         strategy._sub_strategies[name] = sub_strategy
         strategy._strategy_weights[name] = StrategyWeight(
-            strategy_name=name,
-            base_weight=1.0 / len(mock_sub_strategies)
+            strategy_name=name, base_weight=1.0 / len(mock_sub_strategies)
         )
 
     return strategy
@@ -90,12 +93,12 @@ async def test_ensemble_strategy_initialization():
         "sub_strategies": [
             {"name": "historical", "weight": 0.4},
             {"name": "statistical", "weight": 0.35},
-            {"name": "ml_model", "weight": 0.25}
-        ]
+            {"name": "ml_model", "weight": 0.25},
+        ],
     }
 
     # Mock子策略初始化
-    with patch.object(strategy, '_initialize_sub_strategies') as mock_init:
+    with patch.object(strategy, "_initialize_sub_strategies"):
         await strategy.initialize(config)
 
     assert strategy._ensemble_method == EnsembleMethod.WEIGHTED_AVERAGE
@@ -118,7 +121,7 @@ async def test_weighted_average_prediction(ensemble_strategy):
         home_team_id=1,
         away_team_id=2,
         home_team_form="WWWW",
-        away_team_form="LDWD"
+        away_team_form="LDWD",
     )
 
     # 预测
@@ -143,14 +146,12 @@ async def test_majority_voting_prediction(ensemble_strategy):
     ensemble_strategy._ensemble_method = EnsembleMethod.MAJORITY_VOTING
 
     # 修改子策略返回值以产生明确的多数
-    ensemble_strategy._sub_strategies["historical"].predict.return_value = PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.75
-    )
-    ensemble_strategy._sub_strategies["statistical"].predict.return_value = PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.68
-    )
+    ensemble_strategy._sub_strategies[
+        "historical"
+    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.75)
+    ensemble_strategy._sub_strategies[
+        "statistical"
+    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.68)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
@@ -171,7 +172,7 @@ async def test_dynamic_weighting(ensemble_strategy):
     ensemble_strategy._performance_history = {
         "historical": [0.7, 0.75, 0.72, 0.78, 0.76],
         "statistical": [0.6, 0.65, 0.68, 0.64, 0.66],
-        "ml_model": [0.8, 0.82, 0.79, 0.83, 0.81]
+        "ml_model": [0.8, 0.82, 0.79, 0.83, 0.81],
     }
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
@@ -183,7 +184,9 @@ async def test_dynamic_weighting(ensemble_strategy):
 
     # ML模型性能最好，应该有更高的权重
     ml_weight = ensemble_strategy._strategy_weights["ml_model"].performance_weight
-    statistical_weight = ensemble_strategy._strategy_weights["statistical"].performance_weight
+    statistical_weight = ensemble_strategy._strategy_weights[
+        "statistical"
+    ].performance_weight
 
     assert ml_weight > statistical_weight
 
@@ -192,43 +195,40 @@ async def test_dynamic_weighting(ensemble_strategy):
 async def test_consensus_score_calculation(ensemble_strategy):
     """测试共识分数计算"""
     # 所有策略给出相似预测
-    ensemble_strategy._sub_strategies["historical"].predict.return_value = PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.75
-    )
-    ensemble_strategy._sub_strategies["statistical"].predict.return_value = PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.72
-    )
-    ensemble_strategy._sub_strategies["ml_model"].predict.return_value = PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.78
-    )
+    ensemble_strategy._sub_strategies[
+        "historical"
+    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.75)
+    ensemble_strategy._sub_strategies[
+        "statistical"
+    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.72)
+    ensemble_strategy._sub_strategies[
+        "ml_model"
+    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.78)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     result = await ensemble_strategy.predict(input_data)
 
     # 高共识应该反映在结果中
-    assert "consensus" in result.reasoning.lower() or "agreement" in result.reasoning.lower()
+    assert (
+        "consensus" in result.reasoning.lower()
+        or "agreement" in result.reasoning.lower()
+    )
 
 
 @pytest.mark.asyncio
 async def test_disagreement_handling(ensemble_strategy):
     """测试分歧处理"""
     # 设置高度分歧的预测
-    ensemble_strategy._sub_strategies["historical"].predict.return_value = PredictionOutput(
-        prediction=(1, 0),
-        confidence=0.8
-    )
-    ensemble_strategy._sub_strategies["statistical"].predict.return_value = PredictionOutput(
-        prediction=(0, 0),
-        confidence=0.7
-    )
-    ensemble_strategy._sub_strategies["ml_model"].predict.return_value = PredictionOutput(
-        prediction=(4, 0),
-        confidence=0.85
-    )
+    ensemble_strategy._sub_strategies[
+        "historical"
+    ].predict.return_value = PredictionOutput(prediction=(1, 0), confidence=0.8)
+    ensemble_strategy._sub_strategies[
+        "statistical"
+    ].predict.return_value = PredictionOutput(prediction=(0, 0), confidence=0.7)
+    ensemble_strategy._sub_strategies[
+        "ml_model"
+    ].predict.return_value = PredictionOutput(prediction=(4, 0), confidence=0.85)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
@@ -236,14 +236,19 @@ async def test_disagreement_handling(ensemble_strategy):
 
     # 高分歧应该降低置信度
     assert result.confidence < 0.7  # 分歧时置信度应该降低
-    assert "disagreement" in result.reasoning.lower() or "uncertain" in result.reasoning.lower()
+    assert (
+        "disagreement" in result.reasoning.lower()
+        or "uncertain" in result.reasoning.lower()
+    )
 
 
 @pytest.mark.asyncio
 async def test_strategy_failure_handling(ensemble_strategy):
     """测试子策略失败处理"""
     # 让一个策略失败
-    ensemble_strategy._sub_strategies["historical"].predict.side_effect = Exception("Strategy failed")
+    ensemble_strategy._sub_strategies["historical"].predict.side_effect = Exception(
+        "Strategy failed"
+    )
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
@@ -273,16 +278,15 @@ async def test_single_sub_strategy():
 
     # 添加一个子策略
     mock_strategy = MagicMock()
-    mock_strategy.predict = AsyncMock(return_value=PredictionOutput(
-        prediction=(2, 1),
-        confidence=0.8,
-        reasoning="Single strategy prediction"
-    ))
+    mock_strategy.predict = AsyncMock(
+        return_value=PredictionOutput(
+            prediction=(2, 1), confidence=0.8, reasoning="Single strategy prediction"
+        )
+    )
 
     strategy._sub_strategies["single"] = mock_strategy
     strategy._strategy_weights["single"] = StrategyWeight(
-        strategy_name="single",
-        base_weight=1.0
+        strategy_name="single", base_weight=1.0
     )
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
@@ -302,7 +306,7 @@ def test_strategy_weight_creation():
         base_weight=0.5,
         dynamic_weight=0.6,
         performance_weight=0.7,
-        recent_accuracy=0.75
+        recent_accuracy=0.75,
     )
 
     assert weight.strategy_name == "test"
@@ -320,10 +324,10 @@ def test_ensemble_result_creation():
         strategy_contributions={
             "historical": {"weight": 0.4, "prediction": (2, 1)},
             "statistical": {"weight": 0.35, "prediction": (2, 0)},
-            "ml_model": {"weight": 0.25, "prediction": (3, 1)}
+            "ml_model": {"weight": 0.25, "prediction": (3, 1)},
         },
         consensus_score=0.75,
-        disagreement_level=0.5
+        disagreement_level=0.5,
     )
 
     assert result.final_prediction == (2, 1)
@@ -340,7 +344,7 @@ async def test_performance_history_update(ensemble_strategy):
     ensemble_strategy._performance_window = 5
     ensemble_strategy._performance_history = {
         "historical": [0.7, 0.75, 0.72, 0.78, 0.76],
-        "statistical": [0.6, 0.65, 0.68, 0.64, 0.66]
+        "statistical": [0.6, 0.65, 0.68, 0.64, 0.66],
     }
 
     # 添加新的性能数据
@@ -363,7 +367,7 @@ async def test_ensemble_strategy_metrics(ensemble_strategy):
     ensemble_strategy._performance_history = {
         "historical": [0.7, 0.75, 0.72, 0.78, 0.76],
         "statistical": [0.6, 0.65, 0.68, 0.64, 0.66],
-        "ml_model": [0.8, 0.82, 0.79, 0.83, 0.81]
+        "ml_model": [0.8, 0.82, 0.79, 0.83, 0.81],
     }
 
     metrics = await ensemble_strategy.get_metrics()

@@ -30,10 +30,7 @@ class TestCacheConsistencyManager:
         mock_redis = Mock()
         mock_db = Mock()
 
-        manager = CacheConsistencyManager(
-            redis_manager=mock_redis,
-            db_manager=mock_db
-        )
+        manager = CacheConsistencyManager(redis_manager=mock_redis, db_manager=mock_db)
 
         assert manager.redis_manager is mock_redis
         assert manager.db_manager is mock_db
@@ -58,8 +55,9 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_sync_cache_with_db_redis_error(self):
         """测试：Redis错误处理"""
-        with patch('src.cache.consistency_manager.get_redis_manager') as mock_get_redis:
+        with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
             import redis
+
             mock_get_redis.side_effect = redis.RedisError("Connection failed")
 
             manager = CacheConsistencyManager()
@@ -69,7 +67,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_sync_cache_with_db_connection_error(self):
         """测试：连接错误处理"""
-        with patch('src.cache.consistency_manager.get_redis_manager') as mock_get_redis:
+        with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
             mock_get_redis.side_effect = ConnectionError("Cannot connect")
 
             manager = CacheConsistencyManager()
@@ -79,7 +77,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_invalidate_cache_single_key(self):
         """测试：失效单个缓存键"""
-        with patch('src.cache.consistency_manager.adelete_cache') as mock_adelete:
+        with patch("src.cache.consistency_manager.adelete_cache") as mock_adelete:
             mock_adelete.return_value = True
 
             manager = CacheConsistencyManager()
@@ -91,7 +89,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_invalidate_cache_multiple_keys(self):
         """测试：失效多个缓存键"""
-        with patch('src.cache.consistency_manager.adelete_cache') as mock_adelete:
+        with patch("src.cache.consistency_manager.adelete_cache") as mock_adelete:
             mock_adelete.return_value = True
 
             manager = CacheConsistencyManager()
@@ -114,7 +112,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_invalidate_cache_partial_failure(self):
         """测试：部分失效失败"""
-        with patch('src.cache.consistency_manager.adelete_cache') as mock_adelete:
+        with patch("src.cache.consistency_manager.adelete_cache") as mock_adelete:
             mock_adelete.side_effect = [True, False, True]
 
             manager = CacheConsistencyManager()
@@ -126,8 +124,9 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_invalidate_cache_redis_error(self):
         """测试：失效缓存时Redis错误"""
-        with patch('src.cache.consistency_manager.adelete_cache') as mock_adelete:
+        with patch("src.cache.consistency_manager.adelete_cache") as mock_adelete:
             import redis
+
             mock_adelete.side_effect = redis.RedisError("Redis error")
 
             manager = CacheConsistencyManager()
@@ -153,7 +152,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_warm_cache_partial_failure(self):
         """测试：部分预热失败"""
-        with patch.object(CacheConsistencyManager, 'sync_cache_with_db') as mock_sync:
+        with patch.object(CacheConsistencyManager, "sync_cache_with_db") as mock_sync:
             mock_sync.side_effect = [True, False, True]
 
             manager = CacheConsistencyManager()
@@ -166,7 +165,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_warm_cache_all_failure(self):
         """测试：全部预热失败"""
-        with patch.object(CacheConsistencyManager, 'sync_cache_with_db') as mock_sync:
+        with patch.object(CacheConsistencyManager, "sync_cache_with_db") as mock_sync:
             mock_sync.return_value = False
 
             manager = CacheConsistencyManager()
@@ -197,16 +196,16 @@ class TestCacheConsistencyManager:
 
         # 检查日志器级别
         # 默认级别可能不是WARNING，取决于配置
-        assert hasattr(manager.logger, 'level')
+        assert hasattr(manager.logger, "level")
 
     def test_manager_error_handling_attributes(self):
         """测试：错误处理属性"""
         manager = CacheConsistencyManager()
 
         # 检查管理器有必要的错误处理属性
-        assert hasattr(manager, 'logger')
-        assert hasattr(manager, 'redis_manager')
-        assert hasattr(manager, 'db_manager')
+        assert hasattr(manager, "logger")
+        assert hasattr(manager, "redis_manager")
+        assert hasattr(manager, "db_manager")
 
 
 class TestCacheConsistencyManagerIntegration:
@@ -249,7 +248,7 @@ class TestCacheConsistencyManagerIntegration:
         operations = [
             ("match", [1, 2, 3]),
             ("prediction", [4, 5]),
-            ("user", [6, 7, 8, 9])
+            ("user", [6, 7, 8, 9]),
         ]
 
         for entity_type, ids in operations:
@@ -277,8 +276,7 @@ class TestCacheConsistencyManagerIntegration:
         custom_db = Mock()
 
         manager = CacheConsistencyManager(
-            redis_manager=custom_redis,
-            db_manager=custom_db
+            redis_manager=custom_redis, db_manager=custom_db
         )
 
         # 验证自定义组件被正确设置
@@ -291,7 +289,7 @@ class TestCacheConsistencyManagerIntegration:
         manager = CacheConsistencyManager()
 
         # 模拟一个操作失败
-        with patch.object(manager, 'sync_cache_with_db') as mock_sync:
+        with patch.object(manager, "sync_cache_with_db") as mock_sync:
             mock_sync.return_value = False
 
             result1 = await manager.sync_cache_with_db("match", 123)
@@ -320,7 +318,7 @@ class TestCacheConsistencyManagerIntegration:
             sync_operation(),
             sync_operation(),
             invalidate_operation(),
-            invalidate_operation()
+            invalidate_operation(),
         ]
 
         # 应该不会抛出异常

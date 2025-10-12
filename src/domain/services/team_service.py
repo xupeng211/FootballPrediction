@@ -132,9 +132,7 @@ class TeamDomainService:
         """重置球队的统计和状态信息。"""
         team.stats = TeamStats()
         team.form = TeamForm()
-        self._events.append(
-            TeamPerformanceResetEvent(team_id=team.id or 0)
-        )
+        self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
         self._persist(team)
 
     def calculate_league_table(self, teams: List[Team]) -> List[Dict[str, Any]]:

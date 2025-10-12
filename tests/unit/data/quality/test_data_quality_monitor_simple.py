@@ -13,6 +13,7 @@ import logging
 # 测试导入
 try:
     from src.data.quality.data_quality_monitor import DataQualityMonitor
+
     DATA_QUALITY_MONITOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -20,28 +21,31 @@ except ImportError as e:
     DataQualityMonitor = None
 
 
-@pytest.mark.skipif(not DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module not available")
+@pytest.mark.skipif(
+    not DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module not available",
+)
 class TestDataQualityMonitorSimple:
     """数据质量监控器简化测试"""
 
     def test_monitor_creation(self):
         """测试：监控器创建"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor is not None
-            assert hasattr(monitor, 'thresholds')
+            assert hasattr(monitor, "thresholds")
             assert monitor.thresholds["data_freshness_hours"] == 24
 
     def test_monitor_custom_thresholds(self):
         """测试：自定义阈值"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             monitor.thresholds["data_freshness_hours"] = 12
             assert monitor.thresholds["data_freshness_hours"] == 12
 
     def test_calculate_quality_score_perfect(self):
         """测试：计算质量分数（完美）"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             freshness_check = {"overall_status": "good"}
@@ -52,7 +56,7 @@ class TestDataQualityMonitorSimple:
 
     def test_calculate_quality_score_with_issues(self):
         """测试：计算质量分数（有问题）"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             freshness_check = {"status": "warning"}  # 修正为正确的status字段
@@ -63,14 +67,14 @@ class TestDataQualityMonitorSimple:
 
     def test_determine_overall_status(self):
         """测试：确定总体状态"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             # 测试各种状态组合
             test_cases = [
                 ({"overall_status": "good"}, [], "good"),
                 ({"overall_status": "good"}, [{"type": "minor"}], "warning"),
-                ({"overall_status": "critical"}, [{"type": "major"}], "critical")
+                ({"overall_status": "critical"}, [{"type": "major"}], "critical"),
             ]
 
             for freshness, anomalies, expected in test_cases:
@@ -79,14 +83,14 @@ class TestDataQualityMonitorSimple:
 
     def test_logging_configuration(self):
         """测试：日志配置"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor.logger is not None
             assert isinstance(monitor.logger, logging.Logger)
 
     def test_threshold_values(self):
         """测试：阈值验证"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             # 验证默认阈值
@@ -100,7 +104,7 @@ class TestDataQualityMonitorSimple:
     @pytest.mark.asyncio
     async def test_error_handling(self):
         """测试：错误处理"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager') as mock_db:
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
             mock_db.return_value.get_session.side_effect = Exception("DB Error")
 
             monitor = DataQualityMonitor()
@@ -113,20 +117,22 @@ class TestDataQualityMonitorSimple:
 
     def test_generate_recommendations(self):
         """测试：生成建议"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             freshness_check = {"overall_status": "warning"}
             anomalies = [{"type": "stale_data"}]
 
             # 如果方法存在，测试它
-            if hasattr(monitor, '_generate_recommendations'):
-                recommendations = monitor._generate_recommendations(freshness_check, anomalies)
+            if hasattr(monitor, "_generate_recommendations"):
+                recommendations = monitor._generate_recommendations(
+                    freshness_check, anomalies
+                )
                 assert isinstance(recommendations, list)
 
     def test_quality_score_boundary(self):
         """测试：质量分数边界"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             # 测试严重情况
@@ -136,7 +142,7 @@ class TestDataQualityMonitorSimple:
                 {"type": "missing_data"},
                 {"type": "suspicious_odds"},
                 {"type": "inconsistent_data"},
-                {"type": "unusual_scores"}
+                {"type": "unusual_scores"},
             ]
 
             score = monitor._calculate_quality_score(freshness_check, anomalies)
@@ -144,7 +150,7 @@ class TestDataQualityMonitorSimple:
 
     def test_status_priority(self):
         """测试：状态优先级"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             # critical > warning > good
@@ -155,7 +161,7 @@ class TestDataQualityMonitorSimple:
                 # 有异常时至少是warning
                 ({"overall_status": "good"}, [{"type": "any"}], "warning"),
                 # critical状态保持critical
-                ({"overall_status": "critical"}, [], "critical")
+                ({"overall_status": "critical"}, [], "critical"),
             ]
 
             for freshness, anomalies, expected in test_cases:
@@ -163,7 +169,10 @@ class TestDataQualityMonitorSimple:
                 assert result == expected
 
 
-@pytest.mark.skipif(DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module should be available")
+@pytest.mark.skipif(
+    DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module should be available",
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -178,4 +187,5 @@ def test_module_imports():
     """测试：模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+
         assert DataQualityMonitor is not None

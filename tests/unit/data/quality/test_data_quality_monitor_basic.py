@@ -10,6 +10,7 @@ import pytest
 # 测试导入
 try:
     from src.data.quality.data_quality_monitor import DataQualityMonitor
+
     DATA_QUALITY_MONITOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -21,22 +22,26 @@ def test_module_imports():
     """测试：模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+
         assert DataQualityMonitor is not None
-        assert hasattr(DataQualityMonitor, '__name__')
-        assert DataQualityMonitor.__name__ == 'DataQualityMonitor'
+        assert hasattr(DataQualityMonitor, "__name__")
+        assert DataQualityMonitor.__name__ == "DataQualityMonitor"
 
 
 def test_class_attributes():
     """测试：类属性（不实例化）"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
         # 检查类是否定义了正确的方法
-        assert hasattr(DataQualityMonitor, '__init__')
-        assert hasattr(DataQualityMonitor, 'check_data_freshness')
-        assert hasattr(DataQualityMonitor, 'detect_anomalies')
-        assert hasattr(DataQualityMonitor, 'generate_quality_report')
+        assert hasattr(DataQualityMonitor, "__init__")
+        assert hasattr(DataQualityMonitor, "check_data_freshness")
+        assert hasattr(DataQualityMonitor, "detect_anomalies")
+        assert hasattr(DataQualityMonitor, "generate_quality_report")
 
 
-@pytest.mark.skipif(DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module should be available")
+@pytest.mark.skipif(
+    DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module should be available",
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

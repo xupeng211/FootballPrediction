@@ -13,6 +13,7 @@ from unittest.mock import patch
 # 测试导入
 try:
     from src.cache.mock_redis import MockRedisManager
+
     MOCK_REDIS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -256,11 +257,8 @@ class TestMockRedisManager:
         complex_data = {
             "user_id": 123,
             "name": "Test User",
-            "preferences": {
-                "theme": "dark",
-                "notifications": True
-            },
-            "tags": ["python", "redis", "cache"]
+            "preferences": {"theme": "dark", "notifications": True},
+            "tags": ["python", "redis", "cache"],
         }
 
         # 序列化存储
@@ -382,14 +380,16 @@ class TestMockRedisManager:
 
         # 性能断言（内存操作应该很快）
         assert write_time < 1.0  # 1000次写入应在1秒内
-        assert read_time < 0.5   # 1000次读取应在0.5秒内
+        assert read_time < 0.5  # 1000次读取应在0.5秒内
 
         # 清理
         for i in range(iterations):
             redis.delete(f"perf_key_{i}")
 
 
-@pytest.mark.skipif(MOCK_REDIS_AVAILABLE, reason="Mock Redis module should be available")
+@pytest.mark.skipif(
+    MOCK_REDIS_AVAILABLE, reason="Mock Redis module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -404,6 +404,7 @@ def test_module_imports():
     """测试：模块导入"""
     if MOCK_REDIS_AVAILABLE:
         from src.cache.mock_redis import MockRedisManager
+
         assert MockRedisManager is not None
 
 
@@ -426,7 +427,7 @@ class TestMockRedisManagerAdvanced:
             operations = [
                 ("SET", "t1", "value1"),
                 ("INCR", "t2"),
-                ("HSET", "t3", "field", "hvalue")
+                ("HSET", "t3", "field", "hvalue"),
             ]
 
             results = []
@@ -467,7 +468,7 @@ class TestMockRedisManagerAdvanced:
             ("SET", "p2", "v2"),
             ("GET", "p1"),
             ("INCR", "counter"),
-            ("GET", "counter")
+            ("GET", "counter"),
         ]
 
         # 执行管道
@@ -489,7 +490,7 @@ class TestMockRedisManagerAdvanced:
 
     def test_pubsub_simulation(self):
         """测试：发布订阅模拟"""
-        redis = MockRedisManager()
+        MockRedisManager()
 
         # 创建简单的发布订阅系统
         class PubSub:
@@ -541,9 +542,7 @@ class TestMockRedisManagerAdvanced:
 
         # 执行脚本
         result = script_eval(
-            "return redis.call('INCRBY', KEYS[1], ARGV[1])",
-            ["script_counter"],
-            ["10"]
+            "return redis.call('INCRBY', KEYS[1], ARGV[1])", ["script_counter"], ["10"]
         )
 
         assert result == 10
@@ -584,7 +583,7 @@ class TestMockRedisManagerAdvanced:
 
     def test_cluster_simulation(self):
         """测试：集群模拟"""
-        redis = MockRedisManager()
+        MockRedisManager()
 
         # 模拟简单集群分片
         class RedisCluster:
@@ -624,12 +623,13 @@ class TestMockRedisManagerAdvanced:
             snapshot = {
                 "data": redis._data.copy(),
                 "expirations": redis._expirations.copy(),
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
             return snapshot
 
         # 模拟AOF日志
         aof_log = []
+
         def log_command(command, *args):
             aof_log.append((command, args, time.time()))
 

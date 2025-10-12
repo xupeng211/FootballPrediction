@@ -11,7 +11,13 @@ import warnings
 # 测试导入
 ODDS_COLLECTOR_AVAILABLE = True
 try:
-    from src.collectors.odds_collector import collector, parser, storage, validator, __all__
+    from src.collectors.odds_collector import (
+        collector,
+        parser,
+        storage,
+        validator,
+        __all__,
+    )
 except ImportError as e:
     print(f"Import error: {e}")
     ODDS_COLLECTOR_AVAILABLE = False
@@ -52,14 +58,17 @@ class TestOddsCollectorCompatibility:
             try:
                 from importlib import reload
                 import sys
-                if 'src.collectors.odds_collector' in sys.modules:
-                    del sys.modules['src.collectors.odds_collector']
+
+                if "src.collectors.odds_collector" in sys.modules:
+                    del sys.modules["src.collectors.odds_collector"]
                 import src.collectors.odds_collector
             except Exception:
                 pass
 
             # 检查弃用警告
-            deprecation_warnings = [warn for warn in w if issubclass(warn.category, DeprecationWarning)]
+            deprecation_warnings = [
+                warn for warn in w if issubclass(warn.category, DeprecationWarning)
+            ]
             if ODDS_COLLECTOR_AVAILABLE:
                 assert len(deprecation_warnings) > 0
                 assert "已弃用" in str(deprecation_warnings[0].message)
@@ -78,7 +87,7 @@ class TestOddsCollectorCompatibility:
             # 验证每个组件都有基本属性
             for component in [collector, parser, storage, validator]:
                 if component is not None:
-                    assert hasattr(component, '__name__')
+                    assert hasattr(component, "__name__")
                     assert component.__name__ is not None
 
     def test_no_additional_exports(self):
@@ -86,12 +95,15 @@ class TestOddsCollectorCompatibility:
         import src.collectors.odds_collector as odds_module
 
         # 检查只有预期的导出
-        expected_exports = {'collector', 'parser', 'storage', 'validator', '__all__'}
-        actual_exports = {name for name in dir(odds_module)
-                          if not name.startswith('_') or name == '__all__'}
+        expected_exports = {"collector", "parser", "storage", "validator", "__all__"}
+        actual_exports = {
+            name
+            for name in dir(odds_module)
+            if not name.startswith("_") or name == "__all__"
+        }
 
         # 移除Python默认属性
-        python_defaults = {'name', 'package', 'spec', 'loader', 'file', 'cached'}
+        python_defaults = {"name", "package", "spec", "loader", "file", "cached"}
         actual_exports -= python_defaults
 
         # 应该只有预期的导出
@@ -105,30 +117,30 @@ class TestOddsCollectorFunctionality:
         """测试：收集器接口"""
         if collector and ODDS_COLLECTOR_AVAILABLE:
             # 检查基本接口
-            if hasattr(collector, 'collect'):
+            if hasattr(collector, "collect"):
                 assert callable(collector.collect)
 
     def test_parser_interface(self):
         """测试：解析器接口"""
         if parser and ODDS_COLLECTOR_AVAILABLE:
             # 检查基本接口
-            if hasattr(parser, 'parse'):
+            if hasattr(parser, "parse"):
                 assert callable(parser.parse)
 
     def test_storage_interface(self):
         """测试：存储接口"""
         if storage and ODDS_COLLECTOR_AVAILABLE:
             # 检查基本接口
-            if hasattr(storage, 'save'):
+            if hasattr(storage, "save"):
                 assert callable(storage.save)
-            if hasattr(storage, 'load'):
+            if hasattr(storage, "load"):
                 assert callable(storage.load)
 
     def test_validator_interface(self):
         """测试：验证器接口"""
         if validator and ODDS_COLLECTOR_AVAILABLE:
             # 检查基本接口
-            if hasattr(validator, 'validate'):
+            if hasattr(validator, "validate"):
                 assert callable(validator.validate)
 
     def test_component_types(self):
@@ -158,6 +170,7 @@ class TestOddsCollectorIntegration:
         # 旧代码应该能够导入
         try:
             from src.collectors.odds_collector import collector as old_collector
+
             assert old_collector is not None
         except ImportError:
             pytest.skip("Backward compatibility import failed")
@@ -167,6 +180,7 @@ class TestOddsCollectorIntegration:
         # 尝试从新路径导入
         try:
             from src.collectors.odds.basic import collector as new_collector
+
             # 如果两个路径都能导入，它们应该是相同的对象
             if ODDS_COLLECTOR_AVAILABLE and collector is not None:
                 assert collector is new_collector
@@ -191,7 +205,7 @@ class TestOddsCollectorIntegration:
             test_data = {"odds": [1.5, 2.0, 3.5]}
 
             # 解析
-            if hasattr(parser, 'parse') and callable(parser.parse):
+            if hasattr(parser, "parse") and callable(parser.parse):
                 try:
                     parsed = parser.parse(test_data)
                     assert parsed is not None
@@ -200,7 +214,7 @@ class TestOddsCollectorIntegration:
                     pass
 
             # 验证
-            if hasattr(validator, 'validate') and callable(validator.validate):
+            if hasattr(validator, "validate") and callable(validator.validate):
                 try:
                     is_valid = validator.validate(test_data)
                     assert isinstance(is_valid, bool)
@@ -217,7 +231,7 @@ class TestOddsCollectorIntegration:
                     continue
 
                 # 测试各种方法的错误处理
-                for method_name in ['collect', 'parse', 'save', 'load', 'validate']:
+                for method_name in ["collect", "parse", "save", "load", "validate"]:
                     if hasattr(component, method_name):
                         method = getattr(component, method_name)
                         if callable(method):
@@ -243,7 +257,10 @@ def test_performance_baseline():
 
     # 读取模块文件
     try:
-        with open("/home/user/projects/FootballPrediction/src/collectors/odds_collector.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/collectors/odds_collector.py",
+            "r",
+        ) as f:
             content = f.read()
         assert len(content) > 0
     except FileNotFoundError:

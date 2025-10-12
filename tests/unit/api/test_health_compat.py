@@ -26,9 +26,9 @@ class TestHealthCompatibility:
     def test_router_import(self):
         """测试：路由导入"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         # 验证是FastAPI路由器
-        assert 'APIRouter' in str(type(router))
+        assert "APIRouter" in str(type(router))
 
     def test_module_exports(self):
         """测试：模块导出"""
@@ -43,10 +43,13 @@ class TestHealthCompatibility:
             # 重新导入以触发警告
             from importlib import reload
             import src.api.health as health_module
+
             reload(health_module)
 
             # 检查警告
-            deprecation_warnings = [warn for warn in w if issubclass(warn.category, DeprecationWarning)]
+            deprecation_warnings = [
+                warn for warn in w if issubclass(warn.category, DeprecationWarning)
+            ]
             assert len(deprecation_warnings) > 0
             assert "已弃用" in str(deprecation_warnings[0].message)
             assert "api.health" in str(deprecation_warnings[0].message)
@@ -59,6 +62,7 @@ class TestHealthCompatibility:
         # 验证与新导入路径一致
         try:
             from src.api.health.checks import router as new_router
+
             # 注意：由于是重新导出，它们应该是同一个对象
             assert old_router is new_router
         except ImportError:
@@ -79,15 +83,26 @@ class TestHealthCompatibility:
         import src.api.health as health_module
 
         # 检查没有意外的导出
-        expected_exports = {'router', '__all__', '__doc__', '__file__', '__loader__'}
-        actual_exports = {name for name in dir(health_module) if not name.startswith('_') or name == '__all__'}
+        actual_exports = {
+            name
+            for name in dir(health_module)
+            if not name.startswith("_") or name == "__all__"
+        }
 
         # 移除Python默认属性
-        python_defaults = {'name', 'package', 'spec', 'loader', 'file', 'cached', 'path'}
+        python_defaults = {
+            "name",
+            "package",
+            "spec",
+            "loader",
+            "file",
+            "cached",
+            "path",
+        }
         actual_exports -= python_defaults
 
         # 应该只有router在公开导出中
-        assert actual_exports == {'router'}
+        assert actual_exports == {"router"}
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
@@ -101,26 +116,26 @@ class TestHealthFunctionality:
         assert len(routes) > 0
 
         # 检查路由路径
-        route_paths = [route.path for route in routes if hasattr(route, 'path')]
-        assert any('/health' in path for path in route_paths)
+        route_paths = [route.path for route in routes if hasattr(route, "path")]
+        assert any("/health" in path for path in route_paths)
 
     def test_router_tags(self):
         """测试：路由标签"""
-        if hasattr(router, 'tags'):
+        if hasattr(router, "tags"):
             assert isinstance(router.tags, (list, tuple))
 
         # 检查路由的标签
         for route in router.routes:
-            if hasattr(route, 'tags'):
+            if hasattr(route, "tags"):
                 assert isinstance(route.tags, (list, tuple, set))
 
     def test_router_methods(self):
         """测试：路由方法"""
         for route in router.routes:
-            if hasattr(route, 'methods'):
+            if hasattr(route, "methods"):
                 assert isinstance(route.methods, (list, set, frozenset))
                 # 健康检查通常有GET方法
-                assert 'GET' in route.methods
+                assert "GET" in route.methods
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
@@ -132,6 +147,7 @@ class TestHealthIntegration:
         # 尝试将路由器添加到FastAPI应用
         try:
             from fastapi import FastAPI
+
             app = FastAPI()
             app.include_router(router)
             # 如果没有异常，说明集成成功
@@ -145,7 +161,7 @@ class TestHealthIntegration:
         assert router is not None
 
         # 验证路由器已正确配置
-        if hasattr(router, 'prefix'):
+        if hasattr(router, "prefix"):
             # 健康检查路由通常有前缀
             assert router.prefix is not None or len(router.routes) > 0
 

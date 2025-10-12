@@ -36,12 +36,14 @@ from datetime import datetime
 
 class TeamType(str, Enum):
     """球队类型枚举"""
+
     HOME = "home"  # 主队
     AWAY = "away"  # 客队
 
 
 class FeatureEntityType(str, Enum):
     """特征实体类型"""
+
     MATCH = "match"
     TEAM = "team"
     PLAYER = "player"
@@ -50,15 +52,20 @@ class FeatureEntityType(str, Enum):
 
 class FeatureEntity(BaseModel):
     """特征实体"""
+
     __tablename__ = "feature_entities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    entity_type: Mapped[FeatureEntityType] = mapped_column(SQLEnum(FeatureEntityType), nullable=False)
+    entity_type: Mapped[FeatureEntityType] = mapped_column(
+        SQLEnum(FeatureEntityType), nullable=False
+    )
     value: Mapped[float] = mapped_column(DECIMAL(10, 4), nullable=True)
     metadata_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     metadata_records: Mapped[list["FeatureMetadata"]] = relationship(
@@ -66,15 +73,20 @@ class FeatureEntity(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<FeatureEntity(id={self.id}, name={self.name}, type={self.entity_type})>"
+        return (
+            f"<FeatureEntity(id={self.id}, name={self.name}, type={self.entity_type})>"
+        )
 
 
 class FeatureMetadata(BaseModel):
     """特征元数据"""
+
     __tablename__ = "feature_metadata"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    feature_entity_id: Mapped[int] = mapped_column(ForeignKey("feature_entities.id"), nullable=False)
+    feature_entity_id: Mapped[int] = mapped_column(
+        ForeignKey("feature_entities.id"), nullable=False
+    )
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     data_type: Mapped[str] = mapped_column(String(50), default="float")
@@ -82,7 +94,9 @@ class FeatureMetadata(BaseModel):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # 关系
-    feature_entity: Mapped[FeatureEntity] = relationship("FeatureEntity", back_populates="metadata_records")
+    feature_entity: Mapped[FeatureEntity] = relationship(
+        "FeatureEntity", back_populates="metadata_records"
+    )
 
     def __repr__(self) -> str:
         return f"<FeatureMetadata(id={self.id}, name={self.feature_name})>"
@@ -97,18 +111,17 @@ feature_types = {
     "numerical": ["float", "int", "decimal"],
     "categorical": ["str", "enum"],
     "boolean": ["bool"],
-    "temporal": ["datetime", "date", "time"]
+    "temporal": ["datetime", "date", "time"],
 }
 
 # 简化的模型字典
-models = {
-    "FeatureEntity": FeatureEntity,
-    "FeatureMetadata": FeatureMetadata
-}
+models = {"FeatureEntity": FeatureEntity, "FeatureMetadata": FeatureMetadata}
+
 
 # 为了向后兼容，添加简化的 Features 类
 class Features(BaseModel):
     """简化的 Features 类以保持向后兼容"""
+
     __tablename__ = "features"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

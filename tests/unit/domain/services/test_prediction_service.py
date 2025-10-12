@@ -33,10 +33,7 @@ class TestPredictionDomainService:
         """创建未来的比赛"""
         match_date = datetime.utcnow() + timedelta(days=1)
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=match_date,
-            season="2023-2024"
+            home_team_id=1, away_team_id=2, match_date=match_date, season="2023-2024"
         )
         match.id = 100
         return match
@@ -46,10 +43,7 @@ class TestPredictionDomainService:
         """创建过去的比赛"""
         match_date = datetime.utcnow() - timedelta(days=1)
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=match_date,
-            season="2023-2024"
+            home_team_id=1, away_team_id=2, match_date=match_date, season="2023-2024"
         )
         match.id = 101
         return match
@@ -59,10 +53,7 @@ class TestPredictionDomainService:
         """创建已安排的比赛"""
         match_date = datetime.utcnow() + timedelta(days=1)
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=match_date,
-            season="2023-2024"
+            home_team_id=1, away_team_id=2, match_date=match_date, season="2023-2024"
         )
         match.id = 100
         match.status = MatchStatus.SCHEDULED
@@ -86,29 +77,29 @@ class TestPredictionDomainService:
         pred.cancelled_at = None
         return pred
 
-    def test_create_prediction_should_raise_when_match_in_past(self, service, past_match):
+    def test_create_prediction_should_raise_when_match_in_past(
+        self, service, past_match
+    ):
         """测试：对过去的比赛进行预测时应抛出错误"""
         # When / Then
         with pytest.raises(ValueError, match="预测必须在比赛开始前提交"):
             service.create_prediction(
-                user_id=1001,
-                match=past_match,
-                predicted_home=2,
-                predicted_away=1
+                user_id=1001, match=past_match, predicted_home=2, predicted_away=1
             )
 
-    def test_create_prediction_should_raise_when_negative_scores(self, service, future_match):
+    def test_create_prediction_should_raise_when_negative_scores(
+        self, service, future_match
+    ):
         """测试：预测比分为负数时应抛出错误"""
         # When / Then
         with pytest.raises(ValueError, match="预测比分不能为负数"):
             service.create_prediction(
-                user_id=1001,
-                match=future_match,
-                predicted_home=-1,
-                predicted_away=2
+                user_id=1001, match=future_match, predicted_home=-1, predicted_away=2
             )
 
-    def test_create_prediction_should_raise_when_confidence_out_of_range(self, service, future_match):
+    def test_create_prediction_should_raise_when_confidence_out_of_range(
+        self, service, future_match
+    ):
         """测试：信心度超出范围时应抛出错误"""
         # When / Then
         with pytest.raises(ValueError, match="信心度必须在0-1之间"):
@@ -117,7 +108,7 @@ class TestPredictionDomainService:
                 match=future_match,
                 predicted_home=2,
                 predicted_away=1,
-                confidence=1.5
+                confidence=1.5,
             )
 
     def test_create_prediction_should_raise_when_match_id_is_none(self, service):
@@ -131,14 +122,13 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="比赛ID不能为空"):
             service.create_prediction(
-                user_id=1001,
-                match=match,
-                predicted_home=2,
-                predicted_away=1
+                user_id=1001, match=match, predicted_home=2, predicted_away=1
             )
 
-    @patch('src.domain.services.prediction_service.Prediction')
-    def test_create_prediction_success(self, mock_prediction_class, service, scheduled_match):
+    @patch("src.domain.services.prediction_service.Prediction")
+    def test_create_prediction_success(
+        self, mock_prediction_class, service, scheduled_match
+    ):
         """测试：成功创建预测"""
         # Given
         mock_pred = Mock()
@@ -152,12 +142,14 @@ class TestPredictionDomainService:
             match=scheduled_match,
             predicted_home=2,
             predicted_away=1,
-            confidence=0.8
+            confidence=0.8,
         )
 
         # Then
         assert prediction == mock_pred
-        mock_pred.make_prediction.assert_called_once_with(predicted_home=2, predicted_away=1, confidence=0.8)
+        mock_pred.make_prediction.assert_called_once_with(
+            predicted_home=2, predicted_away=1, confidence=0.8
+        )
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionCreatedEvent)
 
@@ -176,7 +168,7 @@ class TestPredictionDomainService:
             prediction=mock_prediction,
             new_predicted_home=3,
             new_predicted_away=1,
-            new_confidence=0.9
+            new_confidence=0.9,
         )
 
         # Then
@@ -184,7 +176,9 @@ class TestPredictionDomainService:
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionUpdatedEvent)
 
-    def test_update_prediction_should_raise_when_not_pending(self, service, mock_prediction):
+    def test_update_prediction_should_raise_when_not_pending(
+        self, service, mock_prediction
+    ):
         """测试：更新非待定状态的预测时应抛出错误"""
         # Given
         mock_prediction.status = PredictionStatus.EVALUATED
@@ -192,12 +186,12 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="只能更新待处理的预测"):
             service.update_prediction(
-                prediction=mock_prediction,
-                new_predicted_home=3,
-                new_predicted_away=1
+                prediction=mock_prediction, new_predicted_home=3, new_predicted_away=1
             )
 
-    def test_update_prediction_should_raise_when_negative_scores(self, service, mock_prediction):
+    def test_update_prediction_should_raise_when_negative_scores(
+        self, service, mock_prediction
+    ):
         """测试：更新预测时使用负数比分"""
         # Given
         mock_prediction.status = PredictionStatus.PENDING
@@ -205,9 +199,7 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="预测比分不能为负数"):
             service.update_prediction(
-                prediction=mock_prediction,
-                new_predicted_home=-1,
-                new_predicted_away=1
+                prediction=mock_prediction, new_predicted_home=-1, new_predicted_away=1
             )
 
     def test_evaluate_prediction(self, service, mock_prediction):
@@ -229,7 +221,9 @@ class TestPredictionDomainService:
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionEvaluatedEvent)
 
-    def test_evaluate_prediction_should_raise_when_not_pending(self, service, mock_prediction):
+    def test_evaluate_prediction_should_raise_when_not_pending(
+        self, service, mock_prediction
+    ):
         """测试：评估已评估的预测时应抛出错误"""
         # Given
         mock_prediction.status = PredictionStatus.EVALUATED
@@ -253,7 +247,9 @@ class TestPredictionDomainService:
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionCancelledEvent)
 
-    def test_cancel_prediction_should_raise_when_not_pending(self, service, mock_prediction):
+    def test_cancel_prediction_should_raise_when_not_pending(
+        self, service, mock_prediction
+    ):
         """测试：取消非待定状态的预测时应抛出错误"""
         # Given
         mock_prediction.status = PredictionStatus.EVALUATED
@@ -277,7 +273,9 @@ class TestPredictionDomainService:
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionExpiredEvent)
 
-    def test_expire_prediction_should_raise_when_not_pending(self, service, mock_prediction):
+    def test_expire_prediction_should_raise_when_not_pending(
+        self, service, mock_prediction
+    ):
         """测试：过期非待定状态的预测时应抛出错误"""
         # Given
         mock_prediction.status = PredictionStatus.EVALUATED
@@ -296,9 +294,7 @@ class TestPredictionDomainService:
 
         # When
         service.adjust_prediction_points(
-            mock_prediction,
-            new_points=10,
-            adjustment_reason="系统修正"
+            mock_prediction, new_points=10, adjustment_reason="系统修正"
         )
 
         # Then
@@ -306,7 +302,9 @@ class TestPredictionDomainService:
         assert len(service._events) == 1
         assert isinstance(service._events[0], PredictionPointsAdjustedEvent)
 
-    def test_adjust_prediction_points_should_raise_when_not_evaluated(self, service, mock_prediction):
+    def test_adjust_prediction_points_should_raise_when_not_evaluated(
+        self, service, mock_prediction
+    ):
         """测试：调整未评估的预测积分时应抛出错误"""
         # Given
         mock_prediction.status = PredictionStatus.PENDING
@@ -314,9 +312,7 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="只能调整已评估的预测积分"):
             service.adjust_prediction_points(
-                mock_prediction,
-                new_points=10,
-                adjustment_reason="系统修正"
+                mock_prediction, new_points=10, adjustment_reason="系统修正"
             )
 
     def test_calculate_prediction_confidence(self, service):
@@ -327,9 +323,7 @@ class TestPredictionDomainService:
 
         # When
         confidence = service.calculate_prediction_confidence(
-            user_history=user_history,
-            match重要性=match_importance,
-            team_form_diff=0.2
+            user_history=user_history, match重要性=match_importance, team_form_diff=0.2
         )
 
         # Then
@@ -350,7 +344,7 @@ class TestPredictionDomainService:
         errors = service.validate_prediction_rules(
             prediction=mock_prediction,
             user_predictions_today=5,
-            max_predictions_per_day=10
+            max_predictions_per_day=10,
         )
 
         # Then
@@ -367,9 +361,7 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_pred,
-            user_predictions_today=10,
-            max_predictions_per_day=10
+            prediction=mock_pred, user_predictions_today=10, max_predictions_per_day=10
         )
 
         # Then
@@ -387,16 +379,16 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_pred,
-            user_predictions_today=5,
-            max_predictions_per_day=10
+            prediction=mock_pred, user_predictions_today=5, max_predictions_per_day=10
         )
 
         # Then
         assert len(errors) > 0
         assert "预测比分不能为负数" in errors[0]
 
-    def test_validate_prediction_rules_invalid_confidence(self, service, mock_prediction):
+    def test_validate_prediction_rules_invalid_confidence(
+        self, service, mock_prediction
+    ):
         """测试：验证预测规则 - 无效信心度"""
         # Given
         mock_prediction.confidence = Mock()
@@ -410,7 +402,7 @@ class TestPredictionDomainService:
         errors = service.validate_prediction_rules(
             prediction=mock_prediction,
             user_predictions_today=5,
-            max_predictions_per_day=10
+            max_predictions_per_day=10,
         )
 
         # Then
@@ -453,8 +445,7 @@ class TestPredictionDomainService:
 
         # When
         confidence = service.calculate_prediction_confidence(
-            user_history=user_history,
-            match重要性=match_importance
+            user_history=user_history, match重要性=match_importance
         )
 
         # Then
@@ -465,16 +456,12 @@ class TestPredictionDomainService:
         """测试：计算预测信心度 - 边界值"""
         # 测试最小值
         confidence = service.calculate_prediction_confidence(
-            user_history={"accuracy_rate": 0.0},
-            match重要性=0.0,
-            team_form_diff=-1.0
+            user_history={"accuracy_rate": 0.0}, match重要性=0.0, team_form_diff=-1.0
         )
         assert confidence >= 0.0
 
         # 测试最大值
         confidence = service.calculate_prediction_confidence(
-            user_history={"accuracy_rate": 1.0},
-            match重要性=1.0,
-            team_form_diff=1.0
+            user_history={"accuracy_rate": 1.0}, match重要性=1.0, team_form_diff=1.0
         )
         assert confidence <= 1.0

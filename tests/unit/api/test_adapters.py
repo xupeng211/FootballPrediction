@@ -153,21 +153,26 @@ class TestAdaptersAPI:
         registry.status = Mock(value="inactive")
         registry.initialize = AsyncMock()
         registry.shutdown = AsyncMock()
-        registry.get_health_status = AsyncMock(return_value={
-            "status": "active",
-            "total_adapters": 5,
-            "active_adapters": 4,
-        })
-        registry.get_metrics_summary = Mock(return_value={
-            "total_requests": 1000,
-            "success_rate": 0.95,
-        })
+        registry.get_health_status = AsyncMock(
+            return_value={
+                "status": "active",
+                "total_adapters": 5,
+                "active_adapters": 4,
+            }
+        )
+        registry.get_metrics_summary = Mock(
+            return_value={
+                "total_requests": 1000,
+                "success_rate": 0.95,
+            }
+        )
         registry.get_adapter = Mock(return_value=MockAdapter())
         return registry
 
     def setup_mocks(self, mock_factory, mock_registry):
         """设置模拟对象"""
         import src.api.adapters
+
         src.api.adapters.adapter_factory = mock_factory
         src.api.adapters.adapter_registry = mock_registry
 
@@ -179,13 +184,17 @@ class TestAdaptersAPI:
         # Given
         mock_registry.status.value = "inactive"
         mock_registry.initialize = AsyncMock()
-        mock_registry.get_health_status = AsyncMock(return_value={
-            "status": "active",
-            "total_adapters": 5,
-        })
-        mock_registry.get_metrics_summary = Mock(return_value={
-            "total_requests": 1000,
-        })
+        mock_registry.get_health_status = AsyncMock(
+            return_value={
+                "status": "active",
+                "total_adapters": 5,
+            }
+        )
+        mock_registry.get_metrics_summary = Mock(
+            return_value={
+                "total_requests": 1000,
+            }
+        )
 
         # When
         response = client.get("/adapters/registry/status")
@@ -202,15 +211,19 @@ class TestAdaptersAPI:
         """测试：获取已初始化的注册表状态"""
         # Given
         mock_registry.status.value = "active"
-        mock_registry.get_health_status = AsyncMock(return_value={
-            "status": "active",
-            "total_adapters": 5,
-            "active_adapters": 4,
-        })
-        mock_registry.get_metrics_summary = Mock(return_value={
-            "total_requests": 1000,
-            "success_rate": 0.95,
-        })
+        mock_registry.get_health_status = AsyncMock(
+            return_value={
+                "status": "active",
+                "total_adapters": 5,
+                "active_adapters": 4,
+            }
+        )
+        mock_registry.get_metrics_summary = Mock(
+            return_value={
+                "total_requests": 1000,
+                "success_rate": 0.95,
+            }
+        )
 
         # When
         response = client.get("/adapters/registry/status")
@@ -630,7 +643,9 @@ class TestAdaptersAPI:
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
-        mock_adapter.get_teams = AsyncMock(side_effect=AttributeError("Invalid attribute"))
+        mock_adapter.get_teams = AsyncMock(
+            side_effect=AttributeError("Invalid attribute")
+        )
         mock_registry.get_adapter.return_value = mock_adapter
 
         # When
@@ -647,6 +662,7 @@ class TestAdaptersAPI:
         mock_registry.status.value = "active"
         mock_adapter = Mock()
         from requests.exceptions import HTTPError
+
         mock_adapter.get_players = AsyncMock(side_effect=HTTPError("HTTP error"))
         mock_registry.get_adapter.return_value = mock_adapter
 

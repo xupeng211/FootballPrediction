@@ -29,8 +29,8 @@ def statistical_strategy():
             "poisson": 0.4,
             "historical": 0.3,
             "form": 0.2,
-            "head_to_head": 0.1
-        }
+            "head_to_head": 0.1,
+        },
     }
 
     # 初始化策略
@@ -43,15 +43,15 @@ def statistical_strategy():
             "goals_conceded_per_game": 0.9,
             "recent_form": [2, 1, 3, 2, 1],
             "home_goals_per_game": 2.1,
-            "sample_size": 20
+            "sample_size": 20,
         },
         2: {  # 客队
             "goals_scored_per_game": 1.2,
             "goals_conceded_per_game": 1.4,
             "recent_form": [1, 0, 1, 2, 0],
             "away_goals_per_game": 1.0,
-            "sample_size": 20
-        }
+            "sample_size": 20,
+        },
     }
 
     strategy._head_to_head_stats = {
@@ -61,7 +61,7 @@ def statistical_strategy():
             "draws": 4,
             "avg_home_goals": 1.8,
             "avg_away_goals": 1.1,
-            "sample_size": 10
+            "sample_size": 10,
         }
     }
 
@@ -80,7 +80,7 @@ def prediction_input():
         home_team_goals_scored=[2, 1, 3, 2, 1],
         away_team_goals_scored=[1, 0, 1, 2, 0],
         home_team_goals_conceded=[0, 1, 0, 1, 2],
-        away_team_goals_conceded=[2, 1, 2, 0, 1]
+        away_team_goals_conceded=[2, 1, 2, 0, 1],
     )
 
 
@@ -93,7 +93,7 @@ async def test_statistical_strategy_initialization():
         "min_sample_size": 10,
         "weight_recent_games": 0.8,
         "home_advantage_factor": 1.3,
-        "model_weights": {"poisson": 0.5, "historical": 0.3, "form": 0.2}
+        "model_weights": {"poisson": 0.5, "historical": 0.3, "form": 0.2},
     }
 
     await strategy.initialize(config)
@@ -129,7 +129,9 @@ async def test_poisson_prediction(statistical_strategy, prediction_input):
     assert all(0 <= x <= 10 for x in result)  # 合理的进球数范围
 
     # 验证主队预期进球更高（基于主队优势）
-    home_exp, away_exp = statistical_strategy._calculate_poisson_lambdas(prediction_input)
+    home_exp, away_exp = statistical_strategy._calculate_poisson_lambdas(
+        prediction_input
+    )
     assert home_exp > away_exp
 
 
@@ -175,7 +177,7 @@ async def test_ensemble_predictions(statistical_strategy, prediction_input):
         "poisson": (2.1, 1.3),
         "historical": (1.9, 1.1),
         "form": (2.0, 1.0),
-        "head_to_head": (1.8, 1.1)
+        "head_to_head": (1.8, 1.1),
     }
 
     result = await statistical_strategy._ensemble_predictions(predictions)
@@ -200,14 +202,10 @@ async def test_insufficient_sample_size():
     # 设置样本数量不足的统计数据
     strategy._team_stats = {
         1: {"sample_size": 3},  # 少于最小样本数
-        2: {"sample_size": 4}
+        2: {"sample_size": 4},
     }
 
-    input_data = PredictionInput(
-        match_id=123,
-        home_team_id=1,
-        away_team_id=2
-    )
+    input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     with pytest.raises(ValueError, match="样本数量不足"):
         await strategy.predict(input_data)
@@ -223,27 +221,24 @@ async def test_home_advantage_calculation(statistical_strategy, prediction_input
 
     # 测试没有主场优势数据的情况
     statistical_strategy._team_stats[1]["home_goals_per_game"] = None
-    home_advantage_default = statistical_strategy._calculate_home_advantage(prediction_input)
-    assert home_advantage_default == statistical_strategy._model_params["home_advantage_factor"]
+    home_advantage_default = statistical_strategy._calculate_home_advantage(
+        prediction_input
+    )
+    assert (
+        home_advantage_default
+        == statistical_strategy._model_params["home_advantage_factor"]
+    )
 
 
 @pytest.mark.asyncio
 async def test_validate_input(statistical_strategy):
     """测试输入验证"""
     # 有效输入
-    valid_input = PredictionInput(
-        match_id=123,
-        home_team_id=1,
-        away_team_id=2
-    )
+    valid_input = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
     assert await statistical_strategy.validate_input(valid_input) is True
 
     # 无效输入（缺少必要字段）
-    invalid_input = PredictionInput(
-        match_id=None,
-        home_team_id=1,
-        away_team_id=2
-    )
+    invalid_input = PredictionInput(match_id=None, home_team_id=1, away_team_id=2)
     assert await statistical_strategy.validate_input(invalid_input) is False
 
 
@@ -253,9 +248,9 @@ async def test_preprocessing(statistical_strategy, prediction_input):
     processed = await statistical_strategy.pre_process(prediction_input)
 
     assert processed is not None
-    assert hasattr(processed, 'match_id')
-    assert hasattr(processed, 'home_team_id')
-    assert hasattr(processed, 'away_team_id')
+    assert hasattr(processed, "match_id")
+    assert hasattr(processed, "home_team_id")
+    assert hasattr(processed, "away_team_id")
 
     # 验证近期状态被处理
     assert processed.home_team_form == prediction_input.home_team_form
@@ -270,7 +265,7 @@ async def test_confidence_calculation(statistical_strategy, prediction_input):
         "poisson": (2.1, 1.3),
         "historical": (1.9, 1.1),
         "form": (2.0, 1.0),
-        "head_to_head": (1.8, 1.1)
+        "head_to_head": (1.8, 1.1),
     }
 
     # 计算预测方差作为不确定性度量
@@ -292,10 +287,10 @@ async def test_strategy_metrics(statistical_strategy):
     metrics = await statistical_strategy.get_metrics()
 
     assert metrics is not None
-    assert hasattr(metrics, 'strategy_type')
+    assert hasattr(metrics, "strategy_type")
     assert metrics.strategy_type == StrategyType.STATISTICAL
-    assert hasattr(metrics, 'prediction_count')
-    assert hasattr(metrics, 'average_confidence')
+    assert hasattr(metrics, "prediction_count")
+    assert hasattr(metrics, "average_confidence")
 
 
 @pytest.mark.asyncio
@@ -304,13 +299,13 @@ async def test_seasonal_adjustment(statistical_strategy, prediction_input):
     # 模拟赛季末段（进球数可能更多）
     season_end_input = PredictionInput(
         **prediction_input.__dict__,
-        match_date=datetime(2024, 5, 15)  # 赛季末
+        match_date=datetime(2024, 5, 15),  # 赛季末
     )
 
     # 模拟赛季初段（进球数可能较少）
     season_start_input = PredictionInput(
         **prediction_input.__dict__,
-        match_date=datetime(2024, 8, 15)  # 赛季初
+        match_date=datetime(2024, 8, 15),  # 赛季初
     )
 
     # 计算两个时期的预测
@@ -344,8 +339,7 @@ def test_poisson_probability_calculation(statistical_strategy):
 
     # 验证概率总和接近1（k从0到10）
     total_prob = sum(
-        statistical_strategy._poisson_probability(k, 1.5)
-        for k in range(11)
+        statistical_strategy._poisson_probability(k, 1.5) for k in range(11)
     )
     assert 0.95 < total_prob < 1.05  # 允许小的数值误差
 
@@ -354,13 +348,11 @@ def test_poisson_probability_calculation(statistical_strategy):
 async def test_team_strength_calculation(statistical_strategy, prediction_input):
     """测试球队实力计算"""
     home_strength = statistical_strategy._calculate_team_strength(
-        prediction_input.home_team_id,
-        is_home=True
+        prediction_input.home_team_id, is_home=True
     )
 
     away_strength = statistical_strategy._calculate_team_strength(
-        prediction_input.away_team_id,
-        is_home=False
+        prediction_input.away_team_id, is_home=False
     )
 
     assert isinstance(home_strength, float)

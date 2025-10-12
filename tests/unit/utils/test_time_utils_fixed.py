@@ -12,6 +12,7 @@ from unittest.mock import patch
 # 测试导入
 try:
     from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
     TIME_UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -26,11 +27,11 @@ class TestTimeUtilsBasic:
     def test_time_utils_creation(self):
         """测试：TimeUtils类创建"""
         assert TimeUtils is not None
-        assert hasattr(TimeUtils, 'now_utc')
-        assert hasattr(TimeUtils, 'timestamp_to_datetime')
-        assert hasattr(TimeUtils, 'datetime_to_timestamp')
-        assert hasattr(TimeUtils, 'format_datetime')
-        assert hasattr(TimeUtils, 'parse_datetime')
+        assert hasattr(TimeUtils, "now_utc")
+        assert hasattr(TimeUtils, "timestamp_to_datetime")
+        assert hasattr(TimeUtils, "datetime_to_timestamp")
+        assert hasattr(TimeUtils, "format_datetime")
+        assert hasattr(TimeUtils, "parse_datetime")
 
     def test_now_utc(self):
         """测试：获取当前UTC时间"""
@@ -190,7 +191,7 @@ class TestBackwardCompatibility:
         function_time = utc_now()
 
         # 应该是相同的时间类型
-        assert type(class_time) == type(function_time)
+        assert type(class_time) is type(function_time)
         assert class_time.tzinfo == function_time.tzinfo
 
     def test_parse_datetime_function_with_none(self):
@@ -279,7 +280,9 @@ class TestTimeUtilsPerformance:
         assert end_time - start_time < 0.5
 
 
-@pytest.mark.skipif(TIME_UTILS_AVAILABLE, reason="Time utils module should be available")
+@pytest.mark.skipif(
+    TIME_UTILS_AVAILABLE, reason="Time utils module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -322,6 +325,7 @@ async def test_async_context_usage():
 
         # 模拟异步操作
         import asyncio
+
         await asyncio.sleep(0.01)
 
         end_time = TimeUtils.now_utc()

@@ -10,12 +10,7 @@ import asyncio
 from datetime import datetime
 from unittest.mock import Mock, AsyncMock
 
-from src.adapters.base import (
-    AdapterStatus,
-    Adaptee,
-    Target,
-    Adapter
-)
+from src.adapters.base import AdapterStatus, Adaptee, Target, Adapter
 
 
 class TestAdapterStatus:
@@ -63,6 +58,7 @@ class TestAdaptee:
 
     def test_adaptee_implementation(self):
         """测试：被适配者实现"""
+
         class ConcreteAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):
                 return "data"
@@ -99,6 +95,7 @@ class TestTarget:
 
     def test_target_implementation(self):
         """测试：目标实现"""
+
         class ConcreteTarget(Target):
             async def request(self, *args, **kwargs):
                 return "response"
@@ -129,6 +126,7 @@ class TestAdapter:
 
     def test_adapter_initialization(self):
         """测试：适配器初始化"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -155,6 +153,7 @@ class TestAdapter:
 
     def test_adapter_initialization_default_name(self):
         """测试：适配器默认名称"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -177,6 +176,7 @@ class TestAdapter:
 
     def test_adapter_metrics_initialization(self):
         """测试：适配器指标初始化"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -204,6 +204,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_initialize_success(self):
         """测试：适配器初始化成功"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 self.initialized = True
@@ -230,6 +231,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_initialize_failure(self):
         """测试：适配器初始化失败"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 raise ValueError("Initialization failed")
@@ -256,6 +258,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_cleanup_success(self):
         """测试：适配器清理成功"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -281,6 +284,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_cleanup_failure(self):
         """测试：适配器清理失败"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -307,6 +311,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_request_active(self):
         """测试：适配器请求（活跃状态）"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -321,7 +326,6 @@ class TestAdapter:
                 """实现抽象方法"""
                 return {"status": "ok", "data": "response"}
 
-
         mock_adaptee = Mock(spec=Adaptee)
         adapter = ConcreteAdapter(mock_adaptee)
         adapter.status = AdapterStatus.ACTIVE
@@ -332,6 +336,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_request_inactive(self):
         """测试：适配器请求（非活跃状态）"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -353,6 +358,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_request_metrics_update(self):
         """测试：适配器请求指标更新"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -363,7 +369,6 @@ class TestAdapter:
             async def _request(self, *args, **kwargs):
                 """实现抽象方法"""
                 return {"status": "ok", "data": "response"}
-
 
         mock_adaptee = Mock(spec=Adaptee)
         adapter = ConcreteAdapter(mock_adaptee)
@@ -378,6 +383,7 @@ class TestAdapter:
     @pytest.mark.asyncio
     async def test_adapter_request_with_args(self):
         """测试：适配器请求带参数"""
+
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -388,7 +394,6 @@ class TestAdapter:
             async def _request(self, *args, **kwargs):
                 """实现抽象方法"""
                 return {"args": args, "kwargs": kwargs}
-
 
         mock_adaptee = Mock(spec=Adaptee)
         adapter = ConcreteAdapter(mock_adaptee)
@@ -405,6 +410,7 @@ class TestAdapterConcreteImplementation:
     @pytest.mark.asyncio
     async def test_full_adapter_lifecycle(self):
         """测试：完整适配器生命周期"""
+
         class TestAdaptee(Adaptee):
             def __init__(self):
                 self.data = "initial"
@@ -461,6 +467,7 @@ class TestAdapterConcreteImplementation:
     @pytest.mark.asyncio
     async def test_adapter_error_handling(self):
         """测试：适配器错误处理"""
+
         class TestAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):
                 raise ValueError("Data error")
@@ -500,6 +507,7 @@ class TestAdapterConcreteImplementation:
     @pytest.mark.asyncio
     async def test_adapter_composition(self):
         """测试：适配器组合"""
+
         class SourceAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):
                 return {"raw": "data"}

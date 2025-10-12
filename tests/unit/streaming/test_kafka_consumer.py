@@ -12,8 +12,9 @@ try:
     from src.streaming.kafka_consumer import (
         MessageProcessor,
         DataProcessor,
-        get_session
+        get_session,
     )
+
     KAFKA_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -27,7 +28,7 @@ class TestKafkaConsumerImports:
     def test_message_processor_import(self):
         """测试：MessageProcessor导入"""
         assert MessageProcessor is not None
-        assert hasattr(MessageProcessor, '__name__')
+        assert hasattr(MessageProcessor, "__name__")
         # 如果有类，检查基本属性
         if isinstance(MessageProcessor, type):
             assert MessageProcessor.__name__ == "MessageProcessor"
@@ -35,7 +36,7 @@ class TestKafkaConsumerImports:
     def test_data_processor_import(self):
         """测试：DataProcessor导入"""
         assert DataProcessor is not None
-        assert hasattr(DataProcessor, '__name__')
+        assert hasattr(DataProcessor, "__name__")
         # 如果有类，检查基本属性
         if isinstance(DataProcessor, type):
             assert DataProcessor.__name__ == "DataProcessor"
@@ -50,7 +51,7 @@ class TestKafkaConsumerImports:
         # 验证__all__中包含预期的类
         import src.streaming.kafka_consumer as kafka_module
 
-        if hasattr(kafka_module, '__all__'):
+        if hasattr(kafka_module, "__all__"):
             assert "MessageProcessor" in kafka_module.__all__
             assert "DataProcessor" in kafka_module.__all__
             assert "get_session" in kafka_module.__all__
@@ -64,7 +65,10 @@ class TestKafkaConsumerCompatibility:
         """测试：向后兼容性"""
         # 验证模块可以通过旧方式导入
         try:
-            from src.streaming.kafka_consumer import MessageProcessor as OldMessageProcessor
+            from src.streaming.kafka_consumer import (
+                MessageProcessor as OldMessageProcessor,
+            )
+
             assert OldMessageProcessor is MessageProcessor
         except ImportError:
             pytest.skip("Module not available for compatibility test")
@@ -78,7 +82,7 @@ class TestKafkaConsumerCompatibility:
         assert "兼容性" in kafka_module.__doc__
 
         # 验证有__all__属性
-        assert hasattr(kafka_module, '__all__')
+        assert hasattr(kafka_module, "__all__")
 
     def test_no_football_kafka_consumer(self):
         """测试：FootballKafkaConsumer应该不存在"""
@@ -136,8 +140,12 @@ class TestKafkaConsumerIntegration:
         """测试：从子模块导入"""
         # 验证可以从子模块导入相同的类
         try:
-            from src.streaming.data_processor import DataProcessor as DirectDataProcessor
-            from src.streaming.message_processor import MessageProcessor as DirectMessageProcessor
+            from src.streaming.data_processor import (
+                DataProcessor as DirectDataProcessor,
+            )
+            from src.streaming.message_processor import (
+                MessageProcessor as DirectMessageProcessor,
+            )
 
             # 它们应该是相同的对象
             assert DataProcessor is DirectDataProcessor
@@ -162,7 +170,10 @@ class TestKafkaConsumerIntegration:
 
         # 验证模块有适当的文档说明
         assert kafka_module.__doc__ is not None
-        assert "重新导出" in kafka_module.__doc__ or "wrapper" in kafka_module.__doc__.lower()
+        assert (
+            "重新导出" in kafka_module.__doc__
+            or "wrapper" in kafka_module.__doc__.lower()
+        )
 
 
 # 如果模块不可用，添加一个占位测试

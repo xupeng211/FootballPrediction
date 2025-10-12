@@ -30,10 +30,7 @@ class EnhancedMetricsCollector:
 
     def collect(self) -> Dict[str, Any]:
         """收集指标"""
-        return {
-            "timestamp": datetime.utcnow(),
-            "metrics": self.metrics
-        }
+        return {"timestamp": datetime.utcnow(), "metrics": self.metrics}
 
     def add_metric(self, name: str, value: Any):
         """添加指标"""
@@ -52,7 +49,9 @@ class MetricsAggregator:
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
                 # 简单的聚合逻辑：取平均值
-                self.aggregated_metrics[key] = (self.aggregated_metrics[key] + value) / 2
+                self.aggregated_metrics[key] = (
+                    self.aggregated_metrics[key] + value
+                ) / 2
             else:
                 self.aggregated_metrics[key] = value
         logger.debug(f"Aggregated {len(metrics)} metrics")
@@ -72,11 +71,7 @@ class MetricPoint:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
-            "name": self.name,
-            "value": self.value,
-            "timestamp": self.timestamp
-        }
+        return {"name": self.name, "value": self.value, "timestamp": self.timestamp}
 
 
 # 全局实例
@@ -103,6 +98,7 @@ def track_cache_performance(cache_name: str, hit_rate: float):
     collector = get_metrics_collector()
     collector.add_metric(f"cache_{cache_name}_hit_rate", hit_rate)
     logger.info(f"Tracked cache performance: {cache_name} - {hit_rate}")
+
 
 # 重新导出类型
 

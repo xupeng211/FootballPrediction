@@ -82,8 +82,12 @@ class TestTeamService:
 
     def test_should_calculate_league_table(self, service, team):
         second_team = Team(id=2, name="Chelsea", country="England")
-        second_team.stats = TeamStats(matches_played=1, wins=1, draws=0, losses=0, goals_for=2, goals_against=0)
-        team.stats = TeamStats(matches_played=1, wins=0, draws=1, losses=0, goals_for=1, goals_against=1)
+        second_team.stats = TeamStats(
+            matches_played=1, wins=1, draws=0, losses=0, goals_for=2, goals_against=0
+        )
+        team.stats = TeamStats(
+            matches_played=1, wins=0, draws=1, losses=0, goals_for=1, goals_against=1
+        )
 
         table = service.calculate_league_table([team, second_team])
 

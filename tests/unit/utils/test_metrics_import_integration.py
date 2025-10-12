@@ -124,9 +124,7 @@ def test_import_from_init():
         # 尝试导入，但不实际使用
         import importlib
 
-        module = importlib.import_module(
-            "src.monitoring.metrics_collector_enhanced"
-        )
+        module = importlib.import_module("src.monitoring.metrics_collector_enhanced")
         assert module is not None
     except ImportError as e:
         pytest.skip(f"Cannot import module package: {e}")

@@ -89,7 +89,7 @@ class TestBadExample:
     def test_line_content_encoding(self):
         """测试：行内容编码"""
         # 确保字符串使用正确的编码
-        assert isinstance(very_long_line.encode('utf-8'), bytes)
+        assert isinstance(very_long_line.encode("utf-8"), bytes)
         # 检查特殊字符
         assert "，" in very_long_line  # 中文逗号
         assert "应该会报错" in very_long_line

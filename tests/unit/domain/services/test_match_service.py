@@ -25,7 +25,9 @@ def away_team() -> Team:
 class TestMatchScheduling:
     def test_should_schedule_match(self, service, home_team, away_team):
         match_time = datetime.utcnow() + timedelta(days=1)
-        match = service.schedule_match(home_team, away_team, match_time, venue="Stadium")
+        match = service.schedule_match(
+            home_team, away_team, match_time, venue="Stadium"
+        )
 
         assert match.home_team_id == home_team.id
         assert match.away_team_id == away_team.id
@@ -54,13 +56,19 @@ class TestMatchLifecycle:
         assert len(events) == 1
         assert events[0].match_id == 99
 
-    def test_should_reject_start_when_time_not_reached(self, service, home_team, away_team):
-        match = service.schedule_match(home_team, away_team, datetime.utcnow() + timedelta(hours=1))
+    def test_should_reject_start_when_time_not_reached(
+        self, service, home_team, away_team
+    ):
+        match = service.schedule_match(
+            home_team, away_team, datetime.utcnow() + timedelta(hours=1)
+        )
 
         with pytest.raises(ValueError):
             service.start_match(match)
 
-    def test_should_update_score_and_finish_with_event(self, service, home_team, away_team):
+    def test_should_update_score_and_finish_with_event(
+        self, service, home_team, away_team
+    ):
         match_time = datetime.utcnow() - timedelta(minutes=5)
         match = service.schedule_match(home_team, away_team, match_time)
         match.id = 5
@@ -76,7 +84,9 @@ class TestMatchLifecycle:
         assert finished_event.final_score.home_score == 2
 
     def test_should_require_live_match_for_updates(self, service, home_team, away_team):
-        match = service.schedule_match(home_team, away_team, datetime.utcnow() - timedelta(minutes=5))
+        match = service.schedule_match(
+            home_team, away_team, datetime.utcnow() - timedelta(minutes=5)
+        )
 
         with pytest.raises(ValueError):
             service.update_match_score(match, 1, 0)
@@ -88,20 +98,30 @@ class TestMatchLifecycle:
 
 class TestMatchAdjustments:
     def test_should_cancel_and_postpone_match(self, service, home_team, away_team):
-        match = service.schedule_match(home_team, away_team, datetime.utcnow() + timedelta(days=1))
+        match = service.schedule_match(
+            home_team, away_team, datetime.utcnow() + timedelta(days=1)
+        )
         match.id = 7
 
         service.cancel_match(match, "heavy rain")
         assert match.status == MatchStatus.CANCELLED
         assert service.get_domain_events()[-1].reason == "heavy rain"
 
-        new_match = service.schedule_match(home_team, away_team, datetime.utcnow() + timedelta(days=1))
-        service.postpone_match(new_match, datetime.utcnow() + timedelta(days=2), "broadcast")
+        new_match = service.schedule_match(
+            home_team, away_team, datetime.utcnow() + timedelta(days=1)
+        )
+        service.postpone_match(
+            new_match, datetime.utcnow() + timedelta(days=2), "broadcast"
+        )
         assert new_match.status == MatchStatus.POSTPONED
         assert service.get_domain_events()[-1].reason == "broadcast"
 
-    def test_should_prevent_invalid_cancellations_or_postpones(self, service, home_team, away_team):
-        match = service.schedule_match(home_team, away_team, datetime.utcnow() + timedelta(days=1))
+    def test_should_prevent_invalid_cancellations_or_postpones(
+        self, service, home_team, away_team
+    ):
+        match = service.schedule_match(
+            home_team, away_team, datetime.utcnow() + timedelta(days=1)
+        )
         match.status = MatchStatus.FINISHED
 
         with pytest.raises(ValueError):

@@ -29,11 +29,7 @@ class MatchDataProcessor(DataProcessor):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比赛数据"""
         logger.debug(f"Processing match data: {data.get('id')}")
-        return {
-            **data,
-            "processed_at": datetime.utcnow(),
-            "type": "match"
-        }
+        return {**data, "processed_at": datetime.utcnow(), "type": "match"}
 
 
 class OddsDataProcessor(DataProcessor):
@@ -42,11 +38,7 @@ class OddsDataProcessor(DataProcessor):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理赔率数据"""
         logger.debug(f"Processing odds data: {data.get('match_id')}")
-        return {
-            **data,
-            "processed_at": datetime.utcnow(),
-            "type": "odds"
-        }
+        return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
 
 
 class ScoresDataProcessor(DataProcessor):
@@ -55,11 +47,7 @@ class ScoresDataProcessor(DataProcessor):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比分数据"""
         logger.debug(f"Processing scores data: {data.get('match_id')}")
-        return {
-            **data,
-            "processed_at": datetime.utcnow(),
-            "type": "scores"
-        }
+        return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 
 
 class FeaturesDataProcessor(DataProcessor):
@@ -68,11 +56,7 @@ class FeaturesDataProcessor(DataProcessor):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理特征数据"""
         logger.debug(f"Processing features data: {data.get('match_id')}")
-        return {
-            **data,
-            "processed_at": datetime.utcnow(),
-            "type": "features"
-        }
+        return {**data, "processed_at": datetime.utcnow(), "type": "features"}
 
 
 class DataQualityValidator:
@@ -176,11 +160,7 @@ class BronzeToSilverProcessor:
         for handler in self.handlers:
             data = handler.handle(data)
 
-        return {
-            **data,
-            "processed_at": datetime.utcnow(),
-            "layer": "silver"
-        }
+        return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
 
 
 class DataProcessingService:
@@ -217,15 +197,13 @@ class DataProcessingService:
         if processor:
             result = await processor.process(data)
         else:
-            result = {
-                **data,
-                "processed_at": datetime.utcnow(),
-                "status": "processed"
-            }
+            result = {**data, "processed_at": datetime.utcnow(), "status": "processed"}
 
         return result
 
-    async def batch_process(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def batch_process(
+        self, data_list: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """批量处理数据"""
         results = []
         for data in data_list:
@@ -236,6 +214,7 @@ class DataProcessingService:
     async def cleanup(self):
         """清理资源"""
         logger.info("DataProcessingService cleaned up")
+
 
 # 重新导出以保持原始接口
 __all__ = [

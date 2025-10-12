@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 # 测试导入
 try:
     from src.api.buggy_api import router, SomeAsyncService, service
+
     BUGGY_API_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -26,6 +27,7 @@ class TestBuggyAPI:
     def client(self):
         """创建测试客户端"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/test")
         return TestClient(app)
@@ -92,7 +94,7 @@ class TestBuggyAPI:
         assert data["limit"] == 25
         assert isinstance(data["limit"], int)  # 确保类型转换正确
 
-    @patch('src.api.buggy_api.service')
+    @patch("src.api.buggy_api.service")
     def test_buggy_async_endpoint(self, mock_service, client):
         """测试：异步端点"""
         mock_service.get_status = AsyncMock(return_value="test_status")
@@ -145,7 +147,7 @@ class TestBuggyAPIIntegration:
     def test_endpoint_documentation(self):
         """测试：端点文档"""
         for route in router.routes:
-            if hasattr(route, 'endpoint'):
+            if hasattr(route, "endpoint"):
                 # 端点应该有文档字符串
                 if route.endpoint.__doc__:
                     assert len(route.endpoint.__doc__.strip()) > 0
@@ -154,13 +156,14 @@ class TestBuggyAPIIntegration:
         """测试：查询参数规范"""
         # 检查路由是否有正确的查询参数
         for route in router.routes:
-            if hasattr(route, 'dependant'):
+            if hasattr(route, "dependant"):
                 # 检查依赖项
                 assert route.dependant is not None
 
     def test_fastapi_integration(self):
         """测试：FastAPI集成"""
         from fastapi import FastAPI
+
         app = FastAPI()
 
         # 应该能够成功包含路由
@@ -179,6 +182,7 @@ class TestBuggyAPIEdgeCases:
         """测试：并发请求"""
         import threading
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/test")
         client = TestClient(app)
@@ -208,6 +212,7 @@ class TestBuggyAPIEdgeCases:
     def test_large_limit_values(self):
         """测试：大限制值"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/test")
         client = TestClient(app)
@@ -222,6 +227,7 @@ class TestBuggyAPIEdgeCases:
     def test_endpoint_response_format(self):
         """测试：端点响应格式"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/test")
         client = TestClient(app)
@@ -236,6 +242,7 @@ class TestBuggyAPIEdgeCases:
     def test_parameter_type_handling(self):
         """测试：参数类型处理"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/test")
         client = TestClient(app)

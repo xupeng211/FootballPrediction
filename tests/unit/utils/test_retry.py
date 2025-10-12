@@ -9,14 +9,15 @@ from datetime import datetime, timedelta
 
 class RetryError(Exception):
     """重试错误类"""
+
     pass
 
 
 def retry(max_attempts=3, delay=0.1, backoff=1.0, exceptions=(Exception,)):
     """重试装饰器"""
+
     def decorator(func):
         async def async_wrapper(*args, **kwargs):
-            last_exception = None
             current_delay = delay
 
             for attempt in range(max_attempts):
@@ -26,7 +27,6 @@ def retry(max_attempts=3, delay=0.1, backoff=1.0, exceptions=(Exception,)):
                     else:
                         return func(*args, **kwargs)
                 except exceptions as e:
-                    last_exception = e
                     if attempt == max_attempts - 1:
                         raise RetryError(f"Failed after {max_attempts} attempts") from e
 
@@ -34,14 +34,12 @@ def retry(max_attempts=3, delay=0.1, backoff=1.0, exceptions=(Exception,)):
                     current_delay *= backoff
 
         def sync_wrapper(*args, **kwargs):
-            last_exception = None
             current_delay = delay
 
             for attempt in range(max_attempts):
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
-                    last_exception = e
                     if attempt == max_attempts - 1:
                         raise RetryError(f"Failed after {max_attempts} attempts") from e
 
@@ -52,6 +50,7 @@ def retry(max_attempts=3, delay=0.1, backoff=1.0, exceptions=(Exception,)):
             return async_wrapper
         else:
             return sync_wrapper
+
     return decorator
 
 
@@ -187,6 +186,7 @@ class TestRetryUtils:
     @pytest.mark.asyncio
     async def test_retry_error_message(self):
         """测试重试错误消息"""
+
         @retry(max_attempts=2, delay=0.01)
         async def test_function():
             raise ConnectionError("Network error")
@@ -194,12 +194,13 @@ class TestRetryUtils:
         with pytest.raises(RetryError) as exc_info:
             await test_function()
 
-        assert exc_info.value.__cause__.__class__ == ConnectionError
+        assert exc_info.value.__cause__.__class__ is ConnectionError
         assert str(exc_info.value.__cause__) == "Network error"
 
     @pytest.mark.asyncio
     async def test_retry_zero_attempts(self):
         """测试零次重试"""
+
         @retry(max_attempts=1, delay=0.01)
         async def test_function():
             raise ValueError("Always fails")
@@ -230,6 +231,7 @@ class TestRetryUtils:
     @pytest.mark.asyncio
     async def test_retry_preserves_function_attributes(self):
         """测试重试装饰器保留函数属性"""
+
         @retry(max_attempts=3, delay=0.01)
         async def test_function():
             """测试函数文档"""

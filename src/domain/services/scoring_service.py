@@ -61,7 +61,9 @@ class ScoringService:
         )
 
         score_bonus = Decimal(exact_score_points)
-        outcome_total = Decimal(outcome_points + goal_diff_points + streak_bonus + difficulty_bonus)
+        outcome_total = Decimal(
+            outcome_points + goal_diff_points + streak_bonus + difficulty_bonus
+        )
         confidence_bonus_value = Decimal(confidence_bonus)
 
         total_points = score_bonus + outcome_total + confidence_bonus_value

@@ -9,13 +9,11 @@ import pytest
 from src.core.exceptions import (
     # 基础异常
     FootballPredictionError,
-
     # 配置和数据异常
     ConfigError,
     DataError,
     ModelError,
     PredictionError,
-
     # 数据相关异常（继承自DataError）
     CacheError,
     DatabaseError,
@@ -23,31 +21,25 @@ from src.core.exceptions import (
     ValidationError,
     DataQualityError,
     DataProcessingError,
-
     # 领域层异常
     DomainError,
     BusinessRuleError,
-
     # 系统异常
     PipelineError,
     ServiceLifecycleError,
     DependencyInjectionError,
-
     # 追踪异常
     LineageError,
     TrackingError,
-
     # 任务异常
     BacktestError,
     TaskExecutionError,
     TaskRetryError,
-
     # 安全异常
     AuthenticationError,
     AuthorizationError,
     RateLimitError,
     TimeoutError,
-
     # 架构异常
     AdapterError,
     StreamingError,
@@ -88,7 +80,7 @@ class TestFootballPredictionError:
         """测试：异常继承链"""
         assert issubclass(FootballPredictionError, Exception)
         assert FootballPredictionError.__mro__[0] == FootballPredictionError
-        assert FootballPredictionError.__mro__[1] == Exception
+        assert FootballPredictionError.__mro__[1] is Exception
 
 
 class TestConfigError:
@@ -447,7 +439,7 @@ class TestExceptionBestPractices:
         context = {
             "user_id": 123,
             "action": "predict",
-            "timestamp": "2023-01-01T12:00:00Z"
+            "timestamp": "2023-01-01T12:00:00Z",
         }
 
         error = PredictionError(

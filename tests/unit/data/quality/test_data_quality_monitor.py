@@ -13,6 +13,7 @@ import logging
 # 测试导入
 try:
     from src.data.quality.data_quality_monitor import DataQualityMonitor
+
     DATA_QUALITY_MONITOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -20,16 +21,19 @@ except ImportError as e:
     DataQualityMonitor = None
 
 
-@pytest.mark.skipif(not DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module not available")
+@pytest.mark.skipif(
+    not DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module not available",
+)
 class TestDataQualityMonitor:
     """数据质量监控器测试"""
 
     def test_monitor_creation(self):
         """测试：监控器创建"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor is not None
-            assert hasattr(monitor, 'thresholds')
+            assert hasattr(monitor, "thresholds")
             assert monitor.thresholds["data_freshness_hours"] == 24
             assert monitor.thresholds["missing_data_rate"] == 0.1
             assert monitor.thresholds["odds_min_value"] == 1.01
@@ -37,7 +41,7 @@ class TestDataQualityMonitor:
 
     def test_monitor_custom_thresholds(self):
         """测试：自定义阈值"""
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager'):
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             # 更新阈值
@@ -53,19 +57,19 @@ class TestDataQualityMonitor:
         monitor = DataQualityMonitor()
 
         # 模拟数据库会话
-        mock_session = AsyncMock()
+        AsyncMock()
 
-        with patch.object(monitor, '_check_fixtures_age') as mock_fixtures:
-            with patch.object(monitor, '_check_odds_age') as mock_odds:
+        with patch.object(monitor, "_check_fixtures_age") as mock_fixtures:
+            with patch.object(monitor, "_check_odds_age") as mock_odds:
                 mock_fixtures.return_value = {
                     "status": "good",
                     "oldest_fixture_hours": 6,
-                    "stale_fixtures_count": 0
+                    "stale_fixtures_count": 0,
                 }
                 mock_odds.return_value = {
                     "status": "warning",
                     "oldest_odds_hours": 30,
-                    "stale_odds_count": 5
+                    "stale_odds_count": 5,
                 }
 
                 result = await monitor.check_data_freshness()
@@ -81,19 +85,21 @@ class TestDataQualityMonitor:
         """测试：检测异常"""
         monitor = DataQualityMonitor()
 
-        mock_session = AsyncMock()
+        AsyncMock()
 
-        with patch.object(monitor, '_find_missing_matches') as mock_missing:
-            with patch.object(monitor, '_find_suspicious_odds') as mock_odds:
-                with patch.object(monitor, '_find_unusual_scores') as mock_scores:
-                    with patch.object(monitor, '_check_data_consistency') as mock_consistency:
+        with patch.object(monitor, "_find_missing_matches") as mock_missing:
+            with patch.object(monitor, "_find_suspicious_odds") as mock_odds:
+                with patch.object(monitor, "_find_unusual_scores") as mock_scores:
+                    with patch.object(
+                        monitor, "_check_data_consistency"
+                    ) as mock_consistency:
                         mock_missing.return_value = {
                             "missing_matches": 2,
-                            "details": ["Match 1", "Match 2"]
+                            "details": ["Match 1", "Match 2"],
                         }
                         mock_odds.return_value = [
                             {"match_id": 123, "issue": "suspicious_odds"},
-                            {"match_id": 456, "issue": "extreme_value"}
+                            {"match_id": 456, "issue": "extreme_value"},
                         ]
                         mock_scores.return_value = [
                             {"match_id": 789, "issue": "high_scoring"}
@@ -202,15 +208,15 @@ class TestDataQualityMonitor:
                 "home_win": 0.5,  # 低于最小值
                 "draw": 3.5,
                 "away_win": 8.0,  # 高于最大值
-                "suspicious_reason": "extreme_values"
+                "suspicious_reason": "extreme_values",
             },
             {
                 "match_id": 456,
                 "home_win": 2.0,
                 "draw": 3.0,
                 "away_win": 4.0,
-                "suspicious_reason": "rapid_change"
-            }
+                "suspicious_reason": "rapid_change",
+            },
         ]
         mock_session.execute.return_value = mock_result
 
@@ -235,14 +241,14 @@ class TestDataQualityMonitor:
                 "match_id": 789,
                 "home_score": 15,  # 超过最大值
                 "away_score": 0,
-                "unusual_reason": "high_scoring"
+                "unusual_reason": "high_scoring",
             },
             {
                 "match_id": 101,
                 "home_score": 0,
                 "away_score": 12,
-                "unusual_reason": "one_sided"
-            }
+                "unusual_reason": "one_sided",
+            },
         ]
         mock_session.execute.return_value = mock_result
 
@@ -266,13 +272,13 @@ class TestDataQualityMonitor:
             {
                 "match_id": 111,
                 "issue": "mismatched_teams",
-                "details": "Home team name differs in fixtures and odds"
+                "details": "Home team name differs in fixtures and odds",
             },
             {
                 "match_id": 222,
                 "issue": "invalid_datetime",
-                "details": "Match datetime is in the past for future fixture"
-            }
+                "details": "Match datetime is in the past for future fixture",
+            },
         ]
         mock_session.execute.return_value = mock_result
 
@@ -288,16 +294,16 @@ class TestDataQualityMonitor:
         """测试：生成质量报告"""
         monitor = DataQualityMonitor()
 
-        with patch.object(monitor, 'check_data_freshness') as mock_freshness:
-            with patch.object(monitor, 'detect_anomalies') as mock_anomalies:
+        with patch.object(monitor, "check_data_freshness") as mock_freshness:
+            with patch.object(monitor, "detect_anomalies") as mock_anomalies:
                 mock_freshness.return_value = {
                     "fixtures": {"status": "good"},
                     "odds": {"status": "warning"},
-                    "overall_status": "warning"
+                    "overall_status": "warning",
                 }
                 mock_anomalies.return_value = [
                     {"type": "suspicious_odds", "count": 3},
-                    {"type": "missing_data", "count": 1}
+                    {"type": "missing_data", "count": 1},
                 ]
 
                 report = await monitor.generate_quality_report()
@@ -315,9 +321,7 @@ class TestDataQualityMonitor:
         """测试：计算质量分数（完美）"""
         monitor = DataQualityMonitor()
 
-        freshness_check = {
-            "overall_status": "good"
-        }
+        freshness_check = {"overall_status": "good"}
         anomalies = []
 
         score = monitor._calculate_quality_score(freshness_check, anomalies)
@@ -328,13 +332,8 @@ class TestDataQualityMonitor:
         """测试：计算质量分数（警告）"""
         monitor = DataQualityMonitor()
 
-        freshness_check = {
-            "overall_status": "warning"
-        }
-        anomalies = [
-            {"type": "suspicious_odds"},
-            {"type": "missing_data"}
-        ]
+        freshness_check = {"overall_status": "warning"}
+        anomalies = [{"type": "suspicious_odds"}, {"type": "missing_data"}]
 
         score = monitor._calculate_quality_score(freshness_check, anomalies)
 
@@ -345,15 +344,13 @@ class TestDataQualityMonitor:
         """测试：计算质量分数（严重）"""
         monitor = DataQualityMonitor()
 
-        freshness_check = {
-            "overall_status": "critical"
-        }
+        freshness_check = {"overall_status": "critical"}
         anomalies = [
             {"type": "suspicious_odds"},
             {"type": "missing_data"},
             {"type": "inconsistent_data"},
             {"type": "unusual_scores"},
-            {"type": "stale_data"}
+            {"type": "stale_data"},
         ]
 
         score = monitor._calculate_quality_score(freshness_check, anomalies)
@@ -415,7 +412,7 @@ class TestDataQualityMonitor:
         anomalies = [
             {"type": "stale_data"},
             {"type": "missing_data"},
-            {"type": "suspicious_odds"}
+            {"type": "suspicious_odds"},
         ]
 
         recommendations = monitor._generate_recommendations(freshness_check, anomalies)
@@ -434,12 +431,14 @@ class TestDataQualityMonitor:
         monitor = DataQualityMonitor()
 
         # 更新配置
-        monitor.thresholds.update({
-            "data_freshness_hours": 12,
-            "missing_data_rate": 0.05,
-            "odds_min_value": 1.1,
-            "odds_max_value": 50.0
-        })
+        monitor.thresholds.update(
+            {
+                "data_freshness_hours": 12,
+                "missing_data_rate": 0.05,
+                "odds_min_value": 1.1,
+                "odds_max_value": 50.0,
+            }
+        )
 
         mock_session = AsyncMock()
 
@@ -465,15 +464,14 @@ class TestDataQualityMonitor:
         """测试：完整质量检查工作流"""
         monitor = DataQualityMonitor()
 
-        with patch.object(monitor, 'check_data_freshness') as mock_freshness:
-            with patch.object(monitor, 'detect_anomalies') as mock_anomalies:
-                with patch.object(monitor, 'generate_quality_report') as mock_report:
-
+        with patch.object(monitor, "check_data_freshness") as mock_freshness:
+            with patch.object(monitor, "detect_anomalies") as mock_anomalies:
+                with patch.object(monitor, "generate_quality_report") as mock_report:
                     # 设置模拟返回值
                     mock_freshness.return_value = {
                         "fixtures": {"status": "good"},
                         "odds": {"status": "warning"},
-                        "overall_status": "warning"
+                        "overall_status": "warning",
                     }
                     mock_anomalies.return_value = [
                         {"type": "suspicious_odds", "count": 2}
@@ -482,7 +480,7 @@ class TestDataQualityMonitor:
                         "timestamp": datetime.now(),
                         "quality_score": 85.0,
                         "overall_status": "warning",
-                        "recommendations": ["Check odds sources"]
+                        "recommendations": ["Check odds sources"],
                     }
 
                     # 执行完整工作流
@@ -530,7 +528,9 @@ class TestDataQualityMonitor:
         assert monitor.thresholds["data_freshness_hours"] > 0
         assert 0 < monitor.thresholds["missing_data_rate"] < 1
         assert monitor.thresholds["odds_min_value"] > 1.0
-        assert monitor.thresholds["odds_max_value"] > monitor.thresholds["odds_min_value"]
+        assert (
+            monitor.thresholds["odds_max_value"] > monitor.thresholds["odds_min_value"]
+        )
         assert monitor.thresholds["score_max_value"] > 0
         assert 0 < monitor.thresholds["suspicious_odds_change"] < 1
 
@@ -560,7 +560,10 @@ class TestDataQualityMonitor:
         assert elapsed < 1.0  # 应该在1秒内完成
 
 
-@pytest.mark.skipif(not DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module not available")
+@pytest.mark.skipif(
+    not DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module not available",
+)
 class TestDataQualityMonitorIntegration:
     """数据质量监控器集成测试"""
 
@@ -570,12 +573,12 @@ class TestDataQualityMonitorIntegration:
         monitor = DataQualityMonitor()
 
         # 模拟完整的监控管道
-        with patch.object(monitor, 'db_manager') as mock_db:
+        with patch.object(monitor, "db_manager") as mock_db:
             mock_db.get_session.return_value.__aenter__.return_value = AsyncMock()
 
-            with patch.object(monitor, '_check_fixtures_age') as mock_fixtures:
-                with patch.object(monitor, '_check_odds_age') as mock_odds:
-                    with patch.object(monitor, '_find_missing_matches') as mock_missing:
+            with patch.object(monitor, "_check_fixtures_age") as mock_fixtures:
+                with patch.object(monitor, "_check_odds_age") as mock_odds:
+                    with patch.object(monitor, "_find_missing_matches") as mock_missing:
                         mock_fixtures.return_value = {"status": "good"}
                         mock_odds.return_value = {"status": "warning"}
                         mock_missing.return_value = {"missing_matches": 0}
@@ -600,7 +603,7 @@ class TestDataQualityMonitorIntegration:
         check_results = []
 
         for i in range(3):
-            with patch.object(monitor, 'check_data_freshness') as mock_check:
+            with patch.object(monitor, "check_data_freshness") as mock_check:
                 mock_check.return_value = {
                     "overall_status": "good" if i % 2 == 0 else "warning"
                 }
@@ -618,19 +621,19 @@ class TestDataQualityMonitorIntegration:
         monitor = DataQualityMonitor()
 
         # 模拟需要告警的情况
-        with patch.object(monitor, 'generate_quality_report') as mock_report:
+        with patch.object(monitor, "generate_quality_report") as mock_report:
             mock_report.return_value = {
                 "timestamp": datetime.now(),
                 "quality_score": 45.0,
                 "overall_status": "critical",
                 "anomalies": [
                     {"type": "stale_data", "count": 10},
-                    {"type": "missing_data", "count": 5}
+                    {"type": "missing_data", "count": 5},
                 ],
                 "recommendations": [
                     "Immediate data refresh required",
-                    "Check data pipelines"
-                ]
+                    "Check data pipelines",
+                ],
             }
 
             report = await monitor.generate_quality_report()
@@ -644,7 +647,7 @@ class TestDataQualityMonitorIntegration:
     @pytest.mark.asyncio
     async def test_quality_trend_analysis(self):
         """测试：质量趋势分析"""
-        monitor = DataQualityMonitor()
+        DataQualityMonitor()
 
         # 模拟历史质量数据
         quality_history = [
@@ -652,7 +655,7 @@ class TestDataQualityMonitorIntegration:
             {"timestamp": datetime.now() - timedelta(hours=18), "score": 90.0},
             {"timestamp": datetime.now() - timedelta(hours=12), "score": 85.0},
             {"timestamp": datetime.now() - timedelta(hours=6), "score": 80.0},
-            {"timestamp": datetime.now(), "score": 75.0}
+            {"timestamp": datetime.now(), "score": 75.0},
         ]
 
         # 计算趋势
@@ -673,10 +676,10 @@ class TestDataQualityMonitorIntegration:
         source_quality = {}
 
         for source in sources:
-            with patch.object(monitor, '_check_fixtures_age') as mock_check:
+            with patch.object(monitor, "_check_fixtures_age") as mock_check:
                 mock_check.return_value = {
                     "status": "good" if source != "manual_entry" else "warning",
-                    "source": source
+                    "source": source,
                 }
                 result = await monitor._check_fixtures_age(AsyncMock())
                 source_quality[source] = result
@@ -687,7 +690,10 @@ class TestDataQualityMonitorIntegration:
         assert source_quality["manual_entry"]["status"] == "warning"
 
 
-@pytest.mark.skipif(DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module should be available")
+@pytest.mark.skipif(
+    DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module should be available",
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -702,4 +708,5 @@ def test_module_imports():
     """测试：模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+
         assert DataQualityMonitor is not None

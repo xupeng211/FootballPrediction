@@ -62,7 +62,7 @@ class TestUserProfileService:
     async def test_initialize_failure(self, service):
         """测试：初始化失败"""
         # Given
-        with patch.object(service, '_on_initialize', return_value=False):
+        with patch.object(service, "_on_initialize", return_value=False):
             # When
             result = await service.initialize()
 
@@ -95,7 +95,10 @@ class TestUserProfileService:
         # Then
         assert info["name"] == "UserProfileService"
         assert info["type"] == "UserProfileService"
-        assert info["description"] == "User profile service for managing user preferences and behavior"
+        assert (
+            info["description"]
+            == "User profile service for managing user preferences and behavior"
+        )
         assert info["version"] == "1.0.0"
         assert info["profiles_count"] == 0
 
@@ -117,7 +120,9 @@ class TestUserProfileService:
         assert "language" in profile.preferences
 
     @pytest.mark.asyncio
-    async def test_generate_profile_with_user_profile(self, service, sample_user_with_profile):
+    async def test_generate_profile_with_user_profile(
+        self, service, sample_user_with_profile
+    ):
         """测试：生成用户画像（带profile属性）"""
         # Given
         await service.initialize()
@@ -167,8 +172,7 @@ class TestUserProfileService:
 
         # When
         updated_profile = await service.update_profile(
-            "user_123",
-            {"display_name": "Updated Name", "new_preference": "test_value"}
+            "user_123", {"display_name": "Updated Name", "new_preference": "test_value"}
         )
 
         # Then
@@ -251,7 +255,7 @@ class TestUserProfileService:
             "name": "New User",
             "email": "new@example.com",
             "interests": ["足球", "篮球"],
-            "language": "en"
+            "language": "en",
         }
 
         # When
@@ -324,7 +328,7 @@ class TestUserProfileService:
         users = [
             Mock(id="user1", username="user1"),
             Mock(id="user2", username="user2"),
-            Mock(id="user3", username="user3")
+            Mock(id="user3", username="user3"),
         ]
 
         # When
@@ -340,12 +344,11 @@ class TestUserProfileService:
         """测试：更新画像偏好"""
         # Given
         await service.initialize()
-        profile = await service.generate_profile(sample_user)
+        await service.generate_profile(sample_user)
 
         # When
         updated = await service.update_profile(
-            "user_123",
-            {"preferences": {"new_key": "new_value"}}
+            "user_123", {"preferences": {"new_key": "new_value"}}
         )
 
         # Then
@@ -362,7 +365,7 @@ class TestUserProfileService:
             user_id="test123",
             display_name="Test User",
             email="test@example.com",
-            preferences=preferences
+            preferences=preferences,
         )
 
         # Then

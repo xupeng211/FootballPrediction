@@ -40,17 +40,19 @@ class MockStrategy(PredictionStrategy):
         input_data.processed = True
         return input_data
 
-    async def _predict_internal(self, processed_input: PredictionInput) -> PredictionOutput:
+    async def _predict_internal(
+        self, processed_input: PredictionInput
+    ) -> PredictionOutput:
         """内部预测实现"""
         # 简单的模拟预测逻辑
-        home_goals = 2 if processed_input.home_team_form.startswith('W') else 1
-        away_goals = 1 if processed_input.away_team_form.startswith('L') else 0
+        home_goals = 2 if processed_input.home_team_form.startswith("W") else 1
+        away_goals = 1 if processed_input.away_team_form.startswith("L") else 0
         confidence = 0.75
 
         return PredictionOutput(
             prediction=(home_goals, away_goals),
             confidence=confidence,
-            reasoning=f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}"
+            reasoning=f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}",
         )
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
@@ -78,18 +80,14 @@ def valid_prediction_input():
         away_team_form="LDDLL",
         home_team_goals_scored=[2, 3, 1, 2, 1],
         away_team_goals_scored=[0, 1, 0, 2, 0],
-        match_date=datetime(2024, 1, 15, 15, 0)
+        match_date=datetime(2024, 1, 15, 15, 0),
     )
 
 
 @pytest.fixture
 def invalid_prediction_input():
     """创建无效的预测输入"""
-    return PredictionInput(
-        match_id=None,
-        home_team_id=1,
-        away_team_id=None
-    )
+    return PredictionInput(match_id=None, home_team_id=1, away_team_id=None)
 
 
 class TestPredictionStrategy:
@@ -106,11 +104,7 @@ class TestPredictionStrategy:
     @pytest.mark.asyncio
     async def test_strategy_configuration(self, mock_strategy):
         """测试策略配置"""
-        config = {
-            "param1": "value1",
-            "param2": 42,
-            "model_path": "/path/to/model"
-        }
+        config = {"param1": "value1", "param2": 42, "model_path": "/path/to/model"}
 
         await mock_strategy.initialize(config)
 
@@ -118,7 +112,9 @@ class TestPredictionStrategy:
         assert mock_strategy._config == config
 
     @pytest.mark.asyncio
-    async def test_successful_prediction_flow(self, mock_strategy, valid_prediction_input):
+    async def test_successful_prediction_flow(
+        self, mock_strategy, valid_prediction_input
+    ):
         """测试成功的预测流程"""
         # 初始化策略
         await mock_strategy.initialize({})
@@ -144,13 +140,17 @@ class TestPredictionStrategy:
         assert mock_strategy._total_confidence == result.confidence
 
     @pytest.mark.asyncio
-    async def test_prediction_without_initialization(self, mock_strategy, valid_prediction_input):
+    async def test_prediction_without_initialization(
+        self, mock_strategy, valid_prediction_input
+    ):
         """测试未初始化的预测"""
         with pytest.raises(RuntimeError, match="策略未初始化"):
             await mock_strategy.predict(valid_prediction_input)
 
     @pytest.mark.asyncio
-    async def test_invalid_input_handling(self, mock_strategy, invalid_prediction_input):
+    async def test_invalid_input_handling(
+        self, mock_strategy, invalid_prediction_input
+    ):
         """测试无效输入处理"""
         await mock_strategy.initialize({})
 
@@ -178,7 +178,9 @@ class TestPredictionStrategy:
         assert metrics.is_initialized is True
 
     @pytest.mark.asyncio
-    async def test_average_confidence_calculation(self, mock_strategy, valid_prediction_input):
+    async def test_average_confidence_calculation(
+        self, mock_strategy, valid_prediction_input
+    ):
         """测试平均置信度计算"""
         await mock_strategy.initialize({})
 
@@ -211,18 +213,22 @@ class TestPredictionStrategy:
         assert mock_strategy._total_confidence == 0.0
 
     @pytest.mark.asyncio
-    async def test_preprocessing_modification(self, mock_strategy, valid_prediction_input):
+    async def test_preprocessing_modification(
+        self, mock_strategy, valid_prediction_input
+    ):
         """测试预处理修改"""
         await mock_strategy.initialize({})
 
-        result = await mock_strategy.predict(valid_prediction_input)
+        await mock_strategy.predict(valid_prediction_input)
 
         # 验证预处理标记被添加
-        assert hasattr(valid_prediction_input, 'processed')
+        assert hasattr(valid_prediction_input, "processed")
         assert valid_prediction_input.processed is True
 
     @pytest.mark.asyncio
-    async def test_postprocessing_modification(self, mock_strategy, valid_prediction_input):
+    async def test_postprocessing_modification(
+        self, mock_strategy, valid_prediction_input
+    ):
         """测试后处理修改"""
         await mock_strategy.initialize({})
 
@@ -236,7 +242,7 @@ class TestPredictionStrategy:
         """测试带计时器的预测"""
         await mock_strategy.initialize({})
 
-        with patch('time.time', side_effect=[0.0, 0.1]):
+        with patch("time.time", side_effect=[0.0, 0.1]):
             result = await mock_strategy.predict_with_timing(valid_prediction_input)
 
         # 验证结果包含计时信息
@@ -251,7 +257,7 @@ class TestPredictionStrategy:
             StrategyType.HISTORICAL,
             StrategyType.STATISTICAL,
             StrategyType.ML_MODEL,
-            StrategyType.ENSEMBLE
+            StrategyType.ENSEMBLE,
         ]
 
         for strategy_type in valid_types:
@@ -271,7 +277,7 @@ class TestPredictionStrategy:
                 home_team_id=1,
                 away_team_id=2,
                 home_team_form="W" * i,
-                away_team_form="L" * i
+                away_team_form="L" * i,
             )
             for i in range(1, 6)
         ]
@@ -287,6 +293,7 @@ class TestPredictionStrategy:
     @pytest.mark.asyncio
     async def test_error_handling_in_prediction(self):
         """测试预测中的错误处理"""
+
         class ErrorStrategy(MockStrategy):
             async def _predict_internal(self, processed_input):
                 raise Exception("Prediction error")
@@ -294,11 +301,7 @@ class TestPredictionStrategy:
         strategy = ErrorStrategy("error_strategy")
         await strategy.initialize({})
 
-        input_data = PredictionInput(
-            match_id=1,
-            home_team_id=1,
-            away_team_id=2
-        )
+        input_data = PredictionInput(match_id=1, home_team_id=1, away_team_id=2)
 
         with pytest.raises(Exception, match="Prediction error"):
             await strategy.predict(input_data)
@@ -319,7 +322,7 @@ class TestPredictionStrategy:
         strategy_data = {
             "name": "deserialized_strategy",
             "type": "statistical",
-            "config": {"param1": "value1"}
+            "config": {"param1": "value1"},
         }
 
         # 注意：这需要在实际实现中支持
@@ -336,10 +339,7 @@ class TestPredictionStrategy:
         await mock_strategy.initialize({})
 
         # 创建并发任务
-        tasks = [
-            mock_strategy.predict(valid_prediction_input)
-            for _ in range(10)
-        ]
+        tasks = [mock_strategy.predict(valid_prediction_input) for _ in range(10)]
 
         # 执行并发预测
         results = await asyncio.gather(*tasks)

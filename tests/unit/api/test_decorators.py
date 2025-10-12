@@ -20,8 +20,9 @@ try:
         example_function_2,
         failing_function,
         slow_function,
-        global_decorator_service
+        global_decorator_service,
     )
+
     DECORATORS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -53,7 +54,7 @@ class TestAPIDecorators:
     def test_router_exists(self):
         """测试：路由器存在"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         assert len(router.routes) > 0
 
     def test_example_functions_exist(self):
@@ -94,12 +95,12 @@ class TestAPIDecorators:
         assert result == "Completed slowly"
         assert (end - start).total_seconds() >= 0.01
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_all(self, mock_service, client):
         """测试：获取所有装饰器统计"""
         mock_service.get_all_stats.return_value = {
             "function1": {"calls": 10, "success_rate": 0.9},
-            "function2": {"calls": 5, "success_rate": 1.0}
+            "function2": {"calls": 5, "success_rate": 1.0},
         }
 
         response = client.get("/decorators/stats")
@@ -109,13 +110,13 @@ class TestAPIDecorators:
         assert "function2" in data
         mock_service.get_all_stats.assert_called_once()
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_specific(self, mock_service, client):
         """测试：获取特定函数的装饰器统计"""
         mock_service.get_function_stats.return_value = {
             "function_name": "example_function_1",
             "calls": 10,
-            "success_rate": 1.0
+            "success_rate": 1.0,
         }
 
         response = client.get("/decorators/stats?function_name=example_function_1")
@@ -124,7 +125,7 @@ class TestAPIDecorators:
         assert data["function_name"] == "example_function_1"
         mock_service.get_function_stats.assert_called_with("example_function_1")
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_not_found(self, mock_service, client):
         """测试：获取不存在函数的统计"""
         mock_service.get_function_stats.return_value = None
@@ -135,7 +136,7 @@ class TestAPIDecorators:
         assert "detail" in data
         assert "未找到" in data["detail"]
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_clear_decorator_stats(self, mock_service, client):
         """测试：清空装饰器统计"""
         mock_service.clear_stats.return_value = None
@@ -163,7 +164,7 @@ class TestDecoratorDemos:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_logging_decorator(self, mock_service, client):
         """测试：日志装饰器演示"""
         # 创建模拟装饰器函数
@@ -188,7 +189,7 @@ class TestDecoratorDemos:
             example_function_1, decorator_names=["default_logging"]
         )
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_retry_decorator(self, mock_service, client):
         """测试：重试装饰器演示"""
         # 创建模拟装饰器函数
@@ -209,7 +210,7 @@ class TestDecoratorDemos:
         assert "decorator_stats" in data
         assert data["message"] == "函数失败后自动重试"
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_cache_decorator_with_cache(self, mock_service, client):
         """测试：缓存装饰器演示（使用缓存）"""
         # 创建模拟装饰器函数
@@ -232,7 +233,7 @@ class TestDecoratorDemos:
         assert data["cache_enabled"] is True
         assert "speedup" in data
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_timeout_decorator_success(self, mock_service, client):
         """测试：超时装饰器演示（成功）"""
         # 创建模拟装饰器函数
@@ -249,7 +250,7 @@ class TestDecoratorDemos:
         assert data["result"] == "Completed"
         assert data["timed_out"] is False
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_timeout_decorator_timeout(self, mock_service, client):
         """测试：超时装饰器演示（超时）"""
         # 创建模拟装饰器函数
@@ -266,7 +267,7 @@ class TestDecoratorDemos:
         assert data["result"] is None
         assert data["error_message"] == "Timeout"
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_metrics_decorator(self, mock_service, client):
         """测试：指标装饰器演示"""
         # 创建模拟装饰器函数
@@ -274,14 +275,14 @@ class TestDecoratorDemos:
         mock_decorated.side_effect = [
             "Processed: iteration_0",
             "Processed: iteration_1",
-            "Processed: iteration_2"
+            "Processed: iteration_2",
         ]
         mock_decorated.get_decorator_stats.return_value = {
             "metrics": {
                 "total_calls": 3,
                 "average_time": 0.02,
                 "min_time": 0.018,
-                "max_time": 0.025
+                "max_time": 0.025,
             }
         }
 
@@ -296,7 +297,7 @@ class TestDecoratorDemos:
         assert len(data["sample_results"]) == 3
         assert "decorator_stats" in data
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     async def test_demo_combo_decorators(self, mock_service, client):
         """测试：组合装饰器演示"""
         # 创建模拟装饰器函数
@@ -308,7 +309,7 @@ class TestDecoratorDemos:
                 "logging": {"calls": 2},
                 "metrics": {"calls": 2},
                 "timeout": {"calls": 2},
-                "cache": {"hits": 1, "misses": 1}
+                "cache": {"hits": 1, "misses": 1},
             }
         }
 
@@ -340,22 +341,37 @@ class TestDecoratorConfigManagement:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_configs(self, mock_service, client):
         """测试：获取装饰器配置"""
         # 创建模拟工厂
         mock_factory = Mock()
         mock_factory.list_configs.return_value = ["logging", "cache", "retry"]
         mock_factory.get_config.side_effect = [
-            Mock(decorator_type="logging", enabled=True, priority=1, parameters={"level": "INFO"}),
-            Mock(decorator_type="cache", enabled=True, priority=2, parameters={"ttl": 300}),
-            Mock(decorator_type="retry", enabled=False, priority=3, parameters={"max_attempts": 3})
+            Mock(
+                decorator_type="logging",
+                enabled=True,
+                priority=1,
+                parameters={"level": "INFO"},
+            ),
+            Mock(
+                decorator_type="cache",
+                enabled=True,
+                priority=2,
+                parameters={"ttl": 300},
+            ),
+            Mock(
+                decorator_type="retry",
+                enabled=False,
+                priority=3,
+                parameters={"max_attempts": 3},
+            ),
         ]
         mock_factory.list_chain_configs.return_value = ["default_chain"]
         mock_factory.get_chain_config.return_value = Mock(
             target_functions=["example_*"],
             is_global=True,
-            decorators=["logging", "cache"]
+            decorators=["logging", "cache"],
         )
 
         mock_service.factory = mock_factory
@@ -372,7 +388,7 @@ class TestDecoratorConfigManagement:
         assert data["decorators"]["logging"]["type"] == "logging"
         assert data["decorators"]["cache"]["enabled"] is True
 
-    @patch('src.api.decorators.global_decorator_service')
+    @patch("src.api.decorators.global_decorator_service")
     def test_reload_decorator_configs(self, mock_service, client):
         """测试：重新加载装饰器配置"""
         mock_service.reload_configuration.return_value = None
@@ -400,20 +416,22 @@ class TestDecoratorContext:
         """创建测试客户端"""
         return TestClient(app)
 
-    @patch('src.api.decorators.global_decorator_service')
-    @patch('src.api.decorators.DecoratorContext')
-    async def test_demo_decorator_context(self, mock_context_class, mock_service, client):
+    @patch("src.api.decorators.global_decorator_service")
+    @patch("src.api.decorators.DecoratorContext")
+    async def test_demo_decorator_context(
+        self, mock_context_class, mock_service, client
+    ):
         """测试：装饰器上下文演示"""
         # 创建模拟上下文
         mock_context = Mock()
         mock_context.get.side_effect = lambda key, default=None: {
             "user_id": "demo_user",
-            "request_id": "req_12345"
+            "request_id": "req_12345",
         }.get(key, default)
         mock_context.to_dict.return_value = {
             "user_id": "demo_user",
             "request_id": "req_12345",
-            "execution_path": ["step1", "step2", "step3"]
+            "execution_path": ["step1", "step2", "step3"],
         }
         mock_context.execution_path = ["step1", "step2", "step3"]
         mock_context.get_execution_time.return_value = 0.05
@@ -425,7 +443,7 @@ class TestDecoratorContext:
         mock_decorated.side_effect = [
             {"value": 2, "user_id": "demo_user", "request_id": "req_12345"},
             {"value": 4, "user_id": "demo_user", "request_id": "req_12345"},
-            {"value": 6, "user_id": "demo_user", "request_id": "req_12345"}
+            {"value": 6, "user_id": "demo_user", "request_id": "req_12345"},
         ]
 
         mock_service.apply_decorators.return_value = mock_decorated
@@ -441,7 +459,9 @@ class TestDecoratorContext:
         assert "total_time" in data
 
 
-@pytest.mark.skipif(DECORATORS_AVAILABLE, reason="Decorators module should be available")
+@pytest.mark.skipif(
+    DECORATORS_AVAILABLE, reason="Decorators module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -477,7 +497,7 @@ def test_router_routes():
             "/decorators/demo/combo",
             "/decorators/configs",
             "/decorators/reload",
-            "/decorators/demo/context"
+            "/decorators/demo/context",
         ]
 
         for route in expected_routes:
@@ -492,7 +512,7 @@ async def test_global_decorator_service():
         assert global_decorator_service is not None
 
         # 验证服务有基本方法
-        assert hasattr(global_decorator_service, 'apply_decorators')
-        assert hasattr(global_decorator_service, 'get_all_stats')
-        assert hasattr(global_decorator_service, 'clear_stats')
-        assert hasattr(global_decorator_service, 'reload_configuration')
+        assert hasattr(global_decorator_service, "apply_decorators")
+        assert hasattr(global_decorator_service, "get_all_stats")
+        assert hasattr(global_decorator_service, "clear_stats")
+        assert hasattr(global_decorator_service, "reload_configuration")

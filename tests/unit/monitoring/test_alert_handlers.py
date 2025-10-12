@@ -19,8 +19,9 @@ try:
         WebhookAlertHandler,
         AlertManager,
         AlertSeverity,
-        AlertStatus
+        AlertStatus,
     )
+
     ALERT_HANDLERS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -35,7 +36,9 @@ except ImportError as e:
     AlertStatus = None
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestAlertHandler:
     """警报处理器基础测试"""
 
@@ -43,16 +46,12 @@ class TestAlertHandler:
         """测试：警报处理器创建"""
         handler = AlertHandler()
         assert handler is not None
-        assert hasattr(handler, 'handle_alert')
-        assert hasattr(handler, 'is_active')
+        assert hasattr(handler, "handle_alert")
+        assert hasattr(handler, "is_active")
 
     def test_alert_handler_configuration(self):
         """测试：警报处理器配置"""
-        config = {
-            "enabled": True,
-            "retry_attempts": 3,
-            "timeout": 30
-        }
+        config = {"enabled": True, "retry_attempts": 3, "timeout": 30}
 
         handler = AlertHandler(config)
         assert handler.config == config
@@ -67,14 +66,16 @@ class TestAlertHandler:
             "id": "alert_123",
             "severity": "high",
             "message": "Test alert",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         result = await handler.handle_alert(alert)
         assert result is True or result is None  # 可能返回True或None
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestEmailAlertHandler:
     """邮件警报处理器测试"""
 
@@ -85,7 +86,7 @@ class TestEmailAlertHandler:
             "smtp_port": 587,
             "username": "alerts@example.com",
             "password": "secret",
-            "recipients": ["admin@example.com"]
+            "recipients": ["admin@example.com"],
         }
 
         handler = EmailAlertHandler(config)
@@ -100,7 +101,7 @@ class TestEmailAlertHandler:
             "smtp_port": 587,
             "username": "test@test.com",
             "password": "test123",
-            "recipients": ["admin@test.com"]
+            "recipients": ["admin@test.com"],
         }
 
         handler = EmailAlertHandler(config)
@@ -110,19 +111,16 @@ class TestEmailAlertHandler:
             "severity": "critical",
             "subject": "Critical Alert: Service Down",
             "message": "The service is down. Please investigate immediately.",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-        with patch.object(handler, '_send_email', return_value=True):
+        with patch.object(handler, "_send_email", return_value=True):
             result = await handler.handle_alert(alert)
             assert result is True
 
     def test_email_formatting(self):
         """测试：邮件格式化"""
-        config = {
-            "smtp_server": "smtp.test.com",
-            "recipients": ["admin@test.com"]
-        }
+        config = {"smtp_server": "smtp.test.com", "recipients": ["admin@test.com"]}
 
         handler = EmailAlertHandler(config)
 
@@ -130,10 +128,7 @@ class TestEmailAlertHandler:
             "id": "test_alert",
             "severity": "warning",
             "message": "Warning: High memory usage",
-            "details": {
-                "memory_usage": "85%",
-                "threshold": "80%"
-            }
+            "details": {"memory_usage": "85%", "threshold": "80%"},
         }
 
         subject = handler._format_subject(alert)
@@ -144,7 +139,9 @@ class TestEmailAlertHandler:
         assert "85%" in body
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestSlackAlertHandler:
     """Slack警报处理器测试"""
 
@@ -153,7 +150,7 @@ class TestSlackAlertHandler:
         config = {
             "webhook_url": "https://hooks.slack.com/services/...",
             "channel": "#alerts",
-            "username": "AlertBot"
+            "username": "AlertBot",
         }
 
         handler = SlackAlertHandler(config)
@@ -163,10 +160,7 @@ class TestSlackAlertHandler:
     @pytest.mark.asyncio
     async def test_send_slack_alert(self):
         """测试：发送Slack警报"""
-        config = {
-            "webhook_url": "https://hooks.slack.com/test",
-            "channel": "#alerts"
-        }
+        config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
 
@@ -174,10 +168,10 @@ class TestSlackAlertHandler:
             "id": "slack_alert_1",
             "severity": "error",
             "message": "API response time exceeded threshold",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-        with patch('aiohttp.ClientSession.post') as mock_post:
+        with patch("aiohttp.ClientSession.post") as mock_post:
             mock_response = Mock()
             mock_response.status = 200
             mock_post.return_value.__aenter__.return_value = mock_response
@@ -187,10 +181,7 @@ class TestSlackAlertHandler:
 
     def test_slack_payload_format(self):
         """测试：Slack载荷格式"""
-        config = {
-            "webhook_url": "https://hooks.slack.com/test",
-            "channel": "#alerts"
-        }
+        config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
 
@@ -199,7 +190,7 @@ class TestSlackAlertHandler:
             "severity": "critical",
             "message": "Database connection failed",
             "service": "auth-service",
-            "environment": "production"
+            "environment": "production",
         }
 
         payload = handler._create_payload(alert)
@@ -209,7 +200,9 @@ class TestSlackAlertHandler:
         assert payload["attachments"][0]["color"] == "danger"  # critical = red
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestWebhookAlertHandler:
     """Webhook警报处理器测试"""
 
@@ -220,8 +213,8 @@ class TestWebhookAlertHandler:
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer token123",
-                "Content-Type": "application/json"
-            }
+                "Content-Type": "application/json",
+            },
         }
 
         handler = WebhookAlertHandler(config)
@@ -234,7 +227,7 @@ class TestWebhookAlertHandler:
         config = {
             "url": "https://api.example.com/webhook",
             "method": "POST",
-            "headers": {"Authorization": "Bearer token"}
+            "headers": {"Authorization": "Bearer token"},
         }
 
         handler = WebhookAlertHandler(config)
@@ -243,14 +236,10 @@ class TestWebhookAlertHandler:
             "id": "webhook_alert",
             "severity": "info",
             "message": "System health check passed",
-            "metrics": {
-                "cpu": 45,
-                "memory": 67,
-                "disk": 23
-            }
+            "metrics": {"cpu": 45, "memory": 67, "disk": 23},
         }
 
-        with patch('aiohttp.ClientSession.request') as mock_request:
+        with patch("aiohttp.ClientSession.request") as mock_request:
             mock_response = Mock()
             mock_response.status = 200
             mock_request.return_value.__aenter__.return_value = mock_response
@@ -263,7 +252,7 @@ class TestWebhookAlertHandler:
         config = {
             "url": "https://api.example.com/webhook",
             "retry_attempts": 3,
-            "retry_delay": 1
+            "retry_delay": 1,
         }
 
         handler = WebhookAlertHandler(config)
@@ -272,7 +261,9 @@ class TestWebhookAlertHandler:
         assert handler.retry_delay == 1
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestAlertManager:
     """警报管理器测试"""
 
@@ -280,9 +271,9 @@ class TestAlertManager:
         """测试：警报管理器创建"""
         manager = AlertManager()
         assert manager is not None
-        assert hasattr(manager, 'register_handler')
-        assert hasattr(manager, 'handle_alert')
-        assert hasattr(manager, 'get_active_handlers')
+        assert hasattr(manager, "register_handler")
+        assert hasattr(manager, "handle_alert")
+        assert hasattr(manager, "get_active_handlers")
 
     def test_register_handler(self):
         """测试：注册处理器"""
@@ -315,7 +306,7 @@ class TestAlertManager:
         alert = {
             "id": "multi_handler_alert",
             "severity": "high",
-            "message": "Multiple handler test"
+            "message": "Multiple handler test",
         }
 
         results = await manager.handle_alert(alert)
@@ -347,7 +338,7 @@ class TestAlertManager:
         alerts = [
             {"severity": "info", "message": "Info"},
             {"severity": "warning", "message": "Warning"},
-            {"severity": "critical", "message": "Critical"}
+            {"severity": "critical", "message": "Critical"},
         ]
 
         for alert in alerts:
@@ -359,7 +350,9 @@ class TestAlertManager:
                 assert len(handlers) == 2
 
 
-@pytest.mark.skipif(ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module should be available")
+@pytest.mark.skipif(
+    ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -378,7 +371,7 @@ def test_module_imports():
             EmailAlertHandler,
             SlackAlertHandler,
             WebhookAlertHandler,
-            AlertManager
+            AlertManager,
         )
 
         assert AlertHandler is not None
@@ -388,7 +381,9 @@ def test_module_imports():
         assert AlertManager is not None
 
 
-@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
+@pytest.mark.skipif(
+    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
+)
 class TestAlertHandlersIntegration:
     """警报处理器集成测试"""
 
@@ -401,20 +396,20 @@ class TestAlertHandlersIntegration:
         # 创建并配置处理器
         email_config = {
             "smtp_server": "smtp.test.com",
-            "recipients": ["admin@test.com"]
+            "recipients": ["admin@test.com"],
         }
 
         slack_config = {
             "webhook_url": "https://hooks.slack.com/test",
-            "channel": "#alerts"
+            "channel": "#alerts",
         }
 
         email_handler = EmailAlertHandler(email_config)
         slack_handler = SlackAlertHandler(slack_config)
 
         # 模拟发送
-        with patch.object(email_handler, '_send_email', return_value=True):
-            with patch('aiohttp.ClientSession.post') as mock_post:
+        with patch.object(email_handler, "_send_email", return_value=True):
+            with patch("aiohttp.ClientSession.post") as mock_post:
                 mock_response = Mock()
                 mock_response.status = 200
                 mock_post.return_value.__aenter__.return_value = mock_response
@@ -428,7 +423,7 @@ class TestAlertHandlersIntegration:
                     "severity": "error",
                     "message": "Integration test alert",
                     "service": "test-service",
-                    "environment": "test"
+                    "environment": "test",
                 }
 
                 results = await manager.handle_alert(alert)
@@ -445,7 +440,7 @@ class TestAlertHandlersIntegration:
             "id": "dedup_test",
             "severity": "warning",
             "message": "Duplicate test",
-            "fingerprint": "service:cpu_threshold"
+            "fingerprint": "service:cpu_threshold",
         }
 
         # 第一时间发送
@@ -460,10 +455,7 @@ class TestAlertHandlersIntegration:
     async def test_alert_rate_limiting(self):
         """测试：警报速率限制"""
         manager = AlertManager()
-        manager.rate_limit = {
-            "max_alerts_per_minute": 5,
-            "max_alerts_per_hour": 50
-        }
+        manager.rate_limit = {"max_alerts_per_minute": 5, "max_alerts_per_hour": 50}
 
         handler = Mock(spec=AlertHandler)
         handler.handle_alert = AsyncMock(return_value=True)
@@ -491,7 +483,7 @@ class TestAlertHandlersIntegration:
         similar_alerts = [
             {"id": "agg_1", "type": "cpu_high", "service": "api", "value": 85},
             {"id": "agg_2", "type": "cpu_high", "service": "api", "value": 87},
-            {"id": "agg_3", "type": "cpu_high", "service": "api", "value": 89}
+            {"id": "agg_3", "type": "cpu_high", "service": "api", "value": 89},
         ]
 
         # 聚合警报
@@ -507,17 +499,18 @@ class TestAlertHandlersIntegration:
         manager = AlertManager()
 
         # 注册模板
-        manager.register_template("cpu_alert", {
-            "subject": "High CPU Usage Alert",
-            "message": "CPU usage is {value}% on {service}",
-            "severity": "warning"
-        })
+        manager.register_template(
+            "cpu_alert",
+            {
+                "subject": "High CPU Usage Alert",
+                "message": "CPU usage is {value}% on {service}",
+                "severity": "warning",
+            },
+        )
 
         # 使用模板生成警报
         alert = manager.create_alert_from_template(
-            "cpu_alert",
-            service="api-service",
-            value=85
+            "cpu_alert", service="api-service", value=85
         )
 
         assert alert["subject"] == "High CPU Usage Alert"
@@ -534,7 +527,7 @@ class TestAlertHandlersIntegration:
         handlers = [
             EmailAlertHandler({}),
             SlackAlertHandler({}),
-            WebhookAlertHandler({})
+            WebhookAlertHandler({}),
         ]
 
         for i, handler in enumerate(handlers):
@@ -556,21 +549,9 @@ class TestAlertHandlersIntegration:
         manager.metrics = {
             "total_sent": 100,
             "total_failed": 5,
-            "by_severity": {
-                "info": 50,
-                "warning": 30,
-                "error": 15,
-                "critical": 5
-            },
-            "by_handler": {
-                "email": 80,
-                "slack": 60,
-                "webhook": 40
-            },
-            "last_24h": {
-                "sent": 25,
-                "failed": 1
-            }
+            "by_severity": {"info": 50, "warning": 30, "error": 15, "critical": 5},
+            "by_handler": {"email": 80, "slack": 60, "webhook": 40},
+            "last_24h": {"sent": 25, "failed": 1},
         }
 
         metrics = manager.get_metrics()

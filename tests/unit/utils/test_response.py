@@ -16,10 +16,7 @@ class TestAPIResponseModel:
     def test_model_creation_success(self):
         """测试：创建成功响应模型"""
         model = APIResponseModel(
-            success=True,
-            message="操作成功",
-            data={"id": 1, "name": "test"},
-            code="200"
+            success=True, message="操作成功", data={"id": 1, "name": "test"}, code="200"
         )
 
         assert model.success is True
@@ -29,11 +26,7 @@ class TestAPIResponseModel:
 
     def test_model_creation_error(self):
         """测试：创建错误响应模型"""
-        model = APIResponseModel(
-            success=False,
-            message="操作失败",
-            code="500"
-        )
+        model = APIResponseModel(success=False, message="操作失败", code="500")
 
         assert model.success is False
         assert model.message == "操作失败"
@@ -42,10 +35,7 @@ class TestAPIResponseModel:
 
     def test_model_defaults(self):
         """测试：模型默认值"""
-        model = APIResponseModel(
-            success=True,
-            message="测试"
-        )
+        model = APIResponseModel(success=True, message="测试")
 
         assert model.success is True
         assert model.message == "测试"
@@ -54,11 +44,7 @@ class TestAPIResponseModel:
 
     def test_model_serialization(self):
         """测试：模型序列化"""
-        model = APIResponseModel(
-            success=True,
-            message="测试",
-            data={"key": "value"}
-        )
+        model = APIResponseModel(success=True, message="测试", data={"key": "value"})
 
         json_data = model.model_dump()
         assert json_data["success"] is True
@@ -173,11 +159,7 @@ class TestAPIResponseError:
     def test_error_with_data(self):
         """测试：错误响应（带数据）"""
         error_data = {"field": "email", "error": "格式无效"}
-        response = APIResponse.error(
-            message="验证错误",
-            code=400,
-            data=error_data
-        )
+        response = APIResponse.error(message="验证错误", code=400, data=error_data)
 
         assert response["success"] is False
         assert response["message"] == "验证错误"
@@ -253,14 +235,7 @@ class TestAPIResponseEdgeCases:
     def test_nested_data_response(self):
         """测试：嵌套数据响应"""
         nested_data = {
-            "user": {
-                "profile": {
-                    "settings": {
-                        "theme": "dark",
-                        "notifications": True
-                    }
-                }
-            }
+            "user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}
         }
         response = APIResponse.success(data=nested_data)
 
@@ -273,8 +248,8 @@ class TestAPIResponseEdgeCases:
             "操作成功！",
             "Error: Invalid input",
             "测试中文消息",
-            "Message with \"quotes\"",
-            "Line 1\nLine 2"
+            'Message with "quotes"',
+            "Line 1\nLine 2",
         ]
 
         for msg in messages:
@@ -310,7 +285,7 @@ class TestAPIResponseEdgeCases:
             APIResponse.success(),
             APIResponse.success(),
             APIResponse.error(),
-            APIResponse.error()
+            APIResponse.error(),
         ]
 
         for response in responses:
@@ -346,8 +321,7 @@ class TestAPIResponsePerformance:
 
         large_data = {
             "users": [
-                {"id": i, "name": f"user_{i}", "data": "x" * 100}
-                for i in range(100)
+                {"id": i, "name": f"user_{i}", "data": "x" * 100} for i in range(100)
             ]
         }
 
@@ -361,11 +335,7 @@ class TestAPIResponsePerformance:
 # 测试模块级别的功能
 def test_module_imports():
     """测试：模块导入"""
-    from src.utils.response import (
-        APIResponse,
-        APIResponseModel,
-        ResponseUtils
-    )
+    from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
     assert APIResponse is not None
     assert APIResponseModel is not None
@@ -376,11 +346,7 @@ def test_all_classes_exported():
     """测试：所有类都被导出"""
     import src.utils.response as response_module
 
-    expected_classes = [
-        'APIResponseModel',
-        'APIResponse',
-        'ResponseUtils'
-    ]
+    expected_classes = ["APIResponseModel", "APIResponse", "ResponseUtils"]
 
     for class_name in expected_classes:
         assert hasattr(response_module, class_name)
@@ -388,11 +354,11 @@ def test_all_classes_exported():
 
 def test_static_methods():
     """测试：静态方法存在"""
-    assert hasattr(APIResponse, 'success')
-    assert hasattr(APIResponse, 'success_response')
-    assert hasattr(APIResponse, 'error')
-    assert hasattr(APIResponse, 'error_response')
+    assert hasattr(APIResponse, "success")
+    assert hasattr(APIResponse, "success_response")
+    assert hasattr(APIResponse, "error")
+    assert hasattr(APIResponse, "error_response")
 
     # 验证它们是可调用的
-    assert callable(getattr(APIResponse, 'success'))
-    assert callable(getattr(APIResponse, 'error'))
+    assert callable(getattr(APIResponse, "success"))
+    assert callable(getattr(APIResponse, "error"))

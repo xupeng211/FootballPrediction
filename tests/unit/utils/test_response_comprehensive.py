@@ -306,8 +306,8 @@ class TestResponseUtils:
     def test_response_utils_is_alias(self):
         """测试：ResponseUtils是APIResponse的别名"""
         assert ResponseUtils is APIResponse
-        assert hasattr(ResponseUtils, 'success')
-        assert hasattr(ResponseUtils, 'error')
+        assert hasattr(ResponseUtils, "success")
+        assert hasattr(ResponseUtils, "error")
         assert ResponseUtils.success == APIResponse.success
         assert ResponseUtils.error == APIResponse.error
         assert ResponseUtils.success_response == APIResponse.success_response
@@ -338,8 +338,7 @@ class TestResponseUtils:
         """测试：ResponseUtils综合功能"""
         # 成功响应
         success = ResponseUtils.success_response(
-            data={"items": ["item1", "item2"]},
-            message="通过别名获取数据成功"
+            data={"items": ["item1", "item2"]}, message="通过别名获取数据成功"
         )
         assert success["success"] is True
         assert success["message"] == "通过别名获取数据成功"
@@ -349,7 +348,7 @@ class TestResponseUtils:
         error = ResponseUtils.error_response(
             message="通过别名处理错误",
             code=422,
-            data={"field": "name", "reason": "不能为空"}
+            data={"field": "name", "reason": "不能为空"},
         )
         assert error["success"] is False
         assert error["message"] == "通过别名处理错误"

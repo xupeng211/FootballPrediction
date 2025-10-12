@@ -16,6 +16,7 @@ from tests.mocks.fast_mocks import FastRedisManager
 # 测试导入
 try:
     from src.cache.redis_manager import RedisManager
+
     REDIS_MANAGER_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -35,13 +36,15 @@ def mock_redis_manager():
     if not REDIS_MANAGER_AVAILABLE:
         pytest.skip("Redis manager module not available")
 
-    with patch('src.cache.redis_manager.RedisManager') as mock:
+    with patch("src.cache.redis_manager.RedisManager") as mock:
         redis_instance = FastRedisManager()
         mock.return_value = redis_instance
         yield redis_instance
 
 
-@pytest.mark.skipif(not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available")
+@pytest.mark.skipif(
+    not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available"
+)
 class TestMockRedisOptimized:
     """Mock Redis 优化测试"""
 
@@ -165,6 +168,7 @@ class TestMockRedisOptimized:
         """测试：复杂数据类型"""
         # JSON 数据
         import json
+
         json_data = {"name": "test", "values": [1, 2, 3]}
         fast_redis.set("json_key", json.dumps(json_data))
         retrieved = json.loads(fast_redis.get("json_key"))
@@ -190,16 +194,18 @@ class TestMockRedisOptimized:
         assert result == "async_value"
 
 
-@pytest.mark.skipif(not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available")
+@pytest.mark.skipif(
+    not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available"
+)
 class TestRedisManagerIntegration:
     """Redis Manager 集成测试"""
 
     def test_redis_manager_creation(self, mock_redis_manager):
         """测试：Redis Manager 创建"""
         assert mock_redis_manager is not None
-        assert hasattr(mock_redis_manager, 'get')
-        assert hasattr(mock_redis_manager, 'set')
-        assert hasattr(mock_redis_manager, 'delete')
+        assert hasattr(mock_redis_manager, "get")
+        assert hasattr(mock_redis_manager, "set")
+        assert hasattr(mock_redis_manager, "delete")
 
     @pytest.mark.asyncio
     async def test_redis_cache_workflow(self, mock_redis_manager):
@@ -210,6 +216,7 @@ class TestRedisManagerIntegration:
 
         # 缓存数据
         import json
+
         mock_redis_manager.set(cache_key, json.dumps(cache_data), ex=3600)
 
         # 获取缓存

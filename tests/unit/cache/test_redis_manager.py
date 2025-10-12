@@ -17,7 +17,7 @@ from src.cache.redis_manager import (
     set_cache,
     delete_cache,
     exists_cache,
-    ttl_cache
+    ttl_cache,
 )
 
 
@@ -61,11 +61,11 @@ class TestRedisManager:
         manager = RedisManager()
 
         # 检查必要的属性
-        assert hasattr(manager, 'connection_manager')
-        assert hasattr(manager, 'key_manager')
-        assert hasattr(manager, 'async_ops')
-        assert hasattr(manager, 'sync_ops')
-        assert hasattr(manager, 'logger')
+        assert hasattr(manager, "connection_manager")
+        assert hasattr(manager, "key_manager")
+        assert hasattr(manager, "async_ops")
+        assert hasattr(manager, "sync_ops")
+        assert hasattr(manager, "logger")
 
     def test_get_key_manager(self):
         """测试：获取键管理器"""
@@ -103,13 +103,13 @@ class TestCacheKeyManager:
 
         # 检查是否有基本的键管理方法
         # 具体方法取决于实现
-        assert hasattr(manager, '__class__')
+        assert hasattr(manager, "__class__")
 
 
 class TestCacheConvenienceFunctions:
     """缓存便捷函数测试"""
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_get_cache_function(self, mock_get_manager):
         """测试：获取缓存函数"""
         mock_manager = Mock()
@@ -121,7 +121,7 @@ class TestCacheConvenienceFunctions:
         assert result == "test_value"
         mock_manager.get_sync_client.assert_called_once()
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_set_cache_function(self, mock_get_manager):
         """测试：设置缓存函数"""
         mock_manager = Mock()
@@ -133,7 +133,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
         mock_manager.get_sync_client.assert_called_once()
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_set_cache_with_ttl(self, mock_get_manager):
         """测试：设置带TTL的缓存函数"""
         mock_manager = Mock()
@@ -144,7 +144,7 @@ class TestCacheConvenienceFunctions:
         result = set_cache("test_key", "test_value", ttl=3600)
         assert result is True
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_delete_cache_function(self, mock_get_manager):
         """测试：删除缓存函数"""
         mock_manager = Mock()
@@ -156,7 +156,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
         mock_manager.get_sync_client.assert_called_once()
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_exists_cache_function(self, mock_get_manager):
         """测试：检查缓存存在函数"""
         mock_manager = Mock()
@@ -168,7 +168,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
         mock_manager.get_sync_client.assert_called_once()
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_ttl_cache_function(self, mock_get_manager):
         """测试：获取TTL函数"""
         mock_manager = Mock()
@@ -179,7 +179,7 @@ class TestCacheConvenienceFunctions:
         result = ttl_cache("test_key")
         assert result == 3600
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_ttl_cache_not_exists(self, mock_get_manager):
         """测试：获取不存在键的TTL"""
         mock_manager = Mock()
@@ -190,13 +190,16 @@ class TestCacheConvenienceFunctions:
         result = ttl_cache("test_key")
         assert result == -2
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_ttl_cache_error_handling(self, mock_get_manager):
         """测试：TTL错误处理"""
         import redis
+
         mock_manager = Mock()
         mock_manager.get_sync_client = Mock(return_value=Mock())
-        mock_manager.get_sync_client.return_value.ttl.side_effect = redis.RedisError("Connection error")
+        mock_manager.get_sync_client.return_value.ttl.side_effect = redis.RedisError(
+            "Connection error"
+        )
         mock_get_manager.return_value = mock_manager
 
         result = ttl_cache("test_key")
@@ -206,7 +209,7 @@ class TestCacheConvenienceFunctions:
 class TestAsyncCacheFunctions:
     """异步缓存函数测试"""
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     @pytest.mark.asyncio
     async def test_async_cache_functions_import(self, mock_get_manager):
         """测试：异步缓存函数导入"""
@@ -219,7 +222,7 @@ class TestAsyncCacheFunctions:
                 aexists_cache,
                 attl_cache,
                 amget_cache,
-                amset_cache
+                amset_cache,
             )
 
             assert callable(aget_cache)
@@ -232,20 +235,20 @@ class TestAsyncCacheFunctions:
         except ImportError:
             pytest.skip("Async cache functions not available")
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_async_functions_exist(self, mock_get_manager):
         """测试：异步函数存在"""
         # 这些函数应该在模块中定义
         import src.cache.redis_manager as redis_manager
 
         async_functions = [
-            'aget_cache',
-            'aset_cache',
-            'adelete_cache',
-            'aexists_cache',
-            'attl_cache',
-            'amget_cache',
-            'amset_cache'
+            "aget_cache",
+            "aset_cache",
+            "adelete_cache",
+            "aexists_cache",
+            "attl_cache",
+            "amget_cache",
+            "amset_cache",
         ]
 
         for func_name in async_functions:
@@ -260,7 +263,7 @@ class TestModuleMetadata:
         """测试：模块版本信息"""
         import src.cache.redis_manager as redis_manager
 
-        if hasattr(redis_manager, '__version__'):
+        if hasattr(redis_manager, "__version__"):
             assert isinstance(redis_manager.__version__, str)
             assert len(redis_manager.__version__) > 0
 
@@ -268,7 +271,7 @@ class TestModuleMetadata:
         """测试：模块描述"""
         import src.cache.redis_manager as redis_manager
 
-        if hasattr(redis_manager, '__description__'):
+        if hasattr(redis_manager, "__description__"):
             assert isinstance(redis_manager.__description__, str)
             assert len(redis_manager.__description__) > 0
 
@@ -276,21 +279,21 @@ class TestModuleMetadata:
         """测试：模块导出"""
         import src.cache.redis_manager as redis_manager
 
-        if hasattr(redis_manager, '__all__'):
+        if hasattr(redis_manager, "__all__"):
             exports = redis_manager.__all__
             assert isinstance(exports, list)
             assert len(exports) > 0
 
             # 检查主要导出
             expected_exports = [
-                'RedisManager',
-                'CacheKeyManager',
-                'get_redis_manager',
-                'get_cache',
-                'set_cache',
-                'delete_cache',
-                'exists_cache',
-                'ttl_cache'
+                "RedisManager",
+                "CacheKeyManager",
+                "get_redis_manager",
+                "get_cache",
+                "set_cache",
+                "delete_cache",
+                "exists_cache",
+                "ttl_cache",
             ]
 
             for export in expected_exports:
@@ -303,7 +306,7 @@ class TestErrorHandling:
     def test_redis_unavailable_handling(self):
         """测试：Redis不可用时的处理"""
         # 模拟Redis不可用的情况
-        with patch('src.cache.redis_manager.get_redis_manager') as mock_get_manager:
+        with patch("src.cache.redis_manager.get_redis_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_manager.get_sync_client.side_effect = Exception("Redis unavailable")
             mock_get_manager.return_value = mock_manager
@@ -315,7 +318,7 @@ class TestErrorHandling:
                 # 如果抛出异常，应该是预期的
                 pass
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_serialization_error_handling(self, mock_get_manager):
         """测试：序列化错误处理"""
         mock_manager = Mock()
@@ -326,16 +329,17 @@ class TestErrorHandling:
 
         # 应该能够处理序列化错误
         try:
-            result = set_cache("test_key", object())  # 不可序列化的对象
+            set_cache("test_key", object())  # 不可序列化的对象
             # 可能返回False或抛出异常，取决于实现
         except TypeError:
             # 预期的错误
             pass
 
-    @patch('src.cache.redis_manager.get_redis_manager')
+    @patch("src.cache.redis_manager.get_redis_manager")
     def test_connection_error_handling(self, mock_get_manager):
         """测试：连接错误处理"""
         import redis
+
         mock_manager = Mock()
         mock_manager.sync_ops = Mock()
         mock_manager.sync_ops.get.side_effect = redis.ConnectionError("Cannot connect")
@@ -343,7 +347,7 @@ class TestErrorHandling:
 
         # 应该能够处理连接错误
         try:
-            result = get_cache("test_key")
+            get_cache("test_key")
             # 可能返回None或抛出异常
         except redis.ConnectionError:
             # 预期的错误
@@ -364,7 +368,7 @@ class TestConfiguration:
             "redis://localhost:6379",
             "redis://localhost:6380/0",
             "redis://user:pass@localhost:6379/1",
-            "redis://localhost:6379?ssl=true"
+            "redis://localhost:6379?ssl=true",
         ]
 
         for url in custom_urls:
@@ -373,7 +377,7 @@ class TestConfiguration:
 
     def test_environment_redis_url(self):
         """测试：环境变量Redis URL"""
-        with patch.dict('os.environ', {'REDIS_URL': 'redis://env-host:6379'}):
+        with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
             manager = RedisManager()
             # 如果实现使用环境变量，这里应该使用环境变量的值
             # 否则使用传入的URL或默认值

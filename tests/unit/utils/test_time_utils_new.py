@@ -167,7 +167,7 @@ class TestTimeUtils:
         """测试：utc_now与类方法返回相同类型"""
         func_result = utc_now()
         class_result = TimeUtils.now_utc()
-        assert type(func_result) == type(class_result)
+        assert type(func_result) is type(class_result)
         assert func_result.tzinfo == class_result.tzinfo
 
     def test_parse_datetime_function_default(self):
@@ -221,7 +221,7 @@ class TestTimeUtils:
         """测试：parse_datetime函数处理无效类型"""
         # 实际实现会抛出TypeError而不是返回None
         try:
-            result = parse_datetime(123)
+            parse_datetime(123)
             assert False, "应该抛出TypeError"
         except TypeError:
             pass  # 预期的错误

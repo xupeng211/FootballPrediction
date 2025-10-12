@@ -11,6 +11,7 @@ from typing import List
 # 测试导入
 try:
     from src.utils.string_utils import StringUtils
+
     STRING_UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -18,7 +19,9 @@ except ImportError as e:
     StringUtils = None
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsTruncate:
     """字符串截断测试"""
 
@@ -87,7 +90,9 @@ class TestStringUtilsTruncate:
         assert result == "Line 1\nL..."
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsSlugify:
     """字符串slugify测试"""
 
@@ -152,7 +157,9 @@ class TestStringUtilsSlugify:
         assert result in ["-"]  # 可能的结果
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsCamelToSnake:
     """驼峰转下划线测试"""
 
@@ -198,7 +205,9 @@ class TestStringUtilsCamelToSnake:
         assert result == ""
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsSnakeToCamel:
     """下划线转驼峰测试"""
 
@@ -244,7 +253,9 @@ class TestStringUtilsSnakeToCamel:
         assert result == "test123Case"
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsCleanText:
     """文本清理测试"""
 
@@ -279,10 +290,10 @@ class TestStringUtilsCleanText:
 
     def test_clean_text_unicode_spaces(self):
         """测试：Unicode空格"""
-        text = "Hello\u00A0World"  # \u00A0是non-breaking space
+        text = "Hello\u00a0World"  # \u00A0是non-breaking space
         # 实现可能不处理Unicode空格
         result = StringUtils.clean_text(text)
-        assert result in ["Hello World", "Hello\u00A0World"]
+        assert result in ["Hello World", "Hello\u00a0World"]
 
     def test_clean_text_multiple_lines(self):
         """测试：多行文本"""
@@ -291,7 +302,9 @@ class TestStringUtilsCleanText:
         assert result == "Line 1 Line 2 Line 3"
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsExtractNumbers:
     """数字提取测试"""
 
@@ -352,7 +365,9 @@ class TestStringUtilsExtractNumbers:
         assert result in [[1.23], [12300.0], []]
 
 
-@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
+@pytest.mark.skipif(
+    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
+)
 class TestStringUtilsEdgeCases:
     """边界情况测试"""
 
@@ -380,7 +395,9 @@ class TestStringUtilsEdgeCases:
             StringUtils.extract_numbers(123)
 
 
-@pytest.mark.skipif(STRING_UTILS_AVAILABLE, reason="String utils module should be available")
+@pytest.mark.skipif(
+    STRING_UTILS_AVAILABLE, reason="String utils module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -405,12 +422,12 @@ def test_class_methods(self):
         from src.utils.string_utils import StringUtils
 
         expected_methods = [
-            'truncate',
-            'slugify',
-            'camel_to_snake',
-            'snake_to_camel',
-            'clean_text',
-            'extract_numbers'
+            "truncate",
+            "slugify",
+            "camel_to_snake",
+            "snake_to_camel",
+            "clean_text",
+            "extract_numbers",
         ]
 
         for method in expected_methods:

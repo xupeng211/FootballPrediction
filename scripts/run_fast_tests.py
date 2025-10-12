@@ -37,7 +37,7 @@ class FastTestRunner:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                cwd=self.project_root
+                cwd=self.project_root,
             )
 
             elapsed = time.time() - start_time
@@ -49,17 +49,19 @@ class FastTestRunner:
                 # 提取测试统计
                 output = result.stdout
                 if "passed" in output:
-                    for line in output.split('\n'):
-                        if 'passed' in line and ('failed' in line or 'error' in line or 'skipped' in line):
+                    for line in output.split("\n"):
+                        if "passed" in line and (
+                            "failed" in line or "error" in line or "skipped" in line
+                        ):
                             print(f"📊 {line.strip()}")
                             break
 
                 # 提取覆盖率
                 if "TOTAL" in output:
-                    for line in output.split('\n'):
+                    for line in output.split("\n"):
                         if "TOTAL" in line and "%" in line:
                             print(f"🎯 覆盖率: {line.strip()}")
-                            self.results['coverage'] = line.strip()
+                            self.results["coverage"] = line.strip()
                             break
 
             else:
@@ -68,9 +70,9 @@ class FastTestRunner:
                     print(f"错误信息: {result.stderr[:200]}...")
 
             self.results[description] = {
-                'success': result.returncode == 0,
-                'time': elapsed,
-                'output': result.stdout[:500] if result.stdout else ''
+                "success": result.returncode == 0,
+                "time": elapsed,
+                "output": result.stdout[:500] if result.stdout else "",
             }
 
             return result.returncode == 0
@@ -78,19 +80,15 @@ class FastTestRunner:
         except subprocess.TimeoutExpired:
             print(f"⏰ 超时！超过 {timeout} 秒")
             self.results[description] = {
-                'success': False,
-                'time': timeout,
-                'output': 'TIMEOUT'
+                "success": False,
+                "time": timeout,
+                "output": "TIMEOUT",
             }
             return False
 
         except Exception as e:
             print(f"❌ 异常: {e}")
-            self.results[description] = {
-                'success': False,
-                'time': 0,
-                'output': str(e)
-            }
+            self.results[description] = {"success": False, "time": 0, "output": str(e)}
             return False
 
     def run_level_1_tests(self):
@@ -176,18 +174,18 @@ class FastTestRunner:
         print("📊 测试执行总结")
         print(f"{'='*60}")
 
-        success_count = sum(1 for r in self.results.values() if r['success'])
+        success_count = sum(1 for r in self.results.values() if r["success"])
         total_count = len(self.results)
 
         print(f"✅ 成功: {success_count}/{total_count}")
         print(f"⏱️  总耗时: {total_time:.2f}秒")
 
-        if 'coverage' in self.results:
+        if "coverage" in self.results:
             print(f"🎯 覆盖率: {self.results['coverage']}")
 
         print("\n详细结果:")
         for desc, result in self.results.items():
-            status = "✅" if result['success'] else "❌"
+            status = "✅" if result["success"] else "❌"
             print(f"{status} {desc}: {result['time']:.2f}秒")
 
         # 建议
@@ -197,7 +195,7 @@ class FastTestRunner:
             print("- 考虑跳过慢速测试: pytest -m 'not slow'")
         if success_count < total_count:
             print("- 修复失败的测试以提升代码质量")
-        if 'coverage' not in self.results:
+        if "coverage" not in self.results:
             print("- 运行覆盖率检查以了解测试覆盖情况")
 
 
@@ -209,17 +207,11 @@ def main():
         type=int,
         default=3,
         choices=[1, 2, 3],
-        help="测试级别 (1: 快速, 2: 中等, 3: 完整)"
+        help="测试级别 (1: 快速, 2: 中等, 3: 完整)",
     )
+    parser.add_argument("--coverage", action="store_true", help="只运行覆盖率检查")
     parser.add_argument(
-        "--coverage",
-        action="store_true",
-        help="只运行覆盖率检查"
-    )
-    parser.add_argument(
-        "--parallel",
-        action="store_true",
-        help="使用并行执行 (需要 pytest-xdist)"
+        "--parallel", action="store_true", help="使用并行执行 (需要 pytest-xdist)"
     )
 
     args = parser.parse_args()
@@ -231,7 +223,7 @@ def main():
     else:
         # 设置并行执行参数
         if args.parallel:
-            os.environ['PYTEST_ADDOPTS'] = '-n auto'
+            os.environ["PYTEST_ADDOPTS"] = "-n auto"
 
         runner.run_all_levels(max_level=args.level)
 

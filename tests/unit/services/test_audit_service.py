@@ -21,8 +21,9 @@ try:
         DataSanitizer,
         SeverityAnalyzer,
         AuditEvent,
-        AuditService
+        AuditService,
     )
+
     AUDIT_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -75,7 +76,7 @@ class TestAuditAction:
             AuditAction.CREATE,
             AuditAction.READ,
             AuditAction.UPDATE,
-            AuditAction.DELETE
+            AuditAction.DELETE,
         ]
         assert len(set(actions)) == 4  # 确保没有重复
 
@@ -96,9 +97,7 @@ class TestAuditContext:
     def test_context_creation_full(self):
         """测试：创建完整上下文"""
         context = AuditContext(
-            user_id="user456",
-            session_id="session789",
-            ip_address="192.168.1.1"
+            user_id="user456", session_id="session789", ip_address="192.168.1.1"
         )
 
         assert context.user_id == "user456"
@@ -130,7 +129,7 @@ class TestAuditLog:
             action=AuditAction.CREATE,
             context=sample_context,
             severity=AuditSeverity.MEDIUM,
-            details={"resource": "prediction", "id": 789}
+            details={"resource": "prediction", "id": 789},
         )
 
         assert log.action == AuditAction.CREATE
@@ -146,7 +145,7 @@ class TestAuditLog:
             action=AuditAction.DELETE,
             context=sample_context,
             severity=AuditSeverity.CRITICAL,
-            details={"resource": "user", "id": 123}
+            details={"resource": "user", "id": 123},
         )
 
         assert log.severity == AuditSeverity.CRITICAL
@@ -159,19 +158,16 @@ class TestAuditLog:
             "id": 456,
             "changes": {
                 "home_score": {"from": 1, "to": 2},
-                "status": {"from": "IN_PLAY", "to": "FINISHED"}
+                "status": {"from": "IN_PLAY", "to": "FINISHED"},
             },
-            "metadata": {
-                "source": "api",
-                "version": "v1.0"
-            }
+            "metadata": {"source": "api", "version": "v1.0"},
         }
 
         log = AuditLog(
             action=AuditAction.UPDATE,
             context=sample_context,
             severity=AuditSeverity.LOW,
-            details=complex_details
+            details=complex_details,
         )
 
         assert log.details["changes"]["home_score"]["to"] == 2
@@ -188,7 +184,7 @@ class TestAuditEvent:
             action=AuditAction.CREATE,
             user="test_user",
             severity=AuditSeverity.MEDIUM,
-            details={"resource": "test"}
+            details={"resource": "test"},
         )
 
         assert event.action == AuditAction.CREATE
@@ -203,15 +199,12 @@ class TestAuditEvent:
             AuditAction.LOGIN,
             AuditAction.UPDATE,
             AuditAction.DELETE,
-            AuditAction.LOGOUT
+            AuditAction.LOGOUT,
         ]
 
         for action in actions:
             event = AuditEvent(
-                action=action,
-                user="user123",
-                severity=AuditSeverity.LOW,
-                details={}
+                action=action, user="user123", severity=AuditSeverity.LOW, details={}
             )
             assert event.action == action
 
@@ -222,7 +215,7 @@ class TestAuditEvent:
             action=AuditAction.READ,
             user="user456",
             severity=AuditSeverity.LOW,
-            details={}
+            details={},
         )
         after = datetime.utcnow()
 
@@ -261,7 +254,7 @@ class TestDataSanitizer:
             "password": "secret",
             "token": "abc123",
             "api_key": "def456",
-            "normal_field": "value"
+            "normal_field": "value",
         }
         sanitized = sanitizer.sanitize(data)
 
@@ -281,13 +274,7 @@ class TestDataSanitizer:
 
     def test_sanitize_nested_data(self, sanitizer):
         """测试：清理嵌套数据"""
-        data = {
-            "user": {
-                "username": "test",
-                "password": "secret"
-            },
-            "token": "abc123"
-        }
+        data = {"user": {"username": "test", "password": "secret"}, "token": "abc123"}
         sanitized = sanitizer.sanitize(data)
 
         # 简化版清理器只处理顶层字段
@@ -307,10 +294,7 @@ class TestSeverityAnalyzer:
     def test_analyze_delete_action(self, analyzer):
         """测试：分析删除动作"""
         event = AuditEvent(
-            action="delete_user",
-            user="admin",
-            severity=AuditSeverity.LOW,
-            details={}
+            action="delete_user", user="admin", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -319,10 +303,7 @@ class TestSeverityAnalyzer:
     def test_analyze_modify_action(self, analyzer):
         """测试：分析修改动作"""
         event = AuditEvent(
-            action="modify_config",
-            user="admin",
-            severity=AuditSeverity.LOW,
-            details={}
+            action="modify_config", user="admin", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -331,10 +312,7 @@ class TestSeverityAnalyzer:
     def test_analyze_other_action(self, analyzer):
         """测试：分析其他动作"""
         event = AuditEvent(
-            action="read_data",
-            user="user123",
-            severity=AuditSeverity.LOW,
-            details={}
+            action="read_data", user="user123", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -343,10 +321,7 @@ class TestSeverityAnalyzer:
     def test_analyze_case_insensitive(self, analyzer):
         """测试：大小写不敏感分析"""
         event = AuditEvent(
-            action="DELETE_USER",
-            user="admin",
-            severity=AuditSeverity.LOW,
-            details={}
+            action="DELETE_USER", user="admin", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -367,15 +342,13 @@ class TestAuditService:
         assert audit_service is not None
         assert isinstance(audit_service.events, list)
         assert len(audit_service.events) == 0
-        assert hasattr(audit_service, 'sanitizer')
-        assert hasattr(audit_service, 'analyzer')
+        assert hasattr(audit_service, "sanitizer")
+        assert hasattr(audit_service, "analyzer")
 
     def test_log_event(self, audit_service):
         """测试：记录事件"""
         event = audit_service.log_event(
-            action="create_prediction",
-            user="user123",
-            details={"prediction_id": 789}
+            action="create_prediction", user="user123", details={"prediction_id": 789}
         )
 
         assert event is not None
@@ -390,7 +363,7 @@ class TestAuditService:
         event = audit_service.log_event(
             action="login",
             user="user456",
-            details={"username": "test", "password": "secret123"}
+            details={"username": "test", "password": "secret123"},
         )
 
         assert event.details["username"] == "test"
@@ -402,9 +375,7 @@ class TestAuditService:
 
         for i in range(5):
             event = audit_service.log_event(
-                action=f"action_{i}",
-                user=f"user_{i}",
-                details={"index": i}
+                action=f"action_{i}", user=f"user_{i}", details={"index": i}
             )
             events.append(event)
 
@@ -473,14 +444,14 @@ class TestAuditService:
 
     def test_event_logging_with_logging(self, audit_service):
         """测试：事件记录时的日志"""
-        with patch('src.services.audit_service.logger') as mock_logger:
+        with patch("src.services.audit_service.logger") as mock_logger:
             event = audit_service.log_event(
-                action="test_action",
-                user="test_user",
-                details={}
+                action="test_action", user="test_user", details={}
             )
 
-            mock_logger.info.assert_called_once_with("Audit event logged: test_action by test_user")
+            mock_logger.info.assert_called_once_with(
+                "Audit event logged: test_action by test_user"
+            )
             assert event is not None
 
     def test_concurrent_logging(self, audit_service):
@@ -492,10 +463,10 @@ class TestAuditService:
 
         def log_worker(worker_id):
             for i in range(10):
-                event = audit_service.log_event(
+                audit_service.log_event(
                     action=f"worker_{worker_id}_action_{i}",
                     user=f"worker_{worker_id}",
-                    details={"iteration": i}
+                    details={"iteration": i},
                 )
                 results.append((worker_id, i))
 
@@ -516,6 +487,7 @@ class TestAuditService:
 
     def test_service_with_custom_sanitizer(self):
         """测试：使用自定义清理器的服务"""
+
         class CustomSanitizer:
             def sanitize(self, data):
                 sanitized = data.copy()
@@ -533,7 +505,7 @@ class TestAuditService:
         event = service.log_event(
             action="login",
             user="test",
-            details={"password": "secret", "api_key": "abc123", "normal": "value"}
+            details={"password": "secret", "api_key": "abc123", "normal": "value"},
         )
 
         assert event.details["password"] == "****"
@@ -542,6 +514,7 @@ class TestAuditService:
 
     def test_service_with_custom_analyzer(self):
         """测试：使用自定义分析器的服务"""
+
         class CustomAnalyzer:
             def analyze(self, event):
                 # 所有登录动作都是高风险
@@ -553,11 +526,7 @@ class TestAuditService:
         service = AuditService()
         service.analyzer = CustomAnalyzer()
 
-        event = service.log_event(
-            action="login_attempt",
-            user="test",
-            details={}
-        )
+        event = service.log_event(action="login_attempt", user="test", details={})
 
         assert event.severity == AuditSeverity.HIGH
 
@@ -570,9 +539,7 @@ class TestAuditService:
         # 记录大量事件
         for i in range(1000):
             audit_service.log_event(
-                action=f"action_{i}",
-                user="perf_test",
-                details={"index": i}
+                action=f"action_{i}", user="perf_test", details={"index": i}
             )
 
         end_time = time.time()

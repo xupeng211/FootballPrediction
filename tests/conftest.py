@@ -221,10 +221,12 @@ def auto_mock_external_services(monkeypatch):
 @pytest.fixture(scope="session")
 def mock_database_manager():
     """模拟数据库管理器"""
-    with patch('src.database.connection.DatabaseManager') as mock:
+    with patch("src.database.connection.DatabaseManager") as mock:
         # 配置 mock 实例
         mock_instance = AsyncMock()
-        mock_instance.get_async_session.return_value.__aenter__.return_value = AsyncMock()
+        mock_instance.get_async_session.return_value.__aenter__.return_value = (
+            AsyncMock()
+        )
         mock_instance.get_session.return_value.__enter__.return_value = MagicMock()
         mock.return_value = mock_instance
         yield mock
@@ -250,7 +252,7 @@ def mock_async_db_session():
 @pytest.fixture(scope="session")
 def mock_redis_manager():
     """模拟 Redis 管理器"""
-    with patch('src.cache.redis_manager.RedisManager') as mock:
+    with patch("src.cache.redis_manager.RedisManager") as mock:
         mock_instance = AsyncMock()
         mock_instance.get.return_value = None
         mock_instance.set.return_value = True
@@ -286,7 +288,7 @@ def mock_redis_client():
 @pytest.fixture
 def mock_football_api():
     """模拟 Football API"""
-    with patch('src.collectors.football_api.FootballAPI') as mock:
+    with patch("src.collectors.football_api.FootballAPI") as mock:
         api_instance = AsyncMock()
         api_instance.get_matches.return_value = []
         api_instance.get_odds.return_value = []
@@ -299,7 +301,7 @@ def mock_football_api():
 @pytest.fixture
 def mock_api_sports():
     """模拟 API Sports"""
-    with patch('src.collectors.api_sports.APISports') as mock:
+    with patch("src.collectors.api_sports.APISports") as mock:
         api_instance = AsyncMock()
         api_instance.get_fixtures.return_value = []
         api_instance.get_odds.return_value = []
@@ -311,7 +313,7 @@ def mock_api_sports():
 @pytest.fixture
 def mock_scorebat_api():
     """模拟 Scorebat API"""
-    with patch('src.collectors.scorebat.ScorebatAPI') as mock:
+    with patch("src.collectors.scorebat.ScorebatAPI") as mock:
         api_instance = AsyncMock()
         api_instance.get_latest_scores.return_value = []
         api_instance.get_video_highlights.return_value = []
@@ -323,7 +325,7 @@ def mock_scorebat_api():
 @pytest.fixture
 def mock_kafka_producer():
     """模拟 Kafka 生产者"""
-    with patch('src.streaming.kafka.KafkaProducer') as mock:
+    with patch("src.streaming.kafka.KafkaProducer") as mock:
         producer = AsyncMock()
         producer.send.return_value = None
         producer.flush.return_value = None
@@ -334,7 +336,7 @@ def mock_kafka_producer():
 @pytest.fixture
 def mock_kafka_consumer():
     """模拟 Kafka 消费者"""
-    with patch('src.streaming.kafka.KafkaConsumer') as mock:
+    with patch("src.streaming.kafka.KafkaConsumer") as mock:
         consumer = AsyncMock()
         consumer.__aiter__.return_value = iter([])
         mock.return_value = consumer
@@ -344,27 +346,35 @@ def mock_kafka_consumer():
 # === Common Mock Decorators ===
 def with_database_mock(func):
     """装饰器：自动应用数据库 mock"""
+
     def wrapper(*args, **kwargs):
-        with patch('src.database.connection.DatabaseManager'):
+        with patch("src.database.connection.DatabaseManager"):
             return func(*args, **kwargs)
+
     return wrapper
 
 
 def with_redis_mock(func):
     """装饰器：自动应用 Redis mock"""
+
     def wrapper(*args, **kwargs):
-        with patch('src.cache.redis_manager.RedisManager'):
+        with patch("src.cache.redis_manager.RedisManager"):
             return func(*args, **kwargs)
+
     return wrapper
 
 
 def with_external_apis_mock(func):
     """装饰器：自动应用外部 API mock"""
+
     def wrapper(*args, **kwargs):
-        with patch('src.collectors.football_api.FootballAPI'), \
-             patch('src.collectors.api_sports.APISports'), \
-             patch('src.collectors.scorebat.ScorebatAPI'):
+        with (
+            patch("src.collectors.football_api.FootballAPI"),
+            patch("src.collectors.api_sports.APISports"),
+            patch("src.collectors.scorebat.ScorebatAPI"),
+        ):
             return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -381,7 +391,7 @@ def test_match_data():
         "match_time": "2024-01-15T20:00:00Z",
         "status": "finished",
         "league_id": 101,
-        "season": "2023-2024"
+        "season": "2023-2024",
     }
 
 
@@ -394,7 +404,7 @@ def test_team_data():
         "short_name": "TT",
         "country": "Test Country",
         "founded": 1900,
-        "venue": "Test Stadium"
+        "venue": "Test Stadium",
     }
 
 
@@ -408,7 +418,7 @@ def test_odds_data():
         "home_odds": 2.50,
         "draw_odds": 3.20,
         "away_odds": 2.80,
-        "collected_at": "2024-01-15T19:00:00Z"
+        "collected_at": "2024-01-15T19:00:00Z",
     }
 
 
@@ -424,5 +434,5 @@ def test_prediction_data():
         "home_win_prob": 0.60,
         "draw_prob": 0.25,
         "away_win_prob": 0.15,
-        "created_at": "2024-01-15T18:00:00Z"
+        "created_at": "2024-01-15T18:00:00Z",
     }

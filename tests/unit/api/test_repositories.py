@@ -22,9 +22,16 @@ from src.api.repositories import router
 class MockPrediction:
     """模拟预测模型"""
 
-    def __init__(self, id=1, user_id=1, match_id=123,
-                 predicted_home=2, predicted_away=1,
-                 confidence=0.85, strategy_used="neural_network"):
+    def __init__(
+        self,
+        id=1,
+        user_id=1,
+        match_id=123,
+        predicted_home=2,
+        predicted_away=1,
+        confidence=0.85,
+        strategy_used="neural_network",
+    ):
         self.id = id
         self.user_id = user_id
         self.match_id = match_id
@@ -83,15 +90,15 @@ class MockRepository:
 
         # 应用排序
         if query_spec.order_by:
-            reverse = query_spec.order_by[0].startswith('-')
-            sort_key = query_spec.order_by[0].lstrip('-')
+            reverse = query_spec.order_by[0].startswith("-")
+            sort_key = query_spec.order_by[0].lstrip("-")
             results.sort(key=lambda x: getattr(x, sort_key), reverse=reverse)
 
         # 应用限制和偏移
         if query_spec.offset:
-            results = results[query_spec.offset:]
+            results = results[query_spec.offset :]
         if query_spec.limit:
-            results = results[:query_spec.limit]
+            results = results[: query_spec.limit]
 
         return results
 
@@ -101,7 +108,10 @@ class MockRepository:
         return {
             "user_id": user_id,
             "total_predictions": len(user_predictions),
-            "average_confidence": sum(p.confidence for p in user_predictions) / len(user_predictions) if user_predictions else 0,
+            "average_confidence": sum(p.confidence for p in user_predictions)
+            / len(user_predictions)
+            if user_predictions
+            else 0,
             "period_days": period_days or 30,
         }
 
@@ -216,7 +226,7 @@ class TestPredictionRepository:
         mock_repo = MockRepository()
         # 添加5个预测
         for i in range(1, 6):
-            mock_repo.data[str(i)] = MockPrediction(id=i, user_id=i, match_id=100+i)
+            mock_repo.data[str(i)] = MockPrediction(id=i, user_id=i, match_id=100 + i)
         mock_repo_dep.return_value = mock_repo
 
         # When
@@ -270,8 +280,10 @@ class TestPredictionRepository:
         mock_repo = MockRepository()
         # 添加用户1的3个预测
         for i in range(3):
-            pred = MockPrediction(id=i+1, user_id=1, match_id=100+i, confidence=0.8+i*0.05)
-            mock_repo.data[str(i+1)] = pred
+            pred = MockPrediction(
+                id=i + 1, user_id=1, match_id=100 + i, confidence=0.8 + i * 0.05
+            )
+            mock_repo.data[str(i + 1)] = pred
         mock_repo_dep.return_value = mock_repo
 
         # When
@@ -367,7 +379,7 @@ class TestRepositoryEdgeCases:
         mock_repo = MockRepository()
         # 只添加2个预测
         for i in range(2):
-            mock_repo.data[str(i+1)] = MockPrediction(id=i+1)
+            mock_repo.data[str(i + 1)] = MockPrediction(id=i + 1)
         mock_repo_dep.return_value = mock_repo
 
         # When - 请求10个
@@ -385,7 +397,7 @@ class TestRepositoryEdgeCases:
         mock_repo = MockRepository()
         # 只添加2个预测
         for i in range(2):
-            mock_repo.data[str(i+1)] = MockPrediction(id=i+1)
+            mock_repo.data[str(i + 1)] = MockPrediction(id=i + 1)
         mock_repo_dep.return_value = mock_repo
 
         # When - 偏移10个

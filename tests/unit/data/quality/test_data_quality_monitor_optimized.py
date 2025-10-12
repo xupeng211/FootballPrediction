@@ -18,6 +18,7 @@ from tests.mocks.fast_mocks import FastDatabaseManager, FastAsyncSession
 try:
     from src.data.quality.data_quality_monitor import DataQualityMonitor
     from src.database.connection import DatabaseManager
+
     DATA_QUALITY_MONITOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -39,21 +40,26 @@ def data_quality_monitor(mock_db_session):
     if not DATA_QUALITY_MONITOR_AVAILABLE:
         pytest.skip("Data quality monitor module not available")
 
-    with patch('src.data.quality.data_quality_monitor.DatabaseManager') as mock_db:
+    with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
         # 配置快速 mock
-        mock_db.return_value.get_async_session.return_value.__aenter__.return_value = mock_db_session
+        mock_db.return_value.get_async_session.return_value.__aenter__.return_value = (
+            mock_db_session
+        )
         monitor = DataQualityMonitor()
         return monitor
 
 
-@pytest.mark.skipif(not DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module not available")
+@pytest.mark.skipif(
+    not DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module not available",
+)
 class TestDataQualityMonitorOptimized:
     """数据质量监控器优化测试"""
 
     def test_monitor_creation(self, data_quality_monitor):
         """测试：监控器创建"""
         assert data_quality_monitor is not None
-        assert hasattr(data_quality_monitor, 'thresholds')
+        assert hasattr(data_quality_monitor, "thresholds")
         assert data_quality_monitor.thresholds["data_freshness_hours"] == 24
         assert data_quality_monitor.thresholds["missing_data_rate"] == 0.1
         assert data_quality_monitor.thresholds["odds_min_value"] == 1.01
@@ -74,7 +80,9 @@ class TestDataQualityMonitorOptimized:
         freshness_check = {"status": "healthy"}
         anomalies = []
 
-        score = data_quality_monitor._calculate_quality_score(freshness_check, anomalies)
+        score = data_quality_monitor._calculate_quality_score(
+            freshness_check, anomalies
+        )
         assert score == 100.0
 
     def test_calculate_quality_score_with_issues(self, data_quality_monitor):
@@ -82,10 +90,12 @@ class TestDataQualityMonitorOptimized:
         freshness_check = {"status": "warning"}
         anomalies = [
             {"type": "suspicious_odds", "severity": "high"},
-            {"type": "unusual_score", "severity": "medium"}
+            {"type": "unusual_score", "severity": "medium"},
         ]
 
-        score = data_quality_monitor._calculate_quality_score(freshness_check, anomalies)
+        score = data_quality_monitor._calculate_quality_score(
+            freshness_check, anomalies
+        )
         assert 50 <= score < 90
 
     def test_determine_overall_status(self, data_quality_monitor):
@@ -94,11 +104,13 @@ class TestDataQualityMonitorOptimized:
             ({"status": "healthy"}, [], "healthy"),
             ({"status": "warning"}, [], "warning"),
             ({"status": "healthy"}, [{"severity": "high"}], "critical"),
-            ({"status": "error"}, [], "critical")
+            ({"status": "error"}, [], "critical"),
         ]
 
         for freshness, anomalies, expected in test_cases:
-            status = data_quality_monitor._determine_overall_status(freshness, anomalies)
+            status = data_quality_monitor._determine_overall_status(
+                freshness, anomalies
+            )
             assert status == expected
 
     def test_generate_recommendations(self, data_quality_monitor):
@@ -106,7 +118,9 @@ class TestDataQualityMonitorOptimized:
         freshness_check = {"status": "warning"}
         anomalies = [{"severity": "high"}]
 
-        recommendations = data_quality_monitor._generate_recommendations(freshness_check, anomalies)
+        recommendations = data_quality_monitor._generate_recommendations(
+            freshness_check, anomalies
+        )
         assert isinstance(recommendations, list)
         assert len(recommendations) > 0
         assert any("检查数据采集" in r for r in recommendations)
@@ -118,19 +132,20 @@ class TestDataQualityMonitorOptimized:
         mock_result = Mock()
         mock_result.last_update = datetime.now() - timedelta(hours=1)
 
-        with patch.object(data_quality_monitor, '_check_fixtures_age') as mock_fixtures, \
-             patch.object(data_quality_monitor, '_check_odds_age') as mock_odds, \
-             patch.object(data_quality_monitor, '_find_missing_matches') as mock_missing:
-
+        with (
+            patch.object(data_quality_monitor, "_check_fixtures_age") as mock_fixtures,
+            patch.object(data_quality_monitor, "_check_odds_age") as mock_odds,
+            patch.object(data_quality_monitor, "_find_missing_matches") as mock_missing,
+        ):
             mock_fixtures.return_value = {
                 "last_update": datetime.now().isoformat(),
                 "hours_since_update": 1,
-                "status": "ok"
+                "status": "ok",
             }
             mock_odds.return_value = {
                 "last_update": datetime.now().isoformat(),
                 "hours_since_update": 0.5,
-                "status": "ok"
+                "status": "ok",
             }
             mock_missing.return_value = {"count": 0}
 
@@ -143,20 +158,21 @@ class TestDataQualityMonitorOptimized:
     @pytest.mark.asyncio
     async def test_check_data_freshness_stale(self, data_quality_monitor):
         """测试：检查数据新鲜度（过期状态）"""
-        with patch.object(data_quality_monitor, '_check_fixtures_age') as mock_fixtures, \
-             patch.object(data_quality_monitor, '_check_odds_age') as mock_odds, \
-             patch.object(data_quality_monitor, '_find_missing_matches') as mock_missing:
-
+        with (
+            patch.object(data_quality_monitor, "_check_fixtures_age") as mock_fixtures,
+            patch.object(data_quality_monitor, "_check_odds_age") as mock_odds,
+            patch.object(data_quality_monitor, "_find_missing_matches") as mock_missing,
+        ):
             # 模拟过期数据
             mock_fixtures.return_value = {
                 "last_update": (datetime.now() - timedelta(hours=30)).isoformat(),
                 "hours_since_update": 30,
-                "status": "stale"
+                "status": "stale",
             }
             mock_odds.return_value = {
                 "last_update": (datetime.now() - timedelta(hours=5)).isoformat(),
                 "hours_since_update": 5,
-                "status": "stale"
+                "status": "stale",
             }
             mock_missing.return_value = {"count": 5}
 
@@ -169,17 +185,20 @@ class TestDataQualityMonitorOptimized:
     @pytest.mark.asyncio
     async def test_detect_anomalies(self, data_quality_monitor):
         """测试：异常检测"""
-        with patch.object(data_quality_monitor, '_find_suspicious_odds') as mock_odds, \
-             patch.object(data_quality_monitor, '_find_unusual_scores') as mock_scores, \
-             patch.object(data_quality_monitor, '_check_data_consistency') as mock_consistency:
-
+        with (
+            patch.object(data_quality_monitor, "_find_suspicious_odds") as mock_odds,
+            patch.object(data_quality_monitor, "_find_unusual_scores") as mock_scores,
+            patch.object(
+                data_quality_monitor, "_check_data_consistency"
+            ) as mock_consistency,
+        ):
             # 模拟异常
             mock_odds.return_value = [
                 {
                     "type": "abnormal_odds_value",
                     "match_id": 123,
                     "odds": {"home": 150.0},
-                    "severity": "high"
+                    "severity": "high",
                 }
             ]
             mock_scores.return_value = [
@@ -187,7 +206,7 @@ class TestDataQualityMonitorOptimized:
                     "type": "unusual_high_score",
                     "match_id": 456,
                     "score": "10-8",
-                    "severity": "medium"
+                    "severity": "medium",
                 }
             ]
             mock_consistency.return_value = []
@@ -201,13 +220,13 @@ class TestDataQualityMonitorOptimized:
     @pytest.mark.asyncio
     async def test_generate_quality_report(self, data_quality_monitor):
         """测试：生成质量报告"""
-        with patch.object(data_quality_monitor, 'check_data_freshness') as mock_freshness, \
-             patch.object(data_quality_monitor, 'detect_anomalies') as mock_anomalies:
-
-            mock_freshness.return_value = {
-                "status": "healthy",
-                "details": {}
-            }
+        with (
+            patch.object(
+                data_quality_monitor, "check_data_freshness"
+            ) as mock_freshness,
+            patch.object(data_quality_monitor, "detect_anomalies") as mock_anomalies,
+        ):
+            mock_freshness.return_value = {"status": "healthy", "details": {}}
             mock_anomalies.return_value = []
 
             report = await data_quality_monitor.generate_quality_report()
@@ -226,30 +245,28 @@ class TestDataQualityMonitorOptimized:
         """测试：错误处理"""
         # 测试计算质量分数的错误处理
         score = data_quality_monitor._calculate_quality_score(
-            {"status": "error"},
-            [{"type": "error", "severity": "high"} * 10]
+            {"status": "error"}, [{"type": "error", "severity": "high"} * 10]
         )
         assert score >= 0
 
     def test_edge_cases(self, data_quality_monitor):
         """测试：边界情况"""
         # 空异常列表
-        score = data_quality_monitor._calculate_quality_score(
-            {"status": "healthy"},
-            []
-        )
+        score = data_quality_monitor._calculate_quality_score({"status": "healthy"}, [])
         assert score == 100.0
 
         # 极端严重性
         anomalies = [{"severity": "high"}] * 20
         score = data_quality_monitor._calculate_quality_score(
-            {"status": "healthy"},
-            anomalies
+            {"status": "healthy"}, anomalies
         )
         assert score == 0.0
 
 
-@pytest.mark.skipif(not DATA_QUALITY_MONITOR_AVAILABLE, reason="Data quality monitor module not available")
+@pytest.mark.skipif(
+    not DATA_QUALITY_MONITOR_AVAILABLE,
+    reason="Data quality monitor module not available",
+)
 class TestDataQualityMonitorIntegration:
     """数据质量监控器集成测试"""
 
@@ -257,7 +274,7 @@ class TestDataQualityMonitorIntegration:
     async def test_monitoring_pipeline(self):
         """测试：完整的监控管道"""
         # 使用真实的数据库连接 mock
-        with patch('src.data.quality.data_quality_monitor.DatabaseManager') as mock_db:
+        with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
             # 配置 mock
             mock_session = FastAsyncSession()
             mock_db.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
