@@ -32,7 +32,7 @@ class TestFeatureStore:
         """创建示例实体"""
         return [
             Entity(name="team", join_keys=["team_id"]),
-            Entity(name="match", join_keys=["match_id"])
+            Entity(name="match", join_keys=["match_id"]),
         ]
 
     @pytest.fixture
@@ -42,7 +42,7 @@ class TestFeatureStore:
             Field(name="team:avg_goals", dtype=Float64),
             Field(name="team:win_rate", dtype=Float64),
             Field(name="match:home_score", dtype=Int64),
-            Field(name="match:away_score", dtype=Int64)
+            Field(name="match:away_score", dtype=Int64),
         ]
 
     @pytest.fixture
@@ -51,14 +51,14 @@ class TestFeatureStore:
         return FeatureView(
             name="team_match_features",
             entities=sample_entities,
-            features=sample_features
+            features=sample_features,
         )
 
     def test_feature_store_initialization(self, mock_store):
         """测试：特征存储初始化"""
         # Then
         assert mock_store is not None
-        assert hasattr(mock_store, 'applied_objects')
+        assert hasattr(mock_store, "applied_objects")
         assert mock_store.applied_objects == []
 
     def test_entity_creation(self):
@@ -75,7 +75,7 @@ class TestFeatureStore:
         feature_view = FeatureView(
             name="team_features",
             entities=sample_entities[:1],
-            features=sample_features[:2]
+            features=sample_features[:2],
         )
 
         # Then
@@ -107,12 +107,12 @@ class TestFeatureStore:
         feature_view1 = FeatureView(
             name="features1",
             entities=[sample_entities[0]],
-            features=[sample_features[0]]
+            features=[sample_features[0]],
         )
         feature_view2 = FeatureView(
             name="features2",
             entities=[sample_entities[1]],
-            features=[sample_features[1]]
+            features=[sample_features[1]],
         )
 
         # When
@@ -128,10 +128,7 @@ class TestFeatureStore:
         """测试：获取在线特征"""
         # Given
         features = ["team:avg_goals", "team:win_rate"]
-        entity_rows = [
-            {"team_id": 1},
-            {"team_id": 2}
-        ]
+        entity_rows = [{"team_id": 1}, {"team_id": 2}]
 
         # When
         result = mock_store.get_online_features(features, entity_rows)
@@ -149,7 +146,7 @@ class TestFeatureStore:
         features = ["match:home_score", "match:away_score"]
         entity_rows = [
             {"match_id": 100, "home_score": 2},  # 预设值
-            {"match_id": 101}  # 无预设值
+            {"match_id": 101},  # 无预设值
         ]
 
         # When
@@ -171,9 +168,7 @@ class TestFeatureStore:
 
         # When
         result = mock_store.get_historical_features(
-            entity_df=entity_df,
-            features=features,
-            full_feature_names=False
+            entity_df=entity_df, features=features, full_feature_names=False
         )
 
         # Then
@@ -189,9 +184,7 @@ class TestFeatureStore:
 
         # When
         result = mock_store.get_historical_features(
-            entity_df=entity_df,
-            features=features,
-            full_feature_names=True
+            entity_df=entity_df, features=features, full_feature_names=True
         )
 
         # Then
@@ -200,11 +193,13 @@ class TestFeatureStore:
     def test_push_features(self, mock_store):
         """测试：推送特征"""
         # Given
-        test_data = pd.DataFrame({
-            "team_id": [1, 2],
-            "avg_goals": [1.5, 2.0],
-            "event_timestamp": [datetime.now(), datetime.now()]
-        })
+        test_data = pd.DataFrame(
+            {
+                "team_id": [1, 2],
+                "avg_goals": [1.5, 2.0],
+                "event_timestamp": [datetime.now(), datetime.now()],
+            }
+        )
 
         # When
         result = mock_store.push(test_data)
@@ -215,10 +210,7 @@ class TestFeatureStore:
     def test_mock_feast_result(self):
         """测试：Mock Feast结果"""
         # Given
-        rows = [
-            {"team_id": 1, "avg_goals": 1.5},
-            {"team_id": 2, "avg_goals": 2.0}
-        ]
+        rows = [{"team_id": 1, "avg_goals": 1.5}, {"team_id": 2, "avg_goals": 2.0}]
 
         # When
         result = _MockFeastResult(rows)
@@ -256,21 +248,11 @@ class TestFeatureStore:
             "team:recent_form",
             "match:home_score",
             "match:away_score",
-            "match:match_importance"
+            "match:match_importance",
         ]
         entity_rows = [
-            {
-                "team_id": 1,
-                "match_id": 100,
-                "home_team_id": 1,
-                "away_team_id": 2
-            },
-            {
-                "team_id": 2,
-                "match_id": 100,
-                "home_team_id": 1,
-                "away_team_id": 2
-            }
+            {"team_id": 1, "match_id": 100, "home_team_id": 1, "away_team_id": 2},
+            {"team_id": 2, "match_id": 100, "home_team_id": 1, "away_team_id": 2},
         ]
 
         # When
@@ -288,16 +270,8 @@ class TestFeatureStore:
         """测试：使用配置创建特征存储"""
         # Given
         config = {
-            "offline_store": {
-                "type": "postgres",
-                "host": "localhost",
-                "port": 5432
-            },
-            "online_store": {
-                "type": "redis",
-                "host": "localhost",
-                "port": 6379
-            }
+            "offline_store": {"type": "postgres", "host": "localhost", "port": 5432},
+            "online_store": {"type": "redis", "host": "localhost", "port": 6379},
         }
 
         # When

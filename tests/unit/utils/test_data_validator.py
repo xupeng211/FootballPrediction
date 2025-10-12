@@ -29,7 +29,7 @@ class TestDataValidator:
             "user+tag@example.org",
             "user123@test-domain.com",
             "test.email.with+symbol@example.com",
-            "user@sub.domain.com"
+            "user@sub.domain.com",
         ]
         for email in valid_emails:
             assert self.validator.is_valid_email(email) is True
@@ -41,7 +41,7 @@ class TestDataValidator:
             "@example.com",
             "user@",
             "user@.com",
-            "user.name@"
+            "user.name@",
         ]
         for email in invalid_emails:
             assert self.validator.is_valid_email(email) is False
@@ -61,7 +61,7 @@ class TestDataValidator:
             "https://sub.domain.com/path",
             "http://localhost:8000",
             "https://example.com:8080/path?query=1",
-            "ftp://example.com/file.txt"
+            "ftp://example.com/file.txt",
         ]
         for url in valid_urls:
             result = self.validator.is_valid_url(url)
@@ -73,7 +73,7 @@ class TestDataValidator:
         invalid_urls = [
             "not-a-url",
             "www.example.com",  # 缺少协议
-            ""
+            "",
         ]
         for url in invalid_urls:
             assert self.validator.is_valid_url(url) is False
@@ -173,28 +173,22 @@ class TestDataValidator:
         """测试：邮箱验证（与is_valid_email对比）"""
         # 两个方法应该返回相同的结果
         email = "test@example.com"
-        assert self.validator.validate_email(email) == self.validator.is_valid_email(email)
+        assert self.validator.validate_email(email) == self.validator.is_valid_email(
+            email
+        )
 
     # ==================== 电话验证测试 ====================
 
     def test_validate_phone_china(self):
         """测试：中国手机号验证"""
         # 有效的中国手机号
-        valid_phones = [
-            "13800138000",
-            "18812345678",
-            "15012345678",
-            "19912345678"
-        ]
+        valid_phones = ["13800138000", "18812345678", "15012345678", "19912345678"]
         for phone in valid_phones:
             assert self.validator.validate_phone(phone) is True
 
     def test_validate_phone_invalid(self):
         """测试：无效电话号码"""
-        invalid_phones = [
-            "123456",
-            "abcdefghij"
-        ]
+        invalid_phones = ["123456", "abcdefghij"]
         for phone in invalid_phones:
             assert self.validator.validate_phone(phone) is False
 
@@ -241,7 +235,7 @@ class TestDataValidator:
             "email": "john.doe@example.com",
             "age": 30,
             "active": True,
-            "registered_at": datetime.utcnow()
+            "registered_at": datetime.utcnow(),
         }
 
         # 验证必填字段
@@ -250,12 +244,7 @@ class TestDataValidator:
         assert len(errors) == 0
 
         # 验证数据类型
-        schema = {
-            "name": str,
-            "email": str,
-            "age": int,
-            "active": bool
-        }
+        schema = {"name": str, "email": str, "age": int, "active": bool}
         errors = self.validator.validate_data_types(user_data, schema)
         assert len(errors) == 0
 
@@ -290,6 +279,7 @@ class TestDataValidator:
         schema = {f"field{i}": str for i in range(100)}
 
         import time
+
         start = time.time()
         errors = self.validator.validate_data_types(large_data, schema)
         duration = time.time() - start

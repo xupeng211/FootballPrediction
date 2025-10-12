@@ -20,8 +20,9 @@ try:
         get_cache,
         get_all_stats,
         clear_all_caches,
-        cleanup_all_expired
+        cleanup_all_expired,
     )
+
     TTL_AVAILABLE = True
 except ImportError:
     TTL_AVAILABLE = False
@@ -75,11 +76,11 @@ class TestCacheEntry:
         entry = CacheEntry("test_value", ttl=60)
         data = entry.to_dict()
 
-        assert 'value' in data
-        assert 'ttl' in data
-        assert 'created_at' in data
-        assert 'access_count' in data
-        assert 'last_accessed' in data
+        assert "value" in data
+        assert "ttl" in data
+        assert "created_at" in data
+        assert "access_count" in data
+        assert "last_accessed" in data
 
 
 @pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
@@ -185,11 +186,11 @@ class TestTTLCache:
 
         # 初始统计
         stats = cache.get_stats()
-        assert 'hits' in stats
-        assert 'misses' in stats
-        assert 'size' in stats
-        assert stats['hits'] == 0
-        assert stats['misses'] == 0
+        assert "hits" in stats
+        assert "misses" in stats
+        assert "size" in stats
+        assert stats["hits"] == 0
+        assert stats["misses"] == 0
 
         # 添加和访问一些键
         cache.set("key1", "value1")
@@ -197,9 +198,9 @@ class TestTTLCache:
         cache.get("key2")  # miss
 
         stats = cache.get_stats()
-        assert stats['hits'] == 1
-        assert stats['misses'] == 1
-        assert stats['size'] == 1
+        assert stats["hits"] == 1
+        assert stats["misses"] == 1
+        assert stats["size"] == 1
 
     def test_cache_contains(self):
         """测试：缓存包含检查"""

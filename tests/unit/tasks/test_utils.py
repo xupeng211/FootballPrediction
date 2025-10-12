@@ -19,8 +19,9 @@ try:
         get_active_leagues,
         calculate_next_collection_time,
         cleanup_stale_tasks,
-        get_task_priority
+        get_task_priority,
     )
+
     TASKS_UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -35,14 +36,16 @@ except ImportError as e:
     get_task_priority = None
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestShouldCollectLiveScores:
     """测试：是否应该采集实时比分"""
 
     @pytest.mark.asyncio
     async def test_should_collect_with_live_matches(self):
         """测试：有实时比赛时应该采集"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.scalar.return_value = 5  # 5场比赛
@@ -58,7 +61,7 @@ class TestShouldCollectLiveScores:
     @pytest.mark.asyncio
     async def test_should_collect_no_matches(self):
         """测试：没有比赛时不应该采集"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.scalar.return_value = 0  # 0场比赛
@@ -73,7 +76,7 @@ class TestShouldCollectLiveScores:
     @pytest.mark.asyncio
     async def test_should_collect_with_upcoming_matches(self):
         """测试：有即将开始的比赛时应该采集"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.scalar.return_value = 3  # 3场比赛
@@ -88,22 +91,26 @@ class TestShouldCollectLiveScores:
     @pytest.mark.asyncio
     async def test_should_collect_database_error(self):
         """测试：数据库错误时返回False"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
-            mock_db_manager.return_value.get_async_session.side_effect = Exception("Database error")
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
+            mock_db_manager.return_value.get_async_session.side_effect = Exception(
+                "Database error"
+            )
 
             result = await should_collect_live_scores()
 
             assert result is False
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestGetUpcomingMatches:
     """测试：获取即将到来的比赛"""
 
     @pytest.mark.asyncio
     async def test_get_upcoming_matches_default_hours(self):
         """测试：获取未来24小时的比赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
 
@@ -114,15 +121,15 @@ class TestGetUpcomingMatches:
                     "home_team": "Team A",
                     "away_team": "Team B",
                     "match_time": datetime.now() + timedelta(hours=1),
-                    "league": "Premier League"
+                    "league": "Premier League",
                 },
                 {
                     "id": 2,
                     "home_team": "Team C",
                     "away_team": "Team D",
                     "match_time": datetime.now() + timedelta(hours=12),
-                    "league": "La Liga"
-                }
+                    "league": "La Liga",
+                },
             ]
 
             mock_result.fetchall.return_value = mock_matches
@@ -139,7 +146,7 @@ class TestGetUpcomingMatches:
     @pytest.mark.asyncio
     async def test_get_upcoming_matches_custom_hours(self):
         """测试：获取自定义时间范围内的比赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.fetchall.return_value = []  # 没有比赛
@@ -155,7 +162,7 @@ class TestGetUpcomingMatches:
     @pytest.mark.asyncio
     async def test_get_upcoming_matches_with_filters(self):
         """测试：获取带过滤器的比赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
 
@@ -167,7 +174,7 @@ class TestGetUpcomingMatches:
                     "away_team": "Team F",
                     "match_time": datetime.now() + timedelta(hours=6),
                     "league": "Serie A",
-                    "status": "scheduled"
+                    "status": "scheduled",
                 }
             ]
 
@@ -182,7 +189,9 @@ class TestGetUpcomingMatches:
             assert matches[0]["status"] == "scheduled"
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestIsMatchDay:
     """测试：是否是比赛日"""
 
@@ -222,14 +231,16 @@ class TestIsMatchDay:
         assert isinstance(result, bool)
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestGetActiveLeagues:
     """测试：获取活跃联赛"""
 
     @pytest.mark.asyncio
     async def test_get_active_leagues_with_data(self):
         """测试：获取有数据的活跃联赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
 
@@ -249,7 +260,7 @@ class TestGetActiveLeagues:
     @pytest.mark.asyncio
     async def test_get_active_leagues_empty(self):
         """测试：没有活跃联赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
             mock_result.scalars.return_value.all.return_value = []
@@ -265,7 +276,7 @@ class TestGetActiveLeagues:
     @pytest.mark.asyncio
     async def test_get_active_leagues_with_time_filter(self):
         """测试：获取时间过滤的活跃联赛"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
             mock_result = Mock()
 
@@ -282,7 +293,9 @@ class TestGetActiveLeagues:
             assert all(isinstance(league, str) for league in leagues)
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestCalculateNextCollectionTime:
     """测试：计算下次采集时间"""
 
@@ -325,7 +338,9 @@ class TestCalculateNextCollectionTime:
     def test_calculate_next_custom_interval(self):
         """测试：计算自定义间隔采集时间"""
         now = datetime.now()
-        next_time = calculate_next_collection_time("custom_task", now, interval_minutes=45)
+        next_time = calculate_next_collection_time(
+            "custom_task", now, interval_minutes=45
+        )
 
         # 自定义间隔应该在45分钟内
         time_diff = next_time - now
@@ -336,7 +351,9 @@ class TestCalculateNextCollectionTime:
         now = datetime.now()
         base_time = now.replace(hour=18, minute=0, second=0, microsecond=0)
 
-        next_time = calculate_next_collection_time("evening_update", now, base_time=base_time)
+        next_time = calculate_next_collection_time(
+            "evening_update", now, base_time=base_time
+        )
 
         # 如果已经过了18:00，应该是明天的18:00
         if now.hour >= 18:
@@ -346,13 +363,15 @@ class TestCalculateNextCollectionTime:
             assert next_time.hour == 18
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestCleanupStaleTasks:
     """测试：清理过期任务"""
 
     def test_cleanup_stale_tasks_success(self):
         """测试：成功清理过期任务"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = Mock()
             mock_result = Mock()
             mock_result.rowcount = 5  # 清理了5个任务
@@ -368,7 +387,7 @@ class TestCleanupStaleTasks:
 
     def test_cleanup_stale_tasks_no_stale(self):
         """测试：没有过期任务"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = Mock()
             mock_result = Mock()
             mock_result.rowcount = 0  # 没有清理任务
@@ -382,7 +401,7 @@ class TestCleanupStaleTasks:
 
     def test_cleanup_stale_tasks_with_threshold(self):
         """测试：使用自定义阈值清理"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = Mock()
             mock_result = Mock()
             mock_result.rowcount = 3
@@ -396,7 +415,9 @@ class TestCleanupStaleTasks:
             assert cleaned_count == 3
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestGetTaskPriority:
     """测试：获取任务优先级"""
 
@@ -441,22 +462,26 @@ class TestGetTaskPriority:
             ("historical_data", 7),
             ("weekly_report", 8),
             ("monthly_report", 9),
-            ("cleanup", 10)
+            ("cleanup", 10),
         ]
 
         for task_name, expected_priority in known_tasks:
             priority = get_task_priority(task_name)
-            assert priority == expected_priority, f"Task {task_name} should have priority {expected_priority}"
+            assert (
+                priority == expected_priority
+            ), f"Task {task_name} should have priority {expected_priority}"
 
 
-@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
+@pytest.mark.skipif(
+    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
+)
 class TestTasksUtilsIntegration:
     """任务工具函数集成测试"""
 
     @pytest.mark.asyncio
     async def test_complete_workflow_check(self):
         """测试：完整工作流检查"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
 
             # 模拟应该采集
@@ -472,7 +497,11 @@ class TestTasksUtilsIntegration:
 
             # 2. 获取即将到来的比赛
             mock_result.fetchall.return_value = [
-                {"id": 1, "home_team": "Team A", "match_time": datetime.now() + timedelta(hours=1)}
+                {
+                    "id": 1,
+                    "home_team": "Team A",
+                    "match_time": datetime.now() + timedelta(hours=1),
+                }
             ]
             mock_session.execute.return_value = mock_result
 
@@ -496,12 +525,15 @@ class TestTasksUtilsIntegration:
     @pytest.mark.asyncio
     async def test_league_and_match_coordination(self):
         """测试：联赛和比赛协调"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             mock_session = AsyncMock()
 
             # 模拟活跃联赛
             mock_result = Mock()
-            mock_result.scalars.return_value.all.return_value = ["Premier League", "La Liga"]
+            mock_result.scalars.return_value.all.return_value = [
+                "Premier League",
+                "La Liga",
+            ]
             mock_session.execute.return_value = mock_result
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
@@ -522,7 +554,7 @@ class TestTasksUtilsIntegration:
             "daily_odds",
             "weekly_report",
             "cleanup",
-            "unknown_task"
+            "unknown_task",
         ]
 
         # 获取所有任务优先级
@@ -540,9 +572,11 @@ class TestTasksUtilsIntegration:
     @pytest.mark.asyncio
     async def test_error_recovery_workflow(self):
         """测试：错误恢复工作流"""
-        with patch('src.tasks.utils.DatabaseManager') as mock_db_manager:
+        with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
             # 模拟数据库错误
-            mock_db_manager.return_value.get_async_session.side_effect = Exception("Connection failed")
+            mock_db_manager.return_value.get_async_session.side_effect = Exception(
+                "Connection failed"
+            )
 
             # 应该优雅处理错误
             result = await should_collect_live_scores()
@@ -562,7 +596,9 @@ class TestTasksUtilsIntegration:
             assert result is True
 
 
-@pytest.mark.skipif(TASKS_UTILS_AVAILABLE, reason="Tasks utils module should be available")
+@pytest.mark.skipif(
+    TASKS_UTILS_AVAILABLE, reason="Tasks utils module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -583,7 +619,7 @@ def test_module_imports():
             get_active_leagues,
             calculate_next_collection_time,
             cleanup_stale_tasks,
-            get_task_priority
+            get_task_priority,
         )
 
         assert should_collect_live_scores is not None

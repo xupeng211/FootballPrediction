@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class DataQualityLevel(Enum):
     """数据质量等级"""
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -76,6 +77,7 @@ class FootballDataCleaner:
     def batch_clean(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """批量清洗数据"""
         return [self.clean_match_data(data) for data in data_list]
+
 
 # 保持原有的导出
 __all__ = [

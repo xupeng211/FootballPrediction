@@ -247,7 +247,7 @@ class TestJSONTypeIntegration:
             "boolean": True,
             "null": None,
             "list": [1, 2, 3],
-            "nested": {"key": "value"}
+            "nested": {"key": "value"},
         }
 
         # 绑定参数（Python -> 数据库）
@@ -280,7 +280,7 @@ class TestJSONTypeIntegration:
         data = {
             "quotes": 'Single "and" double quotes',
             "backslashes": r"\n\t\r\\",
-            "special": "!@#$%^&*()"
+            "special": "!@#$%^&*()",
         }
 
         # 序列化

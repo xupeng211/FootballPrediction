@@ -11,6 +11,7 @@ import warnings
 # 测试导入
 try:
     from src.lineage.metadata_manager import __all__
+
     METADATA_MANAGER_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -18,7 +19,9 @@ except ImportError as e:
     __all__ = []
 
 
-@pytest.mark.skipif(not METADATA_MANAGER_AVAILABLE, reason="Metadata manager module not available")
+@pytest.mark.skipif(
+    not METADATA_MANAGER_AVAILABLE, reason="Metadata manager module not available"
+)
 class TestMetadataManager:
     """元数据管理器测试"""
 
@@ -37,13 +40,16 @@ class TestMetadataManager:
             try:
                 import importlib
                 import sys
-                if 'src.lineage.metadata_manager' in sys.modules:
-                    importlib.reload(sys.modules['src.lineage.metadata_manager'])
+
+                if "src.lineage.metadata_manager" in sys.modules:
+                    importlib.reload(sys.modules["src.lineage.metadata_manager"])
             except Exception:
                 pass
 
             # 检查弃用警告
-            deprecation_warnings = [warn for warn in w if issubclass(warn.category, DeprecationWarning)]
+            deprecation_warnings = [
+                warn for warn in w if issubclass(warn.category, DeprecationWarning)
+            ]
             # 兼容性模块应该触发弃用警告
             if len(deprecation_warnings) > 0:
                 assert "已弃用" in str(deprecation_warnings[0].message)
@@ -58,7 +64,9 @@ class TestMetadataManager:
         assert "向后兼容" in module.__doc__
 
 
-@pytest.mark.skipif(METADATA_MANAGER_AVAILABLE, reason="Metadata manager module should be available")
+@pytest.mark.skipif(
+    METADATA_MANAGER_AVAILABLE, reason="Metadata manager module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -73,6 +81,7 @@ def test_module_imports():
     """测试：模块导入"""
     if METADATA_MANAGER_AVAILABLE:
         import src.lineage.metadata_manager as module
+
         assert module is not None
 
 
@@ -82,6 +91,7 @@ def test_backward_compatibility(self):
         # 尝试导入（即使可能失败）
         try:
             from src.lineage.metadata_manager import MetadataManager  # type: ignore
+
             # 如果导入成功，验证类型
             assert MetadataManager is not None
         except ImportError:
@@ -89,7 +99,9 @@ def test_backward_compatibility(self):
             pass
 
 
-@pytest.mark.skipif(not METADATA_MANAGER_AVAILABLE, reason="Metadata manager module not available")
+@pytest.mark.skipif(
+    not METADATA_MANAGER_AVAILABLE, reason="Metadata manager module not available"
+)
 class TestMetadataManagerCompatibility:
     """元数据管理器兼容性测试"""
 
@@ -97,7 +109,10 @@ class TestMetadataManagerCompatibility:
         """测试：导入路径兼容性"""
         # 测试旧导入路径
         try:
-            from src.lineage.metadata_manager import MetadataManager as OldMetadataManager
+            from src.lineage.metadata_manager import (
+                MetadataManager as OldMetadataManager,
+            )
+
             # 测试新导入路径
             from src.lineage.metadata import MetadataManager as NewMetadataManager
 
@@ -107,6 +122,7 @@ class TestMetadataManagerCompatibility:
             # 至少旧路径应该工作（作为兼容性包装器）
             try:
                 from src.lineage.metadata_manager import MetadataManager  # type: ignore
+
                 assert True  # 导入成功
             except ImportError:
                 pass
@@ -116,10 +132,10 @@ class TestMetadataManagerCompatibility:
         import src.lineage.metadata_manager as module
 
         # 检查模块属性
-        module_items = dir(module)
+        dir(module)
 
         # 应该有__all__属性
-        assert hasattr(module, '__all__')
+        assert hasattr(module, "__all__")
 
         # 检查__all__的类型
         assert isinstance(module.__all__, list)
@@ -136,7 +152,9 @@ class TestMetadataManagerCompatibility:
                 pass
 
             # 检查警告消息
-            deprecation_warnings = [warn for warn in w if issubclass(warn.category, DeprecationWarning)]
+            deprecation_warnings = [
+                warn for warn in w if issubclass(warn.category, DeprecationWarning)
+            ]
             if deprecation_warnings:
                 message = str(deprecation_warnings[0].message)
                 assert "metadata_manager" in message
@@ -147,25 +165,31 @@ class TestMetadataManagerCompatibility:
         import src.lineage.metadata_manager as module
 
         # 验证模块的基本结构
-        assert hasattr(module, '__doc__')
-        assert hasattr(module, '__all__')
-        assert hasattr(module, '__name__')
-        assert module.__name__ == 'src.lineage.metadata_manager'
+        assert hasattr(module, "__doc__")
+        assert hasattr(module, "__all__")
+        assert hasattr(module, "__name__")
+        assert module.__name__ == "src.lineage.metadata_manager"
 
     def test_no_additional_exports(self):
         """测试：没有额外的导出"""
         import src.lineage.metadata_manager as module
 
         # 检查只有预期的导出
-        public_items = [name for name in dir(module) if not name.startswith('_')]
+        public_items = [name for name in dir(module) if not name.startswith("_")]
 
         # 允许的公共项
-        allowed_items = {'__all__'}
+        allowed_items = {"__all__"}
 
         # 过滤掉Python默认属性
         python_defaults = {
-            'name', 'package', 'spec', 'loader', 'file', 'cached',
-            'path', 'annotations'
+            "name",
+            "package",
+            "spec",
+            "loader",
+            "file",
+            "cached",
+            "path",
+            "annotations",
         }
         public_items -= python_defaults
 
@@ -186,11 +210,16 @@ class TestMetadataManagerCompatibility:
             import_module()
 
             # 检查警告的来源
-            deprecation_warnings = [warn for warn in w if issubclass(warn.category, DeprecationWarning)]
+            deprecation_warnings = [
+                warn for warn in w if issubclass(warn.category, DeprecationWarning)
+            ]
             if deprecation_warnings:
                 # 警告应该指向模块的导入位置，而不是警告内部
                 filename = deprecation_warnings[0].filename
-                assert "metadata_manager.py" in filename or "test_metadata_manager.py" in filename
+                assert (
+                    "metadata_manager.py" in filename
+                    or "test_metadata_manager.py" in filename
+                )
 
     def test_future_proof_design(self):
         """测试：面向未来的设计"""
@@ -219,11 +248,13 @@ def test_integration_with_new_module():
         try:
             # 尝试从新路径导入
             from src.lineage.metadata import MetadataManager
+
             assert MetadataManager is not None
 
             # 如果新路径存在，兼容性模块应该也能工作
             try:
                 from src.lineage.metadata_manager import MetadataManager as OldManager
+
                 # 两者可能相同或不同，取决于实现
                 assert OldManager is not None
             except ImportError:

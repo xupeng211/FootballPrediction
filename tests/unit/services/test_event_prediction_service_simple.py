@@ -43,8 +43,8 @@ class TestEventDrivenPredictionServiceSimple:
 
     def test_service_has_event_bus(self, mock_service):
         """测试：服务有事件总线"""
-        assert hasattr(mock_service, '_event_bus')
-        assert hasattr(mock_service, '_event_source')
+        assert hasattr(mock_service, "_event_bus")
+        assert hasattr(mock_service, "_event_source")
         assert mock_service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
@@ -55,10 +55,7 @@ class TestEventDrivenPredictionServiceSimple:
 
         # When
         result = await mock_service.predict_match(
-            match_id=456,
-            user_id=789,
-            strategy_name="test_strategy",
-            confidence=0.85
+            match_id=456, user_id=789, strategy_name="test_strategy", confidence=0.85
         )
 
         # Then
@@ -73,9 +70,7 @@ class TestEventDrivenPredictionServiceSimple:
 
         # When
         result = await mock_service.update_prediction(
-            prediction_id=123,
-            user_id=789,
-            new_predicted_home=3
+            prediction_id=123, user_id=789, new_predicted_home=3
         )
 
         # Then
@@ -86,17 +81,12 @@ class TestEventDrivenPredictionServiceSimple:
     async def test_batch_predict_workflow(self, mock_service):
         """测试：批量预测工作流程"""
         # Given
-        predictions = [
-            Mock(id=1),
-            Mock(id=2),
-            Mock(id=3)
-        ]
+        predictions = [Mock(id=1), Mock(id=2), Mock(id=3)]
         mock_service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
         result = await mock_service.batch_predict(
-            match_ids=[101, 102, 103],
-            user_id=1001
+            match_ids=[101, 102, 103], user_id=1001
         )
 
         # Then
@@ -114,23 +104,19 @@ class TestEventDrivenPredictionServiceSimple:
         assert mock_service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_prediction_with_minimal_params(self, mock_service, sample_prediction):
+    async def test_prediction_with_minimal_params(
+        self, mock_service, sample_prediction
+    ):
         """测试：使用最小参数预测"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(
-            match_id=456,
-            user_id=789
-        )
+        result = await mock_service.predict_match(match_id=456, user_id=789)
 
         # Then
         assert result == sample_prediction
-        mock_service.predict_match.assert_called_once_with(
-            match_id=456,
-            user_id=789
-        )
+        mock_service.predict_match.assert_called_once_with(match_id=456, user_id=789)
 
     @pytest.mark.asyncio
     async def test_prediction_with_all_params(self, mock_service, sample_prediction):
@@ -144,7 +130,7 @@ class TestEventDrivenPredictionServiceSimple:
             user_id=789,
             strategy_name="ml_strategy",
             confidence=0.95,
-            notes="高信心度预测"
+            notes="高信心度预测",
         )
 
         # Then
@@ -159,9 +145,7 @@ class TestEventDrivenPredictionServiceSimple:
 
         # When
         result = await mock_service.predict_match(
-            match_id=456,
-            user_id=789,
-            strategy_name=None
+            match_id=456, user_id=789, strategy_name=None
         )
 
         # Then
@@ -175,9 +159,7 @@ class TestEventDrivenPredictionServiceSimple:
 
         # When
         result = await mock_service.predict_match(
-            match_id=456,
-            user_id=789,
-            confidence=0.0
+            match_id=456, user_id=789, confidence=0.0
         )
 
         # Then
@@ -186,11 +168,11 @@ class TestEventDrivenPredictionServiceSimple:
     def test_service_attributes_exist(self, mock_service):
         """测试：服务属性存在"""
         # Check required attributes
-        assert hasattr(mock_service, '_event_bus')
-        assert hasattr(mock_service, '_event_source')
-        assert hasattr(mock_service, 'predict_match')
-        assert hasattr(mock_service, 'update_prediction')
-        assert hasattr(mock_service, 'batch_predict')
+        assert hasattr(mock_service, "_event_bus")
+        assert hasattr(mock_service, "_event_source")
+        assert hasattr(mock_service, "predict_match")
+        assert hasattr(mock_service, "update_prediction")
+        assert hasattr(mock_service, "batch_predict")
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_publish_multiple_events(self, mock_service):
@@ -201,8 +183,7 @@ class TestEventDrivenPredictionServiceSimple:
 
         # When
         await mock_service.batch_predict(
-            match_ids=[101, 102, 103, 104, 105],
-            user_id=1001
+            match_ids=[101, 102, 103, 104, 105], user_id=1001
         )
 
         # Then
@@ -213,15 +194,13 @@ class TestEventDrivenPredictionServiceSimple:
     async def test_update_prediction_preserves_original(self, mock_service):
         """测试：更新预测保留原始值"""
         # Given
-        original = Mock(id=123, predicted_home=2, predicted_away=1)
+        Mock(id=123, predicted_home=2, predicted_away=1)
         updated = Mock(id=123, predicted_home=3, predicted_away=1)
         mock_service.update_prediction = AsyncMock(return_value=updated)
 
         # When
         result = await mock_service.update_prediction(
-            prediction_id=123,
-            user_id=789,
-            new_predicted_home=3
+            prediction_id=123, user_id=789, new_predicted_home=3
         )
 
         # Then
@@ -237,7 +216,7 @@ class TestEventDrivenPredictionServiceSimple:
             predicted_home=3,
             predicted_away=2,
             confidence=0.95,
-            notes="更新后的备注"
+            notes="更新后的备注",
         )
         mock_service.update_prediction = AsyncMock(return_value=updated)
 
@@ -249,7 +228,7 @@ class TestEventDrivenPredictionServiceSimple:
             new_predicted_away=2,
             new_confidence=0.95,
             new_notes="更新后的备注",
-            update_reason="分析调整"
+            update_reason="分析调整",
         )
 
         # Then
@@ -283,9 +262,9 @@ class TestEventDrivenMatchServiceSimple:
 
     def test_match_service_has_attributes(self, mock_match_service):
         """测试：比赛服务有必要的属性"""
-        assert hasattr(mock_match_service, '_match_repository')
-        assert hasattr(mock_match_service, '_event_bus')
-        assert hasattr(mock_match_service, '_event_source')
+        assert hasattr(mock_match_service, "_match_repository")
+        assert hasattr(mock_match_service, "_event_bus")
+        assert hasattr(mock_match_service, "_event_source")
         assert mock_match_service._event_source == "match_service"
 
     @pytest.mark.asyncio
@@ -297,10 +276,7 @@ class TestEventDrivenMatchServiceSimple:
 
         # When
         result = await mock_match_service.create_match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=3,
-            match_time=datetime.utcnow()
+            home_team_id=1, away_team_id=2, league_id=3, match_time=datetime.utcnow()
         )
 
         # Then
@@ -324,9 +300,9 @@ class TestEventDrivenUserServiceSimple:
 
     def test_user_service_has_attributes(self, mock_user_service):
         """测试：用户服务有必要的属性"""
-        assert hasattr(mock_user_service, '_user_repository')
-        assert hasattr(mock_user_service, '_event_bus')
-        assert hasattr(mock_user_service, '_event_source')
+        assert hasattr(mock_user_service, "_user_repository")
+        assert hasattr(mock_user_service, "_event_bus")
+        assert hasattr(mock_user_service, "_event_source")
         assert mock_user_service._event_source == "user_service"
 
     @pytest.mark.asyncio
@@ -338,9 +314,7 @@ class TestEventDrivenUserServiceSimple:
 
         # When
         result = await mock_user_service.register_user(
-            username="testuser",
-            email="test@example.com",
-            password_hash="hashed"
+            username="testuser", email="test@example.com", password_hash="hashed"
         )
 
         # Then

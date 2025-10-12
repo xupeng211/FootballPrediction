@@ -13,13 +13,16 @@ from typing import Dict, Any
 # 测试导入
 try:
     from src.services.processing.processors.features_processor import FeaturesProcessor
+
     FEATURES_PROCESSOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     FEATURES_PROCESSOR_AVAILABLE = False
 
 
-@pytest.mark.skipif(not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available")
+@pytest.mark.skipif(
+    not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
+)
 class TestFeaturesProcessor:
     """特征处理器测试"""
 
@@ -32,9 +35,9 @@ class TestFeaturesProcessor:
         """测试：处理器初始化"""
         assert processor is not None
         # 检查基本属性
-        assert hasattr(processor, 'process')
-        assert hasattr(processor, 'validate')
-        if hasattr(processor, 'config'):
+        assert hasattr(processor, "process")
+        assert hasattr(processor, "validate")
+        if hasattr(processor, "config"):
             assert isinstance(processor.config, dict)
 
     @pytest.mark.asyncio
@@ -48,12 +51,12 @@ class TestFeaturesProcessor:
             "features": {
                 "home_form": [1, 0, 1, 1, 0],
                 "away_form": [0, 1, 0, 0, 1],
-                "head_to_head": [1, 0, 1]
-            }
+                "head_to_head": [1, 0, 1],
+            },
         }
 
         # 如果有process方法，测试它
-        if hasattr(processor, 'process'):
+        if hasattr(processor, "process"):
             try:
                 result = await processor.process(input_data)
                 assert result is not None
@@ -67,14 +70,16 @@ class TestFeaturesProcessor:
     async def test_process_features_with_dataframe(self, processor):
         """测试：使用DataFrame处理特征"""
         # 创建测试DataFrame
-        df = pd.DataFrame({
-            "match_id": [1, 2, 3],
-            "home_goals": [2, 1, 3],
-            "away_goals": [1, 2, 1],
-            "possession": [55, 48, 62]
-        })
+        df = pd.DataFrame(
+            {
+                "match_id": [1, 2, 3],
+                "home_goals": [2, 1, 3],
+                "away_goals": [1, 2, 1],
+                "possession": [55, 48, 62],
+            }
+        )
 
-        if hasattr(processor, 'process_dataframe'):
+        if hasattr(processor, "process_dataframe"):
             try:
                 result = await processor.process_dataframe(df)
                 assert result is not None
@@ -92,20 +97,22 @@ class TestFeaturesProcessor:
             "features": {
                 "goals_scored_avg": 1.5,
                 "goals_conceded_avg": 0.8,
-                "win_rate": 0.6
-            }
+                "win_rate": 0.6,
+            },
         }
 
-        if hasattr(processor, 'validate'):
+        if hasattr(processor, "validate"):
             result = processor.validate(valid_features)
             assert result is True or isinstance(result, dict)
 
         # 测试无效特征
         invalid_features = {}  # 空数据
 
-        if hasattr(processor, 'validate'):
+        if hasattr(processor, "validate"):
             result = processor.validate(invalid_features)
-            assert result is False or isinstance(result, dict) and "errors" in str(result)
+            assert (
+                result is False or isinstance(result, dict) and "errors" in str(result)
+            )
 
     @pytest.mark.asyncio
     async def test_process_batch_features(self, processor):
@@ -113,10 +120,10 @@ class TestFeaturesProcessor:
         batch_data = [
             {"match_id": 1, "features": {"home_goals": 2}},
             {"match_id": 2, "features": {"home_goals": 1}},
-            {"match_id": 3, "features": {"home_goals": 3}}
+            {"match_id": 3, "features": {"home_goals": 3}},
         ]
 
-        if hasattr(processor, 'process_batch'):
+        if hasattr(processor, "process_batch"):
             try:
                 results = await processor.process_batch(batch_data)
                 assert len(results) == len(batch_data)
@@ -127,10 +134,10 @@ class TestFeaturesProcessor:
         """测试：特征转换"""
         raw_features = {
             "home_goals_last_5": [2, 1, 3, 0, 2],
-            "away_goals_last_5": [1, 2, 0, 1, 1]
+            "away_goals_last_5": [1, 2, 0, 1, 1],
         }
 
-        if hasattr(processor, 'transform_features'):
+        if hasattr(processor, "transform_features"):
             result = processor.transform_features(raw_features)
             assert result is not None
             # 验证转换后的特征
@@ -145,10 +152,10 @@ class TestFeaturesProcessor:
             "home_losses": 3,
             "away_wins": 8,
             "away_draws": 4,
-            "away_losses": 6
+            "away_losses": 6,
         }
 
-        if hasattr(processor, 'engineer_features'):
+        if hasattr(processor, "engineer_features"):
             engineered = processor.engineer_features(base_features)
             assert engineered is not None
             # 检查是否生成了新特征
@@ -161,10 +168,10 @@ class TestFeaturesProcessor:
         time_series_data = {
             "match_id": 123,
             "timestamps": ["2024-01-01", "2024-01-08", "2024-01-15"],
-            "values": [2.5, 1.8, 2.2]
+            "values": [2.5, 1.8, 2.2],
         }
 
-        if hasattr(processor, 'process_time_series'):
+        if hasattr(processor, "process_time_series"):
             result = await processor.process_time_series(time_series_data)
             assert result is not None
             if isinstance(result, dict):
@@ -177,10 +184,10 @@ class TestFeaturesProcessor:
             "feature_2": 0.8,
             "feature_3": 0.1,
             "feature_4": 0.9,
-            "feature_5": 0.3
+            "feature_5": 0.3,
         }
 
-        if hasattr(processor, 'select_features'):
+        if hasattr(processor, "select_features"):
             selected = processor.select_features(all_features, top_k=3)
             assert len(selected) <= 3
 
@@ -188,57 +195,59 @@ class TestFeaturesProcessor:
     async def test_error_handling(self, processor):
         """测试：错误处理"""
         # 测试None输入
-        if hasattr(processor, 'process'):
+        if hasattr(processor, "process"):
             with pytest.raises((ValueError, TypeError, AttributeError)):
                 await processor.process(None)
 
         # 测试无效类型
-        if hasattr(processor, 'process'):
+        if hasattr(processor, "process"):
             with pytest.raises((ValueError, TypeError)):
                 await processor.process("invalid_string")
 
     def test_processor_configuration(self, processor):
         """测试：处理器配置"""
         # 测试默认配置
-        if hasattr(processor, 'config'):
+        if hasattr(processor, "config"):
             default_config = processor.config
             assert isinstance(default_config, dict)
 
         # 测试配置更新
-        if hasattr(processor, 'update_config'):
+        if hasattr(processor, "update_config"):
             new_config = {"batch_size": 100, "timeout": 30}
             processor.update_config(new_config)
             # 验证配置已更新
-            if hasattr(processor, 'config'):
+            if hasattr(processor, "config"):
                 assert processor.config["batch_size"] == 100
 
     def test_feature_normalization(self, processor):
         """测试：特征归一化"""
         features = {
             "goals_scored": [0, 1, 2, 3, 4, 5],
-            "possession": [30, 45, 50, 60, 70, 85]
+            "possession": [30, 45, 50, 60, 70, 85],
         }
 
-        if hasattr(processor, 'normalize_features'):
+        if hasattr(processor, "normalize_features"):
             normalized = processor.normalize_features(features)
             assert normalized is not None
             # 检查归一化后的值在合理范围内
             if isinstance(normalized, dict):
                 for key, values in normalized.items():
                     if isinstance(values, list):
-                        assert all(0 <= v <= 1 for v in values if isinstance(v, (int, float)))
+                        assert all(
+                            0 <= v <= 1 for v in values if isinstance(v, (int, float))
+                        )
 
     @pytest.mark.asyncio
     async def test_processor_performance(self, processor):
         """测试：处理器性能"""
         # 创建大量测试数据
         large_dataset = [
-            {"match_id": i, "features": {"value": i * 0.1}}
-            for i in range(1000)
+            {"match_id": i, "features": {"value": i * 0.1}} for i in range(1000)
         ]
 
-        if hasattr(processor, 'process_batch'):
+        if hasattr(processor, "process_batch"):
             import time
+
             start_time = time.time()
             result = await processor.process_batch(large_dataset)
             end_time = time.time()
@@ -251,7 +260,9 @@ class TestFeaturesProcessor:
             assert processing_time < 10.0  # 10秒内完成
 
 
-@pytest.mark.skipif(not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available")
+@pytest.mark.skipif(
+    not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
+)
 class TestFeaturesProcessorIntegration:
     """特征处理器集成测试"""
 
@@ -266,34 +277,34 @@ class TestFeaturesProcessorIntegration:
             "home_team_history": [
                 {"goals": 2, "opposition": "Team X"},
                 {"goals": 1, "opposition": "Team Y"},
-                {"goals": 3, "opposition": "Team Z"}
+                {"goals": 3, "opposition": "Team Z"},
             ],
             "away_team_history": [
                 {"goals": 1, "opposition": "Team A"},
                 {"goals": 2, "opposition": "Team B"},
-                {"goals": 1, "opposition": "Team C"}
-            ]
+                {"goals": 1, "opposition": "Team C"},
+            ],
         }
 
         # 步骤1：验证数据
-        if hasattr(processor, 'validate'):
+        if hasattr(processor, "validate"):
             is_valid = processor.validate(raw_data)
             if not is_valid:
                 pytest.skip("Invalid test data")
 
         # 步骤2：提取特征
-        if hasattr(processor, 'extract_features'):
+        if hasattr(processor, "extract_features"):
             features = processor.extract_features(raw_data)
             assert features is not None
 
         # 步骤3：特征工程
-        if hasattr(processor, 'engineer_features') and 'features' in locals():
+        if hasattr(processor, "engineer_features") and "features" in locals():
             engineered = processor.engineer_features(features)
             assert engineered is not None
 
         # 步骤4：处理特征
-        if hasattr(processor, 'process'):
-            if 'engineered' in locals():
+        if hasattr(processor, "process"):
+            if "engineered" in locals():
                 result = await processor.process(engineered)
             else:
                 result = await processor.process(raw_data)
@@ -301,7 +312,7 @@ class TestFeaturesProcessorIntegration:
 
     def test_processor_factory_pattern(self):
         """测试：处理器工厂模式"""
-        if hasattr(FeaturesProcessor, 'create'):
+        if hasattr(FeaturesProcessor, "create"):
             # 测试工厂方法创建处理器
             processor = FeaturesProcessor.create(type="basic")
             assert isinstance(processor, FeaturesProcessor)
@@ -312,13 +323,10 @@ class TestFeaturesProcessorIntegration:
         import asyncio
 
         processor = FeaturesProcessor()
-        datasets = [
-            {"match_id": i, "features": {"value": i}}
-            for i in range(10)
-        ]
+        datasets = [{"match_id": i, "features": {"value": i}} for i in range(10)]
 
         # 并发处理多个数据集
-        if hasattr(processor, 'process'):
+        if hasattr(processor, "process"):
             tasks = [processor.process(data) for data in datasets]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 

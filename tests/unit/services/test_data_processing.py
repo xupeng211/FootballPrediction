@@ -17,15 +17,18 @@ try:
         MatchDataProcessor,
         OddsDataProcessor,
         ScoresDataProcessor,
-        FeaturesDataProcessor
+        FeaturesDataProcessor,
     )
+
     PROCESSING_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     PROCESSING_AVAILABLE = False
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestDataProcessor:
     """数据处理器基类测试"""
 
@@ -41,6 +44,7 @@ class TestDataProcessor:
 
     def test_data_processor_implementation(self):
         """测试：数据处理器实现"""
+
         class ConcreteProcessor(DataProcessor):
             async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
                 return {"processed": True}
@@ -49,7 +53,9 @@ class TestDataProcessor:
         assert isinstance(processor, DataProcessor)
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestMatchDataProcessor:
     """比赛数据处理器测试"""
 
@@ -67,7 +73,7 @@ class TestMatchDataProcessor:
             "away_team": "Team B",
             "home_score": 2,
             "away_score": 1,
-            "status": "FINISHED"
+            "status": "FINISHED",
         }
 
         result = await match_processor.process(input_data)
@@ -105,7 +111,7 @@ class TestMatchDataProcessor:
             "status": "IN_PLAY",
             "minute": 65,
             "home_score": 1,
-            "away_score": 0
+            "away_score": 0,
         }
 
         result = await match_processor.process(input_data)
@@ -119,14 +125,16 @@ class TestMatchDataProcessor:
         """测试处理时的日志记录"""
         input_data = {"id": 789}
 
-        with patch('src.services.data_processing.logger') as mock_logger:
+        with patch("src.services.data_processing.logger") as mock_logger:
             result = await match_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing match data: 789")
             assert result["id"] == 789
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestOddsDataProcessor:
     """赔率数据处理器测试"""
 
@@ -144,7 +152,7 @@ class TestOddsDataProcessor:
             "home_win": 2.10,
             "draw": 3.20,
             "away_win": 3.50,
-            "timestamp": "2024-01-15T10:00:00Z"
+            "timestamp": "2024-01-15T10:00:00Z",
         }
 
         result = await odds_processor.process(input_data)
@@ -167,8 +175,13 @@ class TestOddsDataProcessor:
             "match_id": 789,
             "bookmakers": [
                 {"name": "Bet365", "home_win": 2.10, "draw": 3.20, "away_win": 3.50},
-                {"name": "William Hill", "home_win": 2.15, "draw": 3.10, "away_win": 3.60}
-            ]
+                {
+                    "name": "William Hill",
+                    "home_win": 2.15,
+                    "draw": 3.10,
+                    "away_win": 3.60,
+                },
+            ],
         }
 
         result = await odds_processor.process(input_data)
@@ -182,14 +195,16 @@ class TestOddsDataProcessor:
         """测试处理时的日志记录"""
         input_data = {"match_id": 999}
 
-        with patch('src.services.data_processing.logger') as mock_logger:
+        with patch("src.services.data_processing.logger") as mock_logger:
             result = await odds_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing odds data: 999")
             assert result["match_id"] == 999
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestScoresDataProcessor:
     """比分数据处理器测试"""
 
@@ -207,7 +222,7 @@ class TestScoresDataProcessor:
             "away_score": 1,
             "minute": 75,
             "scorer": "Player A",
-            "assist": "Player B"
+            "assist": "Player B",
         }
 
         result = await scores_processor.process(input_data)
@@ -234,8 +249,8 @@ class TestScoresDataProcessor:
             "away_score": 0,
             "events": [
                 {"minute": 30, "type": "goal", "team": "home"},
-                {"minute": 45, "type": "card", "team": "away"}
-            ]
+                {"minute": 45, "type": "card", "team": "away"},
+            ],
         }
 
         result = await scores_processor.process(input_data)
@@ -255,7 +270,9 @@ class TestScoresDataProcessor:
         assert "processed_at" in result
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestFeaturesDataProcessor:
     """特征数据处理器测试"""
 
@@ -270,12 +287,8 @@ class TestFeaturesDataProcessor:
         input_data = {
             "match_id": 123,
             "team_id": 1,
-            "features": {
-                "avg_goals": 1.8,
-                "win_rate": 0.65,
-                "form_points": 7
-            },
-            "calculated_at": "2024-01-15T10:00:00Z"
+            "features": {"avg_goals": 1.8, "win_rate": 0.65, "form_points": 7},
+            "calculated_at": "2024-01-15T10:00:00Z",
         }
 
         result = await features_processor.process(input_data)
@@ -307,8 +320,8 @@ class TestFeaturesDataProcessor:
                 "shots_on_target": 6.2,
                 # 历史特征
                 "h2h_wins": 3,
-                "last_5_points": 9
-            }
+                "last_5_points": 9,
+            },
         }
 
         result = await features_processor.process(input_data)
@@ -329,7 +342,9 @@ class TestFeaturesDataProcessor:
         assert "processed_at" in result
 
 
-@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
+@pytest.mark.skipif(
+    not PROCESSING_AVAILABLE, reason="Data processing module not available"
+)
 class TestDataProcessingIntegration:
     """数据处理集成测试"""
 
@@ -340,7 +355,7 @@ class TestDataProcessingIntegration:
             MatchDataProcessor(),
             OddsDataProcessor(),
             ScoresDataProcessor(),
-            FeaturesDataProcessor()
+            FeaturesDataProcessor(),
         ]
 
     @pytest.mark.asyncio
@@ -351,7 +366,7 @@ class TestDataProcessingIntegration:
             "type": "match",
             "home_team": "Team A",
             "away_team": "Team B",
-            "odds": {"home_win": 2.10, "draw": 3.20, "away_win": 3.50}
+            "odds": {"home_win": 2.10, "draw": 3.20, "away_win": 3.50},
         }
 
         # 通过每个处理器
@@ -362,7 +377,7 @@ class TestDataProcessingIntegration:
                 relevant_data = {
                     "id": processed_data["id"],
                     "home_team": processed_data.get("home_team"),
-                    "away_team": processed_data.get("away_team")
+                    "away_team": processed_data.get("away_team"),
                 }
                 processed_data = await processor.process(relevant_data)
             else:
@@ -379,7 +394,7 @@ class TestDataProcessingIntegration:
         batch_data = [
             {"id": 1, "home_team": "Team A", "away_team": "Team B"},
             {"id": 2, "home_team": "Team C", "away_team": "Team D"},
-            {"id": 3, "home_team": "Team E", "away_team": "Team F"}
+            {"id": 3, "home_team": "Team E", "away_team": "Team F"},
         ]
 
         processor = MatchDataProcessor()
@@ -396,6 +411,7 @@ class TestDataProcessingIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_in_pipeline(self, processors):
         """测试流水线错误处理"""
+
         # 创建会抛出异常的处理器
         class ErrorProcessor(DataProcessor):
             async def process(self, data):
@@ -417,7 +433,7 @@ class TestDataProcessingIntegration:
         input_data = {
             "id": 123,
             "match_time": "2024-01-15T15:00:00Z",
-            "home_team": "Team A"
+            "home_team": "Team A",
         }
 
         result = await processor.process(input_data)
@@ -442,8 +458,7 @@ class TestDataProcessingIntegration:
 
         # 并发处理
         results = await asyncio.gather(
-            match_processor.process(match_data),
-            odds_processor.process(odds_data)
+            match_processor.process(match_data), odds_processor.process(odds_data)
         )
 
         assert len(results) == 2
@@ -460,7 +475,7 @@ class TestDataProcessingIntegration:
             "id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "score": {"home": 2, "away": 1}
+            "score": {"home": 2, "away": 1},
         }
 
         first_result = await match_processor.process(match_data)
@@ -471,7 +486,7 @@ class TestDataProcessingIntegration:
         score_data = {
             "match_id": first_result["id"],
             "home_score": first_result["score"]["home"],
-            "away_score": first_result["score"]["away"]
+            "away_score": first_result["score"]["away"],
         }
 
         second_result = await scores_processor.process(score_data)
@@ -504,7 +519,7 @@ class TestDataProcessingIntegration:
         # 创建包含大量特征的数据
         large_data = {
             "match_id": 999,
-            "features": {f"feature_{i}": i for i in range(1000)}
+            "features": {f"feature_{i}": i for i in range(1000)},
         }
 
         result = await processor.process(large_data)
@@ -525,14 +540,14 @@ class TestDataProcessingIntegration:
             "teams": ["Team A", "Team B"],
             "stats": {
                 "possession": {"home": 60.5, "away": 39.5},
-                "shots": {"home": 15, "away": 8}
+                "shots": {"home": 15, "away": 8},
             },
             "events": [
                 {"minute": 25, "type": "goal", "player": "Player A"},
-                {"minute": 45, "type": "card", "player": "Player B", "color": "yellow"}
+                {"minute": 45, "type": "card", "player": "Player B", "color": "yellow"},
             ],
             "is_finished": True,
-            "attendance": 50000
+            "attendance": 50000,
         }
 
         result = await processor.process(complex_data)

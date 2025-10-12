@@ -11,13 +11,13 @@ import pytest
 try:
     import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src'))
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
     import importlib.util
 
     # 动态导入模块
     spec = importlib.util.spec_from_file_location(
-        "buggy_api",
-        "/home/user/projects/FootballPrediction/src/api/buggy_api.py"
+        "buggy_api", "/home/user/projects/FootballPrediction/src/api/buggy_api.py"
     )
     buggy_api_module = importlib.util.module_from_spec(spec)
 
@@ -34,13 +34,16 @@ class TestBuggyAPIBasic:
     def test_module_file_exists(self):
         """测试：模块文件存在"""
         import os
+
         file_path = "/home/user/projects/FootballPrediction/src/api/buggy_api.py"
         assert os.path.exists(file_path)
         assert os.path.isfile(file_path)
 
     def test_module_file_content(self):
         """测试：模块文件内容"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 验证文件包含预期的内容
@@ -52,7 +55,9 @@ class TestBuggyAPIBasic:
 
     def test_module_has_functions(self):
         """测试：模块有预期的函数"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查函数定义
@@ -62,14 +67,18 @@ class TestBuggyAPIBasic:
 
     def test_module_has_class(self):
         """测试：模块有预期的类"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         assert "class SomeAsyncService" in content
 
     def test_module_docstrings(self):
         """测试：模块有文档字符串"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             lines = f.readlines()
 
         # 检查函数有文档字符串
@@ -78,7 +87,9 @@ class TestBuggyAPIBasic:
 
     def test_endpoint_decorators(self):
         """测试：端点装饰器"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查FastAPI装饰器
@@ -87,7 +98,9 @@ class TestBuggyAPIBasic:
 
     def test_query_parameters(self):
         """测试：查询参数定义"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查Query参数
@@ -98,7 +111,9 @@ class TestBuggyAPIBasic:
 
     def test_async_patterns(self):
         """测试：异步模式"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查异步模式
@@ -107,7 +122,9 @@ class TestBuggyAPIBasic:
 
     def test_service_pattern(self):
         """测试：服务模式"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查服务实例化
@@ -116,7 +133,9 @@ class TestBuggyAPIBasic:
 
     def test_type_annotations(self):
         """测试：类型注解"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查类型注解
@@ -125,7 +144,9 @@ class TestBuggyAPIBasic:
 
     def test_error_handling_patterns(self):
         """测试：错误处理模式"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查是否有错误处理的注释或代码
@@ -133,23 +154,27 @@ class TestBuggyAPIBasic:
 
     def test_code_quality_indicators(self):
         """测试：代码质量指标"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             lines = f.readlines()
 
         # 基本代码质量检查
         assert len(lines) > 10  # 有足够的代码行
 
         # 检查空行（代码可读性）
-        empty_lines = sum(1 for line in lines if line.strip() == '')
+        empty_lines = sum(1 for line in lines if line.strip() == "")
         assert empty_lines > 0  # 应该有空行分隔
 
         # 检查注释
-        comment_lines = sum(1 for line in lines if line.strip().startswith('#'))
+        comment_lines = sum(1 for line in lines if line.strip().startswith("#"))
         assert comment_lines > 0  # 应该有注释
 
     def test_function_return_patterns(self):
         """测试：函数返回模式"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查返回语句
@@ -158,7 +183,9 @@ class TestBuggyAPIBasic:
 
     def test_validation_patterns(self):
         """测试：验证模式"""
-        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+        with open(
+            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
+        ) as f:
             content = f.read()
 
         # 检查参数验证
@@ -175,7 +202,7 @@ def test_performance_baseline():
     start_time = time.time()
 
     # 读取模块文件
-    with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", 'r') as f:
+    with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
         content = f.read()
 
     end_time = time.time()

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class AuditSeverity(Enum):
     """审计严重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -24,6 +25,7 @@ class AuditSeverity(Enum):
 
 class AuditAction:
     """审计动作"""
+
     CREATE = "create"
     READ = "read"
     UPDATE = "update"
@@ -36,7 +38,12 @@ class AuditAction:
 class AuditContext:
     """审计上下文"""
 
-    def __init__(self, user_id: str, session_id: Optional[str] = None, ip_address: Optional[str] = None):
+    def __init__(
+        self,
+        user_id: str,
+        session_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+    ):
         self.user_id = user_id
         self.session_id = session_id
         self.ip_address = ip_address
@@ -46,7 +53,13 @@ class AuditContext:
 class AuditLog:
     """审计日志"""
 
-    def __init__(self, action: str, context: AuditContext, severity: AuditSeverity, details: Dict[str, Any]):
+    def __init__(
+        self,
+        action: str,
+        context: AuditContext,
+        severity: AuditSeverity,
+        details: Dict[str, Any],
+    ):
         self.action = action
         self.context = context
         self.severity = severity
@@ -93,7 +106,9 @@ class SeverityAnalyzer:
 class AuditEvent:
     """审计事件"""
 
-    def __init__(self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]):
+    def __init__(
+        self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]
+    ):
         self.action = action
         self.user = user
         self.severity = severity
@@ -143,6 +158,7 @@ class AuditService:
             summary.by_action[action] = summary.by_action.get(action, 0) + 1
 
         return summary
+
 
 __all__ = [
     "AuditService",

@@ -15,6 +15,7 @@ from datetime import datetime
 try:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
+
     API_AVAILABLE = True
 except ImportError:
     API_AVAILABLE = False
@@ -40,10 +41,10 @@ class TestPredictionWorkflow:
                     "home_win": 0.45,
                     "draw": 0.25,
                     "away_win": 0.30,
-                    "confidence": 0.85
+                    "confidence": 0.85,
                 },
                 "match_id": request.get("match_id"),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         # 模拟获取预测历史
@@ -57,9 +58,9 @@ class TestPredictionWorkflow:
                         "home_win": 0.45,
                         "draw": 0.25,
                         "away_win": 0.30,
-                        "created_at": datetime.now().isoformat()
+                        "created_at": datetime.now().isoformat(),
                     }
-                ]
+                ],
             }
 
         return app
@@ -77,7 +78,7 @@ class TestPredictionWorkflow:
             "home_team": "Team A",
             "away_team": "Team B",
             "league": "Premier League",
-            "season": "2023-2024"
+            "season": "2023-2024",
         }
 
         # 2. 发送预测请求
@@ -94,7 +95,9 @@ class TestPredictionWorkflow:
         assert "home_win" in pred
         assert "draw" in pred
         assert "away_win" in pred
-        assert pred["home_win"] + pred["draw"] + pred["away_win"] == pytest.approx(1.0, rel=1e-2)
+        assert pred["home_win"] + pred["draw"] + pred["away_win"] == pytest.approx(
+            1.0, rel=1e-2
+        )
 
         # 5. 获取预测历史
         history_response = client.get(f"/api/predictions/{predict_request['match_id']}")
@@ -138,7 +141,7 @@ class TestPredictionWorkflow:
                 request = {
                     "match_id": f"match_{threading.get_ident()}",
                     "home_team": "Team A",
-                    "away_team": "Team B"
+                    "away_team": "Team B",
                 }
                 response = client.post("/api/predict", json=request)
                 results.append(response.status_code)
@@ -166,7 +169,7 @@ class TestPredictionWorkflow:
         request = {
             "match_id": "test_format",
             "home_team": "Team A",
-            "away_team": "Team B"
+            "away_team": "Team B",
         }
 
         response = client.post("/api/predict", json=request)
@@ -208,7 +211,7 @@ class TestDataCollectionWorkflow:
                 "matches": [
                     {"id": i, "home": f"Team {i}", "away": f"Team {i+1}"}
                     for i in range(10)
-                ]
+                ],
             }
 
         @app.post("/api/data/collect/odds")
@@ -219,7 +222,7 @@ class TestDataCollectionWorkflow:
                 "odds": [
                     {"match_id": i, "home_win": 2.0, "draw": 3.0, "away_win": 3.5}
                     for i in range(5)
-                ]
+                ],
             }
 
         @app.get("/api/data/status")
@@ -228,7 +231,7 @@ class TestDataCollectionWorkflow:
                 "last_collection": datetime.now().isoformat(),
                 "total_matches": 100,
                 "total_odds": 50,
-                "status": "up_to_date"
+                "status": "up_to_date",
             }
 
         return app
@@ -268,7 +271,7 @@ class TestDataCollectionWorkflow:
             "league": "Premier League",
             "season": "2023-2024",
             "date_from": "2023-01-01",
-            "date_to": "2023-12-31"
+            "date_to": "2023-12-31",
         }
 
         response = data_client.post("/api/data/collect/matches", json=filters)
@@ -279,7 +282,7 @@ class TestDataCollectionWorkflow:
         # 无效的过滤器
         invalid_filters = {
             "league": "",  # 空字符串
-            "season": "invalid"  # 无效格式
+            "season": "invalid",  # 无效格式
         }
 
         response = data_client.post("/api/data/collect/matches", json=invalid_filters)
@@ -294,14 +297,14 @@ class TestSystemIntegration:
     def test_prediction_data_integration(self):
         """测试：预测与数据集成"""
         # 模拟数据收集到预测的完整流程
-        with patch('src.services.prediction_service.PredictionService') as mock_service:
+        with patch("src.services.prediction_service.PredictionService") as mock_service:
             # 设置模拟服务
             mock_instance = AsyncMock()
             mock_instance.predict.return_value = {
                 "home_win": 0.5,
                 "draw": 0.3,
                 "away_win": 0.2,
-                "confidence": 0.9
+                "confidence": 0.9,
             }
             mock_service.return_value = mock_instance
 
@@ -316,7 +319,7 @@ class TestSystemIntegration:
 
     def test_error_propagation(self):
         """测试：错误传播"""
-        with patch('src.services.prediction_service.PredictionService') as mock_service:
+        with patch("src.services.prediction_service.PredictionService") as mock_service:
             # 设置模拟抛出异常
             mock_instance = AsyncMock()
             mock_instance.predict.side_effect = ValueError("Invalid input")
@@ -337,7 +340,7 @@ class TestSystemIntegration:
         import time
 
         # 预测响应时间应该小于1秒
-        with patch('src.services.prediction_service.PredictionService') as mock_service:
+        with patch("src.services.prediction_service.PredictionService") as mock_service:
             mock_instance = AsyncMock()
             mock_instance.predict.return_value = {"home_win": 0.5}
             mock_service.return_value = mock_instance
@@ -358,7 +361,7 @@ class TestSystemIntegration:
         import asyncio
         import time
 
-        with patch('src.services.prediction_service.PredictionService') as mock_service:
+        with patch("src.services.prediction_service.PredictionService") as mock_service:
             mock_instance = AsyncMock()
             mock_instance.predict.return_value = {"home_win": 0.5}
             mock_service.return_value = mock_instance
@@ -391,7 +394,7 @@ class TestSystemIntegration:
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "score": {"home": 2, "away": 1}
+            "score": {"home": 2, "away": 1},
         }
 
         # 验证数据格式在传输过程中保持一致
@@ -404,7 +407,7 @@ class TestSystemIntegration:
 
     def test_security_headers(self):
         """测试：安全头"""
-        with patch('fastapi.FastAPI') as mock_fastapi:
+        with patch("fastapi.FastAPI"):
             # 模拟FastAPI应用
             app = Mock()
             app.include_router = Mock()
@@ -413,7 +416,7 @@ class TestSystemIntegration:
             security_headers = {
                 "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "DENY",
-                "X-XSS-Protection": "1; mode=block"
+                "X-XSS-Protection": "1; mode=block",
             }
 
             # 在真实环境中，这些应该由中间件添加
@@ -432,13 +435,13 @@ class TestMonitoringAndLogging:
         logger = logging.getLogger("footballprediction")
 
         # 测试日志记录
-        with patch.object(logger, 'info') as mock_info:
+        with patch.object(logger, "info") as mock_info:
             logger.info("Test message")
             mock_info.assert_called_once_with("Test message")
 
     def test_metrics_collection(self):
         """测试：指标收集"""
-        with patch('prometheus_client.Counter') as mock_counter:
+        with patch("prometheus_client.Counter") as mock_counter:
             # 模拟指标创建
             counter = Mock()
             counter.labels.return_value = counter
@@ -446,9 +449,7 @@ class TestMonitoringAndLogging:
 
             # 创建指标
             prediction_counter = mock_counter(
-                "predictions_total",
-                "Total number of predictions",
-                ["model", "status"]
+                "predictions_total", "Total number of predictions", ["model", "status"]
             )
 
             # 记录指标
@@ -468,8 +469,8 @@ class TestMonitoringAndLogging:
             "checks": {
                 "database": "healthy",
                 "redis": "healthy",
-                "prediction_service": "healthy"
-            }
+                "prediction_service": "healthy",
+            },
         }
 
         # 验证健康检查数据
@@ -478,7 +479,7 @@ class TestMonitoringAndLogging:
 
     def test_error_monitoring(self):
         """测试：错误监控"""
-        with patch('src.core.logger.get_logger') as mock_logger:
+        with patch("src.core.logger.get_logger") as mock_logger:
             mock_instance = Mock()
             mock_logger.return_value = mock_instance
 
@@ -493,9 +494,7 @@ class TestMonitoringAndLogging:
 # 运行E2E测试的设置
 def pytest_configure(config):
     """配置pytest标记"""
-    config.addinivalue_line(
-        "markers", "e2e: mark test as end-to-end test"
-    )
+    config.addinivalue_line("markers", "e2e: mark test as end-to-end test")
 
 
 def pytest_collection_modifyitems(config, items):

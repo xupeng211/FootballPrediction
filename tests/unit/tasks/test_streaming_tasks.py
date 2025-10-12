@@ -19,8 +19,9 @@ try:
         KafkaConsumer,
         StreamProcessor,
         StreamMonitor,
-        StreamingTaskStatus
+        StreamingTaskStatus,
     )
+
     STREAMING_TASKS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -34,7 +35,9 @@ except ImportError as e:
     StreamingTaskStatus = None
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestStreamMessage:
     """流消息测试"""
 
@@ -70,16 +73,15 @@ class TestStreamMessage:
         assert msg.timestamp == timestamp
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestKafkaProducer:
     """Kafka生产者测试"""
 
     def test_producer_creation(self):
         """测试：生产者创建"""
-        config = {
-            "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
-        }
+        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
         assert producer is not None
         assert producer.config == config
@@ -87,19 +89,16 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_produce_message(self):
         """测试：生产消息"""
-        config = {
-            "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
-        }
+        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
         message = StreamMessage("test_topic", b"test_key", b'{"event": "test"}')
 
-        with patch.object(producer, 'kafka_client') as mock_client:
+        with patch.object(producer, "kafka_client") as mock_client:
             mock_client.send.return_value = {
                 "topic": "test_topic",
                 "partition": 0,
-                "offset": 100
+                "offset": 100,
             }
 
             result = await producer.produce(message)
@@ -111,23 +110,20 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_produce_batch(self):
         """测试：批量生产消息"""
-        config = {
-            "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
-        }
+        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
-        with patch.object(producer, 'kafka_client') as mock_client:
+        with patch.object(producer, "kafka_client") as mock_client:
             mock_client.send_batch.return_value = [
                 {"topic": "test_topic", "partition": 0, "offset": 101},
                 {"topic": "test_topic", "partition": 0, "offset": 102},
-                {"topic": "test_topic", "partition": 0, "offset": 103}
+                {"topic": "test_topic", "partition": 0, "offset": 103},
             ]
 
             messages = [
-                StreamMessage("test_topic", b"key1", b'value1'),
-                StreamMessage("test_topic", b"key2", b'value2'),
-                StreamMessage("test_topic", b"key3", b'value3')
+                StreamMessage("test_topic", b"key1", b"value1"),
+                StreamMessage("test_topic", b"key2", b"value2"),
+                StreamMessage("test_topic", b"key3", b"value3"),
             ]
 
             results = await producer.produce_batch(messages)
@@ -138,13 +134,10 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_producer_error_handling(self):
         """测试：生产者错误处理"""
-        config = {
-            "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
-        }
+        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
-        with patch.object(producer, 'kafka_client') as mock_client:
+        with patch.object(producer, "kafka_client") as mock_client:
             mock_client.send.side_effect = Exception("Connection failed")
 
             message = StreamMessage("test_topic", b"key", b"value")
@@ -156,13 +149,10 @@ class TestKafkaProducer:
 
     def test_producer_connection_health(self):
         """测试：生产者连接健康检查"""
-        config = {
-            "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
-        }
+        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
-        with patch.object(producer, 'kafka_client') as mock_client:
+        with patch.object(producer, "kafka_client") as mock_client:
             mock_client.bootstrap.connected.return_value = True
 
             health = producer.check_health()
@@ -170,7 +160,9 @@ class TestKafkaProducer:
             assert health["connected"] is True
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestKafkaConsumer:
     """Kafka消费者测试"""
 
@@ -179,7 +171,7 @@ class TestKafkaConsumer:
         config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
-            "topics": ["test_topic"]
+            "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(config)
         assert consumer is not None
@@ -192,11 +184,11 @@ class TestKafkaConsumer:
         config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
-            "topics": ["test_topic"]
+            "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(config)
 
-        with patch.object(consumer, 'kafka_client') as mock_client:
+        with patch.object(consumer, "kafka_client") as mock_client:
             # 模拟消费的消息
             mock_messages = [
                 {
@@ -205,7 +197,7 @@ class TestKafkaConsumer:
                     "offset": 100,
                     "key": b"key1",
                     "value": b'{"event": "test1"}',
-                    "timestamp": datetime.now()
+                    "timestamp": datetime.now(),
                 },
                 {
                     "topic": "test_topic",
@@ -213,8 +205,8 @@ class TestKafkaConsumer:
                     "offset": 101,
                     "key": b"key2",
                     "value": b'{"event": "test2"}',
-                    "timestamp": datetime.now()
-                }
+                    "timestamp": datetime.now(),
+                },
             ]
             mock_client.consume.return_value = mock_messages
 
@@ -230,17 +222,17 @@ class TestKafkaConsumer:
         config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
-            "topics": ["test_topic"]
+            "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(config)
 
-        with patch.object(consumer, 'kafka_client') as mock_client:
+        with patch.object(consumer, "kafka_client") as mock_client:
             mock_client.commit.return_value = True
 
             offsets = {
                 "test_topic": {
                     0: 101,  # partition: offset
-                    1: 50
+                    1: 50,
                 }
             }
 
@@ -255,11 +247,11 @@ class TestKafkaConsumer:
         config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
-            "topics": ["test_topic"]
+            "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(config)
 
-        with patch.object(consumer, 'kafka_client') as mock_client:
+        with patch.object(consumer, "kafka_client") as mock_client:
             # 暂停
             await consumer.pause("test_topic", 0)
             mock_client.pause_partition.assert_called_once_with("test_topic", 0)
@@ -269,7 +261,9 @@ class TestKafkaConsumer:
             mock_client.resume_partition.assert_called_once_with("test_topic", 0)
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestStreamProcessor:
     """流处理器测试"""
 
@@ -278,7 +272,7 @@ class TestStreamProcessor:
         config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
-            "processing_function": lambda x: x
+            "processing_function": lambda x: x,
         }
         processor = StreamProcessor(config)
         assert processor is not None
@@ -287,6 +281,7 @@ class TestStreamProcessor:
     @pytest.mark.asyncio
     async def test_process_message(self):
         """测试：处理消息"""
+
         def process_func(data):
             data["processed"] = True
             return data
@@ -294,18 +289,17 @@ class TestStreamProcessor:
         config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
-            "processing_function": process_func
+            "processing_function": process_func,
         }
         processor = StreamProcessor(config)
 
-        message = StreamMessage(
-            "input_topic",
-            b"key1",
-            b'{"id": 1, "value": "test"}'
-        )
+        message = StreamMessage("input_topic", b"key1", b'{"id": 1, "value": "test"}')
 
-        with patch.object(processor, 'producer') as mock_producer:
-            mock_producer.produce.return_value = {"topic": "output_topic", "offset": 200}
+        with patch.object(processor, "producer") as mock_producer:
+            mock_producer.produce.return_value = {
+                "topic": "output_topic",
+                "offset": 200,
+            }
 
             result = await processor.process_message(message)
 
@@ -325,6 +319,7 @@ class TestStreamProcessor:
     @pytest.mark.asyncio
     async def test_process_batch(self):
         """测试：批量处理"""
+
         def process_func(data):
             data["batch_processed"] = True
             return data
@@ -332,20 +327,19 @@ class TestStreamProcessor:
         config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
-            "processing_function": process_func
+            "processing_function": process_func,
         }
         processor = StreamProcessor(config)
 
         messages = [
             StreamMessage("input_topic", b"key1", b'{"id": 1}'),
             StreamMessage("input_topic", b"key2", b'{"id": 2}'),
-            StreamMessage("input_topic", b"key3", b'{"id": 3}')
+            StreamMessage("input_topic", b"key3", b'{"id": 3}'),
         ]
 
-        with patch.object(processor, 'producer') as mock_producer:
+        with patch.object(processor, "producer") as mock_producer:
             mock_producer.produce_batch.return_value = [
-                {"topic": "output_topic", "offset": i}
-                for i in range(200, 203)
+                {"topic": "output_topic", "offset": i} for i in range(200, 203)
             ]
 
             results = await processor.process_batch(messages)
@@ -356,13 +350,14 @@ class TestStreamProcessor:
     @pytest.mark.asyncio
     async def test_processing_error_handling(self):
         """测试：处理错误处理"""
+
         def failing_func(data):
             raise ValueError("Processing failed")
 
         config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
-            "processing_function": failing_func
+            "processing_function": failing_func,
         }
         processor = StreamProcessor(config)
 
@@ -374,7 +369,9 @@ class TestStreamProcessor:
         assert result in [False, True]  # 取决于错误处理策略
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestStreamMonitor:
     """流监控测试"""
 
@@ -383,11 +380,7 @@ class TestStreamMonitor:
         config = {
             "metrics_interval": 60,
             "health_check_interval": 30,
-            "alert_thresholds": {
-                "lag": 1000,
-                "error_rate": 0.05,
-                "throughput": 1000
-            }
+            "alert_thresholds": {"lag": 1000, "error_rate": 0.05, "throughput": 1000},
         }
         monitor = StreamMonitor(config)
         assert monitor is not None
@@ -396,25 +389,22 @@ class TestStreamMonitor:
     @pytest.mark.asyncio
     async def test_monitor_consumer_lag(self):
         """测试：监控消费者延迟"""
-        config = {
-            "metrics_interval": 60,
-            "topics": ["test_topic"]
-        }
+        config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
-        with patch.object(monitor, 'kafka_admin') as mock_admin:
+        with patch.object(monitor, "kafka_admin") as mock_admin:
             mock_admin.get_consumer_offsets.return_value = {
                 "test_group": {
                     "test_topic": {
                         0: 500,  # 消费者偏移量
-                        1: 300
+                        1: 300,
                     }
                 }
             }
             mock_admin.get_topic_offsets.return_value = {
                 "test_topic": {
                     0: 1000,  # 最新偏移量
-                    1: 800
+                    1: 800,
                 }
             }
 
@@ -426,18 +416,12 @@ class TestStreamMonitor:
     @pytest.mark.asyncio
     async def test_monitor_throughput(self):
         """测试：监控吞吐量"""
-        config = {
-            "metrics_interval": 60,
-            "topics": ["test_topic"]
-        }
+        config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
-        with patch.object(monitor, 'metrics_collector') as mock_collector:
+        with patch.object(monitor, "metrics_collector") as mock_collector:
             mock_collector.get_throughput_metrics.return_value = {
-                "test_topic": {
-                    "messages_per_second": 500,
-                    "bytes_per_second": 1024000
-                }
+                "test_topic": {"messages_per_second": 500, "bytes_per_second": 1024000}
             }
 
             metrics = await monitor.collect_throughput_metrics()
@@ -448,15 +432,10 @@ class TestStreamMonitor:
     @pytest.mark.asyncio
     async def test_trigger_alert(self):
         """测试：触发警报"""
-        config = {
-            "alert_thresholds": {
-                "lag": 100,
-                "error_rate": 0.05
-            }
-        }
+        config = {"alert_thresholds": {"lag": 100, "error_rate": 0.05}}
         monitor = StreamMonitor(config)
 
-        with patch.object(monitor, 'alert_handler') as mock_alert:
+        with patch.object(monitor, "alert_handler") as mock_alert:
             mock_alert.send_alert.return_value = True
 
             # 模拟高延迟
@@ -476,7 +455,9 @@ class TestStreamMonitor:
             assert alert["lag"] == 1500
 
 
-@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
+@pytest.mark.skipif(
+    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
+)
 class TestStreamingTasksIntegration:
     """流处理任务集成测试"""
 
@@ -486,7 +467,7 @@ class TestStreamingTasksIntegration:
         # 创建生产者
         producer_config = {
             "bootstrap_servers": ["localhost:9092"],
-            "client_id": "test_producer"
+            "client_id": "test_producer",
         }
         producer = KafkaProducer(producer_config)
 
@@ -494,7 +475,7 @@ class TestStreamingTasksIntegration:
         consumer_config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
-            "topics": ["test_topic"]
+            "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(consumer_config)
 
@@ -502,34 +483,36 @@ class TestStreamingTasksIntegration:
         processor_config = {
             "input_topics": ["test_topic"],
             "output_topic": "processed_topic",
-            "processing_function": lambda x: {**x, "processed": True}
+            "processing_function": lambda x: {**x, "processed": True},
         }
         processor = StreamProcessor(processor_config)
 
         # 模拟完整的流程
-        with patch.object(producer, 'kafka_client') as mock_producer:
-            with patch.object(consumer, 'kafka_client') as mock_consumer:
-                with patch.object(processor, 'producer') as mock_processor_producer:
-
+        with patch.object(producer, "kafka_client") as mock_producer:
+            with patch.object(consumer, "kafka_client") as mock_consumer:
+                with patch.object(processor, "producer") as mock_processor_producer:
                     # 1. 生产消息
-                    mock_producer.send.return_value = {"topic": "test_topic", "offset": 100}
+                    mock_producer.send.return_value = {
+                        "topic": "test_topic",
+                        "offset": 100,
+                    }
                     message = StreamMessage("test_topic", b"key", b'{"id": 1}')
                     await producer.produce(message)
 
                     # 2. 消费消息
-                    mock_consumer.consume.return_value = [{
-                        "topic": "test_topic",
-                        "value": b'{"id": 1}',
-                        "key": b"key"
-                    }]
+                    mock_consumer.consume.return_value = [
+                        {"topic": "test_topic", "value": b'{"id": 1}', "key": b"key"}
+                    ]
                     consumed = await consumer.consume(batch_size=1)
 
                     # 3. 处理消息
                     mock_processor_producer.produce.return_value = {
                         "topic": "processed_topic",
-                        "offset": 200
+                        "offset": 200,
                     }
-                    stream_msg = StreamMessage("test_topic", b"key", consumed[0]["value"])
+                    stream_msg = StreamMessage(
+                        "test_topic", b"key", consumed[0]["value"]
+                    )
                     await processor.process_message(stream_msg)
 
                     # 验证流程完成
@@ -544,13 +527,13 @@ class TestStreamingTasksIntegration:
         processors = [
             lambda x: {**x, "stage1": True},
             lambda x: {**x, "stage2": True},
-            lambda x: {**x, "stage3": True}
+            lambda x: {**x, "stage3": True},
         ]
 
         config = {
             "input_topic": "input",
             "output_topic": "output",
-            "processors": processors
+            "processors": processors,
         }
 
         pipeline = StreamProcessor(config)
@@ -558,7 +541,7 @@ class TestStreamingTasksIntegration:
         # 测试管道处理
         message = StreamMessage("input", b"key", b'{"data": "test"}')
 
-        with patch.object(pipeline, 'producer') as mock_producer:
+        with patch.object(pipeline, "producer") as mock_producer:
             mock_producer.produce.return_value = {"topic": "output", "offset": 300}
 
             result = await pipeline.process_message(message)
@@ -580,7 +563,7 @@ class TestStreamingTasksIntegration:
             "output_topic": "output",
             "processing_function": lambda x: x,
             "retry_attempts": 3,
-            "dead_letter_topic": "dlq"
+            "dead_letter_topic": "dlq",
         }
         processor = StreamProcessor(config)
 
@@ -592,7 +575,7 @@ class TestStreamingTasksIntegration:
 
         message = StreamMessage("input", b"key", b'{"test": "data"}')
 
-        with patch.object(processor, 'producer') as mock_producer:
+        with patch.object(processor, "producer") as mock_producer:
             # 第一次失败
             mock_producer.produce.side_effect = Exception("Failed")
 
@@ -611,16 +594,16 @@ class TestStreamingTasksIntegration:
                 "bootstrap_servers": ["localhost:9092"],
                 "group_id": "scaled_group",
                 "topics": ["topic1", "topic2"],
-                "consumer_id": f"consumer_{i}"
+                "consumer_id": f"consumer_{i}",
             }
             consumers.append(KafkaConsumer(config))
 
         # 模拟分区分配
-        with patch('src.tasks.streaming_tasks.assign_partitions') as mock_assign:
+        with patch("src.tasks.streaming_tasks.assign_partitions") as mock_assign:
             mock_assign.return_value = {
                 "consumer_0": [("topic1", 0), ("topic1", 1)],
                 "consumer_1": [("topic1", 2), ("topic2", 0)],
-                "consumer_2": [("topic2", 1), ("topic2", 2)]
+                "consumer_2": [("topic2", 1), ("topic2", 2)],
             }
 
             assignment = await mock_assign("scaled_group", ["topic1", "topic2"], 3)
@@ -632,32 +615,18 @@ class TestStreamingTasksIntegration:
     @pytest.mark.asyncio
     async def test_monitoring_dashboard_data(self):
         """测试：监控仪表板数据"""
-        monitor = StreamMonitor({
-            "metrics_interval": 30,
-            "topics": ["topic1", "topic2"]
-        })
+        monitor = StreamMonitor(
+            {"metrics_interval": 30, "topics": ["topic1", "topic2"]}
+        )
 
-        with patch.object(monitor, 'metrics_store') as mock_store:
+        with patch.object(monitor, "metrics_store") as mock_store:
             mock_store.get_metrics.return_value = {
                 "timestamp": datetime.now(),
                 "topics": {
-                    "topic1": {
-                        "messages_per_sec": 100,
-                        "lag": 10,
-                        "errors": 0
-                    },
-                    "topic2": {
-                        "messages_per_sec": 200,
-                        "lag": 5,
-                        "errors": 1
-                    }
+                    "topic1": {"messages_per_sec": 100, "lag": 10, "errors": 0},
+                    "topic2": {"messages_per_sec": 200, "lag": 5, "errors": 1},
                 },
-                "consumers": {
-                    "group1": {
-                        "active_members": 3,
-                        "avg_lag": 8
-                    }
-                }
+                "consumers": {"group1": {"active_members": 3, "avg_lag": 8}},
             }
 
             dashboard_data = await monitor.get_dashboard_data()
@@ -668,7 +637,9 @@ class TestStreamingTasksIntegration:
             assert dashboard_data["consumers"]["group1"]["active_members"] == 3
 
 
-@pytest.mark.skipif(STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module should be available")
+@pytest.mark.skipif(
+    STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -688,7 +659,7 @@ def test_module_imports():
             KafkaConsumer,
             StreamProcessor,
             StreamMonitor,
-            StreamingTaskStatus
+            StreamingTaskStatus,
         )
 
         assert StreamMessage is not None

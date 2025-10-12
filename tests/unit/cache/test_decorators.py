@@ -17,7 +17,7 @@ from src.cache.decorators import (
     cache_result,
     cache_with_ttl,
     cache_by_user,
-    cache_invalidate
+    cache_invalidate,
 )
 
 
@@ -26,6 +26,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_basic(self):
         """测试：基础缓存键生成"""
+
         def test_func(a, b):
             return a + b
 
@@ -38,6 +39,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_with_args(self):
         """测试：带参数的缓存键生成"""
+
         def test_func(a, b):
             return a + b
 
@@ -51,6 +53,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_with_kwargs(self):
         """测试：带关键字参数的缓存键生成"""
+
         def test_func(a, b=None):
             return a
 
@@ -64,6 +67,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_with_prefix(self):
         """测试：带前缀的缓存键生成"""
+
         def test_func(a):
             return a
 
@@ -74,6 +78,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_with_user_id(self):
         """测试：带用户ID的缓存键生成"""
+
         def test_func(a):
             return a
 
@@ -83,6 +88,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_exclude_args(self):
         """测试：排除参数的缓存键生成"""
+
         def test_func(a, b, c=None):
             return a + b
 
@@ -96,6 +102,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_serialization_error(self):
         """测试：序列化错误处理"""
+
         def test_func(a):
             return a
 
@@ -110,6 +117,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_consistent(self):
         """测试：缓存键一致性"""
+
         def test_func(a, b):
             return a + b
 
@@ -123,6 +131,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_different_order(self):
         """测试：不同参数顺序的键一致性"""
+
         def test_func(a, b, c):
             return a + b + c
 
@@ -138,6 +147,7 @@ class TestMakeCacheKey:
 
     def test_make_cache_key_empty_params(self):
         """测试：空参数的缓存键"""
+
         def test_func():
             return "test"
 
@@ -156,7 +166,9 @@ class TestCacheResultDecorator:
         mock_redis = Mock()
         mock_redis.get.return_value = json.dumps({"result": "cached"})
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def test_func(x):
@@ -172,7 +184,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def test_func(x):
@@ -189,7 +203,9 @@ class TestCacheResultDecorator:
         mock_redis.aget.return_value = None
         mock_redis.aset.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             async def test_func(x):
@@ -207,7 +223,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.setex.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result(ttl=3600)
             def test_func(x):
@@ -223,7 +241,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result(prefix="myprefix")
             def test_func(x):
@@ -240,7 +260,9 @@ class TestCacheResultDecorator:
         """测试：unless条件"""
         mock_redis = Mock()
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result(unless=lambda x: x > 5)
             def test_func(x):
@@ -264,7 +286,9 @@ class TestCacheResultDecorator:
         def custom_key(func, args, kwargs):
             return f"custom:{args[0]}"
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result(key_generator=custom_key)
             def test_func(x):
@@ -281,7 +305,9 @@ class TestCacheResultDecorator:
         mock_redis = Mock()
         mock_redis.get.side_effect = Exception("Redis error")
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def test_func(x):
@@ -296,7 +322,9 @@ class TestCacheResultDecorator:
         mock_redis = Mock()
         mock_redis.get.return_value = "invalid json"
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def test_func(x):
@@ -312,7 +340,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             class TestClass:
                 @cache_result()
@@ -330,7 +360,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             class TestClass:
                 @classmethod
@@ -348,7 +380,9 @@ class TestCacheResultDecorator:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             class TestClass:
                 @staticmethod
@@ -370,7 +404,9 @@ class TestCacheWithTTL:
         mock_redis.get.return_value = None
         mock_redis.setex.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_with_ttl(ttl=7200)
             def test_func(x):
@@ -389,7 +425,9 @@ class TestCacheWithTTL:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_with_ttl()
             def test_func(x):
@@ -409,7 +447,9 @@ class TestCacheByUser:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_by_user()
             def test_func(user_id, x):
@@ -428,7 +468,9 @@ class TestCacheByUser:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_by_user(user_param="uid")
             def test_func(uid, x):
@@ -449,7 +491,9 @@ class TestCacheInvalidate:
         mock_redis = Mock()
         mock_redis.delete.return_value = 1
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_invalidate(pattern="test:*")
             def update_func(x):
@@ -464,7 +508,9 @@ class TestCacheInvalidate:
         mock_redis = Mock()
         mock_redis.delete.return_value = 1
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def get_data(x):
@@ -493,7 +539,9 @@ class TestCacheDecoratorIntegration:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result(ttl=3600, prefix="multi")
             @cache_by_user()
@@ -514,7 +562,9 @@ class TestCacheDecoratorIntegration:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def outer_func(x):
@@ -536,7 +586,9 @@ class TestCacheDecoratorIntegration:
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def factorial(n):
@@ -555,7 +607,9 @@ class TestCacheDecoratorIntegration:
         mock_redis = Mock()
         mock_redis.get.return_value = None
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
 
             @cache_result()
             def test_generator():
@@ -572,8 +626,9 @@ class TestCacheDecoratorIntegration:
         """测试：Lambda函数的缓存"""
         mock_redis = Mock()
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
-
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
             # Lambda函数可能没有__name__属性
             # 这可能导致问题
             try:
@@ -595,8 +650,9 @@ class TestCacheDecoratorIntegration:
 
         mock_redis = Mock()
 
-        with patch('src.cache.decorators.RedisManager.get_instance', return_value=mock_redis):
-
+        with patch(
+            "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
+        ):
             try:
                 cached_func = cache_result()(partial_func)
                 result = cached_func(5)

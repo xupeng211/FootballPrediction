@@ -28,11 +28,7 @@ class MockDataProcessor(DataProcessor):
 
     async def process(self, data):
         """处理数据"""
-        return {
-            **data,
-            "mock_processed": True,
-            "processed_at": datetime.utcnow()
-        }
+        return {**data, "mock_processed": True, "processed_at": datetime.utcnow()}
 
 
 class TestDataProcessor:
@@ -79,7 +75,7 @@ class TestMatchDataProcessor:
             "away_team": "Team B",
             "home_score": 2,
             "away_score": 1,
-            "status": "FINISHED"
+            "status": "FINISHED",
         }
 
         result = await match_processor.process(input_data)
@@ -127,7 +123,7 @@ class TestOddsDataProcessor:
             "home_win": 2.10,
             "draw": 3.20,
             "away_win": 3.50,
-            "timestamp": "2024-01-15T10:00:00Z"
+            "timestamp": "2024-01-15T10:00:00Z",
         }
 
         result = await odds_processor.process(input_data)
@@ -161,7 +157,7 @@ class TestScoresDataProcessor:
             "away_score": 1,
             "minute": 75,
             "scorer": "Player A",
-            "assist": "Player B"
+            "assist": "Player B",
         }
 
         result = await scores_processor.process(input_data)
@@ -193,12 +189,8 @@ class TestFeaturesDataProcessor:
         input_data = {
             "match_id": 123,
             "team_id": 1,
-            "features": {
-                "avg_goals": 1.8,
-                "win_rate": 0.65,
-                "form_points": 7
-            },
-            "calculated_at": "2024-01-15T10:00:00Z"
+            "features": {"avg_goals": 1.8, "win_rate": 0.65, "form_points": 7},
+            "calculated_at": "2024-01-15T10:00:00Z",
         }
 
         result = await features_processor.process(input_data)
@@ -232,21 +224,14 @@ class TestDataQualityValidator:
 
     def test_validate_valid_data(self, validator):
         """测试验证有效数据"""
-        valid_data = {
-            "id": 123,
-            "name": "Test",
-            "value": 100
-        }
+        valid_data = {"id": 123, "name": "Test", "value": 100}
 
         assert validator.validate(valid_data) is True
         assert len(validator.errors) == 0
 
     def test_validate_missing_required_field(self, validator):
         """测试验证缺少必填字段"""
-        invalid_data = {
-            "name": "Test",
-            "value": 100
-        }
+        invalid_data = {"name": "Test", "value": 100}
 
         assert validator.validate(invalid_data) is False
         assert len(validator.errors) == 1
@@ -273,11 +258,7 @@ class TestAnomalyDetector:
 
     def test_detect_normal_data(self, detector):
         """测试检测正常数据"""
-        normal_data = {
-            "id": 123,
-            "score": 85,
-            "value": 100.5
-        }
+        normal_data = {"id": 123, "score": 85, "value": 100.5}
 
         anomalies = detector.detect(normal_data)
         assert len(anomalies) == 0
@@ -287,7 +268,7 @@ class TestAnomalyDetector:
         anomaly_data = {
             "id": 124,
             "score": -10,  # 异常负分
-            "value": 999999  # 异常大值
+            "value": 999999,  # 异常大值
         }
 
         anomalies = detector.detect(anomaly_data)
@@ -304,11 +285,7 @@ class TestMissingDataHandler:
 
     def test_handle_missing_value(self, handler):
         """测试处理缺失值"""
-        data_with_missing = {
-            "id": 123,
-            "value": None,
-            "score": 85
-        }
+        data_with_missing = {"id": 123, "value": None, "score": 85}
 
         result = handler.handle(data_with_missing)
         # 根据实际实现验证结果
@@ -316,11 +293,7 @@ class TestMissingDataHandler:
 
     def test_handle_complete_data(self, handler):
         """测试处理完整数据"""
-        complete_data = {
-            "id": 123,
-            "value": 100,
-            "score": 85
-        }
+        complete_data = {"id": 123, "value": 100, "score": 85}
 
         result = handler.handle(complete_data)
         # 完整数据应该保持不变
@@ -342,7 +315,7 @@ class TestMissingScoresHandler:
             "home_team": "Team A",
             "away_team": "Team B",
             "home_score": None,
-            "away_score": None
+            "away_score": None,
         }
 
         result = handler.handle(data)
@@ -360,11 +333,7 @@ class TestMissingTeamHandler:
 
     def test_handle_missing_team(self, handler):
         """测试处理缺失球队"""
-        data = {
-            "match_id": 123,
-            "home_team": None,
-            "away_team": "Team B"
-        }
+        data = {"match_id": 123, "home_team": None, "away_team": "Team B"}
 
         result = handler.handle(data)
         # 根据实际实现验证结果
@@ -382,11 +351,7 @@ class TestBronzeToSilverProcessor:
     @pytest.mark.asyncio
     async def test_process_bronze_data(self, processor):
         """测试处理青铜数据"""
-        bronze_data = {
-            "id": 123,
-            "raw_data": "raw content",
-            "source": "api"
-        }
+        bronze_data = {"id": 123, "raw_data": "raw content", "source": "api"}
 
         result = await processor.process(bronze_data)
 
@@ -410,7 +375,7 @@ class TestDataProcessingService:
             "id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "type": "match"
+            "type": "match",
         }
 
         result = await service.process_data(data)
@@ -426,7 +391,7 @@ class TestDataProcessingService:
             "home_win": 2.10,
             "draw": 3.20,
             "away_win": 3.50,
-            "type": "odds"
+            "type": "odds",
         }
 
         result = await service.process_data(data)
@@ -439,7 +404,7 @@ class TestDataProcessingService:
         """测试批量处理"""
         batch = [
             {"id": 1, "home_team": "Team A", "away_team": "Team B", "type": "match"},
-            {"id": 2, "home_team": "Team C", "away_team": "Team D", "type": "match"}
+            {"id": 2, "home_team": "Team C", "away_team": "Team D", "type": "match"},
         ]
 
         results = await service.batch_process(batch)

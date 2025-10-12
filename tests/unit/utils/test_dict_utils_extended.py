@@ -109,16 +109,11 @@ class TestDictUtilsExtended:
             "user": {
                 "profile": {
                     "name": "John",
-                    "settings": {
-                        "theme": "dark",
-                        "notifications": True
-                    }
+                    "settings": {"theme": "dark", "notifications": True},
                 },
-                "stats": {
-                    "login_count": 100
-                }
+                "stats": {"login_count": 100},
             },
-            "active": True
+            "active": True,
         }
         result = DictUtils.flatten_dict(data)
         expected = {
@@ -126,7 +121,7 @@ class TestDictUtilsExtended:
             "user.profile.settings.theme": "dark",
             "user.profile.settings.notifications": True,
             "user.stats.login_count": 100,
-            "active": True
+            "active": True,
         }
         assert result == expected
 
@@ -141,31 +136,10 @@ class TestDictUtilsExtended:
     def test_filter_none_values_nested(self):
         """测试：过滤None值（嵌套）"""
         # filter_none_values只处理顶层，不会递归
-        data = {
-            "a": 1,
-            "b": {
-                "c": None,
-                "d": 4,
-                "e": {
-                    "f": None,
-                    "g": 7
-                }
-            },
-            "h": None
-        }
+        data = {"a": 1, "b": {"c": None, "d": 4, "e": {"f": None, "g": 7}}, "h": None}
         result = DictUtils.filter_none_values(data)
         # 只会过滤顶层的None值
-        expected = {
-            "a": 1,
-            "b": {
-                "c": None,
-                "d": 4,
-                "e": {
-                    "f": None,
-                    "g": 7
-                }
-            }
-        }
+        expected = {"a": 1, "b": {"c": None, "d": 4, "e": {"f": None, "g": 7}}}
         assert result == expected
 
     def test_filter_none_values_empty(self):
@@ -194,7 +168,7 @@ class TestDictUtilsExtended:
             "empty_string": "",
             "empty_list": [],
             "empty_dict": {},
-            "none": None
+            "none": None,
         }
         result = DictUtils.filter_none_values(data)
         expected = {
@@ -202,7 +176,7 @@ class TestDictUtilsExtended:
             "false": False,
             "empty_string": "",
             "empty_list": [],
-            "empty_dict": {}
+            "empty_dict": {},
         }
         assert result == expected
 
@@ -218,7 +192,7 @@ class TestDictUtilsExtended:
         assert merged == {
             "config": {
                 "app": {"debug": False, "version": "1.0"},
-                "db": {"host": "localhost"}
+                "db": {"host": "localhost"},
             }
         }
 
@@ -227,7 +201,7 @@ class TestDictUtilsExtended:
         expected = {
             "config.app.debug": False,
             "config.app.version": "1.0",
-            "config.db.host": "localhost"
+            "config.db.host": "localhost",
         }
         assert flattened == expected
 
@@ -237,10 +211,7 @@ class TestDictUtilsExtended:
             "user": {
                 "name": None,
                 "email": "test@example.com",
-                "profile": {
-                    "age": None,
-                    "active": True
-                }
+                "profile": {"age": None, "active": True},
             }
         }
 
@@ -250,15 +221,12 @@ class TestDictUtilsExtended:
             "user.name": None,
             "user.email": "test@example.com",
             "user.profile.age": None,
-            "user.profile.active": True
+            "user.profile.active": True,
         }
 
         # 再过滤None
         filtered = DictUtils.filter_none_values(flattened)
-        expected = {
-            "user.email": "test@example.com",
-            "user.profile.active": True
-        }
+        expected = {"user.email": "test@example.com", "user.profile.active": True}
         assert filtered == expected
 
     # ==================== 边界条件测试 ====================
@@ -283,12 +251,12 @@ class TestDictUtilsExtended:
         data = {}
         for i in range(100):
             data[f"section{i}"] = {
-                f"subsection{j}": {"value": i * j for j in range(10)}
-                for j in range(10)
+                f"subsection{j}": {"value": i * j for j in range(10)} for j in range(10)
             }
 
         # 测试扁平化
         import time
+
         start = time.time()
         result = DictUtils.flatten_dict(data)
         duration = time.time() - start

@@ -38,12 +38,7 @@ class TestResponseUtils:
     def test_create_paginated_response(self):
         """测试创建分页响应"""
         items = [{"id": i} for i in range(1, 11)]
-        response = ResponseUtils.paginated(
-            items=items,
-            page=1,
-            per_page=10,
-            total=100
-        )
+        response = ResponseUtils.paginated(items=items, page=1, per_page=10, total=100)
 
         assert response["status"] == "success"
         assert response["data"]["items"] == items
@@ -148,13 +143,7 @@ class TestDictUtils:
 
     def test_get_nested_value(self):
         """测试获取嵌套值"""
-        data = {
-            "user": {
-                "profile": {
-                    "name": "John"
-                }
-            }
-        }
+        data = {"user": {"profile": {"name": "John"}}}
 
         # 存在的路径
         assert DictUtils.get_nested(data, "user.profile.name") == "John"
@@ -180,22 +169,10 @@ class TestDictUtils:
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
-        data = {
-            "a": 1,
-            "b": {
-                "c": 2,
-                "d": {
-                    "e": 3
-                }
-            }
-        }
+        data = {"a": 1, "b": {"c": 2, "d": {"e": 3}}}
 
         flat = DictUtils.flatten(data)
-        expected = {
-            "a": 1,
-            "b.c": 2,
-            "b.d.e": 3
-        }
+        expected = {"a": 1, "b.c": 2, "b.d.e": 3}
         assert flat == expected
 
     def test_filter_keys(self):
@@ -204,7 +181,7 @@ class TestDictUtils:
             "id": 1,
             "name": "test",
             "password": "secret",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
 
         # 保留特定键

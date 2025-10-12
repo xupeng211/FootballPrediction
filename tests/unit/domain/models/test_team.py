@@ -33,7 +33,9 @@ class TestTeamInitialization:
 
 class TestTeamStats:
     def test_should_compute_points_and_goal_difference(self):
-        stats = TeamStats(matches_played=10, wins=6, draws=2, losses=2, goals_for=20, goals_against=10)
+        stats = TeamStats(
+            matches_played=10, wins=6, draws=2, losses=2, goals_for=20, goals_against=10
+        )
 
         assert stats.points == 20
         assert stats.goal_difference == 10

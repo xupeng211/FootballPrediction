@@ -62,8 +62,10 @@ class TestFeatureCalculator:
         mock_session.execute.return_value = mock_result
 
         # When
-        with patch.object(calculator, 'db_manager') as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
+        with patch.object(calculator, "db_manager") as mock_db:
+            mock_db.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             features = await calculator.calculate_recent_performance_features(
                 team_id=1, calculation_date=sample_date
             )
@@ -99,8 +101,10 @@ class TestFeatureCalculator:
         mock_session.execute.return_value = mock_result
 
         # When
-        with patch.object(calculator, 'db_manager') as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
+        with patch.object(calculator, "db_manager") as mock_db:
+            mock_db.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             features = await calculator.calculate_recent_performance_features(
                 team_id=1, calculation_date=sample_date
             )
@@ -130,8 +134,10 @@ class TestFeatureCalculator:
         mock_session.execute.return_value = mock_result
 
         # When
-        with patch.object(calculator, 'db_manager') as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
+        with patch.object(calculator, "db_manager") as mock_db:
+            mock_db.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             features = await calculator.calculate_historical_matchup_features(
                 home_team_id=1, away_team_id=2, calculation_date=sample_date
             )
@@ -170,7 +176,7 @@ class TestFeatureCalculator:
     async def test_database_manager_usage(self, calculator):
         """测试：数据库管理器的使用"""
         # When
-        with patch.object(calculator, 'db_manager') as mock_db:
+        with patch.object(calculator, "db_manager") as mock_db:
             mock_db.get_async_session.return_value.__aenter__ = AsyncMock()
             mock_db.get_async_session.return_value.__aexit__ = AsyncMock()
 
@@ -190,12 +196,14 @@ class TestFeatureCalculator:
 
         for date in dates:
             # When
-            with patch.object(calculator, 'db_manager') as mock_db:
+            with patch.object(calculator, "db_manager") as mock_db:
                 mock_session = AsyncMock()
                 mock_result = AsyncMock()
                 mock_result.scalars.return_value.all.return_value = []
                 mock_session.execute.return_value = mock_result
-                mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
+                mock_db.get_async_session.return_value.__aenter__.return_value = (
+                    mock_session
+                )
 
                 features = await calculator.calculate_recent_performance_features(
                     team_id=1, calculation_date=date
@@ -213,12 +221,14 @@ class TestFeatureCalculator:
 
         for team_id in team_ids:
             # When
-            with patch.object(calculator, 'db_manager') as mock_db:
+            with patch.object(calculator, "db_manager") as mock_db:
                 mock_session = AsyncMock()
                 mock_result = AsyncMock()
                 mock_result.scalars.return_value.all.return_value = []
                 mock_session.execute.return_value = mock_result
-                mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
+                mock_db.get_async_session.return_value.__aenter__.return_value = (
+                    mock_session
+                )
 
                 features = await calculator.calculate_recent_performance_features(
                     team_id=team_id, calculation_date=sample_date

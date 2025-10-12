@@ -13,6 +13,7 @@ import asyncio
 # 测试导入
 try:
     from src.collectors.scores_collector import ScoresCollector, ScoresCollectorFactory
+
     SCORES_COLLECTOR_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -21,7 +22,9 @@ except ImportError as e:
     ScoresCollectorFactory = None
 
 
-@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
+@pytest.mark.skipif(
+    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
+)
 class TestScoresCollector:
     """比分收集器测试"""
 
@@ -42,7 +45,7 @@ class TestScoresCollector:
     @pytest.fixture
     def collector(self, mock_db_session, mock_redis_client):
         """创建比分收集器实例"""
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test_token'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test_token"}):
             return ScoresCollector(mock_db_session, mock_redis_client)
 
     def test_collector_creation(self, collector):
@@ -55,7 +58,7 @@ class TestScoresCollector:
 
     def test_collector_creation_without_token(self, mock_db_session, mock_redis_client):
         """测试：没有API Token的收集器创建"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             collector = ScoresCollector(mock_db_session, mock_redis_client)
             assert collector.headers == {}
             assert "X-Auth-Token" not in collector.headers
@@ -165,23 +168,24 @@ class TestScoresCollector:
 
         await collector._clear_match_cache(match_id)
 
-        expected_calls = [
-            ("scores:live",),
-            ("events:match:123",)
+        expected_calls = [("scores:live",), ("events:match:123",)]
+        actual_calls = [
+            call[0] for call in collector.redis_client.delete_cache.call_args_list
         ]
-        actual_calls = [call[0] for call in collector.redis_client.delete_cache.call_args_list]
 
         assert len(actual_calls) == 2
         assert actual_calls[0] in expected_calls
         assert actual_calls[1] in expected_calls
 
 
-@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
+@pytest.mark.skipif(
+    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
+)
 class TestScoresCollectorFactory:
     """比分收集器工厂测试"""
 
-    @patch('src.collectors.scores_collector.DatabaseManager')
-    @patch('src.collectors.scores_collector.RedisManager')
+    @patch("src.collectors.scores_collector.DatabaseManager")
+    @patch("src.collectors.scores_collector.RedisManager")
     def test_create_collector(self, mock_redis, mock_db):
         """测试：创建收集器"""
         mock_db_instance = Mock()
@@ -196,7 +200,9 @@ class TestScoresCollectorFactory:
         mock_redis.assert_called_once()
 
 
-@pytest.mark.skipif(SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module should be available")
+@pytest.mark.skipif(
+    SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -210,12 +216,18 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if SCORES_COLLECTOR_AVAILABLE:
-        from src.collectors.scores_collector import ScoresCollector, ScoresCollectorFactory
+        from src.collectors.scores_collector import (
+            ScoresCollector,
+            ScoresCollectorFactory,
+        )
+
         assert ScoresCollector is not None
         assert ScoresCollectorFactory is not None
 
 
-@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
+@pytest.mark.skipif(
+    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
+)
 class TestScoresCollectorAdvanced:
     """比分收集器高级测试"""
 
@@ -243,7 +255,7 @@ class TestScoresCollectorAdvanced:
         mock_result.scalars.return_value.all.return_value = matches
         mock_db.execute.return_value = mock_result
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
             result = await collector.collect_live_scores()
 
@@ -257,7 +269,7 @@ class TestScoresCollectorAdvanced:
         mock_redis = AsyncMock()
         mock_redis.get_cache_value.return_value = None
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
             collector.cache_timeout = 120  # 设置2分钟缓存
 
@@ -283,7 +295,7 @@ class TestScoresCollectorAdvanced:
         mock_result.scalars.return_value.all.return_value = []
         mock_db.execute.return_value = mock_result
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 
             # 并发执行多次收集
@@ -298,7 +310,7 @@ class TestScoresCollectorAdvanced:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 
             assert "live_scores" in collector.api_endpoints
@@ -310,7 +322,7 @@ class TestScoresCollectorAdvanced:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 
             # 测试不同状态的比赛
@@ -326,7 +338,10 @@ class TestScoresCollectorAdvanced:
                     score = await collector._get_match_score(match)
                     if status in ["live", "half_time"]:
                         # 正在进行的比赛应该有比分
-                        assert score in [{"home": 0, "away": 0}, {"home": None, "away": None}]
+                        assert score in [
+                            {"home": 0, "away": 0},
+                            {"home": None, "away": None},
+                        ]
 
                 asyncio.run(test_score())
 
@@ -337,8 +352,8 @@ class TestScoresCollectorAdvanced:
         mock_redis = AsyncMock()
         mock_redis.get_cache_value.return_value = None
 
-        with patch('src.collectors.scores_collector.logger') as mock_logger:
-            with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch("src.collectors.scores_collector.logger") as mock_logger:
+            with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
                 collector = ScoresCollector(mock_db, mock_redis)
                 collector.db_session.execute.side_effect = ValueError("Test error")
 
@@ -357,17 +372,31 @@ class TestScoresCollectorAdvanced:
 
         # 一些比赛有数据，一些没有
         matches = [
-            Mock(id=1, home_team_id=10, away_team_id=20, minute=45,
-                  match_status="live", home_score=2, away_score=1),
-            Mock(id=2, home_team_id=30, away_team_id=40, minute=30,
-                  match_status="live", home_score=None, away_score=None),
+            Mock(
+                id=1,
+                home_team_id=10,
+                away_team_id=20,
+                minute=45,
+                match_status="live",
+                home_score=2,
+                away_score=1,
+            ),
+            Mock(
+                id=2,
+                home_team_id=30,
+                away_team_id=40,
+                minute=30,
+                match_status="live",
+                home_score=None,
+                away_score=None,
+            ),
         ]
 
         mock_result = Mock()
         mock_result.scalars.return_value.all.return_value = matches
         mock_db.execute.return_value = mock_result
 
-        with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test'}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
             result = await collector.collect_live_scores()
 
@@ -382,13 +411,13 @@ class TestScoresCollectorAdvanced:
 
         # 测试不同的环境变量设置
         test_cases = [
-            ({'FOOTBALL_API_TOKEN': 'valid_token'}, 'valid_token'),
+            ({"FOOTBALL_API_TOKEN": "valid_token"}, "valid_token"),
             ({}, None),
-            ({'FOOTBALL_API_TOKEN': ''}, None),
+            ({"FOOTBALL_API_TOKEN": ""}, None),
         ]
 
         for env_vars, expected_token in test_cases:
-            with patch.dict('os.environ', env_vars, clear=True):
+            with patch.dict("os.environ", env_vars, clear=True):
                 collector = ScoresCollector(mock_db, mock_redis)
                 if expected_token:
                     assert collector.headers.get("X-Auth-Token") == expected_token

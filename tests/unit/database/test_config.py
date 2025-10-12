@@ -16,7 +16,7 @@ from src.database.config import (
     get_test_database_config,
     get_production_database_config,
     _get_env_bool,
-    _parse_int
+    _parse_int,
 )
 
 
@@ -30,7 +30,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password=None
+            password=None,
         )
 
         assert config.host == "localhost"
@@ -53,7 +53,7 @@ class TestDatabaseConfig:
             max_overflow=30,
             pool_timeout=60,
             pool_recycle=3600,
-            echo=True
+            echo=True,
         )
 
         assert config.host == "custom-host"
@@ -74,7 +74,7 @@ class TestDatabaseConfig:
             port=5432,
             database=":memory:",
             username="user",
-            password=None
+            password=None,
         )
         assert config._is_sqlite() is True
 
@@ -85,7 +85,7 @@ class TestDatabaseConfig:
             port=5432,
             database="test.db",
             username="user",
-            password=None
+            password=None,
         )
         assert config._is_sqlite() is True
 
@@ -96,7 +96,7 @@ class TestDatabaseConfig:
             port=5432,
             database="postgresdb",
             username="user",
-            password=None
+            password=None,
         )
         assert config._is_sqlite() is False
 
@@ -107,7 +107,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password="pass"
+            password="pass",
         )
         expected = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
         assert config.sync_url == expected
@@ -119,7 +119,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password=None
+            password=None,
         )
         expected = "postgresql+psycopg2://user@localhost:5432/testdb"
         assert config.sync_url == expected
@@ -131,7 +131,7 @@ class TestDatabaseConfig:
             port=5432,
             database=":memory:",
             username="user",
-            password=None
+            password=None,
         )
         assert config.sync_url == "sqlite:///:memory:"
 
@@ -142,7 +142,7 @@ class TestDatabaseConfig:
             port=5432,
             database="test.db",
             username="user",
-            password=None
+            password=None,
         )
         assert config.sync_url == "sqlite:///test.db"
 
@@ -153,7 +153,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password="pass"
+            password="pass",
         )
         expected = "postgresql+asyncpg://user:pass@localhost:5432/testdb"
         assert config.async_url == expected
@@ -165,7 +165,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password=None
+            password=None,
         )
         expected = "postgresql+asyncpg://user@localhost:5432/testdb"
         assert config.async_url == expected
@@ -177,7 +177,7 @@ class TestDatabaseConfig:
             port=5432,
             database=":memory:",
             username="user",
-            password=None
+            password=None,
         )
         assert config.async_url == "sqlite+aiosqlite:///:memory:"
 
@@ -188,7 +188,7 @@ class TestDatabaseConfig:
             port=5432,
             database="test.db",
             username="user",
-            password=None
+            password=None,
         )
         assert config.async_url == "sqlite+aiosqlite:///test.db"
 
@@ -199,7 +199,7 @@ class TestDatabaseConfig:
             port=5432,
             database="testdb",
             username="user",
-            password="pass"
+            password="pass",
         )
         assert config.alembic_url == config.sync_url
 
@@ -209,44 +209,44 @@ class TestEnvironmentHelpers:
 
     def test_get_env_bool_true(self):
         """测试：环境变量布尔值解析（真）"""
-        with patch.dict('os.environ', {'TEST_BOOL': 'true'}):
-            assert _get_env_bool('TEST_BOOL') is True
+        with patch.dict("os.environ", {"TEST_BOOL": "true"}):
+            assert _get_env_bool("TEST_BOOL") is True
 
-        with patch.dict('os.environ', {'TEST_BOOL': '1'}):
-            assert _get_env_bool('TEST_BOOL') is True
+        with patch.dict("os.environ", {"TEST_BOOL": "1"}):
+            assert _get_env_bool("TEST_BOOL") is True
 
-        with patch.dict('os.environ', {'TEST_BOOL': 'YES'}):
-            assert _get_env_bool('TEST_BOOL') is True
+        with patch.dict("os.environ", {"TEST_BOOL": "YES"}):
+            assert _get_env_bool("TEST_BOOL") is True
 
     def test_get_env_bool_false(self):
         """测试：环境变量布尔值解析（假）"""
-        with patch.dict('os.environ', {'TEST_BOOL': 'false'}):
-            assert _get_env_bool('TEST_BOOL') is False
+        with patch.dict("os.environ", {"TEST_BOOL": "false"}):
+            assert _get_env_bool("TEST_BOOL") is False
 
-        with patch.dict('os.environ', {'TEST_BOOL': '0'}):
-            assert _get_env_bool('TEST_BOOL') is False
+        with patch.dict("os.environ", {"TEST_BOOL": "0"}):
+            assert _get_env_bool("TEST_BOOL") is False
 
-        with patch.dict('os.environ', {'TEST_BOOL': 'no'}):
-            assert _get_env_bool('TEST_BOOL') is False
+        with patch.dict("os.environ", {"TEST_BOOL": "no"}):
+            assert _get_env_bool("TEST_BOOL") is False
 
     def test_get_env_bool_default(self):
         """测试：环境变量布尔值解析（默认值）"""
-        assert _get_env_bool('NONEXISTENT') is False
-        assert _get_env_bool('NONEXISTENT', True) is True
+        assert _get_env_bool("NONEXISTENT") is False
+        assert _get_env_bool("NONEXISTENT", True) is True
 
     def test_parse_int_valid(self):
         """测试：环境变量整数解析（有效）"""
-        with patch.dict('os.environ', {'TEST_INT': '123'}):
-            assert _parse_int('TEST_INT', 0) == 123
+        with patch.dict("os.environ", {"TEST_INT": "123"}):
+            assert _parse_int("TEST_INT", 0) == 123
 
     def test_parse_int_invalid(self):
         """测试：环境变量整数解析（无效）"""
-        with patch.dict('os.environ', {'TEST_INT': 'not_a_number'}):
-            assert _parse_int('TEST_INT', 42) == 42
+        with patch.dict("os.environ", {"TEST_INT": "not_a_number"}):
+            assert _parse_int("TEST_INT", 42) == 42
 
     def test_parse_int_default(self):
         """测试：环境变量整数解析（默认值）"""
-        assert _parse_int('NONEXISTENT', 99) == 99
+        assert _parse_int("NONEXISTENT", 99) == 99
 
 
 class TestDatabaseConfigFactory:
@@ -254,7 +254,7 @@ class TestDatabaseConfigFactory:
 
     def test_get_database_config_development(self):
         """测试：获取开发环境配置"""
-        with patch.dict('os.environ', {'DB_PASSWORD': 'dev-pass'}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
             config = get_database_config("development")
 
             assert config.host == "localhost"
@@ -265,7 +265,7 @@ class TestDatabaseConfigFactory:
 
     def test_get_database_config_test(self):
         """测试：获取测试环境配置"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             config = get_database_config("test")
 
             assert config.host == "localhost"
@@ -277,15 +277,15 @@ class TestDatabaseConfigFactory:
     def test_get_database_config_production_with_password(self):
         """测试：获取生产环境配置（有密码）"""
         env_vars = {
-            'PROD_DB_HOST': 'prod-host',
-            'PROD_DB_PORT': '5433',
-            'PROD_DB_NAME': 'prod_db',
-            'PROD_DB_USER': 'prod_user',
-            'PROD_DB_PASSWORD': 'secret_pass',
-            'PROD_DB_POOL_SIZE': '20'
+            "PROD_DB_HOST": "prod-host",
+            "PROD_DB_PORT": "5433",
+            "PROD_DB_NAME": "prod_db",
+            "PROD_DB_USER": "prod_user",
+            "PROD_DB_PASSWORD": "secret_pass",
+            "PROD_DB_POOL_SIZE": "20",
         }
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_database_config("production")
 
             assert config.host == "prod-host"
@@ -297,7 +297,7 @@ class TestDatabaseConfigFactory:
 
     def test_get_database_config_production_missing_password(self):
         """测试：获取生产环境配置（缺少密码）"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(ValueError) as exc_info:
                 get_database_config("production")
 
@@ -307,47 +307,46 @@ class TestDatabaseConfigFactory:
     def test_get_database_config_from_env(self):
         """测试：从环境变量获取配置"""
         env_vars = {
-            'ENVIRONMENT': 'development',
-            'DB_HOST': 'env-host',
-            'DB_PORT': '55432',
-            'DB_NAME': 'env-db',
-            'DB_USER': 'env-user',
-            'DB_PASSWORD': 'env-pass',
-            'DB_POOL_SIZE': '15',
-            'DB_ECHO': 'true'
+            "ENVIRONMENT": "development",
+            "DB_HOST": "env-host",
+            "DB_PORT": "55432",
+            "DB_NAME": "env-db",
+            "DB_USER": "env-user",
+            "DB_PASSWORD": "env-pass",
+            "DB_POOL_SIZE": "15",
+            "DB_ECHO": "true",
         }
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_database_config()
 
-            assert config.host == 'env-host'
+            assert config.host == "env-host"
             assert config.port == 55432
-            assert config.database == 'env-db'
-            assert config.username == 'env-user'
-            assert config.password == 'env-pass'
+            assert config.database == "env-db"
+            assert config.username == "env-user"
+            assert config.password == "env-pass"
             assert config.pool_size == 15
             assert config.echo is True
 
     def test_get_database_config_dev_environment_alias(self):
         """测试：开发环境别名"""
-        with patch.dict('os.environ', {'DB_HOST': 'dev-host', 'DB_PASSWORD': 'dev-pass'}, clear=True):
+        with patch.dict(
+            "os.environ", {"DB_HOST": "dev-host", "DB_PASSWORD": "dev-pass"}, clear=True
+        ):
             config = get_database_config("dev")
             assert config.host == "dev-host"
 
     def test_get_database_config_prod_environment_alias(self):
         """测试：生产环境别名"""
-        env_vars = {
-            'PROD_DB_HOST': 'prod-host-alias',
-            'PROD_DB_PASSWORD': 'secret'
-        }
+        env_vars = {"PROD_DB_HOST": "prod-host-alias", "PROD_DB_PASSWORD": "secret"}
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_database_config("prod")
             assert config.host == "prod-host-alias"
 
     def test_get_database_config_unknown_environment(self):
         """测试：未知环境"""
-        with patch.dict('os.environ', {'DB_PASSWORD': 'unknown-pass'}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "unknown-pass"}, clear=True):
             config = get_database_config("unknown")
             # 应该使用开发环境的默认值
             assert config.host == "localhost"
@@ -355,7 +354,7 @@ class TestDatabaseConfigFactory:
 
     def test_get_test_database_config(self):
         """测试：获取测试数据库配置快捷函数"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             config = get_test_database_config()
 
             assert config.database == ":memory:"
@@ -363,12 +362,9 @@ class TestDatabaseConfigFactory:
 
     def test_get_production_database_config_with_password(self):
         """测试：获取生产数据库配置快捷函数（有密码）"""
-        env_vars = {
-            'PROD_DB_HOST': 'prod-host',
-            'PROD_DB_PASSWORD': 'secret'
-        }
+        env_vars = {"PROD_DB_HOST": "prod-host", "PROD_DB_PASSWORD": "secret"}
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_production_database_config()
 
             assert config.host == "prod-host"
@@ -376,27 +372,27 @@ class TestDatabaseConfigFactory:
 
     def test_get_production_database_config_missing_password(self):
         """测试：获取生产数据库配置快捷函数（缺少密码）"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(ValueError):
                 get_production_database_config()
 
     def test_config_with_all_pool_parameters(self):
         """测试：完整的连接池配置"""
         env_vars = {
-            'DB_HOST': 'localhost',
-            'DB_USER': 'user',
-            'DB_PASSWORD': 'pass',
-            'DB_POOL_SIZE': '15',
-            'DB_MAX_OVERFLOW': '25',
-            'DB_POOL_TIMEOUT': '45',
-            'DB_POOL_RECYCLE': '2700',
-            'DB_ASYNC_POOL_SIZE': '20',
-            'DB_ASYNC_MAX_OVERFLOW': '30',
-            'DB_ECHO': 'true',
-            'DB_ECHO_POOL': 'true'
+            "DB_HOST": "localhost",
+            "DB_USER": "user",
+            "DB_PASSWORD": "pass",
+            "DB_POOL_SIZE": "15",
+            "DB_MAX_OVERFLOW": "25",
+            "DB_POOL_TIMEOUT": "45",
+            "DB_POOL_RECYCLE": "2700",
+            "DB_ASYNC_POOL_SIZE": "20",
+            "DB_ASYNC_MAX_OVERFLOW": "30",
+            "DB_ECHO": "true",
+            "DB_ECHO_POOL": "true",
         }
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_database_config()
 
             assert config.pool_size == 15
@@ -411,14 +407,14 @@ class TestDatabaseConfigFactory:
     def test_config_async_pool_defaults(self):
         """测试：异步连接池默认值"""
         env_vars = {
-            'DB_HOST': 'localhost',
-            'DB_USER': 'user',
-            'DB_PASSWORD': 'pass',
-            'DB_POOL_SIZE': '12',
-            'DB_MAX_OVERFLOW': '18'
+            "DB_HOST": "localhost",
+            "DB_USER": "user",
+            "DB_PASSWORD": "pass",
+            "DB_POOL_SIZE": "12",
+            "DB_MAX_OVERFLOW": "18",
         }
 
-        with patch.dict('os.environ', env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             config = get_database_config()
 
             # 异步池默认使用同步池的值
