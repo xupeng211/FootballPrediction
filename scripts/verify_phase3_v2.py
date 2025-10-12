@@ -15,7 +15,8 @@ def run_test_with_mock(test_file, description):
 
     # 使用预加载Mock
     cmd = [
-        "python", "-c",
+        "python",
+        "-c",
         f"""
 import sys
 sys.path.insert(0, 'tests')
@@ -32,13 +33,13 @@ sys.exit(subprocess.run([
     '--timeout=10',
     '-x'
 ]).returncode)
-"""
+""",
     ]
 
     # 更简单的方法：使用环境变量预加载
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     cmd = [
         "pytest",
@@ -47,16 +48,12 @@ sys.exit(subprocess.run([
         "--disable-warnings",
         "--tb=short",
         "--timeout=10",
-        "-x"
+        "-x",
     ]
 
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env
+            cmd, capture_output=True, text=True, timeout=30, env=env
         )
 
         output = result.stdout + result.stderr
@@ -69,20 +66,30 @@ sys.exit(subprocess.run([
 
         # 检查是否有超时或连接错误
         has_timeout = "timeout" in output.lower() or "TIMEOUT" in output
-        has_connection_error = any(err in output for err in [
-            "ConnectionError", "OperationalError", "TimeoutError",
-            "连接", "超时", "connection", "timeout"
-        ])
+        has_connection_error = any(
+            err in output
+            for err in [
+                "ConnectionError",
+                "OperationalError",
+                "TimeoutError",
+                "连接",
+                "超时",
+                "connection",
+                "timeout",
+            ]
+        )
 
         if has_timeout or has_connection_error:
-            print(f"  ⚠️  连接超时或错误")
+            print("  ⚠️  连接超时或错误")
             return False, output
         else:
-            print(f"  ✓ 通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}")
+            print(
+                f"  ✓ 通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}"
+            )
             return True, output
 
     except subprocess.TimeoutExpired:
-        print(f"  ⚠️  测试超时")
+        print("  ⚠️  测试超时")
         return False, "Timeout"
     except Exception as e:
         print(f"  ✗️  执行错误: {e}")
@@ -115,13 +122,13 @@ def main():
         # 如果有错误，显示详细信息
         if not success and output != "Timeout":
             # 显示前几行错误信息
-            lines = output.split('\n')[:20]
+            lines = output.split("\n")[:20]
             for line in lines:
                 if line.strip():
                     print(f"    {line}")
 
     print("\n" + "=" * 60)
-    print(f"Phase 3 v2 验证结果:")
+    print("Phase 3 v2 验证结果:")
     print(f"  成功: {success_count}/{total_count}")
 
     if success_count == total_count:
@@ -131,7 +138,9 @@ def main():
         print("  - 可以进入 Phase 4：校准覆盖率配置")
         return True
     else:
-        print(f"\n⚠️  Phase 3 v2 需要继续优化：{total_count - success_count} 个测试仍有问题")
+        print(
+            f"\n⚠️  Phase 3 v2 需要继续优化：{total_count - success_count} 个测试仍有问题"
+        )
         print("\n建议：")
         print("  - 检查失败的测试并修复Mock")
         print("  - 确保Mock在导入阶段就生效")
@@ -140,6 +149,7 @@ def main():
 
 if __name__ == "__main__":
     import os
+
     success = main()
     print("\n" + "=" * 60)
     if success:

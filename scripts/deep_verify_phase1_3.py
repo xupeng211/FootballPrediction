@@ -114,10 +114,12 @@ def deep_verify_phase2():
 
             print(f"  {test_file}: 跳过={skipped}, 运行={passed+failed+errors}")
 
-    print(f"\n关键模块统计:")
+    print("\n关键模块统计:")
     print(f"  总测试数: {total_tests}")
     print(f"  跳过数: {total_skipped}")
-    print(f"  跳过率: {total_skipped/total_tests*100:.1f}%" if total_tests > 0 else "N/A")
+    print(
+        f"  跳过率: {total_skipped/total_tests*100:.1f}%" if total_tests > 0 else "N/A"
+    )
 
     # 验证标准：跳过率应该小于20%
     if total_tests > 0 and (total_skipped / total_tests) < 0.2:
@@ -135,8 +137,8 @@ def deep_verify_phase3():
 
     # 设置环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 测试1: 验证所有外部依赖都被Mock
     mock_test_script = """
@@ -215,13 +217,18 @@ exit(0 if all_passed else 1)
     # 测试2: 运行实际的pytest确保无超时
     print("\n测试pytest执行（检查无超时）...")
     test_cmd = [
-        "pytest", "tests/unit/core/test_logger.py",
-        "-v", "--disable-warnings", "--tb=short"
+        "pytest",
+        "tests/unit/core/test_logger.py",
+        "-v",
+        "--disable-warnings",
+        "--tb=short",
     ]
 
     start_time = time.time()
     try:
-        test_result = subprocess.run(test_cmd, env=env, capture_output=True, text=True, timeout=60)
+        test_result = subprocess.run(
+            test_cmd, env=env, capture_output=True, text=True, timeout=60
+        )
         elapsed = time.time() - start_time
 
         if elapsed < 30:  # 30秒内完成

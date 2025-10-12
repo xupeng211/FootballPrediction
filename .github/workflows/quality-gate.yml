@@ -1,0 +1,140 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip-quality]')"
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          .venv
+        key: ${{ runner.os }}-deps-${{ hashFiles('**/requirements*.lock') }}
+
+    - name: Install Dependencies
+      run: |
+        make install
+        make env-check
+
+    - name: Code Quality Check
+      run: |
+        make lint
+        make mypy-check
+
+    - name: Run Tests
+      run: |
+        make coverage-local
+
+    - name: Quality Gate
+      run: |
+        python scripts/quality_gate.py --ci-mode
+
+    - name: Security Scan
+      run: |
+        pip install bandit
+        bandit -r src/ -f json -o security-report.json
+
+    - name: Performance Test
+      run: |
+        python scripts/performance_check.py
+
+    - name: Generate Coverage Badge
+      uses: tj-actions/coverage-badge-py@v2
+      with:
+        output: coverage-badge.svg
+        threshold: 45
+
+    - name: Quality Score
+      run: |
+        python scripts/calculate_quality_score.py
+
+    - name: Upload Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-reports-${{ github.run_number }}
+        path: |
+          coverage.json
+          coverage-badge.svg
+          security-report.json
+          quality-report.json
+          docs/_reports/
+
+    - name: Comment PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // 读取质量报告
+          let qualityReport = {};
+          try {
+            qualityReport = JSON.parse(fs.readFileSync('quality-report.json', 'utf8'));
+          } catch (e) {
+            console.log('No quality report found');
+          }
+
+          // 读取覆盖率
+          let coverage = 0;
+          try {
+            const coverageData = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+            coverage = coverageData.totals.percent_covered;
+          } catch (e) {
+            console.log('No coverage report found');
+          }
+
+          // 创建评论
+          const comment = `
+          ## 🚦 Quality Gate Report
+
+          ### 📊 Metrics
+          - **Coverage**: ${coverage.toFixed(2)}% ${coverage >= 45 ? '✅' : '❌'}
+          - **Quality Score**: ${qualityReport.score || 'N/A'} ${qualityReport.score >= 8 ? '✅' : '❌'}
+          - **Test Pass Rate**: ${qualityReport.test_pass_rate || 'N/A'}%
+          - **Security**: ${qualityReport.security_score || 'N/A'}%
+
+          ### 🎯 Status
+          ${qualityReport.passed ? '✅ **PASSED** - Can merge' : '❌ **FAILED** - Fix required'}
+
+          ### 📋 Issues
+          ${qualityReport.blockers && qualityReport.blockers.length > 0 ?
+            qualityReport.blockers.map(b => `- ❌ ${b}`).join('\n') :
+            'No critical issues'}
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Quality Gate Status
+      run: |
+        if [ -f "quality-report.json" ]; then
+          PASSED=$(python -c "import json; print(json.load(open('quality-report.json'))['passed'])")
+          if [ "$PASSED" = "false" ]; then
+            echo "❌ Quality gate failed"
+            exit 1
+          fi
+        fi

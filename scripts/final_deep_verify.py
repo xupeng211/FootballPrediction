@@ -39,7 +39,13 @@ def main():
     print("-" * 60)
 
     # 运行核心测试
-    cmd = ["pytest", "tests/unit/api/test_health.py", "tests/unit/core/test_logger.py", "-v", "--disable-warnings"]
+    cmd = [
+        "pytest",
+        "tests/unit/api/test_health.py",
+        "tests/unit/core/test_logger.py",
+        "-v",
+        "--disable-warnings",
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
     output = result.stdout + result.stderr
@@ -54,10 +60,13 @@ def main():
 
     # 测试Mock
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
-    cmd = [sys.executable, "-c", """
+    cmd = [
+        sys.executable,
+        "-c",
+        """
 import sys
 sys.path.insert(0, 'tests')
 import conftest_mock
@@ -69,7 +78,8 @@ import mlflow
 print("✅ 数据库Mock成功")
 print("✅ Redis Mock成功")
 print("✅ MLflow Mock成功")
-"""]
+""",
+    ]
 
     result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=30)
 

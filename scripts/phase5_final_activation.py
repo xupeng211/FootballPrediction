@@ -22,15 +22,15 @@ def run_comprehensive_test():
 
     # 设置测试环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     results = {
-        'phase1': False,
-        'phase2': False,
-        'phase3': False,
-        'phase4': False,
-        'overall': False
+        "phase1": False,
+        "phase2": False,
+        "phase3": False,
+        "phase4": False,
+        "overall": False,
     }
 
     # 1. Phase 1 验证：模块导入
@@ -41,7 +41,9 @@ def run_comprehensive_test():
     cmd = ["pytest", "--collect-only", "-p", "no:warnings", "-q", "tests"]
     start_time = time.time()
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, env=env
+        )
         elapsed = time.time() - start_time
 
         if "collected" in result.stdout.lower():
@@ -49,7 +51,7 @@ def run_comprehensive_test():
             if collected_match:
                 count = int(collected_match.group(1))
                 print(f"✅ pytest 成功收集 {count} 个测试（耗时 {elapsed:.1f}秒）")
-                results['phase1'] = True
+                results["phase1"] = True
             else:
                 print("❌ 无法解析收集的测试数量")
         else:
@@ -66,7 +68,7 @@ def run_comprehensive_test():
         "tests/unit/api/test_health.py",
         "tests/unit/core/test_logger.py",
         "tests/unit/services/test_audit_service.py",
-        "tests/unit/utils/test_core_config.py"
+        "tests/unit/utils/test_core_config.py",
     ]
 
     total_skipped = 0
@@ -77,7 +79,9 @@ def run_comprehensive_test():
         if os.path.exists(test_file):
             test_files_found += 1
             cmd = ["pytest", test_file, "-v", "--disable-warnings", "--tb=no", "-x"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, env=env
+            )
 
             output = result.stdout + result.stderr
             skipped = len(re.findall(r"SKIPPED", output))
@@ -89,16 +93,25 @@ def run_comprehensive_test():
             total_run += passed + failed + errors
 
     if test_files_found > 0:
-        skip_rate = total_skipped / (total_skipped + total_run) if (total_skipped + total_run) > 0 else 0
-        print(f"✅ 核心测试统计: 跳过={total_skipped}, 运行={total_run}, 跳过率={skip_rate:.1%}")
+        skip_rate = (
+            total_skipped / (total_skipped + total_run)
+            if (total_skipped + total_run) > 0
+            else 0
+        )
+        print(
+            f"✅ 核心测试统计: 跳过={total_skipped}, 运行={total_run}, 跳过率={skip_rate:.1%}"
+        )
         if skip_rate < 0.3:  # 30%阈值
-            results['phase2'] = True
+            results["phase2"] = True
 
     # 3. Phase 3 验证：Mock 外部依赖
     print("\n📋 3. Phase 3 验证：Mock 外部依赖测试")
     print("-" * 60)
 
-    mock_test_cmd = [sys.executable, "-c", """
+    mock_test_cmd = [
+        sys.executable,
+        "-c",
+        """
 import sys
 sys.path.insert(0, 'tests')
 import conftest_mock
@@ -131,12 +144,15 @@ except:
     sys.exit(1)
 
 print("All Mocks OK")
-"""]
+""",
+    ]
 
-    result = subprocess.run(mock_test_cmd, env=env, capture_output=True, text=True, timeout=30)
+    result = subprocess.run(
+        mock_test_cmd, env=env, capture_output=True, text=True, timeout=30
+    )
     if result.returncode == 0 and "All Mocks OK" in result.stdout:
         print("✅ 所有外部依赖 Mock 成功")
-        results['phase3'] = True
+        results["phase3"] = True
     else:
         print("❌ Mock 测试失败")
 
@@ -146,20 +162,23 @@ print("All Mocks OK")
 
     # 运行覆盖率测试
     cmd = [
-        "pytest", "tests/unit/core/test_logger.py",
+        "pytest",
+        "tests/unit/core/test_logger.py",
         "--cov=src",
         "--cov-report=term-missing",
-        "--disable-warnings"
+        "--disable-warnings",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=60, env=env
+        )
         output = result.stdout
 
         # 检查覆盖率报告
         if "TOTAL" in output and "%" in output:
             print("✅ 覆盖率报告生成成功")
-            results['phase4'] = True
+            results["phase4"] = True
 
             # 提取覆盖率百分比
             total_match = re.search(r"TOTAL\s+(\d+)%", output)
@@ -175,10 +194,10 @@ print("All Mocks OK")
     print("=" * 80)
 
     phase_names = {
-        'phase1': 'Phase 1 - 模块导入',
-        'phase2': 'Phase 2 - 清理skipif',
-        'phase3': 'Phase 3 - Mock依赖',
-        'phase4': 'Phase 4 - 覆盖率配置'
+        "phase1": "Phase 1 - 模块导入",
+        "phase2": "Phase 2 - 清理skipif",
+        "phase3": "Phase 3 - Mock依赖",
+        "phase4": "Phase 4 - 覆盖率配置",
     }
 
     all_passed = True

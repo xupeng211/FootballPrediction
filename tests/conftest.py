@@ -224,7 +224,9 @@ def auto_mock_external_services(monkeypatch):
     mock_db_connection.engine.pool = MagicMock()
     sys.modules["src.database.connection"] = MagicMock()
     sys.modules["src.database.connection"].DatabaseManager = MagicMock
-    sys.modules["src.database.connection"].get_database_url = lambda: "sqlite:///:memory:"
+    sys.modules["src.database.connection"].get_database_url = (
+        lambda: "sqlite:///:memory:"
+    )
 
     # Mock Kafka producer
     try:
@@ -235,7 +237,9 @@ def auto_mock_external_services(monkeypatch):
 
         sys.modules["src.streaming.kafka_producer"] = MagicMock()
         sys.modules["src.streaming.kafka_producer"].KafkaProducer = MagicMock
-        sys.modules["src.streaming.kafka_producer"].KafkaProducer.return_value = mock_kafka_producer
+        sys.modules[
+            "src.streaming.kafka_producer"
+        ].KafkaProducer.return_value = mock_kafka_producer
     except ImportError:
         pass
 
@@ -248,7 +252,9 @@ def auto_mock_external_services(monkeypatch):
 
         sys.modules["src.streaming.kafka_consumer"] = MagicMock()
         sys.modules["src.streaming.kafka_consumer"].KafkaConsumer = MagicMock
-        sys.modules["src.streaming.kafka_consumer"].KafkaConsumer.return_value = mock_kafka_consumer
+        sys.modules[
+            "src.streaming.kafka_consumer"
+        ].KafkaConsumer.return_value = mock_kafka_consumer
     except ImportError:
         pass
 
@@ -270,6 +276,7 @@ def auto_mock_external_services(monkeypatch):
     # Mock Redis 连接（避免真实连接）
     try:
         import redis
+
         mock_redis_client = MagicMock()
         mock_redis_client.ping.return_value = True
         mock_redis_client.get.return_value = None
@@ -277,7 +284,6 @@ def auto_mock_external_services(monkeypatch):
         mock_redis_client.exists.return_value = False
 
         # Mock redis.Redis 构造函数
-        original_redis = redis.Redis
         def mock_redis_init(*args, **kwargs):
             return mock_redis_client
 
@@ -296,7 +302,10 @@ def auto_mock_external_services(monkeypatch):
 
         # 创建内存数据库引擎
         def mock_create_engine(*args, **kwargs):
-            if "sqlite:///:memory:" in str(args) or kwargs.get("connect_args", {}).get("check_same_thread") is False:
+            if (
+                "sqlite:///:memory:" in str(args)
+                or kwargs.get("connect_args", {}).get("check_same_thread") is False
+            ):
                 # 测试时创建真实的内存数据库
                 kwargs.setdefault("poolclass", StaticPool)
                 kwargs.setdefault("connect_args", {"check_same_thread": False})
@@ -305,6 +314,7 @@ def auto_mock_external_services(monkeypatch):
 
         # 替换 create_engine
         import sqlalchemy
+
         sqlalchemy.create_engine = mock_create_engine
     except ImportError:
         pass

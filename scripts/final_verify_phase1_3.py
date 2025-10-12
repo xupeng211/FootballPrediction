@@ -15,7 +15,14 @@ def verify_phase1():
     print("-" * 40)
 
     # 测试pytest是否能收集测试
-    cmd = ["pytest", "--collect-only", "-p", "no:warnings", "-q", "tests/unit/core/test_logger.py"]
+    cmd = [
+        "pytest",
+        "--collect-only",
+        "-p",
+        "no:warnings",
+        "-q",
+        "tests/unit/core/test_logger.py",
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if "collected" in result.stdout and "error" not in result.stdout.lower():
@@ -69,12 +76,13 @@ def verify_phase3():
 
     # 设置环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 运行一个简单的测试来验证Mock
     cmd = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         """
 import sys
 sys.path.insert(0, 'tests')
@@ -107,7 +115,7 @@ except Exception:
     sys.exit(1)
 
 print("✓ 所有外部依赖Mock成功")
-"""
+""",
     ]
 
     result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=30)

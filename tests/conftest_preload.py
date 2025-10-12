@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, AsyncMock
 os.environ["TESTING"] = "true"
 os.environ["ENVIRONMENT"] = "testing"
 
+
 # 在模块级别应用Mock
 def pytest_configure(config):
     """在pytest配置阶段应用Mock"""
@@ -21,11 +22,14 @@ def pytest_configure(config):
     mock_db_manager = MagicMock()
     mock_db_manager.get_async_session.return_value.__aenter__.return_value = AsyncMock()
     mock_db_manager.get_session.return_value.__enter__.return_value = MagicMock()
-    sys.modules["src.database.connection"].DatabaseManager = MagicMock(return_value=mock_db_manager)
+    sys.modules["src.database.connection"].DatabaseManager = MagicMock(
+        return_value=mock_db_manager
+    )
 
     # Mock Redis
     try:
         import redis
+
         mock_redis_client = MagicMock()
         mock_redis_client.ping.return_value = True
         mock_redis_client.get.return_value = None
@@ -34,9 +38,9 @@ def pytest_configure(config):
         mock_redis_client.hgetall.return_value = {}
         mock_redis_client.hset.return_value = True
 
-        original_redis = redis.Redis
         def mock_redis_init(*args, **kwargs):
             return mock_redis_client
+
         redis.Redis = mock_redis_init
     except ImportError:
         pass
@@ -83,7 +87,10 @@ def pytest_configure(config):
 
         # 创建内存数据库引擎
         def mock_create_engine(*args, **kwargs):
-            if "sqlite:///:memory:" in str(args) or kwargs.get("connect_args", {}).get("check_same_thread") is False:
+            if (
+                "sqlite:///:memory:" in str(args)
+                or kwargs.get("connect_args", {}).get("check_same_thread") is False
+            ):
                 # 测试时创建真实的内存数据库
                 kwargs.setdefault("poolclass", StaticPool)
                 kwargs.setdefault("connect_args", {"check_same_thread": False})
@@ -92,6 +99,7 @@ def pytest_configure(config):
 
         # 替换 create_engine
         import sqlalchemy
+
         sqlalchemy.create_engine = mock_create_engine
     except ImportError:
         pass

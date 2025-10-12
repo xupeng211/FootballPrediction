@@ -16,12 +16,13 @@ def run_test(test_file, description):
 
     # 设置环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 先导入conftest_mock，然后运行pytest
     cmd = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         f"""
 import sys
 sys.path.insert(0, 'tests')
@@ -54,7 +55,7 @@ if has_connection_error:
 else:
     print('✓ 无连接错误')
     sys.exit(result.returncode)
-"""
+""",
     ]
 
     try:
@@ -106,7 +107,7 @@ def main():
             total_count -= 1
 
     print("\n" + "=" * 60)
-    print(f"验证结果:")
+    print("验证结果:")
     print(f"  成功: {success_count}/{total_count}")
 
     if success_count == total_count:
@@ -116,7 +117,9 @@ def main():
         print("  - 可以进入 Phase 4：校准覆盖率配置")
         return True
     else:
-        print(f"\n⚠️  Phase 3 需要继续优化：{total_count - success_count} 个测试仍有问题")
+        print(
+            f"\n⚠️  Phase 3 需要继续优化：{total_count - success_count} 个测试仍有问题"
+        )
         return False
 
 

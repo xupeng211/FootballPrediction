@@ -54,9 +54,13 @@ kafka_consumer_mock = AsyncMock()
 kafka_consumer_mock.__aiter__ = AsyncMock(return_value=iter([]))
 
 sys.modules["src.streaming.kafka_producer"] = MagicMock()
-sys.modules["src.streaming.kafka_producer"].KafkaProducer = MagicMock(return_value=kafka_producer_mock)
+sys.modules["src.streaming.kafka_producer"].KafkaProducer = MagicMock(
+    return_value=kafka_producer_mock
+)
 sys.modules["src.streaming.kafka_consumer"] = MagicMock()
-sys.modules["src.streaming.kafka_consumer"].KafkaConsumer = MagicMock(return_value=kafka_consumer_mock)
+sys.modules["src.streaming.kafka_consumer"].KafkaConsumer = MagicMock(
+    return_value=kafka_consumer_mock
+)
 
 # Mock MLflow
 mlflow_mock = MagicMock()
