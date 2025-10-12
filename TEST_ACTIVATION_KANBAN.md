@@ -372,3 +372,149 @@
 - Phase 1-5 为测试激活阶段
 - Phase 6-8 为覆盖率提升和质量保障阶段
 - 所有修改应遵循项目的渐进式改进理念
+
+---
+
+# 🧱 三层测试架构与执行分工（Unit / Integration / E2E）
+
+> 🎯 目标：明确测试层级的分工、执行位置、责任归属与自动化规则，
+> 形成"单元测试 + 集成测试 + 端到端测试"三层闭环体系。
+
+---
+
+### 🧩 一、总体架构说明
+
+当前项目测试体系采用"三层测试模型"：
+
+| 层级 | 说明 | 目标 | 是否在 Claude 环境执行 |
+|------|------|------|----------------|
+| **Unit Test（单元测试）** | 验证函数、类、模块逻辑是否正确 | 保证"零件没问题" | ✅ 是 |
+| **Integration Test（集成测试）** | 验证模块间接口交互、数据库操作 | 保证"模块能配合工作" | ❌ 否（由 CI 执行） |
+| **E2E Test（端到端测试）** | 模拟真实用户或系统调用，全链路验证 | 保证"整机能正常运行" | ❌ 否（由 Nightly Job 执行） |
+
+---
+
+### ⚡ 二、单元测试（Unit Test）
+
+**执行者：** Claude Code、本地开发环境
+**目录：** `tests/unit/`
+**特征：**
+- 不依赖真实外部服务；
+- 所有外部依赖均使用 Mock；
+- 运行速度快（<10s）；
+- 适合 AI 快速验证覆盖率。
+
+**命令示例：**
+```bash
+pytest tests/unit/ --cov=src --cov-report=term --disable-warnings -q
+```
+
+**输出报告：**
+- 终端覆盖率报告
+- 快速验证是否有逻辑回归
+
+---
+
+### ⚙️ 三、集成测试（Integration Test）
+
+**执行者：** CI/CD 环境（如 GitHub Actions、GitLab CI）
+**目录：** `tests/integration/`
+**特征：**
+- 启动 Docker Compose 或测试数据库；
+- 验证模块之间的协作；
+- 测试 API 与 DB、Kafka、Redis 等交互；
+- 通常耗时 1~5 分钟。
+
+**命令示例：**
+```bash
+pytest tests/integration/ --disable-warnings --maxfail=3 --cov-append --cov-report=term
+```
+
+**执行环境建议：**
+- CI Pipeline 使用 `docker-compose.test.yml` 启动依赖；
+- 执行前设置：
+  ```bash
+  export TEST_ENV=integration
+  ```
+
+**输出报告：**
+- `docs/_reports/INTEGRATION_RESULT_<date>.md`
+- 包含模块交互日志与接口验证结果。
+
+---
+
+### 🚀 四、端到端测试（E2E Test）
+
+**执行者：** Nightly Job / Staging 环境
+**目录：** `tests/e2e/`
+**特征：**
+- 模拟真实业务流程（API → DB → Kafka → Redis → Response）；
+- 不 Mock 外部依赖；
+- 验证整个系统的行为正确性；
+- 运行时间最长（3~10 分钟）。
+
+**命令示例：**
+```bash
+pytest tests/e2e/ -v --maxfail=1 --disable-warnings
+```
+
+**输出报告：**
+- `docs/_reports/E2E_RESULT_<date>.md`
+- 包含系统级通过率与关键路径验证日志。
+
+**Nightly Job 配置建议：**
+```yaml
+name: E2E Verification
+on:
+  schedule:
+    - cron: "0 22 * * *"  # 每晚 22:00 执行
+jobs:
+  run-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pytest tests/e2e/ -v --disable-warnings
+      - run: mv e2e_report.md docs/_reports/E2E_RESULT_$(date +%F).md
+```
+
+---
+
+### 🧩 五、测试结果汇总机制
+
+**目标：** 统一三层测试结果，形成自动汇报闭环。
+
+1. 每层测试结果统一汇总到：
+   ```
+   docs/_reports/TEST_STATUS_WEEKLY.md
+   ```
+2. 汇总内容包括：
+   - 单元测试通过率与覆盖率；
+   - 集成测试通过模块列表；
+   - 端到端测试通过率；
+   - 自动检测跳过与失败测试数量。
+3. 每周自动生成：
+   ```bash
+   python scripts/test_activation_check.py
+   ```
+   并推送进周报目录。
+
+---
+
+### 🧠 六、AI 协同执行策略
+
+**规则说明：**
+- Claude Code 仅在"单元测试层"执行任务；
+- 当检测到"集成测试未执行"或"E2E 未生成报告"时，自动在看板中提示：
+  > ⚠️ 集成/E2E 测试结果缺失，请检查 CI/Nightly Job。
+- AI 可自动读取 `TEST_STATUS_WEEKLY.md`，更新任务进度；
+- 当所有层测试均通过时，自动在看板顶部标记：
+  > ✅ 测试闭环验证完成（全层通过）。
+
+---
+
+## 📝 备注
+
+- 此看板专注于测试激活和覆盖率提升
+- Phase 1-5 为测试激活阶段
+- Phase 6-8 为覆盖率提升和质量保障阶段
+- 所有修改应遵循项目的渐进式改进理念
