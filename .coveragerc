@@ -2,6 +2,7 @@
 branch = True
 source = src
 omit =
+    */__pycache__/*
     */tests/integration/*
     */tests/e2e/*
     */tests/slow/*
@@ -11,7 +12,7 @@ omit =
 
 [report]
 show_missing = True
-skip_covered = True
+skip_covered = False
 
 [html]
 directory = htmlcov
