@@ -4,7 +4,9 @@
 
 import pytest
 from datetime import datetime
-# from src.utils.response import APIResponse, APIResponseModel
+from pydantic import ValidationError
+
+from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 
 class TestAPIResponse:
@@ -296,3 +298,61 @@ class TestAPIResponse:
         assert result2["data"]["call"] == 2
         assert result1["timestamp"] != result2["timestamp"]
         assert result1 != result2
+
+
+class TestResponseUtils:
+    """ResponseUtils别名测试"""
+
+    def test_response_utils_is_alias(self):
+        """测试：ResponseUtils是APIResponse的别名"""
+        assert ResponseUtils is APIResponse
+        assert hasattr(ResponseUtils, 'success')
+        assert hasattr(ResponseUtils, 'error')
+        assert ResponseUtils.success == APIResponse.success
+        assert ResponseUtils.error == APIResponse.error
+        assert ResponseUtils.success_response == APIResponse.success_response
+        assert ResponseUtils.error_response == APIResponse.error_response
+
+    def test_response_utils_functionality(self):
+        """测试：ResponseUtils功能与APIResponse一致"""
+        test_data = {"test": "ResponseUtils"}
+        success1 = APIResponse.success(data=test_data, message="APIResponse成功")
+        success2 = ResponseUtils.success(data=test_data, message="ResponseUtils成功")
+
+        assert success1["success"] is True
+        assert success2["success"] is True
+        assert success1["data"] == success2["data"]
+        assert success1["message"] != success2["message"]
+        assert success2["message"] == "ResponseUtils成功"
+
+        error1 = APIResponse.error(code=404, message="API错误")
+        error2 = ResponseUtils.error(code=404, message="Utils错误")
+
+        assert error1["success"] is False
+        assert error2["success"] is False
+        assert error1["code"] == error2["code"]
+        assert error1["message"] != error2["message"]
+        assert error2["message"] == "Utils错误"
+
+    def test_response_utils_comprehensive(self):
+        """测试：ResponseUtils综合功能"""
+        # 成功响应
+        success = ResponseUtils.success_response(
+            data={"items": ["item1", "item2"]},
+            message="通过别名获取数据成功"
+        )
+        assert success["success"] is True
+        assert success["message"] == "通过别名获取数据成功"
+        assert success["data"]["items"] == ["item1", "item2"]
+
+        # 错误响应
+        error = ResponseUtils.error_response(
+            message="通过别名处理错误",
+            code=422,
+            data={"field": "name", "reason": "不能为空"}
+        )
+        assert error["success"] is False
+        assert error["message"] == "通过别名处理错误"
+        assert error["code"] == 422
+        assert error["data"]["field"] == "name"
+        assert error["data"]["reason"] == "不能为空"

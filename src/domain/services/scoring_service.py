@@ -6,7 +6,9 @@ Scoring Domain Service
 Handles complex business logic related to prediction scoring.
 """
 
+from decimal import Decimal
 from typing import Dict, Any, List, Optional
+
 from ..models.prediction import PredictionPoints
 
 
@@ -58,21 +60,17 @@ class ScoringService:
             match_importance, predicted_home, predicted_away
         )
 
-        # 计算总得分
-        total_points = (
-            exact_score_points
-            + outcome_points
-            + goal_diff_points
-            + confidence_bonus
-            + streak_bonus
-            + difficulty_bonus
-        )
+        score_bonus = Decimal(exact_score_points)
+        outcome_total = Decimal(outcome_points + goal_diff_points + streak_bonus + difficulty_bonus)
+        confidence_bonus_value = Decimal(confidence_bonus)
 
-        return PredictionPoints(  # type: ignore
-            exact_score=exact_score_points,
-            outcome_diff=outcome_points,
-            goals_diff=goal_diff_points,
-            total_points=total_points,
+        total_points = score_bonus + outcome_total + confidence_bonus_value
+
+        return PredictionPoints(
+            total=total_points,
+            score_bonus=score_bonus,
+            result_bonus=outcome_total,
+            confidence_bonus=confidence_bonus_value,
         )
 
     def _calculate_exact_score_points(

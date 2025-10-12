@@ -60,7 +60,7 @@ class MLModelStrategy(PredictionStrategy):
             )
         except ImportError:
             self._mlflow_client = None
-            logger.warning("MLflow not available, using mock model")
+            self.logger.warning("MLflow not available, using mock model")
             # 创建一个模拟模型
             self._model = None
             self._model_version = "mock_v1.0"
@@ -74,12 +74,12 @@ class MLModelStrategy(PredictionStrategy):
         await self._initialize_feature_processor(config)
 
         self._is_initialized = True
-        logger.info(f"ML模型策略 '{self.name}' 初始化成功")
+        self.logger.info(f"ML模型策略 '{self.name}' 初始化成功")
 
     async def _load_model(self, config: Dict[str, Any]) -> None:
         """加载ML模型"""
         if not self._mlflow_client:
-            logger.warning("MLflow client not available, using mock model")
+            self.logger.warning("MLflow client not available, using mock model")
             self._model = None
             self._model_version = "mock_v1.0"
             self._model_loaded_at = datetime.utcnow()
@@ -102,10 +102,10 @@ class MLModelStrategy(PredictionStrategy):
             self._model_version = model_version
             self._model_loaded_at = datetime.utcnow()
 
-            logger.info(f"成功加载模型: {model_name} 版本: {model_version}")
+            self.logger.info(f"成功加载模型: {model_name} 版本: {model_version}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"加载ML模型失败: {e}")
+            self.logger.error(f"加载ML模型失败: {e}")
             # 使用模拟模型
             self._model = None
             self._model_version = "mock_v1.0"
@@ -150,12 +150,10 @@ class MLModelStrategy(PredictionStrategy):
 
         # 模型预测
         if self._model is None:
-            # 使用模拟预测
-            import random
-
-            possible_results = ["HOME_WIN", "DRAW", "AWAY_WIN"]
-            prediction_result = random.choice(possible_results)
-            prediction_proba = [0.33, 0.34, 0.33]
+            # 使用可预测的模拟结果
+            vector = features.reshape(-1)
+            prediction_result = self._mock_predict(vector)
+            prediction_proba = self._mock_probabilities(vector)
         else:
             prediction_result = self._model.predict(features)[0]
             # 获取预测概率（如果模型支持）
@@ -210,12 +208,8 @@ class MLModelStrategy(PredictionStrategy):
         # 批量预测
         if features_list:
             if self._model is None:
-                # 使用模拟预测
-                import random
-
-                possible_results = ["HOME_WIN", "DRAW", "AWAY_WIN"]
                 prediction_results = [
-                    random.choice(possible_results) for _ in range(len(features_list))
+                    self._mock_predict(feat.reshape(-1)) for feat in features_list
                 ]
             else:
                 features_array = np.vstack(features_list)
@@ -223,7 +217,8 @@ class MLModelStrategy(PredictionStrategy):
 
             if self._model is None:
                 prediction_probas = [
-                    [0.33, 0.34, 0.33] for _ in range(len(features_list))
+                    self._mock_probabilities(feat.reshape(-1))
+                    for feat in features_list
                 ]
             else:
                 try:
@@ -247,6 +242,40 @@ class MLModelStrategy(PredictionStrategy):
             outputs.append(output)
 
         return outputs
+
+    def _mock_predict(self, feature_vector: np.ndarray) -> np.ndarray:
+        """基于特征向量生成可预测的比分结果"""
+        signal = float(np.sum(feature_vector))
+        base_home = int(abs(signal)) % 3 + 1
+        base_away = int(abs(signal * 1.3)) % 3
+        # 若两队评分接近且结果偏 draw，提供最少进球数
+        if base_home == base_away:
+            base_away = max(0, base_home - 1)
+        return np.array([base_home, base_away])
+
+    def _mock_probabilities(self, feature_vector: np.ndarray) -> List[float]:
+        """根据特征向量生成稳定的概率分布"""
+        advantage = float(np.sum(feature_vector[: len(feature_vector)//2])) - float(
+            np.sum(feature_vector[len(feature_vector)//2 :])
+        )
+        base = np.array([0.33, 0.34, 0.33], dtype=float)
+
+        if advantage > 0.5:
+            delta = min(0.15, advantage * 0.05)
+            base[0] += delta
+            base[1:] -= delta / 2
+        elif advantage < -0.5:
+            delta = min(0.15, abs(advantage) * 0.05)
+            base[2] += delta
+            base[[0, 1]] -= delta / 2
+        else:
+            delta = min(0.1, abs(advantage) * 0.03)
+            base[1] += delta
+            base[[0, 2]] -= delta / 2
+
+        base = np.clip(base, 0.05, 0.9)
+        base = base / base.sum()
+        return [round(float(val), 4) for val in base]
 
     async def _extract_features(self, input_data: PredictionInput) -> np.ndarray:
         """提取特征向量"""
@@ -421,7 +450,7 @@ class MLModelStrategy(PredictionStrategy):
 
         # 检查是否有必需的特征数据
         if not input_data.historical_data and not input_data.additional_features:
-            logger.info("警告: 缺少特征数据，可能影响预测准确性")
+            self.logger.info("警告: 缺少特征数据，可能影响预测准确性")
 
         return True
 

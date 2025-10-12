@@ -8,6 +8,7 @@ Combines multiple prediction strategies through weighted voting or other ensembl
 """
 
 import asyncio
+import logging
 import time
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
@@ -23,6 +24,9 @@ from .base import (
     StrategyMetrics,
 )
 from ..models.prediction import Prediction
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnsembleMethod(Enum):

@@ -67,7 +67,7 @@ class StatisticalStrategy(PredictionStrategy):
         }
 
         self._is_initialized = True
-        logger.info(f"统计策略 '{self.name}' 初始化成功")
+        self.logger.info(f"统计策略 '{self.name}' 初始化成功")
 
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
         """执行单次预测"""
