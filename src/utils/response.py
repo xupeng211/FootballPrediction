@@ -87,3 +87,7 @@ class APIResponse:
     ) -> Dict[str, Any]:
         """错误响应（别名方法）"""
         return APIResponse.error(message, code, data)
+
+
+# 为了向后兼容，提供一个ResponseUtils别名
+ResponseUtils = APIResponse

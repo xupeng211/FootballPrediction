@@ -1,6 +1,9 @@
 """API响应工具简单测试"""
 
-# from src.utils.response import APIResponse
+import pytest
+from datetime import datetime
+
+from src.utils.response import APIResponse, ResponseUtils
 
 
 class TestResponseSimple:
@@ -41,24 +44,24 @@ class TestResponseSimple:
         """测试错误响应"""
         response = APIResponse.error("测试错误")
         assert response["success"] is False
-        assert response["error"] == "测试错误"
+        assert response["message"] == "测试错误"
         assert "timestamp" in response
 
     def test_error_with_details(self):
         """测试错误响应（带详细信息）"""
         details = {"field": "email", "issue": "格式错误"}
-        response = APIResponse.error("验证失败", details=details)
+        response = APIResponse.error("验证失败", data=details)
         assert response["success"] is False
-        assert response["error"] == "验证失败"
-        assert response["details"] == details
+        assert response["message"] == "验证失败"
+        assert response["data"] == details
         assert "timestamp" in response
 
     def test_error_with_code(self):
         """测试错误响应（带错误码）"""
-        response = APIResponse.error("业务错误", error_code="BUSINESS_ERROR")
+        response = APIResponse.error("业务错误", code=400)
         assert response["success"] is False
-        assert response["error"] == "业务错误"
-        assert response["error_code"] == "BUSINESS_ERROR"
+        assert response["message"] == "业务错误"
+        assert response["code"] == 400
         assert "timestamp" in response
 
     def test_timestamp_format(self):

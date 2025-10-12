@@ -15,6 +15,12 @@ from .types import (
     PredictionUpdatedEvent,
     UserRegisteredEvent,
     TeamStatsUpdatedEvent,
+    MatchCreatedEventData,
+    MatchUpdatedEventData,
+    PredictionMadeEventData,
+    PredictionUpdatedEventData,
+    UserRegisteredEventData,
+    TeamStatsEventData,
 )
 from .handlers import (
     MetricsEventHandler,
@@ -43,6 +49,13 @@ __all__ = [
     "PredictionUpdatedEvent",
     "UserRegisteredEvent",
     "TeamStatsUpdatedEvent",
+    # 事件数据类型
+    "MatchCreatedEventData",
+    "MatchUpdatedEventData",
+    "PredictionMadeEventData",
+    "PredictionUpdatedEventData",
+    "UserRegisteredEventData",
+    "TeamStatsEventData",
     # 事件处理器
     "MetricsEventHandler",
     "LoggingEventHandler",

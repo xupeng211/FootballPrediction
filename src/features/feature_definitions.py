@@ -11,7 +11,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Dict, Any, List
+
+from .entities import MatchEntity, TeamEntity
 
 
 @dataclass

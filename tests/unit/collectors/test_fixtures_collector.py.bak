@@ -1,0 +1,438 @@
+"""测试比赛赛程收集器"""
+
+import pytest
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime, timedelta
+import json
+
+from src.collectors.fixtures_collector import FixturesCollector
+
+
+@pytest.fixture
+def mock_db_session():
+    """创建模拟数据库会话"""
+    session = AsyncMock()
+    session.execute = AsyncMock()
+    session.commit = AsyncMock()
+    session.add = MagicMock()
+    session.refresh = AsyncMock()
+    return session
+
+
+@pytest.fixture
+def mock_redis_client():
+    """创建模拟Redis客户端"""
+    redis = AsyncMock()
+    redis.get_cache_value = AsyncMock(return_value=None)
+    redis.set_cache_value = AsyncMock(return_value=True)
+    redis.delete = AsyncMock(return_value=True)
+    redis.exists = AsyncMock(return_value=False)
+    return redis
+
+
+@pytest.fixture
+def fixtures_collector(mock_db_session, mock_redis_client):
+    """创建赛程收集器实例"""
+    with patch.dict('os.environ', {'FOOTBALL_API_TOKEN': 'test_token'}):
+        collector = FixturesCollector(
+            db_session=mock_db_session,
+            redis_client=mock_redis_client
+        )
+    return collector
+
+
+class TestFixturesCollector:
+    """测试赛程收集器"""
+
+    def test_collector_initialization(self, fixtures_collector):
+        """测试收集器初始化"""
+        assert fixtures_collector.db_session == fixtures_collector.db_session
+        assert fixtures_collector.redis_client == fixtures_collector.redis_client
+        assert fixtures_collector.cache_timeout == 3600
+        assert fixtures_collector.headers["X-Auth-Token"] == "test_token"
+        assert "football-api" in fixtures_collector.api_endpoints
+        assert "api-sports" in fixtures_collector.api_endpoints
+
+    def test_collector_no_api_token(self, mock_db_session, mock_redis_client):
+        """测试没有API Token的初始化"""
+        with patch.dict('os.environ', {}, clear=True):
+            with patch('src.collectors.fixtures_collector.logger') as mock_logger:
+                collector = FixturesCollector(
+                    db_session=mock_db_session,
+                    redis_client=mock_redis_client
+                )
+                assert collector.headers == {}
+                mock_logger.warning.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_collect_team_fixtures_from_cache(self, fixtures_collector):
+        """测试从缓存获取球队赛程"""
+        team_id = 123
+        cached_fixtures = [
+            {
+                "id": 1,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "date": "2024-01-15T15:00:00Z"
+            }
+        ]
+
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(
+            return_value=cached_fixtures
+        )
+
+        result = await fixtures_collector.collect_team_fixtures(team_id)
+
+        assert result == cached_fixtures
+        fixtures_collector.redis_client.get_cache_value.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_collect_team_fixtures_from_db(self, fixtures_collector):
+        """测试从数据库获取球队赛程"""
+        team_id = 123
+        db_fixtures = [
+            {
+                "id": 1,
+                "home_team_id": team_id,
+                "away_team_id": 456,
+                "match_date": datetime.utcnow() + timedelta(days=7),
+                "status": "SCHEDULED"
+            }
+        ]
+
+        # Mock缓存未命中
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(return_value=None)
+
+        # Mock数据库查询
+        fixtures_collector._get_fixtures_from_db = AsyncMock(return_value=db_fixtures)
+
+        result = await fixtures_collector.collect_team_fixtures(team_id)
+
+        assert result == db_fixtures
+        fixtures_collector._get_fixtures_from_db.assert_called_once_with(team_id, 30)
+
+    @pytest.mark.asyncio
+    async def test_collect_team_fixtures_from_api(self, fixtures_collector):
+        """测试从API获取球队赛程"""
+        team_id = 123
+        api_fixtures = [
+            {
+                "id": 1,
+                "homeTeam": {"id": team_id, "name": "Team A"},
+                "awayTeam": {"id": 456, "name": "Team B"},
+                "utcDate": "2024-01-15T15:00:00Z",
+                "status": "SCHEDULED"
+            }
+        ]
+
+        # Mock缓存未命中
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(return_value=None)
+
+        # Mock数据库查询无结果
+        fixtures_collector._get_fixtures_from_db = AsyncMock(return_value=[])
+
+        # Mock API获取
+        fixtures_collector._fetch_fixtures_from_api = AsyncMock(return_value=api_fixtures)
+
+        # Mock保存到数据库
+        fixtures_collector._save_fixtures_to_db = AsyncMock()
+
+        result = await fixtures_collector.collect_team_fixtures(team_id)
+
+        assert result == api_fixtures
+        fixtures_collector._fetch_fixtures_from_api.assert_called_once_with(team_id, 30)
+        fixtures_collector._save_fixtures_to_db.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_collect_team_fixtures_error_handling(self, fixtures_collector):
+        """测试错误处理"""
+        team_id = 123
+
+        # Mock缓存未命中
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(return_value=None)
+
+        # Mock数据库查询抛出异常
+        fixtures_collector._get_fixtures_from_db = AsyncMock(
+            side_effect=ValueError("Database error")
+        )
+
+        with patch('src.collectors.fixtures_collector.logger') as mock_logger:
+            result = await fixtures_collector.collect_team_fixtures(team_id)
+
+            assert result == []
+            mock_logger.error.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_collect_league_fixtures(self, fixtures_collector):
+        """测试收集联赛赛程"""
+        league_id = 39
+        matchday = 15
+        league_fixtures = [
+            {
+                "id": 1,
+                "matchday": matchday,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "date": "2024-01-15T15:00:00Z"
+            }
+        ]
+
+        # Mock缓存未命中
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(return_value=None)
+
+        # Mock API获取
+        fixtures_collector._fetch_league_fixtures_from_api = AsyncMock(
+            return_value=league_fixtures
+        )
+
+        result = await fixtures_collector.collect_league_fixtures(
+            league_id=league_id,
+            matchday=matchday
+        )
+
+        assert result == league_fixtures
+        fixtures_collector._fetch_league_fixtures_from_api.assert_called_once_with(
+            league_id, matchday
+        )
+
+    @pytest.mark.asyncio
+    async def test_force_refresh(self, fixtures_collector):
+        """测试强制刷新缓存"""
+        team_id = 123
+        new_fixtures = [
+            {
+                "id": 2,
+                "home_team": "Team A",
+                "away_team": "Team C",
+                "date": "2024-01-16T15:00:00Z"
+            }
+        ]
+
+        # 即使有缓存，强制刷新也会从API获取
+        fixtures_collector.redis_client.get_cache_value = AsyncMock(
+            return_value=[{"old": "fixture"}]
+        )
+        fixtures_collector._get_fixtures_from_db = AsyncMock(return_value=[])
+        fixtures_collector._fetch_fixtures_from_api = AsyncMock(return_value=new_fixtures)
+
+        result = await fixtures_collector.collect_team_fixtures(
+            team_id,
+            force_refresh=True
+        )
+
+        assert result == new_fixtures
+
+    @pytest.mark.asyncio
+    async def test_save_fixtures_to_db(self, fixtures_collector):
+        """测试保存赛程到数据库"""
+        fixtures = [
+            {
+                "id": 1,
+                "homeTeam": {"id": 123, "name": "Team A"},
+                "awayTeam": {"id": 456, "name": "Team B"},
+                "utcDate": "2024-01-15T15:00:00Z",
+                "status": "SCHEDULED",
+                "matchday": 15
+            }
+        ]
+
+        # Mock数据库操作
+        fixtures_collector.db_session.add = MagicMock()
+        fixtures_collector.db_session.commit = AsyncMock()
+
+        await fixtures_collector._save_fixtures_to_db(fixtures)
+
+        # 验证数据库操作被调用
+        fixtures_collector.db_session.add.assert_called()
+        fixtures_collector.db_session.commit.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_format_fixture_data(self, fixtures_collector):
+        """测试格式化赛程数据"""
+        api_fixture = {
+            "id": 1,
+            "homeTeam": {"id": 123, "name": "Team A"},
+            "awayTeam": {"id": 456, "name": "Team B"},
+            "utcDate": "2024-01-15T15:00:00Z",
+            "status": "SCHEDULED",
+            "matchday": 15,
+            "competition": {"id": 39, "name": "Premier League"}
+        }
+
+        formatted = fixtures_collector._format_fixture_data(api_fixture)
+
+        assert formatted["id"] == 1
+        assert formatted["home_team_id"] == 123
+        assert formatted["away_team_id"] == 456
+        assert formatted["match_date"] == "2024-01-15T15:00:00Z"
+        assert formatted["status"] == "SCHEDULED"
+        assert formatted["matchday"] == 15
+        assert formatted["league_id"] == 39
+
+    @pytest.mark.asyncio
+    async def test_get_fixtures_by_date_range(self, fixtures_collector):
+        """测试按日期范围获取赛程"""
+        start_date = datetime(2024, 1, 15)
+        end_date = datetime(2024, 1, 21)
+
+        fixtures = [
+            {
+                "id": 1,
+                "date": "2024-01-16T15:00:00Z",
+                "home_team": "Team A",
+                "away_team": "Team B"
+            },
+            {
+                "id": 2,
+                "date": "2024-01-20T15:00:00Z",
+                "home_team": "Team C",
+                "away_team": "Team D"
+            }
+        ]
+
+        fixtures_collector._get_fixtures_by_date_range = AsyncMock(
+            return_value=fixtures
+        )
+
+        result = await fixtures_collector.get_fixtures_by_date_range(
+            start_date,
+            end_date
+        )
+
+        assert len(result) == 2
+        assert result[0]["id"] == 1
+        assert result[1]["id"] == 2
+
+    @pytest.mark.asyncio
+    async def test_update_fixture_status(self, fixtures_collector):
+        """测试更新比赛状态"""
+        fixture_id = 1
+        new_status = "LIVE"
+        new_score = {"home": 1, "away": 0}
+
+        # Mock数据库更新
+        fixtures_collector.db_session.execute = AsyncMock()
+        fixtures_collector.db_session.commit = AsyncMock()
+
+        # Mock缓存删除
+        fixtures_collector.redis_client.delete = AsyncMock()
+
+        result = await fixtures_collector.update_fixture_status(
+            fixture_id,
+            new_status,
+            new_score
+        )
+
+        assert result is True
+        fixtures_collector.db_session.execute.assert_called()
+        fixtures_collector.db_session.commit.assert_called()
+
+    def test_validate_fixture_data(self, fixtures_collector):
+        """测试验证赛程数据"""
+        # 有效数据
+        valid_fixture = {
+            "id": 1,
+            "homeTeam": {"id": 123, "name": "Team A"},
+            "awayTeam": {"id": 456, "name": "Team B"},
+            "utcDate": "2024-01-15T15:00:00Z",
+            "status": "SCHEDULED"
+        }
+        assert fixtures_collector._validate_fixture_data(valid_fixture) is True
+
+        # 无效数据 - 缺少必要字段
+        invalid_fixture = {
+            "id": 1,
+            "homeTeam": {"id": 123, "name": "Team A"}
+        }
+        assert fixtures_collector._validate_fixture_data(invalid_fixture) is False
+
+        # 无效数据 - 日期格式错误
+        invalid_date_fixture = {
+            "id": 1,
+            "homeTeam": {"id": 123, "name": "Team A"},
+            "awayTeam": {"id": 456, "name": "Team B"},
+            "utcDate": "invalid-date",
+            "status": "SCHEDULED"
+        }
+        assert fixtures_collector._validate_fixture_data(invalid_date_fixture) is False
+
+    @pytest.mark.asyncio
+    async def test_get_upcoming_fixtures_count(self, fixtures_collector):
+        """测试获取即将到来的比赛数量"""
+        team_id = 123
+        days_ahead = 30
+
+        fixtures = [
+            {"date": "2024-01-20T15:00:00Z"},
+            {"date": "2024-01-25T15:00:00Z"},
+            {"date": "2024-02-01T15:00:00Z"}
+        ]
+
+        fixtures_collector.collect_team_fixtures = AsyncMock(return_value=fixtures)
+
+        count = await fixtures_collector.get_upcoming_fixtures_count(
+            team_id,
+            days_ahead
+        )
+
+        assert count == 3
+        fixtures_collector.collect_team_fixtures.assert_called_once_with(
+            team_id, days_ahead
+        )
+
+    @pytest.mark.asyncio
+    async def test_collect_multiple_teams(self, fixtures_collector):
+        """测试收集多个球队的赛程"""
+        team_ids = [123, 456, 789]
+
+        # Mock每个球队的赛程
+        team_fixtures = {
+            123: [{"id": 1, "home_team": "Team A"}],
+            456: [{"id": 2, "home_team": "Team B"}],
+            789: [{"id": 3, "home_team": "Team C"}]
+        }
+
+        async def mock_collect(team_id, days_ahead=30, force_refresh=False):
+            return team_fixtures.get(team_id, [])
+
+        fixtures_collector.collect_team_fixtures = mock_collect
+
+        results = await fixtures_collector.collect_multiple_teams(team_ids)
+
+        assert len(results) == 3
+        assert 123 in results
+        assert 456 in results
+        assert 789 in results
+        assert results[123][0]["id"] == 1
+
+    @pytest.mark.asyncio
+    async def test_cache_key_generation(self, fixtures_collector):
+        """测试缓存键生成"""
+        team_id = 123
+        days_ahead = 30
+
+        cache_key = fixtures_collector._generate_cache_key(team_id, days_ahead)
+
+        expected_key = f"fixtures:team:{team_id}:{days_ahead}"
+        assert cache_key == expected_key
+
+    @pytest.mark.asyncio
+    async def test_api_request_headers(self, fixtures_collector):
+        """测试API请求头"""
+        headers = fixtures_collector._get_api_headers()
+
+        assert "X-Auth-Token" in headers
+        assert headers["X-Auth-Token"] == "test_token"
+
+    def test_parse_match_date(self, fixtures_collector):
+        """测试解析比赛日期"""
+        # ISO格式日期
+        iso_date = "2024-01-15T15:00:00Z"
+        parsed = fixtures_collector._parse_match_date(iso_date)
+        assert parsed == "2024-01-15T15:00:00Z"
+
+        # 其他格式
+        other_date = "15/01/2024 15:00"
+        parsed = fixtures_collector._parse_match_date(other_date)
+        assert parsed == other_date  # 保持原格式如果无法解析

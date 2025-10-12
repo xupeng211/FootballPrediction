@@ -215,3 +215,214 @@ def auto_mock_external_services(monkeypatch):
         sys.modules["httpx"] = mock_httpx
     except ImportError:
         pass
+
+
+# === Database Manager Mock ===
+@pytest.fixture(scope="session")
+def mock_database_manager():
+    """模拟数据库管理器"""
+    with patch('src.database.connection.DatabaseManager') as mock:
+        # 配置 mock 实例
+        mock_instance = AsyncMock()
+        mock_instance.get_async_session.return_value.__aenter__.return_value = AsyncMock()
+        mock_instance.get_session.return_value.__enter__.return_value = MagicMock()
+        mock.return_value = mock_instance
+        yield mock
+
+
+@pytest.fixture
+def mock_async_db_session():
+    """模拟异步数据库会话"""
+    session = AsyncMock()
+    session.execute.return_value.fetchone.return_value = None
+    session.execute.return_value.fetchall.return_value = []
+    session.add = MagicMock()
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+    session.refresh = AsyncMock()
+    session.close = AsyncMock()
+    session.delete = MagicMock()
+    session.query = MagicMock()
+    return session
+
+
+# === Redis Manager Mock ===
+@pytest.fixture(scope="session")
+def mock_redis_manager():
+    """模拟 Redis 管理器"""
+    with patch('src.cache.redis_manager.RedisManager') as mock:
+        mock_instance = AsyncMock()
+        mock_instance.get.return_value = None
+        mock_instance.set.return_value = True
+        mock_instance.delete.return_value = True
+        mock_instance.exists.return_value = False
+        mock_instance.expire.return_value = True
+        mock_instance.hgetall.return_value = {}
+        mock_instance.hset.return_value = True
+        mock_instance.ping.return_value = True
+        mock.return_value = mock_instance
+        yield mock_instance
+
+
+# === Mock Redis Client ===
+@pytest.fixture
+def mock_redis_client():
+    """模拟 Redis 客户端"""
+    client = AsyncMock()
+    client.get.return_value = None
+    client.set.return_value = True
+    client.delete.return_value = True
+    client.exists.return_value = False
+    client.hgetall.return_value = {}
+    client.hset.return_value = True
+    client.zadd.return_value = 1
+    client.zrange.return_value = []
+    client.ping.return_value = True
+    client.keys.return_value = []
+    return client
+
+
+# === External API Mocks ===
+@pytest.fixture
+def mock_football_api():
+    """模拟 Football API"""
+    with patch('src.collectors.football_api.FootballAPI') as mock:
+        api_instance = AsyncMock()
+        api_instance.get_matches.return_value = []
+        api_instance.get_odds.return_value = []
+        api_instance.get_scores.return_value = []
+        api_instance.get_live_scores.return_value = []
+        mock.return_value = api_instance
+        yield api_instance
+
+
+@pytest.fixture
+def mock_api_sports():
+    """模拟 API Sports"""
+    with patch('src.collectors.api_sports.APISports') as mock:
+        api_instance = AsyncMock()
+        api_instance.get_fixtures.return_value = []
+        api_instance.get_odds.return_value = []
+        api_instance.get_live_games.return_value = []
+        mock.return_value = api_instance
+        yield api_instance
+
+
+@pytest.fixture
+def mock_scorebat_api():
+    """模拟 Scorebat API"""
+    with patch('src.collectors.scorebat.ScorebatAPI') as mock:
+        api_instance = AsyncMock()
+        api_instance.get_latest_scores.return_value = []
+        api_instance.get_video_highlights.return_value = []
+        mock.return_value = api_instance
+        yield api_instance
+
+
+# === Kafka Mocks ===
+@pytest.fixture
+def mock_kafka_producer():
+    """模拟 Kafka 生产者"""
+    with patch('src.streaming.kafka.KafkaProducer') as mock:
+        producer = AsyncMock()
+        producer.send.return_value = None
+        producer.flush.return_value = None
+        mock.return_value = producer
+        yield producer
+
+
+@pytest.fixture
+def mock_kafka_consumer():
+    """模拟 Kafka 消费者"""
+    with patch('src.streaming.kafka.KafkaConsumer') as mock:
+        consumer = AsyncMock()
+        consumer.__aiter__.return_value = iter([])
+        mock.return_value = consumer
+        yield consumer
+
+
+# === Common Mock Decorators ===
+def with_database_mock(func):
+    """装饰器：自动应用数据库 mock"""
+    def wrapper(*args, **kwargs):
+        with patch('src.database.connection.DatabaseManager'):
+            return func(*args, **kwargs)
+    return wrapper
+
+
+def with_redis_mock(func):
+    """装饰器：自动应用 Redis mock"""
+    def wrapper(*args, **kwargs):
+        with patch('src.cache.redis_manager.RedisManager'):
+            return func(*args, **kwargs)
+    return wrapper
+
+
+def with_external_apis_mock(func):
+    """装饰器：自动应用外部 API mock"""
+    def wrapper(*args, **kwargs):
+        with patch('src.collectors.football_api.FootballAPI'), \
+             patch('src.collectors.api_sports.APISports'), \
+             patch('src.collectors.scorebat.ScorebatAPI'):
+            return func(*args, **kwargs)
+    return wrapper
+
+
+# === Test Data Factory ===
+@pytest.fixture
+def test_match_data():
+    """测试用比赛数据"""
+    return {
+        "id": 12345,
+        "home_team_id": 1,
+        "away_team_id": 2,
+        "home_score": 2,
+        "away_score": 1,
+        "match_time": "2024-01-15T20:00:00Z",
+        "status": "finished",
+        "league_id": 101,
+        "season": "2023-2024"
+    }
+
+
+@pytest.fixture
+def test_team_data():
+    """测试用球队数据"""
+    return {
+        "id": 1,
+        "name": "Test Team",
+        "short_name": "TT",
+        "country": "Test Country",
+        "founded": 1900,
+        "venue": "Test Stadium"
+    }
+
+
+@pytest.fixture
+def test_odds_data():
+    """测试用赔率数据"""
+    return {
+        "id": 54321,
+        "match_id": 12345,
+        "bookmaker": "TestBookmaker",
+        "home_odds": 2.50,
+        "draw_odds": 3.20,
+        "away_odds": 2.80,
+        "collected_at": "2024-01-15T19:00:00Z"
+    }
+
+
+@pytest.fixture
+def test_prediction_data():
+    """测试用预测数据"""
+    return {
+        "id": 999,
+        "match_id": 12345,
+        "model_name": "test_model",
+        "prediction": "home_win",
+        "confidence": 0.75,
+        "home_win_prob": 0.60,
+        "draw_prob": 0.25,
+        "away_win_prob": 0.15,
+        "created_at": "2024-01-15T18:00:00Z"
+    }

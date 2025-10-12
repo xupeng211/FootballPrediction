@@ -67,6 +67,8 @@ class HistoricalStrategy(PredictionStrategy):
         self._min_historical_matches = 3
         self._similarity_threshold = 0.7
         self.logger = logging.getLogger(__name__)
+        self._rng_seed = 42
+        self._rng = np.random.default_rng(self._rng_seed)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
         """初始化历史策略
@@ -82,6 +84,8 @@ class HistoricalStrategy(PredictionStrategy):
         self._min_historical_matches = config.get("min_historical_matches", 3)
         self._similarity_threshold = config.get("similarity_threshold", 0.7)
         self._max_historical_years = config.get("max_historical_years", 5)
+        self._rng_seed = config.get("random_seed", self._rng_seed)
+        self._rng = np.random.default_rng(self._rng_seed)
         self._weight_factors = config.get(
             "weight_factors",
             {
@@ -93,10 +97,11 @@ class HistoricalStrategy(PredictionStrategy):
         )
 
         # 加载历史数据（实际应从数据库加载）
-        await self._load_historical_data()
+        if not config.get("disable_mock_generation", False):
+            await self._load_historical_data()
 
         self._is_initialized = True
-        logger.info(f"历史策略 '{self.name}' 初始化成功")
+        self.logger.info(f"历史策略 '{self.name}' 初始化成功")
 
     async def _load_historical_data(self) -> None:
         """加载历史数据（模拟）"""
@@ -117,8 +122,8 @@ class HistoricalStrategy(PredictionStrategy):
                     if opponent_id == team_id:
                         opponent_id = 20 if team_id < 20 else 1
 
-                    home_score = np.random.poisson(1.4)
-                    away_score = np.random.poisson(1.1)
+                    home_score = int(self._rng.poisson(1.4))
+                    away_score = int(self._rng.poisson(1.1))
                     if match_id % 2 == 0:  # 主客场交换
                         home_score, away_score = away_score, home_score
 

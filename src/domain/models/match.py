@@ -296,7 +296,10 @@ class Match:
     def from_dict(cls, data: Dict[str, Any]) -> "Match":
         """从字典创建实例"""
         score_data = data.pop("score", None)
-        score = MatchScore(**score_data) if score_data else None
+        score = None
+        if score_data:
+            score_data.pop("result", None)
+            score = MatchScore(**score_data)
 
         # 处理日期
         if data.get("match_date"):
