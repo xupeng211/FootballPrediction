@@ -19,8 +19,9 @@ try:
         get_team_statistics,
         clear_user_cache,
         batch_fetch_data,
-        cached_api_call
+        cached_api_call,
     )
+
     CACHE_EXAMPLES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -36,7 +37,9 @@ except ImportError as e:
     cached_api_call = None
 
 
-@pytest.mark.skipif(not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available")
+@pytest.mark.skipif(
+    not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
+)
 class TestCacheExamples:
     """缓存示例测试"""
 
@@ -138,7 +141,9 @@ class TestCacheExamples:
             assert result1 == result2
 
 
-@pytest.mark.skipif(CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module should be available")
+@pytest.mark.skipif(
+    CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -155,7 +160,7 @@ def test_module_imports():
         from src.cache.examples import (
             expensive_computation,
             fetch_user_data,
-            get_user_profile
+            get_user_profile,
         )
 
         assert expensive_computation is not None
@@ -163,7 +168,9 @@ def test_module_imports():
         assert get_user_profile is not None
 
 
-@pytest.mark.skipif(not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available")
+@pytest.mark.skipif(
+    not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
+)
 class TestCacheExamplesAdvanced:
     """缓存示例高级测试"""
 
@@ -250,13 +257,7 @@ class TestCacheExamplesAdvanced:
     def test_cache_with_complex_objects(self):
         """测试：复杂对象的缓存"""
         # 测试复杂参数对象
-        complex_param = {
-            "nested": {
-                "value": 42,
-                "list": [1, 2, 3]
-            },
-            "simple": "test"
-        }
+        complex_param = {"nested": {"value": 42, "list": [1, 2, 3]}, "simple": "test"}
 
         # 如果有接受复杂对象的函数
         try:
@@ -271,7 +272,7 @@ class TestCacheExamplesAdvanced:
         import sys
 
         # 获取初始内存使用（近似）
-        initial_objects = len(gc.get_objects()) if 'gc' in sys.modules else 0
+        len(gc.get_objects()) if "gc" in sys.modules else 0
 
         # 多次调用缓存函数
         for i in range(100):
@@ -284,7 +285,7 @@ class TestCacheExamplesAdvanced:
     def test_cache_error_handling(self):
         """测试：缓存错误处理"""
         # 测试缓存装饰器如何处理函数异常
-        with patch('src.cache.examples.logger') as mock_logger:
+        with patch("src.cache.examples.logger"):
             try:
                 # 如果有会抛出异常的函数
                 expensive_computation(None, None)
@@ -299,7 +300,7 @@ class TestCacheExamplesAdvanced:
             result = expensive_computation(0, 0)
             # 某些实现可能缓存None值
             assert result is not None or result is None
-        except:
+        except Exception:
             pass
 
     def test_cache_statistics(self):

@@ -19,7 +19,9 @@ class TestEventDrivenPredictionService:
     @pytest.fixture
     def mock_strategy_service(self):
         """Mock策略预测服务"""
-        with patch('src.services.event_prediction_service.StrategyPredictionService') as mock:
+        with patch(
+            "src.services.event_prediction_service.StrategyPredictionService"
+        ) as mock:
             # 设置基类方法
             mock_instance = Mock()
             mock_instance.predict_match = AsyncMock()
@@ -38,7 +40,10 @@ class TestEventDrivenPredictionService:
     @pytest.fixture
     def service(self, mock_strategy_service, mock_event_bus):
         """创建服务实例"""
-        with patch('src.services.event_prediction_service.get_event_bus', return_value=mock_event_bus):
+        with patch(
+            "src.services.event_prediction_service.get_event_bus",
+            return_value=mock_event_bus,
+        ):
             service = EventDrivenPredictionService()
             return service
 
@@ -61,7 +66,10 @@ class TestEventDrivenPredictionService:
     @pytest.mark.asyncio
     async def test_service_initialization(self, mock_event_bus):
         """测试：服务初始化"""
-        with patch('src.services.event_prediction_service.get_event_bus', return_value=mock_event_bus):
+        with patch(
+            "src.services.event_prediction_service.get_event_bus",
+            return_value=mock_event_bus,
+        ):
             service = EventDrivenPredictionService()
 
             # Then
@@ -69,7 +77,9 @@ class TestEventDrivenPredictionService:
             assert service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_predict_match_and_publish_event(self, service, sample_prediction, mock_event_bus):
+    async def test_predict_match_and_publish_event(
+        self, service, sample_prediction, mock_event_bus
+    ):
         """测试：预测比赛并发布事件"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -81,7 +91,7 @@ class TestEventDrivenPredictionService:
             user_id=789,
             strategy_name=strategy_name,
             confidence=0.85,
-            notes="测试预测"
+            notes="测试预测",
         )
 
         # Then
@@ -92,12 +102,14 @@ class TestEventDrivenPredictionService:
         call_args = mock_event_bus.publish.call_args
         assert call_args is not None
         event = call_args[0][0]
-        assert hasattr(event, 'data')
-        assert hasattr(event, 'source')
+        assert hasattr(event, "data")
+        assert hasattr(event, "source")
         assert event.source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_predict_match_without_optional_params(self, service, sample_prediction):
+    async def test_predict_match_without_optional_params(
+        self, service, sample_prediction
+    ):
         """测试：预测比赛（不提供可选参数）"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -110,7 +122,9 @@ class TestEventDrivenPredictionService:
         service._event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_prediction_and_publish_event(self, service, sample_prediction):
+    async def test_update_prediction_and_publish_event(
+        self, service, sample_prediction
+    ):
         """测试：更新预测并发布事件"""
         # Given
         # Mock仓库返回原预测
@@ -126,7 +140,7 @@ class TestEventDrivenPredictionService:
             new_predicted_home=3,
             new_predicted_away=1,
             new_confidence=0.9,
-            update_reason="更正预测"
+            update_reason="更正预测",
         )
 
         # Then
@@ -153,10 +167,7 @@ class TestEventDrivenPredictionService:
 
         # When / Then
         with pytest.raises(ValueError, match="预测不存在"):
-            await service.update_prediction(
-                prediction_id=999,
-                user_id=789
-            )
+            await service.update_prediction(prediction_id=999, user_id=789)
 
     @pytest.mark.asyncio
     async def test_update_prediction_partial_update(self, service, sample_prediction):
@@ -169,9 +180,7 @@ class TestEventDrivenPredictionService:
 
         # When - 只更新主队得分
         result = await service.update_prediction(
-            prediction_id=123,
-            user_id=789,
-            new_predicted_home=3
+            prediction_id=123, user_id=789, new_predicted_home=3
         )
 
         # Then
@@ -194,9 +203,7 @@ class TestEventDrivenPredictionService:
 
         # When
         result = await service.batch_predict(
-            match_ids=[101, 102, 103],
-            user_id=1001,
-            strategy_name=strategy_name
+            match_ids=[101, 102, 103], user_id=1001, strategy_name=strategy_name
         )
 
         # Then
@@ -214,10 +221,7 @@ class TestEventDrivenPredictionService:
         service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
-        result = await service.batch_predict(
-            match_ids=[101],
-            user_id=1001
-        )
+        result = await service.batch_predict(match_ids=[101], user_id=1001)
 
         # Then
         assert len(result) == 1
@@ -226,12 +230,13 @@ class TestEventDrivenPredictionService:
     def test_inheritance_from_strategy_service(self):
         """测试：继承自策略预测服务"""
         # When
-        with patch('src.services.event_prediction_service.StrategyPredictionService'):
+        with patch("src.services.event_prediction_service.StrategyPredictionService"):
             service = EventDrivenPredictionService()
 
         # Then
         # 验证继承关系
         from src.services.strategy_prediction_service import StrategyPredictionService
+
         assert isinstance(service, StrategyPredictionService)
 
     @pytest.mark.asyncio
@@ -249,7 +254,9 @@ class TestEventDrivenPredictionService:
         assert event.source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_prediction_made_event_data_structure(self, service, sample_prediction):
+    async def test_prediction_made_event_data_structure(
+        self, service, sample_prediction
+    ):
         """测试：预测创建事件数据结构"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -257,10 +264,7 @@ class TestEventDrivenPredictionService:
 
         # When
         await service.predict_match(
-            match_id=456,
-            user_id=789,
-            strategy_name=strategy_name,
-            confidence=0.85
+            match_id=456, user_id=789, strategy_name=strategy_name, confidence=0.85
         )
 
         # Then
@@ -268,8 +272,8 @@ class TestEventDrivenPredictionService:
         event = call_args[0][0]
 
         # 验证事件数据包含必要字段
-        assert hasattr(event, 'data')
-        assert hasattr(event, 'timestamp')
+        assert hasattr(event, "data")
+        assert hasattr(event, "timestamp")
         assert event.timestamp is not None
 
     @pytest.mark.asyncio

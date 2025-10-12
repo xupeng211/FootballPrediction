@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 from src.database.sql_compatibility import (
     Compatibility,
     CompatibleQueryBuilder,
-    SQLCompatibilityHelper
+    SQLCompatibilityHelper,
 )
 
 
@@ -172,9 +172,9 @@ class TestModuleStructure:
         import src.database.sql_compatibility as sql_compat
 
         # 检查主要类是否导出
-        assert hasattr(sql_compat, 'Compatibility')
-        assert hasattr(sql_compat, 'CompatibleQueryBuilder')
-        assert hasattr(sql_compat, 'SQLCompatibilityHelper')
+        assert hasattr(sql_compat, "Compatibility")
+        assert hasattr(sql_compat, "CompatibleQueryBuilder")
+        assert hasattr(sql_compat, "SQLCompatibilityHelper")
 
         # 检查类是否可实例化
         assert callable(sql_compat.Compatibility)

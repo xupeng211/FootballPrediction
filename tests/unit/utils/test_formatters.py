@@ -14,8 +14,9 @@ try:
         format_datetime,
         format_json,
         format_currency,
-        format_percentage
+        format_percentage,
     )
+
     FORMATTERS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -253,7 +254,9 @@ class TestFormatPercentage:
         assert result == "12.34568%"
 
 
-@pytest.mark.skipif(FORMATTERS_AVAILABLE, reason="Formatters module should be available")
+@pytest.mark.skipif(
+    FORMATTERS_AVAILABLE, reason="Formatters module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -271,7 +274,7 @@ def test_module_imports():
             format_datetime,
             format_json,
             format_currency,
-            format_percentage
+            format_percentage,
         )
 
         assert format_datetime is not None
@@ -307,11 +310,7 @@ def test_combined_formatting():
         amount = format_currency(123.45)
         percentage = format_percentage(85.5)
 
-        data = {
-            "date": date_str,
-            "amount": amount,
-            "success_rate": percentage
-        }
+        data = {"date": date_str, "amount": amount, "success_rate": percentage}
 
         json_str = format_json(data)
 

@@ -20,6 +20,7 @@ try:
     from src.database.repositories import BaseRepository
     from src.database.models import Base
     from src.database.config import get_database_url
+
     DATABASE_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -40,9 +41,7 @@ class TestDatabaseConnection:
         """创建测试数据库引擎"""
         # 使用SQLite内存数据库进行测试
         engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:",
-            echo=False,
-            future=True
+            "sqlite+aiosqlite:///:memory:", echo=False, future=True
         )
 
         # 创建所有表
@@ -89,11 +88,13 @@ class TestDatabaseConnection:
         async with test_session.begin():
             # 执行插入
             await test_session.execute(
-                text("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)")
+                text(
+                    "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)"
+                )
             )
             await test_session.execute(
                 text("INSERT INTO test_table (value) VALUES (:value)"),
-                {"value": "test_value"}
+                {"value": "test_value"},
             )
 
         # 验证数据已提交
@@ -104,7 +105,9 @@ class TestDatabaseConnection:
         """测试：数据库事务回滚"""
         # 创建测试表
         await test_session.execute(
-            text("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)")
+            text(
+                "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)"
+            )
         )
 
         try:
@@ -113,7 +116,7 @@ class TestDatabaseConnection:
                 # 插入数据
                 await test_session.execute(
                     text("INSERT INTO test_table (value) VALUES (:value)"),
-                    {"value": "rollback_test"}
+                    {"value": "rollback_test"},
                 )
                 # 故意抛出异常触发回滚
                 raise Exception("Test rollback")
@@ -121,8 +124,10 @@ class TestDatabaseConnection:
             pass
 
         # 验证数据未被提交
-        result = await test_session.execute(text("SELECT COUNT(*) FROM test_table WHERE value = :value"),
-                                          {"value": "rollback_test"})
+        result = await test_session.execute(
+            text("SELECT COUNT(*) FROM test_table WHERE value = :value"),
+            {"value": "rollback_test"},
+        )
         assert result.scalar() == 0
 
 
@@ -135,9 +140,7 @@ class TestBaseRepository:
     async def repo_session(self):
         """创建仓储测试会话"""
         engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:",
-            echo=False,
-            future=True
+            "sqlite+aiosqlite:///:memory:", echo=False, future=True
         )
 
         async_session = sessionmaker(
@@ -153,7 +156,7 @@ class TestBaseRepository:
         """测试：基础仓储创建"""
         # BaseRepository是抽象类，不能直接实例化
         # 但可以测试其接口
-        assert hasattr(BaseRepository, '__abstract__')
+        assert hasattr(BaseRepository, "__abstract__")
 
         # 创建具体实现
         class TestRepository(BaseRepository):
@@ -179,6 +182,7 @@ class TestBaseRepository:
 
     async def test_base_repository_session_management(self, repo_session):
         """测试：基础仓储会话管理"""
+
         class TestRepository(BaseRepository):
             model_class = None
 
@@ -190,19 +194,20 @@ class TestBaseRepository:
 
     async def test_base_repository_methods_exist(self, repo_session):
         """测试：基础仓储方法存在"""
+
         class TestRepository(BaseRepository):
             model_class = None
 
         repo = TestRepository(repo_session)
 
         # 检查所有CRUD方法
-        assert hasattr(repo, 'create')
-        assert hasattr(repo, 'get_by_id')
-        assert hasattr(repo, 'get_all')
-        assert hasattr(repo, 'update')
-        assert hasattr(repo, 'delete')
-        assert hasattr(repo, 'count')
-        assert hasattr(repo, 'exists')
+        assert hasattr(repo, "create")
+        assert hasattr(repo, "get_by_id")
+        assert hasattr(repo, "get_all")
+        assert hasattr(repo, "update")
+        assert hasattr(repo, "delete")
+        assert hasattr(repo, "count")
+        assert hasattr(repo, "exists")
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -217,7 +222,7 @@ class TestDatabaseConfig:
             assert url is not None
             assert isinstance(url, str)
             # 应该包含数据库驱动信息
-            assert any(db in url for db in ['postgresql', 'mysql', 'sqlite'])
+            assert any(db in url for db in ["postgresql", "mysql", "sqlite"])
 
     def test_database_url_parsing(self):
         """测试：数据库URL解析"""
@@ -225,7 +230,7 @@ class TestDatabaseConfig:
         test_urls = [
             "postgresql+asyncpg://user:pass@localhost/db",
             "mysql+aiomysql://user:pass@localhost/db",
-            "sqlite+aiosqlite:///test.db"
+            "sqlite+aiosqlite:///test.db",
         ]
 
         for url in test_urls:
@@ -233,12 +238,12 @@ class TestDatabaseConfig:
             assert "+" in url  # 异步驱动标识
             assert "://" in url  # URL格式
 
-    @patch.dict(os.environ, {'DATABASE_URL': 'sqlite+aiosqlite:///test.db'})
+    @patch.dict(os.environ, {"DATABASE_URL": "sqlite+aiosqlite:///test.db"})
     def test_database_url_from_env(self):
         """测试：从环境变量获取数据库URL"""
         if get_database_url:
             url = get_database_url()
-            assert url == 'sqlite+aiosqlite:///test.db'
+            assert url == "sqlite+aiosqlite:///test.db"
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -250,9 +255,7 @@ class TestDatabasePerformance:
         """测试：数据库连接池"""
         # 使用连接池配置
         db_manager = DatabaseManager(
-            "sqlite+aiosqlite:///:memory:",
-            pool_size=5,
-            max_overflow=10
+            "sqlite+aiosqlite:///:memory:", pool_size=5, max_overflow=10
         )
 
         # 应该能够获取多个连接
@@ -271,24 +274,28 @@ class TestDatabasePerformance:
 
         async with db_manager.get_session() as session:
             # 创建测试表
-            await session.execute(text("""
+            await session.execute(
+                text(
+                    """
                 CREATE TABLE test_bulk (
                     id INTEGER PRIMARY KEY,
                     value TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """))
+            """
+                )
+            )
 
             # 批量插入
             test_data = [{"value": f"item_{i}"} for i in range(100)]
 
             import time
+
             start_time = time.time()
 
             # 使用execute_many进行批量插入
             await session.execute(
-                text("INSERT INTO test_bulk (value) VALUES (:value)"),
-                test_data
+                text("INSERT INTO test_bulk (value) VALUES (:value)"), test_data
             )
 
             end_time = time.time()
@@ -307,17 +314,23 @@ class TestDatabasePerformance:
         async def concurrent_query(session_id):
             async with db_manager.get_session() as session:
                 # 创建测试表
-                await session.execute(text(f"""
+                await session.execute(
+                    text(
+                        f"""
                     CREATE TABLE IF NOT EXISTS test_concurrent_{session_id} (
                         id INTEGER PRIMARY KEY,
                         value TEXT
                     )
-                """))
+                """
+                    )
+                )
 
                 # 插入数据
                 await session.execute(
-                    text(f"INSERT INTO test_concurrent_{session_id} (value) VALUES (:value)"),
-                    {"value": f"session_{session_id}"}
+                    text(
+                        f"INSERT INTO test_concurrent_{session_id} (value) VALUES (:value)"
+                    ),
+                    {"value": f"session_{session_id}"},
                 )
 
                 # 查询数据
@@ -363,8 +376,8 @@ def test_database_manager_class():
     """测试：数据库管理器类"""
     if DATABASE_AVAILABLE:
         assert DatabaseManager is not None
-        assert hasattr(DatabaseManager, 'get_session')
-        assert hasattr(DatabaseManager, 'close')
+        assert hasattr(DatabaseManager, "get_session")
+        assert hasattr(DatabaseManager, "close")
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -401,25 +414,29 @@ class TestDatabaseErrorHandling:
 
         async with db_manager.get_session() as session:
             # 创建测试表
-            await session.execute(text("""
+            await session.execute(
+                text(
+                    """
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY,
                     username TEXT,
                     email TEXT
                 )
-            """))
+            """
+                )
+            )
 
             # 插入测试数据
             await session.execute(
                 text("INSERT INTO users (username, email) VALUES (:username, :email)"),
-                {"username": "testuser", "email": "test@example.com"}
+                {"username": "testuser", "email": "test@example.com"},
             )
 
             # 尝试SQL注入（使用参数化查询应该安全）
             malicious_input = "testuser'; DROP TABLE users; --"
             result = await session.execute(
                 text("SELECT * FROM users WHERE username = :username"),
-                {"username": malicious_input}
+                {"username": malicious_input},
             )
 
             # 应该没有结果（注入失败）

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class DataQualityIssueType(Enum):
     """数据质量问题类型"""
+
     MISSING_VALUE = "missing_value"
     INVALID_FORMAT = "invalid_format"
     OUT_OF_RANGE = "out_of_range"
@@ -35,7 +36,9 @@ class DataQualityExceptionHandler:
         """注册处理器"""
         self.handlers[issue_type] = handler
 
-    def handle_issue(self, data: Dict[str, Any], issue_type: DataQualityIssueType, **kwargs) -> Dict[str, Any]:
+    def handle_issue(
+        self, data: Dict[str, Any], issue_type: DataQualityIssueType, **kwargs
+    ) -> Dict[str, Any]:
         """处理数据质量问题"""
         handler = self.handlers.get(issue_type)
         if handler:
@@ -83,7 +86,9 @@ class SuspiciousOddsHandler:
                 try:
                     odds_val = float(odds)
                     if odds_val < min_val or odds_val > max_val:
-                        logger.warning(f"Suspicious odds value: {odds_val} for {odds_type}")
+                        logger.warning(
+                            f"Suspicious odds value: {odds_val} for {odds_type}"
+                        )
                         data[f"{odds_type}_suspicious"] = True
                 except (ValueError, TypeError):
                     logger.error(f"Invalid odds format: {odds}")
@@ -116,7 +121,7 @@ class QualityLogger:
             "timestamp": datetime.utcnow(),
             "issue_type": issue_type,
             "data_id": data_id,
-            "description": description
+            "description": description,
         }
         self.logs.append(log_entry)
         logger.warning(f"Quality issue: {issue_type} for {data_id} - {description}")
@@ -148,36 +153,43 @@ class StatisticsProvider:
 # 异常类定义
 class DataQualityException(Exception):
     """数据质量异常基类"""
+
     pass
 
 
 class MissingValueException(DataQualityException):
     """缺失值异常"""
+
     pass
 
 
 class SuspiciousOddsException(DataQualityException):
     """可疑赔率异常"""
+
     pass
 
 
 class InvalidDataException(DataQualityException):
     """无效数据异常"""
+
     pass
 
 
 class DataConsistencyException(DataQualityException):
     """数据一致性异常"""
+
     pass
 
 
 class QualityLogException(DataQualityException):
     """质量日志异常"""
+
     pass
 
 
 class StatisticsQueryException(DataQualityException):
     """统计查询异常"""
+
     pass
 
 

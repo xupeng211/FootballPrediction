@@ -9,7 +9,12 @@ from datetime import datetime
 
 from src.services.strategy_prediction_service import StrategyPredictionService
 from src.domain.strategies import PredictionStrategy, PredictionStrategyFactory
-from src.domain.strategies import PredictionInput, PredictionOutput, PredictionContext, StrategyType
+from src.domain.strategies import (
+    PredictionInput,
+    PredictionOutput,
+    PredictionContext,
+    StrategyType,
+)
 from src.domain.models import Prediction, Match, Team
 
 
@@ -37,15 +42,20 @@ class TestStrategyPredictionService:
         return Mock()
 
     @pytest.fixture
-    def service(self, mock_strategy_factory, mock_prediction_domain_service,
-                 mock_match_repository, mock_prediction_repository):
+    def service(
+        self,
+        mock_strategy_factory,
+        mock_prediction_domain_service,
+        mock_match_repository,
+        mock_prediction_repository,
+    ):
         """创建服务实例"""
         return StrategyPredictionService(
             strategy_factory=mock_strategy_factory,
             prediction_domain_service=mock_prediction_domain_service,
             match_repository=mock_match_repository,
             prediction_repository=mock_prediction_repository,
-            default_strategy="test_strategy"
+            default_strategy="test_strategy",
         )
 
     @pytest.fixture
@@ -110,8 +120,14 @@ class TestStrategyPredictionService:
         assert service._current_strategies["test_strategy"] == sample_strategy
 
     @pytest.mark.asyncio
-    async def test_predict_match_success(self, service, sample_match, sample_team,
-                                         sample_strategy, sample_prediction_output):
+    async def test_predict_match_success(
+        self,
+        service,
+        sample_match,
+        sample_team,
+        sample_strategy,
+        sample_prediction_output,
+    ):
         """测试：成功预测比赛"""
         # Given
         service._match_repository.get_by_id = AsyncMock(return_value=sample_match)
@@ -129,7 +145,7 @@ class TestStrategyPredictionService:
             user_id=456,
             strategy_name="test_strategy",
             confidence=0.9,
-            notes="测试预测"
+            notes="测试预测",
         )
 
         # Then
@@ -138,8 +154,9 @@ class TestStrategyPredictionService:
         service._prediction_repository.create.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_predict_match_with_default_strategy(self, service, sample_match,
-                                                       sample_strategy, sample_prediction_output):
+    async def test_predict_match_with_default_strategy(
+        self, service, sample_match, sample_strategy, sample_prediction_output
+    ):
         """测试：使用默认策略预测比赛"""
         # Given
         service._match_repository.get_by_id = AsyncMock(return_value=sample_match)
@@ -151,7 +168,7 @@ class TestStrategyPredictionService:
         service._prediction_repository.create = AsyncMock()
 
         # When - 不指定策略名称
-        result = await service.predict_match(match_id=123, user_id=456)
+        await service.predict_match(match_id=123, user_id=456)
 
         # Then
         service._get_or_create_strategy.assert_called_once_with("test_strategy")
@@ -167,8 +184,9 @@ class TestStrategyPredictionService:
             await service.predict_match(match_id=999, user_id=456)
 
     @pytest.mark.asyncio
-    async def test_batch_predict(self, service, sample_match, sample_strategy,
-                                 sample_prediction_output):
+    async def test_batch_predict(
+        self, service, sample_match, sample_strategy, sample_prediction_output
+    ):
         """测试：批量预测"""
         # Given
         match_ids = [101, 102, 103]
@@ -183,12 +201,16 @@ class TestStrategyPredictionService:
         service._get_or_create_strategy = AsyncMock(return_value=sample_strategy)
         service._prepare_prediction_input = AsyncMock()
         sample_strategy.predict.return_value = sample_prediction_output
-        service._prediction_domain_service.create_prediction = Mock(side_effect=predictions.append)
+        service._prediction_domain_service.create_prediction = Mock(
+            side_effect=predictions.append
+        )
         service._prediction_repository.create = AsyncMock()
         service._log_prediction_details = AsyncMock()
 
         # When
-        result = await service.batch_predict(match_ids, user_id=456, strategy_name="test")
+        result = await service.batch_predict(
+            match_ids, user_id=456, strategy_name="test"
+        )
 
         # Then
         assert len(result) == 3
@@ -228,10 +250,7 @@ class TestStrategyPredictionService:
         """测试：准备预测输入"""
         # Given
         context = PredictionContext(
-            match=Mock(),
-            home_team=Mock(),
-            away_team=Mock(),
-            user_id=123
+            match=Mock(), home_team=Mock(), away_team=Mock(), user_id=123
         )
 
         # When
@@ -258,12 +277,12 @@ class TestStrategyPredictionService:
 
     def test_service_attributes(self, service):
         """测试：服务属性"""
-        assert hasattr(service, '_strategy_factory')
-        assert hasattr(service, '_prediction_domain_service')
-        assert hasattr(service, '_match_repository')
-        assert hasattr(service, '_prediction_repository')
-        assert hasattr(service, '_current_strategies')
-        assert hasattr(service, '_default_strategy')
+        assert hasattr(service, "_strategy_factory")
+        assert hasattr(service, "_prediction_domain_service")
+        assert hasattr(service, "_match_repository")
+        assert hasattr(service, "_prediction_repository")
+        assert hasattr(service, "_current_strategies")
+        assert hasattr(service, "_default_strategy")
 
     def test_default_strategy_value(self, service):
         """测试：默认策略值"""
@@ -274,7 +293,9 @@ class TestStrategyPredictionService:
         assert service._current_strategies == {}
 
     @pytest.mark.asyncio
-    async def test_prediction_context_creation(self, service, sample_match, sample_team):
+    async def test_prediction_context_creation(
+        self, service, sample_match, sample_team
+    ):
         """测试：预测上下文创建"""
         # Given
         service._match_repository.get_by_id = AsyncMock(return_value=sample_match)
@@ -292,18 +313,19 @@ class TestStrategyPredictionService:
         assert call_args.user_id == 456
 
     @pytest.mark.asyncio
-    async def test_prediction_output_processing(self, service, sample_prediction_output):
+    async def test_prediction_output_processing(
+        self, service, sample_prediction_output
+    ):
         """测试：预测输出处理"""
         # Given
         prediction = Mock()
-        service._prediction_domain_service.create_prediction = Mock(return_value=prediction)
+        service._prediction_domain_service.create_prediction = Mock(
+            return_value=prediction
+        )
 
         # When
-        result = await service._process_prediction_output(
-            sample_prediction_output,
-            Mock(),
-            123,
-            456
+        await service._process_prediction_output(
+            sample_prediction_output, Mock(), 123, 456
         )
 
         # Then
@@ -313,7 +335,7 @@ class TestStrategyPredictionService:
             predicted_home=sample_prediction_output.predicted_home_score,
             predicted_away=sample_prediction_output.predicted_away_score,
             confidence=sample_prediction_output.confidence,
-            notes=None
+            notes=None,
         )
 
     @pytest.mark.asyncio
@@ -352,7 +374,9 @@ class TestStrategyPredictionService:
     def test_strategy_factory_dependency(self):
         """测试：策略工厂依赖注入"""
         # Given & When
-        with patch('src.services.strategy_prediction_service.PredictionStrategyFactory') as mock_factory:
+        with patch(
+            "src.services.strategy_prediction_service.PredictionStrategyFactory"
+        ) as mock_factory:
             mock_service_instance = Mock()
             mock_factory.return_value = mock_service_instance
 

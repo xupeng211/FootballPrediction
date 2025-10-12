@@ -15,6 +15,7 @@ import json
 try:
     from src.core.di_setup import DISetup
     from src.core.di import DIContainer, ServiceCollection
+
     DI_SETUP_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -43,7 +44,7 @@ class TestDISetup:
 
     def test_setup_with_environment_variable(self):
         """测试：从环境变量读取配置"""
-        with patch.dict('os.environ', {'APP_PROFILE': 'test'}):
+        with patch.dict("os.environ", {"APP_PROFILE": "test"}):
             setup = DISetup()
             assert setup.profile == "test"
 
@@ -51,7 +52,7 @@ class TestDISetup:
         """测试：默认初始化"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_collection.return_value.build_container.return_value = mock_container
 
@@ -66,12 +67,12 @@ class TestDISetup:
         setup = DISetup()
 
         # 创建临时配置文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             config_data = {
                 "services": {
                     "test_service": {
                         "implementation": "TestServiceImpl",
-                        "lifetime": "singleton"
+                        "lifetime": "singleton",
                     }
                 }
             }
@@ -79,8 +80,8 @@ class TestDISetup:
             config_file = f.name
 
         try:
-            with patch('src.core.di_setup.ConfigurationBinder') as mock_binder:
-                with patch('pathlib.Path.exists', return_value=True):
+            with patch("src.core.di_setup.ConfigurationBinder") as mock_binder:
+                with patch("pathlib.Path.exists", return_value=True):
                     mock_container = Mock()
                     mock_binder_instance = Mock()
                     mock_binder_instance.container = mock_container
@@ -90,8 +91,12 @@ class TestDISetup:
 
                     assert container is mock_container
                     mock_binder.assert_called_once()
-                    mock_binder_instance.load_from_file.assert_called_once_with(config_file)
-                    mock_binder_instance.set_active_profile.assert_called_once_with("development")
+                    mock_binder_instance.load_from_file.assert_called_once_with(
+                        config_file
+                    )
+                    mock_binder_instance.set_active_profile.assert_called_once_with(
+                        "development"
+                    )
                     mock_binder_instance.apply_configuration.assert_called_once()
         finally:
             Path(config_file).unlink()
@@ -100,7 +105,7 @@ class TestDISetup:
         """测试：使用不存在的配置文件初始化"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_collection.return_value.build_container.return_value = mock_container
 
@@ -113,14 +118,16 @@ class TestDISetup:
         setup = DISetup()
         modules = ["module1", "module2"]
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
-            with patch('src.core.di_setup.AutoBinder') as mock_auto_binder:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
+            with patch("src.core.di_setup.AutoBinder") as mock_auto_binder:
                 mock_container = Mock()
-                mock_collection.return_value.build_container.return_value = mock_container
+                mock_collection.return_value.build_container.return_value = (
+                    mock_container
+                )
                 mock_binder_instance = Mock()
                 mock_auto_binder.return_value = mock_binder_instance
 
-                container = setup.initialize(auto_scan_modules=modules)
+                setup.initialize(auto_scan_modules=modules)
 
                 mock_auto_binder.assert_called_once()
                 mock_binder_instance.scan_and_bind.assert_called_once_with(modules)
@@ -129,7 +136,7 @@ class TestDISetup:
         """测试：注册核心服务"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_collection.return_value.build_container.return_value = mock_container
 
@@ -143,20 +150,23 @@ class TestDISetup:
         """测试：设置生命周期管理器"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.get_lifecycle_manager') as mock_get_manager:
+        with patch("src.core.di_setup.get_lifecycle_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_get_manager.return_value = mock_manager
 
             setup.initialize()
 
             # 在真实实现中，应该初始化生命周期管理器
-            assert setup.lifecycle_manager is None or setup.lifecycle_manager is mock_manager
+            assert (
+                setup.lifecycle_manager is None
+                or setup.lifecycle_manager is mock_manager
+            )
 
     def test_get_service(self):
         """测试：获取服务"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_service = Mock()
             mock_container.get_service.return_value = mock_service
@@ -172,7 +182,7 @@ class TestDISetup:
         """测试：释放资源"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_manager = Mock()
             mock_collection.return_value.build_container.return_value = mock_container
@@ -181,7 +191,7 @@ class TestDISetup:
             setup.lifecycle_manager = mock_manager
 
             # 释放资源
-            if hasattr(setup, 'dispose'):
+            if hasattr(setup, "dispose"):
                 setup.dispose()
                 if mock_manager:
                     mock_manager.dispose.assert_called_once()
@@ -202,6 +212,7 @@ def test_module_imports():
     """测试：模块导入"""
     if DI_SETUP_AVAILABLE:
         from src.core.di_setup import DISetup
+
         assert DISetup is not None
 
 
@@ -210,8 +221,8 @@ def test_di_setup_class():
     if DI_SETUP_AVAILABLE:
         from src.core.di_setup import DISetup
 
-        assert hasattr(DISetup, 'initialize')
-        assert hasattr(DISetup, '__init__')
+        assert hasattr(DISetup, "initialize")
+        assert hasattr(DISetup, "__init__")
 
 
 @pytest.mark.skipif(not DI_SETUP_AVAILABLE, reason="DI setup module not available")
@@ -237,10 +248,12 @@ class TestDISetupAdvanced:
         setup = DISetup()
 
         # 测试无效配置文件
-        with patch('pathlib.Path.exists', return_value=False):
-            with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("pathlib.Path.exists", return_value=False):
+            with patch("src.core.di_setup.ServiceCollection") as mock_collection:
                 mock_container = Mock()
-                mock_collection.return_value.build_container.return_value = mock_container
+                mock_collection.return_value.build_container.return_value = (
+                    mock_container
+                )
 
                 container = setup.initialize(config_file="invalid.json")
                 assert container is mock_container
@@ -253,13 +266,15 @@ class TestDISetupAdvanced:
         service_types = [
             ("singleton", "SingleInstanceService"),
             ("scoped", "ScopedService"),
-            ("transient", "TransientService")
+            ("transient", "TransientService"),
         ]
 
         for lifetime, service_name in service_types:
-            with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+            with patch("src.core.di_setup.ServiceCollection") as mock_collection:
                 mock_container = Mock()
-                mock_collection.return_value.build_container.return_value = mock_container
+                mock_collection.return_value.build_container.return_value = (
+                    mock_container
+                )
 
                 setup.initialize()
 
@@ -271,12 +286,14 @@ class TestDISetupAdvanced:
         setup = DISetup()
 
         # 模拟配置加载错误
-        with patch('src.core.di_setup.ConfigurationBinder') as mock_binder:
+        with patch("src.core.di_setup.ConfigurationBinder") as mock_binder:
             mock_binder.side_effect = Exception("Configuration error")
 
-            with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+            with patch("src.core.di_setup.ServiceCollection") as mock_collection:
                 mock_container = Mock()
-                mock_collection.return_value.build_container.return_value = mock_container
+                mock_collection.return_value.build_container.return_value = (
+                    mock_container
+                )
 
                 # 应该回退到默认配置
                 container = setup.initialize(config_file="broken.json")
@@ -287,10 +304,13 @@ class TestDISetupAdvanced:
         setup1 = DISetup()
         setup2 = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container1 = Mock()
             mock_container2 = Mock()
-            mock_collection.return_value.build_container.side_effect = [mock_container1, mock_container2]
+            mock_collection.return_value.build_container.side_effect = [
+                mock_container1,
+                mock_container2,
+            ]
 
             container1 = setup1.initialize()
             container2 = setup2.initialize()
@@ -309,22 +329,26 @@ class TestDISetupAdvanced:
             ["src.services"],
             ["src.repositories", "src.services"],
             ["src.*"],
-            []
+            [],
         ]
 
         for modules in scan_configs:
-            with patch('src.core.di_setup.ServiceCollection') as mock_collection:
-                with patch('src.core.di_setup.AutoBinder') as mock_auto_binder:
+            with patch("src.core.di_setup.ServiceCollection") as mock_collection:
+                with patch("src.core.di_setup.AutoBinder") as mock_auto_binder:
                     mock_container = Mock()
-                    mock_collection.return_value.build_container.return_value = mock_container
+                    mock_collection.return_value.build_container.return_value = (
+                        mock_container
+                    )
                     mock_binder_instance = Mock()
                     mock_auto_binder.return_value = mock_binder_instance
 
-                    container = setup.initialize(auto_scan_modules=modules)
+                    setup.initialize(auto_scan_modules=modules)
 
                     if modules:  # 如果指定了模块
                         mock_auto_binder.assert_called_once()
-                        mock_binder_instance.scan_and_bind.assert_called_once_with(modules)
+                        mock_binder_instance.scan_and_bind.assert_called_once_with(
+                            modules
+                        )
 
     def test_environment_specific_configuration(self):
         """测试：环境特定配置"""
@@ -333,9 +357,11 @@ class TestDISetupAdvanced:
         for env in environments:
             setup = DISetup(profile=env)
 
-            with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+            with patch("src.core.di_setup.ServiceCollection") as mock_collection:
                 mock_container = Mock()
-                mock_collection.return_value.build_container.return_value = mock_container
+                mock_collection.return_value.build_container.return_value = (
+                    mock_container
+                )
 
                 container = setup.initialize()
 
@@ -346,7 +372,7 @@ class TestDISetupAdvanced:
         """测试：依赖解析"""
         setup = DISetup()
 
-        with patch('src.core.di_setup.ServiceCollection') as mock_collection:
+        with patch("src.core.di_setup.ServiceCollection") as mock_collection:
             mock_container = Mock()
             mock_service = Mock()
             mock_dependency = Mock()
@@ -354,7 +380,7 @@ class TestDISetupAdvanced:
             # 模拟服务解析
             mock_container.get_service.side_effect = lambda service_type: {
                 "TestService": mock_service,
-                "TestDependency": mock_dependency
+                "TestDependency": mock_dependency,
             }.get(service_type)
 
             mock_collection.return_value.build_container.return_value = mock_container

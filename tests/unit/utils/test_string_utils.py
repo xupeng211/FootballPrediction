@@ -332,10 +332,10 @@ class TestStringUtilsCleanText:
 
     def test_clean_text_unicode_spaces(self):
         """测试：Unicode空格"""
-        text = "Hello\u00A0World"
+        text = "Hello\u00a0World"
         result = StringUtils.clean_text(text)
         # 非 breaking space 不会被正则\s匹配
-        assert "\u00A0" in result
+        assert "\u00a0" in result
 
 
 class TestStringUtilsExtractNumbers:
@@ -435,14 +435,7 @@ class TestStringUtilsEdgeCases:
     def test_unicode_handling(self):
         """测试：Unicode处理"""
         # 测试各种Unicode字符
-        texts = [
-            "Café",
-            "naïve",
-            "résumé",
-            "piñata",
-            "测试",
-            "🚀 emoji"
-        ]
+        texts = ["Café", "naïve", "résumé", "piñata", "测试", "🚀 emoji"]
 
         for text in texts:
             # 截断应该正常工作
@@ -499,20 +492,20 @@ def test_module_imports():
 
 def test_class_methods():
     """测试：类方法存在"""
-    assert hasattr(StringUtils, 'truncate')
-    assert hasattr(StringUtils, 'slugify')
-    assert hasattr(StringUtils, 'camel_to_snake')
-    assert hasattr(StringUtils, 'snake_to_camel')
-    assert hasattr(StringUtils, 'clean_text')
-    assert hasattr(StringUtils, 'extract_numbers')
+    assert hasattr(StringUtils, "truncate")
+    assert hasattr(StringUtils, "slugify")
+    assert hasattr(StringUtils, "camel_to_snake")
+    assert hasattr(StringUtils, "snake_to_camel")
+    assert hasattr(StringUtils, "clean_text")
+    assert hasattr(StringUtils, "extract_numbers")
 
     # 验证它们都是可调用的
-    assert callable(getattr(StringUtils, 'truncate'))
-    assert callable(getattr(StringUtils, 'slugify'))
-    assert callable(getattr(StringUtils, 'camel_to_snake'))
-    assert callable(getattr(StringUtils, 'snake_to_camel'))
-    assert callable(getattr(StringUtils, 'clean_text'))
-    assert callable(getattr(StringUtils, 'extract_numbers'))
+    assert callable(getattr(StringUtils, "truncate"))
+    assert callable(getattr(StringUtils, "slugify"))
+    assert callable(getattr(StringUtils, "camel_to_snake"))
+    assert callable(getattr(StringUtils, "snake_to_camel"))
+    assert callable(getattr(StringUtils, "clean_text"))
+    assert callable(getattr(StringUtils, "extract_numbers"))
 
 
 def test_static_methods():

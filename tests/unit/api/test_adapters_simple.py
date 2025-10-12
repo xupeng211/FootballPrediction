@@ -38,15 +38,19 @@ class TestAdaptersAPI:
         """测试：获取注册表状态"""
         # Given
         mock_registry.status.value = "active"
-        mock_registry.get_health_status = AsyncMock(return_value={
-            "status": "active",
-            "total_adapters": 5,
-            "active_adapters": 4,
-        })
-        mock_registry.get_metrics_summary = Mock(return_value={
-            "total_requests": 1000,
-            "success_rate": 0.95,
-        })
+        mock_registry.get_health_status = AsyncMock(
+            return_value={
+                "status": "active",
+                "total_adapters": 5,
+                "active_adapters": 4,
+            }
+        )
+        mock_registry.get_metrics_summary = Mock(
+            return_value={
+                "total_requests": 1000,
+                "success_rate": 0.95,
+            }
+        )
 
         # When
         response = client.get("/adapters/registry/status")
@@ -275,7 +279,6 @@ class TestAdaptersAPI:
 
     # ==================== 边界条件测试 ====================
 
-    
     def test_get_team_players_empty_team_id(self, client):
         """测试：空的球队ID"""
         # When

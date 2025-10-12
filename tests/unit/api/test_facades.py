@@ -29,7 +29,10 @@ class MockFacade:
         self.name = name
         self.initialized = False
         self.subsystem_manager = Mock()
-        self.subsystem_manager.list_subsystems.return_value = ["subsystem1", "subsystem2"]
+        self.subsystem_manager.list_subsystems.return_value = [
+            "subsystem1",
+            "subsystem2",
+        ]
         self.metrics = {
             "operations_count": 0,
             "cache_hits": 0,
@@ -684,13 +687,15 @@ class TestFacadesAPI:
         notification_facade = MockFacade()
         main_facade = MockFacade()
 
-        global_facades.update({
-            "data_collection": data_facade,
-            "analytics": analytics_facade,
-            "prediction": prediction_facade,
-            "notification": notification_facade,
-            "main": main_facade,
-        })
+        global_facades.update(
+            {
+                "data_collection": data_facade,
+                "analytics": analytics_facade,
+                "prediction": prediction_facade,
+                "notification": notification_facade,
+                "main": main_facade,
+            }
+        )
 
         # When
         response = client.post(
@@ -718,12 +723,16 @@ class TestFacadesAPI:
         data_facade = MockFacade()
         # 让预测操作失败
         prediction_facade = MockFacade()
-        prediction_facade.execute = AsyncMock(side_effect=ValueError("Prediction failed"))
+        prediction_facade.execute = AsyncMock(
+            side_effect=ValueError("Prediction failed")
+        )
 
-        global_facades.update({
-            "data_collection": data_facade,
-            "prediction": prediction_facade,
-        })
+        global_facades.update(
+            {
+                "data_collection": data_facade,
+                "prediction": prediction_facade,
+            }
+        )
 
         # When
         response = client.post(

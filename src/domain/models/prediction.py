@@ -214,9 +214,7 @@ class Prediction:
                 match_id=self.match_id,
                 predicted_home=self.score.predicted_home,
                 predicted_away=self.score.predicted_away,
-                confidence=float(self.confidence.value)
-                if self.confidence
-                else None,
+                confidence=float(self.confidence.value) if self.confidence else None,
             )
         )
 

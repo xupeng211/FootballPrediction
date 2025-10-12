@@ -129,7 +129,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
 @celery_app.task  # type: ignore
 def manual_collect_all_data() -> Dict[str, Any]:
     """手动收集所有数据任务
-    
+
     手动触发所有数据收集
 
     这是一个同步任务，用于立即收集所有类型的数据。
@@ -176,7 +176,9 @@ def emergency_data_collection_task(
         logger.warning(f"Emergency data collection triggered for: {critical_types}")
 
         # 使用asyncio.run在同步上下文中运行异步代码
-        results = asyncio.run(task.orchestrator.collect_all_data(data_types=critical_types))  # type: ignore
+        results = asyncio.run(
+            task.orchestrator.collect_all_data(data_types=critical_types)
+        )  # type: ignore
 
         # 标记为紧急收集
         results["emergency"] = True
@@ -210,11 +212,13 @@ def collect_historical_data_task():
         historical_collector = task.orchestrator.get_collector("historical")
         if historical_collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            results = asyncio.run(historical_collector.collect_historical_data(  # type: ignore
-                data_type="matches",
-                start_date=datetime.utcnow() - timedelta(days=30),
-                end_date=datetime.utcnow(),
-            ))
+            results = asyncio.run(
+                historical_collector.collect_historical_data(  # type: ignore
+                    data_type="matches",
+                    start_date=datetime.utcnow() - timedelta(days=30),
+                    end_date=datetime.utcnow(),
+                )
+            )
 
             # 保存到数据库
             asyncio.run(_save_historical_data(results, "matches"))  # type: ignore

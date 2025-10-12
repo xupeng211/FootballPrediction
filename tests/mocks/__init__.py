@@ -8,12 +8,12 @@ from .fast_mocks import (
     FastDatabaseManager,
     FastRedisManager,
     FastAsyncSession,
-    FastHTTPClient
+    FastHTTPClient,
 )
 
 __all__ = [
-    'FastDatabaseManager',
-    'FastRedisManager',
-    'FastAsyncSession',
-    'FastHTTPClient'
+    "FastDatabaseManager",
+    "FastRedisManager",
+    "FastAsyncSession",
+    "FastHTTPClient",
 ]

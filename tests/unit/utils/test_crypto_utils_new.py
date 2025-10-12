@@ -13,6 +13,7 @@ from unittest.mock import patch, MagicMock
 # 测试导入
 try:
     from src.utils.crypto_utils import CryptoUtils, HAS_BCRYPT
+
     CRYPTO_UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -33,7 +34,7 @@ class TestCryptoUtilsStaticMethods:
         # 验证UUID格式
         assert isinstance(uuid1, str)
         assert len(uuid1) == 36  # UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        assert uuid1.count('-') == 4
+        assert uuid1.count("-") == 4
 
         # 验证唯一性
         assert uuid1 != uuid2
@@ -47,7 +48,7 @@ class TestCryptoUtilsStaticMethods:
 
         assert isinstance(short_id, str)
         assert len(short_id) == 8
-        assert '-' not in short_id
+        assert "-" not in short_id
 
     def test_generate_short_id_custom_length(self):
         """测试：生成短ID（自定义长度）"""
@@ -59,7 +60,7 @@ class TestCryptoUtilsStaticMethods:
         for length in lengths:
             short_id = CryptoUtils.generate_short_id(length)
             assert len(short_id) == length
-            assert '-' not in short_id
+            assert "-" not in short_id
 
     def test_generate_short_id_zero_length(self):
         """测试：生成短ID（零长度）"""
@@ -85,7 +86,7 @@ class TestCryptoUtilsStaticMethods:
         # 生成超过32字符的ID
         short_id = CryptoUtils.generate_short_id(50)
         assert len(short_id) == 50
-        assert '-' not in short_id
+        assert "-" not in short_id
 
     def test_hash_string_md5(self):
         """测试：MD5哈希"""
@@ -109,7 +110,10 @@ class TestCryptoUtilsStaticMethods:
 
         assert isinstance(hash_value, str)
         assert len(hash_value) == 64  # SHA256哈希长度
-        assert hash_value == "d5579c46dfcc7f18207013e65b44e4cb4e2c2298f4ac457ba8f82743f31e930b"
+        assert (
+            hash_value
+            == "d5579c46dfcc7f18207013e65b44e4cb4e2c2298f4ac457ba8f82743f31e930b"
+        )
 
     def test_hash_string_unicode(self):
         """测试：Unicode字符串哈希"""

@@ -13,13 +13,16 @@ import os
 # 测试导入
 try:
     from src.collectors.fixtures_collector import FixturesCollector
+
     COLLECTORS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     COLLECTORS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available")
+@pytest.mark.skipif(
+    not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
+)
 class TestFixturesCollector:
     """比赛赛程收集器测试"""
 
@@ -40,10 +43,12 @@ class TestFixturesCollector:
     @pytest.fixture
     def collector(self, mock_db_session, mock_redis_client):
         """创建收集器实例"""
-        with patch.dict(os.environ, {'FOOTBALL_API_TOKEN': 'test_token'}):
+        with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
             return FixturesCollector(mock_db_session, mock_redis_client)
 
-    def test_collector_initialization(self, collector, mock_db_session, mock_redis_client):
+    def test_collector_initialization(
+        self, collector, mock_db_session, mock_redis_client
+    ):
         """测试：收集器初始化"""
         assert collector.db_session is mock_db_session
         assert collector.redis_client is mock_redis_client
@@ -52,13 +57,17 @@ class TestFixturesCollector:
         assert "api-sports" in collector.api_endpoints
         assert collector.headers["X-Auth-Token"] == "test_token"
 
-    def test_collector_initialization_no_token(self, mock_db_session, mock_redis_client):
+    def test_collector_initialization_no_token(
+        self, mock_db_session, mock_redis_client
+    ):
         """测试：收集器初始化（无API令牌）"""
         with patch.dict(os.environ, {}, clear=True):
-            with patch('src.collectors.fixtures_collector.logger') as mock_logger:
+            with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db_session, mock_redis_client)
                 assert collector.headers == {}
-                mock_logger.warning.assert_called_with("未设置 FOOTBALL_API_TOKEN 环境变量")
+                mock_logger.warning.assert_called_with(
+                    "未设置 FOOTBALL_API_TOKEN 环境变量"
+                )
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_with_cache(self, collector, mock_redis_client):
@@ -75,27 +84,29 @@ class TestFixturesCollector:
         assert result[0]["homeTeam"] == "Team A"
 
     @pytest.mark.asyncio
-    async def test_collect_team_fixtures_force_refresh(self, collector, mock_redis_client):
+    async def test_collect_team_fixtures_force_refresh(
+        self, collector, mock_redis_client
+    ):
         """测试：强制刷新收集球队赛程"""
         # 模拟缓存存在但强制刷新
         cached_data = '[{"id": 1}]'
         mock_redis_client.get.return_value = cached_data
         mock_redis_client.delete.return_value = True
 
-        with patch.object(collector, '_fetch_from_api') as mock_fetch:
+        with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.return_value = [{"id": 2, "homeTeam": "Team C"}]
 
             result = await collector.collect_team_fixtures(
-                team_id=123,
-                days_ahead=30,
-                force_refresh=True
+                team_id=123, days_ahead=30, force_refresh=True
             )
 
             mock_redis_client.delete.assert_called_once()
             assert result[0]["id"] == 2
 
     @pytest.mark.asyncio
-    async def test_collect_team_fixtures_api_success(self, collector, mock_redis_client):
+    async def test_collect_team_fixtures_api_success(
+        self, collector, mock_redis_client
+    ):
         """测试：从API成功收集球队赛程"""
         # 模拟缓存未命中
         mock_redis_client.get.return_value = None
@@ -106,11 +117,11 @@ class TestFixturesCollector:
                 "homeTeam": {"id": 1, "name": "Team X"},
                 "awayTeam": {"id": 2, "name": "Team Y"},
                 "utcDate": "2024-02-15T19:00:00Z",
-                "status": "SCHEDULED"
+                "status": "SCHEDULED",
             }
         ]
 
-        with patch.object(collector, '_fetch_from_api') as mock_fetch:
+        with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.return_value = api_data
 
             result = await collector.collect_team_fixtures(team_id=123)
@@ -127,7 +138,7 @@ class TestFixturesCollector:
         """测试：API错误处理"""
         mock_redis_client.get.return_value = None
 
-        with patch.object(collector, '_fetch_from_api') as mock_fetch:
+        with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.side_effect = Exception("API Error")
 
             result = await collector.collect_team_fixtures(team_id=123)
@@ -141,7 +152,7 @@ class TestFixturesCollector:
         mock_teams = [
             Mock(id=1, name="Team A"),
             Mock(id=2, name="Team B"),
-            Mock(id=3, name="Team C")
+            Mock(id=3, name="Team C"),
         ]
 
         # 模拟数据库查询
@@ -150,11 +161,11 @@ class TestFixturesCollector:
         collector.db_session.execute.return_value = mock_result
 
         # 模拟每个球队的赛程
-        with patch.object(collector, 'collect_team_fixtures') as mock_collect:
+        with patch.object(collector, "collect_team_fixtures") as mock_collect:
             mock_collect.side_effect = [
                 [{"id": 1, "homeTeam": "Team A"}],
                 [{"id": 2, "homeTeam": "Team B"}],
-                [{"id": 3, "homeTeam": "Team C"}]
+                [{"id": 3, "homeTeam": "Team C"}],
             ]
 
             result = await collector.collect_all_fixtures()
@@ -174,13 +185,13 @@ class TestFixturesCollector:
                 "awayTeam": {"id": 20, "name": "Away Team"},
                 "utcDate": "2024-02-15T19:00:00Z",
                 "status": "SCHEDULED",
-                "matchday": 25
+                "matchday": 25,
             }
         ]
 
         # 模拟数据库操作
         mock_match = Mock()
-        with patch('src.collectors.fixtures_collector.Match') as mock_match_class:
+        with patch("src.collectors.fixtures_collector.Match") as mock_match_class:
             mock_match_class.return_value = mock_match
 
             result = await collector.store_fixtures_in_db(fixtures_data)
@@ -197,7 +208,7 @@ class TestFixturesCollector:
 
         # 模拟比赛已存在
         mock_existing_match = Mock()
-        with patch('src.collectors.fixtures_collector.select') as mock_select:
+        with patch("src.collectors.fixtures_collector.select") as mock_select:
             mock_select.return_value.where.return_value.return_value = mock_select
             collector.db_session.execute.return_value.scalar_one_or_none.return_value = mock_existing_match
 
@@ -216,10 +227,10 @@ class TestFixturesCollector:
             "utcDate": "2024-02-15T19:00:00Z",
             "status": "SCHEDULED",
             "matchday": 25,
-            "competition": {"id": 100, "name": "Premier League"}
+            "competition": {"id": 100, "name": "Premier League"},
         }
 
-        if hasattr(collector, '_format_fixture_data'):
+        if hasattr(collector, "_format_fixture_data"):
             formatted = collector._format_fixture_data(raw_fixture)
 
             assert formatted["external_id"] == 123
@@ -234,10 +245,10 @@ class TestFixturesCollector:
         start_date = datetime(2024, 2, 1)
         end_date = datetime(2024, 2, 29)
 
-        with patch.object(collector, '_fetch_fixtures_by_date') as mock_fetch:
+        with patch.object(collector, "_fetch_fixtures_by_date") as mock_fetch:
             mock_fetch.return_value = [
                 {"id": 1, "date": "2024-02-15"},
-                {"id": 2, "date": "2024-02-16"}
+                {"id": 2, "date": "2024-02-16"},
             ]
 
             result = await collector.collect_by_date_range(start_date, end_date)
@@ -247,7 +258,7 @@ class TestFixturesCollector:
 
     def test_get_cache_key(self, collector):
         """测试：获取缓存键"""
-        if hasattr(collector, '_get_cache_key'):
+        if hasattr(collector, "_get_cache_key"):
             key = collector._get_cache_key("team", 123, 30)
             assert "team" in key
             assert "123" in key
@@ -256,11 +267,11 @@ class TestFixturesCollector:
     @pytest.mark.asyncio
     async def test_cleanup_old_cache(self, collector, mock_redis_client):
         """测试：清理旧缓存"""
-        if hasattr(collector, 'cleanup_old_cache'):
-            with patch.object(collector, '_get_all_cache_keys') as mock_get_keys:
+        if hasattr(collector, "cleanup_old_cache"):
+            with patch.object(collector, "_get_all_cache_keys") as mock_get_keys:
                 mock_get_keys.return_value = [
                     "fixtures:team:123:old",
-                    "fixtures:team:456:recent"
+                    "fixtures:team:456:recent",
                 ]
 
                 await collector.cleanup_old_cache(days_old=7)
@@ -269,7 +280,9 @@ class TestFixturesCollector:
                 assert mock_redis_client.delete.call_count >= 1
 
 
-@pytest.mark.skipif(not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available")
+@pytest.mark.skipif(
+    not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
+)
 class TestFixturesCollectorIntegration:
     """比赛赛程收集器集成测试"""
 
@@ -281,7 +294,7 @@ class TestFixturesCollectorIntegration:
         mock_redis.get = AsyncMock(return_value=None)
         mock_redis.set = AsyncMock()
 
-        with patch.dict(os.environ, {'FOOTBALL_API_TOKEN': 'test_token'}):
+        with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
             collector = FixturesCollector(mock_db, mock_redis)
 
         # 模拟API数据
@@ -291,15 +304,16 @@ class TestFixturesCollectorIntegration:
                 "homeTeam": {"id": 10, "name": "Team A"},
                 "awayTeam": {"id": 20, "name": "Team B"},
                 "utcDate": "2024-02-15T19:00:00Z",
-                "status": "SCHEDULED"
+                "status": "SCHEDULED",
             }
         ]
 
         # 模拟数据库存储
         mock_match = Mock()
-        with patch('src.collectors.fixtures_collector.Match') as mock_match_class, \
-             patch.object(collector, '_fetch_from_api') as mock_fetch:
-
+        with (
+            patch("src.collectors.fixtures_collector.Match") as mock_match_class,
+            patch.object(collector, "_fetch_from_api") as mock_fetch,
+        ):
             mock_match_class.return_value = mock_match
             mock_fetch.return_value = api_fixtures
 
@@ -326,13 +340,10 @@ class TestFixturesCollectorIntegration:
         # 并发收集多个球队的赛程
         team_ids = [1, 2, 3, 4, 5]
 
-        with patch.object(collector, 'collect_team_fixtures') as mock_collect:
+        with patch.object(collector, "collect_team_fixtures") as mock_collect:
             mock_collect.return_value = [{"id": 1}]
 
-            tasks = [
-                collector.collect_team_fixtures(team_id)
-                for team_id in team_ids
-            ]
+            tasks = [collector.collect_team_fixtures(team_id) for team_id in team_ids]
             results = await asyncio.gather(*tasks)
 
             assert len(results) == 5
@@ -345,7 +356,7 @@ class TestFixturesCollectorIntegration:
 
         # 创建没有API令牌的收集器
         with patch.dict(os.environ, {}, clear=True):
-            with patch('src.collectors.fixtures_collector.logger') as mock_logger:
+            with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db, mock_redis)
                 assert collector.headers == {}
                 mock_logger.warning.assert_called()

@@ -9,10 +9,7 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, AsyncMock, patch
 
-from src.monitoring.health_checker import (
-    HealthStatus,
-    HealthChecker
-)
+from src.monitoring.health_checker import HealthStatus, HealthChecker
 
 
 class TestHealthStatus:
@@ -302,7 +299,7 @@ class TestHealthChecker:
         checker = HealthChecker()
 
         # 如果有check_all方法
-        if hasattr(checker, 'check_all'):
+        if hasattr(checker, "check_all"):
             mock_db = AsyncMock()
             mock_db.fetch_one.return_value = {"test": 1}
             mock_db.pool = None
@@ -327,7 +324,7 @@ class TestHealthChecker:
         checker = HealthChecker()
 
         # 如果有_update_last_checks方法
-        if hasattr(checker, '_update_last_checks'):
+        if hasattr(checker, "_update_last_checks"):
             checker._update_last_checks("database")
             assert "database" in checker.last_checks
             assert isinstance(checker.last_checks["database"], datetime)
@@ -337,7 +334,7 @@ class TestHealthChecker:
         checker = HealthChecker()
 
         # 如果有get_component_status方法
-        if hasattr(checker, 'get_component_status'):
+        if hasattr(checker, "get_component_status"):
             # 测试存在的组件
             if "database" in checker.last_checks:
                 status = checker.get_component_status("database")
@@ -393,7 +390,7 @@ class TestHealthChecker:
             checker.check_database(),
             checker.check_redis(),
             checker.check_database(),
-            checker.check_redis()
+            checker.check_redis(),
         ]
 
         results = await asyncio.gather(*tasks)

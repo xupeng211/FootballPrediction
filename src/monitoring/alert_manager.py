@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class AlertSeverity(Enum):
     """警报严重程度"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -23,6 +24,7 @@ class AlertSeverity(Enum):
 
 class AlertType(Enum):
     """警报类型"""
+
     SYSTEM = "system"
     DATABASE = "database"
     API = "api"
@@ -31,7 +33,9 @@ class AlertType(Enum):
 class Alert:
     """警报对象"""
 
-    def __init__(self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str):
+    def __init__(
+        self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str
+    ):
         self.name = name
         self.severity = severity
         self.type = alert_type
@@ -56,7 +60,9 @@ class AlertManager:
         self.alerts: List[Alert] = []
         self.alert_rules = {}
 
-    def create_alert(self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str):
+    def create_alert(
+        self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str
+    ):
         """创建警报"""
         alert = Alert(name, severity, alert_type, message)
         self.alerts.append(alert)
@@ -76,42 +82,51 @@ AlertChannel = str  # 简化处理
 
 class PrometheusMetrics:
     """Prometheus指标 - 简化版本"""
+
     pass
 
 
 class AlertChannelManager:
     """警报通道管理器 - 简化版本"""
+
     pass
 
 
 class AlertRuleEngine:
     """警报规则引擎 - 简化版本"""
+
     pass
 
 
 class AlertAggregator:
     """警报聚合器 - 简化版本"""
+
     pass
 
 
 class LogHandler:
     """日志处理器 - 简化版本"""
+
     pass
 
 
 class PrometheusHandler:
     """Prometheus处理器 - 简化版本"""
+
     pass
 
 
 class WebhookHandler:
     """Webhook处理器 - 简化版本"""
+
     pass
 
 
 class EmailHandler:
     """邮件处理器 - 简化版本"""
+
     pass
+
 
 __all__ = [
     "AlertManager",

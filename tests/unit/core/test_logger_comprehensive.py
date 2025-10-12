@@ -61,7 +61,7 @@ class TestLogger:
 
     def test_setup_logger_formatter(self):
         """测试：日志器格式"""
-        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("format_test")
             test_logger.info("Test message")
 
@@ -91,7 +91,7 @@ class TestLogger:
         # logging.getLogger(None) 返回 root logger
         assert test_logger.name == "root"
 
-    @patch('logging.StreamHandler')
+    @patch("logging.StreamHandler")
     def test_setup_logger_custom_handler(self, mock_stream_handler):
         """测试：自定义处理器"""
         mock_handler = MagicMock()
@@ -123,7 +123,7 @@ class TestLogger:
 
     def test_logger_message_output(self):
         """测试：日志消息输出"""
-        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("output_test", "DEBUG")
 
             # 测试不同级别的日志
@@ -148,7 +148,7 @@ class TestLogger:
 
     def test_logger_with_exception(self):
         """测试：记录异常信息"""
-        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("exception_test")
 
             try:
@@ -341,8 +341,9 @@ class TestLoggerIntegration:
 
         # 获取初始对象计数
         gc.collect()
-        initial_count = len([obj for obj in gc.get_objects()
-                            if isinstance(obj, logging.Logger)])
+        initial_count = len(
+            [obj for obj in gc.get_objects() if isinstance(obj, logging.Logger)]
+        )
 
         # 创建大量日志器
         loggers = []
@@ -357,7 +358,8 @@ class TestLoggerIntegration:
         gc.collect()
 
         # 验证内存被正确清理（至少部分）
-        final_count = len([obj for obj in gc.get_objects()
-                          if isinstance(obj, logging.Logger)])
+        final_count = len(
+            [obj for obj in gc.get_objects() if isinstance(obj, logging.Logger)]
+        )
         # 允许一些差异，因为可能有其他日志器存在
         assert abs(final_count - initial_count) < 110

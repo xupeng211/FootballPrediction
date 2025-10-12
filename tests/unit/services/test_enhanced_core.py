@@ -45,7 +45,7 @@ class TestServiceConfig:
             version="2.0.0",
             description="A test service with full config",
             dependencies=dependencies,
-            config=config_dict
+            config=config_dict,
         )
 
         # Then
@@ -58,11 +58,7 @@ class TestServiceConfig:
     def test_service_config_empty_lists(self):
         """测试：空列表参数"""
         # When
-        config = ServiceConfig(
-            name="TestService",
-            dependencies=[],
-            config={}
-        )
+        config = ServiceConfig(name="TestService", dependencies=[], config={})
 
         # Then
         assert config.dependencies == []
@@ -177,7 +173,7 @@ class TestEnhancedBaseService:
         config = ServiceConfig(
             name="TestService",
             version="1.0.0",
-            description="Test service for unit tests"
+            description="Test service for unit tests",
         )
         return MockEnhancedService(config)
 
@@ -408,6 +404,7 @@ class TestEnhancedBaseService:
     @pytest.mark.asyncio
     async def test_execute_with_metrics_success(self, service):
         """测试：执行带指标（成功）"""
+
         # Given
         async def test_func():
             return "test_result"
@@ -424,6 +421,7 @@ class TestEnhancedBaseService:
     @pytest.mark.asyncio
     async def test_execute_with_metrics_error(self, service):
         """测试：执行带指标（失败）"""
+
         # Given
         async def failing_func():
             raise ValueError("Test error")

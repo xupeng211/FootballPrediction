@@ -16,8 +16,9 @@ try:
         list_facades,
         initialize_facade,
         global_facades,
-        facade_factory
+        facade_factory,
     )
+
     FACADES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -32,17 +33,25 @@ class TestListFacades:
     async def test_list_facades_success(self):
         """测试：成功获取门面列表"""
         mock_factory = Mock()
-        mock_factory.list_facade_types.return_value = ["prediction", "analytics", "monitoring"]
+        mock_factory.list_facade_types.return_value = [
+            "prediction",
+            "analytics",
+            "monitoring",
+        ]
         mock_factory.list_configs.return_value = ["default", "production", "test"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             # 清空全局门面
             global_facades.clear()
             global_facades["test_facade"] = Mock()
 
             result = await list_facades()
 
-            assert result["available_types"] == ["prediction", "analytics", "monitoring"]
+            assert result["available_types"] == [
+                "prediction",
+                "analytics",
+                "monitoring",
+            ]
             assert result["configured_facades"] == ["default", "production", "test"]
             assert result["cached_instances"] == ["test_facade"]
             assert result["factory_info"]["total_configs"] == 3
@@ -55,7 +64,7 @@ class TestListFacades:
         mock_factory.list_facade_types.return_value = []
         mock_factory.list_configs.return_value = []
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             result = await list_facades()
@@ -72,7 +81,7 @@ class TestListFacades:
         mock_factory = Mock()
         mock_factory.list_facade_types.side_effect = Exception("Factory error")
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             with pytest.raises(Exception, match="Factory error"):
                 await list_facades()
 
@@ -91,13 +100,13 @@ class TestInitializeFacade:
         mock_factory.create_facade.return_value = mock_facade
         mock_factory.list_facade_types.return_value = ["prediction"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             result = await initialize_facade(
                 facade_type="prediction",
                 facade_name="test_facade",
-                auto_initialize=True
+                auto_initialize=True,
             )
 
             assert result["status"] == "success"
@@ -116,7 +125,7 @@ class TestInitializeFacade:
         result = await initialize_facade(
             facade_type="prediction",
             facade_name="existing_facade",
-            auto_initialize=True
+            auto_initialize=True,
         )
 
         assert result["status"] == "already_exists"
@@ -129,13 +138,13 @@ class TestInitializeFacade:
         mock_factory = Mock()
         mock_factory.create_facade.return_value = mock_facade
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             result = await initialize_facade(
                 facade_type="prediction",
                 facade_name="lazy_facade",
-                auto_initialize=False
+                auto_initialize=False,
             )
 
             assert result["status"] == "created"
@@ -149,11 +158,10 @@ class TestInitializeFacade:
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["prediction", "analytics"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             with pytest.raises(Exception):  # 具体异常取决于实现
                 await initialize_facade(
-                    facade_type="invalid_type",
-                    facade_name="test_facade"
+                    facade_type="invalid_type", facade_name="test_facade"
                 )
 
     @pytest.mark.asyncio
@@ -162,11 +170,10 @@ class TestInitializeFacade:
         mock_factory = Mock()
         mock_factory.create_facade.side_effect = RuntimeError("Creation failed")
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             with pytest.raises(RuntimeError, match="Creation failed"):
                 await initialize_facade(
-                    facade_type="prediction",
-                    facade_name="error_facade"
+                    facade_type="prediction", facade_name="error_facade"
                 )
 
     @pytest.mark.asyncio
@@ -178,12 +185,12 @@ class TestInitializeFacade:
         mock_factory = Mock()
         mock_factory.create_facade.return_value = mock_facade
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             with pytest.raises(Exception, match="Init failed"):
                 await initialize_facade(
                     facade_type="prediction",
                     facade_name="fail_init_facade",
-                    auto_initialize=True
+                    auto_initialize=True,
                 )
 
 
@@ -208,7 +215,7 @@ class TestFacadesIntegration:
         mock_factory.create_facade.return_value = mock_facade
         mock_factory.list_facade_types.return_value = ["test_facade_type"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             # 1. 列出门面（应该为空）
@@ -217,8 +224,7 @@ class TestFacadesIntegration:
 
             # 2. 初始化门面
             init_result = await initialize_facade(
-                facade_type="test_facade_type",
-                facade_name="lifecycle_test"
+                facade_type="test_facade_type", facade_name="lifecycle_test"
             )
             assert init_result["status"] == "success"
 
@@ -236,15 +242,14 @@ class TestFacadesIntegration:
         mock_factory.list_facade_types.return_value = ["type1", "type2", "type3"]
         mock_factory.create_facade.return_value = AsyncMock()
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             # 创建多个门面
             facades = []
             for i in range(3):
                 result = await initialize_facade(
-                    facade_type=f"type{i+1}",
-                    facade_name=f"facade_{i}"
+                    facade_type=f"type{i+1}", facade_name=f"facade_{i}"
                 )
                 facades.append(result)
                 assert result["status"] == "success"
@@ -252,7 +257,9 @@ class TestFacadesIntegration:
             # 验证所有门面都被创建
             list_result = await list_facades()
             assert len(list_result["cached_instances"]) == 3
-            assert all(f"facade_{i}" in list_result["cached_instances"] for i in range(3))
+            assert all(
+                f"facade_{i}" in list_result["cached_instances"] for i in range(3)
+            )
 
     @pytest.mark.asyncio
     async def test_concurrent_facade_operations(self):
@@ -266,15 +273,14 @@ class TestFacadesIntegration:
         mock_factory.create_facade.return_value = mock_facade
         mock_factory.list_facade_types.return_value = ["concurrent_type"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             # 并发创建多个门面
             tasks = []
             for i in range(10):
                 task = initialize_facade(
-                    facade_type="concurrent_type",
-                    facade_name=f"concurrent_facade_{i}"
+                    facade_type="concurrent_type", facade_name=f"concurrent_facade_{i}"
                 )
                 tasks.append(task)
 
@@ -296,23 +302,21 @@ class TestFacadesIntegration:
         # 第一次创建失败
         mock_factory.create_facade.side_effect = [
             RuntimeError("First attempt failed"),
-            Mock()  # 第二次成功
+            Mock(),  # 第二次成功
         ]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             # 第一次尝试失败
             with pytest.raises(RuntimeError, match="First attempt failed"):
                 await initialize_facade(
-                    facade_type="test_type",
-                    facade_name="recover_test"
+                    facade_type="test_type", facade_name="recover_test"
                 )
 
             # 第二次尝试成功
             result = await initialize_facade(
-                facade_type="test_type",
-                facade_name="recover_test_2"
+                facade_type="test_type", facade_name="recover_test_2"
             )
             assert result["status"] == "success"
 
@@ -336,7 +340,7 @@ class TestFacadesIntegration:
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["valid_type1", "valid_type2"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             # 测试有效类型
             valid_types = ["valid_type1", "valid_type2"]
             for facade_type in valid_types:
@@ -344,8 +348,7 @@ class TestFacadesIntegration:
                 # 实际的验证逻辑取决于实现
                 try:
                     await initialize_facade(
-                        facade_type=facade_type,
-                        facade_name=f"test_{facade_type}"
+                        facade_type=facade_type, facade_name=f"test_{facade_type}"
                     )
                 except Exception:
                     pass  # 可能因为其他原因失败，但不是类型问题
@@ -356,8 +359,7 @@ class TestFacadesIntegration:
                 if facade_type is not None:
                     with pytest.raises(Exception):
                         await initialize_facade(
-                            facade_type=facade_type,
-                            facade_name="test_invalid"
+                            facade_type=facade_type, facade_name="test_invalid"
                         )
 
     @pytest.mark.asyncio
@@ -368,7 +370,7 @@ class TestFacadesIntegration:
         mock_factory.create_facade.return_value = mock_facade
         mock_factory.list_facade_types.return_value = ["test_type"]
 
-        with patch('src.api.facades.facade_factory', mock_factory):
+        with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
             # 测试不同名称
@@ -377,13 +379,12 @@ class TestFacadesIntegration:
                 "facade_with_underscores",
                 "facade-with-dashes",
                 "facade123",
-                "UPPERCASE"
+                "UPPERCASE",
             ]
 
             for name in test_names:
                 result = await initialize_facade(
-                    facade_type="test_type",
-                    facade_name=name
+                    facade_type="test_type", facade_name=name
                 )
                 assert result["facade_name"] == name
                 assert name in global_facades
@@ -391,7 +392,7 @@ class TestFacadesIntegration:
     def test_router_endpoints(self):
         """测试：路由端点"""
         # 检查路由是否正确配置
-        routes = [route for route in router.routes if hasattr(route, 'path')]
+        routes = [route for route in router.routes if hasattr(route, "path")]
 
         # 验证路径
         paths = [route.path for route in routes]

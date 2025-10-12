@@ -78,6 +78,7 @@ class TestServiceManager:
 
     def test_register_service_replace(self, manager):
         """测试：替换已注册的服务"""
+
         # Given
         class OldService:
             pass
@@ -290,7 +291,7 @@ class TestGlobalServiceManager:
         assert "UserProfileService" in _SERVICE_FACTORIES
         assert "DataProcessingService" in _SERVICE_FACTORIES
 
-    @patch('src.services.manager.get_settings')
+    @patch("src.services.manager.get_settings")
     def test_ensure_default_services_no_enabled(self, mock_get_settings):
         """测试：没有启用服务"""
         # Given
@@ -298,7 +299,7 @@ class TestGlobalServiceManager:
         mock_settings.enabled_services = []
         mock_get_settings.return_value = mock_settings
 
-        manager = ServiceManager()
+        ServiceManager()
 
         # When
         _ensure_default_services()
@@ -306,9 +307,10 @@ class TestGlobalServiceManager:
         # Then
         # 全局管理器应该被使用
         from src.services.manager import service_manager
+
         assert isinstance(service_manager, ServiceManager)
 
-    @patch('src.services.manager.get_settings')
+    @patch("src.services.manager.get_settings")
     def test_ensure_default_services_with_enabled(self, mock_get_settings):
         """测试：有启用的服务"""
         # Given
@@ -320,14 +322,14 @@ class TestGlobalServiceManager:
         manager = ServiceManager()
 
         # Patch the global service_manager
-        with patch('src.services.manager.service_manager', manager):
+        with patch("src.services.manager.service_manager", manager):
             # When
             _ensure_default_services()
 
             # Then
             assert "ContentAnalysisService" in manager.services
 
-    @patch('src.services.manager.get_settings')
+    @patch("src.services.manager.get_settings")
     def test_ensure_default_services_unknown_service(self, mock_get_settings):
         """测试：未知服务名称"""
         # Given
@@ -337,14 +339,14 @@ class TestGlobalServiceManager:
 
         manager = ServiceManager()
 
-        with patch('src.services.manager.service_manager', manager):
+        with patch("src.services.manager.service_manager", manager):
             # When
             _ensure_default_services()
 
             # Then
             assert len(manager.services) == 0
 
-    @patch('src.services.manager.get_settings')
+    @patch("src.services.manager.get_settings")
     def test_ensure_default_services_none_settings(self, mock_get_settings):
         """测试：settings为None或enabled_services为None"""
         # Given
@@ -354,7 +356,7 @@ class TestGlobalServiceManager:
 
         manager = ServiceManager()
 
-        with patch('src.services.manager.service_manager', manager):
+        with patch("src.services.manager.service_manager", manager):
             # When
             _ensure_default_services()
 
@@ -362,7 +364,7 @@ class TestGlobalServiceManager:
             # 不应该抛出异常
             assert len(manager.services) == 0
 
-    @patch('src.services.manager.get_settings')
+    @patch("src.services.manager.get_settings")
     def test_ensure_default_services_already_registered(self, mock_get_settings):
         """测试：服务已注册"""
         # Given
@@ -374,7 +376,7 @@ class TestGlobalServiceManager:
         # 预先注册服务
         manager.register_service("ContentAnalysisService", Mock())
 
-        with patch('src.services.manager.service_manager', manager):
+        with patch("src.services.manager.service_manager", manager):
             # When
             _ensure_default_services()
 

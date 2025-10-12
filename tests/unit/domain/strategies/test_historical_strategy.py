@@ -13,11 +13,11 @@ def test_historical_strategy_provides_stable_predictions():
     strategy = HistoricalStrategy()
     asyncio.run(
         strategy.initialize(
-        {
-            "min_historical_matches": 1,
-            "random_seed": 123,
-            "disable_mock_generation": True,
-        }
+            {
+                "min_historical_matches": 1,
+                "random_seed": 123,
+                "disable_mock_generation": True,
+            }
         )
     )
 
@@ -88,7 +88,9 @@ def test_historical_strategy_provides_stable_predictions():
 
     assert first_output.predicted_home_score == second_output.predicted_home_score
     assert first_output.predicted_away_score == second_output.predicted_away_score
-    assert first_output.probability_distribution == second_output.probability_distribution
+    assert (
+        first_output.probability_distribution == second_output.probability_distribution
+    )
     assert first_output.confidence == pytest.approx(second_output.confidence)
     assert first_output.predicted_home_score >= 0
     assert first_output.predicted_away_score >= 0

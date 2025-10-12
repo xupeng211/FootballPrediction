@@ -21,8 +21,9 @@ try:
         get_match_info,
         get_features_data,
         build_response_data,
-        feature_store
+        feature_store,
     )
+
     FEATURES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -45,9 +46,10 @@ class TestFeatureStore:
         """测试：特征存储初始化成功"""
         # 重置全局变量
         import src.api.features
+
         src.api.features.feature_store = None
 
-        with patch('src.api.features.FootballFeatureStore') as mock_store_class:
+        with patch("src.api.features.FootballFeatureStore") as mock_store_class:
             mock_store = Mock()
             mock_store_class.return_value = mock_store
 
@@ -65,9 +67,10 @@ class TestFeatureStore:
         """测试：特征存储初始化失败"""
         # 重置全局变量
         import src.api.features
+
         src.api.features.feature_store = None
 
-        with patch('src.api.features.FootballFeatureStore') as mock_store_class:
+        with patch("src.api.features.FootballFeatureStore") as mock_store_class:
             mock_store_class.side_effect = ValueError("Connection failed")
 
             store = get_feature_store()
@@ -77,6 +80,7 @@ class TestFeatureStore:
         """测试：获取缓存的特征存储"""
         # 设置全局变量
         import src.api.features
+
         src.api.features.feature_store = Mock()
 
         store = get_feature_store()
@@ -111,7 +115,7 @@ class TestValidationFunctions:
 
     def test_check_feature_store_availability_available(self):
         """测试：检查特征存储可用（可用）"""
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = Mock()
 
             # 不应该抛出异常
@@ -119,7 +123,7 @@ class TestValidationFunctions:
 
     def test_check_feature_store_availability_unavailable(self):
         """测试：检查特征存储可用（不可用）"""
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
@@ -208,7 +212,7 @@ class TestFeaturesData:
         mock_features = {"feature1": 0.5, "feature2": 0.3}
         mock_store.get_match_features_for_prediction.return_value = mock_features
 
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = mock_store
 
             features, error = await get_features_data(123, mock_match)
@@ -221,7 +225,7 @@ class TestFeaturesData:
         """测试：特征存储不可用"""
         mock_match = Mock()
 
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = None
 
             features, error = await get_features_data(123, mock_match)
@@ -238,7 +242,7 @@ class TestFeaturesData:
         mock_store = AsyncMock()
         mock_store.get_match_features_for_prediction.return_value = {}
 
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = mock_store
 
             features, error = await get_features_data(123, mock_match)
@@ -253,9 +257,11 @@ class TestFeaturesData:
         mock_match.away_team_id = 2
 
         mock_store = AsyncMock()
-        mock_store.get_match_features_for_prediction.side_effect = ValueError("Feature calculation failed")
+        mock_store.get_match_features_for_prediction.side_effect = ValueError(
+            "Feature calculation failed"
+        )
 
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = mock_store
 
             features, error = await get_features_data(123, mock_match)
@@ -331,7 +337,11 @@ class TestResponseBuilder:
 
         assert "raw_features" in response
         assert response["raw_features"]["feature_count"] == 3
-        assert response["raw_features"]["feature_keys"] == ["feature1", "feature2", "feature3"]
+        assert response["raw_features"]["feature_keys"] == [
+            "feature1",
+            "feature2",
+            "feature3",
+        ]
 
     def test_build_response_data_empty_features(self):
         """测试：构建空特征的响应数据"""
@@ -361,6 +371,7 @@ class TestAPIEndpoints:
     def app(self):
         """创建测试应用"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router)
         return app
@@ -384,13 +395,13 @@ class TestAPIEndpoints:
     def test_router_exists(self):
         """测试：路由器存在"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         assert len(router.routes) > 0
 
     @pytest.mark.asyncio
     async def test_health_check_endpoint_simple(self):
         """测试：健康检查端点（简化版）"""
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = Mock()
 
             # 直接调用函数而不是通过HTTP
@@ -404,7 +415,7 @@ class TestAPIEndpoints:
     @pytest.mark.asyncio
     async def test_health_check_endpoint_unhealthy_simple(self):
         """测试：健康检查端点（不健康，简化版）"""
-        with patch('src.api.features.get_feature_store') as mock_get:
+        with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = None
 
             # 直接调用函数而不是通过HTTP
@@ -442,10 +453,7 @@ def test_router_routes():
     """测试：路由器路由"""
     if FEATURES_AVAILABLE:
         routes = [route.path for route in router.routes]
-        expected_routes = [
-            "/features/{match_id}",
-            "/features/health"
-        ]
+        expected_routes = ["/features/{match_id}", "/features/health"]
 
         for route in expected_routes:
             assert route in routes, f"Missing route: {route}"
@@ -456,5 +464,6 @@ def test_global_feature_store():
     if FEATURES_AVAILABLE:
         # 验证全局变量存在
         import src.api.features
-        assert hasattr(src.api.features, 'feature_store')
+
+        assert hasattr(src.api.features, "feature_store")
         # 初始值可能为None

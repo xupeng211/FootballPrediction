@@ -12,6 +12,7 @@ from unittest.mock import patch
 # 测试导入
 try:
     from src.utils.time_utils import TimeUtils
+
     TIME_UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -121,7 +122,7 @@ class TestTimeUtilsParsing:
         """测试：解析自定义格式日期时间"""
         dt_str = "01/01/2023 12:30"
         # 如果支持自定义格式解析
-        if hasattr(TimeUtils, 'parse_datetime_format'):
+        if hasattr(TimeUtils, "parse_datetime_format"):
             dt = TimeUtils.parse_datetime_format(dt_str, "%d/%m/%Y %H:%M")
             assert dt.day == 1
             assert dt.month == 1
@@ -194,7 +195,7 @@ class TestTimeUtilsOperations:
     def test_get_business_days(self):
         """测试：获取工作日天数"""
         start = datetime(2023, 1, 2)  # 周一
-        end = datetime(2023, 1, 6)   # 周五
+        end = datetime(2023, 1, 6)  # 周五
         business_days = TimeUtils.get_business_days(start, end)
         assert business_days == 5
 
@@ -208,7 +209,7 @@ class TestTimeUtilsValidation:
         assert TimeUtils.is_valid_date("2023-01-01") is True
         assert TimeUtils.is_valid_date("2023-02-28") is True
         assert TimeUtils.is_valid_date("2023-02-29") is False  # 非闰年
-        assert TimeUtils.is_valid_date("2024-02-29") is True   # 闰年
+        assert TimeUtils.is_valid_date("2024-02-29") is True  # 闰年
         assert TimeUtils.is_valid_date("invalid") is False
 
     def test_is_valid_time(self):
@@ -256,7 +257,7 @@ class TestTimeUtilsTimezone:
         utc_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
         # 转换为其他时区
-        if hasattr(TimeUtils, 'convert_timezone'):
+        if hasattr(TimeUtils, "convert_timezone"):
             local_dt = TimeUtils.convert_timezone(utc_dt, "America/New_York")
             assert local_dt is not None
 
@@ -274,7 +275,7 @@ class TestTimeUtilsTimezone:
 
     def test_timezone_offset(self):
         """测试：时区偏移"""
-        if hasattr(TimeUtils, 'get_timezone_offset'):
+        if hasattr(TimeUtils, "get_timezone_offset"):
             offset = TimeUtils.get_timezone_offset("America/New_York")
             assert isinstance(offset, (int, float))
 
@@ -288,6 +289,7 @@ class TestTimeUtilsPerformance:
         dt = datetime.now()
 
         import time
+
         start_time = time.time()
 
         for _ in range(10000):
@@ -302,6 +304,7 @@ class TestTimeUtilsPerformance:
         dt_str = "2023-01-01 12:30:45"
 
         import time
+
         start_time = time.time()
 
         for _ in range(10000):
@@ -312,7 +315,9 @@ class TestTimeUtilsPerformance:
         assert end_time - start_time < 1.0
 
 
-@pytest.mark.skipif(TIME_UTILS_AVAILABLE, reason="Time utils module should be available")
+@pytest.mark.skipif(
+    TIME_UTILS_AVAILABLE, reason="Time utils module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -337,18 +342,18 @@ def test_class_methods(self):
         from src.utils.time_utils import TimeUtils
 
         expected_methods = [
-            'format_datetime',
-            'format_date',
-            'format_time',
-            'parse_datetime',
-            'parse_date',
-            'parse_time',
-            'add_days',
-            'add_hours',
-            'add_minutes',
-            'subtract_days',
-            'get_weekday',
-            'is_weekend'
+            "format_datetime",
+            "format_date",
+            "format_time",
+            "parse_datetime",
+            "parse_date",
+            "parse_time",
+            "add_days",
+            "add_hours",
+            "add_minutes",
+            "subtract_days",
+            "get_weekday",
+            "is_weekend",
         ]
 
         for method in expected_methods:
@@ -369,7 +374,7 @@ class TestTimeUtilsEdgeCases:
 
         # 非闰年
         try:
-            invalid_date = datetime(2023, 2, 29)
+            datetime(2023, 2, 29)
         except ValueError:
             # 应该抛出异常
             pass
@@ -397,7 +402,7 @@ class TestTimeUtilsEdgeCases:
     def test_daylight_saving(self):
         """测试：夏令时处理"""
         # 夏令时开始和结束时间
-        if hasattr(TimeUtils, 'is_daylight_saving'):
+        if hasattr(TimeUtils, "is_daylight_saving"):
             dt = datetime(2023, 7, 1)  # 北半球夏令时
             is_dst = TimeUtils.is_daylight_saving(dt)
             assert isinstance(is_dst, bool)
@@ -407,7 +412,7 @@ class TestTimeUtilsEdgeCases:
         base_dt = datetime(2000, 1, 1)
         future_dt = datetime(2100, 1, 1)
 
-        if hasattr(TimeUtils, 'get_years_between'):
+        if hasattr(TimeUtils, "get_years_between"):
             years = TimeUtils.get_years_between(base_dt, future_dt)
             assert years == 100
 
@@ -434,7 +439,7 @@ class TestTimeUtilsEdgeCases:
         # 跨越时区边界的时间
         utc_dt = datetime(2023, 1, 1, 23, 30, 0, tzinfo=timezone.utc)
 
-        if hasattr(TimeUtils, 'convert_timezone'):
+        if hasattr(TimeUtils, "convert_timezone"):
             # 转换到UTC-14（国际日期变更线）
             local_dt = TimeUtils.convert_timezone(utc_dt, "Pacific/Kiritimati")
             # 日期可能改变

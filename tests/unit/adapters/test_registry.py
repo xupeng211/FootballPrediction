@@ -11,13 +11,10 @@ import asyncio
 
 # 测试导入
 try:
-    from src.adapters.registry import (
-        AdapterRegistry,
-        RegistryStatus,
-        adapter_registry
-    )
+    from src.adapters.registry import AdapterRegistry, RegistryStatus, adapter_registry
     from src.adapters.base import Adapter, AdapterStatus
     from src.adapters.factory import AdapterFactory, AdapterConfig, AdapterGroupConfig
+
     REGISTRY_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -430,7 +427,7 @@ class TestAdapterRegistry:
         result = await registry.restart_adapter("test_adapter")
         assert result is False
 
-    @patch('asyncio.sleep')
+    @patch("asyncio.sleep")
     async def test_health_check_loop(self, mock_sleep, registry):
         """测试：健康检查循环"""
         await registry.initialize()
@@ -490,8 +487,8 @@ def test_enum_values():
     """测试：枚举值"""
     if REGISTRY_AVAILABLE:
         # 验证RegistryStatus是枚举
-        assert hasattr(RegistryStatus, '__members__')
+        assert hasattr(RegistryStatus, "__members__")
         members = RegistryStatus.__members__
-        assert 'ACTIVE' in members
-        assert 'INACTIVE' in members
-        assert 'SHUTTING_DOWN' in members
+        assert "ACTIVE" in members
+        assert "INACTIVE" in members
+        assert "SHUTTING_DOWN" in members

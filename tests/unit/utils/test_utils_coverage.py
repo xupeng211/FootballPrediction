@@ -18,9 +18,9 @@ class TestUtilsCoverage:
         import datetime
 
         # 测试系统模块功能
-        assert hasattr(sys, 'version')
-        assert hasattr(os, 'path')
-        assert json.dumps({}) == '{}'
+        assert hasattr(sys, "version")
+        assert hasattr(os, "path")
+        assert json.dumps({}) == "{}"
         assert datetime.datetime.now() is not None
 
     def test_import_coverage(self):
@@ -34,7 +34,7 @@ class TestUtilsCoverage:
             "src.utils.dict_utils",
             "src.utils.helpers",
             "src.utils.formatters",
-            "src.utils.config_loader"
+            "src.utils.config_loader",
         ]
 
         success_count = 0
@@ -75,13 +75,13 @@ class TestUtilsCoverage:
             "src.domain.models.match",
             "src.domain.models.prediction",
             "src.domain.models.league",
-            "src.domain.models.team"
+            "src.domain.models.team",
         ]
 
         imported = []
         for model in models:
             try:
-                module = __import__(model, fromlist=[''])
+                __import__(model, fromlist=[""])
                 imported.append(model)
             except ImportError:
                 pass
@@ -93,7 +93,7 @@ class TestUtilsCoverage:
         services = [
             "src.services.data_processing",
             "src.services.audit_service",
-            "src.services.base_unified"
+            "src.services.base_unified",
         ]
 
         for service in services:
@@ -104,11 +104,7 @@ class TestUtilsCoverage:
 
     def test_api_modules(self):
         """测试API模块"""
-        apis = [
-            "src.api.app",
-            "src.api.dependencies",
-            "src.api.health_check"
-        ]
+        apis = ["src.api.app", "src.api.dependencies", "src.api.health_check"]
 
         for api in apis:
             try:
@@ -121,7 +117,7 @@ class TestUtilsCoverage:
         databases = [
             "src.database.connection",
             "src.database.models",
-            "src.database.base"
+            "src.database.base",
         ]
 
         for db in databases:
@@ -132,10 +128,7 @@ class TestUtilsCoverage:
 
     def test_cache_modules(self):
         """测试缓存模块"""
-        caches = [
-            "src.cache.redis_manager",
-            "src.cache.decorators"
-        ]
+        caches = ["src.cache.redis_manager", "src.cache.decorators"]
 
         for cache in caches:
             try:
@@ -148,7 +141,7 @@ class TestUtilsCoverage:
         adapters = [
             "src.adapters.base",
             "src.adapters.factory",
-            "src.adapters.registry"
+            "src.adapters.registry",
         ]
 
         for adapter in adapters:
@@ -159,11 +152,7 @@ class TestUtilsCoverage:
 
     def test_core_modules(self):
         """测试核心模块"""
-        cores = [
-            "src.core.exceptions",
-            "src.core.logger",
-            "src.core.di"
-        ]
+        cores = ["src.core.exceptions", "src.core.logger", "src.core.di"]
 
         for core in cores:
             try:
@@ -175,7 +164,7 @@ class TestUtilsCoverage:
         """测试监控模块"""
         monitoring = [
             "src.monitoring.system_monitor",
-            "src.monitoring.metrics_collector"
+            "src.monitoring.metrics_collector",
         ]
 
         for mon in monitoring:
@@ -205,7 +194,7 @@ def test_error_handling():
         pass  # 预期的错误
 
     try:
-        x = 1 / 0
+        pass
     except ZeroDivisionError:
         pass  # 预期的错误
 
@@ -224,5 +213,5 @@ def test_async_functions():
     try:
         result = asyncio.run(simple_async())
         assert result == "async result"
-    except:
+    except Exception:
         pass  # 如果事件循环有问题，跳过

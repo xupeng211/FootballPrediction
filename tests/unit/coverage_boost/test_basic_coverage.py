@@ -37,7 +37,7 @@ class TestModuleImports:
             "src.api.app",
             "src.api.dependencies",
             "src.api.health_check",
-            "src.api.middleware"
+            "src.api.middleware",
         ]
 
         imported = 0
@@ -58,7 +58,7 @@ class TestModuleImports:
             "src.database.connection",
             "src.database.models",
             "src.database.base",
-            "src.database.migrations"
+            "src.database.migrations",
         ]
 
         for module in db_modules:
@@ -69,11 +69,7 @@ class TestModuleImports:
 
     def test_import_domain_modules(self):
         """测试领域模块导入"""
-        domain_modules = [
-            "src.domain",
-            "src.domain.models",
-            "src.domain.services"
-        ]
+        domain_modules = ["src.domain", "src.domain.models", "src.domain.services"]
 
         for module in domain_modules:
             try:
@@ -87,7 +83,7 @@ class TestModuleImports:
             "src.services",
             "src.services.data_processing",
             "src.services.audit_service",
-            "src.services.base_unified"
+            "src.services.base_unified",
         ]
 
         for module in service_modules:
@@ -106,7 +102,7 @@ class TestModuleImports:
             "src.utils.time_utils",
             "src.utils.dict_utils",
             "src.utils.helpers",
-            "src.utils.formatters"
+            "src.utils.formatters",
         ]
 
         imported = 0
@@ -121,11 +117,7 @@ class TestModuleImports:
 
     def test_import_cache_modules(self):
         """测试缓存模块导入"""
-        cache_modules = [
-            "src.cache",
-            "src.cache.redis_manager",
-            "src.cache.decorators"
-        ]
+        cache_modules = ["src.cache", "src.cache.redis_manager", "src.cache.decorators"]
 
         for module in cache_modules:
             try:
@@ -139,7 +131,7 @@ class TestModuleImports:
             "src.adapters",
             "src.adapters.base",
             "src.adapters.factory",
-            "src.adapters.registry"
+            "src.adapters.registry",
         ]
 
         for module in adapter_modules:
@@ -153,7 +145,7 @@ class TestModuleImports:
         monitoring_modules = [
             "src.monitoring",
             "src.monitoring.system_monitor",
-            "src.monitoring.metrics_collector"
+            "src.monitoring.metrics_collector",
         ]
 
         for module in monitoring_modules:
@@ -168,7 +160,7 @@ class TestModuleImports:
             "src.tasks",
             "src.tasks.error_logger",
             "src.tasks.maintenance_tasks",
-            "src.tasks.utils"
+            "src.tasks.utils",
         ]
 
         for module in task_modules:
@@ -182,7 +174,7 @@ class TestModuleImports:
         collector_modules = [
             "src.collectors",
             "src.collectors.football_api",
-            "src.collectors.data_collector"
+            "src.collectors.data_collector",
         ]
 
         for module in collector_modules:
@@ -193,10 +185,7 @@ class TestModuleImports:
 
     def test_import_streaming_modules(self):
         """测试流处理模块导入"""
-        streaming_modules = [
-            "src.streaming",
-            "src.streaming.kafka"
-        ]
+        streaming_modules = ["src.streaming", "src.streaming.kafka"]
 
         for module in streaming_modules:
             try:
@@ -228,6 +217,7 @@ class TestBasicFunctionality:
         """测试文件操作"""
         # 路径操作
         from pathlib import Path
+
         path = Path("/tmp/test")
         assert str(path) == "/tmp/test"
 

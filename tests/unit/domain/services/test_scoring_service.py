@@ -31,7 +31,7 @@ class TestScoringService:
         custom_config = {
             "exact_score": {"points": 15, "multiplier": 1.5},
             "outcome_only": {"points": 5, "multiplier": 1.0},
-            "confidence_bonus": {"max_bonus": 5, "threshold": 0.9}
+            "confidence_bonus": {"max_bonus": 5, "threshold": 0.9},
         }
         service = ScoringService(custom_config)
         assert service.config["exact_score"]["points"] == 15
@@ -201,13 +201,13 @@ class TestScoringService:
             actual_away=1,
             confidence=0.9,
             match_importance=0.5,
-            user_streak=2
+            user_streak=2,
         )
         assert isinstance(points, PredictionPoints)
-        assert points.total == Decimal('25')  # 10 + 3 + 5 + 2 + 3 + 2 = 25
-        assert points.score_bonus == Decimal('10')
-        assert points.result_bonus == Decimal('13')  # 3 + 5 + 3 + 2 = 13
-        assert points.confidence_bonus == Decimal('2')
+        assert points.total == Decimal("25")  # 10 + 3 + 5 + 2 + 3 + 2 = 25
+        assert points.score_bonus == Decimal("10")
+        assert points.result_bonus == Decimal("13")  # 3 + 5 + 3 + 2 = 13
+        assert points.confidence_bonus == Decimal("2")
 
     def test_calculate_prediction_points_outcome_only(self):
         """测试：计算预测得分（仅结果）"""
@@ -219,12 +219,12 @@ class TestScoringService:
             actual_away=1,
             confidence=0.7,
             match_importance=0.3,
-            user_streak=1
+            user_streak=1,
         )
-        assert points.total == Decimal('11')  # 0 + 3 + 5 + 0 + 3 + 0 = 11
-        assert points.score_bonus == Decimal('0')
-        assert points.result_bonus == Decimal('11')  # 3 + 5 + 3 + 0 = 11
-        assert points.confidence_bonus == Decimal('0')
+        assert points.total == Decimal("11")  # 0 + 3 + 5 + 0 + 3 + 0 = 11
+        assert points.score_bonus == Decimal("0")
+        assert points.result_bonus == Decimal("11")  # 3 + 5 + 3 + 0 = 11
+        assert points.confidence_bonus == Decimal("0")
 
     def test_calculate_prediction_points_all_wrong(self):
         """测试：计算预测得分（全部错误）"""
@@ -236,26 +236,23 @@ class TestScoringService:
             actual_away=2,
             confidence=0.5,
             match_importance=0.2,
-            user_streak=0
+            user_streak=0,
         )
-        assert points.total == Decimal('2')  # 0 + 0 + 0 + 0 + 2 + 0 = 2
-        assert points.score_bonus == Decimal('0')
-        assert points.result_bonus == Decimal('2')  # 0 + 0 + 0 + 2 = 2
-        assert points.confidence_bonus == Decimal('0')
+        assert points.total == Decimal("2")  # 0 + 0 + 0 + 0 + 2 + 0 = 2
+        assert points.score_bonus == Decimal("0")
+        assert points.result_bonus == Decimal("2")  # 0 + 0 + 0 + 2 = 2
+        assert points.confidence_bonus == Decimal("0")
 
     def test_calculate_prediction_points_no_bonus_params(self):
         """测试：计算预测得分（无奖励参数）"""
         service = ScoringService()
         points = service.calculate_prediction_points(
-            predicted_home=1,
-            predicted_away=1,
-            actual_home=1,
-            actual_away=1
+            predicted_home=1, predicted_away=1, actual_home=1, actual_away=1
         )
-        assert points.total == Decimal('16')  # 10 + 0 + 0 + 0 + 4 + 0 = 16
-        assert points.score_bonus == Decimal('10')
-        assert points.result_bonus == Decimal('6')  # 0 + 0 + 0 + 4 + 2 = 6
-        assert points.confidence_bonus == Decimal('0')
+        assert points.total == Decimal("16")  # 10 + 0 + 0 + 0 + 4 + 0 = 16
+        assert points.score_bonus == Decimal("10")
+        assert points.result_bonus == Decimal("6")  # 0 + 0 + 0 + 4 + 2 = 6
+        assert points.confidence_bonus == Decimal("0")
 
     def test_calculate_leaderboard_position_first(self):
         """测试：计算排行榜位置（第一名）"""
@@ -311,7 +308,7 @@ class TestScoringService:
         new_config = {
             "exact_score": {"points": 20, "multiplier": 1.5},
             "outcome_only": {"points": 6, "multiplier": 1.0},
-            "goal_difference": {"points": 8, "multiplier": 1.0}
+            "goal_difference": {"points": 8, "multiplier": 1.0},
         }
         service.update_scoring_config(new_config)
         assert service.config["exact_score"]["points"] == 20
@@ -333,7 +330,7 @@ class TestScoringService:
         service = ScoringService()
         new_config = {
             "exact_score": {"multiplier": 1.5},
-            "outcome_only": {"points": 6, "multiplier": 1.0}
+            "outcome_only": {"points": 6, "multiplier": 1.0},
         }
         with pytest.raises(ValueError) as exc_info:
             service.update_scoring_config(new_config)
@@ -344,7 +341,7 @@ class TestScoringService:
         service = ScoringService()
         new_config = {
             "exact_score": {"points": "ten", "multiplier": 1.0},
-            "outcome_only": {"points": 6, "multiplier": 1.0}
+            "outcome_only": {"points": 6, "multiplier": 1.0},
         }
         with pytest.raises(ValueError) as exc_info:
             service.update_scoring_config(new_config)
@@ -355,7 +352,7 @@ class TestScoringService:
         service = ScoringService()
         new_config = {
             "exact_score": {"points": -10, "multiplier": 1.0},
-            "outcome_only": {"points": 6, "multiplier": 1.0}
+            "outcome_only": {"points": 6, "multiplier": 1.0},
         }
         with pytest.raises(ValueError) as exc_info:
             service.update_scoring_config(new_config)
@@ -383,7 +380,7 @@ class TestScoringService:
             "outcome_only": {"points": 5, "multiplier": 1.0},
             "goal_difference": {"points": 8, "multiplier": 1.0},
             "confidence_bonus": {"max_bonus": 5, "threshold": 0.9},
-            "streak_bonus": {"enabled": True, "bonus_per_streak": 2, "max_bonus": 10}
+            "streak_bonus": {"enabled": True, "bonus_per_streak": 2, "max_bonus": 10},
         }
         service = ScoringService(custom_config)
         summary = service.get_scoring_rules_summary()
@@ -404,11 +401,11 @@ class TestScoringService:
             actual_away=2,
             confidence=0.95,
             match_importance=0.8,
-            user_streak=4
+            user_streak=4,
         )
         # 精确比分: 0, 结果正确: 3, 净胜球: 0
         # 信心奖励: 2, 连胜奖励: 4 (已达上限), 难度奖励: 4
         # 总计: 0 + 3 + 0 + 2 + 4 + 5 = 14
-        assert points.total == Decimal('18')  # 实际计算可能有差异
-        assert points.score_bonus == Decimal('0')
-        assert points.confidence_bonus == Decimal('2')
+        assert points.total == Decimal("18")  # 实际计算可能有差异
+        assert points.score_bonus == Decimal("0")
+        assert points.confidence_bonus == Decimal("2")

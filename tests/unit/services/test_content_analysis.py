@@ -31,7 +31,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_001",
             content_type="text",
-            data={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"}
+            data={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
         )
 
     @pytest.fixture
@@ -40,15 +40,14 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_002",
             content_type="image",
-            data={"url": "http://example.com/image.jpg", "size": "1024x768"}
+            data={"url": "http://example.com/image.jpg", "size": "1024x768"},
         )
 
     @pytest.fixture
     def user_profile(self):
         """示例用户配置文件"""
         return UserProfile(
-            user_id="user_123",
-            preferences={"language": "zh", "category": "football"}
+            user_id="user_123", preferences={"language": "zh", "category": "football"}
         )
 
     @pytest.mark.asyncio
@@ -74,7 +73,7 @@ class TestContentAnalysisService:
     async def test_initialize_failure(self, service):
         """测试：初始化失败"""
         # Given
-        with patch.object(service, '_on_initialize', return_value=False):
+        with patch.object(service, "_on_initialize", return_value=False):
             # When
             result = await service.initialize()
 
@@ -107,7 +106,10 @@ class TestContentAnalysisService:
         # Then
         assert info["name"] == "ContentAnalysisService"
         assert info["type"] == "ContentAnalysisService"
-        assert info["description"] == "Content analysis service for football prediction system"
+        assert (
+            info["description"]
+            == "Content analysis service for football prediction system"
+        )
         assert info["version"] == "1.0.0"
         assert info["models_loaded"] is True
 
@@ -151,14 +153,18 @@ class TestContentAnalysisService:
         assert result.result["language"] == "unknown"
 
     @pytest.mark.asyncio
-    async def test_analyze_content_without_initialization(self, service, sample_text_content):
+    async def test_analyze_content_without_initialization(
+        self, service, sample_text_content
+    ):
         """测试：未初始化时分析内容"""
         # When / Then
         with pytest.raises(RuntimeError, match="服务未初始化"):
             await service.analyze_content(sample_text_content)
 
     @pytest.mark.asyncio
-    async def test_batch_analyze(self, service, sample_text_content, sample_image_content):
+    async def test_batch_analyze(
+        self, service, sample_text_content, sample_image_content
+    ):
         """测试：批量分析内容"""
         # Given
         await service.initialize()
@@ -219,7 +225,7 @@ class TestContentAnalysisService:
         content = Content(
             content_id="test",
             content_type="text",
-            data={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"}
+            data={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
         )
 
         # When
@@ -387,7 +393,10 @@ class TestContentAnalysisService:
     def test_generate_summary_long_text(self, service):
         """测试：生成长文本摘要"""
         # Given
-        text = "这是一段很长的文本。包含了很多内容。需要进行摘要。超过了一百个字符的限制。" * 3
+        text = (
+            "这是一段很长的文本。包含了很多内容。需要进行摘要。超过了一百个字符的限制。"
+            * 3
+        )
 
         # When
         summary = service.generate_summary(text, 50)
@@ -423,9 +432,7 @@ class TestContentModel:
         """测试：创建内容对象"""
         # Given & When
         content = Content(
-            content_id="test_001",
-            content_type="text",
-            data={"text": "测试内容"}
+            content_id="test_001", content_type="text", data={"text": "测试内容"}
         )
 
         # Then
@@ -448,10 +455,7 @@ class TestContentModel:
         preferences = {"language": "zh", "category": "football"}
 
         # When
-        profile = UserProfile(
-            user_id="user_123",
-            preferences=preferences
-        )
+        profile = UserProfile(user_id="user_123", preferences=preferences)
 
         # Then
         assert profile.user_id == "user_123"
@@ -482,7 +486,7 @@ class TestContentModel:
             result={"sentiment": "positive"},
             confidence=0.95,
             timestamp=timestamp,
-            content_id="content_001"
+            content_id="content_001",
         )
 
         # Then

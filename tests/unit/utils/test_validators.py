@@ -11,7 +11,7 @@ from src.utils.validators import (
     is_valid_phone,
     is_valid_url,
     validate_required_fields,
-    validate_data_types
+    validate_data_types,
 )
 
 
@@ -26,7 +26,7 @@ class TestEmailValidator:
             "user+tag@example.org",
             "user123@test-domain.com",
             "email@sub.domain.com",
-            "a@b.co"
+            "a@b.co",
         ]
 
         for email in valid_emails:
@@ -44,7 +44,7 @@ class TestEmailValidator:
             "user space@domain.com",
             "user name@domain.com",
             "user@domain,com",
-            "user@domain.c"
+            "user@domain.c",
         ]
 
         for email in invalid_emails:
@@ -101,7 +101,7 @@ class TestUrlValidator:
             "https://example.com:8080/path",
             "https://sub.domain.example.com",
             "https://example.co.uk",
-            "https://example.com/path_with_underscores"
+            "https://example.com/path_with_underscores",
         ]
 
         for url in valid_urls:
@@ -119,7 +119,7 @@ class TestUrlValidator:
             "http://",
             "https://example .com",
             "://example.com",
-            "https:/example.com"
+            "https:/example.com",
         ]
 
         for url in invalid_urls:
@@ -136,7 +136,9 @@ class TestUrlValidator:
         assert is_valid_url("https://example.com:8080") is True
         assert is_valid_url("https://example.com:443") is True
 
-    @pytest.mark.skip(reason="Simple URL validator doesn't support complex query parameters")
+    @pytest.mark.skip(
+        reason="Simple URL validator doesn't support complex query parameters"
+    )
     def test_url_with_query_and_fragment(self):
         """测试：带查询参数和锚点的URL"""
         pass
@@ -147,45 +149,28 @@ class TestRequiredFieldsValidator:
 
     def test_all_fields_present(self):
         """测试：所有字段都存在"""
-        data = {
-            "name": "John",
-            "email": "john@example.com",
-            "age": 30
-        }
+        data = {"name": "John", "email": "john@example.com", "age": 30}
         required = ["name", "email", "age"]
         missing = validate_required_fields(data, required)
         assert missing == []
 
     def test_missing_fields(self):
         """测试：缺少字段"""
-        data = {
-            "name": "John",
-            "email": "john@example.com"
-        }
+        data = {"name": "John", "email": "john@example.com"}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         assert set(missing) == {"age", "address"}
 
     def test_none_values(self):
         """测试：字段值为None"""
-        data = {
-            "name": "John",
-            "email": None,
-            "age": 30,
-            "address": ""
-        }
+        data = {"name": "John", "email": None, "age": 30, "address": ""}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         assert set(missing) == {"email", "address"}
 
     def test_empty_string_values(self):
         """测试：字段值为空字符串"""
-        data = {
-            "name": "John",
-            "email": "",
-            "age": 0,
-            "address": "   "
-        }
+        data = {"name": "John", "email": "", "age": 0, "address": "   "}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         # 注意：0不算空值，空格字符串不算空值（只有空字符串和None算）
@@ -207,12 +192,7 @@ class TestRequiredFieldsValidator:
 
     def test_nested_fields(self):
         """测试：嵌套字段（只检查顶层）"""
-        data = {
-            "user": {
-                "name": "John",
-                "email": "john@example.com"
-            }
-        }
+        data = {"user": {"name": "John", "email": "john@example.com"}}
         required = ["user", "user.name"]
         # user存在，user.name不存在（是嵌套的）
         missing = validate_required_fields(data, required)
@@ -229,14 +209,14 @@ class TestDataTypesValidator:
             "age": 30,
             "active": True,
             "scores": [85, 90, 78],
-            "metadata": {"key": "value"}
+            "metadata": {"key": "value"},
         }
         schema = {
             "name": str,
             "age": int,
             "active": bool,
             "scores": list,
-            "metadata": dict
+            "metadata": dict,
         }
         errors = validate_data_types(data, schema)
         assert errors == []
@@ -248,14 +228,14 @@ class TestDataTypesValidator:
             "age": "30",  # Should be int
             "active": "true",  # Should be bool
             "scores": "85,90,78",  # Should be list
-            "metadata": ["key", "value"]  # Should be dict
+            "metadata": ["key", "value"],  # Should be dict
         }
         schema = {
             "name": str,
             "age": int,
             "active": bool,
             "scores": list,
-            "metadata": dict
+            "metadata": dict,
         }
         errors = validate_data_types(data, schema)
         assert len(errors) == 5
@@ -267,50 +247,31 @@ class TestDataTypesValidator:
 
     def test_partial_schema(self):
         """测试：部分schema（只验证指定字段）"""
-        data = {
-            "name": "John",
-            "age": "30",
-            "city": "New York",
-            "active": True
-        }
-        schema = {
-            "name": str,
-            "age": int
-        }
+        data = {"name": "John", "age": "30", "city": "New York", "active": True}
+        schema = {"name": str, "age": int}
         errors = validate_data_types(data, schema)
         assert len(errors) == 1
         assert "Field 'age' should be int, got str" in errors
 
     def test_missing_fields_in_data(self):
         """测试：数据中缺少schema中的字段"""
-        data = {
-            "name": "John"
-        }
-        schema = {
-            "name": str,
-            "age": int,
-            "email": str
-        }
+        data = {"name": "John"}
+        schema = {"name": str, "age": int, "email": str}
         errors = validate_data_types(data, schema)
         # 缺少的字段不会被报告为类型错误
         assert errors == []
 
     def test_type_inheritance(self):
         """测试：类型继承"""
+
         class User:
             pass
 
         class Admin(User):
             pass
 
-        data = {
-            "user": Admin(),
-            "admin": Admin()
-        }
-        schema = {
-            "user": User,
-            "admin": Admin
-        }
+        data = {"user": Admin(), "admin": Admin()}
+        schema = {"user": User, "admin": Admin}
         errors = validate_data_types(data, schema)
         assert errors == []  # Admin是User的子类
 
@@ -319,31 +280,19 @@ class TestDataTypesValidator:
         import datetime
         from typing import Any
 
-        data = {
-            "date": datetime.datetime.now(),
-            "items": [1, 2, 3],
-            "value": Any
-        }
+        data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
         schema = {
             "date": datetime.datetime,
             "items": list,
-            "value": type(None)  # NoneType
+            "value": type(None),  # NoneType
         }
         errors = validate_data_types(data, schema)
         assert len(errors) >= 1  # value字段应该报错
 
     def test_none_values(self):
         """测试：None值的类型检查"""
-        data = {
-            "name": None,
-            "age": None,
-            "active": None
-        }
-        schema = {
-            "name": str,
-            "age": int,
-            "active": bool
-        }
+        data = {"name": None, "age": None, "active": None}
+        schema = {"name": str, "age": int, "active": bool}
         errors = validate_data_types(data, schema)
         # None会被认为是错误的类型
         assert len(errors) == 3
@@ -352,13 +301,10 @@ class TestDataTypesValidator:
         """测试：联合类型（需要使用typing.Union）"""
         from typing import Union
 
-        data = {
-            "value": 123,
-            "identifier": "abc123"
-        }
+        data = {"value": 123, "identifier": "abc123"}
         schema = {
             "value": int,  # 只测试单一类型
-            "identifier": str
+            "identifier": str,
         }
         errors = validate_data_types(data, schema)
         assert errors == []
@@ -381,11 +327,7 @@ class TestValidatorEdgeCases:
 
     def test_data_with_whitespace(self):
         """测试：包含空白字符的数据"""
-        data = {
-            "name": " John ",
-            "email": "  ",
-            "age": " 30 "
-        }
+        data = {"name": " John ", "email": "  ", "age": " 30 "}
 
         # 必填字段验证
         required = ["name", "email", "age"]
@@ -432,7 +374,7 @@ def test_module_imports():
         is_valid_phone,
         is_valid_url,
         validate_required_fields,
-        validate_data_types
+        validate_data_types,
     )
 
     assert callable(is_valid_email)
@@ -447,11 +389,11 @@ def test_all_functions_exported():
     import src.utils.validators as validators_module
 
     expected_functions = [
-        'is_valid_email',
-        'is_valid_phone',
-        'is_valid_url',
-        'validate_required_fields',
-        'validate_data_types'
+        "is_valid_email",
+        "is_valid_phone",
+        "is_valid_url",
+        "validate_required_fields",
+        "validate_data_types",
     ]
 
     for func_name in expected_functions:

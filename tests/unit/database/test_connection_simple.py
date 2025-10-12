@@ -16,7 +16,7 @@ from src.database.connection import (
     get_multi_user_database_manager,
     initialize_database,
     initialize_multi_user_database,
-    initialize_test_database
+    initialize_test_database,
 )
 
 
@@ -51,22 +51,22 @@ class TestDatabaseManager:
     def test_initialization_attribute(self):
         """测试：初始化属性"""
         manager = DatabaseManager()
-        assert hasattr(manager, 'initialized')
+        assert hasattr(manager, "initialized")
         assert manager.initialized is False
 
     def test_get_session_methods_exist(self):
         """测试：会话获取方法存在"""
         manager = DatabaseManager()
-        assert hasattr(manager, 'get_session')
-        assert hasattr(manager, 'get_async_session')
-        assert callable(getattr(manager, 'get_session'))
-        assert callable(getattr(manager, 'get_async_session'))
+        assert hasattr(manager, "get_session")
+        assert hasattr(manager, "get_async_session")
+        assert callable(getattr(manager, "get_session"))
+        assert callable(getattr(manager, "get_async_session"))
 
     def test_initialize_method_exists(self):
         """测试：初始化方法存在"""
         manager = DatabaseManager()
-        assert hasattr(manager, 'initialize')
-        assert callable(getattr(manager, 'initialize'))
+        assert hasattr(manager, "initialize")
+        assert callable(getattr(manager, "initialize"))
 
 
 class TestMultiUserDatabaseManager:
@@ -82,9 +82,9 @@ class TestMultiUserDatabaseManager:
         manager = MultiUserDatabaseManager()
         # MultiUserDatabaseManager的__init__应该添加这些属性
         # 根据实际实现，如果不存在就跳过测试
-        if hasattr(manager, 'readers'):
-            assert hasattr(manager, 'writers')
-            assert hasattr(manager, 'admins')
+        if hasattr(manager, "readers"):
+            assert hasattr(manager, "writers")
+            assert hasattr(manager, "admins")
         else:
             # 如果实现中没有这些属性，至少确认它继承自DatabaseManager
             assert isinstance(manager, DatabaseManager)
@@ -137,7 +137,7 @@ class TestSessionFunctions:
             get_session,
             get_async_reader_session,
             get_async_writer_session,
-            get_async_admin_session
+            get_async_admin_session,
         )
 
         # 所有函数应该是可调用的
@@ -183,11 +183,11 @@ class TestDatabaseManagerBasicFunctionality:
     def test_manager_class_structure(self):
         """测试：管理器类结构"""
         # 检查类属性
-        assert hasattr(DatabaseManager, '_instance')
-        assert hasattr(DatabaseManager, '_engine')
-        assert hasattr(DatabaseManager, '_async_engine')
-        assert hasattr(DatabaseManager, '_session_factory')
-        assert hasattr(DatabaseManager, '_async_session_factory')
+        assert hasattr(DatabaseManager, "_instance")
+        assert hasattr(DatabaseManager, "_engine")
+        assert hasattr(DatabaseManager, "_async_engine")
+        assert hasattr(DatabaseManager, "_session_factory")
+        assert hasattr(DatabaseManager, "_async_session_factory")
 
     def test_manager_new_method(self):
         """测试：管理器__new__方法"""
@@ -204,20 +204,20 @@ class TestDatabaseManagerBasicFunctionality:
         """测试：管理器__init__方法"""
         manager = DatabaseManager()
         # 初始化后应该有initialized属性
-        assert hasattr(manager, 'initialized')
+        assert hasattr(manager, "initialized")
         assert manager.initialized is False
 
     def test_multi_user_manager_init(self):
         """测试：多用户管理器初始化"""
         manager = MultiUserDatabaseManager()
         # 应该调用父类的__init__
-        assert hasattr(manager, 'initialized')
+        assert hasattr(manager, "initialized")
         assert manager.initialized is False
 
         # 检查是否有用户列表属性（根据实际实现可能没有）
-        has_readers = hasattr(manager, 'readers')
-        has_writers = hasattr(manager, 'writers')
-        has_admins = hasattr(manager, 'admins')
+        has_readers = hasattr(manager, "readers")
+        has_writers = hasattr(manager, "writers")
+        has_admins = hasattr(manager, "admins")
 
         # 如果有其中一个，应该都有
         if has_readers or has_writers or has_admins:

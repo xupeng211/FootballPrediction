@@ -14,7 +14,7 @@ from src.domain.models.match import (
     MatchResult,
     MatchScore,
     Match,
-    DomainError
+    DomainError,
 )
 
 
@@ -133,11 +133,7 @@ class TestMatch:
 
     def test_match_creation_minimal(self):
         """测试：创建最小比赛对象"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         assert match.home_team_id == 1
         assert match.away_team_id == 2
@@ -163,7 +159,7 @@ class TestMatch:
             venue="Camp Nou",
             referee="John Smith",
             weather="Sunny",
-            attendance=80000
+            attendance=80000,
         )
 
         assert match.id == 100
@@ -181,64 +177,31 @@ class TestMatch:
     def test_same_team_validation(self):
         """测试：相同球队验证"""
         with pytest.raises(DomainError) as exc_info:
-            Match(
-                home_team_id=1,
-                away_team_id=1,
-                league_id=10
-            )
+            Match(home_team_id=1, away_team_id=1, league_id=10)
         assert "主队和客队不能相同" in str(exc_info.value)
 
     def test_season_format_validation(self):
         """测试：赛季格式验证"""
         # 有效格式
-        match1 = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            season="2023"
-        )
+        match1 = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023")
         assert match1.season == "2023"
 
-        match2 = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            season="2023-2024"
-        )
+        match2 = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
         assert match2.season == "2023-2024"
 
         # 无效格式
         with pytest.raises(DomainError):
-            Match(
-                home_team_id=1,
-                away_team_id=2,
-                league_id=10,
-                season="23-24"
-            )
+            Match(home_team_id=1, away_team_id=2, league_id=10, season="23-24")
 
         with pytest.raises(DomainError):
-            Match(
-                home_team_id=1,
-                away_team_id=2,
-                league_id=10,
-                season="2023-2025"
-            )
+            Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2025")
 
         with pytest.raises(DomainError):
-            Match(
-                home_team_id=1,
-                away_team_id=2,
-                league_id=10,
-                season="abc"
-            )
+            Match(home_team_id=1, away_team_id=2, league_id=10, season="abc")
 
     def test_start_match_success(self):
         """测试：成功开始比赛"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         match.start_match()
         assert match.status == MatchStatus.LIVE
@@ -247,10 +210,7 @@ class TestMatch:
     def test_start_match_already_started(self):
         """测试：开始已开始的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.LIVE
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.LIVE
         )
 
         with pytest.raises(DomainError) as exc_info:
@@ -260,10 +220,7 @@ class TestMatch:
     def test_start_match_finished(self):
         """测试：开始已结束的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
 
         with pytest.raises(DomainError):
@@ -271,11 +228,7 @@ class TestMatch:
 
     def test_update_score_scheduled(self):
         """测试：更新已安排比赛的比分"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         match.update_score(1, 0)
         assert match.score.home_score == 1
@@ -289,7 +242,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             status=MatchStatus.LIVE,
-            score=MatchScore(1, 0)
+            score=MatchScore(1, 0),
         )
 
         match.update_score(1, 1)
@@ -299,11 +252,7 @@ class TestMatch:
 
     def test_update_score_no_goal_change(self):
         """测试：更新比分为0-0"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         match.update_score(0, 0)
         assert match.score.home_score == 0
@@ -317,7 +266,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             status=MatchStatus.FINISHED,
-            score=MatchScore(2, 1)
+            score=MatchScore(2, 1),
         )
 
         with pytest.raises(DomainError) as exc_info:
@@ -332,10 +281,10 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             status=MatchStatus.LIVE,
-            score=MatchScore(2, 1)
+            score=MatchScore(2, 1),
         )
 
-        with patch('src.domain.events.MatchFinishedEvent') as mock_event:
+        with patch("src.domain.events.MatchFinishedEvent") as mock_event:
             mock_event.return_value = Mock()
             match.finish_match()
 
@@ -348,10 +297,7 @@ class TestMatch:
     def test_finish_match_not_live(self):
         """测试：结束未开始的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.SCHEDULED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.SCHEDULED
         )
 
         with pytest.raises(DomainError) as exc_info:
@@ -361,10 +307,7 @@ class TestMatch:
     def test_finish_match_no_score(self):
         """测试：结束没有比分的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.LIVE
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.LIVE
         )
 
         with pytest.raises(DomainError) as exc_info:
@@ -374,10 +317,7 @@ class TestMatch:
     def test_cancel_match_success(self):
         """测试：成功取消比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.SCHEDULED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.SCHEDULED
         )
 
         match.cancel_match("Weather conditions")
@@ -387,10 +327,7 @@ class TestMatch:
     def test_cancel_match_finished(self):
         """测试：取消已结束的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
 
         with pytest.raises(DomainError) as exc_info:
@@ -400,10 +337,7 @@ class TestMatch:
     def test_cancel_match_already_cancelled(self):
         """测试：取消已取消的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.CANCELLED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.CANCELLED
         )
 
         with pytest.raises(DomainError):
@@ -413,10 +347,7 @@ class TestMatch:
         """测试：成功延期比赛"""
         future_date = datetime.utcnow() + timedelta(days=7)
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.SCHEDULED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.SCHEDULED
         )
 
         match.postpone_match(future_date)
@@ -432,7 +363,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             match_date=original_date,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
 
         match.postpone_match()
@@ -442,10 +373,7 @@ class TestMatch:
     def test_postpone_match_finished(self):
         """测试：延期已结束的比赛"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
 
         with pytest.raises(DomainError):
@@ -453,11 +381,7 @@ class TestMatch:
 
     def test_is_same_team(self):
         """测试：检查是否是参赛球队"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         assert match.is_same_team(1) is True
         assert match.is_same_team(2) is True
@@ -465,33 +389,21 @@ class TestMatch:
 
     def test_is_home_team(self):
         """测试：检查是否是主队"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         assert match.is_home_team(1) is True
         assert match.is_home_team(2) is False
 
     def test_is_away_team(self):
         """测试：检查是否是客队"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         assert match.is_away_team(2) is True
         assert match.is_away_team(1) is False
 
     def test_get_opponent_id(self):
         """测试：获取对手ID"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         assert match.get_opponent_id(1) == 2
         assert match.get_opponent_id(2) == 1
@@ -505,7 +417,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             match_date=future_date,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
 
         assert match.is_upcoming is True
@@ -520,7 +432,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             match_date=past_date,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
 
         assert match.is_upcoming is False
@@ -529,10 +441,7 @@ class TestMatch:
     def test_is_live(self):
         """测试：是否正在进行"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.LIVE
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.LIVE
         )
 
         assert match.is_live is True
@@ -540,10 +449,7 @@ class TestMatch:
     def test_is_finished(self):
         """测试：是否已结束"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
 
         assert match.is_finished is True
@@ -551,64 +457,42 @@ class TestMatch:
     def test_can_be_predicted(self):
         """测试：是否可以预测"""
         scheduled_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.SCHEDULED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.SCHEDULED
         )
         assert scheduled_match.can_be_predicted is True
 
         live_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.LIVE
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.LIVE
         )
         assert live_match.can_be_predicted is True
 
         finished_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
         assert finished_match.can_be_predicted is False
 
         cancelled_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.CANCELLED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.CANCELLED
         )
         assert cancelled_match.can_be_predicted is False
 
     def test_get_duration_finished(self):
         """测试：获取已结束比赛的时长"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.FINISHED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.FINISHED
         )
         assert match.get_duration() == 90
 
     def test_get_duration_not_finished(self):
         """测试：获取未结束比赛的时长"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.LIVE
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.LIVE
         )
         assert match.get_duration() is None
 
     def test_domain_events_management(self):
         """测试：领域事件管理"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10)
 
         # 初始状态没有事件
         assert len(match.get_domain_events()) == 0
@@ -631,7 +515,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             season="2023-2024",
-            venue="Camp Nou"
+            venue="Camp Nou",
         )
 
         data = match.to_dict()
@@ -653,7 +537,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             status=MatchStatus.FINISHED,
-            score=score
+            score=score,
         )
 
         data = match.to_dict()
@@ -671,7 +555,7 @@ class TestMatch:
             "league_id": 10,
             "season": "2023-2024",
             "status": "scheduled",
-            "venue": "Camp Nou"
+            "venue": "Camp Nou",
         }
 
         match = Match.from_dict(data)
@@ -691,11 +575,7 @@ class TestMatch:
             "away_team_id": 2,
             "league_id": 10,
             "status": "finished",
-            "score": {
-                "home_score": 2,
-                "away_score": 1,
-                "result": "home_win"
-            }
+            "score": {"home_score": 2, "away_score": 1, "result": "home_win"},
         }
 
         match = Match.from_dict(data)
@@ -713,7 +593,7 @@ class TestMatch:
             "match_date": "2023-01-01T20:00:00",
             "created_at": "2023-01-01T19:00:00",
             "updated_at": "2023-01-01T19:00:00",
-            "status": "scheduled"
+            "status": "scheduled",
         }
 
         match = Match.from_dict(data)
@@ -724,10 +604,7 @@ class TestMatch:
     def test_string_representation(self):
         """测试：字符串表示"""
         match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            status=MatchStatus.SCHEDULED
+            home_team_id=1, away_team_id=2, league_id=10, status=MatchStatus.SCHEDULED
         )
         assert "Team1 vs Team2" in str(match)
         assert "scheduled" in str(match)
@@ -737,7 +614,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             status=MatchStatus.FINISHED,
-            score=MatchScore(2, 1)
+            score=MatchScore(2, 1),
         )
         assert "(2-1)" in str(match_with_score)
         assert "finished" in str(match_with_score)
@@ -745,30 +622,16 @@ class TestMatch:
     def test_edge_cases(self):
         """测试：边界情况"""
         # 零ID球队
-        match = Match(
-            home_team_id=0,
-            away_team_id=1,
-            league_id=0
-        )
+        match = Match(home_team_id=0, away_team_id=1, league_id=0)
         assert match.home_team_id == 0
         assert match.league_id == 0
 
         # 空字符串venue
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            venue=""
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10, venue="")
         assert match.venue == ""
 
         # 零观众
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=10,
-            attendance=0
-        )
+        match = Match(home_team_id=1, away_team_id=2, league_id=10, attendance=0)
         assert match.attendance == 0
 
     def test_full_match_lifecycle(self):
@@ -780,7 +643,7 @@ class TestMatch:
             away_team_id=2,
             league_id=10,
             season="2023-2024",
-            venue="Camp Nou"
+            venue="Camp Nou",
         )
         assert match.status == MatchStatus.SCHEDULED
 
@@ -798,7 +661,7 @@ class TestMatch:
         assert match.score.home_score == 2
 
         # 5. 结束比赛
-        with patch('src.domain.events.MatchFinishedEvent'):
+        with patch("src.domain.events.MatchFinishedEvent"):
             match.finish_match()
         assert match.status == MatchStatus.FINISHED
         assert match.is_finished is True

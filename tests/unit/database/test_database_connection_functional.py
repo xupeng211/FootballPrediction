@@ -9,7 +9,11 @@ from unittest.mock import Mock, patch, MagicMock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from src.database.connection import DatabaseManager, MultiUserDatabaseManager, DatabaseRole
+from src.database.connection import (
+    DatabaseManager,
+    MultiUserDatabaseManager,
+    DatabaseRole,
+)
 
 
 class TestDatabaseConnectionFunctional:
@@ -45,7 +49,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_manager_initialization(self, db_manager, test_db_url):
         """测试：数据库管理器初始化"""
         # When
-        with patch('src.database.definitions.create_engine') as mock_create_engine:
+        with patch("src.database.definitions.create_engine") as mock_create_engine:
             mock_engine = Mock()
             mock_create_engine.return_value = mock_engine
 
@@ -64,8 +68,10 @@ class TestDatabaseConnectionFunctional:
         test_url = "postgresql://env:env@localhost/env_db"
 
         # When
-        with patch('src.database.definitions.create_engine') as mock_create_engine, \
-             patch.dict('os.environ', {'DATABASE_URL': test_url}):
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch.dict("os.environ", {"DATABASE_URL": test_url}),
+        ):
             mock_engine = Mock()
             mock_create_engine.return_value = mock_engine
 
@@ -78,7 +84,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_manager_multiple_initialization(self, db_manager, test_db_url):
         """测试：多次初始化应该只执行一次"""
         # Given
-        with patch('src.database.definitions.create_engine') as mock_create_engine:
+        with patch("src.database.definitions.create_engine") as mock_create_engine:
             mock_engine = Mock()
             mock_create_engine.return_value = mock_engine
 
@@ -93,7 +99,7 @@ class TestDatabaseConnectionFunctional:
     def test_database_manager_raise_error_without_url(self, db_manager):
         """测试：没有提供数据库URL时应该抛出错误"""
         # Given
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             # When / Then
             # 由于SQLAlchemy会先抛出错误，我们捕获任意异常
             with pytest.raises((ValueError, Exception)):
@@ -102,8 +108,10 @@ class TestDatabaseConnectionFunctional:
     def test_get_sync_session(self, db_manager, test_db_url):
         """测试：获取同步会话"""
         # Given
-        with patch('src.database.definitions.create_engine') as mock_create_engine, \
-             patch('src.database.definitions.sessionmaker') as mock_sessionmaker:
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch("src.database.definitions.sessionmaker") as mock_sessionmaker,
+        ):
             mock_engine = Mock()
             mock_session_factory = Mock()
             mock_create_engine.return_value = mock_engine
@@ -121,8 +129,12 @@ class TestDatabaseConnectionFunctional:
     def test_get_async_session(self, db_manager, test_db_url):
         """测试：获取异步会话"""
         # Given
-        with patch('src.database.definitions.create_async_engine') as mock_create_engine, \
-             patch('src.database.definitions.async_sessionmaker') as mock_async_sessionmaker:
+        with (
+            patch("src.database.definitions.create_async_engine") as mock_create_engine,
+            patch(
+                "src.database.definitions.async_sessionmaker"
+            ) as mock_async_sessionmaker,
+        ):
             mock_engine = Mock()
             mock_session_factory = Mock()
             mock_create_engine.return_value = mock_engine
@@ -143,7 +155,7 @@ class TestDatabaseConnectionFunctional:
         assert db_manager.initialized is False
 
         # When
-        with patch.object(db_manager, 'initialize') as mock_initialize:
+        with patch.object(db_manager, "initialize") as mock_initialize:
             mock_session = Mock()
             mock_initialize.return_value = None
             db_manager._session_factory = Mock(return_value=mock_session)
@@ -161,8 +173,12 @@ class TestDatabaseConnectionFunctional:
         expected_async_url = "postgresql+asyncpg://user:pass@localhost/db"
 
         # When
-        with patch('src.database.definitions.create_engine') as mock_create_engine, \
-             patch('src.database.definitions.create_async_engine') as mock_create_async_engine:
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch(
+                "src.database.definitions.create_async_engine"
+            ) as mock_create_async_engine,
+        ):
             mock_create_engine.return_value = Mock()
             mock_create_async_engine.return_value = Mock()
 
@@ -170,14 +186,10 @@ class TestDatabaseConnectionFunctional:
 
         # Then
         mock_create_engine.assert_called_once_with(
-            sync_url,
-            pool_pre_ping=True,
-            pool_recycle=300
+            sync_url, pool_pre_ping=True, pool_recycle=300
         )
         mock_create_async_engine.assert_called_once_with(
-            expected_async_url,
-            pool_pre_ping=True,
-            pool_recycle=300
+            expected_async_url, pool_pre_ping=True, pool_recycle=300
         )
 
     def test_multi_user_database_manager_initialization(self):
@@ -190,7 +202,7 @@ class TestDatabaseConnectionFunctional:
         # 检查是否成功创建了MultiUserDatabaseManager实例
         assert manager is not None
         # MultiUserDatabaseManager继承自DatabaseManager，应该有相同的属性
-        assert hasattr(manager, 'initialized')
+        assert hasattr(manager, "initialized")
 
     def test_database_role_enum(self):
         """测试：数据库角色枚举"""
@@ -210,8 +222,12 @@ class TestDatabaseConnectionFunctional:
     def test_database_engine_pool_configuration(self, db_manager, test_db_url):
         """测试：数据库引擎池配置"""
         # When
-        with patch('src.database.definitions.create_engine') as mock_create_engine, \
-             patch('src.database.definitions.create_async_engine') as mock_create_async_engine:
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch(
+                "src.database.definitions.create_async_engine"
+            ) as mock_create_async_engine,
+        ):
             mock_create_engine.return_value = Mock()
             mock_create_async_engine.return_value = Mock()
 
@@ -221,19 +237,21 @@ class TestDatabaseConnectionFunctional:
         # 验证同步引擎配置
         mock_create_engine.assert_called_once()
         sync_kwargs = mock_create_engine.call_args.kwargs
-        assert sync_kwargs['pool_pre_ping'] is True
-        assert sync_kwargs['pool_recycle'] == 300
+        assert sync_kwargs["pool_pre_ping"] is True
+        assert sync_kwargs["pool_recycle"] == 300
 
         # 验证异步引擎配置
         async_kwargs = mock_create_async_engine.call_args.kwargs
-        assert async_kwargs['pool_pre_ping'] is True
-        assert async_kwargs['pool_recycle'] == 300
+        assert async_kwargs["pool_pre_ping"] is True
+        assert async_kwargs["pool_recycle"] == 300
 
     def test_database_session_return(self, db_manager, test_db_url):
         """测试：数据库会话返回"""
         # Given
-        with patch('src.database.definitions.create_engine') as mock_create_engine, \
-             patch('src.database.definitions.sessionmaker') as mock_sessionmaker:
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch("src.database.definitions.sessionmaker") as mock_sessionmaker,
+        ):
             mock_engine = Mock()
             mock_session = Mock()
             mock_session_factory = Mock(return_value=mock_session)
@@ -245,7 +263,7 @@ class TestDatabaseConnectionFunctional:
             # When
             session = db_manager.get_session()
 
-        # Then
+            # Then
             assert session is not None
             assert session == mock_session
             mock_session_factory.assert_called_once()
@@ -253,9 +271,9 @@ class TestDatabaseConnectionFunctional:
     def test_database_manager_class_attributes(self, db_manager):
         """测试：数据库管理器类属性"""
         # Then
-        assert hasattr(db_manager, '_instance')
-        assert hasattr(db_manager, '_engine')
-        assert hasattr(db_manager, '_async_engine')
-        assert hasattr(db_manager, '_session_factory')
-        assert hasattr(db_manager, '_async_session_factory')
-        assert hasattr(db_manager, 'initialized')
+        assert hasattr(db_manager, "_instance")
+        assert hasattr(db_manager, "_engine")
+        assert hasattr(db_manager, "_async_engine")
+        assert hasattr(db_manager, "_session_factory")
+        assert hasattr(db_manager, "_async_session_factory")
+        assert hasattr(db_manager, "initialized")

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 # 测试导入
 try:
     from src.api.monitoring import router
+
     MONITORING_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -27,7 +28,7 @@ class TestMonitoringRouter:
     def test_router_exists(self):
         """测试：路由器存在"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         assert router.tags == ["monitoring"]
 
     def test_router_routes(self):
@@ -35,11 +36,6 @@ class TestMonitoringRouter:
         routes = [route.path for route in router.routes]
 
         # 验证预期的路由存在
-        expected_routes = [
-            "/metrics",
-            "/status",
-            "/metrics/prometheus"
-        ]
 
         # 至少应该有metrics端点
         assert "/metrics" in routes
@@ -54,14 +50,15 @@ class TestMonitoringModule:
         import src.api.monitoring as monitoring_module
 
         # 验证模块级别的属性
-        assert hasattr(monitoring_module, 'router')
-        assert hasattr(monitoring_module, 'logger')
+        assert hasattr(monitoring_module, "router")
+        assert hasattr(monitoring_module, "logger")
 
         # 验证路由器类型
         from fastapi.routing import APIRouter
+
         assert isinstance(monitoring_module.router, APIRouter)
 
-    @patch('src.api.monitoring.logger')
+    @patch("src.api.monitoring.logger")
     def test_logger_available(self, mock_logger):
         """测试：日志记录器可用"""
         import src.api.monitoring as monitoring_module
@@ -121,8 +118,8 @@ class TestDatabaseMetrics:
         mock_db.execute.side_effect = mock_execute
 
         # 导入并测试函数（如果可访问）
-        if hasattr(monitoring_module, '_get_database_metrics'):
-            with patch('time.time', side_effect=[0, 0.1]):
+        if hasattr(monitoring_module, "_get_database_metrics"):
+            with patch("time.time", side_effect=[0, 0.1]):
                 metrics = await monitoring_module._get_database_metrics(mock_db)
 
                 assert metrics["healthy"] is True
@@ -142,8 +139,8 @@ class TestDatabaseMetrics:
         mock_db.execute.side_effect = Exception("Database error")
 
         # 导入并测试函数（如果可访问）
-        if hasattr(monitoring_module, '_get_database_metrics'):
-            with patch('time.time', side_effect=[0, 0.1]):
+        if hasattr(monitoring_module, "_get_database_metrics"):
+            with patch("time.time", side_effect=[0, 0.1]):
                 metrics = await monitoring_module._get_database_metrics(mock_db)
 
                 assert metrics["healthy"] is False
@@ -187,9 +184,11 @@ class TestBusinessMetrics:
         mock_db.execute.side_effect = mock_execute
 
         # 导入并测试函数（如果可访问）
-        if hasattr(monitoring_module, '_get_business_metrics'):
-            with patch('src.api.monitoring.datetime') as mock_datetime:
-                mock_datetime.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
+        if hasattr(monitoring_module, "_get_business_metrics"):
+            with patch("src.api.monitoring.datetime") as mock_datetime:
+                mock_datetime.utcnow.return_value.isoformat.return_value = (
+                    "2023-01-01T12:00:00"
+                )
 
                 metrics = await monitoring_module._get_business_metrics(mock_db)
 
@@ -213,9 +212,11 @@ class TestBusinessMetrics:
         mock_db.execute.return_value = mock_result
 
         # 导入并测试函数（如果可访问）
-        if hasattr(monitoring_module, '_get_business_metrics'):
-            with patch('src.api.monitoring.datetime') as mock_datetime:
-                mock_datetime.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
+        if hasattr(monitoring_module, "_get_business_metrics"):
+            with patch("src.api.monitoring.datetime") as mock_datetime:
+                mock_datetime.utcnow.return_value.isoformat.return_value = (
+                    "2023-01-01T12:00:00"
+                )
 
                 metrics = await monitoring_module._get_business_metrics(mock_db)
 
@@ -238,20 +239,24 @@ class TestMonitoringEndpoints:
         route_paths = [route.path for route in app.routes]
         assert any("/monitoring" in path for path in route_paths)
 
-    @patch('src.api.monitoring.get_db_session')
-    @patch('src.api.monitoring._get_database_metrics')
-    @patch('src.api.monitoring._get_business_metrics')
-    def test_get_metrics_endpoint_structure(self, mock_business, mock_db_metrics, mock_db_session):
+    @patch("src.api.monitoring.get_db_session")
+    @patch("src.api.monitoring._get_database_metrics")
+    @patch("src.api.monitoring._get_business_metrics")
+    def test_get_metrics_endpoint_structure(
+        self, mock_business, mock_db_metrics, mock_db_session
+    ):
         """测试：指标端点结构"""
         # 由于端点可能依赖数据库，我们只测试基本结构
         import src.api.monitoring as monitoring_module
 
         # 验证端点函数存在
-        if hasattr(monitoring_module, 'get_metrics'):
+        if hasattr(monitoring_module, "get_metrics"):
             assert callable(monitoring_module.get_metrics)
 
 
-@pytest.mark.skipif(MONITORING_AVAILABLE, reason="Monitoring module should be available")
+@pytest.mark.skipif(
+    MONITORING_AVAILABLE, reason="Monitoring module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -268,7 +273,7 @@ def test_module_imports():
         import src.api.monitoring as monitoring_module
 
         assert monitoring_module is not None
-        assert hasattr(monitoring_module, 'router')
+        assert hasattr(monitoring_module, "router")
 
 
 def test_monitoring_tags():
@@ -283,7 +288,7 @@ def test_route_decorators():
         # 验证路由有正确的装饰器
         for route in router.routes:
             # 路由应该有方法
-            assert hasattr(route, 'methods')
+            assert hasattr(route, "methods")
             assert len(route.methods) > 0
 
 
@@ -299,8 +304,7 @@ async def test_monitoring_integration():
 
         # 验证应用包含监控路由
         monitoring_routes = [
-            route for route in app.routes
-            if "/api/v1/monitoring" in route.path
+            route for route in app.routes if "/api/v1/monitoring" in route.path
         ]
 
         # 应该至少有一个监控路由

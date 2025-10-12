@@ -19,6 +19,7 @@ try:
     from src.tasks.data_collection_core import DataCollectionTask
     from src.tasks.data_collection_core import celery_app
     from src.tasks.data_collection_core import logger
+
     DATA_COLLECTION_CORE_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -28,7 +29,10 @@ except ImportError as e:
     logger = None
 
 
-@pytest.mark.skipif(not DATA_COLLECTION_CORE_AVAILABLE, reason="Data collection core module not available")
+@pytest.mark.skipif(
+    not DATA_COLLECTION_CORE_AVAILABLE,
+    reason="Data collection core module not available",
+)
 class TestDataCollectionTask:
     """数据收集任务测试"""
 
@@ -36,8 +40,8 @@ class TestDataCollectionTask:
         """测试：任务创建"""
         task = DataCollectionTask()
         assert task is not None
-        assert hasattr(task, 'db_manager')
-        assert hasattr(task, 'orchestrator')
+        assert hasattr(task, "db_manager")
+        assert hasattr(task, "orchestrator")
 
     def test_task_initialization(self):
         """测试：任务初始化"""
@@ -45,7 +49,7 @@ class TestDataCollectionTask:
         assert task.db_manager is None
         assert task.orchestrator is not None
 
-    @patch('src.tasks.data_collection_core.DatabaseManager')
+    @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_set_database_manager(self, mock_db_manager):
         """测试：设置数据库管理器"""
         mock_db_instance = Mock()
@@ -56,7 +60,7 @@ class TestDataCollectionTask:
 
         assert task.db_manager is mock_db_instance
 
-    @patch('src.tasks.data_collection_core.DatabaseManager')
+    @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_set_database_manager_propagates_to_collectors(self, mock_db_manager):
         """测试：数据库管理器传播到收集器"""
         mock_db_instance = Mock()
@@ -67,7 +71,7 @@ class TestDataCollectionTask:
         mock_collector.set_database_manager = Mock()
 
         task = DataCollectionTask()
-        task.orchestrator.collectors = {'test_collector': mock_collector}
+        task.orchestrator.collectors = {"test_collector": mock_collector}
         task.set_database_manager(mock_db_instance)
 
         # 验证数据库管理器被传递给收集器
@@ -101,14 +105,17 @@ class TestDataCollectionTask:
         task.on_success(retval, task_id, args, kwargs)
 
 
-@pytest.mark.skipif(not DATA_COLLECTION_CORE_AVAILABLE, reason="Data collection core module not available")
+@pytest.mark.skipif(
+    not DATA_COLLECTION_CORE_AVAILABLE,
+    reason="Data collection core module not available",
+)
 class TestCeleryApp:
     """Celery应用测试"""
 
     def test_celery_app_exists(self):
         """测试：Celery应用存在"""
         assert celery_app is not None
-        assert hasattr(celery_app, 'main')
+        assert hasattr(celery_app, "main")
         assert celery_app.main == "data_collection"
 
     def test_celery_app_name(self):
@@ -118,15 +125,18 @@ class TestCeleryApp:
     def test_celery_app_configuration(self):
         """测试：Celery应用配置"""
         # 应该有conf属性
-        assert hasattr(celery_app, 'conf')
+        assert hasattr(celery_app, "conf")
         assert celery_app.conf is not None
 
 
-@pytest.mark.skipif(not DATA_COLLECTION_CORE_AVAILABLE, reason="Data collection core module not available")
+@pytest.mark.skipif(
+    not DATA_COLLECTION_CORE_AVAILABLE,
+    reason="Data collection core module not available",
+)
 class TestDataCollectionTaskAdvanced:
     """数据收集任务高级测试"""
 
-    @patch('src.tasks.data_collection_core.DataCollectionOrchestrator')
+    @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     def test_orchestrator_initialization(self, mock_orchestrator):
         """测试：编排器初始化"""
         mock_orch_instance = Mock()
@@ -138,13 +148,13 @@ class TestDataCollectionTaskAdvanced:
         mock_orchestrator.assert_called_once()
         assert task.orchestrator is mock_orch_instance
 
-    @patch('src.tasks.data_collection_core.DatabaseManager')
+    @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_database_manager_none_initially(self, mock_db_manager):
         """测试：初始时数据库管理器为None"""
         task = DataCollectionTask()
         assert task.db_manager is None
 
-    @patch('src.tasks.data_collection_core.DatabaseManager')
+    @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_multiple_set_database_manager_calls(self, mock_db_manager):
         """测试：多次设置数据库管理器"""
         mock_db_instance = Mock()
@@ -179,7 +189,7 @@ class TestDataCollectionTaskAdvanced:
         """测试：失败回调日志记录"""
         task = DataCollectionTask()
 
-        with patch.object(task, 'logger') as mock_logger:
+        with patch.object(task, "logger") as mock_logger:
             exc = Exception("Test error")
             task_id = "test_task_123"
             einfo = Mock()
@@ -193,7 +203,7 @@ class TestDataCollectionTaskAdvanced:
         """测试：成功回调日志记录"""
         task = DataCollectionTask()
 
-        with patch.object(task, 'logger') as mock_logger:
+        with patch.object(task, "logger") as mock_logger:
             retval = {"status": "success"}
             task_id = "test_task_123"
 
@@ -227,11 +237,8 @@ class TestDataCollectionTaskAdvanced:
         # 复杂的返回值
         complex_retval = {
             "data": [1, 2, 3],
-            "metadata": {
-                "timestamp": datetime.now(),
-                "source": "test"
-            },
-            "status": "success"
+            "metadata": {"timestamp": datetime.now(), "source": "test"},
+            "status": "success",
         }
 
         task_id = "test_task_123"
@@ -290,7 +297,7 @@ def test_module_imports():
         from src.tasks.data_collection_core import (
             DataCollectionTask,
             celery_app,
-            logger
+            logger,
         )
 
         assert DataCollectionTask is not None
@@ -302,7 +309,7 @@ def test_module_logger():
     """测试：模块日志记录器"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         assert logger is not None
-        assert 'data_collection_core' in logger.name
+        assert "data_collection_core" in logger.name
 
 
 def test_class_exported():
@@ -310,8 +317,8 @@ def test_class_exported():
     if DATA_COLLECTION_CORE_AVAILABLE:
         import src.tasks.data_collection_core as core_module
 
-        assert hasattr(core_module, 'DataCollectionTask')
-        assert hasattr(core_module, 'celery_app')
+        assert hasattr(core_module, "DataCollectionTask")
+        assert hasattr(core_module, "celery_app")
 
 
 def test_celery_app_isolation():
@@ -324,7 +331,10 @@ def test_celery_app_isolation():
         assert app1 is app2
 
 
-@pytest.mark.skipif(not DATA_COLLECTION_CORE_AVAILABLE, reason="Data collection core module not available")
+@pytest.mark.skipif(
+    not DATA_COLLECTION_CORE_AVAILABLE,
+    reason="Data collection core module not available",
+)
 class TestDataCollectionTaskEdgeCases:
     """数据收集任务边界情况测试"""
 
@@ -348,7 +358,7 @@ class TestDataCollectionTaskEdgeCases:
         for i in range(5):
             collector = Mock()
             collector.set_database_manager = Mock()
-            collectors[f'collector_{i}'] = collector
+            collectors[f"collector_{i}"] = collector
 
         task.orchestrator.collectors = collectors
 
@@ -358,7 +368,7 @@ class TestDataCollectionTaskEdgeCases:
 
         # 验证所有收集器都收到了数据库管理器
         for collector in collectors.values():
-            if hasattr(collector, 'set_database_manager'):
+            if hasattr(collector, "set_database_manager"):
                 collector.set_database_manager.assert_called_with(mock_db_manager)
 
     def test_collector_without_set_database_manager(self):
@@ -369,7 +379,7 @@ class TestDataCollectionTaskEdgeCases:
         collector = Mock()
         del collector.set_database_manager
 
-        task.orchestrator.collectors = {'test_collector': collector}
+        task.orchestrator.collectors = {"test_collector": collector}
 
         # 应该不抛出异常
         mock_db_manager = Mock()

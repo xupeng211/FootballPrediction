@@ -18,6 +18,7 @@ TESTCONTAINERS_AVAILABLE = False
 try:
     from testcontainers.compose import DockerCompose
     from testcontainers.core.waiting_utils import wait_for_logs
+
     TESTCONTAINERS_AVAILABLE = True
 except ImportError:
     print("TestContainers not available, using mock instead")
@@ -31,9 +32,7 @@ class TestPostgreSQLIntegration:
     def postgres_container(self):
         """启动PostgreSQL容器"""
         with DockerCompose(
-            ".",
-            compose_file_name="docker-compose.test.yml",
-            pull=True
+            ".", compose_file_name="docker-compose.test.yml", pull=True
         ) as compose:
             # 等待数据库就绪
             db_port = compose.get_service_port("postgres", 5432)
@@ -45,7 +44,7 @@ class TestPostgreSQLIntegration:
                 "port": db_port,
                 "database": "footballprediction_test",
                 "username": "postgres",
-                "password": "postgres"
+                "password": "postgres",
             }
 
     async def test_postgres_connection(self, postgres_container):
@@ -87,24 +86,28 @@ class TestPostgreSQLIntegration:
         # 测试连接和表创建
         async with db_manager.get_session() as session:
             # 创建测试表
-            await session.execute(text("""
+            await session.execute(
+                text(
+                    """
                 CREATE TABLE test_table (
                     id SERIAL PRIMARY KEY,
                     name VARCHAR(100),
                     created_at TIMESTAMP DEFAULT NOW()
                 )
-            """))
+            """
+                )
+            )
 
             # 插入数据
             await session.execute(
                 text("INSERT INTO test_table (name) VALUES (:name)"),
-                {"name": "test_record"}
+                {"name": "test_record"},
             )
 
             # 查询数据
             result = await session.execute(
                 text("SELECT name FROM test_table WHERE name = :name"),
-                {"name": "test_record"}
+                {"name": "test_record"},
             )
             assert result.scalar() == "test_record"
 
@@ -168,20 +171,14 @@ class TestRedisIntegration:
     def redis_container(self):
         """启动Redis容器"""
         with DockerCompose(
-            ".",
-            compose_file_name="docker-compose.test.yml",
-            pull=True
+            ".", compose_file_name="docker-compose.test.yml", pull=True
         ) as compose:
             # 等待Redis就绪
             redis_port = compose.get_service_port("redis", 6379)
             wait_for_logs(compose, "Ready to accept connections")
             time.sleep(1)
 
-            yield {
-                "host": "localhost",
-                "port": redis_port,
-                "db": 0
-            }
+            yield {"host": "localhost", "port": redis_port, "db": 0}
 
     async def test_redis_connection(self, redis_container):
         """测试：Redis连接"""
@@ -189,9 +186,9 @@ class TestRedisIntegration:
 
         # 创建Redis客户端
         client = redis.Redis(
-            host=redis_container['host'],
-            port=redis_container['port'],
-            db=redis_container['db']
+            host=redis_container["host"],
+            port=redis_container["port"],
+            db=redis_container["db"],
         )
 
         # 测试连接
@@ -210,8 +207,7 @@ class TestRedisIntegration:
 
         # 创建Redis管理器
         redis_manager = RedisManager(
-            host=redis_container['host'],
-            port=redis_container['port']
+            host=redis_container["host"], port=redis_container["port"]
         )
 
         # 测试缓存操作
@@ -233,11 +229,13 @@ class TestWithMockContainers:
 
     async def test_database_connection_mock(self):
         """测试：模拟数据库连接"""
-        with patch('src.database.connection.DatabaseManager') as mock_db:
+        with patch("src.database.connection.DatabaseManager") as mock_db:
             # 设置模拟
             mock_instance = AsyncMock()
             mock_session = AsyncMock()
-            mock_instance.get_session.return_value.__aenter__.return_value = mock_session
+            mock_instance.get_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
             mock_db.return_value = mock_instance
 
             # 测试连接
@@ -248,7 +246,7 @@ class TestWithMockContainers:
 
     async def test_redis_connection_mock(self):
         """测试：模拟Redis连接"""
-        with patch('redis.asyncio.Redis') as mock_redis:
+        with patch("redis.asyncio.Redis") as mock_redis:
             # 设置模拟
             client = AsyncMock()
             client.ping.return_value = True
@@ -257,6 +255,7 @@ class TestWithMockContainers:
 
             # 测试连接
             from redis.asyncio import Redis
+
             redis_client = Redis(host="localhost", port=6379)
             await redis_client.ping()
             value = await redis_client.get("test_key")
@@ -265,18 +264,20 @@ class TestWithMockContainers:
     async def test_full_workflow_mock(self):
         """测试：完整工作流（模拟）"""
         # 模拟数据收集
-        with patch('src.services.data_collection.DataCollectionService') as mock_service:
+        with patch(
+            "src.services.data_collection.DataCollectionService"
+        ) as mock_service:
             service = AsyncMock()
             service.collect_match_data.return_value = {"matches": 10}
             mock_service.return_value = service
 
             # 模拟预测
-            with patch('src.services.prediction.PredictionService') as mock_pred:
+            with patch("src.services.prediction.PredictionService") as mock_pred:
                 pred_service = AsyncMock()
                 pred_service.predict.return_value = {
                     "home_win": 0.5,
                     "draw": 0.3,
-                    "away_win": 0.2
+                    "away_win": 0.2,
                 }
                 mock_pred.return_value = pred_service
 
@@ -291,7 +292,7 @@ class TestWithMockContainers:
 
     async def test_error_handling_mock(self):
         """测试：错误处理（模拟）"""
-        with patch('src.database.connection.DatabaseManager') as mock_db:
+        with patch("src.database.connection.DatabaseManager") as mock_db:
             # 设置模拟抛出异常
             mock_instance = AsyncMock()
             mock_instance.get_session.side_effect = Exception("Connection failed")
@@ -300,7 +301,7 @@ class TestWithMockContainers:
             # 测试错误处理
             db_manager = mock_db("invalid://url")
             try:
-                async with db_manager.get_session() as session:
+                async with db_manager.get_session():
                     pass
                 assert False, "应该抛出异常"
             except Exception as e:
@@ -319,30 +320,26 @@ class TestContainerOrchestration:
         # 检查Docker Compose文件是否存在
         compose_file = "docker-compose.test.yml"
         if os.path.exists(compose_file):
-            with open(compose_file, 'r') as f:
+            with open(compose_file, "r") as f:
                 compose_config = yaml.safe_load(f)
 
             # 验证服务配置
-            assert 'services' in compose_config
-            services = compose_config['services']
+            assert "services" in compose_config
+            services = compose_config["services"]
 
             # 应该有数据库服务
-            assert 'postgres' in services or 'db' in services
+            assert "postgres" in services or "db" in services
 
             # 应该有Redis服务（如果有）
-            if 'redis' in services:
-                redis_config = services['redis']
-                assert 'image' in redis_config
-                assert 'redis' in redis_config['image']
+            if "redis" in services:
+                redis_config = services["redis"]
+                assert "image" in redis_config
+                assert "redis" in redis_config["image"]
 
     async def test_service_health_checks(self):
         """测试：服务健康检查"""
         # 模拟健康检查
-        health_checks = {
-            "database": False,
-            "redis": False,
-            "api": False
-        }
+        health_checks = {"database": False, "redis": False, "api": False}
 
         # 模拟服务就绪
         async def check_service(service_name):
@@ -353,7 +350,7 @@ class TestContainerOrchestration:
         tasks = [
             check_service("database"),
             check_service("redis"),
-            check_service("api")
+            check_service("api"),
         ]
         await asyncio.gather(*tasks)
 
@@ -386,14 +383,12 @@ class TestContainerOrchestration:
     def test_environment_variables(self):
         """测试：环境变量配置"""
         # 检查必要的环境变量
-        required_vars = [
-            "DATABASE_URL",
-            "REDIS_URL"
-        ]
+        required_vars = ["DATABASE_URL", "REDIS_URL"]
 
         # 在测试环境中，这些可能未设置
         # 但代码应该能够处理
         import os
+
         for var in required_vars:
             value = os.environ.get(var)
             # 在测试中可以接受None或使用默认值

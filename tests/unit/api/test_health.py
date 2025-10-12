@@ -14,6 +14,7 @@ from datetime import datetime
 try:
     from src.api.health.utils import HealthChecker
     from src.api.health import router
+
     HEALTH_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -30,10 +31,10 @@ class TestHealthChecker:
         """测试：健康检查器创建"""
         checker = HealthChecker()
         assert checker is not None
-        assert hasattr(checker, 'check_all_services')
-        assert hasattr(checker, 'check_database')
-        assert hasattr(checker, 'check_redis')
-        assert hasattr(checker, 'check_prediction_service')
+        assert hasattr(checker, "check_all_services")
+        assert hasattr(checker, "check_database")
+        assert hasattr(checker, "check_redis")
+        assert hasattr(checker, "check_prediction_service")
 
     async def test_check_all_services(self):
         """测试：检查所有服务"""
@@ -75,13 +76,7 @@ class TestHealthChecker:
     def test_health_check_response_format(self):
         """测试：健康检查响应格式"""
         # 标准健康检查响应格式
-        expected_fields = [
-            "status",
-            "timestamp",
-            "version",
-            "checks",
-            "uptime"
-        ]
+        expected_fields = ["status", "timestamp", "version", "checks", "uptime"]
 
         # 模拟健康检查响应
         health_response = {
@@ -91,9 +86,9 @@ class TestHealthChecker:
             "checks": {
                 "database": "healthy",
                 "redis": "healthy",
-                "prediction_service": "healthy"
+                "prediction_service": "healthy",
             },
-            "uptime": 3600
+            "uptime": 3600,
         }
 
         for field in expected_fields:
@@ -119,6 +114,7 @@ class TestHealthEndpoints:
     def client(self, mock_app):
         """创建测试客户端"""
         from fastapi.testclient import TestClient
+
         return TestClient(mock_app)
 
     def test_health_endpoint_exists(self, client):
@@ -130,7 +126,7 @@ class TestHealthEndpoints:
             "/api/health",
             "/api/health/",
             "/healthz",
-            "/api/healthz"
+            "/api/healthz",
         ]
 
         for path in health_paths:
@@ -183,7 +179,7 @@ class TestHealthCheckerAdvanced:
         dependencies = {
             "database": ["postgresql", "connection_pool"],
             "redis": ["redis_server", "connection_pool"],
-            "prediction_service": ["database", "model_cache"]
+            "prediction_service": ["database", "model_cache"],
         }
 
         for service, deps in dependencies.items():
@@ -198,7 +194,7 @@ class TestHealthCheckerAdvanced:
         checker = HealthChecker()
 
         # 设置短超时时间
-        with patch.object(checker, 'timeout', 0.1):
+        with patch.object(checker, "timeout", 0.1):
             status = await checker.check_all_services()
             assert isinstance(status, dict)
 
@@ -222,11 +218,11 @@ class TestHealthCheckerAdvanced:
 
         # 第一次检查
         status1 = await checker.check_all_services()
-        time1 = status1.get("timestamp")
+        status1.get("timestamp")
 
         # 第二次检查（可能使用缓存）
         status2 = await checker.check_all_services()
-        time2 = status2.get("timestamp")
+        status2.get("timestamp")
 
         assert isinstance(status1, dict)
         assert isinstance(status2, dict)
@@ -239,12 +235,7 @@ class TestHealthCheckerAdvanced:
         report = await checker.check_all_services()
 
         # 验证报告结构
-        required_sections = [
-            "overall_status",
-            "services",
-            "metrics",
-            "last_check"
-        ]
+        required_sections = ["overall_status", "services", "metrics", "last_check"]
 
         # 检查是否有额外信息
         for section in required_sections:
@@ -256,12 +247,6 @@ class TestHealthCheckerAdvanced:
         checker = HealthChecker()
 
         # 模拟指标收集
-        metrics = {
-            "response_time_ms": 50,
-            "uptime_seconds": 3600,
-            "total_checks": 100,
-            "failed_checks": 2
-        }
 
         status = await checker.check_all_services()
         # 在真实环境中，应该包含这些指标
@@ -294,9 +279,9 @@ def test_health_checker_class(self):
     if HEALTH_AVAILABLE:
         from src.api.health.utils import HealthChecker
 
-        assert hasattr(HealthChecker, 'check_all_services')
-        assert hasattr(HealthChecker, 'check_database')
-        assert hasattr(HealthChecker, 'check_redis')
+        assert hasattr(HealthChecker, "check_all_services")
+        assert hasattr(HealthChecker, "check_database")
+        assert hasattr(HealthChecker, "check_redis")
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health check module not available")
@@ -307,7 +292,7 @@ class TestHealthCheckerErrorHandling:
         """测试：数据库连接错误处理"""
         checker = HealthChecker()
 
-        with patch.object(checker, 'check_database') as mock_check:
+        with patch.object(checker, "check_database") as mock_check:
             mock_check.side_effect = Exception("Database connection failed")
 
             try:
@@ -320,7 +305,7 @@ class TestHealthCheckerErrorHandling:
         """测试：Redis连接错误处理"""
         checker = HealthChecker()
 
-        with patch.object(checker, 'check_redis') as mock_check:
+        with patch.object(checker, "check_redis") as mock_check:
             mock_check.side_effect = Exception("Redis connection failed")
 
             try:
@@ -334,8 +319,11 @@ class TestHealthCheckerErrorHandling:
         checker = HealthChecker()
 
         # 模拟一个服务失败，其他正常
-        with patch.object(checker, 'check_database') as mock_db:
-            mock_db.return_value = {"status": "unhealthy", "error": "Connection timeout"}
+        with patch.object(checker, "check_database") as mock_db:
+            mock_db.return_value = {
+                "status": "unhealthy",
+                "error": "Connection timeout",
+            }
 
             status = await checker.check_all_services()
 
@@ -345,7 +333,7 @@ class TestHealthCheckerErrorHandling:
 
     async def test_health_check_timeout_handling(self):
         """测试：健康检查超时处理"""
-        checker = HealthChecker()
+        HealthChecker()
 
         async def slow_check():
             await asyncio.sleep(5)  # 模拟慢速检查
@@ -366,8 +354,8 @@ class TestHealthCheckerErrorHandling:
             "timestamp": datetime.now().isoformat(),
             "checks": {
                 "database": {"status": "healthy"},
-                "redis": {"status": "healthy"}
-            }
+                "redis": {"status": "healthy"},
+            },
         }
 
         # 应该能够序列化为JSON
@@ -383,7 +371,7 @@ class TestHealthCheckerErrorHandling:
         tasks = [
             checker.check_database(),
             checker.check_redis(),
-            checker.check_prediction_service()
+            checker.check_prediction_service(),
         ]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)

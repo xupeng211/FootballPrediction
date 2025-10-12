@@ -217,8 +217,7 @@ class MLModelStrategy(PredictionStrategy):
 
             if self._model is None:
                 prediction_probas = [
-                    self._mock_probabilities(feat.reshape(-1))
-                    for feat in features_list
+                    self._mock_probabilities(feat.reshape(-1)) for feat in features_list
                 ]
             else:
                 try:
@@ -255,8 +254,8 @@ class MLModelStrategy(PredictionStrategy):
 
     def _mock_probabilities(self, feature_vector: np.ndarray) -> List[float]:
         """根据特征向量生成稳定的概率分布"""
-        advantage = float(np.sum(feature_vector[: len(feature_vector)//2])) - float(
-            np.sum(feature_vector[len(feature_vector)//2 :])
+        advantage = float(np.sum(feature_vector[: len(feature_vector) // 2])) - float(
+            np.sum(feature_vector[len(feature_vector) // 2 :])
         )
         base = np.array([0.33, 0.34, 0.33], dtype=float)
 

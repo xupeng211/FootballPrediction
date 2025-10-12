@@ -19,8 +19,9 @@ try:
         example_get_historical_features,
         example_feature_statistics,
         example_batch_feature_extraction,
-        example_feature_validation
+        example_feature_validation,
     )
+
     FEATURE_EXAMPLES_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -35,11 +36,13 @@ except ImportError as e:
     example_feature_validation = None
 
 
-@pytest.mark.skipif(not FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module not available")
+@pytest.mark.skipif(
+    not FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module not available"
+)
 class TestFeatureExamples:
     """特征示例测试"""
 
-    @patch('src.data.features.examples.os.getenv')
+    @patch("src.data.features.examples.os.getenv")
     def test_initialize_feature_store(self, mock_getenv):
         """测试：初始化特征仓库"""
         # 设置环境变量
@@ -48,10 +51,10 @@ class TestFeatureExamples:
             "DB_PORT": "5432",
             "DB_NAME": "football_prediction_dev",
             "DB_READER_USER": "football_reader",
-            "DB_READER_PASSWORD": "password123"
+            "DB_READER_PASSWORD": "password123",
         }.get(key, default)
 
-        with patch('src.data.features.examples.FootballFeatureStore') as mock_store:
+        with patch("src.data.features.examples.FootballFeatureStore") as mock_store:
             mock_instance = Mock()
             mock_store.return_value = mock_instance
 
@@ -64,7 +67,9 @@ class TestFeatureExamples:
     async def test_write_match_features(self):
         """测试：写入比赛特征"""
         if example_write_match_features:
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_get_store.return_value = mock_store
 
@@ -77,12 +82,14 @@ class TestFeatureExamples:
     async def test_get_online_features(self):
         """测试：获取在线特征"""
         if example_get_online_features:
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.get_online_features.return_value = {
                     "team_form": [1, 0, 1, 1, 0],
                     "avg_goals": 1.5,
-                    "home_advantage": 0.3
+                    "home_advantage": 0.3,
                 }
                 mock_get_store.return_value = mock_store
 
@@ -96,14 +103,18 @@ class TestFeatureExamples:
     async def test_get_historical_features(self):
         """测试：获取历史特征"""
         if example_get_historical_features:
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 # 模拟返回DataFrame
-                mock_df = pd.DataFrame({
-                    "match_id": ["1", "2", "3"],
-                    "team_form": [[1, 0, 1], [0, 1, 1], [1, 1, 1]],
-                    "goals_scored": [2, 1, 3]
-                })
+                mock_df = pd.DataFrame(
+                    {
+                        "match_id": ["1", "2", "3"],
+                        "team_form": [[1, 0, 1], [0, 1, 1], [1, 1, 1]],
+                        "goals_scored": [2, 1, 3],
+                    }
+                )
                 mock_store.get_historical_features.return_value = mock_df
                 mock_get_store.return_value = mock_store
 
@@ -112,9 +123,7 @@ class TestFeatureExamples:
                 start_date = end_date - timedelta(days=30)
 
                 features = await example_get_historical_features(
-                    team_id="team_123",
-                    start_date=start_date,
-                    end_date=end_date
+                    team_id="team_123", start_date=start_date, end_date=end_date
                 )
 
                 assert isinstance(features, pd.DataFrame)
@@ -124,15 +133,14 @@ class TestFeatureExamples:
     async def test_feature_statistics(self):
         """测试：特征统计"""
         if example_feature_statistics:
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.get_feature_statistics.return_value = {
                     "total_features": 150,
-                    "feature_types": {
-                        "numerical": 120,
-                        "categorical": 30
-                    },
-                    "last_updated": datetime.now().isoformat()
+                    "feature_types": {"numerical": 120, "categorical": 30},
+                    "last_updated": datetime.now().isoformat(),
                 }
                 mock_get_store.return_value = mock_store
 
@@ -148,7 +156,9 @@ class TestFeatureExamples:
         if example_batch_feature_extraction:
             match_ids = ["match_1", "match_2", "match_3"]
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.batch_extract_features.return_value = {
                     "extracted": 3,
@@ -156,8 +166,8 @@ class TestFeatureExamples:
                     "features": {
                         "match_1": {"goals": 2, "corners": 5},
                         "match_2": {"goals": 1, "corners": 3},
-                        "match_3": {"goals": 0, "corners": 7}
-                    }
+                        "match_3": {"goals": 0, "corners": 7},
+                    },
                 }
                 mock_get_store.return_value = mock_store
 
@@ -175,15 +185,17 @@ class TestFeatureExamples:
                 "team_form": [1, 0, 1, 1, 0],
                 "avg_goals": 1.5,
                 "home_advantage": 0.3,
-                "invalid_feature": None
+                "invalid_feature": None,
             }
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.validate_features.return_value = {
                     "valid": True,
                     "warnings": ["invalid_feature is None"],
-                    "errors": []
+                    "errors": [],
                 }
                 mock_get_store.return_value = mock_store
 
@@ -193,7 +205,9 @@ class TestFeatureExamples:
                 assert len(validation["warnings"]) >= 0
 
 
-@pytest.mark.skipif(FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module should be available")
+@pytest.mark.skipif(
+    FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module should be available"
+)
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -210,7 +224,7 @@ def test_module_imports():
         from src.data.features.examples import (
             example_initialize_feature_store,
             example_write_match_features,
-            example_get_online_features
+            example_get_online_features,
         )
 
         assert example_initialize_feature_store is not None
@@ -218,7 +232,9 @@ def test_module_imports():
         assert example_get_online_features is not None
 
 
-@pytest.mark.skipif(not FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module not available")
+@pytest.mark.skipif(
+    not FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module not available"
+)
 class TestFeatureExamplesAdvanced:
     """特征示例高级测试"""
 
@@ -229,17 +245,19 @@ class TestFeatureExamplesAdvanced:
             "DB_PORT": "5433",
             "DB_NAME": "test_db",
             "DB_READER_USER": "test_user",
-            "DB_READER_PASSWORD": "test_pass"
+            "DB_READER_PASSWORD": "test_pass",
         }
 
-        with patch('src.data.features.examples.os.getenv') as mock_getenv:
-            mock_getenv.side_effect = lambda key, default=None: env_vars.get(key, default)
+        with patch("src.data.features.examples.os.getenv") as mock_getenv:
+            mock_getenv.side_effect = lambda key, default=None: env_vars.get(
+                key, default
+            )
 
-            with patch('src.data.features.examples.FootballFeatureStore') as mock_store:
+            with patch("src.data.features.examples.FootballFeatureStore") as mock_store:
                 mock_instance = Mock()
                 mock_store.return_value = mock_instance
 
-                store = example_initialize_feature_store()
+                example_initialize_feature_store()
 
                 # 验证配置被正确读取
                 mock_store.assert_called_once()
@@ -252,15 +270,19 @@ class TestFeatureExamplesAdvanced:
             features = {
                 "team_form": [1, 1, 0, 1, 1],
                 "goals_scored": 3,
-                "possession": 65.5
+                "possession": 65.5,
             }
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_get_store.return_value = mock_store
 
                 # 写入特征
-                await example_write_match_features(match_id, "team_1", "team_2", features)
+                await example_write_match_features(
+                    match_id, "team_1", "team_2", features
+                )
 
                 # 读取特征
                 mock_store.get_online_features.return_value = features
@@ -276,20 +298,24 @@ class TestFeatureExamplesAdvanced:
             target_date = datetime(2024, 1, 15)
             team_id = "team_123"
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
-                historical_df = pd.DataFrame({
-                    "date": [target_date - timedelta(days=i) for i in range(5)],
-                    "team_id": [team_id] * 5,
-                    "feature_value": [1.0, 1.2, 0.8, 1.5, 1.1]
-                })
+                historical_df = pd.DataFrame(
+                    {
+                        "date": [target_date - timedelta(days=i) for i in range(5)],
+                        "team_id": [team_id] * 5,
+                        "feature_value": [1.0, 1.2, 0.8, 1.5, 1.1],
+                    }
+                )
                 mock_store.get_historical_features.return_value = historical_df
                 mock_get_store.return_value = mock_store
 
                 features = await example_get_historical_features(
                     team_id=team_id,
                     start_date=target_date - timedelta(days=5),
-                    end_date=target_date
+                    end_date=target_date,
                 )
 
                 assert len(features) == 5
@@ -304,18 +330,20 @@ class TestFeatureExamplesAdvanced:
                 "negative_goals": -5,  # 不可能的值
                 "high_percentage": 150,  # 超过100%
                 "empty_list": [],  # 空特征
-                "normal_feature": 1.0
+                "normal_feature": 1.0,
             }
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.validate_features.return_value = {
                     "valid": False,
                     "warnings": ["empty_list is empty"],
                     "errors": [
                         "negative_goals cannot be negative",
-                        "high_percentage cannot exceed 100"
-                    ]
+                        "high_percentage cannot exceed 100",
+                    ],
                 }
                 mock_get_store.return_value = mock_store
 
@@ -330,31 +358,32 @@ class TestFeatureExamplesAdvanced:
         if example_batch_feature_extraction:
             match_ids = ["match_1", "match_2"]
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 # 模拟派生特征
                 derived_features = {
                     "match_1": {
                         "raw_goals": 2,
                         "derived_xg": 1.8,
-                        "derived_form_trend": 0.3
+                        "derived_form_trend": 0.3,
                     },
                     "match_2": {
                         "raw_goals": 1,
                         "derived_xg": 1.2,
-                        "derived_form_trend": -0.1
-                    }
+                        "derived_form_trend": -0.1,
+                    },
                 }
                 mock_store.batch_extract_features.return_value = {
                     "extracted": 2,
                     "failed": 0,
-                    "features": derived_features
+                    "features": derived_features,
                 }
                 mock_get_store.return_value = mock_store
 
                 results = await example_batch_feature_extraction(
-                    match_ids,
-                    derive_features=True
+                    match_ids, derive_features=True
                 )
 
                 assert results["extracted"] == 2
@@ -369,12 +398,11 @@ class TestFeatureExamplesAdvanced:
         if example_get_online_features:
             match_id = "cached_match"
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
-                cached_features = {
-                    "team_form": [1, 0, 1],
-                    "cached": True
-                }
+                cached_features = {"team_form": [1, 0, 1], "cached": True}
                 mock_store.get_online_features.return_value = cached_features
                 mock_get_store.return_value = mock_store
 
@@ -390,20 +418,15 @@ class TestFeatureExamplesAdvanced:
     async def test_feature_monitoring(self):
         """测试：特征监控"""
         if example_feature_statistics:
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.get_feature_statistics.return_value = {
                     "total_features": 1000,
-                    "feature_health": {
-                        "healthy": 950,
-                        "stale": 30,
-                        "missing": 20
-                    },
-                    "update_frequency": {
-                        "avg_seconds": 60,
-                        "max_seconds": 300
-                    },
-                    "last_updated": datetime.now().isoformat()
+                    "feature_health": {"healthy": 950, "stale": 30, "missing": 20},
+                    "update_frequency": {"avg_seconds": 60, "max_seconds": 300},
+                    "last_updated": datetime.now().isoformat(),
                 }
                 mock_get_store.return_value = mock_store
 
@@ -419,19 +442,22 @@ class TestFeatureExamplesAdvanced:
         if example_batch_feature_extraction:
             match_ids = [f"match_{i}" for i in range(10)]
 
-            with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+            with patch(
+                "src.data.features.examples.get_feature_store"
+            ) as mock_get_store:
                 mock_store = AsyncMock()
                 mock_store.batch_extract_features.return_value = {
                     "extracted": len(match_ids),
                     "failed": 0,
-                    "features": {mid: {"extracted": True} for mid in match_ids}
+                    "features": {mid: {"extracted": True} for mid in match_ids},
                 }
                 mock_get_store.return_value = mock_store
 
                 # 并发执行
                 import asyncio
+
                 tasks = [
-                    example_batch_feature_extraction(match_ids[i:i+3])
+                    example_batch_feature_extraction(match_ids[i : i + 3])
                     for i in range(0, len(match_ids), 3)
                 ]
                 results = await asyncio.gather(*tasks)
@@ -449,36 +475,38 @@ class TestFeatureExamplesAdvanced:
                 "field_types": {
                     "team_form": list,
                     "goals_scored": int,
-                    "possession": float
+                    "possession": float,
                 },
                 "value_constraints": {
                     "goals_scored": {"min": 0},
-                    "possession": {"min": 0, "max": 100}
-                }
+                    "possession": {"min": 0, "max": 100},
+                },
             }
 
             valid_features = {
                 "team_form": [1, 0, 1],
                 "goals_scored": 2,
-                "possession": 65.5
+                "possession": 65.5,
             }
 
             async def test_validation():
-                with patch('src.data.features.examples.get_feature_store') as mock_get_store:
+                with patch(
+                    "src.data.features.examples.get_feature_store"
+                ) as mock_get_store:
                     mock_store = AsyncMock()
                     mock_store.validate_features.return_value = {
                         "valid": True,
                         "schema": valid_schema,
-                        "errors": []
+                        "errors": [],
                     }
                     mock_get_store.return_value = mock_store
 
                     result = await example_feature_validation(
-                        valid_features,
-                        schema=valid_schema
+                        valid_features, schema=valid_schema
                     )
                     assert result["valid"] is True
 
             # 运行异步测试
             import asyncio
+
             asyncio.run(test_validation())

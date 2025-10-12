@@ -15,6 +15,7 @@ from fastapi import FastAPI
 try:
     from src.api.health import router
     from src.api.health import _check_database
+
     HEALTH_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -42,7 +43,7 @@ class TestHealthCheck:
     def test_router_exists(self):
         """测试：路由器存在"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
     def test_check_database_function(self):
         """测试：数据库检查函数"""
@@ -125,7 +126,7 @@ class TestHealthCheckMocked:
 
     def test_health_check_with_unhealthy_database(self):
         """测试：数据库不健康时的整体状态"""
-        with patch('src.api.health._check_database') as mock_check:
+        with patch("src.api.health._check_database") as mock_check:
             mock_check.return_value = {"status": "unhealthy", "latency_ms": 1000}
 
             # 创建测试应用
@@ -142,8 +143,11 @@ class TestHealthCheckMocked:
 
     def test_readiness_check_with_unhealthy_database(self):
         """测试：数据库不健康时的就绪状态"""
-        with patch('src.api.health._check_database') as mock_check:
-            mock_check.return_value = {"status": "unhealthy", "error": "Connection timeout"}
+        with patch("src.api.health._check_database") as mock_check:
+            mock_check.return_value = {
+                "status": "unhealthy",
+                "error": "Connection timeout",
+            }
 
             app = FastAPI()
             app.include_router(router, prefix="/health")
@@ -192,7 +196,7 @@ class TestHealthCheckIntegration:
             "/health/",
             "/health/liveness",
             "/health/readiness",
-            "/health/detailed"
+            "/health/detailed",
         ]
 
         for endpoint in endpoints:
@@ -264,12 +268,7 @@ def test_router_routes():
     """测试：路由器路由"""
     if HEALTH_AVAILABLE:
         routes = [route.path for route in router.routes]
-        expected_routes = [
-            "/",
-            "/liveness",
-            "/readiness",
-            "/detailed"
-        ]
+        expected_routes = ["/", "/liveness", "/readiness", "/detailed"]
 
         for route in expected_routes:
             assert route in routes, f"Missing route: {route}"
@@ -280,7 +279,12 @@ async def test_async_endpoints():
     """测试：异步端点"""
     if HEALTH_AVAILABLE:
         # 直接调用端点函数
-        from src.api.health import health_check, liveness_check, readiness_check, detailed_health
+        from src.api.health import (
+            health_check,
+            liveness_check,
+            readiness_check,
+            detailed_health,
+        )
 
         # 测试health_check
         result = await health_check()
