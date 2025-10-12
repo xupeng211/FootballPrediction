@@ -1,0 +1,56 @@
+# Phase 7: AI Coverage Improvement
+name: Phase 7 - AI Coverage Improvement
+
+on:
+  schedule:
+    # 每天UTC 02:00运行（北京时间10:00）
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: 'Number of modules to process'
+        required: false
+        default: '10'
+
+jobs:
+  ai-coverage-improvement:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        make install
+        make env-check
+
+    - name: Run Phase 7
+      run: |
+        chmod +x scripts/run_phase7.sh
+        scripts/run_phase7.sh
+
+    - name: Upload Coverage
+      uses: actions/upload-artifact@v3
+      with:
+        name: phase7-coverage-${{ github.run_number }}
+        path: |
+          coverage.json
+          htmlcov/
+          docs/_reports/
+
+    - name: Coverage Badge
+      uses: tj-actions/coverage-badge-py@v2
+      with:
+        output: coverage-badge.svg
+
+    - name: Update Badge
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-badge
+        path: coverage-badge.svg

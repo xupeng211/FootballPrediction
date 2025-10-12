@@ -7,12 +7,14 @@ import sys
 import os
 import subprocess
 
+
 def test_db_connection():
     """测试数据库连接是否被正确Mock"""
 
     # 运行一个测试数据库连接的脚本
     cmd = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         """
 import sys
 sys.path.insert(0, 'tests')
@@ -44,7 +46,7 @@ async def test_connection():
 # 运行测试
 asyncio.run(test_connection())
 print("\\n✅ 数据库Mock测试通过！")
-"""
+""",
     ]
 
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -60,25 +62,33 @@ print("\\n✅ 数据库Mock测试通过！")
 def test_api_connection():
     """测试API是否可以运行而不超时"""
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("测试API端点（无超时）...")
 
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 使用pytest运行一个简单的API测试
     cmd = [
-        'pytest', 'tests/unit/api/test_health.py::test_health_check',
-        '-v', '--disable-warnings', '--tb=short', '--timeout=5'
+        "pytest",
+        "tests/unit/api/test_health.py::test_health_check",
+        "-v",
+        "--disable-warnings",
+        "--tb=short",
+        "--timeout=5",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=30, env=env
+        )
 
         # 检查是否有超时错误
         output = result.stdout + result.stderr
-        has_timeout = any(err in output.lower() for err in ['timeout', 'time out', '超时'])
+        has_timeout = any(
+            err in output.lower() for err in ["timeout", "time out", "超时"]
+        )
 
         if has_timeout:
             print("⚠️  检测到超时错误")

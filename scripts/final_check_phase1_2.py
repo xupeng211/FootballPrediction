@@ -28,7 +28,14 @@ def check_phase1():
         return False
 
     # 测试能否收集测试
-    cmd = ["pytest", "--collect-only", "-p", "no:warnings", "-q", "tests/unit/core/test_logger.py"]
+    cmd = [
+        "pytest",
+        "--collect-only",
+        "-p",
+        "no:warnings",
+        "-q",
+        "tests/unit/core/test_logger.py",
+    ]
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if "tests collected" in result.stdout:
@@ -53,7 +60,6 @@ def check_phase2():
     ]
 
     total_skipped = 0
-    all_pass = True
 
     for name, test_file in test_dirs:
         try:
@@ -70,11 +76,10 @@ def check_phase2():
             total_skipped += skipped
 
             if skipped > 0 and name in ["API", "Core"]:
-                all_pass = False
+                pass
 
         except Exception as e:
             print(f"✗ {name}: 测试失败 - {e}")
-            all_pass = False
 
     print(f"\n总计跳过: {total_skipped}")
 
@@ -82,7 +87,7 @@ def check_phase2():
         print("✅ Phase 2 目标达成：skipped < 100")
         return True
     else:
-        print(f"✗ Phase 2 目标未达成：skipped >= 100")
+        print("✗ Phase 2 目标未达成：skipped >= 100")
         return False
 
 

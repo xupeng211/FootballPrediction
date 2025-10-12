@@ -7,10 +7,11 @@ import sys
 from unittest.mock import Mock, MagicMock, patch
 
 # 确保模块可以导入
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 try:
     from src.core.di import DIContainer, get_container, register_service
+
     DI_AVAILABLE = True
 except ImportError:
     DI_AVAILABLE = False
@@ -23,6 +24,7 @@ class TestDIModule:
     def test_di_imports(self):
         """测试DI模块导入"""
         from src.core import di
+
         assert di is not None
 
     def test_container_creation(self):
@@ -40,10 +42,10 @@ class TestDIModule:
                 self.value = "test"
 
         # 注册服务
-        container.register('test_service', TestService)
+        container.register("test_service", TestService)
 
         # 验证服务已注册
-        assert container.is_registered('test_service')
+        assert container.is_registered("test_service")
 
     def test_container_get_service(self):
         """测试获取服务"""
@@ -53,10 +55,10 @@ class TestDIModule:
             def __init__(self):
                 self.value = "test"
 
-        container.register('test_service', TestService)
+        container.register("test_service", TestService)
 
         # 获取服务
-        service = container.get('test_service')
+        service = container.get("test_service")
         assert service is not None
         assert service.value == "test"
 
@@ -68,11 +70,11 @@ class TestDIModule:
             def __init__(self):
                 self.value = "test"
 
-        container.register('test_service', TestService, singleton=True)
+        container.register("test_service", TestService, singleton=True)
 
         # 获取两次应该是同一个实例
-        service1 = container.get('test_service')
-        service2 = container.get('test_service')
+        service1 = container.get("test_service")
+        service2 = container.get("test_service")
 
         assert service1 is service2
 
@@ -84,14 +86,15 @@ class TestDIModule:
 
     def test_register_service_decorator(self):
         """测试服务注册装饰器"""
-        @register_service('decorated_service')
+
+        @register_service("decorated_service")
         class DecoratedService:
             def __init__(self):
                 self.name = "decorated"
 
         # 验证服务已注册到全局容器
         container = get_container()
-        service = container.get('decorated_service')
+        service = container.get("decorated_service")
         assert service is not None
         assert service.name == "decorated"
 
@@ -109,11 +112,11 @@ class TestDIModule:
                 self.name = "ServiceB"
 
         # 注册服务
-        container.register('service_a', ServiceA)
-        container.register('service_b', ServiceB)
+        container.register("service_a", ServiceA)
+        container.register("service_b", ServiceB)
 
         # 获取ServiceB，应该自动注入ServiceA
-        service_b = container.get('service_b')
+        service_b = container.get("service_b")
         assert service_b is not None
         assert service_b.service_a is not None
         assert service_b.service_a.name == "ServiceA"
@@ -125,23 +128,23 @@ class TestDIModule:
         class TestService:
             pass
 
-        container.register('test_service', TestService)
-        assert container.is_registered('test_service')
+        container.register("test_service", TestService)
+        assert container.is_registered("test_service")
 
         # 清空容器
         container.clear()
-        assert not container.is_registered('test_service')
+        assert not container.is_registered("test_service")
 
     def test_container_has_method(self):
         """测试has方法"""
         container = DIContainer()
 
         # 未注册的服务
-        assert not container.has('non_existent')
+        assert not container.has("non_existent")
 
         # 注册服务后
         class TestService:
             pass
 
-        container.register('test_service', TestService)
-        assert container.has('test_service')
+        container.register("test_service", TestService)
+        assert container.has("test_service")

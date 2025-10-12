@@ -18,11 +18,14 @@ sys.modules["src.database.connection"] = MagicMock()
 mock_db_manager = MagicMock()
 mock_db_manager.get_async_session.return_value.__aenter__.return_value = AsyncMock()
 mock_db_manager.get_session.return_value.__enter__.return_value = MagicMock()
-sys.modules["src.database.connection"].DatabaseManager = MagicMock(return_value=mock_db_manager)
+sys.modules["src.database.connection"].DatabaseManager = MagicMock(
+    return_value=mock_db_manager
+)
 
 # Mock Redis
 try:
     import redis
+
     mock_redis_client = MagicMock()
     mock_redis_client.ping.return_value = True
     mock_redis_client.get.return_value = None
@@ -30,8 +33,10 @@ try:
     mock_redis_client.exists.return_value = False
 
     original_redis = redis.Redis
+
     def mock_redis_init(*args, **kwargs):
         return mock_redis_client
+
     redis.Redis = mock_redis_init
 except ImportError:
     pass

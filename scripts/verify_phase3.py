@@ -49,7 +49,7 @@ def main():
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=60  # 60秒超时
+                timeout=60,  # 60秒超时
             )
 
             output = result.stdout + result.stderr
@@ -63,9 +63,11 @@ def main():
             # 检查是否有超时
             if "timeout" in output.lower() or "TIMEOUT" in output:
                 timeout_count += 1
-                print(f"  ⚠️  超时")
+                print("  ⚠️  超时")
             else:
-                print(f"  通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}")
+                print(
+                    f"  通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}"
+                )
 
             total_tests += passed + failed + errors + skipped
             total_passed += passed
@@ -74,7 +76,7 @@ def main():
             total_skipped += skipped
 
         except subprocess.TimeoutExpired:
-            print(f"  ⚠️  测试超时")
+            print("  ⚠️  测试超时")
             timeout_count += 1
         except Exception as e:
             print(f"  ✗️  执行错误: {e}")
@@ -99,7 +101,7 @@ def main():
             cmd,
             capture_output=True,
             text=True,
-            timeout=120  # 2分钟超时
+            timeout=120,  # 2分钟超时
         )
 
         output = result.stdout + result.stderr
@@ -110,7 +112,7 @@ def main():
         errors = len(re.findall(r"ERROR", output))
         skipped = len(re.findall(r"SKIPPED", output))
 
-        print(f"\n批量测试结果:")
+        print("\n批量测试结果:")
         print(f"  通过: {passed}")
         print(f"  失败: {failed}")
         print(f"  错误: {errors}")
@@ -123,7 +125,9 @@ def main():
     print("\n" + "=" * 60)
     print("Phase 3 验证结果:")
     print(f"  超时测试数: {timeout_count}")
-    print(f"  样本测试: 总计={total_tests}, 通过={total_passed}, 失败={total_failed}, 错误={total_errors}, 跳过={total_skipped}")
+    print(
+        f"  样本测试: 总计={total_tests}, 通过={total_passed}, 失败={total_failed}, 错误={total_errors}, 跳过={total_skipped}"
+    )
 
     # 评估结果
     if timeout_count == 0:

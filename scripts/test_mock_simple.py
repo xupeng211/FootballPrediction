@@ -8,17 +8,19 @@ import os
 import subprocess
 import time
 
+
 def test_mock():
     """测试Mock是否生效"""
 
     # 设置环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 运行一个简单的测试
     cmd = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         """
 import sys
 import os
@@ -55,7 +57,7 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     sys.exit(1)
-"""
+""",
     ]
 
     result = subprocess.run(cmd, env=env, capture_output=True, text=True)

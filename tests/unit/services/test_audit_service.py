@@ -574,14 +574,3 @@ class TestAuditLogSummary:
         assert summary.total_logs == 100
         assert summary.by_severity["low"] == 50
         assert summary.by_action["create"] == 40
-
-
-# 如果模块不可用，添加一个占位测试
-@pytest.mark.skipif(True, reason="Module not available")
-class TestModuleNotAvailable:
-    """模块不可用时的占位测试"""
-
-    def test_module_import_error(self):
-        """测试：模块导入错误"""
-        assert not AUDIT_AVAILABLE
-        assert True  # 表明测试意识到模块不可用
