@@ -7,11 +7,12 @@ import sys
 from unittest.mock import Mock, patch, MagicMock
 
 # 确保模块可以导入
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 try:
     from src.api import health
     from src.api.health import router
+
     HEALTH_AVAILABLE = True
 except ImportError:
     HEALTH_AVAILABLE = False
@@ -25,7 +26,7 @@ class TestHealthModule:
         """测试模块导入"""
         assert health is not None
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
     def test_health_router_exists(self):
         """测试健康路由器存在"""
@@ -42,7 +43,7 @@ class TestHealthModule:
         # 但至少应该有响应
         assert response.status_code in [200, 404, 500]
 
-    @patch('src.api.health.health_checker')
+    @patch("src.api.health.health_checker")
     def test_health_endpoint(self, mock_health_checker):
         """测试健康检查端点"""
         # Mock健康检查器
@@ -50,7 +51,7 @@ class TestHealthModule:
         mock_checker.check_all_services.return_value = {
             "status": "healthy",
             "database": "ok",
-            "redis": "ok"
+            "redis": "ok",
         }
         mock_health_checker.HealthChecker.return_value = mock_checker
 
@@ -58,7 +59,7 @@ class TestHealthModule:
         from src.api.health import get_health_status
 
         # 如果函数存在，调用它
-        if hasattr(health, 'get_health_status'):
+        if hasattr(health, "get_health_status"):
             result = get_health_status()
             assert isinstance(result, dict)
 
@@ -69,4 +70,4 @@ class TestHealthModule:
 
         # 检查是否有健康检查路由
         route_paths = [route.path for route in routes]
-        assert '/' in route_paths or '/health' in route_paths
+        assert "/" in route_paths or "/health" in route_paths

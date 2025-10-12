@@ -36,8 +36,8 @@ def verify_coverage_config():
 
             # 检查 omit 配置
             omit_patterns = []
-            for line in config.split('\n'):
-                if line.strip().startswith('*/'):
+            for line in config.split("\n"):
+                if line.strip().startswith("*/"):
                     omit_patterns.append(line.strip())
 
             if omit_patterns:
@@ -49,20 +49,23 @@ def verify_coverage_config():
     # 2. 运行覆盖率测试
     print("\n2. 运行覆盖率测试...")
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 运行一个小的覆盖率测试
     cmd = [
-        "pytest", "tests/unit/core/test_logger.py",
+        "pytest",
+        "tests/unit/core/test_logger.py",
         "--cov=src",
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov_phase4",
-        "--disable-warnings"
+        "--disable-warnings",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, env=env
+        )
         output = result.stdout
 
         # 3. 分析覆盖率报告
@@ -75,7 +78,7 @@ def verify_coverage_config():
             total_missing = int(total_match.group(2))
             total_percent = int(total_match.group(3))
 
-            print(f"\n覆盖率统计:")
+            print("\n覆盖率统计:")
             print(f"  总语句数: {total_statements}")
             print(f"  未覆盖: {total_missing}")
             print(f"  覆盖率: {total_percent}%")
@@ -86,7 +89,7 @@ def verify_coverage_config():
             if module in output:
                 modules_found.append(module)
 
-        print(f"\n核心模块在报告中:")
+        print("\n核心模块在报告中:")
         for module in modules_found:
             print(f"  ✓ {module}")
 

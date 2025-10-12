@@ -18,21 +18,29 @@ def analyze_failed_tests():
 
     # 运行测试并收集失败信息
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     cmd = [
-        "pytest", "-v", "--disable-warnings", "--tb=short",
-        "--json-report", "--json-report-file=test_results.json"
+        "pytest",
+        "-v",
+        "--disable-warnings",
+        "--tb=short",
+        "--json-report",
+        "--json-report-file=test_results.json",
     ]
 
     try:
         # 检查是否安装了 pytest-json-report
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, env=env
+        )
     except:
         # 如果没有安装，使用普通方式
         cmd = ["pytest", "-v", "--disable-warnings", "--tb=short"]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, env=env
+        )
 
     output = result.stdout + result.stderr
 
@@ -40,7 +48,7 @@ def analyze_failed_tests():
     failed_tests = []
     error_tests = []
 
-    lines = output.split('\n')
+    lines = output.split("\n")
     for line in lines:
         if "FAILED" in line and "::" in line:
             failed_tests.append(line.strip())
@@ -64,19 +72,17 @@ def analyze_skipped_tests():
     print("-" * 60)
 
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
-    cmd = [
-        "pytest", "-v", "--disable-warnings", "--rs", "-q"
-    ]
+    cmd = ["pytest", "-v", "--disable-warnings", "--rs", "-q"]
 
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=180, env=env)
     output = result.stdout + result.stderr
 
     # 收集 skipped 测试及原因
     skipped_tests = []
-    lines = output.split('\n')
+    lines = output.split("\n")
 
     for i, line in enumerate(lines):
         if "SKIPPED" in line and "::" in line:
@@ -87,22 +93,19 @@ def analyze_skipped_tests():
                 if next_line.startswith("[") and "skip" in next_line.lower():
                     skip_reason = next_line
 
-            skipped_tests.append({
-                'test': line.strip(),
-                'reason': skip_reason
-            })
+            skipped_tests.append({"test": line.strip(), "reason": skip_reason})
 
     print(f"\n发现 {len(skipped_tests)} 个 skipped 测试:")
 
     # 分类
     placeholder_tests = []  # 占位测试
-    dependency_tests = []   # 依赖缺失
-    other_tests = []        # 其他原因
+    dependency_tests = []  # 依赖缺失
+    other_tests = []  # 其他原因
 
     for test in skipped_tests:
-        if "placeholder" in test['reason'].lower() or "占位" in test['reason']:
+        if "placeholder" in test["reason"].lower() or "占位" in test["reason"]:
             placeholder_tests.append(test)
-        elif "not available" in test['reason'].lower() or "不可用" in test['reason']:
+        elif "not available" in test["reason"].lower() or "不可用" in test["reason"]:
             dependency_tests.append(test)
         else:
             other_tests.append(test)
@@ -120,11 +123,11 @@ def analyze_skipped_tests():
         print(f"    - {test['test']}")
 
     return {
-        'total': len(skipped_tests),
-        'placeholder': len(placeholder_tests),
-        'dependency': len(dependency_tests),
-        'other': len(other_tests),
-        'details': skipped_tests
+        "total": len(skipped_tests),
+        "placeholder": len(placeholder_tests),
+        "dependency": len(dependency_tests),
+        "other": len(other_tests),
+        "details": skipped_tests,
     }
 
 
@@ -134,22 +137,24 @@ def generate_coverage_report():
     print("-" * 60)
 
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 创建覆盖率报告目录
     os.makedirs("htmlcov", exist_ok=True)
     os.makedirs("docs/_reports", exist_ok=True)
 
     cmd = [
-        "pytest", "--cov=src", "--cov-report=html",
-        "--cov-report=term-missing", "--cov-report=json",
-        "--disable-warnings"
+        "pytest",
+        "--cov=src",
+        "--cov-report=html",
+        "--cov-report=term-missing",
+        "--cov-report=json",
+        "--disable-warnings",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
-        output = result.stdout
+        subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
 
         # 解析覆盖率数据
         if os.path.exists("coverage.json"):
@@ -160,31 +165,35 @@ def generate_coverage_report():
             zero_coverage_modules = []
             low_coverage_modules = []
 
-            for file_path, file_data in coverage_data['files'].items():
-                if file_path.startswith('src/'):
-                    coverage_percent = file_data['summary']['percent_covered']
-                    module_name = file_path.replace('src/', '').replace('.py', '')
+            for file_path, file_data in coverage_data["files"].items():
+                if file_path.startswith("src/"):
+                    coverage_percent = file_data["summary"]["percent_covered"]
+                    module_name = file_path.replace("src/", "").replace(".py", "")
 
                     if coverage_percent == 0:
-                        zero_coverage_modules.append({
-                            'module': module_name,
-                            'path': file_path,
-                            'statements': file_data['summary']['num_statements']
-                        })
+                        zero_coverage_modules.append(
+                            {
+                                "module": module_name,
+                                "path": file_path,
+                                "statements": file_data["summary"]["num_statements"],
+                            }
+                        )
                     elif coverage_percent < 30:
-                        low_coverage_modules.append({
-                            'module': module_name,
-                            'path': file_path,
-                            'coverage': coverage_percent,
-                            'statements': file_data['summary']['num_statements']
-                        })
+                        low_coverage_modules.append(
+                            {
+                                "module": module_name,
+                                "path": file_path,
+                                "coverage": coverage_percent,
+                                "statements": file_data["summary"]["num_statements"],
+                            }
+                        )
 
             # 提取总体覆盖率
-            total_coverage = coverage_data['totals']['percent_covered']
-            total_statements = coverage_data['totals']['num_statements']
-            total_missing = coverage_data['totals']['missing_lines']
+            total_coverage = coverage_data["totals"]["percent_covered"]
+            total_statements = coverage_data["totals"]["num_statements"]
+            total_missing = coverage_data["totals"]["missing_lines"]
 
-            print(f"\n覆盖率统计:")
+            print("\n覆盖率统计:")
             print(f"  总覆盖率: {total_coverage:.1f}%")
             print(f"  总语句数: {total_statements}")
             print(f"  未覆盖: {total_missing}")
@@ -192,10 +201,10 @@ def generate_coverage_report():
             print(f"  低覆盖率模块(<30%): {len(low_coverage_modules)}")
 
             return {
-                'total_coverage': total_coverage,
-                'zero_coverage': zero_coverage_modules,
-                'low_coverage': low_coverage_modules,
-                'total_statements': total_statements
+                "total_coverage": total_coverage,
+                "zero_coverage": zero_coverage_modules,
+                "low_coverage": low_coverage_modules,
+                "total_statements": total_statements,
             }
 
         else:
@@ -258,16 +267,16 @@ def create_improvement_plan(coverage_data, failed_tests, skipped_data):
 """
 
     # 添加0%覆盖率模块
-    for i, module in enumerate(coverage_data['zero_coverage'][:10], 1):
+    for i, module in enumerate(coverage_data["zero_coverage"][:10], 1):
         plan_content += f"{i}. **{module['module']}** ({module['statements']} 语句)\n"
         plan_content += "   - 需要创建测试文件\n"
         plan_content += "   - 优先级: 高\n\n"
 
     # 添加低覆盖率模块
-    if coverage_data['low_coverage']:
+    if coverage_data["low_coverage"]:
         plan_content += "## 📈 低覆盖率模块 (<30%)\n\n"
 
-        for i, module in enumerate(coverage_data['low_coverage'][:10], 1):
+        for i, module in enumerate(coverage_data["low_coverage"][:10], 1):
             plan_content += f"{i}. **{module['module']}** - {module['coverage']:.1f}%\n"
             plan_content += f"   - 路径: {module['path']}\n"
             plan_content += f"   - 语句数: {module['statements']}\n"

@@ -221,3 +221,64 @@ def sample_prediction_data():
         "away_win_probability": 0.25,
         "confidence_score": 0.75,
     }
+
+
+"""
+健康检查测试的 fixtures
+"""
+
+import pytest
+from unittest.mock import Mock, AsyncMock
+
+
+@pytest.fixture
+def mock_health_checker():
+    """Mock 健康检查器"""
+    checker = Mock()
+
+    # Mock 基本方法
+    checker.check_all_services = AsyncMock(
+        return_value={
+            "status": "healthy",
+            "checks": {
+                "database": {"status": "healthy", "response_time": 0.001},
+                "redis": {"status": "healthy", "response_time": 0.0005},
+                "prediction_service": {"status": "healthy", "response_time": 0.01},
+            },
+            "timestamp": "2025-01-12T10:00:00Z",
+        }
+    )
+
+    checker.check_database = AsyncMock(
+        return_value={"status": "healthy", "response_time": 0.001}
+    )
+
+    checker.check_redis = AsyncMock(
+        return_value={"status": "healthy", "response_time": 0.0005}
+    )
+
+    checker.check_prediction_service = AsyncMock(
+        return_value={"status": "healthy", "response_time": 0.01}
+    )
+
+    return checker
+
+
+@pytest.fixture
+def mock_unhealthy_services():
+    """Mock 不健康的服务状态"""
+    return {
+        "database": {"status": "unhealthy", "error": "Connection timeout"},
+        "redis": {"status": "degraded", "response_time": 0.5},
+        "prediction_service": {"status": "healthy", "response_time": 0.01},
+    }
+
+
+@pytest.fixture
+def mock_service_dependencies():
+    """Mock 服务依赖"""
+    return {
+        "prediction_service": ["database", "model_loader"],
+        "database": [],
+        "redis": [],
+    }

@@ -19,13 +19,14 @@ def run_tests():
 
     # 设置环境
     env = os.environ.copy()
-    env['PYTHONPATH'] = 'tests:src'
-    env['TESTING'] = 'true'
+    env["PYTHONPATH"] = "tests:src"
+    env["TESTING"] = "true"
 
     # 测试1：简单的API健康检查
     print("\n1. 测试API健康检查...")
     cmd1 = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         """
 import sys
 sys.path.insert(0, 'tests')
@@ -51,7 +52,7 @@ except Exception as e:
     sys.exit(1)
 
 print("✓ API测试通过")
-"""
+""",
     ]
 
     result1 = subprocess.run(cmd1, env=env, capture_output=True, text=True, timeout=30)
@@ -64,7 +65,8 @@ print("✓ API测试通过")
     # 测试2：数据库连接（Mock）
     print("\n2. 测试数据库连接（Mock）...")
     cmd2 = [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         """
 import sys
 sys.path.insert(0, 'tests')
@@ -87,7 +89,7 @@ except Exception as e:
     import traceback
     traceback.print_exc()
     sys.exit(1)
-"""
+""",
     ]
 
     result2 = subprocess.run(cmd2, env=env, capture_output=True, text=True, timeout=30)
@@ -100,21 +102,29 @@ except Exception as e:
     # 测试3：运行实际的pytest（不使用timeout参数）
     print("\n3. 运行pytest测试...")
     cmd3 = [
-        "pytest", "tests/unit/core/test_logger.py",
-        "-v", "--disable-warnings", "--tb=short", "-x"
+        "pytest",
+        "tests/unit/core/test_logger.py",
+        "-v",
+        "--disable-warnings",
+        "--tb=short",
+        "-x",
     ]
 
     try:
-        result3 = subprocess.run(cmd3, env=env, capture_output=True, text=True, timeout=60)
+        result3 = subprocess.run(
+            cmd3, env=env, capture_output=True, text=True, timeout=60
+        )
         output = result3.stdout + result3.stderr
 
         # 检查是否有通过
         has_passed = "PASSED" in output
         has_errors = "ERROR" in output
         has_failures = "FAILED" in output
-        has_timeout = any(err in output.lower() for err in ['timeout', 'time out', '超时'])
+        has_timeout = any(
+            err in output.lower() for err in ["timeout", "time out", "超时"]
+        )
 
-        print(f"输出摘要:")
+        print("输出摘要:")
         print(f"  有通过的测试: {'是' if has_passed else '否'}")
         print(f"  有错误: {'是' if has_errors else '否'}")
         print(f"  有失败: {'是' if has_failures else '否'}")
