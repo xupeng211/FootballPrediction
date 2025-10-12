@@ -59,7 +59,7 @@ make coverage-fast    # 快速覆盖率检查（仅单元测试）
 make coverage-local   # 本地覆盖率检查（16%阈值）
 ```
 
-#### 单个测试运行
+#### 单个测试运行（基于 Cursor 测试规范）
 ```bash
 # 运行特定测试文件
 pytest tests/unit/test_specific.py -v
@@ -272,24 +272,34 @@ tests/
   - API测试: `make test-api`（所有API端点）
   - 单元测试: `make test-unit`（仅单元测试）
 
-## 开发工作流程
+## 新开发者快速上手
 
-### 快速开始（新开发者）
+### 🎯 必读文档（按优先级）
+1. **本文档**：了解开发命令和架构
+2. **[.claude-preferences.md](/.claude-preferences.md)**：理解用户开发哲学和渐进式改进理念
+3. **[测试运行指南](TEST_RUN_GUIDE.md)**：学习正确的测试方法
+4. **[架构文档](docs/architecture.md)**：深入理解系统架构
+
+### 🚀 5分钟快速设置
 ```bash
-# 1. 克隆项目
-git clone <repository-url>
-cd FootballPrediction
+# 1. 环境检查
+make env-check        # 确认 Python 环境健康
 
-# 2. 一键设置环境
-make dev-setup      # 创建虚拟环境、安装依赖、加载上下文
+# 2. 安装依赖
+make install          # 从锁文件安装依赖
 
-# 3. 验证环境
-make test-quick     # 运行快速测试
-make env-check      # 检查环境健康
+# 3. 加载上下文
+make context          # 加载项目上下文到 AI 助手
 
-# 4. 启动服务（可选）
-make up             # 启动 Docker 服务（PostgreSQL、Redis）
+# 4. 验证环境
+make test-quick       # 快速测试（60秒内完成）
 ```
+
+### 📋 日常开发流程
+1. **开发前**：`make context && make env-check`
+2. **开发中**：每 10-15 分钟运行 `make test-quick`
+3. **提交前**：`make fmt && make lint && make prepush`
+4. **推送前**：`./scripts/ci-verify.sh`（完整 CI 验证）
 
 ### 日常开发流程
 1. **开始开发前**
@@ -454,6 +464,9 @@ make debt-summary            # 生成清理总结报告
 - **PostgreSQL**: 15
 - **Redis**: 7
 - **Celery**: 5.4.0（异步任务）
+- **Ruff**: 代码格式化和检查（替代 black/flake8/isort）
+- **MyPy**: 静态类型检查
+- **pytest**: 测试框架，支持标记和覆盖率
 
 ### 依赖管理
 - 项目使用 pip-tools 进行依赖管理（requirements/ 目录）
@@ -462,18 +475,24 @@ make debt-summary            # 生成清理总结报告
 - **requirements/requirements.lock** - 完整依赖锁定
 
 ### 代码质量工具
-- 代码格式化和检查已迁移到 ruff（替代 flake8、black、isort）
-- 所有 Python 代码必须通过 ruff 和 mypy 检查
-- 测试使用 pytest 并生成覆盖率报告
-- Docker Compose 提供本地开发的 PostgreSQL、Redis 和 Nginx
-- MLOps 流程包括模型重训练和反馈循环
+- **代码格式化和检查**：已完全迁移到 Ruff（替代 flake8、black、isort）
+- **静态类型检查**：MyPy 配置完整，新代码必须包含类型注解
+- **测试框架**：pytest，支持标记系统和覆盖率报告
+- **容器化**：Docker Compose 提供本地开发的 PostgreSQL、Redis 和 Nginx
+- **MLOps**：完整的模型训练、部署和反馈循环流程
 
 ## 项目特定规则
 
-### 代码风格
-- 优先修改已有文件，避免不必要的文件创建
-- 函数和类使用清晰的中文 docstring
-- 遵循仓库模式进行数据访问
+### 代码风格（基于 Cursor 规则）
+- **修改优先**：优先修改已有文件，避免不必要的文件创建
+- **模块化设计**：保持文件功能单一，避免过度复杂的模块
+- **命名规范**：
+  - 变量和函数：snake_case
+  - 类名：PascalCase
+  - 常量：UPPER_SNAKE_CASE
+  - 私有成员：前缀下划线
+- **类型注解**：所有公共接口必须有完整类型注解
+- **文档字符串**：使用 Google 风格 docstring，函数和类使用清晰的中文说明
 
 ### 数据库相关
 - 使用异步 SQLAlchemy 操作
@@ -491,6 +510,7 @@ make debt-summary            # 生成清理总结报告
 - ❌ 提交前不运行任何检查
 - ❌ 在 API 层直接操作数据库
 - ❌ 跳过测试覆盖率要求（除非是文档提交）
+- ❌ 使用 black/flake8/isort（项目已完全迁移到 Ruff）
 
 ## 故障排除指南
 
@@ -659,17 +679,18 @@ mypy src/api          # 检查特定模块
 - 复杂类型使用 `typing` 模块
 - 必要时使用 `# type: ignore`
 
-## 重要架构信息
+## 架构模式详解
 
-### 已完成的优化（截至 2025-01-12）
-✅ **统一基础服务类**：`src/services/base_unified.py` - 所有服务的基础类
-✅ **仓储模式实现**：`src/database/repositories/` - 数据访问抽象层
-✅ **领域模型引入**：`src/domain/models/` - 业务领域模型
-✅ **依赖注入系统**：`src/core/di.py` - IoC容器实现
-✅ **事件驱动架构**：`src/api/events.py` - 系统事件和观察者
+### 已实现的设计模式（2025-01-12）
+✅ **统一基础服务类**：`src/services/base_unified.py` - 所有服务继承的基类
+✅ **仓储模式**：`src/database/repositories/` - 数据访问抽象层
+✅ **领域驱动设计**：`src/domain/models/` - 业务领域模型和服务
+✅ **依赖注入**：`src/core/di.py` - IoC容器实现
+✅ **事件驱动架构**：`src/api/events.py` + `src/api/observers.py` - 系统事件和观察者
 ✅ **CQRS 模式**：`src/api/cqrs.py` - 命令查询责任分离
 ✅ **工厂模式**：`tests/factories/` - 测试数据生成
-✅ **异步架构**：全栈使用 async/await
+✅ **适配器模式**：`src/adapters/` - 外部系统集成
+✅ **异步优先**：全栈使用 async/await
 
 ### 架构特点
 - **高度模块化**：清晰的分层架构（API→Service→Domain→Database）
@@ -689,13 +710,15 @@ mypy src/api          # 检查特定模块
 - **MyPy**：静态类型检查
 - **pytest**：测试框架，支持标记和覆盖率
 
-### CI/CD 配置
+### CI/CD 质量门禁
 - **覆盖率要求**：
   - CI环境：30%（已从20%提升）
   - 开发环境：20%
   - 最低门槛：15-16%
   - 当前实际：21.78%
+- **质量检查**：Ruff + MyPy + 测试覆盖率 + 安全扫描
 - **验证脚本**：`./scripts/ci-verify.sh` 提供完整的本地CI模拟
+- **触发条件**：Push 到 main/develop/hotfix 分支、创建 PR、手动触发
 
 ### 关键配置文件
 - `pyproject.toml`：Ruff配置和项目元数据

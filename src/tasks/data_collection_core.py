@@ -11,8 +11,9 @@ from typing import Any, Dict, List, Optional
 
 from celery import Celery
 
-from src.database.connection import DatabaseManager
 from src.core.logging import get_logger
+from src.database.connection import DatabaseManager
+
 from .data_collectors import DataCollectionOrchestrator  # type: ignore
 
 logger = get_logger(__name__)
@@ -62,7 +63,8 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         # 收集数据
         collector = task.orchestrator.get_collector("fixtures")
         if collector:
-            result = await collector.collect_async(days_ahead=30)  # type: ignore
+            # 使用asyncio.run在同步上下文中运行异步代码
+            result = asyncio.run(collector.collect_async(days_ahead=30))  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Fixtures collector not found"}
@@ -87,7 +89,8 @@ def collect_odds_task(self) -> Dict[str, Any]:
         # 收集数据
         collector = task.orchestrator.get_collector("odds")
         if collector:
-            result = await collector.collect_async()  # type: ignore
+            # 使用asyncio.run在同步上下文中运行异步代码
+            result = asyncio.run(collector.collect_async())  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Odds collector not found"}
@@ -112,7 +115,8 @@ def collect_scores_task(self) -> Dict[str, Any]:
         # 收集数据
         collector = task.orchestrator.get_collector("scores")
         if collector:
-            result = await collector.collect_async()  # type: ignore
+            # 使用asyncio.run在同步上下文中运行异步代码
+            result = asyncio.run(collector.collect_async())  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Scores collector not found"}
@@ -122,10 +126,10 @@ def collect_scores_task(self) -> Dict[str, Any]:
         raise
 
 
-@celery.app.task  # type: ignore
+@celery_app.task  # type: ignore
 def manual_collect_all_data() -> Dict[str, Any]:
-    """手动收集所有数据任务"""
-    """
+    """手动收集所有数据任务
+    
     手动触发所有数据收集
 
     这是一个同步任务，用于立即收集所有类型的数据。
@@ -139,8 +143,8 @@ def manual_collect_all_data() -> Dict[str, Any]:
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
 
-        # 使用协调器收集所有数据
-        results = await task.orchestrator.collect_all_data()  # type: ignore
+        # 使用asyncio.run在同步上下文中运行异步代码
+        results = asyncio.run(task.orchestrator.collect_all_data())  # type: ignore
         return results  # type: ignore
 
     except (RuntimeError, ValueError, ConnectionError) as e:
@@ -148,7 +152,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
         return {"error": str(e), "collected_at": datetime.utcnow().isoformat()}
 
 
-@celery.app.task  # type: ignore
+@celery_app.task  # type: ignore
 def emergency_data_collection_task(
     data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
@@ -171,8 +175,8 @@ def emergency_data_collection_task(
 
         logger.warning(f"Emergency data collection triggered for: {critical_types}")
 
-        # 使用协调器收集数据
-        results = await task.orchestrator.collect_all_data(data_types=critical_types)  # type: ignore
+        # 使用asyncio.run在同步上下文中运行异步代码
+        results = asyncio.run(task.orchestrator.collect_all_data(data_types=critical_types))  # type: ignore
 
         # 标记为紧急收集
         results["emergency"] = True
@@ -190,7 +194,7 @@ def emergency_data_collection_task(
 
 
 # 定时任务定义
-@celery.app.task  # type: ignore
+@celery_app.task  # type: ignore
 def collect_historical_data_task():
     """定期收集历史数据任务"""
     task = DataCollectionTask()
@@ -205,14 +209,15 @@ def collect_historical_data_task():
         # 收集过去30天的比赛数据
         historical_collector = task.orchestrator.get_collector("historical")
         if historical_collector:
-            results = await historical_collector.collect_historical_data(  # type: ignore
+            # 使用asyncio.run在同步上下文中运行异步代码
+            results = asyncio.run(historical_collector.collect_historical_data(  # type: ignore
                 data_type="matches",
                 start_date=datetime.utcnow() - timedelta(days=30),
                 end_date=datetime.utcnow(),
-            )
+            ))
 
             # 保存到数据库
-            await _save_historical_data(results, "matches")  # type: ignore
+            asyncio.run(_save_historical_data(results, "matches"))  # type: ignore
             return results
 
         return {"error": "Historical collector not found"}

@@ -18,6 +18,8 @@ from typing import Any, Dict, List
 import logging
 from datetime import datetime
 
+from src.database.connection import DatabaseManager
+
 
 class DataQualityMonitor:
     """

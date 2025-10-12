@@ -1,0 +1,315 @@
+"""测试适配器模式实现"""
+
+import pytest
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
+from src.adapters.base import (
+    Adapter,
+    Adaptee,
+    Target,
+    AdapterStatus,
+    BaseAdapter,
+    AdapterConfig
+)
+from src.adapters.factory import AdapterFactory
+from src.adapters.registry import AdapterRegistry
+
+
+@pytest.mark.unit
+class TestAdapterPattern:
+    """测试适配器模式"""
+
+    @pytest.fixture
+    def test_adaptee(self):
+        """创建测试用的被适配者"""
+        class TestAdaptee(Adaptee):
+            def __init__(self, data):
+                self.data = data
+
+            async def get_data(self, key):
+                """获取原始数据（旧接口）"""
+                return self.data.get(key)
+
+            async def send_data(self, data):
+                """发送数据（旧接口）"""
+                self.data.update(data)
+                return True
+
+        return TestAdaptee({"name": "test", "value": 100})
+
+    @pytest.fixture
+    def test_adapter(self, test_adaptee):
+        """创建测试用的适配器"""
+        class TestAdapter(BaseAdapter):
+            """测试适配器，将旧接口转换为新接口"""
+
+            async def request(self, method: str, *args, **kwargs):
+                """统一的请求接口（新接口）"""
+                if method == "get":
+                    key = args[0] if args else kwargs.get("key")
+                    return await self.adaptee.get_data(key)
+                elif method == "set":
+                    key = args[0] if args else kwargs.get("key")
+                    value = args[1] if len(args) > 1 else kwargs.get("value")
+                    return await self.adaptee.send_data({key: value})
+                else:
+                    raise ValueError(f"Unsupported method: {method}")
+
+        return TestAdapter(test_adaptee)
+
+    @pytest.mark.asyncio
+    async def test_adapter_interface(self, test_adapter):
+        """测试适配器接口转换"""
+        # 测试通过新接口获取数据
+        result = await test_adapter.request("get", "name")
+        assert result == "test"
+
+        # 测试通过新接口设置数据
+        result = await test_adapter.request("set", "name", "updated")
+        assert result is True
+
+        # 验证数据已更新
+        result = await test_adapter.request("get", "name")
+        assert result == "updated"
+
+    @pytest.mark.asyncio
+    async def test_adapter_status_management(self, test_adapter):
+        """测试适配器状态管理"""
+        # 初始状态应该是未激活
+        assert test_adapter.status == AdapterStatus.INACTIVE
+
+        # 激活适配器
+        await test_adapter.activate()
+        assert test_adapter.status == AdapterStatus.ACTIVE
+
+        # 停用适配器
+        await test_adapter.deactivate()
+        assert test_adapter.status == AdapterStatus.INACTIVE
+
+        # 设置错误状态
+        await test_adapter.set_error("Test error")
+        assert test_adapter.status == AdapterStatus.ERROR
+        assert test_adapter.error_message == "Test error"
+
+    def test_adapter_config(self):
+        """测试适配器配置"""
+        config = AdapterConfig(
+            name="test_adapter",
+            timeout=30,
+            retry_count=3,
+            enable_cache=True
+        )
+
+        assert config.name == "test_adapter"
+        assert config.timeout == 30
+        assert config.retry_count == 3
+        assert config.enable_cache is True
+
+
+@pytest.mark.unit
+class TestAdapterFactory:
+    """测试适配器工厂"""
+
+    @pytest.fixture
+    def adapter_factory(self):
+        """创建适配器工厂实例"""
+        return AdapterFactory()
+
+    def test_register_adapter(self, adapter_factory):
+        """测试注册适配器"""
+        class TestAdapter(BaseAdapter):
+            pass
+
+        # 注册适配器类型
+        adapter_factory.register("test", TestAdapter)
+
+        # 验证已注册
+        assert "test" in adapter_factory.get_registered_types()
+
+    def test_create_adapter(self, adapter_factory):
+        """测试创建适配器"""
+        class TestAdaptee(Adaptee):
+            async def get_data(self, key):
+                return f"data-{key}"
+
+            async def send_data(self, data):
+                return True
+
+        class TestAdapter(BaseAdapter):
+            pass
+
+        # 注册适配器
+        adapter_factory.register("test", TestAdapter)
+
+        # 创建适配器实例
+        adaptee = TestAdaptee()
+        adapter = adapter_factory.create("test", adaptee)
+
+        assert isinstance(adapter, TestAdapter)
+        assert adapter.adaptee is adaptee
+
+    def test_create_unknown_adapter(self, adapter_factory):
+        """测试创建未注册的适配器"""
+        with pytest.raises(ValueError, match="Unknown adapter type"):
+            adapter_factory.create("unknown", MagicMock())
+
+
+@pytest.mark.unit
+class TestAdapterRegistry:
+    """测试适配器注册表"""
+
+    @pytest.fixture
+    def adapter_registry(self):
+        """创建适配器注册表实例"""
+        return AdapterRegistry()
+
+    def test_register_and_get_adapter(self, adapter_registry):
+        """测试注册和获取适配器"""
+        adapter = MagicMock()
+
+        # 注册适配器
+        adapter_registry.register("test_service", adapter)
+
+        # 获取适配器
+        retrieved = adapter_registry.get("test_service")
+        assert retrieved is adapter
+
+    def test_get_nonexistent_adapter(self, adapter_registry):
+        """测试获取不存在的适配器"""
+        with pytest.raises(KeyError):
+            adapter_registry.get("nonexistent")
+
+    def test_list_adapters(self, adapter_registry):
+        """测试列出所有适配器"""
+        adapter1 = MagicMock()
+        adapter2 = MagicMock()
+
+        # 注册多个适配器
+        adapter_registry.register("service1", adapter1)
+        adapter_registry.register("service2", adapter2)
+
+        # 列出适配器
+        adapters = adapter_registry.list()
+        assert "service1" in adapters
+        assert "service2" in adapters
+        assert len(adapters) == 2
+
+    def test_unregister_adapter(self, adapter_registry):
+        """测试注销适配器"""
+        adapter = MagicMock()
+
+        # 注册适配器
+        adapter_registry.register("test", adapter)
+        assert "test" in adapter_registry.list()
+
+        # 注销适配器
+        adapter_registry.unregister("test")
+        assert "test" not in adapter_registry.list()
+
+
+@pytest.mark.unit
+class TestCompositeAdapter:
+    """测试组合适配器"""
+
+    @pytest.fixture
+    def composite_adapter(self):
+        """创建组合适配器"""
+        from src.adapters.composite import CompositeAdapter
+
+        # 创建子适配器
+        adaptee1 = AsyncMock()
+        adaptee2 = AsyncMock()
+
+        adapter1 = MagicMock()
+        adapter1.request = AsyncMock(return_value="result1")
+        adapter2 = MagicMock()
+        adapter2.request = AsyncMock(return_value="result2")
+
+        composite = CompositeAdapter()
+        composite.add_adapter("adapter1", adapter1)
+        composite.add_adapter("adapter2", adapter2)
+
+        return composite
+
+    @pytest.mark.asyncio
+    async def test_composite_request(self, composite_adapter):
+        """测试组合请求"""
+        # 测试并行请求所有适配器
+        results = await composite_adapter.request_all("test", parallel=True)
+
+        assert "adapter1" in results
+        assert "adapter2" in results
+        assert results["adapter1"] == "result1"
+        assert results["adapter2"] == "result2"
+
+    @pytest.mark.asyncio
+    async def test_sequential_request(self, composite_adapter):
+        """测试顺序请求"""
+        # 测试顺序请求适配器
+        results = await composite_adapter.request_all("test", parallel=False)
+
+        assert len(results) == 2
+        assert "adapter1" in results
+        assert "adapter2" in results
+
+    def test_remove_adapter(self, composite_adapter):
+        """测试移除适配器"""
+        # 移除一个适配器
+        composite_adapter.remove_adapter("adapter1")
+
+        # 验证只剩一个适配器
+        assert len(composite_adapter.adapters) == 1
+        assert "adapter1" not in composite_adapter.adapters
+
+
+@pytest.mark.unit
+class TestAdapterLifecycle:
+    """测试适配器生命周期"""
+
+    @pytest.fixture
+    def lifecycle_adapter(self):
+        """创建生命周期适配器"""
+        from src.adapters.lifecycle import LifecycleAdapter
+
+        class TestLifecycleAdapter(LifecycleAdapter):
+            def __init__(self, adaptee):
+                super().__init__(adaptee)
+                self.init_called = False
+                self.cleanup_called = False
+
+            async def on_initialize(self):
+                """初始化回调"""
+                self.init_called = True
+
+            async def on_cleanup(self):
+                """清理回调"""
+                self.cleanup_called = True
+
+            async def request(self, *args, **kwargs):
+                """请求方法"""
+                return "test_result"
+
+        adaptee = MagicMock()
+        return TestLifecycleAdapter(adaptee)
+
+    @pytest.mark.asyncio
+    async def test_lifecycle_initialization(self, lifecycle_adapter):
+        """测试生命周期初始化"""
+        # 初始化适配器
+        await lifecycle_adapter.initialize()
+
+        assert lifecycle_adapter.init_called is True
+        assert lifecycle_adapter.is_initialized is True
+
+    @pytest.mark.asyncio
+    async def test_lifecycle_cleanup(self, lifecycle_adapter):
+        """测试生命周期清理"""
+        # 先初始化
+        await lifecycle_adapter.initialize()
+
+        # 清理适配器
+        await lifecycle_adapter.cleanup()
+
+        assert lifecycle_adapter.cleanup_called is True
+        assert lifecycle_adapter.is_initialized is False

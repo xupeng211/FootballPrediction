@@ -5,6 +5,7 @@
 """
 
 from typing import Any, Dict, Optional, List
+from datetime import datetime
 from .base_unified import SimpleService
 
 
@@ -17,6 +18,15 @@ class UserProfile:
         self.display_name = display_name
         self.email = email
         self.preferences = preferences
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "user_id": self.user_id,
+            "display_name": self.display_name,
+            "email": self.email,
+            "preferences": self.preferences,
+        }
 
 
 # 简化的User类定义
@@ -80,8 +90,8 @@ class UserProfileService(SimpleService):
                 "language": content_preferences.get(str("language"), "zh"),
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
+                "created_at": datetime.now(),
             },
-            created_at=datetime.now(),  # type: ignore
         )
         self._user_profiles[user.id] = profile
         return profile
@@ -113,7 +123,7 @@ class UserProfileService(SimpleService):
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
-            if user.profile.favorite_teams:
+            if user.profile.favorite_teams and isinstance(user.profile.favorite_teams, (list, tuple)):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
 
@@ -162,8 +172,10 @@ class UserProfileService(SimpleService):
             user_id=user_id,
             display_name=user_data.get(str("name"), "Anonymous"),
             email=user_data.get(str("email"), ""),
-            preferences=preferences,
-            created_at=datetime.now(),  # type: ignore
+            preferences={
+                **preferences,
+                "created_at": datetime.now(),
+            },
         )
         self._user_profiles[user_id] = profile
         return {"status": "created", "profile": profile.to_dict()}  # type: ignore
