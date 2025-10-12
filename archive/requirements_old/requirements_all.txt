@@ -1,4 +1,0 @@
-# 合并所有依赖用于生成锁定文件
--r base.txt
--r dev.txt
--r optional.txt

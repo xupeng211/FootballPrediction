@@ -1,9 +1,0 @@
-# 流处理依赖 - Kafka支持
-# 继承自base.txt
-
--r base.in
-
-# Apache Kafka
-confluent-kafka==2.5.0
-aiokafka==0.11.0
-kafka-python==2.0.2

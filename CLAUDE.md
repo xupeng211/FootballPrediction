@@ -26,6 +26,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 代码注释可以使用英文，但解释要用中文
 - 错误信息和技术术语的解释也要用中文
 
+## 📖 重要提示
+
+**请先阅读 [.claude-preferences.md](/.claude-preferences.md)**
+- 该文件记录了用户的核心偏好和已选择的最佳实践
+- 包含用户的开发哲学和当前项目状态
+- 了解用户的渐进式改进理念
+
+**核心理念**：先让 CI 绿灯亮起，再逐步提高标准！
+
+**当前项目状态**（2025-01-12）：
+- 测试覆盖率：21.78%（已完成技术债务改进）
+- CI 覆盖率门槛：30%（已从 20% 提升）
+- MyPy 类型注解错误：正在进行修复（最近已修复第1批）
+- 代码质量评分：8.5/10 ✅ 已达成最佳实践目标
+- 采用渐进式改进策略，确保持续集成保持绿灯
+
+## 🌏 语言设置
+
+**重要规则：在与用户交流时，请使用简体中文回复。** 用户不懂英文，所以所有解释和说明都应该用中文。
+
+- 与用户的所有对话都使用简体中文
+- 代码注释可以使用英文，但解释要用中文
+- 错误信息和技术术语的解释也要用中文
+
 ## 项目简介
 
 这是一个足球预测系统，使用 FastAPI、SQLAlchemy、Redis 和 PostgreSQL 构建。项目采用现代 Python 架构，具有完整的测试、CI/CD 和 MLOps 功能。
@@ -45,6 +69,11 @@ make clean-env        # 清理虚拟环境和旧依赖文件
 make lock-deps        # 锁定依赖以保证可重现构建
 make verify-deps      # 验证依赖是否与锁定文件匹配
 ```
+
+**重要提示**：
+- 不要直接运行 `pytest`，必须使用 Makefile 命令
+- 推荐使用 `./scripts/ci-verify.sh` 进行完整的 CI 验证
+- 使用 `make test-quick` 进行日常快速测试（60秒超时）
 
 #### 测试
 ```bash
@@ -224,6 +253,13 @@ src/
   - ✅ CQRS 模式（`src/api/cqrs.py`）
   - ✅ 多种设计模式应用（工厂、DI、仓储、事件等）
   - ✅ 模块化架构，易于扩展和维护
+
+### 关键配置文件
+- `pyproject.toml`：Ruff配置和项目元数据
+- `pytest.ini`：测试配置和标记定义
+- `mypy.ini`：类型检查配置
+- `coverage_local.ini`：本地覆盖率配置
+- `docker-compose.yml`：容器编排配置
 
 ## 测试指南
 

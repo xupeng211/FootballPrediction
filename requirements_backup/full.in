@@ -1,7 +1,0 @@
-# =============================================================================
-# Football Prediction System - Full Dependencies Entry Point
-# =============================================================================
-# This file includes all dependencies for the project
-
-# Include development and testing dependencies
--r dev.in
